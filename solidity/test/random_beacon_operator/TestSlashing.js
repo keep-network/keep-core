@@ -1,11 +1,11 @@
 const blsData = require("../helpers/data.js")
 const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
-const {increaseTime} = require('../helpers/increaseTime');
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 const stakeDelegate = require('../helpers/stakeDelegate')
 const BLS = contract.fromArtifact('BLS');
 
@@ -51,7 +51,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]})

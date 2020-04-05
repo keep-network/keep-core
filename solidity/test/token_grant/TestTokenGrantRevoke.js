@@ -1,6 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const { duration, increaseTimeTo } = require('../helpers/increaseTime');
-const latestTime = require('../helpers/latestTime');
+const {time} = require("@openzeppelin/test-helpers")
 const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
@@ -27,11 +26,11 @@ describe('TokenGrant/Revoke', function() {
   let grantStart;
   const grantAmount = web3.utils.toBN(1000000000);
   const grantRevocable = true;
-  const grantDuration = duration.seconds(60);;
-  const grantCliff = duration.seconds(1);
+  const grantDuration = time.duration.seconds(60);;
+  const grantCliff = time.duration.seconds(1);
     
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const initializationPeriod = time.duration.seconds(10);
+  const undelegationPeriod = time.duration.seconds(30);
 
   before(async () => {
     tokenContract = await KeepToken.new( {from: accounts[0]});
@@ -49,7 +48,7 @@ describe('TokenGrant/Revoke', function() {
 
     minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
 
-    grantStart = await latestTime();
+    grantStart = await time.latest();
 
     grantId = await grantTokens(
       grantContract, 
@@ -76,7 +75,7 @@ describe('TokenGrant/Revoke', function() {
 
   it("should allow to revoke grant", async () => {
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
-    await increaseTimeTo(grantStart + duration.seconds(30));
+    await time.increaseTo(grantStart.add(time.duration.seconds(30)));
     const withdrawable = await grantContract.withdrawable(grantId);
     const refund = grantAmount.sub(withdrawable);
     

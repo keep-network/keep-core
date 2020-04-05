@@ -1,9 +1,9 @@
 const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
 const expectThrow = require('../helpers/expectThrow.js')
 const {contract, accounts} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
 const initContracts = require('../helpers/initContracts')
-const {increaseTime} = require('../helpers/increaseTime')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
 const mineBlocks = require("../helpers/mineBlocks")
@@ -49,7 +49,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
     tickets1 = generateTickets(

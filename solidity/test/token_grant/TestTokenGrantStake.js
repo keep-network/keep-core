@@ -1,7 +1,6 @@
 const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const { duration, increaseTimeTo, increaseTime } = require('../helpers/increaseTime');
-const latestTime = require('../helpers/latestTime');
+const {time} = require("@openzeppelin/test-helpers")
 const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
@@ -14,7 +13,7 @@ const expect = chai.expect
 // Depending on test network increaseTimeTo can be inconsistent and add
 // extra time. As a workaround we subtract timeRoundMargin in all cases
 // that test times before initialization/undelegation periods end.
-const timeRoundMargin = duration.minutes(1)
+const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
@@ -44,11 +43,11 @@ describe('TokenGrant/Stake', function() {
   let evilGrantId;
   let grantStart;
 
-  const grantUnlockingDuration = duration.days(60);
-  const grantCliff = duration.days(10);
+  const grantUnlockingDuration = time.duration.days(60);
+  const grantCliff = time.duration.days(10);
 
-  const initializationPeriod = duration.minutes(10);
-  const undelegationPeriod = duration.minutes(30);
+  const initializationPeriod = time.duration.minutes(10);
+  const undelegationPeriod = time.duration.minutes(30);
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
@@ -65,7 +64,7 @@ describe('TokenGrant/Stake', function() {
 
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
-    grantStart = await latestTime();
+    grantStart = await time.latest();
     minimumStake = await stakingContract.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()
@@ -185,12 +184,12 @@ describe('TokenGrant/Stake', function() {
 
   it("should allow to delegate, undelegate, and recover grant", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
-    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
+    let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(undelegatedAt.add(undelegationPeriod).addn(1))
     await grantContract.recoverStake(operatorOne);
 
     let availableForStaking = await grantContract.availableToStake.call(grantId)
@@ -226,9 +225,9 @@ describe('TokenGrant/Stake', function() {
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod - timeRoundMargin)
+    await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
@@ -247,9 +246,9 @@ describe('TokenGrant/Stake', function() {
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
     await expectThrowWithMessage(
       grantContract.cancelStake(operatorOne, {from: grantee}),
@@ -259,12 +258,12 @@ describe('TokenGrant/Stake', function() {
 
   it("should not allow to recover stake before undelegation period is over", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
-    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(undelegatedAt + undelegationPeriod - timeRoundMargin);
+    let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(undelegatedAt.add(undelegationPeriod).sub(timeRoundMargin));
 
     await expectThrowWithMessage(
       stakingContract.recoverStake(operatorOne),
@@ -284,11 +283,11 @@ describe('TokenGrant/Stake', function() {
 
   it("should not allow to delegate to the same operator even after recovering stake", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
-    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
+    let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(undelegatedAt.add(undelegationPeriod).addn(1))
     await grantContract.recoverStake(operatorOne, {from: grantee});
 
     await expectThrowWithMessage(
@@ -367,18 +366,18 @@ describe('TokenGrant/Stake', function() {
 
   it("should let operator undelegate", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     await grantContract.undelegate(operatorOne, {from: operatorOne})
     // ok, no exceptions
   })
 
   it("should not allow third party to undelegate", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     await expectThrowWithMessage(
       grantContract.undelegate(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can undelegate"
@@ -387,12 +386,12 @@ describe('TokenGrant/Stake', function() {
 
   it("should recover tokens recovered outside the grant contract", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
-    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
+    let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(undelegatedAt.add(undelegationPeriod).addn(1))
     await stakingContract.recoverStake(operatorOne);
     let availablePre = await grantContract.availableToStake(grantId);
 

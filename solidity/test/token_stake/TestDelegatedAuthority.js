@@ -1,5 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const { duration, increaseTimeTo } = require('../helpers/increaseTime');
+const {time} = require("@openzeppelin/test-helpers")
 const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -13,8 +13,8 @@ const TokenStaking = contract.fromArtifact('TokenStaking');
 const Registry = contract.fromArtifact("Registry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
-const initializationPeriod = 10;
-const undelegationPeriod = 30;
+const initializationPeriod = time.duration.seconds(10);
+const undelegationPeriod = time.duration.seconds(30);
 
 let token, registry, stakingContract;
 let authorityDelegator, badAuthorityDelegator;
@@ -41,8 +41,8 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);
     let tx = await delegate(operator, stakingAmount);
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
     authorityDelegator = await DelegatedAuthorityStub.new(recognizedContract);
     badAuthorityDelegator = await DelegatedAuthorityStub.new(unapprovedContract);

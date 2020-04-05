@@ -1,6 +1,5 @@
-const { duration, increaseTimeTo } = require('../helpers/increaseTime');
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const latestTime = require('../helpers/latestTime');
+const {time} = require("@openzeppelin/test-helpers")
 const expectThrow = require('../helpers/expectThrow');
 const grantTokens = require('../helpers/grantTokens');
 const KeepToken = contract.fromArtifact('KeepToken');
@@ -21,22 +20,22 @@ describe('TokenGrant', function() {
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await Registry.new({from: accounts[0]});
-    stakingContract = await TokenStaking.new(token.address, registry.address, duration.days(1), duration.days(30), {from: accounts[0]});
+    stakingContract = await TokenStaking.new(token.address, registry.address, time.duration.days(1), time.duration.days(30), {from: accounts[0]});
     grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
     permissivePolicy = await PermissiveStakingPolicy.new()
     amount = web3.utils.toBN(100);
-    unlockingDuration = duration.days(30);
-    start = await latestTime();
-    cliff = duration.days(0);
+    unlockingDuration = time.duration.days(30);
+    start = await time.latest();
+    cliff = time.duration.days(0);
   });
 
   it("should grant tokens correctly", async function() {
 
     let amount = web3.utils.toBN(1000000000);
-    let unlockingDuration = duration.days(30);
-    let start = await latestTime();
-    let cliff = duration.days(10);
+    let unlockingDuration = time.duration.days(30);
+    let start = await time.latest();
+    let cliff = time.duration.days(10);
     let revocable = true;
 
     // Starting balances
@@ -65,7 +64,7 @@ describe('TokenGrant', function() {
     await expectThrow(grantContract.withdraw(id))
 
     // jump in time, third unlocking duration
-    await increaseTimeTo(await latestTime()+unlockingDuration/3);
+    await time.increase(unlockingDuration.divn(3));
 
     // Should be able to withdraw token grant withdrawable amount
     await grantContract.withdraw(id)
@@ -75,7 +74,7 @@ describe('TokenGrant', function() {
     assert.equal(account_two_ending_balance.lte(account_two_starting_balance.add(amount.div(web3.utils.toBN(2)))), true, 'Should withdraw some of the grant to the main balance')
 
     // jump in time, full unlocking duration
-    await increaseTimeTo(await latestTime()+unlockingDuration);
+    await time.increase(unlockingDuration);
     await grantContract.withdraw(id);
 
     // should withdraw full grant amount to the main balance
@@ -112,9 +111,9 @@ describe('TokenGrant', function() {
 
     let schedule = await grantContract.getGrantUnlockingSchedule(id);
     assert.equal(schedule[0], grant_manager, "Grant should maintain a record of the grant manager.");
-    assert.equal(schedule[1].eq(web3.utils.toBN(unlockingDuration)), true, "Grant should have unlocking schedule duration.");
+    assert.equal(schedule[1].eq(web3.utils.toBN(unlockingDuration)), true, "Grant should have unlocking schedule time.duration.");
     assert.equal(schedule[2].eq(web3.utils.toBN(start)), true, "Grant should have start time.");
-    assert.equal(schedule[3].eq(web3.utils.toBN(start).add(web3.utils.toBN(cliff))), true, "Grant should have unlocking schedule cliff duration.");
+    assert.equal(schedule[3].eq(web3.utils.toBN(start).add(web3.utils.toBN(cliff))), true, "Grant should have unlocking schedule cliff time.duration.");
 
   });
 });

@@ -1,11 +1,11 @@
 const generateTickets = require('./generateTickets')
 const mineBlocks =  require('./mineBlocks')
-const {increaseTime} =  require('./increaseTime')
 const packTicket =  require('./packTicket')
 const sign =  require('./signature')
 const blsData =  require('./data.js')
 const stakeDelegate =  require('./stakeDelegate')
 const {web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 
 
 // Function stakes first three accounts provided in the array of accounts and
@@ -56,7 +56,7 @@ async function stakeAndGenesis(accounts, contracts) {
     let tickets2 = generateTickets(groupSelectionRelayEntry, operator2, operator2StakingWeight);
     let tickets3 = generateTickets(groupSelectionRelayEntry, operator3, operator3StakingWeight);
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);

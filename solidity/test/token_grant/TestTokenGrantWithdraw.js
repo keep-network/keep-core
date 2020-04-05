@@ -1,7 +1,6 @@
 const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const { duration, increaseTimeTo } = require('../helpers/increaseTime');
-const latestTime = require('../helpers/latestTime');
+const {time} = require("@openzeppelin/test-helpers")
 const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
@@ -30,11 +29,11 @@ describe('TokenGrant/Withdraw', function() {
   let grantId, grantStart, grantAmount;
 
   const grantRevocable = false;
-  const grantDuration = duration.seconds(60);
-  const grantCliff = duration.seconds(1);
+  const grantDuration = time.duration.seconds(60);
+  const grantCliff = time.duration.seconds(1);
     
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const initializationPeriod = time.duration.seconds(10);
+  const undelegationPeriod = time.duration.seconds(30);
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
@@ -54,7 +53,7 @@ describe('TokenGrant/Withdraw', function() {
 
     permissivePolicy = await PermissiveStakingPolicy.new()
 
-    grantStart = await latestTime();
+    grantStart = await time.latest();
 
     grantId = await grantTokens(
       grantContract, 
@@ -80,7 +79,7 @@ describe('TokenGrant/Withdraw', function() {
   })
 
   it("should allow to wihtdraw some tokens", async () => {
-    await increaseTimeTo(grantStart + grantDuration - 30)
+    await time.increaseTo(grantStart.add(grantDuration) - 30)
 
     const withdrawable = await grantContract.withdrawable(grantId)
     const granteeTokenGrantBalancePre = await grantContract.balanceOf(grantee)
@@ -105,7 +104,7 @@ describe('TokenGrant/Withdraw', function() {
   })
 
   it("should allow to wihtdraw the whole grant amount ", async () => {
-    await increaseTimeTo(grantStart + grantDuration)
+    await time.increaseTo(grantStart.add(grantDuration))
 
     const withdrawablePre = await grantContract.withdrawable(grantId)
     const granteeTokenGrantBalancePre = await grantContract.balanceOf(grantee)
@@ -139,7 +138,7 @@ describe('TokenGrant/Withdraw', function() {
   })
 
   it("should not allow to withdraw delegated tokens", async () => {
-    await increaseTimeTo(grantStart + grantDuration)
+    await time.increaseTo(grantStart.add(grantDuration))
     const withdrawable = await grantContract.withdrawable(grantId)
     await delegateStakeFromGrant(
         grantContract,

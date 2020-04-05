@@ -1,11 +1,10 @@
-const { duration, increaseTimeTo } = require('../helpers/increaseTime');
-const latestTime = require('../helpers/latestTime');
 const expectThrow = require('../helpers/expectThrow.js')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 
 const ServiceContractProxy = contract.fromArtifact('KeepRandomBeaconService')
 
@@ -212,7 +211,7 @@ describe('TestKeepRandomBeaconService/ViaProxy', function() {
     await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
 
     // jump in time, full undelegation period
-    await increaseTimeTo(await latestTime()+duration.days(30));
+    await time.increase(time.duration.days(30));
 
     let receiverStartBalance = await web3.eth.getBalance(account_three);
     await serviceContract.finishWithdrawal(account_three, {from: account_one});

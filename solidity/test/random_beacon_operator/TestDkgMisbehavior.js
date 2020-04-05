@@ -1,10 +1,10 @@
 const blsData = require("../helpers/data")
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 const initContracts = require('../helpers/initContracts')
 const sign = require('../helpers/signature')
 const mineBlocks = require('../helpers/mineBlocks')
-const {increaseTime} = require('../helpers/increaseTime')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
 const generateTickets = require('../helpers/generateTickets')
@@ -53,7 +53,7 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     await stakingContract.authorizeOperatorContract(operator4, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator5, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
     let tickets1 = generateTickets(groupSelectionRelayEntry, operator1, 1)
