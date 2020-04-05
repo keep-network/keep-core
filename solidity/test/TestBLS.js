@@ -4,7 +4,7 @@ const {expectRevert} = require("@openzeppelin/test-helpers")
 const BLS = contract.fromArtifact('BLS');
 var assert = require('chai').assert
 
-describe('TestBLS', function() {
+describe('BLS', function() {
   let bls;
 
   before(async () => {
