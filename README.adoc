@@ -42,12 +42,12 @@ https://github.com/keep-network/keep-core/issues[is appreciated!]
 dApp developers will be most interested in the smart contracts exposing Keep's
 on-chain facilities.
 
-The contracts can be found in the link:solidity/[`solidity/`] directory. They
-can be used to request miner-resistant random numbers, as well as handle
-creating and managing keeps, generating new secrets, and requesting signatures.
-
-It runs the Keep network’s random beacon and participates in related
-computations.
+The core contracts can be found in the link:solidity/[`solidity/`] directory.
+They can be used to request
+link:solidity/contracts/IRandomBeacon.sol[miner-resistant random numbers], as
+well as creating and managing keeps. To generate new ECDSA key material and
+request signatures, the contracts can be found in
+link:https://github.com/keep-network/keep-ecdsa/blob/master/solidity/contracts/api/IBondedECDSAKeep.sol[`keep-ecdsa`].
 
 === Client Developers
 
