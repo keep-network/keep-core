@@ -21,7 +21,6 @@ describe('KeepRandomBeaconOperator/GroupExpiration', function() {
     const groupsLibrary = await Groups.new();
     await GroupsExpirationStub.detectNetwork()
     await GroupsExpirationStub.link("Groups", groupsLibrary.address);
-    await GroupsExpirationStub.detectNetwork()
     groups = await GroupsExpirationStub.new();
   });
 

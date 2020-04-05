@@ -19,7 +19,6 @@ describe('KeepRandomBeaconOperator/GroupTermination', function() {
       const groupsLibrary = await Groups.new();
       await GroupsTerminationStub.detectNetwork()
       await GroupsTerminationStub.link("Groups", groupsLibrary.address);
-      await GroupsTerminationStub.detectNetwork()
       groups = await GroupsTerminationStub.new();
     });
 

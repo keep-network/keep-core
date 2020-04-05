@@ -54,13 +54,9 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
 
   const reimbursements = await Reimbursements.new({from: accounts[0]});
 
-  await KeepRandomBeaconOperator.detectNetwork()
   await KeepRandomBeaconOperator.link("GroupSelection", groupSelection.address);
-  await KeepRandomBeaconOperator.detectNetwork()
   await KeepRandomBeaconOperator.link("Groups", groups.address);
-  await KeepRandomBeaconOperator.detectNetwork()
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
-  await KeepRandomBeaconOperator.detectNetwork()
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
   operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, {from: accounts[0]});
 
