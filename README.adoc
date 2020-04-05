@@ -23,6 +23,9 @@ endangering key material. ECDSA keeps mean decentralized signing, cross-chain
 applications, and new tools for custodial applications — from Solidity. This
 capability is used heavily by https://tbtc.network/[tBTC].
 
+To learn more about ECDSA keeps, check out
+[keep-ecdsa](https://github.com/keep-network/keep-ecdsa)
+
 == Getting Started
 
 A good place to start is the link:docs/[the docs directory].
