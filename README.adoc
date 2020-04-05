@@ -14,8 +14,11 @@ containers for private storage and computation that can be opened, closed, and
 managed by smart contracts autonomously.
 
 Keeps are maintained by stakers, actors who run nodes and have skin in the
-game. When a new keep is opened, the requisite number of stakers are chosen
-via a BLS-based random beacon to maintain the keep.
+game, and collect fees for operating the network. When a new keep is opened,
+the requisite number of stakers are chosen via a
+link:https://blog.keep.network/whats-in-a-beacon-12c34b0bc078[BLS-based random beacon]
+to maintain the keep, using a process called
+link:https://en.wikipedia.org/wiki/Sortition[sortition].
 
 The first type of keep launching with the network is the `BondedECDSAKeep`,
 allowing smart contracts to generate private keys and sign messages without
