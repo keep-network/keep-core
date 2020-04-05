@@ -1,6 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -109,7 +108,7 @@ describe('TokenGrant/Revoke', function() {
   })
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(grantId, { from: grantee }),
       "Only grant manager can revoke."
     );
@@ -129,7 +128,7 @@ describe('TokenGrant/Revoke', function() {
         minimumPolicy.address
     );
     
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
       "Grant must be revocable in the first place."
     );
@@ -138,7 +137,7 @@ describe('TokenGrant/Revoke', function() {
   it("should not allow to revoke grant multiple times", async () => {
     await grantContract.revoke(grantId, { from: tokenOwner });
   
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(grantId, { from: tokenOwner }),
       "Grant must not be already revoked."
     );

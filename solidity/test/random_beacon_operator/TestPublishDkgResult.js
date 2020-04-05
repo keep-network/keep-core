@@ -6,7 +6,6 @@ const shuffleArray = require('../helpers/shuffle');
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
-const expectThrow = require('../helpers/expectThrow.js')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
@@ -194,9 +193,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
 
     // Should throw if non eligible submitter 2 tries to submit
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       submitter2MemberIndex, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: submitter2})
+      {from: submitter2}),
+      "Submitter not eligible"
     );
 
     // Jump in time to when submitter 2 becomes eligible to submit
@@ -209,9 +209,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices, 
-      {from: operator4})
+      {from: operator4}),
+      "Unexpected submitter index"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
@@ -240,9 +241,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: selectedParticipants[0]})
+      {from: selectedParticipants[0]}),
+      "Invalid signature"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
@@ -288,9 +290,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: selectedParticipants[0]})
+      {from: selectedParticipants[0]}),
+      "Too few signatures"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");

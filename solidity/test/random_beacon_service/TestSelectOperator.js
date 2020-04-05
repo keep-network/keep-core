@@ -1,5 +1,4 @@
-const expectThrow = require('../helpers/expectThrow.js')
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
@@ -50,7 +49,10 @@ describe('TestKeepRandomBeaconService/SelectOperator', function() {
     assert.equal(result, operatorContract.address, "Operator contract added during initialization should present in the service contract.");
 
     await serviceContract.removeOperatorContract(operatorContract.address, {from: accounts[0]});
-    await expectThrow(serviceContract.selectOperatorContract(0, {from: accounts[0]})); // Should revert since no operator contract present.
+    await expectRevert(
+      serviceContract.selectOperatorContract(0, {from: accounts[0]}),
+      "Total number of groups must be greater than zero"
+    ); // Should revert since no operator contract present.
 
     await registry.approveOperatorContract(operatorContract2.address, {from: accounts[0]});
     await serviceContract.addOperatorContract(operatorContract2.address, {from: accounts[0]});
@@ -95,7 +97,7 @@ describe('TestKeepRandomBeaconService/SelectOperator', function() {
     await registry.disableOperatorContract(operatorContract2.address, {from: accounts[0]});
     await registry.disableOperatorContract(operatorContract3.address, {from: accounts[0]});
 
-    await expectThrowWithMessage(
+    await expectRevert(
       serviceContract.selectOperatorContract(0, {from: accounts[0]}),
       "Total number of groups must be greater than zero."
     );

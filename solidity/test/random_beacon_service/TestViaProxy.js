@@ -1,10 +1,9 @@
-const expectThrow = require('../helpers/expectThrow.js')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
 const ServiceContractProxy = contract.fromArtifact('KeepRandomBeaconService')
 
@@ -54,8 +53,9 @@ describe('TestKeepRandomBeaconService/ViaProxy', function() {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await expectThrow(
-      serviceContract.methods['requestRelayEntry()']({from: account_two, value: 0})
+    await expectRevert(
+      serviceContract.methods['requestRelayEntry()']({from: account_two, value: 0}),
+      "Payment is less than required minimum."
     );
   });
 
@@ -204,11 +204,20 @@ describe('TestKeepRandomBeaconService/ViaProxy', function() {
     )
 
     // should fail to withdraw if not owner
-    await expectThrow(serviceContract.initiateWithdrawal({from: account_two}));
-    await expectThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
+    await expectRevert(
+      serviceContract.initiateWithdrawal({from: account_two}),
+      "Ownable: caller is not the owner"
+    );
+    await expectRevert(
+      serviceContract.finishWithdrawal(account_two, {from: account_two}),
+      "Ownable: caller is not the owner"
+    );
 
     await serviceContract.initiateWithdrawal({from: account_one});
-    await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
+    await expectRevert(
+      serviceContract.finishWithdrawal(account_three, {from: account_one}),
+      "The current time must pass the pending withdrawal timestamp."
+    );
 
     // jump in time, full undelegation period
     await time.increase(time.duration.days(30));

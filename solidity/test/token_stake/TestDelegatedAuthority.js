@@ -1,6 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -105,7 +104,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     })
 
     it("doesn't give unrecognized contracts delegated authority", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.claimDelegatedAuthority(
           authorityDelegator.address,
           {from: unrecognizedContract}
@@ -115,7 +114,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     })
 
     it("doesn't give delegated authority through unapproved contracts", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.claimDelegatedAuthority(
           badAuthorityDelegator.address,
           {from: unapprovedContract}
@@ -158,7 +157,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await disable(authorityDelegator);
       // Indirect test;
       // `claimDelegatedAuthority` checks `onlyApprovedOperatorContract`
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.claimDelegatedAuthority(
           recognizedContract,
           {from: unrecognizedContract}
@@ -183,7 +182,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
 
   describe("authorizeOperatorContract", async () => {
     it("doesn't authorize contracts using delegated authority", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.authorizeOperatorContract(
           operator,
           recognizedContract,
@@ -196,7 +195,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
 
   describe("slash", async () => {
     it("uses delegated authorization correctly", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.slash(
           minimumStake,
           [operator],
@@ -216,7 +215,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
 
   describe("seize", async () => {
     it("uses delegated authorization correctly", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.seize(
           minimumStake,
           100,

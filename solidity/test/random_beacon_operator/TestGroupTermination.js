@@ -1,4 +1,4 @@
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
@@ -182,13 +182,13 @@ describe('KeepRandomBeaconOperator/GroupTermination', function() {
 
     describe("should fail when there are no active groups", async () => {
       it("T", async function() {
-        await expectThrowWithMessage(
+        await expectRevert(
           runTerminationTest(1, 0, [0], 0), 
           "At least one active group required"
         );
       })
       it("TT", async function() {
-        await expectThrowWithMessage(
+        await expectRevert(
           runTerminationTest(2, 0, [0, 1], 0), 
           "At least one active group required"
         );

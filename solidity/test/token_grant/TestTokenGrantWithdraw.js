@@ -1,7 +1,6 @@
 const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -152,7 +151,7 @@ describe('TokenGrant/Withdraw', function() {
     )
     const withdrawableAfterStake = await grantContract.withdrawable(grantId)
 
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.withdraw(grantId),
       "Grant available to withdraw amount should be greater than zero."
     )

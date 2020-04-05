@@ -1,7 +1,6 @@
 const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -250,7 +249,7 @@ describe('TokenGrant/Stake', function() {
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.cancelStake(operatorOne, {from: grantee}),
       "Initialization period is over"
     );
@@ -265,7 +264,7 @@ describe('TokenGrant/Stake', function() {
     let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
     await time.increaseTo(undelegatedAt.add(undelegationPeriod).sub(timeRoundMargin));
 
-    await expectThrowWithMessage(
+    await expectRevert(
       stakingContract.recoverStake(operatorOne),
       "Can not recover stake before undelegation period is over"
     )
@@ -275,7 +274,7 @@ describe('TokenGrant/Stake', function() {
     let amountToDelegate = minimumStake.muln(5);
     await delegate(grantee, operatorOne, amountToDelegate);
 
-    await expectThrowWithMessage(
+    await expectRevert(
       delegate(grantee, operatorOne, amountToDelegate, grantId),
       "Operator address is already in use"
     )
@@ -290,7 +289,7 @@ describe('TokenGrant/Stake', function() {
     await time.increaseTo(undelegatedAt.add(undelegationPeriod).addn(1))
     await grantContract.recoverStake(operatorOne, {from: grantee});
 
-    await expectThrowWithMessage(
+    await expectRevert(
       delegate(grantee, operatorOne, grantAmount),
       "Operator address is already in use."
     )
@@ -329,7 +328,7 @@ describe('TokenGrant/Stake', function() {
 
     const notAuthorizedContract = "0x9E8E3487dCCd6a50045792fAfe8Ac71600B649a9"
 
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.stake(
         grantId,
         notAuthorizedContract,
@@ -342,7 +341,7 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should not allow anyone but grantee to delegate", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       delegate(operatorOne, operatorOne, grantAmount),
       "Only grantee of the grant can stake it."
     );
@@ -358,7 +357,7 @@ describe('TokenGrant/Stake', function() {
   it("should not allow third party to cancel delegation", async () => {
     await delegate(grantee, operatorOne, grantAmount);
 
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.cancelStake(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can cancel the delegation."
     );
@@ -378,7 +377,7 @@ describe('TokenGrant/Stake', function() {
     let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.undelegate(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can undelegate"
     )
@@ -415,7 +414,7 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should not allow delegation of more than permitted", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       delegateRevocable(revocableGrantee, operatorTwo, minimumStake.addn(1)),
       "Must have available granted amount to stake."
     );
@@ -427,7 +426,7 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should not allow delegation of more than in the grant", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       delegateEvil(evilGrantee, operatorTwo, grantAmount.addn(1)),
       "Must have available granted amount to stake."
     );

@@ -1,6 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -135,7 +134,7 @@ describe('TokenStaking', function() {
     it("should not allow to delegate to the same operator twice", async () => {
       await delegate(operatorOne, stakingAmount)
   
-      await expectThrowWithMessage(
+      await expectRevert(
         delegate(operatorOne, stakingAmount),
         "Operator address is already in use."
       )
@@ -150,14 +149,14 @@ describe('TokenStaking', function() {
       await time.increase(undelegationPeriod.addn(1));
       await stakingContract.recoverStake(operatorOne);
           
-      await expectThrowWithMessage(
+      await expectRevert(
         delegate(operatorOne, stakingAmount),
         "Operator address is already in use."
       )
     })
   
     it("should not allow to delegate less than the minimum stake", async () => {    
-      await expectThrowWithMessage(
+      await expectRevert(
         delegate(operatorOne, minimumStake.subn(1)),
         "Tokens amount must be greater than the minimum stake"
       )
@@ -204,7 +203,7 @@ describe('TokenStaking', function() {
     it("should not allow third party to cancel delegation", async () => {
       await delegate(operatorOne, stakingAmount)
   
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: operatorTwo}),
         "Only operator or the owner of the stake can cancel the delegation"
       )
@@ -259,7 +258,7 @@ describe('TokenStaking', function() {
   
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
   
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: ownerOne}),
         "Initialization period is over"
       );
@@ -304,7 +303,7 @@ describe('TokenStaking', function() {
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
         "Only operator or the owner of the stake can undelegate"
       )
@@ -325,7 +324,7 @@ describe('TokenStaking', function() {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
       await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
         "Cannot undelegate in initialization period, use cancelStake instead"
       )
@@ -369,7 +368,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await stakingContract.undelegate(operatorOne, {from: operatorOne})
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
         "Only the owner may postpone previously set undelegation"
       )
@@ -401,7 +400,7 @@ describe('TokenStaking', function() {
 
       let currentTime = await time.latest()
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegateAt(
           operatorOne, currentTime.addn(10),
           {from: operatorTwo}
@@ -443,7 +442,7 @@ describe('TokenStaking', function() {
       await delegate(operatorOne, stakingAmount)
 
       let currentTime = await time.latest()
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegateAt(
           operatorOne, currentTime.add(initializationPeriod).sub(timeRoundMargin),
           {from: operatorOne}
@@ -460,7 +459,7 @@ describe('TokenStaking', function() {
 
       let currentTime = await time.latest()
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegateAt(
           operatorOne, currentTime - 1,
           {from: operatorOne}
@@ -516,7 +515,7 @@ describe('TokenStaking', function() {
 
       let currentTime = await time.latest()
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.undelegateAt(
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
@@ -533,7 +532,7 @@ describe('TokenStaking', function() {
   
       await time.increaseTo(createdAt.add(initializationPeriod).add(undelegationPeriod))
   
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operatorOne),
         "Can not recover without first undelegating"
       )
@@ -548,7 +547,7 @@ describe('TokenStaking', function() {
       let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp);
       await time.increaseTo(undelegatedAt.add(undelegationPeriod).sub(timeRoundMargin));
   
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operatorOne),
         "Can not recover stake before undelegation period is over"
       )

@@ -2,7 +2,7 @@ const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 const assert = require('chai').assert
 const mineBlocks = require('../helpers/mineBlocks')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const GroupsExpirationStub = contract.fromArtifact('GroupsExpirationStub')
 const Groups = contract.fromArtifact('Groups');
 const BLS = contract.fromArtifact('BLS');
@@ -284,7 +284,7 @@ describe('KeepRandomBeaconOperator/GroupExpiration', function() {
     await addGroups(6);
 
     let pubKey = "0x1337"; // group with such pub key does not exist
-    await expectThrowWithMessage(
+    await expectRevert(
       groups.isStaleGroup(pubKey),
       "Group does not exist"
     );

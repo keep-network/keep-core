@@ -1,6 +1,6 @@
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const expectThrowWithMessage = require('./helpers/expectThrowWithMessage.js')
 const {accounts, contract} = require("@openzeppelin/test-environment")
+const {expectRevert} = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 
 const Registry = contract.fromArtifact('RegistryStub');
@@ -49,7 +49,7 @@ describe('Registry', () => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setGovernance(someoneElse, {from: owner}),
                 "Not authorized"
             )
@@ -72,7 +72,7 @@ describe('Registry', () => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setRegistryKeeper(someoneElse, {from: owner}),
                 "Not authorized"
             )
@@ -95,7 +95,7 @@ describe('Registry', () => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setPanicButton(someoneElse, {from: owner}),
                 "Not authorized"
             )
@@ -122,7 +122,7 @@ describe('Registry', () => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setOperatorContractUpgrader(
                     serviceContract1,
                     someoneElse, 
@@ -169,7 +169,7 @@ describe('Registry', () => {
         })
 
         it("can not be called by non-registry-keeper", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
                     {from: owner}
@@ -200,7 +200,7 @@ describe('Registry', () => {
                 {from: registryKeeper}
             )
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
                     {from: registryKeeper}
@@ -220,7 +220,7 @@ describe('Registry', () => {
                 {from: panicButton}
             )
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
                     {from: registryKeeper}
@@ -248,7 +248,7 @@ describe('Registry', () => {
         })
 
         it("can not be called by non-registry-keeper", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract1,
                     {from: owner}
@@ -275,7 +275,7 @@ describe('Registry', () => {
                 {from: panicButton}
             )
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract1, 
                     {from: panicButton}
@@ -285,7 +285,7 @@ describe('Registry', () => {
         })
 
         it("cannot be called for new operator contract", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract2, 
                     {from: panicButton}

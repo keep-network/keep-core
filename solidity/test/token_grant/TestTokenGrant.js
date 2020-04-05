@@ -1,6 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const expectThrow = require('../helpers/expectThrow');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const grantTokens = require('../helpers/grantTokens');
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
@@ -61,7 +60,10 @@ describe('TokenGrant', function() {
     assert.equal(account_two_ending_balance.eq(account_two_starting_balance), true, "Grantee main balance should stay unchanged");
 
     // Should not be able to withdraw token grant (0 withdrawable amount)
-    await expectThrow(grantContract.withdraw(id))
+    await expectRevert(
+      grantContract.withdraw(id),
+      "Grant available to withdraw amount should be greater than zero"
+    )
 
     // jump in time, third unlocking duration
     await time.increase(unlockingDuration.divn(3));
