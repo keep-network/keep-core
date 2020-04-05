@@ -51,10 +51,8 @@ computations.
 
 === Client Developers
 
-Client developers will be most interested in the link:go/[reference Keep Go
-client], as well as the link:docs/rfc/[RFCs],
-link:/docs/development-process.adoc[detailed development process], and the
-link:/docs/random-beacon/[random beacon yellowpaper].
+Client developers will be most interested in the link:./main.go[reference Keep
+Go client], as well as the link:docs/rfc/[RFCs] and repo directory structure 👇
 
 ==== Directory structure
 
@@ -80,9 +78,9 @@ keep-core/
     relay/
       relay.go, *.go
 ```
-<1> While Keep only uses Solidity at the moment, the directory structure allows
-    for other contract languages.
-<2> Keep subcommands are implemented here, though they should be minimal and
+<1> While the Keep network only uses Solidity at the moment, the directory
+    structure allows for other contract languages.
+<2> Keep client subcommands are implemented here, though they should be minimal and
     deal solely with user interaction. The meat of the commands should exist in
     a package fit for the appropriate purpose.
 <3> All additional packages live in `pkg/`.
