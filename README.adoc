@@ -27,7 +27,7 @@ applications, and new tools for custodial applications — from Solidity. This
 capability is used heavily by https://tbtc.network/[tBTC].
 
 To learn more about ECDSA keeps, check out
-[keep-ecdsa](https://github.com/keep-network/keep-ecdsa)
+https://github.com/keep-network/keep-ecdsa[keep-ecdsa].
 
 == Getting Started
 
