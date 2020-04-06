@@ -1,3 +1,10 @@
+import KeepToken from '@keep-network/keep-core/artifacts/KeepToken.json'
+import TokenStaking from '@keep-network/keep-core/artifacts/TokenStaking.json'
+import TokenGrant from '@keep-network/keep-core/artifacts/TokenGrant.json'
+import KeepRandomBeaconOperator from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json'
+import Registry from '@keep-network/keep-core/artifacts/Registry.json'
+import GuaranteedMinimumStakingPolicy from '@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json'
+import PermissiveStakingPolicy from '@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json'
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -5,22 +12,6 @@ import {
   OPERATOR_CONTRACT_NAME,
   REGISTRY_CONTRACT_NAME,
 } from './constants/constants'
-
-const getDefaultContractsPath = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return '@keep-network/keep-core/artifacts'
-  }
-
-  return './contracts'
-}
-
-const KeepToken = require(`${getDefaultContractsPath()}/KeepToken.json`)
-const TokenStaking = require(`${getDefaultContractsPath()}/TokenStaking.json`)
-const TokenGrant = require(`${getDefaultContractsPath()}/TokenGrant.json`)
-const KeepRandomBeaconOperator = require(`${getDefaultContractsPath()}/KeepRandomBeaconOperator.json`)
-const Registry = require(`${getDefaultContractsPath()}/Registry.json`)
-const GuaranteedMinimumStakingPolicy = require(`${getDefaultContractsPath()}/GuaranteedMinimumStakingPolicy.json`)
-const PermissiveStakingPolicy = require(`${getDefaultContractsPath()}/PermissiveStakingPolicy.json`)
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [KEEP_TOKEN_CONTRACT_NAME]: 0,
