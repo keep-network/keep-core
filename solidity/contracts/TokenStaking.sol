@@ -52,8 +52,8 @@ contract TokenStaking is StakeDelegatable {
     event RecoveredStake(address operator, uint256 recoveredAt);
     event TokensSlashed(address indexed operator, uint256 amount);
     event TokensSeized(address indexed operator, uint256 amount);
-    event StakeLocked(address indexed operator, address by, uint256 until);
-    event LockReleased(address indexed operator, address by);
+    event StakeLocked(address indexed operator, address lockCreator, uint256 until);
+    event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
     // Registry contract with a list of approved operator contracts and upgraders.
