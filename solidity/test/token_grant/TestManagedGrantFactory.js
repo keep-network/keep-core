@@ -123,5 +123,28 @@ describe('ManagedGrantFactory', () => {
       expect(await managedGrant.grantee()).to.equal(grantee);
       expect(await managedGrant.grantManager()).to.equal(grantCreator);
     });
+
+    it("doesn't let one grant more than is in their pool", async () => {
+      await token.approveAndCall(
+        factory.address, grantAmount, nullBytes, {from: grantCreator}
+      );
+      await token.transfer(unrelatedAddress, grantAmount, {from: grantCreator});
+      await token.approveAndCall(
+        factory.address, grantAmount, nullBytes, {from: unrelatedAddress}
+      );
+      grantStart = await time.latest();
+      await expectRevert(
+        factory.createGrant(
+          grantee,
+          grantAmount.addn(1),
+          grantUnlockingDuration,
+          grantStart,
+          grantCliff,
+          false,
+          {from: unrelatedAddress}
+        ),
+        "Insufficient funding"
+      );
+    });
   });
 });
