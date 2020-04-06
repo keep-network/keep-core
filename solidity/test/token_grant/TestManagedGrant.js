@@ -17,6 +17,8 @@ const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumS
 
 const ManagedGrant = contract.fromArtifact('ManagedGrant');
 
+const nullAddress = '0x0000000000000000000000000000000000000000';
+
 describe('ManagedGrant', () => {
   let token, registry, tokenGrant, staking;
   let permissivePolicy, minimumPolicy;
@@ -118,6 +120,7 @@ describe('ManagedGrant', () => {
     expect(await managedGrant.grantManager()).to.equal(grantCreator);
     expect(await managedGrant.grantId()).to.eq.BN(grantId);
     expect(await managedGrant.grantee()).to.equal(grantee);
+    expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
   });
 
   it("can be staked by the grantee", async () => {
@@ -143,4 +146,46 @@ describe('ManagedGrant', () => {
       "Only grantee may perform this action"
     );
   });
+
+  it("can be reassigned", async () => {
+    await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+    expect(await managedGrant.grantee()).to.equal(grantee);
+    expect(await managedGrant.requestedNewGrantee()).to.equal(newGrantee);
+
+    await managedGrant.confirmGranteeReassignment({from: grantCreator});
+    expect(await managedGrant.grantee()).to.equal(newGrantee);
+    expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
+  });
+
+  it("only grantee can request reassignment", async () => {
+    await expectRevert(
+      managedGrant.requestGranteeReassignment(newGrantee, {from: newGrantee}),
+      "Only grantee may perform this action"
+    );
+    await expectRevert(
+      managedGrant.requestGranteeReassignment(newGrantee, {from: grantCreator}),
+      "Only grantee may perform this action"
+    );
+    await expectRevert(
+      managedGrant.requestGranteeReassignment(newGrantee, {from: unrelatedAddress}),
+      "Only grantee may perform this action"
+    );
+  })
+
+  it("only grantManager can confirm reassignment", async () => {
+    await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+
+    await expectRevert(
+      managedGrant.confirmGranteeReassignment({from: grantee}),
+      "Only grantManager may perform this action"
+    );
+    await expectRevert(
+      managedGrant.confirmGranteeReassignment({from: newGrantee}),
+      "Only grantManager may perform this action"
+    );
+    await expectRevert(
+      managedGrant.confirmGranteeReassignment({from: unrelatedAddress}),
+      "Only grantManager may perform this action"
+    );
+  })
 })
