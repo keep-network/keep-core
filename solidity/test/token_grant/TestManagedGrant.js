@@ -167,7 +167,9 @@ describe('ManagedGrant', () => {
         "Only grantee may perform this action"
       );
     });
+  });
 
+  describe("reassignment + withdrawal", async () => {
     it("can not be withdrawn when reassignment is pending", async () => {
       await time.increase(grantUnlockingDuration);
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
@@ -175,6 +177,14 @@ describe('ManagedGrant', () => {
         managedGrant.withdraw({from: grantee}),
         "Can not withdraw with pending reassignment"
       );
+    });
+
+    it("can be withdrawn to a reassigned grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await time.increase(grantUnlockingDuration);
+      await managedGrant.withdraw({from: newGrantee});
+      expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
     });
   });
 
