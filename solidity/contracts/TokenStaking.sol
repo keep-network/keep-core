@@ -566,12 +566,17 @@ contract TokenStaking is StakeDelegatable {
 
     /**
      * @notice Gets the active stake balance of the specified address.
-     * An active stake is a stake that passed the initialization period.
+     * An active stake is a stake that passed the initialization period,
+     * and may be in the process of undelegation
+     * but has not been released yet,
+     * either because the undelegation period is not over,
+     * or because the operator contract has an active lock on the operator.
      * Also, the operator had to approve the specified operator contract.
      *
      * The difference between eligible stake is that active stake does not make
      * the operator eligible for work selection but it may be still finishing
-     * earlier work during undelegation period. Operator with a minimum required
+     * earlier work until the stake is released.
+     * Operator with a minimum required
      * amount of active stake can join the network but cannot be selected to any
      * new work.
      *
