@@ -179,7 +179,7 @@ describe('ManagedGrant', () => {
     expect(await managedGrant.grantee()).to.equal(grantee);
     expect(await managedGrant.requestedNewGrantee()).to.equal(newGrantee);
 
-    await managedGrant.confirmGranteeReassignment({from: grantCreator});
+    await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
     expect(await managedGrant.grantee()).to.equal(newGrantee);
     expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
   });
@@ -197,22 +197,22 @@ describe('ManagedGrant', () => {
       managedGrant.requestGranteeReassignment(newGrantee, {from: unrelatedAddress}),
       "Only grantee may perform this action"
     );
-  })
+  });
 
   it("only grantManager can confirm reassignment", async () => {
     await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
 
     await expectRevert(
-      managedGrant.confirmGranteeReassignment({from: grantee}),
+      managedGrant.confirmGranteeReassignment(newGrantee, {from: grantee}),
       "Only grantManager may perform this action"
     );
     await expectRevert(
-      managedGrant.confirmGranteeReassignment({from: newGrantee}),
+      managedGrant.confirmGranteeReassignment(newGrantee, {from: newGrantee}),
       "Only grantManager may perform this action"
     );
     await expectRevert(
-      managedGrant.confirmGranteeReassignment({from: unrelatedAddress}),
+      managedGrant.confirmGranteeReassignment(newGrantee, {from: unrelatedAddress}),
       "Only grantManager may perform this action"
     );
-  })
+  });
 })

@@ -36,12 +36,17 @@ contract ManagedGrant {
         requestedNewGrantee = _newGrantee;
     }
 
-    function confirmGranteeReassignment() public onlyManager {
+    function confirmGranteeReassignment(address _newGrantee) public onlyManager {
+        address _requestedNewGrantee = requestedNewGrantee;
         require(
-            requestedNewGrantee != address(0),
+            _requestedNewGrantee != address(0),
             "No reassignment requested"
         );
-        grantee = requestedNewGrantee;
+        require(
+            _requestedNewGrantee == _newGrantee,
+            "Reassignment address mismatch"
+        );
+        grantee = _requestedNewGrantee;
         requestedNewGrantee = address(0);
     }
 
