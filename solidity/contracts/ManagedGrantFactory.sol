@@ -76,34 +76,19 @@ contract ManagedGrantFactory {
         );
         _managedGrant = address(managedGrant);
 
-        bytes memory extraData;
-
-        {
-        bytes memory fstBytes;
-        bytes memory sndBytes;
-        bytes memory trdBytes;
-
-        bytes memory managedGrantBytes = abi.encodePacked(_managedGrant);
-        bytes memory durationBytes = abi.encodePacked(duration);
-        fstBytes = BytesLib.concat(managedGrantBytes, durationBytes);
-
-        bytes memory startBytes = abi.encodePacked(start);
-        bytes memory cliffBytes = abi.encodePacked(cliff);
-        sndBytes = BytesLib.concat(startBytes, cliffBytes);
-
-        bytes memory revocableBytes = abi.encodePacked(
-            uint8(revocable ? 0x01 : 0x00)
+        bytes memory grantData = abi.encodePacked(
+            _managedGrant,
+            duration,
+            start,
+            cliff,
+            revocable ? 0x01 : 0x00,
+            address(stakingPolicy)
         );
-        bytes memory stakingPolicyBytes = abi.encodePacked(address(stakingPolicy));
-        trdBytes = BytesLib.concat(revocableBytes, stakingPolicyBytes);
-
-        extraData = fstBytes.concat(sndBytes).concat(trdBytes);
-        }
 
         token.approveAndCall(
             address(tokenGrant),
             amount,
-            extraData
+            grantData
         );
 
         return _managedGrant;
