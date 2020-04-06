@@ -1,7 +1,7 @@
 pragma solidity ^0.5.4;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./GrantStakingPolicy.sol";
+import "../GrantStakingPolicy.sol";
 
 /// @title EvilStakingPolicy
 /// @dev A staking policy which allows the grantee to stake
