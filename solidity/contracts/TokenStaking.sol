@@ -3,6 +3,7 @@ pragma solidity ^0.5.4;
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
+import "./utils/LockUtils.sol";
 import "./Registry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
@@ -34,6 +35,7 @@ interface AuthorityDelegator {
 contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
     using PercentUtils for uint256;
+    using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
 
     // Minimum amount of KEEP that allows sMPC cluster client to participate in
@@ -50,12 +52,21 @@ contract TokenStaking is StakeDelegatable {
     event RecoveredStake(address operator, uint256 recoveredAt);
     event TokensSlashed(address indexed operator, uint256 amount);
     event TokensSeized(address indexed operator, uint256 amount);
+    event StakeLocked(address indexed operator, address lockCreator, uint256 until);
+    event LockReleased(address indexed operator, address lockCreator);
+    event ExpiredLockReleased(address indexed operator, address lockCreator);
 
     // Registry contract with a list of approved operator contracts and upgraders.
     Registry public registry;
 
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
+
+    // Locks placed on the operator.
+    // `operatorLocks[operator]` returns all locks placed on the operator.
+    // Each authorized operator contract can place one lock on an operator.
+    mapping(address => LockUtils.LockSet) internal operatorLocks;
+    uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
 
     // Granters of delegated authority to operator contracts.
     // E.g. keep factories granting delegated authority to keeps.
@@ -71,7 +82,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Creates a token staking contract for a provided Standard ERC20Burnable token.
+     * @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
      * @param _tokenAddress Address of a token that will be linked to this contract.
      * @param _registry Address of a keep registry that will be linked to this contract.
      * @param _initializationPeriod To avoid certain attacks on work selection, recently created
@@ -159,7 +170,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
 
         require(
-            block.timestamp <= operatorParams.getCreationTimestamp().add(initializationPeriod),
+            !_isInitialized(operatorParams),
             "Initialization period is over"
         );
 
@@ -234,9 +245,15 @@ contract TokenStaking is StakeDelegatable {
             "Can not recover without first undelegating"
         );
         require(
-            block.timestamp > operatorParams.getUndelegationTimestamp().add(undelegationPeriod),
+            _isUndelegatingFinished(operatorParams),
             "Can not recover stake before undelegation period is over."
         );
+
+        require(
+            !isStakeLocked(_operator),
+            "Can not recover locked stake"
+        );
+
         address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
 
@@ -247,7 +264,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets stake delegation info for the given operator.
+     * @notice Gets stake delegation info for the given operator.
      * @param _operator Operator address.
      * @return amount The amount of tokens the given operator delegated.
      * @return createdAt The time when the stake has been delegated.
@@ -260,7 +277,130 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Slash provided token amount from every member in the misbehaved
+     * @notice Locks given operator stake for the specified duration.
+     * Locked stake may not be recovered until the lock expires or is released,
+     * even if the normal undelegation period has passed.
+     * Only previously authorized operator contract can lock the stake.
+     * @param operator Operator address.
+     * @param duration Lock duration in seconds.
+     */
+    function lockStake(
+        address operator,
+        uint256 duration
+    ) public onlyApprovedOperatorContract(msg.sender) {
+        require(
+            isAuthorizedForOperator(operator, msg.sender),
+            "Not authorized"
+        );
+        require(duration <= maximumLockDuration, "Lock duration too long");
+
+        uint256 operatorParams = operators[operator].packedParams;
+
+        require(
+            _isInitialized(operatorParams),
+            "Operator stake must be active"
+        );
+        require(
+            !_isUndelegating(operatorParams),
+            "Operator undelegating"
+        );
+
+        operatorLocks[operator].setLock(
+            msg.sender,
+            uint96(block.timestamp.add(duration))
+        );
+        emit StakeLocked(operator, msg.sender, block.timestamp.add(duration));
+    }
+
+    /**
+     * @notice Removes a lock the caller had previously placed on the operator.
+     * @dev Only for operator contracts.
+     * To remove expired or disabled locks, use `releaseExpiredLocks`.
+     * The authorization check ensures that the caller must have been able
+     * to place a lock on the operator sometime in the past.
+     * We don't need to check for current approval status of the caller
+     * because unlocking stake cannot harm the operator
+     * nor interfere with other operator contracts.
+     * Therefore even disabled operator contracts may freely unlock stake.
+     * @param operator Operator address.
+     */
+    function unlockStake(
+        address operator
+    ) public {
+        require(
+            isAuthorizedForOperator(operator, msg.sender),
+            "Not authorized"
+        );
+        operatorLocks[operator].releaseLock(msg.sender);
+        emit LockReleased(operator, msg.sender);
+    }
+
+    /// @notice Removes the lock of the specified operator contract
+    /// if the lock has expired or the contract has been disabled.
+    /// @dev Necessary for removing locks placed by contracts
+    /// that have been disabled by the panic button.
+    /// Also applicable to prevent inadvertent DoS of `recoverStake`
+    /// if too many operator contracts have failed to clean up their locks.
+    function releaseExpiredLock(
+        address operator,
+        address operatorContract
+    ) public {
+        LockUtils.LockSet storage locks = operatorLocks[operator];
+        require(
+            locks.contains(operatorContract),
+            "No matching lock present"
+        );
+        bool expired = block.timestamp >= locks.getLockTime(operatorContract);
+        bool disabled = !registry.isApprovedOperatorContract(operatorContract);
+        require(
+            expired || disabled,
+            "Lock still active and valid"
+        );
+        locks.releaseLock(operatorContract);
+        emit ExpiredLockReleased(operator, operatorContract);
+    }
+
+    /// @notice Check whether the operator has any active locks
+    /// that haven't expired yet
+    /// and whose creators aren't disabled by the panic button.
+    function isStakeLocked(
+        address operator
+    ) public view returns (bool) {
+        LockUtils.Lock[] storage _locks = operatorLocks[operator].locks;
+        LockUtils.Lock memory lock;
+        for (uint i = 0; i < _locks.length; i++) {
+            lock = _locks[i];
+            if (block.timestamp < lock.expiresAt) {
+                if (registry.isApprovedOperatorContract(lock.creator)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /// @notice Get the locks placed on the operator.
+    /// @return creators The addresses of operator contracts
+    /// that have placed a lock on the operator.
+    /// @return expirations The expiration times
+    /// of the locks placed on the operator.
+    function getLocks(address operator)
+        public
+        view
+        returns (address[] memory creators, uint256[] memory expirations) {
+        uint256 lockCount = operatorLocks[operator].locks.length;
+        creators = new address[](lockCount);
+        expirations = new uint256[](lockCount);
+        LockUtils.Lock memory lock;
+        for (uint i = 0; i < lockCount; i++) {
+            lock = operatorLocks[operator].locks[i];
+            creators[i] = lock.creator;
+            expirations[i] = lock.expiresAt;
+        }
+    }
+
+    /**
+     * @notice Slash provided token amount from every member in the misbehaved
      * operators array and burn 100% of all the tokens.
      * @param amountToSlash Token amount to slash from every misbehaved operator.
      * @param misbehavedOperators Array of addresses to seize the tokens from.
@@ -277,8 +417,13 @@ contract TokenStaking is StakeDelegatable {
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
-                block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
+                _isInitialized(operatorParams),
                 "Operator stake must be active"
+            );
+
+            require(
+                !_isStakeReleased(operator, operatorParams, msg.sender),
+                "Stake is released"
             );
 
             uint256 currentAmount = operatorParams.getAmount();
@@ -302,7 +447,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Seize provided token amount from every member in the misbehaved
+     * @notice Seize provided token amount from every member in the misbehaved
      * operators array. The tattletale is rewarded with 5% of the total seized
      * amount scaled by the reward adjustment parameter and the rest 95% is burned.
      * @param amountToSeize Token amount to seize from every misbehaved operator.
@@ -324,8 +469,13 @@ contract TokenStaking is StakeDelegatable {
 
             uint256 operatorParams = operators[operator].packedParams;
             require(
-                block.timestamp > operatorParams.getCreationTimestamp().add(initializationPeriod),
+                _isInitialized(operatorParams),
                 "Operator stake must be active"
+            );
+
+            require(
+                !_isStakeReleased(operator, operatorParams, msg.sender),
+                "Stake is released"
             );
 
             uint256 currentAmount = operatorParams.getAmount();
@@ -352,7 +502,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Authorizes operator contract to access staked token balance of
+     * @notice Authorizes operator contract to access staked token balance of
      * the provided operator. Can only be executed by stake operator authorizer.
      * Contracts using delegated authority
      * cannot be authorized with `authorizeOperatorContract`.
@@ -372,7 +522,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Checks if operator contract has access to the staked token balance of
+     * @notice Checks if operator contract has access to the staked token balance of
      * the provided operator.
      * @param _operator address of stake operator.
      * @param _operatorContract address of operator contract.
@@ -382,7 +532,7 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets the eligible stake balance of the specified address.
+     * @notice Gets the eligible stake balance of the specified address.
      * An eligible stake is a stake that passed the initialization period
      * and is not currently undelegating. Also, the operator had to approve
      * the specified operator contract.
@@ -401,15 +551,13 @@ contract TokenStaking is StakeDelegatable {
         bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
-        uint256 createdAt = operatorParams.getCreationTimestamp();
-        uint256 undelegatedAt = operatorParams.getUndelegationTimestamp();
 
-        bool isActive = block.timestamp > createdAt.add(initializationPeriod);
+        bool isActive = _isInitialized(operatorParams);
         // `undelegatedAt` may be set to a time in the future,
         // to schedule undelegation in advance.
         // In this case the operator is still eligible
         // until the timestamp `undelegatedAt`.
-        bool isUndelegating = (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
+        bool isUndelegating = _isUndelegating(operatorParams);
 
         if (isAuthorized && isActive && !isUndelegating) {
             balance = operatorParams.getAmount();
@@ -417,13 +565,18 @@ contract TokenStaking is StakeDelegatable {
     }
 
     /**
-     * @dev Gets the active stake balance of the specified address.
-     * An active stake is a stake that passed the initialization period.
+     * @notice Gets the active stake balance of the specified address.
+     * An active stake is a stake that passed the initialization period,
+     * and may be in the process of undelegation
+     * but has not been released yet,
+     * either because the undelegation period is not over,
+     * or because the operator contract has an active lock on the operator.
      * Also, the operator had to approve the specified operator contract.
      *
      * The difference between eligible stake is that active stake does not make
      * the operator eligible for work selection but it may be still finishing
-     * earlier work during undelegation period. Operator with a minimum required
+     * earlier work until the stake is released.
+     * Operator with a minimum required
      * amount of active stake can join the network but cannot be selected to any
      * new work.
      *
@@ -438,17 +591,22 @@ contract TokenStaking is StakeDelegatable {
         bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
 
         uint256 operatorParams = operators[_operator].packedParams;
-        uint256 createdAt = operatorParams.getCreationTimestamp();
 
-        bool isActive = block.timestamp > createdAt.add(initializationPeriod);
+        bool isActive = _isInitialized(operatorParams);
 
-        if (isAuthorized && isActive) {
+        bool stakeReleased = _isStakeReleased(
+            _operator,
+            operatorParams,
+            _operatorContract
+        );
+
+        if (isAuthorized && isActive && !stakeReleased) {
             balance = operatorParams.getAmount();
         }
     }
 
     /**
-     * @dev Checks if the specified account has enough active stake to become
+     * @notice Checks if the specified account has enough active stake to become
      * network operator and that the specified operator contract has been
      * authorized for potential slashing.
      *
@@ -501,5 +659,47 @@ contract TokenStaking is StakeDelegatable {
             return operatorContract;
         }
         return getAuthoritySource(delegatedAuthoritySource);
+    }
+
+    /// @notice Is the operator with the given params initialized
+    function _isInitialized(uint256 _operatorParams)
+        internal view returns (bool) {
+        uint256 createdAt = _operatorParams.getCreationTimestamp();
+        return block.timestamp > createdAt.add(initializationPeriod);
+    }
+
+    /// @notice Is the operator with the given params undelegating
+    function _isUndelegating(uint256 _operatorParams)
+        internal view returns (bool) {
+        uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
+        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
+    }
+
+    /// @notice Has the operator with the given params finished undelegating
+    function _isUndelegatingFinished(uint256 _operatorParams)
+        internal view returns (bool) {
+        uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
+        uint256 finishedAt = undelegatedAt.add(undelegationPeriod);
+        return (undelegatedAt != 0) && (block.timestamp > finishedAt);
+    }
+
+    /// @notice Get whether the operator's stake is released
+    /// as far as the operator contract is concerned.
+    /// If the operator contract has a lock on the operator,
+    /// the operator's stake is be released when the lock expires.
+    /// Otherwise the stake is released when the operator finishes undelegating.
+    function _isStakeReleased(
+        address _operator,
+        uint256 _operatorParams,
+        address _operatorContract
+    ) internal view returns (bool) {
+        if (!_isUndelegatingFinished(_operatorParams)) {
+            return false;
+        }
+        // Undelegating finished, so check locks
+        LockUtils.LockSet storage locks = operatorLocks[_operator];
+        // `getLockTime` returns 0 if the lock doesn't exist,
+        // thus we don't need to check for its presence separately.
+        return block.timestamp >= locks.getLockTime(_operatorContract);
     }
 }
