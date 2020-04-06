@@ -32,6 +32,8 @@ contract ManagedGrant {
             requestedNewGrantee == address(0),
             "Reassignment already requested"
         );
+        require(_newGrantee != address(0), "Invalid new grantee address");
+        require(_newGrantee != grantee, "Unchanged new grantee address");
 
         requestedNewGrantee = _newGrantee;
     }

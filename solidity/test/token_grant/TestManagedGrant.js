@@ -204,6 +204,20 @@ describe('ManagedGrant', () => {
       );
     });
 
+    it("rejects reassignment to the null address", async () => {
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(nullAddress, {from: grantee}),
+        "Invalid new grantee address"
+      );
+    });
+
+    it("rejects reassignment to the old grantee's address", async () => {
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(grantee, {from: grantee}),
+        "Unchanged new grantee address"
+      );
+    });
+
     it("only grantManager can confirm reassignment", async () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
 
@@ -221,7 +235,7 @@ describe('ManagedGrant', () => {
       );
     });
 
-    it("requires the grant manager to confirm reassignment", async () => {
+    it("requires the grant manager to confirm the new grantee address", async () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(grantee, {from: grantCreator}),
