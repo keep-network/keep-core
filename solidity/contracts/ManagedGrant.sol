@@ -70,11 +70,11 @@ contract ManagedGrant {
         tokenGrant.stake(grantId, _stakingContract, _amount, _extraData);
     }
 
-    function cancelStake(address _operator) public onlyGrantee {
+    function cancelStake(address _operator) public onlyGranteeOr(_operator) {
         tokenGrant.cancelStake(_operator);
     }
 
-    function undelegate(address _operator) public onlyGrantee {
+    function undelegate(address _operator) public onlyGranteeOr(_operator) {
         tokenGrant.undelegate(_operator);
     }
 
@@ -86,6 +86,14 @@ contract ManagedGrant {
         require(
             msg.sender == grantee,
             "Only grantee may perform this action"
+        );
+        _;
+    }
+
+    modifier onlyGranteeOr(address _operator) {
+        require(
+            msg.sender == grantee || msg.sender == _operator,
+            "Only grantee or operator may perform this action"
         );
         _;
     }
