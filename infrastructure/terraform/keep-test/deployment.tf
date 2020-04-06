@@ -60,3 +60,14 @@ resource "google_project_iam_member" "ci_get_bucket_object_service_account" {
   role    = "roles/storage.objectViewer"
   member  = "${local.service_account_prefix}:${google_service_account.ci_get_bucket_object_service_account.email}"
 }
+
+resource "google_storage_bucket" "keep_contract_data" {
+  name     = "${var.keep_contract_data_bucket_name}"
+  project  = "${module.project.project_id}"
+  location = "${var.region_data["region"]}"
+  labels   = "${local.labels}"
+
+  versioning {
+    enabled = true
+  }
+}

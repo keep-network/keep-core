@@ -1,13 +1,14 @@
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+const {contract, accounts, web3} = require("@openzeppelin/test-environment");
+const {createSnapshot, restoreSnapshot} = require('./helpers/snapshot.js');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const LockStub = artifacts.require('./stubs/LockStub.sol');
+const LockStub = contract.fromArtifact('LockStub');
 
-contract('LockUtils', (accounts) => {
+describe('LockUtils', () => {
   let locks;
 
   const alice = accounts[0];

@@ -1,4 +1,4 @@
-export default async function delegateStakeFromGrant(
+async function delegateStakeFromGrant(
     grantContract,
     stakingContractAddress,
     grantee,
@@ -22,3 +22,5 @@ export default async function delegateStakeFromGrant(
       {from: grantee}
     );
   }
+
+  module.exports = delegateStakeFromGrant

@@ -1680,6 +1680,11 @@ func (cm *CombiningMember) CombineGroupPublicKey() {
 // from given group member.
 func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 	go func() {
+		logger.Infof(
+			"[member:%v] starting computation of group public key shares",
+			cm.ID,
+		)
+
 		groupPublicKeyShares := make(map[group.MemberIndex]*bn256.G2)
 
 		// Calculate group public key shares for all other operating members.
@@ -1719,6 +1724,11 @@ func (cm *CombiningMember) ComputeGroupPublicKeyShares() {
 
 			groupPublicKeyShares[operatingMemberID] = sum
 		}
+
+		logger.Infof(
+			"[member:%v] completed computation of group public key shares",
+			cm.ID,
+		)
 
 		cm.groupPublicKeySharesChannel <- groupPublicKeyShares
 	}()

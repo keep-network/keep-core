@@ -1,4 +1,6 @@
-export default function mineBlocks(blocks) {
+const {web3} = require("@openzeppelin/test-environment")
+
+module.exports = function mineBlocks(blocks) {
     for (let i = 0; i < blocks; i++) {
       web3.currentProvider.send({
         jsonrpc: "2.0",

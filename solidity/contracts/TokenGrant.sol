@@ -3,10 +3,12 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "./libraries/grant/UnlockingSchedule.sol";
 import "./utils/BytesLib.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./TokenStaking.sol";
 import "./TokenGrantStake.sol";
+import "./GrantStakingPolicy.sol";
 
 /**
  * @title TokenGrant
@@ -18,6 +20,7 @@ import "./TokenGrantStake.sol";
  */
 contract TokenGrant {
     using SafeMath for uint256;
+    using UnlockingSchedule for uint256;
     using SafeERC20 for ERC20Burnable;
     using BytesLib for bytes;
     using AddressArrayUtils for address[];
@@ -39,6 +42,7 @@ contract TokenGrant {
         uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to unlock.
         uint256 withdrawn; // Amount that was withdrawn to the grantee.
         uint256 staked; // Amount that was staked by the grantee.
+        GrantStakingPolicy stakingPolicy;
     }
 
     uint256 public numGrants;
@@ -209,13 +213,16 @@ contract TokenGrant {
      * @param _token Token contract address.
      * @param _extraData This byte array must have the following values concatenated:
      * grantee (20 bytes) Address of the grantee.
+     * duration (32 bytes) Duration in seconds of the unlocking period.
      * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
      * start (32 bytes) Timestamp at which unlocking will start.
      * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
+     * stakingPolicy (20 bytes) Address of the staking policy for the grant.
      */
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
+        require(_extraData.length == 137, "Invalid extra data length.");
 
         address _grantee = _extraData.toAddress(0);
         uint256 _duration = _extraData.toUint(20);
@@ -230,8 +237,22 @@ contract TokenGrant {
             _revocable = true;
         }
 
+        address _stakingPolicy = _extraData.toAddress(117);
+        require(_stakingPolicy != address(0), "Staking policy can't be zero.");
+
         uint256 id = numGrants++;
-        grants[id] = Grant(_from, _grantee, 0, 0, _revocable, _amount, _duration, _start, _start.add(_cliff), 0, 0);
+        grants[id] = Grant(
+            _from,
+            _grantee,
+            0, 0,
+            _revocable,
+            _amount,
+            _duration,
+            _start,
+            _start.add(_cliff),
+            0, 0,
+            GrantStakingPolicy(_stakingPolicy)
+        );
 
         // Maintain a record to make it easier to query grants by grant manager.
         grantIndices[_from].push(id);
@@ -275,17 +296,17 @@ contract TokenGrant {
      * @param _id Grant ID.
      */
     function unlockedAmount(uint256 _id) public view returns (uint256) {
-        uint256 balance = grants[_id].amount;
-
-        if (now < grants[_id].cliff) {
-            return 0; // Cliff period is not over.
-        } else if (grants[_id].revokedAt != 0) {
-            return balance.sub(grants[_id].revokedAmount);
-        } else if (now >= grants[_id].start.add(grants[_id].duration)) {
-            return balance; // Unlocking period is finished.
-        } else {
-            return balance.mul(now.sub(grants[_id].start)).div(grants[_id].duration);
-        }
+        Grant storage grant = grants[_id];
+        return (grant.revokedAt != 0)
+            // Grant revoked -> return what is remaining
+            ? grant.amount.sub(grant.revokedAmount)
+            // Not revoked -> calculate the unlocked amount normally
+            : now.getUnlockedAmount(
+                grant.amount,
+                grant.duration,
+                grant.start,
+                grant.cliff
+            );
     }
 
     /**
@@ -340,7 +361,6 @@ contract TokenGrant {
      * Magpie address (20 bytes) where the rewards for participation are sent and operator's (20 bytes) address.
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
-        require(!grants[_id].revocable, "Revocable grants can not be staked.");
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(
             stakingContracts[grants[_id].grantManager][_stakingContract],
@@ -378,7 +398,25 @@ contract TokenGrant {
       @param _grantId Identifier of the grant
      */
     function availableToStake(uint256 _grantId) public view returns (uint256) {
-        return grants[_grantId].amount.sub(grants[_grantId].withdrawn).sub(grants[_grantId].staked);
+        Grant storage grant = grants[_grantId];
+        uint256 amount = grant.amount;
+        uint256 withdrawn = grant.withdrawn;
+        uint256 remaining = amount.sub(withdrawn);
+        uint256 stakeable = grant.stakingPolicy.getStakeableAmount(
+            now,
+            amount,
+            grant.duration,
+            grant.start,
+            grant.cliff,
+            withdrawn
+        );
+        // Clamp the stakeable amount to what is left in the grant
+        // in the case of a malfunctioning staking policy.
+        if (stakeable > remaining) {
+            stakeable = remaining;
+        }
+
+        return stakeable.sub(grant.staked);
     }
 
     /**

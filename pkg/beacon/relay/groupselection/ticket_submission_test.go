@@ -4,7 +4,6 @@ import (
 	"math/big"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -13,7 +12,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-func TestSubmitAllTickets(t *testing.T) {
+func TestSubmitTicketsOnChain(t *testing.T) {
 	beaconOutput := big.NewInt(10).Bytes()
 	stakerValue := []byte("StakerValue1001")
 
@@ -23,7 +22,6 @@ func TestSubmitAllTickets(t *testing.T) {
 		tickets = append(tickets, ticket)
 	}
 
-	quit := make(chan struct{}, 0)
 	submittedTickets := make([]*chain.Ticket, 0)
 
 	mockInterface := &mockGroupInterface{
@@ -38,7 +36,7 @@ func TestSubmitAllTickets(t *testing.T) {
 		},
 	}
 
-	submitTickets(tickets, mockInterface, quit)
+	submitTicketsOnChain(tickets, mockInterface)
 
 	if len(tickets) != len(submittedTickets) {
 		t.Errorf(
@@ -80,50 +78,6 @@ func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
 	}
 }
 
-func TestCancelTicketSubmissionAfterATimeout(t *testing.T) {
-	beaconOutput := big.NewInt(10).Bytes()
-	stakerValue := []byte("StakerValue1001")
-
-	tickets := make([]*ticket, 0)
-	for i := 1; i <= 6; i++ {
-		ticket, _ := newTicket(beaconOutput, stakerValue, big.NewInt(int64(i)))
-		tickets = append(tickets, ticket)
-	}
-
-	quit := make(chan struct{}, 0)
-	submittedTickets := make([]*chain.Ticket, 0)
-
-	mockInterface := &mockGroupInterface{
-		mockSubmitTicketFn: func(t *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
-			submittedTickets = append(submittedTickets, t)
-			promise := &async.EventGroupTicketSubmissionPromise{}
-
-			time.Sleep(500 * time.Millisecond)
-
-			promise.Fulfill(&event.GroupTicketSubmission{
-				TicketValue: t.Value,
-				BlockNumber: 222,
-			})
-			return promise
-		},
-	}
-
-	go func() {
-		time.Sleep(1 * time.Second)
-		quit <- struct{}{}
-	}()
-
-	submitTickets(tickets, mockInterface, quit)
-
-	if len(submittedTickets) == 0 {
-		t.Errorf("no tickets submitted")
-	}
-
-	if len(tickets) == len(submittedTickets) {
-		t.Errorf("ticket submission has not been cancelled")
-	}
-}
-
 type mockGroupInterface struct {
 	mockSubmitTicketFn func(t *chain.Ticket) *async.EventGroupTicketSubmissionPromise
 }
@@ -138,7 +92,7 @@ func (mgi *mockGroupInterface) SubmitTicket(
 	panic("unexpected")
 }
 
-func (mgi *mockGroupInterface) GetSubmittedTicketsCount() (*big.Int, error) {
+func (mgi *mockGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	panic("not implemented")
 }
 

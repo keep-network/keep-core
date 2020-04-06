@@ -1,7 +1,9 @@
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-const GroupSelectionStub = artifacts.require('./stubs/GroupSelectionStub.sol');
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const assert = require('chai').assert
+const {contract} = require("@openzeppelin/test-environment")
+const GroupSelectionStub = contract.fromArtifact('GroupSelectionStub');
 
-contract('KeepRandomBeaconOperator/TicketsOrdering', function() {
+describe('KeepRandomBeaconOperator/TicketsOrdering', function() {
   const groupSize = 10;
   
   let groupSelectionStub;

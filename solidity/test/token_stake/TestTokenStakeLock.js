@@ -1,12 +1,12 @@
-import increaseTime, {duration, increaseTimeTo} from '../helpers/increaseTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+const {contract, accounts, web3} = require("@openzeppelin/test-environment");
+const {expectRevert, time} = require("@openzeppelin/test-helpers");
+const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const Registry = contract.fromArtifact("Registry");
 
-contract('TokenStaking/Lock', function(accounts) {
+describe('TokenStaking/Lock', () => {
   let token, registry, stakingContract, stakingAmount, minimumStake;
   const owner = accounts[0],
     operator1 = accounts[1],
@@ -17,22 +17,23 @@ contract('TokenStaking/Lock', function(accounts) {
     operatorContract = accounts[6],
     operatorContract2 = accounts[7];
 
-  const initializationPeriod = duration.minutes(10);
-  const undelegationPeriod = duration.minutes(10);
-  const lockPeriod = duration.weeks(12);
+  const initializationPeriod = time.duration.minutes(10);
+  const undelegationPeriod = time.duration.minutes(10);
+  const lockPeriod = time.duration.weeks(12);
 
   let createdAt;
   let operator;
 
   before(async () => {
-    token = await KeepToken.new();
-    registry = await Registry.new();
+    token = await KeepToken.new({from: owner});
+    registry = await Registry.new({from: owner});
     stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod
+      token.address, registry.address, initializationPeriod, undelegationPeriod,
+      {from: owner}
     );
 
-    await registry.approveOperatorContract(operatorContract);
-    await registry.approveOperatorContract(operatorContract2);
+    await registry.approveOperatorContract(operatorContract, {from: owner});
+    await registry.approveOperatorContract(operatorContract2, {from: owner});
 
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);
@@ -60,10 +61,14 @@ contract('TokenStaking/Lock', function(accounts) {
     );
   }
 
+  async function timestampOf(tx) {
+    return web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp);
+  }
+
   async function undelegate(operator) {
     let tx = await stakingContract.undelegate(operator, {from: operator})
-    let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(undelegatedAt + undelegationPeriod + 1)
+    let undelegatedAt = await timestampOf(tx);
+    await time.increaseTo(undelegationPeriod.add(undelegatedAt).addn(1))
   }
 
   describe("setting locks", async () => {
@@ -76,57 +81,57 @@ contract('TokenStaking/Lock', function(accounts) {
         { from: authorizer },
       );
 
-      createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+      createdAt = await timestampOf(tx);
     })
 
     it("should not permit locks on non-initialized operators", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
         "Operator stake must be active"
       )
     })
 
     it("should not permit locks on undelegating operators", async () => {
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       let tx = await stakingContract.undelegate(operator, {from: operator})
-      let undelegatedAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-      await increaseTimeTo(undelegatedAt + 1)
-      await expectThrowWithMessage(
+      let undelegatedAt = await timestampOf(tx)
+      await time.increaseTo(undelegatedAt.addn(1))
+      await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
         "Operator undelegating"
       )
     })
 
     it("should not permit locks from unauthorized operator contracts", async () => {
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
-      await expectThrowWithMessage(
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
+      await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract2}),
         "Not authorized"
       )
     })
 
     it("should not permit locks from disabled operator contracts", async () => {
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
-      await registry.disableOperatorContract(operatorContract)
-      await expectThrowWithMessage(
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
+      await registry.disableOperatorContract(operatorContract, {from: owner})
+      await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
         "Operator contract is not approved"
       )
     })
 
     it("should not permit locks from unapproved operator contracts", async () => {
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
-      await expectThrowWithMessage(
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
+      await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operator}),
         "Operator contract is not approved"
       )
     })
 
     it("should not permit locks that exceed the maximum lock duration", async () => {
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       let maximumDuration = await stakingContract.maximumLockDuration();
       let longPeriod = maximumDuration.addn(1);
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.lockStake(operator, longPeriod, {from: operatorContract}),
         "Lock duration too long"
       )
@@ -144,14 +149,14 @@ contract('TokenStaking/Lock', function(accounts) {
         { from: authorizer },
       );
 
-      createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      createdAt = await timestampOf(tx);
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
     })
 
     it("should only permit recover unlocked stake", async () => {
       await undelegate(operator)
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operator),
         "Can not recover locked stake"
       )
@@ -163,25 +168,25 @@ contract('TokenStaking/Lock', function(accounts) {
 
     it("should allow recover locked stake after lock duration has expired", async () => {
       await undelegate(operator)
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operator),
         "Can not recover locked stake"
       )
 
-      await increaseTime(lockPeriod)
+      await time.increase(lockPeriod)
       await stakingContract.recoverStake(operator, {from: operator})
       // ok, no revert
     })
 
     it("should allow recover locked stake after operator contract has been disabled", async () => {
       await undelegate(operator)
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operator),
         "Can not recover locked stake"
       )
 
       // disable operator contract with panic button
-      await registry.disableOperatorContract(operatorContract)
+      await registry.disableOperatorContract(operatorContract, {from: owner});
 
       await stakingContract.recoverStake(operator, {from: operator})
       // ok, no revert
@@ -190,18 +195,18 @@ contract('TokenStaking/Lock', function(accounts) {
     it("should be able to reduce the duration of existing locks", async () => {
       await stakingContract.lockStake(
         operator,
-        undelegationPeriod + duration.minutes(5),
+        undelegationPeriod.add(time.duration.minutes(5)),
         {from: operatorContract}
       )
 
       await undelegate(operator)
       // 5 minutes left in lock
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operator),
         "Can not recover locked stake"
       )
 
-      await increaseTime(duration.minutes(5))
+      await time.increase(time.duration.minutes(5))
       await stakingContract.recoverStake(operator, {from: operator})
       // ok, no revert
     })
@@ -223,16 +228,16 @@ contract('TokenStaking/Lock', function(accounts) {
     it("should not allow slashing/seizing non-locked stake after undelegation", async () => {
       await undelegate(operator)
 
-      await increaseTime(lockPeriod)
+      await time.increase(lockPeriod)
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.slash(
           minimumStake, [operator],
           {from: operatorContract}
         ),
         "Stake is released"
       )
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.seize(
           minimumStake, 100, magpie, [operator],
           {from: operatorContract}
@@ -249,14 +254,14 @@ contract('TokenStaking/Lock', function(accounts) {
       );
       await undelegate(operator)
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.slash(
           minimumStake, [operator],
           {from: operatorContract2}
         ),
         "Stake is released"
       )
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.seize(
           minimumStake, 100, magpie, [operator],
           {from: operatorContract2}
@@ -283,8 +288,8 @@ contract('TokenStaking/Lock', function(accounts) {
         { from: authorizer },
       );
 
-      createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-      await increaseTimeTo(createdAt + initializationPeriod + 1)
+      createdAt = await timestampOf(tx);
+      await time.increaseTo(initializationPeriod.add(createdAt).addn(1));
       await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract})
       await stakingContract.lockStake(operator, lockPeriod, {from: operatorContract2})
     })
@@ -293,7 +298,7 @@ contract('TokenStaking/Lock', function(accounts) {
       await undelegate(operator)
       await stakingContract.unlockStake(operator, {from: operatorContract})
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operator),
         "Can not recover locked stake"
       )
@@ -308,12 +313,12 @@ contract('TokenStaking/Lock', function(accounts) {
       await undelegate(operator)
       await stakingContract.unlockStake(operator, {from: operatorContract})
 
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.recoverStake(operator),
         "Can not recover locked stake"
       )
 
-      await registry.disableOperatorContract(operatorContract2)
+      await registry.disableOperatorContract(operatorContract2, {from: owner});
 
       await stakingContract.recoverStake(operator, {from: operator})
       // ok, no revert

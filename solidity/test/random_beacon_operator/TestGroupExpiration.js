@@ -1,10 +1,13 @@
-import mineBlocks from '../helpers/mineBlocks';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol')
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-const Groups = artifacts.require('./libraries/operator/Groups.sol');
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const assert = require('chai').assert
+const mineBlocks = require('../helpers/mineBlocks')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {expectRevert} = require("@openzeppelin/test-helpers")
+const GroupsExpirationStub = contract.fromArtifact('GroupsExpirationStub')
+const Groups = contract.fromArtifact('Groups');
+const BLS = contract.fromArtifact('BLS');
 
-contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
+describe('KeepRandomBeaconOperator/GroupExpiration', function() {
 
   let groups;
 
@@ -12,7 +15,11 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
   const relayEntryTimeout = 10;
 
   before(async () => {
+    const bls = await BLS.new({from: accounts[0]});
+    await Groups.detectNetwork()
+    await Groups.link("BLS", bls.address);
     const groupsLibrary = await Groups.new();
+    await GroupsExpirationStub.detectNetwork()
     await GroupsExpirationStub.link("Groups", groupsLibrary.address);
     groups = await GroupsExpirationStub.new();
   });
@@ -277,7 +284,7 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
     await addGroups(6);
 
     let pubKey = "0x1337"; // group with such pub key does not exist
-    await expectThrowWithMessage(
+    await expectRevert(
       groups.isStaleGroup(pubKey),
       "Group does not exist"
     );

@@ -2,6 +2,7 @@ package relay
 
 import (
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
@@ -122,9 +123,12 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	err = channel.SetFilter(
-		createGroupMemberFilter(groupMembers, signing),
+	membershipValidator := group.NewStakersMembershipValidator(
+		groupMembers,
+		signing,
 	)
+
+	err = channel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
 		logger.Errorf(
 			"could not set filter for channel [%v]: [%v]",

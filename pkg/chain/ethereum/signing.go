@@ -124,3 +124,8 @@ func unmarshalPublicKey(
 func (es *ethereumSigning) PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte {
 	return crypto.PubkeyToAddress(publicKey).Bytes()
 }
+
+func (es *ethereumSigning) PublicKeyBytesToAddress(publicKey []byte) []byte {
+	// Does the same as crypto.PubkeyToAddress but directly on public key bytes.
+	return crypto.Keccak256(publicKey[1:])[12:]
+}
