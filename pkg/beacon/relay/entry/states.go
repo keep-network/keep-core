@@ -2,7 +2,6 @@ package entry
 
 import (
 	"context"
-	"fmt"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -14,19 +13,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// EntryMessagingStateDelayBlocks is a delay in blocks for a state exchanging
-// network messages as a part of its execution.
-//
-// One block is given for all state machines cooperating over the network
-// so that they can enter the given state before any message for this
-// state is sent. This way we make sure that no messages are dropped.
-const EntryMessagingStateDelayBlocks = 1
-
-// EntryMessagingStateActiveBlocks is a number of blocks for which a state
-// exchanging network messages as a part of its execution should be active.
-const EntryMessagingStateActiveBlocks = 3
-
 type signingState = state.State
+
+const signatureShareStateDelayBlocks = 1
+const signatureShareStateActiveBlocks = 3
 
 type signingStateBase struct {
 	channel      net.BroadcastChannel
@@ -35,7 +25,7 @@ type signingStateBase struct {
 
 	signer *dkg.ThresholdSigner
 
-	previousEntry []byte
+	previousEntry *bn256.G1
 
 	honestThreshold int
 }
@@ -50,18 +40,15 @@ type signatureShareState struct {
 }
 
 func (sss *signatureShareState) DelayBlocks() uint64 {
-	return EntryMessagingStateDelayBlocks
+	return signatureShareStateDelayBlocks
 }
 
 func (sss *signatureShareState) ActiveBlocks() uint64 {
-	return EntryMessagingStateActiveBlocks
+	return signatureShareStateActiveBlocks
 }
 
 func (sss *signatureShareState) Initiate(ctx context.Context) error {
-	share, err := sss.signer.CalculateSignatureShare(sss.previousEntry)
-	if err != nil {
-		return fmt.Errorf("could not evaluate signature share: [%v]", err)
-	}
+	share := sss.signer.CalculateSignatureShare(sss.previousEntry)
 
 	sss.selfSignatureShare = share
 
@@ -138,19 +125,38 @@ func (scs *signatureCompleteState) Initiate(ctx context.Context) error {
 		share := new(bn256.G1)
 		_, err := share.Unmarshal(message.shareBytes)
 		if err != nil {
-			logger.Errorf(
+			logger.Warningf(
 				"[member:%v] failed to unmarshal signature share from member [%v]: [%v]",
 				scs.MemberIndex(),
 				message.senderID,
 				err,
 			)
 		} else {
-			logger.Debugf(
-				"[member:%v] accepting signature share from member [%v]",
-				scs.MemberIndex(),
-				message.senderID,
-			)
-			seenShares[message.senderID] = share
+			publicKeyShare, ok := scs.signer.GroupPublicKeyShares()[message.senderID]
+			if !ok {
+				logger.Warningf(
+					"[member:%v] could not validate signature share from "+
+						"member [%v]; public key share not found",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+				continue
+			}
+
+			if bls.VerifyG1(publicKeyShare, scs.previousEntry, share) {
+				logger.Debugf(
+					"[member:%v] accepting signature share from member [%v]",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+				seenShares[message.senderID] = share
+			} else {
+				logger.Warningf(
+					"[member:%v] rejecting invalid signature share from member [%v]",
+					scs.MemberIndex(),
+					message.senderID,
+				)
+			}
 		}
 	}
 

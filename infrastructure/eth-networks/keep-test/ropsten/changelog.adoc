@@ -2,6 +2,50 @@
 
 Summary of Keep private testnet releases in reverse chronological order.
 
+== 2020-03-13
+
+=== NEW FEATURES
+
+- We're proud to annouce the Keep token dashboard!  Find at at `http://dashboard.test.keep.network`
+  The token dashboard allows you to manage your KEEP grants, staking, authorizations, and
+  operations.  We'll be shipping a separate guide over the coming weeks.  To use the dashboard all
+  you need to do is load your issued keep-client Ethereum account into metamask.
+
+== 2020-02-18
+
+=== BUGFIXES
+
+- keep-clients can now recover from an underlying Ethreum node connection loss
+
+=== OTHERS
+
+- Implemented slashing scheme per Yellowpaper
+- Adjusted rewards and reimbursements
+- Continued gas cost optimization
+- Increase active time for commitment and points validation phases of GJKR
+- Remove idle states and wait delays from state machines
+- Validate if a peer is allowed to participate in threshold signature
+- libp2p transport layer encryption
+- Eliminate the possibility of accepting late retransmission
+- libp2p buffers adjustments - improve message delivery rate
+- Improve libp2p broadcast channel message delivery pipeline
+
+== 2020-01-22
+
+Happy New Year!!
+
+=== BUGFIXES
+
+- Group selection occasionally fails on Infura:  We now account for Infura's load balancing pattern.
+- Group selection is not triggered again after a failure:  Resloved a condition where we would end up with zero groups on-chain.
+- Undelegation failure: Resolved occasional function not found error in the staking dapp.
+
+=== OTHERS
+
+- Reentrancy protection: Retransmitter refinements and libp2p buffers adjustments to improve message delivery rates.
+- Adjust gas price for Ropsten: Price adjust as compared to local environments.
+- Signing group member as a relay entry timeout tattletale:  Added group signers as tattletales by default.  This should help reduce penalties and allow for additional beacon self-healing.
+
 == 2019-12-13
 
 === BUGFIXES

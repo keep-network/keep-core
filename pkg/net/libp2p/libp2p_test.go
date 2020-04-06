@@ -66,7 +66,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err = provider.ChannelFor(testName); err != nil {
+	if _, err = provider.BroadcastChannelFor(testName); err != nil {
 		t.Fatalf("expected: test to fail with [%v]\nactual:   failed with [%v]",
 			nil,
 			err,
@@ -104,7 +104,7 @@ func TestSendReceive(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	broadcastChannel, err := provider.ChannelFor(name)
+	broadcastChannel, err := provider.BroadcastChannelFor(name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +184,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		fmt.Sprintf("/dns4/address.com/tcp/3919/ipfs/%v", provider.ID()),
 		fmt.Sprintf("/ip4/100.20.50.30/tcp/3919/ipfs/%v", provider.ID()),
 	}
-	providerAddresses := provider.AddrStrings()
+	providerAddresses := provider.ConnectionManager().AddrStrings()
 	if strings.Join(expectedAddresses, " ") != strings.Join(providerAddresses, " ") {
 		t.Fatalf(
 			"expected: provider addresses [%v]\nactual: provider addresses [%v]",

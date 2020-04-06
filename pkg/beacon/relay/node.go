@@ -2,10 +2,11 @@ package relay
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"encoding/hex"
 	"math/big"
 	"sync"
+
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -54,26 +55,37 @@ func (n *Node) JoinGroupIfEligible(
 ) {
 	dkgStartBlockHeight := groupSelectionResult.GroupSelectionEndBlock
 
-	indexes := make([]int, 0)
+	if len(groupSelectionResult.SelectedStakers) > maxGroupSize {
+		logger.Errorf(
+			"group size larger than supported: [%v]",
+			len(groupSelectionResult.SelectedStakers),
+		)
+		return
+	}
+
+	indexes := make([]uint8, 0)
 	for index, selectedStaker := range groupSelectionResult.SelectedStakers {
 		// See if we are amongst those chosen
-		if bytes.Compare(selectedStaker, n.Staker.ID()) == 0 {
-			indexes = append(indexes, index)
+		if bytes.Compare(selectedStaker, n.Staker.Address()) == 0 {
+			indexes = append(indexes, uint8(index))
 		}
 	}
 
 	if len(indexes) > 0 {
 		// create temporary broadcast channel for DKG using the group selection
 		// seed
-		broadcastChannel, err := n.netProvider.ChannelFor(newEntry.Text(16))
+		broadcastChannel, err := n.netProvider.BroadcastChannelFor(newEntry.Text(16))
 		if err != nil {
 			logger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
 		}
 
-		err = broadcastChannel.SetFilter(
-			createGroupMemberFilter(groupSelectionResult.SelectedStakers, signing),
+		membershipValidator := group.NewStakersMembershipValidator(
+			groupSelectionResult.SelectedStakers,
+			signing,
 		)
+
+		err = broadcastChannel.SetFilter(membershipValidator.IsInGroup)
 		if err != nil {
 			logger.Errorf(
 				"could not set filter for channel [%v]: [%v]",
@@ -92,6 +104,7 @@ func (n *Node) JoinGroupIfEligible(
 					playerIndex,
 					n.chainConfig.GroupSize,
 					n.chainConfig.DishonestThreshold(),
+					membershipValidator,
 					dkgStartBlockHeight,
 					n.blockCounter,
 					relayChain,
@@ -113,35 +126,14 @@ func (n *Node) JoinGroupIfEligible(
 				if err != nil {
 					logger.Errorf("failed to register a group: [%v]", err)
 				}
+
+				logger.Infof(
+					"[member:%v] ready to operate in the group",
+					signer.MemberID(),
+				)
 			}()
 		}
 	}
 
 	return
-}
-
-func createGroupMemberFilter(
-	members []relaychain.StakerAddress,
-	signing chain.Signing,
-) net.BroadcastChannelFilter {
-	authorizations := make(map[string]bool, len(members))
-	for _, address := range members {
-		authorizations[hex.EncodeToString(address)] = true
-	}
-
-	return func(authorPublicKey *ecdsa.PublicKey) bool {
-		authorAddress := hex.EncodeToString(
-			signing.PublicKeyToAddress(*authorPublicKey),
-		)
-		_, isAuthorized := authorizations[authorAddress]
-
-		if !isAuthorized {
-			logger.Warningf(
-				"rejecting message from [%v]; author is not a member of the group",
-				authorAddress,
-			)
-		}
-
-		return isAuthorized
-	}
 }

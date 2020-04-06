@@ -22,30 +22,12 @@ go get -u golang.org/x/lint/golint
 echo "Installing pre-commit and specified hooks..."
 pre-commit install --install-hooks
 
-echo "Installing bn requirements..."
-for pkg in gmp openssl llvm; do
-  brew list $pkg &> /dev/null || brew install $pkg
-done
-
-export PATH="/usr/local/opt/llvm/bin:${PATH}"
-export LD_LIBRARY_PATH="/usr/local/opt/openssl/lib/:${LD_LIBRARY_PATH}"
-export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${LD_LIBRARY_PATH}"
-
-echo "Installing command line developer tools..."
-xcode-select --install || true
-
-echo "Installing contracts/solidity npm and requirements..."
+echo "Installing solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
-cd ../contracts/solidity && npm install && cd ../../scripts
+cd ../solidity && npm install && cd ../scripts
 
 echo "Installing truffle..."
 npm install -g truffle
-
-echo "******************************************************************"
-echo "*** Please configure PATH, LD_LIBRARY_PATH, DYLD_LIBRARY_PATH  ***"
-echo "*** environment variables in your shell configuration file.    ***"
-echo "*** Ex. for bash shell - ~/.bash_profile, for zsh - ~/.zshrc   ***"
-echo "******************************************************************"
 
 if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
   echo 'WARNING: protoc-gen-gogoslick command is not available'

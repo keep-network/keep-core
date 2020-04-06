@@ -1,12 +1,11 @@
 node_modules/
-./contracts/solidity/truffle.js
+./solidity/truffle.js
 build/
 vendor/
 _local/
 *.swp
 *.swo
 *.DS_Store
-*.pb.go
 ,*
 config.toml
 config.*.toml
@@ -16,8 +15,9 @@ config.*.toml
 *.abi
 *.account
 pkg/**/gen/*/*.go
+!pkg/gen/async/*.go
+!pkg/net/gen/pb/*.go
 !pkg/chain/gen/cmd/cmd*.go
-!pkg/chain/gen/options/options*.go
 
 # Executables
 debug
@@ -33,6 +33,7 @@ main.test
 # Infrastructure
 .terraform
 infrastructure/gcp/service-accounts*
+.secrets*
 
 # keys
 keystore

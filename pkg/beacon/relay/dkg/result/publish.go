@@ -29,6 +29,7 @@ func RegisterUnmarshallers(channel net.BroadcastChannel) {
 func Publish(
 	memberIndex group.MemberIndex,
 	dkgGroup *group.Group,
+	membershipValidator group.MembershipValidator,
 	result *gjkr.Result,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
@@ -41,8 +42,8 @@ func Publish(
 		relayChain:              relayChain,
 		signing:                 signing,
 		blockCounter:            blockCounter,
-		member:                  NewSigningMember(memberIndex, dkgGroup),
-		result:                  convertResult(result, dkgGroup.GroupSize()),
+		member:                  NewSigningMember(memberIndex, dkgGroup, membershipValidator),
+		result:                  convertGjkrResult(result),
 		signatureMessages:       make([]*DKGResultHashSignatureMessage, 0),
 		signingStartBlockHeight: startBlockHeight,
 	}

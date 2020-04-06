@@ -1,0 +1,36 @@
+name: NPM
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
+
+jobs:
+  publish-contracts:
+    # Don't run the job if commit message starts with `[CI]`.
+    if: startsWith(github.event.commits[0].message, '[CI]') == false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "11.x"
+          registry-url: "https://npm.pkg.github.com"
+      - name: Install dependencies
+        working-directory: ./solidity
+        run: npm install
+      - name: Compile source code
+        working-directory: ./solidity
+        run: npm run compile
+      - name: Publish package
+        working-directory: ./solidity
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # TODO: Add version auto bumping and commit. We disabled it as repo
+      # configuration does not allow pushing directly to master branch, what
+      # is required after committing the version bump.

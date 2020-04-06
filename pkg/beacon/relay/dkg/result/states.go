@@ -14,6 +14,17 @@ import (
 // represents a given state in the state machine for signing dkg results
 type signingState = state.State
 
+const resultSigningStateDelayBlocks = 1
+const resultSigningStateActiveBlocks = 5
+
+// PrePublicationBlocks returns the total number of blocks it takes to execute
+// all the required work to get ready for the result publication or to decide
+// to skip the publication because there are not enough supporters of
+// the given result.
+func PrePublicationBlocks() uint64 {
+	return resultSigningStateDelayBlocks + resultSigningStateActiveBlocks
+}
+
 // resultSigningState is the state during which group members sign their preferred
 // dkg result (by hashing their dkg result, and then signing the result), and
 // share this over the broadcast channel.
@@ -35,11 +46,11 @@ type resultSigningState struct {
 }
 
 func (rss *resultSigningState) DelayBlocks() uint64 {
-	return state.DefaultMessagingStateDelayBlocks
+	return resultSigningStateDelayBlocks
 }
 
 func (rss *resultSigningState) ActiveBlocks() uint64 {
-	return state.DefaultMessagingStateActiveBlocks
+	return resultSigningStateActiveBlocks
 }
 
 func (rss *resultSigningState) Initiate(ctx context.Context) error {
@@ -76,6 +87,7 @@ func (rss *resultSigningState) Receive(msg net.Message) error {
 	switch signedMessage := msg.Payload().(type) {
 	case *DKGResultHashSignatureMessage:
 		if !group.IsMessageFromSelf(rss.member.index, signedMessage) &&
+			group.IsSenderValid(rss.member, signedMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(rss.member, signedMessage) &&
 			isValidKeyUsed(signedMessage) {
 			rss.signatureMessages = append(rss.signatureMessages, signedMessage)

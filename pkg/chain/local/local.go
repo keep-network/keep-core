@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"math/rand"
 	"sort"
 	"sync"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/ipfs/go-log"
 
@@ -17,7 +20,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -39,7 +41,7 @@ type Chain interface {
 
 	// GetLastDKGResult returns the last DKG result submitted to the chain
 	// as well as all the signatures that supported that result.
-	GetLastDKGResult() (*relaychain.DKGResult, map[group.MemberIndex][]byte)
+	GetLastDKGResult() (*relaychain.DKGResult, map[relaychain.GroupMemberIndex][]byte)
 
 	// GetLastRelayEntry returns the last relay entry submitted to the chain.
 	GetLastRelayEntry() []byte
@@ -60,7 +62,7 @@ type localChain struct {
 	groups []localGroup
 
 	lastSubmittedDKGResult           *relaychain.DKGResult
-	lastSubmittedDKGResultSignatures map[group.MemberIndex][]byte
+	lastSubmittedDKGResultSignatures map[relaychain.GroupMemberIndex][]byte
 	lastSubmittedRelayEntry          []byte
 
 	handlerMutex                  sync.Mutex
@@ -114,7 +116,7 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
 	})
 
-	promise.Fulfill(&event.GroupTicketSubmission{
+	_ = promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: ticket.Value,
 		BlockNumber: c.simulatedHeight,
 	})
@@ -122,8 +124,15 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 	return promise
 }
 
-func (c *localChain) GetSubmittedTicketsCount() (*big.Int, error) {
-	return big.NewInt(int64(len(c.tickets))), nil
+func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
+	tickets := make([]uint64, len(c.tickets))
+
+	for i := range tickets {
+		valueBytes := common.LeftPadBytes(c.tickets[i].Value.Bytes(), 32)
+		tickets[i] = binary.BigEndian.Uint64(valueBytes)
+	}
+
+	return tickets, nil
 }
 
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
@@ -294,7 +303,7 @@ func ConnectWithKey(
 		relayConfig: &relayconfig.Chain{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
-			TicketSubmissionTimeout:    4,
+			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: 3,
 			MinimumStake:               minimumStake,
 		},
@@ -357,9 +366,9 @@ func (c *localChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 
 // SubmitDKGResult submits the result to a chain.
 func (c *localChain) SubmitDKGResult(
-	participantIndex group.MemberIndex,
+	participantIndex relaychain.GroupMemberIndex,
 	resultToPublish *relaychain.DKGResult,
-	signatures map[group.MemberIndex][]byte,
+	signatures map[relaychain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -381,6 +390,7 @@ func (c *localChain) SubmitDKGResult(
 	dkgResultPublicationEvent := &event.DKGResultSubmission{
 		MemberIndex:    uint32(participantIndex),
 		GroupPublicKey: resultToPublish.GroupPublicKey[:],
+		Misbehaved:     resultToPublish.Misbehaved,
 		BlockNumber:    currentBlock,
 	}
 
@@ -438,7 +448,7 @@ func (c *localChain) OnDKGResultSubmitted(
 
 func (c *localChain) GetLastDKGResult() (
 	*relaychain.DKGResult,
-	map[group.MemberIndex][]byte,
+	map[relaychain.GroupMemberIndex][]byte,
 ) {
 	return c.lastSubmittedDKGResult, c.lastSubmittedDKGResultSignatures
 }

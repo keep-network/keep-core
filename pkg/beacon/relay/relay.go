@@ -2,6 +2,7 @@ package relay
 
 import (
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
@@ -14,6 +15,8 @@ import (
 )
 
 var logger = log.Logger("keep-relay")
+
+const maxGroupSize = 255
 
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
@@ -106,7 +109,7 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	channel, err := n.netProvider.BroadcastChannelFor(memberships[0].ChannelName)
 	if err != nil {
 		logger.Errorf("could not create broadcast channel: [%v]", err)
 		return
@@ -120,9 +123,12 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	err = channel.SetFilter(
-		createGroupMemberFilter(groupMembers, signing),
+	membershipValidator := group.NewStakersMembershipValidator(
+		groupMembers,
+		signing,
 	)
+
+	err = channel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
 		logger.Errorf(
 			"could not set filter for channel [%v]: [%v]",

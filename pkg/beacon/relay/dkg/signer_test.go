@@ -12,8 +12,6 @@ import (
 func TestSignAndComplete(t *testing.T) {
 	var message = new(bn256.G1).ScalarBaseMult(big.NewInt(1337))
 
-	// Obtained by running `TestFullStateTransitions` and outputting shares
-	// and group public key. MemberIDs are 1-indexed.
 	privateKeySharesMap := map[group.MemberIndex]string{
 		group.MemberIndex(1): "+20447821705176695776117400920440893381372259028396365458583014272617533574429",
 		group.MemberIndex(2): "+10311498259490277582707403215942210669382166384656845373229012913757750213620",
@@ -87,10 +85,7 @@ func TestSignAndComplete(t *testing.T) {
 		// Ensure we get a valid signature share from every signer.
 		shares := make([]*bls.SignatureShare, 0)
 		for _, signer := range signers {
-			share, err := signer.CalculateSignatureShare(message.Marshal())
-			if err != nil {
-				t.Fatal(err)
-			}
+			share := signer.CalculateSignatureShare(message)
 
 			shares = append(shares,
 				&bls.SignatureShare{

@@ -56,6 +56,7 @@ func Execute(
 	channel net.BroadcastChannel,
 	dishonestThreshold int,
 	seed *big.Int,
+	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
@@ -64,15 +65,16 @@ func Execute(
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
+		membershipValidator,
 		seed,
 	)
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot create a new member: [%v]", err)
 	}
 
-	initialState := &joinState{
+	initialState := &ephemeralKeyPairGenerationState{
 		channel: channel,
-		member:  member,
+		member:  member.InitializeEphemeralKeysGeneration(),
 	}
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)

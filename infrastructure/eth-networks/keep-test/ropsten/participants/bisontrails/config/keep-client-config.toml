@@ -1,25 +1,25 @@
 [ethereum]
-  URL = "ws://eth-tx-ropsten.test.keep.network:8546"
-  URLRPC = "http://eth-tx-ropsten.test.keep.network:8545"
+  URL = "wss://ropsten.infura.io/ws/v3/59fb36a36fa4474b890c13dd30038be5"
+  URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
 
   [ethereum.account]
-    Address = "0xaa886f33bfe5cf672effcfdf9c630bdb785802f8"
+    Address = "0x1833a1a046db585d9c405ad93bfce085d43b2b04"
     KeyFile = "/mnt/keep-client/config/eth-account-keyfile"
 
-  # Contracts are already deployed to the private testnet.  They are subject to change on deployment
+  # Contracts are already deployed to Ropsten.  They are subject to change on deployment.
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0x23C62f3AC74Ab575427EEFf37eCddc68fDeD5901"
+    KeepRandomBeaconOperator = "0x8d804f0c36d2c3A40EE128B7a01fe5269D511206"
     # TokenStaking
-    TokenStaking = "0x5366837a0a40CD92e5C42c3b8d919046377CC525"
+    TokenStaking = "0x585A83EdA3d29e030C49A51B46B653FEcd9c5919"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0x6eaC1E4eEFFEb463eBbe4f65efcE64D5d5bD8076"
+    KeepRandomBeaconService = "0x17c43Fb5035b89a51b3481f7Dd11a987E7A8720d"
 
-# We can configure multiple bootstrap peers.  For the purpose of initial testing we're keeping it at one.
+# Testnet bootstrap peers hosted by the folks at Keep.
 [LibP2P]
-  Peers = ["/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAmDKyX7xmLMEAuWtDw5oBLN3L9xtKXSFn8hUEVtukZkuHp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm359ykqT4QAehewxGLCqY7vTNHLP1ao9EjieZS8jdeKp5", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmS29jNiEX2vAtcjZVhPjU5HWKZNjpWj1gp4SKMGwnSfrg", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8SrKDSKZnj3syGjQ1B8F6bDokP93wikjUgpdx4sWCN5L"]
+  Peers = ["/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH", "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY", "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp", "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf", "/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4"]
   Port = 3919
   # AnnouncedAddresses:
   # Leaving AnnouncedAddresses empty will set a default address to be
@@ -27,10 +27,6 @@
   # conditions.  Set AnnouncedAddresses if you have known external IPs
   # or DNS entries you want to route traffic through.
   AnnouncedAddresses = []
-  # Number of retransmissions for each message
-  RetransmissionCycles = 5
-  # Milliseconds interval between each retransmission of a message
-  RetransmissionInterval = 1000
 
 # In the real world this directory should be on persistent storage.
 [Storage]
