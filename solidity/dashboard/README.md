@@ -56,9 +56,9 @@ truffle exec ./scripts/delegate-tokens.js
 * Use metamask with `localhost:8545` to use Ganache test network. Import your first Ganache test account into metamask and you should be able to see the demo data.
 
 
-## Internal testnet
+### Internal testnet
 
-A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed by VPN at `http://keep-dapp-staking.default.svc.cluster.local/` and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
+A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed at [https://dashboard.dev.keep.network/](https://dashboard.dev.keep.network/) and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
 
 ### MetaMask extension setup
 
