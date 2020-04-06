@@ -11,6 +11,13 @@ type SignatureShareMessage struct {
 	shareBytes []byte
 }
 
+func NewSignatureShareMessage(
+	senderID group.MemberIndex,
+	shareBytes []byte,
+) *SignatureShareMessage {
+	return &SignatureShareMessage{senderID, shareBytes}
+}
+
 // SenderID returns protocol-level identifier of the message sender.
 func (ssm *SignatureShareMessage) SenderID() group.MemberIndex {
 	return ssm.senderID

@@ -1,8 +1,7 @@
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const expectThrow = require('../helpers/expectThrow.js')
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 
@@ -52,13 +51,16 @@ describe('KeepRandomBeaconOperator/RelayEntry', () => {
       // This is not a valid G1 point
       let groupSignature = "0x11134abfa2a9844a58776650e399bca3e08ab134e42595e03e3efc5a0472bcd8";
 
-      await expectThrow(operatorContract.relayEntry(groupSignature));
+      await expectRevert(
+        operatorContract.relayEntry(groupSignature),
+        "Invalid G1 bytes length"
+      );
   })
 
   it("should not allow to submit invalid relay entry", async () => {
       // Signature is a valid G1 point but it is not a signature over the
       // expected input.
-      await expectThrowWithMessage(
+      await expectRevert(
         operatorContract.relayEntry(blsData.nextGroupSignature),
         "Invalid signature"
       );
@@ -75,7 +77,7 @@ describe('KeepRandomBeaconOperator/RelayEntry', () => {
   it("should allow to submit only one entry", async () => {
     await operatorContract.relayEntry(blsData.groupSignature);
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.relayEntry(blsData.groupSignature),
       "Entry was submitted"
     );

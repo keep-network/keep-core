@@ -15,6 +15,10 @@ type memberCore struct {
 	// Group to which this member belongs.
 	group *group.Group
 
+	// Validator allowing to check public key and member index
+	// against group members
+	membershipValidator group.MembershipValidator
+
 	// Evidence log provides access to messages from earlier protocol phases
 	// for the sake of compliant resolution.
 	evidenceLog evidenceLog
@@ -174,6 +178,9 @@ type RevealingMember struct {
 type ReconstructingMember struct {
 	*RevealingMember
 
+	// Revealed shares of members from the QUAL set disqualified or marked as
+	// inactive in later phases, after QUAL set has been established.
+	revealedMisbehavedMembersShares []*misbehavedShares
 	// Disqualified members' individual private keys reconstructed from shares
 	// revealed by other group members.
 	// Stored as `<m, z_m>`, where:
@@ -197,6 +204,10 @@ type CombiningMember struct {
 	// Group public key calculated from individual public keys of all group members.
 	// Denoted as `Y` across the protocol specification.
 	groupPublicKey *bn256.G2
+	// Group public key shares calculated for each QUAL group member.
+	// Public key shares calculation is time-expensive so we do it in an async
+	// manner and publish the result to this channel, once ready.
+	groupPublicKeySharesChannel chan map[group.MemberIndex]*bn256.G2
 }
 
 // InitializeFinalization returns a member to perform next protocol operations.
@@ -217,12 +228,14 @@ func NewMember(
 	memberID group.MemberIndex,
 	groupSize,
 	dishonestThreshold int,
+	membershipValidator group.MembershipValidator,
 	seed *big.Int,
 ) (*LocalMember, error) {
 	return &LocalMember{
 		memberCore: &memberCore{
 			memberID,
 			group.NewDkgGroup(dishonestThreshold, groupSize),
+			membershipValidator,
 			newDkgEvidenceLog(),
 			newProtocolParameters(seed),
 		},
@@ -307,7 +320,10 @@ func (rm *RevealingMember) InitializeReconstruction() *ReconstructingMember {
 
 // InitializeCombining returns a member to perform next protocol operations.
 func (rm *ReconstructingMember) InitializeCombining() *CombiningMember {
-	return &CombiningMember{ReconstructingMember: rm}
+	return &CombiningMember{
+		ReconstructingMember:        rm,
+		groupPublicKeySharesChannel: make(chan map[group.MemberIndex]*bn256.G2),
+	}
 }
 
 // individualPrivateKey returns current member's individual private key.
@@ -345,8 +361,9 @@ func (sm *SharingMember) receivedValidPeerIndividualPublicKeys() []*bn256.G2 {
 // be revealed publicly.
 func (fm *FinalizingMember) Result() *Result {
 	return &Result{
-		Group:                fm.group,
-		GroupPublicKey:       fm.groupPublicKey, // nil if threshold not satisfied
-		GroupPrivateKeyShare: fm.groupPrivateKeyShare,
+		Group:                       fm.group,
+		GroupPublicKey:              fm.groupPublicKey, // nil if threshold not satisfied
+		GroupPrivateKeyShare:        fm.groupPrivateKeyShare,
+		groupPublicKeySharesChannel: fm.groupPublicKeySharesChannel,
 	}
 }

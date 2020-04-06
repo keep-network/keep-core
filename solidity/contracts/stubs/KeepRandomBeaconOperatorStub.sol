@@ -48,10 +48,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groupSelection.inProgress;
     }
 
-    function getRelayEntryTimeout() public view returns (uint256) {
-        return relayEntryTimeout;
-    }
-
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.groups[groupIndex].groupPubKey;
     }

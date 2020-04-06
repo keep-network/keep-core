@@ -16,6 +16,10 @@ func TestThresholdSignerRoundtrip(t *testing.T) {
 		memberIndex:          group.MemberIndex(2),
 		groupPublicKey:       new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		groupPrivateKeyShare: big.NewInt(1),
+		groupPublicKeyShares: map[group.MemberIndex]*bn256.G2{
+			group.MemberIndex(1): new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
+			group.MemberIndex(2): new(bn256.G2).ScalarBaseMult(big.NewInt(11)),
+		},
 	}
 
 	unmarshaled := &ThresholdSigner{}

@@ -1,7 +1,7 @@
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const crypto = require("crypto")
@@ -153,7 +153,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     // Nothing can be withdrawn
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.withdrawGroupMemberRewards(operator1, 1, memberIndices),
       "Group must be expired and stale"
     )
@@ -169,7 +169,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     // Nothing can be withdrawn
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.withdrawGroupMemberRewards(operator2, 0, memberIndices),
       "Group must be expired and stale"
     )

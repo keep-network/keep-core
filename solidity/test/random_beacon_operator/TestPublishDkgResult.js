@@ -1,16 +1,14 @@
 const blsData = require("../helpers/data");
 const sign = require('../helpers/signature');
-const {increaseTime} = require('../helpers/increaseTime');
 const packTicket = require('../helpers/packTicket')
 const generateTickets = require('../helpers/generateTickets');
 const shuffleArray = require('../helpers/shuffle');
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
-const expectThrow = require('../helpers/expectThrow.js')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const stakeDelegate = require('../helpers/stakeDelegate')
 
 describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
@@ -61,7 +59,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: owner})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
     let tickets1 = generateTickets(groupSelectionRelayEntry, operator1, operator1StakingWeight);
@@ -195,9 +193,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
 
     // Should throw if non eligible submitter 2 tries to submit
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       submitter2MemberIndex, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: submitter2})
+      {from: submitter2}),
+      "Submitter not eligible"
     );
 
     // Jump in time to when submitter 2 becomes eligible to submit
@@ -210,9 +209,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices, 
-      {from: operator4})
+      {from: operator4}),
+      "Unexpected submitter index"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
@@ -241,9 +241,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: selectedParticipants[0]})
+      {from: selectedParticipants[0]}),
+      "Invalid signature"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
@@ -289,9 +290,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: selectedParticipants[0]})
+      {from: selectedParticipants[0]}),
+      "Too few signatures"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");

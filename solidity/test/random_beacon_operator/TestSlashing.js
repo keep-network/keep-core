@@ -1,11 +1,10 @@
 const blsData = require("../helpers/data.js")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
-const {increaseTime} = require('../helpers/increaseTime');
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const stakeDelegate = require('../helpers/stakeDelegate')
 const BLS = contract.fromArtifact('BLS');
 
@@ -51,7 +50,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]})
@@ -90,7 +89,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     stakingContract.setInitializationPeriod(1000)
     let amountToSlash = web3.utils.toBN(42000000);
     
-    await expectThrowWithMessage(
+    await expectRevert(
       stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract}),
       "Operator stake must be active"
       );
@@ -101,7 +100,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     let amountToSeize = web3.utils.toBN(42000000);
     let rewardMultiplier = web3.utils.toBN(25)
       
-    await expectThrowWithMessage(
+    await expectRevert(
       stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract}),
       "Operator stake must be active"
     );
@@ -171,14 +170,14 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     assert.isTrue((await token.balanceOf(tattletale)).eq(expectedTattletaleReward), "Unexpected tattletale balance")
 
     // Group should be terminated, expecting total number of groups to become 0
-    await expectThrowWithMessage(
+    await expectRevert(
       serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}),
       "Total number of groups must be greater than zero."
     )
   })
 
   it("should ignore invalid report of unauthorized signing", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.reportUnauthorizedSigning(
         groupIndex,
         blsData.nextGroupSignature, // Wrong signature
@@ -194,7 +193,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
     let operator2balance = await stakingContract.balanceOf(operator2)
     let operator3balance = await stakingContract.balanceOf(operator3)
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.reportRelayEntryTimeout({from: tattletale}),
       "Entry did not time out."
     )

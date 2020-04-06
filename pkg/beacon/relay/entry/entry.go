@@ -1,6 +1,7 @@
 package entry
 
 import (
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ipfs/go-log"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
@@ -27,11 +28,17 @@ func SignAndSubmit(
 	blockCounter chain.BlockCounter,
 	channel net.BroadcastChannel,
 	relayChain relayChain.Interface,
-	previousEntry []byte,
+	previousEntryBytes []byte,
 	honestThreshold int,
 	signer *dkg.ThresholdSigner,
 	startBlockHeight uint64,
 ) error {
+	previousEntry := new(bn256.G1)
+	_, err := previousEntry.Unmarshal(previousEntryBytes)
+	if err != nil {
+		return err
+	}
+
 	initialState := &signatureShareState{
 		signingStateBase: signingStateBase{
 			channel:         channel,
@@ -45,7 +52,7 @@ func SignAndSubmit(
 	}
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)
-	_, _, err := stateMachine.Execute(startBlockHeight)
+	_, _, err = stateMachine.Execute(startBlockHeight)
 
 	return err
 }

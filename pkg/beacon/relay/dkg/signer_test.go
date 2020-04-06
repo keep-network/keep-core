@@ -85,10 +85,7 @@ func TestSignAndComplete(t *testing.T) {
 		// Ensure we get a valid signature share from every signer.
 		shares := make([]*bls.SignatureShare, 0)
 		for _, signer := range signers {
-			share, err := signer.CalculateSignatureShare(message.Marshal())
-			if err != nil {
-				t.Fatal(err)
-			}
+			share := signer.CalculateSignatureShare(message)
 
 			shares = append(shares,
 				&bls.SignatureShare{

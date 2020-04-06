@@ -1,7 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const { duration, increaseTimeTo } = require('../helpers/increaseTime');
-const latestTime = require('../helpers/latestTime');
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage');
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -14,10 +12,11 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const Registry = contract.fromArtifact("Registry");
+const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 
 describe('TokenGrant/Revoke', function() {
 
-  let tokenContract, registryContract, grantContract, stakingContract;
+  let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
 
   const tokenOwner = accounts[0],
     grantee = accounts[1];
@@ -26,11 +25,11 @@ describe('TokenGrant/Revoke', function() {
   let grantStart;
   const grantAmount = web3.utils.toBN(1000000000);
   const grantRevocable = true;
-  const grantDuration = duration.seconds(60);;
-  const grantCliff = duration.seconds(1);
-    
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const grantDuration = time.duration.minutes(60);
+  const grantCliff = time.duration.minutes(1);
+
+  const initializationPeriod = time.duration.minutes(10);
+  const undelegationPeriod = time.duration.minutes(30);
 
   before(async () => {
     tokenContract = await KeepToken.new( {from: accounts[0]});
@@ -46,7 +45,9 @@ describe('TokenGrant/Revoke', function() {
     
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
-    grantStart = await latestTime( {from: accounts[0]});
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
+
+    grantStart = await time.latest();
 
     grantId = await grantTokens(
       grantContract, 
@@ -58,6 +59,7 @@ describe('TokenGrant/Revoke', function() {
       grantStart, 
       grantCliff, 
       grantRevocable,
+      minimumPolicy.address,
       {from: accounts[0]}
     );
   });
@@ -72,7 +74,7 @@ describe('TokenGrant/Revoke', function() {
 
   it("should allow to revoke grant", async () => {
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
-    await increaseTimeTo(grantStart + duration.seconds(30));
+    await time.increaseTo(grantStart.add(time.duration.minutes(30)));
     const withdrawable = await grantContract.withdrawable(grantId);
     const refund = grantAmount.sub(withdrawable);
     
@@ -106,7 +108,7 @@ describe('TokenGrant/Revoke', function() {
   })
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(grantId, { from: grantee }),
       "Only grant manager can revoke."
     );
@@ -123,9 +125,10 @@ describe('TokenGrant/Revoke', function() {
         grantStart, 
         grantCliff, 
         false,
+        minimumPolicy.address
     );
     
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
       "Grant must be revocable in the first place."
     );
@@ -134,7 +137,7 @@ describe('TokenGrant/Revoke', function() {
   it("should not allow to revoke grant multiple times", async () => {
     await grantContract.revoke(grantId, { from: tokenOwner });
   
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(grantId, { from: tokenOwner }),
       "Grant must not be already revoked."
     );
@@ -156,6 +159,7 @@ describe('TokenGrant/Revoke', function() {
       grantStart, 
       grantCliff, 
       grantRevocable,
+      minimumPolicy.address
       );
       
     const granteeGrantBalanceBefore = await grantContract.balanceOf.call(grantee);

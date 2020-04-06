@@ -1,9 +1,7 @@
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
-const expectThrow = require('../helpers/expectThrow.js')
 const {contract, accounts} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
 const initContracts = require('../helpers/initContracts')
-const {increaseTime} = require('../helpers/increaseTime')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
 const mineBlocks = require("../helpers/mineBlocks")
@@ -49,7 +47,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
     tickets1 = generateTickets(
@@ -78,14 +76,17 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
   });
 
   it("should fail to get selected participants before submission period is over", async () => {
-    await expectThrow(operatorContract.selectedParticipants());
+    await expectRevert(
+      operatorContract.selectedParticipants(),
+      "Ticket submission in progress"
+    );
   });
 
   it("should accept valid ticket with minimum virtual staker index", async () => {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    let submittedCount = await operatorContract.submittedTicketsCount();
+    let submittedCount = (await operatorContract.submittedTickets()).length;
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
@@ -93,13 +94,13 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    let submittedCount = await operatorContract.submittedTicketsCount();
+    let submittedCount = (await operatorContract.submittedTickets()).length;
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
   it("should reject ticket with too high virtual staker index", async () => {
     let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length + 1, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     );
@@ -107,7 +108,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
   it("should reject ticket with invalid value", async() => {
     let ticket = packTicket('0x1337', 1, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     );
@@ -115,7 +116,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
   it("should reject ticket with not matching operator", async() => {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator2}),
       "Invalid ticket"
     )
@@ -123,7 +124,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
   it("should reject ticket with not matching virtual staker index", async() => {
     let ticket = packTicket(tickets1[0].valueHex, 2, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     )
@@ -133,7 +134,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Duplicate ticket"
     );

@@ -1,5 +1,5 @@
 const blsData = require("../helpers/data.js")
-const expectThrowWithMessage = require('../helpers/expectThrowWithMessage.js')
+const {expectRevert} = require("@openzeppelin/test-helpers")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const mineBlocks = require("../helpers/mineBlocks")
@@ -64,7 +64,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.sign(requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}), 
       "Beacon is busy"
     );
@@ -88,9 +88,9 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
-    mineBlocks(await operatorContract.getRelayEntryTimeout());
+    mineBlocks(await operatorContract.relayEntryTimeout());
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.relayEntry(blsData.groupSignature), 
       "Entry timed out"
     );
