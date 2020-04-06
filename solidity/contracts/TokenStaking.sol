@@ -52,6 +52,9 @@ contract TokenStaking is StakeDelegatable {
     event RecoveredStake(address operator, uint256 recoveredAt);
     event TokensSlashed(address indexed operator, uint256 amount);
     event TokensSeized(address indexed operator, uint256 amount);
+    event StakeLocked(address indexed operator, address by, uint256 until);
+    event LockReleased(address indexed operator, address by);
+    event ExpiredLockReleased(address indexed operator, address lockCreator);
 
     // Registry contract with a list of approved operator contracts and upgraders.
     Registry public registry;
@@ -306,6 +309,7 @@ contract TokenStaking is StakeDelegatable {
             msg.sender,
             uint96(block.timestamp.add(duration))
         );
+        emit StakeLocked(operator, msg.sender, block.timestamp.add(duration));
     }
 
     /**
@@ -328,6 +332,7 @@ contract TokenStaking is StakeDelegatable {
             "Not authorized"
         );
         operatorLocks[operator].releaseLock(msg.sender);
+        emit LockReleased(operator, msg.sender);
     }
 
     /// @notice Removes the lock of the specified operator contract
@@ -352,6 +357,7 @@ contract TokenStaking is StakeDelegatable {
             "Lock still active and valid"
         );
         locks.releaseLock(operatorContract);
+        emit ExpiredLockReleased(operator, operatorContract);
     }
 
     /// @notice Check whether the operator has any active locks
