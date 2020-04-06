@@ -76,4 +76,59 @@ describe("AltBn128", () => {
             )
         })
     })
+
+  it("runHashingTest()", async () => {
+    await altBn128.runHashingTest()
+    // ok, no revert
+  })
+
+  it("runHashAndAddTest()", async () => {
+    await altBn128.runHashAndAddTest()
+    // ok, no revert
+  })
+
+  it("runHashAndScalarMultiplyTest()", async () => {
+    await altBn128.runHashAndScalarMultiplyTest()
+    // ok, no revert
+  })
+
+  it("runGfP2AddTest()", async () => {
+    await altBn128.runGfP2AddTest()
+    // ok, no revert
+  })
+
+  it("runAddTest()", async () => {
+    await altBn128.runAddTest()
+    // ok, no revert
+  })
+
+  it("runScalarMultiplyTest()", async () => {
+    await altBn128.runScalarMultiplyTest()
+    // ok, no revert
+  })
+
+  it("runBasicPairingTest()", async () => {
+    await altBn128.runBasicPairingTest()
+    // ok, no revert
+  })
+
+  it("runVerifySignatureTest()", async () => {
+    await altBn128.runVerifySignatureTest()
+    // ok, no revert
+  })
+
+  it("runCompressG1InvertibilityTest()", async () => {
+    await altBn128.runCompressG1InvertibilityTest()
+    // ok, no revert
+  })
+
+  it("runCompressG2InvertibilityTest()", async () => {
+    await altBn128.runCompressG2InvertibilityTest()
+    // ok, no revert
+  })
+
+  it("runG2PointOnCurveTest()", async () => {
+    await altBn128.runG2PointOnCurveTest()
+    // ok, no revert
+  })
 })
