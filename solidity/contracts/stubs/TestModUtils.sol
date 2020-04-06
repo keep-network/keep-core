@@ -2,7 +2,7 @@ pragma solidity ^0.5.4;
 
 import "../utils/ModUtils.sol";
 
-contract ModUtilsStub {
+contract TestModUtils {
 
     using ModUtils for uint256;
 

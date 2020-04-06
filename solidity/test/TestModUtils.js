@@ -1,13 +1,12 @@
-const { expectRevert } = require("@openzeppelin/test-helpers")
 const { contract } = require("@openzeppelin/test-environment")
-const ModUtilsStub = contract.fromArtifact("ModUtilsStub")
+const TestModUtils = contract.fromArtifact("TestModUtils")
 
 describe("ModUtils", () => {
 
   let modUtils
 
   before(async () => {
-    modUtils = await ModUtilsStub.new()
+    modUtils = await TestModUtils.new()
   })
 
   it("runModExponentTest()", async () => {

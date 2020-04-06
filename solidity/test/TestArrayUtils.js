@@ -1,13 +1,12 @@
-const { expectRevert } = require("@openzeppelin/test-helpers")
 const { contract } = require("@openzeppelin/test-environment")
-const ArrayUtilsStub = contract.fromArtifact("ArrayUtilsStub")
+const TestArrayUtils = contract.fromArtifact("TestArrayUtils")
 
-describe("ArrayUtils", () => {
+describe("TestArrayUtils", () => {
 
   let arrayUtils
 
   before(async () => {
-    arrayUtils = await ArrayUtilsStub.new()
+    arrayUtils = await TestArrayUtils.new()
   })
 
   it("runCanHandleEmptyArrayTest()", async () => {

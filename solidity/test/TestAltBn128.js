@@ -1,6 +1,6 @@
 const { expectRevert } = require("@openzeppelin/test-helpers")
 const { contract } = require("@openzeppelin/test-environment")
-const AltBn128Stub = contract.fromArtifact("AltBn128Stub")
+const TestAltBn128 = contract.fromArtifact("TestAltBn128")
 
 describe("AltBn128", () => {
 
@@ -11,7 +11,7 @@ describe("AltBn128", () => {
     let altBn128
 
     before(async () => {
-        altBn128 = await AltBn128Stub.new()
+        altBn128 = await TestAltBn128.new()
     })
 
     describe("g1Unmarshal", async () => {

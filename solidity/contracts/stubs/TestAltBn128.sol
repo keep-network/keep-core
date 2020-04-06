@@ -6,7 +6,7 @@ pragma experimental ABIEncoderV2;
 
 import "../cryptography/AltBn128.sol";
 
-contract AltBn128Stub {
+contract TestAltBn128 {
 
     function publicG1Unmarshal(bytes memory m) public pure returns(AltBn128.G1Point memory) {
         return AltBn128.g1Unmarshal(m);
