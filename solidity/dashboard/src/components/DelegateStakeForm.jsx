@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { SubmitButton } from './Button'
 import FormInput from './FormInput'
 import { withFormik, useFormikContext } from 'formik'
@@ -18,14 +18,25 @@ import {
   normalizeAmount,
   formatAmount as formatFormAmount,
 } from '../forms/form.utils.js'
+import { lte } from '../utils/arithmetics.utils'
 
 const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grants, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const stakeTokensValue = formatAmount(formikProps.values.stakeTokens)
+  useEffect(() => {
+    const { values: { selectedGrant } } = formikProps
+    if (!selectedGrant.id && grants.length > 0) {
+      formikProps.setFieldValue('selectedGrant', grants[0], true)
+    }
+  }, [grants])
 
   const getContextBalance = () => {
     const { values: { context, selectedGrant } } = formikProps
-    return context === 'granted' ? selectedGrant.availableToStake : keepBalance
+
+    if (context === 'granted') {
+      return selectedGrant.availableToStake || '0'
+    }
+    return keepBalance
   }
 
   const isGrantContext = () => {
@@ -117,7 +128,7 @@ const ContextSwitch = (props) => {
   }, [values.context])
 
   const onClick = useCallback((event) => {
-    setFieldValue('context', event.target.id, false)
+    setFieldValue('context', event.target.id, true)
   }, [])
 
   return (
@@ -150,11 +161,10 @@ const connectedWithFormik = withFormik({
     context: 'granted',
   }),
   validate: (values, props) => {
-    const { keepBalance, minStake } = props
-    const { beneficiaryAddress, operatorAddress, stakeTokens, authorizerAddress, context, selectedGrant } = values
+    const { beneficiaryAddress, operatorAddress, authorizerAddress, context, selectedGrant } = values
     const errors = {}
-    const contextBalance = context === 'granted' ? selectedGrant.availableToStake : keepBalance
-    errors.stakeTokens = validateAmountInRange(stakeTokens, contextBalance, minStake)
+
+    errors.stakeTokens = getStakeTokensError(props, values)
     errors.selectedGrant = context === 'granted' && validateRequiredValue(selectedGrant.id)
     errors.beneficiaryAddress = validateEthAddress(beneficiaryAddress)
     errors.operatorAddress = validateEthAddress(operatorAddress)
@@ -164,5 +174,26 @@ const connectedWithFormik = withFormik({
   },
   displayName: 'DelegateStakeForm',
 })(DelegateStakeForm)
+
+const getStakeTokensError = (props, { stakeTokens, selectedGrant, context }) => {
+  const { keepBalance, minStake } = props
+  const contextBalance = context === 'granted' ? selectedGrant.availableToStake : keepBalance
+
+  if (context === 'granted') {
+    if (!selectedGrant.id) {
+      return 'Please select grant'
+    } else if (lte(selectedGrant.availableToStake, 0)) {
+      return 'Insufficient funds'
+    } else {
+      return validateAmountInRange(stakeTokens, contextBalance, minStake)
+    }
+  } else {
+    if (lte(keepBalance, 0)) {
+      return 'Insufficient funds'
+    } else {
+      return validateAmountInRange(stakeTokens, contextBalance, minStake)
+    }
+  }
+}
 
 export default connectedWithFormik
