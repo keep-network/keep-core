@@ -40,6 +40,8 @@ describe('ManagedGrant', () => {
 
   let managedGrant;
 
+  let stakeFromManagedGrant;
+
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await Registry.new({from: accounts[0]});
@@ -80,6 +82,27 @@ describe('ManagedGrant', () => {
       permissivePolicy.address,
       {from: grantCreator}
     );
+
+    stakeFromManagedGrant = async (
+      operator,
+      beneficiary,
+      authorizer,
+      amount,
+      sender
+    ) => {
+      let delegation = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operator.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ]);
+
+      return managedGrant.stake(
+        staking.address,
+        amount,
+        delegation,
+        {from: sender}
+      );
+    }
   });
 
   beforeEach(async () => {
@@ -95,5 +118,29 @@ describe('ManagedGrant', () => {
     expect(await managedGrant.grantManager()).to.equal(grantCreator);
     expect(await managedGrant.grantId()).to.eq.BN(grantId);
     expect(await managedGrant.grantee()).to.equal(grantee);
+  });
+
+  it("can be staked by the grantee", async () => {
+    await stakeFromManagedGrant(
+      operator, beneficiary, authorizer, minimumStake, grantee
+    );
+  })
+
+  it("can not be staked by the grant creator", async () => {
+    await expectRevert(
+      stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantCreator
+      ),
+      "Only grantee may perform this action"
+    );
+  });
+
+  it("can not be staked by a third party", async () => {
+    await expectRevert(
+      stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, unrelatedAddress
+      ),
+      "Only grantee may perform this action"
+    );
   });
 })
