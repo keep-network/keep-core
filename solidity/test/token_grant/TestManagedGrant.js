@@ -220,5 +220,21 @@ describe('ManagedGrant', () => {
         "Only grantManager may perform this action"
       );
     });
+
+    it("requires the grant manager to confirm reassignment", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.confirmGranteeReassignment(grantee, {from: grantCreator}),
+        "Reassignment address mismatch"
+      );
+      await expectRevert(
+        managedGrant.confirmGranteeReassignment(grantCreator, {from: grantCreator}),
+        "Reassignment address mismatch"
+      );
+      await expectRevert(
+        managedGrant.confirmGranteeReassignment(unrelatedAddress, {from: grantCreator}),
+        "Reassignment address mismatch"
+      );
+    });
   });
 });
