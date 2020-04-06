@@ -7,18 +7,15 @@ import { displayAmount, isEmptyObj } from '../utils/general.utils'
 import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
 import { findIndexAndObject } from '../utils/array.utils'
 import { useTokensPageContext } from '../contexts/TokensPageContext'
-import {
-  GRANT_STAKED,
-  GRANT_WITHDRAWN,
-} from '../reducers/tokens-page.reducer.js'
 
 const TokenGrantsOverview = (props) => {
   const {
     grants,
     grantTokenBalance,
-    dispatch,
     refreshGrantTokenBalance,
     refreshKeepTokenBalance,
+    grantStaked,
+    grantWithdrawn,
   } = useTokensPageContext()
   const [selectedGrant, setSelectedGrant] = useState({})
   const { latestEvent: stakedEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantStaked')
@@ -42,7 +39,7 @@ const TokenGrantsOverview = (props) => {
       return
     }
     const { returnValues: { grantId, amount } } = stakedEvent
-    dispatch({ type: GRANT_STAKED, payload: { grantId, amount } })
+    grantStaked(grantId, amount)
   }, [stakedEvent.transactionHash])
 
   useEffect(() => {
@@ -50,7 +47,7 @@ const TokenGrantsOverview = (props) => {
       return
     }
     const { returnValues: { grantId, amount } } = withdrawanEvent
-    dispatch({ type: GRANT_WITHDRAWN, payload: { grantId, amount } })
+    grantWithdrawn(grantId, amount)
     refreshGrantTokenBalance()
     refreshKeepTokenBalance()
   }, [withdrawanEvent.transactionHash])
