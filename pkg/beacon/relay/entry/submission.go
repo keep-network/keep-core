@@ -100,7 +100,8 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			return <-errorChannel
 		case blockNumber := <-onSubmittedResultChan:
 			logger.Infof(
-				"[member:%v] leaving; relay entry submitted by other member at block [%v]",
+				"[member:%v] leaving submitter; "+
+					"relay entry submitted by other member at block [%v]",
 				res.index,
 				blockNumber,
 			)

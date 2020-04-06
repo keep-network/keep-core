@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/ipfs/go-log"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -40,11 +42,6 @@ func SignAndSubmit(
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	receiveChannel := make(chan net.Message, 64)
-	channel.Recv(ctx, func(netMessage net.Message) {
-		receiveChannel <- netMessage
-	})
-
 	previousEntry := new(bn256.G1)
 	_, err := previousEntry.Unmarshal(previousEntryBytes)
 	if err != nil {
@@ -54,14 +51,6 @@ func SignAndSubmit(
 	selfShare := signer.CalculateSignatureShare(previousEntry)
 
 	go broadcastShare(ctx, signer.MemberID(), selfShare, channel)
-
-	seenShares := make(map[group.MemberIndex]*bn256.G1)
-	seenShares[signer.MemberID()] = selfShare
-
-	logger.Debugf(
-		"[member:%v] auto-accepting self signature share",
-		signer.MemberID(),
-	)
 
 	config, err := relayChain.GetConfig()
 	if err != nil {
@@ -75,7 +64,31 @@ func SignAndSubmit(
 		return err
 	}
 
-	for len(seenShares) < honestThreshold {
+	resultSubmittedChannel := make(chan uint64)
+	subscription, err := relayChain.OnRelayEntrySubmitted(
+		func(event *event.EntrySubmitted) {
+			resultSubmittedChannel <- event.BlockNumber
+		},
+	)
+	if err != nil {
+		return err
+	}
+	defer subscription.Unsubscribe()
+
+	receiveChannel := make(chan net.Message, 64)
+	channel.Recv(ctx, func(netMessage net.Message) {
+		receiveChannel <- netMessage
+	})
+
+	receivedShares := map[group.MemberIndex]*bn256.G1{
+		signer.MemberID(): selfShare,
+	}
+
+	// Run the message loop until the number of received and valid signature
+	// shares is equal to the honest threshold. Message loop will be also
+	// terminated if an other member submits the result or the relay entry
+	// timeout block is reached.
+	for len(receivedShares) < honestThreshold {
 		select {
 		case netMessage := <-receiveChannel:
 			message, ok := netMessage.Payload().(*SignatureShareMessage)
@@ -90,7 +103,8 @@ func SignAndSubmit(
 			)
 			if err != nil {
 				logger.Warningf(
-					"[member:%v] rejecting signature share from member [%v]: [%v]",
+					"[member:%v] rejecting signature share from "+
+						"member [%v]: [%v]",
 					signer.MemberID(),
 					message.senderID,
 					err,
@@ -104,28 +118,24 @@ func SignAndSubmit(
 				message.senderID,
 			)
 
-			seenShares[message.senderID] = share
-		case <-timeoutChannel:
-			return fmt.Errorf("relay entry timed out")
+			receivedShares[message.senderID] = share
+		case blockNumber := <-resultSubmittedChannel:
+			logger.Infof(
+				"[member:%v] leaving message loop; "+
+					"relay entry submitted by other member at block [%v]",
+				signer.MemberID(),
+				blockNumber,
+			)
+			return nil
+		case blockNumber := <-timeoutChannel:
+			return fmt.Errorf(
+				"relay entry timed out at block [%v]",
+				blockNumber,
+			)
 		}
 	}
 
-	seenSharesSlice := make([]*bls.SignatureShare, 0)
-	for memberID, share := range seenShares {
-		signatureShare := &bls.SignatureShare{I: int(memberID), V: share}
-		seenSharesSlice = append(seenSharesSlice, signatureShare)
-	}
-
-	logger.Infof(
-		"[member:%v] restoring signature from [%v] shares",
-		signer.MemberID(),
-		len(seenSharesSlice),
-	)
-
-	signature, err := signer.CompleteSignature(
-		seenSharesSlice,
-		honestThreshold,
-	)
+	signature, err := completeSignature(signer, receivedShares, honestThreshold)
 	if err != nil {
 		return err
 	}
@@ -190,4 +200,32 @@ func extractShare(
 	}
 
 	return share, nil
+}
+
+func completeSignature(
+	signer *dkg.ThresholdSigner,
+	shares map[group.MemberIndex]*bn256.G1,
+	honestThreshold int,
+) (*bn256.G1, error) {
+	signatureShares := make([]*bls.SignatureShare, 0)
+	for memberID, share := range shares {
+		signatureShare := &bls.SignatureShare{I: int(memberID), V: share}
+		signatureShares = append(signatureShares, signatureShare)
+	}
+
+	logger.Infof(
+		"[member:%v] restoring signature from [%v] shares",
+		signer.MemberID(),
+		len(signatureShares),
+	)
+
+	signature, err := signer.CompleteSignature(
+		signatureShares,
+		honestThreshold,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return signature, nil
 }
