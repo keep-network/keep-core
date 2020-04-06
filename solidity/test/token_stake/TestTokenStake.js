@@ -648,7 +648,7 @@ describe('TokenStaking', function() {
       )
     })
   
-    it("should report no active stake after recovering stake", async () => {
+    it("should report no active stake after undelegation is finished", async () => {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
       await stakingContract.authorizeOperatorContract(
@@ -658,8 +658,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await stakingContract.undelegate(operatorOne, {from: ownerOne});
       await time.increase(undelegationPeriod.addn(1));
-      await stakingContract.recoverStake(operatorOne);
-      
+
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
       expect(activeStake).to.eq.BN(

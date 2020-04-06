@@ -589,7 +589,13 @@ contract TokenStaking is StakeDelegatable {
 
         bool isActive = _isInitialized(operatorParams);
 
-        if (isAuthorized && isActive) {
+        bool stakeReleased = _isStakeReleased(
+            _operator,
+            operatorParams,
+            _operatorContract
+        );
+
+        if (isAuthorized && isActive && !stakeReleased) {
             balance = operatorParams.getAmount();
         }
     }
