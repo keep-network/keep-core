@@ -13,14 +13,14 @@ const WALLETS = [
   },
   {
     label: 'Coinbase',
-    iconSrc: '/images/trezor.svg',
+    iconSrc: '/images/coinbase.svg',
     providerName: 'COINBASE',
     type: 'web wallet',
     description: 'Connect to your Coinbase wallet.',
   },
   {
     label: 'Ledger',
-    iconSrc: '/images/trezor.svg',
+    iconSrc: '/images/ledger.svg',
     providerName: 'LEDGER',
     type: 'hardware wallet',
     description: 'You will need your Ledger device plugged into your USB drive.',
@@ -66,7 +66,9 @@ const Wallet = ({
 
   return (
     <li className="wallet" onClick={() => connectAppWithWallet(providerName)}>
-      <img src={iconSrc} alt={label} />
+      <div className="wallet-img">
+        <img src={iconSrc} alt={label} />
+      </div>
       <div className="flex row center">
         <h4 className="mr-1">{label}</h4>
         <Icons.ArrowRight />
