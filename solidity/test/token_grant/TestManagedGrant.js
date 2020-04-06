@@ -123,96 +123,102 @@ describe('ManagedGrant', () => {
     expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
   });
 
-  it("can be staked by the grantee", async () => {
-    await stakeFromManagedGrant(
-      operator, beneficiary, authorizer, minimumStake, grantee
-    );
-  })
+  describe("staking", async () => {
+    it("can be staked by the grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantee
+      );
+    });
 
-  it("can not be staked by the grant creator", async () => {
-    await expectRevert(
-      stakeFromManagedGrant(
-        operator, beneficiary, authorizer, minimumStake, grantCreator
-      ),
-      "Only grantee may perform this action"
-    );
+    it("can not be staked by the grant creator", async () => {
+      await expectRevert(
+        stakeFromManagedGrant(
+          operator, beneficiary, authorizer, minimumStake, grantCreator
+        ),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("can not be staked by a third party", async () => {
+      await expectRevert(
+        stakeFromManagedGrant(
+          operator, beneficiary, authorizer, minimumStake, unrelatedAddress
+        ),
+        "Only grantee may perform this action"
+      );
+    });
   });
 
-  it("can not be staked by a third party", async () => {
-    await expectRevert(
-      stakeFromManagedGrant(
-        operator, beneficiary, authorizer, minimumStake, unrelatedAddress
-      ),
-      "Only grantee may perform this action"
-    );
+  describe("withdrawal", async () => {
+    it("can be withdrawn", async () => {
+      await time.increase(grantUnlockingDuration);
+      await managedGrant.withdraw({from: grantee});
+      expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
+    });
+
+    it("can only be withdrawn by the grantee", async () => {
+      await time.increase(grantUnlockingDuration);
+      await expectRevert(
+        managedGrant.withdraw({from: grantCreator}),
+        "Only grantee may perform this action"
+      );
+      await expectRevert(
+        managedGrant.withdraw({from: unrelatedAddress}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("can not be withdrawn when reassignment is pending", async () => {
+      await time.increase(grantUnlockingDuration);
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.withdraw({from: grantee}),
+        "Can not withdraw with pending reassignment"
+      );
+    });
   });
 
-  it("can be withdrawn", async () => {
-    await time.increase(grantUnlockingDuration);
-    await managedGrant.withdraw({from: grantee});
-    expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
+  describe("reassignment", async () => {
+    it("can be reassigned", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      expect(await managedGrant.grantee()).to.equal(grantee);
+      expect(await managedGrant.requestedNewGrantee()).to.equal(newGrantee);
+
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      expect(await managedGrant.grantee()).to.equal(newGrantee);
+      expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
+    });
+
+    it("only grantee can request reassignment", async () => {
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(newGrantee, {from: newGrantee}),
+        "Only grantee may perform this action"
+      );
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(newGrantee, {from: grantCreator}),
+        "Only grantee may perform this action"
+      );
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(newGrantee, {from: unrelatedAddress}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("only grantManager can confirm reassignment", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+
+      await expectRevert(
+        managedGrant.confirmGranteeReassignment(newGrantee, {from: grantee}),
+        "Only grantManager may perform this action"
+      );
+      await expectRevert(
+        managedGrant.confirmGranteeReassignment(newGrantee, {from: newGrantee}),
+        "Only grantManager may perform this action"
+      );
+      await expectRevert(
+        managedGrant.confirmGranteeReassignment(newGrantee, {from: unrelatedAddress}),
+        "Only grantManager may perform this action"
+      );
+    });
   });
-
-  it("can only be withdrawn by the grantee", async () => {
-    await time.increase(grantUnlockingDuration);
-    await expectRevert(
-      managedGrant.withdraw({from: grantCreator}),
-      "Only grantee may perform this action"
-    );
-    await expectRevert(
-      managedGrant.withdraw({from: unrelatedAddress}),
-      "Only grantee may perform this action"
-    );
-  })
-
-  it("can not be withdrawn when reassignment is pending", async () => {
-    await time.increase(grantUnlockingDuration);
-    await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
-    await expectRevert(
-      managedGrant.withdraw({from: grantee}),
-      "Can not withdraw with pending reassignment"
-    );
-  })
-
-  it("can be reassigned", async () => {
-    await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
-    expect(await managedGrant.grantee()).to.equal(grantee);
-    expect(await managedGrant.requestedNewGrantee()).to.equal(newGrantee);
-
-    await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
-    expect(await managedGrant.grantee()).to.equal(newGrantee);
-    expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
-  });
-
-  it("only grantee can request reassignment", async () => {
-    await expectRevert(
-      managedGrant.requestGranteeReassignment(newGrantee, {from: newGrantee}),
-      "Only grantee may perform this action"
-    );
-    await expectRevert(
-      managedGrant.requestGranteeReassignment(newGrantee, {from: grantCreator}),
-      "Only grantee may perform this action"
-    );
-    await expectRevert(
-      managedGrant.requestGranteeReassignment(newGrantee, {from: unrelatedAddress}),
-      "Only grantee may perform this action"
-    );
-  });
-
-  it("only grantManager can confirm reassignment", async () => {
-    await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
-
-    await expectRevert(
-      managedGrant.confirmGranteeReassignment(newGrantee, {from: grantee}),
-      "Only grantManager may perform this action"
-    );
-    await expectRevert(
-      managedGrant.confirmGranteeReassignment(newGrantee, {from: newGrantee}),
-      "Only grantManager may perform this action"
-    );
-    await expectRevert(
-      managedGrant.confirmGranteeReassignment(newGrantee, {from: unrelatedAddress}),
-      "Only grantManager may perform this action"
-    );
-  });
-})
+});
