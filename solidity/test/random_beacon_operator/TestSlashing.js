@@ -1,14 +1,14 @@
-import {initContracts} from '../helpers/initContracts'
-import stakeDelegate from '../helpers/stakeDelegate'
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
-import {bls as blsData} from '../helpers/data'
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import mineBlocks from '../helpers/mineBlocks'
-import increaseTime from '../helpers/increaseTime';
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const stakeDelegate = require('../helpers/stakeDelegate')
+const BLS = contract.fromArtifact('BLS');
 
-const BLS = artifacts.require('./cryptography/BLS.sol');
-
-contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
+describe('KeepRandomBeaconOperator/Slashing', function() {
   let token, stakingContract, serviceContract, operatorContract, minimumStake, largeStake, entryFeeEstimate, groupIndex,
     registry, bls,
     owner = accounts[0],
@@ -23,11 +23,11 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
   before(async () => {
     
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStakingStub.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStakingStub'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     )
 
     token = contracts.token
@@ -50,12 +50,13 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate})
-  
-    await registry.setRegistryKeeper(registryKeeper)
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]})
+
+    await registry.setRegistryKeeper(registryKeeper, {from: accounts[0]})
+
     await registry.approveOperatorContract(anotherOperatorContract, {from: registryKeeper})
     await stakingContract.authorizeOperatorContract(operator1, anotherOperatorContract, {from: authorizer})
   })
@@ -88,7 +89,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     stakingContract.setInitializationPeriod(1000)
     let amountToSlash = web3.utils.toBN(42000000);
     
-    await expectThrowWithMessage(
+    await expectRevert(
       stakingContract.slash(amountToSlash, [operator1], {from: anotherOperatorContract}),
       "Operator stake must be active"
       );
@@ -99,7 +100,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     let amountToSeize = web3.utils.toBN(42000000);
     let rewardMultiplier = web3.utils.toBN(25)
       
-    await expectThrowWithMessage(
+    await expectRevert(
       stakingContract.seize(amountToSeize, rewardMultiplier, tattletale, [operator1], {from: anotherOperatorContract}),
       "Operator stake must be active"
     );
@@ -169,14 +170,14 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     assert.isTrue((await token.balanceOf(tattletale)).eq(expectedTattletaleReward), "Unexpected tattletale balance")
 
     // Group should be terminated, expecting total number of groups to become 0
-    await expectThrowWithMessage(
-      serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}),
+    await expectRevert(
+      serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}),
       "Total number of groups must be greater than zero."
     )
   })
 
   it("should ignore invalid report of unauthorized signing", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.reportUnauthorizedSigning(
         groupIndex,
         blsData.nextGroupSignature, // Wrong signature
@@ -192,7 +193,7 @@ contract('KeepRandomBeaconOperator/Slashing', function(accounts) {
     let operator2balance = await stakingContract.balanceOf(operator2)
     let operator3balance = await stakingContract.balanceOf(operator3)
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.reportRelayEntryTimeout({from: tattletale}),
       "Entry did not time out."
     )

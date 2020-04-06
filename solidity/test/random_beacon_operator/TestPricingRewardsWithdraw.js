@@ -1,11 +1,13 @@
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {expectRevert} = require("@openzeppelin/test-helpers")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const crypto = require("crypto")
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot'
-import stakeDelegate from '../helpers/stakeDelegate'
-import {initContracts} from '../helpers/initContracts'
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import mineBlocks from '../helpers/mineBlocks'
+const stakeDelegate = require('../helpers/stakeDelegate')
 
-contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
+describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   let token, stakingContract, operatorContract, serviceContract,
     groupSize, memberBaseReward, entryFeeEstimate,
@@ -21,11 +23,11 @@ contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorPricingRewardsWithdrawStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorPricingRewardsWithdrawStub')
     )
 
     token = contracts.token
@@ -151,7 +153,7 @@ contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     // Nothing can be withdrawn
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.withdrawGroupMemberRewards(operator1, 1, memberIndices),
       "Group must be expired and stale"
     )
@@ -167,7 +169,7 @@ contract('KeepRandomBeaconOperator/PricingRewardsWithdraw', function(accounts) {
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     // Nothing can be withdrawn
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.withdrawGroupMemberRewards(operator2, 0, memberIndices),
       "Group must be expired and stale"
     )

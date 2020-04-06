@@ -1,32 +1,26 @@
-import increaseTime, {duration, increaseTimeTo} from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-// Depending on test network increaseTimeTo can be inconsistent and add
-// extra time. As a workaround we subtract timeRoundMargin in all cases
-// that test times before initialization/undelegation periods end.
-const timeRoundMargin = duration.minutes(1)
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const Registry = contract.fromArtifact("Registry");
+const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
-const DelegatedAuthorityStub = artifacts.require("./stubs/DelegatedAuthorityStub.sol");
-
-const initializationPeriod = 10;
-const undelegationPeriod = 30;
+const initializationPeriod = time.duration.seconds(10);
+const undelegationPeriod = time.duration.seconds(30);
 
 let token, registry, stakingContract;
 let authorityDelegator, badAuthorityDelegator;
 let innerRecursiveDelegator, outerRecursiveDelegator;
 let minimumStake, stakingAmount;
 
-contract("TokenStaking/DelegatedAuthority", async (accounts) => {
+describe("TokenStaking/DelegatedAuthority", async () => {
   const owner = accounts[0];
   const operator = accounts[1];
   const magpie = accounts[2];
@@ -37,7 +31,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
   const recursivelyAuthorizedContract = accounts[7];
 
   before(async () => {
-    token = await KeepToken.new();
+    token = await KeepToken.new({from: accounts[0]});
     registry = await Registry.new();
 
     stakingContract = await TokenStaking.new(
@@ -46,8 +40,8 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);
     let tx = await delegate(operator, stakingAmount);
-    let createdAt = (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
-    await increaseTimeTo(createdAt + initializationPeriod + 1)
+    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
     authorityDelegator = await DelegatedAuthorityStub.new(recognizedContract);
     badAuthorityDelegator = await DelegatedAuthorityStub.new(unapprovedContract);
@@ -110,7 +104,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     })
 
     it("doesn't give unrecognized contracts delegated authority", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.claimDelegatedAuthority(
           authorityDelegator.address,
           {from: unrecognizedContract}
@@ -120,7 +114,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
     })
 
     it("doesn't give delegated authority through unapproved contracts", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.claimDelegatedAuthority(
           badAuthorityDelegator.address,
           {from: unapprovedContract}
@@ -163,7 +157,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
       await disable(authorityDelegator);
       // Indirect test;
       // `claimDelegatedAuthority` checks `onlyApprovedOperatorContract`
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.claimDelegatedAuthority(
           recognizedContract,
           {from: unrecognizedContract}
@@ -188,7 +182,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
 
   describe("authorizeOperatorContract", async () => {
     it("doesn't authorize contracts using delegated authority", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.authorizeOperatorContract(
           operator,
           recognizedContract,
@@ -201,7 +195,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
 
   describe("slash", async () => {
     it("uses delegated authorization correctly", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.slash(
           minimumStake,
           [operator],
@@ -221,7 +215,7 @@ contract("TokenStaking/DelegatedAuthority", async (accounts) => {
 
   describe("seize", async () => {
     it("uses delegated authorization correctly", async () => {
-      await expectThrowWithMessage(
+      await expectRevert(
         stakingContract.seize(
           minimumStake,
           100,

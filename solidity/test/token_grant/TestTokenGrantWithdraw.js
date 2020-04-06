@@ -1,22 +1,21 @@
-import { duration, increaseTimeTo } from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import grantTokens from '../helpers/grantTokens';
-import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
-import delegateStakeFromGrant from '../helpers/delegateStakeFromGrant'
+const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const grantTokens = require('../helpers/grantTokens');
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const TokenGrant = artifacts.require('./TokenGrant.sol');
-const Registry = artifacts.require("./Registry.sol");
-const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenGrant = contract.fromArtifact('TokenGrant');
+const Registry = contract.fromArtifact("Registry");
+const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 
-contract('TokenGrant/Withdraw', function(accounts) {
+describe('TokenGrant/Withdraw', function() {
 
   let tokenContract, registryContract, grantContract, stakingContract, permissivePolicy;
 
@@ -29,30 +28,31 @@ contract('TokenGrant/Withdraw', function(accounts) {
   let grantId, grantStart, grantAmount;
 
   const grantRevocable = false;
-  const grantDuration = duration.seconds(60);
-  const grantCliff = duration.seconds(1);
+  const grantDuration = time.duration.seconds(60);
+  const grantCliff = time.duration.seconds(1);
     
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const initializationPeriod = time.duration.seconds(10);
+  const undelegationPeriod = time.duration.seconds(30);
 
   before(async () => {
-    tokenContract = await KeepToken.new();
-    registryContract = await Registry.new();
+    tokenContract = await KeepToken.new({from: accounts[0]});
+    registryContract = await Registry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       tokenContract.address, 
       registryContract.address, 
       initializationPeriod, 
-      undelegationPeriod
+      undelegationPeriod,
+      {from: accounts[0]}
     );
     grantAmount = (await stakingContract.minimumStake()).muln(10);
 
-    grantContract = await TokenGrant.new(tokenContract.address);
+    grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
     
-    await grantContract.authorizeStakingContract(stakingContract.address);
+    await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
     permissivePolicy = await PermissiveStakingPolicy.new()
 
-    grantStart = await latestTime();
+    grantStart = await time.latest();
 
     grantId = await grantTokens(
       grantContract, 
@@ -64,7 +64,8 @@ contract('TokenGrant/Withdraw', function(accounts) {
       grantStart, 
       grantCliff, 
       grantRevocable,
-      permissivePolicy.address
+      permissivePolicy.address,
+      {from: accounts[0]}
     );
   });
 
@@ -77,7 +78,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
   })
 
   it("should allow to wihtdraw some tokens", async () => {
-    await increaseTimeTo(grantStart + grantDuration - 30)
+    await time.increaseTo(grantStart.add(grantDuration) - 30)
 
     const withdrawable = await grantContract.withdrawable(grantId)
     const granteeTokenGrantBalancePre = await grantContract.balanceOf(grantee)
@@ -102,7 +103,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
   })
 
   it("should allow to wihtdraw the whole grant amount ", async () => {
-    await increaseTimeTo(grantStart + grantDuration)
+    await time.increaseTo(grantStart.add(grantDuration))
 
     const withdrawablePre = await grantContract.withdrawable(grantId)
     const granteeTokenGrantBalancePre = await grantContract.balanceOf(grantee)
@@ -136,7 +137,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
   })
 
   it("should not allow to withdraw delegated tokens", async () => {
-    await increaseTimeTo(grantStart + grantDuration)
+    await time.increaseTo(grantStart.add(grantDuration))
     const withdrawable = await grantContract.withdrawable(grantId)
     await delegateStakeFromGrant(
         grantContract,
@@ -150,7 +151,7 @@ contract('TokenGrant/Withdraw', function(accounts) {
     )
     const withdrawableAfterStake = await grantContract.withdrawable(grantId)
 
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.withdraw(grantId),
       "Grant available to withdraw amount should be greater than zero."
     )

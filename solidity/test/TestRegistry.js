@@ -1,8 +1,11 @@
-const Registry = artifacts.require('./stubs/RegistryStub.sol');
-import expectThrowWithMessage from './helpers/expectThrowWithMessage'
-import {createSnapshot, restoreSnapshot} from "./helpers/snapshot"
+const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
+const {accounts, contract} = require("@openzeppelin/test-environment")
+const {expectRevert} = require("@openzeppelin/test-helpers")
+var assert = require('chai').assert
 
-contract('Registry', (accounts) => {
+const Registry = contract.fromArtifact('RegistryStub');
+
+describe('Registry', () => {
     
     const owner = accounts[0]
     const governance = accounts[1]
@@ -20,7 +23,7 @@ contract('Registry', (accounts) => {
     let registry
 
     before(async () => {
-        registry = await Registry.new()
+        registry = await Registry.new({from: owner})
         await registry.setGovernance(governance, {from: owner})
         await registry.setPanicButton(panicButton, {from: governance})
         await registry.setRegistryKeeper(registryKeeper, {from: governance})
@@ -46,7 +49,7 @@ contract('Registry', (accounts) => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setGovernance(someoneElse, {from: owner}),
                 "Not authorized"
             )
@@ -69,7 +72,7 @@ contract('Registry', (accounts) => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setRegistryKeeper(someoneElse, {from: owner}),
                 "Not authorized"
             )
@@ -92,7 +95,7 @@ contract('Registry', (accounts) => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setPanicButton(someoneElse, {from: owner}),
                 "Not authorized"
             )
@@ -119,7 +122,7 @@ contract('Registry', (accounts) => {
         })
 
         it("can not be called by non-governance", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.setOperatorContractUpgrader(
                     serviceContract1,
                     someoneElse, 
@@ -166,7 +169,7 @@ contract('Registry', (accounts) => {
         })
 
         it("can not be called by non-registry-keeper", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
                     {from: owner}
@@ -197,7 +200,7 @@ contract('Registry', (accounts) => {
                 {from: registryKeeper}
             )
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
                     {from: registryKeeper}
@@ -217,7 +220,7 @@ contract('Registry', (accounts) => {
                 {from: panicButton}
             )
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
                     {from: registryKeeper}
@@ -245,7 +248,7 @@ contract('Registry', (accounts) => {
         })
 
         it("can not be called by non-registry-keeper", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract1,
                     {from: owner}
@@ -272,7 +275,7 @@ contract('Registry', (accounts) => {
                 {from: panicButton}
             )
 
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract1, 
                     {from: panicButton}
@@ -282,7 +285,7 @@ contract('Registry', (accounts) => {
         })
 
         it("cannot be called for new operator contract", async () => {
-            await expectThrowWithMessage(
+            await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract2, 
                     {from: panicButton}
