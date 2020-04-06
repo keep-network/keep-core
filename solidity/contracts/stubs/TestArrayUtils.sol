@@ -4,7 +4,7 @@ import "../utils/AddressArrayUtils.sol";
 import "../utils/UintArrayUtils.sol";
 
 
-contract ArrayUtilsStub {
+contract TestArrayUtils {
 
     using AddressArrayUtils for address[];
     using UintArrayUtils for uint256[];
