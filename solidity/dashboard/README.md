@@ -88,3 +88,11 @@ To use this account in the dApp, it needs to be imported from [the JSON file](ht
 4. Click `Browse` and point MetaMask to the previously downloaded account JSON file
 5. Copy-paste the password from the referenced password file
 6. Click `Import`
+
+### Hardware wallets
+
+## TREZOR
+To run the trezor hardware wallet locally follow this instruction:
+1. [Download and run the trezor bridge](https://github.com/trezor/trezord-go).
+2. [Clone the Trezor repo](https://github.com/trezor/trezor-firmware/blob/master/docs/core/build/index.md)
+3. [Setup and run the emulator](https://github.com/trezor/trezor-firmware/blob/master/docs/core/emulator/index.md)
