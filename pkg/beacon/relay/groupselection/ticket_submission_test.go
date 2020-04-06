@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -47,7 +46,7 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 	}
 
 	for i, ticket := range tickets {
-		submitted := fromChainTicket(submittedTickets[i], t)
+		submitted := fromChainTicket(submittedTickets[i])
 
 		if !reflect.DeepEqual(ticket, submitted) {
 			t.Errorf(
@@ -60,14 +59,9 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 	}
 }
 
-func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
-	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((chainTicket.Value.Bytes()))
-	if err != nil {
-		t.Errorf("could not pad ticket value [%v]", err)
-	}
-
-	var value [32]byte
-	copy(value[:], paddedTicketValue)
+func fromChainTicket(chainTicket *chain.Ticket) *ticket {
+	var value [8]byte
+	copy(value[:], chainTicket.ValueBytes())
 
 	return &ticket{
 		value: value,

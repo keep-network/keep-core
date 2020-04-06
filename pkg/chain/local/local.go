@@ -11,8 +11,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/ipfs/go-log"
 
 	crand "crypto/rand"
@@ -128,8 +126,7 @@ func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(c.tickets))
 
 	for i := range tickets {
-		valueBytes := common.LeftPadBytes(c.tickets[i].Value.Bytes(), 32)
-		tickets[i] = binary.BigEndian.Uint64(valueBytes)
+		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].ValueBytes())
 	}
 
 	return tickets, nil

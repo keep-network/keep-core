@@ -6,8 +6,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
@@ -347,8 +345,7 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(stg.submittedTickets))
 
 	for i := range tickets {
-		valueBytes := common.LeftPadBytes(stg.submittedTickets[i].Value.Bytes(), 32)
-		tickets[i] = binary.BigEndian.Uint64(valueBytes)
+		tickets[i] = binary.BigEndian.Uint64(stg.submittedTickets[i].ValueBytes())
 	}
 
 	return tickets, nil

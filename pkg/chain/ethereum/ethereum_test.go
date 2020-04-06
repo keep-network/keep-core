@@ -155,7 +155,7 @@ func TestPackTicket(t *testing.T) {
 		return bigInt
 	}
 
-	ticketValue := toBigInt("77475267169740498967948014258679832639111923451618263020575217281118610489031")
+	ticketValue := toBigInt("18446744073709551615")
 	stakerValue := toBigInt("471938313681866282067432403796053736964016932944")
 
 	var tests = map[string]struct {
@@ -168,13 +168,13 @@ func TestPackTicket(t *testing.T) {
 			ticketValue:        ticketValue,
 			stakerValue:        stakerValue,
 			virtualStakerIndex: toBigInt("1"),
-			expectedPacked:     "ab49727f1f1c661a52aa72262c904281c49765499f85a774c459885000000001",
+			expectedPacked:     "ffffffffffffffff52aa72262c904281c49765499f85a774c459885000000001",
 		},
 		"virtual staker index maximum value": {
 			ticketValue:        ticketValue,
 			stakerValue:        stakerValue,
 			virtualStakerIndex: toBigInt("4294967295"),
-			expectedPacked:     "ab49727f1f1c661a52aa72262c904281c49765499f85a774c4598850ffffffff",
+			expectedPacked:     "ffffffffffffffff52aa72262c904281c49765499f85a774c4598850ffffffff",
 		},
 		"zero ticket value": {
 			ticketValue:        toBigInt("0"),
@@ -182,11 +182,11 @@ func TestPackTicket(t *testing.T) {
 			virtualStakerIndex: toBigInt("12"),
 			expectedPacked:     "00000000000000007020a5556ba1ce5f92c81063a13d33512cf1305c0000000c",
 		},
-		"low ticket value (below natural threshold)": {
-			ticketValue:        toBigInt("442342886742415014920381897080165736613327114059325198266614648165032201400"),
+		"low ticket value": {
+			ticketValue:        toBigInt("65535"),
 			stakerValue:        toBigInt("640134992772870476466797915370027482254406660188"),
 			virtualStakerIndex: toBigInt("12"),
-			expectedPacked:     "00fa5b718feae4ee7020a5556ba1ce5f92c81063a13d33512cf1305c0000000c",
+			expectedPacked:     "000000000000ffff7020a5556ba1ce5f92c81063a13d33512cf1305c0000000c",
 		},
 	}
 
