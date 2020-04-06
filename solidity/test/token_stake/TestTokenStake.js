@@ -783,8 +783,7 @@ describe('TokenStaking', function() {
     })
 
     it("should report no eligible stake for passed future undelegation", async () => {
-      let tx = await delegate(operatorOne, stakingAmount)
-      let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+      await delegate(operatorOne, stakingAmount)
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
@@ -792,13 +791,15 @@ describe('TokenStaking', function() {
       const delegationTime = time.duration.seconds(10)
 
       let currentTime = await time.latest()
+      let undelegateAt = currentTime.add(initializationPeriod).add(delegationTime)
+
       await stakingContract.undelegateAt(
-        operatorOne, 
-        currentTime.add(initializationPeriod).add(delegationTime), 
+        operatorOne,
+        undelegateAt,
         {from: ownerOne}
       );
 
-      await time.increaseTo(createdAt.add(initializationPeriod).add(delegationTime).addn(1))
+      await time.increaseTo(undelegateAt.addn(1))
 
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(
