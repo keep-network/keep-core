@@ -52,22 +52,22 @@ func SignAndSubmit(
 
 	go broadcastShare(ctx, signer.MemberID(), selfShare, channel)
 
-	config, err := relayChain.GetConfig()
+	chainConfig, err := relayChain.GetConfig()
 	if err != nil {
 		return err
 	}
 
-	timeoutChannel, err := blockCounter.BlockHeightWaiter(
-		startBlockHeight + config.RelayEntryTimeout,
+	relayEntryTimeoutChannel, err := blockCounter.BlockHeightWaiter(
+		startBlockHeight + chainConfig.RelayEntryTimeout,
 	)
 	if err != nil {
 		return err
 	}
 
-	resultSubmittedChannel := make(chan uint64)
+	relayEntrySubmittedChannel := make(chan uint64)
 	subscription, err := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
-			resultSubmittedChannel <- event.BlockNumber
+			relayEntrySubmittedChannel <- event.BlockNumber
 		},
 	)
 	if err != nil {
@@ -119,7 +119,7 @@ func SignAndSubmit(
 			)
 
 			receivedShares[message.senderID] = share
-		case blockNumber := <-resultSubmittedChannel:
+		case blockNumber := <-relayEntrySubmittedChannel:
 			logger.Infof(
 				"[member:%v] leaving message loop; "+
 					"relay entry submitted by other member at block [%v]",
@@ -127,7 +127,7 @@ func SignAndSubmit(
 				blockNumber,
 			)
 			return nil
-		case blockNumber := <-timeoutChannel:
+		case blockNumber := <-relayEntryTimeoutChannel:
 			return fmt.Errorf(
 				"relay entry timed out at block [%v]",
 				blockNumber,
@@ -150,6 +150,8 @@ func SignAndSubmit(
 		signature.Marshal(),
 		signer.GroupPublicKeyBytes(),
 		startBlockHeight,
+		relayEntrySubmittedChannel,
+		relayEntryTimeoutChannel,
 	)
 }
 
