@@ -90,6 +90,38 @@ describe('ManagedGrantFactory', () => {
         factory.address, grantAmount, nullBytes, {from: grantCreator}
       );
       expect(await factory.grantFundingPool(grantCreator)).to.eq.BN(grantAmount);
-    })
-  })
+    });
+  });
+
+  describe("creating managed grants", async () => {
+    it("works", async () => {
+      await token.approveAndCall(
+        factory.address, grantAmount, nullBytes, {from: grantCreator}
+      );
+      grantStart = await time.latest();
+      let managedGrantAddress = await factory.createGrant.call(
+        grantee,
+        grantAmount,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        false,
+        {from: grantCreator}
+      );
+      await factory.createGrant(
+        grantee,
+        grantAmount,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        false,
+        {from: grantCreator}
+      );
+      let managedGrant = await ManagedGrant.at(managedGrantAddress);
+      let grantId = await managedGrant.grantId();
+      expect(await tokenGrant.availableToStake(grantId)).to.eq.BN(grantAmount);
+      expect(await managedGrant.grantee()).to.equal(grantee);
+      expect(await managedGrant.grantManager()).to.equal(grantCreator);
+    });
+  });
 });
