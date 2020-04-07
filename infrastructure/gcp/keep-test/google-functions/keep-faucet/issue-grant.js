@@ -37,21 +37,13 @@ const web3 = new Web3(keepContractOwnerProvider, null, web3Options)
 
 // TokenGrant
 const tokenGrantAbi = tokenGrantJsonFile.abi
-const tokenGrantAddress =
- tokenGrantJsonFile.networks[ethereumNetworkId].address
-const tokenGrant = new web3.eth.Contract(
-  tokenGrantAbi,
-  tokenGrantAddress,
-)
+const tokenGrantAddress = tokenGrantJsonFile.networks[ethereumNetworkId].address
+const tokenGrant = new web3.eth.Contract(tokenGrantAbi, tokenGrantAddress)
 
 // KeepToken
 const keepTokenAbi = keepTokenJsonFile.abi
-const keepTokenAddress =
-  keepTokenJsonFile.networks[ethereumNetworkId].address
-const keepToken = new web3.eth.Contract(
-  keepTokenAbi,
-  keepTokenAddress,
-)
+const keepTokenAddress = keepTokenJsonFile.networks[ethereumNetworkId].address
+const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
 
 exports.issueGrant = async (request, response) => {
   try {
@@ -61,48 +53,50 @@ exports.issueGrant = async (request, response) => {
     const cliff = 0
     const revocable = true
     const tokens = 300000
-    const grantBalance = await tokenGrant.methods.balanceOf(granteeAccount).call()
+    const grantBalance = await tokenGrant.methods
+      .balanceOf(granteeAccount)
+      .call()
     var grantAmount = formatAmount(tokens, 18)
 
     if (grantBalance.gte(grantAmount)) {
-      console.log(`${granteeAccount} requested grant while at limit. Balance: ${grantBalance}`)
+      console.log(
+        `${granteeAccount} requested grant while at limit. Balance: ${grantBalance}`,
+      )
       return response.send(`
         Token grant failed, your account has the maximum testnet KEEP allowed.
         You can manage your token grants at: https://dashboard.test.keep.network
-        If you have questions find us on Discord: https://discord.gg/jqxBU4m\n`
-      )
+        If you have questions find us on Discord: https://discord.gg/jqxBU4m\n`)
     } else {
-      var grantAmount = formatAmount((grantAmount - grantBalance), 0)
-      const grantData =
-        Buffer.concat([
-          Buffer.from(granteeAccount.substr(2), 'hex'),
-          web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
-          web3.utils.toBN(start).toBuffer('be', 32),
-          web3.utils.toBN(cliff).toBuffer('be', 32),
-          Buffer.from(revocable ? '01' : '00', 'hex'),
-        ])
+      var grantAmount = formatAmount(grantAmount - grantBalance, 0)
+      const grantData = Buffer.concat([
+        Buffer.from(granteeAccount.substr(2), 'hex'),
+        web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
+        web3.utils.toBN(start).toBuffer('be', 32),
+        web3.utils.toBN(cliff).toBuffer('be', 32),
+        Buffer.from(revocable ? '01' : '00', 'hex'),
+      ])
 
       await keepToken.methods
-        .approveAndCall(
-          tokenGrant.address,
-          grantAmount,
-          grantData,
-        )
+        .approveAndCall(tokenGrant.address, grantAmount, grantData)
         .send({ from: keepContractOwnerAddress })
 
-      console.log(`Created grant for ${web3.utils.toBN(grantAmount)} to: ${granteeAccount}`)
-      response.send(`
-        Created token grant with ${web3.utils.toBN(grantAmount)} KEEP for account: ${granteeAccount}
-        You can manage your token grants at: https://dashboard.test.keep.network
-        You can find us on Discord at: https://discord.gg/jqxBU4m\n`
+      console.log(
+        `Created grant for ${web3.utils.toBN(
+          grantAmount,
+        )} to: ${granteeAccount}`,
       )
+      response.send(`
+        Created token grant with ${web3.utils.toBN(
+          grantAmount,
+        )} KEEP for account: ${granteeAccount}
+        You can manage your token grants at: https://dashboard.test.keep.network
+        You can find us on Discord at: https://discord.gg/jqxBU4m\n`)
     }
   } catch (error) {
     console.log(error)
     return response.send(`
         Token grant failed, try again.
-        If problems persist find us on Discord: https://discord.gg/jqxBU4m\n`
-    )
+        If problems persist find us on Discord: https://discord.gg/jqxBU4m\n`)
   }
 }
 
