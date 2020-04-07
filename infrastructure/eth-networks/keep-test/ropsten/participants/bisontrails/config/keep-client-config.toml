@@ -9,13 +9,13 @@
   # Contracts are already deployed to Ropsten.  They are subject to change on deployment.
   [ethereum.ContractAddresses]
     # Hex-encoded address of KeepRandomBeaconOperator contract
-    KeepRandomBeaconOperator = "0x8d804f0c36d2c3A40EE128B7a01fe5269D511206"
+    KeepRandomBeaconOperator = "0xbe388aC5b4EE6EA912036b91D4b31f818043aF04"
     # TokenStaking
-    TokenStaking = "0x585A83EdA3d29e030C49A51B46B653FEcd9c5919"
+    TokenStaking = "0xE2Eda1d802e4aB47631500e3e6F30118350C5f1B"
     # Hex-encoded address of KeepRandomBeaconService contract. Only needed
     # in cases where the client's utility functions will be used (e.g., the
     # relay subcommand).
-    KeepRandomBeaconService = "0x17c43Fb5035b89a51b3481f7Dd11a987E7A8720d"
+    KeepRandomBeaconService = "0xf991573a359a57bF840E65147C56305828a283fE"
 
 # Testnet bootstrap peers hosted by the folks at Keep.
 [LibP2P]
