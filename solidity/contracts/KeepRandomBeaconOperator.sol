@@ -700,15 +700,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Withdraws accumulated group member rewards for operator
-     * using the provided group index and member indices. Once the
-     * accumulated reward is withdrawn from the selected group, member is
-     * removed from it. Rewards can be withdrawn only from stale group.
+     * using the provided group index.
+     * Once the accumulated reward is withdrawn from the selected group,
+     * the operator is flagged as withdrawn.
+     * Rewards can be withdrawn only from stale group.
      * @param operator Operator address.
      * @param groupIndex Group index.
-     * @param groupMemberIndices Array of member indices for the group member.
      */
-    function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] memory groupMemberIndices) public nonReentrant {
-        uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex, groupMemberIndices);
+    function withdrawGroupMemberRewards(address operator, uint256 groupIndex)
+        public nonReentrant {
+        uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex);
         (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
         if (success) {
             emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);

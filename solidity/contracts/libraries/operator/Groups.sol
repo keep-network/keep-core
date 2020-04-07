@@ -38,6 +38,10 @@ library Groups {
         // this value.
         mapping (bytes => uint256) groupMemberRewards;
 
+        // Mapping of `groupPubKey, operator`
+        // to whether the operator has withdrawn rewards from that group.
+        mapping(bytes => mapping(address => bool)) withdrawn;
+
         // expiredGroupOffset is pointing to the first active group, it is also the
         // expired groups counter
         uint256 expiredGroupOffset;
@@ -331,26 +335,29 @@ library Groups {
 
     /**
      * @dev Withdraws accumulated group member rewards for operator
-     * using the provided group index and member indices. Once the
-     * accumulated reward is withdrawn from the selected group, member is
-     * removed from it. Rewards can be withdrawn only from stale group.
+     * using the provided group index.
+     * Once the accumulated reward is withdrawn from the selected group,
+     * the operator is flagged as withdrawn.
+     * Rewards can be withdrawn only from stale group.
      * @param operator Operator address.
      * @param groupIndex Group index.
-     * @param groupMemberIndices Array of member indices for the group member.
      */
     function withdrawFromGroup(
         Storage storage self,
         address operator,
-        uint256 groupIndex,
-        uint256[] memory groupMemberIndices
+        uint256 groupIndex
     ) public returns (uint256 rewards) {
         bool isExpired = self.expiredGroupOffset > groupIndex;
         bool isStale = isStaleGroup(self, groupIndex);
         require(isExpired && isStale, "Group must be expired and stale");
         bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
-        for (uint i = 0; i < groupMemberIndices.length; i++) {
-            if (operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
-                delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
+        require(
+            !(self.withdrawn[groupPublicKey][operator]),
+            "Rewards already withdrawn"
+        );
+        self.withdrawn[groupPublicKey][operator] = true;
+        for (uint i = 0; i < self.groupMembers[groupPublicKey].length; i++) {
+            if (operator == self.groupMembers[groupPublicKey][i]) {
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
         }
