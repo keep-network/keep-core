@@ -306,6 +306,7 @@ func ConnectWithKey(
 			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: 3,
 			MinimumStake:               minimumStake,
+			RelayEntryTimeout:          12,
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
