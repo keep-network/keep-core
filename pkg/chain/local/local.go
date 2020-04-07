@@ -111,11 +111,11 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 
 	c.tickets = append(c.tickets, ticket)
 	sort.SliceStable(c.tickets, func(i, j int) bool {
-		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
+		return c.tickets[i].IntValue().Cmp(c.tickets[j].IntValue()) == -1
 	})
 
 	_ = promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.Value,
+		TicketValue: ticket.IntValue(),
 		BlockNumber: c.simulatedHeight,
 	})
 
@@ -126,7 +126,7 @@ func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(c.tickets))
 
 	for i := range tickets {
-		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].ValueBytes())
+		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].Value[:])
 	}
 
 	return tickets, nil

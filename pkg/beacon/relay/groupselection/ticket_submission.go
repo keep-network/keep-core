@@ -34,7 +34,7 @@ func submitTicketsOnChain(
 
 func toChainTicket(ticket *ticket) (*relaychain.Ticket, error) {
 	return &relaychain.Ticket{
-		Value: ticket.intValue(),
+		Value: ticket.value,
 		Proof: &relaychain.TicketProof{
 			StakerValue:        new(big.Int).SetBytes(ticket.proof.stakerValue),
 			VirtualStakerIndex: ticket.proof.virtualStakerIndex,

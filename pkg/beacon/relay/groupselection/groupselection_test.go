@@ -326,7 +326,7 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	stg.submittedTickets = append(stg.submittedTickets, ticket)
 
 	sort.SliceStable(stg.submittedTickets, func(i, j int) bool {
-		return stg.submittedTickets[i].Value.Cmp(stg.submittedTickets[j].Value) == -1
+		return stg.submittedTickets[i].IntValue().Cmp(stg.submittedTickets[j].IntValue()) == -1
 	})
 
 	if len(stg.submittedTickets) > stg.groupSize {
@@ -334,7 +334,7 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	}
 
 	_ = promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.Value,
+		TicketValue: ticket.IntValue(),
 		BlockNumber: 222,
 	})
 
@@ -345,7 +345,7 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(stg.submittedTickets))
 
 	for i := range tickets {
-		tickets[i] = binary.BigEndian.Uint64(stg.submittedTickets[i].ValueBytes())
+		tickets[i] = binary.BigEndian.Uint64(stg.submittedTickets[i].Value[:])
 	}
 
 	return tickets, nil

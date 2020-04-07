@@ -28,7 +28,7 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 			submittedTickets = append(submittedTickets, t)
 			promise := &async.EventGroupTicketSubmissionPromise{}
 			promise.Fulfill(&event.GroupTicketSubmission{
-				TicketValue: t.Value,
+				TicketValue: t.IntValue(),
 				BlockNumber: 111,
 			})
 			return promise
@@ -60,11 +60,8 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 }
 
 func fromChainTicket(chainTicket *chain.Ticket) *ticket {
-	var value [8]byte
-	copy(value[:], chainTicket.ValueBytes())
-
 	return &ticket{
-		value: value,
+		value: chainTicket.Value,
 		proof: &proof{
 			stakerValue:        chainTicket.Proof.StakerValue.Bytes(),
 			virtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,
