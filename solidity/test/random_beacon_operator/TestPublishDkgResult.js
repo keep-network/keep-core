@@ -1,17 +1,17 @@
-import { sign } from '../helpers/signature';
-import mineBlocks from '../helpers/mineBlocks';
-import increaseTime from '../helpers/increaseTime';
-import packTicket from '../helpers/packTicket';
-import generateTickets from '../helpers/generateTickets';
-import stakeDelegate from '../helpers/stakeDelegate';
-import expectThrow from '../helpers/expectThrow';
-import shuffleArray from '../helpers/shuffle';
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-import {bls} from '../helpers/data';
-const { expectRevert } = require("@openzeppelin/test-helpers")
+const blsData = require("../helpers/data");
+const sign = require('../helpers/signature');
+const packTicket = require('../helpers/packTicket')
+const generateTickets = require('../helpers/generateTickets');
+const shuffleArray = require('../helpers/shuffle');
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const stakeDelegate = require('../helpers/stakeDelegate')
 
-contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
+describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   const groupSize = 20;
   const groupThreshold = 11;
@@ -26,17 +26,17 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
   selectedParticipants, signatures, signingMemberIndices = [],
   noMisbehaved = '0x',
   maxMisbehaved = '0x010203040506070809', // 20 - 11 = 9 max could misbehave
-  groupPubKey = bls.groupPubKey,
+  groupPubKey = blsData.groupPubKey,
   resultHash = web3.utils.soliditySha3(groupPubKey, noMisbehaved);
 
   before(async () => {
 
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     );
 
     token = contracts.token;
@@ -59,11 +59,12 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: owner})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: owner})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
+    const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
+    let tickets1 = generateTickets(groupSelectionRelayEntry, operator1, operator1StakingWeight);
+    let tickets2 = generateTickets(groupSelectionRelayEntry, operator2, operator2StakingWeight);
+    let tickets3 = generateTickets(groupSelectionRelayEntry, operator3, operator3StakingWeight);
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
@@ -192,9 +193,10 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
 
     // Should throw if non eligible submitter 2 tries to submit
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       submitter2MemberIndex, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: submitter2})
+      {from: submitter2}),
+      "Submitter not eligible"
     );
 
     // Jump in time to when submitter 2 becomes eligible to submit
@@ -207,9 +209,10 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
   });
 
   it("should not be able to submit if submitter was not selected to be part of the group.", async function() {
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices, 
-      {from: operator4})
+      {from: operator4}),
+      "Unexpected submitter index"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
@@ -238,9 +241,10 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: selectedParticipants[0]})
+      {from: selectedParticipants[0]}),
+      "Invalid signature"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
@@ -286,9 +290,10 @@ contract('KeepRandomBeaconOperator/PublishDkgResult', function(accounts) {
     let currentBlock = await web3.eth.getBlockNumber();
     mineBlocks(resultPublicationTime - currentBlock);
 
-    await expectThrow(operatorContract.submitDkgResult(
+    await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
-      {from: selectedParticipants[0]})
+      {from: selectedParticipants[0]}),
+      "Too few signatures"
     );
 
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");

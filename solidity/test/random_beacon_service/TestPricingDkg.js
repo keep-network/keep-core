@@ -1,10 +1,11 @@
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-import {bls} from '../helpers/data';
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const stakeAndGenesis = require('../helpers/stakeAndGenesis')
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 
-import stakeAndGenesis from '../helpers/stakeAndGenesis';
-
-contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
+describe('KeepRandomBeaconService/PricingDkg', () => {
 
     const groupSize = 20;
     const groupThreshold = 11;
@@ -15,11 +16,11 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
 
     before(async () => {
         let contracts = await initContracts(
-          artifacts.require('./KeepToken.sol'),
-          artifacts.require('./TokenStaking.sol'),
-          artifacts.require('./KeepRandomBeaconService.sol'),
-          artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-          artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+          contract.fromArtifact('KeepToken'),
+          contract.fromArtifact('TokenStaking'),
+          contract.fromArtifact('KeepRandomBeaconService'),
+          contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+          contract.fromArtifact('KeepRandomBeaconOperatorStub')
         );
         
         serviceContract = contracts.serviceContract;
@@ -44,7 +45,7 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
     it("should not trigger new group selection when there are not sufficient " +
        "funds in the DKG fee pool", async () => { 
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
         let contractBalance = await web3.eth.getBalance(serviceContract.address);
 
@@ -54,7 +55,7 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
         
         await serviceContract.fundDkgFeePool({value: insufficientPoolFunds});
 
-        await operatorContract.relayEntry(bls.groupSignature);
+        await operatorContract.relayEntry(blsData.groupSignature);
         
         assert.isFalse(
             await operatorContract.isGroupSelectionInProgress(), 
@@ -65,13 +66,13 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
     it("should trigger new group selection when there are sufficient funds in the " +
        "DKG fee pool", async () => {
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
         let sufficientPoolFunds = web3.utils.toBN(groupCreationFee);
         
         await serviceContract.fundDkgFeePool({value: sufficientPoolFunds});
 
-        await operatorContract.relayEntry(bls.groupSignature);
+        await operatorContract.relayEntry(blsData.groupSignature);
         
         assert.isTrue(
             await operatorContract.isGroupSelectionInProgress(), 
@@ -83,8 +84,8 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
         await serviceContract.fundDkgFeePool({value: 3 * groupCreationFee});
   
         let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
-        await operatorContract.relayEntry(bls.groupSignature);
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
+        await operatorContract.relayEntry(blsData.groupSignature);
 
         assert.isTrue(
           await operatorContract.isGroupSelectionInProgress(),
@@ -93,9 +94,9 @@ contract('KeepRandomBeaconService/PricingDkg', (accounts) => {
   
         let startBlock = await operatorContract.getTicketSubmissionStartBlock();
 
-        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+        await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
         let contractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
-        await operatorContract.relayEntry(bls.nextGroupSignature);
+        await operatorContract.relayEntry(blsData.nextGroupSignature);
 
         assert.isTrue(
             web3.utils.toBN(await web3.eth.getBalance(serviceContract.address)).eq(contractBalance),

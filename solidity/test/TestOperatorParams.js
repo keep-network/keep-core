@@ -1,6 +1,8 @@
-const OperatorParamsStub = artifacts.require('./stubs/OperatorParamsStub.sol');
+const {contract, web3} = require("@openzeppelin/test-environment")
+var assert = require('chai').assert
+const OperatorParamsStub = contract.fromArtifact('OperatorParamsStub');
 
-contract('OperatorParamsStub', (accounts) => {
+describe('OperatorParams', () => {
   let opUtils;
   const eighteen = web3.utils.toBN(18)
   const ten = web3.utils.toBN(10)

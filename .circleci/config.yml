@@ -23,16 +23,11 @@ jobs:
     executor: docker-node
     steps:
       - checkout
-      - run: sudo npm install -g ganache-cli@6.4.2
       - run:
           name: Set up test and test result environment
           command: |
             cd solidity
             npm install
-      - run:
-          name: Running testrpc
-          command: ganache-cli
-          background: true
       - run: cd solidity && npm run test
       - store_test_results:
           path: /tmp/test-results

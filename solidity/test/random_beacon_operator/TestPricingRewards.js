@@ -1,25 +1,27 @@
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-import {bls} from '../helpers/data';
-import mineBlocks from '../helpers/mineBlocks';
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 
-contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
+describe('KeepRandomBeaconOperator/PricingRewards', function() {
   let serviceContract;
   let operatorContract;
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorPricingStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorPricingStub')
     );
     
     serviceContract = contracts.serviceContract;
     operatorContract = contracts.operatorContract;
 
-    await operatorContract.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(blsData.groupPubKey);
   });
 
   beforeEach(async () => {
@@ -32,7 +34,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
 
   it("should correctly evaluate delay factor right after the request", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     let delayFactor = await operatorContract.delayFactor.call();        
 
@@ -42,7 +44,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
 
   it("should correctly evaluate delay factor at the first submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
 
@@ -54,7 +56,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
 
   it("should correctly evaluate delay factor at the second submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));
 
@@ -66,7 +68,7 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
 
   it("should correctly evaluate delay factor in the last block before timeout", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     mineBlocks(await operatorContract.relayEntryTimeout());
 
@@ -80,10 +82,10 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
      "right after the request", async () => {
     await operatorContract.setGroupMemberBaseReward(1410);
     await operatorContract.setEntryVerificationGasEstimate(10020);
-    await operatorContract.setGasPriceCeiling(140000);
+    await operatorContract.setGasPriceCeiling(140000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -115,10 +117,10 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
      "at the first submission block", async() => {
     await operatorContract.setGroupMemberBaseReward(966);
     await operatorContract.setEntryVerificationGasEstimate(10050);
-    await operatorContract.setGasPriceCeiling(150000);  
+    await operatorContract.setGasPriceCeiling(150000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1)); 
 
@@ -152,10 +154,10 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
      "at the second submission block", async () => {
     await operatorContract.setGroupMemberBaseReward(1987000);
     await operatorContract.setEntryVerificationGasEstimate(50050);
-    await operatorContract.setGasPriceCeiling(1400000);  
+    await operatorContract.setGasPriceCeiling(1400000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate});  
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
     mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));  
 
@@ -208,10 +210,10 @@ contract('KeepRandomBeaconOperator/PricingRewards', function(accounts) {
      "in the last block before timeout", async () => {
     await operatorContract.setGroupMemberBaseReward(1382000000);
     await operatorContract.setEntryVerificationGasEstimate(50020);
-    await operatorContract.setGasPriceCeiling(2000000);  
+    await operatorContract.setGasPriceCeiling(2000000, {from: accounts[0]});
 
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
-    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate}); 
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}); 
 
     mineBlocks(await operatorContract.relayEntryTimeout());
 

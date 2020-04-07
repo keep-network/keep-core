@@ -3,6 +3,8 @@ import TokenStaking from '@keep-network/keep-core/artifacts/TokenStaking.json'
 import TokenGrant from '@keep-network/keep-core/artifacts/TokenGrant.json'
 import KeepRandomBeaconOperator from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json'
 import Registry from '@keep-network/keep-core/artifacts/Registry.json'
+import GuaranteedMinimumStakingPolicy from '@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json'
+import PermissiveStakingPolicy from '@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json'
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -92,3 +94,10 @@ function getContractAddress({ networks }) {
   return networks[Object.keys(networks)[0]].address
 };
 
+export function getPermissiveStakingPolicyContractAddress() {
+  return getContractAddress(PermissiveStakingPolicy)
+}
+
+export function getGuaranteedMinimumStakingPolicyContractAddress() {
+  return getContractAddress(GuaranteedMinimumStakingPolicy)
+}

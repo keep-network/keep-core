@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-core",
-  "version": "0.12.0-pre",
+  "version": "0.13.0-pre",
   "description": "Smart Contracts for the Keep Network Core",
   "repository": {
     "type": "git",
@@ -14,7 +14,8 @@
     "truffle": "truffle",
     "clean": "rm -rf build",
     "compile": "npm run clean && truffle compile --contracts_build_directory=./build/truffle",
-    "test": "npm run clean && truffle compile && truffle test",
+    "test": "truffle compile && mocha --exit --recursive --timeout 75000",
+    "test:quick": "mocha --exit --recursive --timeout 45000",
     "demo": "truffle migrate --reset && truffle exec ./scripts/delegate-tokens.js",
     "lint": "solium --dir ./contracts"
   },
@@ -30,7 +31,8 @@
     "openzeppelin-solidity": "2.4.0"
   },
   "devDependencies": {
-    "@openzeppelin/test-helpers": "^0.5.4",
+    "@openzeppelin/test-environment": "^0.1.3",
+    "@openzeppelin/test-helpers": "^0.5.5",
     "@truffle/hdwallet-provider": "^1.0.25",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
@@ -41,6 +43,7 @@
     "chai": "^4.2.0",
     "eth-gas-reporter": "^0.2.14",
     "ethereumjs-abi": "^0.6.5",
+    "mocha": "^7.1.1",
     "mocha-junit-reporter": "^1.23.1",
     "solc": "^0.5.7",
     "toml": "^3.0.0",

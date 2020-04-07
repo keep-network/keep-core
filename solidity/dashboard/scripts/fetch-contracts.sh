@@ -3,7 +3,15 @@
 # that `CONTRACT_DATA_BUCKET` environment variable is set to the name of a bucket
 # from which contracts should be downloaded.
 
-CONTRACTS_NAMES=("KeepToken.json" "TokenStaking.json" "TokenGrant.json" "KeepRandomBeaconOperator.json" "Registry.json")
+CONTRACTS_NAMES=(
+  "KeepToken.json"
+  "TokenStaking.json"
+  "TokenGrant.json"
+  "KeepRandomBeaconOperator.json"
+  "Registry.json"
+  "GuaranteedMinimumStakingPolicy.json"
+  "PermissiveStakingPolicy.json"
+)
 
 DESTINATION_DIR=$(realpath $(dirname $0)/../src/contracts)
 

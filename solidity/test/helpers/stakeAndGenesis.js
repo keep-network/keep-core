@@ -1,10 +1,11 @@
-import generateTickets from './generateTickets';
-import mineBlocks from './mineBlocks';
-import increaseTime from './increaseTime';
-import packTicket from './packTicket';
-import {sign} from './signature';
-import {bls} from './data';
-import stakeDelegate from './stakeDelegate';
+const generateTickets = require('./generateTickets')
+const mineBlocks =  require('./mineBlocks')
+const packTicket =  require('./packTicket')
+const sign =  require('./signature')
+const blsData =  require('./data.js')
+const stakeDelegate =  require('./stakeDelegate')
+const {web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 
 
 // Function stakes first three accounts provided in the array of accounts and
@@ -18,7 +19,7 @@ import stakeDelegate from './stakeDelegate';
 //
 // This function should be usually used on the result of initContracts which
 // initializes contracts up to the point when genesis should be performed.
-export default async function stakeAndGenesis(accounts, contracts) {
+async function stakeAndGenesis(accounts, contracts) {
     let operator1 = accounts[1];
     let operator2 = accounts[2];
     let operator3 = accounts[3];
@@ -50,11 +51,12 @@ export default async function stakeAndGenesis(accounts, contracts) {
 
     let groupSize = await operatorContract.groupSize();
 
-    let tickets1 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator1, operator1StakingWeight);
-    let tickets2 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator2, operator2StakingWeight);
-    let tickets3 = generateTickets(await operatorContract.getGroupSelectionRelayEntry(), operator3, operator3StakingWeight);
+    const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
+    let tickets1 = generateTickets(groupSelectionRelayEntry, operator1, operator1StakingWeight);
+    let tickets2 = generateTickets(groupSelectionRelayEntry, operator2, operator2StakingWeight);
+    let tickets3 = generateTickets(groupSelectionRelayEntry, operator3, operator3StakingWeight);
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
     for(let i = 0; i < groupSize; i++) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
@@ -74,17 +76,19 @@ export default async function stakeAndGenesis(accounts, contracts) {
     let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
     let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
 
-    mineBlocks(submissionTimeout);
+    let currentBlock = await web3.eth.getBlockNumber()
+    mineBlocks(ticketSubmissionStartBlock + submissionTimeout - currentBlock);
 
     let selectedParticipants = await operatorContract.selectedParticipants();
 
     let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    let resultPublicationTime = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
+    let resultPublicationBlock = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
 
-    mineBlocks(resultPublicationTime);
+    currentBlock = await web3.eth.getBlockNumber()
+    mineBlocks(resultPublicationBlock - currentBlock)
 
     let misbehaved = '0x';
-    let resultHash = web3.utils.soliditySha3(bls.groupPubKey, misbehaved);
+    let resultHash = web3.utils.soliditySha3(blsData.groupPubKey, misbehaved);
 
     let signingMemberIndices = [];
     let signatures = undefined;
@@ -97,7 +101,9 @@ export default async function stakeAndGenesis(accounts, contracts) {
     }
 
     await operatorContract.submitDkgResult(
-      1, bls.groupPubKey, misbehaved, signatures, signingMemberIndices,
+      1, blsData.groupPubKey, misbehaved, signatures, signingMemberIndices,
       {from: selectedParticipants[0]}
     );
 }
+
+module.exports = stakeAndGenesis
