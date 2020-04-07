@@ -42,15 +42,16 @@ func SignAndSubmit(
 	ctx, cancelCtx := context.WithCancel(context.Background())
 	defer cancelCtx()
 
-	previousEntry := new(bn256.G1)
-	_, err := previousEntry.Unmarshal(previousEntryBytes)
+	relayEntrySubmittedChannel := make(chan uint64)
+	subscription, err := relayChain.OnRelayEntrySubmitted(
+		func(event *event.EntrySubmitted) {
+			relayEntrySubmittedChannel <- event.BlockNumber
+		},
+	)
 	if err != nil {
 		return err
 	}
-
-	selfShare := signer.CalculateSignatureShare(previousEntry)
-
-	go broadcastShare(ctx, signer.MemberID(), selfShare, channel)
+	defer subscription.Unsubscribe()
 
 	chainConfig, err := relayChain.GetConfig()
 	if err != nil {
@@ -64,16 +65,15 @@ func SignAndSubmit(
 		return err
 	}
 
-	relayEntrySubmittedChannel := make(chan uint64)
-	subscription, err := relayChain.OnRelayEntrySubmitted(
-		func(event *event.EntrySubmitted) {
-			relayEntrySubmittedChannel <- event.BlockNumber
-		},
-	)
+	previousEntry := new(bn256.G1)
+	_, err = previousEntry.Unmarshal(previousEntryBytes)
 	if err != nil {
 		return err
 	}
-	defer subscription.Unsubscribe()
+
+	selfShare := signer.CalculateSignatureShare(previousEntry)
+
+	go broadcastShare(ctx, signer.MemberID(), selfShare, channel)
 
 	receiveChannel := make(chan net.Message, 64)
 	channel.Recv(ctx, func(netMessage net.Message) {
