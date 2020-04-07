@@ -159,7 +159,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
-            "Caller is not an authorized contract"
+            "Caller not authorized contract"
         );
         _;
     }
@@ -238,7 +238,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         // reimbursing a submitter that triggered group selection
         (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
-        require(success, "Failed reimbursing submitter for starting a group selection");
+        require(success, "Grp selection reimbursement fail");
     }
 
     function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {

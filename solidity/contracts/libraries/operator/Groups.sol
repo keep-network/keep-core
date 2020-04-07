@@ -297,7 +297,7 @@ library Groups {
         Storage storage self,
         uint256 seed
     ) public returns(uint256) {
-        require(numberOfGroups(self) > 0, "At least one active group required");
+        require(numberOfGroups(self) > 0, "No active groups");
 
         expireOldGroups(self);
         uint256 selectedGroup = seed % numberOfGroups(self);
@@ -407,7 +407,7 @@ library Groups {
             terminateGroup(self, groupIndex);
             self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
         } else {
-            revert("Group is terminated or the signature is invalid");
+            revert("Group terminated or sig invalid");
         }
     }
 
