@@ -21,8 +21,8 @@ repos:
       - --config=solidity/.soliumrc.json
       additional_dependencies:
       - ethlint@1.2.3
-  - repo: https://github.com/prettier/prettier
-    rev: "master" # Use the sha or tag you want to point at
-    hooks:
-      - id: prettier
-        files: '\.js$'
+ - repo: https://github.com/prettier/prettier
+   rev: "master" # Use the sha or tag you want to point at
+   hooks:
+    - id: prettier
+      files: '\.js$'
