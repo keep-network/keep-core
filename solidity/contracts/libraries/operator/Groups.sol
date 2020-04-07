@@ -66,7 +66,7 @@ library Groups {
         bytes memory groupPubKey,
         address[] memory members,
         bytes memory misbehaved
-    ) internal {
+    ) public {
         self.groupMembers[groupPubKey] = members;
 
         // Iterate misbehaved array backwards, replace misbehaved
