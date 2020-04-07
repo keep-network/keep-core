@@ -3,16 +3,10 @@ package ethereum
 import (
 	"fmt"
 	"math/big"
-	"strings"
 	"time"
-
-	"context"
 
 	"github.com/ipfs/go-log"
 
-	"github.com/ethereum/go-ethereum"
-	goethabi "github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
@@ -20,7 +14,6 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	keepcoreabi "github.com/keep-network/keep-core/pkg/chain/gen/abi"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -244,36 +237,12 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	transactorOptions := bind.NewKeyedTransactor(ec.accountKey.PrivateKey)
-	from := transactorOptions.From
-
-	toAddress, err := ec.config.ContractAddress("KeepRandomBeaconOperator")
+	gasEstimate, err := ec.keepRandomBeaconOperatorContract.RelayEntryGasEstimate(entry)
 	if err != nil {
-		logger.Errorf("failed to find KeepRandomBeaconOperator address [%v]", err)
+		logger.Errorf("failed to estimate gas [%v]", err)
 	}
 
-	abi, err := goethabi.JSON(strings.NewReader(keepcoreabi.KeepRandomBeaconOperatorABI))
-	if err != nil {
-		logger.Errorf("failed to instantiate ABI: [%v]", err)
-	}
-
-	packed, err := abi.Pack("relayEntry", entry)
-	if err != nil {
-		logger.Errorf("failed packing relayEntry to conform with ABI [%v]", err)
-	}
-
-	msg := ethereum.CallMsg{
-		From: from,
-		To:   toAddress,
-		Data: packed,
-	}
-
-	gasEstimate, err := ec.client.EstimateGas(context.TODO(), msg)
-	if err != nil {
-		logger.Errorf("failed to estimate gas for relay entry [%v]", err)
-	}
 	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2) // 20% more than original
-
 	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
 		entry,
 		ethutil.TransactionOptions{
