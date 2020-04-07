@@ -167,4 +167,24 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     )
     assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance), "Unexpected beneficiary balance")
   })
+
+  it("should not be able to withdraw group rewards multiple times", async () => {
+    // Register new group and request new entry so we can expire the previous two groups
+    await operatorContract.registerNewGroup(group3)
+    await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
+    let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
+
+    mineBlocks(10)
+    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+
+    // operator2 has 2 members in group1 only
+    let expectedReward = memberBaseReward.muln(2)
+    await operatorContract.withdrawGroupMemberRewards(operator2, 0)
+    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance")
+
+    await expectRevert(
+      operatorContract.withdrawGroupMemberRewards(operator2, 0),
+      "Rewards already withdrawn"
+    );
+  })
 })
