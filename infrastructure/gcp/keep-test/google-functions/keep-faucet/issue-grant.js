@@ -15,7 +15,11 @@ const keepContractOwnerProvider = new HDWalletProvider(
   `${ethereumHost}`,
 )
 
-// Operator info
+// Contract artifacts
+var tokenGrantJsonFile = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
+var keepTokenJsonFile  = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
+
+// Parse grantee account address
 const { parseAccountAddress } = require('./parse-account-address.js')
 
 // We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -32,56 +36,75 @@ const web3Options = {
 // Setup web3 provider.  We use the keepContractOwner since it needs to sign the approveAndCall transaction.
 const web3 = new Web3(keepContractOwnerProvider, null, web3Options)
 
-// TokenStaking
-const tokenStakingContractJsonFile = `./TokenStaking.json`
-const tokenStakingContractParsed = JSON.parse(
-  fs.readFileSync(tokenStakingContractJsonFile),
-)
-const tokenStakingContractAbi = tokenStakingContractParsed.abi
-const tokenStakingContractAddress =
-  tokenStakingContractParsed.networks[ethereumNetworkId].address
-const tokenStakingContract = new web3.eth.Contract(
-  tokenStakingContractAbi,
-  tokenStakingContractAddress,
+// TokenGrant
+const tokenGrantAbi = tokenGrantJsonFile.abi
+const tokenGrantAddress =
+ tokenGrantJsonFile.networks[ethereumNetworkId].address
+const tokenGrant = new web3.eth.Contract(
+  tokenGrantAbi,
+  tokenGrantAddress,
 )
 
 // KeepToken
-const keepTokenContractJsonFile = `./KeepToken.json`
-const keepTokenContractParsed = JSON.parse(
-  fs.readFileSync(keepTokenContractJsonFile),
-)
-const keepTokenContractAbi = keepTokenContractParsed.abi
-const keepTokenContractAddress =
-  keepTokenContractParsed.networks[ethereumNetworkId].address
-const keepTokenContract = new web3.eth.Contract(
-  keepTokenContractAbi,
-  keepTokenContractAddress,
+const keepTokenAbi = keepTokenJsonFile.abi
+const keepTokenAddress =
+  keepTokenJsonFile.networks[ethereumNetworkId].address
+const keepToken = new web3.eth.Contract(
+  keepTokenAbi,
+  keepTokenAddress,
 )
 
-exports.dripAndStake = async (request, response) => {
+exports.issueGrant = async (request, response) => {
   try {
-    const operatorAddress = parseAccountAddress(request, response)
-    console.log(operatorAddress)
-    const delegation =
-      '0x' +
-      Buffer.concat([
-        Buffer.from(keepContractOwnerAddress.substr(2), 'hex'),
-        Buffer.from(operatorAddress.substr(2), 'hex'),
-      ]).toString('hex')
+    const granteeAccount = parseAccountAddress(request, response)
+    const unlockingDuration = 0
+    const start = Math.floor(Date.now() / 1000)
+    const cliff = 0
+    const revocable = true
+    var tokens = 6
+    var grantBalance = await tokenGrant.methods.balanceOf(granteeAccount).call()
+    var grantAmount = formatAmount(tokens, 18)
 
-    await keepTokenContract.methods
-      .approveAndCall(
-        tokenStakingContract.address,
-        formatAmount(20000000, 18),
-        delegation,
+    if (grantBalance.gte(grantAmount)) {
+      console.log(`${granteeAccount} requested grant while at limit. Balance: ${grantBalance}`)
+      return response.send(`
+        Token grant failed, your account has the maximum testnet KEEP allowed.
+        You can manage your token grants at: https://dashboard.test.keep.network
+        If you have questions find us on Discord: https://discord.gg/jqxBU4m\n`
       )
-      .send({ from: keepContractOwnerAddress })
+    } else {
 
-    console.log(`${operatorAddress} staked with 20000000 KEEP!`)
-    response.send(`${operatorAddress} staked with 20000000 KEEP!`)
-  } catch (error) {
-    console.log(error)
-    return response.send('Staking failed, find an adult at Keep.')
+      var grantAmount = formatAmount((grantAmount - grantBalance), 0)
+      const grantData =
+        Buffer.concat([
+          Buffer.from(granteeAccount.substr(2), 'hex'),
+          web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
+          web3.utils.toBN(start).toBuffer('be', 32),
+          web3.utils.toBN(cliff).toBuffer('be', 32),
+          Buffer.from(revocable ? "01" : "00", 'hex'),
+      ])
+
+      await keepToken.methods
+        .approveAndCall(
+          tokenGrant.address,
+          grantAmount,
+          grantData,
+        )
+        .send({ from: keepContractOwnerAddress })
+
+      console.log(`Created grant for ${web3.utils.toBN(grantAmount)} to: ${granteeAccount}`)
+      response.send(`
+        Created token grant with ${web3.utils.toBN(grantAmount)} KEEP for account: ${granteeAccount}
+        You can manage your token grants at: https://dashboard.test.keep.network
+        You can find us on Discord at: https://discord.gg/jqxBU4m\n`
+      )}
+    } catch (error) {
+      console.log(error)
+      return response.send(`
+        Token grant failed, try again.
+        If problems persist find us on Discord: https://discord.gg/jqxBU4m\n`
+      )
+
   }
 }
 
