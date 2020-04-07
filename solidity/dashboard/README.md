@@ -56,11 +56,12 @@ truffle exec ./scripts/delegate-tokens.js
 * Use metamask with `localhost:8545` to use Ganache test network. Import your first Ganache test account into metamask and you should be able to see the demo data.
 
 ### Work with contracts deployed locally
-* Go to the `solidity` directory then:
-  * create symbolic link `artifacts/` to `build/contracts` with `ln -s build/contracts artifacts`.
-  * Create a global symlink for a `@keep-network/keep-core` dependency with `npm link`
-* Go to the `dashboard` directory and tell the application to use the global symlink with `npm link @keep-network/keep-core`
-* When you don’t want to use the local version of `@keep-network/keep-core` anymore, delete the symlink with `npm uninstall --no-save @keep-network/keep-core && npm install`
+
+* Go to the `solidity` directory and:
+  * Create symlink `artifacts/` to `build/contracts` with `ln -s build/contracts artifacts`.
+  * Create a global symlink for a `@keep-network/keep-core` dependency with `npm link`.
+* Go to the `dashboard` directory and tell the application to use the global symlink with `npm link @keep-network/keep-core`.
+* When you don’t want to use the local version of `@keep-network/keep-core` anymore, delete the symlink with `npm uninstall --no-save @keep-network/keep-core && npm install`.
 
 ## Internal testnet
 
