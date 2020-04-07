@@ -16,14 +16,10 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
     }
 
     function isExpiredGroup(bytes memory groupPubKey) public view returns(bool) {
-        for (uint i = 0; i < groups.groups.length; i++) {
-            if (groups.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                bool isExpired = groups.expiredGroupOffset > i;
-                return isExpired;
-            }
-        }
-
-        revert("Group does not exist");
+        uint256 flaggedIndex = groups.groupIndices[groupPubKey];
+        require(flaggedIndex > 0, "Group does not exist");
+        uint256 i = flaggedIndex ^ (1 << 255);
+        return groups.expiredGroupOffset > i;
     }
 
     function setGroupSize(uint256 size) public {

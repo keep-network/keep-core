@@ -10,9 +10,12 @@ library Groups {
     using SafeMath for uint256;
     using BytesLib for bytes;
 
+    uint256 constant GROUP_INDEX_FLAG = 1 << 255;
+
     struct Group {
         bytes groupPubKey;
-        uint registrationBlockHeight;
+        uint64 registrationBlockHeight;
+        bool terminated;
     }
 
     struct Storage {
@@ -23,8 +26,10 @@ library Groups {
         // The value is set when the operator contract is added.
         uint256 relayEntryTimeout;
 
+        // Mapping of `groupPubKey` to flagged `groupIndex`
+        mapping (bytes => uint256) groupIndices;
         Group[] groups;
-        uint256[] terminatedGroups;
+        uint256[] activeTerminatedGroups;
         mapping (bytes => address[]) groupMembers;
 
         // Sum of all group member rewards earned so far. The value is the same for
@@ -47,7 +52,8 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) internal {
-        self.groups.push(Group(groupPubKey, block.number));
+        self.groupIndices[groupPubKey] = (self.groups.length | GROUP_INDEX_FLAG);
+        self.groups.push(Group(groupPubKey, uint64(block.number), false));
     }
 
     /**
@@ -155,7 +161,8 @@ library Groups {
         Storage storage self,
         uint256 groupIndex
     ) internal {
-        self.terminatedGroups.push(groupIndex);
+        self.groups[groupIndex].terminated = true;
+        self.activeTerminatedGroups.push(groupIndex);
     }
 
     /**
@@ -165,12 +172,7 @@ library Groups {
         Storage storage self,
         uint256 groupIndex
     ) internal view returns(bool) {
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.terminatedGroups[i] == groupIndex) {
-                return true;
-            }
-        }
-        return false;
+        return self.groups[groupIndex].terminated;
     }
 
     /**
@@ -180,12 +182,9 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) internal view returns(bool) {
-        for (uint i = 0; i < self.groups.length; i++) {
-            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return true;
-            }
-        }
-        return false;
+        // Values in `groupIndices` are flagged with `GROUP_INDEX_FLAG`
+        // and thus nonzero, even for group 0
+        return self.groupIndices[groupPubKey] > 0;
     }
 
     /**
@@ -196,7 +195,7 @@ library Groups {
         Storage storage self,
         Group memory group
     ) internal view returns(uint256) {
-        return group.registrationBlockHeight.add(self.groupActiveTime);
+        return uint256(group.registrationBlockHeight).add(self.groupActiveTime);
     }
 
     /**
@@ -224,15 +223,12 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) public view returns(bool) {
-        for (uint i = 0; i < self.groups.length; i++) {
-            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                bool isExpired = self.expiredGroupOffset > i;
-                bool isStale = groupStaleTime(self, self.groups[i]) < block.number;
-                return isExpired && isStale;
-            }
-        }
-
-        revert("Group does not exist");
+        uint256 flaggedIndex = self.groupIndices[groupPubKey];
+        require(flaggedIndex != 0, "Group does not exist");
+        uint256 index = flaggedIndex ^ GROUP_INDEX_FLAG;
+        bool isExpired = self.expiredGroupOffset > index;
+        bool isStale = groupStaleTime(self, self.groups[index]) < block.number;
+        return isExpired && isStale;
     }
 
     /**
@@ -258,7 +254,7 @@ library Groups {
     function numberOfGroups(
         Storage storage self
     ) internal view returns(uint256) {
-        return self.groups.length.sub(self.expiredGroupOffset).sub(self.terminatedGroups.length);
+        return self.groups.length.sub(self.expiredGroupOffset).sub(self.activeTerminatedGroups.length);
     }
 
     /**
@@ -273,14 +269,14 @@ library Groups {
             self.expiredGroupOffset++;
         }
 
-        // Go through all terminatedGroups and if some of the terminated
-        // groups are expired, remove them from terminatedGroups collection.
+        // Go through all activeTerminatedGroups and if some of the terminated
+        // groups are expired, remove them from activeTerminatedGroups collection.
         // This is needed because we evaluate the shift of selected group index
         // based on how many non-expired groups has been terminated.
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.expiredGroupOffset > self.terminatedGroups[i]) {
-                self.terminatedGroups[i] = self.terminatedGroups[self.terminatedGroups.length - 1];
-                self.terminatedGroups.length--;
+        for (uint i = 0; i < self.activeTerminatedGroups.length; i++) {
+            if (self.expiredGroupOffset > self.activeTerminatedGroups[i]) {
+                self.activeTerminatedGroups[i] = self.activeTerminatedGroups[self.activeTerminatedGroups.length - 1];
+                self.activeTerminatedGroups.length--;
             }
         }
     }
@@ -324,8 +320,8 @@ library Groups {
         uint256 selectedIndex
     ) internal view returns(uint256) {
         uint256 shiftedIndex = selectedIndex;
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.terminatedGroups[i] <= shiftedIndex) {
+        for (uint i = 0; i < self.activeTerminatedGroups.length; i++) {
+            if (self.activeTerminatedGroups[i] <= shiftedIndex) {
                 shiftedIndex++;
             }
         }
