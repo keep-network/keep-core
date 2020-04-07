@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 /// @title GrantStakingPolicy
 /// @dev A staking policy defines the function `getStakeableAmount`
