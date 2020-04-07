@@ -761,9 +761,10 @@ describe('TokenStaking', function() {
       const delegationTime = time.duration.seconds(10)
 
       let currentTime = await time.latest()
+      let undelegateAt = currentTime.add(initializationPeriod).add(delegationTime)
       await stakingContract.undelegateAt(
         operatorOne, 
-        currentTime.add(initializationPeriod).add(delegationTime), 
+        undelegateAt,
         {from: ownerOne}
       );
 
@@ -774,7 +775,7 @@ describe('TokenStaking', function() {
         "Eligible stake should equal staked amount"
       )
 
-      await time.increase(delegationTime.subn(1));
+      await time.increaseTo(undelegateAt.subn(1));
       eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(
         stakingAmount,
