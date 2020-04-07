@@ -692,13 +692,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Gets all indices in the provided group for a member.
-     */
-    function getGroupMemberIndices(bytes memory groupPubKey, address member) public view returns (uint256[] memory indices) {
-        return groups.getGroupMemberIndices(groupPubKey, member);
-    }
-
-    /**
      * @notice Return whether the given operator
      * has withdrawn their rewards from the given group.
      */

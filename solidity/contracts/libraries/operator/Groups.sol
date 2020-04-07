@@ -134,31 +134,6 @@ library Groups {
     }
 
     /**
-     * @dev Gets all indices in the provided group for a member.
-     */
-    function getGroupMemberIndices(
-        Storage storage self,
-        bytes memory groupPubKey,
-        address member
-    ) public view returns (uint256[] memory indices) {
-        uint256 counter;
-        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
-            if (self.groupMembers[groupPubKey][i] == member) {
-                counter++;
-            }
-        }
-
-        indices = new uint256[](counter);
-        counter = 0;
-        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
-            if (self.groupMembers[groupPubKey][i] == member) {
-                indices[counter] = i;
-                counter++;
-            }
-        }
-    }
-
-    /**
      * @dev Terminates group.
      */
     function terminateGroup(
