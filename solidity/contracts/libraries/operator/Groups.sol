@@ -364,9 +364,11 @@ library Groups {
     }
 
     /**
-     * @dev Returns addresses of all the members in the provided group.
+     * @dev Returns members of the given group by group public key.
+     *
+     * @param groupPubKey Group public key.
      */
-    function membersOf(
+    function getGroupMembers(
         Storage storage self,
         bytes memory groupPubKey
     ) public view returns (address[] memory members) {
@@ -376,7 +378,7 @@ library Groups {
     /**
      * @dev Returns addresses of all the members in the provided group.
      */
-    function membersOf(
+    function getGroupMembers(
         Storage storage self,
         uint256 groupIndex
     ) public view returns (address[] memory members) {
@@ -424,15 +426,18 @@ library Groups {
         // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
         uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
         rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
-        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, membersOf(self, groupIndex));
+        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, getGroupMembers(self, groupIndex));
     }
 
     /**
-     * @dev Returns members of the given group by group public key.
-     *
-     * @param groupPubKey Group public key.
+     * @notice Return whether the given operator
+     * has withdrawn their rewards from the given group.
      */
-    function getGroupMembers(Storage storage self, bytes memory groupPubKey) public view returns (address[] memory ) {
-        return self.groupMembers[groupPubKey];
+    function hasWithdrawnRewards(
+        Storage storage self,
+        address operator,
+        uint256 groupIndex
+    ) public view returns (bool) {
+        return self.withdrawn[getGroupPublicKey(self, groupIndex)][operator];
     }
 }

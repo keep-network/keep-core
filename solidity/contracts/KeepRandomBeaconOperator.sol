@@ -699,6 +699,15 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
+     * @notice Return whether the given operator
+     * has withdrawn their rewards from the given group.
+     */
+    function hasWithdrawnRewards(address operator, uint256 groupIndex)
+        public view returns (bool) {
+        return groups.hasWithdrawnRewards(operator, groupIndex);
+    }
+
+    /**
      * @dev Withdraws accumulated group member rewards for operator
      * using the provided group index.
      * Once the accumulated reward is withdrawn from the selected group,
