@@ -16,8 +16,8 @@ const keepContractOwnerProvider = new HDWalletProvider(
 )
 
 // Contract artifacts
-var tokenGrantJsonFile = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
-var keepTokenJsonFile  = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
+const tokenGrantJsonFile = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
+const keepTokenJsonFile = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
 
 // Parse grantee account address
 const { parseAccountAddress } = require('./parse-account-address.js')
@@ -61,8 +61,8 @@ exports.issueGrant = async (request, response) => {
     const start = Math.floor(Date.now() / 1000)
     const cliff = 0
     const revocable = true
-    var tokens = 300000
-    var grantBalance = await tokenGrant.methods.balanceOf(granteeAccount).call()
+    const tokens = 300000
+    const grantBalance = await tokenGrant.methods.balanceOf(granteeAccount).call()
     var grantAmount = formatAmount(tokens, 18)
 
     if (grantBalance.gte(grantAmount)) {
@@ -73,7 +73,6 @@ exports.issueGrant = async (request, response) => {
         If you have questions find us on Discord: https://discord.gg/jqxBU4m\n`
       )
     } else {
-
       var grantAmount = formatAmount((grantAmount - grantBalance), 0)
       const grantData =
         Buffer.concat([
@@ -81,8 +80,8 @@ exports.issueGrant = async (request, response) => {
           web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
           web3.utils.toBN(start).toBuffer('be', 32),
           web3.utils.toBN(cliff).toBuffer('be', 32),
-          Buffer.from(revocable ? "01" : "00", 'hex'),
-      ])
+          Buffer.from(revocable ? '01' : '00', 'hex'),
+        ])
 
       await keepToken.methods
         .approveAndCall(
@@ -97,14 +96,14 @@ exports.issueGrant = async (request, response) => {
         Created token grant with ${web3.utils.toBN(grantAmount)} KEEP for account: ${granteeAccount}
         You can manage your token grants at: https://dashboard.test.keep.network
         You can find us on Discord at: https://discord.gg/jqxBU4m\n`
-      )}
-    } catch (error) {
-      console.log(error)
-      return response.send(`
+      )
+    }
+  } catch (error) {
+    console.log(error)
+    return response.send(`
         Token grant failed, try again.
         If problems persist find us on Discord: https://discord.gg/jqxBU4m\n`
-      )
-
+    )
   }
 }
 
