@@ -184,7 +184,10 @@ Application configurations are stored in a `.toml` file and passed to the applic
 |Yes
 
 |`AnnouncedAddresses`
-|Multiaddr formatted hostnames or addresses annouced to the Keep Network. More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[here].
+|Multiaddr formatted hostnames or addresses annouced to the
+Keep Network. More on multiaddr format
+https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p
+reference].
 |[""]
 |No
 |===
@@ -398,5 +401,4 @@ Keep uses the Ethereum Ropsten Testnet.
 |KeepRandomBeaconOperator
 |`0x8d804f0c36d2c3A40EE128B7a01fe5269D511206`
 |===
-
 
