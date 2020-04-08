@@ -8,7 +8,11 @@ toc::[]
 
 == System Considerations
 
-- It is paramount that Keep nodes remain available to the Keep network. We encourage a stable and redundant internet connection.
+The Keep Network expects certain capabilites for each node running on the network.  To help attain
+these capabilities consider the following criteria:
+
+- It is paramount that Keep nodes remain available to the Keep Network. We strongly encourage a
+  stable and redundant internet connection.
 - A connection to a production grade self-hosted or third party Ethereum node deployment.
 - Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
 - Each random beacon client running on the network requires a unique Ethereum operator account.
