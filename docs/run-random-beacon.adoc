@@ -376,49 +376,26 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 ==== Contracts
 
+Contract addresses needed to boot the Random Beacon client.
+
 [%header,cols=2*]
 |===
 |Token
 |
 
-|KeepToken
-|`0xEF26cE3a729d4420558B10b8d9475CB84DA832c1`
-
 |TokenStaking
-|`0x585A83EdA3d29e030C49A51B46B653FEcd9c5919`
-
-|TokenGrant
-|`0xbf9c8f1125a34725CCe9a11a1b32509ED6773390`
-|===
-
-[%header,cols=2*]
-|===
-|Group
-|
-
-|Groups
-|`0xc75Df8B0aF13EFba5b44Fa2585998b208378c2E2`
-
-|GroupSelection
-|`0x49e75D5714fb92b061ED1863626BCBd458E2370f`
-|===
+|`0xE2Eda1d802e4aB47631500e3e6F30118350C5f1B`
 
 [%header,cols=2*]
 |===
 |RandomBeacon
 |
 
-|DKGResultVerification
-|`0x721EA02c31Ed7bc0E5e6F015F0F35cE6481355e4`
-
-|KeepRandomBeaconServiceImplV1
-|`0xb8548Db4469A32f14724a0c1e436D19Fdf0Ace1A`
-
 |KeepRandomBeaconService
-|`0x17c43Fb5035b89a51b3481f7Dd11a987E7A8720d`
+|`0xf991573a359a57bF840E65147C56305828a283fE`
 
 |KeepRandomBeaconOperator
-|`0x8d804f0c36d2c3A40EE128B7a01fe5269D511206`
+|`0xbe388aC5b4EE6EA912036b91D4b31f818043aF04`
 |===
 
 
