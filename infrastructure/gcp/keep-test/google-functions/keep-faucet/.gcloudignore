@@ -13,6 +13,7 @@
 .git
 .gitignore
 
+deploy-faucet.sh
 node_modules
 
 .eslintrc.js
