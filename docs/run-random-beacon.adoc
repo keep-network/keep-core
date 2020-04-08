@@ -188,7 +188,10 @@ Application configurations are stored in a `.toml` file and passed to the applic
 |Yes
 
 |`AnnouncedAddresses`
-|Multiaddr formatted hostnames or addresses annouced to the Keep Network. More on multiaddr format https://docs.libp2p.io/reference/glossary/#multiaddr[here].
+|Multiaddr formatted hostnames or addresses annouced to the
+Keep Network. More on multiaddr format
+https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p
+reference].
 |[""]
 |No
 |===
@@ -401,5 +404,4 @@ Contract addresses needed to boot the Random Beacon client.
 |KeepRandomBeaconOperator
 |`0xbe388aC5b4EE6EA912036b91D4b31f818043aF04`
 |===
-
 
