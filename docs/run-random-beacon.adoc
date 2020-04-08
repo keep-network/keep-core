@@ -344,6 +344,28 @@ Trust math, not hardware.
 
 Keep uses the Ethereum Ropsten Testnet.
 
+==== Faucet
+
+The KEEP faucet will will issue a 300k KEEP token grant for the provided Ethereum account.  You can
+use the faucet from your web browser or via a terminal using curl.
+
+Faucet Endpoint: https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten
+
+To use the faucet you need to pass your Ethereum account to the faucet endpoint with the parameter
+`?account=<eth-account-address>`.
+
+Curl Example:
+```
+curl https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten'?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE'
+```
+
+Browser Example:
+```
+https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE
+```
+
+Once you've got your KEEP token grant you can manage it with our https://dashboard.test.keep.network[token dashboard].
+
 ==== Bootstrap Peers
 
 [small]*`"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH"`*
