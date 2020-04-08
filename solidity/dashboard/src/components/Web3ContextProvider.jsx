@@ -66,6 +66,7 @@ export default class Web3ContextProvider extends React.Component {
         web3,
         provider: providerName,
         yourAddress: account,
+        networkType: await web3.eth.net.getNetworkType(),
       }, this.setData)
     }
 
