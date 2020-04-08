@@ -6,31 +6,31 @@ import { useWeb3Context } from './WithWeb3Context'
 const WALLETS = [
   {
     label: 'MetaMask',
-    iconSrc: '/images/metamask.svg',
+    icon: <Icons.MetaMask />,
     providerName: 'METAMASK',
     type: 'web wallet',
-    description: 'Use the MetaMask extension to access my wallet. Don’t have it? Download here.',
+    description: 'Crypto wallet that’s a web browser plugin.',
   },
   {
     label: 'Coinbase',
-    iconSrc: '/images/coinbase.svg',
+    icon: <Icons.Coinbase />,
     providerName: 'COINBASE',
     type: 'web wallet',
-    description: 'Connect to your Coinbase wallet.',
+    description: 'Crypto wallet that’s a web browser plugin.',
   },
   {
     label: 'Ledger',
-    iconSrc: '/images/ledger.svg',
+    icon: <Icons.Ledger />,
     providerName: 'LEDGER',
     type: 'hardware wallet',
-    description: 'You will need your Ledger device plugged into your USB drive.',
+    description: 'Crypto wallet on a secure hardware device.',
   },
   {
     label: 'Trezor',
-    iconSrc: '/images/trezor.svg',
+    icon: <Icons.Trezor />,
     providerName: 'TREZOR',
     type: 'hardware wallet',
-    description: 'You will need your Trezor device plugged into your USB drive.',
+    description: 'Crypto wallet on a secure hardware device.',
   },
 ]
 
@@ -57,7 +57,7 @@ const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
 const Wallet = ({
   label,
-  iconSrc,
+  icon,
   providerName,
   type,
   description,
@@ -66,9 +66,7 @@ const Wallet = ({
 
   return (
     <li className="wallet" onClick={() => connectAppWithWallet(providerName)}>
-      <div className="wallet-img">
-        <img src={iconSrc} alt={label} />
-      </div>
+      {icon}
       <div className="flex row center">
         <h4 className="mr-1">{label}</h4>
         <Icons.ArrowRight />

@@ -45,22 +45,23 @@
                 text-decoration: underline;
             }
 
-            .wallet-img {
-                background-color: @primary-color;
+            .wallet-icon { 
+                > circle {
+                    fill: @primary-color !important;;
+                }
+                > * {
+                    fill: @color-black;
+                }
+                &.coinbase {
+                    .c-letter {
+                        stroke: @color-black;
+                    }
+                }
             }
         }
 
-        &-img {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            border-radius: 50%;
+        &-icon {
             margin-bottom: 2rem;
-
-            img {
-                padding: 1rem;
-            }
         }
     }
 }
