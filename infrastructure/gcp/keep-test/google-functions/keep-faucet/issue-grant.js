@@ -67,7 +67,6 @@ exports.issueGrant = async (request, response) => {
         You can manage your token grants at: https://dashboard.test.keep.network
         If you have questions find us on Discord: https://discord.gg/jqxBU4m\n`)
     } else {
-      var grantAmount = formatAmount(grantAmount - grantBalance, 0)
       const grantData = Buffer.concat([
         Buffer.from(granteeAccount.substr(2), 'hex'),
         web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
