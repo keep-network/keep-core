@@ -14,7 +14,7 @@ toc::[]
 - Each random beacon client running on the network requires a unique Ethereum operator account.
 - Each random beacon client running on the network requires a unique IP address or a unique
   application port running under the same IP.
-- Machines:
+- Recommended machine types by provider:
 
 [%header,cols=2*]
 |===
