@@ -21,8 +21,9 @@ repos:
       - --config=solidity/.soliumrc.json
       additional_dependencies:
       - ethlint@1.2.3
- - repo: https://github.com/prettier/prettier
-   rev: "master" # Use the sha or tag you want to point at
-   hooks:
-    - id: prettier
+    - id: lint-js
+      name: 'lint js'
+      entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
       files: '\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"
