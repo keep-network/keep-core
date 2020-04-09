@@ -339,7 +339,7 @@ To use the faucet you need to pass your Ethereum account to the faucet endpoint 
 
 Curl Example:
 ```
-curl https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten'?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE'
+curl 'https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE'
 ```
 
 Browser Example:
