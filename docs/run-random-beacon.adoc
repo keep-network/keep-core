@@ -220,7 +220,7 @@ See the https://github.com/keep-network/keep-core/tree/master/docs/development#b
 Doesn't exist for the public yet.
 
 === Run Image
-This is a sample run command to for illustration purposes only.
+This is a sample run command for illustration purposes only.
 
 ```
 export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
