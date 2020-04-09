@@ -11,8 +11,6 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/ipfs/go-log"
 
 	crand "crypto/rand"
@@ -113,11 +111,15 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 
 	c.tickets = append(c.tickets, ticket)
 	sort.SliceStable(c.tickets, func(i, j int) bool {
-		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
+		// Ticket value bytes are interpreted as a big-endian unsigned integers.
+		iValue := new(big.Int).SetBytes(c.tickets[i].Value[:])
+		jValue := new(big.Int).SetBytes(c.tickets[j].Value[:])
+
+		return iValue.Cmp(jValue) == -1
 	})
 
 	_ = promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.Value,
+		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
 		BlockNumber: c.simulatedHeight,
 	})
 
@@ -128,8 +130,7 @@ func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(c.tickets))
 
 	for i := range tickets {
-		valueBytes := common.LeftPadBytes(c.tickets[i].Value.Bytes(), 32)
-		tickets[i] = binary.BigEndian.Uint64(valueBytes)
+		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].Value[:])
 	}
 
 	return tickets, nil
