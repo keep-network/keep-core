@@ -1,14 +1,13 @@
 const blsData = require("../helpers/data.js")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts} = require("@openzeppelin/test-environment")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 
 describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
   let operatorContract, serviceContract, fee;
-  const blocksForward = 20;
+  const blocksForward = web3.utils.toBN(20);
   const requestCounter = 0;
 
   before(async() => {
@@ -45,7 +44,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
-    mineBlocks(blocksForward)
+    await time.advanceBlockTo(blocksForward.addn(await web3.eth.getBlockNumber()))
 
     await operatorContract.sign(
       requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
@@ -88,7 +87,8 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    const relayEntryTimeout = await operatorContract.relayEntryTimeout()
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()))
 
     await expectRevert(
       operatorContract.relayEntry(blsData.groupSignature), 
