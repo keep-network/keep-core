@@ -155,9 +155,6 @@ func TestPackTicket(t *testing.T) {
 		return bigInt
 	}
 
-	ticketValue := [8]byte{255, 255, 255, 255, 255, 255, 255, 255}
-	stakerValue := toBigInt("471938313681866282067432403796053736964016932944")
-
 	var tests = map[string]struct {
 		ticketValue        [8]byte
 		stakerValue        *big.Int
@@ -165,14 +162,14 @@ func TestPackTicket(t *testing.T) {
 		expectedPacked     string
 	}{
 		"virtual staker index minimum value": {
-			ticketValue:        ticketValue,
-			stakerValue:        stakerValue,
+			ticketValue:        [8]byte{255, 255, 255, 255, 255, 255, 255, 255},
+			stakerValue:        toBigInt("471938313681866282067432403796053736964016932944"),
 			virtualStakerIndex: toBigInt("1"),
 			expectedPacked:     "ffffffffffffffff52aa72262c904281c49765499f85a774c459885000000001",
 		},
 		"virtual staker index maximum value": {
-			ticketValue:        ticketValue,
-			stakerValue:        stakerValue,
+			ticketValue:        [8]byte{255, 255, 255, 255, 255, 255, 255, 255},
+			stakerValue:        toBigInt("471938313681866282067432403796053736964016932944"),
 			virtualStakerIndex: toBigInt("4294967295"),
 			expectedPacked:     "ffffffffffffffff52aa72262c904281c49765499f85a774c4598850ffffffff",
 		},
