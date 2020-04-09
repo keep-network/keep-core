@@ -1,9 +1,9 @@
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 
 describe('KeepRandomBeaconOperator/PricingRewards', function() {
   let serviceContract;
@@ -46,7 +46,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
+    await time.advanceBlockTo(relayEntryGenerationTime.addn(1).addn(await web3.eth.getBlockNumber()));
 
     let delayFactor = await operatorContract.delayFactor.call();
 
@@ -58,7 +59,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
+    await time.advanceBlockTo(relayEntryGenerationTime.addn(2).addn(await web3.eth.getBlockNumber()));
 
     let delayFactor = await operatorContract.delayFactor.call();
 
@@ -70,7 +72,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     let delayFactor = await operatorContract.delayFactor.call();        
 
@@ -122,7 +125,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1)); 
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
+    await time.advanceBlockTo(relayEntryGenerationTime.addn(1).addn(await web3.eth.getBlockNumber()));
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -159,7 +163,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));  
+    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
+    await time.advanceBlockTo(relayEntryGenerationTime.addn(2).addn(await web3.eth.getBlockNumber()));
 
     // There is one block of delay so the delay factor is 0.9896104600694443.
     // Group member reward should be scaled by the delay factor: 
@@ -215,7 +220,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}); 
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     // There is one block left before the timeout so the delay factor is 
     // 0.0000271267361111.
