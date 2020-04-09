@@ -141,7 +141,7 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     let submissionStartBlock = currentEntryStartBlock.addn(1);
     let decimalPoints = web3.utils.toBN(1e16);
 
-    await time.advanceBlockTo((await web3.eth.getBlockNumber()) + 1)
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
