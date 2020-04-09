@@ -392,6 +392,7 @@ Contract addresses needed to boot the Random Beacon client.
 
 |TokenStaking
 |`0xE2Eda1d802e4aB47631500e3e6F30118350C5f1B`
+|===
 
 [%header,cols=2*]
 |===
