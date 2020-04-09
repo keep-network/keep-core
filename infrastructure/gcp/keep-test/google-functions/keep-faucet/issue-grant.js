@@ -56,7 +56,7 @@ exports.issueGrant = async (request, response) => {
     const grantBalance = await tokenGrant.methods
       .balanceOf(granteeAccount)
       .call()
-    var grantAmount = formatAmount(tokens, 18)
+    let grantAmount = formatAmount(tokens, 18)
 
     if (grantBalance.gte(grantAmount)) {
       console.log(
