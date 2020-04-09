@@ -51,7 +51,7 @@ exports.issueGrant = async (request, response) => {
     const unlockingDuration = 0
     const start = Math.floor(Date.now() / 1000)
     const cliff = 0
-    const revocable = true
+    const revocable = false
     const tokens = 300000
     const grantBalance = await tokenGrant.methods
       .balanceOf(granteeAccount)
