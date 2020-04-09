@@ -18,8 +18,11 @@ func TestSubmitTicketAndGetSelectedParticipants(t *testing.T) {
 	groupSize := 4
 
 	generateTicket := func(index int64) *relaychain.Ticket {
+		var value [8]byte
+		copy(value[:], common.LeftPadBytes(big.NewInt(10*index).Bytes(), 8))
+
 		return &relaychain.Ticket{
-			Value: big.NewInt(10 * index),
+			Value: value,
 			Proof: &relaychain.TicketProof{
 				StakerValue:        big.NewInt(100 * index),
 				VirtualStakerIndex: big.NewInt(index),
