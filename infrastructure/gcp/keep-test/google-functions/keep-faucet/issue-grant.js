@@ -15,8 +15,8 @@ const keepContractOwnerProvider = new HDWalletProvider(
 )
 
 // Contract artifacts
-const tokenGrantJsonFile = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
-const keepTokenJsonFile = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
+const tokenGrantJson = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
+const keepTokenJson = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
 
 // Parse grantee account address
 const { parseAccountAddress } = require('./parse-account-address.js')
@@ -36,13 +36,13 @@ const web3Options = {
 const web3 = new Web3(keepContractOwnerProvider, null, web3Options)
 
 // TokenGrant
-const tokenGrantAbi = tokenGrantJsonFile.abi
-const tokenGrantAddress = tokenGrantJsonFile.networks[ethereumNetworkId].address
+const tokenGrantAbi = tokenGrantJson.abi
+const tokenGrantAddress = tokenGrantJson.networks[ethereumNetworkId].address
 const tokenGrant = new web3.eth.Contract(tokenGrantAbi, tokenGrantAddress)
 
 // KeepToken
-const keepTokenAbi = keepTokenJsonFile.abi
-const keepTokenAddress = keepTokenJsonFile.networks[ethereumNetworkId].address
+const keepTokenAbi = keepTokenJson.abi
+const keepTokenAddress = keepTokenJson.networks[ethereumNetworkId].address
 const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
 
 exports.issueGrant = async (request, response) => {
