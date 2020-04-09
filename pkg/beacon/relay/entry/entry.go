@@ -146,6 +146,11 @@ func SignAndSubmit(
 		index:        signer.MemberID(),
 	}
 
+	// relayEntrySubmittedChannel and relayEntryTimeoutChannel are passed to
+	// the submitter. This should be done because no entry submission or
+	// timeout signal appeared while executing the message loop. There is
+	// still a possibility those signals appear in the future so the submitter
+	// must be aware of them and break the execution if they occur.
 	return submitter.submitRelayEntry(
 		signature.Marshal(),
 		signer.GroupPublicKeyBytes(),
