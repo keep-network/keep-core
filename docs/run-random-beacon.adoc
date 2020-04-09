@@ -361,7 +361,7 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 ==== Contracts
 
-Contract addresses needed to boot the Random Beacon client.
+Contract addresses needed to boot the Random Beacon client:
 
 [%header,cols=2*]
 |===
