@@ -47,7 +47,7 @@
     "ethereumjs-abi": "^0.6.5",
     "mocha": "^7.1.1",
     "mocha-junit-reporter": "^1.23.1",
-    "solc": "^0.5.7",
+    "solc": "0.5.17",
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
     "truffle": "^5.1.9",
