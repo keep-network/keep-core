@@ -4,7 +4,7 @@ const url = require('url')
 exports.parseAccountAddress = (request, response) => {
   const requestUrl = url.parse(request.url, true)
   const account = requestUrl.query.account
-  if (requestUrl.query.account) {
+  if (account) {
     return account
   } else if (!/^(0x)?[0-9a-f]{40}$/i.test(account)) {
     // check if it has the basic requirements of an account
