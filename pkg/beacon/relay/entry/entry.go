@@ -80,7 +80,7 @@ func SignAndSubmit(
 		receiveChannel <- netMessage
 	})
 
-	receivedShares := map[group.MemberIndex]*bn256.G1{
+	receivedValidShares := map[group.MemberIndex]*bn256.G1{
 		signer.MemberID(): selfShare,
 	}
 
@@ -88,7 +88,7 @@ func SignAndSubmit(
 	// shares is equal to the honest threshold. Message loop will be also
 	// terminated if an other member submits the result or the relay entry
 	// timeout block is reached.
-	for len(receivedShares) < honestThreshold {
+	for len(receivedValidShares) < honestThreshold {
 		select {
 		case netMessage := <-receiveChannel:
 			message, ok := netMessage.Payload().(*SignatureShareMessage)
@@ -118,7 +118,7 @@ func SignAndSubmit(
 				message.senderID,
 			)
 
-			receivedShares[message.senderID] = share
+			receivedValidShares[message.senderID] = share
 		case blockNumber := <-relayEntrySubmittedChannel:
 			logger.Infof(
 				"[member:%v] leaving message loop; "+
@@ -135,7 +135,7 @@ func SignAndSubmit(
 		}
 	}
 
-	signature, err := completeSignature(signer, receivedShares, honestThreshold)
+	signature, err := completeSignature(signer, receivedValidShares, honestThreshold)
 	if err != nil {
 		return err
 	}
@@ -193,7 +193,7 @@ func extractAndValidateShare(
 	if !ok {
 		return nil, fmt.Errorf(
 			"could not validate signature share; " +
-				"group public key share not found",
+				"group public key share for sender not found",
 		)
 	}
 
