@@ -87,9 +87,8 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
 
     let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
     let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
-    let entryReceivedBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let entryReceivedBlock = currentEntryStartBlock.addn(1);
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
     let submissionWindow = deadlineBlock.sub(entryReceivedBlock);
     let decimalPoints = web3.utils.toBN(1e16);
@@ -138,12 +137,11 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
 
     let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
     let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).addn(1);
-    let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let submissionStartBlock = currentEntryStartBlock.addn(1);
     let decimalPoints = web3.utils.toBN(1e16);
 
-    await time.advanceBlockTo(relayEntryGenerationTime.addn(1).addn(await web3.eth.getBlockNumber()))
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);

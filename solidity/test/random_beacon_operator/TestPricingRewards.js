@@ -46,8 +46,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    await time.advanceBlockTo(relayEntryGenerationTime.addn(1).addn(await web3.eth.getBlockNumber()));
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     let delayFactor = await operatorContract.delayFactor.call();
 
@@ -59,8 +58,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    await time.advanceBlockTo(relayEntryGenerationTime.addn(2).addn(await web3.eth.getBlockNumber()));
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(2));
 
     let delayFactor = await operatorContract.delayFactor.call();
 
@@ -125,8 +123,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    await time.advanceBlockTo(relayEntryGenerationTime.addn(1).addn(await web3.eth.getBlockNumber()));
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -163,8 +160,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    await time.advanceBlockTo(relayEntryGenerationTime.addn(2).addn(await web3.eth.getBlockNumber()));
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(2));
 
     // There is one block of delay so the delay factor is 0.9896104600694443.
     // Group member reward should be scaled by the delay factor: 
