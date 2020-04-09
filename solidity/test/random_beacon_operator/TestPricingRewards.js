@@ -1,9 +1,9 @@
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 
 describe('KeepRandomBeaconOperator/PricingRewards', function() {
   let serviceContract;
@@ -46,7 +46,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks(1);
+    await time.advanceBlockTo((await web3.eth.getBlockNumber()) + 1);
 
     let delayFactor = await operatorContract.delayFactor.call();
 
@@ -58,7 +58,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks(2);
+    await time.advanceBlockTo(await web3.eth.getBlockNumber() + 2);
 
     let delayFactor = await operatorContract.delayFactor.call();
 
@@ -70,7 +70,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     let delayFactor = await operatorContract.delayFactor.call();        
 
@@ -122,7 +123,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    mineBlocks(1);
+    await time.advanceBlockTo((await web3.eth.getBlockNumber()) + 1);
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -159,7 +160,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    mineBlocks(2); 
+    await time.advanceBlockTo((await web3.eth.getBlockNumber()) + 2);
 
     // There is one block of delay so the delay factor is 0.9896104600694443.
     // Group member reward should be scaled by the delay factor: 
@@ -215,7 +216,8 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}); 
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     // There is one block left before the timeout so the delay factor is 
     // 0.0000271267361111.
