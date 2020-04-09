@@ -1,9 +1,9 @@
-const mineBlocks = require('../helpers/mineBlocks')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 const CallbackContract = contract.fromArtifact('CallbackContract')
 
 describe('TestKeepRandomBeaconService/Pricing', function() {
@@ -143,7 +143,7 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
     let decimalPoints = web3.utils.toBN(1e16);
 
-    mineBlocks(relayEntryGenerationTime.toNumber() + 1);
+    await time.advanceBlockTo(relayEntryGenerationTime.addn(1).addn(await web3.eth.getBlockNumber()))
 
     let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
