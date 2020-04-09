@@ -1,13 +1,14 @@
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
-const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
+const GuaranteedMinimumStakingPolicy = contract.fromArtifact('GuaranteedMinimumStakingPolicy');
 
-contract('PermissiveStakingPolicy', async (accounts) => {
+describe('PermissiveStakingPolicy', async () => {
   let policy;
   let amount = 10000;
   let start = 1000;
@@ -55,7 +56,7 @@ contract('PermissiveStakingPolicy', async (accounts) => {
   });
 });
 
-contract('GuaranteedMinimumStakingPolicy', async (accounts) => {
+describe('GuaranteedMinimumStakingPolicy', async () => {
   let policy;
   let stakingContract;
   let minimumStake;

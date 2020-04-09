@@ -85,7 +85,7 @@ const removeFromDelegationOrUndelegation = (array, id) => {
   return array
 }
 
-const grantStaked = (grants, { grantId, amount }) => {
+const grantStaked = (grants, { grantId, amount, availableToStake }) => {
   const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, grants)
   if (indexInArray === null) {
     return grants
@@ -93,14 +93,13 @@ const grantStaked = (grants, { grantId, amount }) => {
   grantToUpdate.staked = add(grantToUpdate.staked, amount)
   grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
   grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0) ? grantToUpdate.readyToRelease : '0'
-  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
-  grantToUpdate.availableToStake = gte(grantToUpdate.availableToStake, 0) ? grantToUpdate.availableToStake : '0'
+  grantToUpdate.availableToStake = availableToStake
   grants[indexInArray] = grantToUpdate
 
   return grants
 }
 
-const grantWithdrawn = (grants, { grantId, amount }) => {
+const grantWithdrawn = (grants, { grantId, amount, availableToStake }) => {
   const { indexInArray, obj: grantToUpdate } = findIndexAndObject('id', grantId, grants)
   if (indexInArray === null) {
     return grants
@@ -108,8 +107,7 @@ const grantWithdrawn = (grants, { grantId, amount }) => {
   grantToUpdate.readyToRelease = '0'
   grantToUpdate.released = add(grantToUpdate.released, amount)
   grantToUpdate.unlocked = add(grantToUpdate.released, grantToUpdate.staked)
-  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
-  grantToUpdate.availableToStake = gte(grantToUpdate.availableToStake, 0) ? grantToUpdate.availableToStake : '0'
+  grantToUpdate.availableToStake = availableToStake
   grants[indexInArray] = grantToUpdate
 
   return grants

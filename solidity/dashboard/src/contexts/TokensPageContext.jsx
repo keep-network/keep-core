@@ -7,7 +7,9 @@ import tokensPageReducer, {
   REFRESH_KEEP_TOKEN_BALANCE,
   REFRESH_GRANT_TOKEN_BALANCE,
   SET_STATE,
-} from '../reducers/tokens-page.reducer.js'
+  GRANT_STAKED,
+  GRANT_WITHDRAWN,
+} from '../reducers/tokens-page.reducer'
 
 const tokesnPageServiceInitialData = {
   delegations: [],
@@ -81,6 +83,20 @@ const TokenPageContextProvider = (props) => {
     dispatch({ type: REFRESH_GRANT_TOKEN_BALANCE, payload: grantTokenBalance })
   }, [web3Context, dispatch])
 
+  const grantStaked = useCallback(async (grantId, amount) => {
+    const { grantContract } = web3Context
+
+    const availableToStake = await grantContract.methods.availableToStake(grantId).call()
+    dispatch({ type: GRANT_STAKED, payload: { grantId, amount, availableToStake } })
+  }, [web3Context, dispatch])
+
+  const grantWithdrawn = useCallback(async (grantId, amount) => {
+    const { grantContract } = web3Context
+
+    const availableToStake = await grantContract.methods.availableToStake(grantId).call()
+    dispatch({ type: GRANT_WITHDRAWN, payload: { grantId, amount, availableToStake } })
+  }, [web3Context, dispatch])
+
   return (
     <TokensPageContext.Provider value={{
       ...state,
@@ -89,6 +105,8 @@ const TokenPageContextProvider = (props) => {
       refreshGrantTokenBalance,
       refreshGrants,
       refreshData,
+      grantWithdrawn,
+      grantStaked,
     }}>
       {props.children}
     </TokensPageContext.Provider>

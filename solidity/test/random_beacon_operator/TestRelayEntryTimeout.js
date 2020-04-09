@@ -1,30 +1,32 @@
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import {bls} from '../helpers/data';
-import {initContracts} from '../helpers/initContracts';
-import mineBlocks from '../helpers/mineBlocks';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+const blsData = require("../helpers/data.js")
+const {expectRevert} = require("@openzeppelin/test-helpers")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts} = require("@openzeppelin/test-environment")
 
-contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
+describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
   let operatorContract, serviceContract, fee;
   const blocksForward = 20;
   const requestCounter = 0;
 
   before(async() => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     ); 
 
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
 
-    await operatorContract.addServiceContract(accounts[0])  
+    await operatorContract.addServiceContract(accounts[0], {from: accounts[0]})  
 
-    await operatorContract.registerNewGroup(bls.groupPubKey);
-    await operatorContract.setGroupMembers(bls.groupPubKey, [accounts[0]]);
+    await operatorContract.registerNewGroup(blsData.groupPubKey);
+    await operatorContract.setGroupMembers(blsData.groupPubKey, [accounts[0]]);
 
     fee = await serviceContract.entryFeeEstimate(0);
   });
@@ -40,13 +42,13 @@ contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
   it("should not throw an error when entry is in progress and " +
      "block number > relay entry timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.previousEntry, {value: fee}
+      requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
     mineBlocks(blocksForward)
 
     await operatorContract.sign(
-      requestCounter, bls.previousEntry, {value: fee}
+      requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
     assert.equal(
@@ -59,11 +61,11 @@ contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
   it("should throw an error when entry is in progress and " + 
      "block number <= relay entry timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.previousEntry, {value: fee}
+      requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
-    await expectThrowWithMessage(
-      operatorContract.sign(requestCounter, bls.previousEntry, {value: fee}), 
+    await expectRevert(
+      operatorContract.sign(requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}), 
       "Beacon is busy"
     );
   });
@@ -71,7 +73,7 @@ contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
   it("should not throw an error when entry is not in progress and " + 
      "block number > relay entry timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.previousEntry, {value: fee}
+      requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
       );
 
     assert.equal(
@@ -83,13 +85,13 @@ contract("KeepRandomBeaconOperator/RelayEntryTimeout", function(accounts) {
 
   it("should not allow to submit relay entry after timeout", async () => {
     await operatorContract.sign(
-      requestCounter, bls.previousEntry, {value: fee}
+      requestCounter, blsData.previousEntry, {value: fee, from: accounts[0]}
     );
 
     mineBlocks(await operatorContract.relayEntryTimeout());
 
-    await expectThrowWithMessage(
-      operatorContract.relayEntry(bls.groupSignature), 
+    await expectRevert(
+      operatorContract.relayEntry(blsData.groupSignature), 
       "Entry timed out"
     );
   });

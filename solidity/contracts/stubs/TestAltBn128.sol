@@ -1,15 +1,29 @@
 pragma solidity ^0.5.4;
 
-import "truffle/Assert.sol";
-import "../../contracts/utils/ModUtils.sol";
-import "../../contracts/cryptography/AltBn128.sol";
+// it is just a stub, not a live deployment;
+// we are fine with experimental feature
+pragma experimental ABIEncoderV2;
+
+import "../cryptography/AltBn128.sol";
 
 contract TestAltBn128 {
+
+    function publicG1Unmarshal(bytes memory m) public pure returns(AltBn128.G1Point memory) {
+        return AltBn128.g1Unmarshal(m);
+    }
+
+    function publicG2Unmarshal(bytes memory m) public pure returns(AltBn128.G2Point memory) {
+        return AltBn128.g2Unmarshal(m);
+    }
+
+    function publicG2Decompress(bytes memory m) public pure returns(AltBn128.G2Point memory) {
+        return AltBn128.g2Decompress(m);
+    }
 
     AltBn128.G1Point g1 = AltBn128.g1();
     AltBn128.G2Point g2 = AltBn128.g2();
 
-    function testHashing() public {
+    function runHashingTest() public {
         string memory hello = "hello!";
         string memory goodbye = "goodbye.";
         AltBn128.G1Point memory p_1;
@@ -17,16 +31,16 @@ contract TestAltBn128 {
         p_1 = AltBn128.g1HashToPoint(bytes(hello));
         p_2 = AltBn128.g1HashToPoint(bytes(goodbye));
 
-        Assert.isNotZero(p_1.x, "X should not equal 0 in a hashed point.");
-        Assert.isNotZero(p_1.y, "Y should not equal 0 in a hashed point.");
-        Assert.isNotZero(p_2.x, "X should not equal 0 in a hashed point.");
-        Assert.isNotZero(p_2.y, "Y should not equal 0 in a hashed point.");
+        require(p_1.x != 0, "X should not equal 0 in a hashed point.");
+        require(p_1.y != 0, "Y should not equal 0 in a hashed point.");
+        require(p_2.x != 0, "X should not equal 0 in a hashed point.");
+        require(p_2.y != 0, "Y should not equal 0 in a hashed point.");
 
-        Assert.isTrue(AltBn128.isG1PointOnCurve(p_1), "Hashed points should be on the curve.");
-        Assert.isTrue(AltBn128.isG1PointOnCurve(p_2), "Hashed points should be on the curve.");
+        require(AltBn128.isG1PointOnCurve(p_1), "Hashed points should be on the curve.");
+        require(AltBn128.isG1PointOnCurve(p_2), "Hashed points should be on the curve.");
     }
 
-    function testHashAndAdd() public {
+    function runHashAndAddTest() public {
         string memory hello = "hello!";
         string memory goodbye = "goodbye.";
         AltBn128.G1Point memory p_1;
@@ -40,13 +54,13 @@ contract TestAltBn128 {
         p_3 = AltBn128.g1Add(p_1, p_2);
         p_4 = AltBn128.g1Add(p_2, p_1);
 
-        Assert.equal(p_3.x, p_4.x, "Point addition should be commutative.");
-        Assert.equal(p_3.y, p_4.y, "Point addition should be commutative.");
+        require(p_3.x == p_4.x, "Point addition should be commutative.");
+        require(p_3.y == p_4.y, "Point addition should be commutative.");
 
-        Assert.isTrue(AltBn128.isG1PointOnCurve(p_3), "Added points should be on the curve.");
+        require(AltBn128.isG1PointOnCurve(p_3), "Added points should be on the curve.");
     }
 
-    function testHashAndScalarMultiply() public {
+    function runHashAndScalarMultiplyTest() public {
         string memory hello = "hello!";
         AltBn128.G1Point memory p_1;
         AltBn128.G1Point memory p_2;
@@ -54,7 +68,7 @@ contract TestAltBn128 {
 
         p_2 = AltBn128.scalarMultiply(p_1, 12);
 
-        Assert.isTrue(AltBn128.isG1PointOnCurve(p_2), "Multiplied point should be on the curve.");
+        require(AltBn128.isG1PointOnCurve(p_2), "Multiplied point should be on the curve.");
     }
 
     uint256[2][] randomG1 = [
@@ -73,17 +87,33 @@ contract TestAltBn128 {
     ];
 
     uint256[4][] randomG2 = [
-        [11559732032986387107991004021392285783925812861821192530917403151452391805634, 10857046999023057135944570762232829481370756359578518086990519993285655852781,
-        4082367875863433681332203403145435568316851327593401208105741076214120093531, 8495653923123431417604973247489272438418190587263600148770280649306958101930],
-        [3558222795862351239338057832504031412042231518727744074889572712970741892158, 1306678064139060928090556321451178074402697032692562310283497263099767804676,
-        2316442485869095896235201578689810877812891214989209176315292141295656899653, 2999256016806770587400278223266487828070696882906920737522774393744811789778],
-        [14622493903084144595613313812136815995549249456289461446052351022658739726486, 14815420576980748908539135128242740015127336122409448605930237255046504879157,
-        13400921316097996971584638040633436051131826349725459963804926452735715285087, 11851371827558083239355447328198017836652007495098247662236445322029872280124],
-        [6217401439122098088765827257305726706731572245002926407946450711747381925871, 14805062536146767263542014365237987548032285721054252746437955688297149797718,
-        2682992062255943794448341271274355111144659536522130372456554423016095772641, 8381914770822556071474775460600158217731085727931186436939477443088764950881]
+        [
+            11559732032986387107991004021392285783925812861821192530917403151452391805634,
+            10857046999023057135944570762232829481370756359578518086990519993285655852781,
+            4082367875863433681332203403145435568316851327593401208105741076214120093531,
+            8495653923123431417604973247489272438418190587263600148770280649306958101930
+        ],
+        [
+            3558222795862351239338057832504031412042231518727744074889572712970741892158,
+            1306678064139060928090556321451178074402697032692562310283497263099767804676,
+            2316442485869095896235201578689810877812891214989209176315292141295656899653,
+            2999256016806770587400278223266487828070696882906920737522774393744811789778
+        ],
+        [
+            14622493903084144595613313812136815995549249456289461446052351022658739726486,
+            14815420576980748908539135128242740015127336122409448605930237255046504879157,
+            13400921316097996971584638040633436051131826349725459963804926452735715285087,
+            11851371827558083239355447328198017836652007495098247662236445322029872280124
+        ],
+        [
+            6217401439122098088765827257305726706731572245002926407946450711747381925871,
+            14805062536146767263542014365237987548032285721054252746437955688297149797718,
+            2682992062255943794448341271274355111144659536522130372456554423016095772641,
+            8381914770822556071474775460600158217731085727931186436939477443088764950881
+        ]
     ];
 
-    function testGfP2Add() public {
+    function runGfP2AddTest() public {
         uint i;
         uint8 j;
 
@@ -100,16 +130,16 @@ contract TestAltBn128 {
                 p_3 = AltBn128.gfP2Add(AltBn128.gfP2(randomG2[j][0], randomG2[j][1]), AltBn128.gfP2(randomG2[i][0], randomG2[i][1]));
                 p_4 = AltBn128.gfP2Add(AltBn128.gfP2(randomG2[j][2], randomG2[j][3]), AltBn128.gfP2(randomG2[i][2], randomG2[i][3]));
 
-                Assert.equal(p_1.x, p_3.x, "Point addition should be commutative.");
-                Assert.equal(p_1.y, p_3.y, "Point addition should be commutative.");
-                Assert.equal(p_2.x, p_4.x, "Point addition should be commutative.");
-                Assert.equal(p_2.y, p_4.y, "Point addition should be commutative.");
+                require(p_1.x == p_3.x, "Point addition should be commutative.");
+                require(p_1.y == p_3.y, "Point addition should be commutative.");
+                require(p_2.x == p_4.x, "Point addition should be commutative.");
+                require(p_2.y == p_4.y, "Point addition should be commutative.");
 
             }
         }
     }
 
-    function testAdd() public {
+    function runAddTest() public {
         uint i;
         uint8 j;
 
@@ -128,15 +158,15 @@ contract TestAltBn128 {
                     AltBn128.G1Point(randomG1[i][0], randomG1[i][1])
                 );
 
-                Assert.equal(p_1.x, p_2.x, "Point addition should be commutative.");
-                Assert.equal(p_1.y, p_2.y, "Point addition should be commutative.");
+                require(p_1.x == p_2.x, "Point addition should be commutative.");
+                require(p_1.y == p_2.y, "Point addition should be commutative.");
 
-                Assert.isTrue(AltBn128.isG1PointOnCurve(p_1), "Added points should be on the curve.");
+                require(AltBn128.isG1PointOnCurve(p_1), "Added points should be on the curve.");
             }
         }
     }
 
-    function testScalarMultiply() public {
+    function runScalarMultiplyTest() public {
         uint i;
         uint j;
 
@@ -146,24 +176,24 @@ contract TestAltBn128 {
         for (i = 1; i < randomG1.length; i++) {
             p_1 = AltBn128.scalarMultiply(AltBn128.G1Point(randomG1[i][0], randomG1[i][1]), i);
 
-            Assert.isTrue(AltBn128.isG1PointOnCurve(p_1), "Multiplied point should be on the curve.");
+            require(AltBn128.isG1PointOnCurve(p_1), "Multiplied point should be on the curve.");
 
             p_2 = AltBn128.G1Point(randomG1[i][0], randomG1[i][1]);
             for (j = 1; j < i; j++) {
                 p_2 = AltBn128.g1Add(p_2, AltBn128.G1Point(randomG1[i][0], randomG1[i][1]));
             }
 
-            Assert.equal(p_1.x, p_2.x, "Scalar multiplication should match repeat addition.");
-            Assert.equal(p_1.y, p_2.y, "Scalar multiplication should match repeat addition.");
+            require(p_1.x == p_2.x, "Scalar multiplication should match repeat addition.");
+            require(p_1.y == p_2.y, "Scalar multiplication should match repeat addition.");
         }
     }
 
-    function testBasicPairing() public {
+    function runBasicPairingTest() public {
         bool result = AltBn128.pairing(g1, g2, AltBn128.G1Point(g1.x, AltBn128.getP() - g1.y), g2);
-        Assert.isTrue(result, "Basic pairing check should succeed.");
+        require(result, "Basic pairing check should succeed.");
     }
 
-    function testG1PointMarshaling() public {
+    function runG1PointMarshalingTest() public {
         AltBn128.G1Point memory point;
         point.x = 656647519899395589093611455851658769732922739162315270379466002146796568126;
         point.y = 5296675831567268847773497112983742440203412208935796410329912816023128374551;
@@ -171,12 +201,12 @@ contract TestAltBn128 {
         bytes memory marshaledPoint = AltBn128.g1Marshal(point);
         AltBn128.G1Point memory actual = AltBn128.g1Unmarshal(marshaledPoint);
 
-        Assert.equal(point.x, actual.x, "Unmarshaling a marshaled point should give the same x coordinate.");
-        Assert.equal(point.y, actual.y, "Unmarshaling a marshaled point should give the same y coordinate.");
+        require(point.x == actual.x, "Unmarshaling a marshaled point should give the same x coordinate.");
+        require(point.y == actual.y, "Unmarshaling a marshaled point should give the same y coordinate.");
     }
 
     // Verifying sample data generated with bn256.go - Ethereum's bn256/cloudflare curve.
-    function testVerifySignature() public {
+    function runVerifySignatureTest() public {
 
         // "hello!" message hashed to G1 point using G1HashToPoint from keep-core/pkg/bls/altbn128.go
         AltBn128.G1Point memory message;
@@ -197,10 +227,10 @@ contract TestAltBn128 {
         publicKey.y.y = 12642665914920339463975152321804664028480770144655934937445922690262428344269;
 
         bool result = AltBn128.pairing(signature, g2, AltBn128.G1Point(message.x, AltBn128.getP() - message.y), publicKey);
-        Assert.isTrue(result, "Verify signature using precompiled pairing contract should succeed.");
+        require(result, "Verify signature using precompiled pairing contract should succeed.");
     }
 
-    function testCompressG1Invertibility() public {
+    function runCompressG1InvertibilityTest() public {
         AltBn128.G1Point memory p_1;
         AltBn128.G1Point memory p_2;
 
@@ -209,12 +239,12 @@ contract TestAltBn128 {
             p_1.y = randomG1[i][1];
             bytes32 compressed = AltBn128.g1Compress(p_1);
             p_2 = AltBn128.g1Decompress(compressed);
-            Assert.equal(p_1.x, p_2.x, "Decompressing a compressed point should give the same x coordinate.");
-            Assert.equal(p_1.y, p_2.y, "Decompressing a compressed point should give the same y coordinate.");
+            require(p_1.x == p_2.x, "Decompressing a compressed point should give the same x coordinate.");
+            require(p_1.y == p_2.y, "Decompressing a compressed point should give the same y coordinate.");
         }
     }
 
-    function testCompressG2Invertibility() public {
+    function runCompressG2InvertibilityTest() public {
 
         AltBn128.G2Point memory p_1;
         AltBn128.G2Point memory p_2;
@@ -226,14 +256,14 @@ contract TestAltBn128 {
             p_1.y.y = randomG2[i][3];
 
             p_2 = AltBn128.g2Decompress(AltBn128.g2Compress(p_1));
-            Assert.equal(p_1.x.x, p_2.x.x, "Decompressing a compressed point should give the same x coordinate.");
-            Assert.equal(p_1.x.y, p_2.x.y, "Decompressing a compressed point should give the same x coordinate.");
-            Assert.equal(p_1.y.x, p_2.y.x, "Decompressing a compressed point should give the same x coordinate.");
-            Assert.equal(p_1.y.y, p_2.y.y, "Decompressing a compressed point should give the same x coordinate.");
+            require(p_1.x.x == p_2.x.x, "Decompressing a compressed point should give the same x coordinate.");
+            require(p_1.x.y == p_2.x.y, "Decompressing a compressed point should give the same x coordinate.");
+            require(p_1.y.x == p_2.y.x, "Decompressing a compressed point should give the same x coordinate.");
+            require(p_1.y.y == p_2.y.y, "Decompressing a compressed point should give the same x coordinate.");
         }
     }
 
-    function testG2PointOnCurve() public {
+    function runG2PointOnCurveTest() public {
         AltBn128.G2Point memory point;
 
         for (uint i = 0; i < randomG2.length; i++) {
@@ -242,7 +272,7 @@ contract TestAltBn128 {
             point.y.x = randomG2[i][2];
             point.y.y = randomG2[i][3];
 
-            Assert.isTrue(AltBn128.isG2PointOnCurve(point), "Valid points should be on the curve.");
+            require(AltBn128.isG2PointOnCurve(point), "Valid points should be on the curve.");
         }
 
         for (uint i = 0; i < randomG2.length; i++) {
@@ -251,7 +281,7 @@ contract TestAltBn128 {
             point.y.x = randomG2[i][0];
             point.y.y = randomG2[i][1];
 
-            Assert.isFalse(AltBn128.isG2PointOnCurve(point), "Invalid points should not be on the curve.");
+            require(!AltBn128.isG2PointOnCurve(point), "Invalid points should not be on the curve.");
         }
     }
 }

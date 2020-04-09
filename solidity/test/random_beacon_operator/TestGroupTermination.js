@@ -1,16 +1,23 @@
-import mineBlocks from '../helpers/mineBlocks';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-const GroupsTerminationStub = artifacts.require('./stubs/GroupsTerminationStub.sol')
-const Groups = artifacts.require('./libraries/operator/Groups.sol');
+const {expectRevert} = require("@openzeppelin/test-helpers")
+const assert = require('chai').assert
+const mineBlocks = require("../helpers/mineBlocks")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {contract, accounts} = require("@openzeppelin/test-environment")
+const GroupsTerminationStub = contract.fromArtifact('GroupsTerminationStub')
+const Groups = contract.fromArtifact('Groups');
+const BLS = contract.fromArtifact('BLS');
 
-contract('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
+describe('KeepRandomBeaconOperator/GroupTermination', function() {
     let groups;
 
     const groupActiveTime = 5;
 
     before(async () => {
+      const bls = await BLS.new({from: accounts[0]});
+      await Groups.detectNetwork()
+      await Groups.link("BLS", bls.address);
       const groupsLibrary = await Groups.new();
+      await GroupsTerminationStub.detectNetwork()
       await GroupsTerminationStub.link("Groups", groupsLibrary.address);
       groups = await GroupsTerminationStub.new();
     });
@@ -175,13 +182,13 @@ contract('KeepRandomBeaconOperator/GroupTermination', function(accounts) {
 
     describe("should fail when there are no active groups", async () => {
       it("T", async function() {
-        await expectThrowWithMessage(
+        await expectRevert(
           runTerminationTest(1, 0, [0], 0), 
           "At least one active group required"
         );
       })
       it("TT", async function() {
-        await expectThrowWithMessage(
+        await expectRevert(
           runTerminationTest(2, 0, [0, 1], 0), 
           "At least one active group required"
         );

@@ -1,21 +1,20 @@
-import { duration, increaseTimeTo } from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage'
-import grantTokens from '../helpers/grantTokens';
-import { createSnapshot, restoreSnapshot } from '../helpers/snapshot'
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const grantTokens = require('../helpers/grantTokens');
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const TokenGrant = artifacts.require('./TokenGrant.sol');
-const Registry = artifacts.require("./Registry.sol");
-const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenGrant = contract.fromArtifact('TokenGrant');
+const Registry = contract.fromArtifact("Registry");
+const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 
-contract('TokenGrant/Revoke', function(accounts) {
+describe('TokenGrant/Revoke', function() {
 
   let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
 
@@ -26,28 +25,29 @@ contract('TokenGrant/Revoke', function(accounts) {
   let grantStart;
   const grantAmount = web3.utils.toBN(1000000000);
   const grantRevocable = true;
-  const grantDuration = duration.seconds(60);;
-  const grantCliff = duration.seconds(1);
-    
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const grantDuration = time.duration.minutes(60);
+  const grantCliff = time.duration.minutes(1);
+
+  const initializationPeriod = time.duration.minutes(10);
+  const undelegationPeriod = time.duration.minutes(30);
 
   before(async () => {
-    tokenContract = await KeepToken.new();
-    registryContract = await Registry.new();
+    tokenContract = await KeepToken.new( {from: accounts[0]});
+    registryContract = await Registry.new( {from: accounts[0]});
     stakingContract = await TokenStaking.new(
       tokenContract.address, 
       registryContract.address, 
       initializationPeriod, 
-      undelegationPeriod
+      undelegationPeriod,
+      {from: accounts[0]}
     );
-    grantContract = await TokenGrant.new(tokenContract.address);
+    grantContract = await TokenGrant.new(tokenContract.address,  {from: accounts[0]});
     
-    await grantContract.authorizeStakingContract(stakingContract.address);
+    await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
     minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
 
-    grantStart = await latestTime();
+    grantStart = await time.latest();
 
     grantId = await grantTokens(
       grantContract, 
@@ -59,7 +59,8 @@ contract('TokenGrant/Revoke', function(accounts) {
       grantStart, 
       grantCliff, 
       grantRevocable,
-      minimumPolicy.address
+      minimumPolicy.address,
+      {from: accounts[0]}
     );
   });
 
@@ -73,7 +74,7 @@ contract('TokenGrant/Revoke', function(accounts) {
 
   it("should allow to revoke grant", async () => {
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
-    await increaseTimeTo(grantStart + duration.seconds(30));
+    await time.increaseTo(grantStart.add(time.duration.minutes(30)));
     const withdrawable = await grantContract.withdrawable(grantId);
     const refund = grantAmount.sub(withdrawable);
     
@@ -107,7 +108,7 @@ contract('TokenGrant/Revoke', function(accounts) {
   })
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(grantId, { from: grantee }),
       "Only grant manager can revoke."
     );
@@ -127,7 +128,7 @@ contract('TokenGrant/Revoke', function(accounts) {
         minimumPolicy.address
     );
     
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
       "Grant must be revocable in the first place."
     );
@@ -136,7 +137,7 @@ contract('TokenGrant/Revoke', function(accounts) {
   it("should not allow to revoke grant multiple times", async () => {
     await grantContract.revoke(grantId, { from: tokenOwner });
   
-    await expectThrowWithMessage(
+    await expectRevert(
       grantContract.revoke(grantId, { from: tokenOwner }),
       "Grant must not be already revoked."
     );

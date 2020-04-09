@@ -1,12 +1,13 @@
-import { duration, increaseTimeTo } from '../helpers/increaseTime';
-import {bls} from '../helpers/data';
-import latestTime from '../helpers/latestTime';
-import expectThrow from '../helpers/expectThrow';
-import {initContracts} from '../helpers/initContracts';
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot";
-const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 
-contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
+const ServiceContractProxy = contract.fromArtifact('KeepRandomBeaconService')
+
+describe('TestKeepRandomBeaconService/ViaProxy', function() {
 
   let serviceContract, serviceContractProxy, operatorContract,
     account_one = accounts[0],
@@ -16,11 +17,11 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
       ServiceContractProxy,
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     );
 
     operatorContract = contracts.operatorContract;
@@ -28,7 +29,7 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
     serviceContractProxy = await ServiceContractProxy.at(serviceContract.address);
 
     // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(blsData.groupPubKey);
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [accounts[0]]);
 
@@ -52,8 +53,9 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
   });
 
   it("should fail to request relay entry with not enough ether", async function() {
-    await expectThrow(
-      serviceContract.methods['requestRelayEntry()']({from: account_two, value: 0})
+    await expectRevert(
+      serviceContract.methods['requestRelayEntry()']({from: account_two, value: 0}),
+      "Payment is less than required minimum."
     );
   });
 
@@ -202,14 +204,23 @@ contract('TestKeepRandomBeaconService/ViaProxy', function(accounts) {
     )
 
     // should fail to withdraw if not owner
-    await expectThrow(serviceContract.initiateWithdrawal({from: account_two}));
-    await expectThrow(serviceContract.finishWithdrawal(account_two, {from: account_two}));
+    await expectRevert(
+      serviceContract.initiateWithdrawal({from: account_two}),
+      "Ownable: caller is not the owner"
+    );
+    await expectRevert(
+      serviceContract.finishWithdrawal(account_two, {from: account_two}),
+      "Ownable: caller is not the owner"
+    );
 
     await serviceContract.initiateWithdrawal({from: account_one});
-    await expectThrow(serviceContract.finishWithdrawal(account_three, {from: account_one}));
+    await expectRevert(
+      serviceContract.finishWithdrawal(account_three, {from: account_one}),
+      "The current time must pass the pending withdrawal timestamp."
+    );
 
     // jump in time, full undelegation period
-    await increaseTimeTo(await latestTime()+duration.days(30));
+    await time.increase(time.duration.days(30));
 
     let receiverStartBalance = await web3.eth.getBalance(account_three);
     await serviceContract.finishWithdrawal(account_three, {from: account_one});

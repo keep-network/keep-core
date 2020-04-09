@@ -1,4 +1,6 @@
-export default async function grantTokens(
+const {web3} = require("@openzeppelin/test-environment")
+
+async function grantTokens(
     grantContract,
     token, amount,
     from, grantee,
@@ -17,3 +19,4 @@ export default async function grantTokens(
   await token.approveAndCall(grantContract.address, amount, grantData, {from: from})
   return (await grantContract.getPastEvents())[0].args[0].toNumber()
 }
+module.exports = grantTokens

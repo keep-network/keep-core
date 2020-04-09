@@ -1,9 +1,10 @@
-import {bls as blsData} from './helpers/data'
-const { expectRevert } = require("@openzeppelin/test-helpers")
+const blsData = require("./helpers/data.js")
+const {contract, web3} = require("@openzeppelin/test-environment")
+const {expectRevert} = require("@openzeppelin/test-helpers")
+const BLS = contract.fromArtifact('BLS');
+var assert = require('chai').assert
 
-const BLS = artifacts.require('./cryptography/BLS.sol');
-
-contract('BLS', function() {
+describe('BLS', function() {
   let bls;
 
   before(async () => {

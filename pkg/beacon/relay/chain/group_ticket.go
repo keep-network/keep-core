@@ -1,10 +1,12 @@
 package chain
 
-import "math/big"
+import (
+	"math/big"
+)
 
 // Ticket represents group selection ticket as seen on-chain.
 type Ticket struct {
-	Value *big.Int // W_k
+	Value [8]byte // W_k
 	Proof *TicketProof
 }
 

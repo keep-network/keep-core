@@ -1,11 +1,12 @@
-import mineBlocks from '../helpers/mineBlocks';
-import {bls} from '../helpers/data';
-import stakeDelegate from '../helpers/stakeDelegate';
-import {initContracts} from '../helpers/initContracts';
+const mineBlocks = require('../helpers/mineBlocks')
+const stakeDelegate = require('../helpers/stakeDelegate')
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const CallbackContract = contract.fromArtifact('CallbackContract')
 
-const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
-
-contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
+describe('TestKeepRandomBeaconService/Pricing', function() {
 
   let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
     owner = accounts[0],
@@ -19,11 +20,11 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
 
   beforeEach(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     );
 
     token = contracts.token;
@@ -33,7 +34,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     callbackContract = await CallbackContract.new();
 
     // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(blsData.groupPubKey);
 
     groupSize = web3.utils.toBN(3);
     await operatorContract.setGroupSize(groupSize);
@@ -52,7 +53,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let gasPriceCeiling = web3.utils.toBN(web3.utils.toWei('20', 'gwei'))
     await operatorContract.setGasPriceCeiling(gasPriceCeiling)
 
-    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(bls.groupSignature))
+    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(blsData.groupSignature))
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     
     await serviceContract.methods['requestRelayEntry(address,uint256)'](
@@ -65,7 +66,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let gasPriceDiff = gasPriceCeiling.sub(submissionGasPrice)
 
     let requestorBalance = await web3.eth.getBalance(requestor);
-    await operatorContract.relayEntry(bls.groupSignature, {gasPrice: submissionGasPrice})
+    await operatorContract.relayEntry(blsData.groupSignature, {gasPrice: submissionGasPrice})
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
@@ -96,7 +97,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    await operatorContract.relayEntry(blsData.groupSignature);
 
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
 
@@ -157,7 +158,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    await operatorContract.relayEntry(blsData.groupSignature);
 
     let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
     assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");

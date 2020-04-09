@@ -1,21 +1,22 @@
-import increaseTime, {duration} from '../helpers/increaseTime';
-import latestTime from '../helpers/latestTime';
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+
+const {contract, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const KeepToken = artifacts.require('./KeepToken.sol');
-const TokenStaking = artifacts.require('./TokenStaking.sol');
-const Registry = artifacts.require("./Registry.sol");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenStaking = contract.fromArtifact('TokenStaking');
+const Registry = contract.fromArtifact("Registry");
 
-contract('TokenStaking', function() {
+describe('TokenStaking', function() {
   let token, registry, stakingContract,
     minimumStakeSteps, minimumStakeSchedule, keepDecimals;
-  const initializationPeriod = 10;
-  const undelegationPeriod = 30;
+  const initializationPeriod = time.duration.seconds(10);
+  const undelegationPeriod = time.duration.seconds(30);
 
   before(async () => {
     token = await KeepToken.new();
@@ -50,7 +51,7 @@ contract('TokenStaking', function() {
       let stepDuration = minimumStakeSchedule.div(minimumStakeSteps)
       let timeForStepOne = minimumStakeScheduleStart.add(stepDuration)
       // Rounding timestamp jump to 1 minute less (looks like increaseTime() can occasionally add extra seconds)
-      await increaseTime(timeForStepOne.toNumber() - await latestTime() - duration.minutes(1))
+      await time.increase(timeForStepOne.sub(await time.latest()).sub(time.duration.minutes(1)))
       expect(await stakingContract.minimumStake()).to.eq.BN(
         web3.utils.toBN(100000).mul(keepDecimals),
         "Unexpected minimum stake amount"
@@ -61,7 +62,7 @@ contract('TokenStaking', function() {
       let minimumStakeScheduleStart = await stakingContract.minimumStakeScheduleStart();
       let stepDuration = minimumStakeSchedule.div(minimumStakeSteps)
       let timeForStepOne = minimumStakeScheduleStart.add(stepDuration)
-      await increaseTime(timeForStepOne.toNumber() - await latestTime())
+      await time.increase(timeForStepOne.sub(await time.latest()))
       expect(await stakingContract.minimumStake()).to.eq.BN(
         web3.utils.toBN(90000).mul(keepDecimals),
         "Unexpected minimum stake amount"
@@ -69,7 +70,7 @@ contract('TokenStaking', function() {
     })
 
     it("returns half value in the middle of the schedule", async () => {
-      await increaseTime(minimumStakeSchedule.divn(2).toNumber());
+      await time.increase(minimumStakeSchedule.divn(2).toNumber());
       expect(await stakingContract.minimumStake()).to.eq.BN(
         web3.utils.toBN(50000).mul(keepDecimals),
         "Unexpected minimum stake amount"
@@ -77,7 +78,7 @@ contract('TokenStaking', function() {
     })
 
     it("returns min value when the schedule ends", async () => {
-      await increaseTime(minimumStakeSchedule.toNumber());
+      await time.increase(minimumStakeSchedule.toNumber());
       expect(await stakingContract.minimumStake()).to.eq.BN(
         web3.utils.toBN(10000).mul(keepDecimals),
         "Unexpected minimum stake amount"
