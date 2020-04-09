@@ -28,7 +28,7 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 			submittedTickets = append(submittedTickets, t)
 			promise := &async.EventGroupTicketSubmissionPromise{}
 			promise.Fulfill(&event.GroupTicketSubmission{
-				TicketValue: t.IntValue(),
+				TicketValue: new(big.Int).SetBytes(t.Value[:]),
 				BlockNumber: 111,
 			})
 			return promise

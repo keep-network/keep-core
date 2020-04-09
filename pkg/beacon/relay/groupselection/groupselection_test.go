@@ -2,6 +2,7 @@ package groupselection
 
 import (
 	"encoding/binary"
+	"math/big"
 	"reflect"
 	"sort"
 	"testing"
@@ -326,7 +327,11 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	stg.submittedTickets = append(stg.submittedTickets, ticket)
 
 	sort.SliceStable(stg.submittedTickets, func(i, j int) bool {
-		return stg.submittedTickets[i].IntValue().Cmp(stg.submittedTickets[j].IntValue()) == -1
+		// Ticket value bytes are interpreted as a big-endian unsigned integers.
+		iValue := new(big.Int).SetBytes(stg.submittedTickets[i].Value[:])
+		jValue := new(big.Int).SetBytes(stg.submittedTickets[j].Value[:])
+
+		return iValue.Cmp(jValue) == -1
 	})
 
 	if len(stg.submittedTickets) > stg.groupSize {
@@ -334,7 +339,7 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	}
 
 	_ = promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.IntValue(),
+		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
 		BlockNumber: 222,
 	})
 

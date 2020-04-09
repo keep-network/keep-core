@@ -10,11 +10,6 @@ type Ticket struct {
 	Proof *TicketProof
 }
 
-// IntValue returns ticket value as a big integer.
-func (t *Ticket) IntValue() *big.Int {
-	return new(big.Int).SetBytes(t.Value[:])
-}
-
 // TicketProof represents group selection ticket proof as seen on-chain.
 type TicketProof struct {
 	StakerValue        *big.Int
