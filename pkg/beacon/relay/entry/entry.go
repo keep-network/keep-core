@@ -96,7 +96,7 @@ func SignAndSubmit(
 				continue
 			}
 
-			share, err := extractShare(
+			share, err := extractAndValidateShare(
 				message,
 				signer.GroupPublicKeyShares(),
 				previousEntry,
@@ -175,7 +175,7 @@ func broadcastShare(
 	}
 }
 
-func extractShare(
+func extractAndValidateShare(
 	message *SignatureShareMessage,
 	groupPublicKeyShares map[group.MemberIndex]*bn256.G2,
 	previousEntry *bn256.G1,
