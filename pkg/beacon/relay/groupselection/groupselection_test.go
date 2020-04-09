@@ -345,6 +345,7 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(stg.submittedTickets))
 
 	for i := range tickets {
+		// Ticket bytes should be interpreted as a big-endian unsigned integers.
 		tickets[i] = binary.BigEndian.Uint64(stg.submittedTickets[i].Value[:])
 	}
 

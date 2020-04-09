@@ -12,7 +12,8 @@ import (
 
 // ticket is a message containing a pseudorandomly generated value, W_k, which is
 // used to determine whether a given virtual staker is eligible for the group P
-// (the lowest N tickets will be chosen) and a proof of the validity of the value
+// (the lowest N tickets will be chosen) and a proof of the validity of the value.
+// Ticket value bytes should be interpreted as a big-endian unsigned integer.
 type ticket struct {
 	value [8]byte // W_k
 	proof *proof  // proof_k = Proof(Q_j, vs)
@@ -82,6 +83,7 @@ func calculateTicketValue(
 }
 
 // Returns ticket value as a big integer.
+// Ticket value bytes are interpreted as a big-endian unsigned integer.
 func (t *ticket) intValue() *big.Int {
 	return new(big.Int).SetBytes(t.value[:])
 }
