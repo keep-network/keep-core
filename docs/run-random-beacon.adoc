@@ -307,26 +307,8 @@ Trust math, not hardware.
 |Token
 |
 
-|KeepToken
-|''
-
 |TokenStaking
-|''
-
-|TokenGrant
-|''
-|===
-
-[%header,cols=2*]
-|===
-|Group
-|
-
-|Groups
-|''
-
-|GroupSelection
-|''
+|``
 |===
 
 [%header,cols=2*]
@@ -334,17 +316,11 @@ Trust math, not hardware.
 |RandomBeacon
 |
 
-|DKGResultVerification
-|''
-
-|KeepRandomBeaconServiceImplV1
-|''
-
 |KeepRandomBeaconService
-|''
+|``
 
 |KeepRandomBeaconOperator
-|''
+|``
 |===
 
 === Testnet
