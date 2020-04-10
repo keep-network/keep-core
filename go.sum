@@ -80,8 +80,6 @@ github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3Ee
 github.com/coreos/go-semver v0.3.0 h1:wkHLiw0WNATZnSG7epLsujiMCgPAc9xhjJ4tgnAxmfM=
 github.com/coreos/go-semver v0.3.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
-github.com/dariubs/percent v0.0.0-20200128140941-b7801cf1c7e2 h1:5EPE4Uk7ucthLTJAZqZxu6LZluox5/AqXUxJDpzgJjg=
-github.com/dariubs/percent v0.0.0-20200128140941-b7801cf1c7e2/go.mod h1:NDZpkezJ8QqyIW/510MywB5T2KdC8v/0oTlEoPcMsRM=
 github.com/davecgh/go-spew v0.0.0-20171005155431-ecdeabc65495/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
@@ -114,7 +112,6 @@ github.com/ethereum/go-ethereum v1.9.7 h1:p4O+z0MGzB7xxngHbplcYNloxkFwGkeComhkzW
 github.com/ethereum/go-ethereum v1.9.7/go.mod h1:PwpWDrCLZrV+tfrhqqF6kPknbISMHaJv9Ln3kPCZLwY=
 github.com/ethereum/go-ethereum v1.9.10 h1:jooX7tWcscpC7ytufk73t9JMCeJQ7aJF2YmZJQEuvFo=
 github.com/ethereum/go-ethereum v1.9.10/go.mod h1:lXHkVo/MTvsEXfYsmNzelZ8R1e0DTvdk/wMZJIRpaRw=
-github.com/ethereum/go-ethereum v1.9.12 h1:EPtimwsp/KGDSiXcNunzsI4kefdsMHZGJntKx3fvbaI=
 github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5/go.mod h1:JpoxHjuQauoxiFMl1ie8Xc/7TfLuMZ5eOCONd1sUBHg=
 github.com/fatih/color v1.3.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fjl/memsize v0.0.0-20180418122429-ca190fb6ffbc h1:jtW8jbpkO4YirRSyepBOH8E+2HEw6/hKkBvFPwhUN8c=
@@ -249,12 +246,6 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199 h1:4EmAF2XUHK1kwXBhg75OO9hgTkJGK7snwJZlpbu+Yy8=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
-github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897 h1:0T9+w0udjSNnyR07gUiIcV3bkVZmFlGx40Byq9dqAuI=
-github.com/keep-network/keep-common v0.1.1-0.20200228111656-16dd370ca897/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-common v0.1.1-0.20200330215727-8ca95ff9de56 h1:VVJrhWz7aqloEH7GzwFbWk36ZXTCpnMH6b5DmKMDxM8=
-github.com/keep-network/keep-common v0.1.1-0.20200330215727-8ca95ff9de56/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
-github.com/keep-network/keep-common v0.1.1-0.20200407084635-41258118ebd7 h1:PpKTRwm3xIVVIg1cmNVO0AB6Z8/y8RSUuAurglHT79E=
-github.com/keep-network/keep-common v0.1.1-0.20200407084635-41258118ebd7/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/keep-network/keep-common v0.1.1-0.20200410121208-86a57ad677d8 h1:34w+kUTPzBmKx0mygUbLhu3dIPFnTZ7yI4BS9b1pjVU=
 github.com/keep-network/keep-common v0.1.1-0.20200410121208-86a57ad677d8/go.mod h1:QPhFeJa7snRCRlqIr+0G7ifgxEYwALIa/UfcMzeyxAk=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
