@@ -6,6 +6,46 @@
 :numbered:
 toc::[]
 
+== Staking
+
+=== Terminology
+
+address:: Hexadecimal string consisting of 40 characters prefixed with "0x" uniquely identifying Ethereum account; 
+derived from ECDSA public key of the party. Example address: `0xb2560a01e4b8b5cb0ac549fa39c7ae255d80e943`.
+
+owner:: The address owning KEEP tokens or KEEP token grant. The owner’s participation is not required in the day-to-day 
+operations on the stake, so cold storage can be accommodated to the maximum extent.
+
+operator:: The address of a party authorized to operate in the network on behalf of a given owner. The operator handles 
+the everyday operations on the delegated stake without actually owning the staked tokens. An operator can not simply 
+transfer away delegated tokens, however, it should be noted that operator's misbehaviour may result in slashing tokens 
+and thus the entire staked amount is indeed at stake.
+
+beneficiary:: the address where the rewards for participation and all reimbursements are sent, earned by an operator, 
+on behalf of an owner
+
+delegated stake:: an owner's staked tokens, delegated to the operator by the owner. Delegation enables KEEP owners to 
+have their wallets offline and their stake operated by operators on their behalf.
+
+operator contract:: Ethereum smart contract handling operations that may have an impact on staked tokens.
+
+authorizer:: the address appointed by owner to authorize operator contract on behalf of the owner. Operator contract 
+must be pre-approved by authorizer before the operator is eligible to use it and join the specific part of the network.
+
+=== Delegating tokens
+
+KEEP tokens are delegated by the owner. During the delegation, the owner needs to appoint an operator, beneficiary, 
+and authorizer. Owner may delegate owned tokens or tokens from a grant. Owner may decide to delegate just a portion 
+of owned tokens or just a part of tokens from a grant. Owner may delegate multiple times to different operators. 
+Tokens can be delegated using Tokens page in https://dashboard.test.keep.network[KEEP token dashboard] and a certain minimum stake defined by the system is required to be provided in the delegation. The more stake is delegated, the higher chance to be selected to relay group.
+
+Delegation takes immediate effect but can be cancelled within one week without additional delay. After one week 
+operator appointed during the delegation becomes eligible for work selection.
+
+=== Authorizations
+Before operator is considered as eligible for work selection, authorizer appointed during the delegation needs to review 
+and authorize Keep Random Beacon smart contract. Smart contracts can be authorized using KEEP token dashboard. Authorized operator contracts may slash or seize tokens in case of operator's misbehavior.
+
 == System Considerations
 
 The Keep Network expects certain capabilites for each node running on the network.  To help attain
