@@ -21,8 +21,6 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
   const { isFetching, data } = state
   const {
-    undelegationStatus,
-    undelegationCompletedAt,
     undelegationPeriod,
   } = data
 
@@ -61,7 +59,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           <Column
             header="status"
             field="undelegationStatus"
-            renderContent={({ undelegationStatus }) => {
+            renderContent={({ undelegationStatus, undelegationCompletedAt }) => {
               const statusText = undelegationStatus === PENDING_STATUS ?
                 `${undelegationStatus.toLowerCase()}, ${undelegationCompletedAt.fromNow(true)}` :
                 undelegationStatus
