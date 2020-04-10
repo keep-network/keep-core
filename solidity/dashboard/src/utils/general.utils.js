@@ -65,3 +65,25 @@ export const getAvailableAtBlock = (blockNumber, status) => {
 export const isSameEthAddress = (address1, address2) => {
   return web3Utils.toChecksumAddress(address1) === web3Utils.toChecksumAddress(address2)
 }
+
+export const getBufferFromHex = (hex) => {
+  const validHex = toValidHex(hex).toLowerCase()
+  return new Buffer(validHex, 'hex')
+}
+
+const toValidHex = (hex) => {
+  hex = hex.substring(0, 2) === '0x' ? hex.substring(2) : hex
+  if (hex === '') {
+    return ''
+  }
+  return hex.length % 2 !== 0 ? `0${hex}` : hex
+}
+
+
+// EIP-155 https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+// v = CHAIN_ID * 2 + 35 => CHAIN_ID = (v - 35) / 2
+export const getChainIdFromV = (vInHex) => {
+  const vIntValue = parseInt(vInHex, 16)
+  const chainId = Math.floor((vIntValue - 35) / 2)
+  return chainId < 0 ? 0 : chainId
+}

@@ -1,32 +1,26 @@
 import TrezorConnect from 'trezor-connect'
 import { TrezorSubprovider } from '@0x/subproviders/lib/src/subproviders/trezor'
-import { AbstractHardwareWalletConnector } from './abstract'
-import web3Utils from 'web3-utils'
-import EthereumTx from 'ethereumjs-tx'
 import Common from 'ethereumjs-common'
-
-TrezorConnect.init({
-  lazyLoad: true, // this param will prevent iframe injection until TrezorConnect.method will be called
-  manifest: {
-    email: 'work@keep.network',
-    appUrl: 'keep.network',
-  },
-  popup: true,
-  //  debug: true,
-})
+import { Transaction as EthereumTx } from 'ethereumjs-tx'
+import web3Utils from 'web3-utils'
+import { AbstractHardwareWalletConnector } from './abstract'
+import { getBufferFromHex, getChainIdFromV } from '../utils/general.utils'
 
 export class TrezorProvider extends AbstractHardwareWalletConnector {
-  constructor() {
-    super(new Trezor({
-      trezorConnectClientApi: TrezorConnect,
-      networkId: 1337,
-    }))
+  constructor(chainId) {
+    super(new CustomTrezorSubprovider(1101))
   }
 }
 
-class Trezor extends TrezorSubprovider {
-  constructor(config) {
-    super(config)
+class CustomTrezorSubprovider extends TrezorSubprovider {
+  chainId
+  constructor(chainId) {
+    super({ trezorConnectClientApi: TrezorConnect, networkId: chainId })
+    this.chainId = chainId
+    this._trezorConnectClientApi.manifest({
+      email: 'work@keep.network',
+      appUrl: 'https://keep.network',
+    })
   }
 
   async signTransactionAsync(txData) {
@@ -48,36 +42,30 @@ class Trezor extends TrezorSubprovider {
         to: txData.to,
         value: txData.value,
         data: txData.data,
-        chainId: this._networkId,
+        chainId: this.chainId,
         nonce: txData.nonce,
         gasLimit: txData.gas,
         gasPrice: txData.gasPrice,
       },
     })
-    if (response.success) {
-      const payload = response.payload
-      const customCommon = Common.forCustomChain('mainnet', {
-        name: 'keep-dev',
-        chainId: this._networkId,
-      })
-      const tx = new EthereumTx(txData, { common: customCommon })
-      tx.v = getBufferFromHex(payload.v)
-      tx.r = getBufferFromHex(payload.r)
-      tx.s = getBufferFromHex(payload.s)
-
-      return `0x${tx.serialize().toString('hex')}`
-    } else {
-      const payload = response.payload
-      throw new Error(payload.error)
+    if (!response.success) {
+      throw new Error(response.payload.error)
     }
-  }
-}
+    const { payload: { v, r, s } } = response
+    const customCommon = Common.forCustomChain('mainnet', {
+      name: 'keep-dev',
+      chainId: this.chainId,
+    })
+    const common = new Common(customCommon._chainParams, 'petersburg', ['petersburg'])
+    const tx = new EthereumTx(txData, { common })
+    tx.v = getBufferFromHex(v)
+    tx.r = getBufferFromHex(r)
+    tx.s = getBufferFromHex(s)
+    const chainIdFromV = getChainIdFromV(v)
+    if (chainIdFromV !== this.chainId) {
+      throw new Error('Invalid chainID')
+    }
 
-const getBufferFromHex = (hex) => {
-  hex = hex.substring(0, 2) == '0x' ? hex.substring(2) : hex
-  if (hex == '') {
-    return new Buffer('', 'hex')
+    return `0x${tx.serialize().toString('hex')}`
   }
-  const padLeft = hex.length % 2 != 0 ? '0' + hex : hex
-  return new Buffer(padLeft.toLowerCase(), 'hex')
 }
