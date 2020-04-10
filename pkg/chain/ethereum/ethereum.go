@@ -237,7 +237,18 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entry)
+	gasEstimate, err := ec.keepRandomBeaconOperatorContract.RelayEntryGasEstimate(entry)
+	if err != nil {
+		logger.Errorf("failed to estimate gas [%v]", err)
+	}
+
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2) // 20% more than original
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
+		entry,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
