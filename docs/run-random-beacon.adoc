@@ -1,0 +1,386 @@
+:toc: macro
+
+= Run Random Beacon
+
+:icons: font
+:numbered:
+toc::[]
+
+== System Considerations
+
+The Keep Network expects certain capabilites for each node running on the network.  To help attain
+these capabilities consider the following criteria:
+
+- It is paramount that Keep nodes remain available to the Keep Network. We strongly encourage a
+  stable and redundant internet connection.
+- A connection to a production grade self-hosted or third party Ethereum node deployment.
+- Persistent and redundant storage that will survive a VM or container rotation, and disk failure.
+- Each random beacon client running on the network requires a unique Ethereum operator account.
+- Each random beacon client running on the network requires a unique IP address or a unique
+  application port running under the same IP.
+- Recommended machine types by provider:
+
+[%header,cols=2*]
+|===
+|Cloud Provider
+|Machine Type
+
+|Google Cloud
+|n1-standard-2
+
+|AWS
+|m5.large
+
+|Azure
+|D2s v3
+
+|Self-hosted
+|2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
+|===
+
+== Configuration
+
+=== Network
+
+Default port mappings.
+
+[%header,cols=2*]
+|===
+|Egress
+|Port
+
+|Ethereum Network
+|`8545` / `8546`
+
+|Keep Network
+|`3919`
+|===
+
+[%header,cols=2*]
+|===
+|Ingress
+|Port
+
+|Keep Network
+|`3919`
+|===
+
+If you set a different `port` in your keep-client configuration, or configure `peers` with
+non-default ports configured, firewall rules will need to be adjusted accordingly.
+
+=== Application
+
+Application configurations are stored in a `.toml` file and passed to the application run command
+ with the `--config` flag.
+
+==== Sample
+
+```
+# Ethereum host connection info.
+[ethereum]
+  URL = "ws://127.0.0.1:8546"
+  URLRPC = "http://127.0.0.1:8545"
+
+# Keep operator Ethereum account.
+[ethereum.account]
+  Address = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+  KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
+
+# Keep contract addresses configuration.
+[ethereum.ContractAddresses]
+  # Hex-encoded address of KeepRandomBeaconOperator contract
+  KeepRandomBeaconOperator = "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"
+  # Hex-encoded address of TokenStaking contract
+  TokenStaking = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+  # Hex-encoded address of KeepRandomBeaconService contract. Only needed
+  # in cases where the client's utility functions will be used (e.g., the
+  # relay subcommand).
+  KeepRandomBeaconService = "0xDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+
+# Keep network configuration.
+[LibP2P]
+  Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1", "/dns4/some-keep-host.com/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
+  Port  = 3920
+  # Override the node's default addresses announced in the network
+  AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
+
+# Storage is encrypted
+[Storage]
+  DataDir = "/my/secure/location"
+```
+
+==== Parameters
+
+[%header,cols=4*]
+|===
+|`ethereum`
+|Description
+|Default
+|Required
+
+|`URL`
+|The Ethereum host your keep-client will connect to.  Websocket protocol/port.
+|""
+|Yes
+
+|`URLRPC`
+|The Ethereum host your keep-client will connect to.  RPC protocol/port.
+|""
+|Yes
+|===
+
+[%header,cols=4*]
+|===
+|`ethereum.account`
+|Description
+|Default
+|Required
+
+|`Address`
+|The Keep operator Ethereum account address.
+|""
+|Yes
+
+|`KeyFile`
+|The local filesystem path to your Keep operator Ethereum account keyfile.
+|""
+|Yes
+|===
+
+[%header,cols=4*]
+|===
+|`ethereum.ContractAddresses`
+|Description
+|Default
+|Required
+
+|`KeepRandomBeaconOperator`
+|Hex-encoded address of the KeepRandomBeaconOperator Contract.
+|""
+|Yes
+
+|`KeepRandomBeaconService`
+|Hex-encoded address of the KeepRandomBeaconService Contract.
+|""
+|Yes
+
+|`TokenStaking`
+|Hex-encoded address of the TokenStaking Contract.
+|""
+|Yes
+|===
+
+[%header,cols=4*]
+|===
+|`LibP2P`
+|Description
+|Default
+|Required
+
+|`Peers`
+|Comma separated list of network peers to boostrap against.
+|[""]
+|Yes
+
+|`Port`
+|The port to run your instance of Keep on.
+|3919
+|Yes
+
+|`AnnouncedAddresses`
+|Multiaddr formatted hostnames or addresses annouced to the
+Keep Network. More on multiaddr format
+https://docs.libp2p.io/reference/glossary/#multiaddr[in the libp2p
+reference].
+|[""]
+|No
+|===
+
+[%header,cols=4*]
+|===
+|`Storage`
+|Description
+|Default
+|Required
+
+|`DataDir`
+|Location to store the Keep nodes group membership details.
+|""
+|Yes
+|===
+
+== Build from Source
+
+See the https://github.com/keep-network/keep-core/tree/master/docs/development#building[building] section in our developer docs.
+
+== Docker
+
+=== Get Image
+
+Doesn't exist for the public yet.
+
+=== Run Image
+This is a sample run command for illustration purposes only.
+
+```
+export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
+export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
+export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
+
+docker run -dit \
+--volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
+--volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
+--env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
+--env LOG_LEVEL=debug \
+-p 3919:3919 \
+keep-client --config /mnt/keep-client/config/keep-client-config.toml start
+```
+
+== Deployment Considerations
+
+=== Kubernetes
+
+At Keep we run on GCP + Kube. To accommodate the aforementioned system considerations we use the following pattern for each of our environments:
+
+- Regional Kube cluster.
+- 5 beacon clients, each running minimum stake required by the network.
+- A LoadBalancer Service for each client.
+- A StatefulSet for each client.
+
+You can see our Ropsten Kube configurations https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-test[here]
+
+== Logging
+
+Below are some of the key things to look out for to make sure you're booted and connected to the
+network:
+
+=== Configurable Values
+
+```
+LOG_LEVEL=DEBUG
+IPFS_LOGGING_FMT=nocolor
+GOLOG_FILE=/var/log/keep/keep.log
+GOLOG_TRACING_FILE=/var/log/keep/trace.json
+```
+
+=== Startup
+```
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+Trust math, not hardware.
+
+-----------------------------------------------------------------------------------------------
+| Keep Random Beacon Node                                                                     |
+|                                                                                             |
+| Port: 3919                                                                                  |
+| IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH    |
+|       /ip4/10.102.0.112/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH |
+-----------------------------------------------------------------------------------------------
+```
+
+**Bonus**: If you want to share your LibP2P address with others you can get it from the startup log.  When sharing remember to substitute the `/ipv4/` address with the public facing IP of your client if you're running on a private machine, or replace the entire `/ipv4/` segment with a DNS entry if you're using a hostname.
+
+=== Peer Connections
+
+```
+21:19:47.129 DEBUG keep-net-w: connected to [1] peers:[16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY]
+```
+
+== ETH Networks
+
+=== Mainnet
+
+==== Boostrap Peers
+
+==== Contracts
+
+[%header,cols=2*]
+|===
+|Token
+|
+
+|TokenStaking
+|``
+|===
+
+[%header,cols=2*]
+|===
+|RandomBeacon
+|
+
+|KeepRandomBeaconService
+|``
+
+|KeepRandomBeaconOperator
+|``
+|===
+
+=== Testnet
+
+Keep uses the Ethereum Ropsten Testnet.
+
+==== Faucet
+
+The KEEP faucet will will issue a 300k KEEP token grant for the provided Ethereum account.  You can
+use the faucet from your web browser or via a terminal using curl.
+
+Faucet Endpoint: https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten
+
+To use the faucet you need to pass your Ethereum account to the faucet endpoint with the parameter
+`?account=<eth-account-address>`.
+
+Curl Example:
+```
+curl 'https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE'
+```
+
+Browser Example:
+```
+https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE
+```
+
+Once you've got your KEEP token grant you can manage it with our https://dashboard.test.keep.network[token dashboard].
+
+==== Bootstrap Peers
+
+====
+[small]*`"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH"`*
+[small]*`"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY"`*
+[small]*`"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp"`*
+[small]*`"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf"`*
+[small]*`"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4"`*
+====
+
+==== Contracts
+
+Contract addresses needed to boot the Random Beacon client:
+
+[%header,cols=2*]
+|===
+|Token
+|
+
+|TokenStaking
+|`0xE2Eda1d802e4aB47631500e3e6F30118350C5f1B`
+|===
+
+[%header,cols=2*]
+|===
+|RandomBeacon
+|
+
+|KeepRandomBeaconService
+|`0xf991573a359a57bF840E65147C56305828a283fE`
+
+|KeepRandomBeaconOperator
+|`0xbe388aC5b4EE6EA912036b91D4b31f818043aF04`
+|===
+

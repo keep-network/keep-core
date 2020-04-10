@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";

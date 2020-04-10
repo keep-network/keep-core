@@ -106,8 +106,12 @@ func Start(c *cli.Context) error {
 
 	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
+	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	if err != nil {
+		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
+	}
 	persistence := persistence.NewEncryptedPersistence(
-		persistence.NewDiskHandle(config.Storage.DataDir),
+		handle,
 		config.Ethereum.Account.KeyFilePassword,
 	)
 

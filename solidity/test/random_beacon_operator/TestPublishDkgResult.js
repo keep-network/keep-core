@@ -5,7 +5,6 @@ const generateTickets = require('../helpers/generateTickets');
 const shuffleArray = require('../helpers/shuffle');
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
@@ -81,13 +80,12 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
       await operatorContract.submitTicket(ticket, {from: operator3});
     }
 
-    let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
-    let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    resultPublicationTime = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
+    let ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
+    let submissionTimeout = await operatorContract.ticketSubmissionTimeout();
+    let timeDKG = await operatorContract.timeDKG();
+    resultPublicationTime = ticketSubmissionStartBlock.add(submissionTimeout).add(timeDKG);
 
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(ticketSubmissionStartBlock + submissionTimeout - currentBlock);
+    await time.advanceBlockTo(ticketSubmissionStartBlock.add(submissionTimeout));
 
     selectedParticipants = await operatorContract.selectedParticipants();
 
@@ -112,8 +110,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should be able to submit correct result as first member after DKG finished.", async function() {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     await operatorContract.submitDkgResult(1, groupPubKey, noMisbehaved, signatures, signingMemberIndices, {from: selectedParticipants[0]})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
@@ -122,8 +119,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should send reward to the DKG submitter", async function() {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
@@ -141,8 +137,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than gas price ceiling", async function() {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     let dkgSubmitterReimbursementFee = web3.utils.toBN(await web3.eth.getBalance(operatorContract.address));
     let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
@@ -173,8 +168,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     }
 
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     await operatorContract.submitDkgResult(1, groupPubKey, noMisbehaved, unorderedSignatures, unorderedSigningMembersIndexes, {from: selectedParticipants[0]})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
@@ -185,12 +179,11 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     let submitter1MemberIndex = 4;
     let submitter2MemberIndex = 5;
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
-    let eligibleBlockForSubmitter1 = resultPublicationTime + (submitter1MemberIndex-1)*resultPublicationBlockStep;
-    let eligibleBlockForSubmitter2 = resultPublicationTime + (submitter2MemberIndex-1)*resultPublicationBlockStep;
+    let eligibleBlockForSubmitter1 = resultPublicationTime.addn((submitter1MemberIndex-1)*resultPublicationBlockStep);
+    let eligibleBlockForSubmitter2 = resultPublicationTime.addn((submitter2MemberIndex-1)*resultPublicationBlockStep);
 
     // Jump in time to when submitter 1 becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(eligibleBlockForSubmitter1 - currentBlock);
+    await time.advanceBlockTo(eligibleBlockForSubmitter1)
 
     // Should throw if non eligible submitter 2 tries to submit
     await expectRevert(operatorContract.submitDkgResult(
@@ -200,8 +193,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     );
 
     // Jump in time to when submitter 2 becomes eligible to submit
-    currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(eligibleBlockForSubmitter2 - currentBlock);
+    await time.advanceBlockTo(eligibleBlockForSubmitter2)
 
     await operatorContract.submitDkgResult(submitter2MemberIndex, groupPubKey, noMisbehaved, signatures, signingMemberIndices, {from: submitter2})
     assert.isTrue(await operatorContract.isGroupRegistered(groupPubKey), "group should be registered");
@@ -238,8 +230,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     signingMemberIndices.push(lastParticipantIdx);
 
     // Jump in time to when first member is eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
@@ -263,8 +254,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     }
 
     // Jump in time to when first member is eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     await operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
@@ -287,8 +277,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
     }
 
     // Jump in time to when first member is eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
@@ -301,8 +290,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should fail to submit with a public key having less than 128 bytes", async () => {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
   
     let invalidGroupPubKey = groupPubKey.slice(0, -2)
 
@@ -318,8 +306,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should fail to submit with a public key having more than 128 bytes", async () => {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
   
     let invalidGroupPubKey = groupPubKey + 'ff';
 
@@ -335,8 +322,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should fail to submit with too many misbehaved", async () => {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     let invalidMisbehaved = maxMisbehaved + 'ff';
 
@@ -352,8 +338,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should allow to submit with maximum possible misbehaved", async () => {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     let s = await signResult(groupPubKey, maxMisbehaved)
 
@@ -366,8 +351,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function() {
 
   it("should not allow to submit with more signatures than the group size", async () => {
     // Jump in time to when submitter becomes eligible to submit
-    let currentBlock = await web3.eth.getBlockNumber();
-    mineBlocks(resultPublicationTime - currentBlock);
+    await time.advanceBlockTo(resultPublicationTime);
 
     let s = await signResult(groupPubKey, noMisbehaved)
 
