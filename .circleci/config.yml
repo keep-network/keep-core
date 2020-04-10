@@ -19,18 +19,6 @@ orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
-  test_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Set up test and test result environment
-          command: |
-            cd solidity
-            npm install
-      - run: cd solidity && npm run test
-      - store_test_results:
-          path: /tmp/test-results
   generate_docs_solidity:
     executor: docker-node
     steps:
@@ -328,9 +316,6 @@ jobs:
 
 workflows:
   version: 2
-  solidity:
-    jobs:
-      - test_solidity
   build-and-test:
     jobs:
       - build_client_and_test_go:
