@@ -39,7 +39,7 @@ jobs:
           name: Generate solidity docs
           command: |
             cd solidity && npm install
-            node_modules/.bin/truffle compile
+            npx truffle compile
             mkdir -p output
             node scripts/generate-api-docs.js > output/index.adoc
             mkdir -p /tmp/docs
