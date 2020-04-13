@@ -9,6 +9,9 @@ import "./ManagedGrant.sol";
 import "./TokenGrant.sol";
 import "./GrantStakingPolicy.sol";
 
+/// @title ManagedGrantFactory
+/// @dev Creates managed grants that permit grantee reassignment
+/// and use pre-defined staking policies.
 contract ManagedGrantFactory {
     using SafeERC20 for KeepToken;
     using BytesLib for bytes;
