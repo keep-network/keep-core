@@ -31,6 +31,14 @@ module.exports = {
       },
       gas: 6721975,
       network_id: 3
+    },
+
+    // TODO: update Infura url
+    mainnet: {
+      provider: function() {
+        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "https://mainnet.infura.io/v3/")
+      },
+      network_id: 1
     }
   },
 
