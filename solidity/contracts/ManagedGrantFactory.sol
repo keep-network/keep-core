@@ -39,7 +39,6 @@ contract ManagedGrantFactory {
         bytes memory _extraData
     ) public {
         require(KeepToken(_token) == token, "Invalid token contract");
-        require(_amount <= token.balanceOf(_from), "Insufficient sender balance");
 
         token.safeTransferFrom(_from, address(this), _amount);
 
