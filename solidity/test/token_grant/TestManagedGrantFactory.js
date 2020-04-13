@@ -77,19 +77,10 @@ describe('TokenGrant/ManagedGrantFactory', () => {
     await restoreSnapshot()
   });
 
-  describe("funding", async () => {
-    it("adds tokens to grant pool correctly", async () => {
-      await token.approveAndCall(
-        factory.address, grantAmount, nullBytes, {from: grantCreator}
-      );
-      expect(await factory.grantFundingPool(grantCreator)).to.eq.BN(grantAmount);
-    });
-  });
-
   describe("creating managed grants", async () => {
     it("works", async () => {
-      await token.approveAndCall(
-        factory.address, grantAmount, nullBytes, {from: grantCreator}
+      await token.approve(
+        factory.address, grantAmount, {from: grantCreator}
       );
       grantStart = await time.latest();
       let managedGrantAddress = await factory.createGrant.call(
@@ -117,13 +108,30 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       expect(await managedGrant.grantManager()).to.equal(grantCreator);
     });
 
-    it("doesn't let one grant more than is in their pool", async () => {
-      await token.approveAndCall(
-        factory.address, grantAmount, nullBytes, {from: grantCreator}
-      );
+    it("doesn't let one grant more than they've approved on the token", async () => {
       await token.transfer(unrelatedAddress, grantAmount, {from: grantCreator});
-      await token.approveAndCall(
-        factory.address, grantAmount, nullBytes, {from: unrelatedAddress}
+      await token.approve(
+        factory.address, grantAmount.subn(1), {from: unrelatedAddress}
+      );
+      grantStart = await time.latest();
+      await expectRevert(
+        factory.createGrant(
+          grantee,
+          grantAmount,
+          grantUnlockingDuration,
+          grantStart,
+          grantCliff,
+          false,
+          {from: unrelatedAddress}
+        ),
+        "SafeERC20: low-level call failed -- Reason given: SafeERC20: low-level call failed."
+      );
+    });
+
+    it("doesn't let one grant more than they have on the token", async () => {
+      await token.transfer(unrelatedAddress, grantAmount, {from: grantCreator});
+      await token.approve(
+        factory.address, grantAmount.addn(1), {from: unrelatedAddress}
       );
       grantStart = await time.latest();
       await expectRevert(
@@ -136,7 +144,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           false,
           {from: unrelatedAddress}
         ),
-        "Insufficient funding"
+        "SafeERC20: low-level call failed -- Reason given: SafeERC20: low-level call failed."
       );
     });
   });
