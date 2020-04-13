@@ -77,8 +77,9 @@ describe('TokenGrant/Revoke', function() {
     await time.increaseTo(grantStart.add(time.duration.minutes(30)));
     const withdrawable = await grantContract.withdrawable(grantId);
     const refund = grantAmount.sub(withdrawable);
-    
+
     await grantContract.revoke(grantId, { from: tokenOwner });
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
 
     const withdrawableAfter = await grantContract.withdrawable(grantId);
     const grantDetails = await grantContract.getGrant(grantId);
