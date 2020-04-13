@@ -245,10 +245,8 @@ describe('ManagedGrant', () => {
         "Only grantee may perform this action"
       );
     });
-  });
 
-  describe("reassignment + withdrawal", async () => {
-    it("can not be withdrawn when reassignment is pending", async () => {
+    it("can't withdraw when reassignment is pending", async () => {
       await time.increase(grantUnlockingDuration);
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
@@ -293,6 +291,28 @@ describe('ManagedGrant', () => {
         "Only grantee may perform this action"
       );
     });
+
+    it("can be done by a reassigned grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, newGrantee
+      );
+      expect(await staking.balanceOf(operator)).to.eq.BN(minimumStake);
+      expect(await staking.magpieOf(operator)).to.equal(beneficiary);
+      expect(await staking.authorizerOf(operator)).to.equal(authorizer);
+    });
+
+    it("can't be done by the old grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await expectRevert(
+        stakeFromManagedGrant(
+          operator, beneficiary, authorizer, minimumStake, grantee
+        ),
+        "Only grantee may perform this action"
+      );
+    });
   });
 
   describe("cancelStake", async () => {
@@ -328,6 +348,28 @@ describe('ManagedGrant', () => {
       );
       await expectRevert(
         managedGrant.cancelStake(operator, {from: unrelatedAddress}),
+        "Only grantee or operator may perform this action"
+      );
+    });
+
+    it("can be done by a reassigned grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantee
+      );
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await managedGrant.cancelStake(operator, {from: newGrantee});
+      expect(await staking.balanceOf(operator)).to.eq.BN(0);
+    });
+
+    it("can't be done by the old grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantee
+      );
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await expectRevert(
+        managedGrant.cancelStake(operator, {from: grantee}),
         "Only grantee or operator may perform this action"
       );
     });
@@ -370,6 +412,31 @@ describe('ManagedGrant', () => {
       await time.increase(initializationPeriod * 2);
       await expectRevert(
         managedGrant.undelegate(operator, {from: unrelatedAddress}),
+        "Only grantee or operator may perform this action"
+      );
+    });
+
+    it("can be done by a reassigned grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await managedGrant.undelegate(operator, {from: newGrantee});
+    });
+
+    it("can't be done by the old grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await expectRevert(
+        managedGrant.undelegate(operator, {from: grantee}),
         "Only grantee or operator may perform this action"
       );
     });
@@ -423,6 +490,35 @@ describe('ManagedGrant', () => {
       await time.increase(undelegationPeriod + grantUnlockingDuration);
       await expectRevert(
         managedGrant.recoverStake(operator, {from: unrelatedAddress}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("can be done by a reassigned grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: grantee});
+      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await managedGrant.recoverStake(operator, {from: newGrantee});
+      await managedGrant.withdraw({from: newGrantee});
+      expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
+    });
+
+    it("can't be done by the old grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: grantee});
+      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      await expectRevert(
+        managedGrant.recoverStake(operator, {from: grantee}),
         "Only grantee may perform this action"
       );
     });
