@@ -18,7 +18,6 @@ const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumS
 const ManagedGrant = contract.fromArtifact('ManagedGrant');
 const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory');
 
-const nullAddress = '0x0000000000000000000000000000000000000000';
 const nullBytes = '0x';
 
 describe('TokenGrant/ManagedGrantFactory', () => {
@@ -28,13 +27,9 @@ describe('TokenGrant/ManagedGrantFactory', () => {
 
   const grantCreator = accounts[0],
         grantee = accounts[2],
-        operator = accounts[3],
-        beneficiary = accounts[4],
-        authorizer = accounts[5],
-        newGrantee = accounts[6],
-        unrelatedAddress = accounts[7];
+        unrelatedAddress = accounts[3];
 
-  let grantId, grantStart, returnedId;
+  let grantStart;
 
   const grantUnlockingDuration = time.duration.days(60);
   const grantCliff = time.duration.days(10);
@@ -43,8 +38,6 @@ describe('TokenGrant/ManagedGrantFactory', () => {
   const undelegationPeriod = time.duration.minutes(30);
 
   let factory;
-
-  let stakeFromManagedGrant;
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
