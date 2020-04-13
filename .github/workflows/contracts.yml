@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - solidity-linting-and-testing-in-github-actions-2
     paths:
       - "solidity/contracts/**"
       - "solidity/package.json"
