@@ -21,7 +21,7 @@ const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory');
 const nullAddress = '0x0000000000000000000000000000000000000000';
 const nullBytes = '0x';
 
-describe('ManagedGrantFactory', () => {
+describe('TokenGrant/ManagedGrantFactory', () => {
   let token, registry, tokenGrant, staking;
   let permissivePolicy, minimumPolicy;
   let minimumStake, grantAmount;
