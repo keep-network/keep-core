@@ -8,6 +8,7 @@ on:
       - "solidity/contracts/**"
       - "solidity/package.json"
       - "solidity/package-lock.json"
+      - ".github/workflows/contracts.yml"
   pull_request:
     branches:
       - master
@@ -15,6 +16,7 @@ on:
       - "solidity/contracts/**"
       - "solidity/package.json"
       - "solidity/package-lock.json"
+      - ".github/workflows/contracts.yml"
 
 jobs:
   test:
