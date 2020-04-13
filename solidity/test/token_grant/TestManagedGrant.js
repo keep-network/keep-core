@@ -30,7 +30,8 @@ describe('ManagedGrant', () => {
         beneficiary = accounts[4],
         authorizer = accounts[5],
         newGrantee = accounts[6],
-        unrelatedAddress = accounts[7];
+        anotherGrantee = accounts[7],
+        unrelatedAddress = accounts[8];
 
   let grantId, grantStart, returnedId;
 
@@ -161,7 +162,105 @@ describe('ManagedGrant', () => {
     it("rejects reassignment to the old grantee's address", async () => {
       await expectRevert(
         managedGrant.requestGranteeReassignment(grantee, {from: grantee}),
-        "Unchanged new grantee address"
+        "New grantee same as current grantee"
+      );
+    });
+  });
+
+  describe("cancelReassignmentRequest", async () => {
+    it("can be done by the grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.cancelReassignmentRequest({from: grantee});
+      expect(await managedGrant.grantee()).to.equal(grantee);
+      expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
+    });
+
+    it("cannot be done by the new grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.cancelReassignmentRequest({from: newGrantee}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("cannot be done by the creator", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.cancelReassignmentRequest({from: grantCreator}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("cannot be done by a third party", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.cancelReassignmentRequest({from: unrelatedAddress}),
+        "Only grantee may perform this action"
+      );
+    });
+  });
+
+  describe("changeReassignmentRequest", async () => {
+    it("can be done by the grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.changeReassignmentRequest(anotherGrantee, {from: grantee});
+      expect(await managedGrant.grantee()).to.equal(grantee);
+      expect(await managedGrant.requestedNewGrantee()).to.equal(anotherGrantee);
+    });
+
+    it("cannot be done by the previous new grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.changeReassignmentRequest(anotherGrantee, {from: newGrantee}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("cannot be done by the changed new grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.changeReassignmentRequest(anotherGrantee, {from: anotherGrantee}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("cannot be done by the creator", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(anotherGrantee, {from: grantCreator}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("cannot be done by a third party", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.requestGranteeReassignment(anotherGrantee, {from: unrelatedAddress}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("rejects reassignment to the null address", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.changeReassignmentRequest(nullAddress, {from: grantee}),
+        "Invalid new grantee address"
+      );
+    });
+
+    it("rejects reassignment to the old grantee's address", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.changeReassignmentRequest(grantee, {from: grantee}),
+        "New grantee same as current grantee"
+      );
+    });
+
+    it("rejects reassignment to the previously requested address", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await expectRevert(
+        managedGrant.changeReassignmentRequest(newGrantee, {from: grantee}),
+        "Unchanged reassignment request"
       );
     });
   });

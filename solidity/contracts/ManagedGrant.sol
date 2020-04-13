@@ -56,7 +56,7 @@ contract ManagedGrant {
     {
         require(
             requestedNewGrantee != _newGrantee,
-            "Reassignment request unchanged"
+            "Unchanged reassignment request"
         );
         _setRequestedNewGrantee(_newGrantee);
     }
@@ -107,7 +107,7 @@ contract ManagedGrant {
 
     function _setRequestedNewGrantee(address _newGrantee) internal {
         require(_newGrantee != address(0), "Invalid new grantee address");
-        require(_newGrantee != grantee, "Unchanged new grantee address");
+        require(_newGrantee != grantee, "New grantee same as current grantee");
 
         requestedNewGrantee = _newGrantee;
     }
