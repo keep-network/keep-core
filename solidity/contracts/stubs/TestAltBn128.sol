@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 // it is just a stub, not a live deployment;
 // we are fine with experimental feature

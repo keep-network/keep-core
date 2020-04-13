@@ -27,7 +27,7 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-COPY --from=ethereum/solc:0.5.10 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
 RUN go get gotest.tools/gotestsum
 
