@@ -224,18 +224,22 @@ describe('ManagedGrant', () => {
   });
 
   describe("withdrawal", async () => {
-    it("can be withdrawn", async () => {
+    it("can be done by the grantee", async () => {
       await time.increase(grantUnlockingDuration);
       await managedGrant.withdraw({from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
-    it("can only be withdrawn by the grantee", async () => {
+    it("can't be done by the grant manager", async () => {
       await time.increase(grantUnlockingDuration);
       await expectRevert(
         managedGrant.withdraw({from: grantCreator}),
         "Only grantee may perform this action"
       );
+    });
+
+    it("can't be done by a third party", async () => {
+      await time.increase(grantUnlockingDuration);
       await expectRevert(
         managedGrant.withdraw({from: unrelatedAddress}),
         "Only grantee may perform this action"
