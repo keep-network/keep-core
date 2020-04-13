@@ -222,22 +222,19 @@ contract TokenGrant {
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
-        require(_extraData.length == 137, "Invalid extra data length.");
-
-        address _grantee = _extraData.toAddress(0);
-        uint256 _duration = _extraData.toUint(20);
-        uint256 _start = _extraData.toUint(52);
-        uint256 _cliff = _extraData.toUint(84);
+        (address _grantee,
+         uint256 _duration,
+         uint256 _start,
+         uint256 _cliff,
+         bool _revocable,
+         address _stakingPolicy) = abi.decode(
+             _extraData,
+             (address, uint256, uint256, uint256, bool, address)
+        );
 
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
 
-        bool _revocable;
-        if (_extraData.slice(116, 1)[0] == 0x01) {
-            _revocable = true;
-        }
-
-        address _stakingPolicy = _extraData.toAddress(117);
         require(_stakingPolicy != address(0), "Staking policy can't be zero.");
 
         uint256 id = numGrants++;

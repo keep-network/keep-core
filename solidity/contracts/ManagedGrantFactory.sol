@@ -78,12 +78,12 @@ contract ManagedGrantFactory {
         );
         _managedGrant = address(managedGrant);
 
-        bytes memory grantData = abi.encodePacked(
+        bytes memory grantData = abi.encode(
             _managedGrant,
             duration,
             start,
             cliff,
-            revocable ? 0x01 : 0x00,
+            revocable,
             address(stakingPolicy)
         );
 
