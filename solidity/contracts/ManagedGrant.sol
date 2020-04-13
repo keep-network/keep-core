@@ -66,12 +66,11 @@ contract ManagedGrant {
         onlyManager
         withRequestedReassignment
     {
-        address _requestedNewGrantee = requestedNewGrantee;
         require(
-            _requestedNewGrantee == _newGrantee,
+            requestedNewGrantee == _newGrantee,
             "Reassignment address mismatch"
         );
-        grantee = _requestedNewGrantee;
+        grantee = requestedNewGrantee;
         requestedNewGrantee = address(0);
     }
 
