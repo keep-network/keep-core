@@ -266,8 +266,8 @@ describe('ManagedGrant', () => {
     });
   });
 
-  describe("staking", async () => {
-    it("can be staked by the grantee", async () => {
+  describe("stake", async () => {
+    it("can be done by the grantee", async () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, minimumStake, grantee
       );
@@ -276,7 +276,7 @@ describe('ManagedGrant', () => {
       expect(await staking.authorizerOf(operator)).to.equal(authorizer);
     });
 
-    it("can not be staked by the grant creator", async () => {
+    it("can not be done by the grant creator", async () => {
       await expectRevert(
         stakeFromManagedGrant(
           operator, beneficiary, authorizer, minimumStake, grantCreator
@@ -285,7 +285,7 @@ describe('ManagedGrant', () => {
       );
     });
 
-    it("can not be staked by a third party", async () => {
+    it("can not be done by a third party", async () => {
       await expectRevert(
         stakeFromManagedGrant(
           operator, beneficiary, authorizer, minimumStake, unrelatedAddress
@@ -293,8 +293,10 @@ describe('ManagedGrant', () => {
         "Only grantee may perform this action"
       );
     });
+  });
 
-    it("can be cancelled", async () => {
+  describe("cancelStake", async () => {
+    it("can be done by the grantee", async () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, minimumStake, grantee
       );
@@ -302,7 +304,15 @@ describe('ManagedGrant', () => {
       expect(await staking.balanceOf(operator)).to.eq.BN(0);
     });
 
-    it("can be cancelled only by grantee or operator", async () => {
+    it("can be done by the operator", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantee
+      );
+      await managedGrant.cancelStake(operator, {from: operator});
+      expect(await staking.balanceOf(operator)).to.eq.BN(0);
+    });
+
+    it("can not be done by the grant manager", async () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, minimumStake, grantee
       );
@@ -310,27 +320,39 @@ describe('ManagedGrant', () => {
         managedGrant.cancelStake(operator, {from: grantCreator}),
         "Only grantee or operator may perform this action"
       );
+    });
+
+    it("can not be done by a third party", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantee
+      );
       await expectRevert(
         managedGrant.cancelStake(operator, {from: unrelatedAddress}),
         "Only grantee or operator may perform this action"
       );
-      await managedGrant.cancelStake(operator, {from: operator});
     });
+  });
 
-    it("can be undelegated and tokens recovered", async () => {
+  describe("undelegate", async () => {
+    it("can be done by the grantee", async () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
       await time.increase(initializationPeriod * 2);
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
-      await managedGrant.recoverStake(operator, {from: grantee});
-      await managedGrant.withdraw({from: grantee});
-      expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
-    it("can be undelegated only by grantee or operator", async () => {
+    it("can be done by the operator", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: operator});
+    });
+
+    it("can't be done by the grant manager", async () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, minimumStake, grantee
       );
@@ -339,11 +361,70 @@ describe('ManagedGrant', () => {
         managedGrant.undelegate(operator, {from: grantCreator}),
         "Only grantee or operator may perform this action"
       );
+    });
+
+    it("can't be done by a third party", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, minimumStake, grantee
+      );
+      await time.increase(initializationPeriod * 2);
       await expectRevert(
         managedGrant.undelegate(operator, {from: unrelatedAddress}),
         "Only grantee or operator may perform this action"
       );
-      await managedGrant.undelegate(operator, {from: operator});
+    });
+  });
+
+  describe("recoverStake", async () => {
+    it("can be done by the grantee", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: grantee});
+      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await managedGrant.recoverStake(operator, {from: grantee});
+      await managedGrant.withdraw({from: grantee});
+      expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
+    });
+
+    it("can't be done by the operator", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: grantee});
+      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await expectRevert(
+        managedGrant.recoverStake(operator, {from: operator}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("can't be done by the grant manager", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: grantee});
+      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await expectRevert(
+        managedGrant.recoverStake(operator, {from: grantCreator}),
+        "Only grantee may perform this action"
+      );
+    });
+
+    it("can't be done by a third party", async () => {
+      await stakeFromManagedGrant(
+        operator, beneficiary, authorizer, grantAmount, grantee
+      );
+      await time.increase(initializationPeriod * 2);
+      await managedGrant.undelegate(operator, {from: grantee});
+      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await expectRevert(
+        managedGrant.recoverStake(operator, {from: unrelatedAddress}),
+        "Only grantee may perform this action"
+      );
     });
   });
 });
