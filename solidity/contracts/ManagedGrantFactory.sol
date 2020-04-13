@@ -61,7 +61,7 @@ contract ManagedGrantFactory {
         );
     }
 
-    function createGrant(
+    function createManagedGrant(
         address grantee,
         uint256 amount,
         uint256 duration,

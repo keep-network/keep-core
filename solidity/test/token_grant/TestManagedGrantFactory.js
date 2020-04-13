@@ -83,7 +83,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         factory.address, grantAmount, {from: grantCreator}
       );
       grantStart = await time.latest();
-      let managedGrantAddress = await factory.createGrant.call(
+      let managedGrantAddress = await factory.createManagedGrant.call(
         grantee,
         grantAmount,
         grantUnlockingDuration,
@@ -92,7 +92,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         false,
         {from: grantCreator}
       );
-      await factory.createGrant(
+      await factory.createManagedGrant(
         grantee,
         grantAmount,
         grantUnlockingDuration,
@@ -115,7 +115,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       );
       grantStart = await time.latest();
       await expectRevert(
-        factory.createGrant(
+        factory.createManagedGrant(
           grantee,
           grantAmount,
           grantUnlockingDuration,
@@ -135,7 +135,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       );
       grantStart = await time.latest();
       await expectRevert(
-        factory.createGrant(
+        factory.createManagedGrant(
           grantee,
           grantAmount.addn(1),
           grantUnlockingDuration,
