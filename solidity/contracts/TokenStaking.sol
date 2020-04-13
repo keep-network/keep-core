@@ -406,11 +406,21 @@ contract TokenStaking is StakeDelegatable {
      * @param misbehavedOperators Array of addresses to seize the tokens from.
      */
     function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
-        public
-        onlyApprovedOperatorContract(msg.sender) {
+        public {
 
         uint256 totalAmountToBurn = 0;
         address authoritySource = getAuthoritySource(msg.sender);
+
+        if (authoritySource == msg.sender) {
+            // self-authorized -> check approval status
+            // this check is not needed when authority is delegated
+            // because delegated authority can only be claimed with approval
+            require(
+                registry.isApprovedOperatorContract(authoritySource),
+                "Operator contract is not approved"
+            );
+        }
+
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[authoritySource][operator], "Not authorized");
@@ -460,9 +470,20 @@ contract TokenStaking is StakeDelegatable {
         uint256 rewardMultiplier,
         address tattletale,
         address[] memory misbehavedOperators
-    ) public onlyApprovedOperatorContract(msg.sender) {
+    ) public {
         uint256 totalAmountToBurn = 0;
         address authoritySource = getAuthoritySource(msg.sender);
+
+        if (authoritySource == msg.sender) {
+            // self-authorized -> check approval status
+            // this check is not needed when authority is delegated
+            // because delegated authority can only be claimed with approval
+            require(
+                registry.isApprovedOperatorContract(authoritySource),
+                "Operator contract is not approved"
+            );
+        }
+
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             require(authorizations[authoritySource][operator], "Not authorized");
