@@ -33,23 +33,40 @@ contract ManagedGrant {
         grantee = _grantee;
     }
 
-    function requestGranteeReassignment(address _newGrantee) public onlyGrantee {
-        require(
-            requestedNewGrantee == address(0),
-            "Reassignment already requested"
-        );
-        require(_newGrantee != address(0), "Invalid new grantee address");
-        require(_newGrantee != grantee, "Unchanged new grantee address");
-
-        requestedNewGrantee = _newGrantee;
+    function requestGranteeReassignment(address _newGrantee)
+        public
+        onlyGrantee
+        noRequestedReassignment
+    {
+        _setRequestedNewGrantee(_newGrantee);
     }
 
-    function confirmGranteeReassignment(address _newGrantee) public onlyManager {
-        address _requestedNewGrantee = requestedNewGrantee;
+    function cancelReassignmentRequest()
+        public
+        onlyGrantee
+        withRequestedReassignment
+    {
+        requestedNewGrantee = address(0);
+    }
+
+    function changeReassignmentRequest(address _newGrantee)
+        public
+        onlyGrantee
+        withRequestedReassignment
+    {
         require(
-            _requestedNewGrantee != address(0),
-            "No reassignment requested"
+            requestedNewGrantee != _newGrantee,
+            "Reassignment request unchanged"
         );
+        _setRequestedNewGrantee(_newGrantee);
+    }
+
+    function confirmGranteeReassignment(address _newGrantee)
+        public
+        onlyManager
+        withRequestedReassignment
+    {
+        address _requestedNewGrantee = requestedNewGrantee;
         require(
             _requestedNewGrantee == _newGrantee,
             "Reassignment address mismatch"
@@ -86,6 +103,29 @@ contract ManagedGrant {
 
     function recoverStake(address _operator) public onlyGrantee {
         tokenGrant.recoverStake(_operator);
+    }
+
+    function _setRequestedNewGrantee(address _newGrantee) internal {
+        require(_newGrantee != address(0), "Invalid new grantee address");
+        require(_newGrantee != grantee, "Unchanged new grantee address");
+
+        requestedNewGrantee = _newGrantee;
+    }
+
+    modifier withRequestedReassignment {
+        require(
+            requestedNewGrantee != address(0),
+            "No reassignment requested"
+        );
+        _;
+    }
+
+    modifier noRequestedReassignment {
+        require(
+            requestedNewGrantee == address(0),
+            "Reassignment already requested"
+        );
+        _;
     }
 
     modifier onlyGrantee {
