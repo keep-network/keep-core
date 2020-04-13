@@ -123,26 +123,28 @@ describe('ManagedGrant', () => {
     expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
   });
 
-  describe("reassignment", async () => {
-    it("can be reassigned", async () => {
+  describe("requestGranteeReassignment", async () => {
+    it("can be done by the grantee", async () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       expect(await managedGrant.grantee()).to.equal(grantee);
       expect(await managedGrant.requestedNewGrantee()).to.equal(newGrantee);
-
-      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
-      expect(await managedGrant.grantee()).to.equal(newGrantee);
-      expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
     });
 
-    it("only grantee can request reassignment", async () => {
+    it("cannot be done by the new grantee", async () => {
       await expectRevert(
         managedGrant.requestGranteeReassignment(newGrantee, {from: newGrantee}),
         "Only grantee may perform this action"
       );
+    });
+
+    it("cannot be done by the creator", async () => {
       await expectRevert(
         managedGrant.requestGranteeReassignment(newGrantee, {from: grantCreator}),
         "Only grantee may perform this action"
       );
+    });
+
+    it("cannot be done by a third party", async () => {
       await expectRevert(
         managedGrant.requestGranteeReassignment(newGrantee, {from: unrelatedAddress}),
         "Only grantee may perform this action"
@@ -162,34 +164,58 @@ describe('ManagedGrant', () => {
         "Unchanged new grantee address"
       );
     });
+  });
 
-    it("only grantManager can confirm reassignment", async () => {
+  describe("confirmGranteeReassignment", async () => {
+    it("can be done by the grant manager", async () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      expect(await managedGrant.grantee()).to.equal(newGrantee);
+      expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress);
+    });
 
+    it("can't be done by the old grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(newGrantee, {from: grantee}),
         "Only grantManager may perform this action"
       );
+    });
+
+    it("can't be done by the new grantee", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(newGrantee, {from: newGrantee}),
         "Only grantManager may perform this action"
       );
+    });
+
+    it("can't be done by a third party", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(newGrantee, {from: unrelatedAddress}),
         "Only grantManager may perform this action"
       );
     });
 
-    it("requires the grant manager to confirm the new grantee address", async () => {
+    it("can't confirm the old grantee", async () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(grantee, {from: grantCreator}),
         "Reassignment address mismatch"
       );
+    });
+
+    it("can't confirm the grant manager", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(grantCreator, {from: grantCreator}),
         "Reassignment address mismatch"
       );
+    });
+
+    it("can't confirm a third party", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await expectRevert(
         managedGrant.confirmGranteeReassignment(unrelatedAddress, {from: grantCreator}),
         "Reassignment address mismatch"
