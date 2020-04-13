@@ -49,6 +49,8 @@
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
     "truffle": "^5.1.9",
-    "websocket": "^1.0.28"
+    "websocket": "^1.0.28",
+    "solium": "^1.2.5",
+    "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1"
   }
 }
