@@ -39,11 +39,9 @@ jobs:
         working-directory: ./solidity
         run: |
           npm ci
-          npm install ganache-cli@6.9.1
       - name: Run tests
         working-directory: ./solidity
         run: |
-          node_modules/.bin/ganache-cli &
           npm run test
           exit 0
   lint:
