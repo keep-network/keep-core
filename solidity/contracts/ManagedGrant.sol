@@ -3,6 +3,12 @@ pragma solidity ^0.5.4;
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "./TokenGrant.sol";
 
+/// @title ManagedGrant
+/// @dev A managed grant acts as the grantee towards the token grant contract,
+/// proxying instructions from the actual grantee.
+/// The address used by the actual grantee
+/// to issue instructions and withdraw tokens
+/// can be reassigned with the consent of the grant manager.
 contract ManagedGrant {
     using SafeERC20 for ERC20Burnable;
 
