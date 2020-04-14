@@ -1,10 +1,9 @@
 import TrezorConnect from 'trezor-connect'
 import { TrezorSubprovider } from '@0x/subproviders/lib/src/subproviders/trezor'
-import Common from 'ethereumjs-common'
-import { Transaction as EthereumTx } from 'ethereumjs-tx'
 import web3Utils from 'web3-utils'
 import { AbstractHardwareWalletConnector } from './abstract'
-import { getBufferFromHex, getChainIdFromV } from '../utils/general.utils'
+import { getEthereumTxObj, getChainIdFromV } from './utils'
+import { getBufferFromHex } from '../utils/general.utils'
 
 export class TrezorProvider extends AbstractHardwareWalletConnector {
   constructor(chainId) {
@@ -14,6 +13,7 @@ export class TrezorProvider extends AbstractHardwareWalletConnector {
 
 class CustomTrezorSubprovider extends TrezorSubprovider {
   chainId
+
   constructor(chainId) {
     super({ trezorConnectClientApi: TrezorConnect, networkId: chainId })
     this.chainId = chainId
@@ -52,12 +52,8 @@ class CustomTrezorSubprovider extends TrezorSubprovider {
       throw new Error(response.payload.error)
     }
     const { payload: { v, r, s } } = response
-    const customCommon = Common.forCustomChain('mainnet', {
-      name: 'keep-dev',
-      chainId: this.chainId,
-    })
-    const common = new Common(customCommon._chainParams, 'petersburg', ['petersburg'])
-    const tx = new EthereumTx(txData, { common })
+    const tx = getEthereumTxObj(txData, this.chainId)
+
     tx.v = getBufferFromHex(v)
     tx.r = getBufferFromHex(r)
     tx.s = getBufferFromHex(s)

@@ -78,12 +78,3 @@ const toValidHex = (hex) => {
   }
   return hex.length % 2 !== 0 ? `0${hex}` : hex
 }
-
-
-// EIP-155 https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-// v = CHAIN_ID * 2 + 35 => CHAIN_ID = (v - 35) / 2
-export const getChainIdFromV = (vInHex) => {
-  const vIntValue = parseInt(vInHex, 16)
-  const chainId = Math.floor((vIntValue - 35) / 2)
-  return chainId < 0 ? 0 : chainId
-}
