@@ -25,7 +25,7 @@ const AuthorizeContracts = ({
         <Column
           header="contract details"
           field="details"
-          renderContent={(contractAddress) => (
+          renderContent={({ contractAddress }) => (
             <a href={ETHERSCAN_DEFAULT_URL + contractAddress} rel="noopener noreferrer" target="_blank">
               View in Block Explorer
             </a>
