@@ -23,6 +23,11 @@ contract ManagedGrantFactory {
     GrantStakingPolicy nonRevocableStakingPolicy;
     GrantStakingPolicy revocableStakingPolicy;
 
+    event ManagedGrantCreated(
+        address grantAddress,
+        address grantee
+    );
+
     constructor(
         address _tokenAddress,
         address _tokenGrant,
@@ -125,6 +130,10 @@ contract ManagedGrantFactory {
             grantData
         );
 
+        emit ManagedGrantCreated(
+            _managedGrant,
+            grantee
+        );
         return _managedGrant;
     }
 }

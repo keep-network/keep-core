@@ -101,11 +101,14 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         false,
         {from: grantCreator}
       );
+      let event = (await factory.getPastEvents())[0];
       let managedGrant = await ManagedGrant.at(managedGrantAddress);
       let grantId = await managedGrant.grantId();
       expect(await tokenGrant.availableToStake(grantId)).to.eq.BN(grantAmount);
       expect(await managedGrant.grantee()).to.equal(grantee);
       expect(await managedGrant.grantManager()).to.equal(grantCreator);
+      expect(event.args['grantAddress']).to.equal(managedGrantAddress);
+      expect(event.args['grantee']).to.equal(grantee);
     });
 
     it("doesn't let one grant more than they've approved on the token", async () => {
