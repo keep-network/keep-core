@@ -378,6 +378,13 @@ func unmarshalPrivateKeyMap(
 		if err := validateMemberIndex(memberID); err != nil {
 			return nil, err
 		}
+
+		if len(privateKeyBytes) == 0 {
+			return nil, fmt.Errorf(
+				"private key bytes slice is empty for member [%v]", memberID,
+			)
+		}
+
 		unmarshalled[group.MemberIndex(memberID)] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
 	}
 
