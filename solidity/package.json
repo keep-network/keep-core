@@ -52,6 +52,8 @@
     "tomlify-j0.4": "^3.0.0",
     "truffle": "^5.1.9",
     "websocket": "^1.0.28",
+    "solium": "^1.2.5",
+    "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
     "eslint": "^6.8.0",
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
     "prettier": "^2.0.2",
