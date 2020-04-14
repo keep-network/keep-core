@@ -19,6 +19,25 @@ contract ManagedGrant {
     address public grantee;
     address public requestedNewGrantee;
 
+    event GranteeReassignmentRequested(
+        address newGrantee
+    );
+    event GranteeReassignmentConfirmed(
+        address oldGrantee,
+        address newGrantee
+    );
+    event GranteeReassignmentCancelled(
+        address cancelledRequestedGrantee
+    );
+    event GranteeReassignmentChanged(
+        address previouslyRequestedGrantee,
+        address newRequestedGrantee
+    );
+    event TokensWithdrawn(
+        address destination,
+        uint256 amount
+    );
+
     constructor(
         address _tokenAddress,
         address _tokenGrant,
@@ -39,6 +58,7 @@ contract ManagedGrant {
         noRequestedReassignment
     {
         _setRequestedNewGrantee(_newGrantee);
+        emit GranteeReassignmentRequested(_newGrantee);
     }
 
     function cancelReassignmentRequest()
@@ -46,7 +66,9 @@ contract ManagedGrant {
         onlyGrantee
         withRequestedReassignment
     {
+        address cancelledGrantee = requestedNewGrantee;
         requestedNewGrantee = address(0);
+        emit GranteeReassignmentCancelled(cancelledGrantee);
     }
 
     function changeReassignmentRequest(address _newGrantee)
@@ -54,11 +76,13 @@ contract ManagedGrant {
         onlyGrantee
         withRequestedReassignment
     {
+        address previouslyRequestedGrantee = requestedNewGrantee;
         require(
-            requestedNewGrantee != _newGrantee,
+            previouslyRequestedGrantee != _newGrantee,
             "Unchanged reassignment request"
         );
         _setRequestedNewGrantee(_newGrantee);
+        emit GranteeReassignmentChanged(previouslyRequestedGrantee, _newGrantee);
     }
 
     function confirmGranteeReassignment(address _newGrantee)
@@ -66,12 +90,14 @@ contract ManagedGrant {
         onlyManager
         withRequestedReassignment
     {
+        address oldGrantee = grantee;
         require(
             requestedNewGrantee == _newGrantee,
             "Reassignment address mismatch"
         );
         grantee = requestedNewGrantee;
         requestedNewGrantee = address(0);
+        emit GranteeReassignmentConfirmed(oldGrantee, _newGrantee);
     }
 
     function withdraw() public onlyGrantee {
@@ -82,6 +108,7 @@ contract ManagedGrant {
         tokenGrant.withdraw(grantId);
         uint256 amount = token.balanceOf(address(this));
         token.safeTransfer(grantee, amount);
+        emit TokensWithdrawn(grantee, amount);
     }
 
     function stake(

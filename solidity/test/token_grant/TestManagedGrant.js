@@ -165,6 +165,12 @@ describe('TokenGrant/ManagedGrant', () => {
         "New grantee same as current grantee"
       );
     });
+
+    it("emits an event", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      expect((await managedGrant.getPastEvents())[0].args['newGrantee'])
+        .to.equal(newGrantee);
+    });
   });
 
   describe("cancelReassignmentRequest", async () => {
@@ -197,6 +203,13 @@ describe('TokenGrant/ManagedGrant', () => {
         managedGrant.cancelReassignmentRequest({from: unrelatedAddress}),
         "Only grantee may perform this action"
       );
+    });
+
+    it("emits an event", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.cancelReassignmentRequest({from: grantee});
+      expect((await managedGrant.getPastEvents())[0].args['cancelledRequestedGrantee'])
+        .to.equal(newGrantee);
     });
   });
 
@@ -263,6 +276,16 @@ describe('TokenGrant/ManagedGrant', () => {
         "Unchanged reassignment request"
       );
     });
+
+    it("emits an event", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.changeReassignmentRequest(anotherGrantee, {from: grantee});
+      let event = (await managedGrant.getPastEvents())[0];
+      expect(event.args['previouslyRequestedGrantee'])
+        .to.equal(newGrantee);
+      expect(event.args['newRequestedGrantee'])
+        .to.equal(anotherGrantee);
+    });
   });
 
   describe("confirmGranteeReassignment", async () => {
@@ -320,6 +343,16 @@ describe('TokenGrant/ManagedGrant', () => {
         "Reassignment address mismatch"
       );
     });
+
+    it("emits an event", async () => {
+      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
+      await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
+      let event = (await managedGrant.getPastEvents())[0];
+      expect(event.args['oldGrantee'])
+        .to.equal(grantee);
+      expect(event.args['newGrantee'])
+        .to.equal(newGrantee);
+    });
   });
 
   describe("withdrawal", async () => {
@@ -360,6 +393,16 @@ describe('TokenGrant/ManagedGrant', () => {
       await time.increase(grantUnlockingDuration);
       await managedGrant.withdraw({from: newGrantee});
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
+    });
+
+    it("emits an event", async () => {
+      await time.increase(grantUnlockingDuration);
+      await managedGrant.withdraw({from: grantee});
+      let event = (await managedGrant.getPastEvents())[0];
+      expect(event.args['destination'])
+        .to.equal(grantee);
+      expect(event.args['amount'])
+        .to.eq.BN(grantAmount);
     });
   });
 
