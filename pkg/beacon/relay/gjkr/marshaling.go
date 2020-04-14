@@ -149,6 +149,11 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 		if err := validateMemberIndex(memberID); err != nil {
 			return err
 		}
+
+		if pbShares == nil {
+			return fmt.Errorf("nil shares from member [%v]", memberID)
+		}
+
 		shares[group.MemberIndex(memberID)] = &peerShares{
 			encryptedShareS: pbShares.EncryptedShareS,
 			encryptedShareT: pbShares.EncryptedShareT,
