@@ -8,6 +8,37 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
+func TestUnicastChannelFuzzing(t *testing.T) {
+	ctx := context.Background()
+
+	withNetwork(ctx, t, func(
+		_ *identity,
+		identity2 *identity,
+		provider1 net.Provider,
+		provider2 net.Provider,
+	) {
+		channel, err := provider1.UnicastChannelWith(identity2.id)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		provider2.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
+			channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+				return &fuzzingMessage{}
+			})
+		})
+
+		for i := 0; i < 100000; i++ {
+			var message fuzzingMessage
+
+			f := fuzz.New().NilChance(0.1).NumElements(0, 1024)
+			f.Fuzz(&message)
+
+			_ = channel.Send(&message)
+		}
+	})
+}
+
 func TestBroadcastChannelFuzzing(t *testing.T) {
 	ctx := context.Background()
 
@@ -35,42 +66,7 @@ func TestBroadcastChannelFuzzing(t *testing.T) {
 			f := fuzz.New().NilChance(0.1).NumElements(0, 1024)
 			f.Fuzz(&message)
 
-			if err := channel.Send(ctx, &message); err != nil {
-				t.Fatal(err)
-			}
-		}
-	})
-}
-
-func TestUnicastChannelFuzzing(t *testing.T) {
-	ctx := context.Background()
-
-	withNetwork(ctx, t, func(
-		_ *identity,
-		identity2 *identity,
-		provider1 net.Provider,
-		provider2 net.Provider,
-	) {
-		channel, err := provider1.UnicastChannelWith(identity2.id)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		provider2.OnUnicastChannelOpened(func(channel net.UnicastChannel) {
-			channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
-				return &fuzzingMessage{}
-			})
-		})
-
-		for i := 0; i < 100000; i++ {
-			var message fuzzingMessage
-
-			f := fuzz.New().NilChance(0.1).NumElements(0, 1024)
-			f.Fuzz(&message)
-
-			if err := channel.Send(&message); err != nil {
-				t.Fatal(err)
-			}
+			_ = channel.Send(ctx, &message)
 		}
 	})
 }
