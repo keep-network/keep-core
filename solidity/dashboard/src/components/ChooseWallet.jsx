@@ -1,6 +1,9 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import * as Icons from './Icons'
 import { useWeb3Context } from './WithWeb3Context'
+import { useModal } from '../hooks/useModal'
+import SelectedWalletModal from './SelectedWalletModal'
+import { LoadingOverlay } from './Loadable'
 
 // TODO change icons
 const WALLETS = [
@@ -10,6 +13,12 @@ const WALLETS = [
     providerName: 'METAMASK',
     type: 'web wallet',
     description: 'Crypto wallet that’s a web browser plugin.',
+    modalProps: {
+      iconDescription: null,
+      btnText: 'install extension',
+      btnLink: 'https://metamask.io',
+      description: 'The MetaMask login screen will open in an external window. If it doesn’t load right away, click below to install:',
+    },
   },
   {
     label: 'Coinbase',
@@ -17,6 +26,12 @@ const WALLETS = [
     providerName: 'COINBASE',
     type: 'web wallet',
     description: 'Crypto wallet that’s a web browser plugin.',
+    modalProps: {
+      iconDescription: null,
+      btnText: null,
+      btnLink: null,
+      description: 'Scan QR code to connect:',
+    },
   },
   {
     label: 'Ledger',
@@ -24,6 +39,12 @@ const WALLETS = [
     providerName: 'LEDGER',
     type: 'hardware wallet',
     description: 'Crypto wallet on a secure hardware device.',
+    modalProps: {
+      iconDescription: '/images/ledger-device.svg',
+      btnText: 'install ledger live',
+      btnLink: 'https://www.ledger.com/ledger-live/',
+      description: 'Plug in Ledger device. Install Ledger Live below:',
+    },
   },
   {
     label: 'Trezor',
@@ -31,25 +52,30 @@ const WALLETS = [
     providerName: 'TREZOR',
     type: 'hardware wallet',
     description: 'Crypto wallet on a secure hardware device.',
+    modalProps: {
+      iconDescription: '/images/trezor-device.svg',
+      btnText: 'go to trezor setup',
+      btnLink: 'https://trezor.io/start/',
+      description: 'Plug in your Trezor device. If the setup screen doesn’t load right away, go to Trezor setup:',
+    },
   },
 ]
 
 const ChooseWallet = () => {
+  const { isFetching } = useWeb3Context()
+
   return (
-    <>
-      <h1 className="mb-1">Connect My Wallet</h1>
+    <LoadingOverlay isFetching={isFetching}>
+      <h1 className="mb-1">Connect Wallet</h1>
       <section className="tile">
         <h3>
-          Choose a wallet below to get started.
+          Choose a wallet type.
         </h3>
-        <div className="text-big text-grey-70">
-          You’ll need a balance of KEEP tokens to stake with the token dashboard. Don’t have any? Request some.
-        </div>
         <ul className="wallets-list" >
           {WALLETS.map(renderWallet)}
         </ul>
       </section>
-    </>
+    </LoadingOverlay>
   )
 }
 
@@ -61,23 +87,46 @@ const Wallet = ({
   providerName,
   type,
   description,
+  modalProps,
 }) => {
-  const { connectAppWithWallet } = useWeb3Context()
+  const { ModalComponent, showModal, closeModal } = useModal()
+  const { connectAppWithWallet, isFetching, web3, provider } = useWeb3Context()
+
+  useEffect(() => {
+    if (!isFetching && web3 && provider) {
+      closeModal()
+    }
+  }, [isFetching, web3, provider])
 
   return (
-    <li className="wallet" onClick={() => connectAppWithWallet(providerName)}>
-      {icon}
-      <div className="flex row center">
-        <h4 className="mr-1">{label}</h4>
-        <Icons.ArrowRight />
-      </div>
-      <h5 className="wallet-type">
-        {type}
-      </h5>
-      <div className="wallet-description">
-        {description}
-      </div>
-    </li>
+    <>
+      <ModalComponent title='Connect Wallet'>
+        <SelectedWalletModal
+          walletName={label}
+          icon={icon}
+          {...modalProps}
+        />
+      </ModalComponent>
+      <li
+        className="wallet"
+        onClick={() => {
+          showModal()
+          connectAppWithWallet(providerName)
+        }}
+      >
+        {icon}
+        <div className="flex row center">
+          <h4 className="mr-1">{label}</h4>
+          <Icons.ArrowRight />
+        </div>
+        <h5 className="wallet-type">
+          {type}
+        </h5>
+        <div className="wallet-description">
+          {description}
+        </div>
+      </li>
+    </>
   )
 }
 
