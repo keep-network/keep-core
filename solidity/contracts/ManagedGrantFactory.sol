@@ -42,13 +42,26 @@ contract ManagedGrantFactory {
         bytes memory _extraData
     ) public {
         require(KeepToken(_token) == token, "Invalid token contract");
-
-        token.safeTransferFrom(_from, address(this), _amount);
-
-        grantFundingPool[_from] += _amount;
+        (address _grantee,
+         uint256 _duration,
+         uint256 _start,
+         uint256 _cliff,
+         bool _revocable) = abi.decode(
+             _extraData,
+             (address, uint256, uint256, uint256, bool)
+        );
+        _createGrant(
+            _grantee,
+            _amount,
+            _duration,
+            _start,
+            _cliff,
+            _revocable,
+            _from
+        );
     }
 
-    function createGrant(
+    function createManagedGrant(
         address grantee,
         uint256 amount,
         uint256 duration,
@@ -56,11 +69,30 @@ contract ManagedGrantFactory {
         uint256 cliff,
         bool revocable
     ) public returns (address _managedGrant) {
-        require(
-            grantFundingPool[msg.sender] >= amount,
-            "Insufficient funding"
+        return _createGrant(
+            grantee,
+            amount,
+            duration,
+            start,
+            cliff,
+            revocable,
+            msg.sender
         );
-        grantFundingPool[msg.sender] -= amount;
+    }
+
+    function _createGrant(
+        address grantee,
+        uint256 amount,
+        uint256 duration,
+        uint256 start,
+        uint256 cliff,
+        bool revocable,
+        address _from
+    ) internal returns (address _managedGrant) {
+        require(grantee != address(0), "Grantee address can't be zero.");
+        require(cliff <= duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
+
+        token.safeTransferFrom(_from, address(this), amount);
 
         GrantStakingPolicy stakingPolicy = revocable
             ? revocableStakingPolicy
@@ -78,12 +110,12 @@ contract ManagedGrantFactory {
         );
         _managedGrant = address(managedGrant);
 
-        bytes memory grantData = abi.encodePacked(
+        bytes memory grantData = abi.encode(
             _managedGrant,
             duration,
             start,
             cliff,
-            revocable ? 0x01 : 0x00,
+            revocable,
             address(stakingPolicy)
         );
 
