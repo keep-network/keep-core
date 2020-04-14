@@ -42,6 +42,10 @@ func TestEphemeralPublicKeyMessageRoundtrip(t *testing.T) {
 	}
 }
 
+func TestFuzzEphemeralPublicKeyMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&EphemeralPublicKeyMessage{})
+}
+
 func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 	msg := &MemberCommitmentsMessage{
 		senderID: group.MemberIndex(141),
@@ -61,6 +65,10 @@ func TestMemberCommitmentsMessageRoundtrip(t *testing.T) {
 	if !reflect.DeepEqual(msg, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
+}
+
+func TestFuzzMemberCommitmentsMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&MemberCommitmentsMessage{})
 }
 
 func TestPeerSharesMessageRoundtrip(t *testing.T) {
@@ -89,6 +97,10 @@ func TestPeerSharesMessageRoundtrip(t *testing.T) {
 	if !reflect.DeepEqual(msg, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
+}
+
+func TestFuzzPeerSharesMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&PeerSharesMessage{})
 }
 
 func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
@@ -121,6 +133,10 @@ func TestSecretSharesAccusationsMessageRoundtrip(t *testing.T) {
 	}
 }
 
+func TestFuzzSecretSharesAccusationsMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&SecretSharesAccusationsMessage{})
+}
+
 func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 	msg := &MemberPublicKeySharePointsMessage{
 		senderID: group.MemberIndex(98),
@@ -141,6 +157,10 @@ func TestMemberPublicKeySharePointsMessageRoundtrip(t *testing.T) {
 	if !reflect.DeepEqual(msg, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
+}
+
+func TestFuzzMemberPublicKeySharePointsMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&MemberPublicKeySharePointsMessage{})
 }
 
 func TestPointsAccusationsMessageRoundtrip(t *testing.T) {
@@ -173,6 +193,10 @@ func TestPointsAccusationsMessageRoundtrip(t *testing.T) {
 	}
 }
 
+func TestFuzzPointsAccusationsMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&PointsAccusationsMessage{})
+}
+
 func TestMisbehavedEphemeralKeysMessageRoundtrip(t *testing.T) {
 	keyPair1, err := ephemeral.GenerateKeyPair()
 	if err != nil {
@@ -201,4 +225,8 @@ func TestMisbehavedEphemeralKeysMessageRoundtrip(t *testing.T) {
 	if !reflect.DeepEqual(msg, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
+}
+
+func TestFuzzMisbehavedEphemeralKeysMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&MisbehavedEphemeralKeysMessage{})
 }

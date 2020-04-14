@@ -2,7 +2,10 @@
 // These utilities are mostly aimed at testing.
 package pbutils
 
-import "github.com/gogo/protobuf/proto"
+import (
+	"github.com/gogo/protobuf/proto"
+	fuzz "github.com/google/gofuzz"
+)
 
 // RoundTrip takes a marshaler and unmarshaler, marshals the marshaler, and then
 // unmarshals the result into the unmarshaler. If either procedure errors out,
@@ -26,4 +29,16 @@ func RoundTrip(
 	}
 
 	return nil
+}
+
+// FuzzUnmarshaler tests given unmarshaler with random bytes.
+func FuzzUnmarshaler(unmarshaler proto.Unmarshaler) {
+	for i := 0; i < 100000; i++ {
+		var messageBytes []byte
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f.Fuzz(&messageBytes)
+
+		_ = unmarshaler.Unmarshal(messageBytes)
+	}
 }

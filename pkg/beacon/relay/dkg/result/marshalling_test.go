@@ -25,3 +25,7 @@ func TestDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
 }
+
+func TestFuzzDKGResultHashSignatureMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&DKGResultHashSignatureMessage{})
+}
