@@ -1,5 +1,4 @@
 const generateTickets = require('./generateTickets')
-const mineBlocks =  require('./mineBlocks')
 const packTicket =  require('./packTicket')
 const sign =  require('./signature')
 const blsData =  require('./data.js')
@@ -73,19 +72,15 @@ async function stakeAndGenesis(accounts, contracts) {
       await operatorContract.submitTicket(ticket, {from: operator3});
     }
 
-    let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber();
-    let submissionTimeout = (await operatorContract.ticketSubmissionTimeout()).toNumber();
-
-    let currentBlock = await web3.eth.getBlockNumber()
-    mineBlocks(ticketSubmissionStartBlock + submissionTimeout - currentBlock);
+    let ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock();
+    let submissionTimeout = await operatorContract.ticketSubmissionTimeout();
+    await time.advanceBlockTo(ticketSubmissionStartBlock.add(submissionTimeout))
 
     let selectedParticipants = await operatorContract.selectedParticipants();
 
-    let timeDKG = (await operatorContract.timeDKG()).toNumber();
-    let resultPublicationBlock = ticketSubmissionStartBlock + submissionTimeout + timeDKG;
-
-    currentBlock = await web3.eth.getBlockNumber()
-    mineBlocks(resultPublicationBlock - currentBlock)
+    let timeDKG = await operatorContract.timeDKG();
+    let resultPublicationBlock = ticketSubmissionStartBlock.add(submissionTimeout).add(timeDKG);
+    await time.advanceBlockTo(resultPublicationBlock)
 
     let misbehaved = '0x';
     let resultHash = web3.utils.soliditySha3(blsData.groupPubKey, misbehaved);

@@ -2,11 +2,10 @@ package groupselection
 
 import (
 	"encoding/binary"
+	"math/big"
 	"reflect"
 	"sort"
 	"testing"
-
-	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
@@ -328,7 +327,11 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	stg.submittedTickets = append(stg.submittedTickets, ticket)
 
 	sort.SliceStable(stg.submittedTickets, func(i, j int) bool {
-		return stg.submittedTickets[i].Value.Cmp(stg.submittedTickets[j].Value) == -1
+		// Ticket value bytes are interpreted as a big-endian unsigned integers.
+		iValue := new(big.Int).SetBytes(stg.submittedTickets[i].Value[:])
+		jValue := new(big.Int).SetBytes(stg.submittedTickets[j].Value[:])
+
+		return iValue.Cmp(jValue) == -1
 	})
 
 	if len(stg.submittedTickets) > stg.groupSize {
@@ -336,7 +339,7 @@ func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGr
 	}
 
 	_ = promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.Value,
+		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
 		BlockNumber: 222,
 	})
 
@@ -347,8 +350,8 @@ func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
 	tickets := make([]uint64, len(stg.submittedTickets))
 
 	for i := range tickets {
-		valueBytes := common.LeftPadBytes(stg.submittedTickets[i].Value.Bytes(), 32)
-		tickets[i] = binary.BigEndian.Uint64(valueBytes)
+		// Ticket bytes should be interpreted as a big-endian unsigned integers.
+		tickets[i] = binary.BigEndian.Uint64(stg.submittedTickets[i].Value[:])
 	}
 
 	return tickets, nil

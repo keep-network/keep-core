@@ -4,7 +4,6 @@ const {time} = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 const initContracts = require('../helpers/initContracts')
 const sign = require('../helpers/signature')
-const mineBlocks = require('../helpers/mineBlocks')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
 const generateTickets = require('../helpers/generateTickets')
@@ -87,13 +86,12 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
       {from: operator5}
     )
 
-    let ticketSubmissionStartBlock = (await operatorContract.getTicketSubmissionStartBlock()).toNumber()
-    let timeoutChallenge = (await operatorContract.ticketSubmissionTimeout()).toNumber()
-    let timeDKG = (await operatorContract.timeDKG()).toNumber()
-    let resultPublicationTime = ticketSubmissionStartBlock + timeoutChallenge + timeDKG
+    let ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock()
+    let timeoutChallenge = await operatorContract.ticketSubmissionTimeout()
+    let timeDKG = await operatorContract.timeDKG()
+    let resultPublicationTime = ticketSubmissionStartBlock.add(timeoutChallenge).add(timeDKG)
 
-    let currentBlock = await web3.eth.getBlockNumber()
-    mineBlocks(resultPublicationTime - currentBlock)
+    await time.advanceBlockTo(resultPublicationTime)
 
     selectedParticipants = await operatorContract.selectedParticipants()
 

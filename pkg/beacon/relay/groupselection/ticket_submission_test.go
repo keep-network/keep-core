@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
-	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
@@ -29,7 +28,7 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 			submittedTickets = append(submittedTickets, t)
 			promise := &async.EventGroupTicketSubmissionPromise{}
 			promise.Fulfill(&event.GroupTicketSubmission{
-				TicketValue: t.Value,
+				TicketValue: new(big.Int).SetBytes(t.Value[:]),
 				BlockNumber: 111,
 			})
 			return promise
@@ -47,7 +46,7 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 	}
 
 	for i, ticket := range tickets {
-		submitted := fromChainTicket(submittedTickets[i], t)
+		submitted := fromChainTicket(submittedTickets[i])
 
 		if !reflect.DeepEqual(ticket, submitted) {
 			t.Errorf(
@@ -60,17 +59,9 @@ func TestSubmitTicketsOnChain(t *testing.T) {
 	}
 }
 
-func fromChainTicket(chainTicket *chain.Ticket, t *testing.T) *ticket {
-	paddedTicketValue, err := byteutils.LeftPadTo32Bytes((chainTicket.Value.Bytes()))
-	if err != nil {
-		t.Errorf("could not pad ticket value [%v]", err)
-	}
-
-	var value [32]byte
-	copy(value[:], paddedTicketValue)
-
+func fromChainTicket(chainTicket *chain.Ticket) *ticket {
 	return &ticket{
-		value: value,
+		value: chainTicket.Value,
 		proof: &proof{
 			stakerValue:        chainTicket.Proof.StakerValue.Bytes(),
 			virtualStakerIndex: chainTicket.Proof.VirtualStakerIndex,

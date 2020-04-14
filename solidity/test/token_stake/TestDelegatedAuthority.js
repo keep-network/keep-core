@@ -237,6 +237,28 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     })
   })
 
+
+  describe("lockStake", async () => {
+    it("uses delegated authorization correctly", async () => {
+      let lockPeriod = time.duration.weeks(12);
+      await expectRevert(
+        stakingContract.lockStake(
+          operator,
+          lockPeriod,
+          {from: recognizedContract}
+        ),
+        "Not authorized"
+      );
+      await authorize(authorityDelegator);
+      await stakingContract.lockStake(
+        operator,
+        lockPeriod,
+        {from: recognizedContract}
+      );
+      // no error
+    })
+  })
+
   describe("eligibleStake", async () => {
     it("uses delegated authorization correctly", async () => {
       expect(await stakingContract.eligibleStake(operator, recognizedContract))
