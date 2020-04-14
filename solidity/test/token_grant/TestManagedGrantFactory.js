@@ -87,8 +87,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         grantee,
         grantAmount,
         grantUnlockingDuration,
-        grantStart,
         grantCliff,
+        grantStart,
         false,
         {from: grantCreator}
       );
@@ -96,8 +96,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         grantee,
         grantAmount,
         grantUnlockingDuration,
-        grantStart,
         grantCliff,
+        grantStart,
         false,
         {from: grantCreator}
       );
@@ -122,8 +122,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           grantee,
           grantAmount,
           grantUnlockingDuration,
-          grantStart,
           grantCliff,
+          grantStart,
           false,
           {from: unrelatedAddress}
         ),
@@ -142,8 +142,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           grantee,
           grantAmount.addn(1),
           grantUnlockingDuration,
-          grantStart,
           grantCliff,
+          grantStart,
           false,
           {from: unrelatedAddress}
         ),

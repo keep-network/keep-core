@@ -40,6 +40,20 @@ contract ManagedGrantFactory {
         revocableStakingPolicy = GrantStakingPolicy(_revocableStakingPolicy);
     }
 
+    /// @notice Create a managed grant
+    /// with the parameters specified in `_extraData`.
+    /// @dev Requires no setup beforehand,
+    /// but only provides the managed grant address through an event.
+    /// @param _from The owner of the tokens who approved them to transfer.
+    /// @param _amount Approved amount for the transfer to create the grant.
+    /// @param _token Address of the token contract;
+    /// must match the token specified when the factory was created.
+    /// @param _extraData The following values encoded with `abi.encode`:
+    /// grantee (address) Address of the grantee.
+    /// duration (uint256) Duration in seconds of the unlocking period.
+    /// cliff (uint256) Duration in seconds of the cliff before which no tokens will unlock.
+    /// start (uint256) Timestamp at which unlocking will start.
+    /// revocable (bool) Whether the token grant is revocable or not.
     function receiveApproval(
         address _from,
         uint256 _amount,
@@ -66,20 +80,32 @@ contract ManagedGrantFactory {
         );
     }
 
+    /// @notice Create a managed grant with the given parameters.
+    /// @dev At least `amount` tokens to be approved for the factory beforehand.
+    /// The grant will use the staking policy specified for its type
+    /// (revocable or non-revocable)
+    /// when the factory was created.
+    /// @param grantee The initial grantee.
+    /// @param amount The number of tokens to grant.
+    /// @param duration Duration in seconds of the unlocking period.
+    /// @param cliff Duration in seconds of the cliff before which no tokens will unlock.
+    /// @param start Timestamp at which unlocking will start.
+    /// @param revocable Whether the token grant is revocable or not.
+    /// @return The address of the managed grant.
     function createManagedGrant(
         address grantee,
         uint256 amount,
         uint256 duration,
-        uint256 start,
         uint256 cliff,
+        uint256 start,
         bool revocable
     ) public returns (address _managedGrant) {
         return _createGrant(
             grantee,
             amount,
             duration,
-            start,
             cliff,
+            start,
             revocable,
             msg.sender
         );
@@ -89,8 +115,8 @@ contract ManagedGrantFactory {
         address grantee,
         uint256 amount,
         uint256 duration,
-        uint256 start,
         uint256 cliff,
+        uint256 start,
         bool revocable,
         address _from
     ) internal returns (address _managedGrant) {

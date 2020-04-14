@@ -52,6 +52,9 @@ contract ManagedGrant {
         grantee = _grantee;
     }
 
+    /// @notice Request a reassignment of the grantee address.
+    /// Can only be called by the grantee.
+    /// @param _newGrantee The requested new grantee.
     function requestGranteeReassignment(address _newGrantee)
         public
         onlyGrantee
@@ -61,6 +64,8 @@ contract ManagedGrant {
         emit GranteeReassignmentRequested(_newGrantee);
     }
 
+    /// @notice Cancel a pending grantee reassignment request.
+    /// Can only be called by the grantee.
     function cancelReassignmentRequest()
         public
         onlyGrantee
@@ -71,6 +76,9 @@ contract ManagedGrant {
         emit GranteeReassignmentCancelled(cancelledGrantee);
     }
 
+    /// @notice Change a pending reassignment request to a different grantee.
+    /// Can only be called by the grantee.
+    /// @param _newGrantee The address of the new requested grantee.
     function changeReassignmentRequest(address _newGrantee)
         public
         onlyGrantee
@@ -85,6 +93,10 @@ contract ManagedGrant {
         emit GranteeReassignmentChanged(previouslyRequestedGrantee, _newGrantee);
     }
 
+    /// @notice Confirm a grantee reassignment request and set the new grantee as the grantee.
+    /// Can only be called by the grant manager.
+    /// @param _newGrantee The address of the new grantee.
+    /// Must match the currently requested new grantee.
     function confirmGranteeReassignment(address _newGrantee)
         public
         onlyManager
@@ -100,6 +112,7 @@ contract ManagedGrant {
         emit GranteeReassignmentConfirmed(oldGrantee, _newGrantee);
     }
 
+    /// @notice Withdraw all unlocked tokens from the grant.
     function withdraw() public onlyGrantee {
         require(
             requestedNewGrantee == address(0),
@@ -111,6 +124,14 @@ contract ManagedGrant {
         emit TokensWithdrawn(grantee, amount);
     }
 
+    /// @notice Stake tokens from the grant.
+    /// @param _stakingContract The contract to stake the tokens on.
+    /// @param _amount The amount of tokens to stake.
+    /// @param _extraData Data for the stake delegation.
+    /// This byte array must have the following values concatenated:
+    /// beneficiary address (20 bytes)
+    /// operator address (20 bytes)
+    /// authorizer address (20 bytes)
     function stake(
         address _stakingContract,
         uint256 _amount,
@@ -119,14 +140,17 @@ contract ManagedGrant {
         tokenGrant.stake(grantId, _stakingContract, _amount, _extraData);
     }
 
+    /// @notice Cancel delegating tokens to the given operator.
     function cancelStake(address _operator) public onlyGranteeOr(_operator) {
         tokenGrant.cancelStake(_operator);
     }
 
+    /// @notice Begin undelegating tokens from the given operator.
     function undelegate(address _operator) public onlyGranteeOr(_operator) {
         tokenGrant.undelegate(_operator);
     }
 
+    /// @notice Recover tokens previously staked and delegated to the operator.
     function recoverStake(address _operator) public onlyGrantee {
         tokenGrant.recoverStake(_operator);
     }
