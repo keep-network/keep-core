@@ -46,19 +46,19 @@ describe('TokenGrant/ManagedGrant', () => {
   let stakeFromManagedGrant;
 
   before(async () => {
-    token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new({from: accounts[0]});
+    token = await KeepToken.new({from: grantCreator});
+    registry = await Registry.new({from: grantCreator});
     staking = await TokenStaking.new(
       token.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: accounts[0]}
+      {from: grantCreator}
     );
 
-    tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]});
+    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
 
-    await tokenGrant.authorizeStakingContract(staking.address, {from: accounts[0]});
+    await tokenGrant.authorizeStakingContract(staking.address, {from: grantCreator});
 
     minimumStake = await staking.minimumStake()
 
