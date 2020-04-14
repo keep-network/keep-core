@@ -11,7 +11,7 @@ import (
 func TestUnicastChannelFuzzing(t *testing.T) {
 	ctx := context.Background()
 
-	withNetwork(ctx, t, func(
+	withNetwork(ctx, t, 7000, func(
 		_ *identity,
 		identity2 *identity,
 		provider1 net.Provider,
@@ -42,7 +42,7 @@ func TestUnicastChannelFuzzing(t *testing.T) {
 func TestBroadcastChannelFuzzing(t *testing.T) {
 	ctx := context.Background()
 
-	withNetwork(ctx, t, func(
+	withNetwork(ctx, t, 8000, func(
 		_ *identity,
 		_ *identity,
 		provider net.Provider,
