@@ -26,3 +26,7 @@ func TestSignatureShareMessageRoundTrip(t *testing.T) {
 
 	testutils.AssertBytesEqual(t, msg.shareBytes, unmarshaled.shareBytes)
 }
+
+func TestFuzzSignatureShareMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&SignatureShareMessage{})
+}
