@@ -523,7 +523,7 @@ describe('TokenGrant/ManagedGrant', () => {
         operator, beneficiary, authorizer, grantAmount, grantee
       );
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
     });
 
@@ -532,7 +532,7 @@ describe('TokenGrant/ManagedGrant', () => {
         operator, beneficiary, authorizer, grantAmount, grantee
       );
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: operator});
     });
 
@@ -540,7 +540,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, minimumStake, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await expectRevert(
         managedGrant.undelegate(operator, {from: grantCreator}),
         "Only grantee or operator may perform this action"
@@ -551,7 +551,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, minimumStake, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await expectRevert(
         managedGrant.undelegate(operator, {from: unrelatedAddress}),
         "Only grantee or operator may perform this action"
@@ -563,7 +563,7 @@ describe('TokenGrant/ManagedGrant', () => {
         operator, beneficiary, authorizer, grantAmount, grantee
       );
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await managedGrant.undelegate(operator, {from: newGrantee});
@@ -574,7 +574,7 @@ describe('TokenGrant/ManagedGrant', () => {
         operator, beneficiary, authorizer, grantAmount, grantee
       );
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0);
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await expectRevert(
@@ -589,9 +589,9 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: grantee});
       await managedGrant.withdraw({from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
@@ -601,9 +601,9 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await expectRevert(
         managedGrant.recoverStake(operator, {from: operator}),
         "Only grantee may perform this action"
@@ -614,9 +614,9 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await expectRevert(
         managedGrant.recoverStake(operator, {from: grantCreator}),
         "Only grantee may perform this action"
@@ -627,9 +627,9 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await expectRevert(
         managedGrant.recoverStake(operator, {from: unrelatedAddress}),
         "Only grantee may perform this action"
@@ -640,9 +640,9 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await managedGrant.recoverStake(operator, {from: newGrantee});
@@ -654,9 +654,9 @@ describe('TokenGrant/ManagedGrant', () => {
       await stakeFromManagedGrant(
         operator, beneficiary, authorizer, grantAmount, grantee
       );
-      await time.increase(initializationPeriod * 2);
+      await time.increase(initializationPeriod.muln(2));
       await managedGrant.undelegate(operator, {from: grantee});
-      await time.increase(undelegationPeriod + grantUnlockingDuration);
+      await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await expectRevert(
