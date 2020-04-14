@@ -234,8 +234,7 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
           command: |
-            docker build \
-              -t keep-dapp-token-dashboard:$DOCKER_IMAGE_TAG .
+            docker build --tag keep-dapp-token-dashboard .
       - run:
           name: Save keep-dapp-token-dashboard image
           working_directory: ~/project/solidity/dashboard
@@ -258,7 +257,7 @@ jobs:
       - run:
           name: Tag Docker image
           command: |
-            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard
+            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard:$DOCKER_IMAGE_TAG
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -346,35 +345,35 @@ workflows:
   build-test-migrate-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           context: keep-dev
       - build_initcontainer:
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           context: keep-dev
           requires:
             - migrate_contracts
             - build_client_and_test_go
       - migrate_contracts:
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           context: keep-dev
       - publish_npm_package:
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           context: keep-dev
           requires:
             - migrate_contracts
             - build_client_and_test_go
       - publish_keep_client:
-          # filters:
-          #   branches:
-          #     only: master
+          filters:
+            branches:
+              only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
