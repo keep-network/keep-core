@@ -5,6 +5,8 @@
   "license": "MIT",
   "dependencies": {
     "@0x/subproviders": "^6.0.8",
+    "@ledgerhq/hw-app-eth": "^5.13.0",
+    "@ledgerhq/hw-transport-u2f": "^5.13.0",
     "bignumber.js": "9.0.0",
     "ethereumjs-common": "^1.5.0",
     "ethereumjs-tx": "^2.1.2",

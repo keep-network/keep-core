@@ -1,6 +1,7 @@
 import React from 'react'
 import Web3 from 'web3'
 import { TrezorProvider } from '../connectors/trezor'
+import { LedgerProvider } from '../connectors/ledger'
 import { Web3Context } from './WithWeb3Context'
 import { MessagesContext, messageType } from './Message'
 import { getContracts } from '../contracts'
@@ -28,10 +29,7 @@ export default class Web3ContextProvider extends React.Component {
     getWeb3 = (providerName) => {
       switch (providerName) {
         case 'TREZOR': {
-          return new Web3(new TrezorProvider(
-            'test@email.com',
-            'https://keep.network/',
-          ))
+          return new Web3(new TrezorProvider(1101))
         }
         case 'METAMASK': {
           if (window.ethereum || window.web3) {
@@ -43,7 +41,7 @@ export default class Web3ContextProvider extends React.Component {
           throw new Error('Coinbase wallet is not yet supported')
         }
         case 'LEDGER': {
-          throw new Error('Ledger wallet is not yet supported')
+          return new Web3(new LedgerProvider(1101))
         }
         default:
           throw new Error('Unsupported wallet')
