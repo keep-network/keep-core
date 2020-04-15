@@ -3,6 +3,7 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
+	"sync"
 
 	"github.com/ipfs/go-log"
 
@@ -62,23 +63,45 @@ func Initialize(
 		groupRegistry,
 	)
 
-	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		logger.Infof(
-			"new relay entry requested at block [%v] from group [0x%x] using "+
-				"previous entry [0x%x]",
-			request.BlockNumber,
-			request.GroupPublicKey,
-			request.PreviousEntry,
-		)
+	groupSelected := &event.GroupSelectionTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
 
+	relayRequested := &event.RelayRequestTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	relayChain.OnRelayEntryRequested(func(request *event.Request) {
+		previousEntry := hex.EncodeToString(request.PreviousEntry[:])
 		if node.IsInGroup(request.GroupPublicKey) {
-			go node.GenerateRelayEntry(
-				request.PreviousEntry,
-				relayChain,
-				signing,
-				request.GroupPublicKey,
-				request.BlockNumber,
-			)
+			go func() {
+				if ok := relayRequested.Add(previousEntry); !ok {
+					logger.Errorf(
+						"a new relay has been already requested using previous entry [0x%x]",
+						previousEntry,
+					)
+					return
+				}
+
+				defer relayRequested.Remove(previousEntry)
+
+				logger.Infof(
+					"new relay entry requested at block [%v] from group [0x%x] using "+
+						"previous entry [0x%x]",
+					request.BlockNumber,
+					request.GroupPublicKey,
+					request.PreviousEntry,
+				)
+				node.GenerateRelayEntry(
+					request.PreviousEntry,
+					relayChain,
+					signing,
+					request.GroupPublicKey,
+					request.BlockNumber,
+				)
+			}()
 		}
 
 		go node.MonitorRelayEntry(
@@ -89,12 +112,6 @@ func Initialize(
 	})
 
 	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		logger.Infof(
-			"group selection started with seed [0x%v] at block [%v]",
-			event.NewEntry.Text(16),
-			event.BlockNumber,
-		)
-
 		onGroupSelected := func(group *groupselection.Result) {
 			for index, staker := range group.SelectedStakers {
 				logger.Infof(
@@ -111,7 +128,24 @@ func Initialize(
 			)
 		}
 
+		newEntry := event.NewEntry.Text(16)
 		go func() {
+			if ok := groupSelected.Add(newEntry); !ok {
+				logger.Errorf(
+					"group selection with seed [0x%v] has already started",
+					newEntry,
+				)
+				return
+			}
+
+			defer groupSelected.Remove(newEntry)
+
+			logger.Infof(
+				"group selection started with seed [0x%v] at block [%v]",
+				newEntry,
+				event.BlockNumber,
+			)
+
 			err := groupselection.CandidateToNewGroup(
 				relayChain,
 				blockCounter,
