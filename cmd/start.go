@@ -86,10 +86,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not check the stake [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf(`no minimum KEEP stake or operator is not authorized to use it;
-please make sure:
-- operator address in the configuration is correct and it has KEEP tokens delegated
-- operator contract has been authorized to operate on stake`)
+		return fmt.Errorf(
+			"no minimum KEEP stake or operator is not authorized to use it; " +
+				"please make sure the operator address in the configuration " +
+				"is correct and it has KEEP tokens delegated and the operator " +
+				"contract has been authorized to operate on the stake",
+		)
 	}
 
 	ctx := context.Background()
