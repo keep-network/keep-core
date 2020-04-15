@@ -1,6 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -17,8 +16,6 @@ const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumS
 
 const ManagedGrant = contract.fromArtifact('ManagedGrant');
 const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory');
-
-const nullBytes = '0x';
 
 describe('TokenGrant/ManagedGrantFactory', () => {
   let token, registry, tokenGrant, staking;
