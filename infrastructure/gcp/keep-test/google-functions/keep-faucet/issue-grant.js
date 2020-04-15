@@ -38,11 +38,13 @@ const web3 = new Web3(keepContractOwnerProvider, null, web3Options)
 const tokenGrantAbi = tokenGrantJson.abi
 const tokenGrantAddress = tokenGrantJson.networks[ethereumNetworkId].address
 const tokenGrant = new web3.eth.Contract(tokenGrantAbi, tokenGrantAddress)
+tokenGrant.options.handleRevert = true
 
 // KeepToken
 const keepTokenAbi = keepTokenJson.abi
 const keepTokenAddress = keepTokenJson.networks[ethereumNetworkId].address
 const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
+keepToken.options.handleRevert = true
 
 // PermissiveStakingPolicy
 const permissiveStakingPolicyAddress = permissiveStakingPolicyJson.networks[ethereumNetworkId].address
@@ -102,6 +104,15 @@ exports.issueGrant = async (request, response) => {
           Buffer.from(permissiveStakingPolicyAddress.substr(2), 'hex', 20)
         ])
 
+        console.log("Test submission...")
+        // Try calling; if this throws, we'll have a proper error message thanks
+        // to handleRevert above.
+        await keepToken.methods
+          .approveAndCall(tokenGrantAddress, grantAmount, grantData)
+          .call({ from: keepContractOwnerAddress })
+
+        console.log("Submitting transaction...")
+        // If the call didn't revert, try submitting the transaction proper.
         const transaction = keepToken.methods
           .approveAndCall(tokenGrant.address, grantAmount, grantData)
           .send({ from: keepContractOwnerAddress })
