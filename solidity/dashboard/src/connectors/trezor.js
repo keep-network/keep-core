@@ -4,10 +4,11 @@ import web3Utils from 'web3-utils'
 import { AbstractHardwareWalletConnector } from './abstract'
 import { getEthereumTxObj, getChainIdFromV } from './utils'
 import { getBufferFromHex } from '../utils/general.utils'
+import { getChainId } from './utils'
 
 export class TrezorProvider extends AbstractHardwareWalletConnector {
-  constructor(chainId) {
-    super(new CustomTrezorSubprovider(1101))
+  constructor() {
+    super(new CustomTrezorSubprovider(getChainId()))
   }
 }
 

@@ -2,15 +2,13 @@ import { LedgerSubprovider } from '@0x/subproviders'
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import AppEth from '@ledgerhq/hw-app-eth'
 import { AbstractHardwareWalletConnector } from './abstract'
-import { getChainIdFromV, getEthereumTxObj } from './utils'
+import { getChainIdFromV, getEthereumTxObj, getChainId } from './utils'
 import web3Utils from 'web3-utils'
 import { getBufferFromHex } from '../utils/general.utils'
 
-console.log('buffer', Buffer.from([2238], 'hex').toString('hex'), '1101'.toString(16))
-
 export class LedgerProvider extends AbstractHardwareWalletConnector {
-  constructor(chainId) {
-    super(new CustomLedgerSubprovider(1101))
+  constructor() {
+    super(new CustomLedgerSubprovider(getChainId()))
   }
 }
 

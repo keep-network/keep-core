@@ -29,7 +29,7 @@ export default class Web3ContextProvider extends React.Component {
     getWeb3 = (providerName) => {
       switch (providerName) {
         case 'TREZOR': {
-          return new Web3(new TrezorProvider(1101))
+          return new Web3(new TrezorProvider())
         }
         case 'METAMASK': {
           if (window.ethereum || window.web3) {
@@ -41,7 +41,7 @@ export default class Web3ContextProvider extends React.Component {
           throw new Error('Coinbase wallet is not yet supported')
         }
         case 'LEDGER': {
-          return new Web3(new LedgerProvider(1101))
+          return new Web3(new LedgerProvider())
         }
         default:
           throw new Error('Unsupported wallet')

@@ -17,3 +17,11 @@ export const getChainIdFromV = (vInHex) => {
   const chainId = Math.floor((vIntValue - 35) / 2)
   return chainId < 0 ? 0 : chainId
 }
+
+export const getChainId = () => {
+  return process.env.CHAIN_ID || 1337
+}
+
+export const getRpcURL = () => {
+  return process.env.ETH_RPC_URL || 'ws://localhost:8545'
+}
