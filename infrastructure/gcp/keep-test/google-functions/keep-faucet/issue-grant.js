@@ -119,12 +119,12 @@ exports.issueGrant = async (request, response) => {
           .send({ from: keepContractOwnerAddress })
           .on('transactionHash', (hash) => {
             console.log(
-              `Submitted grant for [${grantAmount}] to [${granteeAccount}].`,
-              transaction,
+              `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
+                `with hash [${hash}].`,
             )
             response.send(`
               Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
-              You can follow the transaction at https://ropsten.etherscan.io/tx/${transaction.hash}\n
+              You can follow the transaction at https://ropsten.etherscan.io/tx/${hash}\n
               You can manage your token grants at: https://dashboard.test.keep.network .\n
               You can find us on Discord at: https://discord.gg/jqxBU4m .\n
             `)
