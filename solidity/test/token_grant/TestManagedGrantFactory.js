@@ -75,7 +75,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
   });
 
   describe("creating managed grants", async () => {
-    it("works", async () => {
+    it("works with a two-step call", async () => {
       await token.approve(
         factory.address, grantAmount, {from: grantCreator}
       );
@@ -84,8 +84,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         grantee,
         grantAmount,
         grantUnlockingDuration,
-        grantCliff,
         grantStart,
+        grantCliff,
         false,
         {from: grantCreator}
       );
@@ -93,8 +93,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         grantee,
         grantAmount,
         grantUnlockingDuration,
-        grantCliff,
         grantStart,
+        grantCliff,
         false,
         {from: grantCreator}
       );
@@ -108,6 +108,25 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       expect(event.args['grantee']).to.equal(grantee);
     });
 
+    it("works with receiveApproval", async () => {
+      grantStart = await time.latest();
+      let extraData = web3.eth.abi.encodeParameters(
+        ['address', 'uint256', 'uint256', 'uint256', 'bool'],
+        [grantee, grantUnlockingDuration.toNumber(), grantStart.toNumber(), grantCliff.toNumber(), false]
+      );
+      await token.approveAndCall(
+        factory.address, grantAmount, extraData, {from: grantCreator}
+      );
+      let event = (await factory.getPastEvents())[0];
+      expect(event.args['grantee']).to.equal(grantee);
+      let managedGrantAddress = event.args['grantAddress'];
+      let managedGrant = await ManagedGrant.at(managedGrantAddress);
+      let grantId = await managedGrant.grantId();
+      expect(await tokenGrant.availableToStake(grantId)).to.eq.BN(grantAmount);
+      expect(await managedGrant.grantee()).to.equal(grantee);
+      expect(await managedGrant.grantManager()).to.equal(grantCreator);
+    });
+
     it("doesn't let one grant more than they've approved on the token", async () => {
       await token.transfer(unrelatedAddress, grantAmount, {from: grantCreator});
       await token.approve(
@@ -119,8 +138,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           grantee,
           grantAmount,
           grantUnlockingDuration,
-          grantCliff,
           grantStart,
+          grantCliff,
           false,
           {from: unrelatedAddress}
         ),
@@ -139,8 +158,8 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           grantee,
           grantAmount.addn(1),
           grantUnlockingDuration,
-          grantCliff,
           grantStart,
+          grantCliff,
           false,
           {from: unrelatedAddress}
         ),

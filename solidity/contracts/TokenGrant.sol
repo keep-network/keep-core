@@ -214,8 +214,8 @@ contract TokenGrant {
      * @param _extraData This byte array must have the following values concatenated:
      * grantee (20 bytes) Address of the grantee.
      * duration (32 bytes) Duration in seconds of the unlocking period.
-     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
      * start (32 bytes) Timestamp at which unlocking will start.
+     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
      * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
      * stakingPolicy (20 bytes) Address of the staking policy for the grant.
      */

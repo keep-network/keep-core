@@ -88,24 +88,24 @@ contract ManagedGrantFactory {
     /// @param grantee The initial grantee.
     /// @param amount The number of tokens to grant.
     /// @param duration Duration in seconds of the unlocking period.
-    /// @param cliff Duration in seconds of the cliff before which no tokens will unlock.
     /// @param start Timestamp at which unlocking will start.
+    /// @param cliff Duration in seconds of the cliff before which no tokens will unlock.
     /// @param revocable Whether the token grant is revocable or not.
     /// @return The address of the managed grant.
     function createManagedGrant(
         address grantee,
         uint256 amount,
         uint256 duration,
-        uint256 cliff,
         uint256 start,
+        uint256 cliff,
         bool revocable
     ) public returns (address _managedGrant) {
         return _createGrant(
             grantee,
             amount,
             duration,
-            cliff,
             start,
+            cliff,
             revocable,
             msg.sender
         );
@@ -115,8 +115,8 @@ contract ManagedGrantFactory {
         address grantee,
         uint256 amount,
         uint256 duration,
-        uint256 cliff,
         uint256 start,
+        uint256 cliff,
         bool revocable,
         address _from
     ) internal returns (address _managedGrant) {
@@ -135,7 +135,7 @@ contract ManagedGrantFactory {
         ManagedGrant managedGrant = new ManagedGrant(
             address(token),
             address(tokenGrant),
-            msg.sender,
+            _from,
             grantId,
             grantee
         );
