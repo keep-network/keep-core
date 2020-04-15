@@ -3,11 +3,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -20,9 +22,10 @@ import (
 var StartCommand cli.Command
 
 const (
-	bootstrapFlag = "bootstrap"
-	portFlag      = "port"
-	portShort     = "p"
+	bootstrapFlag    = "bootstrap"
+	portFlag         = "port"
+	portShort        = "p"
+	stakeTimeoutFlag = "stake-timeout"
 )
 
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
@@ -38,6 +41,9 @@ func init() {
 			Flags: []cli.Flag{
 				&cli.IntFlag{
 					Name: portFlag + "," + portShort,
+				},
+				&cli.IntFlag{
+					Name: stakeTimeoutFlag,
 				},
 			},
 		}
@@ -78,6 +84,12 @@ func Start(c *cli.Context) error {
 	stakeMonitor, err := chainProvider.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
+	}
+	if c.Int(stakeTimeoutFlag) != 0 {
+		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(stakeTimeoutFlag))
+		if err != nil {
+			return err
+		}
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
 		config.Ethereum.Account.Address,
@@ -153,4 +165,21 @@ func loadStaticKey(
 	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
 	return privateKey, publicKey, nil
+}
+
+func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
+	waitMins := 0
+	for waitMins < timeout {
+		hasMinimumStake, err := stakeMonitor.HasMinimumStake(address)
+		if err != nil {
+			return fmt.Errorf("could not check the stake [%v]", err)
+		}
+		if hasMinimumStake {
+			return nil
+		}
+		fmt.Printf("%s stake is below required minimum, wait duration: %d minutes \n", address, waitMins)
+		time.Sleep(time.Minute)
+		waitMins++
+	}
+	return fmt.Errorf("timed out waiting for %s to have required minimum stake", address)
 }
