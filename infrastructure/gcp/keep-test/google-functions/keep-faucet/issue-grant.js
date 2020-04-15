@@ -113,19 +113,32 @@ exports.issueGrant = async (request, response) => {
 
         console.log("Submitting transaction...")
         // If the call didn't revert, try submitting the transaction proper.
-        const transaction = keepToken.methods
-          .approveAndCall(tokenGrant.address, grantAmount, grantData)
+        keepToken.methods
+          .approveAndCall(tokenGrantAddress, grantAmount, grantData)
           .send({ from: keepContractOwnerAddress })
-
-        console.log(
-          `Created grant for [${grantAmount}] to [${granteeAccount}].`,
-        )
-        response.send(`
-          Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
-          You can follow the transaction at https://ropsten.etherscan.io/tx/${transaction.hash}\n
-          You can manage your token grants at: https://dashboard.test.keep.network\n
-          You can find us on Discord at: https://discord.gg/jqxBU4m\n
-        `)
+          .on('transactionHash', (hash) => {
+            console.log(
+              `Submitted grant for [${grantAmount}] to [${granteeAccount}].`,
+              transaction,
+            )
+            response.send(`
+              Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
+              You can follow the transaction at https://ropsten.etherscan.io/tx/${transaction.hash}\n
+              You can manage your token grants at: https://dashboard.test.keep.network .\n
+              You can find us on Discord at: https://discord.gg/jqxBU4m .\n
+            `)
+          })
+          .on('error', (error) => {
+            console.error(
+              `Error with account grant transaction: [${error}]; URL was [${request.url}].`
+            )
+            if (! response.headersSent) {
+              response.status(500).send(`
+                  Token grant failed, try again.\n
+                  If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
+              `)
+            }
+          })
       }
     }
   } catch (error) {
@@ -134,7 +147,7 @@ exports.issueGrant = async (request, response) => {
     )
     return response.status(500).send(`
         Token grant failed, try again.\n
-        If problems persist find us on Discord: https://discord.gg/jqxBU4m\n
+        If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
     `)
   }
 }
