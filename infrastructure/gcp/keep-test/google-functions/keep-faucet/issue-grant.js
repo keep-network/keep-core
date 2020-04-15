@@ -1,4 +1,5 @@
 // Function deps
+const url = require('url')
 const Web3 = require('web3')
 const HDWalletProvider = require('@truffle/hdwallet-provider')
 
@@ -17,9 +18,6 @@ const keepContractOwnerProvider = new HDWalletProvider(
 // Contract artifacts
 const tokenGrantJson = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
 const keepTokenJson = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
-
-// Parse grantee account address
-const { parseAccountAddress } = require('./parse-account-address.js')
 
 // We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 // 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -45,66 +43,79 @@ const keepTokenAbi = keepTokenJson.abi
 const keepTokenAddress = keepTokenJson.networks[ethereumNetworkId].address
 const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
 
+const ethAccountRegExp = /^(0x)?[0-9a-f]{40}$/i
+const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+
 exports.issueGrant = async (request, response) => {
   try {
-    const granteeAccount = parseAccountAddress(request, response)
-    const unlockingDuration = 0
-    const start = Math.floor(Date.now() / 1000)
-    const cliff = 0
-    const revocable = false
-    const tokens = 300000
-    const grantBalance = await tokenGrant.methods
-      .balanceOf(granteeAccount)
-      .call()
-    let grantAmount = formatAmount(tokens, 18)
+    const requestUrl = url.parse(request.url, true)
+    const account = requestUrl.query.account
 
-    if (grantBalance.gte(grantAmount)) {
-      console.log(
-        `${granteeAccount} requested grant while at limit. Balance: ${grantBalance}`,
+    if (! account) {
+      console.error("Unspecified account.")
+      return response.status(400).send(
+        "No account address set, please set an account with ?accoun=<address>\n"
       )
-      return response.send(`
-        Token grant failed, your account has the maximum testnet KEEP allowed.
-        You can manage your token grants at: https://dashboard.test.keep.network
-        If you have questions find us on Discord: https://discord.gg/jqxBU4m\n`)
+    } else if (!ethAccountRegExp.test(account)) {
+      console.error("Bad account address [", account, "].")
+      return response.status(400).send(
+        "Improperly formatted account address, please correct and try again.\n"
+      )
     } else {
-      const grantData = Buffer.concat([
-        Buffer.from(granteeAccount.substr(2), 'hex'),
-        web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
-        web3.utils.toBN(start).toBuffer('be', 32),
-        web3.utils.toBN(cliff).toBuffer('be', 32),
-        Buffer.from(revocable ? '01' : '00', 'hex'),
-      ])
+      const granteeAccount = account
+      const unlockingDuration = 0
+      const start = Math.floor(Date.now() / 1000)
+      const cliff = 0
+      const revocable = false
+      const tokens = web3.utils.toBN(300000)
+      const grantBalance = await tokenGrant.methods
+        .balanceOf(granteeAccount)
+        .call()
+      const grantAmount = tokens.mul(tokenDecimalMultiplier)
 
-      await keepToken.methods
-        .approveAndCall(tokenGrant.address, grantAmount, grantData)
-        .send({ from: keepContractOwnerAddress })
+      if (grantBalance.gte(grantAmount)) {
+        console.warn(
+          `[${granteeAccount}] requested grant while at limit. Balance: [${grantBalance}].`,
+        )
+        return response.status(400).send(`
+          Token grant failed: your account has the maximum testnet KEEP allowed.\n
+          You can manage your token grants at: https://dashboard.test.keep.network\n
+          If you have questions, you can find us on Discord: https://discord.gg/jqxBU4m\n`
+        )
+      } else {
+        console.log(
+          `Created grant for [${grantAmount}] to [${granteeAccount}].`,
+        )
+        const grantData = Buffer.concat([
+          Buffer.from(granteeAccount.substr(2), 'hex'),
+          web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
+          web3.utils.toBN(start).toBuffer('be', 32),
+          web3.utils.toBN(cliff).toBuffer('be', 32),
+          Buffer.from(revocable ? '01' : '00', 'hex'),
+        ])
 
-      console.log(
-        `Created grant for ${web3.utils.toBN(
-          grantAmount,
-        )} to: ${granteeAccount}`,
-      )
-      response.send(`
-        Created token grant with ${web3.utils.toBN(
-          grantAmount,
-        )} KEEP for account: ${granteeAccount}
-        You can manage your token grants at: https://dashboard.test.keep.network
-        You can find us on Discord at: https://discord.gg/jqxBU4m\n`)
+        const transaction = keepToken.methods
+          .approveAndCall(tokenGrant.address, grantAmount, grantData)
+          .send({ from: keepContractOwnerAddress })
+
+        console.log(
+          `Created grant for [${grantAmount}] to [${granteeAccount}].`,
+        )
+        response.send(`
+          Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
+          You can follow the transaction at https://ropsten.etherscan.io/tx/${transaction.hash}\n
+          You can manage your token grants at: https://dashboard.test.keep.network\n
+          You can find us on Discord at: https://discord.gg/jqxBU4m\n
+        `)
+      }
     }
   } catch (error) {
-    console.log(error)
-    return response.send(`
-        Token grant failed, try again.
-        If problems persist find us on Discord: https://discord.gg/jqxBU4m\n`)
+    console.error(
+      `Error while requesting account grant: [${error}]; URL was [${request.url}].`
+    )
+    return response.status(500).send(`
+        Token grant failed, try again.\n
+        If problems persist find us on Discord: https://discord.gg/jqxBU4m\n
+    `)
   }
-}
-
-function formatAmount(amount, decimals) {
-  return (
-    '0x' +
-    web3.utils
-      .toBN(amount)
-      .mul(web3.utils.toBN(10).pow(web3.utils.toBN(decimals)))
-      .toString('hex')
-  )
 }
