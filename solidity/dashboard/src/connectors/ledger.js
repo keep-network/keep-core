@@ -6,6 +6,8 @@ import { getChainIdFromV, getEthereumTxObj } from './utils'
 import web3Utils from 'web3-utils'
 import { getBufferFromHex } from '../utils/general.utils'
 
+console.log('buffer', Buffer.from([2238], 'hex').toString('hex'), '1101'.toString(16))
+
 export class LedgerProvider extends AbstractHardwareWalletConnector {
   constructor(chainId) {
     super(new CustomLedgerSubprovider(1101))
@@ -43,7 +45,7 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
       this._ledgerClientIfExists = await this._createLedgerClientAsync()
       const tx = getEthereumTxObj(txData, this.chainId)
 
-      tx.raw[6] = this.chainId
+      tx.raw[6] = getBufferFromHex(this.chainId.toString(16))
       tx.raw[7] = Buffer.from([])
       tx.raw[8] = Buffer.from([])
       const result = await this._ledgerClientIfExists.signTransaction(
@@ -51,20 +53,24 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
         tx.serialize().toString('hex')
       )
 
-      let v = result.v
-      const rv = parseInt(v, 16)
-      let cv = this.chainId * 2 + 35
-      if (rv !== cv && (rv & cv) !== rv) {
-        cv += 1 // add signature v bit.
+      // The transport layer only returns the lower 2 bytes.
+      // The returned `v` will be wrong for chainId's < 255 and has to be recomputed.
+      const ledgerSignedV = parseInt(result.v, 16)
+      let signedV = this.chainId * 2 + 35
+      if (ledgerSignedV % 2 == 0) {
+        signedV += 1
       }
-      v = cv.toString(16)
 
-      tx.v = getBufferFromHex(v.toString(16))
+      tx.v = getBufferFromHex(signedV.toString(16))
       tx.r = getBufferFromHex(result.r)
       tx.s = getBufferFromHex(result.s)
 
-      const chainIdFromV = getChainIdFromV(v)
-      if (chainIdFromV !== this.chainId) {
+      // Compare `v` value returned from Ledger.
+      // eg. for `chainId = 1101` => `v = 2238(08be)` => `ledgerSignedV = 190(be)`
+      // `2238 & 0xff = 190`
+      const isValidSignedV = (signedV & 0xff) === ledgerSignedV
+      const chainIdFromV = getChainIdFromV(tx.v)
+      if ((chainIdFromV !== this.chainId) && !isValidSignedV) {
         throw new Error('Invalid chainID')
       }
 
