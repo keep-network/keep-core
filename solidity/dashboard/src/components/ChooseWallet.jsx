@@ -43,7 +43,7 @@ const WALLETS = [
       iconDescription: '/images/ledger-device.svg',
       btnText: 'install ledger live',
       btnLink: 'https://www.ledger.com/ledger-live/',
-      description: 'Plug in Ledger device. Install Ledger Live below:',
+      description: 'Plug in Ledger device and unlock. Install Ledger Live below:',
     },
   },
   {
@@ -56,7 +56,7 @@ const WALLETS = [
       iconDescription: '/images/trezor-device.svg',
       btnText: 'go to trezor setup',
       btnLink: 'https://trezor.io/start/',
-      description: 'Plug in your Trezor device. If the setup screen doesn’t load right away, go to Trezor setup:',
+      description: 'Plug in your Trezor device and unlock. If the setup screen doesn’t load right away, go to Trezor setup:',
     },
   },
 ]
