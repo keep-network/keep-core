@@ -55,7 +55,7 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
       // The returned `v` will be wrong for chainId's < 255 and has to be recomputed.
       const ledgerSignedV = parseInt(result.v, 16)
       let signedV = this.chainId * 2 + 35
-      if (ledgerSignedV % 2 == 0) {
+      if (ledgerSignedV % 2 === 0) {
         signedV += 1
       }
 
