@@ -53,6 +53,7 @@ const ethAccountRegExp = /^(0x)?[0-9a-f]{40}$/i
 const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
 
 exports.issueGrant = async (request, response) => {
+  response.type('text/plain')
   try {
     const requestUrl = url.parse(request.url, true)
     const account = requestUrl.query.account
