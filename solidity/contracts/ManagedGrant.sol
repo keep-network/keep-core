@@ -151,7 +151,7 @@ contract ManagedGrant {
     }
 
     /// @notice Recover tokens previously staked and delegated to the operator.
-    function recoverStake(address _operator) public onlyGrantee {
+    function recoverStake(address _operator) public {
         tokenGrant.recoverStake(_operator);
     }
 
