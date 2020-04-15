@@ -1,6 +1,7 @@
 import React, { useContext } from 'react'
 import { Web3Context } from './WithWeb3Context'
 import Banner, { BANNER_TYPE } from './Banner'
+import { WALLETS } from '../constants/constants'
 
 export const Web3Status = () => {
   const {
@@ -13,7 +14,7 @@ export const Web3Status = () => {
   } = useContext(Web3Context)
 
   const renderStatus = () => {
-    if (!provider) {
+    if (!provider || !web3) {
       return (
         <Banner
           type={BANNER_TYPE.ERROR}
@@ -40,24 +41,6 @@ export const Web3Status = () => {
       )
     }
 
-    if (!web3) {
-      return (
-        <Banner
-          type={BANNER_TYPE.ERROR}
-          title='Install the MetaMask browser extension'
-          subtitle='You can then use the dapp in your current browser.'
-        >
-          <a
-            href="http://metamask.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-transparent btn-xs ml-1">
-              install metamask
-          </a>
-        </Banner>
-      )
-    }
-
     if (!yourAddress) {
       return (
         <Banner
@@ -72,7 +55,7 @@ export const Web3Status = () => {
     return (
       <Banner
         type={BANNER_TYPE.SUCCESS}
-        title='You are logged in securely to MetaMask.'
+        title={`You are logged into ${WALLETS[provider].label}.`}
         withIcon
       />
     )
