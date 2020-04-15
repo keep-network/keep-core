@@ -16,8 +16,9 @@ const keepContractOwnerProvider = new HDWalletProvider(
 )
 
 // Contract artifacts
-const tokenGrantJson = require('./node_modules/@keep-network/keep-core/artifacts/TokenGrant.json')
-const keepTokenJson = require('./node_modules/@keep-network/keep-core/artifacts/KeepToken.json')
+const tokenGrantJson = require('@keep-network/keep-core/artifacts/TokenGrant.json')
+const keepTokenJson = require('@keep-network/keep-core/artifacts/KeepToken.json')
+const permissiveStakingPolicyJson = require('@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json')
 
 // We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 // 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -43,6 +44,9 @@ const keepTokenAbi = keepTokenJson.abi
 const keepTokenAddress = keepTokenJson.networks[ethereumNetworkId].address
 const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
 
+// PermissiveStakingPolicy
+const permissiveStakingPolicyAddress = permissiveStakingPolicyJson.networks[ethereumNetworkId].address
+
 const ethAccountRegExp = /^(0x)?[0-9a-f]{40}$/i
 const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
 
@@ -63,14 +67,17 @@ exports.issueGrant = async (request, response) => {
       )
     } else {
       const granteeAccount = account
-      const unlockingDuration = 0
-      const start = Math.floor(Date.now() / 1000)
-      const cliff = 0
+      const unlockingDuration = web3.utils.toBN(0)
+      const start = web3.utils.toBN(Math.floor(Date.now() / 1000))
+      const cliff = web3.utils.toBN(0)
       const revocable = false
       const tokens = web3.utils.toBN(300000)
-      const grantBalance = await tokenGrant.methods
+      console.log(`Fetching existing balance for account [${granteeAccount}]...`)
+      const grantBalanceString = await tokenGrant.methods
         .balanceOf(granteeAccount)
         .call()
+      const grantBalance = web3.utils.toBN(grantBalanceString)
+      console.log(`Existing balance for account [${granteeAccount}] is [${grantBalance}].`)
       const grantAmount = tokens.mul(tokenDecimalMultiplier)
 
       if (grantBalance.gte(grantAmount)) {
@@ -84,14 +91,15 @@ exports.issueGrant = async (request, response) => {
         )
       } else {
         console.log(
-          `Created grant for [${grantAmount}] to [${granteeAccount}].`,
+          `Submitting grant for [${grantAmount}] to [${granteeAccount}]...`,
         )
         const grantData = Buffer.concat([
-          Buffer.from(granteeAccount.substr(2), 'hex'),
-          web3.utils.toBN(unlockingDuration).toBuffer('be', 32),
-          web3.utils.toBN(start).toBuffer('be', 32),
-          web3.utils.toBN(cliff).toBuffer('be', 32),
+          Buffer.from(granteeAccount.substr(2), 'hex', 20),
+          unlockingDuration.toBuffer('be', 32),
+          start.toBuffer('be', 32),
+          cliff.toBuffer('be', 32),
           Buffer.from(revocable ? '01' : '00', 'hex'),
+          Buffer.from(permissiveStakingPolicyAddress.substr(2), 'hex', 20)
         ])
 
         const transaction = keepToken.methods
