@@ -96,3 +96,6 @@ To run the trezor hardware wallet locally follow this instruction:
 1. [Download and run the trezor bridge](https://github.com/trezor/trezord-go).
 2. [Clone the Trezor repo](https://github.com/trezor/trezor-firmware/blob/master/docs/core/build/index.md)
 3. [Setup and run the emulator](https://github.com/trezor/trezor-firmware/blob/master/docs/core/emulator/index.md)
+
+## LEDGER
+To test the dapp with the ledger hardware wallet run the following command: `HTTPS=true npm start`
