@@ -145,7 +145,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
-    mineBlocks(10)
+    await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     let beneficiary3balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary3))
@@ -190,7 +190,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
-    mineBlocks(10)
+    await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     // operator2 has 2 members in group1 only
