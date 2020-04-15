@@ -19,18 +19,6 @@ orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
-  test_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Set up test and test result environment
-          command: |
-            cd solidity
-            npm install
-      - run: cd solidity && npm run test
-      - store_test_results:
-          path: /tmp/test-results
   generate_docs_solidity:
     executor: docker-node
     steps:
@@ -189,7 +177,7 @@ jobs:
             # this is because npm show json contains a single string if there
             # is only one matching version, or an array if there are multiple,
             # and we want to look at an array always.
-            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | sort | .[-1]")
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
             latest_version=${latest_version:-$version}
             if [ -z $latest_version ]; then
               echo "Latest version calculation failed. Resolved info:"
@@ -328,9 +316,6 @@ jobs:
 
 workflows:
   version: 2
-  solidity:
-    jobs:
-      - test_solidity
   build-and-test:
     jobs:
       - build_client_and_test_go:

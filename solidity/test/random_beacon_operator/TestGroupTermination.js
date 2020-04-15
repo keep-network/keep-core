@@ -1,8 +1,7 @@
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts} = require("@openzeppelin/test-environment")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const GroupsTerminationStub = contract.fromArtifact('GroupsTerminationStub')
 const Groups = contract.fromArtifact('Groups');
 const BLS = contract.fromArtifact('BLS');
@@ -10,7 +9,7 @@ const BLS = contract.fromArtifact('BLS');
 describe('KeepRandomBeaconOperator/GroupTermination', function() {
     let groups;
 
-    const groupActiveTime = 5;
+    const groupActiveTime = web3.utils.toBN(5);
 
     before(async () => {
       const bls = await BLS.new({from: accounts[0]});
@@ -32,7 +31,7 @@ describe('KeepRandomBeaconOperator/GroupTermination', function() {
 
     async function runTerminationTest(groupsCount, expiredCount, terminatedGroups, beaconValue ) {
       await groups.registerNewGroups(expiredCount);
-      mineBlocks(groupActiveTime);
+      await time.advanceBlockTo(groupActiveTime.addn(await web3.eth.getBlockNumber()))
       await groups.registerNewGroups(groupsCount - expiredCount);
 
       for (const groupIndex of terminatedGroups) {

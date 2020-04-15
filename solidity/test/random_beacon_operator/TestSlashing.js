@@ -1,7 +1,6 @@
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
@@ -198,7 +197,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
       "Entry did not time out."
     )
 
-    mineBlocks(20)
+    await time.advanceBlockTo(web3.utils.toBN(20).addn(await web3.eth.getBlockNumber()));
     await operatorContract.reportRelayEntryTimeout({from: tattletale})
 
     assert.isTrue((await stakingContract.balanceOf(operator1)).eq(operator1balance.sub(minimumStake)), "Unexpected operator 1 balance")

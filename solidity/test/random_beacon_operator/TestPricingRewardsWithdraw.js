@@ -1,7 +1,6 @@
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const crypto = require("crypto")
@@ -67,7 +66,8 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     let entryFee = await serviceContract.entryFeeBreakdown()
     memberBaseReward = entryFee.groupProfitFee.div(groupSize)
 
-    mineBlocks(4) // make sure groups become stale in tests
+    // make sure groups become stale in tests
+    await time.advanceBlockTo(web3.utils.toBN(4).addn(await web3.eth.getBlockNumber()))
   })
 
   beforeEach(async () => {
@@ -84,7 +84,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
   })
 
   it("should allow fetching public key of stale group", async() => {
-    mineBlocks(10)
+    await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     let groupPublicKey = await operatorContract.getGroupPublicKey(0)
@@ -97,7 +97,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
-    mineBlocks(10)
+    await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should be stale")
 
@@ -115,7 +115,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
-    mineBlocks(10)
+    await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     // operator2 has 2 members in group1 only
@@ -130,7 +130,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
-    mineBlocks(10)
+    await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
 
     let preWithdrawn = await operatorContract.hasWithdrawnRewards(operator2, 0);

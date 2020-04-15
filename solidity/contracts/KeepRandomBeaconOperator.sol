@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
@@ -83,17 +83,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // to submit the result.
     uint256 public resultPublicationBlockStep = 3;
 
-    // Time in blocks it takes off-chain cluster to generate a new relay entry
-    // and be ready to submit it to the chain.
-    uint256 public relayEntryGenerationTime = (1+3);
-
     // Timeout in blocks for a relay entry to appear on the chain. Blocks are
     // counted from the moment relay request occur.
     //
     // Timeout is never shorter than the time needed by clients to generate
     // relay entry and the time it takes for the last group member to become
     // eligible to submit the result plus at least one block to submit it.
-    uint256 public relayEntryTimeout = relayEntryGenerationTime.add(groupSize.mul(resultPublicationBlockStep));
+    uint256 public relayEntryTimeout = groupSize.mul(resultPublicationBlockStep);
 
     // Gas required to verify BLS signature and produce successful relay
     // entry. Excludes callback and DKG gas. The worst case (most expensive)
@@ -562,9 +558,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).add(1);
 
         // T_begin is the earliest block the result can be published in.
-        // It takes relayEntryGenerationTime to generate a new entry, so it can
-        // be published at block relayEntryGenerationTime + 1 the earliest.
-        uint256 submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(1);
+        // Relay entry can be generated instantly after relay request is
+        // registered on-chain so a new entry can be published at the next
+        // block the earliest.
+        uint256 submissionStartBlock = currentEntryStartBlock.add(1);
 
         // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
         uint256 entryReceivedBlock = block.number <= submissionStartBlock ? submissionStartBlock:block.number;

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 /**
  * @title Keep Random Beacon
@@ -43,6 +43,8 @@ interface IRandomBeacon {
      * emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event.
      * Callback contract has to declare public `__beaconCallback(uint256)`
      * function that is going to be executed with the result, once ready.
+     * It is recommended to implement `IRandomBeaconConsumer` interface to
+     * ensure the correct callback function signature.
      *
      * @dev Beacon does not support concurrent relay requests. No new requests
      * should be made while the beacon is already processing another request.
@@ -51,7 +53,9 @@ interface IRandomBeacon {
 
      * @param callbackContract Callback contract address. Callback is called
      * once a new relay entry has been generated. Must declare public
-     * `__beaconCallback(uint256)` function.
+     * `__beaconCallback(uint256)` function. It is recommended to implement
+     * `IRandomBeaconConsumer` interface to ensure the correct callback function
+     * signature.
      * @param callbackGas Gas required for the callback.
      * The customer needs to ensure they provide a sufficient callback gas
      * to cover the gas fee of executing the callback. Any surplus is returned
@@ -77,4 +81,27 @@ interface IRandomBeacon {
      * @return An uint256 representing uniquely generated relay request ID
      */
     function requestRelayEntry() external payable returns (uint256);
+}
+
+/**
+ * @title Keep Random Beacon Consumer
+ *
+ * @notice Receives Keep Random Beacon relay entries with `__beaconCallback`
+ * function. Contract implementing this interface does not have to be the one
+ * requesting relay entry but it is the one receiving the requested relay entry
+ * once it is produced.
+ *
+ * @dev Use this interface to indicate the contract receives relay entries from
+ * the beacon and to ensure the correctness of callback function signature.
+ */
+interface IRandomBeaconConsumer {
+
+  /**
+   * @notice Receives relay entry produced by Keep Random Beacon. This function
+   * should be called only by Keep Random Beacon.
+   *
+   * @param relayEntry Relay entry (random number) produced by Keep Random
+   * Beacon.
+   */
+  function __beaconCallback(uint256 relayEntry) external;
 }

@@ -86,7 +86,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not check the stake [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf("stake is below the required minimum")
+		return fmt.Errorf(
+			"no minimum KEEP stake or operator is not authorized to use it; " +
+				"please make sure the operator address in the configuration " +
+				"is correct and it has KEEP tokens delegated and the operator " +
+				"contract has been authorized to operate on the stake",
+		)
 	}
 
 	ctx := context.Background()
@@ -106,8 +111,12 @@ func Start(c *cli.Context) error {
 
 	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
+	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	if err != nil {
+		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
+	}
 	persistence := persistence.NewEncryptedPersistence(
-		persistence.NewDiskHandle(config.Storage.DataDir),
+		handle,
 		config.Ethereum.Account.KeyFilePassword,
 	)
 
