@@ -58,7 +58,7 @@ exports.issueGrant = async (request, response) => {
     const requestUrl = url.parse(request.url, true)
     const account = requestUrl.query.account
 
-    if (! account) {
+    if (!account) {
       console.error("Unspecified account.")
       return response.status(400).send(
         "No account address set, please set an account with ?accoun=<address>\n"
@@ -120,7 +120,7 @@ exports.issueGrant = async (request, response) => {
           .on('transactionHash', (hash) => {
             console.log(
               `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
-                `with hash [${hash}].`,
+              `with hash [${hash}].`,
             )
             response.send(`
               Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
@@ -133,7 +133,7 @@ exports.issueGrant = async (request, response) => {
             console.error(
               `Error with account grant transaction: [${error}]; URL was [${request.url}].`
             )
-            if (! response.headersSent) {
+            if (!response.headersSent) {
               response.status(500).send(`
                   Token grant failed, try again.\n
                   If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
