@@ -93,13 +93,13 @@ func (g *Guard) start(ctx context.Context) {
 				// Ensure we mark the peer as being checked before
 				// executing the async stake check.
 				g.markAsChecking(connectedPeer)
-				go g.manageConnectionByFirewall(connectedPeer)
+				go g.checkFirewallRules(connectedPeer)
 			}
 		}
 	}
 }
 
-func (g *Guard) manageConnectionByFirewall(peer string) {
+func (g *Guard) checkFirewallRules(peer string) {
 	defer g.completedCheck(peer)
 
 	peerPublicKey, err := g.getPeerPublicKey(peer)
