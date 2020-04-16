@@ -6,6 +6,7 @@ const TokenStaking = artifacts.require("./TokenStaking.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 const TokenGrant = artifacts.require("./TokenGrant.sol");
+const ManagedGrantFactory = artifacts.require("./ManagedGrantFactory.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
@@ -39,6 +40,13 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);
   await deployer.deploy(TokenGrant, KeepToken.address);
+  await deployer.deploy(
+    ManagedGrantFactory,
+    KeepToken.address,
+    TokenGrant.address,
+    PermissiveStakingPolicy.address,
+    GuaranteedMinimumStakingPolicy.address
+  );
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
   await deployer.link(BLS, Groups);

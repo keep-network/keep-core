@@ -211,38 +211,37 @@ contract TokenGrant {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _amount Approved amount for the transfer to create token grant.
      * @param _token Token contract address.
-     * @param _extraData This byte array must have the following values concatenated:
-     * grantee (20 bytes) Address of the grantee.
-     * duration (32 bytes) Duration in seconds of the unlocking period.
-     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
-     * start (32 bytes) Timestamp at which unlocking will start.
-     * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
-     * stakingPolicy (20 bytes) Address of the staking policy for the grant.
+     * @param _extraData This byte array must have the following values ABI encoded:
+     * grantManager (address) Address of the grant manager.
+     * grantee (address) Address of the grantee.
+     * duration (uint256) Duration in seconds of the unlocking period.
+     * start (uint256) Timestamp at which unlocking will start.
+     * cliff (uint256) Duration in seconds of the cliff after which tokens will begin to unlock.
+     * revocable (bool) Whether the token grant is revocable or not (1 or 0).
+     * stakingPolicy (address) Address of the staking policy for the grant.
      */
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
-        require(_extraData.length == 137, "Invalid extra data length.");
-
-        address _grantee = _extraData.toAddress(0);
-        uint256 _duration = _extraData.toUint(20);
-        uint256 _start = _extraData.toUint(52);
-        uint256 _cliff = _extraData.toUint(84);
+        (address _grantManager,
+         address _grantee,
+         uint256 _duration,
+         uint256 _start,
+         uint256 _cliff,
+         bool _revocable,
+         address _stakingPolicy) = abi.decode(
+             _extraData,
+             (address, address, uint256, uint256, uint256, bool, address)
+        );
 
         require(_grantee != address(0), "Grantee address can't be zero.");
         require(_cliff <= _duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
 
-        bool _revocable;
-        if (_extraData.slice(116, 1)[0] == 0x01) {
-            _revocable = true;
-        }
-
-        address _stakingPolicy = _extraData.toAddress(117);
         require(_stakingPolicy != address(0), "Staking policy can't be zero.");
 
         uint256 id = numGrants++;
         grants[id] = Grant(
-            _from,
+            _grantManager,
             _grantee,
             0, 0,
             _revocable,

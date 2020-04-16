@@ -118,4 +118,22 @@ describe('TokenGrant', function() {
     assert.equal(schedule[3].eq(web3.utils.toBN(start).add(web3.utils.toBN(cliff))), true, "Grant should have unlocking schedule cliff time.duration.");
 
   });
+
+  it("can assign a different address than the sender as grant manager", async () => {
+    // Assign `account_two` as grant manager
+    let grantData = web3.eth.abi.encodeParameters(
+      ['address', 'address', 'uint256', 'uint256', 'uint256', 'bool', 'address'],
+      [account_two, grantee, unlockingDuration.toNumber(), start.toNumber(), cliff.toNumber(), false, permissivePolicy.address]
+    );
+
+    await token.approveAndCall(grantContract.address, amount, grantData, {from: grant_manager});
+    let grantId = (await grantContract.getPastEvents())[0].args[0].toNumber();
+
+    let schedule = await grantContract.getGrantUnlockingSchedule(grantId);
+    assert.equal(
+      schedule[0],
+      account_two,
+      "The grant manager should be assignable to a non-sender"
+    );
+  });
 });
