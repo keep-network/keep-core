@@ -80,7 +80,7 @@ func Initialize(
 				if ok := pendingRelayRequests.Add(previousEntry); !ok {
 					logger.Errorf(
 						"relay entry requested event with previous entry [0x%x] has been registered already",
-						previousEntry,
+						request.PreviousEntry,
 					)
 					return
 				}
@@ -133,7 +133,7 @@ func Initialize(
 			if ok := pendingGroupSelections.Add(newEntry); !ok {
 				logger.Errorf(
 					"group selection event with seed [0x%x] has been registered already",
-					newEntry,
+					event.NewEntry,
 				)
 				return
 			}
@@ -142,7 +142,7 @@ func Initialize(
 
 			logger.Infof(
 				"group selection started with seed [0x%x] at block [%v]",
-				newEntry,
+				event.NewEntry,
 				event.BlockNumber,
 			)
 
