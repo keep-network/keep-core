@@ -157,6 +157,7 @@ contract TokenGrant {
      * @return cliff The duration, in seconds, before which none of the tokens
      *                in the token will be unlocked, and after which a linear
      *                amount based on the age of the grant will be unlocked.
+     * @return policy The address of the grant's staking policy.
      */
     function getGrantUnlockingSchedule(
         uint256 _id
@@ -164,13 +165,15 @@ contract TokenGrant {
         address grantManager,
         uint256 duration,
         uint256 start,
-        uint256 cliff
+        uint256 cliff,
+        address policy
     ) {
         return (
             grants[_id].grantManager,
             grants[_id].duration,
             grants[_id].start,
-            grants[_id].cliff
+            grants[_id].cliff,
+            address(grants[_id].stakingPolicy)
         );
     }
 

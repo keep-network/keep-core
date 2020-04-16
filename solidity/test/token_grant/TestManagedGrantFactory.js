@@ -119,6 +119,9 @@ describe('TokenGrant/ManagedGrantFactory', () => {
 
       let returnedCliff = schedule[3];
       expect(returnedCliff).to.eq.BN(grantStart.add(grantCliff));
+
+      let returnedPolicy = schedule[4];
+      expect(returnedPolicy).to.equal(permissivePolicy.address);
     });
 
     it("works with receiveApproval", async () => {
@@ -151,6 +154,9 @@ describe('TokenGrant/ManagedGrantFactory', () => {
 
       let returnedCliff = schedule[3];
       expect(returnedCliff).to.eq.BN(grantStart.add(grantCliff));
+
+      let returnedPolicy = schedule[4];
+      expect(returnedPolicy).to.equal(permissivePolicy.address);
     });
 
     it("doesn't let one grant more than they've approved on the token", async () => {
