@@ -17,6 +17,8 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     operator3 = accounts[3],
     operator4 = accounts[4],
     operator5 = accounts[5],
+    operator6 = accounts[6],
+    operator7 = accounts[7],
     authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
     misbehaved = '0x0305', // disqualified operator with selected member index 3 and inactive with 5
@@ -36,21 +38,25 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     token = contracts.token
     stakingContract = contracts.stakingContract
     operatorContract = contracts.operatorContract
-    operatorContract.setGroupSize(5, {from: owner})
-    operatorContract.setGroupThreshold(3, {from: owner})
-
+    operatorContract.setGroupSize(7, {from: owner})
+    operatorContract.setGroupThreshold(4, {from: owner})
+    
     let minimumStake = await stakingContract.minimumStake()
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake, {from: owner})
     await stakeDelegate(stakingContract, token, owner, operator2, owner, authorizer, minimumStake, {from: owner})
     await stakeDelegate(stakingContract, token, owner, operator3, owner, authorizer, minimumStake, {from: owner})
     await stakeDelegate(stakingContract, token, owner, operator4, owner, authorizer, minimumStake, {from: owner})
     await stakeDelegate(stakingContract, token, owner, operator5, owner, authorizer, minimumStake, {from: owner})
-
+    await stakeDelegate(stakingContract, token, owner, operator6, owner, authorizer, minimumStake, {from: owner})
+    await stakeDelegate(stakingContract, token, owner, operator7, owner, authorizer, minimumStake, {from: owner})
+    
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator4, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator5, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator6, operatorContract.address, {from: authorizer})
+    await stakingContract.authorizeOperatorContract(operator7, operatorContract.address, {from: authorizer})
 
     time.increase((await stakingContract.initializationPeriod()).addn(1));
 
@@ -60,6 +66,8 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     let tickets3 = generateTickets(groupSelectionRelayEntry, operator3, 1)
     let tickets4 = generateTickets(groupSelectionRelayEntry, operator4, 1)
     let tickets5 = generateTickets(groupSelectionRelayEntry, operator5, 1)
+    let tickets6 = generateTickets(groupSelectionRelayEntry, operator6, 1)
+    let tickets7 = generateTickets(groupSelectionRelayEntry, operator7, 1)
 
     await operatorContract.submitTicket(
       packTicket(tickets1[0].valueHex, tickets1[0].virtualStakerIndex, operator1),
@@ -84,6 +92,16 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     await operatorContract.submitTicket(
       packTicket(tickets5[0].valueHex, tickets5[0].virtualStakerIndex, operator5),
       {from: operator5}
+    )
+
+    await operatorContract.submitTicket(
+      packTicket(tickets6[0].valueHex, tickets6[0].virtualStakerIndex, operator6),
+      {from: operator6}
+    )
+
+    await operatorContract.submitTicket(
+      packTicket(tickets7[0].valueHex, tickets7[0].virtualStakerIndex, operator7),
+      {from: operator7}
     )
 
     let ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock()
@@ -122,5 +140,7 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function() {
     assert.isTrue(registeredMembers.indexOf(selectedParticipants[2]) == -1, "Member should not be registered")
     assert.isTrue(registeredMembers.indexOf(selectedParticipants[3]) != -1, "Member should be registered")
     assert.isTrue(registeredMembers.indexOf(selectedParticipants[4]) == -1, "Member should not be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[5]) != -1, "Member should be registered")
+    assert.isTrue(registeredMembers.indexOf(selectedParticipants[6]) != -1, "Member should be registered")
   })
 })
