@@ -50,7 +50,7 @@ jobs:
           name: Run Docker build
           command: |
             docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --target gobuild -t go-build-env .
-            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client:$DOCKER_IMAGE_TAG .
       - run:
           name: Run Go tests
           command: |
@@ -62,7 +62,7 @@ jobs:
           name: Save keep-client image
           command: |
             mkdir -p /tmp/keep-client/docker-images
-            docker save -o /tmp/keep-client/docker-images/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
+            docker save -o /tmp/keep-client/docker-images/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client:$DOCKER_IMAGE_TAG
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -81,11 +81,11 @@ jobs:
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client .
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client:$DOCKER_IMAGE_TAG .
       - run:
           name: Save initcontainer-provision-keep-client image
           command: |
-            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client
+            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client:$DOCKER_IMAGE_TAG
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -132,12 +132,12 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-client
-          tag: latest
+          tag: $DOCKER_IMAGE_TAG
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: keep-client
-          tag: latest
+          tag: $DOCKER_IMAGE_TAG
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -245,7 +245,7 @@ jobs:
       - run:
           name: Tag Docker image
           command: |
-            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard
+            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard:$DOCKER_IMAGE_TAG
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -255,7 +255,7 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: keep-dapp-token-dashboard
-          tag: latest
+          tag: $DOCKER_IMAGE_TAG
 
   generate_docs_tex:
     docker:
@@ -365,16 +365,16 @@ workflows:
             - build_initcontainer
             - migrate_contracts
       - trigger_downstream_builds:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - publish_npm_package
       - publish_contract_data:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
@@ -388,9 +388,9 @@ workflows:
           requires:
             - publish_npm_package
       - publish_token_dashboard_dapp:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_token_dashboard_dapp

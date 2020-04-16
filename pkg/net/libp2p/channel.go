@@ -8,8 +8,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/btcsuite/btcd/btcec"
-
 	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
@@ -357,5 +355,5 @@ func extractPublicKey(peer peer.ID) (*ecdsa.PublicKey, error) {
 		return nil, fmt.Errorf("public key is of type other than Secp256k1")
 	}
 
-	return (*btcec.PublicKey)(secp256k1PublicKey).ToECDSA(), nil
+	return key.NetworkKeyToECDSAKey(secp256k1PublicKey), nil
 }

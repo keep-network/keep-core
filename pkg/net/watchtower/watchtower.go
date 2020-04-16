@@ -1,16 +1,16 @@
-// Package watchtower continuously monitors the on-chain stake of all connected
-// peers, and disconnects peers which fall below the minimum stake.
+// Package watchtower continuously monitors firewal rules compliance of all
+// connected peers, and disconnects peers which do not comply to the rules.
 package watchtower
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
@@ -21,7 +21,7 @@ var logger = log.Logger("keep-net-watchtower")
 type Guard struct {
 	duration time.Duration
 
-	stakeMonitor chain.StakeMonitor
+	firewall net.Firewall
 
 	connectionManager net.ConnectionManager
 
@@ -35,12 +35,12 @@ type Guard struct {
 func NewGuard(
 	ctx context.Context,
 	duration time.Duration,
-	stakeMonitor chain.StakeMonitor,
+	firewall net.Firewall,
 	connectionManager net.ConnectionManager,
 ) *Guard {
 	guard := &Guard{
 		duration:          duration,
-		stakeMonitor:      stakeMonitor,
+		firewall:          firewall,
 		connectionManager: connectionManager,
 		peerCrossList:     make(map[string]bool),
 	}
@@ -93,17 +93,14 @@ func (g *Guard) start(ctx context.Context) {
 				// Ensure we mark the peer as being checked before
 				// executing the async stake check.
 				g.markAsChecking(connectedPeer)
-				go g.manageConnectionByStake(ctx, connectedPeer)
+				go g.checkFirewallRules(connectedPeer)
 			}
 		}
 	}
 }
 
-func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
+func (g *Guard) checkFirewallRules(peer string) {
 	defer g.completedCheck(peer)
-
-	newContext, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
 
 	peerPublicKey, err := g.getPeerPublicKey(peer)
 	if err != nil {
@@ -118,27 +115,18 @@ func (g *Guard) manageConnectionByStake(ctx context.Context, peer string) {
 		return
 	}
 
-	hasMinimumStake, err := g.validatePeerStake(
-		newContext, peerPublicKey,
-	)
-	if err != nil {
-		// network issues with geth shouldn't cause disconnects from the
-		// network. Rather we'll abort the check and try again later.
-		logger.Warningf("error validating peer stake, retrying later: [%v].", err)
-		return
-	}
+	if err := g.firewall.Validate(peerPublicKey); err != nil {
 
-	if !hasMinimumStake {
-		// if a peer doesn't have at least the min stake, disconnect them.
 		logger.Warningf(
-			"dropping the connection - peer [%v] has no minimal stake",
+			"dropping the connection; firewal rules not satisfied for peer [%v]: [%v] ",
 			peer,
+			err,
 		)
 		g.connectionManager.DisconnectPeer(peer)
 	}
 }
 
-func (g *Guard) getPeerPublicKey(peer string) (*key.NetworkPublic, error) {
+func (g *Guard) getPeerPublicKey(peer string) (*ecdsa.PublicKey, error) {
 	peerPublicKey, err := g.connectionManager.GetPeerPublicKey(peer)
 	if err != nil {
 		return nil, err
@@ -149,23 +137,5 @@ func (g *Guard) getPeerPublicKey(peer string) (*key.NetworkPublic, error) {
 			"failed to resolve valid public key for peer %s", peer,
 		)
 	}
-	return peerPublicKey, nil
-}
-
-func (g *Guard) validatePeerStake(
-	ctx context.Context,
-	peerPublicKey *key.NetworkPublic,
-) (bool, error) {
-	hasMinimumStake, err := g.stakeMonitor.HasMinimumStake(
-		key.NetworkPubKeyToEthAddress(peerPublicKey),
-	)
-	if err != nil {
-		return false, fmt.Errorf(
-			"Failed to get stake information for key [%s] with error: [%v]",
-			peerPublicKey,
-			err,
-		)
-	}
-
-	return hasMinimumStake, nil
+	return key.NetworkKeyToECDSAKey(peerPublicKey), nil
 }

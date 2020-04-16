@@ -2,14 +2,13 @@ package libp2p
 
 import (
 	"context"
-	"math/big"
 	"strconv"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
-	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/multiformats/go-multiaddr"
@@ -196,8 +195,6 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(0))
-
 	provider1, err := Connect(
 		ctx,
 		Config{
@@ -210,7 +207,7 @@ func withNetwork(
 			Port: provider1Port,
 		},
 		privKey1,
-		stakeMonitor,
+		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {
@@ -229,7 +226,7 @@ func withNetwork(
 			Port: provider2Port,
 		},
 		privKey2,
-		stakeMonitor,
+		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {
