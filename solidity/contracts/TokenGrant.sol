@@ -336,7 +336,6 @@ contract TokenGrant {
     function revoke(uint256 _id) public {
         require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
-        // This is safe because revocable grant cannot be staked.
         require(grants[_id].revokedAt == 0, "Grant must not be already revoked.");
 
         uint256 unlockedAmount = unlockedAmount(_id);
