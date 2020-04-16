@@ -18,7 +18,6 @@ contract ManagedGrantFactory {
     using BytesLib for address;
 
     KeepToken public token;
-    mapping(address => uint256) public grantFundingPool;
     TokenGrant public tokenGrant;
     GrantStakingPolicy nonRevocableStakingPolicy;
     GrantStakingPolicy revocableStakingPolicy;
