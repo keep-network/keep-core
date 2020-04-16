@@ -493,6 +493,11 @@ contract TokenGrant {
     }
 
     /// @notice Force cancellation of a revoked grant's stake.
+    /// Can be used by the grant manager
+    /// to immediately withdraw tokens back into the grant,
+    /// from an operator still within the initialization period.
+    /// These tokens can then be withdrawn
+    /// if some revoked tokens haven't been withdrawn yet.
     function cancelRevokedStake(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 grantId = grantStake.getGrantId();
