@@ -2,6 +2,7 @@ package libp2p
 
 import (
 	"context"
+	"strconv"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 func TestSendReceiveUnicastChannel(t *testing.T) {
 	ctx := context.Background()
 
-	withNetwork(ctx, t, func(
+	withNetwork(ctx, t, 9000, func(
 		identity1 *identity,
 		identity2 *identity,
 		provider1 net.Provider,
@@ -148,6 +149,7 @@ func assertReceivedMessages(
 func withNetwork(
 	ctx context.Context,
 	t *testing.T,
+	startingPort int,
 	testFn func(
 		identity1 *identity,
 		identity2 *identity,
@@ -165,7 +167,11 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	multiaddr1, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8081")
+	provider1Port := startingPort
+
+	multiaddr1, err := multiaddr.NewMultiaddr(
+		"/ip4/127.0.0.1/tcp/" + strconv.Itoa(provider1Port),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +186,11 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	multiaddr2, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8082")
+	provider2Port := startingPort + 1
+
+	multiaddr2, err := multiaddr.NewMultiaddr(
+		"/ip4/127.0.0.1/tcp/" + strconv.Itoa(provider2Port),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +204,7 @@ func withNetwork(
 					identity2.id,
 				),
 			},
-			Port: 8081,
+			Port: provider1Port,
 		},
 		privKey1,
 		firewall.Disabled,
@@ -213,7 +223,7 @@ func withNetwork(
 					identity1.id,
 				),
 			},
-			Port: 8082,
+			Port: provider2Port,
 		},
 		privKey2,
 		firewall.Disabled,

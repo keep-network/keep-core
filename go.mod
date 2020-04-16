@@ -11,6 +11,7 @@ require (
 	github.com/btcsuite/btcd v0.20.1-beta
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/gogo/protobuf v1.3.1
+	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-datastore v0.1.1
 	github.com/ipfs/go-log v0.0.1
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20190611114437-e92bd71e8199
