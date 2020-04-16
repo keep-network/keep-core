@@ -153,15 +153,12 @@ type BroadcastChannel interface {
 type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
 
 // Firewall represents a set of rules the remote peer has to conform to so that
-// a connection with that peer can be established. The rules are checked when
-// a new connection is established and periodically for all active connections.
-// If some of the expectations defined by firewall rules are no longer met, the
-// connection is dropped.
+// a connection with that peer can be approved.
 type Firewall interface {
 
 	// Validate takes the remote peer public key and executes all the checks
-	// needed to decide whether the connection with the remote peer should be
-	// established and maintained.
+	// needed to decide whether the connection with the remote peer can be
+	// approved.
 	// If expectations are not met, this function should return an error
 	// describing what is wrong.
 	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
