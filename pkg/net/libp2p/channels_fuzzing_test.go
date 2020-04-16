@@ -4,20 +4,56 @@ import (
 	"context"
 	"testing"
 
+	"github.com/keep-network/keep-core/pkg/net/gen/pb"
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	fuzz "github.com/google/gofuzz"
 	"github.com/keep-network/keep-core/pkg/net"
+
+	pubsub "github.com/libp2p/go-libp2p-pubsub"
+	pubsubpb "github.com/libp2p/go-libp2p-pubsub/pb"
 )
 
-func TestUnicastChannelFuzzing(t *testing.T) {
+func TestFuzzUnicastChannelReceiveSide(t *testing.T) {
 	ctx := context.Background()
 
-	withNetwork(ctx, t, 7000, func(
+	withNetwork(ctx, t, 5000, func(
+		_ *identity,
+		identity2 *identity,
+		provider1 net.Provider,
+		_ net.Provider,
+	) {
+		testChannel, err := provider1.UnicastChannelWith(identity2.id)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		unicastTestChannel, ok := testChannel.(*unicastChannel)
+		if !ok {
+			t.Fatal("could not cast to unicast channel")
+		}
+
+		for i := 0; i < 100; i++ {
+			var message pb.UnicastNetworkMessage
+
+			f := fuzz.New().NilChance(0.01).NumElements(0, 1024)
+			f.Fuzz(&message)
+
+			_ = unicastTestChannel.processMessage(&message)
+		}
+	})
+}
+
+func TestFuzzUnicastChannelRoundtrip(t *testing.T) {
+	ctx := context.Background()
+
+	withNetwork(ctx, t, 6000, func(
 		_ *identity,
 		identity2 *identity,
 		provider1 net.Provider,
 		provider2 net.Provider,
 	) {
-		channel, err := provider1.UnicastChannelWith(identity2.id)
+		testChannel, err := provider1.UnicastChannelWith(identity2.id)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -28,18 +64,59 @@ func TestUnicastChannelFuzzing(t *testing.T) {
 			})
 		})
 
-		for i := 0; i < 100000; i++ {
+		for i := 0; i < 100; i++ {
 			var message fuzzingMessage
 
-			f := fuzz.New().NilChance(0.1).NumElements(0, 1024)
+			f := fuzz.New().NilChance(0.01).NumElements(0, 1024)
 			f.Fuzz(&message)
 
-			_ = channel.Send(&message)
+			_ = testChannel.Send(&message)
 		}
 	})
 }
 
-func TestBroadcastChannelFuzzing(t *testing.T) {
+func TestFuzzBroadcastChannelReceiveSide(t *testing.T) {
+	ctx := context.Background()
+
+	withNetwork(ctx, t, 7000, func(
+		_ *identity,
+		_ *identity,
+		provider net.Provider,
+		_ net.Provider,
+	) {
+		testChannel, err := provider.BroadcastChannelFor("test-channel")
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		broadcastTestChannel, ok := testChannel.(*channel)
+		if !ok {
+			t.Fatal("could not cast to broadcast channel")
+		}
+
+		for i := 0; i < 100; i++ {
+			var (
+				pbMessage     pubsubpb.Message
+				receivedFrom  peer.ID
+				validatorData string
+			)
+
+			f := fuzz.New().NilChance(0.01).NumElements(0, 1024)
+			f.Fuzz(&pbMessage)
+			f.Fuzz(&receivedFrom)
+			f.Fuzz(&validatorData)
+
+			message := &pubsub.Message{
+				Message:       &pbMessage,
+				ReceivedFrom:  receivedFrom,
+				ValidatorData: validatorData,
+			}
+			_ = broadcastTestChannel.processPubsubMessage(message)
+		}
+	})
+}
+
+func TestFuzzBroadcastChannelRoundtrip(t *testing.T) {
 	ctx := context.Background()
 
 	withNetwork(ctx, t, 8000, func(
@@ -48,25 +125,25 @@ func TestBroadcastChannelFuzzing(t *testing.T) {
 		provider net.Provider,
 		_ net.Provider,
 	) {
-		channel, err := provider.BroadcastChannelFor("test-channel")
+		testChannel, err := provider.BroadcastChannelFor("test-channel")
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		err = testChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 			return &fuzzingMessage{}
 		})
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		for i := 0; i < 100000; i++ {
+		for i := 0; i < 100; i++ {
 			var message fuzzingMessage
 
-			f := fuzz.New().NilChance(0.1).NumElements(0, 1024)
+			f := fuzz.New().NilChance(0.01).NumElements(0, 1024)
 			f.Fuzz(&message)
 
-			_ = channel.Send(ctx, &message)
+			_ = testChannel.Send(ctx, &message)
 		}
 	})
 }
