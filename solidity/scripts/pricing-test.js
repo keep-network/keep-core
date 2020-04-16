@@ -1,6 +1,7 @@
 const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
+const KeepRandomBeaconOperatorStatistics = artifacts.require('KeepRandomBeaconOperatorStatistics.sol');
 const fs = require('fs');
 
 // MAKE SURE NONE OF THOSE ACCOUNTS IS A MINER ACCOUNT
@@ -20,6 +21,7 @@ module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
     const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
     const contractOperator = await KeepRandomBeaconOperator.deployed();
+    const contractStatistics = await KeepRandomBeaconOperatorStatistics.deployed();
 
     let accounts = operators.slice();
     accounts.push(requestor);
@@ -39,7 +41,7 @@ module.exports = async function() {
 
             for (let i = 0; i < accounts.length; i++) {
                 prevBalances[i] = await web3.eth.getBalance(accounts[i]);
-                prevRewards[i] = (await availableRewards(accounts[i], contractOperator)).toString();
+                prevRewards[i] = (await availableRewards(accounts[i], contractOperator, contractStatistics)).toString();
             }
 
             let gasPrice = await web3.eth.getGasPrice();
@@ -79,7 +81,7 @@ module.exports = async function() {
                 const balance = await web3.eth.getBalance(address);
                 const balanceChange = web3.utils.toBN(balance).sub(web3.utils.toBN(prevBalances[i])).toString();
 
-                const reward = (await availableRewards(address, contractOperator)).toString();
+                const reward = (await availableRewards(address, contractOperator, contractStatistics)).toString();
                 const rewardChange = web3.utils.toBN(reward).sub(web3.utils.toBN(prevRewards[i])).toString();
 
                 const pricingClient = new PricingClient(
@@ -110,7 +112,7 @@ module.exports = async function() {
     }
 };
 
-async function availableRewards(account, contractOperator) {
+async function availableRewards(account, contractOperator, contractStatistics) {
     const expiredGroupCount = (await contractOperator.getFirstActiveGroupIndex()).toNumber();
     const activeGroupCount = (await contractOperator.numberOfGroups()).toNumber();
     const totalGroupCount = expiredGroupCount + activeGroupCount;
@@ -122,9 +124,9 @@ async function availableRewards(account, contractOperator) {
 
     let accountRewards = web3.utils.toBN(0);
     for (let i = 0; i < groupsPublicKeys.length; i++) {
-        const groupMembersCount = (await contractOperator.getGroupMemberIndices(groupsPublicKeys[i], account)).length;
+        const groupMembersCount = await contractStatistics.countGroupMembership(groupsPublicKeys[i], account);
         const groupMemberReward = await contractOperator.getGroupMemberRewards(groupsPublicKeys[i]);
-        accountRewards = accountRewards.add(web3.utils.toBN(groupMembersCount).mul(groupMemberReward));
+        accountRewards = accountRewards.add(groupMembersCount.mul(groupMemberReward));
     }
 
     return accountRewards;

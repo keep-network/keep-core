@@ -182,7 +182,7 @@ describe('KeepRandomBeaconOperator/Slashing', function() {
         blsData.nextGroupSignature, // Wrong signature
         {from: tattletale}
       ),
-      "Group is terminated or the signature is invalid"
+      "Group terminated or sig invalid"
     )
     // Transaction reverted no changes are applied.
   })

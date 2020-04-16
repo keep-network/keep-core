@@ -10,9 +10,19 @@ library Groups {
     using SafeMath for uint256;
     using BytesLib for bytes;
 
+    // The index of a group is flagged with the most significant bit set,
+    // to distinguish the group `0` from null.
+    // The flag is toggled with bitwise XOR (`^`)
+    // which keeps all other bits intact but flips the flag bit.
+    // The flag should be set before writing to `groupIndices`,
+    // and unset after reading from `groupIndices`
+    // before using the value.
+    uint256 constant GROUP_INDEX_FLAG = 1 << 255;
+
     struct Group {
         bytes groupPubKey;
-        uint registrationBlockHeight;
+        uint64 registrationBlockHeight;
+        bool terminated;
     }
 
     struct Storage {
@@ -23,8 +33,10 @@ library Groups {
         // The value is set when the operator contract is added.
         uint256 relayEntryTimeout;
 
+        // Mapping of `groupPubKey` to flagged `groupIndex`
+        mapping (bytes => uint256) groupIndices;
         Group[] groups;
-        uint256[] terminatedGroups;
+        uint256[] activeTerminatedGroups;
         mapping (bytes => address[]) groupMembers;
 
         // Sum of all group member rewards earned so far. The value is the same for
@@ -32,6 +44,10 @@ library Groups {
         // and is not included here. Each group member can withdraw no more than
         // this value.
         mapping (bytes => uint256) groupMemberRewards;
+
+        // Mapping of `groupPubKey, operator`
+        // to whether the operator has withdrawn rewards from that group.
+        mapping(bytes => mapping(address => bool)) withdrawn;
 
         // expiredGroupOffset is pointing to the first active group, it is also the
         // expired groups counter
@@ -47,7 +63,8 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) internal {
-        self.groups.push(Group(groupPubKey, block.number));
+        self.groupIndices[groupPubKey] = (self.groups.length ^ GROUP_INDEX_FLAG);
+        self.groups.push(Group(groupPubKey, uint64(block.number), false));
     }
 
     /**
@@ -124,38 +141,14 @@ library Groups {
     }
 
     /**
-     * @dev Gets all indices in the provided group for a member.
-     */
-    function getGroupMemberIndices(
-        Storage storage self,
-        bytes memory groupPubKey,
-        address member
-    ) public view returns (uint256[] memory indices) {
-        uint256 counter;
-        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
-            if (self.groupMembers[groupPubKey][i] == member) {
-                counter++;
-            }
-        }
-
-        indices = new uint256[](counter);
-        counter = 0;
-        for (uint i = 0; i < self.groupMembers[groupPubKey].length; i++) {
-            if (self.groupMembers[groupPubKey][i] == member) {
-                indices[counter] = i;
-                counter++;
-            }
-        }
-    }
-
-    /**
      * @dev Terminates group.
      */
     function terminateGroup(
         Storage storage self,
         uint256 groupIndex
     ) internal {
-        self.terminatedGroups.push(groupIndex);
+        self.groups[groupIndex].terminated = true;
+        self.activeTerminatedGroups.push(groupIndex);
     }
 
     /**
@@ -165,12 +158,7 @@ library Groups {
         Storage storage self,
         uint256 groupIndex
     ) internal view returns(bool) {
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.terminatedGroups[i] == groupIndex) {
-                return true;
-            }
-        }
-        return false;
+        return self.groups[groupIndex].terminated;
     }
 
     /**
@@ -180,12 +168,9 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) internal view returns(bool) {
-        for (uint i = 0; i < self.groups.length; i++) {
-            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                return true;
-            }
-        }
-        return false;
+        // Values in `groupIndices` are flagged with `GROUP_INDEX_FLAG`
+        // and thus nonzero, even for group 0
+        return self.groupIndices[groupPubKey] > 0;
     }
 
     /**
@@ -196,7 +181,7 @@ library Groups {
         Storage storage self,
         Group memory group
     ) internal view returns(uint256) {
-        return group.registrationBlockHeight.add(self.groupActiveTime);
+        return uint256(group.registrationBlockHeight).add(self.groupActiveTime);
     }
 
     /**
@@ -224,15 +209,12 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) public view returns(bool) {
-        for (uint i = 0; i < self.groups.length; i++) {
-            if (self.groups[i].groupPubKey.equalStorage(groupPubKey)) {
-                bool isExpired = self.expiredGroupOffset > i;
-                bool isStale = groupStaleTime(self, self.groups[i]) < block.number;
-                return isExpired && isStale;
-            }
-        }
-
-        revert("Group does not exist");
+        uint256 flaggedIndex = self.groupIndices[groupPubKey];
+        require(flaggedIndex != 0, "Group does not exist");
+        uint256 index = flaggedIndex ^ GROUP_INDEX_FLAG;
+        bool isExpired = self.expiredGroupOffset > index;
+        bool isStale = groupStaleTime(self, self.groups[index]) < block.number;
+        return isExpired && isStale;
     }
 
     /**
@@ -258,7 +240,7 @@ library Groups {
     function numberOfGroups(
         Storage storage self
     ) internal view returns(uint256) {
-        return self.groups.length.sub(self.expiredGroupOffset).sub(self.terminatedGroups.length);
+        return self.groups.length.sub(self.expiredGroupOffset).sub(self.activeTerminatedGroups.length);
     }
 
     /**
@@ -273,14 +255,14 @@ library Groups {
             self.expiredGroupOffset++;
         }
 
-        // Go through all terminatedGroups and if some of the terminated
-        // groups are expired, remove them from terminatedGroups collection.
+        // Go through all activeTerminatedGroups and if some of the terminated
+        // groups are expired, remove them from activeTerminatedGroups collection.
         // This is needed because we evaluate the shift of selected group index
         // based on how many non-expired groups has been terminated.
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.expiredGroupOffset > self.terminatedGroups[i]) {
-                self.terminatedGroups[i] = self.terminatedGroups[self.terminatedGroups.length - 1];
-                self.terminatedGroups.length--;
+        for (uint i = 0; i < self.activeTerminatedGroups.length; i++) {
+            if (self.expiredGroupOffset > self.activeTerminatedGroups[i]) {
+                self.activeTerminatedGroups[i] = self.activeTerminatedGroups[self.activeTerminatedGroups.length - 1];
+                self.activeTerminatedGroups.length--;
             }
         }
     }
@@ -297,7 +279,7 @@ library Groups {
         Storage storage self,
         uint256 seed
     ) public returns(uint256) {
-        require(numberOfGroups(self) > 0, "At least one active group required");
+        require(numberOfGroups(self) > 0, "No active groups");
 
         expireOldGroups(self);
         uint256 selectedGroup = seed % numberOfGroups(self);
@@ -324,8 +306,8 @@ library Groups {
         uint256 selectedIndex
     ) internal view returns(uint256) {
         uint256 shiftedIndex = selectedIndex;
-        for (uint i = 0; i < self.terminatedGroups.length; i++) {
-            if (self.terminatedGroups[i] <= shiftedIndex) {
+        for (uint i = 0; i < self.activeTerminatedGroups.length; i++) {
+            if (self.activeTerminatedGroups[i] <= shiftedIndex) {
                 shiftedIndex++;
             }
         }
@@ -335,35 +317,40 @@ library Groups {
 
     /**
      * @dev Withdraws accumulated group member rewards for operator
-     * using the provided group index and member indices. Once the
-     * accumulated reward is withdrawn from the selected group, member is
-     * removed from it. Rewards can be withdrawn only from stale group.
+     * using the provided group index.
+     * Once the accumulated reward is withdrawn from the selected group,
+     * the operator is flagged as withdrawn.
+     * Rewards can be withdrawn only from stale group.
      * @param operator Operator address.
      * @param groupIndex Group index.
-     * @param groupMemberIndices Array of member indices for the group member.
      */
     function withdrawFromGroup(
         Storage storage self,
         address operator,
-        uint256 groupIndex,
-        uint256[] memory groupMemberIndices
+        uint256 groupIndex
     ) public returns (uint256 rewards) {
         bool isExpired = self.expiredGroupOffset > groupIndex;
         bool isStale = isStaleGroup(self, groupIndex);
         require(isExpired && isStale, "Group must be expired and stale");
         bytes memory groupPublicKey = getGroupPublicKey(self, groupIndex);
-        for (uint i = 0; i < groupMemberIndices.length; i++) {
-            if (operator == self.groupMembers[groupPublicKey][groupMemberIndices[i]]) {
-                delete self.groupMembers[groupPublicKey][groupMemberIndices[i]];
+        require(
+            !(self.withdrawn[groupPublicKey][operator]),
+            "Rewards already withdrawn"
+        );
+        self.withdrawn[groupPublicKey][operator] = true;
+        for (uint i = 0; i < self.groupMembers[groupPublicKey].length; i++) {
+            if (operator == self.groupMembers[groupPublicKey][i]) {
                 rewards = rewards.add(self.groupMemberRewards[groupPublicKey]);
             }
         }
     }
 
     /**
-     * @dev Returns addresses of all the members in the provided group.
+     * @dev Returns members of the given group by group public key.
+     *
+     * @param groupPubKey Group public key.
      */
-    function membersOf(
+    function getGroupMembers(
         Storage storage self,
         bytes memory groupPubKey
     ) public view returns (address[] memory members) {
@@ -373,7 +360,7 @@ library Groups {
     /**
      * @dev Returns addresses of all the members in the provided group.
      */
-    function membersOf(
+    function getGroupMembers(
         Storage storage self,
         uint256 groupIndex
     ) public view returns (address[] memory members) {
@@ -407,7 +394,7 @@ library Groups {
             terminateGroup(self, groupIndex);
             self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
         } else {
-            revert("Group is terminated or the signature is invalid");
+            revert("Group terminated or sig invalid");
         }
     }
 
@@ -421,15 +408,18 @@ library Groups {
         // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
         uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
         rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
-        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, membersOf(self, groupIndex));
+        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, getGroupMembers(self, groupIndex));
     }
 
     /**
-     * @dev Returns members of the given group by group public key.
-     *
-     * @param groupPubKey Group public key.
+     * @notice Return whether the given operator
+     * has withdrawn their rewards from the given group.
      */
-    function getGroupMembers(Storage storage self, bytes memory groupPubKey) public view returns (address[] memory ) {
-        return self.groupMembers[groupPubKey];
+    function hasWithdrawnRewards(
+        Storage storage self,
+        address operator,
+        uint256 groupIndex
+    ) public view returns (bool) {
+        return self.withdrawn[getGroupPublicKey(self, groupIndex)][operator];
     }
 }

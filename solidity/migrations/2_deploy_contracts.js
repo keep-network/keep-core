@@ -10,6 +10,7 @@ const ManagedGrantFactory = artifacts.require("./ManagedGrantFactory.sol");
 const KeepRandomBeaconService = artifacts.require("./KeepRandomBeaconService.sol");
 const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
+const KeepRandomBeaconOperatorStatistics = artifacts.require("./statistics/KeepRandomBeaconOperatorStatistics.sol");
 const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.sol");
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
@@ -72,4 +73,5 @@ module.exports = async function(deployer, network) {
   );
 
   await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
+  await deployer.deploy(KeepRandomBeaconOperatorStatistics, KeepRandomBeaconOperator.address);
 };

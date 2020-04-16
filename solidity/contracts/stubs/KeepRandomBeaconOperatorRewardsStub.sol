@@ -33,13 +33,23 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         bytes memory signedMsgSender
     ) public {
         uint256 minimumStake = stakingContract.minimumStake();
-        stakingContract.seize(minimumStake, 100, msg.sender,  groups.membersOf(0));
+        stakingContract.seize(
+            minimumStake,
+            100,
+            msg.sender,
+            groups.getGroupMembers(0)
+        );
         emit UnauthorizedSigningReported(groupIndex);
     }
 
     function reportRelayEntryTimeout() public {
         uint256 minimumStake = stakingContract.minimumStake();
-        stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(0));
+        stakingContract.seize(
+            minimumStake,
+            100,
+            msg.sender,
+            groups.getGroupMembers(0)
+        );
         emit RelayEntryTimeoutReported(0);
     }
 
