@@ -329,8 +329,9 @@ contract TokenGrant {
 
     /**
      * @notice Allows the grant manager to revoke the grant.
-     * @dev Granted tokens that are already unlocked (releasable amount) remain so grantee can still withdraw them
-     * the rest are returned to the token grant manager.
+     * @dev Granted tokens that are already unlocked (releasable amount)
+     * remain in the grant so grantee can still withdraw them
+     * the rest are revoked and withdrawable by token grant manager.
      * @param _id Grant ID.
      */
     function revoke(uint256 _id) public {
@@ -348,6 +349,13 @@ contract TokenGrant {
         emit TokenGrantRevoked(_id);
     }
 
+    /// @notice Allows the grant manager to withdraw revoked tokens.
+    /// @dev Will withdraw as many of the revoked tokens as possible
+    /// without pushing the grant contract into a token deficit.
+    /// If the grantee has staked more tokens than the unlocked amount,
+    /// those tokens will remain in the grant until undelegated and returned,
+    /// after which they can be withdrawn by calling `withdrawRevoked` again.
+    /// @param _id Grant ID.
     function withdrawRevoked(uint256 _id) public {
         Grant storage grant = grants[_id];
         require(
