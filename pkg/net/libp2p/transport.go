@@ -6,7 +6,7 @@ import (
 
 	secio "github.com/libp2p/go-libp2p-secio"
 
-	"github.com/keep-network/keep-core/pkg/chain"
+	keepNet "github.com/keep-network/keep-core/pkg/net"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 	"github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p-core/sec"
@@ -24,13 +24,13 @@ var _ sec.SecureConn = (*authenticatedConnection)(nil)
 type transport struct {
 	localPeerID     peer.ID
 	privateKey      libp2pcrypto.PrivKey
-	stakeMonitor    chain.StakeMonitor
+	firewall        keepNet.Firewall
 	encryptionLayer sec.SecureTransport
 }
 
 func newEncryptedAuthenticatedTransport(
 	pk libp2pcrypto.PrivKey,
-	stakeMonitor chain.StakeMonitor,
+	firewall keepNet.Firewall,
 ) (*transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
 	if err != nil {
@@ -45,7 +45,7 @@ func newEncryptedAuthenticatedTransport(
 	return &transport{
 		localPeerID:     id,
 		privateKey:      pk,
-		stakeMonitor:    stakeMonitor,
+		firewall:        firewall,
 		encryptionLayer: encryptionLayer,
 	}, nil
 }
@@ -64,7 +64,7 @@ func (t *transport) SecureInbound(
 		encryptedConnection,
 		t.localPeerID,
 		t.privateKey,
-		t.stakeMonitor,
+		t.firewall,
 	)
 }
 
@@ -88,6 +88,6 @@ func (t *transport) SecureOutbound(
 		t.localPeerID,
 		t.privateKey,
 		remotePeerID,
-		t.stakeMonitor,
+		t.firewall,
 	)
 }

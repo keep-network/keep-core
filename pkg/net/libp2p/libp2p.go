@@ -9,7 +9,6 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -51,9 +50,9 @@ const (
 
 // watchtower constants
 const (
-	// StakeCheckTick is the amount of time between periodic checks for
-	// minimum stake for all peers connected to this one.
-	StakeCheckTick = time.Minute * 1
+	// FirewallCheckTick is the amount of time between periodic checks of all
+	// firewall rules against all peers connected to this one.
+	FirewallCheckTick = time.Minute * 1
 	// BootstrapCheckPeriod is the amount of time between periodic checks
 	// for ensuring we are connected to an appropriate number of bootstrap
 	// peers.
@@ -227,7 +226,7 @@ func Connect(
 	ctx context.Context,
 	config Config,
 	staticKey *key.NetworkPrivate,
-	stakeMonitor chain.StakeMonitor,
+	firewall net.Firewall,
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
 ) (net.Provider, error) {
@@ -244,7 +243,7 @@ func Connect(
 		identity,
 		config.Port,
 		config.AnnouncedAddresses,
-		stakeMonitor,
+		firewall,
 	)
 	if err != nil {
 		return nil, err
@@ -296,7 +295,7 @@ func Connect(
 
 	// Instantiates and starts the connection management background process
 	watchtower.NewGuard(
-		ctx, StakeCheckTick, stakeMonitor, provider.connectionManager,
+		ctx, FirewallCheckTick, firewall, provider.connectionManager,
 	)
 
 	return provider, nil
@@ -307,7 +306,7 @@ func discoverAndListen(
 	identity *identity,
 	port int,
 	announcedAddresses []string,
-	stakeMonitor chain.StakeMonitor,
+	firewall net.Firewall,
 ) (host.Host, error) {
 	var err error
 
@@ -319,7 +318,7 @@ func discoverAndListen(
 
 	transport, err := newEncryptedAuthenticatedTransport(
 		identity.privKey,
-		stakeMonitor,
+		firewall,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(

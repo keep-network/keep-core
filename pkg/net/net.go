@@ -151,3 +151,28 @@ type BroadcastChannel interface {
 // public key as its argument and returns true if the message should be
 // processed or false otherwise.
 type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+
+// Firewall represents a set of rules the remote peer has to conform to so that
+// a connection with that peer can be established. The rules are checked when
+// a new connection is established and periodically for all active connections.
+// If some of the expectations defined by firewall rules are no longer met, the
+// connection is dropped.
+type Firewall interface {
+
+	// Validate takes the remote peer public key and executes all the checks
+	// needed to decide whether the connection with the remote peer should be
+	// established and maintained.
+	// If expectations are not met, this function should return an error
+	// describing what is wrong.
+	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
+}
+
+// NoFirewall is an empty Firewall implementation enforcing no rules
+// on the connection.
+var NoFirewall = &noFirewall{}
+
+type noFirewall struct{}
+
+func (nf *noFirewall) Validate(remotePeerPublicKey *ecdsa.PublicKey) error {
+	return nil
+}
