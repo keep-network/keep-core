@@ -8,8 +8,8 @@ async function grantTokens(
     revocable,
     stakingPolicy) {
   let grantData = web3.eth.abi.encodeParameters(
-    ['address', 'uint256', 'uint256', 'uint256', 'bool', 'address'],
-    [grantee, unlockingDuration.toNumber(), start.toNumber(), cliff.toNumber(), revocable, stakingPolicy]
+    ['address', 'address', 'uint256', 'uint256', 'uint256', 'bool', 'address'],
+    [from, grantee, unlockingDuration.toNumber(), start.toNumber(), cliff.toNumber(), revocable, stakingPolicy]
   );
 
   await token.approveAndCall(grantContract.address, amount, grantData, {from: from})

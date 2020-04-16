@@ -141,6 +141,7 @@ contract ManagedGrantFactory {
         _managedGrant = address(managedGrant);
 
         bytes memory grantData = abi.encode(
+            _from,
             _managedGrant,
             duration,
             start,

@@ -106,6 +106,19 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       expect(await managedGrant.grantManager()).to.equal(grantCreator);
       expect(event.args['grantAddress']).to.equal(managedGrantAddress);
       expect(event.args['grantee']).to.equal(grantee);
+
+      let schedule = await tokenGrant.getGrantUnlockingSchedule(grantId);
+      let returnedGrantManager = schedule[0];
+      expect(returnedGrantManager).to.equal(grantCreator);
+
+      let returnedDuration = schedule[1];
+      expect(returnedDuration).to.eq.BN(grantUnlockingDuration);
+
+      let returnedStart = schedule[2];
+      expect(returnedStart).to.eq.BN(grantStart);
+
+      let returnedCliff = schedule[3];
+      expect(returnedCliff).to.eq.BN(grantStart.add(grantCliff));
     });
 
     it("works with receiveApproval", async () => {
@@ -125,6 +138,19 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       expect(await tokenGrant.availableToStake(grantId)).to.eq.BN(grantAmount);
       expect(await managedGrant.grantee()).to.equal(grantee);
       expect(await managedGrant.grantManager()).to.equal(grantCreator);
+
+      let schedule = await tokenGrant.getGrantUnlockingSchedule(grantId);
+      let returnedGrantManager = schedule[0];
+      expect(returnedGrantManager).to.equal(grantCreator);
+
+      let returnedDuration = schedule[1];
+      expect(returnedDuration).to.eq.BN(grantUnlockingDuration);
+
+      let returnedStart = schedule[2];
+      expect(returnedStart).to.eq.BN(grantStart);
+
+      let returnedCliff = schedule[3];
+      expect(returnedCliff).to.eq.BN(grantStart.add(grantCliff));
     });
 
     it("doesn't let one grant more than they've approved on the token", async () => {
