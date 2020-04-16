@@ -19,8 +19,17 @@ contract ManagedGrantFactory {
 
     KeepToken public token;
     TokenGrant public tokenGrant;
-    GrantStakingPolicy nonRevocableStakingPolicy;
-    GrantStakingPolicy revocableStakingPolicy;
+
+    struct Params {
+        address grantCreator;
+        address grantee;
+        uint256 amount;
+        uint256 duration;
+        uint256 start;
+        uint256 cliff;
+        bool revocable;
+        address policy;
+    }
 
     event ManagedGrantCreated(
         address grantAddress,
@@ -29,14 +38,10 @@ contract ManagedGrantFactory {
 
     constructor(
         address _tokenAddress,
-        address _tokenGrant,
-        address _nonRevocableStakingPolicy,
-        address _revocableStakingPolicy
+        address _tokenGrant
     ) public {
         token = KeepToken(_tokenAddress);
         tokenGrant = TokenGrant(_tokenGrant);
-        nonRevocableStakingPolicy = GrantStakingPolicy(_nonRevocableStakingPolicy);
-        revocableStakingPolicy = GrantStakingPolicy(_revocableStakingPolicy);
     }
 
     /// @notice Create a managed grant
@@ -54,6 +59,7 @@ contract ManagedGrantFactory {
     /// cliff (uint256) Duration in seconds of the cliff before which no tokens will unlock.
     /// start (uint256) Timestamp at which unlocking will start.
     /// revocable (bool) Whether the token grant is revocable or not.
+    /// policy (address) Address of the staking policy to be used.
     function receiveApproval(
         address _from,
         uint256 _amount,
@@ -65,19 +71,22 @@ contract ManagedGrantFactory {
          uint256 _duration,
          uint256 _start,
          uint256 _cliff,
-         bool _revocable) = abi.decode(
+         bool _revocable,
+         address _policy) = abi.decode(
              _extraData,
-             (address, uint256, uint256, uint256, bool)
+             (address, uint256, uint256, uint256, bool, address)
         );
-        _createGrant(
+        Params memory params = Params(
+            _from,
             _grantee,
             _amount,
             _duration,
             _start,
             _cliff,
             _revocable,
-            _from
+            _policy
         );
+        _createGrant(params);
     }
 
     /// @notice Create a managed grant with the given parameters.
@@ -92,6 +101,7 @@ contract ManagedGrantFactory {
     /// @param start Timestamp at which unlocking will start.
     /// @param cliff Duration in seconds of the cliff before which no tokens will unlock.
     /// @param revocable Whether the token grant is revocable or not.
+    /// @param policy Address of the staking policy to be used.
     /// @return The address of the managed grant.
     function createManagedGrant(
         address grantee,
@@ -99,36 +109,32 @@ contract ManagedGrantFactory {
         uint256 duration,
         uint256 start,
         uint256 cliff,
-        bool revocable
+        bool revocable,
+        address policy
     ) public returns (address _managedGrant) {
-        return _createGrant(
+        Params memory params = Params(
+            msg.sender,
             grantee,
             amount,
             duration,
             start,
             cliff,
             revocable,
-            msg.sender
+            policy
         );
+        return _createGrant(params);
     }
 
     function _createGrant(
-        address grantee,
-        uint256 amount,
-        uint256 duration,
-        uint256 start,
-        uint256 cliff,
-        bool revocable,
-        address _from
+        Params memory params
     ) internal returns (address _managedGrant) {
-        require(grantee != address(0), "Grantee address can't be zero.");
-        require(cliff <= duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
+        require(params.grantee != address(0), "Grantee address can't be zero.");
+        require(
+            params.cliff <= params.duration,
+            "Unlocking cliff duration must be less or equal total unlocking duration."
+        );
 
-        token.safeTransferFrom(_from, address(this), amount);
-
-        GrantStakingPolicy stakingPolicy = revocable
-            ? revocableStakingPolicy
-            : nonRevocableStakingPolicy;
+        token.safeTransferFrom(params.grantCreator, address(this), params.amount);
 
         // Grant ID is predictable in advance
         uint256 grantId = tokenGrant.numGrants();
@@ -136,31 +142,31 @@ contract ManagedGrantFactory {
         ManagedGrant managedGrant = new ManagedGrant(
             address(token),
             address(tokenGrant),
-            _from,
+            params.grantCreator,
             grantId,
-            grantee
+            params.grantee
         );
         _managedGrant = address(managedGrant);
 
         bytes memory grantData = abi.encode(
-            _from,
+            params.grantCreator,
             _managedGrant,
-            duration,
-            start,
-            cliff,
-            revocable,
-            address(stakingPolicy)
+            params.duration,
+            params.start,
+            params.cliff,
+            params.revocable,
+            params.policy
         );
 
         token.approveAndCall(
             address(tokenGrant),
-            amount,
+            params.amount,
             grantData
         );
 
         emit ManagedGrantCreated(
             _managedGrant,
-            grantee
+            params.grantee
         );
         return _managedGrant;
     }
