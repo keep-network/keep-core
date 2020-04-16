@@ -9,6 +9,7 @@ import (
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -102,7 +103,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
-		stakeMonitor,
+		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
 	if err != nil {
