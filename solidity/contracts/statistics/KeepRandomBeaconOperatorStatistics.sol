@@ -14,6 +14,25 @@ contract KeepRandomBeaconOperatorStatistics {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
     }
 
+    /// @notice Counts how many times the operator is present in a group.
+    /// @param groupPubKey The public key of the group.
+    /// @param operator The address of the operator.
+    /// @return The number of members the operator has in the group.
+    function countGroupMembership(
+        bytes memory groupPubKey,
+        address operator
+    ) public view returns (uint256) {
+        address[] memory members = operatorContract.getGroupMembers(groupPubKey);
+        uint256 counter;
+        for (uint i = 0; i < members.length; i++) {
+            if (members[i] == operator) {
+                counter++;
+            }
+        }
+        return counter;
+    }
+
+
     /**
      * @dev Gets all indices in the provided group for a member.
      */
@@ -21,17 +40,11 @@ contract KeepRandomBeaconOperatorStatistics {
         bytes memory groupPubKey,
         address member
     ) public view returns (uint256[] memory indices) {
+        uint256 count = countGroupMembership(groupPubKey, member);
         address[] memory members = operatorContract.getGroupMembers(groupPubKey);
 
-        uint256 counter;
-        for (uint i = 0; i < members.length; i++) {
-            if (members[i] == member) {
-                counter++;
-            }
-        }
-
-        indices = new uint256[](counter);
-        counter = 0;
+        indices = new uint256[](count);
+        uint256 counter = 0;
         for (uint i = 0; i < members.length; i++) {
             if (members[i] == member) {
                 indices[counter] = i;
@@ -50,7 +63,7 @@ contract KeepRandomBeaconOperatorStatistics {
         bytes memory groupPubKey = operatorContract.getGroupPublicKey(groupIndex);
         uint256 memberRewards = operatorContract.getGroupMemberRewards(groupPubKey);
 
-        uint256 memberCount = getGroupMemberIndices(groupPubKey, operator).length;
+        uint256 memberCount = countGroupMembership(groupPubKey, operator);
 
         return memberRewards.mul(memberCount);
     }
