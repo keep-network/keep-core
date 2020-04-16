@@ -171,6 +171,10 @@ describe('TokenGrant/Revoke', function() {
     const grantManagerKeepBalanceBeforeRevoke= await tokenContract.balanceOf(tokenOwner);
 
     await grantContract.revoke(fullyUnlockedGrantId, { from: tokenOwner });
+    await expectRevert(
+      grantContract.withdrawRevoked(fullyUnlockedGrantId, { from: tokenOwner }),
+      "All revoked tokens withdrawn"
+    );
     
     const grantManagerKeepBalanceAfterRevoke = await tokenContract.balanceOf(tokenOwner);
     const granteeGrantBalanceAfter = await grantContract.balanceOf.call(grantee);
