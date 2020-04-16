@@ -22,10 +22,11 @@ import (
 var StartCommand cli.Command
 
 const (
-	bootstrapFlag    = "bootstrap"
-	portFlag         = "port"
-	portShort        = "p"
-	stakeTimeoutFlag = "stake-timeout"
+	bootstrapFlag     = "bootstrap"
+	portFlag          = "port"
+	portShort         = "p"
+	waitForStakeFlag  = "wait-for-stake"
+	waitForStakeShort = "w"
 )
 
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
@@ -43,7 +44,7 @@ func init() {
 					Name: portFlag + "," + portShort,
 				},
 				&cli.IntFlag{
-					Name: stakeTimeoutFlag,
+					Name: waitForStakeFlag + "," + waitForStakeShort,
 				},
 			},
 		}
@@ -85,8 +86,8 @@ func Start(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
-	if c.Int(stakeTimeoutFlag) != 0 {
-		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(stakeTimeoutFlag))
+	if c.Int(waitForStakeFlag) != 0 {
+		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
