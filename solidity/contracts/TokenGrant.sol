@@ -385,7 +385,8 @@ contract TokenGrant {
 
     /**
      * @notice Stake token grant.
-     * @dev Stakable token grant amount is the amount of unlocked tokens minus what user already withdrawn from the grant
+     * @dev Stakable token grant amount is determined
+     * by the grant's staking policy.
      * @param _id Grant Id.
      * @param _stakingContract Address of the staking contract.
      * @param _amount Amount to stake.
@@ -427,15 +428,20 @@ contract TokenGrant {
 
     /**
       @notice Returns the amount of tokens available for staking from the grant.
-      It's the amount of granted tokens minus those released and already staked.
+      The stakeable amount is determined by the staking policy of the grant.
+      If the grantee has withdrawn some tokens
+      or the policy returns an erroneously high value,
+      the stakeable amount is limited to the number of tokens remaining.
       @param _grantId Identifier of the grant
      */
     function availableToStake(uint256 _grantId) public view returns (uint256) {
         Grant storage grant = grants[_grantId];
+        // Revoked grants cannot be staked.
+        // If the grant isn't revoked, the number of revoked tokens is 0.
+        if (grant.revokedAt != 0) { return 0; }
         uint256 amount = grant.amount;
         uint256 withdrawn = grant.withdrawn;
-        uint256 revoked = grant.revokedAmount;
-        uint256 remaining = amount.sub(withdrawn).sub(revoked);
+        uint256 remaining = amount.sub(withdrawn);
         uint256 stakeable = grant.stakingPolicy.getStakeableAmount(
             now,
             amount,
