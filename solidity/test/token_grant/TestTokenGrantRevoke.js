@@ -75,13 +75,17 @@ describe('TokenGrant/Revoke', function() {
   it("should allow to revoke grant", async () => {
     const grantManagerKeepBalanceBefore = await tokenContract.balanceOf(tokenOwner);
     await time.increaseTo(grantStart.add(time.duration.minutes(30)));
-    const withdrawable = await grantContract.withdrawable(grantId);
-    const refund = grantAmount.sub(withdrawable);
 
-    await grantContract.revoke(grantId, { from: tokenOwner });
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    const tx = await grantContract.revoke(grantId, { from: tokenOwner });
+    const revokedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const withdrawableAtRevokedTimestamp = grantAmount.mul(revokedAt.sub(grantStart)).div(grantDuration);
+
+    const refund = grantAmount.sub(withdrawableAtRevokedTimestamp);
 
     const withdrawableAfter = await grantContract.withdrawable(grantId);
+
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+
     const grantDetails = await grantContract.getGrant(grantId);
     const grantManagerKeepBalanceAfter = await tokenContract.balanceOf(tokenOwner);
     const unlockedAmount = await grantContract.unlockedAmount(grantId);

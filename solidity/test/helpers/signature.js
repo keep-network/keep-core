@@ -6,9 +6,9 @@ const sign = async (dataToSign, address) => {
     // validation code that accepts v={27, 28} as specified in the
     // Appendix F of the Ethereum Yellow Paper 
     // https://ethereum.github.io/yellowpaper/paper.pdf
-    return '0x' + Buffer.from(web3.utils.toBN(
+    return '0x' + web3.utils.toBN(
         await web3.eth.sign(dataToSign, address)
-    ).add(web3.utils.toBN(27)).toBuffer()).toString('hex')
+    ).add(web3.utils.toBN(27)).toBuffer('be', 65).toString('hex')
 }
 
 module.exports = sign

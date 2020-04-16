@@ -300,13 +300,16 @@ func ConnectWithKey(
 		registrationBlockHeight: currentBlock,
 	}
 
+	resultPublicationBlockStep := uint64(3)
+
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
 			TicketSubmissionTimeout:    6,
-			ResultPublicationBlockStep: 3,
+			ResultPublicationBlockStep: resultPublicationBlockStep,
 			MinimumStake:               minimumStake,
+			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
