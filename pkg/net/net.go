@@ -166,13 +166,3 @@ type Firewall interface {
 	// describing what is wrong.
 	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
 }
-
-// NoFirewall is an empty Firewall implementation enforcing no rules
-// on the connection.
-var NoFirewall = &noFirewall{}
-
-type noFirewall struct{}
-
-func (nf *noFirewall) Validate(remotePeerPublicKey *ecdsa.PublicKey) error {
-	return nil
-}

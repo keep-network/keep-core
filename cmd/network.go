@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -82,7 +83,7 @@ func pingRequest(c *cli.Context) error {
 		ctx,
 		libp2pConfig,
 		privKey,
-		net.NoFirewall,
+		firewall.Disabled,
 		retransmission.NewTimeTicker(ctx, 50*time.Millisecond),
 	)
 	if err != nil {

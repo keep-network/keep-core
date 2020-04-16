@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
 	"github.com/keep-network/keep-core/pkg/net"
@@ -196,7 +197,7 @@ func withNetwork(
 			Port: 8081,
 		},
 		privKey1,
-		net.NoFirewall,
+		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {
@@ -215,7 +216,7 @@ func withNetwork(
 			Port: 8082,
 		},
 		privKey2,
-		net.NoFirewall,
+		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {

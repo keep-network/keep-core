@@ -9,6 +9,16 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/key"
 )
 
+// Disabled is an empty Firewall implementation enforcing no rules
+// on the connection.
+var Disabled = &noFirewall{}
+
+type noFirewall struct{}
+
+func (nf *noFirewall) Validate(remotePeerPublicKey *ecdsa.PublicKey) error {
+	return nil
+}
+
 // MinimumStakePolicy is a net.Firewall rule making sure the remote peer
 // has a minimum stake of KEEP.
 func MinimumStakePolicy(stakeMonitor chain.StakeMonitor) net.Firewall {
