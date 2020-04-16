@@ -52,7 +52,7 @@ const (
 const (
 	// FirewallCheckTick is the amount of time between periodic checks of all
 	// firewall rules against all peers connected to this one.
-	FirewallCheckTick = time.Minute * 1
+	FirewallCheckTick = time.Minute * 10
 	// BootstrapCheckPeriod is the amount of time between periodic checks
 	// for ensuring we are connected to an appropriate number of bootstrap
 	// peers.
