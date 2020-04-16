@@ -34,7 +34,8 @@ contract TokenGrant {
         address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
         uint256 revokedAt; // Timestamp at which grant was revoked by the grant manager.
-        uint256 revokedAmount; // The number of tokens returned to the grant creator.
+        uint256 revokedAmount; // The number of tokens revoked from the grantee.
+        uint256 revokedWithdrawn; // The number of tokens returned to the grant creator.
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will unlock.
@@ -246,7 +247,7 @@ contract TokenGrant {
         grants[id] = Grant(
             _grantManager,
             _grantee,
-            0, 0,
+            0, 0, 0,
             _revocable,
             _amount,
             _duration,
@@ -330,32 +331,64 @@ contract TokenGrant {
 
     /**
      * @notice Allows the grant manager to revoke the grant.
-     * @dev Granted tokens that are already unlocked (releasable amount) remain so grantee can still withdraw them
-     * the rest are returned to the token grant manager.
+     * @dev Granted tokens that are already unlocked (releasable amount)
+     * remain in the grant so grantee can still withdraw them
+     * the rest are revoked and withdrawable by token grant manager.
      * @param _id Grant ID.
      */
     function revoke(uint256 _id) public {
         require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
-        // This is safe because revocable grant cannot be staked.
         require(grants[_id].revokedAt == 0, "Grant must not be already revoked.");
 
-        uint256 amount = withdrawable(_id);
-        uint256 refund = grants[_id].amount.sub(amount);
+        uint256 unlockedAmount = unlockedAmount(_id);
+        uint256 revokedAmount = grants[_id].amount.sub(unlockedAmount);
         grants[_id].revokedAt = now;
-        grants[_id].revokedAmount = refund;
+        grants[_id].revokedAmount = revokedAmount;
 
         // Update grantee's grants balance.
-        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(refund);
-
-        // Transfer tokens from this contract balance to the token grant manager.
-        token.safeTransfer(grants[_id].grantManager, refund);
+        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(revokedAmount);
         emit TokenGrantRevoked(_id);
+    }
+
+    /// @notice Allows the grant manager to withdraw revoked tokens.
+    /// @dev Will withdraw as many of the revoked tokens as possible
+    /// without pushing the grant contract into a token deficit.
+    /// If the grantee has staked more tokens than the unlocked amount,
+    /// those tokens will remain in the grant until undelegated and returned,
+    /// after which they can be withdrawn by calling `withdrawRevoked` again.
+    /// @param _id Grant ID.
+    function withdrawRevoked(uint256 _id) public {
+        Grant storage grant = grants[_id];
+        require(
+            grant.grantManager == msg.sender,
+            "Only grant manager can withdraw revoked tokens."
+        );
+        uint256 revoked = grant.revokedAmount;
+        uint256 revokedWithdrawn = grant.revokedWithdrawn;
+        require(revokedWithdrawn < revoked, "All revoked tokens withdrawn.");
+
+        uint256 revokedRemaining = revoked.sub(revokedWithdrawn);
+
+        uint256 totalAmount = grant.amount;
+        uint256 staked = grant.staked;
+        uint256 granteeWithdrawn = grant.withdrawn;
+        uint256 remainingPresentInGrant =
+            totalAmount.sub(staked).sub(revokedWithdrawn).sub(granteeWithdrawn);
+
+        require(remainingPresentInGrant > 0, "No revoked tokens withdrawable.");
+
+        uint256 amountToWithdraw = remainingPresentInGrant < revokedRemaining
+            ? remainingPresentInGrant
+            : revokedRemaining;
+        token.safeTransfer(msg.sender, amountToWithdraw);
+        grant.revokedWithdrawn += amountToWithdraw;
     }
 
     /**
      * @notice Stake token grant.
-     * @dev Stakable token grant amount is the amount of unlocked tokens minus what user already withdrawn from the grant
+     * @dev Stakable token grant amount is determined
+     * by the grant's staking policy.
      * @param _id Grant Id.
      * @param _stakingContract Address of the staking contract.
      * @param _amount Amount to stake.
@@ -364,6 +397,7 @@ contract TokenGrant {
      */
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
+        require(grants[_id].revokedAt == 0, "Revoked grant can not be staked");
         require(
             stakingContracts[grants[_id].grantManager][_stakingContract],
             "Provided staking contract is not authorized."
@@ -396,11 +430,17 @@ contract TokenGrant {
 
     /**
       @notice Returns the amount of tokens available for staking from the grant.
-      It's the amount of granted tokens minus those released and already staked.
+      The stakeable amount is determined by the staking policy of the grant.
+      If the grantee has withdrawn some tokens
+      or the policy returns an erroneously high value,
+      the stakeable amount is limited to the number of tokens remaining.
       @param _grantId Identifier of the grant
      */
     function availableToStake(uint256 _grantId) public view returns (uint256) {
         Grant storage grant = grants[_grantId];
+        // Revoked grants cannot be staked.
+        // If the grant isn't revoked, the number of revoked tokens is 0.
+        if (grant.revokedAt != 0) { return 0; }
         uint256 amount = grant.amount;
         uint256 withdrawn = grant.withdrawn;
         uint256 remaining = amount.sub(withdrawn);
@@ -449,6 +489,48 @@ contract TokenGrant {
         require(
             msg.sender == _operator || msg.sender == grants[grantId].grantee,
             "Only operator or grantee can undelegate."
+        );
+
+        grantStake.undelegate();
+    }
+
+    /// @notice Force cancellation of a revoked grant's stake.
+    /// Can be used by the grant manager
+    /// to immediately withdraw tokens back into the grant,
+    /// from an operator still within the initialization period.
+    /// These tokens can then be withdrawn
+    /// if some revoked tokens haven't been withdrawn yet.
+    function cancelRevokedStake(address _operator) public {
+        TokenGrantStake grantStake = grantStakes[_operator];
+        uint256 grantId = grantStake.getGrantId();
+        require(
+            grants[grantId].revokedAt != 0,
+            "Grant must be revoked"
+        );
+        require(
+            msg.sender == grants[grantId].grantManager,
+            "Only grant manager can force cancellation of revoked grant stake."
+        );
+
+        uint256 returned = grantStake.cancelStake();
+        grants[grantId].staked = grants[grantId].staked.sub(returned);
+    }
+
+    /// @notice Force undelegation of a revoked grant's stake.
+    /// @dev Can be called by the grant manager once the grant is revoked.
+    /// Has to be done this way,
+    /// instead of undelegating all operators when the grant is revoked,
+    /// because the latter method is vulnerable to DoS via out-of-gas.
+    function undelegateRevoked(address _operator) public {
+        TokenGrantStake grantStake = grantStakes[_operator];
+        uint256 grantId = grantStake.getGrantId();
+        require(
+            grants[grantId].revokedAt != 0,
+            "Grant must be revoked"
+        );
+        require(
+            msg.sender == grants[grantId].grantManager,
+            "Only grant manager can force undelegation of revoked grant stake"
         );
 
         grantStake.undelegate();
