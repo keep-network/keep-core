@@ -218,6 +218,7 @@ describe('TokenGrant/Revoke', function() {
     const revokedAmount = grantDetails[3];
     const stakedAmount = grantDetails[2];
 
+    expect(revokedAmount).to.eq.BN(grantAmount);
     expect(stakedAmount).to.eq.BN(minimumStake, "Minimum stake should be staked");
 
     const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(tokenOwner);
@@ -246,6 +247,7 @@ describe('TokenGrant/Revoke', function() {
     const revokedAmount = grantDetails[3];
     const stakedAmount = grantDetails[2];
 
+    expect(revokedAmount).to.eq.BN(grantAmount);
     expect(stakedAmount).to.eq.BN(minimumStake, "Minimum stake should be staked");
 
     const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(tokenOwner);
@@ -282,6 +284,7 @@ describe('TokenGrant/Revoke', function() {
     const revokedAmount = grantDetails[3];
     const stakedAmount = grantDetails[2];
 
+    expect(revokedAmount).to.eq.BN(grantAmount);
     expect(stakedAmount).to.eq.BN(minimumStake, "Minimum stake should be staked");
 
     const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(tokenOwner);
