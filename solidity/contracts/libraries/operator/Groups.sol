@@ -14,6 +14,9 @@ library Groups {
     // to distinguish the group `0` from null.
     // The flag is toggled with bitwise XOR (`^`)
     // which keeps all other bits intact but flips the flag bit.
+    // The flag should be set before writing to `groupIndices`,
+    // and unset after reading from `groupIndices`
+    // before using the value.
     uint256 constant GROUP_INDEX_FLAG = 1 << 255;
 
     struct Group {
