@@ -63,12 +63,12 @@ func Initialize(
 		groupRegistry,
 	)
 
-	groupSelected := &event.GroupSelectionTrack{
+	pendingGroupSelections := &event.GroupSelectionTrack{
 		Data:  make(map[string]bool),
 		Mutex: &sync.Mutex{},
 	}
 
-	relayRequested := &event.RelayRequestTrack{
+	pendingRelayRequests := &event.RelayRequestTrack{
 		Data:  make(map[string]bool),
 		Mutex: &sync.Mutex{},
 	}
@@ -77,15 +77,15 @@ func Initialize(
 		previousEntry := hex.EncodeToString(request.PreviousEntry[:])
 		if node.IsInGroup(request.GroupPublicKey) {
 			go func() {
-				if ok := relayRequested.Add(previousEntry); !ok {
+				if ok := pendingRelayRequests.Add(previousEntry); !ok {
 					logger.Errorf(
-						"a new relay has been already requested using previous entry [0x%x]",
+						"relay entry requested event with previous entry [0x%x] has been registered already",
 						previousEntry,
 					)
 					return
 				}
 
-				defer relayRequested.Remove(previousEntry)
+				defer pendingRelayRequests.Remove(previousEntry)
 
 				logger.Infof(
 					"new relay entry requested at block [%v] from group [0x%x] using "+
@@ -130,18 +130,18 @@ func Initialize(
 
 		newEntry := event.NewEntry.Text(16)
 		go func() {
-			if ok := groupSelected.Add(newEntry); !ok {
+			if ok := pendingGroupSelections.Add(newEntry); !ok {
 				logger.Errorf(
-					"group selection with seed [0x%v] has already started",
+					"group selection event with seed [0x%x] has been registered already",
 					newEntry,
 				)
 				return
 			}
 
-			defer groupSelected.Remove(newEntry)
+			defer pendingGroupSelections.Remove(newEntry)
 
 			logger.Infof(
-				"group selection started with seed [0x%v] at block [%v]",
+				"group selection started with seed [0x%x] at block [%v]",
 				newEntry,
 				event.BlockNumber,
 			)

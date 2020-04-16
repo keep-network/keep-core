@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-// GroupSelectionTrack is used to track a start of group selection after GroupSelectionStarted
+// GroupSelectionTrack is used to track a start for group selection after GroupSelectionStarted
 // event is received. It is used to ensure that the process execution
 // is not duplicated, i.e. when the client receives the same event multiple times.
 // When event is received, it should be added in this struct. When a group
@@ -38,7 +38,7 @@ func (gst *GroupSelectionTrack) Remove(entry string) {
 	delete(gst.Data, entry)
 }
 
-// RelayRequestTrack is used to track requests of new entriees after RelayEntryRequested
+// RelayRequestTrack is used to track requests for new entries after RelayEntryRequested
 // event is received. It is used to ensure that the process execution
 // is not duplicated, i.e. when the client receives the same event multiple times.
 // When event is received, it should be added in this struct. When a new entry
