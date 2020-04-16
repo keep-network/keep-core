@@ -60,8 +60,6 @@ describe('TokenGrant/ManagedGrantFactory', () => {
     factory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      permissivePolicy.address,
-      minimumPolicy.address,
       {from: grantCreator}
     );
   });
@@ -87,6 +85,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         grantStart,
         grantCliff,
         false,
+        permissivePolicy.address,
         {from: grantCreator}
       );
       await factory.createManagedGrant(
@@ -96,6 +95,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
         grantStart,
         grantCliff,
         false,
+        permissivePolicy.address,
         {from: grantCreator}
       );
       let event = (await factory.getPastEvents())[0];
@@ -119,13 +119,16 @@ describe('TokenGrant/ManagedGrantFactory', () => {
 
       let returnedCliff = schedule[3];
       expect(returnedCliff).to.eq.BN(grantStart.add(grantCliff));
+
+      let returnedPolicy = schedule[4];
+      expect(returnedPolicy).to.equal(permissivePolicy.address);
     });
 
     it("works with receiveApproval", async () => {
       grantStart = await time.latest();
       let extraData = web3.eth.abi.encodeParameters(
-        ['address', 'uint256', 'uint256', 'uint256', 'bool'],
-        [grantee, grantUnlockingDuration.toNumber(), grantStart.toNumber(), grantCliff.toNumber(), false]
+        ['address', 'uint256', 'uint256', 'uint256', 'bool', 'address'],
+        [grantee, grantUnlockingDuration.toNumber(), grantStart.toNumber(), grantCliff.toNumber(), false, permissivePolicy.address]
       );
       await token.approveAndCall(
         factory.address, grantAmount, extraData, {from: grantCreator}
@@ -151,6 +154,9 @@ describe('TokenGrant/ManagedGrantFactory', () => {
 
       let returnedCliff = schedule[3];
       expect(returnedCliff).to.eq.BN(grantStart.add(grantCliff));
+
+      let returnedPolicy = schedule[4];
+      expect(returnedPolicy).to.equal(permissivePolicy.address);
     });
 
     it("doesn't let one grant more than they've approved on the token", async () => {
@@ -167,6 +173,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           grantStart,
           grantCliff,
           false,
+          permissivePolicy.address,
           {from: unrelatedAddress}
         ),
         "SafeERC20: low-level call failed -- Reason given: SafeERC20: low-level call failed."
@@ -187,6 +194,7 @@ describe('TokenGrant/ManagedGrantFactory', () => {
           grantStart,
           grantCliff,
           false,
+          permissivePolicy.address,
           {from: unrelatedAddress}
         ),
         "SafeERC20: low-level call failed -- Reason given: SafeERC20: low-level call failed."

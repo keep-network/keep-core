@@ -43,9 +43,7 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(
     ManagedGrantFactory,
     KeepToken.address,
-    TokenGrant.address,
-    PermissiveStakingPolicy.address,
-    GuaranteedMinimumStakingPolicy.address
+    TokenGrant.address
   );
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
