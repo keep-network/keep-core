@@ -10,6 +10,10 @@ library Groups {
     using SafeMath for uint256;
     using BytesLib for bytes;
 
+    // The index of a group is flagged with the most significant bit set,
+    // to distinguish the group `0` from null.
+    // The flag is toggled with bitwise XOR (`^`)
+    // which keeps all other bits intact but flips the flag bit.
     uint256 constant GROUP_INDEX_FLAG = 1 << 255;
 
     struct Group {
@@ -56,7 +60,7 @@ library Groups {
         Storage storage self,
         bytes memory groupPubKey
     ) internal {
-        self.groupIndices[groupPubKey] = (self.groups.length | GROUP_INDEX_FLAG);
+        self.groupIndices[groupPubKey] = (self.groups.length ^ GROUP_INDEX_FLAG);
         self.groups.push(Group(groupPubKey, uint64(block.number), false));
     }
 
