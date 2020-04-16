@@ -6,75 +6,139 @@ import (
 )
 
 func TestGroupSelectionTrack_Add(t *testing.T) {
-	type groupSelected struct {
-		Data  map[string]bool
-		Mutex *sync.Mutex
+	entry1 := "0x12345"
+	entry2 := "0x67891"
+
+	gst := &GroupSelectionTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
 	}
-	tests := map[string]struct {
-		groupSelected groupSelected
-		arg           string
-		expected      bool
-	}{
-		"adding unique entry key": {
-			groupSelected: groupSelected{Data: make(map[string]bool), Mutex: &sync.Mutex{}},
-			arg:           "0x123456",
-			expected:      true,
-		},
-		"adding unique entry key to non-empty map": {
-			groupSelected: groupSelected{Data: map[string]bool{"0x123456": true}, Mutex: &sync.Mutex{}},
-			arg:           "0x7891011",
-			expected:      true,
-		},
-		"adding existing entry key": {
-			groupSelected: groupSelected{Data: map[string]bool{"0x123456": true}, Mutex: &sync.Mutex{}},
-			arg:           "0x123456",
-			expected:      false,
-		},
+
+	if !gst.Add(entry1) {
+		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
 	}
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			gst := &GroupSelectionTrack{
-				Data:  test.groupSelected.Data,
-				Mutex: test.groupSelected.Mutex,
-			}
-			if actual := gst.Add(test.arg); actual != test.expected {
-				t.Errorf("GroupSelectionTrack.Add() = %v, expected %v", actual, test.expected)
-			}
-		})
+
+	if !gst.Add(entry2) {
+		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
 	}
 }
 
-func TestGroupSelectionTrack_Remove(t *testing.T) {
-	type groupSelected struct {
-		Data  map[string]bool
-		Mutex *sync.Mutex
+func TestGroupSelectionTrackAdd_Duplicate(t *testing.T) {
+	entry := "0x12345"
+
+	gst := &GroupSelectionTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
 	}
-	tests := map[string]struct {
-		groupSelected groupSelected
-		arg           string
-		expected      bool
-	}{
-		"adding same entry key after removing it from the map": {
-			groupSelected: groupSelected{Data: map[string]bool{"0x123456": true}, Mutex: &sync.Mutex{}},
-			arg:           "0x123456",
-			expected:      true,
-		},
-		"removing from the empty map": {
-			groupSelected: groupSelected{Data: make(map[string]bool), Mutex: &sync.Mutex{}},
-			arg:           "0x123456",
-			expected:      true,
-		},
+
+	if !gst.Add(entry) {
+		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
 	}
-	for testName, test := range tests {
-		t.Run(testName, func(t *testing.T) {
-			gst := &GroupSelectionTrack{
-				Data:  test.groupSelected.Data,
-				Mutex: test.groupSelected.Mutex,
-			}
-			gst.Remove(test.arg)
-			if actual := gst.Add(test.arg); actual != test.expected {
-				t.Errorf("GroupSelectionTrack.Remove() should have removed entry %v", test.arg)
-			}
-		})
+
+	if gst.Add(entry) {
+		t.Error("GroupSelectionStarted event was emitted before; should not be added")
+	}
+}
+
+func TestGroupSelectionTrackRemove(t *testing.T) {
+	entry := "0x12345"
+
+	gst := &GroupSelectionTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	if !gst.Add(entry) {
+		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
+	}
+
+	gst.Remove(entry)
+
+	if !gst.Add(entry) {
+		t.Error("GroupSelectionStarted event was removed; should be added successfully")
+	}
+}
+
+func TestGroupSelectionTrack_WhenEmpty(t *testing.T) {
+	entry := "0x12345"
+
+	gst := &GroupSelectionTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	gst.Remove(entry)
+
+	if !gst.Add(entry) {
+		t.Error("GroupSelectionStarted event wasn't emitted before; should be added successfully")
+	}
+}
+
+func TestRelayRequestTrack_Add(t *testing.T) {
+	previousEntry1 := "0x12345"
+	previousEntry2 := "0x67891"
+
+	rrt := &RelayRequestTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	if !rrt.Add(previousEntry1) {
+		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
+	}
+
+	if !rrt.Add(previousEntry2) {
+		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
+	}
+}
+
+func TestRelayRequestTrackAdd_Duplicate(t *testing.T) {
+	previousEntry := "0x12345"
+
+	rrt := &RelayRequestTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	if !rrt.Add(previousEntry) {
+		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
+	}
+
+	if rrt.Add(previousEntry) {
+		t.Error("RelayEntryRequested event was emitted before; should not be added")
+	}
+}
+
+func TestRelayRequestTrackRemove(t *testing.T) {
+	previousEntry := "0x12345"
+
+	rrt := &RelayRequestTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	if !rrt.Add(previousEntry) {
+		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
+	}
+
+	rrt.Remove(previousEntry)
+
+	if !rrt.Add(previousEntry) {
+		t.Error("RelayEntryRequested event was removed; should be added successfully")
+	}
+}
+
+func TestRelayRequestTrack_WhenEmpty(t *testing.T) {
+	previousEntry := "0x12345"
+
+	rrt := &RelayRequestTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	rrt.Remove(previousEntry)
+
+	if !rrt.Add(previousEntry) {
+		t.Error("RelayEntryRequested event wasn't emitted before; should be added successfully")
 	}
 }
