@@ -479,6 +479,23 @@ contract TokenGrant {
         grantStake.undelegate();
     }
 
+    /// @notice Force cancellation of a revoked grant's stake.
+    function cancelRevokedStake(address _operator) public {
+        TokenGrantStake grantStake = grantStakes[_operator];
+        uint256 grantId = grantStake.getGrantId();
+        require(
+            grants[grantId].revokedAt != 0,
+            "Grant must be revoked"
+        );
+        require(
+            msg.sender == grants[grantId].grantManager,
+            "Only grant manager can force cancellation of revoked grant stake."
+        );
+
+        uint256 returned = grantStake.cancelStake();
+        grants[grantId].staked = grants[grantId].staked.sub(returned);
+    }
+
     /// @notice Force undelegation of a revoked grant's stake.
     /// @dev Can be called by the grant manager once the grant is revoked.
     /// Has to be done this way,

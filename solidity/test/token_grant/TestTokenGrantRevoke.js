@@ -15,7 +15,7 @@ const TokenGrant = contract.fromArtifact('TokenGrant');
 const Registry = contract.fromArtifact("Registry");
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 
-describe.only('TokenGrant/Revoke', function() {
+describe('TokenGrant/Revoke', function() {
 
   let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
 
@@ -226,6 +226,42 @@ describe.only('TokenGrant/Revoke', function() {
     expect(grantManagerKeepBalanceAfterWithdraw).to.eq.BN(
       grantManagerKeepBalanceBeforeWithdraw.add(grantAmount).sub(minimumStake),
       "The staked amount should be subtracted from the withdrawn amount"
+    );
+  });
+
+  it("should be able to force stake cancellation and withdraw revoked tokens", async () => {
+    await delegateStakeFromGrant(
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operator,
+      magpie,
+      authorizer,
+      minimumStake,
+      grantId
+    );
+    await grantContract.revoke(grantId, { from: tokenOwner });
+
+    const grantDetails = await grantContract.getGrant(grantId);
+    const revokedAmount = grantDetails[3];
+    const stakedAmount = grantDetails[2];
+
+    expect(stakedAmount).to.eq.BN(minimumStake, "Minimum stake should be staked");
+
+    const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(tokenOwner);
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    const grantManagerKeepBalanceMidWithdraw = await tokenContract.balanceOf(tokenOwner);
+    await grantContract.cancelRevokedStake(operator, { from: tokenOwner });
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
+
+    expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(
+      grantManagerKeepBalanceBeforeWithdraw.add(grantAmount).sub(minimumStake),
+      "The staked amount should be subtracted from the withdrawn amount"
+    );
+    expect(grantManagerKeepBalanceAfterWithdraw).to.eq.BN(
+      grantManagerKeepBalanceMidWithdraw.add(minimumStake),
+      "The staked amount should be withdrawn now"
     );
   });
 
