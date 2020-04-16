@@ -43,6 +43,7 @@ contract ManagedGrantFactory {
     /// with the parameters specified in `_extraData`.
     /// @dev Requires no setup beforehand,
     /// but only provides the managed grant address through an event.
+    /// The sender of the tokens is assigned as the grant manager.
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _amount Approved amount for the transfer to create the grant.
     /// @param _token Address of the token contract;
@@ -84,6 +85,7 @@ contract ManagedGrantFactory {
     /// The grant will use the staking policy specified for its type
     /// (revocable or non-revocable)
     /// when the factory was created.
+    /// The msg.sender is assigned as the grant manager.
     /// @param grantee The initial grantee.
     /// @param amount The number of tokens to grant.
     /// @param duration Duration in seconds of the unlocking period.

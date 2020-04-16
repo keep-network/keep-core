@@ -211,14 +211,14 @@ contract TokenGrant {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _amount Approved amount for the transfer to create token grant.
      * @param _token Token contract address.
-     * @param _extraData This byte array must have the following values concatenated:
+     * @param _extraData This byte array must have the following values ABI encoded:
      * grantManager (address) Address of the grant manager.
-     * grantee (20 bytes) Address of the grantee.
-     * duration (32 bytes) Duration in seconds of the unlocking period.
-     * start (32 bytes) Timestamp at which unlocking will start.
-     * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
-     * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
-     * stakingPolicy (20 bytes) Address of the staking policy for the grant.
+     * grantee (address) Address of the grantee.
+     * duration (uint256) Duration in seconds of the unlocking period.
+     * start (uint256) Timestamp at which unlocking will start.
+     * cliff (uint256) Duration in seconds of the cliff after which tokens will begin to unlock.
+     * revocable (bool) Whether the token grant is revocable or not (1 or 0).
+     * stakingPolicy (address) Address of the staking policy for the grant.
      */
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
