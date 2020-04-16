@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	fuzz "github.com/google/gofuzz"
+
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 )
 
@@ -21,6 +23,21 @@ func TestAct1MessageRoundTrip(t *testing.T) {
 
 	if !reflect.DeepEqual(message, unmarshaler) {
 		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzAct1MessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var nonce1 uint64
+
+		f := fuzz.New().NilChance(0.1)
+		f.Fuzz(&nonce1)
+
+		message := &Act1Message{
+			nonce1: nonce1,
+		}
+
+		_ = pbutils.RoundTrip(message, &Act1Message{})
 	}
 }
 
@@ -53,6 +70,26 @@ func TestAct2MessageRoundTrip(t *testing.T) {
 	}
 }
 
+func TestFuzzAct2MessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			nonce2    uint64
+			challenge [32]byte
+		)
+
+		f := fuzz.New().NilChance(0.1)
+		f.Fuzz(&nonce2)
+		f.Fuzz(&challenge)
+
+		message := &Act2Message{
+			nonce2:    nonce2,
+			challenge: challenge,
+		}
+
+		_ = pbutils.RoundTrip(message, &Act2Message{})
+	}
+}
+
 func TestFuzzAct2MessageUnmarshaler(t *testing.T) {
 	pbutils.FuzzUnmarshaler(&Act2Message{})
 }
@@ -78,6 +115,21 @@ func TestAct3MessageRoundTrip(t *testing.T) {
 
 	if !reflect.DeepEqual(message, unmarshaler) {
 		t.Fatalf("unexpected content of unmarshaled message")
+	}
+}
+
+func TestFuzzAct3MessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var challenge [32]byte
+
+		f := fuzz.New().NilChance(0.1)
+		f.Fuzz(&challenge)
+
+		message := &Act3Message{
+			challenge: challenge,
+		}
+
+		_ = pbutils.RoundTrip(message, &Act3Message{})
 	}
 }
 

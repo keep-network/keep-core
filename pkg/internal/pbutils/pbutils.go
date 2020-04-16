@@ -3,8 +3,14 @@
 package pbutils
 
 import (
+	"crypto/ecdsa"
+	"math/big"
+
+	"github.com/btcsuite/btcd/btcec"
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/gogo/protobuf/proto"
 	fuzz "github.com/google/gofuzz"
+	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
 // RoundTrip takes a marshaler and unmarshaler, marshals the marshaler, and then
@@ -40,5 +46,79 @@ func FuzzUnmarshaler(unmarshaler proto.Unmarshaler) {
 		f.Fuzz(&messageBytes)
 
 		_ = unmarshaler.Unmarshal(messageBytes)
+	}
+}
+
+// FuzzFuncs returns custom fuzzing functions set.
+func FuzzFuncs() []interface{} {
+	return []interface{}{
+		fuzzBigInt(),
+		fuzzEphemeralPublicKey(),
+		fuzzEphemeralPrivateKey(),
+		fuzzG1(),
+		fuzzG2(),
+	}
+}
+
+func fuzzBigInt() func(*big.Int, fuzz.Continue) {
+	return func(int *big.Int, c fuzz.Continue) {
+		var abs []big.Word
+
+		c.Fuzz(&abs)
+
+		int.SetBits(abs)
+	}
+}
+
+func fuzzEphemeralPublicKey() func(*ephemeral.PublicKey, fuzz.Continue) {
+	return func(key *ephemeral.PublicKey, c fuzz.Continue) {
+		var x, y big.Int
+
+		c.Fuzz(&x)
+		c.Fuzz(&y)
+
+		key.Curve = btcec.S256()
+		key.X = &x
+		key.Y = &y
+	}
+}
+
+func fuzzEphemeralPrivateKey() func(*ephemeral.PrivateKey, fuzz.Continue) {
+	return func(key *ephemeral.PrivateKey, c fuzz.Continue) {
+		var (
+			publicKey ephemeral.PublicKey
+			d         big.Int
+		)
+
+		c.Fuzz(&publicKey)
+		c.Fuzz(&d)
+
+		key.PublicKey = ecdsa.PublicKey(publicKey)
+		key.D = &d
+	}
+}
+
+func fuzzG1() func(*bn256.G1, fuzz.Continue) {
+	return func(g1 *bn256.G1, c fuzz.Continue) {
+		var k big.Int
+
+		c.Fuzz(&k)
+
+		g1.ScalarBaseMult(&k)
+	}
+}
+
+func fuzzG2() func(*bn256.G2, fuzz.Continue) {
+	return func(g2 *bn256.G2, c fuzz.Continue) {
+		var k big.Int
+
+		c.Fuzz(&k)
+
+		// trim k to reasonable number of bytes to prevent long execution
+		if len(k.Bytes()) > 64 {
+			k = *new(big.Int).SetBytes(k.Bytes()[:64])
+		}
+
+		g2.ScalarBaseMult(&k)
 	}
 }
