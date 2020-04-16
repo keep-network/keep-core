@@ -33,10 +33,10 @@ func RoundTrip(
 
 // FuzzUnmarshaler tests given unmarshaler with random bytes.
 func FuzzUnmarshaler(unmarshaler proto.Unmarshaler) {
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 100; i++ {
 		var messageBytes []byte
 
-		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+		f := fuzz.New().NilChance(0.01).NumElements(0, 512)
 		f.Fuzz(&messageBytes)
 
 		_ = unmarshaler.Unmarshal(messageBytes)
