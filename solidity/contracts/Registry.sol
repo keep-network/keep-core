@@ -6,8 +6,7 @@ pragma solidity 0.5.17;
  * @dev Governance owned registry of approved contracts and roles.
  */
 contract Registry {
-
-    enum ContractStatus { New, Approved, Disabled }
+    enum ContractStatus {New, Approved, Disabled}
 
     // Governance role is to enable recovery from key compromise by rekeying other roles.
     address internal governance;
@@ -36,7 +35,10 @@ contract Registry {
     event GovernanceUpdated();
     event RegistryKeeperUpdated();
     event PanicButtonUpdated();
-    event OperatorContractUpgraderUpdated(address serviceContract, address upgrader);
+    event OperatorContractUpgraderUpdated(
+        address serviceContract,
+        address upgrader
+    );
 
     modifier onlyGovernance() {
         require(governance == msg.sender, "Not authorized");
@@ -74,12 +76,21 @@ contract Registry {
         emit PanicButtonUpdated();
     }
 
-    function setOperatorContractUpgrader(address _serviceContract, address _operatorContractUpgrader) public onlyGovernance {
+    function setOperatorContractUpgrader(
+        address _serviceContract,
+        address _operatorContractUpgrader
+    ) public onlyGovernance {
         operatorContractUpgraders[_serviceContract] = _operatorContractUpgrader;
-        emit OperatorContractUpgraderUpdated(_serviceContract, _operatorContractUpgrader);
+        emit OperatorContractUpgraderUpdated(
+            _serviceContract,
+            _operatorContractUpgrader
+        );
     }
 
-    function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
+    function approveOperatorContract(address operatorContract)
+        public
+        onlyRegistryKeeper
+    {
         require(
             isNewOperatorContract(operatorContract),
             "Only new operator contracts can be approved"
@@ -89,7 +100,10 @@ contract Registry {
         emit OperatorContractApproved(operatorContract);
     }
 
-    function disableOperatorContract(address operatorContract) public onlyPanicButton {
+    function disableOperatorContract(address operatorContract)
+        public
+        onlyPanicButton
+    {
         require(
             isApprovedOperatorContract(operatorContract),
             "Only approved operator contracts can be disabled"
@@ -99,15 +113,27 @@ contract Registry {
         emit OperatorContractDisabled(operatorContract);
     }
 
-    function isNewOperatorContract(address operatorContract) public view returns (bool) {
+    function isNewOperatorContract(address operatorContract)
+        public
+        view
+        returns (bool)
+    {
         return operatorContracts[operatorContract] == ContractStatus.New;
     }
 
-    function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
+    function isApprovedOperatorContract(address operatorContract)
+        public
+        view
+        returns (bool)
+    {
         return operatorContracts[operatorContract] == ContractStatus.Approved;
     }
 
-    function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
+    function operatorContractUpgraderFor(address _serviceContract)
+        public
+        view
+        returns (address)
+    {
         return operatorContractUpgraders[_serviceContract];
     }
 }
