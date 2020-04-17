@@ -32,6 +32,7 @@ func TestSubmitDKGResult(t *testing.T) {
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
+		4: []byte{104},
 	}
 
 	tStep := config.ResultPublicationBlockStep
@@ -130,6 +131,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 		1: []byte{101},
 		2: []byte{102},
 		3: []byte{103},
+		4: []byte{104},
 	}
 
 	var tests = map[string]struct {
