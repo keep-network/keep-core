@@ -10,7 +10,7 @@ const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const stakeDelegate = require('../helpers/stakeDelegate')
 
-describe.only('KeepRandomBeaconOperator/PublishDkgResult', function () {
+describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
 
   const groupSize = 20;
   const groupThreshold = 11;
