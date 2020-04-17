@@ -1,12 +1,12 @@
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {accounts, contract} = require("@openzeppelin/test-environment")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { expectRevert } = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 
 const Registry = contract.fromArtifact('RegistryStub');
 
 describe('Registry', () => {
-    
+
     const owner = accounts[0]
     const governance = accounts[1]
     const panicButton = accounts[2]
@@ -23,40 +23,40 @@ describe('Registry', () => {
     let registry
 
     before(async () => {
-        registry = await Registry.new({from: owner})
-        await registry.setGovernance(governance, {from: owner})
-        await registry.setPanicButton(panicButton, {from: governance})
-        await registry.setRegistryKeeper(registryKeeper, {from: governance})
+        registry = await Registry.new({ from: owner })
+        await registry.setGovernance(governance, { from: owner })
+        await registry.setPanicButton(panicButton, { from: governance })
+        await registry.setRegistryKeeper(registryKeeper, { from: governance })
         await registry.setOperatorContractUpgrader(
-            serviceContract1, 
+            serviceContract1,
             operatorContractUpgrader,
-            {from: governance}
+            { from: governance }
         )
     })
 
     beforeEach(async () => {
         await createSnapshot()
     })
-    
+
     afterEach(async () => {
         await restoreSnapshot()
     })
 
     describe("setGovernance", async () => {
         it("can be called by governance", async () => {
-            await registry.setGovernance(someoneElse, {from: governance})
+            await registry.setGovernance(someoneElse, { from: governance })
             // ok, no revert
         })
 
         it("can not be called by non-governance", async () => {
             await expectRevert(
-                registry.setGovernance(someoneElse, {from: owner}),
+                registry.setGovernance(someoneElse, { from: owner }),
                 "Not authorized"
             )
         })
 
         it("updates governance", async () => {
-            await registry.setGovernance(someoneElse, {from: governance})
+            await registry.setGovernance(someoneElse, { from: governance })
             assert.equal(
                 await registry.getGovernance(),
                 someoneElse,
@@ -67,19 +67,19 @@ describe('Registry', () => {
 
     describe("setRegistryKeeper", async () => {
         it("can be called by governance", async () => {
-            await registry.setRegistryKeeper(someoneElse, {from: governance})
+            await registry.setRegistryKeeper(someoneElse, { from: governance })
             // ok, no revert
         })
 
         it("can not be called by non-governance", async () => {
             await expectRevert(
-                registry.setRegistryKeeper(someoneElse, {from: owner}),
+                registry.setRegistryKeeper(someoneElse, { from: owner }),
                 "Not authorized"
             )
         })
 
         it("updates registry keeper", async () => {
-            await registry.setRegistryKeeper(someoneElse, {from: governance})
+            await registry.setRegistryKeeper(someoneElse, { from: governance })
             assert.equal(
                 await registry.getRegistryKeeper(),
                 someoneElse,
@@ -90,19 +90,19 @@ describe('Registry', () => {
 
     describe("setPanicButton", async () => {
         it("can be called by governance", async () => {
-            await registry.setPanicButton(someoneElse, {from: governance})
+            await registry.setPanicButton(someoneElse, { from: governance })
             // ok, no revert
         })
 
         it("can not be called by non-governance", async () => {
             await expectRevert(
-                registry.setPanicButton(someoneElse, {from: owner}),
+                registry.setPanicButton(someoneElse, { from: owner }),
                 "Not authorized"
             )
         })
 
         it("updates panic button", async () => {
-            await registry.setPanicButton(someoneElse, {from: governance})
+            await registry.setPanicButton(someoneElse, { from: governance })
             assert.equal(
                 await registry.getPanicButton(),
                 someoneElse,
@@ -114,9 +114,9 @@ describe('Registry', () => {
     describe("setOperatorContractUpgrader", async () => {
         it("can be called by governance", async () => {
             await registry.setOperatorContractUpgrader(
-                serviceContract1, 
-                someoneElse, 
-                {from: governance}
+                serviceContract1,
+                someoneElse,
+                { from: governance }
             )
             // ok, no revert
         })
@@ -125,8 +125,8 @@ describe('Registry', () => {
             await expectRevert(
                 registry.setOperatorContractUpgrader(
                     serviceContract1,
-                    someoneElse, 
-                    {from: owner}
+                    someoneElse,
+                    { from: owner }
                 ),
                 "Not authorized"
             )
@@ -136,13 +136,13 @@ describe('Registry', () => {
             await registry.setOperatorContractUpgrader(
                 serviceContract1,
                 someoneElse,
-                {from: governance}
+                { from: governance }
             )
 
             await registry.setOperatorContractUpgrader(
                 serviceContract2,
                 operatorContractUpgrader,
-                {from: governance}
+                { from: governance }
             )
 
             assert.equal(
@@ -162,8 +162,8 @@ describe('Registry', () => {
     describe("approveOperatorContract", async () => {
         it("can be called by registry keeper", async () => {
             await registry.approveOperatorContract(
-                operatorContract1, 
-                {from: registryKeeper}
+                operatorContract1,
+                { from: registryKeeper }
             )
             // ok, no revert
         })
@@ -172,7 +172,7 @@ describe('Registry', () => {
             await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
-                    {from: owner}
+                    { from: owner }
                 ),
                 "Not authorized"
             )
@@ -181,7 +181,7 @@ describe('Registry', () => {
         it("approves operator contract", async () => {
             await registry.approveOperatorContract(
                 operatorContract1,
-                {from: registryKeeper}
+                { from: registryKeeper }
             )
 
             assert.isTrue(
@@ -197,13 +197,13 @@ describe('Registry', () => {
         it("cannot be called for already approved contract", async () => {
             await registry.approveOperatorContract(
                 operatorContract1,
-                {from: registryKeeper}
+                { from: registryKeeper }
             )
 
             await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
-                    {from: registryKeeper}
+                    { from: registryKeeper }
 
                 ),
                 "Only new operator contracts can be approved"
@@ -213,17 +213,17 @@ describe('Registry', () => {
         it("cannot be called for disabled contract", async () => {
             await registry.approveOperatorContract(
                 operatorContract1,
-                {from: registryKeeper}
+                { from: registryKeeper }
             )
             await registry.disableOperatorContract(
                 operatorContract1,
-                {from: panicButton}
+                { from: panicButton }
             )
 
             await expectRevert(
                 registry.approveOperatorContract(
                     operatorContract1,
-                    {from: registryKeeper}
+                    { from: registryKeeper }
 
                 ),
                 "Only new operator contracts can be approved"
@@ -235,14 +235,14 @@ describe('Registry', () => {
         beforeEach(async () => {
             await registry.approveOperatorContract(
                 operatorContract1,
-                {from: registryKeeper}
+                { from: registryKeeper }
             )
         })
 
         it("can be called by panic button", async () => {
             await registry.disableOperatorContract(
-                operatorContract1, 
-                {from: panicButton}
+                operatorContract1,
+                { from: panicButton }
             )
             // ok, no revert
         })
@@ -251,7 +251,7 @@ describe('Registry', () => {
             await expectRevert(
                 registry.disableOperatorContract(
                     operatorContract1,
-                    {from: owner}
+                    { from: owner }
                 ),
                 "Not authorized"
             )
@@ -259,8 +259,8 @@ describe('Registry', () => {
 
         it("disables operator contract", async () => {
             await registry.disableOperatorContract(
-                operatorContract1, 
-                {from: panicButton}
+                operatorContract1,
+                { from: panicButton }
             )
 
             assert.isFalse(
@@ -271,14 +271,14 @@ describe('Registry', () => {
 
         it("cannot be called for already disabled contract", async () => {
             await registry.disableOperatorContract(
-                operatorContract1, 
-                {from: panicButton}
+                operatorContract1,
+                { from: panicButton }
             )
 
             await expectRevert(
                 registry.disableOperatorContract(
-                    operatorContract1, 
-                    {from: panicButton}
+                    operatorContract1,
+                    { from: panicButton }
                 ),
                 "Only approved operator contracts can be disabled"
             )
@@ -287,8 +287,8 @@ describe('Registry', () => {
         it("cannot be called for new operator contract", async () => {
             await expectRevert(
                 registry.disableOperatorContract(
-                    operatorContract2, 
-                    {from: panicButton}
+                    operatorContract2,
+                    { from: panicButton }
                 ),
                 "Only approved operator contracts can be disabled"
             )
@@ -305,8 +305,8 @@ describe('Registry', () => {
 
         it("returns false for approved operator contract", async () => {
             await registry.approveOperatorContract(
-                operatorContract1, 
-                {from: registryKeeper}
+                operatorContract1,
+                { from: registryKeeper }
             )
 
             assert.isFalse(
@@ -317,12 +317,12 @@ describe('Registry', () => {
 
         it("returns false for disabled operator contract", async () => {
             await registry.approveOperatorContract(
-                operatorContract1, 
-                {from: registryKeeper}
-            ) 
+                operatorContract1,
+                { from: registryKeeper }
+            )
             await registry.disableOperatorContract(
                 operatorContract1,
-                {from: panicButton}
+                { from: panicButton }
             )
 
             assert.isFalse(
@@ -342,8 +342,8 @@ describe('Registry', () => {
 
         it("returns true for approved operator contract", async () => {
             await registry.approveOperatorContract(
-                operatorContract1, 
-                {from: registryKeeper}
+                operatorContract1,
+                { from: registryKeeper }
             )
 
             assert.isTrue(
@@ -354,12 +354,12 @@ describe('Registry', () => {
 
         it("returns false for disabled operator contract", async () => {
             await registry.approveOperatorContract(
-                operatorContract1, 
-                {from: registryKeeper}
-            ) 
+                operatorContract1,
+                { from: registryKeeper }
+            )
             await registry.disableOperatorContract(
                 operatorContract1,
-                {from: panicButton}
+                { from: panicButton }
             )
 
             assert.isFalse(
