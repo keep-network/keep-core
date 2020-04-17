@@ -6,10 +6,11 @@ pragma solidity 0.5.17;
  * @dev Governance owned registry of approved contracts and roles.
  */
 contract Registry {
+    enum ContractStatus {New, Approved, Disabled}
 
-    enum ContractStatus { New, Approved, Disabled }
-
-    // Governance role is to enable recovery from key compromise by rekeying other roles.
+    // Governance role is to enable recovery from key compromise by rekeying
+    // other roles. Also, it can disable operator contract panic buttons
+    // permanently.
     address internal governance;
 
     // Registry Keeper maintains approved operator contracts. Each operator
@@ -17,9 +18,22 @@ contract Registry {
     // used by a service contract.
     address internal registryKeeper;
 
-    // The Panic Button can disable malicious or malfunctioning contracts
-    // that have been previously approved by the Registry Keeper.
-    address internal panicButton;
+    // Each operator contract has a Panic Button which can disable malicious
+    // or malfunctioning contract that have been previously approved by the
+    // Registry Keeper.
+    //
+    // New operator contract added to the registry has a default panic button
+    // value assigned (defaultPanicButton). Panic button for each operator
+    // contract can be later updated by Governance to individual value.
+    //
+    // It is possible to disable panic button for individual contract by
+    // setting the panic button to zero address. In such case, operator contract
+    // can not be disabled and is permanently approved in the registry.
+    mapping(address => address) public panicButtons;
+
+    // Default panic button for each new operator contract added to the
+    // registry. Can be later updated for each contract.
+    address internal defaultPanicButton;
 
     // Each service contract has a Operator Contract Upgrader whose purpose
     // is to manage operator contracts for that specific service contract.
@@ -35,8 +49,16 @@ contract Registry {
 
     event GovernanceUpdated();
     event RegistryKeeperUpdated();
-    event PanicButtonUpdated();
-    event OperatorContractUpgraderUpdated(address serviceContract, address upgrader);
+    event DefaultPanicButtonUpdated();
+    event OperatorContractPanicButtonDisabled(address operatorContract);
+    event OperatorContractPanicButtonUpdated(
+        address operatorContract,
+        address panicButton
+    );
+    event OperatorContractUpgraderUpdated(
+        address serviceContract,
+        address upgrader
+    );
 
     modifier onlyGovernance() {
         require(governance == msg.sender, "Not authorized");
@@ -48,15 +70,33 @@ contract Registry {
         _;
     }
 
-    modifier onlyPanicButton() {
+    modifier onlyPanicButton(address _operatorContract) {
+        address panicButton = panicButtons[_operatorContract];
+        require(panicButton != address(0), "Panic button disabled");
         require(panicButton == msg.sender, "Not authorized");
+        _;
+    }
+
+    modifier onlyForNewContract(address _operatorContract) {
+        require(
+            isNewOperatorContract(_operatorContract),
+            "Not a new operator contract"
+        );
+        _;
+    }
+
+    modifier onlyForApprovedContract(address _operatorContract) {
+        require(
+            isApprovedOperatorContract(_operatorContract),
+            "Not an approved operator contract"
+        );
         _;
     }
 
     constructor() public {
         governance = msg.sender;
         registryKeeper = msg.sender;
-        panicButton = msg.sender;
+        defaultPanicButton = msg.sender;
     }
 
     function setGovernance(address _governance) public onlyGovernance {
@@ -69,45 +109,98 @@ contract Registry {
         emit RegistryKeeperUpdated();
     }
 
-    function setPanicButton(address _panicButton) public onlyGovernance {
-        panicButton = _panicButton;
-        emit PanicButtonUpdated();
+    function setDefaultPanicButton(address _panicButton) public onlyGovernance {
+        defaultPanicButton = _panicButton;
+        emit DefaultPanicButtonUpdated();
     }
 
-    function setOperatorContractUpgrader(address _serviceContract, address _operatorContractUpgrader) public onlyGovernance {
-        operatorContractUpgraders[_serviceContract] = _operatorContractUpgrader;
-        emit OperatorContractUpgraderUpdated(_serviceContract, _operatorContractUpgrader);
-    }
-
-    function approveOperatorContract(address operatorContract) public onlyRegistryKeeper {
+    function setOperatorContractPanicButton(
+        address _operatorContract,
+        address _panicButton
+    ) public onlyForApprovedContract(_operatorContract) onlyGovernance {
         require(
-            isNewOperatorContract(operatorContract),
-            "Only new operator contracts can be approved"
+            panicButtons[_operatorContract] != address(0),
+            "Disabled panic button cannot be updated"
+        );
+        require(
+            _panicButton != address(0),
+            "Panic button must be non-zero address"
         );
 
+        panicButtons[_operatorContract] = _panicButton;
+
+        emit OperatorContractPanicButtonUpdated(
+            _operatorContract,
+            _panicButton
+        );
+    }
+
+    function disableOperatorContractPanicButton(address _operatorContract)
+        public
+        onlyForApprovedContract(_operatorContract)
+        onlyGovernance
+    {
+        require(
+            panicButtons[_operatorContract] != address(0),
+            "Panic button already disabled"
+        );
+
+        panicButtons[_operatorContract] = address(0);
+
+        emit OperatorContractPanicButtonDisabled(_operatorContract);
+    }
+
+    function setOperatorContractUpgrader(
+        address _serviceContract,
+        address _operatorContractUpgrader
+    ) public onlyGovernance {
+        operatorContractUpgraders[_serviceContract] = _operatorContractUpgrader;
+        emit OperatorContractUpgraderUpdated(
+            _serviceContract,
+            _operatorContractUpgrader
+        );
+    }
+
+    function approveOperatorContract(address operatorContract)
+        public
+        onlyForNewContract(operatorContract)
+        onlyRegistryKeeper
+    {
         operatorContracts[operatorContract] = ContractStatus.Approved;
+        panicButtons[operatorContract] = defaultPanicButton;
         emit OperatorContractApproved(operatorContract);
     }
 
-    function disableOperatorContract(address operatorContract) public onlyPanicButton {
-        require(
-            isApprovedOperatorContract(operatorContract),
-            "Only approved operator contracts can be disabled"
-        );
-
+    function disableOperatorContract(address operatorContract)
+        public
+        onlyForApprovedContract(operatorContract)
+        onlyPanicButton(operatorContract)
+    {
         operatorContracts[operatorContract] = ContractStatus.Disabled;
         emit OperatorContractDisabled(operatorContract);
     }
 
-    function isNewOperatorContract(address operatorContract) public view returns (bool) {
+    function isNewOperatorContract(address operatorContract)
+        public
+        view
+        returns (bool)
+    {
         return operatorContracts[operatorContract] == ContractStatus.New;
     }
 
-    function isApprovedOperatorContract(address operatorContract) public view returns (bool) {
+    function isApprovedOperatorContract(address operatorContract)
+        public
+        view
+        returns (bool)
+    {
         return operatorContracts[operatorContract] == ContractStatus.Approved;
     }
 
-    function operatorContractUpgraderFor(address _serviceContract) public view returns (address) {
+    function operatorContractUpgraderFor(address _serviceContract)
+        public
+        view
+        returns (address)
+    {
         return operatorContractUpgraders[_serviceContract];
     }
 }
