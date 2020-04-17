@@ -151,6 +151,26 @@ describe('Registry', () => {
             )
         })
 
+        it("can not be called on contracts with disabled panic button", async () => {
+            await registry.disableOperatorContractPanicButton(
+                operatorContract1,
+                { from: governance }
+            )
+            assert.equal(
+                await registry.panicButtons(operatorContract1),
+                "0x0000000000000000000000000000000000000000",
+                "Panic button not disabled correctly"
+            )
+            await expectRevert(
+                registry.setOperatorContractPanicButton(
+                    operatorContract1,
+                    someoneElse,
+                    { from: governance }
+                ),
+                "Disabled panic button cannot be updated"
+              )
+        })
+
         it("updates contract panic button", async () => {
             await registry.setOperatorContractPanicButton(
                 operatorContract1,
