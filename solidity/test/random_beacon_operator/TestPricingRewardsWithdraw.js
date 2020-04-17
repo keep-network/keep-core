@@ -128,7 +128,6 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     // Register new group and request new entry so we can expire the previous two groups
     await operatorContract.registerNewGroup(group3)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
-    let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
     assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
