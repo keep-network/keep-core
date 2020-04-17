@@ -2,8 +2,8 @@ pragma solidity 0.5.17;
 
 import "../Registry.sol";
 
-contract RegistryStub is Registry {
 
+contract RegistryStub is Registry {
     function getGovernance() public view returns (address) {
         return governance;
     }
@@ -12,7 +12,15 @@ contract RegistryStub is Registry {
         return registryKeeper;
     }
 
-    function getPanicButton() public view returns (address) {
-        return panicButton;
+    function getDefaultPanicButton() public view returns (address) {
+        return defaultPanicButton;
+    }
+
+    function getPanicButtonForContract(address operatorContract)
+        public
+        view
+        returns (address)
+    {
+        return panicButtons[operatorContract];
     }
 }
