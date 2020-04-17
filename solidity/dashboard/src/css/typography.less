@@ -1,4 +1,5 @@
-@import (inline) "fonts.css";
+@import (inline) "./fonts/work-sans.css";
+@import (inline) "./fonts/vitesse.css";
 
 html {
   font-size: 12px;
@@ -24,46 +25,47 @@ body {
   }
 }
 
-h1, .h1 {
-  font-size: 4.375rem;
-}
-
-h2, .h2 {
-  font-size: 3.125rem;
-  
-}
-
 h1, h2 {
-  font-weight: 800;
-  line-height: 104%;
+  font-family: 'Vitesse', sans-serif;
+  font-style: normal;
+}
+
+h1, .h1 {
+  font-weight: normal;
+  font-size: 2.5rem;
   letter-spacing: -1px;
 }
 
+h2, .h2 {
+  font-weight: bold;
+  font-size: 1.75rem;
+  line-height: 2,3rem;  
+}
+  
 h3, .h3 {
-  font-size: 2rem;
-  font-weight: 800;
+  font-size: 1.625rem;
+  font-weight: 500;
   line-height: 120%;
+  letter-spacing: -1px;
+  font-feature-settings: 'tnum' on, 'lnum' on;
 }
 
 h4, .h4 {
-  font-size: 1.5625rem;
-  font-weight: 500;
+  font-style: normal;
+  font-weight: normal;
+  font-size: 1.375rem;
   line-height: 145%;
+  font-feature-settings: 'tnum' on, 'lnum' on;
 }
 
-h5, .h5 {
-  font-size: 1.25rem;
-  font-weight: bold;
-  line-height: 130%;
-  font-weight: bold;
-}
-
-h6, .h6 {
-  font-size: 1.25rem;
+h5, .h5, h6, .h6 {
+  font-style: normal;
   font-weight: 500;
+  font-size: 0.75rem;
   line-height: 145%;
-  letter-spacing: 0.05rem;
-  font-variant: small-caps;
+  letter-spacing: 0.1rem;
+  text-transform: uppercase;
+  font-feature-settings: 'tnum' on, 'lnum' on;
 }
 
 h1, .h1,
