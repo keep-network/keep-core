@@ -12,7 +12,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe.only('TokenStaking/Punishment', () => {
+describe('TokenStaking/Punishment', () => {
     let token, registry, stakingContract;
 
     let owner = accounts[0],
@@ -91,6 +91,20 @@ describe.only('TokenStaking/Punishment', () => {
             expect(balanceAfterSlashing).to.eq.BN(0)
         })
 
+        it("should not fail if operator is slashed to zero", async () => {
+            time.increase((await stakingContract.initializationPeriod()).addn(1))
+
+            let amountToSlash = largeStake
+
+            // the first slash will slash to 0, the second one has nothing
+            // to slash; it should not fail
+            await stakingContract.slash(amountToSlash, [operator], { from: operatorContract })
+            await stakingContract.slash(amountToSlash, [operator], { from: operatorContract })
+
+            let balanceAfterSlashing = await stakingContract.balanceOf(operator)
+            expect(balanceAfterSlashing).to.eq.BN(0)
+        })
+
         it("should fail when operator stake is not active yet", async () => {
             let amountToSlash = web3.utils.toBN(1000)
             await expectRevert(
@@ -151,6 +165,33 @@ describe.only('TokenStaking/Punishment', () => {
                 tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)
             )
         })
+
+        it("should not fail if operator is slashed to zero", async () => {
+            time.increase((await stakingContract.initializationPeriod()).addn(1))
+
+            let amountToSlash = largeStake
+            let amountToSeize = largeStake
+            let rewardMultiplier = web3.utils.toBN(10)
+
+            let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
+
+            // the first slash will slash to 0, the seize happening later
+            // should not fail
+            await stakingContract.slash(amountToSlash, [operator], { from: operatorContract })
+            await stakingContract.seize(
+                amountToSeize, rewardMultiplier, tattletale,
+                [operator], { from: operatorContract }
+            )
+
+            let operatorBalanceAfterSeizing = await stakingContract.balanceOf(operator)
+            let tattletaleBalanceAfterSeizing = await token.balanceOf(tattletale)
+
+            expect(operatorBalanceAfterSeizing).to.eq.BN(0)
+            expect(tattletaleBalanceAfterSeizing).to.eq.BN(
+                tattletaleBalanceBeforeSeizing
+            )
+        })
+
 
         it("should fail when operator stake is not active yet", async () => {
             let amountToSeize = web3.utils.toBN(42000000)
