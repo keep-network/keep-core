@@ -60,11 +60,11 @@ const fetchAvailableRewards = async (web3Context) => {
   }
 }
 
-const getAvailableRewardForGroup = (oeratorsAmount) => {
+const getAvailableRewardForGroup = (operatorsAmount) => {
   let wholeReward = 0
-  for(const operator in oeratorsAmount ) {
-    if(oeratorsAmount.hasOwnProperty(operator) ) {
-      wholeReward = add(wholeReward, oeratorsAmount[operator])
+  for(const operator in operatorsAmount ) {
+    if(operatorsAmount.hasOwnProperty(operator) ) {
+      wholeReward = add(wholeReward, operatorsAmount[operator])
     }
   }
   return wholeReward
