@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -117,7 +117,7 @@ func (g *Guard) checkFirewallRules(peer string) {
 
 	if err := g.firewall.Validate(peerPublicKey); err != nil {
 
-		logger.Warningf(
+		logger.Warnf(
 			"dropping the connection; firewal rules not satisfied for peer [%v]: [%v] ",
 			peer,
 			err,

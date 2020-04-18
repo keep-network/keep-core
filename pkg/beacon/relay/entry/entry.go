@@ -7,7 +7,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
@@ -102,7 +102,7 @@ func SignAndSubmit(
 				previousEntry,
 			)
 			if err != nil {
-				logger.Warningf(
+				logger.Warnf(
 					"[member:%v] rejecting signature share from "+
 						"member [%v]: [%v]",
 					signer.MemberID(),

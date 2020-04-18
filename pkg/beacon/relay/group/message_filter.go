@@ -1,7 +1,7 @@
 package group
 
 import (
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 )
 
 var logger = log.Logger("keep-message-filter")
@@ -78,7 +78,7 @@ func (mf *InactiveMemberFilter) FlushInactiveMembers() {
 
 	for _, operatingMemberID := range mf.group.OperatingMemberIDs() {
 		if !isActive(operatingMemberID) {
-			logger.Warningf(
+			logger.Warnf(
 				"[member:%v] marking member [%v] as inactive",
 				mf.selfMemberID,
 				operatingMemberID,

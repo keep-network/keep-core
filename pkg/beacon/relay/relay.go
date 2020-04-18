@@ -1,7 +1,7 @@
 package relay
 
 import (
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -70,7 +70,7 @@ func (n *Node) MonitorRelayEntry(
 		case blockNumber := <-timeoutWaiterChannel:
 			subscription.Unsubscribe()
 			close(onEntrySubmittedChannel)
-			logger.Warningf(
+			logger.Warnf(
 				"relay entry was not submitted on time, reporting timeout at block [%v]",
 				blockNumber,
 			)

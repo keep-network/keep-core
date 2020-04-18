@@ -7,7 +7,7 @@ import (
 	"path"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
 	"github.com/urfave/cli"
