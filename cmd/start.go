@@ -182,7 +182,7 @@ func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) 
 		if hasMinimumStake {
 			return nil
 		}
-		logger.Infof("below min stake for %d min \n", address, waitMins)
+		logger.Warningf("below min stake for %d min \n", address, waitMins)
 		time.Sleep(time.Minute)
 		waitMins++
 	}
