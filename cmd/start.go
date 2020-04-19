@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/config"
@@ -19,7 +20,10 @@ import (
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
-var StartCommand cli.Command
+var (
+	StartCommand cli.Command
+	logger       = log.Logger("keep-start")
+)
 
 const (
 	bootstrapFlag     = "bootstrap"
@@ -178,7 +182,7 @@ func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) 
 		if hasMinimumStake {
 			return nil
 		}
-		fmt.Printf("%s stake is below required minimum, wait duration: %d minutes \n", address, waitMins)
+		logger.Infof("below min stake for %d min \n", address, waitMins)
 		time.Sleep(time.Minute)
 		waitMins++
 	}
