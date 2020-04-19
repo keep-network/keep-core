@@ -1,5 +1,5 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -29,9 +29,10 @@ describe("TokenStaking/DelegatedAuthority", async () => {
   const unrecognizedContract = accounts[5];
   const unapprovedContract = accounts[6];
   const recursivelyAuthorizedContract = accounts[7];
+  const authorityDelegator2 = accounts[8];
 
   before(async () => {
-    token = await KeepToken.new({from: accounts[0]});
+    token = await KeepToken.new({ from: accounts[0] });
     registry = await Registry.new();
 
     stakingContract = await TokenStaking.new(
@@ -46,6 +47,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     authorityDelegator = await DelegatedAuthorityStub.new(recognizedContract);
     badAuthorityDelegator = await DelegatedAuthorityStub.new(unapprovedContract);
     await registry.approveOperatorContract(authorityDelegator.address);
+    await registry.approveOperatorContract(authorityDelegator2);
 
     innerRecursiveDelegator = await DelegatedAuthorityStub.new(
       recursivelyAuthorizedContract);
@@ -72,7 +74,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     return token.approveAndCall(
       stakingContract.address, amount,
       '0x' + data.toString('hex'),
-      {from: owner}
+      { from: owner }
     );
   }
 
@@ -84,7 +86,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     stakingContract.authorizeOperatorContract(
       operator,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     );
   }
 
@@ -92,11 +94,33 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     registry.disableOperatorContract(operatorContract.address);
   }
 
+  describe("delegateAuthority", async () => {
+    it("lets contract delegate authority", async () => {
+      await stakingContract.delegateAuthority(
+        recognizedContract,
+        { from: authorityDelegator2 }
+      );
+
+      expect(await stakingContract.getAuthoritySource(recognizedContract))
+        .to.equal(authorityDelegator2);
+    })
+
+    it("doesn't give delegated authority through unapproved contracts", async () => {
+      await expectRevert(
+        stakingContract.delegateAuthority(
+          recognizedContract,
+          { from: unapprovedContract }
+        ),
+        "Operator contract is not approved"
+      );
+    })
+  })
+
   describe("claimDelegatedAuthority", async () => {
     it("lets contracts claim delegated authority", async () => {
       await stakingContract.claimDelegatedAuthority(
         authorityDelegator.address,
-        {from: recognizedContract}
+        { from: recognizedContract }
       );
 
       expect(await stakingContract.getAuthoritySource(recognizedContract))
@@ -107,7 +131,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await expectRevert(
         stakingContract.claimDelegatedAuthority(
           authorityDelegator.address,
-          {from: unrecognizedContract}
+          { from: unrecognizedContract }
         ),
         "Unrecognized claimant"
       );
@@ -117,7 +141,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await expectRevert(
         stakingContract.claimDelegatedAuthority(
           badAuthorityDelegator.address,
-          {from: unapprovedContract}
+          { from: unapprovedContract }
         ),
         "Operator contract is not approved"
       );
@@ -130,7 +154,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       );
       await stakingContract.claimDelegatedAuthority(
         innerRecursiveDelegator.address,
-        {from: recursivelyAuthorizedContract}
+        { from: recursivelyAuthorizedContract }
       );
 
       expect(await stakingContract.getAuthoritySource(recursivelyAuthorizedContract))
@@ -142,7 +166,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     before(async () => {
       await stakingContract.claimDelegatedAuthority(
         authorityDelegator.address,
-        {from: recognizedContract}
+        { from: recognizedContract }
       );
     })
 
@@ -160,7 +184,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await expectRevert(
         stakingContract.claimDelegatedAuthority(
           recognizedContract,
-          {from: unrecognizedContract}
+          { from: unrecognizedContract }
         ),
         "Operator contract is not approved"
       );
@@ -173,7 +197,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       );
       await stakingContract.claimDelegatedAuthority(
         innerRecursiveDelegator.address,
-        {from: recursivelyAuthorizedContract}
+        { from: recursivelyAuthorizedContract }
       );
       await authorize(outerRecursiveDelegator);
       expect(await hasDelegatedAuthorization(recursivelyAuthorizedContract)).to.be.true;
@@ -186,7 +210,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
         stakingContract.authorizeOperatorContract(
           operator,
           recognizedContract,
-          {from: authorizer}
+          { from: authorizer }
         ),
         "Contract uses delegated authority"
       );
@@ -199,7 +223,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
         stakingContract.slash(
           minimumStake,
           [operator],
-          {from: recognizedContract}
+          { from: recognizedContract }
         ),
         "Not authorized"
       );
@@ -207,7 +231,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await stakingContract.slash(
         minimumStake,
         [operator],
-        {from: recognizedContract}
+        { from: recognizedContract }
       );
       // no error
     })
@@ -221,7 +245,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           100,
           magpie,
           [operator],
-          {from: recognizedContract}
+          { from: recognizedContract }
         ),
         "Not authorized"
       );
@@ -231,7 +255,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
         100,
         magpie,
         [operator],
-        {from: recognizedContract}
+        { from: recognizedContract }
       );
       // no error
     })
@@ -245,7 +269,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
         stakingContract.lockStake(
           operator,
           lockPeriod,
-          {from: recognizedContract}
+          { from: recognizedContract }
         ),
         "Not authorized"
       );
@@ -253,7 +277,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await stakingContract.lockStake(
         operator,
         lockPeriod,
-        {from: recognizedContract}
+        { from: recognizedContract }
       );
       // no error
     })

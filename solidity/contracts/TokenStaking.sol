@@ -76,7 +76,8 @@ contract TokenStaking is StakeDelegatable {
     mapping(address => LockUtils.LockSet) internal operatorLocks;
     uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
 
-    // Granters of delegated authority to operator contracts.
+    // Grantees of delegated authority to operator contracts granting their
+    // authority.
     // E.g. keep factories granting delegated authority to keeps.
     // `delegatedAuthority[keep] = factory`
     mapping(address => address) internal delegatedAuthority;
@@ -678,6 +679,19 @@ contract TokenStaking is StakeDelegatable {
         return activeStake(staker, operatorContract) >= minimumStake();
     }
 
+    /// @notice Grants the contract the same authority as `msg.sender` has.
+    /// @dev `msg.sender` has to be an approved operator contract.
+    /// Later, the claimant can slash, seize, place locks etc.
+    /// on operators that have authorized the `msg.sender`.
+    /// If the `msg.sender` is disabled with the panic button,
+    /// any recipients of delegated authority from it will also be disabled.
+    function delegateAuthority(address delegateContract)
+        public
+        onlyApprovedOperatorContract(msg.sender)
+    {
+        delegatedAuthority[delegateContract] = msg.sender;
+    }
+
     /// @notice Grant the sender the same authority as `delegatedAuthoritySource`
     /// @dev If `delegatedAuthoritySource` is an approved operator contract
     /// and recognizes the claimant,
@@ -686,6 +700,9 @@ contract TokenStaking is StakeDelegatable {
     /// on operators that have authorized the `delegatedAuthoritySource`.
     /// If the `delegatedAuthoritySource` is disabled with the panic button,
     /// any recipients of delegated authority from it will also be disabled.
+    /// This function has the same effect as `delegateAuthority` except that
+    /// it is called by the contract claiming the authority and not the contract
+    /// having the authority.
     function claimDelegatedAuthority(address delegatedAuthoritySource)
         public
         onlyApprovedOperatorContract(delegatedAuthoritySource)
