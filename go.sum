@@ -254,6 +254,8 @@ github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420155326-64b2893c0922 h
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420155326-64b2893c0922/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420155740-1b1604f5fb8e h1:NjmMgUNPhpcm5dbJp+occJCVVQaDSutah2YeOnCjzzk=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420155740-1b1604f5fb8e/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
+github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420163504-f5aa53962524 h1:iOBE6U3YmgJ+VB2DnO5bNH9rmVWSiGUY1xgyjKOEGH8=
+github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420163504-f5aa53962524/go.mod h1:MtZSKNavpxpPY0VLt2sl118IxptrGQDUb/MBu+j2Yow=
 github.com/keep-network/keep-common v0.2.0-rc h1:dkG8qtcKINk9kXqtGg4dAFu9x0xiSZtP3Jzj2sxqd2g=
 github.com/keep-network/keep-common v0.2.0-rc/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
