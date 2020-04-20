@@ -30,6 +30,9 @@ type channelManager struct {
 	pubsub *pubsub.PubSub
 
 	retransmissionTicker *retransmission.Ticker
+
+	relaySubscriptionsMutex sync.Mutex
+	relaySubscription       map[string]*pubsub.Subscription
 }
 
 func newChannelManager(
@@ -57,6 +60,7 @@ func newChannelManager(
 		identity:             identity,
 		ctx:                  ctx,
 		retransmissionTicker: retransmissionTicker,
+		relaySubscription:    make(map[string]*pubsub.Subscription),
 	}, nil
 }
 
@@ -113,4 +117,23 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	go channel.handleMessages(cm.ctx)
 
 	return channel, nil
+}
+
+func (cm *channelManager) newRelay(name string) error {
+	cm.relaySubscriptionsMutex.Lock()
+	defer cm.relaySubscriptionsMutex.Unlock()
+
+	if _, ok := cm.relaySubscription[name]; !ok {
+		relaySubscription, err := cm.pubsub.Subscribe(name)
+		if err != nil {
+			return err
+		}
+
+		// TODO: invoke relaySubscription.Next() in a loop to avoid libp2p
+		//  errors and make them context aware.
+
+		cm.relaySubscription[name] = relaySubscription
+	}
+
+	return nil
 }

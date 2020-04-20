@@ -62,6 +62,9 @@ type Provider interface {
 	// CreateTransportIdentifier creates a transport identifier based on the
 	// provided public key.
 	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
+
+	// BroadcastChannelRelayFor creates a message relay for given channel name.
+	BroadcastChannelRelayFor(name string)
 }
 
 // ConnectionManager is an interface which exposes peers a client is connected

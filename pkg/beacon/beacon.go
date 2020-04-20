@@ -104,6 +104,10 @@ func Initialize(
 			}()
 		}
 
+		go node.RelayMessagesForChannel(
+			hex.EncodeToString(request.GroupPublicKey),
+		)
+
 		go node.MonitorRelayEntry(
 			relayChain,
 			request.BlockNumber,

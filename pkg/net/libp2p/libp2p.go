@@ -116,6 +116,14 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	return peer.IDFromPublicKey(&networkPublicKey)
 }
 
+func (p *provider) BroadcastChannelRelayFor(name string) {
+	logger.Infof("requested relay for: [%v]", name)
+
+	if err := p.broadcastChannelManager.newRelay(name); err != nil {
+		logger.Warningf("could not create relay for [%v]: [%v]", name, err)
+	}
+}
+
 type connectionManager struct {
 	host.Host
 }

@@ -71,10 +71,12 @@ func (n *Node) JoinGroupIfEligible(
 		}
 	}
 
+	// create temporary broadcast channel name for DKG using the
+	// group selection seed
+	channelName := newEntry.Text(16)
+
 	if len(indexes) > 0 {
-		// create temporary broadcast channel for DKG using the group selection
-		// seed
-		broadcastChannel, err := n.netProvider.BroadcastChannelFor(newEntry.Text(16))
+		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
 			logger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
@@ -133,7 +135,16 @@ func (n *Node) JoinGroupIfEligible(
 				)
 			}()
 		}
+	} else {
+		go n.RelayMessagesForChannel(channelName)
 	}
 
 	return
+}
+
+// RelayMessagesForChannel enables an ability to subscribe to messages
+// from the given broadcast channel and relay them to other nodes thus
+// making the network more robust.
+func (n *Node) RelayMessagesForChannel(name string) {
+	n.netProvider.BroadcastChannelRelayFor(name)
 }
