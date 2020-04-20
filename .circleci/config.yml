@@ -189,7 +189,10 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
           command: |
-            docker build --tag keep-dapp-token-dashboard .
+            docker build \
+            --build-arg ETH_RPC_URL=$ETH_RPC_URL \
+            --build-arg CHAIN_ID=$ETH_NETWORK_ID \
+            --tag keep-dapp-token-dashboard .
       - run:
           name: Save keep-dapp-token-dashboard image
           working_directory: ~/project/solidity/dashboard

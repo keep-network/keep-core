@@ -3,6 +3,10 @@ FROM node:11.15.0-alpine as build
 
 WORKDIR /app
 
+ARG ETH_RPC_URL
+ARG CHAIN_ID
+ENV ETH_RPC_URL=$ETH_RPC_URL
+ENV CHAIN_ID=$CHAIN_ID
 ENV PATH /app/node_modules/.bin:$PATH
 
 RUN apk add --update --no-cache \
@@ -12,6 +16,7 @@ RUN apk add --update --no-cache \
 
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
+COPY .env* /app/
 
 RUN npm install
 
