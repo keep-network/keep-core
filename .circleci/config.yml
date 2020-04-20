@@ -413,93 +413,93 @@ workflows:
       jobs:
         - keep_test_approval:
             type: approval
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
         - build_client_and_test_go:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - keep_test_approval
         - build_initcontainer:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - migrate_contracts
               - build_client_and_test_go
         - migrate_contracts:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - build_client_and_test_go
         - publish_keep_client:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - build_client_and_test_go
               - build_initcontainer
               - migrate_contracts
         - publish_contract_data:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - build_client_and_test_go
               - migrate_contracts
         - publish_npm_package:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - migrate_contracts
         - trigger_downstream_builds:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - publish_npm_package
         - build_token_dashboard_dapp:
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - publish_npm_package
         - publish_token_dashboard_dapp:
             context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                ignore: /.*/
+            # filters:
+            #   tags:
+            #     only: /^v.*/
+            #   branches:
+            #     ignore: /.*/
             requires:
               - build_token_dashboard_dapp
   docs:
