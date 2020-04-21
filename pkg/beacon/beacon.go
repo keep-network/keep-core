@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"sync"
 
-	"github.com/keep-network/keep-core/pkg/altbn128"
-
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -105,15 +103,7 @@ func Initialize(
 				)
 			}()
 		} else {
-			groupPublicKey, err := altbn128.UnmarshalG2Point(request.GroupPublicKey)
-			if err != nil {
-				logger.Warningf("could not relay messages: [%v]", err)
-			} else {
-				// Channel name used for relay entry request is the string
-				// representation of the compressed group public key G2 point.
-				name := hex.EncodeToString(groupPublicKey.Compress())
-				go node.RelayMessagesForChannel(name)
-			}
+			go node.ForwardSignatureShares(request.GroupPublicKey)
 		}
 
 		go node.MonitorRelayEntry(

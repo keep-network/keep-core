@@ -3,8 +3,12 @@ package relay
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"sync"
+
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
@@ -136,15 +140,50 @@ func (n *Node) JoinGroupIfEligible(
 			}()
 		}
 	} else {
-		go n.RelayMessagesForChannel(channelName)
+		go n.ForwardDKGMessages(channelName)
 	}
 
 	return
 }
 
-// RelayMessagesForChannel enables an ability to subscribe to messages
-// from the given broadcast channel and relay them to other nodes thus
-// making the network more robust.
-func (n *Node) RelayMessagesForChannel(name string) {
+// ForwardDKGMessages enables the ability to forward DKG messages
+// to other nodes even if this node has not been selected to the group.
+func (n *Node) ForwardDKGMessages(name string) {
 	n.netProvider.BroadcastChannelRelayFor(name)
+}
+
+// ForwardSignatureShares enables the ability to forward signature shares
+// messages to other nodes even if this node is not a part of the group which
+// signs the relay entry.
+func (n *Node) ForwardSignatureShares(groupPublicKeyBytes []byte) {
+	name, err := channelNameForPublicKeyBytes(groupPublicKeyBytes)
+	if err != nil {
+		logger.Warningf("could not forward signature shares: [%v]", err)
+		return
+	}
+
+	n.netProvider.BroadcastChannelRelayFor(name)
+}
+
+// channelNameForPublicKey takes group public key represented by marshalled
+// G2 point and transforms it into a broadcast channel name.
+// Broadcast channel name for group is the hexadecimal representation of
+// compressed public key of the group.
+func channelNameForPublicKeyBytes(groupPublicKey []byte) (string, error) {
+	g2 := new(bn256.G2)
+
+	if _, err := g2.Unmarshal(groupPublicKey); err != nil {
+		return "", fmt.Errorf("could not create channel name: [%v]", err)
+	}
+
+	return channelNameForPublicKey(g2), nil
+}
+
+// channelNameForPublicKey takes group public key represented by G2 point
+// and transforms it into a broadcast channel name.
+// Broadcast channel name for group is the hexadecimal representation of
+// compressed public key of the group.
+func channelNameForPublicKey(groupPublicKey *bn256.G2) string {
+	altbn128GroupPublicKey := altbn128.G2Point{G2: groupPublicKey}
+	return hex.EncodeToString(altbn128GroupPublicKey.Compress())
 }
