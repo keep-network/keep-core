@@ -117,10 +117,15 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 }
 
 func (p *provider) BroadcastChannelRelayFor(name string) {
-	logger.Infof("requested relay for: [%v]", name)
+	logger.Infof("requested relay for channel: [%v]", name)
 
-	if err := p.broadcastChannelManager.newRelay(name); err != nil {
-		logger.Warningf("could not create relay for [%v]: [%v]", name, err)
+	// TTL for a single relay should be limited to avoid unnecessary
+	// resource consumption. One hour seems to be a reasonable value as no
+	// single protocol execution will exceed this time.
+	ttl := 1 * time.Hour
+
+	if err := p.broadcastChannelManager.newRelay(name, ttl); err != nil {
+		logger.Warningf("could not create relay for channel [%v]: [%v]", name, err)
 	}
 }
 

@@ -3,6 +3,7 @@ package libp2p
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -32,7 +33,7 @@ type channelManager struct {
 	retransmissionTicker *retransmission.Ticker
 
 	relaySubscriptionsMutex sync.Mutex
-	relaySubscription       map[string]*pubsub.Subscription
+	relaySubscriptions      map[string]*pubsub.Subscription
 }
 
 func newChannelManager(
@@ -60,7 +61,7 @@ func newChannelManager(
 		identity:             identity,
 		ctx:                  ctx,
 		retransmissionTicker: retransmissionTicker,
-		relaySubscription:    make(map[string]*pubsub.Subscription),
+		relaySubscriptions:   make(map[string]*pubsub.Subscription),
 	}, nil
 }
 
@@ -119,21 +120,52 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	return channel, nil
 }
 
-func (cm *channelManager) newRelay(name string) error {
+func (cm *channelManager) newRelay(name string, ttl time.Duration) error {
 	cm.relaySubscriptionsMutex.Lock()
 	defer cm.relaySubscriptionsMutex.Unlock()
 
-	if _, ok := cm.relaySubscription[name]; !ok {
+	if _, ok := cm.relaySubscriptions[name]; !ok {
 		relaySubscription, err := cm.pubsub.Subscribe(name)
 		if err != nil {
 			return err
 		}
 
-		// TODO: invoke relaySubscription.Next() in a loop to avoid libp2p
-		//  errors and make them context aware.
+		go func() {
+			ctx, cancelCtx := context.WithTimeout(cm.ctx, ttl)
+			defer cancelCtx()
 
-		cm.relaySubscription[name] = relaySubscription
+			for {
+				select {
+				case <-ctx.Done():
+					cm.shutdownRelay(name)
+					return
+				default:
+					// Just pull the message from subscription to unblock
+					// the channel and avoid warnings from libp2p. We
+					// are not interested with their content.
+					_, _ = relaySubscription.Next(ctx)
+				}
+			}
+		}()
+
+		cm.relaySubscriptions[name] = relaySubscription
 	}
 
 	return nil
+}
+
+func (cm *channelManager) shutdownRelay(name string) {
+	cm.relaySubscriptionsMutex.Lock()
+	defer cm.relaySubscriptionsMutex.Unlock()
+
+	logger.Debugf("shutting down relay for channel: [%v]", name)
+
+	relaySubscription, ok := cm.relaySubscriptions[name]
+
+	if !ok {
+		return
+	}
+
+	relaySubscription.Cancel()
+	delete(cm.relaySubscriptions, name)
 }
