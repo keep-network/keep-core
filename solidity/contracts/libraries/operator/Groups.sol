@@ -239,39 +239,52 @@ library Groups {
      */
     function numberOfGroups(
         Storage storage self
-    ) internal view returns(uint256) {
-        return self.groups.length.sub(self.expiredGroupOffset).sub(self.activeTerminatedGroups.length);
+    ) public view returns(uint256) {
+        uint256 newExpired = updatedExpiredOffset(self);
+        (, uint256[] memory newTerminated) = updatedTerminatedGroups(
+            self,
+            newExpired
+        );
+        return self.groups.length.sub(newExpired).sub(newTerminated.length);
     }
 
     /**
      * @dev Goes through groups starting from the oldest one that is still
      * active and checks if it hasn't expired. If so, updates the information
      * about expired groups so that all expired groups are marked as such.
+     * Returns the updated number of groups.
      */
-    function expireOldGroups(Storage storage self) public {
+    function expireOldGroups(
+        Storage storage self
+    ) public returns(uint256 updatedGroupCount) {
         // Move expiredGroupOffset as long as there are some groups that should
         // be marked as expired. It is possible that expired group offset will
         // move out of the groups array by one position. It means that all groups
         // are expired (it points to the first active group) and that place in
         // groups array - currently empty - will be possibly filled later by
         // a new group.
-        while(
-            self.expiredGroupOffset < self.groups.length &&
-            groupActiveTimeOf(self, self.groups[self.expiredGroupOffset]) < block.number
-        ) {
-            self.expiredGroupOffset++;
-        }
+        uint256 newExpired = updatedExpiredOffset(self);
+        self.expiredGroupOffset = newExpired;
+
+        (uint256[] memory oldTerminated,
+         uint256[] memory newTerminated) = updatedTerminatedGroups(
+            self,
+            newExpired
+        );
 
         // Go through all activeTerminatedGroups and if some of the terminated
         // groups are expired, remove them from activeTerminatedGroups collection.
         // This is needed because we evaluate the shift of selected group index
         // based on how many non-expired groups has been terminated.
-        for (uint i = 0; i < self.activeTerminatedGroups.length; i++) {
-            if (self.expiredGroupOffset > self.activeTerminatedGroups[i]) {
-                self.activeTerminatedGroups[i] = self.activeTerminatedGroups[self.activeTerminatedGroups.length - 1];
-                self.activeTerminatedGroups.length--;
+        for (uint i = 0; i < newTerminated.length; i++) {
+            if (oldTerminated[i] != newTerminated[i]) {
+                self.activeTerminatedGroups[i] = newTerminated[i];
             }
         }
+        if (oldTerminated.length > newTerminated.length) {
+            self.activeTerminatedGroups.length = newTerminated.length;
+        }
+        return self.groups.length.sub(newExpired).sub(newTerminated.length);
     }
 
     /**
@@ -286,11 +299,10 @@ library Groups {
         Storage storage self,
         uint256 seed
     ) public returns(uint256) {
-        expireOldGroups(self);
+        uint256 groupCount = expireOldGroups(self);
+        require(groupCount > 0, "No active groups");
 
-        require(numberOfGroups(self) > 0, "No active groups");
-
-        uint256 selectedGroup = seed % numberOfGroups(self);
+        uint256 selectedGroup = seed % groupCount;
         return shiftByTerminatedGroups(self, shiftByExpiredGroups(self, selectedGroup));
     }
 
@@ -429,5 +441,64 @@ library Groups {
         uint256 groupIndex
     ) public view returns (bool) {
         return self.withdrawn[getGroupPublicKey(self, groupIndex)][operator];
+    }
+
+    /// @notice Calculate the up-to-date expired offset.
+    function updatedExpiredOffset(
+        Storage storage self
+    ) internal view returns(uint256) {
+        uint256 len = self.groups.length;
+        uint256 exp = self.expiredGroupOffset;
+        while(
+            exp < len &&
+            groupActiveTimeOf(self, self.groups[exp]) < block.number
+        ) {
+            exp++;
+        }
+        return exp;
+    }
+
+    /// @notice Calculate whether the terminated groups should be updated,
+    /// based on the given expired group offset,
+    /// and return the current and post-update terminated groups
+    /// as in-memory arrays for further operations if needed.
+    function updatedTerminatedGroups(
+        Storage storage self,
+        uint256 expiredOffset
+    ) internal view returns (
+        uint256[] memory oldTerminated,
+        uint256[] memory newTerminated
+    ) {
+        oldTerminated = self.activeTerminatedGroups;
+        uint256 oldCount = oldTerminated.length;
+        if (oldCount == 0) {
+            newTerminated = new uint256[](0);
+            return (oldTerminated, newTerminated);
+        }
+        uint256[] memory tempTerminated = new uint256[](oldTerminated.length);
+        uint256 newCount = tempTerminated.length;
+
+        // Go through all activeTerminatedGroups and if some of the terminated
+        // groups are expired, remove them from activeTerminatedGroups collection.
+        // This is needed because we evaluate the shift of selected group index
+        // based on how many non-expired groups has been terminated.
+        uint256 i = 0;
+        // Doesn't overflow because we short-circuit if length = 0
+        while (i < newCount) {
+            uint256 currentTerminatedGroup = oldTerminated[i];
+            while (
+                expiredOffset > currentTerminatedGroup && newCount > i
+            ) {
+                newCount--;
+                currentTerminatedGroup = oldTerminated[newCount];
+            }
+            tempTerminated[i] = currentTerminatedGroup;
+            i++;
+        }
+        newTerminated = new uint256[](newCount);
+        for (uint256 j = 0; j < newCount; j++) {
+            newTerminated[j] = tempTerminated[j];
+        }
+        return (oldTerminated, newTerminated);
     }
 }
