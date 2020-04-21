@@ -23,12 +23,13 @@ import { lte } from '../utils/arithmetics.utils'
 const DelegateStakeForm = ({ onSubmit, minStake, keepBalance, grants, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const stakeTokensValue = formatAmount(formikProps.values.stakeTokens)
+  const { values: { selectedGrant: { id: selectedGrantId } }, setFieldValue } = formikProps
+
   useEffect(() => {
-    const { values: { selectedGrant } } = formikProps
-    if (!selectedGrant.id && grants.length > 0) {
-      formikProps.setFieldValue('selectedGrant', grants[0], true)
+    if (!selectedGrantId && grants.length > 0) {
+      setFieldValue('selectedGrant', grants[0], true)
     }
-  }, [grants])
+  }, [grants, selectedGrantId, setFieldValue])
 
   const getContextBalance = () => {
     const { values: { context, selectedGrant } } = formikProps
@@ -129,7 +130,7 @@ const ContextSwitch = (props) => {
 
   const onClick = useCallback((event) => {
     setFieldValue('context', event.target.id, true)
-  }, [])
+  }, [setFieldValue])
 
   return (
     <div className="tabs flex">
@@ -153,7 +154,7 @@ const ContextSwitch = (props) => {
 
 const connectedWithFormik = withFormik({
   mapPropsToValues: () => ({
-    selectedGrant: { id: '', amount: '0' },
+    selectedGrant: { id: null, amount: '0' },
     beneficiaryAddress: '',
     stakeTokens: '0',
     operatorAddress: '',

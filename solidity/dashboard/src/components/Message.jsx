@@ -55,17 +55,13 @@ export class Messages extends React.Component {
 
 const closeMessageTimeoutInMs = 3250
 
-const Message = ({ message, ...props }) => {
+const Message = ({ message, onMessageClose }) => {
   useEffect(() => {
     if (!message.sticky) {
-      const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs)
+      const timeout = setTimeout(() => onMessageClose(message), closeMessageTimeoutInMs)
       return () => clearTimeout(timeout)
     }
-  }, [message.id])
-
-  const onMessageClose = () => {
-    props.onMessageClose(message)
-  }
+  }, [message, onMessageClose])
 
   return (
     <Banner
@@ -74,7 +70,7 @@ const Message = ({ message, ...props }) => {
       subtitle={message.content}
       withIcon
       withCloseIcon
-      onCloseIcon={onMessageClose}
+      onCloseIcon={() => onMessageClose(message)}
     />
   )
 }

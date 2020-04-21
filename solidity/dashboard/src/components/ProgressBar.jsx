@@ -24,7 +24,7 @@ const ProgressBar = ({ total, items, height, withLegend }) => {
           index={index}
           wrapperHeight={height}
         />)
-  }, [total, items])
+  }, [total, items, height])
 
   return (
     <React.Fragment>

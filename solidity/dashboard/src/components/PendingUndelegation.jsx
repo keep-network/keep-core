@@ -21,14 +21,13 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   const [state, setData] = useFetchData(operatorService.fetchPendingUndelegation, initialData)
   const { isFetching, data } = state
   const {
-    undelegationStatus,
     undelegationCompletedAt,
     undelegationPeriod,
   } = data
-
+  
   useEffect(() => {
+    const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
     if (!isEmptyObj(latestUnstakeEvent)) {
-      const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
       if (!isSameEthAddress(yourAddress, operator)) {
         return
       }

@@ -20,7 +20,7 @@ const useMinimumLoaderDuration = (showLoader, setShowLoader, isFetching) => {
 
       return () => clearTimeout(timeout)
     }
-  }, [isFetching, showLoader])
+  }, [isFetching, showLoader, setShowLoader])
 }
 
 const useCurrentButtonDimensions = (buttonRef, children) => {
@@ -39,7 +39,7 @@ const useCurrentButtonDimensions = (buttonRef, children) => {
     } else {
       setHeight(minHeightPendingButton)
     }
-  }, [children])
+  }, [buttonRef, children])
 
   return [width, height]
 }
@@ -48,7 +48,6 @@ export default function Button({ isFetching, children, ...props }) {
   const [showLoader, setShowLoader] = React.useState(false)
   const buttonRef = useRef(null)
   const [width, height] = useCurrentButtonDimensions(buttonRef, children)
-
   useMinimumLoaderDuration(showLoader, setShowLoader, isFetching)
 
   return (
@@ -100,7 +99,7 @@ export const SubmitButton = ({
       }, successBtnVisibilityDuration)
       return () => clearTimeout(timeout)
     }
-  }, [showSuccessBtn])
+  }, [showSuccessBtn, successCallback])
 
   let pendingMessage = { type: messageType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
   let infoMessage = { type: messageType.INFO, sticky: true, title: 'Waiting for the transaction confirmation...' }

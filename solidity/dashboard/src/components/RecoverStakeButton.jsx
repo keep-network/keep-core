@@ -8,10 +8,10 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   const web3Context = useContext(Web3Context)
   const { yourAddress } = web3Context
   const showMessage = useShowMessage()
+  const { isFromGrant } = props
+  const contract = web3Context[isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME]
 
   const recoverStake = useCallback(async (onTransactionHashCallback) => {
-    const { isFromGrant } = props
-    const contract = web3Context[isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME]
 
     try {
       await contract
@@ -24,7 +24,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
       showMessage({ type: messageType.ERROR, title: 'Recover stake action has been failed ', content: error.message })
       throw error
     }
-  }, [operatorAddress, yourAddress, props.isFromGrant])
+  }, [operatorAddress, yourAddress, contract.methods, showMessage])
 
   return (
     <SubmitButton

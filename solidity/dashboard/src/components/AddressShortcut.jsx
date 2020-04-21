@@ -1,12 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react'
 import { shortenAddress } from '../utils/general.utils'
 
-
 const AddressShortcut = ({ address, classNames }) => {
   const addressElement = useRef(null)
   const [copyStatus, setCopyStatus] = useState('Copy to clipboard')
 
   useEffect(() => {
+    const { current } = { ...addressElement }
     const copyEventListener = (event) => {
       event.preventDefault()
       if (event.clipboardData) {
@@ -17,10 +17,10 @@ const AddressShortcut = ({ address, classNames }) => {
         setCopyStatus(`Cannot copy value: ${address}!`)
       }
     }
-    if (addressElement.current !== null) {
-      addressElement.current.addEventListener('copy', copyEventListener)
+    if (current !== null) {
+      current.addEventListener('copy', copyEventListener)
       return () => {
-        addressElement.current.removeEventListener('copy', copyEventListener)
+        current.removeEventListener('copy', copyEventListener)
       }
     }
   })
