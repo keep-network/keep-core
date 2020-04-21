@@ -69,7 +69,7 @@ func (lp *localProvider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	return createLocalIdentifier(&networkPublicKey), nil
 }
 
-func (lp *localProvider) BroadcastChannelRelayFor(name string) {
+func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
 	//no-op
 }
 

@@ -149,7 +149,7 @@ func (n *Node) JoinGroupIfEligible(
 // ForwardDKGMessages enables the ability to forward DKG messages
 // to other nodes even if this node has not been selected to the group.
 func (n *Node) ForwardDKGMessages(name string) {
-	n.netProvider.BroadcastChannelRelayFor(name)
+	n.netProvider.BroadcastChannelForwarderFor(name)
 }
 
 // ForwardSignatureShares enables the ability to forward signature shares
@@ -162,7 +162,7 @@ func (n *Node) ForwardSignatureShares(groupPublicKeyBytes []byte) {
 		return
 	}
 
-	n.netProvider.BroadcastChannelRelayFor(name)
+	n.netProvider.BroadcastChannelForwarderFor(name)
 }
 
 // channelNameForPublicKey takes group public key represented by marshalled
