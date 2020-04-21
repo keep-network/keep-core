@@ -6,28 +6,28 @@ import { getGuaranteedMinimumStakingPolicyContractAddress, getPermissiveStakingP
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
-  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)
+  const grantIds = new Set(await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress))
   const grants = []
 
-  for (let i = 0; i < grantIds.length; i++) {
-    const grantDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrant', grantIds[i])
+  for (const grantId of grantIds) {
+    const grantDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrant', grantId)
     if (!isSameEthAddress(yourAddress, grantDetails.grantee)) {
       continue
     }
-    const unlockingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantUnlockingSchedule', grantIds[i])
+    const unlockingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantUnlockingSchedule', grantId)
 
-    const unlocked = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'unlockedAmount', grantIds[i])
+    const unlocked = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'unlockedAmount', grantId)
     let readyToRelease = '0'
     try {
       readyToRelease = await contractService
-        .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'withdrawable', grantIds[i])
+        .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'withdrawable', grantId)
     } catch (error) {
       readyToRelease = '0'
     }
     const released = grantDetails.withdrawn
-    const availableToStake = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'availableToStake', grantIds[i])
+    const availableToStake = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'availableToStake', grantId)
 
-    grants.push({ id: grantIds[i], unlocked, released, readyToRelease, availableToStake, ...unlockingSchedule, ...grantDetails })
+    grants.push({ id: grantId, unlocked, released, readyToRelease, availableToStake, ...unlockingSchedule, ...grantDetails })
   }
 
   return grants
