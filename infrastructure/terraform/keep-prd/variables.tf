@@ -96,6 +96,7 @@ variable "nat_gateway_ip" {
     zone_a_name  = "keep-prd-nat-gateway-a-external-ip"
     zone_b_name  = "keep-prd-nat-gateway-b-external-ip"
     zone_c_name  = "keep-prd-nat-gateway-c-external-ip"
+    zone_f_name  = "keep-prd-nat-gateway-f-external-ip"
     address_type = "EXTERNAL"
     network_tier = "PREMIUM"
   }
