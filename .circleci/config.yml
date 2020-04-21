@@ -219,6 +219,11 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
+          name: Resolve latest contracts
+          working_directory: ~/project/solidity/dashboard
+          command: |
+            npm upgrade @keep-network/keep-core
+      - run:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
           command: |
