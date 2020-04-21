@@ -131,10 +131,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
 
     /**
-     * @dev Triggers the first group selection. Genesis can be called only when
-     * there are no groups on the operator contract.
+     * @dev Triggers group selection if there are no active groups.
      */
     function genesis() public payable {
+        // If we run into a very unlikely situation there are no active
+        // groups on the contract because of slashing and groups terminated
+        // or because beacon has not been used for a very long time and all
+        // groups expired, we first want to make a cleanup.
+        groups.expireOldGroups();
         require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
@@ -671,8 +675,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Gets the number of active groups. Expired and terminated groups are
-     * not counted as active.
+     * @notice Gets the number of active groups as currently marked in the
+     * contract. Groups marked as expired or terminated does not count as
+     * active.
+     *
+     * @dev Even if numberOfGroups() > 0, it is still possible requesting for
+     * a new relay entry will revert with "no active groups" failure message.
+     * This function returns the number of active groups as they are currently
+     * marked on-chain. However, during relay request, before group selection,
+     * we run group expiration and it may happen some groups seen as active
+     * turns out to be expired.
      */
     function numberOfGroups() public view returns(uint256) {
         return groups.numberOfGroups();
