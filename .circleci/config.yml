@@ -234,6 +234,7 @@ jobs:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
           command: |
+            npm upgrade @keep-network/keep-core
             docker build --tag keep-dapp-token-dashboard .
       - run:
           name: Save keep-dapp-token-dashboard image
