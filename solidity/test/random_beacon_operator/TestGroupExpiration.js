@@ -62,7 +62,7 @@ describe('KeepRandomBeaconOperator/GroupExpiration', function() {
   }
 
   it("should be able to count the number of active groups", async function() {
-    let expectedGroupCount = 23;
+    let expectedGroupCount = 18;
     await addGroups(expectedGroupCount);
     let numberOfGroups = await groups.numberOfGroups();
     assert.equal(Number(numberOfGroups), expectedGroupCount, "Unexpected number of groups");
