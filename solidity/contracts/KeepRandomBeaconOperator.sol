@@ -676,7 +676,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @notice Gets the number of active groups as currently marked in the
-     * contract. This is the sate from when the expired groups were last updated
+     * contract. This is the state from when the expired groups were last updated
      * without accounting for recent expirations.
      *
      * @dev Even if numberOfGroups() > 0, it is still possible requesting for
