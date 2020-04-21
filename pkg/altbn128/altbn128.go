@@ -297,14 +297,3 @@ func (e *gfP2) pow(base *gfP2, exp *big.Int) *gfP2 {
 	}
 	return e
 }
-
-func UnmarshalG2Point(bytes []byte) (*G2Point, error) {
-	g2 := new(bn256.G2)
-
-	_, err := g2.Unmarshal(bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return &G2Point{g2}, nil
-}
