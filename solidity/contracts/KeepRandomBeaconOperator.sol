@@ -134,7 +134,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Triggers group selection if there are no active groups.
      */
     function genesis() public payable {
-        // If we run into a very unlikely situation there are no active
+        // If we run into a very unlikely situation when there are no active
         // groups on the contract because of slashing and groups terminated
         // or because beacon has not been used for a very long time and all
         // groups expired, we first want to make a cleanup.
@@ -683,7 +683,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * a new relay entry will revert with "no active groups" failure message.
      * This function returns the number of active groups as they are currently
      * marked on-chain. However, during relay request, before group selection,
-     * we run group expiration and it may happen some groups seen as active
+     * we run group expiration and it may happen that some groups seen as active
      * turns out to be expired.
      */
     function numberOfGroups() public view returns(uint256) {
