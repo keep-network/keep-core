@@ -16,7 +16,7 @@
     "formik": "^2.1.3",
     "moment": "^2.20.1",
     "web3": "^1.2.4",
-    "@keep-network/keep-core": "0.13.0-rc.0"
+    "@keep-network/keep-core": ">0.13.0-rc <0.13.0"
   },
   "scripts": {
     "build-css": "lessc --clean-css src/css/app.less src/app.css",
