@@ -33,7 +33,7 @@ type channelManager struct {
 	retransmissionTicker *retransmission.Ticker
 
 	forwarderSubscriptionsMutex sync.Mutex
-	fowarderSubscriptions       map[string]*pubsub.Subscription
+	forwarderSubscriptions      map[string]*pubsub.Subscription
 }
 
 func newChannelManager(
@@ -55,13 +55,13 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels:              make(map[string]*channel),
-		pubsub:                floodsub,
-		peerStore:             p2phost.Peerstore(),
-		identity:              identity,
-		ctx:                   ctx,
-		retransmissionTicker:  retransmissionTicker,
-		fowarderSubscriptions: make(map[string]*pubsub.Subscription),
+		channels:               make(map[string]*channel),
+		pubsub:                 floodsub,
+		peerStore:              p2phost.Peerstore(),
+		identity:               identity,
+		ctx:                    ctx,
+		retransmissionTicker:   retransmissionTicker,
+		forwarderSubscriptions: make(map[string]*pubsub.Subscription),
 	}, nil
 }
 
@@ -124,7 +124,7 @@ func (cm *channelManager) newForwarder(name string, ttl time.Duration) error {
 	cm.forwarderSubscriptionsMutex.Lock()
 	defer cm.forwarderSubscriptionsMutex.Unlock()
 
-	if _, ok := cm.fowarderSubscriptions[name]; !ok {
+	if _, ok := cm.forwarderSubscriptions[name]; !ok {
 		forwarderSubscription, err := cm.pubsub.Subscribe(name)
 		if err != nil {
 			return err
@@ -148,7 +148,7 @@ func (cm *channelManager) newForwarder(name string, ttl time.Duration) error {
 			}
 		}()
 
-		cm.fowarderSubscriptions[name] = forwarderSubscription
+		cm.forwarderSubscriptions[name] = forwarderSubscription
 	}
 
 	return nil
@@ -160,12 +160,12 @@ func (cm *channelManager) shutdownForwarder(name string) {
 
 	logger.Debugf("shutting down message forwarder for channel: [%v]", name)
 
-	fowarderSubscription, ok := cm.fowarderSubscriptions[name]
+	forwarderSubscription, ok := cm.forwarderSubscriptions[name]
 
 	if !ok {
 		return
 	}
 
-	fowarderSubscription.Cancel()
-	delete(cm.fowarderSubscriptions, name)
+	forwarderSubscription.Cancel()
+	delete(cm.forwarderSubscriptions, name)
 }
