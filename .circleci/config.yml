@@ -332,17 +332,6 @@ workflows:
   solidity:
     jobs:
       - test_solidity
-  build-and-test:
-    jobs:
-      - build_client_and_test_go:
-          filters:
-            branches:
-              ignore: master
-          context: keep-dev
-      - build_token_dashboard_dapp:
-          filters:
-            branches:
-              ignore: master
   build-test-migrate-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
@@ -491,16 +480,14 @@ workflows:
               # tags:
               #   only: /^v.*/
               branches:
-                ignore: /.*/
-            requires:
-              - publish_npm_package
+                only: /releases\/.*/
         - publish_token_dashboard_dapp:
             context: keep-test
             filters:
               # tags:
               #   only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_token_dashboard_dapp
   docs:
