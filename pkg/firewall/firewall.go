@@ -60,6 +60,7 @@ func (msp *minimumStakePolicy) Validate(
 	// Similarly, if the client has no minimum stake the last time
 	// HasMinimumStake was executed, we have to ask the chain about the current
 	// status.
+	msp.cache.Sweep()
 	if msp.cache.Has(address) {
 		return nil
 	}
