@@ -85,3 +85,18 @@ variable "private_subnet_ip_cidr_range" {
   description = "IP address range assigned to the private subnet."
   default     = "10.4.0.0/16"
 }
+
+## nat gateway vars
+### external IP address vars
+
+variable "nat_gateway_ip" {
+  type = "map"
+
+  default = {
+    zone_a_name  = "keep-prd-nat-gateway-a-external-ip"
+    zone_b_name  = "keep-prd-nat-gateway-b-external-ip"
+    zone_c_name  = "keep-prd-nat-gateway-c-external-ip"
+    address_type = "EXTERNAL"
+    network_tier = "PREMIUM"
+  }
+}
