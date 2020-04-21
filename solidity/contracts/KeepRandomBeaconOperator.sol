@@ -676,8 +676,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @notice Gets the number of active groups as currently marked in the
-     * contract. Groups marked as expired or terminated does not count as
-     * active.
+     * contract. This is the sate from when the expired groups were last updated
+     * without accounting for recent expirations.
      *
      * @dev Even if numberOfGroups() > 0, it is still possible requesting for
      * a new relay entry will revert with "no active groups" failure message.
