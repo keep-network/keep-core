@@ -488,8 +488,8 @@ workflows:
               - publish_npm_package
         - build_token_dashboard_dapp:
             filters:
-              tags:
-                only: /^v.*/
+              # tags:
+              #   only: /^v.*/
               branches:
                 ignore: /.*/
             requires:
@@ -497,8 +497,8 @@ workflows:
         - publish_token_dashboard_dapp:
             context: keep-test
             filters:
-              tags:
-                only: /^v.*/
+              # tags:
+              #   only: /^v.*/
               branches:
                 ignore: /.*/
             requires:
