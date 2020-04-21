@@ -32,8 +32,8 @@ type channelManager struct {
 
 	retransmissionTicker *retransmission.Ticker
 
-	relaySubscriptionsMutex sync.Mutex
-	relaySubscriptions      map[string]*pubsub.Subscription
+	forwarderSubscriptionsMutex sync.Mutex
+	fowarderSubscriptions       map[string]*pubsub.Subscription
 }
 
 func newChannelManager(
@@ -55,13 +55,13 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels:             make(map[string]*channel),
-		pubsub:               floodsub,
-		peerStore:            p2phost.Peerstore(),
-		identity:             identity,
-		ctx:                  ctx,
-		retransmissionTicker: retransmissionTicker,
-		relaySubscriptions:   make(map[string]*pubsub.Subscription),
+		channels:              make(map[string]*channel),
+		pubsub:                floodsub,
+		peerStore:             p2phost.Peerstore(),
+		identity:              identity,
+		ctx:                   ctx,
+		retransmissionTicker:  retransmissionTicker,
+		fowarderSubscriptions: make(map[string]*pubsub.Subscription),
 	}, nil
 }
 
@@ -120,12 +120,12 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	return channel, nil
 }
 
-func (cm *channelManager) newRelay(name string, ttl time.Duration) error {
-	cm.relaySubscriptionsMutex.Lock()
-	defer cm.relaySubscriptionsMutex.Unlock()
+func (cm *channelManager) newForwarder(name string, ttl time.Duration) error {
+	cm.forwarderSubscriptionsMutex.Lock()
+	defer cm.forwarderSubscriptionsMutex.Unlock()
 
-	if _, ok := cm.relaySubscriptions[name]; !ok {
-		relaySubscription, err := cm.pubsub.Subscribe(name)
+	if _, ok := cm.fowarderSubscriptions[name]; !ok {
+		forwarderSubscription, err := cm.pubsub.Subscribe(name)
 		if err != nil {
 			return err
 		}
@@ -137,35 +137,35 @@ func (cm *channelManager) newRelay(name string, ttl time.Duration) error {
 			for {
 				select {
 				case <-ctx.Done():
-					cm.shutdownRelay(name)
+					cm.shutdownForwarder(name)
 					return
 				default:
 					// Just pull the message from subscription to unblock
 					// the channel and avoid warnings from libp2p. We
 					// are not interested with their content.
-					_, _ = relaySubscription.Next(ctx)
+					_, _ = forwarderSubscription.Next(ctx)
 				}
 			}
 		}()
 
-		cm.relaySubscriptions[name] = relaySubscription
+		cm.fowarderSubscriptions[name] = forwarderSubscription
 	}
 
 	return nil
 }
 
-func (cm *channelManager) shutdownRelay(name string) {
-	cm.relaySubscriptionsMutex.Lock()
-	defer cm.relaySubscriptionsMutex.Unlock()
+func (cm *channelManager) shutdownForwarder(name string) {
+	cm.forwarderSubscriptionsMutex.Lock()
+	defer cm.forwarderSubscriptionsMutex.Unlock()
 
-	logger.Debugf("shutting down relay for channel: [%v]", name)
+	logger.Debugf("shutting down message forwarder for channel: [%v]", name)
 
-	relaySubscription, ok := cm.relaySubscriptions[name]
+	fowarderSubscription, ok := cm.fowarderSubscriptions[name]
 
 	if !ok {
 		return
 	}
 
-	relaySubscription.Cancel()
-	delete(cm.relaySubscriptions, name)
+	fowarderSubscription.Cancel()
+	delete(cm.fowarderSubscriptions, name)
 }

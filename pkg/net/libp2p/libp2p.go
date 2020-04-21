@@ -124,7 +124,7 @@ func (p *provider) BroadcastChannelForwarderFor(name string) {
 	// single protocol execution will exceed this time.
 	ttl := 1 * time.Hour
 
-	if err := p.broadcastChannelManager.newRelay(name, ttl); err != nil {
+	if err := p.broadcastChannelManager.newForwarder(name, ttl); err != nil {
 		logger.Warningf(
 			"could not create message forwarder for channel [%v]: [%v]",
 			name,
