@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -376,7 +376,7 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 	for _, address := range addresses {
 		multiaddress, err := ma.NewMultiaddr(address)
 		if err != nil {
-			logger.Warningf(
+			logger.Warnf(
 				"could not parse address string [%v]: [%v]",
 				address,
 				err,

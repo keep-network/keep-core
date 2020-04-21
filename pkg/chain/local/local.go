@@ -11,7 +11,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	crand "crypto/rand"
 

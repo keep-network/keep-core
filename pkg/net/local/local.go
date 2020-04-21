@@ -8,7 +8,7 @@ import (
 	"crypto/ecdsa"
 	"sync"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 )

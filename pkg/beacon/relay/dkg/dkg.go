@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	dkgResult "github.com/keep-network/keep-core/pkg/beacon/relay/dkg/result"
@@ -90,7 +90,7 @@ func ExecuteDKG(
 		// chain for the result published by any other group member and based
 		// on that, we decide whether we should stay in the final group
 		// or drop our membership.
-		logger.Warningf(
+		logger.Warnf(
 			"[member:%v] DKG result publication process failed [%v]",
 			playerIndex,
 			err,

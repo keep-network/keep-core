@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ipfs/go-log"
+	"github.com/ipfs/go-log/v2"
 
 	"github.com/keep-network/keep-core/pkg/net"
 )
