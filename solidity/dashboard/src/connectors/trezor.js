@@ -1,7 +1,7 @@
 import TrezorConnect from 'trezor-connect'
 import { TrezorSubprovider } from '@0x/subproviders/lib/src/subproviders/trezor'
 import web3Utils from 'web3-utils'
-import { AbstractHardwareWalletConnector } from './abstract'
+import { AbstractHardwareWalletConnector } from './abstract-connector'
 import { getEthereumTxObj, getChainIdFromV } from './utils'
 import { getBufferFromHex } from '../utils/general.utils'
 import { getChainId } from './utils'

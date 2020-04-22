@@ -1,7 +1,7 @@
 import { LedgerSubprovider } from '@0x/subproviders'
 import TransportU2F from '@ledgerhq/hw-transport-u2f'
 import AppEth from '@ledgerhq/hw-app-eth'
-import { AbstractHardwareWalletConnector } from './abstract'
+import { AbstractHardwareWalletConnector } from './abstract-connector'
 import { getChainIdFromV, getEthereumTxObj, getChainId } from './utils'
 import web3Utils from 'web3-utils'
 import { getBufferFromHex } from '../utils/general.utils'
