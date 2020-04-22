@@ -64,7 +64,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     TokenStaking internal stakingContract;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 1000000*1e11; // 1M Gwei
+    uint256 public groupMemberBaseReward = 1000000*1e9; // 1M Gwei
 
     // Gas price ceiling value used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use gas price
