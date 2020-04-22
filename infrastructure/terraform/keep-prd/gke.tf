@@ -8,7 +8,7 @@ provider "kubernetes" {
 
 provider "helm" {
   version                = "= 1.1.1"
-  repository_config_path = "./files/helm-repositories.yaml"
+  repository_config_path = "./config-files/helm-repositories.yaml"
 
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
