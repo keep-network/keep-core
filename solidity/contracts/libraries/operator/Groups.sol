@@ -248,10 +248,17 @@ library Groups {
      * active and checks if it hasn't expired. If so, updates the information
      * about expired groups so that all expired groups are marked as such.
      */
-    function expireOldGroups(Storage storage self) internal {
-        // move expiredGroupOffset as long as there are some groups that should
-        // be marked as expired
-        while(groupActiveTimeOf(self, self.groups[self.expiredGroupOffset]) < block.number) {
+    function expireOldGroups(Storage storage self) public {
+        // Move expiredGroupOffset as long as there are some groups that should
+        // be marked as expired. It is possible that expired group offset will
+        // move out of the groups array by one position. It means that all groups
+        // are expired (it points to the first active group) and that place in
+        // groups array - currently empty - will be possibly filled later by
+        // a new group.
+        while(
+            self.expiredGroupOffset < self.groups.length &&
+            groupActiveTimeOf(self, self.groups[self.expiredGroupOffset]) < block.number
+        ) {
             self.expiredGroupOffset++;
         }
 
@@ -279,9 +286,10 @@ library Groups {
         Storage storage self,
         uint256 seed
     ) public returns(uint256) {
+        expireOldGroups(self);
+
         require(numberOfGroups(self) > 0, "No active groups");
 
-        expireOldGroups(self);
         uint256 selectedGroup = seed % numberOfGroups(self);
         return shiftByTerminatedGroups(self, shiftByExpiredGroups(self, selectedGroup));
     }
