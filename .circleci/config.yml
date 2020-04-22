@@ -49,15 +49,8 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            if [ -z "$CIRCLE_TAG" ]
-            then
-              export DOCKER_BUILD_TAG="latest"
-            else
-              export DOCKER_BUILD_TAG=$CIRCLE_TAG
-            fi
-
             docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --target gobuild -t go-build-env .
-            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client:$DOCKER_IMAGE_TAG .
+            docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
       - run:
           name: Run Go tests
           command: |
@@ -69,7 +62,7 @@ jobs:
           name: Save keep-client image
           command: |
             mkdir -p /tmp/keep-client/docker-images
-            docker save -o /tmp/keep-client/docker-images/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client:$DOCKER_IMAGE_TAG
+            docker save -o /tmp/keep-client/docker-images/keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -85,21 +78,16 @@ jobs:
       - run:
           name: Run Docker build
           command: |
-            if [ -z "$CIRCLE_TAG" ]
-            then
-              export DOCKER_BUILD_TAG="latest"
-            else
-              export DOCKER_BUILD_TAG=$CIRCLE_TAG
-            fi
+
 
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client:$DOCKER_IMAGE_TAG .
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client .
       - run:
           name: Save initcontainer-provision-keep-client image
           command: |
-            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client:$DOCKER_IMAGE_TAG
+            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
@@ -146,12 +134,12 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-client
-          tag: $DOCKER_IMAGE_TAG
+          tag: latest
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: keep-client
-          tag: $DOCKER_IMAGE_TAG
+          tag: latest
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -264,14 +252,9 @@ jobs:
       - run:
           name: Tag Docker image
           command: |
-            if [ -z "$CIRCLE_TAG" ]
-            then
-              export DOCKER_BUILD_TAG="latest"
-            else
-              export DOCKER_BUILD_TAG=$CIRCLE_TAG
-            fi
 
-            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard:$DOCKER_IMAGE_TAG
+
+            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -281,7 +264,7 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: keep-dapp-token-dashboard
-          tag: $DOCKER_IMAGE_TAG
+          tag: latest
 
   generate_docs_tex:
     docker:
