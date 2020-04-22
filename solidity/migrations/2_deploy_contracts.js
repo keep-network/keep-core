@@ -17,8 +17,8 @@ const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultV
 const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
 const Registry = artifacts.require("./Registry.sol");
 
-let initializationPeriod = 518400; // ~6 days
-const undelegationPeriod = 7776000; // ~3 months
+let initializationPeriod = 43200; // ~12 hours
+let undelegationPeriod = 7776000; // ~3 months
 const withdrawalDelay = 86400; // 1 day
 const dkgContributionMargin = 5; // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
 
