@@ -13,6 +13,7 @@ import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { DataTable, Column } from './DataTable'
 import { PENDING_STATUS } from '../constants/constants'
 import moment from 'moment'
+import { usePrevious } from '../hooks/usePrevious'
 
 const initialData = { pendinUndelegations: [] }
 
@@ -24,26 +25,30 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
     undelegationCompletedAt,
     undelegationPeriod,
   } = data
+  const previousEvent = usePrevious(latestUnstakeEvent)
   
   useEffect(() => {
-    const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
-    if (!isEmptyObj(latestUnstakeEvent)) {
-      if (!isSameEthAddress(yourAddress, operator)) {
-        return
-      }
-      const undelegationCompletedAt = moment.unix(undelegatedAt).add(undelegationPeriod, 'seconds')
-      stakingContract.methods.getDelegationInfo(operator).call()
-        .then((data) => {
-          const { amount } = data
-          setData({
-            ...state.data,
-            undelegationCompletedAt,
-            pendingUnstakeBalance: amount,
-            undelegationStatus: 'PENDING',
-          })
-        })
+    if (isEmptyObj(latestUnstakeEvent)) {
+      return
+    } else if (previousEvent.transactionHash === latestUnstakeEvent.transactionHash){
+      return
     }
-  }, [latestUnstakeEvent.transactionHash])
+    const { returnValues: { operator, undelegatedAt } } = latestUnstakeEvent
+    if (!isSameEthAddress(yourAddress, operator)) {
+      return
+    }
+    const undelegationCompletedAt = moment.unix(undelegatedAt).add(undelegationPeriod, 'seconds')
+    stakingContract.methods.getDelegationInfo(operator).call()
+      .then((data) => {
+        const { amount } = data
+        setData({
+          ...state.data,
+          undelegationCompletedAt,
+          pendingUnstakeBalance: amount,
+          undelegationStatus: 'PENDING',
+        })
+      })
+  })
 
   return (
     <LoadingOverlay isFetching={isFetching}>

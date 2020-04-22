@@ -18,8 +18,21 @@ const TokenGrantsOverview = (props) => {
     grantWithdrawn,
   } = useTokensPageContext()
   const [selectedGrant, setSelectedGrant] = useState({})
-  const { latestEvent: stakedEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantStaked')
-  const { latestEvent: withdrawanEvent } = useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantWithdrawn')
+
+  const subscribeToStakedEventCallback = (stakedEvent) => {
+    const { returnValues: { grantId, amount } } = stakedEvent
+    grantStaked(grantId, amount)
+  }
+
+  const subscribeToWithdrawanEventCallback = (withdrawanEvent) => {
+    const { returnValues: { grantId, amount } } = withdrawanEvent
+    grantWithdrawn(grantId, amount)
+    refreshGrantTokenBalance()
+    refreshKeepTokenBalance()
+  }
+  
+  useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantStaked', subscribeToStakedEventCallback)
+  useSubscribeToContractEvent(TOKEN_GRANT_CONTRACT_NAME, 'TokenGrantWithdrawn', subscribeToWithdrawanEventCallback)
 
   useEffect(() => {
     if (isEmptyObj(selectedGrant) && grants.length > 0) {
@@ -28,29 +41,11 @@ const TokenGrantsOverview = (props) => {
       const { obj: updatedGrant } = findIndexAndObject('id', selectedGrant.id, grants)
       setSelectedGrant(updatedGrant)
     }
-  }, [grants])
+  }, [grants, selectedGrant])
 
   const onSelect = (selectedItem) => {
     setSelectedGrant(selectedItem)
   }
-
-  useEffect(() => {
-    if (isEmptyObj(stakedEvent)) {
-      return
-    }
-    const { returnValues: { grantId, amount } } = stakedEvent
-    grantStaked(grantId, amount)
-  }, [stakedEvent.transactionHash])
-
-  useEffect(() => {
-    if (isEmptyObj(withdrawanEvent)) {
-      return
-    }
-    const { returnValues: { grantId, amount } } = withdrawanEvent
-    grantWithdrawn(grantId, amount)
-    refreshGrantTokenBalance()
-    refreshKeepTokenBalance()
-  }, [withdrawanEvent.transactionHash])
 
   return (
     <section>

@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useContext, useCallback } from 'react'
 import { Web3Context } from '../components/WithWeb3Context'
 import { wait } from '../utils/general.utils'
+import { usePrevious } from './usePrevious'
 
 const FETCH_REQUEST_START = 'FETCH_REQUEST_START'
 const FETCH_REQUEST_SUCCESS = 'FETCH_REQUEST_SUCCESS'
@@ -19,6 +20,7 @@ export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) =
     data: initialData,
     syncState: syncState.UP_TO_DATE,
   })
+  const prevSyncState = usePrevious(state.syncState)
 
   const fetchData = () => {
     let shouldSetState = true
@@ -39,10 +41,10 @@ export const useFetchData = (serviceMethod, initialData, ...serviceMethodArgs) =
 
   useEffect(fetchData, [])
   useEffect(() => {
-    if (state.syncState === syncState.OBSOLETE) {
+    if (prevSyncState === syncState.UP_TO_DATE && state.syncState === syncState.OBSOLETE) {
       fetchData()
     }
-  }, [state.syncState])
+  })
 
   const updateData = (updatedData) => {
     dispatch({ type: UPDATE_DATA, payload: updatedData })

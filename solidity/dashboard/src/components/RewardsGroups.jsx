@@ -16,6 +16,7 @@ import SelectedRewardDropdown from './SelectedRewardDropdown'
 import { isEmptyObj, isSameEthAddress } from '../utils/general.utils'
 import { sub, lte, gt } from '../utils/arithmetics.utils'
 import web3Utils from 'web3-utils'
+import { usePrevious } from '../hooks/usePrevious'
 
 const previewDataCount = 3
 const initialData = [[], '0']
@@ -27,9 +28,12 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
   const [showAll, setShowAll] = useState(false)
   const [selectedReward, setSelectedReward] = useState({})
   const [withdrawAction] = useWithdrawAction()
+  const previousWithdrawalEvent = usePrevious(latestWithdrawalEvent)
 
   useEffect(() => {
     if (isEmptyObj(latestWithdrawalEvent)) {
+      return
+    } else if (previousWithdrawalEvent.transactionHash === latestWithdrawalEvent.transactionHash) {
       return
     }
 
@@ -63,7 +67,7 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
     }
 
     updateData([updatedGroups, web3Utils.fromWei(updateTotalRewardsBalance, 'ether')])
-  }, [latestWithdrawalEvent])
+  }, [groups, latestWithdrawalEvent, previousWithdrawalEvent, yourAddress, totalRewardsBalance, updateData])
 
   const updateWithdrawStatus = (status) => {
     const { groupIndex } = selectedReward

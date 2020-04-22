@@ -20,7 +20,7 @@ const Dropdown = ({
       key={item[valuePropertyName]}
       value={item[valuePropertyName]}
       label={item[labelPropertyName]}
-      isSelected={item[valuePropertyName] == selectedItem[valuePropertyName]}
+      isSelected={item[valuePropertyName] === selectedItem[valuePropertyName]}
       onChange={onChange}
       labelPrefix={labelPrefix}
       item={item}
@@ -28,7 +28,7 @@ const Dropdown = ({
     />
 
   const onChange = (value) => {
-    const selectedItem = options.find((option) => option[valuePropertyName] == value)
+    const selectedItem = options.find((option) => option[valuePropertyName] === value)
     onSelect(selectedItem)
     setIsOpen(false)
   }

@@ -11,6 +11,7 @@ import AddressShortcut from './AddressShortcut'
 import moment from 'moment'
 import web3Utils from 'web3-utils'
 import { formatDate, isSameEthAddress, isEmptyObj } from '../utils/general.utils'
+import { usePrevious } from '../hooks/usePrevious'
 
 const previewDataCount = 3
 const initialData = []
@@ -20,10 +21,12 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
   const { isFetching, data } = state
   const [showAll, setShowAll] = useState(false)
   const { yourAddress, eth, keepRandomBeaconOperatorContract } = useContext(Web3Context)
-
+  const previousWithdrawalEvent = usePrevious(latestWithdrawalEvent)
 
   useEffect(() => {
     if (isEmptyObj(latestWithdrawalEvent)) {
+      return
+    } else if (previousWithdrawalEvent.transactionHash === latestWithdrawalEvent.transactionHash) {
       return
     }
     const { blockNumber, returnValues: { groupIndex, amount, beneficiary } } = latestWithdrawalEvent
@@ -42,7 +45,7 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
       }
       updateData([withdrawal, ...data])
     })
-  }, [latestWithdrawalEvent])
+  })
 
   return (
     <LoadingOverlay isFetching={isFetching} >
