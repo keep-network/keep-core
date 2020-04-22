@@ -64,7 +64,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     TokenStaking internal stakingContract;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
+    uint256 public groupMemberBaseReward = 1000000*1e11; // 1M Gwei
 
     // Gas price ceiling value used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use gas price
@@ -171,7 +171,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         stakingContract = TokenStaking(_stakingContract);
 
         groups.stakingContract = TokenStaking(_stakingContract);
-        groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
+        groups.groupActiveTime = 86400 * 7 / 15; // 7 days equivalent in 15s blocks
 
         // There are 39 blocks to submit group selection tickets. To minimize
         // the submitter's cost by minimizing the number of redundant tickets
