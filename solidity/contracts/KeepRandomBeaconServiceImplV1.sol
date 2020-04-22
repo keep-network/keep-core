@@ -4,7 +4,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
-import "./DelayedWithdrawal.sol";
 import "./Registry.sol";
 import "./IRandomBeacon.sol";
 
@@ -32,7 +31,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IRandomBeacon {
+contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
     using PercentUtils for uint256;
     using AddressArrayUtils for address[];
@@ -109,12 +108,10 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
-     * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
      * @param registry Registry contract linked to this contract.
      */
     function initialize(
         uint256 dkgContributionMargin,
-        uint256 withdrawalDelay,
         address registry
     )
         public
@@ -124,14 +121,9 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _dkgContributionMargin = dkgContributionMargin;
-        _withdrawalDelay = withdrawalDelay;
-        _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
         _baseCallbackGas = 10961;
-
-        // Initialize DelayedWithdrawal owner.
-        initialize(msg.sender);
     }
 
     /**
