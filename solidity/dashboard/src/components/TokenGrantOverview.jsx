@@ -8,7 +8,7 @@ import { useShowMessage, messageType } from './Message'
 import moment from 'moment'
 import { gt } from '../utils/arithmetics.utils'
 
-const TokenGrantOverview = ({ selectedGrant }) => {
+const TokenGrantOverview = ({ selectedGrant, delegatedTokens }) => {
   const { yourAddress, grantContract } = useContext(Web3Context)
   const showMessage = useShowMessage()
   const cliffPeriod = moment

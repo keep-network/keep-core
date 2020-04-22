@@ -79,6 +79,7 @@ const TokensPage = () => {
         <TokensOverview
           keepBalance={keepTokenBalance}
           stakingBalance={ownedTokensDelegationsBalance}
+          delegatedTokens={delegations}
           pendingUndelegationBalance={ownedTokensUndelegationsBalance}
           undelegationPeriod={undelegationPeriod}
         />
