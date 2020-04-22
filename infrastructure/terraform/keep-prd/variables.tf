@@ -51,6 +51,23 @@ variable "project_owner_members" {
   ]
 }
 
+# module IAM members: editor
+variable "editor_iam_role" {
+  description = "Editor gives create/modify/destroy privs, no IAM."
+
+  default = "roles/editor"
+}
+
+variable "editor_iam_members" {
+  description = "List of users with editor privs in keep-prd."
+
+  default = [
+    "user:piotr.dyraga@thesis.co",
+    "user:jakub.nowakowski@thesis.co",
+    "user:matt.luongo@thesis.co",
+  ]
+}
+
 variable "project_service_list" {
   description = "List of google APIs/Services to enable with project creation"
 
