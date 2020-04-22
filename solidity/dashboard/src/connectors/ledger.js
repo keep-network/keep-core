@@ -12,9 +12,10 @@ export class LedgerProvider extends AbstractHardwareWalletConnector {
   }
 }
 
+const LEDGER_EXCHANGE_TIMEOUT = 100000
 const ledgerEthereumClientFactoryAsync = async () => {
   const ledgerConnection = await TransportU2F.create()
-  ledgerConnection.setExchangeTimeout(100000)
+  ledgerConnection.setExchangeTimeout(LEDGER_EXCHANGE_TIMEOUT)
   const ledgerEthClient = new AppEth(ledgerConnection)
 
   return ledgerEthClient
