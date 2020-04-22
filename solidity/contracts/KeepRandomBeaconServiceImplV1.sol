@@ -123,7 +123,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         _dkgContributionMargin = dkgContributionMargin;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 10961;
+        _baseCallbackGas = 10203;
     }
 
     /**
