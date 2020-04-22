@@ -1,0 +1,10 @@
+{
+    "networks": {
+        "1101": {
+            "wsURL": "ws://eth-tx-node.default.svc.cluster.local:8546"
+        },
+        "3": {
+            "wsURL": "wss://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
+        }
+    }
+}

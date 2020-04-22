@@ -1,5 +1,7 @@
 import Common from 'ethereumjs-common'
 import { Transaction as EthereumTx } from 'ethereumjs-tx'
+import config from '../config/config.json'
+import { getFirstNetworkIdFromArtifact } from '../contracts'
 
 export const getEthereumTxObj = (txData, chainId) => {
   const customCommon = Common.forCustomChain('mainnet', {
@@ -19,9 +21,20 @@ export const getChainIdFromV = (vInHex) => {
 }
 
 export const getChainId = () => {
-  return process.env.CHAIN_ID || 1337
+  if (process.env.NODE_ENV === 'development') {
+    // private chains (default), change if you use a different one
+    return 1337
+  }
+  // For KEEP internal testnet, ropsten and mainnet `chainId == networkId`
+  return getFirstNetworkIdFromArtifact()
 }
 
-export const getRpcURL = () => {
-  return process.env.ETH_RPC_URL || 'ws://localhost:8545'
+export const getWsUrl = () => {
+  if (process.env.NODE_ENV === 'development') {
+    // Ganache web socket url, change if you use a different one
+    return 'ws://localhost:8545'
+  }
+  return config
+    .networks[getChainId()]
+    .wsURL
 }

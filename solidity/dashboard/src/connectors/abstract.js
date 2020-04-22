@@ -1,7 +1,7 @@
 import Web3ProviderEngine from 'web3-provider-engine'
 import WebsocketSubprovider from 'web3-provider-engine/subproviders/websocket'
 import CacheSubprovider from 'web3-provider-engine/subproviders/cache'
-import { getRpcURL } from './utils'
+import { getWsUrl } from './utils'
 
 export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
     provider
@@ -11,7 +11,7 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
       this.provider = provider
       this.addProvider(this.provider)
       this.addProvider(new CacheSubprovider())
-      this.addProvider(new WebsocketSubprovider({ rpcUrl: getRpcURL(), debug: false }))
+      this.addProvider(new WebsocketSubprovider({ rpcUrl: getWsUrl(), debug: false }))
     }
 
     enable = async () => {

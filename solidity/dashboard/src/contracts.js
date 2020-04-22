@@ -92,3 +92,8 @@ function getContractAddress({ networks }) {
   return networks[Object.keys(networks)[0]].address
 };
 
+// The artifacts from @keep-network/keep-core for a given build only support a single network id
+export function getFirstNetworkIdFromArtifact() {
+  return Object.keys(KeepToken.networks)[0];
+}
+
