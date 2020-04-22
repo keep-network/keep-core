@@ -112,6 +112,23 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	return peer.IDFromPublicKey(&networkPublicKey)
 }
 
+func (p *provider) BroadcastChannelForwarderFor(name string) {
+	logger.Infof("requested message forwarder for channel: [%v]", name)
+
+	// TTL for a single message forwarder should be limited to avoid unnecessary
+	// resource consumption. One hour seems to be a reasonable value as no
+	// single protocol execution will exceed this time.
+	ttl := 1 * time.Hour
+
+	if err := p.broadcastChannelManager.newForwarder(name, ttl); err != nil {
+		logger.Warningf(
+			"could not create message forwarder for channel [%v]: [%v]",
+			name,
+			err,
+		)
+	}
+}
+
 type connectionManager struct {
 	host.Host
 }
