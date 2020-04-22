@@ -13,6 +13,9 @@ executors:
   docker-thesis-buildpack:
     docker:
       - image: thesisco/docker-buildpack:bionic
+  docker-xgo:
+    docker:
+      - image: karalabe/xgo-latest
 
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.0.4
@@ -67,6 +70,54 @@ jobs:
           root: /tmp/keep-client
           paths:
             - docker-images
+
+  cross_compile_client:
+    executor: docker-xgo
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Copy source code
+          command: |
+            docker load -i /tmp/keep-client/docker-images/keep-client.tar
+            container_id=$(docker create keep-client)
+            docker cp $container_id:/go/src/github.com/keep-network/keep-core ~/project
+            docker rm $container_id
+      - run:
+          name: Compile binaries
+          working_directory: ~/project
+          command: xgo -v -dest /tmp/keep-client/bin -out keep-client --targets=linux/amd64 .
+      # xgo doesn't respect `-dest` flag to point a destination directory so we
+      # need to move the output from a place the command saved them
+      - run:
+          name: Move binaries
+          command: |
+            mkdir -p /tmp/keep-client/bin
+            mv /build/keep-client* /tmp/keep-client/bin
+      - persist_to_workspace:
+          root: /tmp/keep-client
+          paths:
+            - bin
+
+  publish_client_binaries:
+    executor: gcp-cli/default
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - gcp-cli/install
+      - gcp-cli/initialize:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - run:
+          name: Upload client binaries
+          command: |
+            cd /tmp/keep-client/bin
+            gsutil -m cp * gs://${CLIENT_BIN_BUCKET}/keep-core/
+
   build_initcontainer:
     executor: docker-git
     steps:
@@ -332,6 +383,13 @@ workflows:
           filters:
             branches:
               ignore: master
+      - cross_compile_client:
+          requires:
+            - build_client_and_test_go
+      - publish_client_binaries:
+          context: keep-dev
+          requires:
+            - cross_compile_client
   build-test-migrate-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
@@ -400,98 +458,98 @@ workflows:
           requires:
             - build_token_dashboard_dapp
   build-test-migrate-publish-keep-test:
-      jobs:
-        - keep_test_approval:
-            type: approval
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-        - build_client_and_test_go:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - keep_test_approval
-        - build_initcontainer:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - migrate_contracts
-              - build_client_and_test_go
-        - migrate_contracts:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-        - publish_keep_client:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-              - build_initcontainer
-              - migrate_contracts
-        - publish_contract_data:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-              - migrate_contracts
-        - publish_npm_package:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - migrate_contracts
-        - trigger_downstream_builds:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - publish_npm_package
-        - build_token_dashboard_dapp:
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - publish_npm_package
-        - publish_token_dashboard_dapp:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_token_dashboard_dapp
+    jobs:
+      - keep_test_approval:
+          type: approval
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+      - build_client_and_test_go:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - keep_test_approval
+      - build_initcontainer:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - migrate_contracts
+            - build_client_and_test_go
+      - migrate_contracts:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+      - publish_keep_client:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+            - build_initcontainer
+            - migrate_contracts
+      - publish_contract_data:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+            - migrate_contracts
+      - publish_npm_package:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - migrate_contracts
+      - trigger_downstream_builds:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - publish_npm_package
+      - build_token_dashboard_dapp:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - publish_npm_package
+      - publish_token_dashboard_dapp:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_token_dashboard_dapp
   docs:
     jobs:
       - generate_docs_tex
