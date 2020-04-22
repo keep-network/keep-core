@@ -57,6 +57,7 @@ variable "project_service_list" {
   default = [
     "compute.googleapis.com",
     "container.googleapis.com",
+    "dns.googleapis.com",
   ]
 }
 
