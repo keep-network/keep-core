@@ -14,8 +14,10 @@ const Header = (props) => {
       <a href="/" className='logo'><Icons.Keep width='250px' height='80px'/></a>
       <Web3Status />
       <div className='account-address'>
-        <span className="text-label text-bold">ADDRESS&nbsp;</span>
-        <AddressShortcut classNames="text-small" address={yourAddress} />
+        <h5 className="text-grey-50">
+          <span>ADDRESS&nbsp;</span>
+          <AddressShortcut classNames="text-small" address={yourAddress} />
+        </h5>
         <NetworkStatus />
       </div>
       <MenuButton />
