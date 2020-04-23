@@ -70,44 +70,41 @@ const DelegatedTokens = (props) => {
     }
   }
   return (
-    <section id="delegated-tokens" className="flex row space-between">
-      <Tile title="Delegated Tokens" id="delegated-tokens-summary" className="tile flex column">
-        <LoadingOverlay isFetching={isFetching} >
-          <h2 className="balance">
-            {stakedBalance && `${displayAmount(stakedBalance)}`} KEEP
-          </h2>
-          <h6 className="text-grey-70">owner&nbsp;
-            <AddressShortcut
-              address={ownerAddress}
-              classNames='text-small text-normal text-darker-grey'
-            />
-          </h6>
-          <h6 className="text-grey-70">beneficiary&nbsp;
-            <AddressShortcut
-              address={beneficiaryAddress}
-              classNames='text-small text-normal text-darker-grey'
-            />
-          </h6>
-          <h6 className="text-grey-70">authorizer&nbsp;
-            <AddressShortcut
-              address={authorizerAddress}
-              classNames='text-small text-normal text-darker-grey'
-            />
-          </h6>
-        </LoadingOverlay>
-      </Tile>
-      <Tile title="Undelegate All Tokens" id="delegated-form-section" className="tile flex column ">
-        <LoadingOverlay isFetching={isFetching} classNames="flex flex-1 column" >
-          <h3 className="text-grey-60">Undelegate All Tokens</h3>
-          <div className="text-big text-grey-70 mt-1 mb-1">
-            Click undelegate below to return all of your delegated KEEP tokens to their original owner address.
-          </div>
-          <div className="flex" style={{ marginTop: 'auto' }}>
-            {renderUndelegationStatus()}
-          </div>
-        </LoadingOverlay>
-      </Tile>
-    </section>
+    <LoadingOverlay isFetching={isFetching} >
+      <section id="delegated-tokens" className="flex row space-between">
+        <Tile title="Total Balance" id="delegated-tokens-summary" className="tile flex column">
+            <h2 className="balance">
+              {stakedBalance && `${displayAmount(stakedBalance)}`} KEEP
+            </h2>
+            <h6 className="text-grey-70">owner&nbsp;
+              <AddressShortcut
+                address={ownerAddress}
+                classNames='text-small text-normal text-darker-grey'
+              />
+            </h6>
+            <h6 className="text-grey-70">beneficiary&nbsp;
+              <AddressShortcut
+                address={beneficiaryAddress}
+                classNames='text-small text-normal text-darker-grey'
+              />
+            </h6>
+            <h6 className="text-grey-70">authorizer&nbsp;
+              <AddressShortcut
+                address={authorizerAddress}
+                classNames='text-small text-normal text-darker-grey'
+              />
+            </h6>
+        </Tile>
+        <Tile title="Undelegate All Tokens" id="delegated-form-section" className="tile flex column ">
+            <div className="text-big text-grey-70 mt-1 mb-1">
+              Click undelegate below to return all of your delegated KEEP tokens to their original owner address.
+            </div>
+            <div className="flex" style={{ marginTop: 'auto' }}>
+              {renderUndelegationStatus()}
+            </div>
+        </Tile>
+      </section>
+    </LoadingOverlay>
   )
 }
 
