@@ -28,7 +28,7 @@ var (
 )
 
 // RegistryABI is the input ABI used to generate the binding from.
-const RegistryABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"GovernanceUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"OperatorContractApproved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"OperatorContractDisabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"serviceContract\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"upgrader\",\"type\":\"address\"}],\"name\":\"OperatorContractUpgraderUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"PanicButtonUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"RegistryKeeperUpdated\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"approveOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"disableOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"isApprovedOperatorContract\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"isNewOperatorContract\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_serviceContract\",\"type\":\"address\"}],\"name\":\"operatorContractUpgraderFor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"operatorContractUpgraders\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"operatorContracts\",\"outputs\":[{\"internalType\":\"enumRegistry.ContractStatus\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_governance\",\"type\":\"address\"}],\"name\":\"setGovernance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_serviceContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContractUpgrader\",\"type\":\"address\"}],\"name\":\"setOperatorContractUpgrader\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_panicButton\",\"type\":\"address\"}],\"name\":\"setPanicButton\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registryKeeper\",\"type\":\"address\"}],\"name\":\"setRegistryKeeper\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const RegistryABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"DefaultPanicButtonUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"GovernanceUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"OperatorContractApproved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"OperatorContractDisabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"OperatorContractPanicButtonDisabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"panicButton\",\"type\":\"address\"}],\"name\":\"OperatorContractPanicButtonUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"serviceContract\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"upgrader\",\"type\":\"address\"}],\"name\":\"OperatorContractUpgraderUpdated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"RegistryKeeperUpdated\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"approveOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"disableOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"disableOperatorContractPanicButton\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"isApprovedOperatorContract\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"isNewOperatorContract\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_serviceContract\",\"type\":\"address\"}],\"name\":\"operatorContractUpgraderFor\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"operatorContractUpgraders\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"operatorContracts\",\"outputs\":[{\"internalType\":\"enumRegistry.ContractStatus\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"panicButtons\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_panicButton\",\"type\":\"address\"}],\"name\":\"setDefaultPanicButton\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_governance\",\"type\":\"address\"}],\"name\":\"setGovernance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_panicButton\",\"type\":\"address\"}],\"name\":\"setOperatorContractPanicButton\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_serviceContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContractUpgrader\",\"type\":\"address\"}],\"name\":\"setOperatorContractUpgrader\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registryKeeper\",\"type\":\"address\"}],\"name\":\"setRegistryKeeper\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // Registry is an auto generated Go binding around an Ethereum contract.
 type Registry struct {
@@ -302,6 +302,32 @@ func (_Registry *RegistryCallerSession) OperatorContracts(arg0 common.Address) (
 	return _Registry.Contract.OperatorContracts(&_Registry.CallOpts, arg0)
 }
 
+// PanicButtons is a free data retrieval call binding the contract method 0x7b4df938.
+//
+// Solidity: function panicButtons(address ) constant returns(address)
+func (_Registry *RegistryCaller) PanicButtons(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _Registry.contract.Call(opts, out, "panicButtons", arg0)
+	return *ret0, err
+}
+
+// PanicButtons is a free data retrieval call binding the contract method 0x7b4df938.
+//
+// Solidity: function panicButtons(address ) constant returns(address)
+func (_Registry *RegistrySession) PanicButtons(arg0 common.Address) (common.Address, error) {
+	return _Registry.Contract.PanicButtons(&_Registry.CallOpts, arg0)
+}
+
+// PanicButtons is a free data retrieval call binding the contract method 0x7b4df938.
+//
+// Solidity: function panicButtons(address ) constant returns(address)
+func (_Registry *RegistryCallerSession) PanicButtons(arg0 common.Address) (common.Address, error) {
+	return _Registry.Contract.PanicButtons(&_Registry.CallOpts, arg0)
+}
+
 // ApproveOperatorContract is a paid mutator transaction binding the contract method 0x02db580b.
 //
 // Solidity: function approveOperatorContract(address operatorContract) returns()
@@ -344,6 +370,48 @@ func (_Registry *RegistryTransactorSession) DisableOperatorContract(operatorCont
 	return _Registry.Contract.DisableOperatorContract(&_Registry.TransactOpts, operatorContract)
 }
 
+// DisableOperatorContractPanicButton is a paid mutator transaction binding the contract method 0x637e9dbe.
+//
+// Solidity: function disableOperatorContractPanicButton(address _operatorContract) returns()
+func (_Registry *RegistryTransactor) DisableOperatorContractPanicButton(opts *bind.TransactOpts, _operatorContract common.Address) (*types.Transaction, error) {
+	return _Registry.contract.Transact(opts, "disableOperatorContractPanicButton", _operatorContract)
+}
+
+// DisableOperatorContractPanicButton is a paid mutator transaction binding the contract method 0x637e9dbe.
+//
+// Solidity: function disableOperatorContractPanicButton(address _operatorContract) returns()
+func (_Registry *RegistrySession) DisableOperatorContractPanicButton(_operatorContract common.Address) (*types.Transaction, error) {
+	return _Registry.Contract.DisableOperatorContractPanicButton(&_Registry.TransactOpts, _operatorContract)
+}
+
+// DisableOperatorContractPanicButton is a paid mutator transaction binding the contract method 0x637e9dbe.
+//
+// Solidity: function disableOperatorContractPanicButton(address _operatorContract) returns()
+func (_Registry *RegistryTransactorSession) DisableOperatorContractPanicButton(_operatorContract common.Address) (*types.Transaction, error) {
+	return _Registry.Contract.DisableOperatorContractPanicButton(&_Registry.TransactOpts, _operatorContract)
+}
+
+// SetDefaultPanicButton is a paid mutator transaction binding the contract method 0x618dae20.
+//
+// Solidity: function setDefaultPanicButton(address _panicButton) returns()
+func (_Registry *RegistryTransactor) SetDefaultPanicButton(opts *bind.TransactOpts, _panicButton common.Address) (*types.Transaction, error) {
+	return _Registry.contract.Transact(opts, "setDefaultPanicButton", _panicButton)
+}
+
+// SetDefaultPanicButton is a paid mutator transaction binding the contract method 0x618dae20.
+//
+// Solidity: function setDefaultPanicButton(address _panicButton) returns()
+func (_Registry *RegistrySession) SetDefaultPanicButton(_panicButton common.Address) (*types.Transaction, error) {
+	return _Registry.Contract.SetDefaultPanicButton(&_Registry.TransactOpts, _panicButton)
+}
+
+// SetDefaultPanicButton is a paid mutator transaction binding the contract method 0x618dae20.
+//
+// Solidity: function setDefaultPanicButton(address _panicButton) returns()
+func (_Registry *RegistryTransactorSession) SetDefaultPanicButton(_panicButton common.Address) (*types.Transaction, error) {
+	return _Registry.Contract.SetDefaultPanicButton(&_Registry.TransactOpts, _panicButton)
+}
+
 // SetGovernance is a paid mutator transaction binding the contract method 0xab033ea9.
 //
 // Solidity: function setGovernance(address _governance) returns()
@@ -363,6 +431,27 @@ func (_Registry *RegistrySession) SetGovernance(_governance common.Address) (*ty
 // Solidity: function setGovernance(address _governance) returns()
 func (_Registry *RegistryTransactorSession) SetGovernance(_governance common.Address) (*types.Transaction, error) {
 	return _Registry.Contract.SetGovernance(&_Registry.TransactOpts, _governance)
+}
+
+// SetOperatorContractPanicButton is a paid mutator transaction binding the contract method 0xd82437f4.
+//
+// Solidity: function setOperatorContractPanicButton(address _operatorContract, address _panicButton) returns()
+func (_Registry *RegistryTransactor) SetOperatorContractPanicButton(opts *bind.TransactOpts, _operatorContract common.Address, _panicButton common.Address) (*types.Transaction, error) {
+	return _Registry.contract.Transact(opts, "setOperatorContractPanicButton", _operatorContract, _panicButton)
+}
+
+// SetOperatorContractPanicButton is a paid mutator transaction binding the contract method 0xd82437f4.
+//
+// Solidity: function setOperatorContractPanicButton(address _operatorContract, address _panicButton) returns()
+func (_Registry *RegistrySession) SetOperatorContractPanicButton(_operatorContract common.Address, _panicButton common.Address) (*types.Transaction, error) {
+	return _Registry.Contract.SetOperatorContractPanicButton(&_Registry.TransactOpts, _operatorContract, _panicButton)
+}
+
+// SetOperatorContractPanicButton is a paid mutator transaction binding the contract method 0xd82437f4.
+//
+// Solidity: function setOperatorContractPanicButton(address _operatorContract, address _panicButton) returns()
+func (_Registry *RegistryTransactorSession) SetOperatorContractPanicButton(_operatorContract common.Address, _panicButton common.Address) (*types.Transaction, error) {
+	return _Registry.Contract.SetOperatorContractPanicButton(&_Registry.TransactOpts, _operatorContract, _panicButton)
 }
 
 // SetOperatorContractUpgrader is a paid mutator transaction binding the contract method 0x716d6061.
@@ -386,27 +475,6 @@ func (_Registry *RegistryTransactorSession) SetOperatorContractUpgrader(_service
 	return _Registry.Contract.SetOperatorContractUpgrader(&_Registry.TransactOpts, _serviceContract, _operatorContractUpgrader)
 }
 
-// SetPanicButton is a paid mutator transaction binding the contract method 0xb742edc9.
-//
-// Solidity: function setPanicButton(address _panicButton) returns()
-func (_Registry *RegistryTransactor) SetPanicButton(opts *bind.TransactOpts, _panicButton common.Address) (*types.Transaction, error) {
-	return _Registry.contract.Transact(opts, "setPanicButton", _panicButton)
-}
-
-// SetPanicButton is a paid mutator transaction binding the contract method 0xb742edc9.
-//
-// Solidity: function setPanicButton(address _panicButton) returns()
-func (_Registry *RegistrySession) SetPanicButton(_panicButton common.Address) (*types.Transaction, error) {
-	return _Registry.Contract.SetPanicButton(&_Registry.TransactOpts, _panicButton)
-}
-
-// SetPanicButton is a paid mutator transaction binding the contract method 0xb742edc9.
-//
-// Solidity: function setPanicButton(address _panicButton) returns()
-func (_Registry *RegistryTransactorSession) SetPanicButton(_panicButton common.Address) (*types.Transaction, error) {
-	return _Registry.Contract.SetPanicButton(&_Registry.TransactOpts, _panicButton)
-}
-
 // SetRegistryKeeper is a paid mutator transaction binding the contract method 0xdb816b62.
 //
 // Solidity: function setRegistryKeeper(address _registryKeeper) returns()
@@ -426,6 +494,138 @@ func (_Registry *RegistrySession) SetRegistryKeeper(_registryKeeper common.Addre
 // Solidity: function setRegistryKeeper(address _registryKeeper) returns()
 func (_Registry *RegistryTransactorSession) SetRegistryKeeper(_registryKeeper common.Address) (*types.Transaction, error) {
 	return _Registry.Contract.SetRegistryKeeper(&_Registry.TransactOpts, _registryKeeper)
+}
+
+// RegistryDefaultPanicButtonUpdatedIterator is returned from FilterDefaultPanicButtonUpdated and is used to iterate over the raw logs and unpacked data for DefaultPanicButtonUpdated events raised by the Registry contract.
+type RegistryDefaultPanicButtonUpdatedIterator struct {
+	Event *RegistryDefaultPanicButtonUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *RegistryDefaultPanicButtonUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(RegistryDefaultPanicButtonUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(RegistryDefaultPanicButtonUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *RegistryDefaultPanicButtonUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *RegistryDefaultPanicButtonUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// RegistryDefaultPanicButtonUpdated represents a DefaultPanicButtonUpdated event raised by the Registry contract.
+type RegistryDefaultPanicButtonUpdated struct {
+	Raw types.Log // Blockchain specific contextual infos
+}
+
+// FilterDefaultPanicButtonUpdated is a free log retrieval operation binding the contract event 0xd2d642ac7b8a5ebfc5dcbe35662d1c1ba8c961ca8092caddf1ab66bb08940af4.
+//
+// Solidity: event DefaultPanicButtonUpdated()
+func (_Registry *RegistryFilterer) FilterDefaultPanicButtonUpdated(opts *bind.FilterOpts) (*RegistryDefaultPanicButtonUpdatedIterator, error) {
+
+	logs, sub, err := _Registry.contract.FilterLogs(opts, "DefaultPanicButtonUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &RegistryDefaultPanicButtonUpdatedIterator{contract: _Registry.contract, event: "DefaultPanicButtonUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchDefaultPanicButtonUpdated is a free log subscription operation binding the contract event 0xd2d642ac7b8a5ebfc5dcbe35662d1c1ba8c961ca8092caddf1ab66bb08940af4.
+//
+// Solidity: event DefaultPanicButtonUpdated()
+func (_Registry *RegistryFilterer) WatchDefaultPanicButtonUpdated(opts *bind.WatchOpts, sink chan<- *RegistryDefaultPanicButtonUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _Registry.contract.WatchLogs(opts, "DefaultPanicButtonUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(RegistryDefaultPanicButtonUpdated)
+				if err := _Registry.contract.UnpackLog(event, "DefaultPanicButtonUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseDefaultPanicButtonUpdated is a log parse operation binding the contract event 0xd2d642ac7b8a5ebfc5dcbe35662d1c1ba8c961ca8092caddf1ab66bb08940af4.
+//
+// Solidity: event DefaultPanicButtonUpdated()
+func (_Registry *RegistryFilterer) ParseDefaultPanicButtonUpdated(log types.Log) (*RegistryDefaultPanicButtonUpdated, error) {
+	event := new(RegistryDefaultPanicButtonUpdated)
+	if err := _Registry.contract.UnpackLog(event, "DefaultPanicButtonUpdated", log); err != nil {
+		return nil, err
+	}
+	return event, nil
 }
 
 // RegistryGovernanceUpdatedIterator is returned from FilterGovernanceUpdated and is used to iterate over the raw logs and unpacked data for GovernanceUpdated events raised by the Registry contract.
@@ -826,6 +1026,273 @@ func (_Registry *RegistryFilterer) ParseOperatorContractDisabled(log types.Log) 
 	return event, nil
 }
 
+// RegistryOperatorContractPanicButtonDisabledIterator is returned from FilterOperatorContractPanicButtonDisabled and is used to iterate over the raw logs and unpacked data for OperatorContractPanicButtonDisabled events raised by the Registry contract.
+type RegistryOperatorContractPanicButtonDisabledIterator struct {
+	Event *RegistryOperatorContractPanicButtonDisabled // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *RegistryOperatorContractPanicButtonDisabledIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(RegistryOperatorContractPanicButtonDisabled)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(RegistryOperatorContractPanicButtonDisabled)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *RegistryOperatorContractPanicButtonDisabledIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *RegistryOperatorContractPanicButtonDisabledIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// RegistryOperatorContractPanicButtonDisabled represents a OperatorContractPanicButtonDisabled event raised by the Registry contract.
+type RegistryOperatorContractPanicButtonDisabled struct {
+	OperatorContract common.Address
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorContractPanicButtonDisabled is a free log retrieval operation binding the contract event 0x825c13d61db27b3c0dae8523f70310e87c2dfd99ea7023664547208322ff679c.
+//
+// Solidity: event OperatorContractPanicButtonDisabled(address operatorContract)
+func (_Registry *RegistryFilterer) FilterOperatorContractPanicButtonDisabled(opts *bind.FilterOpts) (*RegistryOperatorContractPanicButtonDisabledIterator, error) {
+
+	logs, sub, err := _Registry.contract.FilterLogs(opts, "OperatorContractPanicButtonDisabled")
+	if err != nil {
+		return nil, err
+	}
+	return &RegistryOperatorContractPanicButtonDisabledIterator{contract: _Registry.contract, event: "OperatorContractPanicButtonDisabled", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorContractPanicButtonDisabled is a free log subscription operation binding the contract event 0x825c13d61db27b3c0dae8523f70310e87c2dfd99ea7023664547208322ff679c.
+//
+// Solidity: event OperatorContractPanicButtonDisabled(address operatorContract)
+func (_Registry *RegistryFilterer) WatchOperatorContractPanicButtonDisabled(opts *bind.WatchOpts, sink chan<- *RegistryOperatorContractPanicButtonDisabled) (event.Subscription, error) {
+
+	logs, sub, err := _Registry.contract.WatchLogs(opts, "OperatorContractPanicButtonDisabled")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(RegistryOperatorContractPanicButtonDisabled)
+				if err := _Registry.contract.UnpackLog(event, "OperatorContractPanicButtonDisabled", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorContractPanicButtonDisabled is a log parse operation binding the contract event 0x825c13d61db27b3c0dae8523f70310e87c2dfd99ea7023664547208322ff679c.
+//
+// Solidity: event OperatorContractPanicButtonDisabled(address operatorContract)
+func (_Registry *RegistryFilterer) ParseOperatorContractPanicButtonDisabled(log types.Log) (*RegistryOperatorContractPanicButtonDisabled, error) {
+	event := new(RegistryOperatorContractPanicButtonDisabled)
+	if err := _Registry.contract.UnpackLog(event, "OperatorContractPanicButtonDisabled", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// RegistryOperatorContractPanicButtonUpdatedIterator is returned from FilterOperatorContractPanicButtonUpdated and is used to iterate over the raw logs and unpacked data for OperatorContractPanicButtonUpdated events raised by the Registry contract.
+type RegistryOperatorContractPanicButtonUpdatedIterator struct {
+	Event *RegistryOperatorContractPanicButtonUpdated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *RegistryOperatorContractPanicButtonUpdatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(RegistryOperatorContractPanicButtonUpdated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(RegistryOperatorContractPanicButtonUpdated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *RegistryOperatorContractPanicButtonUpdatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *RegistryOperatorContractPanicButtonUpdatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// RegistryOperatorContractPanicButtonUpdated represents a OperatorContractPanicButtonUpdated event raised by the Registry contract.
+type RegistryOperatorContractPanicButtonUpdated struct {
+	OperatorContract common.Address
+	PanicButton      common.Address
+	Raw              types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorContractPanicButtonUpdated is a free log retrieval operation binding the contract event 0x5f94d794a8a48b75e2ca89133a5b8748d14217648260c5247e57e3d314fd52a7.
+//
+// Solidity: event OperatorContractPanicButtonUpdated(address operatorContract, address panicButton)
+func (_Registry *RegistryFilterer) FilterOperatorContractPanicButtonUpdated(opts *bind.FilterOpts) (*RegistryOperatorContractPanicButtonUpdatedIterator, error) {
+
+	logs, sub, err := _Registry.contract.FilterLogs(opts, "OperatorContractPanicButtonUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return &RegistryOperatorContractPanicButtonUpdatedIterator{contract: _Registry.contract, event: "OperatorContractPanicButtonUpdated", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorContractPanicButtonUpdated is a free log subscription operation binding the contract event 0x5f94d794a8a48b75e2ca89133a5b8748d14217648260c5247e57e3d314fd52a7.
+//
+// Solidity: event OperatorContractPanicButtonUpdated(address operatorContract, address panicButton)
+func (_Registry *RegistryFilterer) WatchOperatorContractPanicButtonUpdated(opts *bind.WatchOpts, sink chan<- *RegistryOperatorContractPanicButtonUpdated) (event.Subscription, error) {
+
+	logs, sub, err := _Registry.contract.WatchLogs(opts, "OperatorContractPanicButtonUpdated")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(RegistryOperatorContractPanicButtonUpdated)
+				if err := _Registry.contract.UnpackLog(event, "OperatorContractPanicButtonUpdated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorContractPanicButtonUpdated is a log parse operation binding the contract event 0x5f94d794a8a48b75e2ca89133a5b8748d14217648260c5247e57e3d314fd52a7.
+//
+// Solidity: event OperatorContractPanicButtonUpdated(address operatorContract, address panicButton)
+func (_Registry *RegistryFilterer) ParseOperatorContractPanicButtonUpdated(log types.Log) (*RegistryOperatorContractPanicButtonUpdated, error) {
+	event := new(RegistryOperatorContractPanicButtonUpdated)
+	if err := _Registry.contract.UnpackLog(event, "OperatorContractPanicButtonUpdated", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // RegistryOperatorContractUpgraderUpdatedIterator is returned from FilterOperatorContractUpgraderUpdated and is used to iterate over the raw logs and unpacked data for OperatorContractUpgraderUpdated events raised by the Registry contract.
 type RegistryOperatorContractUpgraderUpdatedIterator struct {
 	Event *RegistryOperatorContractUpgraderUpdated // Event containing the contract specifics and raw log
@@ -955,138 +1422,6 @@ func (_Registry *RegistryFilterer) WatchOperatorContractUpgraderUpdated(opts *bi
 func (_Registry *RegistryFilterer) ParseOperatorContractUpgraderUpdated(log types.Log) (*RegistryOperatorContractUpgraderUpdated, error) {
 	event := new(RegistryOperatorContractUpgraderUpdated)
 	if err := _Registry.contract.UnpackLog(event, "OperatorContractUpgraderUpdated", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// RegistryPanicButtonUpdatedIterator is returned from FilterPanicButtonUpdated and is used to iterate over the raw logs and unpacked data for PanicButtonUpdated events raised by the Registry contract.
-type RegistryPanicButtonUpdatedIterator struct {
-	Event *RegistryPanicButtonUpdated // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *RegistryPanicButtonUpdatedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(RegistryPanicButtonUpdated)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(RegistryPanicButtonUpdated)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *RegistryPanicButtonUpdatedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *RegistryPanicButtonUpdatedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// RegistryPanicButtonUpdated represents a PanicButtonUpdated event raised by the Registry contract.
-type RegistryPanicButtonUpdated struct {
-	Raw types.Log // Blockchain specific contextual infos
-}
-
-// FilterPanicButtonUpdated is a free log retrieval operation binding the contract event 0x593717aed8c0869c13a98ac2dd5510256c75cdf1ddacd2697e54524a50e15263.
-//
-// Solidity: event PanicButtonUpdated()
-func (_Registry *RegistryFilterer) FilterPanicButtonUpdated(opts *bind.FilterOpts) (*RegistryPanicButtonUpdatedIterator, error) {
-
-	logs, sub, err := _Registry.contract.FilterLogs(opts, "PanicButtonUpdated")
-	if err != nil {
-		return nil, err
-	}
-	return &RegistryPanicButtonUpdatedIterator{contract: _Registry.contract, event: "PanicButtonUpdated", logs: logs, sub: sub}, nil
-}
-
-// WatchPanicButtonUpdated is a free log subscription operation binding the contract event 0x593717aed8c0869c13a98ac2dd5510256c75cdf1ddacd2697e54524a50e15263.
-//
-// Solidity: event PanicButtonUpdated()
-func (_Registry *RegistryFilterer) WatchPanicButtonUpdated(opts *bind.WatchOpts, sink chan<- *RegistryPanicButtonUpdated) (event.Subscription, error) {
-
-	logs, sub, err := _Registry.contract.WatchLogs(opts, "PanicButtonUpdated")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(RegistryPanicButtonUpdated)
-				if err := _Registry.contract.UnpackLog(event, "PanicButtonUpdated", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParsePanicButtonUpdated is a log parse operation binding the contract event 0x593717aed8c0869c13a98ac2dd5510256c75cdf1ddacd2697e54524a50e15263.
-//
-// Solidity: event PanicButtonUpdated()
-func (_Registry *RegistryFilterer) ParsePanicButtonUpdated(log types.Log) (*RegistryPanicButtonUpdated, error) {
-	event := new(RegistryPanicButtonUpdated)
-	if err := _Registry.contract.UnpackLog(event, "PanicButtonUpdated", log); err != nil {
 		return nil, err
 	}
 	return event, nil
