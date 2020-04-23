@@ -117,29 +117,32 @@ label {
   }
 
   &-label {
-    font-size: 1rem;
+    font-size: 0.8125rem;
     color: @color-grey-60;
-    line-height: 145%;
-    letter-spacing: 0.05em;
-    font-variant: small-caps;
+    line-height: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-feature-settings: 'tnum' on, 'lnum' on;
   }
 
   &-big {
     font-weight: normal;
-    font-size: 1.2rem !important;
+    font-size: 1.125rem !important;
     line-height: 145%;
     color: @color-grey-60;
+    font-feature-settings: 'tnum' on, 'lnum' on;
   }
 
   &-samll {
-    font-size: 1rem;
-    font-weight: 500;
+    font-size: .875rem;
+    font-weight: normal;
+    line-height: 145%;
+    font-feature-settings: 'tnum' on, 'lnum' on;
   }
 
   &-smaller {
-    font-size: .9rem;
+    font-size: .75rem;
     font-weight: normal;
-    line-height: 1rem;
   }
 
   &-title {
