@@ -1,14 +1,17 @@
-import web3Utils from "web3-utils"
-import { formatDate, wait, isSameEthAddress } from "../utils/general.utils"
-import { add, mul } from "../utils/arithmetics.utils"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
-import { OPERATOR_CONTRACT_NAME } from "../constants/constants"
+import web3Utils from 'web3-utils'
+import { formatDate, wait, isSameEthAddress } from '../utils/general.utils'
+import { add, gt } from '../utils/arithmetics.utils'
+import { CONTRACT_DEPLOY_BLOCK_NUMBER } from '../contracts'
+import {
+  OPERATOR_CONTRACT_NAME,
+} from '../constants/constants'
 
 const fetchAvailableRewards = async (web3Context) => {
   const {
     keepRandomBeaconOperatorContract,
+    keepRandomBeaconOperatorStatistics,
     stakingContract,
-    yourAddress,
+    yourAddress
   } = web3Context
   try {
     let totalRewardsBalance = web3Utils.toBN(0)
@@ -39,70 +42,44 @@ const fetchAvailableRewards = async (web3Context) => {
         if (!isSameEthAddress(yourAddress, beneficiaryAddressForMember)) {
           continue
         }
-        groupMemberIndices[groupPublicKey][
-          memberAddress
-        ] = await keepRandomBeaconOperatorContract.methods
-          .getGroupMemberIndices(groupPublicKey, memberAddress)
+        const awaitingRewards = await keepRandomBeaconOperatorStatistics
+          .methods
+          .awaitingRewards(memberAddress, groupIndex)
           .call()
+                  
+        if (gt(awaitingRewards, 0)) {
+          groupMemberIndices[groupPublicKey][memberAddress] = awaitingRewards
+        }
       }
       if (Object.keys(groupMemberIndices[groupPublicKey]).length === 0) {
         continue
       }
-      const {
-        reward,
-        rewardPerMemberInWei,
-      } = await getAvailableRewardFromGroupInEther(
-        groupPublicKey,
-        groupMemberIndices,
-        web3Context
-      )
-      const isStale = await keepRandomBeaconOperatorContract.methods
-        .isStaleGroup(groupPublicKey)
-        .call()
+      const reward = getAvailableRewardForGroup(groupMemberIndices[groupPublicKey])
+      const isStale = await keepRandomBeaconOperatorContract.methods.isStaleGroup(groupPublicKey).call()
 
-      totalRewardsBalance = add(
-        totalRewardsBalance,
-        web3Utils.toWei(reward, "ether")
-      )
+      totalRewardsBalance = add(totalRewardsBalance, reward)
       groups.push({
         groupIndex: groupIndex.toString(),
         groupPublicKey,
         membersIndeces: groupMemberIndices[groupPublicKey],
-        reward,
-        rewardPerMemberInWei,
+        reward: web3Utils.fromWei(reward, 'ether'),
         isStale,
       })
     }
-    return [groups, web3Utils.fromWei(totalRewardsBalance.toString(), "ether")]
+    return [groups, web3Utils.fromWei(totalRewardsBalance, 'ether')]
   } catch (error) {
     throw error
   }
 }
 
-const getAvailableRewardFromGroupInEther = async (
-  groupPublicKey,
-  groupMemberIndices,
-  web3Context
-) => {
-  const { keepRandomBeaconOperatorContract } = web3Context
-  const membersInGroup = Object.keys(groupMemberIndices[groupPublicKey])
-  const rewardsMultiplier =
-    membersInGroup.length === 1
-      ? groupMemberIndices[groupPublicKey][membersInGroup[0]].length
-      : membersInGroup.reduce((prev, current, index) => {
-          const prevValue =
-            index === 1 ? groupMemberIndices[groupPublicKey][prev].length : prev
-          return prevValue + groupMemberIndices[groupPublicKey][current].length
-        })
-  const groupMemberReward = await keepRandomBeaconOperatorContract.methods
-    .getGroupMemberRewards(groupPublicKey)
-    .call()
-  const wholeReward = mul(groupMemberReward, rewardsMultiplier)
-
-  return {
-    reward: web3Utils.fromWei(wholeReward, "ether"),
-    rewardPerMemberInWei: groupMemberReward,
+const getAvailableRewardForGroup = (operatorsAmount) => {
+  let wholeReward = 0
+  for(const operator in operatorsAmount ) {
+    if(operatorsAmount.hasOwnProperty(operator) ) {
+      wholeReward = add(wholeReward, operatorsAmount[operator])
+    }
   }
+  return wholeReward
 }
 
 const withdrawRewardFromGroup = async (
@@ -118,12 +95,9 @@ const withdrawRewardFromGroup = async (
 
     const promises = groupMembers.map((memberAddress) => {
       return new Promise((resolve, reject) => {
-        const request = keepRandomBeaconOperatorContract.methods
-          .withdrawGroupMemberRewards(
-            memberAddress,
-            groupIndex,
-            groupMembersIndices[memberAddress]
-          )
+        const request = keepRandomBeaconOperatorContract
+          .methods
+          .withdrawGroupMemberRewards(memberAddress, groupIndex)
           .send.request({ from: yourAddress }, (error, transactionHash) => {
             if (error) {
               resolve({

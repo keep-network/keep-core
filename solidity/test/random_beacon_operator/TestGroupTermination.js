@@ -192,5 +192,11 @@ describe('KeepRandomBeaconOperator/GroupTermination', function() {
           "No active groups"
         );
       })
+      it("ET", async function () {
+        await expectRevert(
+          runTerminationTest(2, 1, [1], 0),
+          "No active groups"
+        );
+      })
     })
 });

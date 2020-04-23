@@ -69,6 +69,10 @@ func (lp *localProvider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	return createLocalIdentifier(&networkPublicKey), nil
 }
 
+func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
+	//no-op
+}
+
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {

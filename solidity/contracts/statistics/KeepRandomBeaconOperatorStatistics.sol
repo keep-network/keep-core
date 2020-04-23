@@ -33,26 +33,31 @@ contract KeepRandomBeaconOperatorStatistics {
     }
 
 
-    /**
-     * @dev Gets all indices in the provided group for a member.
-     */
+    /// @notice Gets all indices in the provided group for a member.
+    /// If the given operator is not a member, returns an empty array.
     function getGroupMemberIndices(
         bytes memory groupPubKey,
-        address member
+        address operator
     ) public view returns (uint256[] memory indices) {
-        uint256 count = countGroupMembership(groupPubKey, member);
+        uint256 count = countGroupMembership(groupPubKey, operator);
         address[] memory members = operatorContract.getGroupMembers(groupPubKey);
 
         indices = new uint256[](count);
         uint256 counter = 0;
         for (uint i = 0; i < members.length; i++) {
-            if (members[i] == member) {
+            if (members[i] == operator) {
                 indices[counter] = i;
                 counter++;
             }
         }
     }
 
+    /// @notice Get the amount of group rewards
+    /// allocated to the given operator in the given group.
+    /// The rewards may or may not be withdrawable.
+    /// @param operator Address of the operator.
+    /// @param groupIndex Index of the group.
+    /// @return The total allocated rewards.
     function awaitingRewards(
         address operator,
         uint256 groupIndex
@@ -68,6 +73,12 @@ contract KeepRandomBeaconOperatorStatistics {
         return memberRewards.mul(memberCount);
     }
 
+    /// @notice Get the amount of group rewards
+    /// withdrawable by the given operator in the given group.
+    /// The group must be stale for any group rewards to be withdrawn.
+    /// @param operator Address of the operator.
+    /// @param groupIndex Index of the group.
+    /// @return The total withdrawable rewards.
     function withdrawableRewards(
         address operator,
         uint256 groupIndex
