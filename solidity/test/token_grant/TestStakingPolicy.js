@@ -7,6 +7,7 @@ const expect = chai.expect
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact('GuaranteedMinimumStakingPolicy');
+const AdaptiveStakingPolicy = contract.fromArtifact('AdaptiveStakingPolicy');
 
 describe('PermissiveStakingPolicy', async () => {
   let policy;
@@ -204,6 +205,176 @@ describe('GuaranteedMinimumStakingPolicy', async () => {
         minimumStake,
         "Should permit minimum stake with medium grant halfway through");
       expect(await calculate(2000, smallGrant, tokens(12500))).to.eq.BN(
+        tokens(37500),
+        "Should permit remaining amount with small grant halfway through");
+    });
+  })
+});
+
+
+describe('AdaptiveStakingPolicy', async () => {
+  let cliffPolicy;
+  let noCliffPolicy;
+  let stakingContract;
+  let minimumStake;
+  let largeGrant;
+  let mediumGrant;
+  let smallGrant;
+  let start = 1000;
+  let duration = 2000;
+  let cliff = 2000;
+  let minimumMultiplier = 4;
+  let stakeahead = 500;
+
+  // Minimum stake is 100,000 KEEP tokens at the beginning.
+  // `tokens(n)` returns a BN whose value equals `n` KEEP.
+  function tokens(n) { return minimumStake.divn(100000).muln(n); }
+
+  before(async () => {
+    stakingContract = await TokenStaking.new(
+      accounts[9],
+      accounts[9],
+      0, 0
+    );
+    cliffPolicy = await AdaptiveStakingPolicy.new(
+      stakingContract.address,
+      minimumMultiplier,
+      stakeahead,
+      true
+    );
+    noCliffPolicy = await AdaptiveStakingPolicy.new(
+      stakingContract.address,
+      minimumMultiplier,
+      stakeahead,
+      false
+    );
+    minimumStake = await stakingContract.minimumStake();
+    largeGrant = tokens(5000000); // 50x minimum stake
+    mediumGrant = tokens(500000); // 5x minimum stake
+    smallGrant = tokens(50000); // half of minimum stake
+  });
+
+  async function withCliff(atTimestamp, givenAmount, withdrawnAmount) {
+    return await cliffPolicy.getStakeableAmount(
+      atTimestamp,
+      givenAmount,
+      duration,
+      start,
+      cliff,
+      withdrawnAmount
+    );
+  }
+  async function withoutCliff(atTimestamp, givenAmount, withdrawnAmount) {
+    return await noCliffPolicy.getStakeableAmount(
+      atTimestamp,
+      givenAmount,
+      duration,
+      start,
+      cliff,
+      withdrawnAmount
+    );
+  }
+
+  describe("with nothing withdrawn", async () => {
+    it("should withCliff stakeable amount correctly before cliff", async () => {
+      expect(await withCliff(1499, largeGrant, 0)).to.eq.BN(
+        minimumStake.muln(minimumMultiplier),
+        "Should permit minimum stake with large grant before cliff");
+      expect(await withCliff(1499, mediumGrant, 0)).to.eq.BN(
+        minimumStake.muln(minimumMultiplier),
+        "Should permit minimum stake with medium grant before cliff");
+      expect(await withCliff(1499, smallGrant, 0)).to.eq.BN(
+        smallGrant,
+        "Should permit entire grant with small grant before cliff");
+    });
+
+    // cliff at 1000, stakeahead of 500
+    it("should withCliff stakeable amount correctly just after cliff", async () => {
+      expect(await withCliff(1500, largeGrant, 0)).to.eq.BN(
+        tokens(2500000),
+        "Should permit unlocked amount with large grant just after cliff");
+      expect(await withCliff(1500, mediumGrant, 0)).to.eq.BN(
+        minimumStake.muln(minimumMultiplier),
+        "Should permit minimum stake with medium grant just after cliff");
+      expect(await withCliff(1500, smallGrant, 0)).to.eq.BN(
+        smallGrant,
+        "Should permit entire grant with small grant just after cliff");
+    });
+
+    // stakeahead of 500, so 75% is unlocked
+    it("should withCliff stakeable amount correctly halfway through", async () => {
+      expect(await withCliff(2000, largeGrant, 0)).to.eq.BN(
+        tokens(3750000),
+        "Should permit unlocked amount with large grant halfway through");
+      expect(await withCliff(2000, mediumGrant, 0)).to.eq.BN(
+        minimumStake.muln(minimumMultiplier),
+        "Should permit unlocked amount with medium grant halfway through");
+      expect(await withCliff(2000, smallGrant, 0)).to.eq.BN(
+        smallGrant,
+        "Should permit entire grant with small grant halfway through");
+    });
+
+    it("should withCliff stakeable amount correctly after unlocking period", async () => {
+      expect(await withCliff(3000, largeGrant, 0)).to.eq.BN(
+        largeGrant,
+        "Should permit unlocked amount with large grant after unlocking period");
+      expect(await withCliff(3000, mediumGrant, 0)).to.eq.BN(
+        mediumGrant,
+        "Should permit unlocked amount with medium grant after unlocking period");
+      expect(await withCliff(3000, smallGrant, 0)).to.eq.BN(
+        smallGrant,
+        "Should permit entire grant with small grant after unlocking period");
+    });
+  })
+
+  describe("with all unlocked tokens withdrawn", async () => {
+    it("should withCliff stakeable amount correctly just after cliff", async () => {
+      expect(await withCliff(2000, largeGrant, tokens(2500000))).to.eq.BN(
+        tokens(1250000),
+        "Should permit minimum stake with large grant just after cliff");
+      expect(await withCliff(2000, mediumGrant, tokens(250000))).to.eq.BN(
+        tokens(250000),
+        "Should permit minimum stake with medium grant just after cliff");
+      expect(await withCliff(1500, smallGrant, tokens(12500))).to.eq.BN(
+        tokens(37500),
+        "Should permit remaining amount with small grant just after cliff");
+    });
+
+    // good numbers stop here
+    it("should withCliff stakeable amount correctly at three quarters", async () => {
+      expect(await withCliff(2500, largeGrant, tokens(375000))).to.eq.BN(
+        minimumStake.muln(minimumMultiplier),
+        "Should permit minimum stake with large grant at three quarters");
+      expect(await withCliff(2500, mediumGrant, tokens(187500))).to.eq.BN(
+        tokens(62500),
+        "Should permit remaining amount with medium grant at three quarters");
+      expect(await withCliff(2500, smallGrant, tokens(37500))).to.eq.BN(
+        tokens(12500),
+        "Should permit remaining amount with small grant at three quarters");
+    });
+  })
+
+  describe("with half of unlocked tokens withdrawn", async () => {
+    it("should withCliff stakeable amount correctly just after cliff", async () => {
+      expect(await withCliff(1500, largeGrant, tokens(62500))).to.eq.BN(
+        minimumStake,
+        "Should permit minimum stake with large grant just after cliff");
+      expect(await withCliff(1500, mediumGrant, tokens(31250))).to.eq.BN(
+        minimumStake,
+        "Should permit minimum stake with medium grant just after cliff");
+      expect(await withCliff(1500, smallGrant, tokens(6250))).to.eq.BN(
+        tokens(43750),
+        "Should permit remaining amount with small grant just after cliff");
+    });
+
+    it("should withCliff stakeable amount correctly halfway through", async () => {
+      expect(await withCliff(2000, largeGrant, tokens(125000))).to.eq.BN(
+        tokens(125000),
+        "Should permit remaining unlocked amount with large grant halfway through");
+      expect(await withCliff(2000, mediumGrant, tokens(62500))).to.eq.BN(
+        minimumStake,
+        "Should permit minimum stake with medium grant halfway through");
+      expect(await withCliff(2000, smallGrant, tokens(12500))).to.eq.BN(
         tokens(37500),
         "Should permit remaining amount with small grant halfway through");
     });
