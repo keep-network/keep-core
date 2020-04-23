@@ -1,6 +1,6 @@
 const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
 const { accounts, contract } = require("@openzeppelin/test-environment")
-const { expectRevert } = require("@openzeppelin/test-helpers")
+const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 
 const Registry = contract.fromArtifact('Registry');
@@ -64,6 +64,15 @@ describe('Registry', () => {
                 "Unexpected governance"
             )
         })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setGovernance(
+                someoneElse, { from: governance }
+            )
+            expectEvent(receipt, "GovernanceUpdated", {
+                governance: someoneElse
+              })
+        })
     })
 
     describe("setRegistryKeeper", async () => {
@@ -87,6 +96,15 @@ describe('Registry', () => {
                 "Unexpected registry keeper"
             )
         })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setRegistryKeeper(
+                someoneElse, { from: governance }
+            )
+            expectEvent(receipt, "RegistryKeeperUpdated", {
+                registryKeeper: someoneElse
+            })
+        })
     })
 
     describe("setDefaultPanicButton", async () => {
@@ -109,6 +127,15 @@ describe('Registry', () => {
                 someoneElse,
                 "Unexpected registry keeper"
             )
+        })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setDefaultPanicButton(
+                someoneElse, { from: governance }
+            )
+            expectEvent(receipt, "DefaultPanicButtonUpdated", {
+                defaultPanicButton: someoneElse
+            })
         })
     })
 

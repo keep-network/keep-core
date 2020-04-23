@@ -47,9 +47,9 @@ contract Registry {
     event OperatorContractApproved(address operatorContract);
     event OperatorContractDisabled(address operatorContract);
 
-    event GovernanceUpdated();
-    event RegistryKeeperUpdated();
-    event DefaultPanicButtonUpdated();
+    event GovernanceUpdated(address governance);
+    event RegistryKeeperUpdated(address registryKeeper);
+    event DefaultPanicButtonUpdated(address defaultPanicButton);
     event OperatorContractPanicButtonDisabled(address operatorContract);
     event OperatorContractPanicButtonUpdated(
         address operatorContract,
@@ -101,17 +101,17 @@ contract Registry {
 
     function setGovernance(address _governance) public onlyGovernance {
         governance = _governance;
-        emit GovernanceUpdated();
+        emit GovernanceUpdated(governance);
     }
 
     function setRegistryKeeper(address _registryKeeper) public onlyGovernance {
         registryKeeper = _registryKeeper;
-        emit RegistryKeeperUpdated();
+        emit RegistryKeeperUpdated(registryKeeper);
     }
 
     function setDefaultPanicButton(address _panicButton) public onlyGovernance {
         defaultPanicButton = _panicButton;
-        emit DefaultPanicButtonUpdated();
+        emit DefaultPanicButtonUpdated(defaultPanicButton);
     }
 
     function setOperatorContractPanicButton(
