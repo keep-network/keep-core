@@ -5,19 +5,19 @@ import SlashedTokens from '../components/SlashedTokens'
 import AuthorizationInfo from '../components/AuthorizationInfo'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
+import PageWrapper from '../components/PageWrapper'
 
 const OperatorPage = (props) => {
   const { latestEvent } =
     useSubscribeToContractEvent(TOKEN_STAKING_CONTRACT_NAME, 'Undelegated')
 
   return (
-    <>
-      <h2 className="mb-2">My Token Operations</h2>
+    <PageWrapper title="My Token Operations">
       <DelegatedTokens />
       <PendingUndelegation latestUnstakeEvent={latestEvent} />
       <SlashedTokens />
       <AuthorizationInfo />
-    </>
+    </PageWrapper>
 
   )
 }

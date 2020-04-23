@@ -11,6 +11,7 @@ import AddressShortcut from './AddressShortcut'
 import moment from 'moment'
 import web3Utils from 'web3-utils'
 import { formatDate, isSameEthAddress, isEmptyObj } from '../utils/general.utils'
+import Tile from './Tile'
 
 const previewDataCount = 3
 const initialData = []
@@ -46,8 +47,7 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching} >
-      <section className="tile">
-        <h5 className="mb-1 text-grey-50">Rewards History</h5>
+      <Tile title="Rewards History">
         <DataTable data={showAll ? data : data.slice(0, previewDataCount)} itemFieldId="transactionHash">
           <Column
             header="amount"
@@ -77,7 +77,7 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
           onClickCallback={() => setShowAll(!showAll)}
           showAll={showAll}
         />
-      </section>
+      </Tile>
     </LoadingOverlay>
   )
 }

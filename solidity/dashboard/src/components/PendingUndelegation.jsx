@@ -13,6 +13,7 @@ import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { DataTable, Column } from './DataTable'
 import { PENDING_STATUS } from '../constants/constants'
 import moment from 'moment'
+import Tile from './Tile'
 
 const initialData = { pendinUndelegations: [] }
 
@@ -48,8 +49,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <section id="pending-undelegation" className="tile">
-        <h3 className="text-grey-60">Token Undelegation</h3>
+      <Tile title="Token Undelegation" id="pending-undelegation">
         <DataTable data={[data]} itemFieldId="undelegationComplete">
           <Column
             header="amount"
@@ -90,7 +90,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
             }}
           />
         </DataTable>
-      </section>
+      </Tile>
     </LoadingOverlay>
   )
 }

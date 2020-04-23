@@ -1,6 +1,8 @@
 import React, { useContext } from 'react'
 import CreateTokenGrantForm from '../components/CreateTokenGrantForm'
 import { ContractsDataContext } from '../components/ContractsDataContextProvider'
+import PageWrapper from '../components/PageWrapper'
+import Tile from '../components/Tile'
 
 const CreateTokenGrantPage = () => {
   const {
@@ -8,20 +10,14 @@ const CreateTokenGrantPage = () => {
     refreshKeepTokenBalance,
   } = useContext(ContractsDataContext)
   return (
-    <React.Fragment>
-      <h2 className="mb-2">
-        Create Token Grant
-      </h2>
-      <section className="rewards-history tile flex column">
-        <h3 className="text-grey-70 mb-1">
-            Create Grant
-        </h3>
+    <PageWrapper title="Create Token Grant">
+      <Tile title="Create Grant" className="rewards-history tile flex column">
         <CreateTokenGrantForm
           keepBalance={tokenBalance}
           successCallback={refreshKeepTokenBalance}
         />
-      </section>
-    </React.Fragment>
+      </Tile>
+    </PageWrapper>
   )
 }
 

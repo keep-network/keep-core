@@ -2,6 +2,7 @@ import React from 'react'
 import { displayAmount } from '../utils/general.utils'
 import TokenGrantsOverview from './TokenGrantsOverview'
 import moment from 'moment'
+import Tile from './Tile'
 
 const TokensOverview = ({
   undelegationPeriod,

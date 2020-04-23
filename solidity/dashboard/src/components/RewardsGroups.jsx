@@ -16,6 +16,7 @@ import SelectedRewardDropdown from './SelectedRewardDropdown'
 import { isEmptyObj, isSameEthAddress } from '../utils/general.utils'
 import { sub, lte, gt } from '../utils/arithmetics.utils'
 import web3Utils from 'web3-utils'
+import Tile from './Tile'
 
 const previewDataCount = 3
 const initialData = [[], '0']
@@ -86,11 +87,10 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
     <LoadingOverlay isFetching={isFetching} >
       <section className="tile total-rewards-section">
         <div className="total-rewards-balance">
-          <h3 className='text-grey-70 pb-2'>Total Balance</h3>
+          <h2 className='text-grey-70 pb-2'>Total Balance</h2>
           <h2 className="balance">{`${totalRewardsBalance} ETH`}</h2>
         </div>
-        <section className="withdraw-dropdown-section">
-          <h4 className="text-grey-70 text-normal">Withdraw</h4>
+        <Tile title="Withdraw" className="withdraw-dropdown-section">
           <div className="withdraw-dropdown">
             <div className="dropdown">
               <Dropdown
@@ -114,12 +114,11 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
               withdraw
             </SubmitButton>
           </div>
-        </section>
+        </Tile>
       </section>
     </LoadingOverlay>
       <LoadingOverlay isFetching={isFetching} classNames='group-items self-start'>
-        <section className="group-items tile">
-          <h3 className='text-grey-70 mb-2'>Totals</h3>
+        <Tile title="Totals" className="group-items tile">
           <DataTable data={showAll ? groups : groups.slice(0, previewDataCount)} itemFieldId="groupPublicKey" >
             <Column
               header="amount"
@@ -168,7 +167,7 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
             onClickCallback={() => setShowAll(!showAll)}
             showAll={showAll}
           />
-        </section>
+        </Tile>
       </LoadingOverlay>
     </>
   )

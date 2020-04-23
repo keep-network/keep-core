@@ -23,6 +23,8 @@ import {
   REMOVE_UNDELEGATION,
 } from '../reducers/tokens-page.reducer.js'
 import moment from 'moment'
+import PageWrapper from '../components/PageWrapper'
+import Tile from '../components/Tile'
 
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
@@ -56,40 +58,40 @@ const TokensPage = () => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <h2 className="mb-2">My Tokens</h2>
-      <div className="tokens-wrapper">
-        <section id="delegate-stake-section" className="tile">
-          <h2 className="text-grey-70 mb-1">Delegate Stake</h2>
-          <div className="text-big text-black">
-              Earn ETH rewards by delegating stake to an operator address.
-              All ETH rewards will be sent to the address you set as the beneficiary.
-          </div>
-          <SpeechBubbleInfo>
-              A&nbsp;<span className="text-bold">stake</span>&nbsp;is an amount of KEEP
-              that’s bonded in order to participate in the threshold relay and, optionally, the Keep network.
-          </SpeechBubbleInfo>
-          <hr/>
-          <DelegateStakeForm
-            onSubmit={handleSubmit}
-            minStake={minimumStake}
+      <PageWrapper title="My Tokens">
+        <div className="tokens-wrapper">
+          <Tile title="Delegate Stake" id="delegate-stake-section">
+            <div className="text-big text-black">
+                Earn ETH rewards by delegating stake to an operator address.
+                All ETH rewards will be sent to the address you set as the beneficiary.
+            </div>
+            <SpeechBubbleInfo>
+                A&nbsp;<span className="text-bold">stake</span>&nbsp;is an amount of KEEP
+                that’s bonded in order to participate in the threshold relay and, optionally, the Keep network.
+            </SpeechBubbleInfo>
+            <hr/>
+            <DelegateStakeForm
+              onSubmit={handleSubmit}
+              minStake={minimumStake}
+              keepBalance={keepTokenBalance}
+              grants={grants}
+            />
+          </Tile>
+          <TokensOverview
             keepBalance={keepTokenBalance}
-            grants={grants}
+            stakingBalance={ownedTokensDelegationsBalance}
+            pendingUndelegationBalance={ownedTokensUndelegationsBalance}
+            undelegationPeriod={undelegationPeriod}
           />
-        </section>
-        <TokensOverview
-          keepBalance={keepTokenBalance}
-          stakingBalance={ownedTokensDelegationsBalance}
-          pendingUndelegationBalance={ownedTokensUndelegationsBalance}
-          undelegationPeriod={undelegationPeriod}
+        </div>
+        <Undelegations
+          undelegations={undelegations}
         />
-      </div>
-      <Undelegations
-        undelegations={undelegations}
-      />
-      <DelegatedTokensTable
-        delegatedTokens={delegations}
-        cancelStakeSuccessCallback={refreshData}
-      />
+        <DelegatedTokensTable
+          delegatedTokens={delegations}
+          cancelStakeSuccessCallback={refreshData}
+        />
+      </PageWrapper>
     </LoadingOverlay>
   )
 }

@@ -5,10 +5,11 @@ import UndelegateStakeButton from './UndelegateStakeButton'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 import { DataTable, Column } from './DataTable'
+import Tile from './Tile'
 
 const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) => {
   return (
-    <section className="tile">
+    <Tile className="tile">
       <h3 className="text-grey-60">Delegations</h3>
       <DataTable data={delegatedTokens} itemFieldId="operatorAddress">
         <Column
@@ -64,7 +65,7 @@ const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) =
           }
         />
       </DataTable>
-    </section>
+    </Tile>
   )
 }
 

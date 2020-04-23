@@ -3,11 +3,11 @@ import AddressShortcut from './AddressShortcut'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
 import { DataTable, Column } from './DataTable'
+import Tile from './Tile'
 
 const AuthorizationHistory = ({ contracts }) => {
   return (
-    <section className="tile">
-      <h3 className="text-grey-60">Authorization History</h3>
+    <Tile title="Authorization History">
       <DataTable data={contracts || []} itemFieldId="contractAddress">
         <Column
           header="contract address"
@@ -35,7 +35,7 @@ const AuthorizationHistory = ({ contracts }) => {
           )}
         />
       </DataTable>
-    </section>
+    </Tile>
   )
 }
 

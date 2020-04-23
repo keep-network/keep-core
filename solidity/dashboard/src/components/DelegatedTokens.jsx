@@ -9,6 +9,7 @@ import UndelegateStakeButton from './UndelegateStakeButton'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
 import Banner, { BANNER_TYPE } from './Banner'
 import moment from 'moment'
+import Tile from './Tile'
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
@@ -70,9 +71,8 @@ const DelegatedTokens = (props) => {
   }
   return (
     <section id="delegated-tokens" className="flex row space-between">
-      <section id="delegated-tokens-summary" className="tile flex column">
+      <Tile title="Delegated Tokens" id="delegated-tokens-summary" className="tile flex column">
         <LoadingOverlay isFetching={isFetching} >
-          <h3 className="text-grey-60 mb-1">Delegated Tokens</h3>
           <h2 className="balance">
             {stakedBalance && `${displayAmount(stakedBalance)}`} KEEP
           </h2>
@@ -95,8 +95,8 @@ const DelegatedTokens = (props) => {
             />
           </h6>
         </LoadingOverlay>
-      </section>
-      <section id="delegated-form-section" className="tile flex column ">
+      </Tile>
+      <Tile title="Undelegate All Tokens" id="delegated-form-section" className="tile flex column ">
         <LoadingOverlay isFetching={isFetching} classNames="flex flex-1 column" >
           <h3 className="text-grey-60">Undelegate All Tokens</h3>
           <div className="text-big text-grey-70 mt-1 mb-1">
@@ -106,7 +106,7 @@ const DelegatedTokens = (props) => {
             {renderUndelegationStatus()}
           </div>
         </LoadingOverlay>
-      </section>
+      </Tile>
     </section>
   )
 }

@@ -3,6 +3,7 @@ import AddressShortcut from './AddressShortcut'
 import { SubmitButton } from './Button'
 import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
 import { DataTable, Column } from './DataTable'
+import Tile from './Tile'
 
 const AuthorizeContracts = ({
   contracts,
@@ -10,8 +11,7 @@ const AuthorizeContracts = ({
   onAuthorizeSuccessCallback,
 }) => {
   return (
-    <section className="tile">
-      <h3 className="text-grey-60">Authorize Contracts</h3>
+    <Tile title="Authorize Contracts">
       <DataTable data={contracts || []} itemFieldId={'contractAddress'}>
         <Column
           header="contract address"
@@ -45,7 +45,7 @@ const AuthorizeContracts = ({
           }
         />
       </DataTable>
-    </section>
+    </Tile>
   )
 }
 
