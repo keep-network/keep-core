@@ -37,8 +37,10 @@ export const SideMenu = (props) => {
         { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='create token grants'/> }
         <Web3Status />
         <div className='account-address'>
-          <span className="text-label text-bold">ADDRESS&nbsp;</span>
-          <AddressShortcut classNames="text-small" address={yourAddress} />
+          <h5 className="text-grey-50">
+            <span>ADDRESS&nbsp;</span>
+            <AddressShortcut classNames="text-small" address={yourAddress} />
+          </h5>
           <NetworkStatus />
         </div>
       </ul>
@@ -54,7 +56,7 @@ const NavLink = ({ label, to, exact }) => {
 
   return (
     <Link to={to}>
-      <li className={ match ? 'active-page-link' : '' }>
+      <li className={`text-label ${match ? 'active-page-link' : ''}`}>
         {label}
       </li>
     </Link>
