@@ -217,7 +217,13 @@ See the https://github.com/keep-network/keep-core/tree/master/docs/development#b
 
 === Get Image
 
-Doesn't exist for the public yet.
+https://hub.docker.com/r/keepnetwork/keep-client/
+
+*Latest:*
+`docker pull keepnetwork/keep-client`
+
+*Tag:*
+`docker pull keepnetwork/keep-client:<tag-version>`
 
 === Run Image
 This is a sample run command for illustration purposes only.
