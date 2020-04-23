@@ -110,7 +110,19 @@ describe('TokenStaking/Punishment', () => {
             await expectRevert(
                 stakingContract.slash(amountToSlash, [operator], { from: operatorContract }),
                 "Operator stake must be active"
-            );
+            )
+        })
+
+        it("should fail when operator stake is released", async () => {
+            time.increase((await stakingContract.initializationPeriod()).addn(1))
+            await stakingContract.undelegate(operator, { from: owner })
+            time.increase((await stakingContract.undelegationPeriod()).addn(1))
+
+            let amountToSlash = web3.utils.toBN(100);
+            await expectRevert(
+                stakingContract.slash(amountToSlash, [operator], { from: operatorContract }),
+                "Stake is released"
+            )
         })
     })
 
@@ -192,7 +204,6 @@ describe('TokenStaking/Punishment', () => {
             )
         })
 
-
         it("should fail when operator stake is not active yet", async () => {
             let amountToSeize = web3.utils.toBN(42000000)
             let rewardMultiplier = web3.utils.toBN(25)
@@ -204,6 +215,21 @@ describe('TokenStaking/Punishment', () => {
                 "Operator stake must be active"
             )
         })
-    })
 
+        it("should fail when operator stake is released", async () => {
+            time.increase((await stakingContract.initializationPeriod()).addn(1))
+            await stakingContract.undelegate(operator, { from: owner })
+            time.increase((await stakingContract.undelegationPeriod()).addn(1))
+
+            let amountToSeize = web3.utils.toBN(10000);
+            let rewardMultiplier = web3.utils.toBN(25)
+            await expectRevert(
+                stakingContract.seize(
+                    amountToSeize, rewardMultiplier, tattletale,
+                    [operator], { from: operatorContract }
+                ),
+                "Stake is released"
+            )
+        })
+    })
 })
