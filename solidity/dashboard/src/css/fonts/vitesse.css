@@ -1,20 +1,13 @@
 @font-face {
     font-family: 'Vitesse';
-    src: url('./fonts/vitesse/VitesseSSm-Black.otf') format("opentype");
-    font-weight: normal;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'Vitesse-medium';
     src: url('./fonts/vitesse/VitesseSSm-Medium.otf') format("opentype");
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
-    font-family: 'Vitesse-bold';
+    font-family: 'Vitesse';
     src: url('./fonts/vitesse/VitesseSSm-Bold.otf') format("opentype");
-    font-weight: normal;
+    font-weight: bold;
     font-style: normal;
 }
