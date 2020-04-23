@@ -72,8 +72,8 @@ exports.issueGrant = async (request, response) => {
       const granteeAccount = account
       const unlockingDuration = web3.utils.toBN(0)
       const start = web3.utils.toBN(Math.floor(Date.now() / 1000))
-      const cliff = web3.utils.toBN(0)
-      const revocable = false
+      const cliff = web3.utils.toBN(172800)
+      const revocable = true
       const tokens = web3.utils.toBN(300000)
       console.log(`Fetching existing balance for account [${granteeAccount}]...`)
       const grantBalanceString = await tokenGrant.methods

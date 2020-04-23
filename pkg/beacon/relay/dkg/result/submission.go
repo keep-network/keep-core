@@ -61,11 +61,15 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		)
 	}
 
-	if len(signatures) < config.HonestThreshold {
+	// Chain rejects the result if it has less than 25% safety margin.
+	// If there are not enough signatures to preserve the margin, it does not
+	// make sense to submit the result.
+	signatureThreshold := config.HonestThreshold + (config.GroupSize-config.HonestThreshold)/2
+	if len(signatures) < signatureThreshold {
 		return fmt.Errorf(
-			"could not submit result with [%v] signatures for honest threshold [%v]",
+			"could not submit result with [%v] signatures for signature threshold [%v]",
 			len(signatures),
-			config.HonestThreshold,
+			signatureThreshold,
 		)
 	}
 

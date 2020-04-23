@@ -28,7 +28,7 @@ var (
 )
 
 // TokenGrantABI is the input ABI used to generate the binding from.
-const TokenGrantABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"TokenGrantCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"TokenGrantRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"TokenGrantStaked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TokenGrantWithdrawn\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingContract\",\"type\":\"address\"}],\"name\":\"authorizeStakingContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_grantId\",\"type\":\"uint256\"}],\"name\":\"availableToStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"cancelStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"getGrant\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"staked\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedAt\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getGrantStakeDetails\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"stakingContract\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"getGrantUnlockingSchedule\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"grantManager\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"}],\"name\":\"getGranteeOperators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_granteeOrGrantManager\",\"type\":\"address\"}],\"name\":\"getGrants\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"grantIndices\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"grantStakes\",\"outputs\":[{\"internalType\":\"contractTokenGrantStake\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"granteesToOperators\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"grants\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"grantManager\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"revokedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedAmount\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"staked\",\"type\":\"uint256\"},{\"internalType\":\"contractGrantStakingPolicy\",\"name\":\"stakingPolicy\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numGrants\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"recoverStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"revoke\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_stakingContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stakeBalanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractERC20Burnable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"undelegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"unlockedAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"withdrawable\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const TokenGrantABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"TokenGrantCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"id\",\"type\":\"uint256\"}],\"name\":\"TokenGrantRevoked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"TokenGrantStaked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TokenGrantWithdrawn\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_stakingContract\",\"type\":\"address\"}],\"name\":\"authorizeStakingContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_grantId\",\"type\":\"uint256\"}],\"name\":\"availableToStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_owner\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"balances\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"cancelRevokedStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"cancelStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"getGrant\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"staked\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedAt\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getGrantStakeDetails\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"stakingContract\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"getGrantUnlockingSchedule\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"grantManager\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"policy\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"}],\"name\":\"getGranteeOperators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_granteeOrGrantManager\",\"type\":\"address\"}],\"name\":\"getGrants\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"grantIndices\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"grantStakes\",\"outputs\":[{\"internalType\":\"contractTokenGrantStake\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"granteesToOperators\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"grants\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"grantManager\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"revokedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"revokedWithdrawn\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"staked\",\"type\":\"uint256\"},{\"internalType\":\"contractGrantStakingPolicy\",\"name\":\"stakingPolicy\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numGrants\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"recoverStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"revoke\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_stakingContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"stake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"stakeBalanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractERC20Burnable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"undelegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"undelegateRevoked\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"unlockedAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"withdrawRevoked\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_id\",\"type\":\"uint256\"}],\"name\":\"withdrawable\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // TokenGrant is an auto generated Go binding around an Ethereum contract.
 type TokenGrant struct {
@@ -344,18 +344,20 @@ func (_TokenGrant *TokenGrantCallerSession) GetGrantStakeDetails(operator common
 
 // GetGrantUnlockingSchedule is a free data retrieval call binding the contract method 0xc6076b7a.
 //
-// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff)
+// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
 func (_TokenGrant *TokenGrantCaller) GetGrantUnlockingSchedule(opts *bind.CallOpts, _id *big.Int) (struct {
 	GrantManager common.Address
 	Duration     *big.Int
 	Start        *big.Int
 	Cliff        *big.Int
+	Policy       common.Address
 }, error) {
 	ret := new(struct {
 		GrantManager common.Address
 		Duration     *big.Int
 		Start        *big.Int
 		Cliff        *big.Int
+		Policy       common.Address
 	})
 	out := ret
 	err := _TokenGrant.contract.Call(opts, out, "getGrantUnlockingSchedule", _id)
@@ -364,24 +366,26 @@ func (_TokenGrant *TokenGrantCaller) GetGrantUnlockingSchedule(opts *bind.CallOp
 
 // GetGrantUnlockingSchedule is a free data retrieval call binding the contract method 0xc6076b7a.
 //
-// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff)
+// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
 func (_TokenGrant *TokenGrantSession) GetGrantUnlockingSchedule(_id *big.Int) (struct {
 	GrantManager common.Address
 	Duration     *big.Int
 	Start        *big.Int
 	Cliff        *big.Int
+	Policy       common.Address
 }, error) {
 	return _TokenGrant.Contract.GetGrantUnlockingSchedule(&_TokenGrant.CallOpts, _id)
 }
 
 // GetGrantUnlockingSchedule is a free data retrieval call binding the contract method 0xc6076b7a.
 //
-// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff)
+// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
 func (_TokenGrant *TokenGrantCallerSession) GetGrantUnlockingSchedule(_id *big.Int) (struct {
 	GrantManager common.Address
 	Duration     *big.Int
 	Start        *big.Int
 	Cliff        *big.Int
+	Policy       common.Address
 }, error) {
 	return _TokenGrant.Contract.GetGrantUnlockingSchedule(&_TokenGrant.CallOpts, _id)
 }
@@ -518,34 +522,36 @@ func (_TokenGrant *TokenGrantCallerSession) GranteesToOperators(arg0 common.Addr
 
 // Grants is a free data retrieval call binding the contract method 0x0c0debea.
 //
-// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
+// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
 func (_TokenGrant *TokenGrantCaller) Grants(opts *bind.CallOpts, arg0 *big.Int) (struct {
-	GrantManager  common.Address
-	Grantee       common.Address
-	RevokedAt     *big.Int
-	RevokedAmount *big.Int
-	Revocable     bool
-	Amount        *big.Int
-	Duration      *big.Int
-	Start         *big.Int
-	Cliff         *big.Int
-	Withdrawn     *big.Int
-	Staked        *big.Int
-	StakingPolicy common.Address
+	GrantManager     common.Address
+	Grantee          common.Address
+	RevokedAt        *big.Int
+	RevokedAmount    *big.Int
+	RevokedWithdrawn *big.Int
+	Revocable        bool
+	Amount           *big.Int
+	Duration         *big.Int
+	Start            *big.Int
+	Cliff            *big.Int
+	Withdrawn        *big.Int
+	Staked           *big.Int
+	StakingPolicy    common.Address
 }, error) {
 	ret := new(struct {
-		GrantManager  common.Address
-		Grantee       common.Address
-		RevokedAt     *big.Int
-		RevokedAmount *big.Int
-		Revocable     bool
-		Amount        *big.Int
-		Duration      *big.Int
-		Start         *big.Int
-		Cliff         *big.Int
-		Withdrawn     *big.Int
-		Staked        *big.Int
-		StakingPolicy common.Address
+		GrantManager     common.Address
+		Grantee          common.Address
+		RevokedAt        *big.Int
+		RevokedAmount    *big.Int
+		RevokedWithdrawn *big.Int
+		Revocable        bool
+		Amount           *big.Int
+		Duration         *big.Int
+		Start            *big.Int
+		Cliff            *big.Int
+		Withdrawn        *big.Int
+		Staked           *big.Int
+		StakingPolicy    common.Address
 	})
 	out := ret
 	err := _TokenGrant.contract.Call(opts, out, "grants", arg0)
@@ -554,40 +560,42 @@ func (_TokenGrant *TokenGrantCaller) Grants(opts *bind.CallOpts, arg0 *big.Int) 
 
 // Grants is a free data retrieval call binding the contract method 0x0c0debea.
 //
-// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
+// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
 func (_TokenGrant *TokenGrantSession) Grants(arg0 *big.Int) (struct {
-	GrantManager  common.Address
-	Grantee       common.Address
-	RevokedAt     *big.Int
-	RevokedAmount *big.Int
-	Revocable     bool
-	Amount        *big.Int
-	Duration      *big.Int
-	Start         *big.Int
-	Cliff         *big.Int
-	Withdrawn     *big.Int
-	Staked        *big.Int
-	StakingPolicy common.Address
+	GrantManager     common.Address
+	Grantee          common.Address
+	RevokedAt        *big.Int
+	RevokedAmount    *big.Int
+	RevokedWithdrawn *big.Int
+	Revocable        bool
+	Amount           *big.Int
+	Duration         *big.Int
+	Start            *big.Int
+	Cliff            *big.Int
+	Withdrawn        *big.Int
+	Staked           *big.Int
+	StakingPolicy    common.Address
 }, error) {
 	return _TokenGrant.Contract.Grants(&_TokenGrant.CallOpts, arg0)
 }
 
 // Grants is a free data retrieval call binding the contract method 0x0c0debea.
 //
-// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
+// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
 func (_TokenGrant *TokenGrantCallerSession) Grants(arg0 *big.Int) (struct {
-	GrantManager  common.Address
-	Grantee       common.Address
-	RevokedAt     *big.Int
-	RevokedAmount *big.Int
-	Revocable     bool
-	Amount        *big.Int
-	Duration      *big.Int
-	Start         *big.Int
-	Cliff         *big.Int
-	Withdrawn     *big.Int
-	Staked        *big.Int
-	StakingPolicy common.Address
+	GrantManager     common.Address
+	Grantee          common.Address
+	RevokedAt        *big.Int
+	RevokedAmount    *big.Int
+	RevokedWithdrawn *big.Int
+	Revocable        bool
+	Amount           *big.Int
+	Duration         *big.Int
+	Start            *big.Int
+	Cliff            *big.Int
+	Withdrawn        *big.Int
+	Staked           *big.Int
+	StakingPolicy    common.Address
 }, error) {
 	return _TokenGrant.Contract.Grants(&_TokenGrant.CallOpts, arg0)
 }
@@ -743,6 +751,27 @@ func (_TokenGrant *TokenGrantTransactorSession) AuthorizeStakingContract(_stakin
 	return _TokenGrant.Contract.AuthorizeStakingContract(&_TokenGrant.TransactOpts, _stakingContract)
 }
 
+// CancelRevokedStake is a paid mutator transaction binding the contract method 0x3934af5c.
+//
+// Solidity: function cancelRevokedStake(address _operator) returns()
+func (_TokenGrant *TokenGrantTransactor) CancelRevokedStake(opts *bind.TransactOpts, _operator common.Address) (*types.Transaction, error) {
+	return _TokenGrant.contract.Transact(opts, "cancelRevokedStake", _operator)
+}
+
+// CancelRevokedStake is a paid mutator transaction binding the contract method 0x3934af5c.
+//
+// Solidity: function cancelRevokedStake(address _operator) returns()
+func (_TokenGrant *TokenGrantSession) CancelRevokedStake(_operator common.Address) (*types.Transaction, error) {
+	return _TokenGrant.Contract.CancelRevokedStake(&_TokenGrant.TransactOpts, _operator)
+}
+
+// CancelRevokedStake is a paid mutator transaction binding the contract method 0x3934af5c.
+//
+// Solidity: function cancelRevokedStake(address _operator) returns()
+func (_TokenGrant *TokenGrantTransactorSession) CancelRevokedStake(_operator common.Address) (*types.Transaction, error) {
+	return _TokenGrant.Contract.CancelRevokedStake(&_TokenGrant.TransactOpts, _operator)
+}
+
 // CancelStake is a paid mutator transaction binding the contract method 0xe064172e.
 //
 // Solidity: function cancelStake(address _operator) returns()
@@ -869,6 +898,27 @@ func (_TokenGrant *TokenGrantTransactorSession) Undelegate(_operator common.Addr
 	return _TokenGrant.Contract.Undelegate(&_TokenGrant.TransactOpts, _operator)
 }
 
+// UndelegateRevoked is a paid mutator transaction binding the contract method 0x9bf85078.
+//
+// Solidity: function undelegateRevoked(address _operator) returns()
+func (_TokenGrant *TokenGrantTransactor) UndelegateRevoked(opts *bind.TransactOpts, _operator common.Address) (*types.Transaction, error) {
+	return _TokenGrant.contract.Transact(opts, "undelegateRevoked", _operator)
+}
+
+// UndelegateRevoked is a paid mutator transaction binding the contract method 0x9bf85078.
+//
+// Solidity: function undelegateRevoked(address _operator) returns()
+func (_TokenGrant *TokenGrantSession) UndelegateRevoked(_operator common.Address) (*types.Transaction, error) {
+	return _TokenGrant.Contract.UndelegateRevoked(&_TokenGrant.TransactOpts, _operator)
+}
+
+// UndelegateRevoked is a paid mutator transaction binding the contract method 0x9bf85078.
+//
+// Solidity: function undelegateRevoked(address _operator) returns()
+func (_TokenGrant *TokenGrantTransactorSession) UndelegateRevoked(_operator common.Address) (*types.Transaction, error) {
+	return _TokenGrant.Contract.UndelegateRevoked(&_TokenGrant.TransactOpts, _operator)
+}
+
 // Withdraw is a paid mutator transaction binding the contract method 0x2e1a7d4d.
 //
 // Solidity: function withdraw(uint256 _id) returns()
@@ -888,6 +938,27 @@ func (_TokenGrant *TokenGrantSession) Withdraw(_id *big.Int) (*types.Transaction
 // Solidity: function withdraw(uint256 _id) returns()
 func (_TokenGrant *TokenGrantTransactorSession) Withdraw(_id *big.Int) (*types.Transaction, error) {
 	return _TokenGrant.Contract.Withdraw(&_TokenGrant.TransactOpts, _id)
+}
+
+// WithdrawRevoked is a paid mutator transaction binding the contract method 0x8e34e561.
+//
+// Solidity: function withdrawRevoked(uint256 _id) returns()
+func (_TokenGrant *TokenGrantTransactor) WithdrawRevoked(opts *bind.TransactOpts, _id *big.Int) (*types.Transaction, error) {
+	return _TokenGrant.contract.Transact(opts, "withdrawRevoked", _id)
+}
+
+// WithdrawRevoked is a paid mutator transaction binding the contract method 0x8e34e561.
+//
+// Solidity: function withdrawRevoked(uint256 _id) returns()
+func (_TokenGrant *TokenGrantSession) WithdrawRevoked(_id *big.Int) (*types.Transaction, error) {
+	return _TokenGrant.Contract.WithdrawRevoked(&_TokenGrant.TransactOpts, _id)
+}
+
+// WithdrawRevoked is a paid mutator transaction binding the contract method 0x8e34e561.
+//
+// Solidity: function withdrawRevoked(uint256 _id) returns()
+func (_TokenGrant *TokenGrantTransactorSession) WithdrawRevoked(_id *big.Int) (*types.Transaction, error) {
+	return _TokenGrant.Contract.WithdrawRevoked(&_TokenGrant.TransactOpts, _id)
 }
 
 // TokenGrantTokenGrantCreatedIterator is returned from FilterTokenGrantCreated and is used to iterate over the raw logs and unpacked data for TokenGrantCreated events raised by the TokenGrant contract.

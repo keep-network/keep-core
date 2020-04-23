@@ -162,6 +162,18 @@ describe('KeepRandomBeaconOperator/GroupExpiration', function() {
       expect(selectedIndex).to.eq.BN(9);
     });
   });
+
+  it("should revert group selection when all groups expired", async () => {
+    await addGroups(5);
+
+    let currentBlock = new BN(await web3.eth.getBlockNumber());
+    await time.advanceBlockTo(currentBlock.add(groupActiveTime));
+
+    await expectRevert(
+      groups.selectGroup(0),
+      "No active groups"
+    );
+  });
   
   // - we start with [AAAAAA]
   // - we check whether the first group is stale and assert it is not since
@@ -292,4 +304,19 @@ describe('KeepRandomBeaconOperator/GroupExpiration', function() {
       "Group does not exist"
     );
   });
+
+  it("should allow to add and select new group even if all other\
+groups expired", async () => {
+    await addGroups(5);
+    let currentBlock = new BN(await web3.eth.getBlockNumber());
+    await time.advanceBlockTo(currentBlock.add(groupActiveTime));
+    await addGroups(1)
+
+    let selected = await groups.selectGroup.call(0);
+    await groups.selectGroup(0);
+    let numberOfGroups = await groups.numberOfGroups();
+
+    assert.equal(Number(numberOfGroups), 1, "Expected one active group");
+    assert.equal(Number(selected), 5, "Unexpected group selected");
+  })
 });

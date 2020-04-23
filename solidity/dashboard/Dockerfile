@@ -16,9 +16,6 @@ COPY package-lock.json /app/package-lock.json
 # Install from lockfile.
 RUN npm ci
 
-# Resolve latest build of keep-core.
-RUN npm update @keep-network/keep-core
-
 COPY src /app/src
 COPY public /app/public
 

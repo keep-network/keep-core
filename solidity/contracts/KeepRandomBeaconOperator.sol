@@ -64,7 +64,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     TokenStaking internal stakingContract;
 
     // Each signing group member reward expressed in wei.
-    uint256 public groupMemberBaseReward = 145*1e11; // 14500 Gwei, 10% of operational cost
+    uint256 public groupMemberBaseReward = 1000000*1e9; // 1M Gwei
 
     // Gas price ceiling value used to calculate the gas price for reimbursement
     // next to the actual gas price from the transaction. We use gas price
@@ -131,10 +131,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
 
     /**
-     * @dev Triggers the first group selection. Genesis can be called only when
-     * there are no groups on the operator contract.
+     * @dev Triggers group selection if there are no active groups.
      */
     function genesis() public payable {
+        // If we run into a very unlikely situation when there are no active
+        // groups on the contract because of slashing and groups terminated
+        // or because beacon has not been used for a very long time and all
+        // groups expired, we first want to make a cleanup.
+        groups.expireOldGroups();
         require(numberOfGroups() == 0, "Groups exist");
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
@@ -167,7 +171,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         stakingContract = TokenStaking(_stakingContract);
 
         groups.stakingContract = TokenStaking(_stakingContract);
-        groups.groupActiveTime = TokenStaking(_stakingContract).undelegationPeriod();
+        groups.groupActiveTime = 86400 * 7 / 15; // 7 days equivalent in 15s blocks
 
         // There are 39 blocks to submit group selection tickets. To minimize
         // the submitter's cost by minimizing the number of redundant tickets
@@ -198,10 +202,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         dkgResultVerification.timeDKG = 5*(1+5) + 2*(1+10) + 20;
         dkgResultVerification.resultPublicationBlockStep = resultPublicationBlockStep;
         dkgResultVerification.groupSize = groupSize;
-        // TODO: For now, the required number of signatures is equal to group
-        // threshold. This should be updated to keep a safety margin for
-        // participants misbehaving during signing.
-        dkgResultVerification.signatureThreshold = groupThreshold;
+        dkgResultVerification.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
     }
 
     /**
@@ -674,8 +675,16 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     }
 
     /**
-     * @dev Gets the number of active groups. Expired and terminated groups are
-     * not counted as active.
+     * @notice Gets the number of active groups as currently marked in the
+     * contract. This is the state from when the expired groups were last updated
+     * without accounting for recent expirations.
+     *
+     * @dev Even if numberOfGroups() > 0, it is still possible requesting for
+     * a new relay entry will revert with "no active groups" failure message.
+     * This function returns the number of active groups as they are currently
+     * marked on-chain. However, during relay request, before group selection,
+     * we run group expiration and it may happen that some groups seen as active
+     * turns out to be expired.
      */
     function numberOfGroups() public view returns(uint256) {
         return groups.numberOfGroups();

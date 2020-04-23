@@ -53,10 +53,6 @@ const (
 	// FirewallCheckTick is the amount of time between periodic checks of all
 	// firewall rules against all peers connected to this one.
 	FirewallCheckTick = time.Minute * 10
-	// BootstrapCheckPeriod is the amount of time between periodic checks
-	// for ensuring we are connected to an appropriate number of bootstrap
-	// peers.
-	BootstrapCheckPeriod = 10 * time.Second
 )
 
 // Config defines the configuration for the libp2p network provider.
@@ -114,6 +110,23 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 ) {
 	networkPublicKey := key.NetworkPublic(publicKey)
 	return peer.IDFromPublicKey(&networkPublicKey)
+}
+
+func (p *provider) BroadcastChannelForwarderFor(name string) {
+	logger.Infof("requested message forwarder for channel: [%v]", name)
+
+	// TTL for a single message forwarder should be limited to avoid unnecessary
+	// resource consumption. One hour seems to be a reasonable value as no
+	// single protocol execution will exceed this time.
+	ttl := 1 * time.Hour
+
+	if err := p.broadcastChannelManager.newForwarder(name, ttl); err != nil {
+		logger.Warningf(
+			"could not create message forwarder for channel [%v]: [%v]",
+			name,
+			err,
+		)
+	}
 }
 
 type connectionManager struct {
@@ -180,15 +193,13 @@ func (cm *connectionManager) AddrStrings() []string {
 // ConnectOptions allows to set various options used by libp2p.
 type ConnectOptions struct {
 	RoutingTableRefreshPeriod time.Duration
-	BootstrapMinPeerThreshold int
 }
 
-// Defaults from libp2p.
 func defaultConnectOptions() *ConnectOptions {
 	var options ConnectOptions
 
-	options.RoutingTableRefreshPeriod = 1 * time.Hour
-	options.BootstrapMinPeerThreshold = 4
+	// Half of the default value from libp2p.
+	options.RoutingTableRefreshPeriod = 30 * time.Minute
 
 	return &options
 }
@@ -206,13 +217,6 @@ type ConnectOption func(options *ConnectOptions)
 func WithRoutingTableRefreshPeriod(period time.Duration) ConnectOption {
 	return func(options *ConnectOptions) {
 		options.RoutingTableRefreshPeriod = period
-	}
-}
-
-// WithBootstrapMinPeerThreshold set a minimal peer threshold for bootstrap process.
-func WithBootstrapMinPeerThreshold(threshold int) ConnectOption {
-	return func(options *ConnectOptions) {
-		options.BootstrapMinPeerThreshold = threshold
 	}
 }
 
@@ -286,7 +290,6 @@ func Connect(
 	if err := provider.bootstrap(
 		ctx,
 		config.Peers,
-		connectOptions.BootstrapMinPeerThreshold,
 	); err != nil {
 		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
 	}
@@ -392,7 +395,6 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 func (p *provider) bootstrap(
 	ctx context.Context,
 	bootstrapPeers []string,
-	minPeerThreshold int,
 ) error {
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
@@ -400,10 +402,6 @@ func (p *provider) bootstrap(
 	}
 
 	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
-
-	// TODO: allow this to be a configurable value
-	bootstrapConfig.Period = BootstrapCheckPeriod
-	bootstrapConfig.MinPeerThreshold = minPeerThreshold
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.

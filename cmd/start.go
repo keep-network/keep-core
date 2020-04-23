@@ -3,11 +3,14 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/key"
@@ -18,12 +21,17 @@ import (
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
-var StartCommand cli.Command
+var (
+	StartCommand cli.Command
+	logger       = log.Logger("keep-start")
+)
 
 const (
-	bootstrapFlag = "bootstrap"
-	portFlag      = "port"
-	portShort     = "p"
+	bootstrapFlag     = "bootstrap"
+	portFlag          = "port"
+	portShort         = "p"
+	waitForStakeFlag  = "wait-for-stake"
+	waitForStakeShort = "w"
 )
 
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
@@ -39,6 +47,9 @@ func init() {
 			Flags: []cli.Flag{
 				&cli.IntFlag{
 					Name: portFlag + "," + portShort,
+				},
+				&cli.IntFlag{
+					Name: waitForStakeFlag + "," + waitForStakeShort,
 				},
 			},
 		}
@@ -79,6 +90,12 @@ func Start(c *cli.Context) error {
 	stakeMonitor, err := chainProvider.StakeMonitor()
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
+	}
+	if c.Int(waitForStakeFlag) != 0 {
+		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(waitForStakeFlag))
+		if err != nil {
+			return err
+		}
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
 		config.Ethereum.Account.Address,
@@ -159,4 +176,21 @@ func loadStaticKey(
 	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
 	return privateKey, publicKey, nil
+}
+
+func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
+	waitMins := 0
+	for waitMins < timeout {
+		hasMinimumStake, err := stakeMonitor.HasMinimumStake(address)
+		if err != nil {
+			return fmt.Errorf("could not check the stake [%v]", err)
+		}
+		if hasMinimumStake {
+			return nil
+		}
+		logger.Warningf("below min stake for %d min \n", address, waitMins)
+		time.Sleep(time.Minute)
+		waitMins++
+	}
+	return fmt.Errorf("timed out waiting for %s to have required minimum stake", address)
 }

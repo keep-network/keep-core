@@ -102,6 +102,8 @@ func Initialize(
 					request.BlockNumber,
 				)
 			}()
+		} else {
+			go node.ForwardSignatureShares(request.GroupPublicKey)
 		}
 
 		go node.MonitorRelayEntry(

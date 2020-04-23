@@ -45,9 +45,6 @@ library DKGResultVerification {
      * group selection protocol.
      * @param groupSelectionEndBlock Block height at which the group selection
      * protocol ended.
-     *
-     * @return true if submitter is eligible to submit and the result is valid;
-     * Otherwise, transaction is reverted.
      */
     function verify(
         Storage storage self,
@@ -58,7 +55,7 @@ library DKGResultVerification {
         uint256[] memory signingMemberIndices,
         address[] memory members,
         uint256 groupSelectionEndBlock
-    ) public view returns (bool) {
+    ) public view {
         require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
             members[submitterMemberIndex - 1] == msg.sender,
@@ -97,7 +94,5 @@ library DKGResultVerification {
 
             require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
         }
-
-        return true;
     }
 }
