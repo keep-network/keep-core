@@ -3,7 +3,7 @@ const { accounts, contract } = require("@openzeppelin/test-environment")
 const { expectRevert } = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 
-const Registry = contract.fromArtifact('RegistryStub');
+const Registry = contract.fromArtifact('Registry');
 
 describe('Registry', () => {
 
@@ -59,7 +59,7 @@ describe('Registry', () => {
         it("updates governance", async () => {
             await registry.setGovernance(someoneElse, { from: governance })
             assert.equal(
-                await registry.getGovernance(),
+                await registry.governance(),
                 someoneElse,
                 "Unexpected governance"
             )
@@ -82,7 +82,7 @@ describe('Registry', () => {
         it("updates registry keeper", async () => {
             await registry.setRegistryKeeper(someoneElse, { from: governance })
             assert.equal(
-                await registry.getRegistryKeeper(),
+                await registry.registryKeeper(),
                 someoneElse,
                 "Unexpected registry keeper"
             )
@@ -105,7 +105,7 @@ describe('Registry', () => {
         it("updates default panic button", async () => {
             await registry.setDefaultPanicButton(someoneElse, { from: governance })
             assert.equal(
-                await registry.getDefaultPanicButton(),
+                await registry.defaultPanicButton(),
                 someoneElse,
                 "Unexpected registry keeper"
             )
@@ -178,7 +178,7 @@ describe('Registry', () => {
                 { from: governance }
             )
             assert.equal(
-                await registry.getPanicButtonForContract(operatorContract1),
+                await registry.panicButtons(operatorContract1),
                 someoneElse,
                 "Unexpected operator contract panic button"
             )
@@ -191,7 +191,7 @@ describe('Registry', () => {
                 { from: governance }
             )
             assert.equal(
-                await registry.getDefaultPanicButton(),
+                await registry.defaultPanicButton(),
                 defaultPanicButton,
                 "Unexpected default panic button"
             )
@@ -288,7 +288,7 @@ describe('Registry', () => {
             )
 
             assert.equal(
-                await registry.getPanicButtonForContract(operatorContract1),
+                await registry.panicButtons(operatorContract1),
                 defaultPanicButton,
                 "not a default panic button"
             )

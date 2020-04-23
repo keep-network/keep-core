@@ -11,12 +11,12 @@ contract Registry {
     // Governance role is to enable recovery from key compromise by rekeying
     // other roles. Also, it can disable operator contract panic buttons
     // permanently.
-    address internal governance;
+    address public governance;
 
     // Registry Keeper maintains approved operator contracts. Each operator
     // contract must be approved before it can be authorized by a staker or
     // used by a service contract.
-    address internal registryKeeper;
+    address public registryKeeper;
 
     // Each operator contract has a Panic Button which can disable malicious
     // or malfunctioning contract that have been previously approved by the
@@ -33,7 +33,7 @@ contract Registry {
 
     // Default panic button for each new operator contract added to the
     // registry. Can be later updated for each contract.
-    address internal defaultPanicButton;
+    address public defaultPanicButton;
 
     // Each service contract has a Operator Contract Upgrader whose purpose
     // is to manage operator contracts for that specific service contract.
