@@ -12,7 +12,7 @@ const OperatorPage = (props) => {
     useSubscribeToContractEvent(TOKEN_STAKING_CONTRACT_NAME, 'Undelegated')
 
   return (
-    <PageWrapper title="My Token Operations">
+    <PageWrapper title="Operations">
       <DelegatedTokens />
       <PendingUndelegation latestUnstakeEvent={latestEvent} />
       <SlashedTokens />
