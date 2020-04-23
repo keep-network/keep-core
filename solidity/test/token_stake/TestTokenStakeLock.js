@@ -246,6 +246,27 @@ describe('TokenStaking/Lock', () => {
       )
     })
 
+    it("should not allow slashing/seizing unlocked stake after undelegation", async () => {
+      await undelegate(operator)
+      await stakingContract.unlockStake(operator, {from: operatorContract})
+
+      await expectRevert(
+        stakingContract.slash(
+          minimumStake, [operator],
+          {from: operatorContract}
+        ),
+        "Stake is released"
+      )
+
+      await expectRevert(
+        stakingContract.seize(
+          minimumStake, 100, magpie, [operator],
+          {from: operatorContract}
+        ),
+        "Stake is released"
+      )
+    })
+
     it("should only allow the lock creator to slash/seize after undelegation", async () => {
       await stakingContract.authorizeOperatorContract(
         operator,
