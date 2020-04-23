@@ -1,4 +1,4 @@
-// Package watchtower continuously monitors firewal rules compliance of all
+// Package watchtower continuously monitors firewall rules compliance of all
 // connected peers, and disconnects peers which do not comply to the rules.
 package watchtower
 
@@ -78,12 +78,9 @@ func (g *Guard) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			logger.Debugf("starting firewall guard round")
+
 			connectedPeers := g.connectionManager.ConnectedPeers()
-			logger.Debugf(
-				"connected to [%v] peers: %v\n",
-				len(connectedPeers),
-				connectedPeers,
-			)
 
 			for _, connectedPeer := range connectedPeers {
 				if g.currentlyChecking(connectedPeer) {
@@ -107,7 +104,8 @@ func (g *Guard) checkFirewallRules(peer string) {
 		// if we error while getting the peer's public key, the peer's id
 		// or key may be malformed/unknown; disconnect them immediately.
 		logger.Errorf(
-			"dropping the connection - could not get public key for peer [%v]: [%v]",
+			"dropping the connection; "+
+				"could not get public key for peer [%v]: [%v]",
 			peer,
 			err,
 		)
@@ -118,7 +116,8 @@ func (g *Guard) checkFirewallRules(peer string) {
 	if err := g.firewall.Validate(peerPublicKey); err != nil {
 
 		logger.Warningf(
-			"dropping the connection; firewal rules not satisfied for peer [%v]: [%v] ",
+			"dropping the connection; "+
+				"firewall rules not satisfied for peer [%v]: [%v] ",
 			peer,
 			err,
 		)

@@ -53,6 +53,9 @@ const (
 	// FirewallCheckTick is the amount of time between periodic checks of all
 	// firewall rules against all peers connected to this one.
 	FirewallCheckTick = time.Minute * 10
+	// ConnectedPeersCheckTick is the amount of time between periodic checks of
+	// the number of connected peers.
+	ConnectedPeersCheckTick = time.Minute * 1
 )
 
 // Config defines the configuration for the libp2p network provider.
@@ -133,6 +136,14 @@ type connectionManager struct {
 	host.Host
 }
 
+func newConnectionManager(ctx context.Context, host host.Host) *connectionManager {
+	connectionManager := &connectionManager{host}
+
+	go connectionManager.monitorConnectedPeers(ctx)
+
+	return connectionManager
+}
+
 func (cm *connectionManager) ConnectedPeers() []string {
 	var peers []string
 	for _, connectedPeer := range cm.Network().Peers() {
@@ -188,6 +199,23 @@ func (cm *connectionManager) AddrStrings() []string {
 	}
 
 	return multiaddrStrings
+}
+
+func (cm *connectionManager) monitorConnectedPeers(ctx context.Context) {
+	ticker := time.NewTicker(ConnectedPeersCheckTick)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			connectedPeers := cm.ConnectedPeers()
+
+			logger.Infof("number of connected peers: [%v]", len(connectedPeers))
+			logger.Debugf("connected peers: [%v]", connectedPeers)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 // ConnectOptions allows to set various options used by libp2p.
@@ -284,21 +312,21 @@ func Connect(
 	}
 
 	if len(config.Peers) == 0 {
-		logger.Infof("node's peers list is empty")
+		logger.Infof("bootstrap peers list is empty")
 	}
 
-	if err := provider.bootstrap(
-		ctx,
-		config.Peers,
-	); err != nil {
-		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
+	if err := provider.bootstrap(ctx, config.Peers); err != nil {
+		return nil, fmt.Errorf("bootstrap failed: [%v]", err)
 	}
 
-	provider.connectionManager = &connectionManager{provider.host}
+	provider.connectionManager = newConnectionManager(ctx, provider.host)
 
-	// Instantiates and starts the connection management background process
+	// Instantiates and starts the connection management background process.
 	watchtower.NewGuard(
-		ctx, FirewallCheckTick, firewall, provider.connectionManager,
+		ctx,
+		FirewallCheckTick,
+		firewall,
+		provider.connectionManager,
 	)
 
 	return provider, nil
