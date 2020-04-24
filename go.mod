@@ -14,7 +14,7 @@ require (
 	github.com/google/gofuzz v1.1.0
 	github.com/ipfs/go-datastore v0.1.1
 	github.com/ipfs/go-log v0.0.1
-	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200420163504-f5aa53962524
+	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec
 	github.com/keep-network/keep-common v0.3.0-rc
 	github.com/libp2p/go-addr-util v0.0.1
 	github.com/libp2p/go-libp2p v0.4.1
