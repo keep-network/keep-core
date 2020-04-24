@@ -56,12 +56,12 @@ func newAuthenticatedInboundConnection(
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		ac.Close()
-		return nil, fmt.Errorf("inbound connection handshake failed: [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	if err := ac.checkFirewallRules(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("indbound connection handshake failed: [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	return ac, nil
@@ -98,12 +98,12 @@ func newAuthenticatedOutboundConnection(
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("outbound connection handshake failed: [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	if err := ac.checkFirewallRules(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("outbound connection handshake failed: [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	return ac, nil
