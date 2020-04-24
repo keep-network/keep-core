@@ -1318,11 +1318,11 @@ func (ts *TokenStaking) GetDelegationInfoAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) MagpieOf(
+func (ts *TokenStaking) BeneficiaryOf(
 	_operator common.Address,
 ) (common.Address, error) {
 	var result common.Address
-	result, err := ts.contract.MagpieOf(
+	result, err := ts.contract.BeneficiaryOf(
 		ts.callerOptions,
 		_operator,
 	)
@@ -1332,7 +1332,7 @@ func (ts *TokenStaking) MagpieOf(
 			err,
 			ts.callerOptions.From,
 			nil,
-			"magpieOf",
+			"beneficiaryOf",
 			_operator,
 		)
 	}
@@ -1340,7 +1340,7 @@ func (ts *TokenStaking) MagpieOf(
 	return result, err
 }
 
-func (ts *TokenStaking) MagpieOfAtBlock(
+func (ts *TokenStaking) BeneficiaryOfAtBlock(
 	_operator common.Address,
 	blockNumber *big.Int,
 ) (common.Address, error) {
@@ -1354,7 +1354,7 @@ func (ts *TokenStaking) MagpieOfAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"magpieOf",
+		"beneficiaryOf",
 		&result,
 		_operator,
 	)
