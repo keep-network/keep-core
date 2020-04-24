@@ -234,7 +234,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
 
         // reimbursing a submitter that triggered group selection
-        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
+        (bool success, ) = stakingContract.beneficiaryOf(submitter).call.value(groupSelectionStartFee)("");
         require(success, "Group selection reimbursement failed");
     }
 
@@ -369,13 +369,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         }
 
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        address payable magpie = stakingContract.magpieOf(msg.sender);
+        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);
 
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            magpie.call.value(reimbursementFee)("");
+            beneficiary.call.value(reimbursementFee)("");
 
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
@@ -383,7 +383,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            magpie.call.value(reimbursementFee)("");
+            beneficiary.call.value(reimbursementFee)("");
         }
     }
 
@@ -476,7 +476,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
+        stakingContract.beneficiaryOf(msg.sender).call.value(submitterReward)("");
 
         if (subsidy > 0) {
             signingRequest.serviceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
@@ -718,9 +718,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     function withdrawGroupMemberRewards(address operator, uint256 groupIndex)
         public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex);
-        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
+        (bool success, ) = stakingContract.beneficiaryOf(operator).call.value(accumulatedRewards)("");
         if (success) {
-            emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
+            emit GroupMemberRewardsWithdrawn(stakingContract.beneficiaryOf(operator), operator, accumulatedRewards, groupIndex);
         }
     }
 

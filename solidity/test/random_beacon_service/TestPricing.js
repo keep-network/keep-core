@@ -14,9 +14,9 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     operator1 = accounts[2],
     operator2 = accounts[3],
     operator3 = accounts[4],
-    magpie1 = accounts[5],
-    magpie2 = accounts[6],
-    magpie3 = accounts[7];
+    beneficiary1 = accounts[5],
+    beneficiary2 = accounts[6],
+    beneficiary3 = accounts[7];
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -42,9 +42,9 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });

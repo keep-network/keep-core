@@ -69,10 +69,10 @@ contract StakeDelegatable {
     }
 
     /**
-     * @dev Gets the magpie for the specified operator address.
-     * @return Magpie address.
+     * @dev Gets the beneficiary for the specified operator address.
+     * @return Beneficiary address.
      */
-    function magpieOf(address _operator) public view returns (address payable) {
+    function beneficiaryOf(address _operator) public view returns (address payable) {
         return operators[_operator].beneficiary;
     }
 

@@ -364,7 +364,7 @@ contract TokenGrant {
     /// @param _amount Amount to stake.
     /// @param _extraData Data for stake delegation. This byte array must have
     /// the following values concatenated:
-    /// Magpie address (20 bytes) where the rewards for participation are sent
+    /// Beneficiary address (20 bytes) where the rewards for participation are sent
     /// and operator's (20 bytes) address.
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
@@ -394,7 +394,7 @@ contract TokenGrant {
         token.transfer(address(grantStake), _amount);
 
         // Staking contract expects 40 bytes _extraData for stake delegation.
-        // 20 bytes magpie's address + 20 bytes operator's address.
+        // 20 bytes beneficiary's address + 20 bytes operator's address.
         grantStake.stake(_amount, _extraData);
         emit TokenGrantStaked(_id, _amount, operator);
     }

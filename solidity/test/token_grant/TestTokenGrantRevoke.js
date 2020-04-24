@@ -21,7 +21,7 @@ describe('TokenGrant/Revoke', function() {
 
   const tokenOwner = accounts[0],
         grantee = accounts[1],
-        magpie = accounts[2],
+        beneficiary = accounts[2],
         authorizer = accounts[3],
         operator = accounts[4];
 
@@ -207,7 +207,7 @@ describe('TokenGrant/Revoke', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       minimumStake,
       grantId
@@ -236,7 +236,7 @@ describe('TokenGrant/Revoke', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       minimumStake,
       grantId
@@ -273,7 +273,7 @@ describe('TokenGrant/Revoke', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       minimumStake,
       grantId

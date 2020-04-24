@@ -45,14 +45,14 @@ library Reimbursements {
         uint256 actualCallbackFee = actualCallbackGas.mul(gasPrice);
 
         // Get the beneficiary.
-        address payable magpie = stakingContract.magpieOf(msg.sender);
+        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);
 
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
         if (actualCallbackFee < callbackFee) {
             uint256 callbackSurplus = callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
-            magpie.call.value(actualCallbackFee)("");
+            beneficiary.call.value(actualCallbackFee)("");
 
             // Return callback surplus to the requestor.
             // Expecting 32 bytes data containing 20 byte address
@@ -62,7 +62,7 @@ library Reimbursements {
             }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            magpie.call.value(callbackFee)("");
+            beneficiary.call.value(callbackFee)("");
         }
     }
 }

@@ -412,7 +412,7 @@ describe('TokenGrant/ManagedGrant', () => {
         operator, beneficiary, authorizer, minimumStake, grantee
       );
       expect(await staking.balanceOf(operator)).to.eq.BN(minimumStake);
-      expect(await staking.magpieOf(operator)).to.equal(beneficiary);
+      expect(await staking.beneficiaryOf(operator)).to.equal(beneficiary);
       expect(await staking.authorizerOf(operator)).to.equal(authorizer);
     });
 
@@ -441,7 +441,7 @@ describe('TokenGrant/ManagedGrant', () => {
         operator, beneficiary, authorizer, minimumStake, newGrantee
       );
       expect(await staking.balanceOf(operator)).to.eq.BN(minimumStake);
-      expect(await staking.magpieOf(operator)).to.equal(beneficiary);
+      expect(await staking.beneficiaryOf(operator)).to.equal(beneficiary);
       expect(await staking.authorizerOf(operator)).to.equal(authorizer);
     });
 

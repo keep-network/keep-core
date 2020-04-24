@@ -128,7 +128,7 @@ contract TokenStaking is StakeDelegatable {
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
      * @param _extraData Data for stake delegation. This byte array must have the
-     * following values concatenated: Magpie address (20 bytes) where the rewards for participation
+     * following values concatenated: Beneficiary address (20 bytes) where the rewards for participation
      * are sent, operator's (20 bytes) address, authorizer (20 bytes) address.
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
@@ -136,7 +136,7 @@ contract TokenStaking is StakeDelegatable {
         require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
         require(_extraData.length == 60, "Stake delegation data must be provided.");
 
-        address payable magpie = address(uint160(_extraData.toAddress(0)));
+        address payable beneficiary = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
         require(operators[operator].owner == address(0), "Operator address is already in use.");
         address authorizer = _extraData.toAddress(40);
@@ -147,7 +147,7 @@ contract TokenStaking is StakeDelegatable {
         operators[operator] = Operator(
             OperatorParams.pack(_value, block.timestamp, 0),
             _from,
-            magpie,
+            beneficiary,
             authorizer
         );
         ownerOperators[_from].push(operator);
