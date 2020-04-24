@@ -156,7 +156,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerID, err := peer.IDB58Decode(connectedPeer)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to decode peer ID from [%s] with error: [%v]",
+			"failed to decode peer ID from [%s]: [%v]",
 			connectedPeer,
 			err,
 		)
@@ -165,7 +165,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerPublicKey, err := peerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to extract peer [%s] public key with error: [%v]",
+			"failed to extract peer [%s] public key: [%v]",
 			connectedPeer,
 			err,
 		)
@@ -177,7 +177,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
 	peerID, err := peer.IDB58Decode(peerHash)
 	if err != nil {
-		logger.Errorf("failed to decode peer hash: [%v] [%v]", peerHash, err)
+		logger.Errorf("failed to decode peer hash [%v]: [%v]", peerHash, err)
 		return
 	}
 
@@ -353,7 +353,7 @@ func discoverAndListen(
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not create authenticated transport [%v]",
+			"could not create authenticated transport: [%v]",
 			err,
 		)
 	}

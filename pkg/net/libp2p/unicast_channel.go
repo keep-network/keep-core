@@ -295,7 +295,8 @@ func (uc *unicastChannel) getUnmarshalingContainerByType(messageType string) (
 	unmarshaler, found := uc.unmarshalersByType[messageType]
 	if !found {
 		return nil, fmt.Errorf(
-			"couldn't find unmarshaler for type %s", messageType,
+			"couldn't find unmarshaler for type [%s]",
+			messageType,
 		)
 	}
 

@@ -56,12 +56,12 @@ func newAuthenticatedInboundConnection(
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+		return nil, fmt.Errorf("inbound connection handshake failed: [%v]", err)
 	}
 
 	if err := ac.checkFirewallRules(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
+		return nil, fmt.Errorf("indbound connection handshake failed: [%v]", err)
 	}
 
 	return ac, nil
@@ -82,7 +82,7 @@ func newAuthenticatedOutboundConnection(
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not create new authenticated outbound connection [%v]",
+			"could not create new authenticated outbound connection: [%v]",
 			err,
 		)
 	}
@@ -98,12 +98,12 @@ func newAuthenticatedOutboundConnection(
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+		return nil, fmt.Errorf("outbound connection handshake failed: [%v]", err)
 	}
 
 	if err := ac.checkFirewallRules(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
+		return nil, fmt.Errorf("outbound connection handshake failed: [%v]", err)
 	}
 
 	return ac, nil
@@ -425,7 +425,7 @@ func (ac *authenticatedConnection) verify(
 	ok, err := pubKey.Verify(messageBytes, signatureBytes)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
+			"failed to verify signature [0x%v] for sender [%v]: [%v]",
 			hex.EncodeToString(signatureBytes),
 			actualSender.Pretty(),
 			err,
@@ -434,7 +434,7 @@ func (ac *authenticatedConnection) verify(
 
 	if !ok {
 		return fmt.Errorf(
-			"invalid signature [0x%v] on message from sender [%v] ",
+			"invalid signature [0x%v] on message from sender [%v]",
 			hex.EncodeToString(signatureBytes),
 			actualSender.Pretty(),
 		)

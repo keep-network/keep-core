@@ -264,7 +264,7 @@ func (c *channel) processContainerMessage(
 	//     sender identifier we grab from the message (inner layer).
 	if proposedSender != senderIdentifier.id {
 		return fmt.Errorf(
-			"Outer layer sender [%v] does not match inner layer sender [%v]",
+			"outer layer sender [%v] does not match inner layer sender [%v]",
 			proposedSender,
 			senderIdentifier,
 		)
@@ -299,7 +299,8 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	unmarshaler, found := c.unmarshalersByType[messageType]
 	if !found {
 		return nil, fmt.Errorf(
-			"couldn't find unmarshaler for type %s", messageType,
+			"couldn't find unmarshaler for type [%s]",
+			messageType,
 		)
 	}
 
