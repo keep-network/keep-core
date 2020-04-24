@@ -279,10 +279,10 @@ describe('AdaptiveStakingPolicy', async () => {
     it("should calculate stakeable amount correctly before cliff", async () => {
       expect(await withCliff(1499, largeGrant, 0)).to.eq.BN(
         minimumStake.muln(minimumMultiplier),
-        "Should permit minimum stake with large grant before cliff");
+        "Should permit multiple of minimum stake with large grant before cliff");
       expect(await withCliff(1499, mediumGrant, 0)).to.eq.BN(
         minimumStake.muln(minimumMultiplier),
-        "Should permit minimum stake with medium grant before cliff");
+        "Should permit multiple of minimum stake with medium grant before cliff");
       expect(await withCliff(1499, smallGrant, 0)).to.eq.BN(
         smallGrant,
         "Should permit entire grant with small grant before cliff");
@@ -301,7 +301,7 @@ describe('AdaptiveStakingPolicy', async () => {
         "Should permit half with large grant just after cliff");
       expect(await withCliff(1500, mediumGrant, 0)).to.eq.BN(
         minimumStake.muln(minimumMultiplier),
-        "Should permit minimum with medium grant just after cliff");
+        "Should permit multiple of minimum with medium grant just after cliff");
       expect(await withCliff(1500, smallGrant, 0)).to.eq.BN(
         smallGrant,
         "Should permit entire grant with small grant just after cliff");
@@ -314,7 +314,7 @@ describe('AdaptiveStakingPolicy', async () => {
         "Should permit three quarters with large grant halfway through");
       expect(await withCliff(2000, mediumGrant, 0)).to.eq.BN(
         minimumStake.muln(minimumMultiplier),
-        "Should permit minimum with medium grant halfway through");
+        "Should permit multiple of minimum with medium grant halfway through");
       expect(await withCliff(2000, smallGrant, 0)).to.eq.BN(
         smallGrant,
         "Should permit entire grant with small grant halfway through");
