@@ -7,23 +7,14 @@ import "./TokenStaking.sol";
 
 /// @title AdaptiveStakingPolicy
 /// @dev A staking policy which allows the grantee
-/// to always stake the defined minimum stake,
-/// or the unlocked amount if greater.
+/// to always stake a certain multiple of the defined minimum stake,
+/// or the unlocked amount at a specified time in the future,
+/// if it is greater.
 ///
-/// This is necessary for staking revocable token grants safely.
-/// If the entire revocable grant can be staked,
-/// the yet-to-be-unlocked amount becomes ineffective as collateral
-/// if the grant is revoked.
-/// To avoid this issue,
-/// only the unlocked amount can be staked.
-///
-/// However, grants that feature a cliff pose a problem
-/// as no tokens are unlocked until the cliff is reached.
-/// Small grants may also take a long time
-/// to unlock enough tokens to be able to stake.
-/// To permit all grants to stake from the beginning,
-/// the policy defines a minimum which can always be staked
-/// even if the grant doesn't have enough unlocked tokens.
+/// When creating a policy,
+/// the minimum stake multiplier and stakeahead time can be customized,
+/// and whether the cliff is considered in the stakeahead
+/// can also be chosen.
 contract AdaptiveStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
     using UnlockingSchedule for uint256;
@@ -32,9 +23,32 @@ contract AdaptiveStakingPolicy is GrantStakingPolicy {
     bool useCliff;
 
     constructor(
+        // Address of the staking contract,
+        // from which the minimum stake is fetched at the time of creation.
         address _stakingContract,
+        // Multiplier for the minimum stake;
+        // with a minimumMultiplier = 5
+        // the policy permits staking 5 times the minimum stake.
         uint256 minimumMultiplier,
+        // Stakeahead time in seconds;
+        // the policy permits staking the amount that will be unlocked
+        // `stakeaheadTime` seconds in the future.
+        // For example, on a 12-month grant
+        // a stakeahead time of 7,884,000 (3 months in seconds)
+        // means that 25% of the grant will be unlocked within the stakeahead
+        // and thus be stakeable on top of the unlocked amount.
+        // On a 24-month grant the same stakeahead results in
+        // 12.5% of the grant being added to the unlocked amount.
+        // With a stakeahead of 0,
+        // only the unlocked amount can be staked.
         uint256 _stakeaheadTime,
+        // Whether the cliff is used when calculating stakeahead.
+        // If `useCliff = true`,
+        // a 12-month grant with a 6-month cliff and 3-month stakeahead
+        // will only permit the minimum until 3 months,
+        // when the current time plus stakeahead reaches the cliff.
+        // If the cliff is not used,
+        // the grantee could instead stake 25% right away.
         bool _useCliff
     ) public {
         minimumStake = TokenStaking(_stakingContract).minimumStake().mul(minimumMultiplier);
