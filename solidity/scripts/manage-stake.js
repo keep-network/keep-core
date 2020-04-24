@@ -4,7 +4,7 @@
   To stake KEEP tokens, use 'stake' command and provide three parameters:
   - operator address
   - amount of KEEP to stake
-  - KEEP owner address (we assume it's also beneficiary/beneficiary/authorizer address)
+  - KEEP owner address (we assume it's also beneficiary/authorizer address)
 
     $ truffle exec scripts/manage-stake.js stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 10000 0xFa3DA235947AaB49D439f3BcB46effD1a7237E32
 

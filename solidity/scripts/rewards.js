@@ -2,7 +2,7 @@
  * Important: the KeepRandomBeaconOperatorRewardsStub contract should be deployed to the network!
  * 
  * This script:
- *  - delegates stake to operators. For each operator uses the same beneficiary(beneficiary) address,
+ *  - delegates stake to operators. For each operator uses the same beneficiary address,
  *  - adds 30 mock groups of which 19 makes stale,
  *  - emits fake withdrawal events.
  *  */ 
