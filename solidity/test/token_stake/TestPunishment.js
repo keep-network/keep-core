@@ -159,7 +159,9 @@ describe('TokenStaking/Punishment', () => {
 
             let tattletaleBalanceBeforeSeizing = await token.balanceOf(tattletale)
 
-            let amountToSeize = largeStake.add(web3.utils.toBN(100)) // 200000000000000000000100
+            // we test with a higher excess to ensure that the tattletale reward
+            // is calculated from the applied penalty, not the requested penalty            
+            let amountToSeize = largeStake.muln(2) // 400000000000000000000000
             let rewardMultiplier = web3.utils.toBN(10)
             await stakingContract.seize(
                 amountToSeize, rewardMultiplier, tattletale,
@@ -171,7 +173,7 @@ describe('TokenStaking/Punishment', () => {
 
             expect(operatorBalanceAfterSeizing).to.eq.BN(0)
 
-            // 1000000000000000000000 = (200000000000000000000100 * 5 / 100) * 10 / 100
+            // 1000000000000000000000 = (200000000000000000000000 * 5 / 100) * 10 / 100
             let expectedTattletaleReward = web3.utils.toBN("1000000000000000000000")
             expect(tattletaleBalanceAfterSeizing).to.eq.BN(
                 tattletaleBalanceBeforeSeizing.add(expectedTattletaleReward)
