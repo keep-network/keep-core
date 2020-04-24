@@ -23,7 +23,7 @@ let minimumStake, stakingAmount;
 describe("TokenStaking/DelegatedAuthority", async () => {
   const owner = accounts[0];
   const operator = accounts[1];
-  const magpie = accounts[2];
+  const beneficiary = accounts[2];
   const authorizer = accounts[3];
   const recognizedContract = accounts[4];
   const unrecognizedContract = accounts[5];
@@ -64,7 +64,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
 
   async function delegate(operator, amount) {
     let data = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);
@@ -219,7 +219,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
         stakingContract.seize(
           minimumStake,
           100,
-          magpie,
+          beneficiary,
           [operator],
           {from: recognizedContract}
         ),
@@ -229,7 +229,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       await stakingContract.seize(
         minimumStake,
         100,
-        magpie,
+        beneficiary,
         [operator],
         {from: recognizedContract}
       );

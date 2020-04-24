@@ -10,7 +10,7 @@ const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 describe('KeepRandomBeaconOperator/GroupSelection', function() {
   let operatorContract, submissionTimeout,
   owner = accounts[0], 
-  magpie = accounts[1],
+  beneficiary = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
   operator3 = accounts[4], tickets3,
@@ -38,9 +38,9 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     await operatorContract.setGroupSize(groupSize)
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, minimumStake.muln(operator1StakingWeight));
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, minimumStake.muln(operator2StakingWeight));
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, minimumStake.muln(operator3StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary, authorizer, minimumStake.muln(operator1StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary, authorizer, minimumStake.muln(operator2StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary, authorizer, minimumStake.muln(operator3StakingWeight));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})

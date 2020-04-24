@@ -129,7 +129,7 @@ const useSubscribeToStakedEvent = async () => {
       createdAt,
       operatorAddress: from,
       authorizerAddress: await stakingContract.methods.authorizerOf(from).call(),
-      beneficiary: await stakingContract.methods.magpieOf(from).call(),
+      beneficiary: await stakingContract.methods.beneficiaryOf(from).call(),
       amount: value,
       isInInitializationPeriod: true,
       initializationOverAt: moment.unix(createdAt).add(initializationPeriod, 'seconds'),
@@ -175,7 +175,7 @@ const useSubscribeToUndelegatedEvent = () => {
     const undelegation = {
       operatorAddress: operator,
       authorizerAddress: await stakingContract.methods.authorizerOf(operator).call(),
-      beneficiary: await stakingContract.methods.magpieOf(operator).call(),
+      beneficiary: await stakingContract.methods.beneficiaryOf(operator).call(),
       amount,
       undelegatedAt: moment.unix(undelegatedAt),
       undelegationCompleteAt: moment.unix(undelegatedAt).add(undelegationPeriod, 'seconds'),

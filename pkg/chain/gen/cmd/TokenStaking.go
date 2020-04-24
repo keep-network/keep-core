@@ -57,10 +57,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "magpie-of",
-			Usage:     "Calls the constant method magpieOf on the TokenStaking contract.",
+			Name:      "beneficiary-of",
+			Usage:     "Calls the constant method beneficiaryOf on the TokenStaking contract.",
 			ArgsUsage: "[_operator] ",
-			Action:    tsMagpieOf,
+			Action:    tsBeneficiaryOf,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -328,7 +328,7 @@ func tsGetDelegationInfo(c *cli.Context) error {
 	return nil
 }
 
-func tsMagpieOf(c *cli.Context) error {
+func tsBeneficiaryOf(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
@@ -341,7 +341,7 @@ func tsMagpieOf(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.MagpieOfAtBlock(
+	result, err := contract.BeneficiaryOfAtBlock(
 		_operator,
 
 		cmd.BlockFlagValue.Uint,

@@ -22,7 +22,7 @@ describe('TokenGrant/Withdraw', function() {
   const tokenOwner = accounts[0],
     grantee = accounts[1],
     operatorOne = accounts[2],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5];
 
   let grantId, grantStart, grantAmount;
@@ -144,7 +144,7 @@ describe('TokenGrant/Withdraw', function() {
         stakingContract.address,
         grantee,
         operatorOne,
-        magpie,
+        beneficiary,
         authorizer,
         grantAmount,
         grantId

@@ -12,7 +12,7 @@ describe('TokenStaking/Lock', () => {
     operator1 = accounts[1],
     operator2 = accounts[2],
     operator3 = accounts[3],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6],
     operatorContract2 = accounts[7];
@@ -49,7 +49,7 @@ describe('TokenStaking/Lock', () => {
 
   async function delegate(operator, amount) {
     let data = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);
@@ -219,7 +219,7 @@ describe('TokenStaking/Lock', () => {
         {from: operatorContract}
       )
       await stakingContract.seize(
-        minimumStake, 100, magpie, [operator],
+        minimumStake, 100, beneficiary, [operator],
         {from: operatorContract}
       )
       // ok, no revert
@@ -239,7 +239,7 @@ describe('TokenStaking/Lock', () => {
       )
       await expectRevert(
         stakingContract.seize(
-          minimumStake, 100, magpie, [operator],
+          minimumStake, 100, beneficiary, [operator],
           {from: operatorContract}
         ),
         "Stake is released"
@@ -284,7 +284,7 @@ describe('TokenStaking/Lock', () => {
       )
       await expectRevert(
         stakingContract.seize(
-          minimumStake, 100, magpie, [operator],
+          minimumStake, 100, beneficiary, [operator],
           {from: operatorContract2}
         ),
         "Stake is released"

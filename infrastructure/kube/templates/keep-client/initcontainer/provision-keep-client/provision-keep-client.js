@@ -104,7 +104,7 @@ async function isFunded(operatorAddress) {
 
 async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) {
 
-  let magpie = contractOwnerAddress;
+  let beneficiary = contractOwnerAddress;
   let staked = await isStaked(operatorAddress);
 
   /*
@@ -125,7 +125,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   }
 
   let delegation = '0x' + Buffer.concat([
-    Buffer.from(magpie.substr(2), 'hex'),
+    Buffer.from(beneficiary.substr(2), 'hex'),
     Buffer.from(operatorAddress.substr(2), 'hex'),
     Buffer.from(authorizer.substr(2), 'hex')
   ]).toString('hex');

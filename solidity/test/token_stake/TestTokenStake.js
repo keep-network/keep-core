@@ -24,7 +24,7 @@ describe('TokenStaking', function() {
     ownerTwo = accounts[1],
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6];
 
@@ -54,7 +54,7 @@ describe('TokenStaking', function() {
 
   async function delegate(operator, amount) {
     let data = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);

@@ -78,7 +78,7 @@ const getDelegations = async (
       undelegatedAt,
       amount,
     } = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', operatorAddress)
-    const beneficiary = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'magpieOf', operatorAddress)
+    const beneficiary = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'beneficiaryOf', operatorAddress)
     const authorizerAddress = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', operatorAddress)
 
     const operatorData = {
