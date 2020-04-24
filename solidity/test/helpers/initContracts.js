@@ -15,7 +15,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     operatorContract;
 
   let dkgContributionMargin = 5, // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
-    withdrawalDelay = 1,
     stakeInitializationPeriod = 30, // In seconds
     stakeUndelegationPeriod = 300; // In seconds
 
@@ -34,7 +33,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   const initialize = serviceContractImplV1.contract.methods
       .initialize(
           dkgContributionMargin,
-          withdrawalDelay,
           registry.address,
       ).encodeABI();
 
