@@ -15,6 +15,7 @@ const GroupSelection = artifacts.require("./libraries/operator/GroupSelection.so
 const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
+const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
 const Registry = artifacts.require("./Registry.sol");
 
 let initializationPeriod = 43200; // ~12 hours
@@ -51,6 +52,8 @@ module.exports = async function(deployer, network) {
   await deployer.link(Groups, KeepRandomBeaconOperator);
   await deployer.deploy(DKGResultVerification);
   await deployer.link(DKGResultVerification, KeepRandomBeaconOperator);
+  await deployer.deploy(DelayFactor);
+  await deployer.link(DelayFactor, KeepRandomBeaconOperator);
   await deployer.deploy(Reimbursements);
   await deployer.link(Reimbursements, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperator);
