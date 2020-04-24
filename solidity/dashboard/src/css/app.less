@@ -67,9 +67,9 @@ ul {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  background: @white;
+  background: @header-color;
   padding: 0.5rem;
-  border-bottom: 1px solid @color-black;
+  border-bottom: 1px solid @color-grey-30;
 
   .logo {
     height: @header-height;
@@ -96,51 +96,83 @@ ul {
   height: 100%;
   width: 0px;
   visibility: hidden;
-  background: @white;
-  border-right: 1px solid @color-black;
+  background: @side-menu-color;
+  border-right: 1px solid @color-grey-30;
   overflow-x: hidden;
   transition: 0.5s ease;
-  
+
   .active& {
-    visibility: visible;
     width: @side-menu-width;
+    visibility: visible;
+    overflow-x: visible;
   }
 
   & ul {
     list-style: none;
-    overflow-x: hidden;
     text-align: center;
-    width: @side-menu-width;
     padding: 0;
 
     & li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 1rem;
       color: @color-grey-70;
-      padding: 1.25rem 0;
       width: 100%;
-      border-right: 0 solid @primary-color;
-      border-bottom: 1px solid @color-black;
-      transition: all 0.3s ease;
+      border-bottom: 1px solid @color-grey-30;
+      position: relative;
+      transition: 0.3s ease;
+ 
+      .arrow-right {
+        margin-left: auto;
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        width: 0px;
+        height: calc(100% + 2px);
+        top: 0;
+        right: -6px;  
+        background-color: @primary-color;
+        transition: 0.3s ease;
+      }
+
+      &:hover, &.active-page-link {
+        &::after {
+          width: 5px;
+        }
+        svg {
+          * {
+            transition: 0.3s ease;
+            stroke: @color-black;
+          }
+          &.arrow-right {
+            path {
+              fill: @color-black;
+              stroke: none !important;
+            }
+          }
+        }
+        color: @color-black;
+        font-weight: 600;
+      }
 
       &:hover {
-        color: @color-black;
-        font-weight: 600;
         cursor: pointer;
-        border-right-width: 5px;
       }
 
-      &.active-page-link {
-        border-right-width: 5px;
-        color: @color-black;
-        font-weight: 600;
-      }
     }
 
     a {
       color: @color-black;
       text-decoration: none;
+      outline: none;
 
       &:hover, &:focus{
         text-decoration: none;
+        outline: none;
+
       }
     }
 
@@ -160,8 +192,6 @@ ul {
       text-align: center;
       margin: 1rem;
     }
-
-
   }
 }
 
@@ -287,6 +317,7 @@ footer {
     width: @side-menu-width;
     visibility: visible;
     z-index: 10;
+    overflow-x: visible;
     
     ul > .account-address, .web3 {
       visibility: hidden;
