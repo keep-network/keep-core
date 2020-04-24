@@ -10,7 +10,7 @@ All rewards and punishments are incurred by a specific virtual staker.
 
 STATUS: proposal
 
-Currency and token rewards are paid to the magpie address specified in the stake
+Currency and token rewards are paid to the beneficiary address specified in the stake
 delegation transaction.
 
 Punishments are performed by removing the designated amount of tokens from the
