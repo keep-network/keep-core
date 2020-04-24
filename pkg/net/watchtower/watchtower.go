@@ -133,7 +133,7 @@ func (g *Guard) getPeerPublicKey(peer string) (*ecdsa.PublicKey, error) {
 
 	if peerPublicKey == nil {
 		return nil, fmt.Errorf(
-			"failed to resolve valid public key for peer %s", peer,
+			"failed to resolve valid public key for peer [%s]", peer,
 		)
 	}
 	return key.NetworkKeyToECDSAKey(peerPublicKey), nil
