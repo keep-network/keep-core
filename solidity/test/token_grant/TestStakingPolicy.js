@@ -288,6 +288,12 @@ describe('AdaptiveStakingPolicy', async () => {
         "Should permit entire grant with small grant before cliff");
     });
 
+    it("should ignore cliff if specified", async () => {
+      expect(await withoutCliff(1250, largeGrant, 0)).to.eq.BN(
+        tokens(1875000),
+        "Should permit stakeahead with large grant before cliff");
+    });
+
     // cliff at 1000, stakeahead of 500
     it("should calculate stakeable amount correctly just after cliff", async () => {
       expect(await withCliff(1500, largeGrant, 0)).to.eq.BN(
