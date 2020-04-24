@@ -1,6 +1,12 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { colors } from '../constants/colors'
+import { ReactComponent as ArrowRight } from '../static/svg/arrow-right.svg'
+import { ReactComponent as Operations } from '../static/svg/operations.svg'
+import { ReactComponent as Rewards } from '../static/svg/rewards.svg'
+import { ReactComponent as Glossary } from '../static/svg/glossary.svg'
+import { ReactComponent as Authorizer } from '../static/svg/authorizer.svg'
+import { ReactComponent as KeepToken } from '../static/svg/tokens.svg'
 
 const Keep = ({ color, height, width }) => (
   <svg width={width} height={height} viewBox="0 0 718 126" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -139,4 +145,10 @@ export {
   OK,
   OKBadge,
   PendingBadge,
+  ArrowRight,
+  Authorizer,
+  Glossary,
+  Operations,
+  KeepToken,
+  Rewards,
 }
