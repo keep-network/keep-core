@@ -116,9 +116,10 @@ func (p *provider) BroadcastChannelForwarderFor(name string) {
 	logger.Infof("requested message forwarder for channel: [%v]", name)
 
 	// TTL for a single message forwarder should be limited to avoid unnecessary
-	// resource consumption. One hour seems to be a reasonable value as no
-	// single protocol execution will exceed this time.
-	ttl := 1 * time.Hour
+	// resource consumption. This value should not exceed libp2p time-cache
+	// duration which holds seen messages, to prevent an uncontrolled
+	// message propagation.
+	ttl := 90 * time.Second
 
 	if err := p.broadcastChannelManager.newForwarder(name, ttl); err != nil {
 		logger.Warningf(
