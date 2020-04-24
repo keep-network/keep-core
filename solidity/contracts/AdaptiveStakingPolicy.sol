@@ -29,6 +29,10 @@ contract AdaptiveStakingPolicy is GrantStakingPolicy {
         // Multiplier for the minimum stake;
         // with a minimumMultiplier = 5
         // the policy permits staking 5 times the minimum stake.
+        // If the multiplier is 0,
+        // only the unlocked amount,
+        // including stakeahead if applicable,
+        // can be staked.
         uint256 minimumMultiplier,
         // Stakeahead time in seconds;
         // the policy permits staking the amount that will be unlocked
