@@ -26,7 +26,7 @@ const fetchAvailableRewards = async (web3Context) => {
       const groupMembers = new Set(await keepRandomBeaconOperatorContract.methods.getGroupMembers(groupPublicKey).call())
       groupMemberIndices[groupPublicKey] = {}
       for (const memberAddress of groupMembers) {
-        const beneficiaryAddressForMember = await stakingContract.methods.magpieOf(memberAddress).call()
+        const beneficiaryAddressForMember = await stakingContract.methods.beneficiaryOf(memberAddress).call()
         if (!isSameEthAddress(yourAddress, beneficiaryAddressForMember)) {
           continue
         }

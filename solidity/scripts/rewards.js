@@ -2,7 +2,7 @@
  * Important: the KeepRandomBeaconOperatorRewardsStub contract should be deployed to the network!
  * 
  * This script:
- *  - delegates stake to operators. For each operator uses the same beneficiary(magpie) address,
+ *  - delegates stake to operators. For each operator uses the same beneficiary(beneficiary) address,
  *  - adds 30 mock groups of which 19 makes stale,
  *  - emits fake withdrawal events.
  *  */ 
@@ -37,7 +37,7 @@ module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconServiceImpl.at(contractService.address);
     const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
   
-    const magpie = accounts[5];
+    const beneficiary = accounts[5];
     const requestor = accounts[5];
     const owner = accounts[0];
       
@@ -46,7 +46,7 @@ module.exports = async function() {
       let authorizer = accounts[i]
   
       const delegation = '0x' + Buffer.concat([
-        Buffer.from(magpie.substr(2), 'hex'),
+        Buffer.from(beneficiary.substr(2), 'hex'),
         Buffer.from(operator.substr(2), 'hex'),
         Buffer.from(authorizer.substr(2), 'hex')
       ]).toString('hex');
