@@ -111,8 +111,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // contract.
     uint256 public dkgSubmitterReimbursementFee;
 
-    uint256 internal currentEntryStartBlock;
-
     // Seed value used for the genesis group selection.
     // https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal constant _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
@@ -120,15 +118,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     // Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
-    struct SigningRequest {
-        uint256 relayRequestId;
-        uint256 entryVerificationAndProfitFee;
-        uint256 callbackFee;
-        uint256 groupIndex;
-        bytes previousEntry;
-        address serviceContract;
-    }
-    SigningRequest internal signingRequest;
+    // current relay request data
+    uint256 internal currentRequestId;
+    uint256 internal currentEntryStartBlock;
+    uint256 internal currentRequestGroupIndex;
+    bytes internal currentRequestPreviousEntry;
+    uint256 internal  currentRequestEntryVerificationAndProfitFee;
+    uint256 internal currentRequestCallbackFee;
+    address internal currentRequestServiceContract;
 
 
     /**
@@ -424,14 +421,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         currentEntryStartBlock = block.number;
 
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
-        signingRequest = SigningRequest(
-            requestId,
-            entryVerificationAndProfitFee,
-            callbackFee,
-            groupIndex,
-            previousEntry,
-            serviceContract
-        );
+        
+        currentRequestId = requestId;
+        currentRequestEntryVerificationAndProfitFee = entryVerificationAndProfitFee;
+        currentRequestCallbackFee = callbackFee;
+        currentRequestGroupIndex = groupIndex;
+        currentRequestPreviousEntry = previousEntry;
+        currentRequestServiceContract = serviceContract;        
 
         bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         emit RelayEntryRequested(previousEntry, groupPubKey);
@@ -446,12 +442,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
-        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(currentRequestGroupIndex);
 
         require(
             BLS.verify(
                 groupPubKey,
-                signingRequest.previousEntry,
+                currentRequestPreviousEntry,
                 _groupSignature
             ),
             "Invalid signature"
@@ -461,17 +457,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         // Spend no more than groupSelectionGasEstimate + 40000 gas max
         // This will prevent relayEntry failure in case the service contract is compromised
-        signingRequest.serviceContract.call.gas(groupSelectionGasEstimate.add(40000))(
+        currentRequestServiceContract.call.gas(groupSelectionGasEstimate.add(40000))(
             abi.encodeWithSignature(
                 "entryCreated(uint256,bytes,address)",
-                signingRequest.relayRequestId,
+                currentRequestId,
                 _groupSignature,
                 msg.sender
             )
         );
 
-        if (signingRequest.callbackFee > 0) {
-            executeCallback(signingRequest, uint256(keccak256(_groupSignature)));
+        if (currentRequestCallbackFee > 0) {
+            executeCallback(uint256(keccak256(_groupSignature)));
         }
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
@@ -480,7 +476,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         stakingContract.beneficiaryOf(msg.sender).call.value(submitterReward)("");
 
         if (subsidy > 0) {
-            signingRequest.serviceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
+            currentRequestServiceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
         }
 
         currentEntryStartBlock = 0;
@@ -488,11 +484,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /**
      * @dev Executes customer specified callback for the relay entry request.
-     * @param signingRequest Request data tracked internally by this contract.
      * @param entry The generated random number.
      */
-    function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
-        uint256 callbackFee = signingRequest.callbackFee;
+    function executeCallback(uint256 entry) internal {
+        uint256 callbackFee = currentRequestCallbackFee;
 
         // Make sure not to spend more than what was received from the service
         // contract for the callback
@@ -500,11 +495,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         bytes memory callbackReturnData;
         uint256 gasBeforeCallback = gasleft();
-        (, callbackReturnData) = signingRequest.serviceContract.call.gas(
+        (, callbackReturnData) = currentRequestServiceContract.call.gas(
             gasLimit
         )(abi.encodeWithSignature(
             "executeCallback(uint256,uint256)",
-            signingRequest.relayRequestId,
+            currentRequestId,
             entry
         ));
         uint256 gasAfterCallback = gasleft();
@@ -541,7 +536,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
         uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).percent(5).div(decimals);
-        uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
+        uint256 entryVerificationFee = currentRequestEntryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
@@ -579,22 +574,22 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         require(hasEntryTimedOut(), "Entry did not time out");
 
         uint256 minimumStake = stakingContract.minimumStake();
-        groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
+        groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize, minimumStake);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
         // which can handle it.
         if (numberOfGroups() > 0) {
             signRelayEntry(
-                signingRequest.relayRequestId,
-                signingRequest.previousEntry,
-                signingRequest.serviceContract,
-                signingRequest.entryVerificationAndProfitFee,
-                signingRequest.callbackFee
+                currentRequestId,
+                currentRequestPreviousEntry,
+                currentRequestServiceContract,
+                currentRequestEntryVerificationAndProfitFee,
+                currentRequestCallbackFee
             );
         }
 
-        emit RelayEntryTimeoutReported(signingRequest.groupIndex);
+        emit RelayEntryTimeoutReported(currentRequestGroupIndex);
     }
 
     /**
