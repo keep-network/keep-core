@@ -260,7 +260,7 @@ describe('TokenStaking/Lock', () => {
 
       await expectRevert(
         stakingContract.seize(
-          minimumStake, 100, magpie, [operator],
+          minimumStake, 100, beneficiary, [operator],
           {from: operatorContract}
         ),
         "Stake is released"
