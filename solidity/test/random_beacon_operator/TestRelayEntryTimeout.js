@@ -19,9 +19,13 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       contract.fromArtifact('KeepRandomBeaconOperatorStub')
     ); 
 
+    registryContract = contracts.registry
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
 
+    await registryContract.setServiceContractKeeper(
+      operatorContract.address, accounts[0], {from: accounts[0]}
+    )
     await operatorContract.addServiceContract(accounts[0], {from: accounts[0]})  
 
     await operatorContract.registerNewGroup(blsData.groupPubKey);

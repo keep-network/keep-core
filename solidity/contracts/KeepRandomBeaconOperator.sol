@@ -3,6 +3,7 @@ pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
+import "./Registry.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
@@ -56,12 +57,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
 
-    // Contract owner.
-    address internal owner;
-
     address[] internal serviceContracts;
 
-    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+    Registry internal registry;
+
     TokenStaking internal stakingContract;
 
     // Each signing group member reward expressed in wei.
@@ -143,17 +142,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owner == msg.sender, "Caller is not the owner");
+    modifier onlyServiceContractKeeper() {
+        require(
+            registry.serviceContractKeeperFor(address(this)) == msg.sender,
+            "Not authorized"
+        );
         _;
     }
 
-    /**
-     * @dev Checks if sender is authorized.
-     */
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
@@ -162,8 +158,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         _;
     }
 
-    constructor(address _serviceContract, address _stakingContract) public {
-        owner = msg.sender;
+    constructor(
+        address _serviceContract,
+        address _stakingContract,
+        address _registryContract
+    ) public {
+        registry = Registry(_registryContract);
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
@@ -207,7 +207,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Adds service contract
      * @param serviceContract Address of the service contract.
      */
-    function addServiceContract(address serviceContract) public onlyOwner {
+    function addServiceContract(address serviceContract) public onlyServiceContractKeeper {
         serviceContracts.push(serviceContract);
     }
 
@@ -215,7 +215,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Removes service contract
      * @param serviceContract Address of the service contract.
      */
-    function removeServiceContract(address serviceContract) public onlyOwner {
+    function removeServiceContract(address serviceContract) public onlyServiceContractKeeper {
         serviceContracts.removeAddress(serviceContract);
     }
 

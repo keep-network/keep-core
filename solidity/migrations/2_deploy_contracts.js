@@ -72,6 +72,15 @@ module.exports = async function(deployer, network) {
       initialize
   );
 
-  await deployer.deploy(KeepRandomBeaconOperator, KeepRandomBeaconService.address, TokenStaking.address);
-  await deployer.deploy(KeepRandomBeaconOperatorStatistics, KeepRandomBeaconOperator.address);
+  await deployer.deploy(
+    KeepRandomBeaconOperator, 
+    KeepRandomBeaconService.address, 
+    TokenStaking.address,
+    Registry.address
+  );
+
+  await deployer.deploy(
+    KeepRandomBeaconOperatorStatistics,
+    KeepRandomBeaconOperator.address
+  );
 };
