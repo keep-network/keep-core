@@ -120,9 +120,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // current relay request data
     uint256 internal currentRequestId;
-    uint256 internal currentEntryStartBlock;
-    uint256 internal currentRequestGroupIndex;
-    bytes internal currentRequestPreviousEntry;
+    uint256 public currentEntryStartBlock;
+    uint256 public currentRequestGroupIndex;
+    bytes public currentRequestPreviousEntry;
     uint256 internal  currentRequestEntryVerificationAndProfitFee;
     uint256 internal currentRequestCallbackFee;
     address internal currentRequestServiceContract;
@@ -418,16 +418,15 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     ) internal {
         require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
-        currentEntryStartBlock = block.number;
-
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
-        
+
         currentRequestId = requestId;
+        currentEntryStartBlock = block.number;
         currentRequestEntryVerificationAndProfitFee = entryVerificationAndProfitFee;
         currentRequestCallbackFee = callbackFee;
         currentRequestGroupIndex = groupIndex;
         currentRequestPreviousEntry = previousEntry;
-        currentRequestServiceContract = serviceContract;        
+        currentRequestServiceContract = serviceContract;
 
         bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         emit RelayEntryRequested(previousEntry, groupPubKey);
@@ -547,7 +546,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Returns true if generation of a new relay entry is currently in
      * progress.
      */
-    function isEntryInProgress() internal view returns (bool) {
+    function isEntryInProgress() public view returns (bool) {
         return currentEntryStartBlock != 0;
     }
 
