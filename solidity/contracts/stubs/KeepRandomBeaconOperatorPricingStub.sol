@@ -34,7 +34,7 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         groupSelectionGasEstimate = gas;
     }
 
-    function setGasPriceCeiling(uint256 _gasPriceCeiling) public onlyOwner {
+    function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
         gasPriceCeiling = _gasPriceCeiling;
     }
 
@@ -47,6 +47,9 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
     }
 
     function delayFactor() public view returns(uint256) {
-        return super.getDelayFactor();
+        return DelayFactor.calculate(
+            currentEntryStartBlock,
+            relayEntryTimeout
+        );
     }
 }

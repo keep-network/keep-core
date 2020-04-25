@@ -35,7 +35,7 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
     }
 
     function relayEntry() public returns (uint256) {
-        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(currentRequestGroupIndex);
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         submitterReward; // silence local var
         subsidy; // silence local var
