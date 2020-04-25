@@ -34,7 +34,7 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         groupSelectionGasEstimate = gas;
     }
 
-    function setGasPriceCeiling(uint256 _gasPriceCeiling) public onlyOwner {
+    function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
         gasPriceCeiling = _gasPriceCeiling;
     }
 
