@@ -41,6 +41,15 @@ contract Registry {
     // service contract’s operator contract list, and deprecate old ones.
     mapping(address => address) public operatorContractUpgraders;
 
+    // Operator contract may have a Service Contract Upgrader whose purpose is
+    // to manage service contracts for that specific operator contract.
+    // Service Contract Upgrader can add and remove service contracts
+    // from the list of service contracts approved to work with the operator
+    // contract. List of service contracts is maintained in the operator
+    // contract and is optional - not every operator contract needs to have
+    // a list of service contracts it wants to cooperate with.
+    mapping(address => address) public serviceContractUpgraders;
+
     // The registry of operator contracts
     mapping(address => ContractStatus) public operatorContracts;
 
@@ -58,6 +67,10 @@ contract Registry {
     event OperatorContractUpgraderUpdated(
         address serviceContract,
         address upgrader
+    );
+    event ServiceContractUpgraderUpdated(
+        address operatorContract,
+        address keeper
     );
 
     modifier onlyGovernance() {
@@ -161,6 +174,17 @@ contract Registry {
         );
     }
 
+    function setServiceContractUpgrader(
+        address _operatorContract,
+        address _serviceContractUpgrader
+    ) public onlyGovernance {
+        serviceContractUpgraders[_operatorContract] = _serviceContractUpgrader;
+        emit ServiceContractUpgraderUpdated(
+            _operatorContract,
+            _serviceContractUpgrader
+        );
+    }
+
     function approveOperatorContract(address operatorContract)
         public
         onlyForNewContract(operatorContract)
@@ -202,5 +226,13 @@ contract Registry {
         returns (address)
     {
         return operatorContractUpgraders[_serviceContract];
+    }
+
+    function serviceContractUpgraderFor(address _operatorContract)
+        public
+        view
+        returns (address)
+    {
+        return serviceContractUpgraders[_operatorContract];
     }
 }

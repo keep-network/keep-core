@@ -58,7 +58,12 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await KeepRandomBeaconOperator.link("Groups", groups.address);
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
-  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, {from: accounts[0]});
+  operatorContract = await KeepRandomBeaconOperator.new(
+    serviceContractProxy.address,
+    stakingContract.address,
+    registry.address,
+    {from: accounts[0]}
+  );
 
   await registry.approveOperatorContract(operatorContract.address, {from: accounts[0]});
 

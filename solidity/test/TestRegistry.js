@@ -13,6 +13,7 @@ describe('Registry', () => {
     const registryKeeper = accounts[3]
     const operatorContractUpgrader = accounts[4]
     const individualContractPanicButton = accounts[5]
+    const serviceContractUpgrader = accounts[6]
 
     const someoneElse = "0x524f2E0176350d950fA630D9A5a59A0a190DAf48"
 
@@ -71,7 +72,7 @@ describe('Registry', () => {
             )
             expectEvent(receipt, "GovernanceUpdated", {
                 governance: someoneElse
-              })
+            })
         })
     })
 
@@ -270,6 +271,67 @@ describe('Registry', () => {
                 operatorContractUpgrader,
                 "Unexpected operator contract upgrader"
             )
+        })
+    })
+
+    describe("setServiceContractUpgrader", async () => {
+        it("can be called by governance", async () => {
+            await registry.setServiceContractUpgrader(
+                operatorContract1,
+                serviceContractUpgrader,
+                { from: governance }
+            )
+            // ok, no revert
+        })
+
+        it("can not be called by non-governance", async () => {
+            await expectRevert(
+                registry.setServiceContractUpgrader(
+                    operatorContract1,
+                    serviceContractUpgrader,
+                    { from: owner }
+                ),
+                "Not authorized"
+            )
+        })
+
+        it("updates service contract upgrader", async () => {
+            await registry.setServiceContractUpgrader(
+                operatorContract1,
+                serviceContractUpgrader,
+                { from: governance }
+            )
+
+            await registry.setServiceContractUpgrader(
+                operatorContract2,
+                someoneElse,
+                { from: governance }
+            )
+
+            assert.equal(
+                await registry.serviceContractUpgraderFor(operatorContract1),
+                serviceContractUpgrader,
+                "Unexpected service contract upgrader"
+            )
+
+            assert.equal(
+                await registry.serviceContractUpgraderFor(operatorContract2),
+                someoneElse,
+                "Unexpected service contract upgrader"
+            )
+        })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setServiceContractUpgrader(
+                operatorContract1,
+                serviceContractUpgrader,
+                { from: governance }
+            )
+
+            expectEvent(receipt, "ServiceContractUpgraderUpdated", {
+                operatorContract: operatorContract1,
+                keeper: serviceContractUpgrader
+            })
         })
     })
 
