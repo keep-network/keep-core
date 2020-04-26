@@ -4,7 +4,7 @@ const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/Lock', () => {
   let token, registry, stakingContract, stakingAmount, minimumStake;
@@ -26,7 +26,7 @@ describe('TokenStaking/Lock', () => {
 
   before(async () => {
     token = await KeepToken.new({from: owner});
-    registry = await Registry.new({from: owner});
+    registry = await KeepRegistry.new({from: owner});
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod,
       {from: owner}

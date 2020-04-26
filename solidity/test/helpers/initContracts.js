@@ -6,7 +6,7 @@ const Groups = contract.fromArtifact('Groups');
 const DKGResultVerification = contract.fromArtifact("DKGResultVerification");
 const DelayFactor = contract.fromArtifact("DelayFactor");
 const Reimbursements = contract.fromArtifact("Reimbursements");
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -23,7 +23,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   token = await KeepToken.new({from: accounts[0]});
 
   // Initialize registry contract
-  registry = await Registry.new({from: accounts[0]});
+  registry = await KeepRegistry.new({from: accounts[0]});
 
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod, {from: accounts[0]});

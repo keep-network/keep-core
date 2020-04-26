@@ -4,7 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
-import "./Registry.sol";
+import "./KeepRegistry.sol";
 import "./IRandomBeacon.sol";
 
 
@@ -76,7 +76,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
 
     mapping(uint256 => Callback) internal _callbacks;
 
-    // Registry contract with a list of approved operator contracts and upgraders.
+    // KeepRegistry contract with a list of approved operator contracts and upgraders.
     address internal _registry;
 
     address[] internal _operatorContracts;
@@ -95,7 +95,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
      * @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
      */
     modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = Registry(_registry).operatorContractUpgraderFor(address(this));
+        address operatorContractUpgrader = KeepRegistry(_registry).operatorContractUpgraderFor(address(this));
         require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
         _;
     }
@@ -108,7 +108,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
-     * @param registry Registry contract linked to this contract.
+     * @param registry KeepRegistry contract linked to this contract.
      */
     function initialize(
         uint256 dkgContributionMargin,
@@ -139,7 +139,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
      */
     function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         require(
-            Registry(_registry).isApprovedOperatorContract(operatorContract),
+            KeepRegistry(_registry).isApprovedOperatorContract(operatorContract),
             "Operator contract is not approved"
         );
         _operatorContracts.push(operatorContract);
@@ -181,7 +181,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         address[] memory approvedContracts = new address[](_operatorContracts.length);
 
         for (uint i = 0; i < _operatorContracts.length; i++) {
-            if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
+            if (KeepRegistry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
                 totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
                 approvedContracts[approvedContractsCounter] = _operatorContracts[i];
                 approvedContractsCounter++;
