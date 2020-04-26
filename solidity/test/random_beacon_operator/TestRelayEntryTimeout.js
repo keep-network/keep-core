@@ -23,7 +23,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
     operatorContract = contracts.operatorContract;
     serviceContract = contracts.serviceContract;
 
-    await registryContract.setServiceContractKeeper(
+    await registryContract.setServiceContractUpgrader(
       operatorContract.address, accounts[0], {from: accounts[0]}
     )
     await operatorContract.addServiceContract(accounts[0], {from: accounts[0]})  

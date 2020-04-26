@@ -41,14 +41,14 @@ contract Registry {
     // service contract’s operator contract list, and deprecate old ones.
     mapping(address => address) public operatorContractUpgraders;
 
-    // Operator contract may have a Service Contract Keeper whose purpose is
+    // Operator contract may have a Service Contract Upgrader whose purpose is
     // to manage service contracts for that specific operator contract.
-    // Service Contract Keeper can add and remove service contracts
+    // Service Contract Upgrader can add and remove service contracts
     // from the list of service contracts approved to work with the operator
     // contract. List of service contracts is maintained in the operator
     // contract and is optional - not every operator contract needs to have
     // a list of service contracts it wants to cooperate with.
-    mapping(address => address) public serviceContractKeepers;
+    mapping(address => address) public serviceContractUpgraders;
 
     // The registry of operator contracts
     mapping(address => ContractStatus) public operatorContracts;
@@ -68,7 +68,7 @@ contract Registry {
         address serviceContract,
         address upgrader
     );
-    event ServiceContractKeeperUpdated(
+    event ServiceContractUpgraderUpdated(
         address operatorContract,
         address keeper
     );
@@ -174,14 +174,14 @@ contract Registry {
         );
     }
 
-    function setServiceContractKeeper(
+    function setServiceContractUpgrader(
         address _operatorContract,
-        address _serviceContractKeeper
+        address _serviceContractUpgrader
     ) public onlyGovernance {
-        serviceContractKeepers[_operatorContract] = _serviceContractKeeper;
-        emit ServiceContractKeeperUpdated(
+        serviceContractUpgraders[_operatorContract] = _serviceContractUpgrader;
+        emit ServiceContractUpgraderUpdated(
             _operatorContract,
-            _serviceContractKeeper
+            _serviceContractUpgrader
         );
     }
 
@@ -228,11 +228,11 @@ contract Registry {
         return operatorContractUpgraders[_serviceContract];
     }
 
-    function serviceContractKeeperFor(address _operatorContract)
+    function serviceContractUpgraderFor(address _operatorContract)
         public
         view
         returns (address)
     {
-        return serviceContractKeepers[_operatorContract];
+        return serviceContractUpgraders[_operatorContract];
     }
 }

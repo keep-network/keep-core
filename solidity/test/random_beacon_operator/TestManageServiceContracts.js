@@ -10,7 +10,7 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
   let registry
   let serviceContract2 = accounts[1]
   let serviceContract3 = accounts[2]
-  let serviceContractKeeper = accounts[3]
+  let serviceContractUpgrader = accounts[3]
   let someoneElse = accounts[4]
 
   let groupProfitAndEntryVerificationFee;
@@ -28,9 +28,9 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
     operatorContract = contracts.operatorContract
     registry = contracts.registry
     
-    await registry.setServiceContractKeeper(
+    await registry.setServiceContractUpgrader(
         operatorContract.address, 
-        serviceContractKeeper,
+        serviceContractUpgrader,
         {from: accounts[0]}
     )
 
@@ -53,15 +53,15 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
   });
 
   describe("addServiceContract", async () => {
-    it("can be called by service contract keeper", async () => {
+    it("can be called by service contract upgrader", async () => {
       await operatorContract.addServiceContract(
         serviceContract2, 
-          {from: serviceContractKeeper}
+          {from: serviceContractUpgrader}
       )
       // ok, no revert
     })
 
-    it("cannot be called by non-keeper", async () => {
+    it("cannot be called by non-upgrader", async () => {
       await expectRevert(
         operatorContract.addServiceContract(
           serviceContract2, 
@@ -74,7 +74,7 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
     it("adds service contract to the list", async () => {
       await operatorContract.addServiceContract(
         serviceContract2, 
-        {from: serviceContractKeeper}
+        {from: serviceContractUpgrader}
       )
 
       await operatorContract.sign(
@@ -90,15 +90,15 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
   })
 
   describe("removeServiceContract", async () => {
-    it("can be called by service contract keeper", async () => {
+    it("can be called by service contract upgrader", async () => {
       await operatorContract.removeServiceContract(
         serviceContract.address, 
-        {from: serviceContractKeeper}
+        {from: serviceContractUpgrader}
       )
       // ok, no revert
     })
 
-    it("cannot be called by non-keeper", async () => {
+    it("cannot be called by non-upgrader", async () => {
       await expectRevert(
         operatorContract.removeServiceContract(
           serviceContract.address,
@@ -111,16 +111,16 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
     it("removes service contract from the list", async () => {
       await operatorContract.addServiceContract(
         serviceContract2,
-        {from: serviceContractKeeper}
+        {from: serviceContractUpgrader}
       )
       await operatorContract.addServiceContract(
         serviceContract3,
-        {from: serviceContractKeeper}
+        {from: serviceContractUpgrader}
       )
 
       await operatorContract.removeServiceContract(
         serviceContract2,
-        {from: serviceContractKeeper}
+        {from: serviceContractUpgrader}
       )
 
       await expectRevert(

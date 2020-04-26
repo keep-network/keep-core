@@ -13,7 +13,7 @@ describe('Registry', () => {
     const registryKeeper = accounts[3]
     const operatorContractUpgrader = accounts[4]
     const individualContractPanicButton = accounts[5]
-    const serviceContractKeeper = accounts[6]
+    const serviceContractUpgrader = accounts[6]
 
     const someoneElse = "0x524f2E0176350d950fA630D9A5a59A0a190DAf48"
 
@@ -274,11 +274,11 @@ describe('Registry', () => {
         })
     })
 
-    describe("setServiceContractKeeper", async () => {
+    describe("setServiceContractUpgrader", async () => {
         it("can be called by governance", async () => {
-            await registry.setServiceContractKeeper(
+            await registry.setServiceContractUpgrader(
                 operatorContract1,
-                serviceContractKeeper,
+                serviceContractUpgrader,
                 { from: governance }
             )
             // ok, no revert
@@ -286,51 +286,51 @@ describe('Registry', () => {
 
         it("can not be called by non-governance", async () => {
             await expectRevert(
-                registry.setServiceContractKeeper(
+                registry.setServiceContractUpgrader(
                     operatorContract1,
-                    serviceContractKeeper,
+                    serviceContractUpgrader,
                     { from: owner }
                 ),
                 "Not authorized"
             )
         })
 
-        it("updated service contract keeper", async () => {
-            await registry.setServiceContractKeeper(
+        it("updates service contract upgrader", async () => {
+            await registry.setServiceContractUpgrader(
                 operatorContract1,
-                serviceContractKeeper,
+                serviceContractUpgrader,
                 { from: governance }
             )
 
-            await registry.setServiceContractKeeper(
+            await registry.setServiceContractUpgrader(
                 operatorContract2,
                 someoneElse,
                 { from: governance }
             )
 
             assert.equal(
-                await registry.serviceContractKeeperFor(operatorContract1),
-                serviceContractKeeper,
-                "Unexpected service contract keeper"
+                await registry.serviceContractUpgraderFor(operatorContract1),
+                serviceContractUpgrader,
+                "Unexpected service contract upgrader"
             )
 
             assert.equal(
-                await registry.serviceContractKeeperFor(operatorContract2),
+                await registry.serviceContractUpgraderFor(operatorContract2),
                 someoneElse,
-                "Unexpected service contract keeper"
+                "Unexpected service contract upgrader"
             )
         })
 
         it("emits an event", async () => {
-            const receipt = await registry.setServiceContractKeeper(
+            const receipt = await registry.setServiceContractUpgrader(
                 operatorContract1,
-                serviceContractKeeper,
+                serviceContractUpgrader,
                 { from: governance }
             )
 
-            expectEvent(receipt, "ServiceContractKeeperUpdated", {
+            expectEvent(receipt, "ServiceContractUpgraderUpdated", {
                 operatorContract: operatorContract1,
-                keeper: serviceContractKeeper
+                keeper: serviceContractUpgrader
             })
         })
     })

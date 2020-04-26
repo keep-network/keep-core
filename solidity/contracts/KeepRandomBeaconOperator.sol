@@ -142,9 +142,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
-    modifier onlyServiceContractKeeper() {
+    modifier onlyServiceContractUpgrader() {
         require(
-            registry.serviceContractKeeperFor(address(this)) == msg.sender,
+            registry.serviceContractUpgraderFor(address(this)) == msg.sender,
             "Not authorized"
         );
         _;
@@ -207,7 +207,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Adds service contract
      * @param serviceContract Address of the service contract.
      */
-    function addServiceContract(address serviceContract) public onlyServiceContractKeeper {
+    function addServiceContract(address serviceContract) public onlyServiceContractUpgrader {
         serviceContracts.push(serviceContract);
     }
 
@@ -215,7 +215,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * @dev Removes service contract
      * @param serviceContract Address of the service contract.
      */
-    function removeServiceContract(address serviceContract) public onlyServiceContractKeeper {
+    function removeServiceContract(address serviceContract) public onlyServiceContractUpgrader {
         serviceContracts.removeAddress(serviceContract);
     }
 
