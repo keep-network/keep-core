@@ -127,9 +127,11 @@ contract TokenStaking is StakeDelegatable {
      * @param _from The owner of the tokens who approved them to transfer.
      * @param _value Approved amount for the transfer and stake.
      * @param _token Token contract address.
-     * @param _extraData Data for stake delegation. This byte array must have the
-     * following values concatenated: Beneficiary address (20 bytes) where the rewards for participation
-     * are sent, operator's (20 bytes) address, authorizer (20 bytes) address.
+     * @param _extraData Data for stake delegation. This byte array must have
+     * the following values concatenated:
+     * - Beneficiary address (20 bytes)
+     * - Operator address (20 bytes)
+     * - Authorizer address (20 bytes)
      */
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
