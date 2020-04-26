@@ -7,31 +7,30 @@ import "./utils/LockUtils.sol";
 import "./KeepRegistry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-// An operator contract can delegate authority to other operator contracts
-// by implementing the AuthorityDelegator interface.
-//
-// To delegate authority,
-// the recipient of delegated authority must call `claimDelegatedAuthority`,
-// specifying the contract it wants delegated authority from.
-// The staking contract calls `delegator.__isRecognized(recipient)`
-// and if the call returns `true`,
-// the named delegator contract is set as the recipient's authority delegator.
-// Any future checks of registry approval or per-operator authorization
-// will transparently mirror the delegator's status.
-//
-// Authority can be delegated recursively;
-// an operator contract receiving delegated authority
-// can recognize other operator contracts as recipients of its authority.
+/// @title AuthorityDelegator
+/// @notice An operator contract can delegate authority to other operator
+/// contracts by implementing the AuthorityDelegator interface.
+///
+/// To delegate authority,
+/// the recipient of delegated authority must call `claimDelegatedAuthority`,
+/// specifying the contract it wants delegated authority from.
+/// The staking contract calls `delegator.__isRecognized(recipient)`
+/// and if the call returns `true`,
+/// the named delegator contract is set as the recipient's authority delegator.
+/// Any future checks of registry approval or per-operator authorization
+/// will transparently mirror the delegator's status.
+///
+/// Authority can be delegated recursively;
+/// an operator contract receiving delegated authority
+/// can recognize other operator contracts as recipients of its authority.
 interface AuthorityDelegator {
     function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
 }
 
-/**
- * @title TokenStaking
- * @dev A token staking contract for a specified standard ERC20Burnable token.
- * A holder of the specified token can stake delegate its tokens to this contract
- * and recover the stake after undelegation period is over.
- */
+/// @title TokenStaking
+/// @notice A token staking contract for a specified standard ERC20Burnable token.
+/// A holder of the specified token can stake delegate its tokens to this contract
+/// and recover the stake after undelegation period is over.
 contract TokenStaking is StakeDelegatable {
     using UintArrayUtils for uint256[];
     using PercentUtils for uint256;
@@ -81,16 +80,14 @@ contract TokenStaking is StakeDelegatable {
         _;
     }
 
-    /**
-     * @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
-     * @param _tokenAddress Address of a token that will be linked to this contract.
-     * @param _registry Address of a keep registry that will be linked to this contract.
-     * @param _initializationPeriod To avoid certain attacks on work selection, recently created
-     * operators must wait for a specific period of time before being eligible for work selection.
-     * @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
-     * stakes will stay locked for a period of time after undelegation, and thus available as
-     * collateral for any work the operator is engaged in.
-     */
+    /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
+    /// @param _tokenAddress Address of a token that will be linked to this contract.
+    /// @param _registry Address of a keep registry that will be linked to this contract.
+    /// @param _initializationPeriod To avoid certain attacks on work selection, recently created
+    /// operators must wait for a specific period of time before being eligible for work selection.
+    /// @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
+    /// stakes will stay locked for a period of time after undelegation, and thus available as
+    /// collateral for any work the operator is engaged in.
     constructor(
         address _tokenAddress,
         address _registry,
@@ -105,12 +102,10 @@ contract TokenStaking is StakeDelegatable {
         minimumStakeScheduleStart = block.timestamp;
     }
 
-    /**
-     * @notice Returns minimum amount of KEEP that allows sMPC cluster client to
-     * participate in the Keep network. Expressed as number with 18-decimal places.
-     * Initial minimum stake is higher than the final and lowered periodically based
-     * on the amount of steps and the length of the minimum stake schedule in seconds.
-     */
+    /// @notice Returns minimum amount of KEEP that allows sMPC cluster client to
+    /// participate in the Keep network. Expressed as number with 18-decimal places.
+    /// Initial minimum stake is higher than the final and lowered periodically based
+    /// on the amount of steps and the length of the minimum stake schedule in seconds.
     function minimumStake() public view returns (uint256) {
         if (block.timestamp < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
             uint256 currentStep = minimumStakeSteps.mul(
@@ -121,18 +116,16 @@ contract TokenStaking is StakeDelegatable {
         return minimumStakeBase;
     }
 
-    /**
-     * @notice Receives approval of token transfer and stakes the approved amount.
-     * @dev Makes sure provided token contract is the same one linked to this contract.
-     * @param _from The owner of the tokens who approved them to transfer.
-     * @param _value Approved amount for the transfer and stake.
-     * @param _token Token contract address.
-     * @param _extraData Data for stake delegation. This byte array must have
-     * the following values concatenated:
-     * - Beneficiary address (20 bytes)
-     * - Operator address (20 bytes)
-     * - Authorizer address (20 bytes)
-     */
+    /// @notice Receives approval of token transfer and stakes the approved amount.
+    /// @dev Makes sure provided token contract is the same one linked to this contract.
+    /// @param _from The owner of the tokens who approved them to transfer.
+    /// @param _value Approved amount for the transfer and stake.
+    /// @param _token Token contract address.
+    /// @param _extraData Data for stake delegation. This byte array must have
+    /// the following values concatenated:
+    /// - Beneficiary address (20 bytes)
+    /// - Operator address (20 bytes)
+    /// - Authorizer address (20 bytes)
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
@@ -157,12 +150,10 @@ contract TokenStaking is StakeDelegatable {
         emit Staked(operator, _value);
     }
 
-    /**
-     * @notice Cancels stake of tokens within the operator initialization period
-     * without being subjected to the token lockup for the undelegation period.
-     * This can be used to undo mistaken delegation to the wrong operator address.
-     * @param _operator Address of the stake operator.
-     */
+    /// @notice Cancels stake of tokens within the operator initialization period
+    /// without being subjected to the token lockup for the undelegation period.
+    /// This can be used to undo mistaken delegation to the wrong operator address.
+    /// @param _operator Address of the stake operator.
     function cancelStake(address _operator) public {
         address owner = operators[_operator].owner;
         require(
@@ -182,23 +173,19 @@ contract TokenStaking is StakeDelegatable {
         token.safeTransfer(owner, amount);
     }
 
-    /**
-     * @notice Undelegates staked tokens. You will be able to recover your stake by calling
-     * `recoverStake()` with operator address once undelegation period is over.
-     * @param _operator Address of the stake operator.
-     */
+    /// @notice Undelegates staked tokens. You will be able to recover your stake by calling
+    /// `recoverStake()` with operator address once undelegation period is over.
+    /// @param _operator Address of the stake operator.
     function undelegate(address _operator) public {
         undelegateAt(_operator, block.timestamp);
     }
 
-    /**
-     * @notice Set an undelegation time for staked tokens.
-     * Undelegation will begin at the specified timestamp.
-     * You will be able to recover your stake by calling
-     * `recoverStake()` with operator address once undelegation period is over.
-     * @param _operator Address of the stake operator.
-     * @param _undelegationTimestamp The timestamp undelegation is to start at.
-     */
+    /// @notice Set an undelegation time for staked tokens.
+    /// Undelegation will begin at the specified timestamp.
+    /// You will be able to recover your stake by calling
+    /// `recoverStake()` with operator address once undelegation period is over.
+    /// @param _operator Address of the stake operator.
+    /// @param _undelegationTimestamp The timestamp undelegation is to start at.    
     function undelegateAt(
         address _operator,
         uint256 _undelegationTimestamp
@@ -234,12 +221,10 @@ contract TokenStaking is StakeDelegatable {
         emit Undelegated(_operator, _undelegationTimestamp);
     }
 
-    /**
-     * @notice Recovers staked tokens and transfers them back to the owner.
-     * Recovering tokens can only be performed when the operator finished
-     * undelegating.
-     * @param _operator Operator address.
-     */
+    /// @notice Recovers staked tokens and transfers them back to the owner.
+    /// Recovering tokens can only be performed when the operator finished
+    /// undelegating.
+    /// @param _operator Operator address.
     function recoverStake(address _operator) public {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
@@ -265,27 +250,23 @@ contract TokenStaking is StakeDelegatable {
         emit RecoveredStake(_operator, block.timestamp);
     }
 
-    /**
-     * @notice Gets stake delegation info for the given operator.
-     * @param _operator Operator address.
-     * @return amount The amount of tokens the given operator delegated.
-     * @return createdAt The time when the stake has been delegated.
-     * @return undelegatedAt The time when undelegation has been requested.
-     * If undelegation has not been requested, 0 is returned.
-     */
+    /// @notice Gets stake delegation info for the given operator.
+    /// @param _operator Operator address.
+    /// @return amount The amount of tokens the given operator delegated.
+    /// @return createdAt The time when the stake has been delegated.
+    /// @return undelegatedAt The time when undelegation has been requested.
+    /// If undelegation has not been requested, 0 is returned.
     function getDelegationInfo(address _operator)
     public view returns (uint256 amount, uint256 createdAt, uint256 undelegatedAt) {
         return operators[_operator].packedParams.unpack();
     }
 
-    /**
-     * @notice Locks given operator stake for the specified duration.
-     * Locked stake may not be recovered until the lock expires or is released,
-     * even if the normal undelegation period has passed.
-     * Only previously authorized operator contract can lock the stake.
-     * @param operator Operator address.
-     * @param duration Lock duration in seconds.
-     */
+    /// @notice Locks given operator stake for the specified duration.
+    /// Locked stake may not be recovered until the lock expires or is released,
+    /// even if the normal undelegation period has passed.
+    /// Only previously authorized operator contract can lock the stake.
+    /// @param operator Operator address.
+    /// @param duration Lock duration in seconds.
     function lockStake(
         address operator,
         uint256 duration
@@ -314,18 +295,16 @@ contract TokenStaking is StakeDelegatable {
         emit StakeLocked(operator, msg.sender, block.timestamp.add(duration));
     }
 
-    /**
-     * @notice Removes a lock the caller had previously placed on the operator.
-     * @dev Only for operator contracts.
-     * To remove expired or disabled locks, use `releaseExpiredLocks`.
-     * The authorization check ensures that the caller must have been able
-     * to place a lock on the operator sometime in the past.
-     * We don't need to check for current approval status of the caller
-     * because unlocking stake cannot harm the operator
-     * nor interfere with other operator contracts.
-     * Therefore even disabled operator contracts may freely unlock stake.
-     * @param operator Operator address.
-     */
+    /// @notice Removes a lock the caller had previously placed on the operator.
+    /// @dev Only for operator contracts.
+    /// To remove expired or disabled locks, use `releaseExpiredLocks`.
+    /// The authorization check ensures that the caller must have been able
+    /// to place a lock on the operator sometime in the past.
+    /// We don't need to check for current approval status of the caller
+    /// because unlocking stake cannot harm the operator
+    /// nor interfere with other operator contracts.
+    /// Therefore even disabled operator contracts may freely unlock stake.
+    /// @param operator Operator address.
     function unlockStake(
         address operator
     ) public {
@@ -401,12 +380,10 @@ contract TokenStaking is StakeDelegatable {
         }
     }
 
-    /**
-     * @notice Slash provided token amount from every member in the misbehaved
-     * operators array and burn 100% of all the tokens.
-     * @param amountToSlash Token amount to slash from every misbehaved operator.
-     * @param misbehavedOperators Array of addresses to seize the tokens from.
-     */
+    /// @notice Slash provided token amount from every member in the misbehaved
+    /// operators array and burn 100% of all the tokens.
+    /// @param amountToSlash Token amount to slash from every misbehaved operator.
+    /// @param misbehavedOperators Array of addresses to seize the tokens from.
     function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
         public
         onlyApprovedOperatorContract(msg.sender) {
@@ -448,15 +425,13 @@ contract TokenStaking is StakeDelegatable {
         token.burn(totalAmountToBurn);
     }
 
-    /**
-     * @notice Seize provided token amount from every member in the misbehaved
-     * operators array. The tattletale is rewarded with 5% of the total seized
-     * amount scaled by the reward adjustment parameter and the rest 95% is burned.
-     * @param amountToSeize Token amount to seize from every misbehaved operator.
-     * @param rewardMultiplier Reward adjustment in percentage. Min 1% and 100% max.
-     * @param tattletale Address to receive the 5% reward.
-     * @param misbehavedOperators Array of addresses to seize the tokens from.
-     */
+    /// @notice Seize provided token amount from every member in the misbehaved
+    /// operators array. The tattletale is rewarded with 5% of the total seized
+    /// amount scaled by the reward adjustment parameter and the rest 95% is burned.
+    /// @param amountToSeize Token amount to seize from every misbehaved operator.
+    /// @param rewardMultiplier Reward adjustment in percentage. Min 1% and 100% max.
+    /// @param tattletale Address to receive the 5% reward.
+    /// @param misbehavedOperators Array of addresses to seize the tokens from.
     function seize(
         uint256 amountToSeize,
         uint256 rewardMultiplier,
@@ -503,15 +478,13 @@ contract TokenStaking is StakeDelegatable {
         token.burn(totalAmountToBurn.sub(tattletaleReward));
     }
 
-    /**
-     * @notice Authorizes operator contract to access staked token balance of
-     * the provided operator. Can only be executed by stake operator authorizer.
-     * Contracts using delegated authority
-     * cannot be authorized with `authorizeOperatorContract`.
-     * Instead, authorize `getAuthoritySource(_operatorContract)`.
-     * @param _operator address of stake operator.
-     * @param _operatorContract address of operator contract.
-     */
+    /// @notice Authorizes operator contract to access staked token balance of
+    /// the provided operator. Can only be executed by stake operator authorizer.
+    /// Contracts using delegated authority
+    /// cannot be authorized with `authorizeOperatorContract`.
+    /// Instead, authorize `getAuthoritySource(_operatorContract)`.
+    /// @param _operator address of stake operator.
+    /// @param _operatorContract address of operator contract.
     function authorizeOperatorContract(address _operator, address _operatorContract)
         public
         onlyOperatorAuthorizer(_operator)
@@ -523,29 +496,25 @@ contract TokenStaking is StakeDelegatable {
         authorizations[_operatorContract][_operator] = true;
     }
 
-    /**
-     * @notice Checks if operator contract has access to the staked token balance of
-     * the provided operator.
-     * @param _operator address of stake operator.
-     * @param _operatorContract address of operator contract.
-     */
+    /// @notice Checks if operator contract has access to the staked token balance of
+    /// the provided operator.
+    /// @param _operator address of stake operator.
+    /// @param _operatorContract address of operator contract.
     function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
         return authorizations[getAuthoritySource(_operatorContract)][_operator];
     }
 
-    /**
-     * @notice Gets the eligible stake balance of the specified address.
-     * An eligible stake is a stake that passed the initialization period
-     * and is not currently undelegating. Also, the operator had to approve
-     * the specified operator contract.
-     *
-     * Operator with a minimum required amount of eligible stake can join the
-     * network and participate in new work selection.
-     *
-     * @param _operator address of stake operator.
-     * @param _operatorContract address of operator contract.
-     * @return an uint256 representing the eligible stake balance.
-     */
+    /// @notice Gets the eligible stake balance of the specified address.
+    /// An eligible stake is a stake that passed the initialization period
+    /// and is not currently undelegating. Also, the operator had to approve
+    /// the specified operator contract.
+    ///
+    /// Operator with a minimum required amount of eligible stake can join the
+    /// network and participate in new work selection.
+    ///
+    /// @param _operator address of stake operator.
+    /// @param _operatorContract address of operator contract.
+    /// @return an uint256 representing the eligible stake balance.
     function eligibleStake(
         address _operator,
         address _operatorContract
@@ -566,26 +535,24 @@ contract TokenStaking is StakeDelegatable {
         }
     }
 
-    /**
-     * @notice Gets the active stake balance of the specified address.
-     * An active stake is a stake that passed the initialization period,
-     * and may be in the process of undelegation
-     * but has not been released yet,
-     * either because the undelegation period is not over,
-     * or because the operator contract has an active lock on the operator.
-     * Also, the operator had to approve the specified operator contract.
-     *
-     * The difference between eligible stake is that active stake does not make
-     * the operator eligible for work selection but it may be still finishing
-     * earlier work until the stake is released.
-     * Operator with a minimum required
-     * amount of active stake can join the network but cannot be selected to any
-     * new work.
-     *
-     * @param _operator address of stake operator.
-     * @param _operatorContract address of operator contract.
-     * @return an uint256 representing the eligible stake balance.
-     */
+    /// @notice Gets the active stake balance of the specified address.
+    /// An active stake is a stake that passed the initialization period,
+    /// and may be in the process of undelegation
+    /// but has not been released yet,
+    /// either because the undelegation period is not over,
+    /// or because the operator contract has an active lock on the operator.
+    /// Also, the operator had to approve the specified operator contract.
+    ///
+    /// The difference between eligible stake is that active stake does not make
+    /// the operator eligible for work selection but it may be still finishing
+    /// earlier work until the stake is released.
+    /// Operator with a minimum required
+    /// amount of active stake can join the network but cannot be selected to any
+    /// new work.
+    ///
+    /// @param _operator address of stake operator.
+    /// @param _operatorContract address of operator contract.
+    /// @return an uint256 representing the eligible stake balance.
     function activeStake(
         address _operator,
         address _operatorContract
@@ -607,20 +574,18 @@ contract TokenStaking is StakeDelegatable {
         }
     }
 
-    /**
-     * @notice Checks if the specified account has enough active stake to become
-     * network operator and that the specified operator contract has been
-     * authorized for potential slashing.
-     *
-     * Having the required minimum of active stake makes the operator eligible
-     * to join the network. If the active stake is not currently undelegating,
-     * operator is also eligible for work selection.
-     *
-     * @param staker Staker's address
-     * @param operatorContract Operator contract's address
-     * @return True if has enough active stake to participate in the network,
-     * false otherwise.
-     */
+    /// @notice Checks if the specified account has enough active stake to become
+    /// network operator and that the specified operator contract has been
+    /// authorized for potential slashing.
+    ///
+    /// Having the required minimum of active stake makes the operator eligible
+    /// to join the network. If the active stake is not currently undelegating,
+    /// operator is also eligible for work selection.
+    ///
+    /// @param staker Staker's address
+    /// @param operatorContract Operator contract's address
+    /// @return True if has enough active stake to participate in the network,
+    /// false otherwise.
     function hasMinimumStake(
         address staker,
         address operatorContract
