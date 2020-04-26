@@ -106,7 +106,7 @@ describe('Escrow', () => {
             await escrow.setBeneficiary(beneficiary, {from: owner})
             await expectRevert(
                 escrow.withdraw({from: notBeneficiary}),
-                "Caller is not a beneficiary."                
+                "Caller is not the beneficiary."                
             )
         })
 
@@ -131,7 +131,7 @@ describe('Escrow', () => {
 
             await expectRevert(
                 escrow.withdraw({from: beneficiary}),
-                "Caller is not a beneficiary."                
+                "Caller is not the beneficiary."                
             )
             await escrow.withdraw({from: updatedBeneficiary})
             // ok, no reverts

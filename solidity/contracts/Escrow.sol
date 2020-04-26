@@ -34,7 +34,7 @@ contract Escrow is Ownable {
     // are no tokens in escrow, function fails.
     function withdraw() public {
         require(beneficiary != address(0), "Beneficiary not assigned");
-        require(msg.sender == beneficiary, "Caller is not a beneficiary");
+        require(msg.sender == beneficiary, "Caller is not the beneficiary");
 
         uint256 amount = token.balanceOf(address(this));
         require(amount > 0, "No tokens to withdraw");
