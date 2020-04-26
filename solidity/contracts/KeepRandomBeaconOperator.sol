@@ -3,7 +3,7 @@ pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
-import "./Registry.sol";
+import "./KeepRegistry.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
@@ -59,7 +59,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     address[] internal serviceContracts;
 
-    Registry internal registry;
+    KeepRegistry internal registry;
 
     TokenStaking internal stakingContract;
 
@@ -163,7 +163,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         address _stakingContract,
         address _registryContract
     ) public {
-        registry = Registry(_registryContract);
+        registry = KeepRegistry(_registryContract);
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);

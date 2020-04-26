@@ -4,7 +4,7 @@ import "./StakeDelegatable.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
-import "./Registry.sol";
+import "./KeepRegistry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
 // An operator contract can delegate authority to other operator contracts
@@ -57,7 +57,7 @@ contract TokenStaking is StakeDelegatable {
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
     // Registry contract with a list of approved operator contracts and upgraders.
-    Registry public registry;
+    KeepRegistry public registry;
 
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
@@ -99,7 +99,7 @@ contract TokenStaking is StakeDelegatable {
     ) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
-        registry = Registry(_registry);
+        registry = KeepRegistry(_registry);
         initializationPeriod = _initializationPeriod;
         undelegationPeriod = _undelegationPeriod;
         minimumStakeScheduleStart = block.timestamp;

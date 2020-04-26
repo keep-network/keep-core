@@ -14,7 +14,7 @@ const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking', function() {
 
@@ -33,7 +33,7 @@ describe('TokenStaking', function() {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new({from: accounts[0]});
+    registry = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );

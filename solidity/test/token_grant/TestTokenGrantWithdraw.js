@@ -12,7 +12,7 @@ const expect = chai.expect
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 
 describe('TokenGrant/Withdraw', function() {
@@ -36,7 +36,7 @@ describe('TokenGrant/Withdraw', function() {
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
-    registryContract = await Registry.new({from: accounts[0]});
+    registryContract = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       tokenContract.address, 
       registryContract.address, 

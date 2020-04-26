@@ -9,7 +9,7 @@ const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
 const initializationPeriod = time.duration.seconds(10);
@@ -32,7 +32,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new();
+    registry = await KeepRegistry.new();
 
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod

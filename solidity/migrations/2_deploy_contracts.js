@@ -16,7 +16,7 @@ const Groups = artifacts.require("./libraries/operator/Groups.sol");
 const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultVerification.sol");
 const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
 const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
-const Registry = artifacts.require("./Registry.sol");
+const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 let initializationPeriod = 43200; // ~12 hours
 let undelegationPeriod = 7776000; // ~3 months
@@ -35,8 +35,8 @@ module.exports = async function(deployer, network) {
   await deployer.link(AltBn128, BLS);
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
-  await deployer.deploy(Registry);
-  await deployer.deploy(TokenStaking, KeepToken.address, Registry.address, initializationPeriod, undelegationPeriod);
+  await deployer.deploy(KeepRegistry);
+  await deployer.deploy(TokenStaking, KeepToken.address, KeepRegistry.address, initializationPeriod, undelegationPeriod);
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);
   await deployer.deploy(TokenGrant, KeepToken.address);
@@ -63,7 +63,7 @@ module.exports = async function(deployer, network) {
   const initialize = keepRandomBeaconServiceImplV1.contract.methods
       .initialize(
           dkgContributionMargin,
-          Registry.address
+          KeepRegistry.address
       ).encodeABI();
 
   await deployer.deploy(
@@ -76,7 +76,7 @@ module.exports = async function(deployer, network) {
     KeepRandomBeaconOperator, 
     KeepRandomBeaconService.address, 
     TokenStaking.address,
-    Registry.address
+    KeepRegistry.address
   );
 
   await deployer.deploy(

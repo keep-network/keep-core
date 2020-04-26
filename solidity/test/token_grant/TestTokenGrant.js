@@ -4,7 +4,7 @@ const grantTokens = require('../helpers/grantTokens');
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 const assert = require('chai').assert
 
@@ -18,7 +18,7 @@ describe('TokenGrant', function() {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new({from: accounts[0]});
+    registry = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(token.address, registry.address, time.duration.days(1), time.duration.days(30), {from: accounts[0]});
     grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});

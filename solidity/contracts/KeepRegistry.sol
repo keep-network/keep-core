@@ -2,10 +2,10 @@ pragma solidity 0.5.17;
 
 
 /**
- * @title Registry
+ * @title KeepRegistry
  * @dev Governance owned registry of approved contracts and roles.
  */
-contract Registry {
+contract KeepRegistry {
     enum ContractStatus {New, Approved, Disabled}
 
     // Governance role is to enable recovery from key compromise by rekeying

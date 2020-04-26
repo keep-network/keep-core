@@ -2,7 +2,7 @@ import KeepToken from '@keep-network/keep-core/artifacts/KeepToken.json'
 import TokenStaking from '@keep-network/keep-core/artifacts/TokenStaking.json'
 import TokenGrant from '@keep-network/keep-core/artifacts/TokenGrant.json'
 import KeepRandomBeaconOperator from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json'
-import Registry from '@keep-network/keep-core/artifacts/Registry.json'
+import KeepRegistry from '@keep-network/keep-core/artifacts/KeepRegistry.json'
 import GuaranteedMinimumStakingPolicy from '@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json'
 import PermissiveStakingPolicy from '@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json'
 import KeepRandomBeaconOperatorStatistics from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json'
@@ -41,7 +41,7 @@ export async function getKeepRandomBeaconOperator(web3) {
 }
 
 export async function getRegistry(web3) {
-  return getContract(web3, Registry, REGISTRY_CONTRACT_NAME)
+  return getContract(web3, KeepRegistry, REGISTRY_CONTRACT_NAME)
 }
 
 export async function getKeepRandomBeaconOperatorStatistics(web3) {

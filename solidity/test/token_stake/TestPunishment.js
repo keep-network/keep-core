@@ -5,7 +5,7 @@ const stakeDelegate = require('../helpers/stakeDelegate')
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -29,7 +29,7 @@ describe('TokenStaking/Punishment', () => {
 
     before(async () => {
         token = await KeepToken.new({ from: owner })
-        registry = await Registry.new({ from: owner })
+        registry = await KeepRegistry.new({ from: owner })
         stakingContract = await TokenStaking.new(
             token.address,
             registry.address,

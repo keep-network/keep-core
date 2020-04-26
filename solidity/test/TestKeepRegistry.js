@@ -3,9 +3,9 @@ const { accounts, contract } = require("@openzeppelin/test-environment")
 const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 
-const Registry = contract.fromArtifact('Registry');
+const KeepRegistry = contract.fromArtifact('KeepRegistry');
 
-describe('Registry', () => {
+describe('KeepRegistry', () => {
 
     const owner = accounts[0]
     const governance = accounts[1]
@@ -25,7 +25,7 @@ describe('Registry', () => {
     let registry
 
     before(async () => {
-        registry = await Registry.new({ from: owner })
+        registry = await KeepRegistry.new({ from: owner })
         await registry.setGovernance(governance, { from: owner })
         await registry.setDefaultPanicButton(defaultPanicButton, { from: governance })
         await registry.setRegistryKeeper(registryKeeper, { from: governance })
