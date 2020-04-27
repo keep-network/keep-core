@@ -6,9 +6,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./TokenStaking.sol";
 import "./utils/BytesLib.sol";
 
-/**
-   @dev Interface of sender contract for approveAndCall pattern.
-*/
+
+/// @dev Interface of sender contract for approveAndCall pattern.
 interface tokenSender {
     function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
 }

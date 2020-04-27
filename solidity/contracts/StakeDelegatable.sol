@@ -8,10 +8,8 @@ import "./utils/AddressArrayUtils.sol";
 import "./utils/OperatorParams.sol";
 
 
-/**
- * @title Stake Delegatable
- * @dev A base contract to allow stake delegation for staking contracts.
- */
+/// @title Stake Delegatable
+/// @notice A base contract to allow stake delegation for staking contracts.
 contract StakeDelegatable {
     using SafeMath for uint256;
     using SafeERC20 for ERC20Burnable;
@@ -43,43 +41,33 @@ contract StakeDelegatable {
         _;
     }
 
-    /**
-     * @dev Gets the list of operators of the specified address.
-     * @return An array of addresses.
-     */
+    /// @notice Gets the list of operators of the specified address.
+    /// @return An array of addresses.
     function operatorsOf(address _address) public view returns (address[] memory) {
         return ownerOperators[_address];
     }
 
-    /**
-     * @dev Gets the stake balance of the specified address.
-     * @param _address The address to query the balance of.
-     * @return An uint256 representing the amount staked by the passed address.
-     */
+    /// @notice Gets the stake balance of the specified address.
+    /// @param _address The address to query the balance of.
+    /// @return An uint256 representing the amount staked by the passed address.
     function balanceOf(address _address) public view returns (uint256 balance) {
         return operators[_address].packedParams.getAmount();
     }
 
-    /**
-     * @dev Gets the stake owner for the specified operator address.
-     * @return Stake owner address.
-     */
+    /// @notice Gets the stake owner for the specified operator address.
+    /// @return Stake owner address.
     function ownerOf(address _operator) public view returns (address) {
         return operators[_operator].owner;
     }
 
-    /**
-     * @dev Gets the beneficiary for the specified operator address.
-     * @return Beneficiary address.
-     */
+    /// @notice Gets the beneficiary for the specified operator address.
+    /// @return Beneficiary address.
     function beneficiaryOf(address _operator) public view returns (address payable) {
         return operators[_operator].beneficiary;
     }
 
-    /**
-     * @dev Gets the authorizer for the specified operator address.
-     * @return Authorizer address.
-     */
+    /// @notice Gets the authorizer for the specified operator address.
+    /// @return Authorizer address.
     function authorizerOf(address _operator) public view returns (address) {
         return operators[_operator].authorizer;
     }

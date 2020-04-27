@@ -1,10 +1,8 @@
 pragma solidity 0.5.17;
 
 
-/**
- * @title KeepRegistry
- * @dev Governance owned registry of approved contracts and roles.
- */
+/// @title KeepRegistry
+/// @notice Governance owned registry of approved contracts and roles.
 contract KeepRegistry {
     enum ContractStatus {New, Approved, Disabled}
 

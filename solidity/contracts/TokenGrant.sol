@@ -364,8 +364,9 @@ contract TokenGrant {
     /// @param _amount Amount to stake.
     /// @param _extraData Data for stake delegation. This byte array must have
     /// the following values concatenated:
-    /// Beneficiary address (20 bytes) where the rewards for participation are sent
-    /// and operator's (20 bytes) address.
+    /// - Beneficiary address (20 bytes)
+    /// - Operator address (20 bytes)
+    /// - Authorizer address (20 bytes)
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(grants[_id].revokedAt == 0, "Revoked grant can not be staked");
@@ -374,7 +375,7 @@ contract TokenGrant {
             "Provided staking contract is not authorized."
         );
 
-        // Expecting 40 bytes _extraData for stake delegation.
+        // Expecting 60 bytes _extraData for stake delegation.
         require(_extraData.length == 60, "Stake delegation data must be provided.");
         address operator = _extraData.toAddress(20);
 
