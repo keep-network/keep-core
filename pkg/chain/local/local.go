@@ -81,6 +81,9 @@ type localChain struct {
 	relayEntryTimeoutReports      []uint64
 
 	operatorKey *ecdsa.PrivateKey
+
+	currentEntryStartBlock      *big.Int
+	currentRequestPreviousEntry []byte
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -468,6 +471,22 @@ func (c *localChain) ReportRelayEntryTimeout() error {
 
 	c.relayEntryTimeoutReports = append(c.relayEntryTimeoutReports, currentBlock)
 	return nil
+}
+
+func (c *localChain) IsEntryInProgress() (bool, error) {
+	return c.currentEntryStartBlock.Uint64() != 0, nil
+}
+
+func (c *localChain) CurrentEntryStartBlock() (*big.Int, error) {
+	return c.currentEntryStartBlock, nil
+}
+
+func (c *localChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	return c.currentRequestPreviousEntry, nil
+}
+
+func (c *localChain) GroupPublicKey() ([]byte, error) {
+	return c.groups[0].groupPublicKey, nil
 }
 
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
