@@ -56,8 +56,8 @@ contract ManagedGrantFactory {
     /// @param _extraData The following values encoded with `abi.encode`:
     /// grantee (address) Address of the grantee.
     /// duration (uint256) Duration in seconds of the unlocking period.
-    /// cliff (uint256) Duration in seconds of the cliff before which no tokens will unlock.
     /// start (uint256) Timestamp at which unlocking will start.
+    /// cliff (uint256) Duration in seconds of the cliff before which no tokens will unlock.
     /// revocable (bool) Whether the token grant is revocable or not.
     /// policy (address) Address of the staking policy to be used.
     function receiveApproval(
