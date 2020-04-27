@@ -1,6 +1,8 @@
 package chain
 
 import (
+	"math/big"
+
 	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -38,6 +40,9 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
+	// CurrentEntryStartBlock returns the starting block of the
+	// current relay entry.
+	CurrentEntryStartBlock() (*big.Int, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
