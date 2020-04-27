@@ -26,7 +26,7 @@ contract ManagedGrantFactory {
         uint256 amount;
         uint256 duration;
         uint256 start;
-        uint256 cliff;
+        uint256 cliffDuration;
         bool revocable;
         address policy;
     }
@@ -57,7 +57,7 @@ contract ManagedGrantFactory {
     /// grantee (address) Address of the grantee.
     /// duration (uint256) Duration in seconds of the unlocking period.
     /// start (uint256) Timestamp at which unlocking will start.
-    /// cliff (uint256) Duration in seconds of the cliff before which no tokens will unlock.
+    /// cliffDuration (uint256) Duration in seconds of the cliff before which no tokens will unlock.
     /// revocable (bool) Whether the token grant is revocable or not.
     /// policy (address) Address of the staking policy to be used.
     function receiveApproval(
@@ -70,7 +70,7 @@ contract ManagedGrantFactory {
         (address _grantee,
          uint256 _duration,
          uint256 _start,
-         uint256 _cliff,
+         uint256 _cliffDuration,
          bool _revocable,
          address _policy) = abi.decode(
              _extraData,
@@ -82,7 +82,7 @@ contract ManagedGrantFactory {
             _amount,
             _duration,
             _start,
-            _cliff,
+            _cliffDuration,
             _revocable,
             _policy
         );
@@ -99,7 +99,7 @@ contract ManagedGrantFactory {
     /// @param amount The number of tokens to grant.
     /// @param duration Duration in seconds of the unlocking period.
     /// @param start Timestamp at which unlocking will start.
-    /// @param cliff Duration in seconds of the cliff before which no tokens will unlock.
+    /// @param cliffDuration Duration in seconds of the cliff before which no tokens will unlock.
     /// @param revocable Whether the token grant is revocable or not.
     /// @param policy Address of the staking policy to be used.
     /// @return The address of the managed grant.
@@ -108,7 +108,7 @@ contract ManagedGrantFactory {
         uint256 amount,
         uint256 duration,
         uint256 start,
-        uint256 cliff,
+        uint256 cliffDuration,
         bool revocable,
         address policy
     ) public returns (address _managedGrant) {
@@ -118,7 +118,7 @@ contract ManagedGrantFactory {
             amount,
             duration,
             start,
-            cliff,
+            cliffDuration,
             revocable,
             policy
         );
@@ -130,7 +130,7 @@ contract ManagedGrantFactory {
     ) internal returns (address _managedGrant) {
         require(params.grantee != address(0), "Grantee address can't be zero.");
         require(
-            params.cliff <= params.duration,
+            params.cliffDuration <= params.duration,
             "Unlocking cliff duration must be less or equal total unlocking duration."
         );
 
@@ -153,7 +153,7 @@ contract ManagedGrantFactory {
             _managedGrant,
             params.duration,
             params.start,
-            params.cliff,
+            params.cliffDuration,
             params.revocable,
             params.policy
         );

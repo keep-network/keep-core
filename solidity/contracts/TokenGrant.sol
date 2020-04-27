@@ -38,8 +38,8 @@ contract TokenGrant {
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will unlock.
-        uint256 start; // Timestamp at which unlocking will start.
-        uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to unlock.
+        uint256 start; // Timestamp at which the linear unlocking schedule will start.
+        uint256 cliff; // Timestamp before which no tokens will be unlocked.
         uint256 withdrawn; // Amount that was withdrawn to the grantee.
         uint256 staked; // Amount that was staked by the grantee.
         GrantStakingPolicy stakingPolicy;
@@ -143,9 +143,9 @@ contract TokenGrant {
     /// @return duration The duration, in seconds, during which the tokens will
     ///                  unlocking linearly.
     /// @return start The start time, as a timestamp comparing to `now`.
-    /// @return cliff The duration, in seconds, before which none of the tokens
-    ///                in the token will be unlocked, and after which a linear
-    ///                amount based on the age of the grant will be unlocked.
+    /// @return cliff The timestamp, before which none of the tokens in the grant
+    ///               will be unlocked, and after which a linear amount based on
+    ///               the time elapsed since the start will be unlocked.
     /// @return policy The address of the grant's staking policy.
     function getGrantUnlockingSchedule(
         uint256 _id
@@ -200,7 +200,8 @@ contract TokenGrant {
     /// grantee (address) Address of the grantee.
     /// duration (uint256) Duration in seconds of the unlocking period.
     /// start (uint256) Timestamp at which unlocking will start.
-    /// cliff (uint256) Duration in seconds of the cliff after which tokens will begin to unlock.
+    /// cliffDuration (uint256) Duration in seconds of the cliff;
+    ///               no tokens will be unlocked until the time `start + cliff`.
     /// revocable (bool) Whether the token grant is revocable or not (1 or 0).
     /// stakingPolicy (address) Address of the staking policy for the grant.
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
@@ -210,7 +211,7 @@ contract TokenGrant {
          address _grantee,
          uint256 _duration,
          uint256 _start,
-         uint256 _cliff,
+         uint256 _cliffDuration,
          bool _revocable,
          address _stakingPolicy) = abi.decode(
              _extraData,
@@ -218,7 +219,10 @@ contract TokenGrant {
         );
 
         require(_grantee != address(0), "Grantee address can't be zero.");
-        require(_cliff <= _duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
+        require(
+            _cliffDuration <= _duration,
+            "Unlocking cliff duration must be less or equal total unlocking duration."
+        );
 
         require(_stakingPolicy != address(0), "Staking policy can't be zero.");
 
@@ -231,7 +235,7 @@ contract TokenGrant {
             _amount,
             _duration,
             _start,
-            _start.add(_cliff),
+            _start.add(_cliffDuration),
             0, 0,
             GrantStakingPolicy(_stakingPolicy)
         );
