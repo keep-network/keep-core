@@ -33,7 +33,7 @@ contract ManagedGrantFactory {
 
     event ManagedGrantCreated(
         address grantAddress,
-        address grantee
+        address indexed grantee
     );
 
     constructor(
