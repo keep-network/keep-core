@@ -29,6 +29,8 @@ contract TokenGrant {
     event TokenGrantStaked(uint256 indexed grantId, uint256 amount, address operator);
     event TokenGrantRevoked(uint256 id);
 
+    event StakingContractAuthorized(address indexed grantManager, address stakingContract);
+
     struct Grant {
         address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
@@ -86,6 +88,7 @@ contract TokenGrant {
             "Staking contract address can't be zero"
         );
         stakingContracts[msg.sender][_stakingContract] = true;
+        emit StakingContractAuthorized(msg.sender, _stakingContract);
     }
 
     /// @notice Gets the amount of granted tokens to the specified address.
