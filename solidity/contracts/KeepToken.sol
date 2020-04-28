@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 
 
 /// @dev Interface of recipient contract for approveAndCall pattern.
@@ -8,14 +9,14 @@ interface tokenRecipient { function receiveApproval(address _from, uint256 _valu
 
 /// @title KEEP Token
 /// @dev Standard ERC20Burnable token
-contract KeepToken is ERC20Burnable {
+contract KeepToken is ERC20Burnable, ERC20Detailed {
     string public constant NAME = "KEEP Token";
     string public constant SYMBOL = "KEEP";
     uint8 public constant DECIMALS = 18; // The number of digits after the decimal place when displaying token values on-screen.
     uint256 public constant INITIAL_SUPPLY = 10**27; // 1 billion tokens, 18 decimal places.
 
     /// @dev Gives msg.sender all of existing tokens.
-    constructor() public {
+    constructor() public ERC20Detailed(NAME, SYMBOL, DECIMALS) {
         _mint(msg.sender, INITIAL_SUPPLY);
     }
 
