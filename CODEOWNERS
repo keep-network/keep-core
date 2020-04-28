@@ -1,1 +1,13 @@
-*.sol @Shadowfiend @pdyraga
+/solidity/contracts/KeepToken.sol @Shadowfiend @pdyraga
+/solidity/contracts/TokenGrant.sol @Shadowfiend @pdyraga
+/solidity/contracts/TokenGrantStake.sol @Shadowfiend @pdyraga
+/solidity/contracts/TokenStaking.sol @Shadowfiend @pdyraga
+/solidity/contracts/StakeDelegatable.sol @Shadowfiend @pdyraga
+/solidity/contracts/ManagedGrant.sol @Shadowfiend @pdyraga
+/solidity/contracts/ManagedGrantFactory.sol @Shadowfiend @pdyraga
+/solidity/contracts/AdaptiveStakingPolicy.sol @Shadowfiend @pdyraga
+/solidity/contracts/MinimumStakingPolicy.sol @Shadowfiend @pdyraga
+/solidity/contracts/GuaranteedMinimumStakingPolicy.sol @Shadowfiend @pdyraga
+/solidity/contracts/PermissiveStakingPolicy.sol @Shadowfiend @pdyraga
+/solidity/contracts/KeepRegistry.sol @Shadowfiend @pdyraga
+/solidity/contracts/Escrow.sol @Shadowfiend @pdyraga
