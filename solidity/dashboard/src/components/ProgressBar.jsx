@@ -42,7 +42,7 @@ export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
   return (
     <div className="flex row center">
       <div className="dot" style={{ backgroundColor: color }}/>
-      <span className="text-small">{displayAmount(value)}&nbsp;KEEP&nbsp;</span><span className="text-smaller text-grey-40">{label}</span>
+      <span className="text-small">{displayAmount(value)}&nbsp;KEEP&nbsp;</span><span className="text-caption text-grey-40">{label}</span>
     </div>
   )
 })
