@@ -69,7 +69,7 @@ variable "editor_iam_members" {
 }
 
 variable "project_service_list" {
-  description = "List of google APIs/Services to enable with project creation"
+  description = "List of google APIs/Services to enable with project creation."
 
   default = [
     "compute.googleapis.com",
@@ -117,6 +117,34 @@ variable "nat_gateway_ip" {
     zone_f_name  = "keep-prd-nat-gateway-f-external-ip"
     address_type = "EXTERNAL"
     network_tier = "PREMIUM"
+  }
+}
+
+## Static IPs
+### Electrum Service
+
+variable "electrum_server_service_ip_name" {
+  description = "The name for the IP asset in GCP."
+  default     = "electrum-server-service"
+}
+
+### tbtc-dapp Ingress
+
+variable "tbtc_dapp_ingress_ip" {
+  default {
+    name         = "tbtc-dapp-ingress"
+    address_type = "EXTERNAL"
+    ip_version   = "IPV4"
+  }
+}
+
+### token-dashboard Ingress
+
+variable "token_dashboard_ingress_ip" {
+  default {
+    name         = "token-dashboard-ingress"
+    address_type = "EXTERNAL"
+    ip_version   = "IPV4"
   }
 }
 
