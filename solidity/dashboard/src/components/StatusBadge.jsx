@@ -5,6 +5,7 @@ import * as Icons from './Icons'
 export const BADGE_STATUS = {
   [PENDING_STATUS]: { textClassName: 'text-grey-70 text-normal', bgClassName: 'bg-pending', icon: <Icons.PendingBadge /> },
   [COMPLETE_STATUS]: { textClassName: 'text-success', bgClassName: 'bg-success', icon: <Icons.OKBadge /> },
+  DISABLED: { textClassName: 'text-grey-50', bgClassName: 'bg-grey-10' }
 }
 
 const badgeStyle = { padding: '0.1rem 0.5rem', borderRadius: '100px' }
