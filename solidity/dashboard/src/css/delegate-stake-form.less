@@ -1,0 +1,127 @@
+@icon-width: 40px;
+@icon-height: 40px;
+@vertical-padding: 0.5rem;
+@horizontal-padding: 2rem;
+
+.draw-dashed-vertical-line(@color) {
+    background: repeating-linear-gradient(
+        to bottom,
+        @color 0,
+        @color 1px,
+        transparent 1px,
+        transparent 3px
+    );
+}
+
+.delegate-stake-form {
+    .keep-green-form-icon,
+    .authorizer-form-icon,
+    .operator-form-icon,
+    .beneficiary-form-icon {
+        width: @icon-width !important;
+        height: @icon-height !important;
+    }
+
+    .token-amount-wrapper {
+        display: flex;
+        position: relative;
+        width: 100%;
+        background-color: @success-bg-light-color;
+        padding: @vertical-padding @horizontal-padding;
+
+        &::before {
+            content: '';
+            position: absolute;
+            width: 1px;
+            height: calc(100% - (@icon-height + @vertical-padding));
+            top: calc(@icon-height + @vertical-padding);
+            left: calc(@horizontal-padding + (@icon-width / 2));
+            .draw-dashed-vertical-line(@color-black);
+        }
+    }
+
+    .token-amount-field {
+        width: 100%;
+        margin-left: 1.5rem;
+
+        .form-input {
+            margin-bottom: 0.5rem;
+        }
+        .progress-bar-wrapper {
+            margin: 0;
+        }
+    }
+
+    .address-field-wrapper {
+        padding: @vertical-padding @horizontal-padding;
+        padding-left: calc(@horizontal-padding + (@icon-width / 2));
+        display: flex;
+        align-items: center;    
+        position: relative;
+
+        .dashed-line {
+            * {
+                transition: 0.5s ease;
+                stroke: @color-grey-30;
+            }
+        }
+
+        .authorizer-form-icon,
+        .operator-form-icon,
+        .beneficiary-form-icon {
+            circle {
+                transition: 0.5s ease;
+                fill: @color-grey-10;
+                stroke: @color-grey-10 !important;
+            }
+            * {
+                transition: 0.5s ease;
+                stroke: @color-grey-40 !important;
+            }
+        }
+
+        .form-input {
+            margin-left: 1.5rem;
+        }
+
+        &::before {
+            content: '';
+            position: absolute;
+            width: 1px;
+            height: 50%;
+            top: 0;
+            .draw-dashed-vertical-line(@color-grey-30);
+        }
+
+        &.touched {
+            .dashed-line {
+                * {
+                    stroke: @color-black;
+                }
+            }
+
+            &::before{ 
+                .draw-dashed-vertical-line(@color-black);
+            }
+
+            .authorizer-form-icon,
+            .operator-form-icon,
+            .beneficiary-form-icon {
+                circle {
+                    fill: @white;
+                    stroke: @color-black !important;
+                }
+                * {
+                    stroke: @color-black !important;
+                }
+            }
+        }
+    }
+    
+    .address-field-wrapper ~ .address-field-wrapper {
+        &::before {
+            height: 100%;
+            top: -50%;
+        }
+    }
+}
