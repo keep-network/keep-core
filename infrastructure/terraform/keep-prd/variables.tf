@@ -1,15 +1,14 @@
 # env vars
 variable "gcp_thesis_org_id" {
-  description = "The ID for the organization the project will be created under. Local ENV VAR"
+  description = "The ID for the organization the project will be created under. Local ENV VAR."
 }
 
 variable "gcp_thesis_billing_account" {
-  description = "The billing account to associate with your project.  Must be associated with org already. Local ENV VAR"
+  description = "The billing account to associate with your project.  Must be associated with org already. Local ENV VAR."
 }
 
 # generic vars
 variable "region_data" {
-  type        = "map"
   description = "Region and zone info."
 
   default {
@@ -27,12 +26,12 @@ variable "contacts" {
 }
 
 variable "vertical" {
-  description = "Name of the vertical that the generated resources belong to.  e.g. cfc, keep"
+  description = "Name of the vertical that the generated resources belong to.  e.g. cfc, keep."
   default     = "keep"
 }
 
 variable "environment" {
-  description = "Environment you're creating resources in.  Usually project name"
+  description = "Environment you're creating resources in.  Usually project name."
   default     = "keep-prd"
 }
 
@@ -52,7 +51,7 @@ variable "project_owner_members" {
 }
 
 variable "project_service_list" {
-  description = "List of google APIs/Services to enable with project creation"
+  description = "List of google APIs/Services to enable with project creation."
 
   default = [
     "compute.googleapis.com",
@@ -65,7 +64,7 @@ variable "project_service_list" {
 ## vpc vars
 ### vpc-network
 variable "vpc_network_name" {
-  description = "The name for your vpc-network"
+  description = "The name for your vpc-network."
   default     = "keep-prd-vpc-network"
 }
 
@@ -91,13 +90,11 @@ variable "private_subnet_ip_cidr_range" {
 ### external IP address vars
 
 variable "nat_gateway_ip" {
-  type = "map"
-
-  default = {
-    zone_a_name  = "keep-prd-nat-gateway-a-external-ip"
-    zone_b_name  = "keep-prd-nat-gateway-b-external-ip"
-    zone_c_name  = "keep-prd-nat-gateway-c-external-ip"
-    zone_f_name  = "keep-prd-nat-gateway-f-external-ip"
+  default {
+    zone_a_name  = "nat-gateway-a"
+    zone_b_name  = "nat-gateway-b"
+    zone_c_name  = "nat-gateway-c"
+    zone_f_name  = "nat-gateway-f"
     address_type = "EXTERNAL"
     network_tier = "PREMIUM"
   }
