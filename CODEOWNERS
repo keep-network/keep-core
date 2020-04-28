@@ -11,3 +11,10 @@
 /solidity/contracts/PermissiveStakingPolicy.sol @Shadowfiend @pdyraga
 /solidity/contracts/KeepRegistry.sol @Shadowfiend @pdyraga
 /solidity/contracts/Escrow.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/grant/UnlockingSchedule.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/AddressArrayUtils.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/BytesLib.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/LockUtils.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/OperatorParams.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/PercentUtils.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/UIntArrayUtils.sol @Shadowfiend @pdyraga
