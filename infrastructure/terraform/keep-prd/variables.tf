@@ -94,10 +94,10 @@ variable "nat_gateway_ip" {
   type = "map"
 
   default = {
-    zone_a_name  = "keep-prd-nat-gateway-a-external-ip"
-    zone_b_name  = "keep-prd-nat-gateway-b-external-ip"
-    zone_c_name  = "keep-prd-nat-gateway-c-external-ip"
-    zone_f_name  = "keep-prd-nat-gateway-f-external-ip"
+    zone_a_name  = "nat-gateway-a"
+    zone_b_name  = "nat-gateway-b"
+    zone_c_name  = "nat-gateway-c"
+    zone_f_name  = "nat-gateway-f"
     address_type = "EXTERNAL"
     network_tier = "PREMIUM"
   }
