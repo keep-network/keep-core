@@ -9,8 +9,7 @@ import Tile from './Tile'
 
 const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) => {
   return (
-    <Tile className="tile">
-      <h3 className="text-grey-60">Delegations</h3>
+    <Tile title="Delegations">
       <DataTable data={delegatedTokens} itemFieldId="operatorAddress">
         <Column
           header="amount"
