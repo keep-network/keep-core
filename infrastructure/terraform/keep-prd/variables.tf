@@ -91,9 +91,7 @@ variable "private_subnet_ip_cidr_range" {
 ### external IP address vars
 
 variable "nat_gateway_ip" {
-  type = "map"
-
-  default = {
+  default {
     zone_a_name  = "nat-gateway-a"
     zone_b_name  = "nat-gateway-b"
     zone_c_name  = "nat-gateway-c"
