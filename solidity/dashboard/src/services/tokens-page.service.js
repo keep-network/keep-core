@@ -80,6 +80,13 @@ const getDelegations = async (
     } = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'getDelegationInfo', operatorAddress)
     const beneficiary = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'magpieOf', operatorAddress)
     const authorizerAddress = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', operatorAddress)
+    
+    let grantId
+    if(isFromGrant){
+      const grantStakeDetails = await contractService
+        .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantStakeDetails', operatorAddress)
+      grantId = grantStakeDetails
+    }
 
     const operatorData = {
       undelegatedAt,
@@ -89,6 +96,7 @@ const getDelegations = async (
       createdAt,
       authorizerAddress,
       isFromGrant,
+      grantId
     }
     const balance = web3Utils.toBN(amount)
 
