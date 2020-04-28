@@ -28,7 +28,7 @@ var (
 )
 
 // KeepRandomBeaconOperatorABI is the input ABI used to generate the binding from.
-const KeepRandomBeaconOperatorABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_serviceContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_stakingContract\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"memberIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"misbehaved\",\"type\":\"bytes\"}],\"name\":\"DkgResultSubmittedEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"GroupMemberRewardsWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newEntry\",\"type\":\"uint256\"}],\"name\":\"GroupSelectionStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"OnGroupRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"previousEntry\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"groupPublicKey\",\"type\":\"bytes\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"RelayEntrySubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"RelayEntryTimeoutReported\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"UnauthorizedSigningReported\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"serviceContract\",\"type\":\"address\"}],\"name\":\"addServiceContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newEntry\",\"type\":\"uint256\"},{\"internalType\":\"addresspayable\",\"name\":\"submitter\",\"type\":\"address\"}],\"name\":\"createGroup\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgGasEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgSubmitterReimbursementFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryVerificationFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryVerificationGasEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"gasPriceCeiling\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"genesis\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getFirstActiveGroupIndex\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"},{\"internalType\":\"address\",\"name\":\"member\",\"type\":\"address\"}],\"name\":\"getGroupMemberIndices\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"indices\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"getGroupMemberRewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"getGroupMembers\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"members\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"getGroupPublicKey\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupCreationFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupMemberBaseReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupProfitFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupSelectionGasEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupSize\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"staker\",\"type\":\"address\"}],\"name\":\"hasMinimumStake\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"isGroupRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isGroupSelectionPossible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"isStaleGroup\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numberOfGroups\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_groupSignature\",\"type\":\"bytes\"}],\"name\":\"relayEntry\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"relayEntryTimeout\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"serviceContract\",\"type\":\"address\"}],\"name\":\"removeServiceContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"reportRelayEntryTimeout\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signedMsgSender\",\"type\":\"bytes\"}],\"name\":\"reportUnauthorizedSigning\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"resultPublicationBlockStep\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"selectedParticipants\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"previousEntry\",\"type\":\"bytes\"}],\"name\":\"sign\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"submitterMemberIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"misbehaved\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signatures\",\"type\":\"bytes\"},{\"internalType\":\"uint256[]\",\"name\":\"signingMembersIndexes\",\"type\":\"uint256[]\"}],\"name\":\"submitDkgResult\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ticket\",\"type\":\"bytes32\"}],\"name\":\"submitTicket\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"submittedTickets\",\"outputs\":[{\"internalType\":\"uint64[]\",\"name\":\"\",\"type\":\"uint64[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ticketSubmissionTimeout\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"groupMemberIndices\",\"type\":\"uint256[]\"}],\"name\":\"withdrawGroupMemberRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const KeepRandomBeaconOperatorABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_serviceContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_stakingContract\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_registryContract\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"memberIndex\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"misbehaved\",\"type\":\"bytes\"}],\"name\":\"DkgResultSubmittedEvent\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"GroupMemberRewardsWithdrawn\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newEntry\",\"type\":\"uint256\"}],\"name\":\"GroupSelectionStarted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"OnGroupRegistered\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"previousEntry\",\"type\":\"bytes\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"groupPublicKey\",\"type\":\"bytes\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[],\"name\":\"RelayEntrySubmitted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"RelayEntryTimeoutReported\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"UnauthorizedSigningReported\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"serviceContract\",\"type\":\"address\"}],\"name\":\"addServiceContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_newEntry\",\"type\":\"uint256\"},{\"internalType\":\"addresspayable\",\"name\":\"submitter\",\"type\":\"address\"}],\"name\":\"createGroup\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentEntryStartBlock\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentRequestGroupIndex\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentRequestPreviousEntry\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgGasEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgSubmitterReimbursementFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryVerificationFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryVerificationGasEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"gasPriceCeiling\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"genesis\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getFirstActiveGroupIndex\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"getGroupMemberRewards\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"getGroupMembers\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"members\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"getGroupPublicKey\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupCreationFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupMemberBaseReward\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupProfitFee\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupSelectionGasEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupSize\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"groupThreshold\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"staker\",\"type\":\"address\"}],\"name\":\"hasMinimumStake\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"hasWithdrawnRewards\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isEntryInProgress\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"isGroupRegistered\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isGroupSelectionPossible\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"}],\"name\":\"isStaleGroup\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numberOfGroups\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"_groupSignature\",\"type\":\"bytes\"}],\"name\":\"relayEntry\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"relayEntryTimeout\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"serviceContract\",\"type\":\"address\"}],\"name\":\"removeServiceContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"reportRelayEntryTimeout\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"signedMsgSender\",\"type\":\"bytes\"}],\"name\":\"reportUnauthorizedSigning\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"resultPublicationBlockStep\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"selectedParticipants\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"previousEntry\",\"type\":\"bytes\"}],\"name\":\"sign\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"submitterMemberIndex\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"groupPubKey\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"misbehaved\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"signatures\",\"type\":\"bytes\"},{\"internalType\":\"uint256[]\",\"name\":\"signingMembersIndexes\",\"type\":\"uint256[]\"}],\"name\":\"submitDkgResult\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"ticket\",\"type\":\"bytes32\"}],\"name\":\"submitTicket\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"submittedTickets\",\"outputs\":[{\"internalType\":\"uint64[]\",\"name\":\"\",\"type\":\"uint64[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ticketSubmissionTimeout\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"groupIndex\",\"type\":\"uint256\"}],\"name\":\"withdrawGroupMemberRewards\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // KeepRandomBeaconOperator is an auto generated Go binding around an Ethereum contract.
 type KeepRandomBeaconOperator struct {
@@ -170,6 +170,84 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorRaw) Transfer
 // Transact invokes the (paid) contract method with params as input values.
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorRaw) Transact(opts *bind.TransactOpts, method string, params ...interface{}) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.contract.Transact(opts, method, params...)
+}
+
+// CurrentEntryStartBlock is a free data retrieval call binding the contract method 0xb0dfe104.
+//
+// Solidity: function currentEntryStartBlock() constant returns(uint256)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) CurrentEntryStartBlock(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "currentEntryStartBlock")
+	return *ret0, err
+}
+
+// CurrentEntryStartBlock is a free data retrieval call binding the contract method 0xb0dfe104.
+//
+// Solidity: function currentEntryStartBlock() constant returns(uint256)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CurrentEntryStartBlock() (*big.Int, error) {
+	return _KeepRandomBeaconOperator.Contract.CurrentEntryStartBlock(&_KeepRandomBeaconOperator.CallOpts)
+}
+
+// CurrentEntryStartBlock is a free data retrieval call binding the contract method 0xb0dfe104.
+//
+// Solidity: function currentEntryStartBlock() constant returns(uint256)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) CurrentEntryStartBlock() (*big.Int, error) {
+	return _KeepRandomBeaconOperator.Contract.CurrentEntryStartBlock(&_KeepRandomBeaconOperator.CallOpts)
+}
+
+// CurrentRequestGroupIndex is a free data retrieval call binding the contract method 0x7031b7ff.
+//
+// Solidity: function currentRequestGroupIndex() constant returns(uint256)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) CurrentRequestGroupIndex(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "currentRequestGroupIndex")
+	return *ret0, err
+}
+
+// CurrentRequestGroupIndex is a free data retrieval call binding the contract method 0x7031b7ff.
+//
+// Solidity: function currentRequestGroupIndex() constant returns(uint256)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CurrentRequestGroupIndex() (*big.Int, error) {
+	return _KeepRandomBeaconOperator.Contract.CurrentRequestGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
+}
+
+// CurrentRequestGroupIndex is a free data retrieval call binding the contract method 0x7031b7ff.
+//
+// Solidity: function currentRequestGroupIndex() constant returns(uint256)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) CurrentRequestGroupIndex() (*big.Int, error) {
+	return _KeepRandomBeaconOperator.Contract.CurrentRequestGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
+}
+
+// CurrentRequestPreviousEntry is a free data retrieval call binding the contract method 0x618c2656.
+//
+// Solidity: function currentRequestPreviousEntry() constant returns(bytes)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) CurrentRequestPreviousEntry(opts *bind.CallOpts) ([]byte, error) {
+	var (
+		ret0 = new([]byte)
+	)
+	out := ret0
+	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "currentRequestPreviousEntry")
+	return *ret0, err
+}
+
+// CurrentRequestPreviousEntry is a free data retrieval call binding the contract method 0x618c2656.
+//
+// Solidity: function currentRequestPreviousEntry() constant returns(bytes)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CurrentRequestPreviousEntry() ([]byte, error) {
+	return _KeepRandomBeaconOperator.Contract.CurrentRequestPreviousEntry(&_KeepRandomBeaconOperator.CallOpts)
+}
+
+// CurrentRequestPreviousEntry is a free data retrieval call binding the contract method 0x618c2656.
+//
+// Solidity: function currentRequestPreviousEntry() constant returns(bytes)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) CurrentRequestPreviousEntry() ([]byte, error) {
+	return _KeepRandomBeaconOperator.Contract.CurrentRequestPreviousEntry(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // DkgGasEstimate is a free data retrieval call binding the contract method 0x003bf87e.
@@ -326,32 +404,6 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetFirstActive
 // Solidity: function getFirstActiveGroupIndex() constant returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetFirstActiveGroupIndex() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetFirstActiveGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
-}
-
-// GetGroupMemberIndices is a free data retrieval call binding the contract method 0xcb62c50d.
-//
-// Solidity: function getGroupMemberIndices(bytes groupPubKey, address member) constant returns(uint256[] indices)
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetGroupMemberIndices(opts *bind.CallOpts, groupPubKey []byte, member common.Address) ([]*big.Int, error) {
-	var (
-		ret0 = new([]*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getGroupMemberIndices", groupPubKey, member)
-	return *ret0, err
-}
-
-// GetGroupMemberIndices is a free data retrieval call binding the contract method 0xcb62c50d.
-//
-// Solidity: function getGroupMemberIndices(bytes groupPubKey, address member) constant returns(uint256[] indices)
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetGroupMemberIndices(groupPubKey []byte, member common.Address) ([]*big.Int, error) {
-	return _KeepRandomBeaconOperator.Contract.GetGroupMemberIndices(&_KeepRandomBeaconOperator.CallOpts, groupPubKey, member)
-}
-
-// GetGroupMemberIndices is a free data retrieval call binding the contract method 0xcb62c50d.
-//
-// Solidity: function getGroupMemberIndices(bytes groupPubKey, address member) constant returns(uint256[] indices)
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetGroupMemberIndices(groupPubKey []byte, member common.Address) ([]*big.Int, error) {
-	return _KeepRandomBeaconOperator.Contract.GetGroupMemberIndices(&_KeepRandomBeaconOperator.CallOpts, groupPubKey, member)
 }
 
 // GetGroupMemberRewards is a free data retrieval call binding the contract method 0x9dabee44.
@@ -612,6 +664,58 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) HasMinimumStak
 // Solidity: function hasMinimumStake(address staker) constant returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) HasMinimumStake(staker common.Address) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.HasMinimumStake(&_KeepRandomBeaconOperator.CallOpts, staker)
+}
+
+// HasWithdrawnRewards is a free data retrieval call binding the contract method 0x376f7a11.
+//
+// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) constant returns(bool)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) HasWithdrawnRewards(opts *bind.CallOpts, operator common.Address, groupIndex *big.Int) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "hasWithdrawnRewards", operator, groupIndex)
+	return *ret0, err
+}
+
+// HasWithdrawnRewards is a free data retrieval call binding the contract method 0x376f7a11.
+//
+// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) constant returns(bool)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) HasWithdrawnRewards(operator common.Address, groupIndex *big.Int) (bool, error) {
+	return _KeepRandomBeaconOperator.Contract.HasWithdrawnRewards(&_KeepRandomBeaconOperator.CallOpts, operator, groupIndex)
+}
+
+// HasWithdrawnRewards is a free data retrieval call binding the contract method 0x376f7a11.
+//
+// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) constant returns(bool)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) HasWithdrawnRewards(operator common.Address, groupIndex *big.Int) (bool, error) {
+	return _KeepRandomBeaconOperator.Contract.HasWithdrawnRewards(&_KeepRandomBeaconOperator.CallOpts, operator, groupIndex)
+}
+
+// IsEntryInProgress is a free data retrieval call binding the contract method 0x6e5636e4.
+//
+// Solidity: function isEntryInProgress() constant returns(bool)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) IsEntryInProgress(opts *bind.CallOpts) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "isEntryInProgress")
+	return *ret0, err
+}
+
+// IsEntryInProgress is a free data retrieval call binding the contract method 0x6e5636e4.
+//
+// Solidity: function isEntryInProgress() constant returns(bool)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) IsEntryInProgress() (bool, error) {
+	return _KeepRandomBeaconOperator.Contract.IsEntryInProgress(&_KeepRandomBeaconOperator.CallOpts)
+}
+
+// IsEntryInProgress is a free data retrieval call binding the contract method 0x6e5636e4.
+//
+// Solidity: function isEntryInProgress() constant returns(bool)
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) IsEntryInProgress() (bool, error) {
+	return _KeepRandomBeaconOperator.Contract.IsEntryInProgress(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // IsGroupRegistered is a free data retrieval call binding the contract method 0x1c524ac2.
@@ -1058,25 +1162,25 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) Subm
 	return _KeepRandomBeaconOperator.Contract.SubmitTicket(&_KeepRandomBeaconOperator.TransactOpts, ticket)
 }
 
-// WithdrawGroupMemberRewards is a paid mutator transaction binding the contract method 0x5d6615d9.
+// WithdrawGroupMemberRewards is a paid mutator transaction binding the contract method 0x3926c28e.
 //
-// Solidity: function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] groupMemberIndices) returns()
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactor) WithdrawGroupMemberRewards(opts *bind.TransactOpts, operator common.Address, groupIndex *big.Int, groupMemberIndices []*big.Int) (*types.Transaction, error) {
-	return _KeepRandomBeaconOperator.contract.Transact(opts, "withdrawGroupMemberRewards", operator, groupIndex, groupMemberIndices)
+// Solidity: function withdrawGroupMemberRewards(address operator, uint256 groupIndex) returns()
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactor) WithdrawGroupMemberRewards(opts *bind.TransactOpts, operator common.Address, groupIndex *big.Int) (*types.Transaction, error) {
+	return _KeepRandomBeaconOperator.contract.Transact(opts, "withdrawGroupMemberRewards", operator, groupIndex)
 }
 
-// WithdrawGroupMemberRewards is a paid mutator transaction binding the contract method 0x5d6615d9.
+// WithdrawGroupMemberRewards is a paid mutator transaction binding the contract method 0x3926c28e.
 //
-// Solidity: function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] groupMemberIndices) returns()
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) WithdrawGroupMemberRewards(operator common.Address, groupIndex *big.Int, groupMemberIndices []*big.Int) (*types.Transaction, error) {
-	return _KeepRandomBeaconOperator.Contract.WithdrawGroupMemberRewards(&_KeepRandomBeaconOperator.TransactOpts, operator, groupIndex, groupMemberIndices)
+// Solidity: function withdrawGroupMemberRewards(address operator, uint256 groupIndex) returns()
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) WithdrawGroupMemberRewards(operator common.Address, groupIndex *big.Int) (*types.Transaction, error) {
+	return _KeepRandomBeaconOperator.Contract.WithdrawGroupMemberRewards(&_KeepRandomBeaconOperator.TransactOpts, operator, groupIndex)
 }
 
-// WithdrawGroupMemberRewards is a paid mutator transaction binding the contract method 0x5d6615d9.
+// WithdrawGroupMemberRewards is a paid mutator transaction binding the contract method 0x3926c28e.
 //
-// Solidity: function withdrawGroupMemberRewards(address operator, uint256 groupIndex, uint256[] groupMemberIndices) returns()
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) WithdrawGroupMemberRewards(operator common.Address, groupIndex *big.Int, groupMemberIndices []*big.Int) (*types.Transaction, error) {
-	return _KeepRandomBeaconOperator.Contract.WithdrawGroupMemberRewards(&_KeepRandomBeaconOperator.TransactOpts, operator, groupIndex, groupMemberIndices)
+// Solidity: function withdrawGroupMemberRewards(address operator, uint256 groupIndex) returns()
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) WithdrawGroupMemberRewards(operator common.Address, groupIndex *big.Int) (*types.Transaction, error) {
+	return _KeepRandomBeaconOperator.Contract.WithdrawGroupMemberRewards(&_KeepRandomBeaconOperator.TransactOpts, operator, groupIndex)
 }
 
 // KeepRandomBeaconOperatorDkgResultSubmittedEventIterator is returned from FilterDkgResultSubmittedEvent and is used to iterate over the raw logs and unpacked data for DkgResultSubmittedEvent events raised by the KeepRandomBeaconOperator contract.

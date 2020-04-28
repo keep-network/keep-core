@@ -28,7 +28,7 @@ var (
 )
 
 // KeepRandomBeaconServiceImplV1ABI is the input ABI used to generate the binding from.
-const KeepRandomBeaconServiceImplV1ABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"addOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"baseCallbackGas\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entry\",\"type\":\"bytes\"},{\"internalType\":\"addresspayable\",\"name\":\"submitter\",\"type\":\"address\"}],\"name\":\"entryCreated\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryFeeBreakdown\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"entryVerificationFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dkgContributionFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"groupProfitFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"gasPriceCeiling\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"entryFeeEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"executeCallback\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"surplusRecipient\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"addresspayable\",\"name\":\"payee\",\"type\":\"address\"}],\"name\":\"finishWithdrawal\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundDkgFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundRequestSubsidyFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"dkgContributionMargin\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawalDelay\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"registry\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"initiateWithdrawal\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"previousEntry\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"removeOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"callbackContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"seed\",\"type\":\"uint256\"}],\"name\":\"selectOperatorContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"}]"
+const KeepRandomBeaconServiceImplV1ABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"addOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"baseCallbackGas\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entry\",\"type\":\"bytes\"},{\"internalType\":\"addresspayable\",\"name\":\"submitter\",\"type\":\"address\"}],\"name\":\"entryCreated\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryFeeBreakdown\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"entryVerificationFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dkgContributionFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"groupProfitFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"gasPriceCeiling\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"entryFeeEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"executeCallback\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"surplusRecipient\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundDkgFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundRequestSubsidyFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"dkgContributionMargin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"registry\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"previousEntry\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"removeOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"callbackContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"seed\",\"type\":\"uint256\"}],\"name\":\"selectOperatorContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"}]"
 
 // KeepRandomBeaconServiceImplV1 is an auto generated Go binding around an Ethereum contract.
 type KeepRandomBeaconServiceImplV1 struct {
@@ -294,58 +294,6 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession
 	return _KeepRandomBeaconServiceImplV1.Contract.Initialized(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
-// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
-//
-// Solidity: function isOwner() constant returns(bool)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "isOwner")
-	return *ret0, err
-}
-
-// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
-//
-// Solidity: function isOwner() constant returns(bool)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) IsOwner() (bool, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.IsOwner(&_KeepRandomBeaconServiceImplV1.CallOpts)
-}
-
-// IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
-//
-// Solidity: function isOwner() constant returns(bool)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) IsOwner() (bool, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.IsOwner(&_KeepRandomBeaconServiceImplV1.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() constant returns(address)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "owner")
-	return *ret0, err
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() constant returns(address)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Owner() (common.Address, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.Owner(&_KeepRandomBeaconServiceImplV1.CallOpts)
-}
-
-// Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
-//
-// Solidity: function owner() constant returns(address)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) Owner() (common.Address, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.Owner(&_KeepRandomBeaconServiceImplV1.CallOpts)
-}
-
 // PreviousEntry is a free data retrieval call binding the contract method 0xac6136db.
 //
 // Solidity: function previousEntry() constant returns(bytes)
@@ -487,27 +435,6 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSes
 	return _KeepRandomBeaconServiceImplV1.Contract.ExecuteCallback(&_KeepRandomBeaconServiceImplV1.TransactOpts, requestId, entry)
 }
 
-// FinishWithdrawal is a paid mutator transaction binding the contract method 0xa5150bbc.
-//
-// Solidity: function finishWithdrawal(address payee) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) FinishWithdrawal(opts *bind.TransactOpts, payee common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "finishWithdrawal", payee)
-}
-
-// FinishWithdrawal is a paid mutator transaction binding the contract method 0xa5150bbc.
-//
-// Solidity: function finishWithdrawal(address payee) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) FinishWithdrawal(payee common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.FinishWithdrawal(&_KeepRandomBeaconServiceImplV1.TransactOpts, payee)
-}
-
-// FinishWithdrawal is a paid mutator transaction binding the contract method 0xa5150bbc.
-//
-// Solidity: function finishWithdrawal(address payee) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) FinishWithdrawal(payee common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.FinishWithdrawal(&_KeepRandomBeaconServiceImplV1.TransactOpts, payee)
-}
-
 // FundDkgFeePool is a paid mutator transaction binding the contract method 0x4611b648.
 //
 // Solidity: function fundDkgFeePool() returns()
@@ -550,67 +477,25 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSes
 	return _KeepRandomBeaconServiceImplV1.Contract.FundRequestSubsidyFeePool(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0xa6ab36f2.
+// Initialize is a paid mutator transaction binding the contract method 0xda35a26f.
 //
-// Solidity: function initialize(uint256 dkgContributionMargin, uint256 withdrawalDelay, address registry) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) Initialize(opts *bind.TransactOpts, dkgContributionMargin *big.Int, withdrawalDelay *big.Int, registry common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "initialize", dkgContributionMargin, withdrawalDelay, registry)
+// Solidity: function initialize(uint256 dkgContributionMargin, address registry) returns()
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) Initialize(opts *bind.TransactOpts, dkgContributionMargin *big.Int, registry common.Address) (*types.Transaction, error) {
+	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "initialize", dkgContributionMargin, registry)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0xa6ab36f2.
+// Initialize is a paid mutator transaction binding the contract method 0xda35a26f.
 //
-// Solidity: function initialize(uint256 dkgContributionMargin, uint256 withdrawalDelay, address registry) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Initialize(dkgContributionMargin *big.Int, withdrawalDelay *big.Int, registry common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.Initialize(&_KeepRandomBeaconServiceImplV1.TransactOpts, dkgContributionMargin, withdrawalDelay, registry)
+// Solidity: function initialize(uint256 dkgContributionMargin, address registry) returns()
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Initialize(dkgContributionMargin *big.Int, registry common.Address) (*types.Transaction, error) {
+	return _KeepRandomBeaconServiceImplV1.Contract.Initialize(&_KeepRandomBeaconServiceImplV1.TransactOpts, dkgContributionMargin, registry)
 }
 
-// Initialize is a paid mutator transaction binding the contract method 0xa6ab36f2.
+// Initialize is a paid mutator transaction binding the contract method 0xda35a26f.
 //
-// Solidity: function initialize(uint256 dkgContributionMargin, uint256 withdrawalDelay, address registry) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) Initialize(dkgContributionMargin *big.Int, withdrawalDelay *big.Int, registry common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.Initialize(&_KeepRandomBeaconServiceImplV1.TransactOpts, dkgContributionMargin, withdrawalDelay, registry)
-}
-
-// Initialize0 is a paid mutator transaction binding the contract method 0xc4d66de8.
-//
-// Solidity: function initialize(address sender) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) Initialize0(opts *bind.TransactOpts, sender common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "initialize0", sender)
-}
-
-// Initialize0 is a paid mutator transaction binding the contract method 0xc4d66de8.
-//
-// Solidity: function initialize(address sender) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Initialize0(sender common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.Initialize0(&_KeepRandomBeaconServiceImplV1.TransactOpts, sender)
-}
-
-// Initialize0 is a paid mutator transaction binding the contract method 0xc4d66de8.
-//
-// Solidity: function initialize(address sender) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) Initialize0(sender common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.Initialize0(&_KeepRandomBeaconServiceImplV1.TransactOpts, sender)
-}
-
-// InitiateWithdrawal is a paid mutator transaction binding the contract method 0xb51d1d4f.
-//
-// Solidity: function initiateWithdrawal() returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) InitiateWithdrawal(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "initiateWithdrawal")
-}
-
-// InitiateWithdrawal is a paid mutator transaction binding the contract method 0xb51d1d4f.
-//
-// Solidity: function initiateWithdrawal() returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) InitiateWithdrawal() (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.InitiateWithdrawal(&_KeepRandomBeaconServiceImplV1.TransactOpts)
-}
-
-// InitiateWithdrawal is a paid mutator transaction binding the contract method 0xb51d1d4f.
-//
-// Solidity: function initiateWithdrawal() returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) InitiateWithdrawal() (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.InitiateWithdrawal(&_KeepRandomBeaconServiceImplV1.TransactOpts)
+// Solidity: function initialize(uint256 dkgContributionMargin, address registry) returns()
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) Initialize(dkgContributionMargin *big.Int, registry common.Address) (*types.Transaction, error) {
+	return _KeepRandomBeaconServiceImplV1.Contract.Initialize(&_KeepRandomBeaconServiceImplV1.TransactOpts, dkgContributionMargin, registry)
 }
 
 // RemoveOperatorContract is a paid mutator transaction binding the contract method 0xe58990c5.
@@ -632,27 +517,6 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Remo
 // Solidity: function removeOperatorContract(address operatorContract) returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) RemoveOperatorContract(operatorContract common.Address) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RemoveOperatorContract(&_KeepRandomBeaconServiceImplV1.TransactOpts, operatorContract)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "renounceOwnership")
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) RenounceOwnership() (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.RenounceOwnership(&_KeepRandomBeaconServiceImplV1.TransactOpts)
-}
-
-// RenounceOwnership is a paid mutator transaction binding the contract method 0x715018a6.
-//
-// Solidity: function renounceOwnership() returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) RenounceOwnership() (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.RenounceOwnership(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
@@ -695,179 +559,6 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Requ
 // Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) RequestRelayEntry0(callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestRelayEntry0(&_KeepRandomBeaconServiceImplV1.TransactOpts, callbackContract, callbackGas)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "transferOwnership", newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.TransferOwnership(&_KeepRandomBeaconServiceImplV1.TransactOpts, newOwner)
-}
-
-// TransferOwnership is a paid mutator transaction binding the contract method 0xf2fde38b.
-//
-// Solidity: function transferOwnership(address newOwner) returns()
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) TransferOwnership(newOwner common.Address) (*types.Transaction, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.TransferOwnership(&_KeepRandomBeaconServiceImplV1.TransactOpts, newOwner)
-}
-
-// KeepRandomBeaconServiceImplV1OwnershipTransferredIterator is returned from FilterOwnershipTransferred and is used to iterate over the raw logs and unpacked data for OwnershipTransferred events raised by the KeepRandomBeaconServiceImplV1 contract.
-type KeepRandomBeaconServiceImplV1OwnershipTransferredIterator struct {
-	Event *KeepRandomBeaconServiceImplV1OwnershipTransferred // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *KeepRandomBeaconServiceImplV1OwnershipTransferredIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(KeepRandomBeaconServiceImplV1OwnershipTransferred)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(KeepRandomBeaconServiceImplV1OwnershipTransferred)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *KeepRandomBeaconServiceImplV1OwnershipTransferredIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *KeepRandomBeaconServiceImplV1OwnershipTransferredIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// KeepRandomBeaconServiceImplV1OwnershipTransferred represents a OwnershipTransferred event raised by the KeepRandomBeaconServiceImplV1 contract.
-type KeepRandomBeaconServiceImplV1OwnershipTransferred struct {
-	PreviousOwner common.Address
-	NewOwner      common.Address
-	Raw           types.Log // Blockchain specific contextual infos
-}
-
-// FilterOwnershipTransferred is a free log retrieval operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Filterer) FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*KeepRandomBeaconServiceImplV1OwnershipTransferredIterator, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _KeepRandomBeaconServiceImplV1.contract.FilterLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &KeepRandomBeaconServiceImplV1OwnershipTransferredIterator{contract: _KeepRandomBeaconServiceImplV1.contract, event: "OwnershipTransferred", logs: logs, sub: sub}, nil
-}
-
-// WatchOwnershipTransferred is a free log subscription operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Filterer) WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *KeepRandomBeaconServiceImplV1OwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error) {
-
-	var previousOwnerRule []interface{}
-	for _, previousOwnerItem := range previousOwner {
-		previousOwnerRule = append(previousOwnerRule, previousOwnerItem)
-	}
-	var newOwnerRule []interface{}
-	for _, newOwnerItem := range newOwner {
-		newOwnerRule = append(newOwnerRule, newOwnerItem)
-	}
-
-	logs, sub, err := _KeepRandomBeaconServiceImplV1.contract.WatchLogs(opts, "OwnershipTransferred", previousOwnerRule, newOwnerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(KeepRandomBeaconServiceImplV1OwnershipTransferred)
-				if err := _KeepRandomBeaconServiceImplV1.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseOwnershipTransferred is a log parse operation binding the contract event 0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0.
-//
-// Solidity: event OwnershipTransferred(address indexed previousOwner, address indexed newOwner)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Filterer) ParseOwnershipTransferred(log types.Log) (*KeepRandomBeaconServiceImplV1OwnershipTransferred, error) {
-	event := new(KeepRandomBeaconServiceImplV1OwnershipTransferred)
-	if err := _KeepRandomBeaconServiceImplV1.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
-		return nil, err
-	}
-	return event, nil
 }
 
 // KeepRandomBeaconServiceImplV1RelayEntryGeneratedIterator is returned from FilterRelayEntryGenerated and is used to iterate over the raw logs and unpacked data for RelayEntryGenerated events raised by the KeepRandomBeaconServiceImplV1 contract.
