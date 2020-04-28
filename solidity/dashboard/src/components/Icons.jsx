@@ -7,6 +7,13 @@ import { ReactComponent as Rewards } from '../static/svg/rewards.svg'
 import { ReactComponent as Glossary } from '../static/svg/glossary.svg'
 import { ReactComponent as Authorizer } from '../static/svg/authorizer.svg'
 import { ReactComponent as KeepToken } from '../static/svg/tokens.svg'
+import { ReactComponent as GrantContextIcon } from '../static/svg/grant-context-icon.svg'
+import { ReactComponent as MoneyWalletOpen } from '../static/svg/money-wallet-open.svg'
+import { ReactComponent as KeepGreenOutline } from '../static/svg/keep-green-form-icon.svg'
+import { ReactComponent as AuthorizerFormIcon } from '../static/svg/authorizer-form-icon.svg'
+import { ReactComponent as OperatorFormIcon } from '../static/svg/operator-form-icon.svg'
+import { ReactComponent as BeneficiaryFormIcon } from '../static/svg/beneficiary-form-icon.svg'
+import { ReactComponent as DashedLine } from '../static/svg/dashed-line.svg'
 
 const Keep = ({ color, height, width }) => (
   <svg width={width} height={height} viewBox="0 0 718 126" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -151,4 +158,11 @@ export {
   Operations,
   KeepToken,
   Rewards,
+  GrantContextIcon,
+  MoneyWalletOpen,
+  KeepGreenOutline,
+  DashedLine,
+  AuthorizerFormIcon,
+  BeneficiaryFormIcon,
+  OperatorFormIcon
 }
