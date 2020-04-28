@@ -5,8 +5,10 @@ import { colors } from '../constants/colors'
 import { CircularProgressBars } from './CircularProgressBar'
 import { Web3Context } from './WithWeb3Context'
 import { useShowMessage, messageType } from './Message'
+import Tile from './Tile'
 import moment from 'moment'
 import { gt } from '../utils/arithmetics.utils'
+import { SpeechBubbleTooltip } from './SpeechBubbleTooltip'
 
 const TokenGrantOverview = ({ selectedGrant }) => {
   const { yourAddress, grantContract } = useContext(Web3Context)
@@ -32,14 +34,25 @@ const TokenGrantOverview = ({ selectedGrant }) => {
   }
 
   return (
-    <div className="token-grant-overview">
-      <h2 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h2>
-      <div className="text-small text-grey-40">
-        Issued: {formatDate(moment.unix(selectedGrant.start))}
-        <span className="text-smaller text-grey-30">&nbsp;Cliff: {cliffPeriod}</span>
-        <br/>
-        Fully Unlocked: {formatDate(fullyUnlockedDate)}
-      </div>
+    <Tile
+      id="tokens-overview"
+      title="Grant Details"
+      titleStyle={{ marginRight: 'auto' }}
+      withTooltip
+      tooltipProps={{
+        text:
+          <>
+            A &nbsp;<span className="text-bold">cliff</span>&nbsp; is a set period of time before vesting begins.
+          </>,
+        iconColor: colors.grey60,
+        iconBackgroundColor: 'transparent',
+        title: `${cliffPeriod} cliff`
+      }}
+    >
+      <h1 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h1>
+      <h4 className="text-grey-30 mb-1">Grant ID {selectedGrant.id}</h4>
+      <h5 className="text-grey-50">Issued: {formatDate(moment.unix(selectedGrant.start))}</h5>
+      <h5 className="text-grey-50">Fully Unlocked: {formatDate(fullyUnlockedDate)}</h5>
       <hr/>
       <div className="flex">
         <div className="flex-1">
@@ -64,20 +77,19 @@ const TokenGrantOverview = ({ selectedGrant }) => {
           />
         </div>
         <div className={`ml-2 mt-1 flex-1${selectedGrant.readyToRelease === '0' ? ' self-start' : '' }`}>
-          <div className="text-label">
-            unlocked
-          </div>
-          <div className="text-label">
-            {displayAmount(selectedGrant.unlocked)}
-            <div className="text-smaller text-grey-40">
-              of {displayAmount(selectedGrant.amount)} total
-            </div>
+          <h5 className="text-grey-70">unlocked</h5>
+          <h4 className="text-grey-70">{displayAmount(selectedGrant.unlocked)}</h4>
+          <div className="text-smaller text-grey-40">
+              of {displayAmount(selectedGrant.amount)} Total
           </div>
           {
             gt(selectedGrant.readyToRelease || 0, 0) &&
             <div className="mt-2">
-              <div className="text-secondary text-small" >
-                {`${displayAmount(selectedGrant.readyToRelease)} Available`}
+              <div className="text-secondary text-small flex wrap">
+                <span className="mr-1">{`${displayAmount(selectedGrant.readyToRelease)} Available`}</span>
+                <SpeechBubbleTooltip
+                  text="Releasing tokens allows them to be withdrawn from a grant."
+                />
               </div>
               <SubmitButton
                 className="btn btn-sm btn-secondary"
@@ -96,8 +108,8 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             items={[
               {
                 value: selectedGrant.staked,
-                backgroundStroke: '#F8E9D3',
-                color: colors.brown,
+                color: colors.grey70,
+                backgroundStroke: colors.grey10,
                 label: 'Staked',
               },
             ]}
@@ -105,18 +117,14 @@ const TokenGrantOverview = ({ selectedGrant }) => {
           />
         </div>
         <div className="ml-2 mt-1 self-start flex-1">
-          <div className="text-label">
-            staked
-          </div>
-          <div className="text-label">
-            {displayAmount(selectedGrant.staked)}
-            <div className="text-smaller text-grey-40">
-              of {displayAmount(selectedGrant.amount)} total
-            </div>
+          <h5 className="text-grey-70">staked</h5>
+          <h4 className="text-grey-70">{displayAmount(selectedGrant.staked)}</h4>
+          <div className="text-smaller text-grey-40">
+            of {displayAmount(selectedGrant.amount)} Total
           </div>
         </div>
       </div>
-    </div>
+    </Tile>
   )
 }
 
