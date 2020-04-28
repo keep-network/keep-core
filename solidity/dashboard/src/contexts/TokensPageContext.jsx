@@ -9,7 +9,10 @@ import tokensPageReducer, {
   SET_STATE,
   GRANT_STAKED,
   GRANT_WITHDRAWN,
+  SET_SELECTED_GRANT,
 } from '../reducers/tokens-page.reducer'
+import { isEmptyObj } from '../utils/general.utils'
+import { findIndexAndObject } from '../utils/array.utils'
 
 const tokesnPageServiceInitialData = {
   delegations: [],
@@ -55,6 +58,8 @@ const TokenPageContextProvider = (props) => {
     initializationPeriod: '0',
     undelegationPeriod: '0',
     isFetching: true,
+    tokensContext: 'granted',
+    selectedGrant: {},
   })
 
   useEffect(() => {
@@ -64,6 +69,15 @@ const TokenPageContextProvider = (props) => {
   useEffect(() => {
     dispatch({ type: SET_STATE, payload: { grants, isFetching: grantsAreFetching } })
   }, [grants, grantsAreFetching])
+
+  useEffect(() => {
+    if (isEmptyObj(state.selectedGrant) && state.grants.length > 0) {
+      dispatch({ type: SET_SELECTED_GRANT, payload: state.grants[0] })
+    } else if (!isEmptyObj(state.selectedGrant)) {
+      const { obj: grant } = findIndexAndObject('id', state.electedGrant.id, state.grants)
+      dispatch({ type: SET_SELECTED_GRANT, payload: grant })
+    }
+  }, [state.grants])
 
   const contextValue = useMemo(() => {
     return { state, dispatch }
