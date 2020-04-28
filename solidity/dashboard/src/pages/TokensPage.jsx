@@ -1,12 +1,9 @@
 import React, { useContext } from 'react'
 import DelegateStakeForm from '../components/DelegateStakeForm'
 import TokensOverview from '../components/TokensOverview'
-import Undelegations from '../components/Undelegations'
 import { tokensPageService } from '../services/tokens-page.service'
-import DelegatedTokensTable from '../components/DelegatedTokensTable'
 import { Web3Context } from '../components/WithWeb3Context'
 import { useShowMessage, messageType } from '../components/Message'
-import SpeechBubbleInfo from '../components/SpeechBubbleInfo'
 import { LoadingOverlay } from '../components/Loadable'
 import { useSubscribeToContractEvent } from '../hooks/useSubscribeToContractEvent.js'
 import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
@@ -25,6 +22,8 @@ import {
 import moment from 'moment'
 import PageWrapper from '../components/PageWrapper'
 import Tile from '../components/Tile'
+import TokensContextSwitcher from '../components/TokensContextSwitcher'
+import DelegationOverview from '../components/DelegationOverview'
 
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
@@ -34,16 +33,11 @@ const TokensPage = () => {
   useSubscribeToRecoveredStakeEvent()
 
   const {
-    delegations,
-    undelegations,
     keepTokenBalance,
-    ownedTokensUndelegationsBalance,
-    ownedTokensDelegationsBalance,
-    undelegationPeriod,
     minimumStake,
-    grants,
     isFetching,
-    refreshData,
+    selectedGrant,
+    tokensContext,
   } = useTokensPageContext()
 
   const handleSubmit = async (values, onTransactionHashCallback) => {
@@ -56,41 +50,40 @@ const TokensPage = () => {
     }
   }
 
+  const getAvailableToStakeAmount = () => {
+    if (tokensContext === 'granted') {
+      return selectedGrant.availableToStake
+    }
+
+    return keepTokenBalance
+  }
+
   return (
     <LoadingOverlay isFetching={isFetching}>
       <PageWrapper title="My Tokens">
+        <TokensContextSwitcher />
         <div className="tokens-wrapper">
-          <Tile title="Delegate Stake" id="delegate-stake-section">
-            <div className="text-big text-black">
-                Earn ETH rewards by delegating stake to an operator address.
-                All ETH rewards will be sent to the address you set as the beneficiary.
-            </div>
-            <SpeechBubbleInfo>
-                A&nbsp;<span className="text-bold">stake</span>&nbsp;is an amount of KEEP
-                that’s bonded in order to participate in the threshold relay and, optionally, the Keep network.
-            </SpeechBubbleInfo>
-            <hr/>
+          <Tile
+            title="Delegate Tokens"
+            id="delegate-stake-section"
+            withTooltip
+            tooltipProps={{
+              text: 
+                <>
+                  <span className="text-bold">Delegation</span>&nbsp;
+                  sets aside an amount of KEEP to be staked by a trusted third party, referred to within the dApp as an operator.
+                </>
+            }}
+          >
             <DelegateStakeForm
               onSubmit={handleSubmit}
               minStake={minimumStake}
-              keepBalance={keepTokenBalance}
-              grants={grants}
+              availableToStake={getAvailableToStakeAmount()}
             />
           </Tile>
-          <TokensOverview
-            keepBalance={keepTokenBalance}
-            stakingBalance={ownedTokensDelegationsBalance}
-            pendingUndelegationBalance={ownedTokensUndelegationsBalance}
-            undelegationPeriod={undelegationPeriod}
-          />
+          <TokensOverview />
         </div>
-        <Undelegations
-          undelegations={undelegations}
-        />
-        <DelegatedTokensTable
-          delegatedTokens={delegations}
-          cancelStakeSuccessCallback={refreshData}
-        />
+        <DelegationOverview />
       </PageWrapper>
     </LoadingOverlay>
   )
