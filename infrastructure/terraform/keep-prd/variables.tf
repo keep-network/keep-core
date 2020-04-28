@@ -64,7 +64,7 @@ variable "editor_iam_members" {
   default = [
     "user:piotr.dyraga@thesis.co",
     "user:jakub.nowakowski@thesis.co",
-    "user:matt.luongo@thesis.co",
+    "user:matt@thesis.co",
   ]
 }
 
