@@ -1,7 +1,6 @@
 import React from 'react'
 import { displayAmount, formatDate } from '../utils/general.utils'
 import AddressShortcut from './AddressShortcut'
-import SpeechBubbleInfo from './SpeechBubbleInfo'
 import RecoverStakeButton from './RecoverStakeButton'
 import StatusBadge, { BADGE_STATUS } from './StatusBadge'
 import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
@@ -10,10 +9,16 @@ import Tile from './Tile'
 
 const Undelegations = ({ undelegations }) => {
   return (
-    <Tile title="Undelegations">
-      <SpeechBubbleInfo className="mt-1 mb-1">
-        <span className="text-bold">Recover</span>&nbsp;undelegated tokens to return them to your token balance.
-      </SpeechBubbleInfo>
+    <Tile
+      title="Undelegations"
+      withTooltip={true}
+      tooltipProps={{ text:
+        <>
+          <span className="text-bold">Recover</span>
+          &nbsp;undelegated tokens to return them to your token balance.
+        </>
+      }}
+    >
       <DataTable data={undelegations} itemFieldId="operatorAddress">
         <Column header="amount" field="amount" renderContent={({ amount }) => `${displayAmount(amount)} KEEP`} />
         <Column header="status" field="undelegationStatus" renderContent={(undelegation) => {
