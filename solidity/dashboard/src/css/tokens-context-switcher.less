@@ -1,17 +1,16 @@
 .tokens-context-switcher-wrapper {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
 
     .grants, .owned {
         background: @white;
         padding: 2rem;
         margin-bottom: 1.2rem;
         display: flex; 
-        flex: 1;
         flex-direction: row;
         align-items: center;
         transition: transform 420ms cubic-bezier(.165,.84,.44,1);
-        margin-bottom: 3rem;
+        margin-bottom: 0;
 
         &.active {
             transform: scale(1.05);
@@ -48,8 +47,8 @@
                 height: 100%;
                 top: 0;
                 left: 0;
-                background: @color-grey-30;
-		        opacity: .8;
+                background: @color-grey-10;
+		        opacity: .5;
             }
 
             &:hover {
@@ -58,14 +57,19 @@
         }
     }
 
+    .grants {
+        align-items: start;
+        flex-direction: column;
 
-    .grants-dropdown {
-        margin-left: auto;
-        width: 70%;
+        .grants-dropdown {
+            margin-left: auto;
+            width: 100%;
+        }
     }
 
-
     .owned {
+        margin-bottom: 3rem;
+
         svg {
             margin-right: 1rem;
         }
@@ -73,6 +77,27 @@
         .balance {
             margin-left: auto;
             margin-bottom: 0;
+        }
+    }
+}
+
+@media screen and (min-width: 650px) {
+    .tokens-context-switcher-wrapper {
+        flex-direction: row;
+        
+        .owned, .grants {
+            flex: 1;
+            margin-bottom: 3rem;
+        }
+
+        .grants {
+            align-items: center;
+            flex-direction: row;
+    
+            .grants-dropdown {
+                margin-left: 5%;
+                width: 65%;
+            }
         }
     }
 }
