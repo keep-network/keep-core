@@ -76,12 +76,34 @@ func Initialize(
 	node.ResumeSigningIfEligible(relayChain, signing)
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		previousEntry := hex.EncodeToString(request.PreviousEntry[:])
+		currentEntryStartBlock, err := relayChain.CurrentRequestStartBlock()
+		if err != nil {
+			logger.Warningf("could not check current request start block")
+			return
+		}
+
+		// Ignore if the block number of the received request isn't equal to
+		// the current entry start block from the chain. Most likely, there
+		// are some problems with chain synchronization and multiple events
+		// arrived at the same time but only the last should be handled.
+		if request.BlockNumber != currentEntryStartBlock.Uint64() {
+			logger.Warningf(
+				"ignoring relay entry request with block number [%v]; "+
+					"current entry start block stored on-chain is [%v]",
+				request.BlockNumber,
+				currentEntryStartBlock.Uint64(),
+			)
+			return
+		}
+
 		if node.IsInGroup(request.GroupPublicKey) {
 			go func() {
+				previousEntry := hex.EncodeToString(request.PreviousEntry[:])
+
 				if ok := pendingRelayRequests.Add(previousEntry); !ok {
 					logger.Errorf(
-						"relay entry requested event with previous entry [0x%x] has been registered already",
+						"relay entry requested event with previous entry "+
+							"[0x%x] has been registered already",
 						request.PreviousEntry,
 					)
 					return
@@ -90,12 +112,13 @@ func Initialize(
 				defer pendingRelayRequests.Remove(previousEntry)
 
 				logger.Infof(
-					"new relay entry requested at block [%v] from group [0x%x] using "+
-						"previous entry [0x%x]",
+					"new relay entry requested at block [%v] from group "+
+						"[0x%x] using previous entry [0x%x]",
 					request.BlockNumber,
 					request.GroupPublicKey,
 					request.PreviousEntry,
 				)
+
 				node.GenerateRelayEntry(
 					request.PreviousEntry,
 					relayChain,
