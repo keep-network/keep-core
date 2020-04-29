@@ -10,23 +10,23 @@ library DelayFactor {
      * @return Integer representing floating-point number with 16 decimals places.
      */
     function calculate(
-        uint256 currentEntryStartBlock,
+        uint256 currentRequestStartBlock,
         uint256 relayEntryTimeout
     ) public view returns(uint256 delayFactor) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         // T_deadline is the earliest block when no submissions are accepted
         // and an entry timed out. The last block the entry can be published in is
-        //     currentEntryStartBlock + relayEntryTimeout
+        //     currentRequestStartBlock + relayEntryTimeout
         // and submission are no longer accepted from block
-        //     currentEntryStartBlock + relayEntryTimeout + 1.
-        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).add(1);
+        //     currentRequestStartBlock + relayEntryTimeout + 1.
+        uint256 deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout).add(1);
 
         // T_begin is the earliest block the result can be published in.
         // Relay entry can be generated instantly after relay request is
         // registered on-chain so a new entry can be published at the next
         // block the earliest.
-        uint256 submissionStartBlock = currentEntryStartBlock.add(1);
+        uint256 submissionStartBlock = currentRequestStartBlock.add(1);
 
         // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
         uint256 entryReceivedBlock = block.number <= submissionStartBlock ? submissionStartBlock:block.number;

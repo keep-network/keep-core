@@ -182,7 +182,7 @@ func (n *Node) ResumeSigningIfEligible(
 			)
 			return
 		}
-		entryStartBlock, err := relayChain.CurrentRequestEntryStartBlock()
+		entryStartBlock, err := relayChain.CurrentRequestStartBlock()
 		if err != nil {
 			logger.Errorf(
 				"failed to get a current relay request entry start block: [%v]",

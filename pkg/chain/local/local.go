@@ -474,7 +474,7 @@ func (c *localChain) IsEntryInProgress() (bool, error) {
 	panic("not implemented")
 }
 
-func (c *localChain) CurrentRequestEntryStartBlock() (*big.Int, error) {
+func (c *localChain) CurrentRequestStartBlock() (*big.Int, error) {
 	panic("not implemented")
 }
 

@@ -119,7 +119,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     // current relay request data
     uint256 internal currentRequestId;
-    uint256 public currentEntryStartBlock;
+    uint256 public currentRequestStartBlock;
     uint256 public currentRequestGroupIndex;
     bytes public currentRequestPreviousEntry;
     uint256 internal  currentRequestEntryVerificationAndProfitFee;
@@ -421,7 +421,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
 
         currentRequestId = requestId;
-        currentEntryStartBlock = block.number;
+        currentRequestStartBlock = block.number;
         currentRequestEntryVerificationAndProfitFee = entryVerificationAndProfitFee;
         currentRequestCallbackFee = callbackFee;
         currentRequestGroupIndex = groupIndex;
@@ -478,7 +478,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             currentRequestServiceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
         }
 
-        currentEntryStartBlock = 0;
+        currentRequestStartBlock = 0;
     }
 
     /**
@@ -521,7 +521,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
         uint256 delayFactor = DelayFactor.calculate(
-            currentEntryStartBlock,
+            currentRequestStartBlock,
             relayEntryTimeout
         );
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
@@ -547,7 +547,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * progress.
      */
     function isEntryInProgress() public view returns (bool) {
-        return currentEntryStartBlock != 0;
+        return currentRequestStartBlock != 0;
     }
 
     /**
@@ -556,7 +556,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      * to be produced, see `relayEntryTimeout` value.
      */
     function hasEntryTimedOut() internal view returns (bool) {
-        return currentEntryStartBlock != 0 && block.number > currentEntryStartBlock + relayEntryTimeout;
+        return currentRequestStartBlock != 0 && block.number > currentRequestStartBlock + relayEntryTimeout;
     }
 
     /**

@@ -42,8 +42,8 @@ type RelayEntryInterface interface {
 	ReportRelayEntryTimeout() error
 	// IsEntryInProgress checks if a new relay entry is currently in progress.
 	IsEntryInProgress() (bool, error)
-	// CurrentRequestEntryStartBlock returns a start block of a current entry.
-	CurrentRequestEntryStartBlock() (*big.Int, error)
+	// CurrentRequestStartBlock returns a start block of a current entry.
+	CurrentRequestStartBlock() (*big.Int, error)
 	// CurrentRequestPreviousEntry returns previous entry of a current request.
 	CurrentRequestPreviousEntry() ([]byte, error)
 	// CurrentRequestGroupPublicKey returns group public key for the current request.

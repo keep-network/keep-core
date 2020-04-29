@@ -409,8 +409,8 @@ func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
 }
 
-func (ec *ethereumChain) CurrentRequestEntryStartBlock() (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.CurrentEntryStartBlock()
+func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestStartBlock()
 }
 
 func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
