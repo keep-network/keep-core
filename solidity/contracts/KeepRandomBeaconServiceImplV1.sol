@@ -382,6 +382,11 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
      * @param callbackGas Gas required for the callback.
      */
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
+        require(
+            callbackGas <= 2000000,
+            "Callback gas exceeds 2000000 gas limit"
+        );
+
         (
             uint256 entryVerificationFee,
             uint256 dkgContributionFee,
