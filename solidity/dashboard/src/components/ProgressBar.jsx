@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
-import { displayAmount } from '../utils/general.utils'
-import BigNumber from 'bignumber.js'
+import React, { useMemo } from "react"
+import { displayAmount } from "../utils/general.utils"
+import BigNumber from "bignumber.js"
 
 const defaultValue = 0
 const totalDefaultValue = 1
@@ -17,14 +17,15 @@ const ProgressBar = ({ total, items, height, withLegend }) => {
     return items
       .map((item) => ({ ...item, width: calculateWidth(item.value, total) }))
       .sort((a, b) => b.width - a.width)
-      .map((item, index) =>
+      .map((item, index) => (
         <ProgressBarItem
           key={index}
           {...item}
           index={index}
           wrapperHeight={height}
-        />)
-  }, [total, items])
+        />
+      ))
+  }, [total, items, height])
 
   return (
     <React.Fragment>
@@ -36,13 +37,16 @@ const ProgressBar = ({ total, items, height, withLegend }) => {
   )
 }
 
-export const renderProgressBarLegendItem = (item, index) => <ProgressBarLegendItem key={index} {...item} />
+export const renderProgressBarLegendItem = (item, index) => (
+  <ProgressBarLegendItem key={index} {...item} />
+)
 
 export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
   return (
     <div className="flex row center">
-      <div className="dot" style={{ backgroundColor: color }}/>
-      <span className="text-small">{displayAmount(value)}&nbsp;KEEP&nbsp;</span><span className="text-smaller text-grey-40">{label}</span>
+      <div className="dot" style={{ backgroundColor: color }} />
+      <span className="text-small">{displayAmount(value)}&nbsp;KEEP&nbsp;</span>
+      <span className="text-smaller text-grey-40">{label}</span>
     </div>
   )
 })
@@ -54,13 +58,13 @@ const ProgressBarItem = React.memo(({ width, color, wrapperHeight, index }) => (
       width: `${width}%`,
       zIndex: index + 1,
       backgroundColor: color,
-      height: `${index === 0 ? wrapperHeight : wrapperHeight - index - 1 }px`,
+      height: `${index === 0 ? wrapperHeight : wrapperHeight - index - 1}px`,
     }}
   />
 ))
 
 ProgressBar.defaultProps = {
-  height: '10',
+  height: "10",
 }
 
 export default React.memo(ProgressBar)

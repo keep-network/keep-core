@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import Modal from '../components/Modal'
+import React, { useState } from "react"
+import Modal from "../components/Modal"
 
 export const useModal = () => {
   const [isVisible, setIsVisible] = useState(false)
@@ -8,7 +8,7 @@ export const useModal = () => {
   const hideModal = () => setIsVisible(false)
 
   const ModalComponent = (props) =>
-    isVisible && <Modal closeModal={hideModal} {...props}/>
+    isVisible && <Modal closeModal={hideModal} {...props} />
 
   return { showModal, hideModal, ModalComponent }
 }
