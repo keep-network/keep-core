@@ -30,7 +30,7 @@ the beacon begins the relay entry generation.
 
 The current block is recorded as the start block of the entry generation:
 
-`currentEntryStartBlock = block.number`
+`currentRequestStartBlock = block.number`
 
 The previous entry is hashed to produce the signing group selection seed.
 
@@ -101,7 +101,7 @@ If the submitted entry is invalid, it is rejected.
 == Entry timeout
 
 If a valid output is not submitted before block
-`timeoutBlock = currentEntryStartBlock + relayEntryTimeout + 1`,
+`timeoutBlock = currentRequestStartBlock + relayEntryTimeout + 1`,
 the entry generation for the selected group times out.
 From `timeoutBlock` onwards,
 no submissions by _Group~i~_ are accepted,

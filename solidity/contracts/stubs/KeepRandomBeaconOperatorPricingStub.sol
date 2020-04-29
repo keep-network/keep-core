@@ -53,7 +53,7 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
 
     function delayFactor() public view returns(uint256) {
         return DelayFactor.calculate(
-            currentEntryStartBlock,
+            currentRequestStartBlock,
             relayEntryTimeout
         );
     }
