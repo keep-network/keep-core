@@ -136,11 +136,6 @@ func SignAndSubmit(
 		}
 	}
 
-	// If we jumped outside the message loop, we have enough valid shares
-	// and we can complete the signature. There is no need to continue
-	// signature shares exchange and the context can be cancelled.
-	cancelCtx()
-
 	signature, err := completeSignature(signer, receivedValidShares, honestThreshold)
 	if err != nil {
 		return err
