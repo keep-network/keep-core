@@ -200,7 +200,7 @@ func (n *Node) ResumeSigningIfEligible(
 		}
 
 		logger.Infof(
-			"atempting to rejoin the current signing processs [0x%x]",
+			"attempting to rejoin the current signing process [0x%x]",
 			groupPublicKey,
 		)
 		n.GenerateRelayEntry(
