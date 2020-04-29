@@ -41,6 +41,8 @@ const TokensPage = () => {
   } = useTokensPageContext()
 
   const handleSubmit = async (values, onTransactionHashCallback) => {
+    values.context = tokensContext
+    values.selectedGrant = { ...selectedGrant }
     try {
       await tokensPageService.delegateStake(web3Context, values, onTransactionHashCallback)
       showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Staking delegate transaction has been successfully completed' })

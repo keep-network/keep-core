@@ -59,7 +59,7 @@ const DelegateStakeForm = ({ onSubmit, minStake, availableToStake, ...formikProp
         onSubmitAction={onSubmitBtn}
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
-        disabled={true}
+        disabled={!(formikProps.isValid && formikProps.dirty)}
       > 
         delegate stake
       </SubmitButton>
