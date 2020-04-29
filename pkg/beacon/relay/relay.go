@@ -139,7 +139,7 @@ func (n *Node) GenerateRelayEntry(
 
 	for _, member := range memberships {
 		go func(member *registry.Membership) {
-			signatureErr := entry.SignAndSubmit(
+			err = entry.SignAndSubmit(
 				n.blockCounter,
 				channel,
 				relayChain,
@@ -148,35 +148,10 @@ func (n *Node) GenerateRelayEntry(
 				member.Signer,
 				startBlockHeight,
 			)
-			if signatureErr != nil {
-				isEntryInProgress, err := relayChain.IsEntryInProgress()
-				if err != nil {
-					logger.Errorf(
-						"[member:%v] could not check entry status: [%v]; "+
-							"check was triggered because of threshold "+
-							"signature error: [%v]",
-						member.Signer.MemberID(),
-						err,
-						signatureErr,
-					)
-					return
-				}
-
-				// Check if we failed because someone else submitted in the
-				// meantime or because something wrong happened with
-				// our transaction.
-				if !isEntryInProgress {
-					logger.Infof(
-						"[member:%v] threshold signature already submitted",
-						member.Signer.MemberID(),
-					)
-					return
-				}
-
+			if err != nil {
 				logger.Errorf(
-					"[member:%v] could not create threshold signature: [%v]",
-					member.Signer.MemberID(),
-					signatureErr,
+					"error creating threshold signature: [%v]",
+					err,
 				)
 				return
 			}
