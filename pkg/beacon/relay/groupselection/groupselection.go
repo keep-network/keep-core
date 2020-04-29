@@ -23,11 +23,11 @@ var logger = log.Logger("keep-groupselection")
 // protocol.
 const (
 	// The number of blocks one round takes.
-	roundDuration = uint64(3)
+	roundDuration = uint64(6)
 
 	// The delay in blocks after all rounds complete to ensure all transactions
 	// are mined
-	miningLag = uint64(6)
+	miningLag = uint64(12)
 )
 
 // Result represents the result of group selection protocol. It contains the
@@ -43,7 +43,7 @@ type Result struct {
 //
 // To minimize the submitter's cost by minimizing the number of redundant
 // tickets that are not selected into the group, tickets are submitted in
-// N rounds, each round taking 3 blocks.
+// N rounds, each round taking 6 blocks.
 // As the basic principle, the number of leading zeros in the ticket
 // value is subtracted from the number of rounds to determine the round
 // the ticket should be submitted in:
@@ -57,7 +57,7 @@ type Result struct {
 // the candidate not yet submitted to determine if continuing with
 // ticket submission still makes sense.
 //
-// After the last round, there is a 6 blocks mining lag allowing all
+// After the last round, there is a 12 blocks mining lag allowing all
 // outstanding ticket submissions to have a higher chance of being
 // mined before the deadline.
 func CandidateToNewGroup(

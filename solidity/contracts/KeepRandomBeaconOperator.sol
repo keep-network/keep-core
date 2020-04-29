@@ -78,7 +78,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /// @dev Time in blocks after which the next group member is eligible
     /// to submit the result.
-    uint256 public resultPublicationBlockStep = 3;
+    uint256 public resultPublicationBlockStep = 6;
 
     /// @dev Timeout in blocks for a relay entry to appear on the chain. Blocks
     /// are counted from the moment relay request occur.
@@ -171,7 +171,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // that are not selected into the group, the following approach is
         // recommended:
         //
-        // Tickets are submitted in 11 rounds, each round taking 3 blocks.
+        // Tickets are submitted in 11 rounds, each round taking 6 blocks.
         // As the basic principle, the number of leading zeros in the ticket
         // value is subtracted from the number of rounds to determine the round
         // the ticket should be submitted in:
@@ -185,10 +185,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // the candidate not yet submitted to determine if continuing with
         // ticket submission still makes sense.
         //
-        // After 33 blocks, there is a 6 blocks mining lag allowing all
+        // After 66 blocks, there is a 12 blocks mining lag allowing all
         // outstanding ticket submissions to have a higher chance of being
         // mined before the deadline.
-        groupSelection.ticketSubmissionTimeout = 3 * 11 + 6;
+        groupSelection.ticketSubmissionTimeout = 6 * 11 + 12;
 
         groupSelection.groupSize = groupSize;
 

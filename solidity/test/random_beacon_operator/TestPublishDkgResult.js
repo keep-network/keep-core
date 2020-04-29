@@ -15,7 +15,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
   const groupSize = 20;
   const groupThreshold = 11;
   const dkgResultSignatureThreshold = 15;
-  const resultPublicationBlockStep = 3;
+  const resultPublicationBlockStep = 6;
 
   let resultPublicationTime, token, stakingContract, operatorContract,
     owner = accounts[0], beneficiary = accounts[4], ticket,
@@ -46,7 +46,6 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     await operatorContract.setGroupSize(groupSize);
     await operatorContract.setGroupThreshold(groupThreshold);
     await operatorContract.setDKGResultSignatureThreshold(dkgResultSignatureThreshold);
-    await operatorContract.setResultPublicationBlockStep(resultPublicationBlockStep);
 
     const operator1StakingWeight = 100;
     const operator2StakingWeight = 200;
