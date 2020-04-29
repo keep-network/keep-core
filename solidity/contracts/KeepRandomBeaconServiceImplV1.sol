@@ -221,7 +221,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
      * once a new relay entry has been generated. Callback contract must
      * declare public `__beaconCallback(uint256)` function that is going to be
      * executed with the result, once ready.
-     * @param callbackGas Gas required for the callback.
+     * @param callbackGas Gas required for the callback (6 million gas max).
      * The customer needs to ensure they provide a sufficient callback gas
      * to cover the gas fee of executing the callback. Any surplus is returned
      * to the customer. If the callback gas amount turns to be not enough to
@@ -232,6 +232,11 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         address callbackContract,
         uint256 callbackGas
     ) public nonReentrant payable returns (uint256) {
+        require(
+            callbackGas <= 6000000,
+            "Callback gas exceeds 6000000 gas limit"
+        );
+
         require(
             msg.value >= entryFeeEstimate(callbackGas),
             "Payment is less than required minimum."
