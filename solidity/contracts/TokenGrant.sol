@@ -10,14 +10,13 @@ import "./TokenStaking.sol";
 import "./TokenGrantStake.sol";
 import "./GrantStakingPolicy.sol";
 
-/**
- * @title TokenGrant
- * @dev A token grant contract for a specified standard ERC20Burnable token.
- * Has additional functionality to stake delegate/undelegate token grants.
- * Tokens are granted to the grantee via unlocking scheme and can be
- * withdrawn gradually based on the unlocking schedule cliff and unlocking duration.
- * Optionally grant can be revoked by the token grant manager.
- */
+
+/// @title TokenGrant
+/// @notice A token grant contract for a specified standard ERC20Burnable token.
+/// Has additional functionality to stake delegate/undelegate token grants.
+/// Tokens are granted to the grantee via unlocking scheme and can be
+/// withdrawn gradually based on the unlocking schedule cliff and unlocking duration.
+/// Optionally grant can be revoked by the token grant manager.
 contract TokenGrant {
     using SafeMath for uint256;
     using UnlockingSchedule for uint256;
@@ -30,6 +29,8 @@ contract TokenGrant {
     event TokenGrantStaked(uint256 indexed grantId, uint256 amount, address operator);
     event TokenGrantRevoked(uint256 id);
 
+    event StakingContractAuthorized(address indexed grantManager, address stakingContract);
+
     struct Grant {
         address grantManager; // Token grant manager.
         address grantee; // Address to which granted tokens are going to be withdrawn.
@@ -39,8 +40,8 @@ contract TokenGrant {
         bool revocable; // Whether grant manager can revoke the grant.
         uint256 amount; // Amount of tokens to be granted.
         uint256 duration; // Duration in seconds of the period in which the granted tokens will unlock.
-        uint256 start; // Timestamp at which unlocking will start.
-        uint256 cliff; // Duration in seconds of the cliff after which tokens will begin to unlock.
+        uint256 start; // Timestamp at which the linear unlocking schedule will start.
+        uint256 cliff; // Timestamp before which no tokens will be unlocked.
         uint256 withdrawn; // Amount that was withdrawn to the grantee.
         uint256 staked; // Amount that was staked by the grantee.
         GrantStakingPolicy stakingPolicy;
@@ -72,41 +73,34 @@ contract TokenGrant {
     // Mapping of operator addresses per particular grantee address.
     mapping(address => address[]) public granteesToOperators;
 
-    /**
-     * @dev Creates a token grant contract for a provided Standard ERC20Burnable token.
-     * @param _tokenAddress address of a token that will be linked to this contract.
-     */
+    /// @notice Creates a token grant contract for a provided Standard ERC20Burnable token.
+    /// @param _tokenAddress address of a token that will be linked to this contract.
     constructor(address _tokenAddress) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
     }
 
-    /**
-     * @dev Used by grant manager to authorize staking contract with the given
-     * address.
-     */
+    /// @notice Used by grant manager to authorize staking contract with the given
+    /// address.
     function authorizeStakingContract(address _stakingContract) public {
         require(
             _stakingContract != address(0x0),
             "Staking contract address can't be zero"
         );
         stakingContracts[msg.sender][_stakingContract] = true;
+        emit StakingContractAuthorized(msg.sender, _stakingContract);
     }
 
-    /**
-     * @dev Gets the amount of granted tokens to the specified address.
-     * @param _owner The address to query the grants balance of.
-     * @return An uint256 representing the grants balance owned by the passed address.
-     */
+    /// @notice Gets the amount of granted tokens to the specified address.
+    /// @param _owner The address to query the grants balance of.
+    /// @return An uint256 representing the grants balance owned by the passed address.
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 
-    /**
-     * @dev Gets the stake balance of the specified address.
-     * @param _address The address to query the balance of.
-     * @return An uint256 representing the amount staked by the passed address.
-     */
+    /// @notice Gets the stake balance of the specified address.
+    /// @param _address The address to query the balance of.
+    /// @return An uint256 representing the amount staked by the passed address.
     function stakeBalanceOf(address _address) public view returns (uint256 balance) {
         for (uint i = 0; i < grantIndices[_address].length; i++) {
             uint256 id = grantIndices[_address][i];
@@ -115,20 +109,18 @@ contract TokenGrant {
         return balance;
     }
 
-    /**
-     * @dev Gets grant by ID. Returns only basic grant data.
-     * If you need unlocking schedule for the grant you must call `getGrantUnlockingSchedule()`
-     * This is to avoid Ethereum `Stack too deep` issue described here:
-     * https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
-     * @param _id ID of the token grant.
-     * @return amount The amount of tokens the grant provides.
-     * @return withdrawn The amount of tokens that have already been withdrawn
-     *                   from the grant.
-     * @return staked The amount of tokens that have been staked from the grant.
-     * @return revoked A boolean indicating whether the grant has been revoked,
-     *                 which is to say that it is no longer unlocking.
-     * @return grantee The grantee of grant.
-     */
+    /// @notice Gets grant by ID. Returns only basic grant data.
+    /// If you need unlocking schedule for the grant you must call `getGrantUnlockingSchedule()`
+    /// This is to avoid Ethereum `Stack too deep` issue described here:
+    /// https://forum.ethereum.org/discussion/2400/error-stack-too-deep-try-removing-local-variables
+    /// @param _id ID of the token grant.
+    /// @return amount The amount of tokens the grant provides.
+    /// @return withdrawn The amount of tokens that have already been withdrawn
+    ///                   from the grant.
+    /// @return staked The amount of tokens that have been staked from the grant.
+    /// @return revoked A boolean indicating whether the grant has been revoked,
+    ///                 which is to say that it is no longer unlocking.
+    /// @return grantee The grantee of grant.
     function getGrant(uint256 _id) public view returns (
         uint256 amount,
         uint256 withdrawn,
@@ -147,19 +139,17 @@ contract TokenGrant {
         );
     }
 
-    /**
-     * @dev Gets grant unlocking schedule by grant ID.
-     * @param _id ID of the token grant.
-     * @return grantManager The address designated as the manager of the grant,
-     *                      which is the only address that can revoke this grant.
-     * @return duration The duration, in seconds, during which the tokens will
-     *                  unlocking linearly.
-     * @return start The start time, as a timestamp comparing to `now`.
-     * @return cliff The duration, in seconds, before which none of the tokens
-     *                in the token will be unlocked, and after which a linear
-     *                amount based on the age of the grant will be unlocked.
-     * @return policy The address of the grant's staking policy.
-     */
+    /// @notice Gets grant unlocking schedule by grant ID.
+    /// @param _id ID of the token grant.
+    /// @return grantManager The address designated as the manager of the grant,
+    ///                      which is the only address that can revoke this grant.
+    /// @return duration The duration, in seconds, during which the tokens will
+    ///                  unlocking linearly.
+    /// @return start The start time, as a timestamp comparing to `now`.
+    /// @return cliff The timestamp, before which none of the tokens in the grant
+    ///               will be unlocked, and after which a linear amount based on
+    ///               the time elapsed since the start will be unlocked.
+    /// @return policy The address of the grant's staking policy.
     function getGrantUnlockingSchedule(
         uint256 _id
     ) public view returns (
@@ -178,52 +168,45 @@ contract TokenGrant {
         );
     }
 
-    /**
-     * @dev Gets grant ids of the specified address.
-     * @param _granteeOrGrantManager The address to query.
-     * @return An uint256 array of grant IDs.
-     */
+    /// @notice Gets grant ids of the specified address.
+    /// @param _granteeOrGrantManager The address to query.
+    /// @return An uint256 array of grant IDs.
     function getGrants(address _granteeOrGrantManager) public view returns (uint256[] memory) {
         return grantIndices[_granteeOrGrantManager];
     }
 
-    /**
-     * @dev Gets operator addresses of the specified grantee address.
-     * @param grantee The grantee address.
-     * @return An array of all operators for a given grantee.
-     */
+    /// @notice Gets operator addresses of the specified grantee address.
+    /// @param grantee The grantee address.
+    /// @return An array of all operators for a given grantee.
     function getGranteeOperators(address grantee) public view returns (address[] memory) {
         return granteesToOperators[grantee];
     }
 
-    /**
-     * @dev Gets grant stake details of the given operator.
-     * @param operator The operator address.
-     * @return grantId ID of the token grant.
-     * @return amount The amount of tokens the given operator delegated.
-     * @return stakingContract The address of staking contract.
-     */
+    /// @notice Gets grant stake details of the given operator.
+    /// @param operator The operator address.
+    /// @return grantId ID of the token grant.
+    /// @return amount The amount of tokens the given operator delegated.
+    /// @return stakingContract The address of staking contract.
     function getGrantStakeDetails(address operator) public view returns (uint256 grantId, uint256 amount, address stakingContract) {
         return grantStakes[operator].getDetails();
     }
 
 
-    /**
-     * @notice Receives approval of token transfer and creates a token grant with a unlocking
-     * schedule where balance withdrawn to the grantee gradually in a linear fashion until
-     * start + duration. By then all of the balance will have unlocked.
-     * @param _from The owner of the tokens who approved them to transfer.
-     * @param _amount Approved amount for the transfer to create token grant.
-     * @param _token Token contract address.
-     * @param _extraData This byte array must have the following values ABI encoded:
-     * grantManager (address) Address of the grant manager.
-     * grantee (address) Address of the grantee.
-     * duration (uint256) Duration in seconds of the unlocking period.
-     * start (uint256) Timestamp at which unlocking will start.
-     * cliff (uint256) Duration in seconds of the cliff after which tokens will begin to unlock.
-     * revocable (bool) Whether the token grant is revocable or not (1 or 0).
-     * stakingPolicy (address) Address of the staking policy for the grant.
-     */
+    /// @notice Receives approval of token transfer and creates a token grant with a unlocking
+    /// schedule where balance withdrawn to the grantee gradually in a linear fashion until
+    /// start + duration. By then all of the balance will have unlocked.
+    /// @param _from The owner of the tokens who approved them to transfer.
+    /// @param _amount Approved amount for the transfer to create token grant.
+    /// @param _token Token contract address.
+    /// @param _extraData This byte array must have the following values ABI encoded:
+    /// grantManager (address) Address of the grant manager.
+    /// grantee (address) Address of the grantee.
+    /// duration (uint256) Duration in seconds of the unlocking period.
+    /// start (uint256) Timestamp at which unlocking will start.
+    /// cliffDuration (uint256) Duration in seconds of the cliff;
+    ///               no tokens will be unlocked until the time `start + cliff`.
+    /// revocable (bool) Whether the token grant is revocable or not (1 or 0).
+    /// stakingPolicy (address) Address of the staking policy for the grant.
     function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
         require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
@@ -231,7 +214,7 @@ contract TokenGrant {
          address _grantee,
          uint256 _duration,
          uint256 _start,
-         uint256 _cliff,
+         uint256 _cliffDuration,
          bool _revocable,
          address _stakingPolicy) = abi.decode(
              _extraData,
@@ -239,7 +222,10 @@ contract TokenGrant {
         );
 
         require(_grantee != address(0), "Grantee address can't be zero.");
-        require(_cliff <= _duration, "Unlocking cliff duration must be less or equal total unlocking duration.");
+        require(
+            _cliffDuration <= _duration,
+            "Unlocking cliff duration must be less or equal total unlocking duration."
+        );
 
         require(_stakingPolicy != address(0), "Staking policy can't be zero.");
 
@@ -252,7 +238,7 @@ contract TokenGrant {
             _amount,
             _duration,
             _start,
-            _start.add(_cliff),
+            _start.add(_cliffDuration),
             0, 0,
             GrantStakingPolicy(_stakingPolicy)
         );
@@ -270,11 +256,9 @@ contract TokenGrant {
         emit TokenGrantCreated(id);
     }
 
-    /**
-     * @notice Withdraws Token grant amount to grantee.
-     * @dev Transfers unlocked tokens of the token grant to grantee.
-     * @param _id Grant ID.
-     */
+    /// @notice Withdraws Token grant amount to grantee.
+    /// @dev Transfers unlocked tokens of the token grant to grantee.
+    /// @param _id Grant ID.
     function withdraw(uint256 _id) public {
         uint256 amount = withdrawable(_id);
         require(amount > 0, "Grant available to withdraw amount should be greater than zero.");
@@ -291,13 +275,11 @@ contract TokenGrant {
         emit TokenGrantWithdrawn(_id, amount);
     }
 
-    /**
-     * @notice Calculates and returns unlocked grant amount.
-     * @dev Calculates token grant amount that has already unlocked,
-     * including any tokens that have already been withdrawn by the grantee as well
-     * as any tokens that are available to withdraw but have not yet been withdrawn.
-     * @param _id Grant ID.
-     */
+    /// @notice Calculates and returns unlocked grant amount.
+    /// @dev Calculates token grant amount that has already unlocked,
+    /// including any tokens that have already been withdrawn by the grantee as well
+    /// as any tokens that are available to withdraw but have not yet been withdrawn.
+    /// @param _id Grant ID.
     function unlockedAmount(uint256 _id) public view returns (uint256) {
         Grant storage grant = grants[_id];
         return (grant.revokedAt != 0)
@@ -312,11 +294,9 @@ contract TokenGrant {
             );
     }
 
-    /**
-     * @notice Calculates withdrawable granted amount.
-     * @dev Calculates the amount that has already unlocked but hasn't been withdrawn yet.
-     * @param _id Grant ID.
-     */
+    /// @notice Calculates withdrawable granted amount.
+    /// @dev Calculates the amount that has already unlocked but hasn't been withdrawn yet.
+    /// @param _id Grant ID.
     function withdrawable(uint256 _id) public view returns (uint256) {
         uint256 unlocked = unlockedAmount(_id);
         uint256 withdrawn = grants[_id].withdrawn;
@@ -329,13 +309,11 @@ contract TokenGrant {
         }
     }
 
-    /**
-     * @notice Allows the grant manager to revoke the grant.
-     * @dev Granted tokens that are already unlocked (releasable amount)
-     * remain in the grant so grantee can still withdraw them
-     * the rest are revoked and withdrawable by token grant manager.
-     * @param _id Grant ID.
-     */
+    /// @notice Allows the grant manager to revoke the grant.
+    /// @dev Granted tokens that are already unlocked (releasable amount)
+    /// remain in the grant so grantee can still withdraw them
+    /// the rest are revoked and withdrawable by token grant manager.
+    /// @param _id Grant ID.
     function revoke(uint256 _id) public {
         require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
         require(grants[_id].revocable, "Grant must be revocable in the first place.");
@@ -385,16 +363,17 @@ contract TokenGrant {
         grant.revokedWithdrawn += amountToWithdraw;
     }
 
-    /**
-     * @notice Stake token grant.
-     * @dev Stakable token grant amount is determined
-     * by the grant's staking policy.
-     * @param _id Grant Id.
-     * @param _stakingContract Address of the staking contract.
-     * @param _amount Amount to stake.
-     * @param _extraData Data for stake delegation. This byte array must have the following values concatenated:
-     * Magpie address (20 bytes) where the rewards for participation are sent and operator's (20 bytes) address.
-     */
+    /// @notice Stake token grant.
+    /// @dev Stakable token grant amount is determined
+    /// by the grant's staking policy.
+    /// @param _id Grant Id.
+    /// @param _stakingContract Address of the staking contract.
+    /// @param _amount Amount to stake.
+    /// @param _extraData Data for stake delegation. This byte array must have
+    /// the following values concatenated:
+    /// - Beneficiary address (20 bytes)
+    /// - Operator address (20 bytes)
+    /// - Authorizer address (20 bytes)
     function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
         require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(grants[_id].revokedAt == 0, "Revoked grant can not be staked");
@@ -403,7 +382,7 @@ contract TokenGrant {
             "Provided staking contract is not authorized."
         );
 
-        // Expecting 40 bytes _extraData for stake delegation.
+        // Expecting 60 bytes _extraData for stake delegation.
         require(_extraData.length == 60, "Stake delegation data must be provided.");
         address operator = _extraData.toAddress(20);
 
@@ -423,19 +402,17 @@ contract TokenGrant {
         token.transfer(address(grantStake), _amount);
 
         // Staking contract expects 40 bytes _extraData for stake delegation.
-        // 20 bytes magpie's address + 20 bytes operator's address.
+        // 20 bytes beneficiary's address + 20 bytes operator's address.
         grantStake.stake(_amount, _extraData);
         emit TokenGrantStaked(_id, _amount, operator);
     }
 
-    /**
-      @notice Returns the amount of tokens available for staking from the grant.
-      The stakeable amount is determined by the staking policy of the grant.
-      If the grantee has withdrawn some tokens
-      or the policy returns an erroneously high value,
-      the stakeable amount is limited to the number of tokens remaining.
-      @param _grantId Identifier of the grant
-     */
+    ///  @notice Returns the amount of tokens available for staking from the grant.
+    /// The stakeable amount is determined by the staking policy of the grant.
+    /// If the grantee has withdrawn some tokens
+    /// or the policy returns an erroneously high value,
+    /// the stakeable amount is limited to the number of tokens remaining.
+    /// @param _grantId Identifier of the grant
     function availableToStake(uint256 _grantId) public view returns (uint256) {
         Grant storage grant = grants[_grantId];
         // Revoked grants cannot be staked.
@@ -461,12 +438,10 @@ contract TokenGrant {
         return stakeable.sub(grant.staked);
     }
 
-    /**
-     * @notice Cancels delegation within the operator initialization period
-     * without being subjected to the stake lockup for the undelegation period.
-     * This can be used to undo mistaken delegation to the wrong operator address.
-     * @param _operator Address of the stake operator.
-     */
+    /// @notice Cancels delegation within the operator initialization period
+    /// without being subjected to the stake lockup for the undelegation period.
+    /// This can be used to undo mistaken delegation to the wrong operator address.
+    /// @param _operator Address of the stake operator.
     function cancelStake(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 grantId = grantStake.getGrantId();
@@ -479,10 +454,8 @@ contract TokenGrant {
         grants[grantId].staked = grants[grantId].staked.sub(returned);
     }
 
-    /**
-     * @notice Undelegate the token grant.
-     * @param _operator Operator of the stake.
-     */
+    /// @notice Undelegate the token grant.
+    /// @param _operator Operator of the stake.
     function undelegate(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 grantId = grantStake.getGrantId();
@@ -518,9 +491,9 @@ contract TokenGrant {
 
     /// @notice Force undelegation of a revoked grant's stake.
     /// @dev Can be called by the grant manager once the grant is revoked.
-    /// Has to be done this way,
-    /// instead of undelegating all operators when the grant is revoked,
-    /// because the latter method is vulnerable to DoS via out-of-gas.
+    /// Has to be done this way, instead of undelegating all operators when the
+    /// grant is revoked, because the latter method is vulnerable to DoS via
+    /// out-of-gas.
     function undelegateRevoked(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 grantId = grantStake.getGrantId();
@@ -536,12 +509,10 @@ contract TokenGrant {
         grantStake.undelegate();
     }
 
-    /**
-     * @notice Recover stake of the token grant.
-     * Recovers the tokens correctly
-     * even if they were earlier recovered directly in the staking contract.
-     * @param _operator Operator of the stake.
-     */
+    /// @notice Recover stake of the token grant.
+    /// Recovers the tokens correctly
+    /// even if they were earlier recovered directly in the staking contract.
+    /// @param _operator Operator of the stake.
     function recoverStake(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 returned = grantStake.recoverStake();

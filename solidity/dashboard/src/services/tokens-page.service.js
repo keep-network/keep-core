@@ -126,7 +126,7 @@ const getDelegations = async (
     const beneficiary = await contractService.makeCall(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
-      "magpieOf",
+      "beneficiaryOf",
       operatorAddress
     )
     const authorizerAddress = await contractService.makeCall(

@@ -27,7 +27,7 @@ describe('KeepRandomBeaconService/Upgrade', function() {
     implementationV2 = await ServiceContractImplV2.new({from: admin})
     
     initializeCallData = implementationV1.contract.methods.initialize(
-      100, 200, '0x0000000000000000000000000000000000000001'
+      100, '0x0000000000000000000000000000000000000001'
     ).encodeABI()
 
     proxy = await ServiceContractProxy.new(
@@ -305,7 +305,7 @@ describe('KeepRandomBeaconService/Upgrade', function() {
 
     it("reverts when initialization fails", async () => {
       const failingData = implementationV1.contract.methods.initialize(
-        100, 200, constants.ZERO_ADDRESS
+        100, constants.ZERO_ADDRESS
       ).encodeABI()
 
       await proxy.upgradeTo(

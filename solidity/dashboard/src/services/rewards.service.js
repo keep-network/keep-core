@@ -35,7 +35,7 @@ const fetchAvailableRewards = async (web3Context) => {
       groupMemberIndices[groupPublicKey] = {}
       for (const memberAddress of groupMembers) {
         const beneficiaryAddressForMember = await stakingContract.methods
-          .magpieOf(memberAddress)
+          .beneficiaryOf(memberAddress)
           .call()
         if (!isSameEthAddress(yourAddress, beneficiaryAddressForMember)) {
           continue

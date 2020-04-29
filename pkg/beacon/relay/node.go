@@ -139,17 +139,9 @@ func (n *Node) JoinGroupIfEligible(
 				)
 			}()
 		}
-	} else {
-		go n.forwardDKGMessages(channelName)
 	}
 
 	return
-}
-
-// ForwardDKGMessages enables the ability to forward DKG messages
-// to other nodes even if this node has not been selected to the group.
-func (n *Node) forwardDKGMessages(name string) {
-	n.netProvider.BroadcastChannelForwarderFor(name)
 }
 
 // ForwardSignatureShares enables the ability to forward signature shares

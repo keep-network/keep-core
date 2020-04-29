@@ -14,7 +14,7 @@ const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking', function() {
 
@@ -24,7 +24,7 @@ describe('TokenStaking', function() {
     ownerTwo = accounts[1],
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6];
 
@@ -33,7 +33,7 @@ describe('TokenStaking', function() {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new({from: accounts[0]});
+    registry = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );
@@ -54,7 +54,7 @@ describe('TokenStaking', function() {
 
   async function delegate(operator, amount) {
     let data = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);

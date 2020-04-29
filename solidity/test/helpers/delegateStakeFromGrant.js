@@ -3,13 +3,13 @@ async function delegateStakeFromGrant(
     stakingContractAddress,
     grantee,
     operator,
-    magpie,
+    beneficiary,
     authorizer,
     amount,
     grantId
 ) {
     let delegation = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);

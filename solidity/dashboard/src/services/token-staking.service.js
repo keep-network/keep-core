@@ -27,7 +27,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
     contractService.makeCall(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
-      "magpieOf",
+      "beneficiaryOf",
       yourAddress
     ),
     contractService.makeCall(

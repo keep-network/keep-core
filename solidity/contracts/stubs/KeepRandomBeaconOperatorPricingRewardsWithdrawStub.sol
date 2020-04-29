@@ -9,8 +9,13 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
 
     constructor(
         address _serviceContract,
-        address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        address _stakingContract,
+        address _registryContract
+    ) KeepRandomBeaconOperator(
+        _serviceContract,
+        _stakingContract,
+        _registryContract
+    ) public {
         groups.groupActiveTime = 5;
         groups.relayEntryTimeout = 10;
     }
@@ -35,7 +40,7 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
     }
 
     function relayEntry() public returns (uint256) {
-        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(currentRequestGroupIndex);
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         submitterReward; // silence local var
         subsidy; // silence local var

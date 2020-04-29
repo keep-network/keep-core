@@ -1,11 +1,11 @@
 const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
 const { accounts, contract } = require("@openzeppelin/test-environment")
-const { expectRevert } = require("@openzeppelin/test-helpers")
+const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
 
-const Registry = contract.fromArtifact('RegistryStub');
+const KeepRegistry = contract.fromArtifact('KeepRegistry');
 
-describe('Registry', () => {
+describe('KeepRegistry', () => {
 
     const owner = accounts[0]
     const governance = accounts[1]
@@ -13,6 +13,7 @@ describe('Registry', () => {
     const registryKeeper = accounts[3]
     const operatorContractUpgrader = accounts[4]
     const individualContractPanicButton = accounts[5]
+    const serviceContractUpgrader = accounts[6]
 
     const someoneElse = "0x524f2E0176350d950fA630D9A5a59A0a190DAf48"
 
@@ -24,7 +25,7 @@ describe('Registry', () => {
     let registry
 
     before(async () => {
-        registry = await Registry.new({ from: owner })
+        registry = await KeepRegistry.new({ from: owner })
         await registry.setGovernance(governance, { from: owner })
         await registry.setDefaultPanicButton(defaultPanicButton, { from: governance })
         await registry.setRegistryKeeper(registryKeeper, { from: governance })
@@ -59,10 +60,19 @@ describe('Registry', () => {
         it("updates governance", async () => {
             await registry.setGovernance(someoneElse, { from: governance })
             assert.equal(
-                await registry.getGovernance(),
+                await registry.governance(),
                 someoneElse,
                 "Unexpected governance"
             )
+        })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setGovernance(
+                someoneElse, { from: governance }
+            )
+            expectEvent(receipt, "GovernanceUpdated", {
+                governance: someoneElse
+            })
         })
     })
 
@@ -82,10 +92,19 @@ describe('Registry', () => {
         it("updates registry keeper", async () => {
             await registry.setRegistryKeeper(someoneElse, { from: governance })
             assert.equal(
-                await registry.getRegistryKeeper(),
+                await registry.registryKeeper(),
                 someoneElse,
                 "Unexpected registry keeper"
             )
+        })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setRegistryKeeper(
+                someoneElse, { from: governance }
+            )
+            expectEvent(receipt, "RegistryKeeperUpdated", {
+                registryKeeper: someoneElse
+            })
         })
     })
 
@@ -105,10 +124,19 @@ describe('Registry', () => {
         it("updates default panic button", async () => {
             await registry.setDefaultPanicButton(someoneElse, { from: governance })
             assert.equal(
-                await registry.getDefaultPanicButton(),
+                await registry.defaultPanicButton(),
                 someoneElse,
                 "Unexpected registry keeper"
             )
+        })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setDefaultPanicButton(
+                someoneElse, { from: governance }
+            )
+            expectEvent(receipt, "DefaultPanicButtonUpdated", {
+                defaultPanicButton: someoneElse
+            })
         })
     })
 
@@ -178,7 +206,7 @@ describe('Registry', () => {
                 { from: governance }
             )
             assert.equal(
-                await registry.getPanicButtonForContract(operatorContract1),
+                await registry.panicButtons(operatorContract1),
                 someoneElse,
                 "Unexpected operator contract panic button"
             )
@@ -191,7 +219,7 @@ describe('Registry', () => {
                 { from: governance }
             )
             assert.equal(
-                await registry.getDefaultPanicButton(),
+                await registry.defaultPanicButton(),
                 defaultPanicButton,
                 "Unexpected default panic button"
             )
@@ -246,6 +274,67 @@ describe('Registry', () => {
         })
     })
 
+    describe("setServiceContractUpgrader", async () => {
+        it("can be called by governance", async () => {
+            await registry.setServiceContractUpgrader(
+                operatorContract1,
+                serviceContractUpgrader,
+                { from: governance }
+            )
+            // ok, no revert
+        })
+
+        it("can not be called by non-governance", async () => {
+            await expectRevert(
+                registry.setServiceContractUpgrader(
+                    operatorContract1,
+                    serviceContractUpgrader,
+                    { from: owner }
+                ),
+                "Not authorized"
+            )
+        })
+
+        it("updates service contract upgrader", async () => {
+            await registry.setServiceContractUpgrader(
+                operatorContract1,
+                serviceContractUpgrader,
+                { from: governance }
+            )
+
+            await registry.setServiceContractUpgrader(
+                operatorContract2,
+                someoneElse,
+                { from: governance }
+            )
+
+            assert.equal(
+                await registry.serviceContractUpgraderFor(operatorContract1),
+                serviceContractUpgrader,
+                "Unexpected service contract upgrader"
+            )
+
+            assert.equal(
+                await registry.serviceContractUpgraderFor(operatorContract2),
+                someoneElse,
+                "Unexpected service contract upgrader"
+            )
+        })
+
+        it("emits an event", async () => {
+            const receipt = await registry.setServiceContractUpgrader(
+                operatorContract1,
+                serviceContractUpgrader,
+                { from: governance }
+            )
+
+            expectEvent(receipt, "ServiceContractUpgraderUpdated", {
+                operatorContract: operatorContract1,
+                keeper: serviceContractUpgrader
+            })
+        })
+    })
+
     describe("approveOperatorContract", async () => {
         it("can be called by registry keeper", async () => {
             await registry.approveOperatorContract(
@@ -288,7 +377,7 @@ describe('Registry', () => {
             )
 
             assert.equal(
-                await registry.getPanicButtonForContract(operatorContract1),
+                await registry.panicButtons(operatorContract1),
                 defaultPanicButton,
                 "not a default panic button"
             )

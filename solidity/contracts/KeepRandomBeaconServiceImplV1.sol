@@ -4,8 +4,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
-import "./DelayedWithdrawal.sol";
-import "./Registry.sol";
+import "./KeepRegistry.sol";
 import "./IRandomBeacon.sol";
 
 
@@ -32,7 +31,7 @@ interface OperatorContract {
  * Warning: you can't set constants directly in the contract and must use initialize()
  * please see openzeppelin upgradeable contracts approach for more info.
  */
-contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IRandomBeacon {
+contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
     using PercentUtils for uint256;
     using AddressArrayUtils for address[];
@@ -77,7 +76,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
     mapping(uint256 => Callback) internal _callbacks;
 
-    // Registry contract with a list of approved operator contracts and upgraders.
+    // KeepRegistry contract with a list of approved operator contracts and upgraders.
     address internal _registry;
 
     address[] internal _operatorContracts;
@@ -96,7 +95,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      * @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
      */
     modifier onlyOperatorContractUpgrader() {
-        address operatorContractUpgrader = Registry(_registry).operatorContractUpgraderFor(address(this));
+        address operatorContractUpgrader = KeepRegistry(_registry).operatorContractUpgraderFor(address(this));
         require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
         _;
     }
@@ -109,12 +108,10 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      * @dev Initialize Keep Random Beacon service contract implementation.
      * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
      * request fee.
-     * @param withdrawalDelay Delay before the owner can withdraw ether from this contract.
-     * @param registry Registry contract linked to this contract.
+     * @param registry KeepRegistry contract linked to this contract.
      */
     function initialize(
         uint256 dkgContributionMargin,
-        uint256 withdrawalDelay,
         address registry
     )
         public
@@ -124,14 +121,9 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
 
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
         _dkgContributionMargin = dkgContributionMargin;
-        _withdrawalDelay = withdrawalDelay;
-        _pendingWithdrawal = 0;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 10961;
-
-        // Initialize DelayedWithdrawal owner.
-        initialize(msg.sender);
+        _baseCallbackGas = 10203;
     }
 
     /**
@@ -147,7 +139,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
      */
     function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         require(
-            Registry(_registry).isApprovedOperatorContract(operatorContract),
+            KeepRegistry(_registry).isApprovedOperatorContract(operatorContract),
             "Operator contract is not approved"
         );
         _operatorContracts.push(operatorContract);
@@ -189,7 +181,7 @@ contract KeepRandomBeaconServiceImplV1 is DelayedWithdrawal, ReentrancyGuard, IR
         address[] memory approvedContracts = new address[](_operatorContracts.length);
 
         for (uint i = 0; i < _operatorContracts.length; i++) {
-            if (Registry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
+            if (KeepRegistry(_registry).isApprovedOperatorContract(_operatorContracts[i])) {
                 totalNumberOfGroups += OperatorContract(_operatorContracts[i]).numberOfGroups();
                 approvedContracts[approvedContractsCounter] = _operatorContracts[i];
                 approvedContractsCounter++;

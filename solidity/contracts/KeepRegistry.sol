@@ -1,22 +1,20 @@
 pragma solidity 0.5.17;
 
 
-/**
- * @title Registry
- * @dev Governance owned registry of approved contracts and roles.
- */
-contract Registry {
+/// @title KeepRegistry
+/// @notice Governance owned registry of approved contracts and roles.
+contract KeepRegistry {
     enum ContractStatus {New, Approved, Disabled}
 
     // Governance role is to enable recovery from key compromise by rekeying
     // other roles. Also, it can disable operator contract panic buttons
     // permanently.
-    address internal governance;
+    address public governance;
 
     // Registry Keeper maintains approved operator contracts. Each operator
     // contract must be approved before it can be authorized by a staker or
     // used by a service contract.
-    address internal registryKeeper;
+    address public registryKeeper;
 
     // Each operator contract has a Panic Button which can disable malicious
     // or malfunctioning contract that have been previously approved by the
@@ -33,7 +31,7 @@ contract Registry {
 
     // Default panic button for each new operator contract added to the
     // registry. Can be later updated for each contract.
-    address internal defaultPanicButton;
+    address public defaultPanicButton;
 
     // Each service contract has a Operator Contract Upgrader whose purpose
     // is to manage operator contracts for that specific service contract.
@@ -41,15 +39,24 @@ contract Registry {
     // service contract’s operator contract list, and deprecate old ones.
     mapping(address => address) public operatorContractUpgraders;
 
+    // Operator contract may have a Service Contract Upgrader whose purpose is
+    // to manage service contracts for that specific operator contract.
+    // Service Contract Upgrader can add and remove service contracts
+    // from the list of service contracts approved to work with the operator
+    // contract. List of service contracts is maintained in the operator
+    // contract and is optional - not every operator contract needs to have
+    // a list of service contracts it wants to cooperate with.
+    mapping(address => address) public serviceContractUpgraders;
+
     // The registry of operator contracts
     mapping(address => ContractStatus) public operatorContracts;
 
     event OperatorContractApproved(address operatorContract);
     event OperatorContractDisabled(address operatorContract);
 
-    event GovernanceUpdated();
-    event RegistryKeeperUpdated();
-    event DefaultPanicButtonUpdated();
+    event GovernanceUpdated(address governance);
+    event RegistryKeeperUpdated(address registryKeeper);
+    event DefaultPanicButtonUpdated(address defaultPanicButton);
     event OperatorContractPanicButtonDisabled(address operatorContract);
     event OperatorContractPanicButtonUpdated(
         address operatorContract,
@@ -58,6 +65,10 @@ contract Registry {
     event OperatorContractUpgraderUpdated(
         address serviceContract,
         address upgrader
+    );
+    event ServiceContractUpgraderUpdated(
+        address operatorContract,
+        address keeper
     );
 
     modifier onlyGovernance() {
@@ -101,17 +112,17 @@ contract Registry {
 
     function setGovernance(address _governance) public onlyGovernance {
         governance = _governance;
-        emit GovernanceUpdated();
+        emit GovernanceUpdated(governance);
     }
 
     function setRegistryKeeper(address _registryKeeper) public onlyGovernance {
         registryKeeper = _registryKeeper;
-        emit RegistryKeeperUpdated();
+        emit RegistryKeeperUpdated(registryKeeper);
     }
 
     function setDefaultPanicButton(address _panicButton) public onlyGovernance {
         defaultPanicButton = _panicButton;
-        emit DefaultPanicButtonUpdated();
+        emit DefaultPanicButtonUpdated(defaultPanicButton);
     }
 
     function setOperatorContractPanicButton(
@@ -161,6 +172,17 @@ contract Registry {
         );
     }
 
+    function setServiceContractUpgrader(
+        address _operatorContract,
+        address _serviceContractUpgrader
+    ) public onlyGovernance {
+        serviceContractUpgraders[_operatorContract] = _serviceContractUpgrader;
+        emit ServiceContractUpgraderUpdated(
+            _operatorContract,
+            _serviceContractUpgrader
+        );
+    }
+
     function approveOperatorContract(address operatorContract)
         public
         onlyForNewContract(operatorContract)
@@ -202,5 +224,13 @@ contract Registry {
         returns (address)
     {
         return operatorContractUpgraders[_serviceContract];
+    }
+
+    function serviceContractUpgraderFor(address _operatorContract)
+        public
+        view
+        returns (address)
+    {
+        return serviceContractUpgraders[_operatorContract];
     }
 }
