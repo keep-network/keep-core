@@ -477,8 +477,8 @@ func (c *localChain) IsEntryInProgress() (bool, error) {
 	return c.currentEntryStartBlock.Uint64() != 0, nil
 }
 
-func (c *localChain) CurrentEntryStartBlock() (*big.Int, error) {
-	return c.currentEntryStartBlock, nil
+func (c *localChain) CurrentRequestEntryStartBlock() (*big.Int, error) {
+	panic("not implemented")
 }
 
 func (c *localChain) CurrentRequestPreviousEntry() ([]byte, error) {

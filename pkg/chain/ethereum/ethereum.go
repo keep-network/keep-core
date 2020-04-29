@@ -409,7 +409,7 @@ func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
 }
 
-func (ec *ethereumChain) CurrentEntryStartBlock() (*big.Int, error) {
+func (ec *ethereumChain) CurrentRequestEntryStartBlock() (*big.Int, error) {
 	return ec.keepRandomBeaconOperatorContract.CurrentEntryStartBlock()
 }
 
