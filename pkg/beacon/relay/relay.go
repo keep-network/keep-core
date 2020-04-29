@@ -104,6 +104,7 @@ func (n *Node) GenerateRelayEntry(
 	startBlockHeight uint64,
 ) {
 	memberships := n.groupRegistry.GetGroup(groupPublicKey)
+
 	if len(memberships) < 1 {
 		return
 	}
