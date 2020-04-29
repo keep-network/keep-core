@@ -1,26 +1,26 @@
-import React, { useRef, useState, useEffect } from 'react'
-import { shortenAddress } from '../utils/general.utils'
-
+import React, { useRef, useState, useEffect } from "react"
+import { shortenAddress } from "../utils/general.utils"
 
 const AddressShortcut = ({ address, classNames }) => {
   const addressElement = useRef(null)
-  const [copyStatus, setCopyStatus] = useState('Copy to clipboard')
+  const [copyStatus, setCopyStatus] = useState("Copy to clipboard")
 
   useEffect(() => {
+    const { current } = { ...addressElement }
     const copyEventListener = (event) => {
       event.preventDefault()
       if (event.clipboardData) {
-        event.clipboardData.setData('text/plain', address)
+        event.clipboardData.setData("text/plain", address)
       } else if (window.clipboardData) {
-        window.clipboardData.setData('Text', address)
+        window.clipboardData.setData("Text", address)
       } else {
         setCopyStatus(`Cannot copy value: ${address}!`)
       }
     }
-    if (addressElement.current !== null) {
-      addressElement.current.addEventListener('copy', copyEventListener)
+    if (current !== null) {
+      current.addEventListener("copy", copyEventListener)
       return () => {
-        addressElement.current.removeEventListener('copy', copyEventListener)
+        current.removeEventListener("copy", copyEventListener)
       }
     }
   })
@@ -36,8 +36,8 @@ const AddressShortcut = ({ address, classNames }) => {
         range.selectNode(addressElement.current)
         window.getSelection().addRange(range)
       }
-      document.execCommand('copy')
-      setCopyStatus('Copied!')
+      document.execCommand("copy")
+      setCopyStatus("Copied!")
     } catch (error) {
       setCopyStatus(`Cannot copy value: ${address}!`)
     }
@@ -46,19 +46,14 @@ const AddressShortcut = ({ address, classNames }) => {
   return (
     <span
       onClick={copyToClipboard}
-      onMouseOut={() => setCopyStatus('Copy to clipboard')}
+      onMouseOut={() => setCopyStatus("Copy to clipboard")}
       className={`address-shortcut tooltip ${classNames}`}
     >
-      <span className="tooltip-text bottom">
-        {copyStatus}
-      </span>
-      <span
-        className="full-address"
-        ref={addressElement}
-      >
+      <span className="tooltip-text bottom">{copyStatus}</span>
+      <span className="full-address" ref={addressElement}>
         {address}
       </span>
-      { shortenAddress(address) }
+      {shortenAddress(address)}
     </span>
   )
 }

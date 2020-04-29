@@ -73,6 +73,8 @@ func Initialize(
 		Mutex: &sync.Mutex{},
 	}
 
+	node.ResumeSigningIfEligible(relayChain, signing)
+
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		currentEntryStartBlock, err := relayChain.CurrentRequestStartBlock()
 		if err != nil {

@@ -470,7 +470,19 @@ func (c *localChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
+func (c *localChain) IsEntryInProgress() (bool, error) {
+	panic("not implemented")
+}
+
 func (c *localChain) CurrentRequestStartBlock() (*big.Int, error) {
+	panic("not implemented")
+}
+
+func (c *localChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	panic("not implemented")
+}
+
+func (c *localChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	panic("not implemented")
 }
 

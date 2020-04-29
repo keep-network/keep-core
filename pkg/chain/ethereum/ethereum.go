@@ -405,8 +405,25 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
+func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
+}
+
 func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.CurrentEntryStartBlock()
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestStartBlock()
+}
+
+func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestPreviousEntry()
+}
+
+func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+	currentRequestGroupIndex, err := ec.keepRandomBeaconOperatorContract.CurrentRequestGroupIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
