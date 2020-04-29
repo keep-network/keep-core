@@ -56,6 +56,7 @@
         padding: @vertical-padding @horizontal-padding;
         padding-left: calc(@horizontal-padding + (@icon-width / 2));
         display: flex;
+        flex: 1 0 auto;
         align-items: center;    
         position: relative;
 
@@ -84,13 +85,20 @@
             margin-left: 1.5rem;
         }
 
-        &::before {
+        &::before, &::after {
             content: '';
             position: absolute;
             width: 1px;
             height: 50%;
             top: 0;
             .draw-dashed-vertical-line(@color-grey-30);
+            opacity: 1;
+            transition: opacity 0.35s;
+        }
+
+        &::after {
+            opacity: 0;
+            .draw-dashed-vertical-line(@color-black);
         }
 
         &.touched {
@@ -100,8 +108,12 @@
                 }
             }
 
-            &::before{ 
-                .draw-dashed-vertical-line(@color-black);
+            &::before{
+                opacity: 0;
+            }
+
+            &::after {
+                opacity: 1;
             }
 
             .authorizer-form-icon,
@@ -119,7 +131,7 @@
     }
     
     .address-field-wrapper ~ .address-field-wrapper {
-        &::before {
+        &::before, &::after {
             height: 100%;
             top: -50%;
         }
