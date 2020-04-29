@@ -1,12 +1,16 @@
-import { useEffect, useRef, useContext, useState } from 'react'
-import { Web3Context } from '../components/WithWeb3Context'
-import { isEmptyObj } from '../utils/general.utils'
+import { useEffect, useRef, useContext, useState } from "react"
+import { Web3Context } from "../components/WithWeb3Context"
+import { usePrevious } from "./usePrevious"
 
-export const useSubscribeToContractEvent = (contractName, eventName, subscribeToEventCallback = () => {}) => {
-  const web3Context = useContext(Web3Context)
+export const useSubscribeToContractEvent = (
+  contractName,
+  eventName,
+  subscribeToEventCallback = () => {}
+) => {
   const event = useRef(null)
-  const contract = web3Context[contractName]
+  const contract = useRef(useContext(Web3Context)[contractName])
   const [latestEvent, setLatestEvent] = useState({})
+  const previousEvent = usePrevious(latestEvent)
 
   useEffect(() => {
     const subscribeToEvent = (error, event) => {
@@ -15,19 +19,21 @@ export const useSubscribeToContractEvent = (contractName, eventName, subscribeTo
       }
       setLatestEvent(event)
     }
-    event.current = contract.events[eventName](subscribeToEvent)
+    event.current = contract.current.events[eventName](subscribeToEvent)
 
     return () => {
-      event.current.unsubscribe((error, suscces) => console.log('unsub', error, suscces))
+      event.current.unsubscribe((error, suscces) =>
+        console.log("unsub", error, suscces)
+      )
     }
-  }, [])
+  }, [eventName])
 
   useEffect(() => {
-    if (isEmptyObj(latestEvent)) {
+    if (previousEvent.transactionHash === latestEvent.transactionHash) {
       return
     }
-    subscribeToEventCallback(latestEvent)
-  }, [latestEvent.transactionHash])
+    subscribeToEventCallback({ ...latestEvent })
+  })
 
   return { latestEvent }
 }

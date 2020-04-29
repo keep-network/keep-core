@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react"
 
 export class DataTable extends React.Component {
   constructor(props) {
@@ -25,13 +25,16 @@ export class DataTable extends React.Component {
       <tr key={item[this.props.itemFieldId]}>
         {React.Children.map(this.props.children, (column) => {
           return (
-            <td key={`${item[this.props.itemFieldId]}-${column.props.field}-${item[column.props.field]}`}>
+            <td
+              key={`${item[this.props.itemFieldId]}-${column.props.field}-${
+                item[column.props.field]
+              }`}
+            >
               <span className="responsive-header">{column.props.header}</span>
               {this.renderColumnContent(column, item)}
             </td>
           )
-        })
-        }
+        })}
       </tr>
     )
   }
@@ -43,23 +46,15 @@ export class DataTable extends React.Component {
     return column.props.renderContent(item)
   }
 
-  renderHeader = (header) => (
-    <th key={header}>
-      {header}
-    </th>
-  )
+  renderHeader = (header) => <th key={header}>{header}</th>
 
   render() {
     return (
       <table>
         <thead>
-          <tr>
-            {this.state.headers.map(this.renderHeader)}
-          </tr>
+          <tr>{this.state.headers.map(this.renderHeader)}</tr>
         </thead>
-        <tbody>
-          {this.props.data.map(this.renderItemRow)}
-        </tbody>
+        <tbody>{this.props.data.map(this.renderItemRow)}</tbody>
       </table>
     )
   }

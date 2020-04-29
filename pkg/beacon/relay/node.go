@@ -10,6 +10,7 @@ import (
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -155,6 +156,61 @@ func (n *Node) ForwardSignatureShares(groupPublicKeyBytes []byte) {
 	}
 
 	n.netProvider.BroadcastChannelForwarderFor(name)
+}
+
+// ResumeSigningIfEligible enables a client to rejoin the ongoing signing process
+// after it was crashed or restarted and if it belongs to the signing group.
+func (n *Node) ResumeSigningIfEligible(
+	relayChain relayChain.Interface,
+	signing chain.Signing,
+) {
+	isEntryInProgress, err := relayChain.IsEntryInProgress()
+	if err != nil {
+		logger.Errorf(
+			"failed checking if an entry is in progress: [%v]",
+			err,
+		)
+		return
+	}
+
+	if isEntryInProgress {
+		previousEntry, err := relayChain.CurrentRequestPreviousEntry()
+		if err != nil {
+			logger.Errorf(
+				"failed to get a previous entry for the current request: [%v]",
+				err,
+			)
+			return
+		}
+		entryStartBlock, err := relayChain.CurrentRequestStartBlock()
+		if err != nil {
+			logger.Errorf(
+				"failed to get a start block for the current request: [%v]",
+				err,
+			)
+			return
+		}
+		groupPublicKey, err := relayChain.CurrentRequestGroupPublicKey()
+		if err != nil {
+			logger.Errorf(
+				"failed to get a group public key for the current request: [%v]",
+				err,
+			)
+			return
+		}
+
+		logger.Infof(
+			"attempting to rejoin the current signing process [0x%x]",
+			groupPublicKey,
+		)
+		n.GenerateRelayEntry(
+			previousEntry,
+			relayChain,
+			signing,
+			groupPublicKey,
+			entryStartBlock.Uint64(),
+		)
+	}
 }
 
 // channelNameForPublicKey takes group public key represented by marshalled

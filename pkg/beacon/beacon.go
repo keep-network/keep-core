@@ -73,6 +73,8 @@ func Initialize(
 		Mutex: &sync.Mutex{},
 	}
 
+	node.ResumeSigningIfEligible(relayChain, signing)
+
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		previousEntry := hex.EncodeToString(request.PreviousEntry[:])
 		if node.IsInGroup(request.GroupPublicKey) {
