@@ -177,7 +177,7 @@ func (n *Node) ResumeSigningIfEligible(
 		previousEntry, err := relayChain.CurrentRequestPreviousEntry()
 		if err != nil {
 			logger.Errorf(
-				"failed to get a previous entry for current request: [%v]",
+				"failed to get a previous entry for the current request: [%v]",
 				err,
 			)
 			return
@@ -185,7 +185,7 @@ func (n *Node) ResumeSigningIfEligible(
 		entryStartBlock, err := relayChain.CurrentRequestStartBlock()
 		if err != nil {
 			logger.Errorf(
-				"failed to get a current relay request entry start block: [%v]",
+				"failed to get a start block for the current request: [%v]",
 				err,
 			)
 			return
@@ -193,14 +193,14 @@ func (n *Node) ResumeSigningIfEligible(
 		groupPublicKey, err := relayChain.CurrentRequestGroupPublicKey()
 		if err != nil {
 			logger.Errorf(
-				"failed to get current relay request's group public key: [%v]",
+				"failed to get a group public key for the current request: [%v]",
 				err,
 			)
 			return
 		}
 
 		logger.Infof(
-			"client is atempting to rejoin the current signing processs [0x%x]",
+			"atempting to rejoin the current signing processs [0x%x]",
 			groupPublicKey,
 		)
 		n.GenerateRelayEntry(
