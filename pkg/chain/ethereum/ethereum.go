@@ -405,6 +405,10 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
+func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
+}
+
 func (ec *ethereumChain) SubmitDKGResult(
 	participantIndex chain.GroupMemberIndex,
 	result *relaychain.DKGResult,

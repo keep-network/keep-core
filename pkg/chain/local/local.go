@@ -470,6 +470,10 @@ func (c *localChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
+func (c *localChain) IsEntryInProgress() (bool, error) {
+	panic("not implemented")
+}
+
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
 	return c.relayEntryTimeoutReports
 }

@@ -38,6 +38,8 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
+	// IsEntryInProgress checks if a new relay entry is currently in progress.
+	IsEntryInProgress() (bool, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
