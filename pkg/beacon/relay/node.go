@@ -190,7 +190,7 @@ func (n *Node) ResumeSigningIfEligible(
 			)
 			return
 		}
-		groupPublicKey, err := relayChain.GroupPublicKey()
+		groupPublicKey, err := relayChain.CurrentRequestGroupPublicKey()
 		if err != nil {
 			logger.Errorf(
 				"failed getting a group public key: [%v]",

@@ -417,7 +417,7 @@ func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
 	return ec.keepRandomBeaconOperatorContract.CurrentRequestPreviousEntry()
 }
 
-func (ec *ethereumChain) GroupPublicKey() ([]byte, error) {
+func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	currentRequestGroupIndex, err := ec.keepRandomBeaconOperatorContract.CurrentRequestGroupIndex()
 	if err != nil {
 		return nil, err

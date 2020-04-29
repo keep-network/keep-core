@@ -485,8 +485,8 @@ func (c *localChain) CurrentRequestPreviousEntry() ([]byte, error) {
 	return c.currentRequestPreviousEntry, nil
 }
 
-func (c *localChain) GroupPublicKey() ([]byte, error) {
-	return c.groups[0].groupPublicKey, nil
+func (c *localChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+	panic("not implemented")
 }
 
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {

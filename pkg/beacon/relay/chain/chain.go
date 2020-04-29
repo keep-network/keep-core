@@ -46,8 +46,8 @@ type RelayEntryInterface interface {
 	CurrentEntryStartBlock() (*big.Int, error)
 	// CurrentRequestPreviousEntry returns previous entry of a current request.
 	CurrentRequestPreviousEntry() ([]byte, error)
-	// GroupPublicKey returns group public key.
-	GroupPublicKey() ([]byte, error)
+	// CurrentRequestGroupPublicKey returns group public key for the current request.
+	CurrentRequestGroupPublicKey() ([]byte, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
