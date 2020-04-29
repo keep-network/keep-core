@@ -20,7 +20,7 @@ const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 let initializationPeriod = 43200; // ~12 hours
 let undelegationPeriod = 7776000; // ~3 months
-const dkgContributionMargin = 5; // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
+const dkgContributionMargin = 3; // 3%
 
 module.exports = async function(deployer, network) {
 
