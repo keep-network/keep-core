@@ -70,9 +70,9 @@ exports.issueGrant = async (request, response) => {
       )
     } else {
       const granteeAccount = account
-      const unlockingDuration = web3.utils.toBN(0)
       const start = web3.utils.toBN(Math.floor(Date.now() / 1000))
       const cliff = web3.utils.toBN(172800)
+      const unlockingDuration = cliff
       const revocable = true
       const tokens = web3.utils.toBN(300000)
       console.log(`Fetching existing balance for account [${granteeAccount}]...`)
@@ -96,14 +96,11 @@ exports.issueGrant = async (request, response) => {
         console.log(
           `Submitting grant for [${grantAmount}] to [${granteeAccount}]...`,
         )
-        const grantData = Buffer.concat([
-          Buffer.from(granteeAccount.substr(2), 'hex', 20),
-          unlockingDuration.toBuffer('be', 32),
-          start.toBuffer('be', 32),
-          cliff.toBuffer('be', 32),
-          Buffer.from(revocable ? '01' : '00', 'hex'),
-          Buffer.from(permissiveStakingPolicyAddress.substr(2), 'hex', 20)
-        ])
+        const grantData =
+          web3.eth.abi.encodeParameters(
+            ["address", "address", "uint256", "uint256", "uint256", "bool", "address"],
+            [keepContractOwnerAddress, granteeAccount, unlockingDuration, start, cliff, revocable, permissiveStakingPolicyAddress]
+        )
 
         console.log("Test submission...")
         // Try calling; if this throws, we'll have a proper error message thanks
