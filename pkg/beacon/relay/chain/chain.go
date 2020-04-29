@@ -40,9 +40,9 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
-	// CurrentEntryStartBlock returns the starting block of the
-	// current relay entry.
-	CurrentEntryStartBlock() (*big.Int, error)
+	// CurrentRequestStartBlock returns the starting block of the
+	// current relay entry request.
+	CurrentRequestStartBlock() (*big.Int, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that

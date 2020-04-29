@@ -405,7 +405,7 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
-func (ec *ethereumChain) CurrentEntryStartBlock() (*big.Int, error) {
+func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
 	return ec.keepRandomBeaconOperatorContract.CurrentEntryStartBlock()
 }
 

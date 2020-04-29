@@ -74,9 +74,9 @@ func Initialize(
 	}
 
 	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		currentEntryStartBlock, err := relayChain.CurrentEntryStartBlock()
+		currentEntryStartBlock, err := relayChain.CurrentRequestStartBlock()
 		if err != nil {
-			logger.Warningf("could not check current entry start block")
+			logger.Warningf("could not check current request start block")
 			return
 		}
 
@@ -91,6 +91,7 @@ func Initialize(
 				request.BlockNumber,
 				currentEntryStartBlock.Uint64(),
 			)
+			return
 		}
 
 		if node.IsInGroup(request.GroupPublicKey) {
