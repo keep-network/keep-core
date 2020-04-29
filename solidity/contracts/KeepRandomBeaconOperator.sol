@@ -492,6 +492,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // contract for the callback
         uint256 gasLimit = callbackFee.div(gasPriceCeiling);
 
+        // Make sure not to spend more than 6 million gas on a callback.
+        // This is to protect members from relay entry failure and potential
+        // slashing in case of any changes in .call() gas limit.
+        gasLimit = gasLimit > 6000000 ? 6000000 : gasLimit;
+
         bytes memory callbackReturnData;
         uint256 gasBeforeCallback = gasleft();
         (, callbackReturnData) = currentRequestServiceContract.call.gas(
