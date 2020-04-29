@@ -60,7 +60,7 @@ const TokensPage = () => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <PageWrapper title="My Tokens">
+      <PageWrapper title="Delegate Tokens From:">
         <TokensContextSwitcher />
         <div className="tokens-wrapper">
           <Tile
