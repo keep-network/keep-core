@@ -185,7 +185,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // the candidate not yet submitted to determine if continuing with
         // ticket submission still makes sense.
         //
-        // After 33 blocks, there is a 12 blocks mining lag allowing all
+        // After 66 blocks, there is a 12 blocks mining lag allowing all
         // outstanding ticket submissions to have a higher chance of being
         // mined before the deadline.
         groupSelection.ticketSubmissionTimeout = 6 * 11 + 12;
