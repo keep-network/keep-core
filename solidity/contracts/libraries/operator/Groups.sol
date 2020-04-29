@@ -62,9 +62,7 @@ library Groups {
         TokenStaking stakingContract;
     }
 
-    /**
-     * @dev Adds group.
-     */
+    /// @notice Adds a new group.
     function addGroup(
         Storage storage self,
         bytes memory groupPubKey
@@ -73,17 +71,15 @@ library Groups {
         self.groups.push(Group(groupPubKey, uint64(block.number), false));
     }
 
-    /**
-     * @dev Sets addresses of members for the group with the given public key
-     * eliminating members at positions pointed by the misbehaved array.
-     * @param groupPubKey Group public key.
-     * @param members Group member addresses as outputted by the group selection
-     * protocol.
-     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-     * group members indexes in ascending order; Indexes reflect positions of
-     * members in the group as outputted by the group selection protocol -
-     * member indexes start from 1.
-     */
+    /// @notice Sets addresses of members for the group with the given public key
+    /// eliminating members at positions pointed by the misbehaved array.
+    /// @param groupPubKey Group public key.
+    /// @param members Group member addresses as outputted by the group selection
+    /// protocol.
+    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+    /// group members indexes in ascending order; Indexes reflect positions of
+    /// members in the group as outputted by the group selection protocol -
+    /// member indexes start from 1.
     function setGroupMembers(
         Storage storage self,
         bytes memory groupPubKey,
@@ -104,9 +100,8 @@ library Groups {
         }
     }
 
-    /**
-     * @dev Adds group member reward per group so the accumulated amount can be withdrawn later.
-     */
+    /// @notice Adds group member reward per group so the accumulated amount can
+    /// be withdrawn later.
     function addGroupMemberReward(
         Storage storage self,
         bytes memory groupPubKey,
@@ -115,9 +110,7 @@ library Groups {
         self.groupMemberRewards[groupPubKey] = self.groupMemberRewards[groupPubKey].add(amount);
     }
 
-    /**
-     * @dev Returns accumulated group member rewards for provided group.
-     */
+    /// @notice Returns accumulated group member rewards for provided group.
     function getGroupMemberRewards(
         Storage storage self,
         bytes memory groupPubKey
@@ -125,9 +118,7 @@ library Groups {
         return self.groupMemberRewards[groupPubKey];
     }
 
-    /**
-     * @dev Gets group public key.
-     */
+    /// @notice Gets group public key.
     function getGroupPublicKey(
         Storage storage self,
         uint256 groupIndex
@@ -135,9 +126,7 @@ library Groups {
         return self.groups[groupIndex].groupPubKey;
     }
 
-    /**
-     * @dev Gets group member.
-     */
+    /// @notice Gets group member.
     function getGroupMember(
         Storage storage self,
         bytes memory groupPubKey,
@@ -145,10 +134,8 @@ library Groups {
     ) internal view returns (address) {
         return self.groupMembers[groupPubKey][memberIndex];
     }
-
-    /**
-     * @dev Terminates group.
-     */
+    
+    /// @notice Terminates group.
     function terminateGroup(
         Storage storage self,
         uint256 groupIndex
@@ -157,9 +144,7 @@ library Groups {
         self.activeTerminatedGroups.push(groupIndex);
     }
 
-    /**
-     * @dev Checks if group with the given index is terminated.
-     */
+    /// @notice Checks if group with the given index is terminated.
     function isGroupTerminated(
         Storage storage self,
         uint256 groupIndex
@@ -167,9 +152,7 @@ library Groups {
         return self.groups[groupIndex].terminated;
     }
 
-    /**
-     * @dev Checks if group with the given public key is registered.
-     */
+    /// @notice Checks if group with the given public key is registered.
     function isGroupRegistered(
         Storage storage self,
         bytes memory groupPubKey
@@ -179,10 +162,8 @@ library Groups {
         return self.groupIndices[groupPubKey] > 0;
     }
 
-    /**
-     * @dev Gets the cutoff time in blocks until which the given group is
-     * considered as an active group assuming it hasn't been terminated before.
-     */
+    /// @notice Gets the cutoff time in blocks until which the given group is
+    /// considered as an active group assuming it hasn't been terminated before.
     function groupActiveTimeOf(
         Storage storage self,
         Group memory group
@@ -190,11 +171,9 @@ library Groups {
         return uint256(group.registrationBlockHeight).add(self.groupActiveTime);
     }
 
-    /**
-     * @dev Gets the cutoff time in blocks after which the given group is
-     * considered as stale. Stale group is an expired group which is no longer
-     * performing any operations.
-     */
+    /// @notice Gets the cutoff time in blocks after which the given group is
+    /// considered as stale. Stale group is an expired group which is no longer
+    /// performing any operations.
     function groupStaleTime(
         Storage storage self,
         Group memory group
@@ -202,15 +181,13 @@ library Groups {
         return groupActiveTimeOf(self, group).add(self.relayEntryTimeout);
     }
 
-    /**
-     * @dev Checks if a group with the given public key is a stale group.
-     * Stale group is an expired group which is no longer performing any
-     * operations. It is important to understand that an expired group may
-     * still perform some operations for which it was selected when it was still
-     * active. We consider a group to be stale when it's expired and when its
-     * expiration time and potentially executed operation timeout are both in
-     * the past.
-     */
+    /// @notice Checks if a group with the given public key is a stale group.
+    /// Stale group is an expired group which is no longer performing any
+    /// operations. It is important to understand that an expired group may
+    /// still perform some operations for which it was selected when it was still
+    /// active. We consider a group to be stale when it's expired and when its
+    /// expiration time and potentially executed operation timeout are both in
+    /// the past.
     function isStaleGroup(
         Storage storage self,
         bytes memory groupPubKey
@@ -223,15 +200,13 @@ library Groups {
         return isExpired && isStale;
     }
 
-    /**
-     * @dev Checks if a group with the given index is a stale group.
-     * Stale group is an expired group which is no longer performing any
-     * operations. It is important to understand that an expired group may
-     * still perform some operations for which it was selected when it was still
-     * active. We consider a group to be stale when it's expired and when its
-     * expiration time and potentially executed operation timeout are both in
-     * the past.
-     */
+    /// @notice Checks if a group with the given index is a stale group.
+    /// Stale group is an expired group which is no longer performing any
+    /// operations. It is important to understand that an expired group may
+    /// still perform some operations for which it was selected when it was still
+    /// active. We consider a group to be stale when it's expired and when its
+    /// expiration time and potentially executed operation timeout are both in
+    /// the past.
     function isStaleGroup(
         Storage storage self,
         uint256 groupIndex
@@ -239,21 +214,17 @@ library Groups {
         return groupStaleTime(self, self.groups[groupIndex]) < block.number;
     }
 
-    /**
-     * @dev Gets the number of active groups. Expired and terminated groups are
-     * not counted as active.
-     */
+    /// @notice Gets the number of active groups. Expired and terminated groups are
+    /// not counted as active.
     function numberOfGroups(
         Storage storage self
     ) internal view returns(uint256) {
         return self.groups.length.sub(self.expiredGroupOffset).sub(self.activeTerminatedGroups.length);
     }
 
-    /**
-     * @dev Goes through groups starting from the oldest one that is still
-     * active and checks if it hasn't expired. If so, updates the information
-     * about expired groups so that all expired groups are marked as such.
-     */
+    /// @notice Goes through groups starting from the oldest one that is still
+    /// active and checks if it hasn't expired. If so, updates the information
+    /// about expired groups so that all expired groups are marked as such.
     function expireOldGroups(Storage storage self) public {
         // Move expiredGroupOffset as long as there are some groups that should
         // be marked as expired. It is possible that expired group offset will
@@ -280,14 +251,12 @@ library Groups {
         }
     }
 
-    /**
-     * @dev Returns an index of a randomly selected active group. Terminated and
-     * expired groups are not considered as active.
-     * Before new group is selected, information about expired groups
-     * is updated. At least one active group needs to be present for this
-     * function to succeed.
-     * @param seed Random number used as a group selection seed.
-     */
+    /// @notice Returns an index of a randomly selected active group. Terminated
+    /// and expired groups are not considered as active.
+    /// Before new group is selected, information about expired groups
+    /// is updated. At least one active group needs to be present for this
+    /// function to succeed.
+    /// @param seed Random number used as a group selection seed.
     function selectGroup(
         Storage storage self,
         uint256 seed
@@ -300,10 +269,8 @@ library Groups {
         return shiftByTerminatedGroups(self, shiftByExpiredGroups(self, selectedGroup));
     }
 
-    /**
-     * @dev Evaluates the shift of selected group index based on the number of
-     * expired groups.
-     */
+    /// @notice Evaluates the shift of selected group index based on the number of
+    /// expired groups.
     function shiftByExpiredGroups(
         Storage storage self,
         uint256 selectedIndex
@@ -311,10 +278,8 @@ library Groups {
         return self.expiredGroupOffset.add(selectedIndex);
     }
 
-    /**
-     * @dev Evaluates the shift of selected group index based on the number of
-     * non-expired, terminated groups.
-     */
+    /// @notice Evaluates the shift of selected group index based on the number of
+    /// non-expired, terminated groups.
     function shiftByTerminatedGroups(
         Storage storage self,
         uint256 selectedIndex
@@ -329,15 +294,13 @@ library Groups {
         return shiftedIndex;
     }
 
-    /**
-     * @dev Withdraws accumulated group member rewards for operator
-     * using the provided group index.
-     * Once the accumulated reward is withdrawn from the selected group,
-     * the operator is flagged as withdrawn.
-     * Rewards can be withdrawn only from stale group.
-     * @param operator Operator address.
-     * @param groupIndex Group index.
-     */
+    /// @notice Withdraws accumulated group member rewards for operator
+    /// using the provided group index.
+    /// Once the accumulated reward is withdrawn from the selected group,
+    /// the operator is flagged as withdrawn.
+    /// Rewards can be withdrawn only from stale group.
+    /// @param operator Operator address.
+    /// @param groupIndex Group index.
     function withdrawFromGroup(
         Storage storage self,
         address operator,
@@ -359,11 +322,8 @@ library Groups {
         }
     }
 
-    /**
-     * @dev Returns members of the given group by group public key.
-     *
-     * @param groupPubKey Group public key.
-     */
+    /// @notice Returns members of the given group by group public key.
+    /// @param groupPubKey Group public key.
     function getGroupMembers(
         Storage storage self,
         bytes memory groupPubKey
@@ -371,9 +331,7 @@ library Groups {
         return self.groupMembers[groupPubKey];
     }
 
-    /**
-     * @dev Returns addresses of all the members in the provided group.
-     */
+    /// @notice Returns addresses of all the members in the provided group.
     function getGroupMembers(
         Storage storage self,
         uint256 groupIndex
@@ -382,17 +340,15 @@ library Groups {
         return self.groupMembers[groupPubKey];
     }
 
-    /**
-     * @dev Reports unauthorized signing for the provided group. Must provide
-     * a valid signature of the group address as a message. Successful signature
-     * verification means the private key has been leaked and all group members
-     * should be punished by seizing their tokens. The submitter of this proof is
-     * rewarded with 5% of the total seized amount scaled by the reward adjustment
-     * parameter and the rest 95% is burned. Group has to be active or expired.
-     * Unauthorized signing cannot be reported for stale or terminated group.
-     * In case of reporting unauthorized signing for stale group,
-     * terminated group, or when the signature is inavlid, function reverts.
-     */
+    /// @notice Reports unauthorized signing for the provided group. Must provide
+    /// a valid signature of the group address as a message. Successful signature
+    /// verification means the private key has been leaked and all group members
+    /// should be punished by seizing their tokens. The submitter of this proof is
+    /// rewarded with 5% of the total seized amount scaled by the reward adjustment
+    /// parameter and the rest 95% is burned. Group has to be active or expired.
+    /// Unauthorized signing cannot be reported for stale or terminated group.
+    /// In case of reporting unauthorized signing for stale group,
+    /// terminated group, or when the signature is inavlid, function reverts.
     function reportUnauthorizedSigning(
         Storage storage self,
         uint256 groupIndex,
@@ -447,10 +403,8 @@ library Groups {
         }
     }
 
-    /**
-     * @notice Return whether the given operator
-     * has withdrawn their rewards from the given group.
-     */
+    /// @notice Return whether the given operator
+    /// has withdrawn their rewards from the given group.
     function hasWithdrawnRewards(
         Storage storage self,
         address operator,

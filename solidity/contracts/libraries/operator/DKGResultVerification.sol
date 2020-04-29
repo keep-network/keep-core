@@ -28,24 +28,22 @@ library DKGResultVerification {
         uint256 signatureThreshold;
     }
 
-    /**
-     * @dev Verifies the submitted DKG result against supporting member
-     * signatures and if the submitter is eligible to submit at the current block.
-     *
-     * @param submitterMemberIndex Claimed submitter candidate group member index
-     * @param groupPubKey Generated candidate group public key
-     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-     * group members indexes; Indexes reflect positions of members in the group,
-     * as outputted by the group selection protocol.
-     * @param signatures Concatenation of signatures from members supporting the
-     * result.
-     * @param signingMemberIndices Indices of members corresponding to each
-     * signature.
-     * @param members Addresses of candidate group members as outputted by the
-     * group selection protocol.
-     * @param groupSelectionEndBlock Block height at which the group selection
-     * protocol ended.
-     */
+    /// @notice Verifies the submitted DKG result against supporting member
+    /// signatures and if the submitter is eligible to submit at the current block.
+    ///
+    /// @param submitterMemberIndex Claimed submitter candidate group member index
+    /// @param groupPubKey Generated candidate group public key
+    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+    /// group members indexes; Indexes reflect positions of members in the group,
+    /// as outputted by the group selection protocol.
+    /// @param signatures Concatenation of signatures from members supporting the
+    /// result.
+    /// @param signingMemberIndices Indices of members corresponding to each
+    /// signature.
+    /// @param members Addresses of candidate group members as outputted by the
+    /// group selection protocol.
+    /// @param groupSelectionEndBlock Block height at which the group selection
+    /// protocol ended.
     function verify(
         Storage storage self,
         uint256 submitterMemberIndex,

@@ -5,10 +5,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 library DelayFactor {
     using SafeMath for uint256;
 
-    /**
-     * @dev Gets delay factor for rewards calculation.
-     * @return Integer representing floating-point number with 16 decimals places.
-     */
+    /// @notice Gets delay factor for rewards calculation.
+    /// @return Integer representing floating-point number with 16 decimals places.
     function calculate(
         uint256 currentRequestStartBlock,
         uint256 relayEntryTimeout
