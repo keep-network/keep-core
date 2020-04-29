@@ -56,5 +56,15 @@
             z-index: -1;
         }
 
+        &.address {
+            font-size: 0.6rem !important;
+            padding: 0.25rem;
+            max-width: 120px;
+            left: -(@tooltip-width / 4);
+
+            &::after {
+                left: @tooltip-width / 4;
+            }
+        }
     }
 }
