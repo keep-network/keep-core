@@ -571,9 +571,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
      */
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
-
-        uint256 minimumStake = stakingContract.minimumStake();
-        groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize, minimumStake);
+        groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group

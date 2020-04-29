@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../utils/BytesLib.sol";
+import "../../utils/PercentUtils.sol";
 import "../../cryptography/AltBn128.sol";
 import "../../cryptography/BLS.sol";
 import "../../TokenStaking.sol";
@@ -8,6 +9,7 @@ import "../../TokenStaking.sol";
 
 library Groups {
     using SafeMath for uint256;
+    using PercentUtils for uint256;
     using BytesLib for bytes;
 
     // The index of a group is flagged with the most significant bit set,
@@ -18,6 +20,10 @@ library Groups {
     // and unset after reading from `groupIndices`
     // before using the value.
     uint256 constant GROUP_INDEX_FLAG = 1 << 255;
+
+    uint256 constant ONE_MONTH = 86400 * 30;
+    uint256 constant THREE_MONTHS = 3 * ONE_MONTH;
+    uint256 constant SIX_MONTHS = 6 * ONE_MONTH;
 
     struct Group {
         bytes groupPubKey;
@@ -409,14 +415,36 @@ library Groups {
     function reportRelayEntryTimeout(
         Storage storage self,
         uint256 groupIndex,
-        uint256 groupSize,
-        uint256 minimumStake
+        uint256 groupSize
     ) public {
+        uint256 punishment = relayEntryTimeoutPunishment(self);
         terminateGroup(self, groupIndex);
         // Reward is limited to min(1, 20 / group_size) of the maximum tattletale reward, see the Yellow Paper for more details.
         uint256 rewardAdjustment = uint256(20 * 100).div(groupSize); // Reward adjustment in percentage
         rewardAdjustment = rewardAdjustment > 100 ? 100:rewardAdjustment; // Reward adjustment can be 100% max
-        self.stakingContract.seize(minimumStake, rewardAdjustment, msg.sender, getGroupMembers(self, groupIndex));
+        self.stakingContract.seize(punishment, rewardAdjustment, msg.sender, getGroupMembers(self, groupIndex));
+    }
+
+    /// @notice Evaluates relay entry timeout punishment using the following
+    /// rules:
+    /// - 1% of the minimum stake for the first 3 months,
+    /// - 50% of the minimum stake between the first 3 and 6 months,
+    /// - 100% of the minimum stake after the first 6 months.
+    function relayEntryTimeoutPunishment(
+        Storage storage self
+    ) public view returns (uint256) {
+        uint256 minimumStake = self.stakingContract.minimumStake();
+
+        uint256 minimumStakeScheduleStart = self.stakingContract.minimumStakeScheduleStart();
+        /* solium-disable-next-line security/no-block-members */
+        if (now < minimumStakeScheduleStart + THREE_MONTHS) {
+            return minimumStake.percent(1);
+        /* solium-disable-next-line security/no-block-members */
+        } else if (now < minimumStakeScheduleStart + SIX_MONTHS) {
+            return minimumStake.percent(50);
+        } else {
+            return minimumStake;
+        }
     }
 
     /**
