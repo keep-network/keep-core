@@ -1,7 +1,7 @@
 pragma solidity 0.5.17;
 
 /// @title GrantStakingPolicy
-/// @dev A staking policy defines the function `getStakeableAmount`
+/// @notice A staking policy defines the function `getStakeableAmount`
 /// which calculates how many tokens may be staked from a token grant.
 contract GrantStakingPolicy {
     function getStakeableAmount(

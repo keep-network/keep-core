@@ -6,7 +6,7 @@ import "./GrantStakingPolicy.sol";
 import "./TokenStaking.sol";
 
 /// @title AdaptiveStakingPolicy
-/// @dev A staking policy which allows the grantee
+/// @notice A staking policy which allows the grantee
 /// to always stake a certain multiple of the defined minimum stake,
 /// or the unlocked amount at a specified time in the future,
 /// if it is greater.
