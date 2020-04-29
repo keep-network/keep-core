@@ -28,7 +28,7 @@ var (
 )
 
 // ManagedGrantFactoryABI is the input ABI used to generate the binding from.
-const ManagedGrantFactoryABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_tokenGrant\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"grantAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"}],\"name\":\"ManagedGrantCreated\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"address\",\"name\":\"policy\",\"type\":\"address\"}],\"name\":\"createManagedGrant\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"_managedGrant\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractKeepToken\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"tokenGrant\",\"outputs\":[{\"internalType\":\"contractTokenGrant\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const ManagedGrantFactoryABI = "[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_tokenGrant\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"grantAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"}],\"name\":\"ManagedGrantCreated\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"grantee\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliffDuration\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"revocable\",\"type\":\"bool\"},{\"internalType\":\"address\",\"name\":\"policy\",\"type\":\"address\"}],\"name\":\"createManagedGrant\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"_managedGrant\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_amount\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"token\",\"outputs\":[{\"internalType\":\"contractKeepToken\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"tokenGrant\",\"outputs\":[{\"internalType\":\"contractTokenGrant\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // ManagedGrantFactory is an auto generated Go binding around an Ethereum contract.
 type ManagedGrantFactory struct {
@@ -226,23 +226,23 @@ func (_ManagedGrantFactory *ManagedGrantFactoryCallerSession) TokenGrant() (comm
 
 // CreateManagedGrant is a paid mutator transaction binding the contract method 0x319b84b7.
 //
-// Solidity: function createManagedGrant(address grantee, uint256 amount, uint256 duration, uint256 start, uint256 cliff, bool revocable, address policy) returns(address _managedGrant)
-func (_ManagedGrantFactory *ManagedGrantFactoryTransactor) CreateManagedGrant(opts *bind.TransactOpts, grantee common.Address, amount *big.Int, duration *big.Int, start *big.Int, cliff *big.Int, revocable bool, policy common.Address) (*types.Transaction, error) {
-	return _ManagedGrantFactory.contract.Transact(opts, "createManagedGrant", grantee, amount, duration, start, cliff, revocable, policy)
+// Solidity: function createManagedGrant(address grantee, uint256 amount, uint256 duration, uint256 start, uint256 cliffDuration, bool revocable, address policy) returns(address _managedGrant)
+func (_ManagedGrantFactory *ManagedGrantFactoryTransactor) CreateManagedGrant(opts *bind.TransactOpts, grantee common.Address, amount *big.Int, duration *big.Int, start *big.Int, cliffDuration *big.Int, revocable bool, policy common.Address) (*types.Transaction, error) {
+	return _ManagedGrantFactory.contract.Transact(opts, "createManagedGrant", grantee, amount, duration, start, cliffDuration, revocable, policy)
 }
 
 // CreateManagedGrant is a paid mutator transaction binding the contract method 0x319b84b7.
 //
-// Solidity: function createManagedGrant(address grantee, uint256 amount, uint256 duration, uint256 start, uint256 cliff, bool revocable, address policy) returns(address _managedGrant)
-func (_ManagedGrantFactory *ManagedGrantFactorySession) CreateManagedGrant(grantee common.Address, amount *big.Int, duration *big.Int, start *big.Int, cliff *big.Int, revocable bool, policy common.Address) (*types.Transaction, error) {
-	return _ManagedGrantFactory.Contract.CreateManagedGrant(&_ManagedGrantFactory.TransactOpts, grantee, amount, duration, start, cliff, revocable, policy)
+// Solidity: function createManagedGrant(address grantee, uint256 amount, uint256 duration, uint256 start, uint256 cliffDuration, bool revocable, address policy) returns(address _managedGrant)
+func (_ManagedGrantFactory *ManagedGrantFactorySession) CreateManagedGrant(grantee common.Address, amount *big.Int, duration *big.Int, start *big.Int, cliffDuration *big.Int, revocable bool, policy common.Address) (*types.Transaction, error) {
+	return _ManagedGrantFactory.Contract.CreateManagedGrant(&_ManagedGrantFactory.TransactOpts, grantee, amount, duration, start, cliffDuration, revocable, policy)
 }
 
 // CreateManagedGrant is a paid mutator transaction binding the contract method 0x319b84b7.
 //
-// Solidity: function createManagedGrant(address grantee, uint256 amount, uint256 duration, uint256 start, uint256 cliff, bool revocable, address policy) returns(address _managedGrant)
-func (_ManagedGrantFactory *ManagedGrantFactoryTransactorSession) CreateManagedGrant(grantee common.Address, amount *big.Int, duration *big.Int, start *big.Int, cliff *big.Int, revocable bool, policy common.Address) (*types.Transaction, error) {
-	return _ManagedGrantFactory.Contract.CreateManagedGrant(&_ManagedGrantFactory.TransactOpts, grantee, amount, duration, start, cliff, revocable, policy)
+// Solidity: function createManagedGrant(address grantee, uint256 amount, uint256 duration, uint256 start, uint256 cliffDuration, bool revocable, address policy) returns(address _managedGrant)
+func (_ManagedGrantFactory *ManagedGrantFactoryTransactorSession) CreateManagedGrant(grantee common.Address, amount *big.Int, duration *big.Int, start *big.Int, cliffDuration *big.Int, revocable bool, policy common.Address) (*types.Transaction, error) {
+	return _ManagedGrantFactory.Contract.CreateManagedGrant(&_ManagedGrantFactory.TransactOpts, grantee, amount, duration, start, cliffDuration, revocable, policy)
 }
 
 // ReceiveApproval is a paid mutator transaction binding the contract method 0x8f4ffcb1.
@@ -342,10 +342,15 @@ type ManagedGrantFactoryManagedGrantCreated struct {
 
 // FilterManagedGrantCreated is a free log retrieval operation binding the contract event 0xd670b8855e91e4ed32e465e934368080baed18d1aba14c28902bc9b934f3368a.
 //
-// Solidity: event ManagedGrantCreated(address grantAddress, address grantee)
-func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) FilterManagedGrantCreated(opts *bind.FilterOpts) (*ManagedGrantFactoryManagedGrantCreatedIterator, error) {
+// Solidity: event ManagedGrantCreated(address grantAddress, address indexed grantee)
+func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) FilterManagedGrantCreated(opts *bind.FilterOpts, grantee []common.Address) (*ManagedGrantFactoryManagedGrantCreatedIterator, error) {
 
-	logs, sub, err := _ManagedGrantFactory.contract.FilterLogs(opts, "ManagedGrantCreated")
+	var granteeRule []interface{}
+	for _, granteeItem := range grantee {
+		granteeRule = append(granteeRule, granteeItem)
+	}
+
+	logs, sub, err := _ManagedGrantFactory.contract.FilterLogs(opts, "ManagedGrantCreated", granteeRule)
 	if err != nil {
 		return nil, err
 	}
@@ -354,10 +359,15 @@ func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) FilterManagedGrantCreat
 
 // WatchManagedGrantCreated is a free log subscription operation binding the contract event 0xd670b8855e91e4ed32e465e934368080baed18d1aba14c28902bc9b934f3368a.
 //
-// Solidity: event ManagedGrantCreated(address grantAddress, address grantee)
-func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) WatchManagedGrantCreated(opts *bind.WatchOpts, sink chan<- *ManagedGrantFactoryManagedGrantCreated) (event.Subscription, error) {
+// Solidity: event ManagedGrantCreated(address grantAddress, address indexed grantee)
+func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) WatchManagedGrantCreated(opts *bind.WatchOpts, sink chan<- *ManagedGrantFactoryManagedGrantCreated, grantee []common.Address) (event.Subscription, error) {
 
-	logs, sub, err := _ManagedGrantFactory.contract.WatchLogs(opts, "ManagedGrantCreated")
+	var granteeRule []interface{}
+	for _, granteeItem := range grantee {
+		granteeRule = append(granteeRule, granteeItem)
+	}
+
+	logs, sub, err := _ManagedGrantFactory.contract.WatchLogs(opts, "ManagedGrantCreated", granteeRule)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +401,7 @@ func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) WatchManagedGrantCreate
 
 // ParseManagedGrantCreated is a log parse operation binding the contract event 0xd670b8855e91e4ed32e465e934368080baed18d1aba14c28902bc9b934f3368a.
 //
-// Solidity: event ManagedGrantCreated(address grantAddress, address grantee)
+// Solidity: event ManagedGrantCreated(address grantAddress, address indexed grantee)
 func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) ParseManagedGrantCreated(log types.Log) (*ManagedGrantFactoryManagedGrantCreated, error) {
 	event := new(ManagedGrantFactoryManagedGrantCreated)
 	if err := _ManagedGrantFactory.contract.UnpackLog(event, "ManagedGrantCreated", log); err != nil {
