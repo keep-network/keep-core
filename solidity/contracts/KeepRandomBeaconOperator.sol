@@ -78,7 +78,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /// @dev Time in blocks after which the next group member is eligible
     /// to submit the result.
-    uint256 public resultPublicationBlockStep = 3;
+    uint256 public resultPublicationBlockStep = 6;
 
     /// @dev Timeout in blocks for a relay entry to appear on the chain. Blocks
     /// are counted from the moment relay request occur.
