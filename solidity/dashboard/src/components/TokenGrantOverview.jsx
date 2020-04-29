@@ -49,10 +49,10 @@ const TokenGrantOverview = ({ selectedGrant }) => {
         title: `${cliffPeriod} cliff`
       }}
     >
-      <h1 className="balance">{displayAmount(selectedGrant.amount)}&nbsp;KEEP</h1>
+      <h1 className="balance">{displayAmount(selectedGrant.amount)}</h1>
       <h4 className="text-grey-30 mb-1">Grant ID {selectedGrant.id}</h4>
-      <h5 className="text-grey-50">Issued: {formatDate(moment.unix(selectedGrant.start))}</h5>
-      <h5 className="text-grey-50">Fully Unlocked: {formatDate(fullyUnlockedDate)}</h5>
+      <h5 className="text-grey-50">Issued: { selectedGrant.id && formatDate(moment.unix(selectedGrant.start))}</h5>
+      <h5 className="text-grey-50">Fully Unlocked: { selectedGrant.id && formatDate(fullyUnlockedDate)}</h5>
       <hr/>
       <div className="flex">
         <div className="flex-1">

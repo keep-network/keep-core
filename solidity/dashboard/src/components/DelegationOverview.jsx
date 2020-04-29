@@ -70,7 +70,7 @@ const DelegationOverview = () => {
                                 text="issued"
                             />
                             <span className="h4 text-grey-50 ml-1">
-                                {formatDate(moment.unix(selectedGrant.start))}
+                                {selectedGrant.start && formatDate(moment.unix(selectedGrant.start))}
                             </span>
                         </span>
                     </>
