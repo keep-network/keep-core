@@ -1,18 +1,18 @@
-import React, { useEffect, useRef } from 'react'
-import ReactDOM from 'react-dom'
-import * as Icons from './Icons'
+import React, { useEffect, useRef } from "react"
+import ReactDOM from "react-dom"
+import * as Icons from "./Icons"
 
-const modalRoot = document.getElementById('modal-root')
+const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 18
 const crossIconWidth = 18
 
 const Modal = React.memo(({ closeModal, ...props }) => {
   const modalOverlay = useRef(null)
   useEffect(() => {
-    document.body.style.overflow = 'hidden'
+    document.body.style.overflow = "hidden"
 
     return () => {
-      document.body.style.overflow = 'scroll'
+      document.body.style.overflow = "scroll"
     }
   }, [])
 
@@ -28,10 +28,7 @@ const Modal = React.memo(({ closeModal, ...props }) => {
         <div className="flex">
           <h5 className="text-darker-grey">{props.title}</h5>
           <div className="modal-close" onClick={closeModal}>
-            <Icons.Cross
-              width={crossIconWidth}
-              height={crossIconHeight}
-            />
+            <Icons.Cross width={crossIconWidth} height={crossIconHeight} />
           </div>
         </div>
         {props.children}
@@ -40,6 +37,5 @@ const Modal = React.memo(({ closeModal, ...props }) => {
     modalRoot
   )
 })
-
 
 export default Modal

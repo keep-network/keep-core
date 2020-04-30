@@ -28,27 +28,22 @@ library DKGResultVerification {
         uint256 signatureThreshold;
     }
 
-    /**
-     * @dev Verifies the submitted DKG result against supporting member
-     * signatures and if the submitter is eligible to submit at the current block.
-     *
-     * @param submitterMemberIndex Claimed submitter candidate group member index
-     * @param groupPubKey Generated candidate group public key
-     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-     * group members indexes; Indexes reflect positions of members in the group,
-     * as outputted by the group selection protocol.
-     * @param signatures Concatenation of signatures from members supporting the
-     * result.
-     * @param signingMemberIndices Indices of members corresponding to each
-     * signature.
-     * @param members Addresses of candidate group members as outputted by the
-     * group selection protocol.
-     * @param groupSelectionEndBlock Block height at which the group selection
-     * protocol ended.
-     *
-     * @return true if submitter is eligible to submit and the result is valid;
-     * Otherwise, transaction is reverted.
-     */
+    /// @notice Verifies the submitted DKG result against supporting member
+    /// signatures and if the submitter is eligible to submit at the current block.
+    ///
+    /// @param submitterMemberIndex Claimed submitter candidate group member index
+    /// @param groupPubKey Generated candidate group public key
+    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+    /// group members indexes; Indexes reflect positions of members in the group,
+    /// as outputted by the group selection protocol.
+    /// @param signatures Concatenation of signatures from members supporting the
+    /// result.
+    /// @param signingMemberIndices Indices of members corresponding to each
+    /// signature.
+    /// @param members Addresses of candidate group members as outputted by the
+    /// group selection protocol.
+    /// @param groupSelectionEndBlock Block height at which the group selection
+    /// protocol ended.
     function verify(
         Storage storage self,
         uint256 submitterMemberIndex,
@@ -58,7 +53,7 @@ library DKGResultVerification {
         uint256[] memory signingMemberIndices,
         address[] memory members,
         uint256 groupSelectionEndBlock
-    ) public view returns (bool) {
+    ) public view {
         require(submitterMemberIndex > 0, "Invalid submitter index");
         require(
             members[submitterMemberIndex - 1] == msg.sender,
@@ -97,7 +92,5 @@ library DKGResultVerification {
 
             require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
         }
-
-        return true;
     }
 }

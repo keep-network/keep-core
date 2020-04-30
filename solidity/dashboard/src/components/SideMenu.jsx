@@ -1,11 +1,11 @@
-import React, { useState, useContext } from 'react'
-import { Link, useRouteMatch } from 'react-router-dom'
-import { Web3Status } from './Web3Status'
-import { Web3Context } from './WithWeb3Context'
-import { ContractsDataContext } from './ContractsDataContextProvider'
-import AddressShortcut from './AddressShortcut'
-import { NetworkStatus } from './NetworkStatus'
-import * as Icons from './Icons'
+import React, { useState, useContext } from "react"
+import { Link, useRouteMatch } from "react-router-dom"
+import { Web3Status } from "./Web3Status"
+import { Web3Context } from "./WithWeb3Context"
+import { ContractsDataContext } from "./ContractsDataContextProvider"
+import AddressShortcut from "./AddressShortcut"
+import { NetworkStatus } from "./NetworkStatus"
+import * as Icons from "./Icons"
 
 export const SideMenuContext = React.createContext({})
 
@@ -29,15 +29,27 @@ export const SideMenu = (props) => {
   const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
 
   return (
-    <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
+    <nav className={`${isOpen ? "active " : ""}side-menu`}>
       <ul>
-        <NavLink exact to="/tokens" label='tokens' icon={<Icons.KeepToken />} />
-        <NavLink exact to="/operations" label='operations' icon={<Icons.Operations />}/>
-        <NavLink exact to="/rewards" label='rewards' icon={<Icons.Rewards />}/>
-        <NavLink exact to="/authorizer" label='authorizer' icon={<Icons.Authorizer />}/>
-        { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='token grants'/> }
+        <NavLink exact to="/tokens" label="tokens" icon={<Icons.KeepToken />} />
+        <NavLink
+          exact
+          to="/operations"
+          label="operations"
+          icon={<Icons.Operations />}
+        />
+        <NavLink exact to="/rewards" label="rewards" icon={<Icons.Rewards />} />
+        <NavLink
+          exact
+          to="/authorizer"
+          label="authorizer"
+          icon={<Icons.Authorizer />}
+        />
+        {isKeepTokenContractDeployer && (
+          <NavLink exact to="/create-token-grants" label="token grants" />
+        )}
         <Web3Status />
-        <div className='account-address'>
+        <div className="account-address">
           <h5 className="text-grey-50">
             <span>ADDRESS&nbsp;</span>
             <AddressShortcut classNames="text-small" address={yourAddress} />
@@ -57,7 +69,7 @@ const NavLink = ({ label, to, exact, icon }) => {
 
   return (
     <Link to={to}>
-      <li className={`text-label ${match ? 'active-page-link' : ''}`}>
+      <li className={`text-label ${match ? "active-page-link" : ""}`}>
         {icon}
         <span className="ml-1">{label}</span>
         <Icons.ArrowRight />

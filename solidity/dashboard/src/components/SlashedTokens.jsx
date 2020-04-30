@@ -1,9 +1,9 @@
-import React from 'react'
-import SlashedTokensList from './SlashedTokensList'
-import { LoadingOverlay } from './Loadable'
-import { useFetchData } from '../hooks/useFetchData'
-import { slashedTokensService } from '../services/slashed-tokens.service'
-import Tile from './Tile'
+import React from "react"
+import SlashedTokensList from "./SlashedTokensList"
+import { LoadingOverlay } from "./Loadable"
+import { useFetchData } from "../hooks/useFetchData"
+import { slashedTokensService } from "../services/slashed-tokens.service"
+import Tile from "./Tile"
 
 const SlashedTokens = (props) => {
   const [state] = useFetchData(slashedTokensService.fetchSlashedTokens, [])
@@ -16,17 +16,18 @@ const SlashedTokens = (props) => {
         id="slashed-tokens"
         withTooltip
         tooltipProps={{
-          text:
+          text: (
             <>
-              A &nbsp;<span className="text-bold">slash</span>&nbsp;
-              is a penalty for signing group misbehavior. It results in a removal of a portion of your delegated KEEP tokens.
+              A &nbsp;<span className="text-bold">slash</span>&nbsp; is a
+              penalty for signing group misbehavior. It results in a removal of
+              a portion of your delegated KEEP tokens.
             </>
+          ),
         }}
       >
         <SlashedTokensList slashedTokens={data} />
       </Tile>
     </LoadingOverlay>
-
   )
 }
 

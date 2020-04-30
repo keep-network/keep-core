@@ -1,11 +1,10 @@
-import React from 'react'
+import React from "react"
 
 export class DataTable extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
       headers: [],
-      fields: [],
     }
   }
 
@@ -15,54 +14,47 @@ export class DataTable extends React.Component {
 
   initializeDataTable = () => {
     const headers = []
-    const fields = []
     React.Children.forEach(this.props.children, (children) => {
       headers.push(children.props.header)
-      fields.push({
-        fieldName: children.props.field,
-        renderContent: children.props.renderContent,
-      })
     })
-    this.setState({ headers, fields })
+    this.setState({ headers })
   }
 
-  renderItemRow = (item) => {
-    const columns = this.state.fields.map((field, index) => {
-      return (
-        <td key={`${item[this.props.itemFieldId]}-${field.fieldName}-${item[field.fieldName]}`}>
-          <span className="responsive-header">{this.state.headers[index]}</span>
-          {field.renderContent ?
-            field.renderContent(item) :
-            item[field.fieldName]
-          }
-        </td>
-      )
-    })
-
+  renderItemRow = (item, index) => {
+    const { itemFieldId } = this.props
     return (
-      <tr key={item[this.props.itemFieldId]}>
-        {columns}
+      <tr key={`${item[itemFieldId]}-${index}`}>
+        {React.Children.map(this.props.children, (column, index) => {
+          const {
+            props: { field },
+          } = column
+          const cellKey = `${item[itemFieldId]}-${field}-${item[field]}-${index}`
+          return (
+            <td key={cellKey}>
+              <span className="responsive-header">{column.props.header}</span>
+              {this.renderColumnContent(column, item)}
+            </td>
+          )
+        })}
       </tr>
     )
   }
+  renderColumnContent = (column, item) => {
+    if (!column.props.renderContent) {
+      return item[column.props.field]
+    }
+    return column.props.renderContent(item)
+  }
 
-  renderHeader = (header) => (
-    <th key={header}>
-      {header}
-    </th>
-  )
+  renderHeader = (header) => <th key={header}>{header}</th>
 
   render() {
     return (
       <table>
         <thead>
-          <tr>
-            {this.state.headers.map(this.renderHeader)}
-          </tr>
+          <tr>{this.state.headers.map(this.renderHeader)}</tr>
         </thead>
-        <tbody>
-          {this.props.data.map(this.renderItemRow)}
-        </tbody>
+        <tbody>{this.props.data.map(this.renderItemRow)}</tbody>
       </table>
     )
   }

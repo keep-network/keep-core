@@ -182,14 +182,20 @@ describe('KeepRandomBeaconOperator/GroupTermination', function() {
     describe("should fail when there are no active groups", async () => {
       it("T", async function() {
         await expectRevert(
-          runTerminationTest(1, 0, [0], 0), 
-          "At least one active group required"
+          runTerminationTest(1, 0, [0], 0),
+          "No active groups"
         );
       })
       it("TT", async function() {
         await expectRevert(
-          runTerminationTest(2, 0, [0, 1], 0), 
-          "At least one active group required"
+          runTerminationTest(2, 0, [0, 1], 0),
+          "No active groups"
+        );
+      })
+      it("ET", async function () {
+        await expectRevert(
+          runTerminationTest(2, 1, [1], 0),
+          "No active groups"
         );
       })
     })

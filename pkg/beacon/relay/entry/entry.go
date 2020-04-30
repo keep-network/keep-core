@@ -129,8 +129,9 @@ func SignAndSubmit(
 			return nil
 		case blockNumber := <-relayEntryTimeoutChannel:
 			return fmt.Errorf(
-				"relay entry timed out at block [%v]",
+				"relay entry timed out at block [%v]; received [%v] valid signature shares",
 				blockNumber,
+				len(receivedValidShares),
 			)
 		}
 	}

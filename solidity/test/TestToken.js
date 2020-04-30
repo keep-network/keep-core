@@ -9,7 +9,15 @@ describe('TestToken', function() {
     account_two = accounts[1];
 
   before(async () => {
-    token = await KeepToken.new({from: account_one});
+    token = await KeepToken.new({ from: account_one });
+  });
+
+  it("sets token details", async function () {
+    await token.name.call();
+
+    assert.equal(await token.name.call(), "KEEP Token", "unexpected token name");
+    assert.equal(await token.symbol.call(), "KEEP", "unexpected token symbol");
+    assert.equal(await token.decimals.call(), 18, "unexpected decimals");
   });
 
   it("should send tokens correctly", async function() {

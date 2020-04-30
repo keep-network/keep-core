@@ -4,7 +4,7 @@ const grantTokens = require('../helpers/grantTokens');
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 const assert = require('chai').assert
 
@@ -18,7 +18,7 @@ describe('TokenGrant', function() {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new({from: accounts[0]});
+    registry = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(token.address, registry.address, time.duration.days(1), time.duration.days(30), {from: accounts[0]});
     grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
@@ -117,5 +117,23 @@ describe('TokenGrant', function() {
     assert.equal(schedule[2].eq(web3.utils.toBN(start)), true, "Grant should have start time.");
     assert.equal(schedule[3].eq(web3.utils.toBN(start).add(web3.utils.toBN(cliff))), true, "Grant should have unlocking schedule cliff time.duration.");
 
+  });
+
+  it("can assign a different address than the sender as grant manager", async () => {
+    // Assign `account_two` as grant manager
+    let grantData = web3.eth.abi.encodeParameters(
+      ['address', 'address', 'uint256', 'uint256', 'uint256', 'bool', 'address'],
+      [account_two, grantee, unlockingDuration.toNumber(), start.toNumber(), cliff.toNumber(), false, permissivePolicy.address]
+    );
+
+    await token.approveAndCall(grantContract.address, amount, grantData, {from: grant_manager});
+    let grantId = (await grantContract.getPastEvents())[0].args[0].toNumber();
+
+    let schedule = await grantContract.getGrantUnlockingSchedule(grantId);
+    assert.equal(
+      schedule[0],
+      account_two,
+      "The grant manager should be assignable to a non-sender"
+    );
   });
 });

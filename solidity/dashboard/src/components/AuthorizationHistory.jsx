@@ -1,9 +1,9 @@
-import React from 'react'
-import AddressShortcut from './AddressShortcut'
-import StatusBadge, { BADGE_STATUS } from './StatusBadge'
-import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
-import { DataTable, Column } from './DataTable'
-import Tile from './Tile'
+import React from "react"
+import AddressShortcut from "./AddressShortcut"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import { ETHERSCAN_DEFAULT_URL } from "../constants/constants"
+import { DataTable, Column } from "./DataTable"
+import Tile from "./Tile"
 
 const AuthorizationHistory = ({ contracts }) => {
   return (
@@ -12,7 +12,9 @@ const AuthorizationHistory = ({ contracts }) => {
         <Column
           header="contract address"
           field="contractAddress"
-          renderContent={({ contractAddress }) => <AddressShortcut address={contractAddress} />}
+          renderContent={({ contractAddress }) => (
+            <AddressShortcut address={contractAddress} />
+          )}
         />
         <Column
           header="status"
@@ -28,8 +30,12 @@ const AuthorizationHistory = ({ contracts }) => {
         <Column
           header="contract details"
           field="details"
-          renderContent={(contractAddress) => (
-            <a href={ETHERSCAN_DEFAULT_URL + contractAddress} rel="noopener noreferrer" target="_blank">
+          renderContent={({ contractAddress }) => (
+            <a
+              href={ETHERSCAN_DEFAULT_URL + contractAddress}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
               View in Block Explorer
             </a>
           )}
