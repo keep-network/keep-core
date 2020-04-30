@@ -238,7 +238,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         if (dkgSubmitterReimbursementFee > 0) {
             uint256 surplus = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
+            ServiceContract(groupSelectionStarterContract).fundDkgFeePool.value(surplus)();
         }
 
         groupSelection.minimumStake = stakingContract.minimumStake();
