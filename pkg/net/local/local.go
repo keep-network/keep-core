@@ -69,6 +69,10 @@ func (lp *localProvider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	return createLocalIdentifier(&networkPublicKey), nil
 }
 
+func (lp *localProvider) BroadcastChannelForwarderFor(name string) {
+	//no-op
+}
+
 // Connect returns a local instance of a net provider that does not go over the
 // network.
 func Connect() Provider {
@@ -105,7 +109,7 @@ type localConnectionManager struct {
 func (lcm *localConnectionManager) ConnectedPeers() []string {
 	lcm.mutex.Lock()
 	defer lcm.mutex.Unlock()
-	connectedPeers := make([]string, len(lcm.peers))
+	var connectedPeers []string
 	for peer := range lcm.peers {
 		connectedPeers = append(connectedPeers, peer)
 	}

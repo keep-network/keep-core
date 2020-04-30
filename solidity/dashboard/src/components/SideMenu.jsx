@@ -1,10 +1,10 @@
-import React, { useState, useContext } from 'react'
-import { Link, useRouteMatch } from 'react-router-dom'
-import { Web3Status } from './Web3Status'
-import { Web3Context } from './WithWeb3Context'
-import { ContractsDataContext } from './ContractsDataContextProvider'
-import AddressShortcut from './AddressShortcut'
-import { NetworkStatus } from './NetworkStatus'
+import React, { useState, useContext } from "react"
+import { Link, useRouteMatch } from "react-router-dom"
+import { Web3Status } from "./Web3Status"
+import { Web3Context } from "./WithWeb3Context"
+import { ContractsDataContext } from "./ContractsDataContextProvider"
+import AddressShortcut from "./AddressShortcut"
+import { NetworkStatus } from "./NetworkStatus"
 
 export const SideMenuContext = React.createContext({})
 
@@ -28,15 +28,21 @@ export const SideMenu = (props) => {
   const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
 
   return (
-    <nav className={`${ isOpen ? 'active ' : '' }side-menu`}>
+    <nav className={`${isOpen ? "active " : ""}side-menu`}>
       <ul>
-        <NavLink exact to="/tokens" label='tokens'/>
-        <NavLink exact to="/rewards" label='rewards'/>
-        <NavLink exact to="/operations" label='operations'/>
-        <NavLink exact to="/authorizer" label='authorizer'/>
-        { isKeepTokenContractDeployer && <NavLink exact to="/create-token-grants" label='create token grants'/> }
+        <NavLink exact to="/tokens" label="tokens" />
+        <NavLink exact to="/rewards" label="rewards" />
+        <NavLink exact to="/operations" label="operations" />
+        <NavLink exact to="/authorizer" label="authorizer" />
+        {isKeepTokenContractDeployer && (
+          <NavLink
+            exact
+            to="/create-token-grants"
+            label="create token grants"
+          />
+        )}
         <Web3Status />
-        <div className='account-address'>
+        <div className="account-address">
           <h5 className="text-grey-50">
             <span>ADDRESS&nbsp;</span>
             <AddressShortcut classNames="text-small" address={yourAddress} />
@@ -56,7 +62,7 @@ const NavLink = ({ label, to, exact }) => {
 
   return (
     <Link to={to}>
-      <li className={`text-label ${match ? 'active-page-link' : ''}`}>
+      <li className={`text-label ${match ? "active-page-link" : ""}`}>
         {label}
       </li>
     </Link>

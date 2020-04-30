@@ -6,7 +6,7 @@ import "./GrantStakingPolicy.sol";
 import "./TokenStaking.sol";
 
 /// @title GuaranteedMinimumStakingPolicy
-/// @dev A staking policy which allows the grantee
+/// @notice A staking policy which allows the grantee
 /// to always stake the defined minimum stake,
 /// or the unlocked amount if greater.
 ///

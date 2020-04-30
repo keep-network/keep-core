@@ -257,7 +257,7 @@ operator::
 An address authorized to use the tokens as stakes for participating in the
 network
 
-magpie::
+beneficiary::
 An address designated to receive any rewards from participation
 
 overseer::
@@ -289,12 +289,12 @@ in various protocols. A signature from the operator is also required to initiate
 staking, and the operator can unilaterally finish staking and return the tokens
 to the owner.
 
-===== Magpie
+===== Beneficiary
 
-The magpie collects rewards earned from staking and participating in the
-network. The magpie doesn't sign or publish any protocol-relevant transactions,
+The beneficiary collects rewards earned from staking and participating in the
+network. The beneficiary doesn't sign or publish any protocol-relevant transactions,
 but any currency or tokens earned by the staker will be transferred to the
-magpie.
+beneficiary.
 
 ===== Overseer
 
@@ -321,7 +321,7 @@ parallel operation using the same stake.
     *** _since_ last change
     *** _owner_ of the tokens
     *** _operator_ performing actions
-    *** _magpie_ receiving rewards
+    *** _beneficiary_ receiving rewards
     *** _authorizer_ auditing upgrades
   ** `delegate` method for delegating
   ** `undelegate` method for initiating undelegation
@@ -346,7 +346,7 @@ these contracts can also call `lock` with the proper authorization)
 
 ===== Delegating a stake:
 
-1. The _owner_ chooses the _staked amount_, and the _operator_, _magpie_ and
+1. The _owner_ chooses the _staked amount_, and the _operator_, _beneficiary_ and
 _upgrade authorizer_ addresses and creates a _delegation order_ containing this
 information
 
@@ -377,7 +377,7 @@ op_agreement[delegation_id] := {
   since = staking_time,
   owner = owner,
   operator = operator,
-  magpie = magpie,
+  beneficiary = beneficiary,
   authorizer = upgrade_authorizer
 }
 ....
@@ -476,7 +476,7 @@ required to join the operation, after which the following should be checked
 ===== Rewards
 
 1. If the operator is awarded a _reward_ of currency, the reward should be paid
-to `d_agreement.magpie`
+to `d_agreement.beneficiary`
 
 ===== Penalties
 
@@ -501,8 +501,8 @@ following:
   * `actual_penalty := min(penalty_amount, d_agreement.amount)`
   * If there is a tattletale reward:
     ** `actual_tattletale_reward := min(tattletale_reward_amount, actual_penalty)`
-    ** `tattletale_magpie := op_agreements[tattletale_id].magpie`
-    ** `tokens[tattletale_magpie] += actual_tattletale_reward`
+    ** `tattletale_beneficiary := op_agreements[tattletale_id].beneficiary`
+    ** `tokens[tattletale_beneficiary] += actual_tattletale_reward`
   * `d_agreement.amount -= actual_penalty`
   * If `d_agreement.amount < minimum_stake`, then the operator is blocked from
 joining any new operations and the tokens are automatically unstaked:

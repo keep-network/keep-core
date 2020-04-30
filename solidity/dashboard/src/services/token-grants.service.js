@@ -1,33 +1,75 @@
-import { TOKEN_GRANT_CONTRACT_NAME } from '../constants/constants'
-import { contractService } from './contracts.service'
-import { isSameEthAddress } from '../utils/general.utils'
-import web3Utils from 'web3-utils'
-import { getGuaranteedMinimumStakingPolicyContractAddress, getPermissiveStakingPolicyContractAddress } from '../contracts'
+import { TOKEN_GRANT_CONTRACT_NAME } from "../constants/constants"
+import { contractService } from "./contracts.service"
+import { isSameEthAddress } from "../utils/general.utils"
+import web3Utils from "web3-utils"
+import {
+  getGuaranteedMinimumStakingPolicyContractAddress,
+  getPermissiveStakingPolicyContractAddress,
+} from "../contracts"
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
-  const grantIds = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrants', yourAddress)
+  const grantIds = new Set(
+    await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGrants",
+      yourAddress
+    )
+  )
   const grants = []
 
-  for (let i = 0; i < grantIds.length; i++) {
-    const grantDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrant', grantIds[i])
+  for (const grantId of grantIds) {
+    const grantDetails = await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGrant",
+      grantId
+    )
     if (!isSameEthAddress(yourAddress, grantDetails.grantee)) {
       continue
     }
-    const unlockingSchedule = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantUnlockingSchedule', grantIds[i])
+    const unlockingSchedule = await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGrantUnlockingSchedule",
+      grantId
+    )
 
-    const unlocked = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'unlockedAmount', grantIds[i])
-    let readyToRelease = '0'
+    const unlocked = await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "unlockedAmount",
+      grantId
+    )
+    let readyToRelease = "0"
     try {
-      readyToRelease = await contractService
-        .makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'withdrawable', grantIds[i])
+      readyToRelease = await contractService.makeCall(
+        web3Context,
+        TOKEN_GRANT_CONTRACT_NAME,
+        "withdrawable",
+        grantId
+      )
     } catch (error) {
-      readyToRelease = '0'
+      readyToRelease = "0"
     }
     const released = grantDetails.withdrawn
-    const availableToStake = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'availableToStake', grantIds[i])
+    const availableToStake = await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "availableToStake",
+      grantId
+    )
 
-    grants.push({ id: grantIds[i], unlocked, released, readyToRelease, availableToStake, ...unlockingSchedule, ...grantDetails })
+    grants.push({
+      id: grantId,
+      unlocked,
+      released,
+      readyToRelease,
+      availableToStake,
+      ...unlockingSchedule,
+      ...grantDetails,
+    })
   }
 
   return grants
@@ -36,46 +78,43 @@ const fetchGrants = async (web3Context) => {
 const createGrant = async (web3Context, data, onTransationHashCallback) => {
   const { yourAddress, token, grantContract } = web3Context
   const tokenGrantContractAddress = grantContract.options.address
-  const {
-    grantee,
-    amount,
-    duration,
-    start,
-    cliff,
-    revocable,
-  } = data
+  const { grantee, amount, duration, start, cliff, revocable } = data
 
   /**
    * Extra data contains the following values:
-   * grantee (20 bytes) Address of the grantee.
-   * cliff (32 bytes) Duration in seconds of the cliff after which tokens will begin to unlock.
-   * start (32 bytes) Timestamp at which unlocking will start.
-   * revocable (1 byte) Whether the token grant is revocable or not (1 or 0).
-   * stakingPolicyAddress (20 bytes) The staking policy as an address
+   * from Address of the grant manager.
+   * grantee Address of the grantee.
+   * cliff Duration in seconds of the cliff after which tokens will begin to unlock.
+   * start Timestamp at which unlocking will start.
+   * revocable Whether the token grant is revocable or not (1 or 0).
+   * stakingPolicyAddress The staking policy as an address
    */
-  const stakingPolicyAddress = revocable ?
-    getGuaranteedMinimumStakingPolicyContractAddress() :
-    getPermissiveStakingPolicyContractAddress()
+  const stakingPolicyAddress = revocable
+    ? getGuaranteedMinimumStakingPolicyContractAddress()
+    : getPermissiveStakingPolicyContractAddress()
 
-  const extraData = Buffer.concat([
-    Buffer.from(grantee.substr(2), 'hex'),
-    web3Utils.toBN(duration).toBuffer('be', 32),
-    web3Utils.toBN(start).toBuffer('be', 32),
-    web3Utils.toBN(cliff).toBuffer('be', 32),
-    Buffer.from(revocable ? '01' : '00', 'hex'),
-    Buffer.from(stakingPolicyAddress.substr(2), 'hex'),
-  ])
+  const extraData = web3Context.eth.abi.encodeParameters(
+    ["address", "address", "uint256", "uint256", "uint256", "bool", "address"],
+    [
+      yourAddress,
+      grantee,
+      duration,
+      start,
+      cliff,
+      revocable,
+      stakingPolicyAddress,
+    ]
+  )
 
-  const formattedAmount = web3Utils.toBN(amount).mul(web3Utils.toBN(10).pow(web3Utils.toBN(18))).toString()
+  const formattedAmount = web3Utils
+    .toBN(amount)
+    .mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
+    .toString()
 
   await token.methods
-    .approveAndCall(
-      tokenGrantContractAddress,
-      formattedAmount,
-      extraData
-    )
+    .approveAndCall(tokenGrantContractAddress, formattedAmount, extraData)
     .send({ from: yourAddress })
-    .on('transactionHash', onTransationHashCallback)
+    .on("transactionHash", onTransationHashCallback)
 }
 
 export const tokenGrantsService = {

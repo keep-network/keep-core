@@ -1,22 +1,22 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react'
-import AuthorizeContracts from '../components/AuthorizeContracts'
-import AuthorizationHistory from '../components/AuthorizationHistory'
-import { authorizationService } from '../services/authorization.service'
-import { LoadingOverlay } from '../components/Loadable'
-import { useFetchData } from '../hooks/useFetchData'
-import Dropdown from '../components/Dropdown'
-import { Web3Context } from '../components/WithWeb3Context'
-import { useShowMessage, messageType } from '../components/Message'
-import PageWrapper from '../components/PageWrapper'
-import Tile from '../components/Tile'
+import React, { useState, useEffect, useContext, useMemo } from "react"
+import AuthorizeContracts from "../components/AuthorizeContracts"
+import AuthorizationHistory from "../components/AuthorizationHistory"
+import { authorizationService } from "../services/authorization.service"
+import { LoadingOverlay } from "../components/Loadable"
+import { useFetchData } from "../hooks/useFetchData"
+import Dropdown from "../components/Dropdown"
+import { Web3Context } from "../components/WithWeb3Context"
+import { useShowMessage, messageType } from "../components/Message"
+import PageWrapper from "../components/PageWrapper"
+import Tile from "../components/Tile"
 
 const initialData = {}
 
 const AuthorizerPage = () => {
-  const [
-    state, ,
-    refreshData,
-  ] = useFetchData(authorizationService.fetchAuthorizationPageData, initialData)
+  const [state, , refreshData] = useFetchData(
+    authorizationService.fetchAuthorizationPageData,
+    initialData
+  )
   const { yourAddress, stakingContract } = useContext(Web3Context)
   const showMessage = useShowMessage()
 
@@ -31,14 +31,21 @@ const AuthorizerPage = () => {
 
   const authorizeContaract = async (contract, onTransactionHashCallback) => {
     try {
-      await stakingContract
-        .methods
+      await stakingContract.methods
         .authorizeOperatorContract(operator.address, contract.contractAddress)
         .send({ from: yourAddress })
-        .on('transactionHash', onTransactionHashCallback)
-      showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'You have successfully authorized operator' })
+        .on("transactionHash", onTransactionHashCallback)
+      showMessage({
+        type: messageType.SUCCESS,
+        title: "Success",
+        content: "You have successfully authorized operator",
+      })
     } catch (error) {
-      showMessage({ type: messageType.ERROR, title: 'Error', content: error.message })
+      showMessage({
+        type: messageType.ERROR,
+        title: "Error",
+        content: error.message,
+      })
       throw error
     }
   }
@@ -53,24 +60,29 @@ const AuthorizerPage = () => {
         <Dropdown
           options={dropdownOptions}
           onSelect={(operator) => setOperator(operator)}
-          valuePropertyName='address'
-          labelPropertyName='address'
+          valuePropertyName="address"
+          labelPropertyName="address"
           selectedItem={operator}
-          labelPrefix='Operator:'
-          noItemSelectedText='Select Operator'
-          label=''
+          labelPrefix="Operator:"
+          noItemSelectedText="Select Operator"
+          label=""
         />
       </Tile>
       <LoadingOverlay isFetching={isFetching}>
         <AuthorizeContracts
-          contracts={data[operator.address] && data[operator.address].contractsToAuthorize}
+          contracts={
+            data[operator.address] &&
+            data[operator.address].contractsToAuthorize
+          }
           onAuthorizeBtn={authorizeContaract}
           onAuthorizeSuccessCallback={refreshData}
         />
       </LoadingOverlay>
       <LoadingOverlay isFetching={isFetching}>
         <AuthorizationHistory
-          contracts={data[operator.address] && data[operator.address].authorizedContracts}
+          contracts={
+            data[operator.address] && data[operator.address].authorizedContracts
+          }
         />
       </LoadingOverlay>
     </PageWrapper>

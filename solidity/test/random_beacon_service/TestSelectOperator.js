@@ -25,8 +25,18 @@ describe('TestKeepRandomBeaconService/SelectOperator', function() {
     operatorContract = contracts.operatorContract;
 
     // Create and initialize additional operator contracts
-    operatorContract2 = await OperatorContract.new(serviceContract.address, stakingContract.address, {from: accounts[0]});
-    operatorContract3 = await OperatorContract.new(serviceContract.address, stakingContract.address, {from: accounts[0]});
+    operatorContract2 = await OperatorContract.new(
+      serviceContract.address, 
+      stakingContract.address, 
+      registry.address,
+      {from: accounts[0]}
+    );
+    operatorContract3 = await OperatorContract.new(
+      serviceContract.address, 
+      stakingContract.address, 
+      registry.address,
+      {from: accounts[0]}
+    );
 
     await operatorContract.registerNewGroup("0x0", {from: accounts[0]});
     await operatorContract2.registerNewGroup("0x0", {from: accounts[0]});
@@ -102,5 +112,4 @@ describe('TestKeepRandomBeaconService/SelectOperator', function() {
       "Total number of groups must be greater than zero."
     );
   });
-
 });

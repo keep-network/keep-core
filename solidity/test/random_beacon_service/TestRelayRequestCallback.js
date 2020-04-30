@@ -4,6 +4,7 @@ const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const {expectRevert} = require("@openzeppelin/test-helpers")
 
 const CallbackContract = contract.fromArtifact('CallbackContract');
 
@@ -56,6 +57,22 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
   afterEach(async () => {
     await restoreSnapshot()
+  });
+
+  it("should revert when callback gas exceeds gas limit", async () => {
+    const callbackGas = 2000001;
+    await expectRevert(
+      serviceContract.entryFeeEstimate(callbackGas),
+      "Callback gas exceeds 2000000 gas limit"
+    );
+
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(2000000)
+    await expectRevert(
+      serviceContract.methods['requestRelayEntry(address,uint256)'](
+        callbackContract.address, callbackGas, {value: entryFeeEstimate, from: customer}
+      ),
+      "Callback gas exceeds 2000000 gas limit"
+    );
   });
 
   it("should produce entry when no callback was not provided", async () => {

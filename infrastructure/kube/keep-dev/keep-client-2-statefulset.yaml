@@ -5,6 +5,7 @@ metadata:
   name: keep-client-2
   namespace: default
   labels:
+    keel.sh/policy: all
     app: keep
     type: beacon
     id: '2'
@@ -52,6 +53,8 @@ spec:
                 key: account-2
           - name: LOG_LEVEL
             value: debug
+          - name: IPFS_LOGGING_FMT
+            value: nocolor
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config

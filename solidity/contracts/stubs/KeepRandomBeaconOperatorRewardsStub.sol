@@ -6,8 +6,13 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
-        address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        address _stakingContract,
+        address _registryContract
+    ) KeepRandomBeaconOperator(
+        _serviceContract,
+        _stakingContract,
+        _registryContract
+    ) public {
         groups.groupActiveTime = 5;
         groups.relayEntryTimeout = 10;
     }
@@ -25,7 +30,7 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
     }
 
     function emitRewardsWithdrawnEvent(address operator, uint256 groupIndex) public {
-        emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, 1000 wei, groupIndex);
+        emit GroupMemberRewardsWithdrawn(stakingContract.beneficiaryOf(operator), operator, 1000 wei, groupIndex);
     }
 
     function reportUnauthorizedSigning(
@@ -33,13 +38,23 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         bytes memory signedMsgSender
     ) public {
         uint256 minimumStake = stakingContract.minimumStake();
-        stakingContract.seize(minimumStake, 100, msg.sender,  groups.membersOf(0));
+        stakingContract.seize(
+            minimumStake,
+            100,
+            msg.sender,
+            groups.getGroupMembers(0)
+        );
         emit UnauthorizedSigningReported(groupIndex);
     }
 
     function reportRelayEntryTimeout() public {
         uint256 minimumStake = stakingContract.minimumStake();
-        stakingContract.seize(minimumStake, 100, msg.sender, groups.membersOf(0));
+        stakingContract.seize(
+            minimumStake,
+            100,
+            msg.sender,
+            groups.getGroupMembers(0)
+        );
         emit RelayEntryTimeoutReported(0);
     }
 

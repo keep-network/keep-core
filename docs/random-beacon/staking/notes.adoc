@@ -284,8 +284,8 @@ Returns the staker weight of the specified staker.
 operator(staker_id) -> address::
 Returns the address which has _operator_ authority for the specified staker.
 
-magpie(staker_id) -> address::
-Returns the address which has _magpie_ authority for the specified staker.
+beneficiary(staker_id) -> address::
+Returns the address which has _beneficiary_ authority for the specified staker.
 
 overseer(staker_id) -> address::
 Returns the address which has _overseer_ authority for the specified staker.
@@ -307,10 +307,10 @@ Calling `slash` on an `Unstaking` staker is backend-specific.
 * `since` time of last change (staking or unstaking)
 * `owner` of the tokens
 * `operator` address performing operations
-* `magpie` address to send rewards to
+* `beneficiary` address to send rewards to
 * `overseer` address to determine authorized contracts
 
-stake(amount, operator, magpie, overseer)::
+stake(amount, operator, beneficiary, overseer)::
 Initiate staking by specifying the addresses of the other roles
 and transferring at least _minimum stake_ tokens to the contract
 +
@@ -332,7 +332,7 @@ May be called by either the owner or the operator of the staker
 
 reward(staker_id, amount)::
 Reward a staker for correct operation
-and transfer currency or tokens to its magpie address
+and transfer currency or tokens to its beneficiary address
 +
 May be called by a functionality contract
 

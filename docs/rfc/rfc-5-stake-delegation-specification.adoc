@@ -33,7 +33,7 @@ owner:: The address of an owner of the staked tokens.
 operator:: The address of a party authorized to operate a stake on behalf of a
   given _owner_.
 
-magpie:: The address where the rewards for participation are sent, earned by an
+beneficiary:: The address where the rewards for participation are sent, earned by an
   _operator_, on behalf of an _owner_.
 
 delegated stake:: An _owner_'s staked tokens, delegated to the _operator_ by the
@@ -55,7 +55,7 @@ granted and all penalties are imposed.
 
 == Roles
 
-In this proposal, we are specifying three roles: owner, operator, and magpie.
+In this proposal, we are specifying three roles: owner, operator, and beneficiary.
 They are briefly characterized in this section.
 
 === Owner
@@ -84,13 +84,13 @@ The operator address is used to provide network functionality by
 The operator can unilaterally <<undelegating, finish delegation>> 
 and <<restoring, restore the tokens to the owner>>.
 
-=== Magpie
+=== Beneficiary
 
-The magpie collects <<rewarding,rewards>> earned from
+The beneficiary collects <<rewarding,rewards>> earned from
 <<delegating, stake delegation>> and
-<<operating, participation in the network>>. The magpie doesn't sign or publish
+<<operating, participation in the network>>. The beneficiary doesn't sign or publish
 any protocol-relevant transactions, but any currency or tokens earned by the
-operator will be transferred to the magpie.
+operator will be transferred to the beneficiary.
 
 == Specification Features
 
@@ -129,7 +129,7 @@ The contract should include the following information:
 
 * _owner_ address,
 * _operator_ address,
-* _magpie_ address,
+* _beneficiary_ address,
 * _bond_ indicator between an operator and an owner,
 * amount of delegated _tokens_,
 * _state_ of the agreement between an owner and an operator,
@@ -146,11 +146,11 @@ The contract should also have the following discrete pieces of functionality:
 ==== Delegating a stake
 
 1. The _owner_ chooses the number of tokens to delegate, _operator_, and
-_magpie_ and creates a _delegation order_ containing this information.
+_beneficiary_ and creates a _delegation order_ containing this information.
 
 2. The contract receives the _delegation order_ and verifies the following (if
 any condition is unfulfilled, processing aborts):
-  * _magpie_ address is set,
+  * _beneficiary_ address is set,
   * _operator_ is not involved in another active delegating contract,
   * amount of delegated tokens is lower or equal to the owner staked tokens.
 
@@ -218,7 +218,7 @@ required to join the operation, after which the following should be checked:
 ==== Rewarding
 
 If the operator is awarded a _reward_ of currency, the reward should be paid
-to magpie address. In this document, we are not specifying how rewarding
+to beneficiary address. In this document, we are not specifying how rewarding
 should be done.
 
 [#penalizing]

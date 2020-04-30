@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -29,7 +28,7 @@ func TestProviderReturnsType(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(),
 		privKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
@@ -59,7 +58,7 @@ func TestProviderReturnsChannel(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(),
 		privKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
@@ -98,7 +97,7 @@ func TestSendReceive(t *testing.T) {
 		ctx,
 		config,
 		privKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
@@ -173,7 +172,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		ctx,
 		config,
 		privateKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {

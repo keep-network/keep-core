@@ -1,6 +1,7 @@
 package key
 
 import (
+	"crypto/ecdsa"
 	"crypto/elliptic"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -76,4 +77,10 @@ func Libp2pKeyToNetworkKey(publicKey libp2pcrypto.PubKey) *NetworkPublic {
 		return (*NetworkPublic)(networkKey)
 	}
 	return nil
+}
+
+// NetworkKeyToECDSAKey takes the public NetworkKey and turns it into
+// ecdsa.PublicKey from Go standard library.
+func NetworkKeyToECDSAKey(publicKey *NetworkPublic) *ecdsa.PublicKey {
+	return (*btcec.PublicKey)(publicKey).ToECDSA()
 }

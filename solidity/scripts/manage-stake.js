@@ -4,7 +4,7 @@
   To stake KEEP tokens, use 'stake' command and provide three parameters:
   - operator address
   - amount of KEEP to stake
-  - KEEP owner address (we assume it's also magpie/beneficiary/authorizer address)
+  - KEEP owner address (we assume it's also beneficiary/authorizer address)
 
     $ truffle exec scripts/manage-stake.js stake 0x524f2E0176350d950fA630D9A5a59A0a190DAf48 10000 0xFa3DA235947AaB49D439f3BcB46effD1a7237E32
 
@@ -60,13 +60,13 @@ module.exports = async function() {
     async function stake() {
         const amountToStake = process.argv[6]; 
         const owner = process.argv[7];
-        const magpie = owner;
+        const beneficiary = owner;
         const authorizer = owner;
 
-        console.log(`Staking ${amountToStake} tokens from ${owner} to operator ${operator} using beneficiary ${magpie} and authorizer ${authorizer}`);
+        console.log(`Staking ${amountToStake} tokens from ${owner} to operator ${operator} using beneficiary ${beneficiary} and authorizer ${authorizer}`);
        
         const delegation = '0x' + Buffer.concat([
-            Buffer.from(magpie.substr(2), 'hex'),
+            Buffer.from(beneficiary.substr(2), 'hex'),
             Buffer.from(operator.substr(2), 'hex'),
             Buffer.from(authorizer.substr(2), 'hex')
         ]).toString('hex');
