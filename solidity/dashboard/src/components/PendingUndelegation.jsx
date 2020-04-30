@@ -16,7 +16,7 @@ import moment from "moment"
 import Tile from "./Tile"
 import { usePrevious } from "../hooks/usePrevious"
 
-const initialData = { pendinUndelegations: [] }
+const initialData = { undelegation: {} }
 
 const PendingUndelegation = ({ latestUnstakeEvent }) => {
   const { stakingContract, yourAddress } = useContext(Web3Context)
@@ -62,7 +62,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
   return (
     <LoadingOverlay isFetching={isFetching}>
       <Tile title="Token Undelegation" id="pending-undelegation">
-        <DataTable data={[data]} itemFieldId="undelegationComplete">
+        <DataTable data={[{ ...data }]} itemFieldId="pendingUnstakeBalance">
           <Column
             header="amount"
             field="pendingUnstakeBalance"
@@ -94,7 +94,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           />
           <Column
             header="estimate"
-            field="undelegationComplete"
+            field="undelegationCompletedAt"
             renderContent={({ undelegationCompletedAt }) =>
               undelegationCompletedAt
                 ? formatDate(undelegationCompletedAt)
