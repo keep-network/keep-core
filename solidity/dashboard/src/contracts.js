@@ -2,15 +2,17 @@ import KeepToken from '@keep-network/keep-core/artifacts/KeepToken.json'
 import TokenStaking from '@keep-network/keep-core/artifacts/TokenStaking.json'
 import TokenGrant from '@keep-network/keep-core/artifacts/TokenGrant.json'
 import KeepRandomBeaconOperator from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json'
-import Registry from '@keep-network/keep-core/artifacts/Registry.json'
+import KeepRegistry from '@keep-network/keep-core/artifacts/KeepRegistry.json'
 import GuaranteedMinimumStakingPolicy from '@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json'
 import PermissiveStakingPolicy from '@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json'
+import KeepRandomBeaconOperatorStatistics from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json'
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
   TOKEN_GRANT_CONTRACT_NAME,
   OPERATOR_CONTRACT_NAME,
   REGISTRY_CONTRACT_NAME,
+  KEEP_OPERATOR_STATISTICS_CONTRACT_NAME,
 } from './constants/constants'
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -19,6 +21,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [OPERATOR_CONTRACT_NAME]: 0,
   [TOKEN_STAKING_CONTRACT_NAME]: 0,
   [REGISTRY_CONTRACT_NAME]: 0,
+  [KEEP_OPERATOR_STATISTICS_CONTRACT_NAME]: 0,
 }
 
 export async function getKeepToken(web3) {
@@ -38,7 +41,11 @@ export async function getKeepRandomBeaconOperator(web3) {
 }
 
 export async function getRegistry(web3) {
-  return getContract(web3, Registry, REGISTRY_CONTRACT_NAME)
+  return getContract(web3, KeepRegistry, REGISTRY_CONTRACT_NAME)
+}
+
+export async function getKeepRandomBeaconOperatorStatistics(web3) {
+  return getContract(web3, KeepRandomBeaconOperatorStatistics, KEEP_OPERATOR_STATISTICS_CONTRACT_NAME)
 }
 
 export async function getKeepTokenContractDeployerAddress(web3) {
@@ -62,6 +69,7 @@ export async function getContracts(web3) {
     getTokenStaking(web3),
     getKeepRandomBeaconOperator(web3),
     getRegistry(web3),
+    getKeepRandomBeaconOperatorStatistics(web3),
   ])
 
   return {
@@ -70,6 +78,7 @@ export async function getContracts(web3) {
     stakingContract: contracts[2],
     keepRandomBeaconOperatorContract: contracts[3],
     registryContract: contracts[4],
+    keepRandomBeaconOperatorStatistics: contracts[5]
   }
 }
 

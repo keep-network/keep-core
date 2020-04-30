@@ -93,7 +93,7 @@ type initiatorAct1 struct {
 func InitiateHandshake() (*initiatorAct1, error) {
 	nonce1, err := randomNonce()
 	if err != nil {
-		return nil, fmt.Errorf("could not initiate the handshake [%v]", err)
+		return nil, fmt.Errorf("could not initiate the handshake: [%v]", err)
 	}
 
 	return &initiatorAct1{nonce1}, nil
@@ -119,7 +119,7 @@ func AnswerHandshake(message *Act1Message) (*responderAct2, error) {
 	nonce1 := message.nonce1
 	nonce2, err := randomNonce()
 	if err != nil {
-		return nil, fmt.Errorf("could not answer the handshake [%v]", err)
+		return nil, fmt.Errorf("could not answer the handshake: [%v]", err)
 	}
 	challenge := hashToChallenge(nonce1, nonce2)
 
@@ -215,7 +215,7 @@ func randomNonce() (uint64, error) {
 	bytes := make([]byte, 8)
 	_, err := crand.Read(bytes)
 	if err != nil {
-		return 0, fmt.Errorf("could not generate a new nonce [%v]", err)
+		return 0, fmt.Errorf("could not generate a new nonce: [%v]", err)
 	}
 
 	return binary.LittleEndian.Uint64(bytes), nil

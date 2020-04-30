@@ -14,10 +14,6 @@ config.*.toml
 *.out
 *.abi
 *.account
-pkg/**/gen/*/*.go
-!pkg/gen/async/*.go
-!pkg/net/gen/pb/*.go
-!pkg/chain/gen/cmd/cmd*.go
 
 # Executables
 debug

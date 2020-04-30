@@ -1,16 +1,18 @@
-import React from 'react'
-import { displayAmount, formatDate } from '../utils/general.utils'
-import AddressShortcut from './AddressShortcut'
-import UndelegateStakeButton from './UndelegateStakeButton'
-import StatusBadge, { BADGE_STATUS } from './StatusBadge'
-import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
-import { DataTable, Column } from './DataTable'
-import Tile from './Tile'
+import React from "react"
+import { displayAmount, formatDate } from "../utils/general.utils"
+import AddressShortcut from "./AddressShortcut"
+import UndelegateStakeButton from "./UndelegateStakeButton"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
+import { DataTable, Column } from "./DataTable"
+import Tile from "./Tile"
 
-const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) => {
+const DelegatedTokensTable = ({
+  delegatedTokens,
+  cancelStakeSuccessCallback,
+}) => {
   return (
-    <Tile className="tile">
-      <h3 className="text-grey-60">Delegations</h3>
+    <Tile title="Delegations">
       <DataTable data={delegatedTokens} itemFieldId="operatorAddress">
         <Column
           header="amount"
@@ -21,10 +23,15 @@ const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) =
           header="status"
           field="delegationStatus"
           renderContent={(delegation) => {
-            const delegationStatus = delegation.isInInitializationPeriod ? PENDING_STATUS : COMPLETE_STATUS
-            const statusBadgeText = delegationStatus === PENDING_STATUS ?
-              `${delegationStatus.toLowerCase()}, ${delegation.initializationOverAt.fromNow(true)}` :
-              formatDate(delegation.initializationOverAt)
+            const delegationStatus = delegation.isInInitializationPeriod
+              ? PENDING_STATUS
+              : COMPLETE_STATUS
+            const statusBadgeText =
+              delegationStatus === PENDING_STATUS
+                ? `${delegationStatus.toLowerCase()}, ${delegation.initializationOverAt.fromNow(
+                    true
+                  )}`
+                : formatDate(delegation.initializationOverAt)
 
             return (
               <StatusBadge
@@ -39,30 +46,40 @@ const DelegatedTokensTable = ({ delegatedTokens, cancelStakeSuccessCallback }) =
         <Column
           header="beneficiary"
           field="beneficiary"
-          renderContent={({ beneficiary }) => <AddressShortcut address={beneficiary} />}
+          renderContent={({ beneficiary }) => (
+            <AddressShortcut address={beneficiary} />
+          )}
         />
         <Column
           header="operator"
           field="operatorAddress"
-          renderContent={({ operatorAddress }) => <AddressShortcut address={operatorAddress} />}
+          renderContent={({ operatorAddress }) => (
+            <AddressShortcut address={operatorAddress} />
+          )}
         />
         <Column
           header="authorizer"
           field="authorizerAddress"
-          renderContent={({ authorizerAddress }) => <AddressShortcut address={authorizerAddress} />}
+          renderContent={({ authorizerAddress }) => (
+            <AddressShortcut address={authorizerAddress} />
+          )}
         />
         <Column
           header=""
           field=""
-          renderContent={(delegation) =>
+          renderContent={(delegation) => (
             <UndelegateStakeButton
               isInInitializationPeriod={delegation.isInInitializationPeriod}
               isFromGrant={delegation.isFromGrant}
               btnClassName="btn btn-sm btn-secondary"
               operator={delegation.operatorAddress}
-              successCallback={delegation.isInInitializationPeriod ? cancelStakeSuccessCallback : () => {}}
+              successCallback={
+                delegation.isInInitializationPeriod
+                  ? cancelStakeSuccessCallback
+                  : () => {}
+              }
             />
-          }
+          )}
         />
       </DataTable>
     </Tile>

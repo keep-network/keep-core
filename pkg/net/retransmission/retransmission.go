@@ -30,7 +30,7 @@ func ScheduleRetransmissions(
 		ticker.onTick(ctx, func() {
 			go func() {
 				if err := retransmit(); err != nil {
-					logger.Errorf("could not retransmit message [%v]", err)
+					logger.Errorf("could not retransmit message: [%v]", err)
 				}
 			}()
 		})

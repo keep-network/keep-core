@@ -77,7 +77,35 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 					}
 					errorChannel <- err
 				})
-			return <-errorChannel
+
+			entryErr := <-errorChannel
+
+			if entryErr != nil {
+				isEntryInProgress, err := res.chain.IsEntryInProgress()
+				if err != nil {
+					logger.Errorf(
+						"[member:%v] could not check entry status after "+
+							"relay entry submission error: [%v]; "+
+							"original error will be returned",
+						res.index,
+						err,
+					)
+					return entryErr
+				}
+
+				// Check if we failed because someone else submitted in the
+				// meantime or because something wrong happened with
+				// our transaction.
+				if !isEntryInProgress {
+					logger.Infof(
+						"[member:%v] relay entry already submitted",
+						res.index,
+					)
+					return nil
+				}
+			}
+
+			return entryErr
 		case blockNumber := <-relayEntrySubmittedChannel:
 			logger.Infof(
 				"[member:%v] leaving submitter; "+

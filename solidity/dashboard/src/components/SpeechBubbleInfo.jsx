@@ -1,8 +1,8 @@
-import React from 'react'
-import * as Icons from './Icons'
+import React from "react"
+import * as Icons from "./Icons"
 
-const childStyle = { marginLeft: '1rem' }
-const wrapperStyle = { marginTop: '0.8rem' }
+const childStyle = { marginLeft: "1rem" }
+const wrapperStyle = { marginTop: "0.8rem" }
 
 export const SpeechBubbleInfo = ({ children, className }) => {
   return (
@@ -16,7 +16,7 @@ export const SpeechBubbleInfo = ({ children, className }) => {
 }
 
 SpeechBubbleInfo.defaultProps = {
-  className: '',
+  className: "",
 }
 
 export default React.memo(SpeechBubbleInfo)

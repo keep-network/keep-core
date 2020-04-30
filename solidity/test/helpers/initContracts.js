@@ -4,8 +4,9 @@ const BLS = contract.fromArtifact('BLS');
 const GroupSelection = contract.fromArtifact('GroupSelection');
 const Groups = contract.fromArtifact('Groups');
 const DKGResultVerification = contract.fromArtifact("DKGResultVerification");
+const DelayFactor = contract.fromArtifact("DelayFactor");
 const Reimbursements = contract.fromArtifact("Reimbursements");
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -14,8 +15,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     serviceContractImplV1, serviceContractProxy, serviceContract,
     operatorContract;
 
-  let dkgContributionMargin = 1, // 1%
-    withdrawalDelay = 1,
+  let dkgContributionMargin = 5, // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
     stakeInitializationPeriod = 30, // In seconds
     stakeUndelegationPeriod = 300; // In seconds
 
@@ -23,7 +23,7 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   token = await KeepToken.new({from: accounts[0]});
 
   // Initialize registry contract
-  registry = await Registry.new({from: accounts[0]});
+  registry = await KeepRegistry.new({from: accounts[0]});
 
   // Initialize staking contract
   stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod, {from: accounts[0]});
@@ -34,7 +34,6 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   const initialize = serviceContractImplV1.contract.methods
       .initialize(
           dkgContributionMargin,
-          withdrawalDelay,
           registry.address,
       ).encodeABI();
 
@@ -49,16 +48,22 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   await Groups.detectNetwork()
   await Groups.link("BLS", bls.address);
   const groups = await Groups.new({from: accounts[0]});
-
+  const delayFactor = await DelayFactor.new({from: accounts[0]});
   const dkgResultVerification = await DKGResultVerification.new({from: accounts[0]});
 
   const reimbursements = await Reimbursements.new({from: accounts[0]});
 
+  await KeepRandomBeaconOperator.link("DelayFactor", delayFactor.address);
   await KeepRandomBeaconOperator.link("GroupSelection", groupSelection.address);
   await KeepRandomBeaconOperator.link("Groups", groups.address);
   await KeepRandomBeaconOperator.link("DKGResultVerification", dkgResultVerification.address);
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address);
-  operatorContract = await KeepRandomBeaconOperator.new(serviceContractProxy.address, stakingContract.address, {from: accounts[0]});
+  operatorContract = await KeepRandomBeaconOperator.new(
+    serviceContractProxy.address,
+    stakingContract.address,
+    registry.address,
+    {from: accounts[0]}
+  );
 
   await registry.approveOperatorContract(operatorContract.address, {from: accounts[0]});
 

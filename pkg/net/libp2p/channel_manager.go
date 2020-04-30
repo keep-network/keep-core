@@ -3,6 +3,7 @@ package libp2p
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -30,6 +31,9 @@ type channelManager struct {
 	pubsub *pubsub.PubSub
 
 	retransmissionTicker *retransmission.Ticker
+
+	forwarderSubscriptionsMutex sync.Mutex
+	forwarderSubscriptions      map[string]*pubsub.Subscription
 }
 
 func newChannelManager(
@@ -51,12 +55,13 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels:             make(map[string]*channel),
-		pubsub:               floodsub,
-		peerStore:            p2phost.Peerstore(),
-		identity:             identity,
-		ctx:                  ctx,
-		retransmissionTicker: retransmissionTicker,
+		channels:               make(map[string]*channel),
+		pubsub:                 floodsub,
+		peerStore:              p2phost.Peerstore(),
+		identity:               identity,
+		ctx:                    ctx,
+		retransmissionTicker:   retransmissionTicker,
+		forwarderSubscriptions: make(map[string]*pubsub.Subscription),
 	}, nil
 }
 
@@ -113,4 +118,54 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	go channel.handleMessages(cm.ctx)
 
 	return channel, nil
+}
+
+func (cm *channelManager) newForwarder(name string, ttl time.Duration) error {
+	cm.forwarderSubscriptionsMutex.Lock()
+	defer cm.forwarderSubscriptionsMutex.Unlock()
+
+	if _, ok := cm.forwarderSubscriptions[name]; !ok {
+		forwarderSubscription, err := cm.pubsub.Subscribe(name)
+		if err != nil {
+			return err
+		}
+
+		go func() {
+			ctx, cancelCtx := context.WithTimeout(cm.ctx, ttl)
+			defer cancelCtx()
+
+			for {
+				select {
+				case <-ctx.Done():
+					cm.shutdownForwarder(name)
+					return
+				default:
+					// Just pull the message from subscription to unblock
+					// the channel and avoid warnings from libp2p. We
+					// are not interested with their content.
+					_, _ = forwarderSubscription.Next(ctx)
+				}
+			}
+		}()
+
+		cm.forwarderSubscriptions[name] = forwarderSubscription
+	}
+
+	return nil
+}
+
+func (cm *channelManager) shutdownForwarder(name string) {
+	cm.forwarderSubscriptionsMutex.Lock()
+	defer cm.forwarderSubscriptionsMutex.Unlock()
+
+	logger.Debugf("shutting down message forwarder for channel: [%v]", name)
+
+	forwarderSubscription, ok := cm.forwarderSubscriptions[name]
+
+	if !ok {
+		return
+	}
+
+	forwarderSubscription.Cancel()
+	delete(cm.forwarderSubscriptions, name)
 }
