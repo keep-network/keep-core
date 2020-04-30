@@ -1,9 +1,9 @@
-import React from 'react'
-import AddressShortcut from './AddressShortcut'
-import StatusBadge, { BADGE_STATUS } from './StatusBadge'
-import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
-import { DataTable, Column } from './DataTable'
-import Tile from './Tile'
+import React from "react"
+import AddressShortcut from "./AddressShortcut"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import { ETHERSCAN_DEFAULT_URL } from "../constants/constants"
+import { DataTable, Column } from "./DataTable"
+import Tile from "./Tile"
 
 const AuthorizationHistory = ({ contracts }) => {
   return (
