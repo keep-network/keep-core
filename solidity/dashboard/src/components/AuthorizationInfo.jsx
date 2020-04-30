@@ -4,6 +4,7 @@ import { authorizationService } from "../services/authorization.service"
 import { LoadingOverlay } from "../components/Loadable"
 import AddressShortcut from "../components/AddressShortcut"
 import { ETHERSCAN_DEFAULT_URL } from "../constants/constants"
+import Tile from "./Tile"
 
 const initialData = { isOperator: false, contracts: [] }
 
@@ -21,8 +22,7 @@ const AuthorizationInfo = (props) => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <section className="tile">
-        <h3 className="text-grey-60">Authorization</h3>
+      <Tile title="Authorization">
         {contracts.map((contract) => (
           <div key={contract.contractAddress} className="mb-1">
             You have been successfully authorized by authorizer&nbsp;
@@ -38,7 +38,7 @@ const AuthorizationInfo = (props) => {
             .
           </div>
         ))}
-      </section>
+      </Tile>
     </LoadingOverlay>
   )
 }

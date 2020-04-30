@@ -7,6 +7,8 @@ import { useFetchData } from "../hooks/useFetchData"
 import Dropdown from "../components/Dropdown"
 import { Web3Context } from "../components/WithWeb3Context"
 import { useShowMessage, messageType } from "../components/Message"
+import PageWrapper from "../components/PageWrapper"
+import Tile from "../components/Tile"
 
 const initialData = {}
 
@@ -53,10 +55,8 @@ const AuthorizerPage = () => {
   }, [data])
 
   return (
-    <>
-      <h2 className="mb-2">Authorizations</h2>
-      <section className="tile">
-        <h3 className="text-grey-60 mb-1">Available Operators</h3>
+    <PageWrapper title="Authorizations">
+      <Tile title="Available Operators">
         <Dropdown
           options={dropdownOptions}
           onSelect={(operator) => setOperator(operator)}
@@ -67,7 +67,7 @@ const AuthorizerPage = () => {
           noItemSelectedText="Select Operator"
           label=""
         />
-      </section>
+      </Tile>
       <LoadingOverlay isFetching={isFetching}>
         <AuthorizeContracts
           contracts={
@@ -85,7 +85,7 @@ const AuthorizerPage = () => {
           }
         />
       </LoadingOverlay>
-    </>
+    </PageWrapper>
   )
 }
 

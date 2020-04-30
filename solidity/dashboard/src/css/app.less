@@ -114,17 +114,16 @@ ul {
     padding: 0;
 
     & li {
-      border-bottom: 1px solid @color-black;
-      padding: 1rem 0;
+      color: @color-grey-70;
+      padding: 1.25rem 0;
       width: 100%;
-      font-size: 1rem;
-      font-weight: normal;
-      letter-spacing: .05rem;
-      font-variant: small-caps;
       border-right: 0 solid @primary-color;
-      transition: border-right-width 0.3s ease;
+      border-bottom: 1px solid @color-black;
+      transition: all 0.3s ease;
 
       &:hover {
+        color: @color-black;
+        font-weight: 600;
         cursor: pointer;
         border-right-width: 5px;
       }
@@ -132,7 +131,7 @@ ul {
       &.active-page-link {
         border-right-width: 5px;
         color: @color-black;
-        font-weight: bold;
+        font-weight: 600;
       }
     }
 

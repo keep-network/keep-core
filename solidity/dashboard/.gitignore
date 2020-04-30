@@ -15,5 +15,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+/src/css/app.css
 /src/app.css
 /src/contracts
