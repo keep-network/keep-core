@@ -28,6 +28,8 @@ const DelegatedTokens = (props) => {
       isUndelegationFromGrant,
       isInInitializationPeriod,
       undelegationPeriod,
+      isManagedGrant,
+      managedGrantContractInstance,
     },
   } = state
 
@@ -77,6 +79,8 @@ const DelegatedTokens = (props) => {
           }
           isFromGrant={isUndelegationFromGrant}
           isInInitializationPeriod={isInInitializationPeriod}
+          isManagedGrant={isManagedGrant}
+          managedGrantContractInstance={managedGrantContractInstance}
         />
       )
     }
