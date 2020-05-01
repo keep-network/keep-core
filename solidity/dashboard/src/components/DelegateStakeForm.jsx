@@ -136,10 +136,10 @@ const TokensAmountField = ({
 
 const connectedWithFormik = withFormik({
   mapPropsToValues: () => ({
-    beneficiaryAddress: null,
-    stakeTokens: null,
-    operatorAddress: null,
-    authorizerAddress: null,
+    beneficiaryAddress: "",
+    stakeTokens: "",
+    operatorAddress: "",
+    authorizerAddress: "",
   }),
   validate: (values, props) => {
     const { beneficiaryAddress, operatorAddress, authorizerAddress } = values
