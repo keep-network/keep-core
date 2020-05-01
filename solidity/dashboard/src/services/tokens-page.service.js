@@ -126,7 +126,7 @@ const getDelegations = async (
     const beneficiary = await contractService.makeCall(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
-      "magpieOf",
+      "beneficiaryOf",
       operatorAddress
     )
     const authorizerAddress = await contractService.makeCall(
@@ -138,13 +138,17 @@ const getDelegations = async (
 
     let grantId
     if (isFromGrant) {
-      const grantStakeDetails = await contractService.makeCall(
-        web3Context,
-        TOKEN_GRANT_CONTRACT_NAME,
-        "getGrantStakeDetails",
-        operatorAddress
-      )
-      grantId = grantStakeDetails
+      try {
+        const grantStakeDetails = await contractService.makeCall(
+          web3Context,
+          TOKEN_GRANT_CONTRACT_NAME,
+          "getGrantStakeDetails",
+          operatorAddress
+        )
+        grantId = grantStakeDetails.grantId
+      } catch (error) {
+        grantId = null
+      }
     }
 
     const operatorData = {
