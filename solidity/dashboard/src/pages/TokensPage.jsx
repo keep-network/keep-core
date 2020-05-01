@@ -6,7 +6,10 @@ import { Web3Context } from "../components/WithWeb3Context"
 import { useShowMessage, messageType } from "../components/Message"
 import { LoadingOverlay } from "../components/Loadable"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent.js"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import {
+  TOKEN_STAKING_CONTRACT_NAME,
+  TOKEN_GRANT_CONTRACT_NAME,
+} from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
@@ -33,6 +36,7 @@ const TokensPage = () => {
   useSubscribeToStakedEvent()
   useSubscribeToUndelegatedEvent()
   useSubscribeToRecoveredStakeEvent()
+  useSubscribeToTokenGrantEvents()
 
   const {
     keepTokenBalance,
@@ -149,6 +153,7 @@ const useSubscribeToStakedEvent = async () => {
       initializationOverAt: moment
         .unix(createdAt)
         .add(initializationPeriod, "seconds"),
+      grantId: grantStakeDetails.grantId,
     }
 
     if (!isFromGrant) {
@@ -203,6 +208,7 @@ const useSubscribeToUndelegatedEvent = () => {
         .unix(undelegatedAt)
         .add(undelegationPeriod, "seconds"),
       canRecoverStake: false,
+      grantId: isFromGrant ? grantStakeDetails.grantId : null,
     }
     dispatch({ type: REMOVE_DELEGATION, payload: operator })
 
@@ -298,4 +304,40 @@ const isAddressedToCurrentAccount = async (
     const owner = await stakingContract.methods.ownerOf(operator).call()
     return !isSameEthAddress(owner, yourAddress)
   }
+}
+
+const useSubscribeToTokenGrantEvents = () => {
+  const {
+    refreshGrantTokenBalance,
+    refreshKeepTokenBalance,
+    grantStaked,
+    grantWithdrawn,
+  } = useTokensPageContext()
+
+  const subscribeToStakedEventCallback = (stakedEvent) => {
+    const {
+      returnValues: { grantId, amount },
+    } = stakedEvent
+    grantStaked(grantId, amount)
+  }
+
+  const subscribeToWithdrawanEventCallback = (withdrawanEvent) => {
+    const {
+      returnValues: { grantId, amount },
+    } = withdrawanEvent
+    grantWithdrawn(grantId, amount)
+    refreshGrantTokenBalance()
+    refreshKeepTokenBalance()
+  }
+
+  useSubscribeToContractEvent(
+    TOKEN_GRANT_CONTRACT_NAME,
+    "TokenGrantStaked",
+    subscribeToStakedEventCallback
+  )
+  useSubscribeToContractEvent(
+    TOKEN_GRANT_CONTRACT_NAME,
+    "TokenGrantWithdrawn",
+    subscribeToWithdrawanEventCallback
+  )
 }
