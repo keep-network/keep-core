@@ -7,6 +7,8 @@ import {
 } from "../constants/constants"
 import { sub, gt } from "../utils/arithmetics.utils"
 import moment from "moment"
+import { tokenGrantsService } from "../services/token-grants.service"
+import { createManagedGrantContractInstance } from "../contracts"
 
 export const fetchTokensPageData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -61,6 +63,9 @@ export const fetchTokensPageData = async (web3Context) => {
     yourAddress
   )
   const granteeOperatorsSet = new Set(granteeOperators)
+  const managedGrantOperators = await tokenGrantsService.getOperatorsFromManagedGrants(
+    web3Context
+  )
 
   const [
     ownedDelegations,
@@ -81,14 +86,27 @@ export const fetchTokensPageData = async (web3Context) => {
     undelegationPeriod,
     true
   )
+  const [
+    managedGrantsDelegations,
+    managedGrantsUndelegations,
+  ] = await getDelegations(
+    managedGrantOperators,
+    web3Context,
+    initializationPeriod,
+    undelegationPeriod,
+    true,
+    true
+  )
 
   const delegations = [
     ...ownedDelegations,
     ...granteeDelegations,
+    ...managedGrantsDelegations,
   ].sort((a, b) => sub(b.createdAt, a.createdAt))
   const undelegations = [
     ...ownedUndelegations,
     ...granteeUndelegations,
+    ...managedGrantsUndelegations,
   ].sort((a, b) => sub(b.undelegatedAt, a.undelegatedAt))
 
   return {
@@ -109,8 +127,10 @@ const getDelegations = async (
   web3Context,
   initializationPeriod,
   undelegationPeriod,
-  isFromGrant = false
+  isFromGrant = false,
+  isManagedGrant = false
 ) => {
+  const { web3 } = web3Context
   let tokenStakingBalance = web3Utils.toBN(0)
   let pendingUndelegationBalance = web3Utils.toBN(0)
   const delegations = []
@@ -137,6 +157,10 @@ const getDelegations = async (
     )
 
     let grantId
+    let managedGrantContractInstance = createManagedGrantContractInstance(
+      web3,
+      operatorAddress
+    )
     if (isFromGrant) {
       try {
         const grantStakeDetails = await contractService.makeCall(
@@ -149,6 +173,18 @@ const getDelegations = async (
       } catch (error) {
         grantId = null
       }
+      if (isManagedGrant) {
+        const { grantee } = await contractService.makeCall(
+          web3Context,
+          TOKEN_GRANT_CONTRACT_NAME,
+          "getGrant",
+          grantId
+        )
+        managedGrantContractInstance = createManagedGrantContractInstance(
+          web3,
+          grantee
+        )
+      }
     }
 
     const operatorData = {
@@ -160,6 +196,8 @@ const getDelegations = async (
       authorizerAddress,
       isFromGrant,
       grantId,
+      isManagedGrant,
+      managedGrantContractInstance,
     }
     const balance = web3Utils.toBN(amount)
 
@@ -219,7 +257,7 @@ const delegateStake = async (web3Context, data, onTransactionHashCallback) => {
       Buffer.from(authorizerAddress.substr(2), "hex"),
     ]).toString("hex")
 
-  const { token, stakingContract, grantContract, yourAddress } = web3Context
+  const { token, stakingContract, yourAddress } = web3Context
 
   if (context === "owned") {
     await token.methods
@@ -227,15 +265,8 @@ const delegateStake = async (web3Context, data, onTransactionHashCallback) => {
       .send({ from: yourAddress })
       .on("transactionHash", onTransactionHashCallback)
   } else if (context === "granted") {
-    await grantContract.methods
-      .stake(
-        selectedGrant.id,
-        stakingContract.options.address,
-        amount,
-        delegation
-      )
-      .send({ from: yourAddress })
-      .on("transactionHash", onTransactionHashCallback)
+    const data = { delegation, amount, grant: { ...selectedGrant } }
+    await tokenGrantsService.stake(web3Context, data, onTransactionHashCallback)
   }
 }
 
