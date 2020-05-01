@@ -79,6 +79,10 @@ const Undelegations = ({ undelegations }) => {
             undelegation.canRecoverStake && (
               <RecoverStakeButton
                 isFromGrant={undelegation.isFromGrant}
+                isManagedGrant={undelegation.isManagedGrant}
+                managedGrantContractInstance={
+                  undelegation.managedGrantContractInstance
+                }
                 operatorAddress={undelegation.operatorAddress}
               />
             )
