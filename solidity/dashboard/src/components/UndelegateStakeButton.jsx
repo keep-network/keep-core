@@ -2,22 +2,28 @@ import React, { useContext } from "react"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { SubmitButton } from "./Button"
-import {
-  TOKEN_GRANT_CONTRACT_NAME,
-  TOKEN_STAKING_CONTRACT_NAME,
-} from "../constants/constants"
 
 const UndelegateStakeButton = (props) => {
   const web3Context = useContext(Web3Context)
-  const { yourAddress } = web3Context
+  const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
 
   const undelegate = async (onTransactionHashCallback) => {
-    const { operator, isInInitializationPeriod, isFromGrant } = props
-    const contract =
-      web3Context[
-        isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME
-      ]
+    const {
+      operator,
+      isInInitializationPeriod,
+      isFromGrant,
+      isManagedGrant,
+      managedGrantContractInstance,
+    } = props
+    let contract
+    if (isManagedGrant) {
+      contract = managedGrantContractInstance
+    } else if (isFromGrant) {
+      contract = grantContract
+    } else {
+      contract = stakingContract
+    }
     try {
       await contract.methods[
         isInInitializationPeriod ? "cancelStake" : "undelegate"
