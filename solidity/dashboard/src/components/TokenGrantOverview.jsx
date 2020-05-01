@@ -22,8 +22,11 @@ const TokenGrantOverview = ({ selectedGrant }) => {
 
   const releaseTokens = async (onTransactionHashCallback) => {
     try {
-      await grantContract.methods
-        .withdraw(selectedGrant.id)
+      const { isManagedGrant, managedGrantContractInstance } = selectedGrant
+      const contractMethod = isManagedGrant
+        ? managedGrantContractInstance.methods.withdraw()
+        : grantContract.methods.withdraw(selectedGrant.id)
+      await contractMethod
         .send({ from: yourAddress })
         .on("transactionHash", onTransactionHashCallback)
       showMessage({
