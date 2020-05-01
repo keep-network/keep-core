@@ -6,6 +6,10 @@ import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { formatDate } from "../utils/general.utils"
 import moment from "moment"
 
+const filterByOwned = (delegation) => !delegation.grantId
+const filterBySelectedGrant = (delegation, selectedGrant) =>
+  selectedGrant.id && delegation.grantId === selectedGrant.id
+
 const DelegationOverview = () => {
   const {
     undelegations,
@@ -16,22 +20,22 @@ const DelegationOverview = () => {
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
-    return delegations.filter((delegation) => !delegation.gratnId)
+    return delegations.filter(filterByOwned)
   }, [delegations])
 
   const ownedUndelegations = useMemo(() => {
-    return undelegations.filter((undelegation) => !undelegation.gratnId)
-  }, undelegations)
+    return undelegations.filter(filterByOwned)
+  }, [undelegations])
 
   const grantDelegations = useMemo(() => {
-    return delegations.filter(
-      (delegation) => delegation.gratnId === selectedGrant.id
+    return delegations.filter((delegation) =>
+      filterBySelectedGrant(delegation, selectedGrant)
     )
   }, [delegations, selectedGrant])
 
   const grantUndelegations = useMemo(() => {
-    return undelegations.filter(
-      (undelegation) => undelegation.gratnId === selectedGrant.id
+    return undelegations.filter((undelegation) =>
+      filterBySelectedGrant(undelegation, selectedGrant)
     )
   }, [undelegations, selectedGrant])
 
@@ -39,7 +43,6 @@ const DelegationOverview = () => {
     if (tokensContext === "granted") {
       return grantDelegations
     }
-
     return ownedDelegations
   }
 
@@ -54,9 +57,9 @@ const DelegationOverview = () => {
   return (
     <section>
       <div className="flex wrap self-center mt-3 mb-2">
-        <h2 className="text-grey-60">{`${
-          tokensContext === "granted" ? "Grant " : ""
-        }Delegation Overview`}</h2>
+        <h2 className="text-grey-60">
+          {`${tokensContext === "granted" ? "Grant " : ""}Delegation Overview`}
+        </h2>
         {tokensContext === "granted" && (
           <>
             <span className="flex self-center ml-2">
