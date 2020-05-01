@@ -1,11 +1,13 @@
-import KeepToken from '@keep-network/keep-core/artifacts/KeepToken.json'
-import TokenStaking from '@keep-network/keep-core/artifacts/TokenStaking.json'
-import TokenGrant from '@keep-network/keep-core/artifacts/TokenGrant.json'
-import KeepRandomBeaconOperator from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json'
-import KeepRegistry from '@keep-network/keep-core/artifacts/KeepRegistry.json'
-import GuaranteedMinimumStakingPolicy from '@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json'
-import PermissiveStakingPolicy from '@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json'
-import KeepRandomBeaconOperatorStatistics from '@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json'
+import KeepToken from "@keep-network/keep-core/artifacts/KeepToken.json"
+import TokenStaking from "@keep-network/keep-core/artifacts/TokenStaking.json"
+import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
+import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
+import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
+import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
+import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
+import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
+import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
+import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -13,7 +15,8 @@ import {
   OPERATOR_CONTRACT_NAME,
   REGISTRY_CONTRACT_NAME,
   KEEP_OPERATOR_STATISTICS_CONTRACT_NAME,
-} from './constants/constants'
+  MANAGED_GRANT_FACTORY_CONTRACT_NAME,
+} from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [KEEP_TOKEN_CONTRACT_NAME]: 0,
@@ -22,6 +25,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [TOKEN_STAKING_CONTRACT_NAME]: 0,
   [REGISTRY_CONTRACT_NAME]: 0,
   [KEEP_OPERATOR_STATISTICS_CONTRACT_NAME]: 0,
+  [MANAGED_GRANT_FACTORY_CONTRACT_NAME]: 0,
 }
 
 export async function getKeepToken(web3) {
@@ -45,7 +49,15 @@ export async function getRegistry(web3) {
 }
 
 export async function getKeepRandomBeaconOperatorStatistics(web3) {
-  return getContract(web3, KeepRandomBeaconOperatorStatistics, KEEP_OPERATOR_STATISTICS_CONTRACT_NAME)
+  return getContract(
+    web3,
+    KeepRandomBeaconOperatorStatistics,
+    KEEP_OPERATOR_STATISTICS_CONTRACT_NAME
+  )
+}
+
+export async function getManagedGrantFactory(web3) {
+  return getContract(web3, ManagedGrantFactory)
 }
 
 export async function getKeepTokenContractDeployerAddress(web3) {
@@ -70,6 +82,7 @@ export async function getContracts(web3) {
     getKeepRandomBeaconOperator(web3),
     getRegistry(web3),
     getKeepRandomBeaconOperatorStatistics(web3),
+    getManagedGrantFactory(web3),
   ])
 
   return {
@@ -78,7 +91,8 @@ export async function getContracts(web3) {
     stakingContract: contracts[2],
     keepRandomBeaconOperatorContract: contracts[3],
     registryContract: contracts[4],
-    keepRandomBeaconOperatorStatistics: contracts[5]
+    keepRandomBeaconOperatorStatistics: contracts[5],
+    managedGrantFactoryContract: contracts[6],
   }
 }
 
@@ -87,7 +101,10 @@ async function getContract(web3, contract, contractName) {
   const code = await web3.eth.getCode(address)
 
   checkCodeIsValid(code)
-  CONTRACT_DEPLOY_BLOCK_NUMBER[contractName] = await contractDeployedAtBlock(web3, contract)
+  CONTRACT_DEPLOY_BLOCK_NUMBER[contractName] = await contractDeployedAtBlock(
+    web3,
+    contract
+  )
   return new web3.eth.Contract(contract.abi, address)
 }
 
@@ -101,7 +118,7 @@ function getTransactionHashOfContractDeploy({ networks }) {
 
 function getContractAddress({ networks }) {
   return networks[Object.keys(networks)[0]].address
-};
+}
 
 export function getPermissiveStakingPolicyContractAddress() {
   return getContractAddress(PermissiveStakingPolicy)
@@ -109,4 +126,8 @@ export function getPermissiveStakingPolicyContractAddress() {
 
 export function getGuaranteedMinimumStakingPolicyContractAddress() {
   return getContractAddress(GuaranteedMinimumStakingPolicy)
+}
+
+export function createManagedGrantContractInstance(web3, address) {
+  return new web3.eth.Contract(ManagedGrant.abi, address)
 }
