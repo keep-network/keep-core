@@ -15,6 +15,7 @@ import {
   isSameEthAddress,
   isEmptyObj,
 } from "../utils/general.utils"
+import Tile from "./Tile"
 import { usePrevious } from "../hooks/usePrevious"
 
 const previewDataCount = 3
@@ -66,8 +67,7 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <section className="tile">
-        <h5 className="mb-1 text-grey-50">Rewards History</h5>
+      <Tile title="Rewards History">
         <DataTable
           data={showAll ? data : data.slice(0, previewDataCount)}
           itemFieldId="transactionHash"
@@ -105,7 +105,7 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
           onClickCallback={() => setShowAll(!showAll)}
           showAll={showAll}
         />
-      </section>
+      </Tile>
     </LoadingOverlay>
   )
 }

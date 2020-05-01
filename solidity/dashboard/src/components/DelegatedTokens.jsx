@@ -9,6 +9,7 @@ import UndelegateStakeButton from "./UndelegateStakeButton"
 import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import Banner, { BANNER_TYPE } from "./Banner"
 import moment from "moment"
+import Tile from "./Tile"
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
@@ -81,10 +82,13 @@ const DelegatedTokens = (props) => {
     }
   }
   return (
-    <section id="delegated-tokens" className="flex row space-between">
-      <section id="delegated-tokens-summary" className="tile flex column">
-        <LoadingOverlay isFetching={isFetching}>
-          <h3 className="text-grey-60 mb-1">Delegated Tokens</h3>
+    <LoadingOverlay isFetching={isFetching}>
+      <section id="delegated-tokens" className="flex row space-between">
+        <Tile
+          title="Total Balance"
+          id="delegated-tokens-summary"
+          className="tile flex column"
+        >
           <h2 className="balance">
             {stakedBalance && `${displayAmount(stakedBalance)}`} KEEP
           </h2>
@@ -109,11 +113,12 @@ const DelegatedTokens = (props) => {
               classNames="text-small text-normal text-darker-grey"
             />
           </h6>
-        </LoadingOverlay>
-      </section>
-      <section id="delegated-form-section" className="tile flex column ">
-        <LoadingOverlay isFetching={isFetching} classNames="flex flex-1 column">
-          <h3 className="text-grey-60">Undelegate All Tokens</h3>
+        </Tile>
+        <Tile
+          title="Undelegate All Tokens"
+          id="delegated-form-section"
+          className="tile flex column "
+        >
           <div className="text-big text-grey-70 mt-1 mb-1">
             Click undelegate below to return all of your delegated KEEP tokens
             to their original owner address.
@@ -121,9 +126,9 @@ const DelegatedTokens = (props) => {
           <div className="flex" style={{ marginTop: "auto" }}>
             {renderUndelegationStatus()}
           </div>
-        </LoadingOverlay>
+        </Tile>
       </section>
-    </section>
+    </LoadingOverlay>
   )
 }
 

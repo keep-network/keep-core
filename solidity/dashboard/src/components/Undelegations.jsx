@@ -6,11 +6,11 @@ import RecoverStakeButton from "./RecoverStakeButton"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
+import Tile from "./Tile"
 
 const Undelegations = ({ undelegations }) => {
   return (
-    <section className="tile">
-      <h3 className="text-grey-60">Undelegations</h3>
+    <Tile title="Undelegations">
       <SpeechBubbleInfo className="mt-1 mb-1">
         <span className="text-bold">Recover</span>&nbsp;undelegated tokens to
         return them to your token balance.
@@ -79,7 +79,7 @@ const Undelegations = ({ undelegations }) => {
           }
         />
       </DataTable>
-    </section>
+    </Tile>
   )
 }
 

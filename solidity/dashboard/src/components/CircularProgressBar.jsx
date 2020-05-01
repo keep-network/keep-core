@@ -83,7 +83,9 @@ export const CircularProgressBars = React.memo(
           viewBox="0 0 120 120"
         >
           {bars}
-          <Icons.KeepCircle />
+          <g className="keep-circle">
+            <Icons.KeepCircle />
+          </g>
         </svg>
         <div className="mb-1">
           {withLegend && items.map(renderProgressBarLegendItem)}

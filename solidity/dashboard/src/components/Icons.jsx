@@ -1,6 +1,12 @@
 import React from "react"
 import PropTypes from "prop-types"
 import { colors } from "../constants/colors"
+import { ReactComponent as ArrowRight } from "../static/svg/arrow-right.svg"
+import { ReactComponent as Operations } from "../static/svg/operations.svg"
+import { ReactComponent as Rewards } from "../static/svg/rewards.svg"
+import { ReactComponent as Glossary } from "../static/svg/glossary.svg"
+import { ReactComponent as Authorizer } from "../static/svg/authorizer.svg"
+import { ReactComponent as KeepToken } from "../static/svg/tokens.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -215,20 +221,18 @@ const SpeechBubble = (props) => (
 )
 
 const KeepCircle = ({ color }) => (
-  <g className="keep-circle">
-    <svg
-      width="58"
-      height="58"
-      viewBox="0 0 58 58"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M29 0.25C13.1271 0.25 0.25 13.1271 0.25 29C0.25 44.8729 13.1271 57.75 29 57.75C44.8729 57.75 57.75 44.8729 57.75 29C57.7258 13.1271 44.8487 0.25 29 0.25ZM41.0557 22.5735H39.2437L33.7595 28.9758L39.2437 35.3782H41.0557V40.5242H29.4107V35.4265H31.2227L27.6229 31.2227H26.1492V35.4265H28.2027V40.5242H16.9202V35.3782H19.3603V29V22.5735H16.9202V17.4275H19.6985V19.3361H21.1964V17.4275H23.9265V19.3361H25.4244V17.4275H28.1786V22.5011H26.125V26.7048H27.5987L31.1985 22.5011H29.3866V17.4275H41.0315V22.5735H41.0557Z"
-        fill={color}
-      />
-    </svg>
-  </g>
+  <svg
+    width="58"
+    height="58"
+    viewBox="0 0 58 58"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M29 0.25C13.1271 0.25 0.25 13.1271 0.25 29C0.25 44.8729 13.1271 57.75 29 57.75C44.8729 57.75 57.75 44.8729 57.75 29C57.7258 13.1271 44.8487 0.25 29 0.25ZM41.0557 22.5735H39.2437L33.7595 28.9758L39.2437 35.3782H41.0557V40.5242H29.4107V35.4265H31.2227L27.6229 31.2227H26.1492V35.4265H28.2027V40.5242H16.9202V35.3782H19.3603V29V22.5735H16.9202V17.4275H19.6985V19.3361H21.1964V17.4275H23.9265V19.3361H25.4244V17.4275H28.1786V22.5011H26.125V26.7048H27.5987L31.1985 22.5011H29.3866V17.4275H41.0315V22.5735H41.0557Z"
+      fill={color}
+    />
+  </svg>
 )
 
 KeepCircle.defaultProps = {
@@ -351,4 +355,10 @@ export {
   OK,
   OKBadge,
   PendingBadge,
+  ArrowRight,
+  Authorizer,
+  Glossary,
+  Operations,
+  KeepToken,
+  Rewards,
 }

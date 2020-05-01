@@ -22,9 +22,7 @@ export const useSubscribeToContractEvent = (
     event.current = contract.current.events[eventName](subscribeToEvent)
 
     return () => {
-      event.current.unsubscribe((error, suscces) =>
-        console.log("unsub", error, suscces)
-      )
+      event.current.unsubscribe()
     }
   }, [eventName])
 

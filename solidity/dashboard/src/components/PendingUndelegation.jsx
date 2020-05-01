@@ -13,9 +13,10 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { DataTable, Column } from "./DataTable"
 import { PENDING_STATUS } from "../constants/constants"
 import moment from "moment"
+import Tile from "./Tile"
 import { usePrevious } from "../hooks/usePrevious"
 
-const initialData = { pendinUndelegations: [] }
+const initialData = { undelegation: {} }
 
 const PendingUndelegation = ({ latestUnstakeEvent }) => {
   const { stakingContract, yourAddress } = useContext(Web3Context)
@@ -60,9 +61,8 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <section id="pending-undelegation" className="tile">
-        <h3 className="text-grey-60">Token Undelegation</h3>
-        <DataTable data={[data]} itemFieldId="undelegationComplete">
+      <Tile title="Token Undelegation" id="pending-undelegation">
+        <DataTable data={[{ ...data }]} itemFieldId="pendingUnstakeBalance">
           <Column
             header="amount"
             field="pendingUnstakeBalance"
@@ -94,7 +94,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
           />
           <Column
             header="estimate"
-            field="undelegationComplete"
+            field="undelegationCompletedAt"
             renderContent={({ undelegationCompletedAt }) =>
               undelegationCompletedAt
                 ? formatDate(undelegationCompletedAt)
@@ -112,7 +112,7 @@ const PendingUndelegation = ({ latestUnstakeEvent }) => {
             }}
           />
         </DataTable>
-      </section>
+      </Tile>
     </LoadingOverlay>
   )
 }
