@@ -218,7 +218,7 @@ func confirmCurrentRelayRequest(
 	delay time.Duration,
 ) {
 	for i := 1; ; i++ {
-		currentRequestStartBlock, err := chain.CurrentRequestStartBlock()
+		currentRequestStartBlockBigInt, err := chain.CurrentRequestStartBlock()
 		if err != nil {
 			if i == maxRetries {
 				logger.Errorf(
@@ -240,16 +240,16 @@ func confirmCurrentRelayRequest(
 			continue
 		}
 
-		current := currentRequestStartBlock.Uint64()
+		currentRequestStartBlock := currentRequestStartBlockBigInt.Uint64()
 
-		if current == expectedRequestStartBlock {
+		if currentRequestStartBlock == expectedRequestStartBlock {
 			onConfirmed()
 			return
-		} else if current > expectedRequestStartBlock {
+		} else if currentRequestStartBlock > expectedRequestStartBlock {
 			logger.Infof(
 				"the currently pending relay request started at block [%v]; "+
 					"skipping the execution of the old relay request from block [%v]",
-				current,
+				currentRequestStartBlock,
 				expectedRequestStartBlock,
 			)
 			return
@@ -258,7 +258,7 @@ func confirmCurrentRelayRequest(
 				"could not confirm the expected relay request starting block; "+
 					"the most recent one obtained from chain is [%v] and the "+
 					"expected one is [%v]; giving up after [%v] retries",
-				current,
+				currentRequestStartBlock,
 				expectedRequestStartBlock,
 				maxRetries,
 			)
@@ -267,7 +267,7 @@ func confirmCurrentRelayRequest(
 			logger.Infof(
 				"received unexpected pending relay request start block [%v] "+
 					"while the expected was [%v]; will retry after [%v]",
-				current,
+				currentRequestStartBlock,
 				expectedRequestStartBlock,
 				delay,
 			)
