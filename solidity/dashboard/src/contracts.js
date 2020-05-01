@@ -108,8 +108,9 @@ async function getContract(web3, contract, contractName) {
   return new web3.eth.Contract(contract.abi, address)
 }
 
-function checkCodeIsValid(code) {
-  if (!code || code === '0x0' || code === '0x') throw Error('No contract at address')
+export function checkCodeIsValid(code) {
+  if (!code || code === "0x0" || code === "0x")
+    throw Error("No contract at address")
 }
 
 function getTransactionHashOfContractDeploy({ networks }) {
