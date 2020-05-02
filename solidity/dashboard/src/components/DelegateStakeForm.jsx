@@ -160,7 +160,7 @@ const connectedWithFormik = withFormik({
 const getStakeTokensError = (props, { stakeTokens }) => {
   const { availableToStake, minStake } = props
 
-  if (lte(availableToStake, 0)) {
+  if (lte(availableToStake || 0, 0)) {
     return "Insufficient funds"
   } else {
     return validateAmountInRange(stakeTokens, availableToStake, minStake)
