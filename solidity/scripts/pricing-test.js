@@ -50,8 +50,23 @@ module.exports = async function() {
                 rewardsSum = rewardsSum.add(web3.utils.toBN(prevRewards[i]));
             }
 
-            const operatorContractBalance = await web3.eth.getBalance(contractOperator.address);
+            const serviceContractBalance = await web3.eth.getBalance(contractService.address);
+            const dkgFeePool = await contractService.dkgFeePool();
+            const requestSubsidyFeePool = await contractService.requestSubsidyFeePool();
+            const dkgContributionMargin = await contractService.dkgContributionMargin();
 
+            const serviceContractSummary = new ServiceContractSummary(
+                serviceContractBalance,
+                dkgFeePool.toString(),
+                requestSubsidyFeePool.toString(),
+                dkgContributionMargin.toString()
+            )
+
+            console.log("Service Contract Summary (before request)");
+            console.table([serviceContractSummary]);
+            console.log("\n");
+
+            const operatorContractBalance = await web3.eth.getBalance(contractOperator.address);
             const dkgSubmitterReimbursementFee = await contractOperator.dkgSubmitterReimbursementFee();
 
             const operatorContractSummary = new OperatorContractSummary(
@@ -155,14 +170,26 @@ async function availableRewards(account, contractOperator, contractStatistics) {
     return accountRewards;
 }
 
+function ServiceContractSummary(
+    balance,
+    dkgFeePool,
+    requestSubsidyFeePool,
+    dkgContributionMargin
+) {
+    this.balance = balance,
+    this.dkgFeePool = dkgFeePool
+    this.requestSubsidyFeePool = requestSubsidyFeePool
+    this.dkgContributionMargin = dkgContributionMargin
+}
+
 function OperatorContractSummary(
     balance,
     sumOfRewards,
     dkgSubmitterReimbursementFee,
     sumOfRewardsAndDkgReimbursementFee
 ) {
-    this.balance = balance,
-    this.sumOfRewards = sumOfRewards,
+    this.balance = balance
+    this.sumOfRewards = sumOfRewards
     this.dkgSubmitterReimbursementFee = dkgSubmitterReimbursementFee
     this.sumOfRewardsAndDkgReimbursementFee = sumOfRewardsAndDkgReimbursementFee
 }
@@ -191,6 +218,13 @@ function PricingClient(address, balance, balanceChange, reward, rewardChange) {
     this.balanceChange = balanceChange,
     this.reward = reward,
     this.rewardChange = rewardChange
+}
+
+ServiceContractSummary.prototype.toString = function serviceContractSummaryToString() {
+    return '' + this.balance + ', ' + 
+        this.dkgFeePool + ', ' + 
+        this.requestSubsidyFeePool + ', ' + 
+        this.dkgContributionMargin
 }
 
 OperatorContractSummary.prototype.toString = function operatorContractSummaryToString() {
