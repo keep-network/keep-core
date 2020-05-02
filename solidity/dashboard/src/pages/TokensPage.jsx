@@ -153,7 +153,8 @@ const useSubscribeToStakedEvent = async () => {
       initializationOverAt: moment
         .unix(createdAt)
         .add(initializationPeriod, "seconds"),
-      grantId: grantStakeDetails.grantId,
+      isFromGrant,
+      grantId: isFromGrant ? grantStakeDetails.grantId : null,
     }
 
     if (!isFromGrant) {
@@ -208,6 +209,7 @@ const useSubscribeToUndelegatedEvent = () => {
         .unix(undelegatedAt)
         .add(undelegationPeriod, "seconds"),
       canRecoverStake: false,
+      isFromGrant,
       grantId: isFromGrant ? grantStakeDetails.grantId : null,
     }
     dispatch({ type: REMOVE_DELEGATION, payload: operator })
