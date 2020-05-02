@@ -4,8 +4,9 @@ import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
 import SelectedWalletModal from "./SelectedWalletModal"
 import { LoadingOverlay } from "./Loadable"
+import Tile from "./Tile"
+import PageWrapper from "./PageWrapper"
 
-// TODO change icons
 const WALLETS = [
   {
     label: "MetaMask",
@@ -69,11 +70,11 @@ const ChooseWallet = () => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <h1 className="mb-1">Connect Wallet</h1>
-      <section className="tile">
-        <h3>Choose a wallet type.</h3>
-        <ul className="wallets-list">{WALLETS.map(renderWallet)}</ul>
-      </section>
+      <PageWrapper title="Connect Wallet">
+        <Tile title="Choose a wallet type.">
+          <ul className="wallets-list">{WALLETS.map(renderWallet)}</ul>
+        </Tile>
+      </PageWrapper>
     </LoadingOverlay>
   )
 }
@@ -95,7 +96,7 @@ const Wallet = ({
     if (!isFetching && web3 && provider) {
       closeModal()
     }
-  }, [isFetching, web3, provider])
+  }, [isFetching, web3, provider, closeModal])
 
   return (
     <>
