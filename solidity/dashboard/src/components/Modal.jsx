@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react"
 import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 
-const modalRoot = document.getElementById('modal-root')
+const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
 const crossIconWidth = 15
 
@@ -31,9 +31,7 @@ const Modal = React.memo(({ closeModal, ...props }) => {
             <Icons.Cross width={crossIconWidth} height={crossIconHeight} />
           </div>
         </div>
-        <div className="modal-content">
-          {props.children}
-        </div>
+        <div className="modal-content">{props.children}</div>
       </div>
     </div>,
     modalRoot

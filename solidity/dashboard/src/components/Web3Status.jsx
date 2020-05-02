@@ -1,7 +1,7 @@
-import React, { useContext } from 'react'
-import { Web3Context } from './WithWeb3Context'
-import Banner, { BANNER_TYPE } from './Banner'
-import { WALLETS } from '../constants/constants'
+import React, { useContext } from "react"
+import { Web3Context } from "./WithWeb3Context"
+import Banner, { BANNER_TYPE } from "./Banner"
+import { WALLETS } from "../constants/constants"
 
 export const Web3Status = () => {
   const {
@@ -15,30 +15,15 @@ export const Web3Status = () => {
 
   const renderStatus = () => {
     if (!provider || !web3) {
-      return (
-        <Banner
-          type={BANNER_TYPE.ERROR}
-          title='Please select a wallet'
-        />
-      )
+      return <Banner type={BANNER_TYPE.ERROR} title="Please select a wallet" />
     }
 
     if (isFetching) {
-      return (
-        <Banner
-          type={BANNER_TYPE.DISABLED}
-          title='Loading ...'
-        />
-      )
+      return <Banner type={BANNER_TYPE.DISABLED} title="Loading ..." />
     }
 
     if (error) {
-      return (
-        <Banner
-          type={BANNER_TYPE.ERROR}
-          title={error}
-        />
-      )
+      return <Banner type={BANNER_TYPE.ERROR} title={error} />
     }
 
     if (!yourAddress) {

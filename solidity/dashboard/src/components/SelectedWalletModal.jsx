@@ -1,4 +1,4 @@
-import React from 'react'
+import React from "react"
 
 const SelectedWalletModal = ({
   walletName,
@@ -11,19 +11,17 @@ const SelectedWalletModal = ({
 }) => {
   return (
     <div className="flex column center">
-      <div className= "flex full-center mb-3">
+      <div className="flex full-center mb-3">
         {icon}
         <h3 className="ml-1">{walletName}</h3>
       </div>
-      { iconDescription &&
+      {iconDescription && (
         <img src={iconDescription} className="mb-3" alt={walletName} />
-      }
-      <span className="text-center">
-        {description}
-      </span>
-      {walletName === 'COINBASE' && coinbaseQR}
+      )}
+      <span className="text-center">{description}</span>
+      {walletName === "COINBASE" && coinbaseQR}
 
-      {(btnLink && btnText) &&
+      {btnLink && btnText && (
         <a
           href={btnLink}
           className="btn bt-lg btn-primary mt-3"
@@ -32,7 +30,7 @@ const SelectedWalletModal = ({
         >
           {btnText}
         </a>
-      }
+      )}
     </div>
   )
 }

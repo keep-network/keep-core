@@ -1,10 +1,10 @@
-import { LedgerSubprovider } from '@0x/subproviders'
-import TransportU2F from '@ledgerhq/hw-transport-u2f'
-import AppEth from '@ledgerhq/hw-app-eth'
-import { AbstractHardwareWalletConnector } from './abstract-connector'
-import { getChainIdFromV, getEthereumTxObj, getChainId } from './utils'
-import web3Utils from 'web3-utils'
-import { getBufferFromHex } from '../utils/general.utils'
+import { LedgerSubprovider } from "@0x/subproviders"
+import TransportU2F from "@ledgerhq/hw-transport-u2f"
+import AppEth from "@ledgerhq/hw-app-eth"
+import { AbstractHardwareWalletConnector } from "./abstract-connector"
+import { getChainIdFromV, getEthereumTxObj, getChainId } from "./utils"
+import web3Utils from "web3-utils"
+import { getBufferFromHex } from "../utils/general.utils"
 
 export class LedgerProvider extends AbstractHardwareWalletConnector {
   constructor() {
@@ -25,19 +25,26 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
   chainId
 
   constructor(chainId) {
-    super({ networkId: chainId, ledgerEthereumClientFactoryAsync, baseDerivationPath: '44\'/60\'' })
+    super({
+      networkId: chainId,
+      ledgerEthereumClientFactoryAsync,
+      baseDerivationPath: "44'/60'",
+    })
     this.chainId = chainId
   }
 
   async signTransactionAsync(txData) {
     LedgerSubprovider._validateTxParams(txData)
     if (txData.from === undefined || !web3Utils.isAddress(txData.from)) {
-      throw new Error('Invalid address')
+      throw new Error("Invalid address")
     }
     txData.chainId = this.chainId
 
     const initialDerivedKeyInfo = await this._initialDerivedKeyInfoAsync()
-    const derivedKeyInfo = this._findDerivedKeyInfoForAddress(initialDerivedKeyInfo, txData.from)
+    const derivedKeyInfo = this._findDerivedKeyInfoForAddress(
+      initialDerivedKeyInfo,
+      txData.from
+    )
     const fullDerivationPath = derivedKeyInfo.derivationPath
 
     try {
@@ -49,7 +56,7 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
       tx.raw[8] = Buffer.from([])
       const result = await this._ledgerClientIfExists.signTransaction(
         fullDerivationPath,
-        tx.serialize().toString('hex')
+        tx.serialize().toString("hex")
       )
 
       // The transport layer only returns the lower 2 bytes.
@@ -69,11 +76,11 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
       // `2238 & 0xff = 190`
       const isValidSignedV = (signedV & 0xff) === ledgerSignedV
       const chainIdFromV = getChainIdFromV(tx.v)
-      if ((chainIdFromV !== this.chainId) && !isValidSignedV) {
-        throw new Error('Invalid chainID')
+      if (chainIdFromV !== this.chainId && !isValidSignedV) {
+        throw new Error("Invalid chainID")
       }
 
-      return `0x${tx.serialize().toString('hex')}`
+      return `0x${tx.serialize().toString("hex")}`
     } catch (error) {
       await this._destroyLedgerClientAsync()
       throw error

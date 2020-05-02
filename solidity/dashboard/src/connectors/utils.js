@@ -1,14 +1,16 @@
-import Common from 'ethereumjs-common'
-import { Transaction as EthereumTx } from 'ethereumjs-tx'
-import config from '../config/config.json'
-import { getFirstNetworkIdFromArtifact } from '../contracts'
+import Common from "ethereumjs-common"
+import { Transaction as EthereumTx } from "ethereumjs-tx"
+import config from "../config/config.json"
+import { getFirstNetworkIdFromArtifact } from "../contracts"
 
 export const getEthereumTxObj = (txData, chainId) => {
-  const customCommon = Common.forCustomChain('mainnet', {
-    name: 'keep-dev',
+  const customCommon = Common.forCustomChain("mainnet", {
+    name: "keep-dev",
     chainId,
   })
-  const common = new Common(customCommon._chainParams, 'petersburg', ['petersburg'])
+  const common = new Common(customCommon._chainParams, "petersburg", [
+    "petersburg",
+  ])
   return new EthereumTx(txData, { common })
 }
 
@@ -21,7 +23,7 @@ export const getChainIdFromV = (vInHex) => {
 }
 
 export const getChainId = () => {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     // private chains (default), change if you use a different one
     return 1337
   }
@@ -30,11 +32,9 @@ export const getChainId = () => {
 }
 
 export const getWsUrl = () => {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV === "development") {
     // Ganache web socket url, change if you use a different one
-    return 'ws://localhost:8545'
+    return "ws://localhost:8545"
   }
-  return config
-    .networks[getChainId()]
-    .wsURL
+  return config.networks[getChainId()].wsURL
 }

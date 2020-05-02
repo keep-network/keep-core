@@ -1,7 +1,7 @@
-import BigNumber from 'bignumber.js'
-import moment from 'moment'
-import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
-import web3Utils from 'web3-utils'
+import BigNumber from "bignumber.js"
+import moment from "moment"
+import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
+import web3Utils from "web3-utils"
 
 moment.updateLocale("en", {
   relativeTime: {
@@ -78,13 +78,13 @@ export const isSameEthAddress = (address1, address2) => {
 
 export const getBufferFromHex = (hex) => {
   const validHex = toValidHex(hex).toLowerCase()
-  return new Buffer(validHex, 'hex')
+  return new Buffer(validHex, "hex")
 }
 
 const toValidHex = (hex) => {
-  hex = hex.substring(0, 2) === '0x' ? hex.substring(2) : hex
-  if (hex === '') {
-    return ''
+  hex = hex.substring(0, 2) === "0x" ? hex.substring(2) : hex
+  if (hex === "") {
+    return ""
   }
   return hex.length % 2 !== 0 ? `0${hex}` : hex
 }
