@@ -1,13 +1,23 @@
-const KeepToken = artifacts.require('./KeepToken.sol');
+const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const KeepToken = contract.fromArtifact('KeepToken');
+var assert = require('chai').assert
 
-contract('TestToken', function(accounts) {
+describe('TestToken', function() {
 
   let token,
     account_one = accounts[0],
     account_two = accounts[1];
 
   before(async () => {
-    token = await KeepToken.new();
+    token = await KeepToken.new({ from: account_one });
+  });
+
+  it("sets token details", async function () {
+    await token.name.call();
+
+    assert.equal(await token.name.call(), "KEEP Token", "unexpected token name");
+    assert.equal(await token.symbol.call(), "KEEP", "unexpected token symbol");
+    assert.equal(await token.decimals.call(), 18, "unexpected decimals");
   });
 
   it("should send tokens correctly", async function() {

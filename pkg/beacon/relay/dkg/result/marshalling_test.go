@@ -4,6 +4,10 @@ import (
 	"reflect"
 	"testing"
 
+	fuzz "github.com/google/gofuzz"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
+
 	"github.com/keep-network/keep-core/pkg/internal/pbutils"
 )
 
@@ -24,4 +28,35 @@ func TestDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
 	if !reflect.DeepEqual(msg, unmarshaled) {
 		t.Fatalf("unexpected content of unmarshaled message")
 	}
+}
+
+func TestFuzzDKGResultHashSignatureMessageRoundtrip(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		var (
+			senderIndex group.MemberIndex
+			resultHash  chain.DKGResultHash
+			signature   []byte
+			publicKey   []byte
+		)
+
+		f := fuzz.New().NilChance(0.1).NumElements(0, 512)
+
+		f.Fuzz(&senderIndex)
+		f.Fuzz(&resultHash)
+		f.Fuzz(&signature)
+		f.Fuzz(&publicKey)
+
+		message := &DKGResultHashSignatureMessage{
+			senderIndex: senderIndex,
+			resultHash:  resultHash,
+			signature:   signature,
+			publicKey:   publicKey,
+		}
+
+		_ = pbutils.RoundTrip(message, &DKGResultHashSignatureMessage{})
+	}
+}
+
+func TestFuzzDKGResultHashSignatureMessageUnmarshaler(t *testing.T) {
+	pbutils.FuzzUnmarshaler(&DKGResultHashSignatureMessage{})
 }

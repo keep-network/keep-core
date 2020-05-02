@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"encoding/binary"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -110,19 +111,29 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 
 	c.tickets = append(c.tickets, ticket)
 	sort.SliceStable(c.tickets, func(i, j int) bool {
-		return c.tickets[i].Value.Cmp(c.tickets[j].Value) == -1
+		// Ticket value bytes are interpreted as a big-endian unsigned integers.
+		iValue := new(big.Int).SetBytes(c.tickets[i].Value[:])
+		jValue := new(big.Int).SetBytes(c.tickets[j].Value[:])
+
+		return iValue.Cmp(jValue) == -1
 	})
 
-	promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.Value,
+	_ = promise.Fulfill(&event.GroupTicketSubmission{
+		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
 		BlockNumber: c.simulatedHeight,
 	})
 
 	return promise
 }
 
-func (c *localChain) GetSubmittedTicketsCount() (*big.Int, error) {
-	return big.NewInt(int64(len(c.tickets))), nil
+func (c *localChain) GetSubmittedTickets() ([]uint64, error) {
+	tickets := make([]uint64, len(c.tickets))
+
+	for i := range tickets {
+		tickets[i] = binary.BigEndian.Uint64(c.tickets[i].Value[:])
+	}
+
+	return tickets, nil
 }
 
 func (c *localChain) GetSelectedParticipants() ([]relaychain.StakerAddress, error) {
@@ -289,13 +300,16 @@ func ConnectWithKey(
 		registrationBlockHeight: currentBlock,
 	}
 
+	resultPublicationBlockStep := uint64(3)
+
 	return &localChain{
 		relayConfig: &relayconfig.Chain{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
-			TicketSubmissionTimeout:    4,
-			ResultPublicationBlockStep: 3,
+			TicketSubmissionTimeout:    6,
+			ResultPublicationBlockStep: resultPublicationBlockStep,
 			MinimumStake:               minimumStake,
+			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
 		relayRequestHandlers:     make(map[int]func(request *event.Request)),
@@ -454,6 +468,22 @@ func (c *localChain) ReportRelayEntryTimeout() error {
 
 	c.relayEntryTimeoutReports = append(c.relayEntryTimeoutReports, currentBlock)
 	return nil
+}
+
+func (c *localChain) IsEntryInProgress() (bool, error) {
+	panic("not implemented")
+}
+
+func (c *localChain) CurrentRequestStartBlock() (*big.Int, error) {
+	panic("not implemented")
+}
+
+func (c *localChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	panic("not implemented")
+}
+
+func (c *localChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+	panic("not implemented")
 }
 
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {

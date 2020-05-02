@@ -1,11 +1,12 @@
-import mineBlocks from '../helpers/mineBlocks';
-import {bls} from '../helpers/data';
-import stakeDelegate from '../helpers/stakeDelegate';
-import {initContracts} from '../helpers/initContracts';
+const stakeDelegate = require('../helpers/stakeDelegate')
+const blsData = require("../helpers/data.js")
+const initContracts = require('../helpers/initContracts')
+const assert = require('chai').assert
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
+const CallbackContract = contract.fromArtifact('CallbackContract')
 
-const CallbackContract = artifacts.require('./examples/CallbackContract.sol');
-
-contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
+describe('TestKeepRandomBeaconService/Pricing', function() {
 
   let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
     owner = accounts[0],
@@ -13,17 +14,17 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     operator1 = accounts[2],
     operator2 = accounts[3],
     operator3 = accounts[4],
-    magpie1 = accounts[5],
-    magpie2 = accounts[6],
-    magpie3 = accounts[7];
+    beneficiary1 = accounts[5],
+    beneficiary2 = accounts[6],
+    beneficiary3 = accounts[7];
 
   beforeEach(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorStub')
     );
 
     token = contracts.token;
@@ -33,7 +34,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     callbackContract = await CallbackContract.new();
 
     // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(bls.groupPubKey);
+    await operatorContract.registerNewGroup(blsData.groupPubKey);
 
     groupSize = web3.utils.toBN(3);
     await operatorContract.setGroupSize(groupSize);
@@ -41,9 +42,9 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });
@@ -52,7 +53,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let gasPriceCeiling = web3.utils.toBN(web3.utils.toWei('20', 'gwei'))
     await operatorContract.setGasPriceCeiling(gasPriceCeiling)
 
-    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(bls.groupSignature))
+    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(blsData.groupSignature))
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
     
     await serviceContract.methods['requestRelayEntry(address,uint256)'](
@@ -65,7 +66,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let gasPriceDiff = gasPriceCeiling.sub(submissionGasPrice)
 
     let requestorBalance = await web3.eth.getBalance(requestor);
-    await operatorContract.relayEntry(bls.groupSignature, {gasPrice: submissionGasPrice})
+    await operatorContract.relayEntry(blsData.groupSignature, {gasPrice: submissionGasPrice})
     let updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
     let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
@@ -84,11 +85,10 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
+    let currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
-    let entryReceivedBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout);
+    let entryReceivedBlock = currentRequestStartBlock.addn(1);
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
     let submissionWindow = deadlineBlock.sub(entryReceivedBlock);
     let decimalPoints = web3.utils.toBN(1e16);
@@ -96,7 +96,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
     let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    await operatorContract.relayEntry(blsData.groupSignature);
 
     assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
 
@@ -115,7 +115,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
     // signing fee: 37200000000000000 wei
     // DKG fee: 6780000000000000 wei
     // relayEntryTimeout: 10 blocks
-    // currentEntryStartBlock: 38
+    // currentRequestStartBlock: 38
     // relay entry submission block: 44
     // decimals: 1e16
     // groupProfitFee: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
@@ -135,14 +135,13 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
+    let currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).addn(1);
-    let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout).addn(1);
+    let submissionStartBlock = currentRequestStartBlock.addn(1);
     let decimalPoints = web3.utils.toBN(1e16);
 
-    mineBlocks(relayEntryGenerationTime.toNumber() + 1);
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
@@ -157,7 +156,7 @@ contract('TestKeepRandomBeaconService/Pricing', function(accounts) {
 
     let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
 
-    await operatorContract.relayEntry(bls.groupSignature);
+    await operatorContract.relayEntry(blsData.groupSignature);
 
     let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
     assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");

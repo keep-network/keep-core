@@ -62,6 +62,9 @@ type Provider interface {
 	// CreateTransportIdentifier creates a transport identifier based on the
 	// provided public key.
 	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
+
+	// BroadcastChannelForwarderFor creates a message relay for given channel name.
+	BroadcastChannelForwarderFor(name string)
 }
 
 // ConnectionManager is an interface which exposes peers a client is connected
@@ -151,3 +154,15 @@ type BroadcastChannel interface {
 // public key as its argument and returns true if the message should be
 // processed or false otherwise.
 type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+
+// Firewall represents a set of rules the remote peer has to conform to so that
+// a connection with that peer can be approved.
+type Firewall interface {
+
+	// Validate takes the remote peer public key and executes all the checks
+	// needed to decide whether the connection with the remote peer can be
+	// approved.
+	// If expectations are not met, this function should return an error
+	// describing what is wrong.
+	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
+}

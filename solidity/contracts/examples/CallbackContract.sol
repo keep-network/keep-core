@@ -1,11 +1,12 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
+import "../IRandomBeacon.sol";
 
 /**
  * @title CallbackContract
  * @dev Example callback contract for Random Beacon.
  */
-contract CallbackContract {
+contract CallbackContract is IRandomBeaconConsumer {
 
     uint256 internal _lastEntry;
 

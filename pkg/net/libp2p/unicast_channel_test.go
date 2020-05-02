@@ -2,13 +2,13 @@ package libp2p
 
 import (
 	"context"
-	"math/big"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 
-	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/multiformats/go-multiaddr"
@@ -17,7 +17,7 @@ import (
 func TestSendReceiveUnicastChannel(t *testing.T) {
 	ctx := context.Background()
 
-	withNetwork(ctx, t, func(
+	withNetwork(ctx, t, 9000, func(
 		identity1 *identity,
 		identity2 *identity,
 		provider1 net.Provider,
@@ -149,6 +149,7 @@ func assertReceivedMessages(
 func withNetwork(
 	ctx context.Context,
 	t *testing.T,
+	startingPort int,
 	testFn func(
 		identity1 *identity,
 		identity2 *identity,
@@ -166,7 +167,11 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	multiaddr1, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8081")
+	provider1Port := startingPort
+
+	multiaddr1, err := multiaddr.NewMultiaddr(
+		"/ip4/127.0.0.1/tcp/" + strconv.Itoa(provider1Port),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,12 +186,14 @@ func withNetwork(
 		t.Fatal(err)
 	}
 
-	multiaddr2, err := multiaddr.NewMultiaddr("/ip4/127.0.0.1/tcp/8082")
+	provider2Port := startingPort + 1
+
+	multiaddr2, err := multiaddr.NewMultiaddr(
+		"/ip4/127.0.0.1/tcp/" + strconv.Itoa(provider2Port),
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(0))
 
 	provider1, err := Connect(
 		ctx,
@@ -197,10 +204,10 @@ func withNetwork(
 					identity2.id,
 				),
 			},
-			Port: 8081,
+			Port: provider1Port,
 		},
 		privKey1,
-		stakeMonitor,
+		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {
@@ -216,10 +223,10 @@ func withNetwork(
 					identity1.id,
 				),
 			},
-			Port: 8082,
+			Port: provider2Port,
 		},
 		privKey2,
-		stakeMonitor,
+		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
 	if err != nil {

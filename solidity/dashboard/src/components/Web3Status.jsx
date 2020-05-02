@@ -46,7 +46,7 @@ export const Web3Status = () => {
         <Banner
           titleClassName="text-link"
           type={BANNER_TYPE.PENDING}
-          title='Please log in and connect with dApp'
+          title="Please log in and connect with dApp"
           onTitleClick={connectAppWithAccount}
         />
       )
@@ -61,9 +61,5 @@ export const Web3Status = () => {
     )
   }
 
-  return (
-    <div className="web3">
-      {renderStatus()}
-    </div>
-  )
+  return <div className="web3">{renderStatus()}</div>
 }

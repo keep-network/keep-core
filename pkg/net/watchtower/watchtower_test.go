@@ -2,96 +2,85 @@ package watchtower
 
 import (
 	"context"
-	"math/big"
+	"crypto/ecdsa"
+	"fmt"
 	"testing"
 	"time"
 
-	localChain "github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	localNetwork "github.com/keep-network/keep-core/pkg/net/local"
 )
 
-func TestDisconnectPeerBelowMinStake(t *testing.T) {
+func TestDisconnect(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	minStake := big.NewInt(200)
-	stakeMonitor := localChain.NewStakeMonitor(minStake)
-
-	peer1PubKey, peer1Address, err := createNewPeerIdentity()
+	_, peer1PublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, peer2PublicKey, err := key.GenerateStaticNetworkKey()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := stakeNetworkPeer(stakeMonitor, peer1Address); err != nil {
-		t.Fatal(err)
-	}
+	firewall := newMockFirewall()
+	firewall.updatePeer(peer1PublicKey, true)
+	firewall.updatePeer(peer2PublicKey, true)
 
-	// kick off the network
+	// setup the first peer
 	peer1Provider := localNetwork.Connect()
-	// add self to our own map of connections
-	peer1Provider.AddPeer(peer1Provider.ID().String(), peer1PubKey)
+	_ = NewGuard(ctx, 1*time.Second, firewall, peer1Provider.ConnectionManager())
 
-	// set watchtower for bootstrap peer
-	_ = NewGuard(ctx, 1*time.Second, stakeMonitor, peer1Provider.ConnectionManager())
-
-	// initialize second peer
-	peer2PubKey, peer2Address, err := createNewPeerIdentity()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err := stakeNetworkPeer(stakeMonitor, peer2Address); err != nil {
-		t.Fatal(err)
-	}
-
-	// kick off the network
+	// setup the second peer
 	peer2Provider := localNetwork.Connect()
-	peer2Provider.AddPeer(peer2Provider.ID().String(), peer2PubKey)
+	_ = NewGuard(ctx, 1*time.Second, firewall, peer2Provider.ConnectionManager())
 
-	// set watchtower for our second peer
-	_ = NewGuard(ctx, 1*time.Second, stakeMonitor, peer2Provider.ConnectionManager())
+	// connect them with each other
+	peer1Provider.AddPeer(peer2Provider.ID().String(), peer2PublicKey)
+	peer2Provider.AddPeer(peer1Provider.ID().String(), peer1PublicKey)
 
-	// Make sure they add each other
-	peer1Provider.AddPeer(peer2Provider.ID().String(), peer2PubKey)
-	peer2Provider.AddPeer(peer1Provider.ID().String(), peer1PubKey)
-
-	// drop our second peer below the min stake
-	if err := stakeMonitor.UnstakeTokens(peer2Address); err != nil {
-		t.Fatal(err)
+	// make sure they are connected
+	if len(peer1Provider.ConnectionManager().ConnectedPeers()) != 1 {
+		t.Fatal("peer 1 not connected properly with peer 2")
 	}
+	if len(peer2Provider.ConnectionManager().ConnectedPeers()) != 1 {
+		t.Fatal("peers 2 not connected properly with peer 1")
+	}
+
+	// cut off the second peer in the firewall
+	firewall.updatePeer(peer2PublicKey, false)
+
+	// two seconds to run the validation loop
 	time.Sleep(2 * time.Second)
 
-	// make sure the connection that the first peer has to the second peer has been untethered.
-	for _, peer := range peer1Provider.ConnectionManager().ConnectedPeers() {
-		if peer == peer2Provider.ID().String() {
-			t.Fatal("did not expect connection to peer with min stake")
-		}
+	// peer 1 should drop the connection with peer 2
+	if len(peer1Provider.ConnectionManager().ConnectedPeers()) != 0 {
+		t.Fatal("peer 1 should drop the connection with peer 2")
 	}
 }
 
-// we need the peer pubkey, the peer address, and provider
-func createNewPeerIdentity() (*key.NetworkPublic, string, error) {
-	_, peerPublicKey, err := key.GenerateStaticNetworkKey()
-	if err != nil {
-		return nil, "", err
+func newMockFirewall() *mockFirewall {
+	return &mockFirewall{
+		meetsCriteria: make(map[uint64]bool),
 	}
-
-	return peerPublicKey, key.NetworkPubKeyToEthAddress(peerPublicKey), nil
 }
 
-func stakeNetworkPeer(
-	stakeMonitor *localChain.StakeMonitor,
-	address string,
-) error {
-	staker, err := stakeMonitor.StakerFor(address)
-	if err != nil {
-		return err
-	}
-	if err := stakeMonitor.StakeTokens(address); err != nil {
-		return err
-	}
-	_, err = staker.Stake()
-	return err
+type mockFirewall struct {
+	meetsCriteria map[uint64]bool
+}
 
+func (mf *mockFirewall) Validate(remotePeerPublicKey *ecdsa.PublicKey) error {
+	if !mf.meetsCriteria[remotePeerPublicKey.X.Uint64()] {
+		return fmt.Errorf("remote peer does not meet firewall criteria")
+	}
+	return nil
+}
+
+func (mf *mockFirewall) updatePeer(
+	remotePeerPublicKey *key.NetworkPublic,
+	meetsCriteria bool,
+) {
+	x := key.NetworkKeyToECDSAKey(remotePeerPublicKey).X.Uint64()
+	mf.meetsCriteria[x] = meetsCriteria
 }

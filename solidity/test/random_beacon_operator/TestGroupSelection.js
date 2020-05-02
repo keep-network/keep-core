@@ -1,17 +1,16 @@
-import expectThrow from '../helpers/expectThrow';
-import mineBlocks from '../helpers/mineBlocks';
-import increaseTime from '../helpers/increaseTime';
-import packTicket from '../helpers/packTicket';
-import generateTickets from '../helpers/generateTickets';
-import stakeDelegate from '../helpers/stakeDelegate';
-import {initContracts} from '../helpers/initContracts';
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const assert = require('chai').assert
+const initContracts = require('../helpers/initContracts')
+const stakeDelegate = require('../helpers/stakeDelegate')
+const packTicket = require('../helpers/packTicket')
+const generateTickets = require('../helpers/generateTickets')
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 
-contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
-  let operatorContract,
+describe('KeepRandomBeaconOperator/GroupSelection', function() {
+  let operatorContract, submissionTimeout,
   owner = accounts[0], 
-  magpie = accounts[1],
+  beneficiary = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
   operator3 = accounts[4], tickets3,
@@ -24,11 +23,11 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
   before(async () => {
     let contracts = await initContracts(
-      artifacts.require('./KeepToken.sol'),
-      artifacts.require('./TokenStaking.sol'),
-      artifacts.require('./KeepRandomBeaconService.sol'),
-      artifacts.require('./KeepRandomBeaconServiceImplV1.sol'),
-      artifacts.require('./stubs/KeepRandomBeaconOperatorGroupSelectionStub.sol')
+      contract.fromArtifact('KeepToken'),
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorGroupSelectionStub')
     );
     
     let token = contracts.token;
@@ -39,31 +38,34 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     await operatorContract.setGroupSize(groupSize)
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, minimumStake.muln(operator1StakingWeight));
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, minimumStake.muln(operator2StakingWeight));
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, minimumStake.muln(operator3StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary, authorizer, minimumStake.muln(operator1StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary, authorizer, minimumStake.muln(operator2StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary, authorizer, minimumStake.muln(operator3StakingWeight));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, {from: authorizer})
 
-    increaseTime((await stakingContract.initializationPeriod()).toNumber() + 1);
+    time.increase((await stakingContract.initializationPeriod()).addn(1));
 
+    const groupSelectionRelayEntry = await operatorContract.getGroupSelectionRelayEntry()
     tickets1 = generateTickets(
-      await operatorContract.getGroupSelectionRelayEntry(), 
+      groupSelectionRelayEntry, 
       operator1, 
       operator1StakingWeight
     );
     tickets2 = generateTickets(
-      await operatorContract.getGroupSelectionRelayEntry(), 
+      groupSelectionRelayEntry, 
       operator2, 
       operator2StakingWeight
     );
     tickets3 = generateTickets(
-      await operatorContract.getGroupSelectionRelayEntry(), 
+      groupSelectionRelayEntry, 
       operator3, 
       operator3StakingWeight
     );
+
+    submissionTimeout = await operatorContract.ticketSubmissionTimeout();
   });
 
   beforeEach(async () => {
@@ -75,14 +77,17 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
   });
 
   it("should fail to get selected participants before submission period is over", async () => {
-    await expectThrow(operatorContract.selectedParticipants());
+    await expectRevert(
+      operatorContract.selectedParticipants(),
+      "Ticket submission in progress"
+    );
   });
 
   it("should accept valid ticket with minimum virtual staker index", async () => {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    let submittedCount = await operatorContract.submittedTicketsCount();
+    let submittedCount = (await operatorContract.submittedTickets()).length;
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
@@ -90,13 +95,13 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    let submittedCount = await operatorContract.submittedTicketsCount();
+    let submittedCount = (await operatorContract.submittedTickets()).length;
     assert.equal(1, submittedCount, "Ticket should be accepted");
   });
 
   it("should reject ticket with too high virtual staker index", async () => {
     let ticket = packTicket(tickets1[tickets1.length - 1].valueHex, tickets1.length + 1, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     );
@@ -104,7 +109,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
   it("should reject ticket with invalid value", async() => {
     let ticket = packTicket('0x1337', 1, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     );
@@ -112,7 +117,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
   it("should reject ticket with not matching operator", async() => {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator2}),
       "Invalid ticket"
     )
@@ -120,7 +125,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
 
   it("should reject ticket with not matching virtual staker index", async() => {
     let ticket = packTicket(tickets1[0].valueHex, 2, operator1);
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Invalid ticket"
     )
@@ -130,7 +135,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     let ticket = packTicket(tickets1[0].valueHex, 1, operator1);
     await operatorContract.submitTicket(ticket, {from: operator1});
 
-    await expectThrowWithMessage(
+    await expectRevert(
       operatorContract.submitTicket(ticket, {from: operator1}),
       "Duplicate ticket"
     );
@@ -144,8 +149,8 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
       await operatorContract.submitTicket(ticket, {from: operator1});
     }
-  
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(
@@ -174,7 +179,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     let ticket3 = packTicket(tickets3[0].valueHex, tickets3[0].virtualStakerIndex, operator3);
     await operatorContract.submitTicket(ticket3, {from: operator3});
 
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(
@@ -209,7 +214,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
         {from: operator2}
     );
 
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     // Start new group selection
     const seed = await operatorContract.getGroupSelectionRelayEntry();
@@ -233,7 +238,7 @@ contract('KeepRandomBeaconOperator/GroupSelection', function(accounts) {
     let ticket3 = packTicket(tickets3[0].valueHex, tickets3[0].virtualStakerIndex, operator3);
     await operatorContract.submitTicket(ticket3, {from: operator3});
 
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(

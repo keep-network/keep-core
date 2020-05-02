@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconOperator.sol";
 
@@ -6,8 +6,13 @@ contract KeepRandomBeaconOperatorCallbackStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
-        address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        address _stakingContract,
+        address _registryContract
+    ) KeepRandomBeaconOperator(
+        _serviceContract,
+        _stakingContract,
+        _registryContract
+    ) public {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;

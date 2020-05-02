@@ -92,7 +92,7 @@ func (ucm *unicastChannelManager) getUnicastChannelWithHandshake(
 ) {
 	err := ucm.trialHandshake(peerID)
 	if err != nil {
-		return nil, fmt.Errorf("handshake error: [%v]", err)
+		return nil, fmt.Errorf("unicast channel handshake error: [%v]", err)
 	}
 
 	channel, _, err := ucm.getUnicastChannel(peerID)

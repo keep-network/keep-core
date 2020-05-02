@@ -40,6 +40,14 @@ type RelayEntryInterface interface {
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
 	ReportRelayEntryTimeout() error
+	// IsEntryInProgress checks if a new relay entry is currently in progress.
+	IsEntryInProgress() (bool, error)
+	// CurrentRequestStartBlock returns a start block of a current entry.
+	CurrentRequestStartBlock() (*big.Int, error)
+	// CurrentRequestPreviousEntry returns previous entry of a current request.
+	CurrentRequestPreviousEntry() ([]byte, error)
+	// CurrentRequestGroupPublicKey returns group public key for the current request.
+	CurrentRequestGroupPublicKey() ([]byte, error)
 }
 
 // GroupSelectionInterface defines the subset of the relay chain interface that
@@ -55,9 +63,8 @@ type GroupSelectionInterface interface {
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
 	// error submitting the entry.
 	SubmitTicket(ticket *Ticket) *async.EventGroupTicketSubmissionPromise
-	// GetSubmittedTicketsCount gets the number of submitted group candidate
-	// tickets so far.
-	GetSubmittedTicketsCount() (*big.Int, error)
+	// GetSubmittedTickets gets the submitted group candidate tickets so far.
+	GetSubmittedTickets() ([]uint64, error)
 	// GetSelectedParticipants returns `GroupSize` slice of addresses of
 	// candidates which have been selected to the currently assembling group.
 	GetSelectedParticipants() ([]StakerAddress, error)

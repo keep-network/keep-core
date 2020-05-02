@@ -3,12 +3,16 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/beacon"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/ethereum"
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -17,12 +21,17 @@ import (
 )
 
 // StartCommand contains the definition of the start command-line subcommand.
-var StartCommand cli.Command
+var (
+	StartCommand cli.Command
+	logger       = log.Logger("keep-start")
+)
 
 const (
-	bootstrapFlag = "bootstrap"
-	portFlag      = "port"
-	portShort     = "p"
+	bootstrapFlag     = "bootstrap"
+	portFlag          = "port"
+	portShort         = "p"
+	waitForStakeFlag  = "wait-for-stake"
+	waitForStakeShort = "w"
 )
 
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
@@ -38,6 +47,9 @@ func init() {
 			Flags: []cli.Flag{
 				&cli.IntFlag{
 					Name: portFlag + "," + portShort,
+				},
+				&cli.IntFlag{
+					Name: waitForStakeFlag + "," + waitForStakeShort,
 				},
 			},
 		}
@@ -79,6 +91,12 @@ func Start(c *cli.Context) error {
 	if err != nil {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
+	if c.Int(waitForStakeFlag) != 0 {
+		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(waitForStakeFlag))
+		if err != nil {
+			return err
+		}
+	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
 		config.Ethereum.Account.Address,
 	)
@@ -86,7 +104,12 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("could not check the stake [%v]", err)
 	}
 	if !hasMinimumStake {
-		return fmt.Errorf("stake is below the required minimum")
+		return fmt.Errorf(
+			"no minimum KEEP stake or operator is not authorized to use it; " +
+				"please make sure the operator address in the configuration " +
+				"is correct and it has KEEP tokens delegated and the operator " +
+				"contract has been authorized to operate on the stake",
+		)
 	}
 
 	ctx := context.Background()
@@ -97,7 +120,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
-		stakeMonitor,
+		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
 	if err != nil {
@@ -106,8 +129,12 @@ func Start(c *cli.Context) error {
 
 	nodeHeader(netProvider.ConnectionManager().AddrStrings(), config.LibP2P.Port)
 
+	handle, err := persistence.NewDiskHandle(config.Storage.DataDir)
+	if err != nil {
+		return fmt.Errorf("failed while creating a storage disk handler: [%v]", err)
+	}
 	persistence := persistence.NewEncryptedPersistence(
-		persistence.NewDiskHandle(config.Storage.DataDir),
+		handle,
 		config.Ethereum.Account.KeyFilePassword,
 	)
 
@@ -149,4 +176,21 @@ func loadStaticKey(
 	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
 
 	return privateKey, publicKey, nil
+}
+
+func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
+	waitMins := 0
+	for waitMins < timeout {
+		hasMinimumStake, err := stakeMonitor.HasMinimumStake(address)
+		if err != nil {
+			return fmt.Errorf("could not check the stake [%v]", err)
+		}
+		if hasMinimumStake {
+			return nil
+		}
+		logger.Warningf("%s below min stake for %d min \n", address, waitMins)
+		time.Sleep(time.Minute)
+		waitMins++
+	}
+	return fmt.Errorf("timed out waiting for %s to have required minimum stake", address)
 }

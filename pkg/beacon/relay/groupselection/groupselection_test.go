@@ -1,7 +1,10 @@
 package groupselection
 
 import (
+	"encoding/binary"
 	"math/big"
+	"reflect"
+	"sort"
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -12,182 +15,304 @@ import (
 	"github.com/keep-network/keep-core/pkg/subscription"
 )
 
-func TestSubmission(t *testing.T) {
+func TestSubmitTickets(t *testing.T) {
 	var tests = map[string]struct {
-		groupSize                     int
-		initialSubmissionTickets      []*ticket
-		reactiveSubmissionTickets     []*ticket
-		expectedSubmittedTicketsCount int
+		groupSize                int
+		tickets                  []*ticket
+		expectedSubmittedTickets []uint64
 	}{
-		// Client has the same number of tickets below the natural threshold
-		// (initial submission tickets) as the group size.
-		// All initial submission tickets should be submitted to the chain.
-		// Reactive ticket submission should not be executed.
-		"only initial submission - the same number of tickets as group size": {
+		// Client has the same number of tickets as the group size.
+		// All tickets should be submitted to the chain.
+		"the same number of tickets as group size": {
 			groupSize: 4,
-			initialSubmissionTickets: []*ticket{
+			tickets: []*ticket{
 				newTestTicket(1, 1001),
 				newTestTicket(2, 1002),
 				newTestTicket(3, 1003),
 				newTestTicket(4, 1004),
 			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-			},
-			expectedSubmittedTicketsCount: 4,
+			expectedSubmittedTickets: []uint64{1001, 1002, 1003, 1004},
 		},
-		// Client has more tickets below the natural threshold (initial
-		// submission tickets) than the group size. Only #group_size of initial
-		// submission tickets should be submitted to the chain.
-		// Reactive ticket submission should not be executed.
-		"only initial submission - more tickets than group size": {
+		// Client has more tickets than the group size.
+		// Only #group_size of tickets should be submitted to the chain.
+		"more tickets than group size": {
 			groupSize: 2,
-			initialSubmissionTickets: []*ticket{
+			tickets: []*ticket{
 				newTestTicket(1, 1001),
 				newTestTicket(2, 1002),
 				newTestTicket(3, 1003),
 				newTestTicket(4, 1004),
 			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-			},
-			expectedSubmittedTicketsCount: 2,
+			expectedSubmittedTickets: []uint64{1001, 1002},
 		},
-		// Client has less tickets than the group size. Two tickets have value
-		// below the natural threshold, and there are no tickets with value
-		// above the natural threshold. All tickets should be submitted to
-		// the chain.
-		"only initial submission - less tickets than the group size": {
+		// Client has less tickets than the group size.
+		// All tickets should be submitted to the chain.
+		"less tickets than the group size": {
 			groupSize: 5,
-			initialSubmissionTickets: []*ticket{
+			tickets: []*ticket{
 				newTestTicket(1, 1001),
 				newTestTicket(2, 1002),
 			},
-			reactiveSubmissionTickets:     []*ticket{},
-			expectedSubmittedTicketsCount: 2,
-		},
-		// Client has less tickets below the natural threshold (initial
-		// submission tickets) than the group size. Since no one else submitted
-		// their tickets, reactive ticket submission should be executed.
-		"with reactive submission phase - the same number of tickets as group size": {
-			groupSize: 6,
-			initialSubmissionTickets: []*ticket{
-				newTestTicket(1, 1001),
-				newTestTicket(2, 1002),
-				newTestTicket(3, 1003),
-				newTestTicket(4, 1004),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-			},
-			expectedSubmittedTicketsCount: 6,
-		},
-		// Client has less tickets below the natural threshold (initial
-		// submission tickets) than the group size. Since no one else submitted
-		// their tickets, reactive ticket submission should be executed.
-		// No more tickets should be submitted by the client at overall than the
-		// #group_size, though.
-		"with reactive submission phase - more tickets than group size": {
-			groupSize: 5,
-			initialSubmissionTickets: []*ticket{
-				newTestTicket(1, 1001),
-				newTestTicket(2, 1002),
-				newTestTicket(3, 1003),
-				newTestTicket(4, 1004),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-				newTestTicket(7, 1007),
-				newTestTicket(8, 1008),
-			},
-			expectedSubmittedTicketsCount: 5,
-		},
-		// Client has no tickets below the natural threshold (initial
-		// submission tickets). Since no one else submitted their tickets,
-		// reactive ticket submission should be executed.
-		// No more tickets should be submitted by the client at overall than the
-		// #group_size, though.
-		"with reactive submission phase - no initial submission tickets": {
-			groupSize:                3,
-			initialSubmissionTickets: []*ticket{},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(5, 1005),
-				newTestTicket(6, 1006),
-				newTestTicket(7, 1007),
-				newTestTicket(8, 1008),
-			},
-			expectedSubmittedTicketsCount: 3,
-		},
-		// Client has less tickets than the group size. One ticket has value
-		// below the natural threshold, the other ticket has value above
-		// the natural threshold. Both those tickets should be submitted to
-		// the chain.
-		"with reactive submission phase - less tickets than the group size": {
-			groupSize: 5,
-			initialSubmissionTickets: []*ticket{
-				newTestTicket(1, 1001),
-			},
-			reactiveSubmissionTickets: []*ticket{
-				newTestTicket(2, 1002),
-			},
-			expectedSubmittedTicketsCount: 2,
+			expectedSubmittedTickets: []uint64{1001, 1002},
 		},
 	}
 
-	for _, test := range tests {
-		chainConfig := &config.Chain{
-			GroupSize:               test.groupSize,
-			TicketSubmissionTimeout: 6,
-		}
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			chainConfig := &config.Chain{
+				GroupSize:               test.groupSize,
+				TicketSubmissionTimeout: 24,
+			}
 
-		chain := &stubGroupInterface{
-			groupSize: test.groupSize,
-		}
+			chain := &stubGroupInterface{
+				groupSize: test.groupSize,
+			}
 
-		blockCounter, err := local.BlockCounter()
-		if err != nil {
-			t.Fatal(err)
-		}
+			blockCounter, err := local.BlockCounter()
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		onGroupSelected := func(result *Result) {}
-
-		err = startTicketSubmission(
-			test.initialSubmissionTickets,
-			test.reactiveSubmissionTickets,
-			chain,
-			blockCounter,
-			chainConfig,
-			0, // start block height
-			onGroupSelected,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		err = blockCounter.WaitForBlockHeight(
-			chainConfig.TicketSubmissionTimeout,
-		)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		submittedTicketsCount, err := chain.GetSubmittedTicketsCount()
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		expectedCount := big.NewInt(int64(test.expectedSubmittedTicketsCount))
-		if expectedCount.Cmp(submittedTicketsCount) != 0 {
-			t.Fatalf(
-				"unexpected number of submitted tickets\nexpected: [%v]\nactual:   [%v]",
-				expectedCount,
-				submittedTicketsCount,
+			err = submitTickets(
+				test.tickets,
+				chain,
+				blockCounter,
+				chainConfig,
+				0, // start block height
 			)
-		}
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			err = blockCounter.WaitForBlockHeight(
+				chainConfig.TicketSubmissionTimeout,
+			)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			submittedTickets, err := chain.GetSubmittedTickets()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if !reflect.DeepEqual(test.expectedSubmittedTickets, submittedTickets) {
+				t.Fatalf(
+					"unexpected submitted tickets\nexpected: [%v]\nactual:   [%v]",
+					test.expectedSubmittedTickets,
+					submittedTickets,
+				)
+			}
+		})
+	}
+}
+
+func TestRoundCandidateTickets(t *testing.T) {
+	groupSize := 9
+	rounds := uint64(7)
+
+	tickets := []*ticket{
+		newTestTicket(1, 36028797018963968),
+		newTestTicket(2, 72057594037927936),
+		newTestTicket(3, 144115188075855872),
+		newTestTicket(4, 288230376151711744),
+		newTestTicket(5, 576460752303423488),
+		newTestTicket(6, 1152921504606846976),
+		newTestTicket(7, 2305843009213693952),
+		newTestTicket(8, 4611686018427387904),
+		newTestTicket(9, 9223372036854775808),
+	}
+
+	var tests = map[string]struct {
+		existingChainTickets             []uint64
+		expectedCandidateTicketsPerRound map[uint64][]*ticket
+	}{
+		"no existing chain tickets - all tickets should be submitted": {
+			existingChainTickets: []uint64{},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {tickets[0], tickets[1]},
+				1: {tickets[2]},
+				2: {tickets[3]},
+				3: {tickets[4]},
+				4: {tickets[5]},
+				5: {tickets[6]},
+				6: {tickets[7]},
+				7: {tickets[8]},
+			},
+		},
+		"better chain tickets exists and their count is below the group size - " +
+			"only best tickets should be submitted": {
+			existingChainTickets: []uint64{1000, 1001, 1002, 1003},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {tickets[0], tickets[1]},
+				1: {tickets[2]},
+				2: {tickets[3]},
+				3: {tickets[4]},
+				4: {},
+				5: {},
+				6: {},
+				7: {},
+			},
+		},
+		"better chain tickets exists and their count is equal the group size - " +
+			"no tickets should be submitted": {
+			existingChainTickets: []uint64{
+				1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008,
+			},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {}, 1: {}, 2: {}, 3: {}, 4: {}, 5: {}, 6: {}, 7: {},
+			},
+		},
+		"worse chain tickets exists and their count is below the group size - " +
+			"all tickets should be submitted": {
+			existingChainTickets: []uint64{
+				9223372036854775809,
+				9223372036854775810,
+				9223372036854775811,
+				9223372036854775812,
+			},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {tickets[0], tickets[1]},
+				1: {tickets[2]},
+				2: {tickets[3]},
+				3: {tickets[4]},
+				4: {tickets[5]},
+				5: {tickets[6]},
+				6: {tickets[7]},
+				7: {tickets[8]},
+			},
+		},
+		"worse chain tickets exists and their count is equal the group size - " +
+			"all tickets should be submitted": {
+			existingChainTickets: []uint64{
+				9223372036854775809,
+				9223372036854775810,
+				9223372036854775811,
+				9223372036854775812,
+				9223372036854775813,
+				9223372036854775814,
+				9223372036854775815,
+				9223372036854775816,
+				9223372036854775817,
+			},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {tickets[0], tickets[1]},
+				1: {tickets[2]},
+				2: {tickets[3]},
+				3: {tickets[4]},
+				4: {tickets[5]},
+				5: {tickets[6]},
+				6: {tickets[7]},
+				7: {tickets[8]},
+			},
+		},
+		"better and worse chain tickets exists and their count is below the group size - " +
+			"only best tickets should be submitted": {
+			existingChainTickets: []uint64{
+				1000,
+				1001,
+				1002,
+				9223372036854775809,
+				9223372036854775810,
+				9223372036854775811,
+			},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {tickets[0], tickets[1]},
+				1: {tickets[2]},
+				2: {tickets[3]},
+				3: {tickets[4]},
+				4: {tickets[5]},
+				5: {},
+				6: {},
+				7: {},
+			},
+		},
+		"better and worse chain tickets exists and their count is equal the group size - " +
+			"only best tickets should be submitted": {
+			existingChainTickets: []uint64{
+				1000,
+				1001,
+				1002,
+				1003,
+				9223372036854775809,
+				9223372036854775810,
+				9223372036854775811,
+				9223372036854775812,
+				9223372036854775813,
+			},
+			expectedCandidateTicketsPerRound: map[uint64][]*ticket{
+				0: {tickets[0], tickets[1]},
+				1: {tickets[2]},
+				2: {tickets[3]},
+				3: {tickets[4]},
+				4: {},
+				5: {},
+				6: {},
+				7: {},
+			},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			existingChainTickets := make([]*chain.Ticket, 0)
+			for _, existingChainTicket := range test.existingChainTickets {
+				chainTicket, err := toChainTicket(
+					newTestTicket(0, existingChainTicket),
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				existingChainTickets = append(existingChainTickets, chainTicket)
+			}
+
+			relayChain := &stubGroupInterface{
+				groupSize:        groupSize,
+				submittedTickets: existingChainTickets,
+			}
+
+			for roundIndex := uint64(0); roundIndex <= rounds; roundIndex++ {
+				roundLeadingZeros := rounds - roundIndex
+
+				candidateTickets, err := roundCandidateTickets(
+					relayChain,
+					tickets,
+					roundIndex,
+					roundLeadingZeros,
+					groupSize,
+				)
+				if err != nil {
+					t.Fatal(err)
+				}
+
+				if !reflect.DeepEqual(
+					test.expectedCandidateTicketsPerRound[roundIndex],
+					candidateTickets,
+				) {
+					t.Fatalf(
+						"unexpected candidate tickets for round [%v]\n"+
+							"expected: [%v]\nactual:   [%v]",
+						roundIndex,
+						test.expectedCandidateTicketsPerRound[roundIndex],
+						candidateTickets,
+					)
+				}
+
+				// Candidate tickets must be submitted because next round
+				// will get submitted tickets from the mock chain and use
+				// them to determine an optimal number of their candidate
+				// tickets.
+				for _, ticket := range candidateTickets {
+					chainTicket, err := toChainTicket(ticket)
+					if err != nil {
+						t.Fatal(err)
+					}
+
+					relayChain.SubmitTicket(chainTicket)
+				}
+			}
+		})
 	}
 }
 
@@ -197,19 +322,39 @@ type stubGroupInterface struct {
 }
 
 func (stg *stubGroupInterface) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
-	stg.submittedTickets = append(stg.submittedTickets, ticket)
 	promise := &async.EventGroupTicketSubmissionPromise{}
 
-	promise.Fulfill(&event.GroupTicketSubmission{
-		TicketValue: ticket.Value,
+	stg.submittedTickets = append(stg.submittedTickets, ticket)
+
+	sort.SliceStable(stg.submittedTickets, func(i, j int) bool {
+		// Ticket value bytes are interpreted as a big-endian unsigned integers.
+		iValue := new(big.Int).SetBytes(stg.submittedTickets[i].Value[:])
+		jValue := new(big.Int).SetBytes(stg.submittedTickets[j].Value[:])
+
+		return iValue.Cmp(jValue) == -1
+	})
+
+	if len(stg.submittedTickets) > stg.groupSize {
+		stg.submittedTickets = stg.submittedTickets[:stg.groupSize]
+	}
+
+	_ = promise.Fulfill(&event.GroupTicketSubmission{
+		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
 		BlockNumber: 222,
 	})
 
 	return promise
 }
 
-func (stg *stubGroupInterface) GetSubmittedTicketsCount() (*big.Int, error) {
-	return big.NewInt(int64(len(stg.submittedTickets))), nil
+func (stg *stubGroupInterface) GetSubmittedTickets() ([]uint64, error) {
+	tickets := make([]uint64, len(stg.submittedTickets))
+
+	for i := range tickets {
+		// Ticket bytes should be interpreted as a big-endian unsigned integers.
+		tickets[i] = binary.BigEndian.Uint64(stg.submittedTickets[i].Value[:])
+	}
+
+	return tickets, nil
 }
 
 func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress, error) {

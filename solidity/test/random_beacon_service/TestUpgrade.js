@@ -1,15 +1,17 @@
-import {createSnapshot, restoreSnapshot} from "../helpers/snapshot"
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {BN, constants, expectEvent, expectRevert, time} = require("@openzeppelin/test-helpers")
+const {contract, accounts} = require("@openzeppelin/test-environment")
+const assert = require('chai').assert
 
-const ServiceContractProxy = artifacts.require('./KeepRandomBeaconService.sol')
-const ServiceContractImplV1 = artifacts.require('./KeepRandomBeaconServiceImplV1.sol')
-const ServiceContractImplV2 = artifacts.require('./examples/KeepRandomBeaconServiceUpgradeExample.sol')
+const ServiceContractProxy = contract.fromArtifact('KeepRandomBeaconService')
+const ServiceContractImplV1 = contract.fromArtifact('KeepRandomBeaconServiceImplV1')
+const ServiceContractImplV2 = contract.fromArtifact('KeepRandomBeaconServiceUpgradeExample')
 
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-contract('KeepRandomBeaconService/Upgrade', function(accounts) {
+describe('KeepRandomBeaconService/Upgrade', function() {
 
   let proxy
   let implementationV1
@@ -25,7 +27,7 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
     implementationV2 = await ServiceContractImplV2.new({from: admin})
     
     initializeCallData = implementationV1.contract.methods.initialize(
-      100, 200, '0x0000000000000000000000000000000000000001'
+      100, '0x0000000000000000000000000000000000000001'
     ).encodeABI()
 
     proxy = await ServiceContractProxy.new(
@@ -303,7 +305,7 @@ contract('KeepRandomBeaconService/Upgrade', function(accounts) {
 
     it("reverts when initialization fails", async () => {
       const failingData = implementationV1.contract.methods.initialize(
-        100, 200, constants.ZERO_ADDRESS
+        100, constants.ZERO_ADDRESS
       ).encodeABI()
 
       await proxy.upgradeTo(

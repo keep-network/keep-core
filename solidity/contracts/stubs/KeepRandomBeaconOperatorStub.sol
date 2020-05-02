@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconOperator.sol";
 
@@ -10,8 +10,13 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
-        address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        address _stakingContract,
+        address _registryContract
+    ) KeepRandomBeaconOperator(
+        _serviceContract,
+        _stakingContract,
+        _registryContract
+    ) public {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;
@@ -46,10 +51,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
 
     function isGroupSelectionInProgress() public view returns (bool) {
         return groupSelection.inProgress;
-    }
-
-    function getRelayEntryTimeout() public view returns (uint256) {
-        return relayEntryTimeout;
     }
 
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {

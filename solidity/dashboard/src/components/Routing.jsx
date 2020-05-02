@@ -23,15 +23,23 @@ class Routing extends React.Component {
       return null
     }
 
-    return contractsDataIsFetching ? <Loadable /> : (
+    return contractsDataIsFetching ? (
+      <Loadable />
+    ) : (
       <Switch>
-        <Route exact path='/tokens' component={TokensPage} />
-        <Route exact path='/operations' component={OperatorPage} />
-        <Route exact path='/rewards' component={RewardsPage} />
-        <Route exact path='/authorizer' component={AuthorizerPage} />
-        {isKeepTokenContractDeployer && <Route exact path='/create-token-grants' component={CreateTokenGrantPage} />}
-        <Route exact path='/' >
-          <Redirect to='/tokens' />
+        <Route exact path="/tokens" component={TokensPage} />
+        <Route exact path="/operations" component={OperatorPage} />
+        <Route exact path="/rewards" component={RewardsPage} />
+        <Route exact path="/authorizer" component={AuthorizerPage} />
+        {isKeepTokenContractDeployer && (
+          <Route
+            exact
+            path="/create-token-grants"
+            component={CreateTokenGrantPage}
+          />
+        )}
+        <Route exact path="/">
+          <Redirect to="/tokens" />
         </Route>
         <Route path="*">
           <NotFound404 />
@@ -41,11 +49,7 @@ class Routing extends React.Component {
   }
 
   render() {
-    return (
-      <>
-        {this.renderContent()}
-      </>
-    )
+    return <>{this.renderContent()}</>
   }
 }
 

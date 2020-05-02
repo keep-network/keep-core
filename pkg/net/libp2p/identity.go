@@ -27,7 +27,8 @@ func createIdentity(privateKey libp2pcrypto.PrivKey) (*identity, error) {
 	peerID, err := peer.IDFromPublicKey(privateKey.GetPublic())
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not transform public key to peer's identity [%v]", err,
+			"could not transform public key to peer's identity: [%v]",
+			err,
 		)
 	}
 
@@ -66,7 +67,7 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	)
 
 	if err = pbIdentity.Unmarshal(bytes); err != nil {
-		return fmt.Errorf("unmarshalling failed with error %s", err)
+		return fmt.Errorf("unmarshalling failed: [%v]", err)
 	}
 	i.pubKey, err = libp2pcrypto.UnmarshalPublicKey(pbIdentity.PubKey)
 	if err != nil {
@@ -74,7 +75,10 @@ func (i *identity) Unmarshal(bytes []byte) error {
 	}
 	pid, err = peer.IDFromPublicKey(i.pubKey)
 	if err != nil {
-		return fmt.Errorf("Failed to generate valid libp2p identity with err: %s", err)
+		return fmt.Errorf(
+			"failed to generate valid libp2p identity: [%v]",
+			err,
+		)
 	}
 	i.id = pid
 

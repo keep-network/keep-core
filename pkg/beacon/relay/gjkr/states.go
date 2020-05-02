@@ -31,6 +31,9 @@ const (
 
 	keyRevealStateDelayBlocks  = 1
 	keyRevealStateActiveBlocks = 5
+
+	combinationStateDelayBlocks  = 0
+	combinationStateActiveBlocks = 20
 )
 
 // ephemeralKeyPairGenerationState is the state during which members broadcast
@@ -69,6 +72,7 @@ func (ekpgs *ephemeralKeyPairGenerationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *EphemeralPublicKeyMessage:
 		if !group.IsMessageFromSelf(ekpgs.member.ID, phaseMessage) &&
+			group.IsSenderValid(ekpgs.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(ekpgs.member, phaseMessage) {
 			ekpgs.phaseMessages = append(ekpgs.phaseMessages, phaseMessage)
 		}
@@ -172,12 +176,14 @@ func (cs *commitmentState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PeerSharesMessage:
 		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderValid(cs.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseSharesMessages = append(cs.phaseSharesMessages, phaseMessage)
 		}
 
 	case *MemberCommitmentsMessage:
 		if !group.IsMessageFromSelf(cs.member.ID, phaseMessage) &&
+			group.IsSenderValid(cs.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(cs.member, phaseMessage) {
 			cs.phaseCommitmentsMessages = append(
 				cs.phaseCommitmentsMessages,
@@ -250,6 +256,7 @@ func (cvs *commitmentsVerificationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *SecretSharesAccusationsMessage:
 		if !group.IsMessageFromSelf(cvs.member.ID, phaseMessage) &&
+			group.IsSenderValid(cvs.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(cvs.member, phaseMessage) {
 			cvs.phaseAccusationsMessages = append(
 				cvs.phaseAccusationsMessages,
@@ -393,6 +400,7 @@ func (pss *pointsShareState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MemberPublicKeySharePointsMessage:
 		if !group.IsMessageFromSelf(pss.member.ID, phaseMessage) &&
+			group.IsSenderValid(pss.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(pss.member, phaseMessage) {
 			pss.phaseMessages = append(pss.phaseMessages, phaseMessage)
 		}
@@ -456,6 +464,7 @@ func (pvs *pointsValidationState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *PointsAccusationsMessage:
 		if !group.IsMessageFromSelf(pvs.member.ID, phaseMessage) &&
+			group.IsSenderValid(pvs.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(pvs.member, phaseMessage) {
 			pvs.phaseMessages = append(pvs.phaseMessages, phaseMessage)
 		}
@@ -562,6 +571,7 @@ func (rs *keyRevealState) Receive(msg net.Message) error {
 	switch phaseMessage := msg.Payload().(type) {
 	case *MisbehavedEphemeralKeysMessage:
 		if !group.IsMessageFromSelf(rs.member.ID, phaseMessage) &&
+			group.IsSenderValid(rs.member, phaseMessage, msg.SenderPublicKey()) &&
 			group.IsSenderAccepted(rs.member, phaseMessage) {
 			rs.phaseMessages = append(rs.phaseMessages, phaseMessage)
 		}
@@ -639,14 +649,15 @@ type combinationState struct {
 }
 
 func (cs *combinationState) DelayBlocks() uint64 {
-	return silentStateDelayBlocks
+	return combinationStateDelayBlocks
 }
 
 func (cs *combinationState) ActiveBlocks() uint64 {
-	return silentStateActiveBlocks
+	return combinationStateActiveBlocks
 }
 
 func (cs *combinationState) Initiate(ctx context.Context) error {
+	cs.member.ComputeGroupPublicKeyShares()
 	cs.member.CombineGroupPublicKey()
 	return nil
 }

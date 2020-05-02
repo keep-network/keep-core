@@ -1,14 +1,18 @@
-import React from 'react'
-import { useFetchData } from '../hooks/useFetchData'
-import { authorizationService } from '../services/authorization.service'
-import { LoadingOverlay } from '../components/Loadable'
-import AddressShortcut from '../components/AddressShortcut'
-import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
+import React from "react"
+import { useFetchData } from "../hooks/useFetchData"
+import { authorizationService } from "../services/authorization.service"
+import { LoadingOverlay } from "../components/Loadable"
+import AddressShortcut from "../components/AddressShortcut"
+import { ETHERSCAN_DEFAULT_URL } from "../constants/constants"
+import Tile from "./Tile"
 
 const initialData = { isOperator: false, contracts: [] }
 
 const AuthorizationInfo = (props) => {
-  const [state] = useFetchData(authorizationService.fetchOperatorAuthorizedContracts, initialData)
+  const [state] = useFetchData(
+    authorizationService.fetchOperatorAuthorizedContracts,
+    initialData
+  )
   const { isFetching, data } = state
   const { isOperator, contracts } = data
 
@@ -18,23 +22,23 @@ const AuthorizationInfo = (props) => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <section className="tile">
-        <h3 className="text-grey-60">Authorization</h3>
+      <Tile title="Authorization">
         {contracts.map((contract) => (
           <div key={contract.contractAddress} className="mb-1">
             You have been successfully authorized by authorizer&nbsp;
-            <AddressShortcut address={contract.authorizer}/>&nbsp;
-            to &nbsp;
+            <AddressShortcut address={contract.authorizer} />
+            &nbsp; to &nbsp;
             <a
               href={ETHERSCAN_DEFAULT_URL + contract.contractAddress}
               rel="noopener noreferrer"
               target="_blank"
             >
               operator contract
-            </a>.
+            </a>
+            .
           </div>
         ))}
-      </section>
+      </Tile>
     </LoadingOverlay>
   )
 }

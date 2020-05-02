@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 import "../libraries/operator/Groups.sol";
 
 contract GroupsTerminationStub {
@@ -20,7 +20,7 @@ contract GroupsTerminationStub {
     }
 
     function terminateGroup(uint256 groupIndex) public {
-        groups.terminatedGroups.push(groupIndex);
+        groups.terminateGroup(groupIndex);
     }
 
     function selectGroup(uint256 seed) public returns(uint256) {

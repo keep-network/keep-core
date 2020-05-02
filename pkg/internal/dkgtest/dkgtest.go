@@ -75,15 +75,30 @@ func RunTest(
 		rules,
 	)
 
-	chain := chainLocal.ConnectWithKey(groupSize, honestThreshold, minimumStake, privateKey)
+	chain := chainLocal.ConnectWithKey(
+		groupSize,
+		honestThreshold,
+		minimumStake,
+		privateKey,
+	)
 
-	return executeDKG(seed, chain, network)
+	address := chain.Signing().PublicKeyBytesToAddress(
+		key.Marshal(networkPublicKey),
+	)
+
+	selectedStakers := make([]relaychain.StakerAddress, groupSize)
+	for i := range selectedStakers {
+		selectedStakers[i] = address
+	}
+
+	return executeDKG(seed, chain, network, selectedStakers)
 }
 
 func executeDKG(
 	seed *big.Int,
 	chain chainLocal.Chain,
 	network interception.Network,
+	selectedStakers []relaychain.StakerAddress,
 ) (*Result, error) {
 	relayConfig, err := chain.ThresholdRelay().GetConfig()
 	if err != nil {
@@ -127,6 +142,11 @@ func executeDKG(
 	gjkr.RegisterUnmarshallers(broadcastChannel)
 	dkgResult.RegisterUnmarshallers(broadcastChannel)
 
+	membershipValidator := group.NewStakersMembershipValidator(
+		selectedStakers,
+		chain.Signing(),
+	)
+
 	for i := 0; i < relayConfig.GroupSize; i++ {
 		i := i // capture for goroutine
 		go func() {
@@ -135,6 +155,7 @@ func executeDKG(
 				uint8(i),
 				relayConfig.GroupSize,
 				relayConfig.DishonestThreshold(),
+				membershipValidator,
 				startBlockHeight,
 				blockCounter,
 				chain.ThresholdRelay(),

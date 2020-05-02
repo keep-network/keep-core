@@ -1,5 +1,5 @@
-import React, { useContext } from 'react'
-import { Web3Context } from './WithWeb3Context'
+import React, { useContext } from "react"
+import { Web3Context } from "./WithWeb3Context"
 
 export const NetworkStatus = () => {
   const {
@@ -11,11 +11,11 @@ export const NetworkStatus = () => {
   return (
     <div className="network-status flex row center">
       <div className={`network-indicator ${!error && provider !== null ? 'connected' : 'error' }`} />
-      <span className="text-label">
+      <h5 className="text-label">
         {!error && provider === null && 'not connected' }
         {!error && provider !== null && `connected: ${networkType}`}
         {error && provider !== null && `wrong network`}
-      </span>
+      </h5>
     </div>
   )
 }

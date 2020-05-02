@@ -19,23 +19,6 @@ orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
-  test_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - run: sudo npm install -g ganache-cli@6.4.2
-      - run:
-          name: Set up test and test result environment
-          command: |
-            cd solidity
-            npm install
-      - run:
-          name: Running testrpc
-          command: ganache-cli
-          background: true
-      - run: cd solidity && npm run test
-      - store_test_results:
-          path: /tmp/test-results
   generate_docs_solidity:
     executor: docker-node
     steps:
@@ -172,6 +155,61 @@ jobs:
             cd /tmp/keep-client/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/keep-core
 
+  publish_npm_package:
+    executor: docker-node
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - checkout
+      - run:
+          name: Bump and publish npm package
+          working_directory: ~/project/solidity
+          command: |
+            set -x
+            mkdir -p artifacts
+            cp -r /tmp/keep-client/contracts/* artifacts/
+            name=$(jq --raw-output .name package.json)
+            version=$(jq --raw-output .version package.json)
+            preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
+
+            # Find the latest published package version matching this preid.
+            # Note that in jq, we wrap the result in an array and then flatten;
+            # this is because npm show json contains a single string if there
+            # is only one matching version, or an array if there are multiple,
+            # and we want to look at an array always.
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
+            latest_version=${latest_version:-$version}
+            if [ -z $latest_version ]; then
+              echo "Latest version calculation failed. Resolved info:"
+              echo "$name@$version ; preid $preid"
+              exit 1
+            fi
+
+            # Update package.json with the latest published package version matching this
+            # preid to prepare for bumping.
+            echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
+
+            # Bump without doing any git work. Versioning is a build-time action for us.
+            # Consider including commit id? Would be +<commit id>.
+            npm version prerelease --preid=$preid --no-git-tag-version
+
+            # Fix resolved dependency versions.
+            npm update
+
+            # Publish to npm.
+            echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
+            npm publish --access=public
+
+  trigger_downstream_builds:
+    executor: docker-node
+    steps:
+      - run:
+          name: "Rebuild downstream same-branch build(s)"
+          command: |
+            # CIRCLE_BRANCH || CIRCLE_TAG?
+            # curl CIRCLE_API_BUILD/keep-tecdsa?branch=${CIRCLE_BRANCH}
+            echo "Eventually trigger downstream for $CIRCLE_BRANCH"
+
   build_token_dashboard_dapp:
     executor: docker-node
     steps:
@@ -181,10 +219,10 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
-          name: Copy contract artifacts
+          name: Resolve latest contracts
           working_directory: ~/project/solidity/dashboard
           command: |
-            ./scripts/copy-contracts.sh /tmp/keep-client/contracts
+            npm upgrade @keep-network/keep-core
       - run:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
@@ -283,12 +321,23 @@ jobs:
 
 workflows:
   version: 2
-  solidity:
+  build-and-test:
     jobs:
-      - test_solidity
+      - build_client_and_test_go:
+          filters:
+            branches:
+              ignore: master
+          context: keep-dev
+      - build_token_dashboard_dapp:
+          filters:
+            branches:
+              ignore: master
   build-test-migrate-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
+          filters:
+            branches:
+              only: master
           context: keep-dev
       - build_initcontainer:
           filters:
@@ -303,7 +352,13 @@ workflows:
             branches:
               only: master
           context: keep-dev
+      - publish_npm_package:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
           requires:
+            - migrate_contracts
             - build_client_and_test_go
       - publish_keep_client:
           filters:
@@ -314,6 +369,13 @@ workflows:
             - build_client_and_test_go
             - build_initcontainer
             - migrate_contracts
+      - trigger_downstream_builds:
+          filters:
+            branches:
+              only: master
+          context: keep-dev
+          requires:
+            - publish_npm_package
       - publish_contract_data:
           filters:
             branches:
@@ -322,9 +384,14 @@ workflows:
           requires:
             - build_client_and_test_go
             - migrate_contracts
+      # When building the token dashboard for a master merge, wait for npm
+      # package publish
       - build_token_dashboard_dapp:
+          filters:
+            branches:
+              only: master
           requires:
-            - migrate_contracts
+            - publish_npm_package
       - publish_token_dashboard_dapp:
           filters:
             branches:
@@ -340,14 +407,14 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
         - build_client_and_test_go:
             context: keep-test
             filters:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - keep_test_approval
         - build_initcontainer:
@@ -356,7 +423,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - migrate_contracts
               - build_client_and_test_go
@@ -366,7 +433,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_client_and_test_go
         - publish_keep_client:
@@ -375,7 +442,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_client_and_test_go
               - build_initcontainer
@@ -386,25 +453,43 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_client_and_test_go
               - migrate_contracts
+        - publish_npm_package:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - migrate_contracts
+        - trigger_downstream_builds:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - publish_npm_package
         - build_token_dashboard_dapp:
             filters:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
-              - migrate_contracts
+              - publish_npm_package
         - publish_token_dashboard_dapp:
             context: keep-test
             filters:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_token_dashboard_dapp
   docs:

@@ -1,18 +1,28 @@
-import mineBlocks from '../helpers/mineBlocks';
-import {createSnapshot, restoreSnapshot} from '../helpers/snapshot';
-const GroupsExpirationStub = artifacts.require('./stubs/GroupsExpirationStub.sol')
-import expectThrowWithMessage from '../helpers/expectThrowWithMessage';
-const Groups = artifacts.require('./libraries/operator/Groups.sol');
+const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const assert = require('chai').assert
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const GroupsExpirationStub = contract.fromArtifact('GroupsExpirationStub')
+const Groups = contract.fromArtifact('Groups');
+const BLS = contract.fromArtifact('BLS');
 
-contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
+const BN = web3.utils.BN
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
 
+describe('KeepRandomBeaconOperator/GroupExpiration', function() {
   let groups;
 
-  const groupActiveTime = 20;
-  const relayEntryTimeout = 10;
+  const groupActiveTime = new BN(20);
+  const relayEntryTimeout = new BN(10);
 
   before(async () => {
+    const bls = await BLS.new({from: accounts[0]});
+    await Groups.detectNetwork()
+    await Groups.link("BLS", bls.address);
     const groupsLibrary = await Groups.new();
+    await GroupsExpirationStub.detectNetwork()
     await GroupsExpirationStub.link("Groups", groupsLibrary.address);
     groups = await GroupsExpirationStub.new();
   });
@@ -32,12 +42,12 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
 
   async function expireGroup(groupIndex) {
     let groupRegistrationBlock = await groups.getGroupRegistrationBlockHeight(groupIndex);
-    let currentBlock = await web3.eth.getBlockNumber();
+    let currentBlock = new BN(await web3.eth.getBlockNumber());
 
     // If current block is larger than group registration block by group active time then
     // it is not necessary to mine any blocks cause the group is already expired
-    if (currentBlock - groupRegistrationBlock <= groupActiveTime) {
-      await mineBlocks(groupActiveTime - (currentBlock - groupRegistrationBlock) + 1);
+    if (currentBlock.sub(groupRegistrationBlock).lte(groupActiveTime)) {
+      await time.advanceBlockTo(currentBlock.add(groupActiveTime.sub(currentBlock.sub(groupRegistrationBlock))).addn(1))
     }
   }
 
@@ -61,96 +71,108 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
   describe("should expire old groups and select active one", async () => {
     it("A beacon_value = 0", async function() {
       let selectedIndex = await runExpirationTest(1, 0, 0);
-      assert.equal(0, selectedIndex);
+      expect(selectedIndex).to.eq.BN(0);
     });
     it("A beacon_value = 1", async function() {
       let selectedIndex = await runExpirationTest(1, 0, 1);
-      assert.equal(0, selectedIndex);
+      expect(selectedIndex).to.eq.BN(0);
     });
     it("AAA beacon_value = 0", async function() {
       let selectedIndex = await runExpirationTest(3, 0, 0);
-      assert.equal(0, selectedIndex);
+      expect(selectedIndex).to.eq.BN(0);
     });
     it("AAA beacon_value = 1", async function() {
       let selectedIndex = await runExpirationTest(3, 0, 1);
-      assert.equal(1, selectedIndex);
+      expect(selectedIndex).to.eq.BN(1);
     });
     it("AAA beacon_value = 2", async function() {
       let selectedIndex = await runExpirationTest(3, 0, 2);
-      assert.equal(2, selectedIndex);
+      expect(selectedIndex).to.eq.BN(2);
     });
     it("AAA beacon_value = 3", async function() {
       let selectedIndex = await runExpirationTest(3, 0, 3);
-      assert.equal(0, selectedIndex);
+      expect(selectedIndex).to.eq.BN(0);
     });
     it("EAA beacon_value = 0", async function() {
       let selectedIndex = await runExpirationTest(3, 1, 0);
-      assert.equal(1, selectedIndex);
+      expect(selectedIndex).to.eq.BN(1);
     });
     it("EEEEAAAAAA beacon_value = 0", async function() { 
       let selectedIndex = await runExpirationTest(10, 4, 0);
-      assert.equal(4, selectedIndex);
+      expect(selectedIndex).to.eq.BN(4);
     });
     it("EEEEAAAAAA beacon_value = 1", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 1);
-      assert.equal(5, selectedIndex);
+      expect(selectedIndex).to.eq.BN(5);
     });
     it("EEEEAAAAAA beacon_value = 2", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 2);
-      assert.equal(6, selectedIndex);
+      expect(selectedIndex).to.eq.BN(6);
     });
     it("EEEEAAAAAA beacon_value = 3", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 3);
-      assert.equal(7, selectedIndex);
+      expect(selectedIndex).to.eq.BN(7);
     });
     it("EEEEAAAAAA beacon_value = 4", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 4);
-      assert.equal(8, selectedIndex);
+      expect(selectedIndex).to.eq.BN(8);
     });
     it("EEEEAAAAAA beacon_value = 5", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 5);
-      assert.equal(9, selectedIndex);
+      expect(selectedIndex).to.eq.BN(9);
     });
     it("EEEEAAAAAA beacon_value = 6", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 6);
-      assert.equal(4, selectedIndex);
+      expect(selectedIndex).to.eq.BN(4);
     });
     it("EEEEAAAAAA beacon_value = 7", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 7);
-      assert.equal(5, selectedIndex);
+      expect(selectedIndex).to.eq.BN(5);
     });
     it("EEEEAAAAAA beacon_value = 8", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 8);
-      assert.equal(6, selectedIndex);
+      expect(selectedIndex).to.eq.BN(6);
     });
     it("EEEEAAAAAA beacon_value = 9", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 9);
-      assert.equal(7, selectedIndex);
+      expect(selectedIndex).to.eq.BN(7);
     });
     it("EEEEAAAAAA beacon_value = 10", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 10);
-      assert.equal(8, selectedIndex);
+      expect(selectedIndex).to.eq.BN(8);
     });
     it("EEEEAAAAAA beacon_value = 11", async function() {
       let selectedIndex = await runExpirationTest(10, 4, 11);
-      assert.equal(9, selectedIndex);
+      expect(selectedIndex).to.eq.BN(9);
     });
     it("EEEEEEEEEA beacon_value = 0", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 0);
-      assert.equal(9, selectedIndex);
+      expect(selectedIndex).to.eq.BN(9);
     });
     it("EEEEEEEEEA beacon_value = 1", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 1);
-      assert.equal(9, selectedIndex);
+      expect(selectedIndex).to.eq.BN(9);
     });
     it("EEEEEEEEEA beacon_value = 10", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 10);
-      assert.equal(9, selectedIndex);
+      expect(selectedIndex).to.eq.BN(9);
     });
     it("EEEEEEEEEA beacon_value = 11", async function() {
       let selectedIndex = await runExpirationTest(10, 9, 11);
-      assert.equal(9, selectedIndex);
+      expect(selectedIndex).to.eq.BN(9);
     });
+  });
+
+  it("should revert group selection when all groups expired", async () => {
+    await addGroups(5);
+
+    let currentBlock = new BN(await web3.eth.getBlockNumber());
+    await time.advanceBlockTo(currentBlock.add(groupActiveTime));
+
+    await expectRevert(
+      groups.selectGroup(0),
+      "No active groups"
+    );
   });
   
   // - we start with [AAAAAA]
@@ -199,7 +221,7 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
     // this will move height by one and expire 9 + 1 groups
     await groups.selectGroup(0); 
 
-    await mineBlocks(relayEntryTimeout);
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     for (var i = 10; i < groupsCount; i++) {
       let pubKey = await groups.getGroupPublicKey(i);
@@ -222,7 +244,7 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
     let pubKey = await groups.getGroupPublicKey(0);
 
     // mine blocks but do not select group so it's not marked as expired
-    await mineBlocks(groupActiveTime + relayEntryTimeout);
+    await time.advanceBlockTo(groupActiveTime.add(relayEntryTimeout).addn(await web3.eth.getBlockNumber()))
 
     let isStale  = await groups.isStaleGroup(pubKey);
 
@@ -263,7 +285,7 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
      await expireGroup(0);
      await groups.selectGroup(0);
  
-     await mineBlocks(relayEntryTimeout);
+     await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()))
 
      let isStale  = await groups.isStaleGroup(pubKey);
 
@@ -277,9 +299,24 @@ contract('KeepRandomBeaconOperator/GroupExpiration', function(accounts) {
     await addGroups(6);
 
     let pubKey = "0x1337"; // group with such pub key does not exist
-    await expectThrowWithMessage(
+    await expectRevert(
       groups.isStaleGroup(pubKey),
       "Group does not exist"
     );
   });
+
+  it("should allow to add and select new group even if all other\
+groups expired", async () => {
+    await addGroups(5);
+    let currentBlock = new BN(await web3.eth.getBlockNumber());
+    await time.advanceBlockTo(currentBlock.add(groupActiveTime));
+    await addGroups(1)
+
+    let selected = await groups.selectGroup.call(0);
+    await groups.selectGroup(0);
+    let numberOfGroups = await groups.numberOfGroups();
+
+    assert.equal(Number(numberOfGroups), 1, "Expected one active group");
+    assert.equal(Number(selected), 5, "Unexpected group selected");
+  })
 });
