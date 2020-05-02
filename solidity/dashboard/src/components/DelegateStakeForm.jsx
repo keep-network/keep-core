@@ -49,7 +49,7 @@ const DelegateStakeForm = ({
           label="Operator Address"
           placeholder="0x0"
           icon={<Icons.OperatorFormIcon />}
-          tooltipText="A staking client that has been delegated a stake, but may not yet be in a signing group. Also known as a staker."
+          tooltipText="The operator address is tasked with participation in network operations, and represents the staker in most circumstances."
         />
         <AddressField
           name="beneficiaryAddress"
