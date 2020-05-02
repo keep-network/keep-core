@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
-import "../TokenStaking.sol";
+import "../../contracts/TokenStaking.sol";
+
 
 contract TokenStakingStub is TokenStaking {
     constructor(
@@ -8,8 +9,15 @@ contract TokenStakingStub is TokenStaking {
         address _registry,
         uint256 _initializationPeriod,
         uint256 _undelegationPeriod
-    ) TokenStaking(_tokenAddress, _registry, _initializationPeriod, _undelegationPeriod) public {
-    }
+    )
+        public
+        TokenStaking(
+            _tokenAddress,
+            _registry,
+            _initializationPeriod,
+            _undelegationPeriod
+        )
+    {}
 
     function setInitializationPeriod(uint256 _initializationPeriod) public {
         initializationPeriod = _initializationPeriod;

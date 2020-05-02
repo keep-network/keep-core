@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
-import "../libraries/operator/Groups.sol";
+import "../../contracts/libraries/operator/Groups.sol";
+
 
 contract GroupsTerminationStub {
     using Groups for Groups.Storage;
@@ -14,7 +15,7 @@ contract GroupsTerminationStub {
     }
 
     function registerNewGroups(uint256 groupsCount) public {
-        for (uint i = 1; i <= groupsCount; i++) {
+        for (uint256 i = 1; i <= groupsCount; i++) {
             groups.addGroup(new bytes(i));
         }
     }
@@ -23,7 +24,7 @@ contract GroupsTerminationStub {
         groups.terminateGroup(groupIndex);
     }
 
-    function selectGroup(uint256 seed) public returns(uint256) {
+    function selectGroup(uint256 seed) public returns (uint256) {
         return groups.selectGroup(seed);
     }
 }

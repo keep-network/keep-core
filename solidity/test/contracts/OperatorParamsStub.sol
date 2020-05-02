@@ -1,5 +1,6 @@
 pragma solidity 0.5.17;
-import "../utils/OperatorParams.sol";
+import "../../contracts/utils/OperatorParams.sol";
+
 
 contract OperatorParamsStub {
     using OperatorParams for uint256;
@@ -16,23 +17,41 @@ contract OperatorParamsStub {
         return packed.getAmount();
     }
 
-    function publicSetAmount(uint256 packed, uint256 amount) public pure returns (uint256) {
+    function publicSetAmount(uint256 packed, uint256 amount)
+        public
+        pure
+        returns (uint256)
+    {
         return packed.setAmount(amount);
     }
 
-    function publicGetCreationTimestamp(uint256 packed) public pure returns (uint256) {
+    function publicGetCreationTimestamp(uint256 packed)
+        public
+        pure
+        returns (uint256)
+    {
         return packed.getCreationTimestamp();
     }
 
-    function publicSetCreationTimestamp(uint256 packed, uint256 creationTimestamp) public pure returns (uint256) {
+    function publicSetCreationTimestamp(
+        uint256 packed,
+        uint256 creationTimestamp
+    ) public pure returns (uint256) {
         return packed.setCreationTimestamp(creationTimestamp);
     }
 
-    function publicGetUndelegationTimestamp(uint256 packed) public pure returns (uint256) {
+    function publicGetUndelegationTimestamp(uint256 packed)
+        public
+        pure
+        returns (uint256)
+    {
         return packed.getUndelegationTimestamp();
     }
 
-    function publicSetUndelegationTimestamp(uint256 packed, uint256 undelegationTimestamp) public pure returns (uint256) {
+    function publicSetUndelegationTimestamp(
+        uint256 packed,
+        uint256 undelegationTimestamp
+    ) public pure returns (uint256) {
         return packed.setUndelegationTimestamp(undelegationTimestamp);
     }
 }

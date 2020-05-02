@@ -1,7 +1,8 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../GrantStakingPolicy.sol";
+import "../../contracts/GrantStakingPolicy.sol";
+
 
 /// @title EvilStakingPolicy
 /// @dev A staking policy which allows the grantee to stake
@@ -9,7 +10,7 @@ import "../GrantStakingPolicy.sol";
 contract EvilStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
 
-    function getStakeableAmount (
+    function getStakeableAmount(
         uint256 _now,
         uint256 grantedAmount,
         uint256 duration,
