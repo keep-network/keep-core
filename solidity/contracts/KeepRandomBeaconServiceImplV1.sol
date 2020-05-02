@@ -424,6 +424,28 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         return _previousEntry;
     }
 
+    /// @notice Returns DKG contribution margin - a fraction in % of the
+    /// estimated cost of DKG that is included in relay request fee.
+    function dkgContributionMargin() public view returns(uint256) {
+        return _dkgContributionMargin;
+    }
+
+    /// @notice Returns the current DKG fee pool value.
+    /// Every relay request payment includes DKG contribution that is added to
+    /// the DKG fee pool, once the pool value reaches the required minimum, a new
+    /// relay entry will trigger the creation of a new group. Expressed in wei.
+    function dkgFeePool() public view returns(uint256) {
+        return _dkgFeePool;
+    }
+
+    /// @notice Returns the current value of request subsidy pool.
+    /// Rewards not paid out to the operators are sent to request subsidy pool to
+    /// subsidize new requests: 1% of the subsidy pool is returned to the requester's
+    /// surplus address. Expressed in wei.
+    function requestSubsidyFeePool() public view returns(uint256) {
+        return _requestSubsidyFeePool;
+    }
+
     /// @notice Gets version of the current implementation.
     function version() public pure returns (string memory) {
         return "V1";
