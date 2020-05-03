@@ -59,7 +59,8 @@ module.exports = async function() {
                 serviceContractBalance,
                 dkgFeePool.toString(),
                 requestSubsidyFeePool.toString(),
-                dkgContributionMargin.toString()
+                dkgContributionMargin.toString(),
+                dkgFeePool.add(requestSubsidyFeePool).toString() === serviceContractBalance
             )
 
             console.log("Service Contract Summary (before request)");
@@ -73,7 +74,7 @@ module.exports = async function() {
                 operatorContractBalance,
                 rewardsSum.toString(),
                 dkgSubmitterReimbursementFee.toString(),
-                rewardsSum.add(dkgSubmitterReimbursementFee).toString()
+                rewardsSum.add(dkgSubmitterReimbursementFee).toString() === operatorContractBalance
             )
 
             console.log("Operator Contract Summary (before request)");
@@ -174,24 +175,26 @@ function ServiceContractSummary(
     balance,
     dkgFeePool,
     requestSubsidyFeePool,
-    dkgContributionMargin
+    dkgContributionMargin,
+    hasCorrectBalance
 ) {
     this.balance = balance,
     this.dkgFeePool = dkgFeePool
     this.requestSubsidyFeePool = requestSubsidyFeePool
     this.dkgContributionMargin = dkgContributionMargin
+    this.hasCorrectBalance = hasCorrectBalance
 }
 
 function OperatorContractSummary(
     balance,
     sumOfRewards,
     dkgSubmitterReimbursementFee,
-    sumOfRewardsAndDkgReimbursementFee
+    hasCorrectBalance
 ) {
     this.balance = balance
     this.sumOfRewards = sumOfRewards
     this.dkgSubmitterReimbursementFee = dkgSubmitterReimbursementFee
-    this.sumOfRewardsAndDkgReimbursementFee = sumOfRewardsAndDkgReimbursementFee
+    this.hasCorrectBalance = hasCorrectBalance
 }
 
 function PricingSummary(
@@ -224,14 +227,15 @@ ServiceContractSummary.prototype.toString = function serviceContractSummaryToStr
     return '' + this.balance + ', ' + 
         this.dkgFeePool + ', ' + 
         this.requestSubsidyFeePool + ', ' + 
-        this.dkgContributionMargin
+        this.dkgContributionMargin + ', ' + 
+        this.hasCorrectBalance + ', ';
 }
 
 OperatorContractSummary.prototype.toString = function operatorContractSummaryToString() {
     return '' + this.balance + ', ' +
         this.sumOfRewards + ', ' + 
         this.dkgSubmitterReimbursementFee + ', ' +
-        this.sumOfRewardsAndDkgReimbursementFee + ', ';
+        this.hasCorrectBalance + ', ';
 }
 
 PricingSummary.prototype.toString = function pricingSummaryToString() {
