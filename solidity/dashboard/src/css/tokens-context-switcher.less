@@ -36,6 +36,13 @@
                 color: @color-grey-40 !important;
             }
 
+            .token-amount {
+                svg path {
+                    fill: @color-grey-40;
+                    stroke: none;
+                }
+            }
+
             svg path {
                 stroke: @color-grey-40;
             }
@@ -74,9 +81,12 @@
             margin-right: 1rem;
         }
 
-        .balance {
+        .token-amount {
             margin-left: auto;
             margin-bottom: 0;
+            svg {
+                margin-right: 0;
+            }
         }
     }
 }
