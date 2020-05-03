@@ -90,20 +90,27 @@ func (g *Groups) UnregisterStaleGroups() {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
 			logger.Errorf(
-				"error occured while decoding public key into bytes: [%v]",
+				"error occurred while decoding public key into bytes: [%v]",
 				err,
 			)
 		}
 
 		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			logger.Errorf("stale group check has failed: [%v]", err)
+			logger.Errorf(
+				"failed to check if stale for group with public key [%s]: [%v]",
+				publicKey,
+				err,
+			)
 		}
 
 		if isStaleGroup {
 			err = g.storage.archive(publicKey)
 			if err != nil {
-				logger.Errorf("group archiving has failed: [%v]", err)
+				logger.Errorf("failed to archive group with public key [%s]: [%v]",
+					publicKey,
+					err,
+				)
 			}
 
 			delete(g.myGroups, publicKey)
