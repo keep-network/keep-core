@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
-import "../TokenStaking.sol";
+import "../../contracts/TokenStaking.sol";
+
 
 contract TokenStakingSlashingStub is TokenStaking {
     constructor(
@@ -8,11 +9,20 @@ contract TokenStakingSlashingStub is TokenStaking {
         address _registry,
         uint256 _initializationPeriod,
         uint256 _undelegationPeriod
-    ) TokenStaking(_tokenAddress, _registry, _initializationPeriod, _undelegationPeriod) public {
-    }
+    )
+        public
+        TokenStaking(
+            _tokenAddress,
+            _registry,
+            _initializationPeriod,
+            _undelegationPeriod
+        )
+    {}
 
-    function slash(uint256 amountToSlash, address[] memory misbehavedOperators) public {
-        for (uint i = 0; i < misbehavedOperators.length; i++) {
+    function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
+        public
+    {
+        for (uint256 i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             emit TokensSlashed(operator, 1 ether);
         }
@@ -24,7 +34,7 @@ contract TokenStakingSlashingStub is TokenStaking {
         address tattletale,
         address[] memory misbehavedOperators
     ) public {
-        for (uint i = 0; i < misbehavedOperators.length; i++) {
+        for (uint256 i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             emit TokensSeized(operator, 1 ether);
         }

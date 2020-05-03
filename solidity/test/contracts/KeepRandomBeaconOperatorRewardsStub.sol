@@ -1,18 +1,21 @@
 pragma solidity 0.5.17;
 
-import "../KeepRandomBeaconOperator.sol";
+import "../../contracts/KeepRandomBeaconOperator.sol";
+
 
 contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
-
     constructor(
         address _serviceContract,
         address _stakingContract,
         address _registryContract
-    ) KeepRandomBeaconOperator(
-        _serviceContract,
-        _stakingContract,
-        _registryContract
-    ) public {
+    )
+        public
+        KeepRandomBeaconOperator(
+            _serviceContract,
+            _stakingContract,
+            _registryContract
+        )
+    {
         groups.groupActiveTime = 5;
         groups.relayEntryTimeout = 10;
     }
@@ -21,16 +24,29 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         groups.addGroup(groupPublicKey);
     }
 
-    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+    function setGroupMembers(
+        bytes memory groupPublicKey,
+        address[] memory members
+    ) public {
         groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
-    function addGroupMemberReward(bytes memory groupPubKey, uint256 groupMemberReward) public {
+    function addGroupMemberReward(
+        bytes memory groupPubKey,
+        uint256 groupMemberReward
+    ) public {
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
     }
 
-    function emitRewardsWithdrawnEvent(address operator, uint256 groupIndex) public {
-        emit GroupMemberRewardsWithdrawn(stakingContract.beneficiaryOf(operator), operator, 1000 wei, groupIndex);
+    function emitRewardsWithdrawnEvent(address operator, uint256 groupIndex)
+        public
+    {
+        emit GroupMemberRewardsWithdrawn(
+            stakingContract.beneficiaryOf(operator),
+            operator,
+            1000 wei,
+            groupIndex
+        );
     }
 
     function reportUnauthorizedSigning(
@@ -57,5 +73,4 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         );
         emit RelayEntryTimeoutReported(0);
     }
-
 }

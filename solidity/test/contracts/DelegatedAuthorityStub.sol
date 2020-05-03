@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
-import "../TokenStaking.sol";
+import "../../contracts/TokenStaking.sol";
+
 
 contract DelegatedAuthorityStub {
     address recognizedContract;
@@ -13,10 +14,9 @@ contract DelegatedAuthorityStub {
         return _contract == recognizedContract;
     }
 
-    function claimAuthorityRecursively(
-        address stakingContract,
-        address source
-    ) public {
+    function claimAuthorityRecursively(address stakingContract, address source)
+        public
+    {
         TokenStaking(stakingContract).claimDelegatedAuthority(source);
     }
 }
