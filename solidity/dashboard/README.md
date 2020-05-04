@@ -91,10 +91,18 @@ To use this account in the dApp, it needs to be imported from [the JSON file](ht
 
 ### Hardware wallets
 
-## TREZOR
-To run the trezor hardware wallet locally follow this instruction:
-1. [Download and run the trezor bridge](https://github.com/trezor/trezord-go).
-2. [Clone the Trezor repo](https://github.com/trezor/trezor-firmware/blob/master/docs/core/build/index.md)
+## TREZOR EMULATOR
+
+### Quick setup
+1. [Download and run the trezor bridge](https://github.com/trezor/trezord-go)
+- Navigate to `/trezord-go` directory and run `./trezord-go -e 21324`
+2. [Clone the Trezor repo](https://github.com/trezor/trezor-firmware)
+- Navigate to `/trezor-firmware/core` directory and run `make emu`
+
+For more config information you can follow these links:
+
+1. [Trezor Bridge](https://github.com/trezor/trezord-go)
+2. [pip3 dependencies](https://github.com/trezor/trezor-firmware/blob/master/docs/core/build/index.md)
 3. [Setup and run the emulator](https://github.com/trezor/trezor-firmware/blob/master/docs/core/emulator/index.md)
 
 ## LEDGER
