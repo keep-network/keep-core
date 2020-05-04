@@ -44,6 +44,43 @@ module.exports = async function() {
                 prevRewards[i] = (await availableRewards(accounts[i], contractOperator, contractStatistics)).toString();
             }
 
+
+            let rewardsSum = web3.utils.toBN(0);
+            for (let i = 0; i < accounts.length; i++) {
+                rewardsSum = rewardsSum.add(web3.utils.toBN(prevRewards[i]));
+            }
+
+            const serviceContractBalance = await web3.eth.getBalance(contractService.address);
+            const dkgFeePool = await contractService.dkgFeePool();
+            const requestSubsidyFeePool = await contractService.requestSubsidyFeePool();
+            const dkgContributionMargin = await contractService.dkgContributionMargin();
+
+            const serviceContractSummary = new ServiceContractSummary(
+                serviceContractBalance,
+                dkgFeePool.toString(),
+                requestSubsidyFeePool.toString(),
+                dkgContributionMargin.toString(),
+                dkgFeePool.add(requestSubsidyFeePool).toString() === serviceContractBalance
+            )
+
+            console.log("Service Contract Summary (before request)");
+            console.table([serviceContractSummary]);
+            console.log("\n");
+
+            const operatorContractBalance = await web3.eth.getBalance(contractOperator.address);
+            const dkgSubmitterReimbursementFee = await contractOperator.dkgSubmitterReimbursementFee();
+
+            const operatorContractSummary = new OperatorContractSummary(
+                operatorContractBalance,
+                rewardsSum.toString(),
+                dkgSubmitterReimbursementFee.toString(),
+                rewardsSum.add(dkgSubmitterReimbursementFee).toString() === operatorContractBalance
+            )
+
+            console.log("Operator Contract Summary (before request)");
+            console.table([operatorContractSummary]);
+            console.log("\n");
+
             let gasPrice = await web3.eth.getGasPrice();
 
             let callbackGas = 0;
@@ -66,10 +103,12 @@ module.exports = async function() {
                 entryFeeEstimate.toString(),
                 txCost.toString(),
                 requestorAccountBalance,
-                requestorAccountBalanceChange
+                requestorAccountBalanceChange,
+                operatorContractBalance,
+                rewardsSum.toString()
             );
 
-            console.log("Summary");
+            console.log("Pricing Summary");
             console.table([pricingSummary]);
             console.log("\n");
             let file = pricingSummary.toString();
@@ -96,7 +135,7 @@ module.exports = async function() {
                 file = file + pricingClient.toString();
             }
 
-            console.log("Clients");
+            console.log("Clients Summary");
             console.table(clientsTable);
             console.log("\n");
 
@@ -132,18 +171,48 @@ async function availableRewards(account, contractOperator, contractStatistics) {
     return accountRewards;
 }
 
+function ServiceContractSummary(
+    balance,
+    dkgFeePool,
+    requestSubsidyFeePool,
+    dkgContributionMargin,
+    hasCorrectBalance
+) {
+    this.balance = balance,
+    this.dkgFeePool = dkgFeePool
+    this.requestSubsidyFeePool = requestSubsidyFeePool
+    this.dkgContributionMargin = dkgContributionMargin
+    this.hasCorrectBalance = hasCorrectBalance
+}
+
+function OperatorContractSummary(
+    balance,
+    sumOfRewards,
+    dkgSubmitterReimbursementFee,
+    hasCorrectBalance
+) {
+    this.balance = balance
+    this.sumOfRewards = sumOfRewards
+    this.dkgSubmitterReimbursementFee = dkgSubmitterReimbursementFee
+    this.hasCorrectBalance = hasCorrectBalance
+}
+
 function PricingSummary(
     callbackGas,
     entryFeeEstimate,
     relayRequestTransactionCost,
     requestorAccountBalance,
-    requestorAccountBalanceChange
+    requestorAccountBalanceChange,
+    operatorContractBalance,
+    sumOfRewards
 ) {
-    this.callbackGas = callbackGas,
-    this.entryFeeEstimate = entryFeeEstimate,
-    this.relayRequestTransactionCost = relayRequestTransactionCost,
-    this.requestorAccountBalance = requestorAccountBalance,
+    this.callbackGas = callbackGas
+    this.entryFeeEstimate = entryFeeEstimate
+    this.relayRequestTransactionCost = relayRequestTransactionCost
+    this.requestorAccountBalance = requestorAccountBalance
     this.requestorAccountBalanceChange = requestorAccountBalanceChange
+    this.operatorContractBalance = operatorContractBalance
+    this.sumOfRewards = sumOfRewards
 }
 
 function PricingClient(address, balance, balanceChange, reward, rewardChange) {
@@ -154,12 +223,29 @@ function PricingClient(address, balance, balanceChange, reward, rewardChange) {
     this.rewardChange = rewardChange
 }
 
+ServiceContractSummary.prototype.toString = function serviceContractSummaryToString() {
+    return '' + this.balance + ', ' + 
+        this.dkgFeePool + ', ' + 
+        this.requestSubsidyFeePool + ', ' + 
+        this.dkgContributionMargin + ', ' + 
+        this.hasCorrectBalance + ', ';
+}
+
+OperatorContractSummary.prototype.toString = function operatorContractSummaryToString() {
+    return '' + this.balance + ', ' +
+        this.sumOfRewards + ', ' + 
+        this.dkgSubmitterReimbursementFee + ', ' +
+        this.hasCorrectBalance + ', ';
+}
+
 PricingSummary.prototype.toString = function pricingSummaryToString() {
     return '' + this.callbackGas + ', ' +
         this.entryFeeEstimate + ', ' +
         this.relayRequestTransactionCost + ', ' +
         this.requestorAccountBalance + ', ' +
-        this.requestorAccountBalanceChange + ', ';
+        this.requestorAccountBalanceChange + ', ' +
+        this.operatorContractBalance + ', ' + 
+        this.sumOfRewards + ', ';
 };
 
 PricingClient.prototype.toString = function pricingClientToString() {

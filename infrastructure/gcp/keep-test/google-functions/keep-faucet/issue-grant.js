@@ -61,7 +61,7 @@ exports.issueGrant = async (request, response) => {
     if (!account) {
       console.error("Unspecified account.")
       return response.status(400).send(
-        "No account address set, please set an account with ?accoun=<address>\n"
+        "No account address set, please set an account with ?account=<address>\n"
       )
     } else if (!ethAccountRegExp.test(account)) {
       console.error("Bad account address [", account, "].")
@@ -100,7 +100,7 @@ exports.issueGrant = async (request, response) => {
           web3.eth.abi.encodeParameters(
             ["address", "address", "uint256", "uint256", "uint256", "bool", "address"],
             [keepContractOwnerAddress, granteeAccount, unlockingDuration, start, cliff, revocable, permissiveStakingPolicyAddress]
-        )
+          )
 
         console.log("Test submission...")
         // Try calling; if this throws, we'll have a proper error message thanks
