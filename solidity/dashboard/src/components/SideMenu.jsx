@@ -32,19 +32,6 @@ export const SideMenu = (props) => {
     <nav className={`${isOpen ? "active " : ""}side-menu`}>
       <ul>
         <NavLink exact to="/tokens" label="tokens" icon={<Icons.KeepToken />} />
-        <NavLink
-          exact
-          to="/operations"
-          label="operations"
-          icon={<Icons.Operations />}
-        />
-        <NavLink exact to="/rewards" label="rewards" icon={<Icons.Rewards />} />
-        <NavLink
-          exact
-          to="/authorizer"
-          label="authorizer"
-          icon={<Icons.Authorizer />}
-        />
         {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
         )}

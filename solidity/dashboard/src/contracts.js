@@ -1,13 +1,14 @@
 import KeepToken from "@keep-network/keep-core/artifacts/KeepToken.json"
 import TokenStaking from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
-import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
+// import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
-import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
+// import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
 import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
 import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
+
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -41,7 +42,7 @@ export async function getTokenGrant(web3) {
 }
 
 export async function getKeepRandomBeaconOperator(web3) {
-  return getContract(web3, KeepRandomBeaconOperator, OPERATOR_CONTRACT_NAME)
+  return null; // getContract(web3, KeepRandomBeaconOperator, OPERATOR_CONTRACT_NAME)
 }
 
 export async function getRegistry(web3) {
@@ -49,11 +50,11 @@ export async function getRegistry(web3) {
 }
 
 export async function getKeepRandomBeaconOperatorStatistics(web3) {
-  return getContract(
+  return null; /*getContract(
     web3,
     KeepRandomBeaconOperatorStatistics,
     KEEP_OPERATOR_STATISTICS_CONTRACT_NAME
-  )
+  )*/
 }
 
 export async function getManagedGrantFactory(web3) {
