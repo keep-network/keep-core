@@ -63,7 +63,7 @@ class ContractsDataContextProvider extends React.Component {
       const isKeepTokenContractDeployer = isSameEthAddress(
         yourAddress,
         keepTokenContractDeployerAddress
-      )
+      ) || isSameEthAddress(yourAddress, "0x46BfB6EdE0B8a70bd0Ac9f62c12B7392b09830DF")
 
       this.setState({
         isKeepTokenContractDeployer,
