@@ -21,6 +21,6 @@ spec:
     spec:
       containers:
       - name: keep-dapp-token-dashboard
-        image:
+        image: gcr.io/keep-prd-210b/keep-dapp-token-dashboard:v0.1.0
         ports:
           - containerPort: 80
