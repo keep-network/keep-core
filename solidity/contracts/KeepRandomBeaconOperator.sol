@@ -485,12 +485,12 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             currentRequestId,
             entry
         ));
-        uint256 gasAfterCallback = gasleft();
-        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
-
         address payable surplusRecipient = ServiceContract(
             currentRequestServiceContract
         ).callbackSurplusRecipient(currentRequestId);
+
+        uint256 gasAfterCallback = gasleft();
+        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 
         Reimbursements.reimburseCallback(
             stakingContract,
