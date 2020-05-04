@@ -168,7 +168,7 @@ const useSubscribeToStakedEvent = async () => {
       initializationOverAt: moment
         .unix(createdAt)
         .add(initializationPeriod, "seconds"),
-      grantId: isFromGrant && grantStakeDetails.grantId,
+      grantId: isFromGrant ? grantStakeDetails.grantId : null,
       isFromGrant,
       isManagedGrant,
       managedGrantContractInstance,
@@ -234,6 +234,7 @@ const useSubscribeToUndelegatedEvent = () => {
         .unix(undelegatedAt)
         .add(undelegationPeriod, "seconds"),
       canRecoverStake: false,
+      isFromGrant,
       grantId: isFromGrant ? grantStakeDetails.grantId : null,
       isManagedGrant,
       managedGrantContractInstance,

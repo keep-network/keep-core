@@ -88,18 +88,18 @@ func NewTokenStaking(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (ts *TokenStaking) LockStake(
-	operator common.Address,
-	duration *big.Int,
+func (ts *TokenStaking) Slash(
+	amountToSlash *big.Int,
+	misbehavedOperators []common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction lockStake",
+		"submitting transaction slash",
 		"params: ",
 		fmt.Sprint(
-			operator,
-			duration,
+			amountToSlash,
+			misbehavedOperators,
 		),
 	)
 
@@ -118,10 +118,10 @@ func (ts *TokenStaking) LockStake(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := ts.contract.LockStake(
+	transaction, err := ts.contract.Slash(
 		transactorOptions,
-		operator,
-		duration,
+		amountToSlash,
+		misbehavedOperators,
 	)
 
 	if err != nil {
@@ -129,14 +129,14 @@ func (ts *TokenStaking) LockStake(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"lockStake",
-			operator,
-			duration,
+			"slash",
+			amountToSlash,
+			misbehavedOperators,
 		)
 	}
 
 	tsLogger.Debugf(
-		"submitted transaction lockStake with id: [%v]",
+		"submitted transaction slash with id: [%v]",
 		transaction.Hash().Hex(),
 	)
 
@@ -144,9 +144,9 @@ func (ts *TokenStaking) LockStake(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallLockStake(
-	operator common.Address,
-	duration *big.Int,
+func (ts *TokenStaking) CallSlash(
+	amountToSlash *big.Int,
+	misbehavedOperators []common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -158,51 +158,47 @@ func (ts *TokenStaking) CallLockStake(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"lockStake",
+		"slash",
 		&result,
-		operator,
-		duration,
+		amountToSlash,
+		misbehavedOperators,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) LockStakeGasEstimate(
-	operator common.Address,
-	duration *big.Int,
+func (ts *TokenStaking) SlashGasEstimate(
+	amountToSlash *big.Int,
+	misbehavedOperators []common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"lockStake",
+		"slash",
 		ts.contractABI,
 		ts.transactor,
-		operator,
-		duration,
+		amountToSlash,
+		misbehavedOperators,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (ts *TokenStaking) ReceiveApproval(
-	_from common.Address,
-	_value *big.Int,
-	_token common.Address,
-	_extraData []uint8,
+func (ts *TokenStaking) UndelegateAt(
+	_operator common.Address,
+	_undelegationTimestamp *big.Int,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction receiveApproval",
+		"submitting transaction undelegateAt",
 		"params: ",
 		fmt.Sprint(
-			_from,
-			_value,
-			_token,
-			_extraData,
+			_operator,
+			_undelegationTimestamp,
 		),
 	)
 
@@ -221,12 +217,10 @@ func (ts *TokenStaking) ReceiveApproval(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := ts.contract.ReceiveApproval(
+	transaction, err := ts.contract.UndelegateAt(
 		transactorOptions,
-		_from,
-		_value,
-		_token,
-		_extraData,
+		_operator,
+		_undelegationTimestamp,
 	)
 
 	if err != nil {
@@ -234,16 +228,14 @@ func (ts *TokenStaking) ReceiveApproval(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"receiveApproval",
-			_from,
-			_value,
-			_token,
-			_extraData,
+			"undelegateAt",
+			_operator,
+			_undelegationTimestamp,
 		)
 	}
 
 	tsLogger.Debugf(
-		"submitted transaction receiveApproval with id: [%v]",
+		"submitted transaction undelegateAt with id: [%v]",
 		transaction.Hash().Hex(),
 	)
 
@@ -251,11 +243,9 @@ func (ts *TokenStaking) ReceiveApproval(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallReceiveApproval(
-	_from common.Address,
-	_value *big.Int,
-	_token common.Address,
-	_extraData []uint8,
+func (ts *TokenStaking) CallUndelegateAt(
+	_operator common.Address,
+	_undelegationTimestamp *big.Int,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -267,225 +257,29 @@ func (ts *TokenStaking) CallReceiveApproval(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"receiveApproval",
+		"undelegateAt",
 		&result,
-		_from,
-		_value,
-		_token,
-		_extraData,
+		_operator,
+		_undelegationTimestamp,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) ReceiveApprovalGasEstimate(
-	_from common.Address,
-	_value *big.Int,
-	_token common.Address,
-	_extraData []uint8,
+func (ts *TokenStaking) UndelegateAtGasEstimate(
+	_operator common.Address,
+	_undelegationTimestamp *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"receiveApproval",
-		ts.contractABI,
-		ts.transactor,
-		_from,
-		_value,
-		_token,
-		_extraData,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) Undelegate(
-	_operator common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction undelegate",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := ts.contract.Undelegate(
-		transactorOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"undelegate",
-			_operator,
-		)
-	}
-
-	tsLogger.Debugf(
-		"submitted transaction undelegate with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallUndelegate(
-	_operator common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"undelegate",
-		&result,
-		_operator,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) UndelegateGasEstimate(
-	_operator common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"undelegate",
+		"undelegateAt",
 		ts.contractABI,
 		ts.transactor,
 		_operator,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) AuthorizeOperatorContract(
-	_operator common.Address,
-	_operatorContract common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction authorizeOperatorContract",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-			_operatorContract,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := ts.contract.AuthorizeOperatorContract(
-		transactorOptions,
-		_operator,
-		_operatorContract,
-	)
-
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"authorizeOperatorContract",
-			_operator,
-			_operatorContract,
-		)
-	}
-
-	tsLogger.Debugf(
-		"submitted transaction authorizeOperatorContract with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallAuthorizeOperatorContract(
-	_operator common.Address,
-	_operatorContract common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"authorizeOperatorContract",
-		&result,
-		_operator,
-		_operatorContract,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) AuthorizeOperatorContractGasEstimate(
-	_operator common.Address,
-	_operatorContract common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"authorizeOperatorContract",
-		ts.contractABI,
-		ts.transactor,
-		_operator,
-		_operatorContract,
+		_undelegationTimestamp,
 	)
 
 	return result, err
@@ -583,16 +377,16 @@ func (ts *TokenStaking) CancelStakeGasEstimate(
 }
 
 // Transaction submission.
-func (ts *TokenStaking) ClaimDelegatedAuthority(
-	delegatedAuthoritySource common.Address,
+func (ts *TokenStaking) UnlockStake(
+	operator common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction claimDelegatedAuthority",
+		"submitting transaction unlockStake",
 		"params: ",
 		fmt.Sprint(
-			delegatedAuthoritySource,
+			operator,
 		),
 	)
 
@@ -611,9 +405,9 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := ts.contract.ClaimDelegatedAuthority(
+	transaction, err := ts.contract.UnlockStake(
 		transactorOptions,
-		delegatedAuthoritySource,
+		operator,
 	)
 
 	if err != nil {
@@ -621,13 +415,13 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"claimDelegatedAuthority",
-			delegatedAuthoritySource,
+			"unlockStake",
+			operator,
 		)
 	}
 
 	tsLogger.Debugf(
-		"submitted transaction claimDelegatedAuthority with id: [%v]",
+		"submitted transaction unlockStake with id: [%v]",
 		transaction.Hash().Hex(),
 	)
 
@@ -635,8 +429,8 @@ func (ts *TokenStaking) ClaimDelegatedAuthority(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallClaimDelegatedAuthority(
-	delegatedAuthoritySource common.Address,
+func (ts *TokenStaking) CallUnlockStake(
+	operator common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -648,117 +442,26 @@ func (ts *TokenStaking) CallClaimDelegatedAuthority(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"claimDelegatedAuthority",
+		"unlockStake",
 		&result,
-		delegatedAuthoritySource,
+		operator,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) ClaimDelegatedAuthorityGasEstimate(
-	delegatedAuthoritySource common.Address,
+func (ts *TokenStaking) UnlockStakeGasEstimate(
+	operator common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"claimDelegatedAuthority",
+		"unlockStake",
 		ts.contractABI,
 		ts.transactor,
-		delegatedAuthoritySource,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) RecoverStake(
-	_operator common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction recoverStake",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := ts.contract.RecoverStake(
-		transactorOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"recoverStake",
-			_operator,
-		)
-	}
-
-	tsLogger.Debugf(
-		"submitted transaction recoverStake with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallRecoverStake(
-	_operator common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"recoverStake",
-		&result,
-		_operator,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) RecoverStakeGasEstimate(
-	_operator common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"recoverStake",
-		ts.contractABI,
-		ts.transactor,
-		_operator,
+		operator,
 	)
 
 	return result, err
@@ -979,18 +682,18 @@ func (ts *TokenStaking) SeizeGasEstimate(
 }
 
 // Transaction submission.
-func (ts *TokenStaking) Slash(
-	amountToSlash *big.Int,
-	misbehavedOperators []common.Address,
+func (ts *TokenStaking) LockStake(
+	operator common.Address,
+	duration *big.Int,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction slash",
+		"submitting transaction lockStake",
 		"params: ",
 		fmt.Sprint(
-			amountToSlash,
-			misbehavedOperators,
+			operator,
+			duration,
 		),
 	)
 
@@ -1009,10 +712,10 @@ func (ts *TokenStaking) Slash(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := ts.contract.Slash(
+	transaction, err := ts.contract.LockStake(
 		transactorOptions,
-		amountToSlash,
-		misbehavedOperators,
+		operator,
+		duration,
 	)
 
 	if err != nil {
@@ -1020,14 +723,14 @@ func (ts *TokenStaking) Slash(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"slash",
-			amountToSlash,
-			misbehavedOperators,
+			"lockStake",
+			operator,
+			duration,
 		)
 	}
 
 	tsLogger.Debugf(
-		"submitted transaction slash with id: [%v]",
+		"submitted transaction lockStake with id: [%v]",
 		transaction.Hash().Hex(),
 	)
 
@@ -1035,9 +738,9 @@ func (ts *TokenStaking) Slash(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallSlash(
-	amountToSlash *big.Int,
-	misbehavedOperators []common.Address,
+func (ts *TokenStaking) CallLockStake(
+	operator common.Address,
+	duration *big.Int,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1049,47 +752,51 @@ func (ts *TokenStaking) CallSlash(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"slash",
+		"lockStake",
 		&result,
-		amountToSlash,
-		misbehavedOperators,
+		operator,
+		duration,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) SlashGasEstimate(
-	amountToSlash *big.Int,
-	misbehavedOperators []common.Address,
+func (ts *TokenStaking) LockStakeGasEstimate(
+	operator common.Address,
+	duration *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"slash",
+		"lockStake",
 		ts.contractABI,
 		ts.transactor,
-		amountToSlash,
-		misbehavedOperators,
+		operator,
+		duration,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (ts *TokenStaking) UndelegateAt(
-	_operator common.Address,
-	_undelegationTimestamp *big.Int,
+func (ts *TokenStaking) ReceiveApproval(
+	_from common.Address,
+	_value *big.Int,
+	_token common.Address,
+	_extraData []uint8,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction undelegateAt",
+		"submitting transaction receiveApproval",
 		"params: ",
 		fmt.Sprint(
-			_operator,
-			_undelegationTimestamp,
+			_from,
+			_value,
+			_token,
+			_extraData,
 		),
 	)
 
@@ -1108,10 +815,12 @@ func (ts *TokenStaking) UndelegateAt(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := ts.contract.UndelegateAt(
+	transaction, err := ts.contract.ReceiveApproval(
 		transactorOptions,
-		_operator,
-		_undelegationTimestamp,
+		_from,
+		_value,
+		_token,
+		_extraData,
 	)
 
 	if err != nil {
@@ -1119,14 +828,16 @@ func (ts *TokenStaking) UndelegateAt(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"undelegateAt",
-			_operator,
-			_undelegationTimestamp,
+			"receiveApproval",
+			_from,
+			_value,
+			_token,
+			_extraData,
 		)
 	}
 
 	tsLogger.Debugf(
-		"submitted transaction undelegateAt with id: [%v]",
+		"submitted transaction receiveApproval with id: [%v]",
 		transaction.Hash().Hex(),
 	)
 
@@ -1134,9 +845,11 @@ func (ts *TokenStaking) UndelegateAt(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallUndelegateAt(
-	_operator common.Address,
-	_undelegationTimestamp *big.Int,
+func (ts *TokenStaking) CallReceiveApproval(
+	_from common.Address,
+	_value *big.Int,
+	_token common.Address,
+	_extraData []uint8,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1148,45 +861,51 @@ func (ts *TokenStaking) CallUndelegateAt(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"undelegateAt",
+		"receiveApproval",
 		&result,
-		_operator,
-		_undelegationTimestamp,
+		_from,
+		_value,
+		_token,
+		_extraData,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) UndelegateAtGasEstimate(
-	_operator common.Address,
-	_undelegationTimestamp *big.Int,
+func (ts *TokenStaking) ReceiveApprovalGasEstimate(
+	_from common.Address,
+	_value *big.Int,
+	_token common.Address,
+	_extraData []uint8,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"undelegateAt",
+		"receiveApproval",
 		ts.contractABI,
 		ts.transactor,
-		_operator,
-		_undelegationTimestamp,
+		_from,
+		_value,
+		_token,
+		_extraData,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (ts *TokenStaking) UnlockStake(
-	operator common.Address,
+func (ts *TokenStaking) RecoverStake(
+	_operator common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction unlockStake",
+		"submitting transaction recoverStake",
 		"params: ",
 		fmt.Sprint(
-			operator,
+			_operator,
 		),
 	)
 
@@ -1205,9 +924,9 @@ func (ts *TokenStaking) UnlockStake(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := ts.contract.UnlockStake(
+	transaction, err := ts.contract.RecoverStake(
 		transactorOptions,
-		operator,
+		_operator,
 	)
 
 	if err != nil {
@@ -1215,13 +934,13 @@ func (ts *TokenStaking) UnlockStake(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"unlockStake",
-			operator,
+			"recoverStake",
+			_operator,
 		)
 	}
 
 	tsLogger.Debugf(
-		"submitted transaction unlockStake with id: [%v]",
+		"submitted transaction recoverStake with id: [%v]",
 		transaction.Hash().Hex(),
 	)
 
@@ -1229,8 +948,8 @@ func (ts *TokenStaking) UnlockStake(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallUnlockStake(
-	operator common.Address,
+func (ts *TokenStaking) CallRecoverStake(
+	_operator common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1242,26 +961,307 @@ func (ts *TokenStaking) CallUnlockStake(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"unlockStake",
+		"recoverStake",
 		&result,
-		operator,
+		_operator,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) UnlockStakeGasEstimate(
-	operator common.Address,
+func (ts *TokenStaking) RecoverStakeGasEstimate(
+	_operator common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"unlockStake",
+		"recoverStake",
 		ts.contractABI,
 		ts.transactor,
-		operator,
+		_operator,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) Undelegate(
+	_operator common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction undelegate",
+		"params: ",
+		fmt.Sprint(
+			_operator,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	transaction, err := ts.contract.Undelegate(
+		transactorOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"undelegate",
+			_operator,
+		)
+	}
+
+	tsLogger.Debugf(
+		"submitted transaction undelegate with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallUndelegate(
+	_operator common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"undelegate",
+		&result,
+		_operator,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) UndelegateGasEstimate(
+	_operator common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"undelegate",
+		ts.contractABI,
+		ts.transactor,
+		_operator,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) ClaimDelegatedAuthority(
+	delegatedAuthoritySource common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction claimDelegatedAuthority",
+		"params: ",
+		fmt.Sprint(
+			delegatedAuthoritySource,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	transaction, err := ts.contract.ClaimDelegatedAuthority(
+		transactorOptions,
+		delegatedAuthoritySource,
+	)
+
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"claimDelegatedAuthority",
+			delegatedAuthoritySource,
+		)
+	}
+
+	tsLogger.Debugf(
+		"submitted transaction claimDelegatedAuthority with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallClaimDelegatedAuthority(
+	delegatedAuthoritySource common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"claimDelegatedAuthority",
+		&result,
+		delegatedAuthoritySource,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) ClaimDelegatedAuthorityGasEstimate(
+	delegatedAuthoritySource common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"claimDelegatedAuthority",
+		ts.contractABI,
+		ts.transactor,
+		delegatedAuthoritySource,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) AuthorizeOperatorContract(
+	_operator common.Address,
+	_operatorContract common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction authorizeOperatorContract",
+		"params: ",
+		fmt.Sprint(
+			_operator,
+			_operatorContract,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	transaction, err := ts.contract.AuthorizeOperatorContract(
+		transactorOptions,
+		_operator,
+		_operatorContract,
+	)
+
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"authorizeOperatorContract",
+			_operator,
+			_operatorContract,
+		)
+	}
+
+	tsLogger.Debugf(
+		"submitted transaction authorizeOperatorContract with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallAuthorizeOperatorContract(
+	_operator common.Address,
+	_operatorContract common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"authorizeOperatorContract",
+		&result,
+		_operator,
+		_operatorContract,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) AuthorizeOperatorContractGasEstimate(
+	_operator common.Address,
+	_operatorContract common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"authorizeOperatorContract",
+		ts.contractABI,
+		ts.transactor,
+		_operator,
+		_operatorContract,
 	)
 
 	return result, err
@@ -1269,13 +1269,10 @@ func (ts *TokenStaking) UnlockStakeGasEstimate(
 
 // ----- Const Methods ------
 
-func (ts *TokenStaking) BeneficiaryOf(
-	_operator common.Address,
-) (common.Address, error) {
+func (ts *TokenStaking) Token() (common.Address, error) {
 	var result common.Address
-	result, err := ts.contract.BeneficiaryOf(
+	result, err := ts.contract.Token(
 		ts.callerOptions,
-		_operator,
 	)
 
 	if err != nil {
@@ -1283,16 +1280,14 @@ func (ts *TokenStaking) BeneficiaryOf(
 			err,
 			ts.callerOptions.From,
 			nil,
-			"beneficiaryOf",
-			_operator,
+			"token",
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) BeneficiaryOfAtBlock(
-	_operator common.Address,
+func (ts *TokenStaking) TokenAtBlock(
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
@@ -1305,17 +1300,16 @@ func (ts *TokenStaking) BeneficiaryOfAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"beneficiaryOf",
+		"token",
 		&result,
-		_operator,
 	)
 
 	return result, err
 }
 
-func (ts *TokenStaking) MinimumStake() (*big.Int, error) {
+func (ts *TokenStaking) MaximumLockDuration() (*big.Int, error) {
 	var result *big.Int
-	result, err := ts.contract.MinimumStake(
+	result, err := ts.contract.MaximumLockDuration(
 		ts.callerOptions,
 	)
 
@@ -1324,14 +1318,14 @@ func (ts *TokenStaking) MinimumStake() (*big.Int, error) {
 			err,
 			ts.callerOptions.From,
 			nil,
-			"minimumStake",
+			"maximumLockDuration",
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) MinimumStakeAtBlock(
+func (ts *TokenStaking) MaximumLockDurationAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -1344,8 +1338,95 @@ func (ts *TokenStaking) MinimumStakeAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"minimumStake",
+		"maximumLockDuration",
 		&result,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) MinimumStakeSteps() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.MinimumStakeSteps(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"minimumStakeSteps",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) MinimumStakeStepsAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"minimumStakeSteps",
+		&result,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) IsAuthorizedForOperator(
+	_operator common.Address,
+	_operatorContract common.Address,
+) (bool, error) {
+	var result bool
+	result, err := ts.contract.IsAuthorizedForOperator(
+		ts.callerOptions,
+		_operator,
+		_operatorContract,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"isAuthorizedForOperator",
+			_operator,
+			_operatorContract,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) IsAuthorizedForOperatorAtBlock(
+	_operator common.Address,
+	_operatorContract common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"isAuthorizedForOperator",
+		&result,
+		_operator,
+		_operatorContract,
 	)
 
 	return result, err
@@ -1433,6 +1514,44 @@ func (ts *TokenStaking) OwnerOfAtBlock(
 	return result, err
 }
 
+func (ts *TokenStaking) InitializationPeriod() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.InitializationPeriod(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"initializationPeriod",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) InitializationPeriodAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"initializationPeriod",
+		&result,
+	)
+
+	return result, err
+}
+
 func (ts *TokenStaking) BalanceOf(
 	_address common.Address,
 ) (*big.Int, error) {
@@ -1477,224 +1596,6 @@ func (ts *TokenStaking) BalanceOfAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) MinimumStakeSteps() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.MinimumStakeSteps(
-		ts.callerOptions,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"minimumStakeSteps",
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) MinimumStakeStepsAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"minimumStakeSteps",
-		&result,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) OwnerOperators(
-	arg0 common.Address,
-	arg1 *big.Int,
-) (common.Address, error) {
-	var result common.Address
-	result, err := ts.contract.OwnerOperators(
-		ts.callerOptions,
-		arg0,
-		arg1,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"ownerOperators",
-			arg0,
-			arg1,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) OwnerOperatorsAtBlock(
-	arg0 common.Address,
-	arg1 *big.Int,
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"ownerOperators",
-		&result,
-		arg0,
-		arg1,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) GetAuthoritySource(
-	operatorContract common.Address,
-) (common.Address, error) {
-	var result common.Address
-	result, err := ts.contract.GetAuthoritySource(
-		ts.callerOptions,
-		operatorContract,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"getAuthoritySource",
-			operatorContract,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) GetAuthoritySourceAtBlock(
-	operatorContract common.Address,
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"getAuthoritySource",
-		&result,
-		operatorContract,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) InitializationPeriod() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.InitializationPeriod(
-		ts.callerOptions,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"initializationPeriod",
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) InitializationPeriodAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"initializationPeriod",
-		&result,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsAuthorizedForOperator(
-	_operator common.Address,
-	_operatorContract common.Address,
-) (bool, error) {
-	var result bool
-	result, err := ts.contract.IsAuthorizedForOperator(
-		ts.callerOptions,
-		_operator,
-		_operatorContract,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"isAuthorizedForOperator",
-			_operator,
-			_operatorContract,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsAuthorizedForOperatorAtBlock(
-	_operator common.Address,
-	_operatorContract common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"isAuthorizedForOperator",
-		&result,
-		_operator,
-		_operatorContract,
-	)
-
-	return result, err
-}
-
 func (ts *TokenStaking) MinimumStakeBase() (*big.Int, error) {
 	var result *big.Int
 	result, err := ts.contract.MinimumStakeBase(
@@ -1727,6 +1628,44 @@ func (ts *TokenStaking) MinimumStakeBaseAtBlock(
 		ts.errorResolver,
 		ts.contractAddress,
 		"minimumStakeBase",
+		&result,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) MinimumStakeScheduleStart() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.MinimumStakeScheduleStart(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"minimumStakeScheduleStart",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) MinimumStakeScheduleStartAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"minimumStakeScheduleStart",
 		&result,
 	)
 
@@ -1782,10 +1721,13 @@ func (ts *TokenStaking) ActiveStakeAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) MaximumLockDuration() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.MaximumLockDuration(
+func (ts *TokenStaking) BeneficiaryOf(
+	_operator common.Address,
+) (common.Address, error) {
+	var result common.Address
+	result, err := ts.contract.BeneficiaryOf(
 		ts.callerOptions,
+		_operator,
 	)
 
 	if err != nil {
@@ -1793,17 +1735,19 @@ func (ts *TokenStaking) MaximumLockDuration() (*big.Int, error) {
 			err,
 			ts.callerOptions.From,
 			nil,
-			"maximumLockDuration",
+			"beneficiaryOf",
+			_operator,
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) MaximumLockDurationAtBlock(
+func (ts *TokenStaking) BeneficiaryOfAtBlock(
+	_operator common.Address,
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) (common.Address, error) {
+	var result common.Address
 
 	err := ethutil.CallAtBlock(
 		ts.callerOptions.From,
@@ -1813,8 +1757,9 @@ func (ts *TokenStaking) MaximumLockDurationAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"maximumLockDuration",
+		"beneficiaryOf",
 		&result,
+		_operator,
 	)
 
 	return result, err
@@ -1864,269 +1809,6 @@ func (ts *TokenStaking) EligibleStakeAtBlock(
 		&result,
 		_operator,
 		_operatorContract,
-	)
-
-	return result, err
-}
-
-type Locks struct {
-	Creators    []common.Address
-	Expirations []*big.Int
-}
-
-func (ts *TokenStaking) GetLocks(
-	operator common.Address,
-) (Locks, error) {
-	var result Locks
-	result, err := ts.contract.GetLocks(
-		ts.callerOptions,
-		operator,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"getLocks",
-			operator,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) GetLocksAtBlock(
-	operator common.Address,
-	blockNumber *big.Int,
-) (Locks, error) {
-	var result Locks
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"getLocks",
-		&result,
-		operator,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsStakeLocked(
-	operator common.Address,
-) (bool, error) {
-	var result bool
-	result, err := ts.contract.IsStakeLocked(
-		ts.callerOptions,
-		operator,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"isStakeLocked",
-			operator,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsStakeLockedAtBlock(
-	operator common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"isStakeLocked",
-		&result,
-		operator,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) UndelegationPeriod() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.UndelegationPeriod(
-		ts.callerOptions,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"undelegationPeriod",
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) UndelegationPeriodAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"undelegationPeriod",
-		&result,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) AuthorizerOf(
-	_operator common.Address,
-) (common.Address, error) {
-	var result common.Address
-	result, err := ts.contract.AuthorizerOf(
-		ts.callerOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"authorizerOf",
-			_operator,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) AuthorizerOfAtBlock(
-	_operator common.Address,
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"authorizerOf",
-		&result,
-		_operator,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) Registry() (common.Address, error) {
-	var result common.Address
-	result, err := ts.contract.Registry(
-		ts.callerOptions,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"registry",
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) RegistryAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"registry",
-		&result,
-	)
-
-	return result, err
-}
-
-type DelegationInfo struct {
-	Amount        *big.Int
-	CreatedAt     *big.Int
-	UndelegatedAt *big.Int
-}
-
-func (ts *TokenStaking) GetDelegationInfo(
-	_operator common.Address,
-) (DelegationInfo, error) {
-	var result DelegationInfo
-	result, err := ts.contract.GetDelegationInfo(
-		ts.callerOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"getDelegationInfo",
-			_operator,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) GetDelegationInfoAtBlock(
-	_operator common.Address,
-	blockNumber *big.Int,
-) (DelegationInfo, error) {
-	var result DelegationInfo
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"getDelegationInfo",
-		&result,
-		_operator,
 	)
 
 	return result, err
@@ -2232,6 +1914,269 @@ func (ts *TokenStaking) OperatorsAtBlock(
 	return result, err
 }
 
+func (ts *TokenStaking) AuthorizerOf(
+	_operator common.Address,
+) (common.Address, error) {
+	var result common.Address
+	result, err := ts.contract.AuthorizerOf(
+		ts.callerOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"authorizerOf",
+			_operator,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) AuthorizerOfAtBlock(
+	_operator common.Address,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"authorizerOf",
+		&result,
+		_operator,
+	)
+
+	return result, err
+}
+
+type Locks struct {
+	Creators    []common.Address
+	Expirations []*big.Int
+}
+
+func (ts *TokenStaking) GetLocks(
+	operator common.Address,
+) (Locks, error) {
+	var result Locks
+	result, err := ts.contract.GetLocks(
+		ts.callerOptions,
+		operator,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"getLocks",
+			operator,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) GetLocksAtBlock(
+	operator common.Address,
+	blockNumber *big.Int,
+) (Locks, error) {
+	var result Locks
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"getLocks",
+		&result,
+		operator,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) UndelegationPeriod() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.UndelegationPeriod(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"undelegationPeriod",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) UndelegationPeriodAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"undelegationPeriod",
+		&result,
+	)
+
+	return result, err
+}
+
+type DelegationInfo struct {
+	Amount        *big.Int
+	CreatedAt     *big.Int
+	UndelegatedAt *big.Int
+}
+
+func (ts *TokenStaking) GetDelegationInfo(
+	_operator common.Address,
+) (DelegationInfo, error) {
+	var result DelegationInfo
+	result, err := ts.contract.GetDelegationInfo(
+		ts.callerOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"getDelegationInfo",
+			_operator,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) GetDelegationInfoAtBlock(
+	_operator common.Address,
+	blockNumber *big.Int,
+) (DelegationInfo, error) {
+	var result DelegationInfo
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"getDelegationInfo",
+		&result,
+		_operator,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) GetAuthoritySource(
+	operatorContract common.Address,
+) (common.Address, error) {
+	var result common.Address
+	result, err := ts.contract.GetAuthoritySource(
+		ts.callerOptions,
+		operatorContract,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"getAuthoritySource",
+			operatorContract,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) GetAuthoritySourceAtBlock(
+	operatorContract common.Address,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"getAuthoritySource",
+		&result,
+		operatorContract,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) MinimumStake() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.MinimumStake(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"minimumStake",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) MinimumStakeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"minimumStake",
+		&result,
+	)
+
+	return result, err
+}
+
 func (ts *TokenStaking) OperatorsOf(
 	_address common.Address,
 ) ([]common.Address, error) {
@@ -2276,10 +2221,15 @@ func (ts *TokenStaking) OperatorsOfAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) Token() (common.Address, error) {
+func (ts *TokenStaking) OwnerOperators(
+	arg0 common.Address,
+	arg1 *big.Int,
+) (common.Address, error) {
 	var result common.Address
-	result, err := ts.contract.Token(
+	result, err := ts.contract.OwnerOperators(
 		ts.callerOptions,
+		arg0,
+		arg1,
 	)
 
 	if err != nil {
@@ -2287,14 +2237,18 @@ func (ts *TokenStaking) Token() (common.Address, error) {
 			err,
 			ts.callerOptions.From,
 			nil,
-			"token",
+			"ownerOperators",
+			arg0,
+			arg1,
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) TokenAtBlock(
+func (ts *TokenStaking) OwnerOperatorsAtBlock(
+	arg0 common.Address,
+	arg1 *big.Int,
 	blockNumber *big.Int,
 ) (common.Address, error) {
 	var result common.Address
@@ -2307,17 +2261,22 @@ func (ts *TokenStaking) TokenAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"token",
+		"ownerOperators",
 		&result,
+		arg0,
+		arg1,
 	)
 
 	return result, err
 }
 
-func (ts *TokenStaking) MinimumStakeScheduleStart() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.MinimumStakeScheduleStart(
+func (ts *TokenStaking) IsStakeLocked(
+	operator common.Address,
+) (bool, error) {
+	var result bool
+	result, err := ts.contract.IsStakeLocked(
 		ts.callerOptions,
+		operator,
 	)
 
 	if err != nil {
@@ -2325,17 +2284,19 @@ func (ts *TokenStaking) MinimumStakeScheduleStart() (*big.Int, error) {
 			err,
 			ts.callerOptions.From,
 			nil,
-			"minimumStakeScheduleStart",
+			"isStakeLocked",
+			operator,
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) MinimumStakeScheduleStartAtBlock(
+func (ts *TokenStaking) IsStakeLockedAtBlock(
+	operator common.Address,
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) (bool, error) {
+	var result bool
 
 	err := ethutil.CallAtBlock(
 		ts.callerOptions.From,
@@ -2345,7 +2306,46 @@ func (ts *TokenStaking) MinimumStakeScheduleStartAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"minimumStakeScheduleStart",
+		"isStakeLocked",
+		&result,
+		operator,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) Registry() (common.Address, error) {
+	var result common.Address
+	result, err := ts.contract.Registry(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"registry",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) RegistryAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"registry",
 		&result,
 	)
 
@@ -2353,131 +2353,6 @@ func (ts *TokenStaking) MinimumStakeScheduleStartAtBlock(
 }
 
 // ------ Events -------
-
-type tokenStakingStakedFunc func(
-	From common.Address,
-	Value *big.Int,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) WatchStaked(
-	success tokenStakingStakedFunc,
-	fail func(err error) error,
-	fromFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeStaked(
-			success,
-			failCallback,
-			fromFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event Staked terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeStaked(
-	success tokenStakingStakedFunc,
-	fail func(err error) error,
-	fromFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingStaked)
-	eventSubscription, err := ts.contract.WatchStaked(
-		nil,
-		eventChan,
-		fromFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for Staked events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.From,
-					event.Value,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
 
 type tokenStakingTokensSeizedFunc func(
 	Operator common.Address,
@@ -3331,6 +3206,131 @@ func (ts *TokenStaking) subscribeStakeLocked(
 					event.Operator,
 					event.LockCreator,
 					event.Until,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type tokenStakingStakedFunc func(
+	From common.Address,
+	Value *big.Int,
+	blockNumber uint64,
+)
+
+func (ts *TokenStaking) WatchStaked(
+	success tokenStakingStakedFunc,
+	fail func(err error) error,
+	fromFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := ts.subscribeStaked(
+			success,
+			failCallback,
+			fromFilter,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				tsLogger.Warning(
+					"subscription to event Staked terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (ts *TokenStaking) subscribeStaked(
+	success tokenStakingStakedFunc,
+	fail func(err error) error,
+	fromFilter []common.Address,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.TokenStakingStaked)
+	eventSubscription, err := ts.contract.WatchStaked(
+		nil,
+		eventChan,
+		fromFilter,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for Staked events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.From,
+					event.Value,
 					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()

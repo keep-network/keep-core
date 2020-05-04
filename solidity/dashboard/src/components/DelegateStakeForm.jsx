@@ -49,7 +49,7 @@ const DelegateStakeForm = ({
           label="Operator Address"
           placeholder="0x0"
           icon={<Icons.OperatorFormIcon />}
-          tooltipText="A staking client that has been delegated a stake, but may not yet be in a signing group. Also known as a staker."
+          tooltipText="The operator address is tasked with participation in network operations, and represents the staker in most circumstances."
         />
         <AddressField
           name="beneficiaryAddress"
@@ -160,7 +160,7 @@ const connectedWithFormik = withFormik({
 const getStakeTokensError = (props, { stakeTokens }) => {
   const { availableToStake, minStake } = props
 
-  if (lte(availableToStake, 0)) {
+  if (lte(availableToStake || 0, 0)) {
     return "Insufficient funds"
   } else {
     return validateAmountInRange(stakeTokens, availableToStake, minStake)
