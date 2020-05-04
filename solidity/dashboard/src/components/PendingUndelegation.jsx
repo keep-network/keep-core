@@ -2,11 +2,11 @@ import React, { useEffect, useContext } from "react"
 import { useFetchData } from "../hooks/useFetchData"
 import { operatorService } from "../services/token-staking.service"
 import {
-  displayAmount,
   isSameEthAddress,
   isEmptyObj,
   formatDate,
 } from "../utils/general.utils"
+import { displayAmount } from "../utils/token.utils"
 import { LoadingOverlay } from "./Loadable"
 import { Web3Context } from "./WithWeb3Context"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"

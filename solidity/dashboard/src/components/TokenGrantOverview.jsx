@@ -1,5 +1,5 @@
 import React, { useContext } from "react"
-import { formatDate, displayAmount } from "../utils/general.utils"
+import { formatDate } from "../utils/general.utils"
 import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import { CircularProgressBars } from "./CircularProgressBar"
@@ -10,7 +10,10 @@ import moment from "moment"
 import { gt } from "../utils/arithmetics.utils"
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
 import TokenAmount from "./TokenAmount"
-import { displayAmountWithMetricSuffix } from "../utils/token.utils"
+import {
+  displayAmountWithMetricSuffix,
+  displayAmount,
+} from "../utils/token.utils"
 
 const TokenGrantOverview = ({ selectedGrant }) => {
   const { yourAddress, grantContract } = useContext(Web3Context)

@@ -1,5 +1,6 @@
 import React from "react"
-import { displayAmount, formatDate } from "../utils/general.utils"
+import { formatDate } from "../utils/general.utils"
+import { displayAmount } from "../utils/token.utils"
 import AddressShortcut from "./AddressShortcut"
 import UndelegateStakeButton from "./UndelegateStakeButton"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
