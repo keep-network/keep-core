@@ -31,10 +31,6 @@ contract KeepRandomBeaconOperatorDKGResultStub is KeepRandomBeaconOperator {
         dkgResultVerification.signatureThreshold = threshold;
     }
 
-    function setResultPublicationBlockStep(uint256 step) public {
-        resultPublicationBlockStep = step;
-    }
-
     function getGroupSelectionRelayEntry() public view returns (uint256) {
         return groupSelection.seed;
     }

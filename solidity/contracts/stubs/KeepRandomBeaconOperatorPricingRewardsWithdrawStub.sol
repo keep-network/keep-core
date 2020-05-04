@@ -45,6 +45,6 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         submitterReward; // silence local var
         subsidy; // silence local var
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
-        currentEntryStartBlock = 0;
+        currentRequestStartBlock = 0;
     }
 }

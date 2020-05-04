@@ -22,15 +22,15 @@ interface OperatorContract {
     function isGroupSelectionPossible() external view returns (bool);
 }
 
-/**
- * @title KeepRandomBeaconServiceImplV1
- * @dev Initial version of service contract that works under Keep Random
- * Beacon proxy and allows upgradability. The purpose of the contract is to have
- * up-to-date logic for threshold random number generation. Updated contracts
- * must inherit from this contract and have to be initialized under updated version name
- * Warning: you can't set constants directly in the contract and must use initialize()
- * please see openzeppelin upgradeable contracts approach for more info.
- */
+/// @title KeepRandomBeaconServiceImplV1
+/// @notice Initial version of service contract that works under Keep Random
+/// Beacon proxy and allows upgradability. The purpose of the contract is to have
+/// up-to-date logic for threshold random number generation. Updated contracts
+/// must inherit from this contract and have to be initialized under updated version
+/// name.
+/// @dev Warning: you can't set constants directly in the contract and must use
+/// initialize() please see openzeppelin upgradeable contracts approach for more
+/// info.
 contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
     using SafeMath for uint256;
     using PercentUtils for uint256;
@@ -38,33 +38,34 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
 
     event RelayEntryRequested(uint256 requestId);
 
-    // Fraction in % of the estimated cost of DKG that is included
-    // in relay request fee.
+    /// @dev Fraction in % of the estimated cost of DKG that is included
+    /// in relay request fee.
     uint256 internal _dkgContributionMargin;
 
-    // Every relay request payment includes DKG contribution that is added to
-    // the DKG fee pool, once the pool value reaches the required minimum, a new
-    // relay entry will trigger the creation of a new group. Expressed in wei.
+    /// @dev Every relay request payment includes DKG contribution that is added to
+    /// the DKG fee pool, once the pool value reaches the required minimum, a new
+    /// relay entry will trigger the creation of a new group. Expressed in wei.
     uint256 internal _dkgFeePool;
 
-    // Rewards not paid out to the operators are sent to request subsidy pool to
-    // subsidize new requests: 1% of the subsidy pool is returned to the requester's
-    // surplus address. Expressed in wei.
+    /// @dev Rewards not paid out to the operators are sent to request subsidy pool to
+    /// subsidize new requests: 1% of the subsidy pool is returned to the requester's
+    /// surplus address. Expressed in wei.
     uint256 internal _requestSubsidyFeePool;
 
-    // Each service contract tracks its own requests and these are independent
-    // from operator contracts which track signing requests instead.
+    /// @dev Each service contract tracks its own requests and these are independent
+    /// from operator contracts which track signing requests instead.
     uint256 internal _requestCounter;
 
+    /// @dev Previous entry value produced by the beacon.
     bytes internal _previousEntry;
 
-    // The cost of executing executeCallback() code of this contract, includes
-    // everything but the logic of the external contract called.
-    // The value is used to estimate the cost of executing a callback and is
-    // used for calculating callback call surplus reimbursement for requestor.
-    //
-    // This value has to be updated in case of EVM opcode price change, but since
-    // upgrading service contract is easy, it is not a worrisome problem.
+    /// @dev The cost of executing executeCallback() code of this contract, includes
+    /// everything but the logic of the external contract called.
+    /// The value is used to estimate the cost of executing a callback and is
+    /// used for calculating callback call surplus reimbursement for requestor.
+    ///
+    /// This value has to be updated in case of EVM opcode price change, but since
+    /// upgrading service contract is easy, it is not a worrisome problem.
     uint256 internal _baseCallbackGas;
 
     struct Callback {
@@ -76,24 +77,23 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
 
     mapping(uint256 => Callback) internal _callbacks;
 
-    // KeepRegistry contract with a list of approved operator contracts and upgraders.
+    /// @dev KeepRegistry contract with a list of approved operator contracts and upgraders.
     address internal _registry;
 
     address[] internal _operatorContracts;
 
-    // Mapping to store new implementation versions that inherit from this contract.
+    /// @dev Mapping to store new implementation versions that inherit from this contract.
     mapping (string => bool) internal _initialized;
 
-    // Seed used as the first random beacon value.
-    // It's a G1 point G * PI =
-    // G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
-    // Where G is the generator of G1 abstract cyclic group.
+    /// @dev Seed used as the first random beacon value.
+    /// It's a G1 point G * PI =
+    /// G * 31415926535897932384626433832795028841971693993751058209749445923078164062862
+    /// Where G is the generator of G1 abstract cyclic group.
     bytes constant internal _beaconSeed =
     hex"15c30f4b6cf6dbbcbdcc10fe22f54c8170aea44e198139b776d512d8f027319a1b9e8bfaf1383978231ce98e42bafc8129f473fc993cf60ce327f7d223460663";
 
-    /**
-     * @dev Throws if called by any account other than the operator contract upgrader authorized for this service contract.
-     */
+    /// @dev Throws if called by any account other than the operator contract
+    /// upgrader authorized for this service contract.
     modifier onlyOperatorContractUpgrader() {
         address operatorContractUpgrader = KeepRegistry(_registry).operatorContractUpgraderFor(address(this));
         require(operatorContractUpgrader == msg.sender, "Caller is not operator contract upgrader");
@@ -104,12 +104,10 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         _initialized["KeepRandomBeaconServiceImplV1"] = true;
     }
 
-    /**
-     * @dev Initialize Keep Random Beacon service contract implementation.
-     * @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
-     * request fee.
-     * @param registry KeepRegistry contract linked to this contract.
-     */
+    /// @notice Initialize Keep Random Beacon service contract implementation.
+    /// @param dkgContributionMargin Fraction in % of the estimated cost of DKG that is included in relay
+    /// request fee.
+    /// @param registry KeepRegistry contract linked to this contract.
     function initialize(
         uint256 dkgContributionMargin,
         address registry
@@ -123,20 +121,16 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         _dkgContributionMargin = dkgContributionMargin;
         _previousEntry = _beaconSeed;
         _registry = registry;
-        _baseCallbackGas = 10203;
+        _baseCallbackGas = 10226;
     }
 
-    /**
-     * @dev Checks if this contract is initialized.
-     */
+    /// @notice Checks if this contract is initialized.
     function initialized() public view returns (bool) {
         return _initialized["KeepRandomBeaconServiceImplV1"];
     }
 
-    /**
-     * @dev Adds operator contract
-     * @param operatorContract Address of the operator contract.
-     */
+    /// @notice Adds operator contract
+    /// @param operatorContract Address of the operator contract.
     function addOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         require(
             KeepRegistry(_registry).isApprovedOperatorContract(operatorContract),
@@ -145,34 +139,27 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         _operatorContracts.push(operatorContract);
     }
 
-    /**
-     * @dev Removes operator contract
-     * @param operatorContract Address of the operator contract.
-     */
+    /// @notice Removes operator contract
+    /// @param operatorContract Address of the operator contract.
     function removeOperatorContract(address operatorContract) public onlyOperatorContractUpgrader {
         _operatorContracts.removeAddress(operatorContract);
     }
 
-    /**
-     * @dev Add funds to DKG fee pool.
-     */
+    /// @notice Add funds to DKG fee pool.
     function fundDkgFeePool() public payable {
         _dkgFeePool += msg.value;
     }
 
-    /**
-     * @dev Add funds to request subsidy fee pool.
-     */
+    /// @notice Add funds to request subsidy fee pool.
     function fundRequestSubsidyFeePool() public payable {
         _requestSubsidyFeePool += msg.value;
     }
 
-    /**
-     * @dev Selects an operator contract from the available list using modulo operation
-     * with seed value weighted by the number of active groups on each operator contract.
-     * @param seed Cryptographically generated random value.
-     * @return Address of operator contract.
-     */
+    /// @notice Selects an operator contract from the available list using modulo
+    /// operation with seed value weighted by the number of active groups on each
+    /// operator contract.
+    /// @param seed Cryptographically generated random value.
+    /// @return Address of operator contract.
     function selectOperatorContract(uint256 seed) public view returns (address) {
 
         uint256 totalNumberOfGroups;
@@ -206,32 +193,34 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         return approvedContracts[selectedContract];
     }
 
-    /**
-     * @dev Creates a request to generate a new relay entry, which will include
-     * a random number (by signing the previous entry's random number).
-     * @return An uint256 representing uniquely generated entry Id.
-     */
+    /// @notice Creates a request to generate a new relay entry, which will include
+    /// a random number (by signing the previous entry's random number).
+    /// @return An uint256 representing uniquely generated entry Id.
     function requestRelayEntry() public payable returns (uint256) {
         return requestRelayEntry(address(0), 0);
     }
 
-    /**
-     * @dev Creates a request to generate a new relay entry (random number).
-     * @param callbackContract Callback contract address. Callback is called
-     * once a new relay entry has been generated. Callback contract must
-     * declare public `__beaconCallback(uint256)` function that is going to be
-     * executed with the result, once ready.
-     * @param callbackGas Gas required for the callback.
-     * The customer needs to ensure they provide a sufficient callback gas
-     * to cover the gas fee of executing the callback. Any surplus is returned
-     * to the customer. If the callback gas amount turns to be not enough to
-     * execute the callback, callback execution is skipped.
-     * @return An uint256 representing uniquely generated relay request ID. It is also returned as part of the event.
-     */
+    /// @notice Creates a request to generate a new relay entry (random number).
+    /// @param callbackContract Callback contract address. Callback is called
+    /// once a new relay entry has been generated. Callback contract must
+    /// declare public `__beaconCallback(uint256)` function that is going to be
+    /// executed with the result, once ready.
+    /// @param callbackGas Gas required for the callback (2 million gas max).
+    /// The customer needs to ensure they provide a sufficient callback gas
+    /// to cover the gas fee of executing the callback. Any surplus is returned
+    /// to the customer. If the callback gas amount turns to be not enough to
+    /// execute the callback, callback execution is skipped.
+    /// @return An uint256 representing uniquely generated relay request ID. It
+    /// is also returned as part of the event.
     function requestRelayEntry(
         address callbackContract,
         uint256 callbackGas
     ) public nonReentrant payable returns (uint256) {
+        require(
+            callbackGas <= 2000000,
+            "Callback gas exceeds 2000000 gas limit"
+        );
+
         require(
             msg.value >= entryFeeEstimate(callbackGas),
             "Payment is less than required minimum."
@@ -288,12 +277,11 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         return requestId;
     }
 
-    /**
-     * @dev Store valid entry returned by operator contract and call customer specified callback if required.
-     * @param requestId Request id tracked internally by this contract.
-     * @param entry The generated random number.
-     * @param submitter Relay entry submitter.
-     */
+    /// @notice Store valid entry returned by operator contract and call customer
+    /// specified callback if required.
+    /// @param requestId Request id tracked internally by this contract.
+    /// @param entry The generated random number.
+    /// @param submitter Relay entry submitter.
     function entryCreated(uint256 requestId, bytes memory entry, address payable submitter) public {
         require(
             _operatorContracts.contains(msg.sender),
@@ -307,12 +295,10 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         createGroupIfApplicable(entryAsNumber, submitter);
     }
 
-    /**
-     * @dev Executes customer specified callback for the relay entry request.
-     * @param requestId Request id tracked internally by this contract.
-     * @param entry The generated random number.
-     * @return Address to receive callback surplus.
-     */
+    /// @notice Executes customer specified callback for the relay entry request.
+    /// @param requestId Request id tracked internally by this contract.
+    /// @param entry The generated random number.
+    /// @return Address to receive callback surplus.
     function executeCallback(uint256 requestId, uint256 entry) public returns (address payable surplusRecipient) {
         require(
             _operatorContracts.contains(msg.sender),
@@ -332,12 +318,10 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         delete _callbacks[requestId];
     }
 
-    /**
-     * @dev Triggers the selection process of a new candidate group if the DKG
-     * fee pool equals or exceeds DKG cost estimate.
-     * @param entry The generated random number.
-     * @param submitter Relay entry submitter - operator.
-     */
+    /// @notice Triggers the selection process of a new candidate group if the
+    /// DKG fee pool equals or exceeds DKG cost estimate.
+    /// @param entry The generated random number.
+    /// @param submitter Relay entry submitter - operator.
     function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
         address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
         uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationFee();
@@ -348,17 +332,13 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         }
     }
 
-    /**
-     * @dev Get base callback gas required for relay entry callback.
-     */
+    /// @notice Get base callback gas required for relay entry callback.
     function baseCallbackGas() public view returns(uint256) {
         return _baseCallbackGas;
     }
 
-    /**
-     * @dev Get the minimum payment in wei for relay entry callback.
-     * @param _callbackGas Gas required for the callback.
-     */
+    /// @notice Get the minimum payment in wei for relay entry callback.
+    /// @param _callbackGas Gas required for the callback.
     function callbackFee(
         uint256 _callbackGas,
         uint256 _gasPriceCeiling
@@ -372,11 +352,14 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         return callbackGas.mul(_gasPriceCeiling);
     }
 
-    /**
-     * @dev Get the entry fee estimate in wei for relay entry request.
-     * @param callbackGas Gas required for the callback.
-     */
+    /// @notice Get the entry fee estimate in wei for relay entry request.
+    /// @param callbackGas Gas required for the callback.
     function entryFeeEstimate(uint256 callbackGas) public view returns(uint256) {
+        require(
+            callbackGas <= 2000000,
+            "Callback gas exceeds 2000000 gas limit"
+        );
+
         (
             uint256 entryVerificationFee,
             uint256 dkgContributionFee,
@@ -390,9 +373,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
             .add(callbackFee(callbackGas, gasPriceCeiling));
     }
 
-    /**
-     * @dev Get the entry fee breakdown in wei for relay entry request.
-     */
+    /// @notice Get the entry fee breakdown in wei for relay entry request.
     function entryFeeBreakdown() public view returns(
         uint256 entryVerificationFee,
         uint256 dkgContributionFee,
@@ -438,16 +419,29 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         );
     }
 
-    /**
-     * @dev Gets the previous relay entry value.
-     */
-    function previousEntry() public view returns(bytes memory) {
-        return _previousEntry;
+    /// @notice Returns DKG contribution margin - a fraction in % of the
+    /// estimated cost of DKG that is included in relay request fee.
+    function dkgContributionMargin() public view returns(uint256) {
+        return _dkgContributionMargin;
     }
 
-    /**
-     * @dev Gets version of the current implementation.
-     */
+    /// @notice Returns the current DKG fee pool value.
+    /// Every relay request payment includes DKG contribution that is added to
+    /// the DKG fee pool, once the pool value reaches the required minimum, a new
+    /// relay entry will trigger the creation of a new group. Expressed in wei.
+    function dkgFeePool() public view returns(uint256) {
+        return _dkgFeePool;
+    }
+
+    /// @notice Returns the current value of request subsidy pool.
+    /// Rewards not paid out to the operators are sent to request subsidy pool to
+    /// subsidize new requests: 1% of the subsidy pool is returned to the requester's
+    /// surplus address. Expressed in wei.
+    function requestSubsidyFeePool() public view returns(uint256) {
+        return _requestSubsidyFeePool;
+    }
+
+    /// @notice Gets version of the current implementation.
     function version() public pure returns (string memory) {
         return "V1";
     }

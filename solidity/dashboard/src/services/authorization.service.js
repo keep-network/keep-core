@@ -1,16 +1,18 @@
-import { contractService } from './contracts.service'
-import { TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
-import { registryService } from './registry.service'
-import { isSameEthAddress } from '../utils/general.utils'
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from '../contracts'
+import { contractService } from "./contracts.service"
+import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import { registryService } from "./registry.service"
+import { isSameEthAddress } from "../utils/general.utils"
+import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 
 const fetchAuthorizationPageData = async (web3Context) => {
   const { yourAddress } = web3Context
-  const approvedContractsInRegistry = await registryService.fetchAuthorizedOperatorContracts(web3Context)
+  const approvedContractsInRegistry = await registryService.fetchAuthorizedOperatorContracts(
+    web3Context
+  )
   const stakedEvents = await contractService.getPastEvents(
     web3Context,
     TOKEN_STAKING_CONTRACT_NAME,
-    'Staked',
+    "Staked",
     { fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME] }
   )
   const visitedOperators = {}
@@ -19,13 +21,20 @@ const fetchAuthorizationPageData = async (web3Context) => {
 
   // Fetch all authorizer operators
   for (let i = 0; i < stakedEvents.length; i++) {
-    const { returnValues: { from: operatorAddress } } = stakedEvents[i]
+    const {
+      returnValues: { from: operatorAddress },
+    } = stakedEvents[i]
 
     if (visitedOperators.hasOwnProperty(operatorAddress)) {
       continue
     }
     visitedOperators[operatorAddress] = operatorAddress
-    const authorizerOfOperator = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', operatorAddress)
+    const authorizerOfOperator = await contractService.makeCall(
+      web3Context,
+      TOKEN_STAKING_CONTRACT_NAME,
+      "authorizerOf",
+      operatorAddress
+    )
     if (isSameEthAddress(authorizerOfOperator, yourAddress)) {
       authorizerOperators.push(operatorAddress)
     }
@@ -40,7 +49,13 @@ const fetchAuthorizationPageData = async (web3Context) => {
 
     for (let j = 0; j < approvedContractsInRegistry.length; j++) {
       const contractAddress = approvedContractsInRegistry[j].contractAddress
-      const isAuthorized = await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'isAuthorizedForOperator', operator, contractAddress)
+      const isAuthorized = await contractService.makeCall(
+        web3Context,
+        TOKEN_STAKING_CONTRACT_NAME,
+        "isAuthorizedForOperator",
+        operator,
+        contractAddress
+      )
       if (isAuthorized) {
         data[operator].authorizedContracts.push(approvedContractsInRegistry[j])
       } else {
@@ -55,9 +70,16 @@ const fetchAuthorizationPageData = async (web3Context) => {
 const fetchOperatorAuthorizedContracts = async (web3Context) => {
   const authorizedContracts = []
   const { yourAddress } = web3Context
-  const approvedContractsInRegistry = await registryService.fetchAuthorizedOperatorContracts(web3Context)
-  const authorizer = await await contractService.makeCall(web3Context, TOKEN_STAKING_CONTRACT_NAME, 'authorizerOf', yourAddress)
-  if (authorizer === '0x0000000000000000000000000000000000000000') {
+  const approvedContractsInRegistry = await registryService.fetchAuthorizedOperatorContracts(
+    web3Context
+  )
+  const authorizer = await await contractService.makeCall(
+    web3Context,
+    TOKEN_STAKING_CONTRACT_NAME,
+    "authorizerOf",
+    yourAddress
+  )
+  if (authorizer === "0x0000000000000000000000000000000000000000") {
     return { isOperator: false, contracts: authorizedContracts }
   }
 
@@ -66,7 +88,7 @@ const fetchOperatorAuthorizedContracts = async (web3Context) => {
     const isAuthorized = await contractService.makeCall(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
-      'isAuthorizedForOperator',
+      "isAuthorizedForOperator",
       yourAddress,
       contractAddress
     )
@@ -77,7 +99,6 @@ const fetchOperatorAuthorizedContracts = async (web3Context) => {
 
   return { isOperator: true, contracts: authorizedContracts }
 }
-
 
 export const authorizationService = {
   fetchAuthorizationPageData,

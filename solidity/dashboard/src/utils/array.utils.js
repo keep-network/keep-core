@@ -1,6 +1,11 @@
-import { isSameEthAddress } from '../utils/general.utils'
+import { isSameEthAddress } from "../utils/general.utils"
 
-export const findIndexAndObject = (propertyName, value, array, comparationFunction = defaultComparisonFunction ) => {
+export const findIndexAndObject = (
+  propertyName,
+  value,
+  array,
+  comparationFunction = defaultComparisonFunction
+) => {
   let indexInArray = null
   let obj = null
   for (let index = 0; index < array.length; index++) {
@@ -15,8 +20,10 @@ export const findIndexAndObject = (propertyName, value, array, comparationFuncti
   return { indexInArray, obj }
 }
 
-const defaultComparisonFunction = (object, propertyName, value) => object[propertyName] === value
+const defaultComparisonFunction = (object, propertyName, value) =>
+  object[propertyName] === value
 
-export const compareEthAddresses = (object, propertyName, value) => isSameEthAddress(object[propertyName], value)
+export const compareEthAddresses = (object, propertyName, value) =>
+  isSameEthAddress(object[propertyName], value)
 
 export const isEmptyArray = (array) => !(Array.isArray(array) && array.length)

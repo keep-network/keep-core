@@ -1,14 +1,14 @@
-import React, { useContext, useEffect } from 'react'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
-import Banner, { BANNER_TYPE } from './Banner'
+import React, { useContext, useEffect } from "react"
+import { CSSTransition, TransitionGroup } from "react-transition-group"
+import Banner, { BANNER_TYPE } from "./Banner"
 
 export const MessagesContext = React.createContext({})
 
 export const messageType = {
-  'SUCCESS': BANNER_TYPE.SUCCESS,
-  'ERROR': BANNER_TYPE.ERROR,
-  'PENDING_ACTION': BANNER_TYPE.PENDING,
-  'INFO': BANNER_TYPE.DISABLED,
+  SUCCESS: BANNER_TYPE.SUCCESS,
+  ERROR: BANNER_TYPE.ERROR,
+  PENDING_ACTION: BANNER_TYPE.PENDING,
+  INFO: BANNER_TYPE.DISABLED,
 }
 
 let messageId = 1
@@ -20,52 +20,64 @@ export class Messages extends React.Component {
     this.state = { messages: [] }
   }
 
-    showMessage = (value) => {
-      value.id = messageId++
-      this.setState({ messages: this.state.messages ? [...this.state.messages, value] : [value] })
-      return value
-    }
+  showMessage = (value) => {
+    value.id = messageId++
+    this.setState({
+      messages: this.state.messages ? [...this.state.messages, value] : [value],
+    })
+    return value
+  }
 
-    onMessageClose = (message) => {
-      const updatedMessages = this.state.messages.filter((m) => m.id !== message.id)
-      this.setState({ messages: updatedMessages })
-    }
+  onMessageClose = (message) => {
+    const updatedMessages = this.state.messages.filter(
+      (m) => m.id !== message.id
+    )
+    this.setState({ messages: updatedMessages })
+  }
 
-    render() {
-      return (
-        <MessagesContext.Provider value={{ showMessage: this.showMessage, closeMessage: this.onMessageClose }} >
-          <div className="messages-container">
-            <TransitionGroup >
-              {this.state.messages.map((message) => (
-                <CSSTransition
-                  timeout={messageTransitionTimeoutInMs}
+  render() {
+    return (
+      <MessagesContext.Provider
+        value={{
+          showMessage: this.showMessage,
+          closeMessage: this.onMessageClose,
+        }}
+      >
+        <div className="messages-container">
+          <TransitionGroup>
+            {this.state.messages.map((message) => (
+              <CSSTransition
+                timeout={messageTransitionTimeoutInMs}
+                key={message.id}
+                classNames="banner"
+              >
+                <Message
                   key={message.id}
-                  classNames="banner"
-                >
-                  <Message key={message.id} message={message} onMessageClose={this.onMessageClose} />
-                </CSSTransition>
-              ))}
-            </TransitionGroup>
-          </div>
-          {this.props.children}
-        </MessagesContext.Provider>
-      )
-    }
+                  message={message}
+                  onMessageClose={this.onMessageClose}
+                />
+              </CSSTransition>
+            ))}
+          </TransitionGroup>
+        </div>
+        {this.props.children}
+      </MessagesContext.Provider>
+    )
+  }
 }
 
 const closeMessageTimeoutInMs = 3250
 
-const Message = ({ message, ...props }) => {
+const Message = ({ message, onMessageClose }) => {
   useEffect(() => {
     if (!message.sticky) {
-      const timeout = setTimeout(onMessageClose, closeMessageTimeoutInMs)
+      const timeout = setTimeout(
+        () => onMessageClose(message),
+        closeMessageTimeoutInMs
+      )
       return () => clearTimeout(timeout)
     }
-  }, [message.id])
-
-  const onMessageClose = () => {
-    props.onMessageClose(message)
-  }
+  }, [message, onMessageClose])
 
   return (
     <Banner
@@ -74,7 +86,7 @@ const Message = ({ message, ...props }) => {
       subtitle={message.content}
       withIcon
       withCloseIcon
-      onCloseIcon={onMessageClose}
+      onCloseIcon={() => onMessageClose(message)}
     />
   )
 }

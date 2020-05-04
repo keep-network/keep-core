@@ -8,17 +8,15 @@ library Reimbursements {
     using SafeMath for uint256;
     using BytesLib for bytes;
 
-    /**
-     * @dev Reimburses callback execution cost and surplus based on actual gas
-     * usage to the submitter's beneficiary address and if necessary to the
-     * callback requestor (surplus recipient).
-     * @param stakingContract Staking contract to get the address of the beneficiary
-     * @param gasPriceCeiling Gas price ceiling in wei
-     * @param gasLimit Gas limit set for the callback
-     * @param gasSpent Gas spent by the submitter on the callback
-     * @param callbackFee Fee paid for the callback by the requestor
-     * @param callbackReturnData Data containing surplus recipient address
-     */
+    /// @notice Reimburses callback execution cost and surplus based on actual gas
+    /// usage to the submitter's beneficiary address and if necessary to the
+    /// callback requestor (surplus recipient).
+    /// @param stakingContract Staking contract to get the address of the beneficiary
+    /// @param gasPriceCeiling Gas price ceiling in wei
+    /// @param gasLimit Gas limit set for the callback
+    /// @param gasSpent Gas spent by the submitter on the callback
+    /// @param callbackFee Fee paid for the callback by the requestor
+    /// @param callbackReturnData Data containing surplus recipient address
     function reimburseCallback(
         TokenStaking stakingContract,
         uint256 gasPriceCeiling,
