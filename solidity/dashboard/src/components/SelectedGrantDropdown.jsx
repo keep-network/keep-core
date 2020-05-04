@@ -12,7 +12,7 @@ const SelectedGrantDropdown = ({ grant }) => {
       >
         Issued on{" "}
         {grant.start &&
-          formatDate(moment.unix(grant.start).add(grant.duration, "seconds"))}
+          formatDate(moment.unix(grant.start))}
       </div>
     </div>
   )
