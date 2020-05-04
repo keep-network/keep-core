@@ -415,6 +415,47 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
     );
   });
 
+  it("should return surplus to requestor when callback fails", async () => {
+    let lastEntry = await callbackContract.lastEntry();
+    let estimate = await callbackContract.__beaconCallback.estimateGas(blsData.groupSignature);
+    let callbackGas = estimate - 25000; // Requestor provides wrong gas
+    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+    await serviceContract.methods['requestRelayEntry(address,uint256)'](
+      callbackContract.address, callbackGas, {value: entryFeeEstimate, from: customer}
+    );
+
+    let customerStartBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
+    let beneficiaryStartBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      from: operator
+    });
+    let customerEndBalance = web3.utils.toBN(await web3.eth.getBalance(customer));
+    let beneficiaryEndBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+
+    let customerSurplus = customerEndBalance.sub(customerStartBalance);
+    let submitterReimbursement = beneficiaryEndBalance.sub(beneficiaryStartBalance);
+
+    await assertCallbackReimbursement(
+      callbackGas, entryFeeEstimate, submitterReimbursement,
+      customerSurplus, web3.utils.toBN(await web3.eth.getGasPrice())
+    );
+
+    const dkgSubmitterReimbursementFee = await operatorContract.dkgSubmitterReimbursementFee();
+    const operatorContractBalance = await web3.eth.getBalance(operatorContract.address);
+
+    assert.isTrue(
+      web3.utils.toBN(operatorContractBalance).eq(
+        dkgSubmitterReimbursementFee.add(groupProfitFee)
+      ),
+      "Unexpected operator contract balance"
+    );
+
+    assert.isTrue(
+      lastEntry.eq(await callbackContract.lastEntry()),
+      "Unexpected callback"
+    );
+  });
+
   // This function assets expexced submitter reimbursement and customer surplus
   // in a situation when callback is executed and no new group creation is
   // triggered.
