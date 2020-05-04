@@ -87,29 +87,8 @@ const TokensPage = () => {
       <PageWrapper title="Delegate Tokens From:">
         <TokensContextSwitcher />
         <div className="tokens-wrapper">
-          <Tile
-            title="Delegate Tokens"
-            id="delegate-stake-section"
-            withTooltip
-            tooltipProps={{
-              text: (
-                <>
-                  <span className="text-bold">Delegation</span>&nbsp; sets aside
-                  an amount of KEEP to be staked by a trusted third party,
-                  referred to within the dApp as an operator.
-                </>
-              ),
-            }}
-          >
-            <DelegateStakeForm
-              onSubmit={handleSubmit}
-              minStake={minimumStake}
-              availableToStake={getAvailableToStakeAmount()}
-            />
-          </Tile>
           <TokensOverview />
         </div>
-        <DelegationOverview />
       </PageWrapper>
     </LoadingOverlay>
   )
