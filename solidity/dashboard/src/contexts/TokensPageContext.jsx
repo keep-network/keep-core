@@ -15,9 +15,13 @@ import tokensPageReducer, {
   SET_STATE,
   GRANT_STAKED,
   GRANT_WITHDRAWN,
+  SET_SELECTED_GRANT,
 } from "../reducers/tokens-page.reducer"
+import { isEmptyObj } from "../utils/general.utils"
+import { findIndexAndObject } from "../utils/array.utils"
+import { usePrevious } from "../hooks/usePrevious"
 
-const tokesnPageServiceInitialData = {
+const tokensPageServiceInitialData = {
   delegations: [],
   undelegations: [],
   keepTokenBalance: "0",
@@ -34,7 +38,7 @@ const TokensPageContext = React.createContext({
   refreshGrantTokenBalance: () => {},
   dispatch: () => {},
   grants: [],
-  ...tokesnPageServiceInitialData,
+  ...tokensPageServiceInitialData,
 })
 
 const TokenPageContextProvider = (props) => {
@@ -45,7 +49,7 @@ const TokenPageContextProvider = (props) => {
     refreshData,
   ] = useFetchData(
     tokensPageService.fetchTokensPageData,
-    tokesnPageServiceInitialData
+    tokensPageServiceInitialData
   )
   const [
     { data: grants, isFetching: grantsAreFetching },
@@ -64,7 +68,10 @@ const TokenPageContextProvider = (props) => {
     initializationPeriod: "0",
     undelegationPeriod: "0",
     isFetching: true,
+    tokensContext: "granted",
+    selectedGrant: {},
   })
+  const previousSelectedGrant = usePrevious(state.selectedGrant)
 
   useEffect(() => {
     dispatch({
@@ -78,7 +85,21 @@ const TokenPageContextProvider = (props) => {
       type: SET_STATE,
       payload: { grants, isFetching: grantsAreFetching },
     })
-  }, [grants, grantsAreFetching])
+    if (!isEmptyObj(state.selectedGrant) && grants.length > 0) {
+      const { obj: grant } = findIndexAndObject(
+        "id",
+        state.selectedGrant.id,
+        grants
+      )
+      dispatch({ type: SET_SELECTED_GRANT, payload: grant })
+    }
+  }, [grants, grantsAreFetching, state.selectedGrant])
+
+  useEffect(() => {
+    if (isEmptyObj(previousSelectedGrant) && state.grants.length > 0) {
+      dispatch({ type: SET_SELECTED_GRANT, payload: state.grants[0] })
+    }
+  })
 
   const contextValue = useMemo(() => {
     return { state, dispatch }

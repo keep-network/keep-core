@@ -21,6 +21,8 @@
 @import 'tooltip.less';
 @import 'datatable.less';
 @import 'choose-wallet.less';
+@import 'tokens-context-switcher.less';
+@import 'delegate-stake-form.less';
 
 * {
   margin: 0;
@@ -49,9 +51,8 @@ ul {
   background: @background-color;
   
   > .content {
-    flex: 1 0 auto;
-    overflow-x: hidden;
     display: flex;
+    flex: 1 0 auto;
     flex-direction: column;
     margin: calc(@header-height + 1.5rem) 1.5rem 0;
   }

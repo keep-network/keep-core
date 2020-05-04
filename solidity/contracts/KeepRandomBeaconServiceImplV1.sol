@@ -419,11 +419,6 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         );
     }
 
-    /// @notice Gets the previous relay entry value.
-    function previousEntry() public view returns(bytes memory) {
-        return _previousEntry;
-    }
-
     /// @notice Returns DKG contribution margin - a fraction in % of the
     /// estimated cost of DKG that is included in relay request fee.
     function dkgContributionMargin() public view returns(uint256) {

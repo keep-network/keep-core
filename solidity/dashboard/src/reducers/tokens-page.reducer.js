@@ -14,6 +14,8 @@ export const REMOVE_UNDELEGATION = "REMOVE_UNDELEGATION"
 export const GRANT_STAKED = "GRANT_STAKED"
 export const GRANT_WITHDRAWN = "GRANT_WITHDRAWN"
 export const SET_STATE = "SET_STATE"
+export const SET_SELECTED_GRANT = "SET_SELECTED_GRANT"
+export const SET_TOKENS_CONTEXT = "SET_TOKENS_CONTEXT"
 
 const tokensPageReducer = (state, action) => {
   switch (action.type) {
@@ -83,6 +85,16 @@ const tokensPageReducer = (state, action) => {
       return {
         ...state,
         grants: grantWithdrawn([...state.grants], action.payload),
+      }
+    case SET_SELECTED_GRANT:
+      return {
+        ...state,
+        selectedGrant: action.payload,
+      }
+    case SET_TOKENS_CONTEXT:
+      return {
+        ...state,
+        tokensContext: action.payload,
       }
     default:
       return { ...state }
