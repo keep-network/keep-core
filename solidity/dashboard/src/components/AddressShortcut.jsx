@@ -47,9 +47,9 @@ const AddressShortcut = ({ address, classNames }) => {
     <span
       onClick={copyToClipboard}
       onMouseOut={() => setCopyStatus("Copy to clipboard")}
-      className={`address-shortcut tooltip ${classNames}`}
+      className={`address-shortcut tooltip address ${classNames}`}
     >
-      <span className="tooltip-text bottom">{copyStatus}</span>
+      <span className="tooltip-text address bottom">{copyStatus}</span>
       <span className="full-address" ref={addressElement}>
         {address}
       </span>

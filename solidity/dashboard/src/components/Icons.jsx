@@ -7,6 +7,13 @@ import { ReactComponent as Rewards } from "../static/svg/rewards.svg"
 import { ReactComponent as Glossary } from "../static/svg/glossary.svg"
 import { ReactComponent as Authorizer } from "../static/svg/authorizer.svg"
 import { ReactComponent as KeepToken } from "../static/svg/tokens.svg"
+import { ReactComponent as GrantContextIcon } from "../static/svg/grant-context-icon.svg"
+import { ReactComponent as MoneyWalletOpen } from "../static/svg/money-wallet-open.svg"
+import { ReactComponent as KeepGreenOutline } from "../static/svg/keep-green-form-icon.svg"
+import { ReactComponent as AuthorizerFormIcon } from "../static/svg/authorizer-form-icon.svg"
+import { ReactComponent as OperatorFormIcon } from "../static/svg/operator-form-icon.svg"
+import { ReactComponent as BeneficiaryFormIcon } from "../static/svg/beneficiary-form-icon.svg"
+import { ReactComponent as DashedLine } from "../static/svg/dashed-line.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -162,63 +169,56 @@ Cross.defaultProps = {
   color: "#6D6D6D",
 }
 
-const SpeechBubble = (props) => (
-  <div className="speech-bubble-icon-wrapper">
-    <svg
-      width="17"
-      height="20"
-      viewBox="0 0 17 20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M15.6667 16H9.33333L4 20V16H1.33333C0.596954 16 0 15.403 0 14.6667V1.33333C0 0.596954 0.596954 0 1.33333 0H15.6667C16.403 0 17 0.596954 17 1.33333V14.6667C17 15.403 16.403 16 15.6667 16Z"
-        fill="#48DBB4"
-      />
-    </svg>
-    <svg
-      width="19"
-      height="22"
-      viewBox="0 0 19 22"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M16.6667 17H10.3333L5 21V17H2.33333C1.59695 17 1 16.403 1 15.6667V2.33333C1 1.59695 1.59695 1 2.33333 1H16.6667C17.403 1 18 1.59695 18 2.33333V15.6667C18 16.403 17.403 17 16.6667 17Z"
-        stroke="#4C4C4C"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-    <svg
-      width="7"
-      height="11"
-      viewBox="0 0 7 11"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M1.5 2.9996C1.50019 1.98263 2.26358 1.12775 3.27405 1.01292C4.28451 0.898093 5.22025 1.55989 5.44862 2.55089C5.677 3.54189 5.12527 4.54647 4.16647 4.88546C3.76677 5.02677 3.49963 5.40477 3.49985 5.82872V5.99937"
-        stroke="#4C4C4C"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M3.49974 8.99902C3.36168 8.99902 3.24976 9.11094 3.24976 9.249C3.24976 9.38707 3.36168 9.49899 3.49974 9.49899C3.6378 9.49899 3.74972 9.38707 3.74972 9.249C3.74972 9.11094 3.6378 8.99902 3.49974 8.99902V8.99902"
-        stroke="#4C4C4C"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  </div>
+const Tooltip = ({ backgroundColor, color }) => (
+  <svg
+    width="15"
+    height="16"
+    viewBox="0 0 15 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M13.117 12.3021H8.3426L4.32209 15.2888V12.3021H2.31183C1.75671 12.3021 1.3067 11.8564 1.3067 11.3066V1.35102C1.3067 0.801194 1.75671 0.355469 2.31183 0.355469H13.117C13.6721 0.355469 14.1221 0.801194 14.1221 1.35102V11.3066C14.1221 11.8564 13.6721 12.3021 13.117 12.3021Z"
+      fill={backgroundColor}
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M7.51076 4.33833C7.3878 3.80981 6.88395 3.45686 6.33987 3.5181C5.79578 3.57934 5.38474 4.03526 5.38464 4.57763C5.3846 4.774 5.22385 4.93316 5.02559 4.93312C4.82734 4.93308 4.66665 4.77386 4.66669 4.5775C4.66686 3.67351 5.35196 2.9136 6.2588 2.81153C7.16565 2.70946 8.00542 3.29774 8.21038 4.17864C8.41533 5.05954 7.92019 5.95251 7.05971 6.25384C6.91623 6.30408 6.82035 6.43847 6.82043 6.5892V6.71074C6.82043 6.9071 6.65971 7.06629 6.46145 7.06629C6.26319 7.06629 6.10248 6.9071 6.10248 6.71074L6.10248 6.58957C6.10248 6.58951 6.10248 6.58963 6.10248 6.58957C6.10232 6.13743 6.38999 5.73412 6.82039 5.5834C7.33666 5.40261 7.63373 4.86684 7.51076 4.33833Z"
+      fill={color}
+    />
+    <path
+      d="M6.10248 6.58957L6.10248 6.71074C6.10248 6.9071 6.26319 7.06629 6.46145 7.06629C6.65971 7.06629 6.82043 6.9071 6.82043 6.71074V6.5892C6.82035 6.43847 6.91623 6.30408 7.05971 6.25384C7.92019 5.95251 8.41533 5.05954 8.21038 4.17864C8.00542 3.29774 7.16565 2.70946 6.2588 2.81153C5.35196 2.9136 4.66686 3.67351 4.66669 4.5775C4.66665 4.77386 4.82734 4.93308 5.02559 4.93312C5.22385 4.93316 5.3846 4.774 5.38464 4.57763C5.38474 4.03526 5.79578 3.57934 6.33987 3.5181C6.88395 3.45686 7.3878 3.80981 7.51076 4.33833C7.63373 4.86684 7.33666 5.40261 6.82039 5.5834C6.38999 5.73412 6.10232 6.13743 6.10248 6.58957ZM6.10248 6.58957C6.10248 6.58963 6.10248 6.58951 6.10248 6.58957Z"
+      strokeWidth="0.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      stroke={color}
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M5.92267 8.46667C5.92267 8.17213 6.16374 7.93335 6.46112 7.93335C6.75849 7.93335 6.99956 8.17213 6.99956 8.46667C6.99956 8.76121 6.75849 8.99999 6.46112 8.99999C6.16374 8.99999 5.92267 8.76121 5.92267 8.46667Z"
+      fill={color}
+      stroke={color}
+      strokeWidth="0.1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M1.3052 0.705146C0.977543 0.705146 0.711926 0.968233 0.711926 1.29277V10.6947C0.711926 11.0192 0.977543 11.2823 1.3052 11.2823H3.20367C3.40026 11.2823 3.55963 11.4402 3.55963 11.6349V13.7503L6.78703 11.3528C6.84864 11.3071 6.92358 11.2823 7.0006 11.2823H11.5095C11.8371 11.2823 12.1027 11.0192 12.1027 10.6947V1.29277C12.1027 0.968233 11.8371 0.705146 11.5095 0.705146H1.3052ZM0 1.29277C0 0.578791 0.584357 0 1.3052 0H11.5095C12.2303 0 12.8147 0.578791 12.8147 1.29277V10.6947C12.8147 11.4087 12.2303 11.9875 11.5095 11.9875H7.11926L3.41724 14.7375C3.30938 14.8177 3.16507 14.8306 3.04448 14.7708C2.92388 14.7111 2.8477 14.589 2.8477 14.4555V11.9875H1.3052C0.584357 11.9875 0 11.4087 0 10.6947V1.29277Z"
+      fill={color}
+    />
+  </svg>
 )
+
+Tooltip.defaultProps = {
+  backgroundColor: colors.primary,
+  color: colors.grey70,
+}
 
 const KeepCircle = ({ color }) => (
   <svg
@@ -350,7 +350,7 @@ export {
   Keep,
   Badge,
   Cross,
-  SpeechBubble,
+  Tooltip,
   KeepCircle,
   OK,
   OKBadge,
@@ -361,4 +361,11 @@ export {
   Operations,
   KeepToken,
   Rewards,
+  GrantContextIcon,
+  MoneyWalletOpen,
+  KeepGreenOutline,
+  DashedLine,
+  AuthorizerFormIcon,
+  BeneficiaryFormIcon,
+  OperatorFormIcon,
 }
