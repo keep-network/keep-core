@@ -17,6 +17,7 @@ interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
+    function callbackSurplusRecipient(uint256 requestId) external view returns(address payable);
 }
 
 /// @title KeepRandomBeaconOperator
@@ -476,9 +477,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // slashing in case of any changes in .call() gas limit.
         gasLimit = gasLimit > 2000000 ? 2000000 : gasLimit;
 
-        bytes memory callbackReturnData;
         uint256 gasBeforeCallback = gasleft();
-        (, callbackReturnData) = currentRequestServiceContract.call.gas(
+        currentRequestServiceContract.call.gas(
             gasLimit
         )(abi.encodeWithSignature(
             "executeCallback(uint256,uint256)",
@@ -488,13 +488,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 
+        address payable surplusRecipient = ServiceContract(
+            currentRequestServiceContract
+        ).callbackSurplusRecipient(currentRequestId);
+
         Reimbursements.reimburseCallback(
             stakingContract,
             gasPriceCeiling,
             gasLimit,
             gasSpent,
             callbackFee,
-            callbackReturnData
+            surplusRecipient
         );
     }
 
