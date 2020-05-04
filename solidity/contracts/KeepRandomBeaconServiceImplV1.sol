@@ -441,6 +441,11 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         return _requestSubsidyFeePool;
     }
 
+    /// @notice Returns callback surplus recipient for the provided request id.
+    function callbackSurplusRecipient(uint256 requestId) public view returns(address payable) {
+        return _callbacks[requestId].surplusRecipient;
+    }
+
     /// @notice Gets version of the current implementation.
     function version() public pure returns (string memory) {
         return "V1";
