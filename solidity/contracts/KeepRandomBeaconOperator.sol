@@ -477,6 +477,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // slashing in case of any changes in .call() gas limit.
         gasLimit = gasLimit > 2000000 ? 2000000 : gasLimit;
 
+        address payable surplusRecipient = ServiceContract(
+            currentRequestServiceContract
+        ).callbackSurplusRecipient(currentRequestId);
+
         uint256 gasBeforeCallback = gasleft();
         currentRequestServiceContract.call.gas(
             gasLimit
@@ -485,9 +489,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             currentRequestId,
             entry
         ));
-        address payable surplusRecipient = ServiceContract(
-            currentRequestServiceContract
-        ).callbackSurplusRecipient(currentRequestId);
 
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
