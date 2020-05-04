@@ -21,7 +21,7 @@ import { isEmptyObj } from "../utils/general.utils"
 import { findIndexAndObject } from "../utils/array.utils"
 import { usePrevious } from "../hooks/usePrevious"
 
-const tokennsPageServiceInitialData = {
+const tokensPageServiceInitialData = {
   delegations: [],
   undelegations: [],
   keepTokenBalance: "0",
@@ -38,7 +38,7 @@ const TokensPageContext = React.createContext({
   refreshGrantTokenBalance: () => {},
   dispatch: () => {},
   grants: [],
-  ...tokennsPageServiceInitialData,
+  ...tokensPageServiceInitialData,
 })
 
 const TokenPageContextProvider = (props) => {
@@ -49,7 +49,7 @@ const TokenPageContextProvider = (props) => {
     refreshData,
   ] = useFetchData(
     tokensPageService.fetchTokensPageData,
-    tokennsPageServiceInitialData
+    tokensPageServiceInitialData
   )
   const [
     { data: grants, isFetching: grantsAreFetching },
