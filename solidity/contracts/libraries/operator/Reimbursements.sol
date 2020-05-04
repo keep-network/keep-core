@@ -16,14 +16,14 @@ library Reimbursements {
     /// @param gasLimit Gas limit set for the callback
     /// @param gasSpent Gas spent by the submitter on the callback
     /// @param callbackFee Fee paid for the callback by the requestor
-    /// @param surplusRecipient Surplus recipient address
+    /// @param callbackSurplusRecipientData Data containing surplus recipient address
     function reimburseCallback(
         TokenStaking stakingContract,
         uint256 gasPriceCeiling,
         uint256 gasLimit,
         uint256 gasSpent,
         uint256 callbackFee,
-        address payable surplusRecipient
+        bytes memory callbackSurplusRecipientData
     ) public {
         uint256 gasPrice = gasPriceCeiling;
         // We need to check if tx.gasprice is non-zero as a workaround to a bug
@@ -53,7 +53,11 @@ library Reimbursements {
             beneficiary.call.value(actualCallbackFee)("");
 
             // Return callback surplus to the requestor.
-            surplusRecipient.call.gas(8000).value(callbackSurplus)("");
+            // Expecting 32 bytes data containing 20 byte address
+            if (callbackSurplusRecipientData.length == 32) {
+                address surplusRecipient = callbackSurplusRecipientData.toAddress(12);
+                surplusRecipient.call.gas(8000).value(callbackSurplus)("");
+            }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
             beneficiary.call.value(callbackFee)("");
