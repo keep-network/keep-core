@@ -29,10 +29,7 @@ import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
-import {
-  createManagedGrantContractInstance,
-  checkCodeIsValid,
-} from "../contracts"
+import { createManagedGrantContractInstance, isCodeValid } from "../contracts"
 
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
@@ -204,7 +201,7 @@ const useSubscribeToUndelegatedEvent = () => {
     const grantStakeDetails = await getGrantDetails(operator, grantContract)
     const isFromGrant = grantStakeDetails !== null
     const { grantee } = isFromGrant
-      ? await grantContract.methods.getGrant(grantStakeDetails.grantId)
+      ? await grantContract.methods.getGrant(grantStakeDetails.grantId).call()
       : {}
     let isManagedGrant
     let managedGrantContractInstance
@@ -324,10 +321,10 @@ const isAddressedToCurrentAccount = async (operator, web3Context, grantee) => {
 
   if (isFromGrant) {
     return isSameEthAddress(grantee, yourAddress)
-  } else {
-    const owner = await stakingContract.methods.ownerOf(operator).call()
-    return isSameEthAddress(owner, yourAddress)
   }
+
+  const owner = await stakingContract.methods.ownerOf(operator).call()
+  return isSameEthAddress(owner, yourAddress)
 }
 
 const useSubscribeToTokenGrantEvents = () => {
@@ -372,13 +369,14 @@ const isGranteeInManagedGrant = async (web3Context, grantee) => {
     web3,
     grantee
   )
-  try {
-    // check if grantee is a contract
-    const code = await web3.eth.getCode(grantee)
-    checkCodeIsValid(code)
-  } catch (error) {
+
+  // check if grantee is a contract
+  const code = await web3.eth.getCode(grantee)
+  console.log("code", code, isCodeValid(code))
+  if (!isCodeValid(code)) {
     return false
   }
+
   const granteeAddressInManagedGrant = await managedGrantContractInstance.methods
     .grantee()
     .call()

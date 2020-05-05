@@ -108,9 +108,12 @@ async function getContract(web3, contract, contractName) {
   return new web3.eth.Contract(contract.abi, address)
 }
 
-export function checkCodeIsValid(code) {
-  if (!code || code === "0x0" || code === "0x")
-    throw Error("No contract at address")
+function checkCodeIsValid(code) {
+  if (!isCodeValid(code)) throw Error("No contract at address")
+}
+
+export function isCodeValid(code) {
+  return code && code !== "0x0" && code !== "0x"
 }
 
 function getTransactionHashOfContractDeploy({ networks }) {
@@ -123,7 +126,7 @@ function getContractAddress({ networks }) {
 
 // The artifacts from @keep-network/keep-core for a given build only support a single network id
 export function getFirstNetworkIdFromArtifact() {
-  return Object.keys(KeepToken.networks)[0];
+  return Object.keys(KeepToken.networks)[0]
 }
 
 export function getPermissiveStakingPolicyContractAddress() {
