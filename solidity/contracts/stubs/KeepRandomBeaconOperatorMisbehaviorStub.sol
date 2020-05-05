@@ -2,11 +2,7 @@ pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconOperator.sol";
 
-/**
- * @title KeepRandomBeaconOperatorDKGMisbehaviorStub
- * @dev A simplified Random Beacon operator contract to help local development.
- */
-contract KeepRandomBeaconOperatorDKGMisbehaviorStub is KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperatorMisbehaviorStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
