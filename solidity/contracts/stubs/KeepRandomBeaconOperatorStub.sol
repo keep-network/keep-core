@@ -30,17 +30,6 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
-        groupSelection.groupSize = size;
-        dkgResultVerification.groupSize = size;
-    }
-
-    function setGroupThreshold(uint256 threshold) public {
-        groupThreshold = threshold;
-        dkgResultVerification.signatureThreshold = threshold;
-    }
-
     function getGroupSelectionRelayEntry() public view returns (uint256) {
         return groupSelection.seed;
     }

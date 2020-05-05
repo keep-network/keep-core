@@ -1,8 +1,11 @@
+@tooltip-width: 240px;
+
 .tooltip {
     display: inline-block;
     position: relative;
 
     &:hover {
+        cursor: pointer;
         .tooltip-text {
             visibility: visible;
             opacity: 1;
@@ -12,49 +15,56 @@
     &-text {
         position: absolute;
         visibility: hidden;
-        width: 120px;
+        width: @tooltip-width;
         font-size: 0.7rem !important;
         letter-spacing: normal !important;
         font-variant: normal !important;
         font-weight: normal !important;
-        left: 50%;
-        margin-left: -50%;
-        border-radius: 6px;
-        padding: 5px;
+        left: -(@tooltip-width / 2);
+        padding: 1rem;
         text-align: center;
-        color: @white;
-        background-color: @color-grey-70;
-        z-index: 1;
-        white-space: pre-wrap;                  /* CSS3 */
-        word-wrap: break-word;                  /* Internet Explorer 5.5+ */
-        word-break: break-all;
-        white-space: normal;
+        color: @color-black;
+        background-color: @primary-color;
+        z-index: 20;
+        white-space: pre-wrap;
+        .box-shadow(1px 1px 4px rgba(10, 8, 6, 0.2));
 
         &.bottom {
-            top: 105%;
+            top: calc(100% + 12px);
+            &::after {
+                top: -6px;
+                transform: rotate(-135deg);
+            }
         }
 
         &.top {
-            bottom: 105%;
+            bottom: calc(100% + 12px);
+            &::after {
+                bottom: -6px;
+            }
         }
 
         &:after {
             content: "";
             position: absolute;
-            left: 50%;
-            margin-left: -5px;
-            border: 5px solid transparent;
-
-            .bottom& {
-                bottom: 100%;
-                border-bottom-color: @color-grey-70;
-            }
-
-            .top& {
-                top: 100%;
-                border-top-color: @color-grey-70;
-            }
+            background-color: @primary-color;
+            left: @tooltip-width / 2;
+            .box-shadow(2px 2px 2px 0 rgba(129, 129, 129, 0.5));
+            height: 16px;
+            width:  16px;
+            transform: rotate(45deg);
+            z-index: -1;
         }
 
+        &.address {
+            font-size: 0.6rem !important;
+            padding: 0.25rem;
+            max-width: 120px;
+            left: -(@tooltip-width / 4);
+
+            &::after {
+                left: @tooltip-width / 4;
+            }
+        }
     }
 }

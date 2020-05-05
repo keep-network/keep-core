@@ -8,3 +8,10 @@ export const KEEP_OPERATOR_STATISTICS_CONTRACT_NAME =
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
+
+export const WALLETS = {
+  METAMASK: { label: "MetaMask" },
+  TREZOR: { label: "Trezor" },
+  LEDGER: { label: "Ledger" },
+  COINBASE: { label: "Coinbase" },
+}

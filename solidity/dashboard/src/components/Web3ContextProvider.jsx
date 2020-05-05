@@ -1,5 +1,7 @@
 import React from "react"
-import { getWeb3 } from "../utils/general.utils"
+import Web3 from "web3"
+import { TrezorProvider } from "../connectors/trezor"
+import { LedgerProvider } from "../connectors/ledger"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext, messageType } from "./Message"
 import { getContracts } from "../contracts"
@@ -10,6 +12,7 @@ export default class Web3ContextProvider extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
+      provider: null,
       web3: null,
       isFetching: false,
       yourAddress: "",
@@ -23,23 +26,55 @@ export default class Web3ContextProvider extends React.Component {
     }
   }
 
-  componentDidMount() {
-    this.initialize()
+  getWeb3 = (providerName) => {
+    switch (providerName) {
+      case "TREZOR": {
+        return new Web3(new TrezorProvider())
+      }
+      case "METAMASK": {
+        if (window.ethereum || window.web3) {
+          return new Web3(window.ethereum || window.web3.currentProvider)
+        }
+        throw new Error("No browser extention")
+      }
+      case "COINBASE": {
+        throw new Error("Coinbase wallet is not yet supported")
+      }
+      case "LEDGER": {
+        return new Web3(new LedgerProvider())
+      }
+      default:
+        throw new Error("Unsupported wallet")
+    }
   }
 
-  initialize = async () => {
-    const web3 = getWeb3()
-    if (!web3) {
+  connectAppWithWallet = async (providerName) => {
+    let web3
+    let account
+    this.setState({ isFetching: true })
+    try {
+      web3 = this.getWeb3(providerName)
+      account = (await web3.currentProvider.enable())[0]
+    } catch (error) {
+      this.setState({ providerError: error.message, isFetching: false })
+      this.context.showMessage({
+        type: messageType.ERROR,
+        title: error.message,
+      })
       return
     }
-    this.setState({ web3 }, this.setData)
+    this.setState(
+      {
+        web3,
+        provider: providerName,
+        yourAddress: account,
+        networkType: await web3.eth.net.getNetworkType(),
+      },
+      this.setData
+    )
   }
 
   setData = async () => {
-    const { web3 } = this.state
-    this.setState({ isFetching: true })
-    const accounts = await web3.eth.getAccounts()
-    this.connectAppWithAccount(!accounts || accounts.length === 0)
     this.initializeContracts()
     this.state.web3.eth.currentProvider.on(
       "accountsChanged",
@@ -47,25 +82,18 @@ export default class Web3ContextProvider extends React.Component {
     )
   }
 
-  connectAppWithAccount = async (withInfoMessage = true) => {
+  connectAppWithAccount = async () => {
     const { web3 } = this.state
     this.setState({ isFetching: true })
-    withInfoMessage &&
-      this.context.showMessage({
-        type: messageType.INFO,
-        title: "Please check web3 provider",
-      })
-
     try {
-      const [account] = await web3.currentProvider.enable()
-      this.setState({
-        yourAddress: account,
-        networkType: await web3.eth.net.getNetworkType(),
-        isFetching: false,
-      })
+      const [yourAddress] = await web3.currentProvider.enable()
+      this.setState({ yourAddress, isFetching: false })
     } catch (error) {
-      this.context.showMessage({ type: "error", title: error.message })
-      this.setState({ isFetching: false })
+      this.setState({ providerError: error.message, isFetching: false })
+      this.context.showMessage({
+        type: messageType.ERROR,
+        title: error.message,
+      })
     }
   }
 
@@ -75,12 +103,13 @@ export default class Web3ContextProvider extends React.Component {
       const contracts = await getContracts(web3)
       this.setState({
         ...contracts,
-        defaultContract: contracts.stakingContract,
         utils: web3.utils,
         eth: web3.eth,
+        isFetching: false,
       })
     } catch (error) {
       this.setState({
+        isFetching: false,
         error: "Please select correct network",
       })
     }
@@ -100,17 +129,13 @@ export default class Web3ContextProvider extends React.Component {
     this.setState({ yourAddress })
   }
 
-  changeDefaultContract = (defaultContract) => {
-    this.setState({ defaultContract })
-  }
-
   render() {
     return (
       <Web3Context.Provider
         value={{
           ...this.state,
-          changeDefaultContract: this.changeDefaultContract,
           connectAppWithAccount: this.connectAppWithAccount,
+          connectAppWithWallet: this.connectAppWithWallet,
         }}
       >
         {this.props.children}

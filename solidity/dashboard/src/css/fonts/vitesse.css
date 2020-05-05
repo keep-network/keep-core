@@ -11,3 +11,10 @@
     font-weight: bold;
     font-style: normal;
 }
+
+@font-face {
+    font-family: 'Vitesse';
+    src: url('./fonts/vitesse/VitesseSSm-Book.otf') format("opentype");
+    font-weight: 300;
+    font-style: normal;
+}

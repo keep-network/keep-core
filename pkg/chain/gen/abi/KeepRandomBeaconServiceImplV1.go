@@ -28,7 +28,7 @@ var (
 )
 
 // KeepRandomBeaconServiceImplV1ABI is the input ABI used to generate the binding from.
-const KeepRandomBeaconServiceImplV1ABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"addOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"baseCallbackGas\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgContributionMargin\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgFeePool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entry\",\"type\":\"bytes\"},{\"internalType\":\"addresspayable\",\"name\":\"submitter\",\"type\":\"address\"}],\"name\":\"entryCreated\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryFeeBreakdown\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"entryVerificationFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dkgContributionFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"groupProfitFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"gasPriceCeiling\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"entryFeeEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"executeCallback\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"surplusRecipient\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundDkgFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundRequestSubsidyFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"dkgContributionMargin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"registry\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"previousEntry\",\"outputs\":[{\"internalType\":\"bytes\",\"name\":\"\",\"type\":\"bytes\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"removeOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"callbackContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"requestSubsidyFeePool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"seed\",\"type\":\"uint256\"}],\"name\":\"selectOperatorContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"}]"
+const KeepRandomBeaconServiceImplV1ABI = "[{\"inputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"}],\"name\":\"RelayEntryRequested\",\"type\":\"event\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"addOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"baseCallbackGas\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"}],\"name\":\"callbackSurplusRecipient\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgContributionMargin\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"dkgFeePool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entry\",\"type\":\"bytes\"},{\"internalType\":\"addresspayable\",\"name\":\"submitter\",\"type\":\"address\"}],\"name\":\"entryCreated\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"entryFeeBreakdown\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"entryVerificationFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"dkgContributionFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"groupProfitFee\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"gasPriceCeiling\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"entryFeeEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"executeCallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundDkgFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"fundRequestSubsidyFeePool\",\"outputs\":[],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"dkgContributionMargin\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"registry\",\"type\":\"address\"}],\"name\":\"initialize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"initialized\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"removeOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"callbackContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"requestSubsidyFeePool\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"seed\",\"type\":\"uint256\"}],\"name\":\"selectOperatorContract\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"}]"
 
 // KeepRandomBeaconServiceImplV1 is an auto generated Go binding around an Ethereum contract.
 type KeepRandomBeaconServiceImplV1 struct {
@@ -198,6 +198,32 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession
 	return _KeepRandomBeaconServiceImplV1.Contract.BaseCallbackGas(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
+// CallbackSurplusRecipient is a free data retrieval call binding the contract method 0x0fda9ce4.
+//
+// Solidity: function callbackSurplusRecipient(uint256 requestId) constant returns(address)
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) CallbackSurplusRecipient(opts *bind.CallOpts, requestId *big.Int) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "callbackSurplusRecipient", requestId)
+	return *ret0, err
+}
+
+// CallbackSurplusRecipient is a free data retrieval call binding the contract method 0x0fda9ce4.
+//
+// Solidity: function callbackSurplusRecipient(uint256 requestId) constant returns(address)
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) CallbackSurplusRecipient(requestId *big.Int) (common.Address, error) {
+	return _KeepRandomBeaconServiceImplV1.Contract.CallbackSurplusRecipient(&_KeepRandomBeaconServiceImplV1.CallOpts, requestId)
+}
+
+// CallbackSurplusRecipient is a free data retrieval call binding the contract method 0x0fda9ce4.
+//
+// Solidity: function callbackSurplusRecipient(uint256 requestId) constant returns(address)
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) CallbackSurplusRecipient(requestId *big.Int) (common.Address, error) {
+	return _KeepRandomBeaconServiceImplV1.Contract.CallbackSurplusRecipient(&_KeepRandomBeaconServiceImplV1.CallOpts, requestId)
+}
+
 // DkgContributionMargin is a free data retrieval call binding the contract method 0x280f2043.
 //
 // Solidity: function dkgContributionMargin() constant returns(uint256)
@@ -346,32 +372,6 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession
 	return _KeepRandomBeaconServiceImplV1.Contract.Initialized(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
-// PreviousEntry is a free data retrieval call binding the contract method 0xac6136db.
-//
-// Solidity: function previousEntry() constant returns(bytes)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) PreviousEntry(opts *bind.CallOpts) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "previousEntry")
-	return *ret0, err
-}
-
-// PreviousEntry is a free data retrieval call binding the contract method 0xac6136db.
-//
-// Solidity: function previousEntry() constant returns(bytes)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) PreviousEntry() ([]byte, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.PreviousEntry(&_KeepRandomBeaconServiceImplV1.CallOpts)
-}
-
-// PreviousEntry is a free data retrieval call binding the contract method 0xac6136db.
-//
-// Solidity: function previousEntry() constant returns(bytes)
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) PreviousEntry() ([]byte, error) {
-	return _KeepRandomBeaconServiceImplV1.Contract.PreviousEntry(&_KeepRandomBeaconServiceImplV1.CallOpts)
-}
-
 // RequestSubsidyFeePool is a free data retrieval call binding the contract method 0x687d088e.
 //
 // Solidity: function requestSubsidyFeePool() constant returns(uint256)
@@ -494,21 +494,21 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSes
 
 // ExecuteCallback is a paid mutator transaction binding the contract method 0xfc3fcec7.
 //
-// Solidity: function executeCallback(uint256 requestId, uint256 entry) returns(address surplusRecipient)
+// Solidity: function executeCallback(uint256 requestId, uint256 entry) returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) ExecuteCallback(opts *bind.TransactOpts, requestId *big.Int, entry *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "executeCallback", requestId, entry)
 }
 
 // ExecuteCallback is a paid mutator transaction binding the contract method 0xfc3fcec7.
 //
-// Solidity: function executeCallback(uint256 requestId, uint256 entry) returns(address surplusRecipient)
+// Solidity: function executeCallback(uint256 requestId, uint256 entry) returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) ExecuteCallback(requestId *big.Int, entry *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.ExecuteCallback(&_KeepRandomBeaconServiceImplV1.TransactOpts, requestId, entry)
 }
 
 // ExecuteCallback is a paid mutator transaction binding the contract method 0xfc3fcec7.
 //
-// Solidity: function executeCallback(uint256 requestId, uint256 entry) returns(address surplusRecipient)
+// Solidity: function executeCallback(uint256 requestId, uint256 entry) returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) ExecuteCallback(requestId *big.Int, entry *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.ExecuteCallback(&_KeepRandomBeaconServiceImplV1.TransactOpts, requestId, entry)
 }

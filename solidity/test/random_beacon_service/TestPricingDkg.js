@@ -6,10 +6,6 @@ const assert = require('chai').assert
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 
 describe('KeepRandomBeaconService/PricingDkg', () => {
-
-    const groupSize = 20;
-    const groupThreshold = 11;
-
     let serviceContract;
     let operatorContract
     let groupCreationFee;
@@ -20,14 +16,11 @@ describe('KeepRandomBeaconService/PricingDkg', () => {
           contract.fromArtifact('TokenStaking'),
           contract.fromArtifact('KeepRandomBeaconService'),
           contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-          contract.fromArtifact('KeepRandomBeaconOperatorStub')
+          contract.fromArtifact('KeepRandomBeaconOperatorPricingDKGStub')
         );
-        
+
         serviceContract = contracts.serviceContract;
         operatorContract = contracts.operatorContract;
-    
-        await operatorContract.setGroupSize(groupSize);
-        await operatorContract.setGroupThreshold(groupThreshold);
 
         await stakeAndGenesis(accounts, contracts);    
 

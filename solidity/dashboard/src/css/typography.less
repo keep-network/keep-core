@@ -38,7 +38,7 @@ h2, .h2 {
   font-style: normal;
   font-weight: bold;
   font-size: 1.75rem;
-  line-height: 2,3rem;  
+  line-height: 2.3rem;  
 }
   
 h3, .h3 {
@@ -156,12 +156,32 @@ label {
   }
 
   &-link {
-    border-bottom: 1px solid transparent;
-    transition: all ease-in-out .5s;
+    text-decoration: underline;
 
-    &:hover, &:focus {
+    &:hover {
       cursor: pointer;
-      border-color: @pending-color;
     }
+  }
+  
+  &-center {
+    text-align: center;
+  }
+
+  &-caption {
+    font-family: 'Vitesse';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 0.7rem;
+    line-height: 1.375rem;
+    letter-spacing: 0.08rem;
+  }
+
+  &-intstruction {
+    font-family: 'Vitesse';
+    font-style: normal;
+    font-weight: 300;
+    font-size: 0.7rem;
+    line-height: 1.375rem;
+    letter-spacing: 0.08rem;
   }
 }

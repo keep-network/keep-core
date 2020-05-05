@@ -1,12 +1,23 @@
 import React from "react"
 import { useField } from "formik"
+import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
+import { colors } from "../constants/colors"
 
-const FormInput = ({ label, format, normalize, ...props }) => {
+const FormInput = ({ label, format, normalize, tooltipText, ...props }) => {
   const [field, meta, helpers] = useField(props.name, props.type)
 
   return (
     <div className="form-input flex flex-1 column">
-      <label>{label}</label>
+      <label className="flex center">
+        <span className="mr-1">{label}</span>
+        {tooltipText && (
+          <SpeechBubbleTooltip
+            text={tooltipText}
+            iconColor={colors.grey60}
+            iconBackgroundColor="transparent"
+          />
+        )}
+      </label>
       <input
         {...field}
         {...props}
@@ -21,6 +32,10 @@ const FormInput = ({ label, format, normalize, ...props }) => {
       ) : null}
     </div>
   )
+}
+
+FormInput.defaultProps = {
+  tooltipText: null,
 }
 
 export default React.memo(FormInput)

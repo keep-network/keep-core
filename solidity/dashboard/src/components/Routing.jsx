@@ -3,21 +3,25 @@ import { Route, Switch, Redirect } from "react-router-dom"
 import { withContractsDataContext } from "./ContractsDataContextProvider"
 import Loadable from "./Loadable"
 import { NotFound404 } from "./NotFound404"
-import { withOnlyLoggedUser } from "./WithOnlyLoggedUserHoc"
 import withWeb3Context from "./WithWeb3Context"
 import TokensPage from "../pages/TokensPage"
 import OperatorPage from "../pages/OperatorPage"
 import AuthorizerPage from "../pages/AuthorizerPage"
 import RewardsPage from "../pages/RewardsPage"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
+import ChooseWallet from "./ChooseWallet"
 
 class Routing extends React.Component {
   renderContent() {
     const {
       isKeepTokenContractDeployer,
       contractsDataIsFetching,
-      web3: { error },
+      web3: { error, provider },
     } = this.props
+
+    if (!provider) {
+      return <ChooseWallet />
+    }
 
     if (error) {
       return null
@@ -53,6 +57,4 @@ class Routing extends React.Component {
   }
 }
 
-export default withWeb3Context(
-  withContractsDataContext(withOnlyLoggedUser(Routing))
-)
+export default withWeb3Context(withContractsDataContext(Routing))

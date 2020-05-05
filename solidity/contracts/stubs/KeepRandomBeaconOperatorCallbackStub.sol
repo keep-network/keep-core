@@ -16,17 +16,15 @@ contract KeepRandomBeaconOperatorCallbackStub is KeepRandomBeaconOperator {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;
-    }
 
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
-        groupSelection.groupSize = size;
-        dkgResultVerification.groupSize = size;
-    }
+        // setGroupSize
+        groupSize = 3;
+        groupSelection.groupSize = 3;
+        dkgResultVerification.groupSize = 3;
 
-    function setGroupThreshold(uint256 threshold) public {
-        groupThreshold = threshold;
-        dkgResultVerification.signatureThreshold = threshold;
+        // setGroupThreshold
+        groupThreshold = 2;
+        dkgResultVerification.signatureThreshold = 2;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {

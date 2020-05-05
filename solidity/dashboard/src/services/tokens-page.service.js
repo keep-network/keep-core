@@ -136,6 +136,21 @@ const getDelegations = async (
       operatorAddress
     )
 
+    let grantId
+    if (isFromGrant) {
+      try {
+        const grantStakeDetails = await contractService.makeCall(
+          web3Context,
+          TOKEN_GRANT_CONTRACT_NAME,
+          "getGrantStakeDetails",
+          operatorAddress
+        )
+        grantId = grantStakeDetails.grantId
+      } catch (error) {
+        grantId = null
+      }
+    }
+
     const operatorData = {
       undelegatedAt,
       amount,
@@ -144,6 +159,7 @@ const getDelegations = async (
       createdAt,
       authorizerAddress,
       isFromGrant,
+      grantId,
     }
     const balance = web3Utils.toBN(amount)
 

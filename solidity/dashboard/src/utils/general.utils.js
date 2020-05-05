@@ -1,4 +1,3 @@
-import Web3 from "web3"
 import BigNumber from "bignumber.js"
 import moment from "moment"
 import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
@@ -29,14 +28,6 @@ export function displayAmount(amount, decimals = 18, precision = 0) {
 export function formatAmount(amount, decimals = 18) {
   amount = new BigNumber(amount)
   return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
-}
-
-export const getWeb3 = () => {
-  if (window.ethereum || window.web3) {
-    return new Web3(window.ethereum || window.web3.currentProvider)
-  }
-
-  return null
 }
 
 export const shortenAddress = (address) => {
@@ -83,4 +74,17 @@ export const isSameEthAddress = (address1, address2) => {
     web3Utils.toChecksumAddress(address1) ===
     web3Utils.toChecksumAddress(address2)
   )
+}
+
+export const getBufferFromHex = (hex) => {
+  const validHex = toValidHex(hex).toLowerCase()
+  return new Buffer(validHex, "hex")
+}
+
+const toValidHex = (hex) => {
+  hex = hex.substring(0, 2) === "0x" ? hex.substring(2) : hex
+  if (hex === "") {
+    return ""
+  }
+  return hex.length % 2 !== 0 ? `0${hex}` : hex
 }
