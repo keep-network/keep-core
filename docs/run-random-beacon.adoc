@@ -75,7 +75,8 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 ==== Sample
 
-```
+[source,toml]
+----
 # Ethereum host connection info.
 [ethereum]
   URL = "ws://127.0.0.1:8546"
@@ -107,7 +108,7 @@ Application configurations are stored in a `.toml` file and passed to the applic
 # Storage is encrypted
 [Storage]
   DataDir = "/my/secure/location"
-```
+----
 
 ==== Parameters
 
@@ -228,19 +229,21 @@ https://hub.docker.com/r/keepnetwork/keep-client/
 === Run Image
 This is a sample run command for illustration purposes only.
 
-```
+[source,bash]
+----
 export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
 export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
 
-docker run -dit \
+docker run -d \
+--entrypoint /usr/local/bin/keep-client
 --volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
 --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
 -p 3919:3919 \
-keep-client --config /mnt/keep-client/config/keep-client-config.toml start
-```
+keepnetwork/keep-client:<version> --config /mnt/keep-client/config/keep-client-config.toml start
+----
 
 == Deployment Considerations
 
@@ -262,12 +265,13 @@ network:
 
 === Configurable Values
 
-```
+[source,bash]
+----
 LOG_LEVEL=DEBUG
 IPFS_LOGGING_FMT=nocolor
 GOLOG_FILE=/var/log/keep/keep.log
 GOLOG_TRACING_FILE=/var/log/keep/trace.json
-```
+----
 
 === Startup
 ```
@@ -344,9 +348,10 @@ To use the faucet you need to pass your Ethereum account to the faucet endpoint 
 `?account=<eth-account-address>`.
 
 Curl Example:
-```
+[source,bash]
+----
 curl 'https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE'
-```
+----
 
 Browser Example:
 ```
