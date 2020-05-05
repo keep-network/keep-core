@@ -3,10 +3,10 @@ pragma solidity 0.5.17;
 import "../KeepRandomBeaconOperator.sol";
 
 /**
- * @title KeepRandomBeaconOperatorStub
+ * @title KeepRandomBeaconOperatorServicePricingStub
  * @dev A simplified Random Beacon operator contract to help local development.
  */
-contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperatorServicePricingStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
@@ -20,6 +20,9 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;
+        groupSize = 3;
+        groupSelection.groupSize = 3;
+        dkgResultVerification.groupSize = 3;
     }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
@@ -30,27 +33,11 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
-    function getGroupSelectionRelayEntry() public view returns (uint256) {
-        return groupSelection.seed;
-    }
-
-    function getTicketSubmissionStartBlock() public view returns (uint256) {
-        return groupSelection.ticketSubmissionStartBlock;
-    }
-
-    function isGroupSelectionInProgress() public view returns (bool) {
-        return groupSelection.inProgress;
-    }
-
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.groups[groupIndex].groupPubKey;
     }
 
     function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
         gasPriceCeiling = _gasPriceCeiling;
-    }
-
-    function timeDKG() public view returns (uint256) {
-        return dkgResultVerification.timeDKG;
     }
 }

@@ -298,8 +298,7 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
     /// @notice Executes customer specified callback for the relay entry request.
     /// @param requestId Request id tracked internally by this contract.
     /// @param entry The generated random number.
-    /// @return Address to receive callback surplus.
-    function executeCallback(uint256 requestId, uint256 entry) public returns (address payable surplusRecipient) {
+    function executeCallback(uint256 requestId, uint256 entry) public {
         require(
             _operatorContracts.contains(msg.sender),
             "Only authorized operator contract can call execute callback."
@@ -314,7 +313,6 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
             abi.encodeWithSignature("__beaconCallback(uint256)", entry)
         );
 
-        surplusRecipient = _callbacks[requestId].surplusRecipient;
         delete _callbacks[requestId];
     }
 
@@ -439,6 +437,11 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
     /// surplus address. Expressed in wei.
     function requestSubsidyFeePool() public view returns(uint256) {
         return _requestSubsidyFeePool;
+    }
+
+    /// @notice Returns callback surplus recipient for the provided request id.
+    function callbackSurplusRecipient(uint256 requestId) public view returns(address payable) {
+        return _callbacks[requestId].surplusRecipient;
     }
 
     /// @notice Gets version of the current implementation.
