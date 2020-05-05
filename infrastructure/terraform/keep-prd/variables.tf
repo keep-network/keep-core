@@ -117,6 +117,34 @@ variable "nat_gateway_ip" {
   }
 }
 
+## Static IPs
+### Electrum Service
+
+variable "electrum_server_service_ip_name" {
+  description = "The name for the IP asset in GCP."
+  default     = "electrum-server-service"
+}
+
+### tbtc-dapp Ingress
+
+variable "tbtc_dapp_ingress_ip" {
+  default {
+    name         = "tbtc-dapp-ingress"
+    address_type = "EXTERNAL"
+    ip_version   = "IPV4"
+  }
+}
+
+### token-dashboard Ingress
+
+variable "token_dashboard_ingress_ip" {
+  default {
+    name         = "token-dashboard-ingress"
+    address_type = "EXTERNAL"
+    ip_version   = "IPV4"
+  }
+}
+
 # gke
 variable "gke_cluster" {
   description = "The Google managed part of the cluster configuration."
