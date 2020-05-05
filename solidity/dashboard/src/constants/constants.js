@@ -5,6 +5,7 @@ export const OPERATOR_CONTRACT_NAME = "keepRandomBeaconOperatorContract"
 export const REGISTRY_CONTRACT_NAME = "registryContract"
 export const KEEP_OPERATOR_STATISTICS_CONTRACT_NAME =
   "keepRandomBeaconOperatorStatistics"
+export const MANAGED_GRANT_FACTORY_CONTRACT_NAME = "managedGrantFactoryContract"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"

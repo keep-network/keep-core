@@ -85,13 +85,13 @@ const TokenPageContextProvider = (props) => {
       type: SET_STATE,
       payload: { grants, isFetching: grantsAreFetching },
     })
-    if (!isEmptyObj(state.selectedGrant) && grants.length > 0) {
-      const { obj: grant } = findIndexAndObject(
+    if (!isEmptyObj(state.selectedGrant)) {
+      const { obj: updatedGrant } = findIndexAndObject(
         "id",
         state.selectedGrant.id,
         grants
       )
-      dispatch({ type: SET_SELECTED_GRANT, payload: grant })
+      dispatch({ type: SET_SELECTED_GRANT, payload: updatedGrant })
     }
   }, [grants, grantsAreFetching, state.selectedGrant])
 
