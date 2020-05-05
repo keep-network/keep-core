@@ -28,7 +28,7 @@ const fetchGrants = async (web3Context) => {
     let grantDetails = {}
     try {
       grantDetails = await getGrantDetails(grantId, web3Context)
-    } catch (error) {
+    } catch {
       continue
     }
     grants.push({ ...grantDetails })
@@ -60,7 +60,7 @@ const getGrantDetails = async (
   )
   if (!isManagedGrant && !isSameEthAddress(yourAddress, grantDetails.grantee)) {
     throw new Error(
-      `${yourAddress} is a not a grantee for the grantId ${grantId}`
+      `${yourAddress} does not match a grantee address for the grantId ${grantId}`
     )
   }
   const unlockingSchedule = await contractService.makeCall(
