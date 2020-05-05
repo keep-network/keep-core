@@ -271,9 +271,9 @@ func Connect(
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
 ) (net.Provider, error) {
-	if config.DisseminationTime > MaximumDisseminationTime {
+	if config.DisseminationTime < 0 || config.DisseminationTime > MaximumDisseminationTime {
 		return nil, fmt.Errorf(
-			"maximum allowed message dissemination time is [%v]",
+			"dissemination time mut be in range [0, %v]",
 			MaximumDisseminationTime,
 		)
 	}
