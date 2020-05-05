@@ -22,6 +22,7 @@
 @import 'datatable.less';
 @import 'tokens-context-switcher.less';
 @import 'delegate-stake-form.less';
+@import 'token-grants-page.less';
 
 * {
   margin: 0;
@@ -288,7 +289,7 @@ footer {
 
    .main {
      > .content {
-      max-width: 2200px;
+      max-width: 1400px;
      }
    }
 }
@@ -325,6 +326,14 @@ footer {
     }
   }
 
+  .main {
+    > .content {
+      margin: calc(@header-height + 2rem) 1.5rem 0 calc(@side-menu-width + 1.5rem)
+    }
+  }
+}
+
+@media screen and (min-width: 1400px) {
   .main {
     > .content {
       margin: calc(@header-height + 2rem) 5rem 0 calc(@side-menu-width + 5rem)
