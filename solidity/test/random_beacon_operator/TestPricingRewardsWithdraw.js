@@ -34,8 +34,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     operatorContract = contracts.operatorContract
     serviceContract = contracts.serviceContract
 
-    groupSize = web3.utils.toBN(3)
-    await operatorContract.setGroupSize(groupSize)
+    groupSize = await operatorContract.groupSize()
     let minimumStake = await stakingContract.minimumStake()
 
     await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake)
@@ -46,8 +45,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     group2 = crypto.randomBytes(128)
     group3 = crypto.randomBytes(128)
 
-    await operatorContract.registerNewGroup(group1)
-    await operatorContract.setGroupMembers(group1, [operator1, operator2, operator2])
+    await operatorContract.registerNewGroup(group1, [operator1, operator2, operator2])
 
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
@@ -56,8 +54,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await operatorContract.relayEntry()
 
     // Register second group with all members as operator1
-    await operatorContract.registerNewGroup(group2)
-    await operatorContract.setGroupMembers(group2, [operator1, operator1, operator1])
+    await operatorContract.registerNewGroup(group2, [operator1, operator1, operator1])
 
     // New request will expire the first group
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
@@ -93,7 +90,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   it("should be able to withdraw group rewards from multiple staled groups", async () => {
     // Register new group and request new entry so we can expire the previous two groups
-    await operatorContract.registerNewGroup(group3)
+    await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
@@ -111,7 +108,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   it("should be able to withdraw group rewards from a staled group", async () => {
     // Register new group and request new entry so we can expire the previous two groups
-    await operatorContract.registerNewGroup(group3)
+    await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
@@ -126,7 +123,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   it("should record whether the operator has withdrawn", async () => {
     // Register new group and request new entry so we can expire the previous two groups
-    await operatorContract.registerNewGroup(group3)
+    await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
@@ -141,7 +138,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   it("should not be able to withdraw group rewards without correct data", async () => {
     // Register new group and request new entry so we can expire the previous two groups
-    await operatorContract.registerNewGroup(group3)
+    await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
@@ -185,7 +182,7 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   it("should not be able to withdraw group rewards multiple times", async () => {
     // Register new group and request new entry so we can expire the previous two groups
-    await operatorContract.registerNewGroup(group3)
+    await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 

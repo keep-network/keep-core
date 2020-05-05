@@ -23,7 +23,6 @@ describe('KeepRandomBeaconOperator/RelayEntry', () => {
 
     // Using stub method to add first group to help testing.
     await operatorContract.registerNewGroup(blsData.groupPubKey);
-    operatorContract.setGroupSize(3);
     let group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [accounts[0], accounts[1], accounts[2]]);
 

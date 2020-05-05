@@ -12,7 +12,7 @@ import (
 type storage interface {
 	save(membership *Membership) error
 	readAll() (<-chan *Membership, <-chan error)
-	archive(groupPublicKey string) error
+	archive(groupPublicKey []byte) error
 }
 
 type persistentStorage struct {
@@ -34,6 +34,10 @@ func (ps *persistentStorage) save(membership *Membership) error {
 	hexGroupPublicKey := hex.EncodeToString(membership.Signer.GroupPublicKeyBytesCompressed())
 
 	return ps.handle.Save(membershipBytes, hexGroupPublicKey, "/membership_"+fmt.Sprint(membership.Signer.MemberID()))
+}
+
+func (ps *persistentStorage) archive(groupPublicKeyCompressed []byte) error {
+	return ps.handle.Archive(hex.EncodeToString(groupPublicKeyCompressed))
 }
 
 func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
@@ -106,8 +110,4 @@ func (ps *persistentStorage) readAll() (<-chan *Membership, <-chan error) {
 	}()
 
 	return outputMemberships, outputErrors
-}
-
-func (ps *persistentStorage) archive(groupName string) error {
-	return ps.handle.Archive(groupName)
 }

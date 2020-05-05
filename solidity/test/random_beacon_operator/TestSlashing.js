@@ -37,7 +37,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       contract.fromArtifact('TokenStakingStub'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-      contract.fromArtifact('KeepRandomBeaconOperatorStub')
+      contract.fromArtifact('KeepRandomBeaconOperatorSlashingStub')
     )
 
     token = contracts.token
@@ -62,8 +62,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
     time.increase((await stakingContract.initializationPeriod()).addn(1))
 
     groupIndex = 0
-    await operatorContract.registerNewGroup(blsData.groupPubKey)
-    await operatorContract.setGroupMembers(blsData.groupPubKey, [operator1, operator2, operator3])
+    await operatorContract.registerNewGroup(blsData.groupPubKey, [operator1, operator2, operator3])
     entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     let tx = await serviceContract.methods['requestRelayEntry()']({ value: entryFeeEstimate, from: accounts[0] })
     relayRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber)

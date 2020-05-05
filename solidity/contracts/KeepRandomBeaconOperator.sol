@@ -17,6 +17,7 @@ interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
+    function callbackSurplusRecipient(uint256 requestId) external view returns(address payable);
 }
 
 /// @title KeepRandomBeaconOperator
@@ -465,26 +466,32 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /// @notice Executes customer specified callback for the relay entry request.
     /// @param entry The generated random number.
     function executeCallback(uint256 entry) internal {
-        uint256 callbackFee = currentRequestCallbackFee;
-
         // Make sure not to spend more than what was received from the service
         // contract for the callback
-        uint256 gasLimit = callbackFee.div(gasPriceCeiling);
+        uint256 gasLimit = currentRequestCallbackFee.div(gasPriceCeiling);
 
         // Make sure not to spend more than 2 million gas on a callback.
         // This is to protect members from relay entry failure and potential
         // slashing in case of any changes in .call() gas limit.
         gasLimit = gasLimit > 2000000 ? 2000000 : gasLimit;
 
-        bytes memory callbackReturnData;
+        bytes memory callbackSurplusRecipientData;
+        (, callbackSurplusRecipientData) = currentRequestServiceContract.call.gas(
+            40000
+        )(abi.encodeWithSignature(
+            "callbackSurplusRecipient(uint256)",
+            currentRequestId
+        ));
+
         uint256 gasBeforeCallback = gasleft();
-        (, callbackReturnData) = currentRequestServiceContract.call.gas(
+        currentRequestServiceContract.call.gas(
             gasLimit
         )(abi.encodeWithSignature(
             "executeCallback(uint256,uint256)",
             currentRequestId,
             entry
         ));
+
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 
@@ -493,8 +500,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             gasPriceCeiling,
             gasLimit,
             gasSpent,
-            callbackFee,
-            callbackReturnData
+            currentRequestCallbackFee,
+            callbackSurplusRecipientData
         );
     }
 
