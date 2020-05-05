@@ -1,9 +1,9 @@
 import React from "react"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
-import { ETHERSCAN_DEFAULT_URL } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
+import ViewContractInBlockExplorer from "./ViewContractInBlockExplorer"
 
 const AuthorizeContracts = ({
   contracts,
@@ -25,13 +25,7 @@ const AuthorizeContracts = ({
           header="contract details"
           field="details"
           renderContent={({ contractAddress }) => (
-            <a
-              href={ETHERSCAN_DEFAULT_URL + contractAddress}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              View in Block Explorer
-            </a>
+            <ViewContractInBlockExplorer contractAddress={contractAddress} />
           )}
         />
         <Column

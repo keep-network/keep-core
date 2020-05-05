@@ -13,7 +13,6 @@ const OwnedTokensOverview = ({ keepBalance, stakedBalance }) => {
   const total = useMemo(() => {
     return add(keepBalance, stakedBalance)
   }, [keepBalance, stakedBalance])
-  console.log("total", total.toString())
 
   return (
     <Tile id="tokens-overview" title="Owned Tokens">

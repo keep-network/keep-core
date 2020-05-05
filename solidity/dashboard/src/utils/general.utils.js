@@ -1,4 +1,3 @@
-import Web3 from "web3"
 import moment from "moment"
 import web3Utils from "web3-utils"
 
@@ -15,14 +14,6 @@ moment.updateLocale("en", {
     },
   },
 })
-
-export const getWeb3 = () => {
-  if (window.ethereum || window.web3) {
-    return new Web3(window.ethereum || window.web3.currentProvider)
-  }
-
-  return null
-}
 
 export const shortenAddress = (address) => {
   if (!address) {
@@ -60,4 +51,17 @@ export const isSameEthAddress = (address1, address2) => {
     web3Utils.toChecksumAddress(address1) ===
     web3Utils.toChecksumAddress(address2)
   )
+}
+
+export const getBufferFromHex = (hex) => {
+  const validHex = toValidHex(hex).toLowerCase()
+  return new Buffer(validHex, "hex")
+}
+
+const toValidHex = (hex) => {
+  hex = hex.substring(0, 2) === "0x" ? hex.substring(2) : hex
+  if (hex === "") {
+    return ""
+  }
+  return hex.length % 2 !== 0 ? `0${hex}` : hex
 }

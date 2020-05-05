@@ -157,13 +157,15 @@ label {
   }
 
   &-link {
-    border-bottom: 1px solid transparent;
-    transition: all ease-in-out .5s;
+    text-decoration: underline;
 
-    &:hover, &:focus {
+    &:hover {
       cursor: pointer;
-      border-color: @pending-color;
     }
+  }
+  
+  &-center {
+    text-align: center;
   }
 
   &-caption {

@@ -13,15 +13,14 @@ contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator 
         _registryContract
     ) public {
         groupSelection.ticketSubmissionTimeout = 65;
+
+        // setGroupSize
+        groupSize = 3;
+        groupSelection.groupSize = 3;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {
         return groupSelection.seed;
-    }
-
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
-        groupSelection.groupSize = size;
     }
 
     function startGroupSelection(uint256 seed) public {

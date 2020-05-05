@@ -17,8 +17,8 @@ export function displayAmount(amount, withCommaSeparator = true) {
 }
 
 /**
- * Convert a weis amount to token units.
- * @param {*} amount amount in weis
+ * Convert wei amount to token units
+ * @param {*} amount amount in wei
  *
  * @return {BigNumber} amount in token units
  */
@@ -30,11 +30,11 @@ export const toTokenUnit = (amount) => {
 }
 
 /**
- * Convert a token unit amount to weis.
+ * Convert token unit amount to wei.
  * @param {*} amount amount in token units
  * @param {*} decimals decimals
  *
- * @return {BigNumber} amount in weis
+ * @return {BigNumber} amount in wei
  */
 export function fromTokenUnit(amount, decimals = 18) {
   amount = new BigNumber(amount)
@@ -44,7 +44,7 @@ export function fromTokenUnit(amount, decimals = 18) {
 /**
  * Returns a number with a metric suffix eg.:
  * * 10000000 => { value: 10, suffix: 'M', formattedValue: '10M' }
- * * 1000.4 => { value: 1.4, suffix: 'K', formattedValue: '10K'}
+ * * 1000.4 => { value: 1.4, suffix: 'K', formattedValue: '1.4K'}
  * * 10000.4 => { value: 10, suffix: 'K', formattedValue: '10K' }
  * * 1 => { value: 1, suffix: '', formattedValue: '1' }
  *

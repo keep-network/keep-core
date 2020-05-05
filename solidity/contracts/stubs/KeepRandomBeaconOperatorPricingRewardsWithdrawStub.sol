@@ -16,6 +16,7 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         _stakingContract,
         _registryContract
     ) public {
+        groupSize = 3;
         groups.groupActiveTime = 5;
         groups.relayEntryTimeout = 10;
     }
@@ -27,24 +28,17 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         return groups.expiredGroupOffset > i;
     }
 
-    function setGroupSize(uint256 size) public {
-        groupSize = size;
-    }
-
-    function registerNewGroup(bytes memory groupPublicKey) public {
+    function registerNewGroup(bytes memory groupPublicKey, address[] memory members) public {
         groups.addGroup(groupPublicKey);
-    }
-
-    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
         groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
     function relayEntry() public returns (uint256) {
-        bytes memory groupPubKey = groups.getGroupPublicKey(currentRequestGroupIndex);
-        (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
-        submitterReward; // silence local var
-        subsidy; // silence local var
-        groups.addGroupMemberReward(groupPubKey, groupMemberReward);
+        (uint256 groupMemberReward,,) = newEntryRewardsBreakdown();
+        groups.addGroupMemberReward(
+            groups.getGroupPublicKey(currentRequestGroupIndex),
+            groupMemberReward
+        );
         currentRequestStartBlock = 0;
     }
 }
