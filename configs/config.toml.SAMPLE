@@ -33,7 +33,7 @@
 	# Message dissemination is disabled by default and should be enabled only
 	# on selected bootstrap nodes. It is not a good idea to enable dissemination
 	# on non-bootstrap node as it may clutter communication and eventually lead
-	# to blacklisting the node.
+	# to blacklisting the node. The maximum allowed value is 90 seconds.
 	#
 	# DisseminationTime = 90
 
