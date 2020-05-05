@@ -372,7 +372,6 @@ const isGranteeInManagedGrant = async (web3Context, grantee) => {
 
   // check if grantee is a contract
   const code = await web3.eth.getCode(grantee)
-  console.log("code", code, isCodeValid(code))
   if (!isCodeValid(code)) {
     return false
   }
