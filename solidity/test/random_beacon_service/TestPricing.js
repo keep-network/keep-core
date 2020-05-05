@@ -6,7 +6,7 @@ const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {time} = require("@openzeppelin/test-helpers")
 const CallbackContract = contract.fromArtifact('CallbackContract')
 
-describe.only('TestKeepRandomBeaconService/Pricing', function() {
+describe('TestKeepRandomBeaconService/Pricing', function() {
 
   let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
     owner = accounts[0],
