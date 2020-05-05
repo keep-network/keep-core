@@ -17,7 +17,7 @@ const TokenGrantsPage = () => {
         wrapperClassName="mb-2"
         amount={grantTokenBalance}
         amountClassName="h2 text-grey-40"
-        currencuIconProps={{ className: "keep-outline grey-40" }}
+        currencyIconProps={{ className: "keep-outline grey-40" }}
         withMetricSuffix={false}
       />
       {grants.map(renderTokenGrantOverview)}
