@@ -20,11 +20,22 @@
 	# relay subcommand).
 	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
-# [LibP2P]
-# 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
-# 	Port = 3920
-#   # Uncomment to override the node's default addresses announced in the network
-#   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
+[LibP2P]
+ 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
+ 	Port = 3920
+	#
+	# Uncomment to override the node's default addresses announced in the network
+	# AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]    
+	#
+	# Uncomment to enable courtesy message dissemination for topics this node is
+	# not subscribed to. Messages will be forwarded to peers for the duration
+	# specified as a value in seconds.
+	# Message dissemination is disabled by default and should be enabled only
+	# on selected bootstrap nodes. It is not a good idea to enable dissemination
+	# on non-bootstrap node as it may clutter communication and eventually lead
+	# to blacklisting the node.
+	#
+	# DisseminationTime = 90
 
 [Storage]
   DataDir = "/my/secure/location"

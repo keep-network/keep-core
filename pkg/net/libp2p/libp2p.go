@@ -58,11 +58,19 @@ const (
 	ConnectedPeersCheckTick = time.Minute * 1
 )
 
+// MaximumDisseminationTime is the maximum dissemination time of messages in
+// topics we are not subscribed to. By default courteous dissemination is
+// disabled and it should be enabled only on selected fast bootstrap nodes.
+// This value should never be higher than the lifetime of libp2p cache (120 sec)
+// to prevent uncontrolled message propagation.
+const MaximumDisseminationTime = 90
+
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
+	DisseminationTime  int
 }
 
 type provider struct {
@@ -70,9 +78,10 @@ type provider struct {
 	broadcastChannelManager *channelManager
 	unicastChannelManager   *unicastChannelManager
 
-	identity *identity
-	host     host.Host
-	routing  *dht.IpfsDHT
+	identity          *identity
+	host              host.Host
+	routing           *dht.IpfsDHT
+	disseminationTime int
 
 	connectionManager *connectionManager
 }
@@ -116,15 +125,14 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 }
 
 func (p *provider) BroadcastChannelForwarderFor(name string) {
-	logger.Infof("requested message forwarder for channel: [%v]", name)
+	if p.disseminationTime == 0 {
+		return
+	}
 
-	// TTL for a single message forwarder should be limited to avoid unnecessary
-	// resource consumption. This value should not exceed libp2p time-cache
-	// duration which holds seen messages, to prevent an uncontrolled
-	// message propagation.
-	ttl := 90 * time.Second
+	logger.Infof("starting message forwarder for channel [%v]", name)
+	timeout := time.Duration(p.disseminationTime) * time.Second
 
-	if err := p.broadcastChannelManager.newForwarder(name, ttl); err != nil {
+	if err := p.broadcastChannelManager.newForwarder(name, timeout); err != nil {
 		logger.Warningf(
 			"could not create message forwarder for channel [%v]: [%v]",
 			name,
@@ -263,6 +271,13 @@ func Connect(
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
 ) (net.Provider, error) {
+	if config.DisseminationTime > MaximumDisseminationTime {
+		return nil, fmt.Errorf(
+			"maximum allowed message dissemination time is [%v]",
+			MaximumDisseminationTime,
+		)
+	}
+
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
@@ -310,6 +325,7 @@ func Connect(
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
+		disseminationTime:       config.DisseminationTime,
 	}
 
 	if len(config.Peers) == 0 {
