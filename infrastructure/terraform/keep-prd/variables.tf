@@ -85,3 +85,77 @@ variable "private_subnet_ip_cidr_range" {
   description = "IP address range assigned to the private subnet."
   default     = "10.4.0.0/16"
 }
+
+## nat gateway vars
+### external IP address vars
+
+variable "nat_gateway_ip" {
+  default {
+    zone_a_name  = "nat-gateway-a"
+    zone_b_name  = "nat-gateway-b"
+    zone_c_name  = "nat-gateway-c"
+    zone_f_name  = "nat-gateway-f"
+    address_type = "EXTERNAL"
+    network_tier = "PREMIUM"
+  }
+}
+
+# gke
+variable "gke_cluster" {
+  description = "The Google managed part of the cluster configuration."
+
+  default {
+    name                                = "keep-prd"
+    private_cluster                     = true
+    master_ipv4_cidr_block              = "172.16.0.0/28"
+    master_private_endpoint             = "172.16.0.2"
+    daily_maintenance_window_start_time = "00:00"
+    network_policy_enabled              = false
+    network_policy_provider             = "PROVIDER_UNSPECIFIED"
+    logging_service                     = "logging.googleapis.com/kubernetes"
+    monitoring_service                  = "monitoring.googleapis.com/kubernetes"
+  }
+}
+
+variable "gke_node_pool" {
+  description = "Default node pool for the keep-prd cluster."
+
+  default {
+    name         = "default"
+    node_count   = "2"
+    machine_type = "n1-standard-4"
+    disk_type    = "pd-ssd"
+    disk_size_gb = 100
+    auto_repair  = "true"
+    auto_upgrade = "true"
+    oauth_scopes = "https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring"
+  }
+}
+
+variable "gke_subnet" {
+  description = "Subnet for deploying GKE cluster resources."
+
+  default {
+    primary_ip_cidr_range = "10.8.0.0/16"
+
+    services_secondary_range_name    = "keep-prd-gke-services-secondary-range"
+    services_secondary_ip_cidr_range = "10.108.100.0/24"
+
+    cluster_secondary_range_name    = "keep-prd-gke-cluster-secondary-range"
+    cluster_secondary_ip_cidr_range = "10.108.0.0/20"
+  }
+}
+
+# helm_release openvpn
+variable "openvpn" {
+  description = "Configuration values for the keep-prd VPN server."
+
+  default {
+    name                          = "openvpn"
+    namespace                     = "default"
+    helm_chart                    = "stable/openvpn"
+    helm_chart_version            = "4.2.2"
+    route_all_traffic_through_vpn = "false"
+    gke_master_cidr               = "172.16.0.0"
+  }
+}
