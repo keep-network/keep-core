@@ -1,6 +1,4 @@
-import BigNumber from "bignumber.js"
 import moment from "moment"
-import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import web3Utils from "web3-utils"
 
 moment.updateLocale("en", {
@@ -16,19 +14,6 @@ moment.updateLocale("en", {
     },
   },
 })
-
-export function displayAmount(amount, decimals = 18, precision = 0) {
-  if (amount) {
-    return new BigNumber(amount)
-      .div(new BigNumber(10).pow(new BigNumber(decimals)))
-      .toFormat(precision, BigNumber.ROUND_DOWN)
-  }
-}
-
-export function formatAmount(amount, decimals = 18) {
-  amount = new BigNumber(amount)
-  return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
-}
 
 export const shortenAddress = (address) => {
   if (!address) {
@@ -60,14 +45,6 @@ export const formatDate = (dateMillis) => {
 
 export const isEmptyObj = (obj) =>
   Object.keys(obj).length === 0 && obj.constructor === Object
-
-export const getAvailableAtBlock = (blockNumber, status) => {
-  if (status === PENDING_STATUS) {
-    return `until ${blockNumber} block`
-  } else if (status === COMPLETE_STATUS) {
-    return `at ${blockNumber} block`
-  }
-}
 
 export const isSameEthAddress = (address1, address2) => {
   return (

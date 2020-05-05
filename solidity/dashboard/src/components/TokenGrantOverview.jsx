@@ -1,5 +1,5 @@
 import React, { useContext } from "react"
-import { formatDate, displayAmount } from "../utils/general.utils"
+import { formatDate } from "../utils/general.utils"
 import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import { CircularProgressBars } from "./CircularProgressBar"
@@ -9,6 +9,11 @@ import Tile from "./Tile"
 import moment from "moment"
 import { gt } from "../utils/arithmetics.utils"
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
+import TokenAmount from "./TokenAmount"
+import {
+  displayAmountWithMetricSuffix,
+  displayAmount,
+} from "../utils/token.utils"
 
 const TokenGrantOverview = ({ selectedGrant }) => {
   const { yourAddress, grantContract } = useContext(Web3Context)
@@ -62,7 +67,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
         title: `${cliffPeriod} cliff`,
       }}
     >
-      <h1 className="balance">{displayAmount(selectedGrant.amount)}</h1>
+      <TokenAmount amount={selectedGrant.amount} />
       <h4 className="text-grey-30 mb-1">Grant ID {selectedGrant.id}</h4>
       <h5 className="text-grey-50">
         Issued:{" "}
@@ -104,14 +109,16 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             {displayAmount(selectedGrant.unlocked)}
           </h4>
           <div className="text-smaller text-grey-40">
-            of {displayAmount(selectedGrant.amount)} Total
+            of {displayAmountWithMetricSuffix(selectedGrant.amount)} Total
           </div>
           {gt(selectedGrant.readyToRelease || 0, 0) && (
             <div className="mt-2">
               <div className="text-secondary text-small flex wrap">
-                <span className="mr-1">{`${displayAmount(
-                  selectedGrant.readyToRelease
-                )} Available`}</span>
+                <span className="mr-1">
+                  {`${displayAmountWithMetricSuffix(
+                    selectedGrant.readyToRelease
+                  )} Available`}
+                </span>
                 <SpeechBubbleTooltip text="Releasing tokens allows them to be withdrawn from a grant." />
               </div>
               <SubmitButton
@@ -145,7 +152,7 @@ const TokenGrantOverview = ({ selectedGrant }) => {
             {displayAmount(selectedGrant.staked)}
           </h4>
           <div className="text-smaller text-grey-40">
-            of {displayAmount(selectedGrant.amount)} Total
+            of {displayAmountWithMetricSuffix(selectedGrant.amount)} Total
           </div>
         </div>
       </div>

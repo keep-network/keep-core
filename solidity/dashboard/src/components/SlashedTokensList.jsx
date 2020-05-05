@@ -1,5 +1,6 @@
 import React from "react"
-import { formatDate, displayAmount } from "../utils/general.utils"
+import { formatDate } from "../utils/general.utils"
+import { displayAmount } from "../utils/token.utils"
 import AddressShortcut from "./AddressShortcut"
 
 const SlashedTokensList = ({ slashedTokens }) => {
