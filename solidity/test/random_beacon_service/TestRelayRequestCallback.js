@@ -11,10 +11,6 @@ const CallbackContract = contract.fromArtifact('CallbackContract');
 // A set of integration tests for the beacon pricing mechanism related to
 // callback reimbursement.
 describe('KeepRandomBeacon/RelayRequestCallback', function() {
-
-  const groupSize = 3;
-  const groupThreshold = 2;
-
   let operatorContract, serviceContract, callbackContract;
 
   let customer = accounts[0];
@@ -37,11 +33,7 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
     serviceContract = contracts.serviceContract;
     callbackContract = await CallbackContract.new();
 
-    await operatorContract.setGroupSize(groupSize);
-    await operatorContract.setGroupThreshold(groupThreshold);
-
     await stakeAndGenesis(accounts, contracts);
-
 
     let feeBreakdown = await serviceContract.entryFeeBreakdown();
     entryVerificationFee = web3.utils.toBN(feeBreakdown.entryVerificationFee);
