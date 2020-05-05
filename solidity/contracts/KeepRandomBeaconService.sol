@@ -253,6 +253,13 @@ contract KeepRandomBeaconService is Proxy {
     }
 
     /// @notice Sets the address of the proxy admin.
+    /// @dev Function can be called only by the current admin.
+    /// @param _newAdmin Address of the new proxy admin.
+    function updateAdmin(address _newAdmin) public onlyAdmin {
+        setAdmin(_newAdmin);
+    }
+
+    /// @notice Sets the address of the proxy admin.
     /// @param _newAdmin Address of the new proxy admin.
     function setAdmin(address _newAdmin) internal {
         bytes32 slot = ADMIN_SLOT;
