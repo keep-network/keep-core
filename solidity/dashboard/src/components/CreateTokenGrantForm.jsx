@@ -16,7 +16,7 @@ import { tokenGrantsService } from "../services/token-grants.service"
 import { useShowMessage, messageType } from "./Message"
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
-import { formatAmount, displayAmount } from "../utils/general.utils.js"
+import { fromTokenUnit, displayAmount } from "../utils/token.utils.js"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
@@ -29,7 +29,7 @@ const CreateTokenGrantForm = ({
 }) => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
-  const amount = formatAmount(formikProps.values.amount)
+  const amount = fromTokenUnit(formikProps.values.amount)
 
   const submit = async (values, onTransactionHashCallback) => {
     try {

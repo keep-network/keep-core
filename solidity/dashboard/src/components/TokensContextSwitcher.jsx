@@ -7,7 +7,7 @@ import {
   SET_TOKENS_CONTEXT,
   SET_SELECTED_GRANT,
 } from "../reducers/tokens-page.reducer"
-import { displayAmount } from "../utils/general.utils"
+import TokenAmount from "./TokenAmount"
 
 const TokensContextSwitcher = (props) => {
   const {
@@ -44,9 +44,11 @@ const TokensContextSwitcher = (props) => {
           <Icons.GrantContextIcon />
           <div className="ml-1">
             <h2 className="text-grey-70">Grants</h2>
-            <h4 className="balance">
-              {displayAmount(selectedGrant.availableToStake)}
-            </h4>
+            <TokenAmount
+              amount={selectedGrant.availableToStake}
+              amountClassName="h4 text-primary"
+              suffixClassName="h5"
+            />
           </div>
         </div>
         <div className="grants-dropdown">
@@ -71,7 +73,11 @@ const TokensContextSwitcher = (props) => {
       >
         <Icons.MoneyWalletOpen />
         <h2 className="text-grey-70">Owned</h2>
-        <h4 className="balance">{displayAmount(keepTokenBalance)}</h4>
+        <TokenAmount
+          amount={keepTokenBalance}
+          amountClassName="h4 text-primary"
+          suffixClassName="h5"
+        />
       </div>
     </div>
   )

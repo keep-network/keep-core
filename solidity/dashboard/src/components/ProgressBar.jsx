@@ -1,5 +1,5 @@
 import React, { useMemo } from "react"
-import { displayAmount } from "../utils/general.utils"
+import { displayAmountWithMetricSuffix } from "../utils/token.utils"
 import BigNumber from "bignumber.js"
 
 const defaultValue = 0
@@ -45,8 +45,10 @@ export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
   return (
     <div className="flex row center">
       <div className="dot" style={{ backgroundColor: color }} />
-      <span className="text-small">{displayAmount(value)}&nbsp;KEEP&nbsp;</span>
-      <span className="text-caption text-grey-40">{label}</span>
+      <span className="text-small">
+        {displayAmountWithMetricSuffix(value)}&nbsp;
+        <span className="text-caption text-grey-40">{label}</span>
+      </span>
     </div>
   )
 })

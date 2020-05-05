@@ -8,7 +8,7 @@ import {
   getErrorsObj,
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { displayAmount, formatAmount } from "../utils/general.utils"
+import { displayAmount, fromTokenUnit } from "../utils/token.utils"
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
 import {
@@ -25,7 +25,7 @@ const DelegateStakeForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const stakeTokensValue = formatAmount(formikProps.values.stakeTokens)
+  const stakeTokensValue = fromTokenUnit(formikProps.values.stakeTokens)
 
   return (
     <form className="delegate-stake-form flex column">
