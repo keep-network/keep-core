@@ -1,3 +1,17 @@
+/**
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+                           Trust math, not hardware.
+*/
+
 pragma solidity 0.5.17;
 
 
@@ -6,7 +20,6 @@ pragma solidity 0.5.17;
 /// @notice Keep Random Beacon generates verifiable randomness that is resistant
 /// to bad actors both in the relay network and on the anchoring blockchain.
 interface IRandomBeacon {
-
     /// @notice Event emitted for each new relay entry generated. It contains
     /// request ID allowing to associate the generated relay entry with relay
     /// request created previously with `requestRelayEntry` function. Event is
@@ -57,10 +70,10 @@ interface IRandomBeacon {
     /// to the customer. If the callback gas amount turns to be not enough to
     /// execute the callback, callback execution is skipped.
     /// @return An uint256 representing uniquely generated relay request ID
-    function requestRelayEntry(
-        address callbackContract,
-        uint256 callbackGas
-    ) external payable returns (uint256);
+    function requestRelayEntry(address callbackContract, uint256 callbackGas)
+        external
+        payable
+        returns (uint256);
 
     /// @notice Submits a request to generate a new relay entry. Emits
     /// `RelayEntryGenerated(uint256 requestId, uint256 entry)` event for the
@@ -86,11 +99,10 @@ interface IRandomBeacon {
 /// @dev Use this interface to indicate the contract receives relay entries from
 /// the beacon and to ensure the correctness of callback function signature.
 interface IRandomBeaconConsumer {
-
-  /// @notice Receives relay entry produced by Keep Random Beacon. This function
-  /// should be called only by Keep Random Beacon.
-  ///
-  /// @param relayEntry Relay entry (random number) produced by Keep Random
-  /// Beacon.
-  function __beaconCallback(uint256 relayEntry) external;
+    /// @notice Receives relay entry produced by Keep Random Beacon. This function
+    /// should be called only by Keep Random Beacon.
+    ///
+    /// @param relayEntry Relay entry (random number) produced by Keep Random
+    /// Beacon.
+    function __beaconCallback(uint256 relayEntry) external;
 }
