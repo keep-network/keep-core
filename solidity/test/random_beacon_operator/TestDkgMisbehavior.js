@@ -32,14 +32,12 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function () {
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-      contract.fromArtifact('KeepRandomBeaconOperatorStub')
+      contract.fromArtifact('KeepRandomBeaconOperatorDkgMisbehaviorStub')
     )
 
     token = contracts.token
     stakingContract = contracts.stakingContract
     operatorContract = contracts.operatorContract
-    operatorContract.setGroupSize(5, { from: owner })
-    operatorContract.setGroupThreshold(3, { from: owner })
 
     let minimumStake = await stakingContract.minimumStake()
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake, { from: owner })
