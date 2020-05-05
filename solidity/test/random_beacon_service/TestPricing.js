@@ -24,7 +24,7 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-      contract.fromArtifact('KeepRandomBeaconOperatorStub')
+      contract.fromArtifact('KeepRandomBeaconOperatorServicePricingStub')
     );
 
     token = contracts.token;
@@ -37,7 +37,6 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     await operatorContract.registerNewGroup(blsData.groupPubKey);
 
     groupSize = web3.utils.toBN(3);
-    await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
     let minimumStake = await stakingContract.minimumStake()

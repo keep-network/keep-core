@@ -3,8 +3,8 @@ import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 
 const modalRoot = document.getElementById("modal-root")
-const crossIconHeight = 18
-const crossIconWidth = 18
+const crossIconHeight = 15
+const crossIconWidth = 15
 
 const Modal = React.memo(({ closeModal, ...props }) => {
   const modalOverlay = useRef(null)
@@ -24,14 +24,14 @@ const Modal = React.memo(({ closeModal, ...props }) => {
 
   return ReactDOM.createPortal(
     <div ref={modalOverlay} className="modal-overlay" onClick={onOverlayClick}>
-      <div className="modal-content">
-        <div className="flex">
-          <h5 className="text-darker-grey">{props.title}</h5>
+      <div className="modal-wrapper">
+        <div className="modal-title">
+          <h4 className="text-darker-grey">{props.title}</h4>
           <div className="modal-close" onClick={closeModal}>
             <Icons.Cross width={crossIconWidth} height={crossIconHeight} />
           </div>
         </div>
-        {props.children}
+        <div className="modal-content">{props.children}</div>
       </div>
     </div>,
     modalRoot

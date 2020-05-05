@@ -56,9 +56,9 @@ truffle exec ./scripts/delegate-tokens.js
 * Use metamask with `localhost:8545` to use Ganache test network. Import your first Ganache test account into metamask and you should be able to see the demo data.
 
 
-## Internal testnet
+### Internal testnet
 
-A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed by VPN at `http://keep-dapp-staking.default.svc.cluster.local/` and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
+A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed at [https://dashboard.dev.keep.network/](https://dashboard.dev.keep.network/) and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
 
 ### MetaMask extension setup
 
@@ -88,3 +88,22 @@ To use this account in the dApp, it needs to be imported from [the JSON file](ht
 4. Click `Browse` and point MetaMask to the previously downloaded account JSON file
 5. Copy-paste the password from the referenced password file
 6. Click `Import`
+
+### Hardware wallets
+
+## TREZOR EMULATOR
+
+### Quick setup
+1. [Download and run the trezor bridge](https://github.com/trezor/trezord-go)
+- Navigate to `/trezord-go` directory and run `./trezord-go -e 21324`
+2. [Clone the Trezor repo](https://github.com/trezor/trezor-firmware)
+- Navigate to `/trezor-firmware/core` directory and run `make emu`
+
+For more config information you can follow these links:
+
+1. [Trezor Bridge](https://github.com/trezor/trezord-go)
+2. [pip3 dependencies](https://github.com/trezor/trezor-firmware/blob/master/docs/core/build/index.md)
+3. [Setup and run the emulator](https://github.com/trezor/trezor-firmware/blob/master/docs/core/emulator/index.md)
+
+## LEDGER
+To test the dapp with the ledger hardware wallet run the following command: `HTTPS=true npm start`

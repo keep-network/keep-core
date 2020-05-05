@@ -2,7 +2,11 @@ pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconOperator.sol";
 
-contract KeepRandomBeaconOperatorCallbackStub is KeepRandomBeaconOperator {
+/**
+ * @title KeepRandomBeaconOperatorDKGMisbehaviorStub
+ * @dev A simplified Random Beacon operator contract to help local development.
+ */
+contract KeepRandomBeaconOperatorDKGMisbehaviorStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
@@ -17,14 +21,12 @@ contract KeepRandomBeaconOperatorCallbackStub is KeepRandomBeaconOperator {
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;
 
-        // setGroupSize
-        groupSize = 3;
-        groupSelection.groupSize = 3;
-        dkgResultVerification.groupSize = 3;
+        groupSize = 5;
+        groupSelection.groupSize = 5;
+        dkgResultVerification.groupSize = 5;
 
-        // setGroupThreshold
-        groupThreshold = 2;
-        dkgResultVerification.signatureThreshold = 2;
+        groupThreshold = 3;
+        dkgResultVerification.signatureThreshold = 3;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {

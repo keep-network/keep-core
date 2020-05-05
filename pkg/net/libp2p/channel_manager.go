@@ -158,7 +158,7 @@ func (cm *channelManager) shutdownForwarder(name string) {
 	cm.forwarderSubscriptionsMutex.Lock()
 	defer cm.forwarderSubscriptionsMutex.Unlock()
 
-	logger.Debugf("shutting down message forwarder for channel: [%v]", name)
+	logger.Infof("shutting down message forwarder for channel: [%v]", name)
 
 	forwarderSubscription, ok := cm.forwarderSubscriptions[name]
 
