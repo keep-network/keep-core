@@ -19,7 +19,6 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
   const operator1StakingWeight = 100;
   const operator2StakingWeight = 200;
   const operator3StakingWeight = 300;
-  const groupSize = 3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -35,7 +34,6 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
     operatorContract = contracts.operatorContract;
 
-    await operatorContract.setGroupSize(groupSize)
     let minimumStake = await stakingContract.minimumStake()
 
     await stakeDelegate(stakingContract, token, owner, operator1, beneficiary, authorizer, minimumStake.muln(operator1StakingWeight));
