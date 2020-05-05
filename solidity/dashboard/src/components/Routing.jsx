@@ -10,6 +10,8 @@ import OperatorPage from "../pages/OperatorPage"
 import AuthorizerPage from "../pages/AuthorizerPage"
 import RewardsPage from "../pages/RewardsPage"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
+import TokenGrantsPage from "../pages/TokenGrantsPage"
+import TokensPageContainer from "../pages/TokensPageContainer"
 
 class Routing extends React.Component {
   renderContent() {
@@ -27,10 +29,11 @@ class Routing extends React.Component {
       <Loadable />
     ) : (
       <Switch>
-        <Route exact path="/tokens" component={TokensPage} />
+        <Route path="/tokens" component={TokensPageContainer} />
         <Route exact path="/operations" component={OperatorPage} />
         <Route exact path="/rewards" component={RewardsPage} />
         <Route exact path="/authorizer" component={AuthorizerPage} />
+        <Route exact path="/token-grants" component={TokenGrantsPage} />
         {isKeepTokenContractDeployer && (
           <Route
             exact
