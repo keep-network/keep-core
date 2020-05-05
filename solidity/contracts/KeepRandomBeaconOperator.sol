@@ -466,11 +466,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /// @notice Executes customer specified callback for the relay entry request.
     /// @param entry The generated random number.
     function executeCallback(uint256 entry) internal {
-        uint256 callbackFee = currentRequestCallbackFee;
-
         // Make sure not to spend more than what was received from the service
         // contract for the callback
-        uint256 gasLimit = callbackFee.div(gasPriceCeiling);
+        uint256 gasLimit = currentRequestCallbackFee.div(gasPriceCeiling);
 
         // Make sure not to spend more than 2 million gas on a callback.
         // This is to protect members from relay entry failure and potential
@@ -502,7 +500,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             gasPriceCeiling,
             gasLimit,
             gasSpent,
-            callbackFee,
+            currentRequestCallbackFee,
             callbackSurplusRecipientData
         );
     }
