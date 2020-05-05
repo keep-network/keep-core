@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useContext } from "react"
 
 export const Web3Context = React.createContext({
   web3: null,
@@ -11,6 +11,10 @@ export const Web3Context = React.createContext({
   eth: {},
   error: "",
 })
+
+export const useWeb3Context = () => {
+  return useContext(Web3Context)
+}
 
 const withWeb3Context = (Component) => {
   return (props) => (
