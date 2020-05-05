@@ -2,6 +2,7 @@ import React, { useContext } from "react"
 
 export const Web3Context = React.createContext({
   web3: null,
+  // Points to the currently selected account and it's used as a seneder of the transaction.
   yourAddress: "",
   networkType: "",
   token: { options: { address: "" } },
