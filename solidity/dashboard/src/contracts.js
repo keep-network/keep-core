@@ -100,16 +100,12 @@ async function getContract(web3, contract, contractName) {
   const address = getContractAddress(contract)
   const code = await web3.eth.getCode(address)
 
-  checkCodeIsValid(code)
+  if (!isCodeValid(code)) throw Error("No contract at address")
   CONTRACT_DEPLOY_BLOCK_NUMBER[contractName] = await contractDeployedAtBlock(
     web3,
     contract
   )
   return new web3.eth.Contract(contract.abi, address)
-}
-
-function checkCodeIsValid(code) {
-  if (!isCodeValid(code)) throw Error("No contract at address")
 }
 
 export function isCodeValid(code) {
