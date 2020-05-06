@@ -339,27 +339,6 @@ workflows:
             branches:
               only: master
           context: keep-dev
-      - build_initcontainer:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_client_and_test_go
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_client_and_test_go
       - publish_keep_client:
           filters:
             branches:
@@ -367,8 +346,6 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
-            - build_initcontainer
-            - migrate_contracts
       - trigger_downstream_builds:
           filters:
             branches:
@@ -376,22 +353,12 @@ workflows:
           context: keep-dev
           requires:
             - publish_npm_package
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - build_client_and_test_go
-            - migrate_contracts
       # When building the token dashboard for a master merge, wait for npm
       # package publish
       - build_token_dashboard_dapp:
           filters:
             branches:
               only: master
-          requires:
-            - publish_npm_package
       - publish_token_dashboard_dapp:
           filters:
             branches:
