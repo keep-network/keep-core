@@ -7,7 +7,7 @@ import web3Utils from "web3-utils"
 import { getBufferFromHex } from "../utils/general.utils"
 
 export const LEDGER_DERIVATION_PATHS = {
-  LEDGER_LIVE: "44'/60'",
+  LEDGER_LIVE: "44'/60'/0'/0",
   LEDGER_LEGACY: `44'/60'/0'`,
 }
 
