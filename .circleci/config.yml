@@ -346,15 +346,6 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
-      - trigger_downstream_builds:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - publish_npm_package
-      # When building the token dashboard for a master merge, wait for npm
-      # package publish
       - build_token_dashboard_dapp:
           filters:
             branches:
