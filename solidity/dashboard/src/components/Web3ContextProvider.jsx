@@ -1,7 +1,7 @@
 import React from "react"
 import Web3 from "web3"
 import { TrezorProvider } from "../connectors/trezor"
-import { LedgerProvider } from "../connectors/ledger"
+import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext, messageType } from "./Message"
 import { getContracts } from "../contracts"
@@ -40,21 +40,27 @@ export default class Web3ContextProvider extends React.Component {
       case "COINBASE": {
         throw new Error("Coinbase wallet is not yet supported")
       }
-      case "LEDGER": {
-        return new Web3(new LedgerProvider())
+      case "LEDGER_LIVE":
+      case "LEDGER_LEGACY": {
+        return new Web3(
+          new LedgerProvider(LEDGER_DERIVATION_PATHS[providerName])
+        )
       }
       default:
         throw new Error("Unsupported wallet")
     }
   }
 
-  connectAppWithWallet = async (providerName) => {
+  connectAppWithWallet = async (
+    providerName,
+    firstAccountAsSelected = false
+  ) => {
     let web3
-    let account
+    let accounts
     this.setState({ isFetching: true })
     try {
       web3 = this.getWeb3(providerName)
-      account = (await web3.currentProvider.enable())[0]
+      accounts = await web3.currentProvider.enable()
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       this.context.showMessage({
@@ -67,7 +73,8 @@ export default class Web3ContextProvider extends React.Component {
       {
         web3,
         provider: providerName,
-        yourAddress: account,
+        yourAddress: firstAccountAsSelected ? accounts[0] : null,
+        accounts,
         networkType: await web3.eth.net.getNetworkType(),
       },
       this.setData
@@ -76,10 +83,7 @@ export default class Web3ContextProvider extends React.Component {
 
   setData = async () => {
     this.initializeContracts()
-    this.state.web3.eth.currentProvider.on(
-      "accountsChanged",
-      this.accountHasBeenChanged
-    )
+    this.state.web3.eth.currentProvider.on("accountsChanged", this.setAccount)
   }
 
   connectAppWithAccount = async () => {
@@ -115,7 +119,7 @@ export default class Web3ContextProvider extends React.Component {
     }
   }
 
-  accountHasBeenChanged = ([yourAddress]) => {
+  setAccount = ([yourAddress]) => {
     if (!yourAddress) {
       this.setState({
         isFetching: false,
@@ -136,6 +140,7 @@ export default class Web3ContextProvider extends React.Component {
           ...this.state,
           connectAppWithAccount: this.connectAppWithAccount,
           connectAppWithWallet: this.connectAppWithWallet,
+          setAccount: this.setAccount,
         }}
       >
         {this.props.children}

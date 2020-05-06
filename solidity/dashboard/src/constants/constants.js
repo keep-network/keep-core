@@ -13,6 +13,7 @@ export const COMPLETE_STATUS = "COMPLETE"
 export const WALLETS = {
   METAMASK: { label: "MetaMask" },
   TREZOR: { label: "Trezor" },
-  LEDGER: { label: "Ledger" },
+  LEDGER_LIVE: { label: "Ledger" },
+  LEDGER_LEGACY: { label: "Ledger" },
   COINBASE: { label: "Coinbase" },
 }

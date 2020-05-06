@@ -6,9 +6,14 @@ import { getChainIdFromV, getEthereumTxObj, getChainId } from "./utils"
 import web3Utils from "web3-utils"
 import { getBufferFromHex } from "../utils/general.utils"
 
+export const LEDGER_DERIVATION_PATHS = {
+  LEDGER_LIVE: "44'/60'",
+  LEDGER_LEGACY: `44'/60'/0'`,
+}
+
 export class LedgerProvider extends AbstractHardwareWalletConnector {
-  constructor() {
-    super(new CustomLedgerSubprovider(getChainId()))
+  constructor(baseDerivationPath) {
+    super(new CustomLedgerSubprovider(getChainId(), baseDerivationPath))
   }
 }
 
@@ -24,11 +29,11 @@ const ledgerEthereumClientFactoryAsync = async () => {
 class CustomLedgerSubprovider extends LedgerSubprovider {
   chainId
 
-  constructor(chainId) {
+  constructor(chainId, baseDerivationPath) {
     super({
       networkId: chainId,
       ledgerEthereumClientFactoryAsync,
-      baseDerivationPath: "44'/60'",
+      baseDerivationPath: baseDerivationPath,
     })
     this.chainId = chainId
   }
