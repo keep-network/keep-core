@@ -16,10 +16,10 @@ class Routing extends React.Component {
     const {
       isKeepTokenContractDeployer,
       contractsDataIsFetching,
-      web3: { error, provider },
+      web3: { error, provider, yourAddress },
     } = this.props
 
-    if (!provider) {
+    if (!provider || !yourAddress) {
       return <ChooseWallet />
     }
 
