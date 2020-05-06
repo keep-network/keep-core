@@ -312,13 +312,15 @@ Trust math, not hardware.
 
 ==== Contracts
 
+Contract addresses needed to boot the Random Beacon client:
+
 [%header,cols=2*]
 |===
 |Token
 |
 
 |TokenStaking
-|``
+|`0x6D1140a8c8e6Fac242652F0a5A8171b898c67600`
 |===
 
 [%header,cols=2*]
@@ -327,10 +329,10 @@ Trust math, not hardware.
 |
 
 |KeepRandomBeaconService
-|``
+|`0x17056632d8db5a5c42fdE25132C59DD975a6da7F`
 
 |KeepRandomBeaconOperator
-|``
+|`0x70F2202D85a4F0Cad36e978976f84E982920A624`
 |===
 
 === Testnet
