@@ -4,7 +4,7 @@ import { authorizationService } from "../services/authorization.service"
 import { LoadingOverlay } from "../components/Loadable"
 import AddressShortcut from "../components/AddressShortcut"
 import Tile from "./Tile"
-import ViewContractInBlockExplorer from "./ViewContractInBlockExplorer"
+import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 
 const initialData = { isOperator: false, contracts: [] }
 
@@ -28,8 +28,8 @@ const AuthorizationInfo = (props) => {
             You have been successfully authorized by authorizer&nbsp;
             <AddressShortcut address={contract.authorizer} />
             &nbsp; to &nbsp;
-            <ViewContractInBlockExplorer
-              contractAddress={contract.contractAddress}
+            <ViewAddressInBlockExplorer
+              address={contract.contractAddress}
               text="operator contract"
             />
             .
