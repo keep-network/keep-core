@@ -38,7 +38,7 @@ const UndelegateStakeButton = (props) => {
     } catch (error) {
       showMessage({
         type: messageType.ERROR,
-        title: "Undelegate action has been failed ",
+        title: "Undelegate action has failed ",
         content: error.message,
       })
       throw error

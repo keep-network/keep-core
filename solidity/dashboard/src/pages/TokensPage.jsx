@@ -64,7 +64,7 @@ const TokensPage = () => {
     } catch (error) {
       showMessage({
         type: messageType.ERROR,
-        title: "Staking delegate action has been failed ",
+        title: "Staking delegate action has failed ",
         content: error.message,
       })
       throw error
