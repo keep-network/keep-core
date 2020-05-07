@@ -4,11 +4,12 @@ import { withContractsDataContext } from "./ContractsDataContextProvider"
 import Loadable from "./Loadable"
 import { NotFound404 } from "./NotFound404"
 import withWeb3Context from "./WithWeb3Context"
-import TokensPage from "../pages/TokensPage"
 import OperatorPage from "../pages/OperatorPage"
 import AuthorizerPage from "../pages/AuthorizerPage"
 import RewardsPage from "../pages/RewardsPage"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
+import TokenGrantsPage from "../pages/TokenGrantsPage"
+import TokensPageContainer from "../pages/TokensPageContainer"
 import ChooseWallet from "./ChooseWallet"
 
 class Routing extends React.Component {
@@ -31,10 +32,11 @@ class Routing extends React.Component {
       <Loadable />
     ) : (
       <Switch>
-        <Route exact path="/tokens" component={TokensPage} />
+        <Route path="/tokens" component={TokensPageContainer} />
         <Route exact path="/operations" component={OperatorPage} />
         <Route exact path="/rewards" component={RewardsPage} />
         <Route exact path="/authorizer" component={AuthorizerPage} />
+        <Route exact path="/token-grants" component={TokenGrantsPage} />
         {isKeepTokenContractDeployer && (
           <Route
             exact
