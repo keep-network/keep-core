@@ -117,7 +117,6 @@ ul {
     padding: 0;
 
     & li:not(.sublink) {
-      padding: 1.5rem 1rem;
       color: @color-grey-70;
       width: 100%;
       border-bottom: 1px solid @color-grey-30;
@@ -126,6 +125,8 @@ ul {
  
       a {
         display: flex;
+        flex: 1;
+        padding: 1.5rem 1rem;
         justify-content: space-between;
         align-items: center;
 
@@ -137,7 +138,7 @@ ul {
       ul.sublinks {
         max-height: 0;
         overflow: hidden;
-        padding-left: 1.7rem;
+        padding-left: 2.7rem;
         transition: 0.3s ease-out;
 
         li.sublink {
@@ -153,6 +154,8 @@ ul {
           
           a {
             font-family: "Work Sans";
+            font-weight: normal !important;
+            padding: 0;
             font-size: .8125rem;
             line-height: 1.375rem;
             font-feature-settings: 'tnum' on, 'lnum' on;
@@ -181,8 +184,8 @@ ul {
       &:hover, &.active-page-link {
         ul.sublinks {
           max-height: 500px;
-          margin-top: .625rem;
-          margin-bottom: 1,125rem;
+          margin-top: -calc(1.5rem - .625rem);
+          margin-bottom: 1.125rem;
         }
         &::after {
           width: 5px;
