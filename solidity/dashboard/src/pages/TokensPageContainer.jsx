@@ -32,17 +32,21 @@ const TokensPageContainer = () => {
   useSubscribeToTokenGrantEvents()
 
   return (
-    <TokensPageContextProvider>
-      <Switch>
-        <Route exact path="/tokens/delegate" component={TokensPage} />
-        <Route exact path="/tokens/grants" component={TokenGrantsPage} />
-        <Redirect to="/tokens/delegate" />
-      </Switch>
-    </TokensPageContextProvider>
+    <Switch>
+      <Route exact path="/tokens/delegate" component={TokensPage} />
+      <Route exact path="/tokens/grants" component={TokenGrantsPage} />
+      <Redirect to="/tokens/delegate" />
+    </Switch>
   )
 }
 
-export default React.memo(TokensPageContainer)
+const TokensPageContainerWithContext = () => (
+  <TokensPageContextProvider>
+    <TokensPageContainer />
+  </TokensPageContextProvider>
+)
+
+export default React.memo(TokensPageContainerWithContext)
 
 const useSubscribeToStakedEvent = async () => {
   const web3Context = useContext(Web3Context)
