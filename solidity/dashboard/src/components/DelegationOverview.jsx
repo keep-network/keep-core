@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useCallback } from "react"
 import Undelegations from "../components/Undelegations"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
@@ -15,6 +15,7 @@ const DelegationOverview = () => {
     undelegations,
     delegations,
     refreshData,
+    refreshGrants,
     tokensContext,
     selectedGrant,
   } = useTokensPageContext()
@@ -54,6 +55,11 @@ const DelegationOverview = () => {
     return ownedUndelegations
   }
 
+  const cancelStakeSuccessCallback = useCallback(() => {
+    refreshGrants()
+    refreshData()
+  }, [refreshGrants, refreshData])
+
   return (
     <section>
       <div className="flex wrap self-center mt-3 mb-2">
@@ -88,7 +94,7 @@ const DelegationOverview = () => {
       </div>
       <DelegatedTokensTable
         delegatedTokens={getDelegations()}
-        cancelStakeSuccessCallback={refreshData}
+        cancelStakeSuccessCallback={cancelStakeSuccessCallback}
       />
       <Undelegations undelegations={getUndelegations()} />
     </section>

@@ -1,0 +1,26 @@
+ul.choose-wallet-address {
+    list-style: none;
+    align-self: normal;
+    
+    li {
+        cursor: pointer;
+        padding: 0.5rem 2rem;
+        display: flex;
+
+        &:nth-child(odd) {
+            background-color: @color-grey-10;
+        }
+        label, label input[type=radio] {
+            cursor: pointer;
+        }
+        
+        label input[type=radio] {
+            margin-right: 2rem;
+        }
+
+        a {
+            margin-left: auto;
+        }
+    }
+    
+}

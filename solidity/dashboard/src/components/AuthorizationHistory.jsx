@@ -3,7 +3,7 @@ import AddressShortcut from "./AddressShortcut"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
-import ViewContractInBlockExplorer from "./ViewContractInBlockExplorer"
+import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 
 const AuthorizationHistory = ({ contracts }) => {
   return (
@@ -31,7 +31,7 @@ const AuthorizationHistory = ({ contracts }) => {
           header="contract details"
           field="details"
           renderContent={({ contractAddress }) => (
-            <ViewContractInBlockExplorer contractAddress={contractAddress} />
+            <ViewAddressInBlockExplorer address={contractAddress} />
           )}
         />
       </DataTable>

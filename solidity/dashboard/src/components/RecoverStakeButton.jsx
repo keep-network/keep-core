@@ -1,21 +1,28 @@
-import React, { useContext, useCallback } from "react"
+import React, { useContext, useCallback, useMemo } from "react"
 import { SubmitButton } from "./Button"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
-import {
-  TOKEN_GRANT_CONTRACT_NAME,
-  TOKEN_STAKING_CONTRACT_NAME,
-} from "../constants/constants"
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   const web3Context = useContext(Web3Context)
-  const { yourAddress } = web3Context
+  const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
-  const { isFromGrant } = props
-  const contract =
-    web3Context[
-      isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME
-    ]
+  const { isFromGrant, isManagedGrant, managedGrantContractInstance } = props
+  const contract = useMemo(() => {
+    if (isManagedGrant) {
+      return managedGrantContractInstance
+    } else if (isFromGrant) {
+      return grantContract
+    } else {
+      return stakingContract
+    }
+  }, [
+    grantContract,
+    isFromGrant,
+    isManagedGrant,
+    managedGrantContractInstance,
+    stakingContract,
+  ])
 
   const recoverStake = useCallback(
     async (onTransactionHashCallback) => {
@@ -32,7 +39,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Recover stake action has been failed ",
+          title: "Recover stake action has failed ",
           content: error.message,
         })
         throw error

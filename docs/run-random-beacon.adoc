@@ -75,7 +75,8 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 ==== Sample
 
-```
+[source,toml]
+----
 # Ethereum host connection info.
 [ethereum]
   URL = "ws://127.0.0.1:8546"
@@ -107,7 +108,7 @@ Application configurations are stored in a `.toml` file and passed to the applic
 # Storage is encrypted
 [Storage]
   DataDir = "/my/secure/location"
-```
+----
 
 ==== Parameters
 
@@ -228,19 +229,21 @@ https://hub.docker.com/r/keepnetwork/keep-client/
 === Run Image
 This is a sample run command for illustration purposes only.
 
-```
+[source,bash]
+----
 export KEEP_CLIENT_ETHEREUM_PASSWORD=$(cat .secrets/eth-account-password.txt)
 export KEEP_CLIENT_CONFIG_DIR=$(pwd)/config
 export KEEP_CLIENT_PERSISTENCE_DIR=$(pwd)/persistence
 
-docker run -dit \
+docker run -d \
+--entrypoint /usr/local/bin/keep-client
 --volume $KEEP_CLIENT_PERSISTENCE_DIR:/mnt/keep-client/persistence \
 --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
 -p 3919:3919 \
-keep-client --config /mnt/keep-client/config/keep-client-config.toml start
-```
+keepnetwork/keep-client:<version> --config /mnt/keep-client/config/keep-client-config.toml start
+----
 
 == Deployment Considerations
 
@@ -262,12 +265,13 @@ network:
 
 === Configurable Values
 
-```
+[source,bash]
+----
 LOG_LEVEL=DEBUG
 IPFS_LOGGING_FMT=nocolor
 GOLOG_FILE=/var/log/keep/keep.log
 GOLOG_TRACING_FILE=/var/log/keep/trace.json
-```
+----
 
 === Startup
 ```
@@ -308,13 +312,15 @@ Trust math, not hardware.
 
 ==== Contracts
 
+Contract addresses needed to boot the Random Beacon client:
+
 [%header,cols=2*]
 |===
 |Token
 |
 
 |TokenStaking
-|``
+|`0x6D1140a8c8e6Fac242652F0a5A8171b898c67600`
 |===
 
 [%header,cols=2*]
@@ -323,10 +329,10 @@ Trust math, not hardware.
 |
 
 |KeepRandomBeaconService
-|``
+|`0x17056632d8db5a5c42fdE25132C59DD975a6da7F`
 
 |KeepRandomBeaconOperator
-|``
+|`0x70F2202D85a4F0Cad36e978976f84E982920A624`
 |===
 
 === Testnet
@@ -344,9 +350,10 @@ To use the faucet you need to pass your Ethereum account to the faucet endpoint 
 `?account=<eth-account-address>`.
 
 Curl Example:
-```
+[source,bash]
+----
 curl 'https://us-central1-keep-test-f3e0.cloudfunctions.net/keep-faucet-ropsten?account=0x0eC14BC7cCA82c942Cf276F6BbD0413216dDB2bE'
-```
+----
 
 Browser Example:
 ```
@@ -357,7 +364,7 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 ==== Bootstrap Peers
 
-====
+[.small]
 ```
 "/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
 "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
@@ -367,7 +374,6 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 "/dns4/bootstrap-1.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAkuTUKNh6HkfvWBEkftZbqZHPHi3Kak5ZUygAxvsdQ2UgG",
 "/dns4/bootstrap-2.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAmQirGruZBvtbLHr5SDebsYGcq6Djw7ijF3gnkqsdQs3wK"
 ```
-====
 
 ==== Contracts
 

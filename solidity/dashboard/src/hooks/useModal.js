@@ -1,14 +1,22 @@
-import React, { useState } from "react"
+import React, { useState, useCallback } from "react"
 import Modal from "../components/Modal"
 
 export const useModal = () => {
-  const [isVisible, setIsVisible] = useState(false)
+  const [isOpen, setIsOpen] = useState(false)
 
-  const showModal = () => setIsVisible(true)
-  const hideModal = () => setIsVisible(false)
+  const openModal = useCallback(() => {
+    setIsOpen(true)
+  }, [])
+  const closeModal = useCallback(() => {
+    setIsOpen(false)
+  }, [])
 
-  const ModalComponent = (props) =>
-    isVisible && <Modal closeModal={hideModal} {...props} />
+  const ModalComponent = useCallback(
+    (props) => {
+      return <Modal isOpen={isOpen} closeModal={closeModal} {...props} />
+    },
+    [closeModal, isOpen]
+  )
 
-  return { showModal, hideModal, ModalComponent }
+  return { openModal, closeModal, ModalComponent }
 }

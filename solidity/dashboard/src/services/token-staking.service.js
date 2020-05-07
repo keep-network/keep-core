@@ -1,10 +1,14 @@
 import { contractService } from "./contracts.service"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import {
+  TOKEN_STAKING_CONTRACT_NAME,
+  TOKEN_GRANT_CONTRACT_NAME,
+} from "../constants/constants"
 import moment from "moment"
 import { COMPLETE_STATUS, PENDING_STATUS } from "../constants/constants"
+import { isCodeValid, createManagedGrantContractInstance } from "../contracts"
 
 const fetchDelegatedTokensData = async (web3Context) => {
-  const { yourAddress, grantContract } = web3Context
+  const { yourAddress, grantContract, eth, web3 } = web3Context
   const [
     stakedBalance,
     ownerAddress,
@@ -44,10 +48,33 @@ const fetchDelegatedTokensData = async (web3Context) => {
   ])
 
   let isUndelegationFromGrant = true
+  let grantStakeDetails
   try {
-    await grantContract.methods.getGrantStakeDetails(yourAddress).call()
+    grantStakeDetails = await grantContract.methods
+      .getGrantStakeDetails(yourAddress)
+      .call()
   } catch (error) {
     isUndelegationFromGrant = false
+  }
+
+  let isManagedGrant = false
+  let managedGrantContractInstance
+  if (isUndelegationFromGrant) {
+    const { grantee } = contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGrant",
+      grantStakeDetails.grantId
+    )
+    // check if grantee is a contract
+    const code = await eth.getCode(grantee)
+    if (isCodeValid(code)) {
+      managedGrantContractInstance = createManagedGrantContractInstance(
+        web3,
+        grantee
+      )
+      isManagedGrant = true
+    }
   }
 
   const {
@@ -70,6 +97,8 @@ const fetchDelegatedTokensData = async (web3Context) => {
     isUndelegationFromGrant,
     isInInitializationPeriod,
     undelegationPeriod,
+    isManagedGrant,
+    managedGrantContractInstance,
   }
 }
 

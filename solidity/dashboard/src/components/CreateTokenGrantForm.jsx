@@ -46,7 +46,7 @@ const CreateTokenGrantForm = ({
     } catch (error) {
       showMessage({
         type: messageType.ERROR,
-        title: "Grant tokens action has been failed ",
+        title: "Grant tokens action has failed ",
         content: error.message,
       })
       throw error
