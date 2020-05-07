@@ -75,7 +75,7 @@ const NavLink = ({
   exact,
   icon,
   sublinks,
-  wrappeClassName,
+  wrapperClassName,
   activeClassName,
   withArrowRight,
 }) => {
@@ -85,7 +85,7 @@ const NavLink = ({
   })
 
   return (
-    <li className={`${wrappeClassName} ${match ? activeClassName : ""}`}>
+    <li className={`${wrapperClassName} ${match ? activeClassName : ""}`}>
       <Link to={to}>
         {icon}
         <span className="ml-1">{label}</span>
@@ -94,6 +94,12 @@ const NavLink = ({
       <SubNavLinks sublinks={sublinks} />
     </li>
   )
+}
+
+NavLink.defaultProps = {
+  wrapperClassName: "text-label",
+  activeClassName: "active-page-link",
+  withArrowRight: true,
 }
 
 const SubNavLinks = ({ sublinks }) => {
@@ -105,16 +111,10 @@ const SubNavLinks = ({ sublinks }) => {
         <NavLink
           key={sublink.label}
           {...sublink}
-          wrappeClassName="sublink"
+          wrapperClassName="sublink"
           withArrowRight={false}
         />
       ))}
     </ul>
   )
-}
-
-NavLink.defaultProps = {
-  wrappeClassName: "text-label",
-  activeClassName: "active-page-link",
-  withArrowRight: true,
 }
