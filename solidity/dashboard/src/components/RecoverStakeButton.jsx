@@ -39,7 +39,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Recover stake action has been failed ",
+          title: "Recover stake action has failed ",
           content: error.message,
         })
         throw error

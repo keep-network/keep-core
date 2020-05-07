@@ -3,7 +3,7 @@ import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
-import ViewContractInBlockExplorer from "./ViewContractInBlockExplorer"
+import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 
 const AuthorizeContracts = ({
   contracts,
@@ -25,7 +25,7 @@ const AuthorizeContracts = ({
           header="contract details"
           field="details"
           renderContent={({ contractAddress }) => (
-            <ViewContractInBlockExplorer contractAddress={contractAddress} />
+            <ViewAddressInBlockExplorer address={contractAddress} />
           )}
         />
         <Column

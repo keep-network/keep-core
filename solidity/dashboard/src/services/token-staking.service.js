@@ -57,7 +57,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
     isUndelegationFromGrant = false
   }
 
-  let isManagedGrant = true
+  let isManagedGrant = false
   let managedGrantContractInstance
   if (isUndelegationFromGrant) {
     const { grantee } = contractService.makeCall(
@@ -73,8 +73,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
         web3,
         grantee
       )
-    } else {
-      isManagedGrant = false
+      isManagedGrant = true
     }
   }
 

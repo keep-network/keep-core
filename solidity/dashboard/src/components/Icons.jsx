@@ -15,6 +15,8 @@ import { ReactComponent as OperatorFormIcon } from "../static/svg/operator-form-
 import { ReactComponent as BeneficiaryFormIcon } from "../static/svg/beneficiary-form-icon.svg"
 import { ReactComponent as DashedLine } from "../static/svg/dashed-line.svg"
 import { ReactComponent as KeepOutline } from "../static/svg/keep-green-outline.svg"
+import { ReactComponent as LedgerDevice } from "../static/svg/ledger-device.svg"
+import { ReactComponent as TrezorDevice } from "../static/svg/trezor-device.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -476,4 +478,6 @@ export {
   BeneficiaryFormIcon,
   OperatorFormIcon,
   KeepOutline,
+  LedgerDevice,
+  TrezorDevice,
 }

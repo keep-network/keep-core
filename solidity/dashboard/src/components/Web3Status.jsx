@@ -14,7 +14,7 @@ export const Web3Status = () => {
   } = useContext(Web3Context)
 
   const renderStatus = () => {
-    if (!provider || !web3) {
+    if (!provider || !web3 || !yourAddress) {
       return <Banner type={BANNER_TYPE.ERROR} title="Please select a wallet" />
     }
 

@@ -31,7 +31,15 @@ export const SideMenu = (props) => {
   return (
     <nav className={`${isOpen ? "active " : ""}side-menu`}>
       <ul>
-        <NavLink exact to="/tokens" label="tokens" icon={<Icons.KeepToken />} />
+        <NavLink
+          to="/tokens"
+          label="tokens"
+          icon={<Icons.KeepToken />}
+          sublinks={[
+            { to: "/tokens/delegate", exact: true, label: "Delegate Tokens" },
+            { to: "/tokens/grants", exact: true, label: "Token Grants" },
+          ]}
+        />
         <NavLink
           exact
           to="/operations"
@@ -61,19 +69,52 @@ export const SideMenu = (props) => {
   )
 }
 
-const NavLink = ({ label, to, exact, icon }) => {
+const NavLink = ({
+  label,
+  to,
+  exact,
+  icon,
+  sublinks,
+  wrapperClassName,
+  activeClassName,
+  withArrowRight,
+}) => {
   const match = useRouteMatch({
     path: to,
     exact,
   })
 
   return (
-    <Link to={to}>
-      <li className={`text-label ${match ? "active-page-link" : ""}`}>
+    <li className={`${wrapperClassName} ${match ? activeClassName : ""}`}>
+      <Link to={to}>
         {icon}
         <span className="ml-1">{label}</span>
-        <Icons.ArrowRight />
-      </li>
-    </Link>
+        {withArrowRight && <Icons.ArrowRight />}
+      </Link>
+      <SubNavLinks sublinks={sublinks} />
+    </li>
+  )
+}
+
+NavLink.defaultProps = {
+  wrapperClassName: "text-label",
+  activeClassName: "active-page-link",
+  withArrowRight: true,
+}
+
+const SubNavLinks = ({ sublinks }) => {
+  if (!sublinks) return null
+
+  return (
+    <ul className="sublinks">
+      {sublinks.map((sublink) => (
+        <NavLink
+          key={sublink.label}
+          {...sublink}
+          wrapperClassName="sublink"
+          withArrowRight={false}
+        />
+      ))}
+    </ul>
   )
 }

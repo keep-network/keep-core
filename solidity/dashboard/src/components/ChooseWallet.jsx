@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useState } from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
@@ -6,6 +6,8 @@ import SelectedWalletModal from "./SelectedWalletModal"
 import { LoadingOverlay } from "./Loadable"
 import Tile from "./Tile"
 import PageWrapper from "./PageWrapper"
+import LedgerModal from "./LedgerModal"
+import TrezorModal from "./TrezorModal"
 
 const WALLETS = [
   {
@@ -41,13 +43,6 @@ const WALLETS = [
     providerName: "LEDGER",
     type: "hardware wallet",
     description: "Crypto wallet on a secure hardware device.",
-    modalProps: {
-      iconDescription: "/images/ledger-device.svg",
-      btnText: "install ledger live",
-      btnLink: "https://www.ledger.com/ledger-live/",
-      description:
-        "Plug in Ledger device and unlock. Install Ledger Live below:",
-    },
   },
   {
     label: "Trezor",
@@ -55,13 +50,6 @@ const WALLETS = [
     providerName: "TREZOR",
     type: "hardware wallet",
     description: "Crypto wallet on a secure hardware device.",
-    modalProps: {
-      iconDescription: "/images/trezor-device.svg",
-      btnText: "go to trezor setup",
-      btnLink: "https://trezor.io/start/",
-      description:
-        "Plug in your Trezor device and unlock. If the setup screen doesn’t load right away, go to Trezor setup:",
-    },
   },
 ]
 
@@ -89,25 +77,60 @@ const Wallet = ({
   description,
   modalProps,
 }) => {
-  const { ModalComponent, showModal, closeModal } = useModal()
-  const { connectAppWithWallet, isFetching, web3, provider } = useWeb3Context()
+  const { ModalComponent, openModal, closeModal } = useModal()
+  const { connectAppWithWallet, setAccount } = useWeb3Context()
+  const [accounts, setAccounts] = useState(null)
 
-  useEffect(() => {
-    if (!isFetching && web3 && provider) {
-      closeModal()
+  const onSelectProvider = async (providerName) => {
+    const firstAccountAsSelected = providerName === "METAMASK"
+    const availableAccounts = await connectAppWithWallet(
+      providerName,
+      firstAccountAsSelected
+    )
+    setAccounts(availableAccounts)
+  }
+
+  const onSelectAccount = (account) => {
+    setAccount([account])
+    closeModal()
+  }
+
+  const renderModalContent = () => {
+    switch (providerName) {
+      case "LEDGER":
+        return (
+          <LedgerModal
+            onSelectProvider={onSelectProvider}
+            onSelectAccount={onSelectAccount}
+            accounts={accounts}
+          />
+        )
+      case "TREZOR":
+        return (
+          <TrezorModal accounts={accounts} onSelectAccount={onSelectAccount} />
+        )
+      case "METAMASK":
+      case "COINBASE":
+      default:
+        return (
+          <SelectedWalletModal walletName={label} icon={icon} {...modalProps} />
+        )
     }
-  }, [isFetching, web3, provider, closeModal])
+  }
 
   return (
     <>
       <ModalComponent title="Connect Wallet">
-        <SelectedWalletModal walletName={label} icon={icon} {...modalProps} />
+        {renderModalContent()}
       </ModalComponent>
       <li
         className="wallet"
-        onClick={() => {
-          showModal()
-          connectAppWithWallet(providerName)
+        onClick={async () => {
+          openModal()
+          if (providerName === "LEDGER") {
+            return
+          }
+          await onSelectProvider(providerName)
         }}
       >
         {icon}
