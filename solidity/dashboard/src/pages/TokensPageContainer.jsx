@@ -234,7 +234,7 @@ const getGrantDetails = async (operator, grantContract) => {
     grantStakeDetails = await grantContract.methods
       .getGrantStakeDetails(operator)
       .call()
-  } catch (error) {
+  } catch {
     return grantStakeDetails
   }
   return grantStakeDetails
