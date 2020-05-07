@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
@@ -78,10 +78,16 @@ const Wallet = ({
   modalProps,
 }) => {
   const { ModalComponent, openModal, closeModal } = useModal()
-  const { connectAppWithWallet, accounts, setAccount } = useWeb3Context()
+  const { connectAppWithWallet, setAccount } = useWeb3Context()
+  const [accounts, setAccounts] = useState(null)
 
   const onSelectProvider = async (providerName) => {
-    await connectAppWithWallet(providerName)
+    const firstAccountAsSelected = providerName === "METAMASK"
+    const availableAccounts = await connectAppWithWallet(
+      providerName,
+      firstAccountAsSelected
+    )
+    setAccounts(availableAccounts)
   }
 
   const onSelectAccount = (account) => {
@@ -124,8 +130,7 @@ const Wallet = ({
           if (providerName === "LEDGER") {
             return
           }
-          const firstAccountAsSelected = providerName === "METAMASK"
-          await connectAppWithWallet(providerName, firstAccountAsSelected)
+          await onSelectProvider(providerName)
         }}
       >
         {icon}

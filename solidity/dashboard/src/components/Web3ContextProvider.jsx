@@ -74,11 +74,11 @@ export default class Web3ContextProvider extends React.Component {
         web3,
         provider: providerName,
         yourAddress: firstAccountAsSelected ? accounts[0] : null,
-        accounts,
         networkType: await web3.eth.net.getNetworkType(),
       },
       this.setData
     )
+    return accounts
   }
 
   setData = async () => {
