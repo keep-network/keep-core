@@ -28,7 +28,7 @@ export const getChainId = () => {
     return 1337
   }
   // For KEEP internal testnet, ropsten and mainnet `chainId == networkId`
-  return getFirstNetworkIdFromArtifact()
+  return Number(getFirstNetworkIdFromArtifact())
 }
 
 export const getWsUrl = () => {
