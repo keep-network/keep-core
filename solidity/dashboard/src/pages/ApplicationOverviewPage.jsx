@@ -8,7 +8,7 @@ import ApplicationBox, {
 
 const applications = [
   {
-    icon: <Icons.KeepCircle />,
+    icon: <Icons.TBTC />,
     name: "tBTC",
     websiteUrl: "https://tbtc.network/",
     websiteName: "tBTC Website",
@@ -17,7 +17,7 @@ const applications = [
     btnLink: "/applications/tbtc",
   },
   {
-    icon: <Icons.KeepCircle />,
+    icon: <Icons.KeepBlackGreen />,
     name: "Random Beacon",
     websiteUrl: "https://keep.network/",
     websiteName: "Keep Website",
