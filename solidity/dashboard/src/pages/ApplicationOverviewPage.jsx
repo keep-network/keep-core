@@ -41,7 +41,7 @@ const ApplicationOverviewPage = () => {
 }
 
 const renderApplicationBox = (application) => (
-  <ApplicationBox {...application} />
+  <ApplicationBox key={application.name} {...application} />
 )
 
 export default ApplicationOverviewPage
