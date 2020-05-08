@@ -90,6 +90,20 @@ p {
 a {
   text-decoration: none;
   color: @secondary-color;
+  position: relative;
+
+  &.arrow-link {
+    &::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      bottom: 5px;
+      right: -22px;
+      background-image: url("../static/svg/link-arrow.svg");
+    }
+  }
+  
   &:hover {
     text-decoration: underline;
   }
