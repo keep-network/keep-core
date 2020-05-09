@@ -5,6 +5,8 @@
   "license": "MIT",
   "dependencies": {
     "@keep-network/keep-core": ">1.1.0-pre <1.1.0-rc",
+    "@keep-network/keep-ecdsa": "0.16.0-rc.0",
+    "@keep-network/tbtc": "0.15.0-rc.0",
     "bignumber.js": "9.0.0",
     "formik": "^2.1.3",
     "less": "^3.9.0",
