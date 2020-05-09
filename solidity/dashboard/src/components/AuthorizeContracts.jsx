@@ -12,7 +12,14 @@ const AuthorizeContracts = ({
   onAuthorizeSuccessCallback,
 }) => {
   return (
-    <Tile title="Authorize Contracts">
+    <Tile
+      title="Authorize Contracts"
+      withTooltip
+      tooltipProps={{
+        text:
+          "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens.",
+      }}
+    >
       <DataTable data={data} itemFieldId="operatorAddress">
         <Column
           header="opeartor address"
@@ -51,13 +58,10 @@ const Contracts = ({ contracts }) => {
 const AuthorizeContractItem = ({ contractName, operatorContractAddress }) => {
   return (
     <li className="pb-1 mt-1">
-      <div className="flex row space-between center">
+      <div className="flex row wrap space-between center">
         <div>
           <div className="text-big">{contractName}</div>
-          <ViewAddressInBlockExplorer
-            address={operatorContractAddress}
-            text="Block explorer"
-          />
+          <ViewAddressInBlockExplorer address={operatorContractAddress} />
         </div>
         <SubmitButton
           className="btn btn-secondary btn-sm"
