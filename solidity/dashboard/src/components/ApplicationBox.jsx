@@ -23,7 +23,12 @@ const ApplicationBox = ({
     >
       {icon}
       <h2 className="mt-2">{name}</h2>
-      <a href={websiteUrl} className="arrow-link h4">
+      <a
+        href={websiteUrl}
+        className="arrow-link h4"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
         {websiteName}
       </a>
       <span className="text-small text-center text-grey-60 mt-3">
