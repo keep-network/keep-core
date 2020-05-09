@@ -11,7 +11,16 @@
 /solidity/contracts/PermissiveStakingPolicy.sol @Shadowfiend @pdyraga
 /solidity/contracts/KeepRegistry.sol @Shadowfiend @pdyraga
 /solidity/contracts/Escrow.sol @Shadowfiend @pdyraga
+/solidity/contracts/KeepRandomBeaconOperator.sol @Shadowfiend @pdyraga
+/solidity/contracts/KeepRandomBeaconService.sol @Shadowfiend @pdyraga
+/solidity/contracts/KeepRandomBeaconServiceImplV1.sol @Shadowfiend @pdyraga
+/solidity/contracts/statistics/KeepRandomBeaconOperatorStatistics.sol @Shadowfiend @pdyraga
 /solidity/contracts/libraries/grant/UnlockingSchedule.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/operator/DelayFactor.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/operator/DKGResultVerification.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/operator/Groups.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/operator/GroupSelection.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/operator/Reimbursements.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/AddressArrayUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/BytesLib.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/LockUtils.sol @Shadowfiend @pdyraga
