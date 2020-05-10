@@ -1,0 +1,53 @@
+---
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: keep-network-relay-request-submitter
+  namespace: default
+  labels:
+    app: keep-network
+    type: relay-requester
+spec:
+  schedule: '*/60 * * * *'
+  jobTemplate:
+    metadata:
+      labels:
+        app: keep-network
+        type: relay-requester
+    spec:
+      activeDeadlineSeconds: 600
+      template:
+        spec:
+          containers:
+          - name: keep-network-relay-request-submitter
+            image: keepnetwork/keep-client:v1.1.2
+            ports:
+              - containerPort: 3919
+            env:
+              - name: KEEP_ETHEREUM_PASSWORD
+                valueFrom:
+                  secretKeyRef:
+                    name: keep-network-relay-request-submitter
+                    key: eth-account-passphrase
+              - name: LOG_LEVEL
+                value: debug
+            volumeMounts:
+              - name: config-file
+                mountPath: /mnt/keep-client/config
+              - name: eth-account-keyfile
+                mountPath: /mnt/keep-client/keyfile
+            command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "relay", "request"]
+          volumes:
+          - name: config-file
+            secret:
+              secretName: keep-network-relay-request-submitter
+              items:
+                - key: keep-client-config.toml
+                  path: keep-client-config.toml
+          - name: eth-account-keyfile
+            secret:
+              secretName: keep-network-relay-request-submitter
+              items:
+                - key: eth-account-keyfile
+                  path: eth-account-keyfile
+          restartPolicy: OnFailure
