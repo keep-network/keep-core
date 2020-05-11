@@ -310,6 +310,21 @@ Trust math, not hardware.
 
 ==== Boostrap Peers
 
+[.small]
+```
+"/ip4/54.39.179.73/tcp/3919/ipfs/16Uiu2HAkyYtzNoWuF3ULaA7RMfVAxvfQQ9YRvRT3TK4tXmuZtaWi",
+"/ip4/54.39.186.166/tcp/3919/ipfs/16Uiu2HAkzD5n4mtTSddzqVY3wPJZmtvWjARTSpr4JbDX9n9PDJRh",
+"/ip4/54.39.179.134/tcp/3919/ipfs/16Uiu2HAkuxCuWA4zXnsj9R6A3b3a1TKUjQvBpAEaJ98KGdGue67p",
+"/dns4/bst-a01.core.keep.boar.network/tcp/3001/ipfs/16Uiu2HAkzYFHsqbwt64ZztWWK1hyeLntRNqWMYFiZjaKu1PZgikN",
+"/dns4/bst-b01.core.keep.boar.network/tcp/3001/ipfs/16Uiu2HAkxLttmh3G8LYzAy1V1g1b3kdukzYskjpvv5DihY4wvx7D",
+"/dns4/keep-boot-validator-0.prod-us-west-2.staked.cloud/tcp/3919/ipfs/16Uiu2HAmDnq9qZJH9zJJ3TR4pX1BkYHWtR2rVww24ttxQTiKhsaJ",
+"/dns4/keep-boot-validator-1.prod-us-west-2.staked.cloud/tcp/3919/ipfs/16Uiu2HAmHbbMTDDsT2f6z8zMgDtJkTUDJQSYsQYUpaJjdMjiYNEf",
+"/dns4/keep-boot-validator-2.prod-us-west-2.staked.cloud/tcp/3919/ipfs/16Uiu2HAmBXoNLLMYU9EcKYH6JN5tA498sXQHFWk4heK22RfXD7wC",
+"/dns4/4d00662f-e56d-404a-803a-cac01ada3e15.keep.bison.run/tcp/3919/ipfs/16Uiu2HAmV3HqJjcbKMxHnDxDx4m2iEYynyYdsvU3VwaeE6Zra2P9",
+"/dns4/ec1eb390-124c-4b1b-bcf7-c21709baf2b2.keep.herd.run/tcp/3919/ipfs/16Uiu2HAmVo51PqEZLADehZEbZnrp5A7qjRWFLj9E7DfwZKVhERFt",
+"/dns4/2aa9b786-7360-4c22-ae73-bd95af9c11c5.keep.bison.run/tcp/3919/ipfs/16Uiu2HAm9g3QrQzSvJ8FAhgB1PmjMNgjPd3pDaJJqsdSisGsnaFe"
+```
+
 ==== Contracts
 
 Contract addresses needed to boot the Random Beacon client:
