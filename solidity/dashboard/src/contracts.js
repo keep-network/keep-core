@@ -18,6 +18,7 @@ import {
   REGISTRY_CONTRACT_NAME,
   KEEP_OPERATOR_STATISTICS_CONTRACT_NAME,
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
+  BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -44,6 +45,10 @@ export async function getTokenGrant(web3) {
 
 export async function getKeepRandomBeaconOperator(web3) {
   return getContract(web3, KeepRandomBeaconOperator, OPERATOR_CONTRACT_NAME)
+}
+
+export async function getBondedEcdsaKeepFactoryContract(web3) {
+  return getContract(web3, BondedECDSAKeepFactory, BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME)
 }
 
 export async function getRegistry(web3) {
@@ -85,6 +90,7 @@ export async function getContracts(web3) {
     getRegistry(web3),
     getKeepRandomBeaconOperatorStatistics(web3),
     getManagedGrantFactory(web3),
+    getBondedEcdsaKeepFactoryContract(web3),
   ])
 
   return {
@@ -95,6 +101,7 @@ export async function getContracts(web3) {
     registryContract: contracts[4],
     keepRandomBeaconOperatorStatistics: contracts[5],
     managedGrantFactoryContract: contracts[6],
+    bondedEcdsaKeepFactoryContract: contracts[7],
   }
 }
 
