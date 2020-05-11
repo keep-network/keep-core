@@ -6,6 +6,7 @@ const Tile = ({
   titleStyle,
   withTooltip,
   tooltipProps,
+  subtitle,
   children,
   ...sectionProps
 }) => {
@@ -17,6 +18,7 @@ const Tile = ({
         </h4>
         {withTooltip && <SpeechBubbleTooltip {...tooltipProps} />}
       </div>
+      <div className="text-grey-40 text-small">{subtitle}</div>
       <div className="mt-1">{children}</div>
     </section>
   )

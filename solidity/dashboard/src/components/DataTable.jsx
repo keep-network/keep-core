@@ -15,7 +15,10 @@ export class DataTable extends React.Component {
   initializeDataTable = () => {
     const headers = []
     React.Children.forEach(this.props.children, (children) => {
-      headers.push(children.props.header)
+      headers.push({
+        title: children.props.header,
+        headerStyle: children.props.headerStyle,
+      })
     })
     this.setState({ headers })
   }
@@ -46,7 +49,11 @@ export class DataTable extends React.Component {
     return column.props.renderContent(item)
   }
 
-  renderHeader = (header) => <th key={header}>{header}</th>
+  renderHeader = ({ title, headerStyle }) => (
+    <th key={title} style={headerStyle}>
+      {title}
+    </th>
+  )
 
   render() {
     return (
@@ -60,4 +67,7 @@ export class DataTable extends React.Component {
   }
 }
 
-export const Column = ({ header, field, renderContent }) => null
+export const Column = ({ header, headerStyle, field, renderContent }) => null
+Column.defaultProps = {
+  headerStyle: {},
+}
