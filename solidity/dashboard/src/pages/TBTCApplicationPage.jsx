@@ -4,6 +4,7 @@ import AuthorizeContracts from "../components/AuthorizeContracts"
 import * as Icons from "../components/Icons"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useFetchData } from "../hooks/useFetchData"
+import { BondingSection } from "../components/BondingSection"
 
 const TBTCApplicationPage = () => {
   // fetch data from service
@@ -34,6 +35,16 @@ const TBTCApplicationPage = () => {
     },
   ]
 
+  // fetch data from service
+  const bondingData = [
+    {
+      operatorAddress: "address",
+      stakeAmount: "1000",
+      bondedETH: "1000 ETH",
+      availableETH: "1000 ETH",
+    },
+  ]
+
   return (
     <PageWrapper
       className=""
@@ -53,6 +64,7 @@ const TBTCApplicationPage = () => {
         </a>
       </nav>
       <AuthorizeContracts data={data} />
+      <BondingSection data={bondingData} />
     </PageWrapper>
   )
 }
