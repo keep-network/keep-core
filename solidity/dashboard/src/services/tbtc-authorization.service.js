@@ -1,11 +1,17 @@
 import { contractService } from "./contracts.service"
 import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import { BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME } from "../constants/constants"
+import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import { 
     CONTRACT_DEPLOY_BLOCK_NUMBER,
     getBondedECDSAKeepFactoryAddress,
-    getTBTCSystemAddress
+    getTBTCSystemAddress,
+    getKeepRandomBeaconOperatorAddress,
 } from "../contracts"
+
+const tBTCSystemAddress = getTBTCSystemAddress()
+const bondedECDSAKeepFactoryAddress = getBondedECDSAKeepFactoryAddress()
 
 const fetchTBTCAuthorizationData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -18,17 +24,12 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
   )
   const visitedOperators = {}
   const authorizerOperators = []
-  const data = {}
 
-  console.log("stakedEvents.length: ", stakedEvents.length)
   console.log("getBondedECDSAKeepFactoryAddress: ", getBondedECDSAKeepFactoryAddress())
   console.log("getTBTCSystemAddress: ", getTBTCSystemAddress())
-
-  // TODO: need to double check this
-    const tBTCSystemAddress = getTBTCSystemAddress()
-    const bondedECDSAKeepFactoryAddress = getBondedECDSAKeepFactoryAddress()
+  console.log("getKeepRandomBeaconOperatorAddress: ", getKeepRandomBeaconOperatorAddress())
   
-    // Fetch all authorizer operators
+  // Fetch all authorizer operators
   for (let i = 0; i < stakedEvents.length; i++) {
     const {
       returnValues: { from: operatorAddress },
@@ -37,17 +38,16 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
     if (visitedOperators.hasOwnProperty(operatorAddress)) {
       continue
     }
+
     visitedOperators[operatorAddress] = operatorAddress
-    console.log("operatorAddress: ", operatorAddress)
     const authorizerOfOperator = await contractService.makeCall(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
       "authorizerOf",
       operatorAddress
     )
-    console.log("authorizerOfOperator: ", authorizerOfOperator)
+
     if (isSameEthAddress(authorizerOfOperator, yourAddress)) {
-        
         const delegatedTokens = await contractService.makeCall(
             web3Context,
             TOKEN_STAKING_CONTRACT_NAME,
@@ -89,14 +89,46 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
         }
 
         authorizerOperators.push(authorizerOperator)
-
     }
   }
 
   return authorizerOperators
+}
 
+const authorizeBondedECDSAKeepFactory = async (web3Context, operatorAddress) => {
+    await contractService.makeCall(
+        web3Context,
+        TOKEN_STAKING_CONTRACT_NAME,
+        "authorizeOperatorContract",
+        operatorAddress,
+        bondedECDSAKeepFactoryAddress
+    )
+}
+
+const authorizeTBTCSystem = async (web3Context, operatorAddress) => {
+  try {
+    const sortitionPoolAddress = await contractService.makeCall(
+      web3Context,
+      BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
+      "getSortitionPool",
+      tBTCSystemAddress,
+    )
+    
+    await contractService.makeCall(
+      web3Context,
+      KEEP_BONDING_CONTRACT_NAME,
+      "authorizeSortitionPoolContract",
+      operatorAddress,
+      sortitionPoolAddress,
+    )
+  } catch(error) {
+    // TODO: handle the error properly
+    console.error("failed to authorize tBTC application", error)
+  }
 }
 
 export const tbtcAuthorizationService = {
     fetchTBTCAuthorizationData,
+    authorizeBondedECDSAKeepFactory,
+    authorizeTBTCSystem,
 }
