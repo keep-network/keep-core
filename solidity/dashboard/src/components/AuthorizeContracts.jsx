@@ -36,6 +36,7 @@ const AuthorizeContracts = ({
           }
         />
         <Column
+          headerStyle={{ width: "55%" }}
           header="operator contract details"
           field=""
           renderContent={({ contracts }) => <Contracts contracts={contracts} />}
