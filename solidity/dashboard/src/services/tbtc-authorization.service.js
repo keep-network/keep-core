@@ -40,9 +40,7 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
       returnValues: { from: operatorAddress },
     } = stakedEvents[i]
 
-    if (visitedOperators.hasOwnProperty(operatorAddress)) {
-      continue
-    }
+    if (visitedOperators.hasOwnProperty(operatorAddress)) continue
 
     visitedOperators[operatorAddress] = operatorAddress
     const authorizerOfOperator = await contractService.makeCall(
@@ -167,65 +165,71 @@ const depositEthForOperator = async (
     .on("transactionHash", onTransactionHashCallback)
 }
 
-// TODO fetch from contracts
 const getBondingData = async (web3Context) => {
   const { yourAddress } = web3Context
 
   const bondingData = []
-  const bondedEth = 0
 
   try {
     const operators = await fetchOperatorsOf(web3Context, yourAddress)
     const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
     const createdBondsEvents = await fetchCreatedBondsEvents(web3Context, operators, sortitionPoolAddress)
-    console.log("createdBondsEvents: ", createdBondsEvents)
     
-    // create a map
-    // operator -> bondedEth
-    const operatorBondedEthMap = new Map()
+    const operatorBondingDataMap = new Map()
     if (createdBondsEvents.length != 0) {
       for (let i = 0; i < createdBondsEvents.length; i++) {
+        let {
+          returnValues: { 
+            operator: operator,
+            holder: holder,
+            referenceID: referenceID,
+          },
+        } = createdBondsEvents[i]
 
-        // const {
-        //   returnValues: { from: operator },
-        // } = createdBondsEvents[i]
+        let bondHolder = holder
+        let bondReferenceId = referenceID
 
-        // holder = createBondsEvents[i].holder
-        // referenceID = createBondsEvents[i].referenceID
+        const reassignedEvents = await fetchBondReassignedEvents(web3Context, bondHolder, bondReferenceId) 
+        if (reassignedEvents.length > 0) {
+          // TODO: need to test reasssignment
+          const latestReassignedEvent = reassignedEvents[reassignedEvents.length() - 1]
+          let {
+            returnValues: { 
+              holder: holder,
+              referenceID: referenceID,
+            },
+          } = latestReassignedEvent
 
-        // const reassignedEvents = fetchBondReassignedEvents(web3Context, operator, referenceId) 
-        // if reassignedEventsForOperator > 0 
-        //  latestReassignedEvent = reassignedEvents[reassignedEvents.length() - 1]
-        //  holder = latestReassignedEvent[i].holder
-        //  referenceID = latestReassignedEvent[i].referenceID
+          bondHolder = holder
+          bondReferenceId = referenceID
+        }
 
+        const bondedEth = await fetchLockedBondAmount(web3Context, operator, bondHolder, bondReferenceId)
 
-        // bondedEth = fetchLockedBondAmount(operator, holder, referenceID)
-
-        //operatorBondedEthMap.set(operator, bondedEth)
+        operatorBondingDataMap.set(operator, bondedEth)
       }
     } 
 
     for (let i = 0; i < operators.length; i++) {
-      
-      console.log("operator for bonding TBTC: ", operators[i])
-
       const delegatedTokens = await contractService.makeCall(
         web3Context,
         TOKEN_STAKING_CONTRACT_NAME,
-        "getDelegationInfo",
+        "getDelegationInfo",  
         yourAddress,
       )
-
-      // if (operatorBondedEthMap.get(operator) != undefined)
-      //  bondedEth = operatorBondedEthMap.get(operator)
+      const availableEth = await fetchAvailableAmount(web3Context, operators[i], bondedECDSAKeepFactoryAddress, sortitionPoolAddress)
+        
+      let bondedEth = 0
+      if (operatorBondingDataMap.get(operators[i]) != undefined) {
+        bondedEth = operatorBondingDataMap.get(operators[i])
+      }
 
       const bonding = {
         operatorAddress: operators[i],
         stakeAmount: delegatedTokens.amount,
         bondedETH: bondedEth,
-        availableETH: {},
-        availableETHInWei: "1000000000000000000000",
+        availableETH: availableEth,
+        availableETHInWei: web3Utils.toWei(bondedEth.toString(), "ether"),
       }
 
       bondingData.push(bonding)
@@ -240,7 +244,7 @@ const getBondingData = async (web3Context) => {
 }
 
 const fetchStakedEvents = async (web3Context) => {
-  return await contractService.getPastEvents(
+  return contractService.getPastEvents(
     web3Context,
     TOKEN_STAKING_CONTRACT_NAME,
     "Staked",
@@ -249,7 +253,7 @@ const fetchStakedEvents = async (web3Context) => {
 }
 
 const fetchSortitionPoolForTbtc = async (web3Context) => {
-  return await contractService.makeCall(
+  return contractService.makeCall(
     web3Context,
     BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
     "getSortitionPool",
@@ -261,9 +265,8 @@ const fetchCreatedBondsEvents = async (
   web3Context, 
   operatorAddresses, 
   sortitionPoolAddress
-  ) => {
-
-  return await contractService.getPastEvents(
+) => {
+  return contractService.getPastEvents(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
     "BondCreated",
@@ -278,9 +281,8 @@ const fetchBondReassignedEvents = async (
   web3Context, 
   operatorAddresses, 
   referenceId
-  ) => {
-
-  return await contractService.getPastEvents(
+) => {
+  return contractService.getPastEvents(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
     "BondReassigned",
@@ -294,9 +296,8 @@ const fetchBondReassignedEvents = async (
 const fetchOperatorsOf = async (
   web3Context,
   yourAddress
-  ) => {
-
-  return await contractService.makeCall(
+) => {
+  return contractService.makeCall(
     web3Context,
     TOKEN_STAKING_CONTRACT_NAME,
     "operatorsOf",
@@ -310,9 +311,8 @@ const fetchLockedBondAmount = async (
   operator,
   holder,
   referenceID
-  ) => {
-
-  return await contractService.makeCall(
+) => {
+  return contractService.makeCall(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
     "bondAmount",
@@ -326,14 +326,15 @@ const fetchLockedBondAmount = async (
 const fetchAvailableAmount = async (
   web3Context,
   operator,
+  bondedECDSAKeepFactoryAddress,
   authorizedSortitionPool
-  ) => {
-  return await contractService.makeCall(
+) => {
+  return contractService.makeCall(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
     "availableUnbondedValue",
     operator,
-    getBondedECDSAKeepFactoryAddress(),
+    bondedECDSAKeepFactoryAddress,
     authorizedSortitionPool
   )
 }
