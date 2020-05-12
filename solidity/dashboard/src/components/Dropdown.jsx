@@ -12,6 +12,7 @@ const Dropdown = ({
   noItemSelectedText,
   selectedItemComponent,
   renderOptionComponent,
+  withLabel,
 }) => {
   const [isOpen, setIsOpen] = useState(false)
 
@@ -50,10 +51,13 @@ const Dropdown = ({
 
   return (
     <React.Fragment>
-      <label className="text-small text-grey-60">
-        {label}&nbsp;
-        <span className="text-smaller">{options.length} available</span>
-      </label>
+      {withLabel && (
+        <label className="text-small text-grey-60">
+          {label}&nbsp;
+          <span className="text-smaller">{options.length} available</span>
+        </label>
+      )}
+
       <div className="select-wrapper">
         <div className={`select${isOpen ? " open" : ""}`}>
           <div className="select-trigger" onClick={() => setIsOpen(!isOpen)}>
@@ -102,6 +106,7 @@ const dropdownPropsAreEqual = (prevProps, nextProps) => {
 Dropdown.defaultProps = {
   noItemSelectedText: "Select Item",
   label: "Select Item",
+  withLabel: true,
 }
 
 export default React.memo(Dropdown, dropdownPropsAreEqual)
