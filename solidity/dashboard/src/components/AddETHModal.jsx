@@ -7,11 +7,40 @@ import { withFormik } from "formik"
 import { colors } from "../constants/colors"
 import web3Utils from "web3-utils"
 import { useWeb3Context } from "./WithWeb3Context"
+import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
+import { useShowMessage, messageType } from "./Message"
 
 const AddEthModal = ({ operatorAddress, closeModal }) => {
-  const { yourAddress, web3 } = useWeb3Context()
-  // call contract
-  const onSubmit = useCallback(async (transacionHashCallback) => {}, [])
+  const web3Context = useWeb3Context()
+  const { yourAddress, web3 } = web3Context
+  const showMessage = useShowMessage()
+
+  const onSubmit = useCallback(
+    async (formValues, onTransactionHashCallback) => {
+      const { ethAmount: value } = formValues
+      try {
+        await tbtcAuthorizationService.depositEthForOperator(
+          web3Context,
+          { operatorAddress, value },
+          onTransactionHashCallback
+        )
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content: "Add ETH for operator transaction successfully completed",
+        })
+      } catch (error) {
+        showMessage({
+          type: messageType.ERROR,
+          title: "Add ETH for operator action has failed ",
+          content: error.message,
+        })
+        throw error
+      }
+    },
+    [operatorAddress, showMessage, web3Context]
+  )
+
   return (
     <>
       <h4 style={{ marginBottom: "0.5rem" }}>Enter an amount of ETH</h4>
