@@ -2,26 +2,51 @@ import React, { useCallback } from "react"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
 import { DataTable, Column } from "./DataTable"
-import Tile from "./Tile"
 import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
+import Dropdown from "./Dropdown"
 
 const AuthorizeContracts = ({
   data,
   onAuthorizeBtn,
-  onAuthorizeSuccessCallback,
+  onSelect,
+  selectedOperator,
 }) => {
   return (
-    <Tile
-      title="Authorize Contracts"
-      withTooltip
-      tooltipProps={{
-        text:
-          "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens.",
-      }}
-    >
-      <DataTable data={data} itemFieldId="operatorAddress">
+    <section className="tile">
+      <div className="flex center space-between">
+        <header>
+          <div className="flex row">
+            <h4 className="mr-1 text-grey-70">Authorize Contracts</h4>
+            <SpeechBubbleTooltip
+              text={
+                "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens."
+              }
+            />
+          </div>
+          <div className="text-grey-40 text-small">
+            Below are the available operator contracts to authorize.
+          </div>
+        </header>
+        <div style={{ marginLeft: "auto" }}>
+          <Dropdown
+            withLabel={false}
+            options={[]}
+            onSelect={(operator) => onSelect(operator)}
+            valuePropertyName="operatorAddress"
+            labelPropertyName="operatorAddress"
+            selectedItem={{}}
+            noItemSelectedText="All operators"
+          />
+        </div>
+      </div>
+      <DataTable
+        data={data}
+        itemFieldId="operatorAddress"
+        noDataMessage="No contracts to authorize."
+      >
         <Column
           header="opeartor address"
           field="operatorAddress"
@@ -49,7 +74,7 @@ const AuthorizeContracts = ({
           )}
         />
       </DataTable>
-    </Tile>
+    </section>
   )
 }
 
@@ -92,11 +117,7 @@ const AuthorizeContractItem = ({
           <ViewAddressInBlockExplorer address={operatorContractAddress} />
         </div>
         {isAuthorized ? (
-          <StatusBadge
-            className="self-start"
-            status={BADGE_STATUS.COMPLETE}
-            text="authorized"
-          />
+          <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
         ) : (
           <SubmitButton
             onSubmitAction={onAuthorize}
