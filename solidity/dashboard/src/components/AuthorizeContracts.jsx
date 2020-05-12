@@ -7,11 +7,7 @@ import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 
-const AuthorizeContracts = ({
-  data,
-  onAuthorizeBtn,
-  onAuthorizeSuccessCallback,
-}) => {
+const AuthorizeContracts = ({ data, onAuthorizeBtn }) => {
   return (
     <Tile
       title="Authorize Contracts"
@@ -92,11 +88,7 @@ const AuthorizeContractItem = ({
           <ViewAddressInBlockExplorer address={operatorContractAddress} />
         </div>
         {isAuthorized ? (
-          <StatusBadge
-            className="self-start"
-            status={BADGE_STATUS.COMPLETE}
-            text="authorized"
-          />
+          <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
         ) : (
           <SubmitButton
             onSubmitAction={onAuthorize}

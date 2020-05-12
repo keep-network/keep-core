@@ -13,10 +13,13 @@ import { add } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 
+const initialData = []
 const TBTCApplicationPage = () => {
+  const web3Context = useWeb3Context()
+  const showMessage = useShowMessage()
+
   // fetch data from service
-  const initialData = []
-  const [state, , refreshData] = useFetchData(
+  const [tbtcAuthState, updateTbtcAuthData, refreshData] = useFetchData(
     tbtcAuthorizationService.fetchTBTCAuthorizationData,
     initialData
   )
@@ -60,8 +63,43 @@ const TBTCApplicationPage = () => {
     subscribeToUnbondedValueDepositedCallback
   )
 
-  const web3Context = useWeb3Context()
-  const showMessage = useShowMessage()
+  const onAuthorizationSuccessCallback = useCallback(
+    (contractName, operatorAddress) => {
+      const {
+        indexInArray: operatorIndexInArray,
+        obj: obsoleteOperator,
+      } = findIndexAndObject(
+        "operatorAddress",
+        operatorAddress,
+        tbtcAuthState.data,
+        compareEthAddresses
+      )
+      if (operatorIndexInArray === null) {
+        return
+      }
+      const {
+        indexInArray: contractIndexInArray,
+        obj: obsoleteContract,
+      } = findIndexAndObject(
+        "contractName",
+        contractName,
+        obsoleteOperator.contracts
+      )
+      const updatedContracts = [...obsoleteOperator.contracts]
+      updatedContracts[contractIndexInArray] = {
+        ...obsoleteContract,
+        isAuthorized: true,
+      }
+      const updatedOperators = [...tbtcAuthState.data]
+      updatedOperators[operatorIndexInArray] = {
+        ...obsoleteOperator,
+        contracts: updatedContracts,
+      }
+
+      updateTbtcAuthData(updatedOperators)
+    },
+    [updateTbtcAuthData, tbtcAuthState.data]
+  )
 
   const authorizeContract = useCallback(
     async (data, transactionHashCallback) => {
@@ -71,7 +109,7 @@ const TBTCApplicationPage = () => {
           ? tbtcAuthorizationService.authorizeTBTCSystem
           : tbtcAuthorizationService.authorizeBondedECDSAKeepFactory
       try {
-        await serviceMethod.authorizeTBTCSystem(
+        await serviceMethod(
           web3Context,
           operatorAddress,
           transactionHashCallback
@@ -81,6 +119,10 @@ const TBTCApplicationPage = () => {
           title: "Success",
           content: "Authorization transaction successfully completed",
         })
+        setTimeout(
+          () => onAuthorizationSuccessCallback(contractName, operatorAddress),
+          5000
+        )
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
@@ -90,7 +132,7 @@ const TBTCApplicationPage = () => {
         throw error
       }
     },
-    [showMessage, web3Context]
+    [showMessage, web3Context, onAuthorizationSuccessCallback]
   )
 
   return (
@@ -112,7 +154,7 @@ const TBTCApplicationPage = () => {
         </a>
       </nav>
       <AuthorizeContracts
-        data={state.data}
+        data={tbtcAuthState.data}
         onAuthorizeBtn={authorizeContract}
         onAuthorizeSuccessCallback={refreshData}
       />
