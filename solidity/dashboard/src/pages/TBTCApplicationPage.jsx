@@ -12,6 +12,7 @@ import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
+import { LoadingOverlay } from "../components/Loadable"
 
 const initialData = []
 const TBTCApplicationPage = () => {
@@ -19,7 +20,7 @@ const TBTCApplicationPage = () => {
   const showMessage = useShowMessage()
 
   // fetch data from service
-  const [tbtcAuthState, updateTbtcAuthData, refreshData] = useFetchData(
+  const [tbtcAuthState, updateTbtcAuthData] = useFetchData(
     tbtcAuthorizationService.fetchTBTCAuthorizationData,
     initialData
   )
@@ -153,12 +154,15 @@ const TBTCApplicationPage = () => {
           tBTC Website
         </a>
       </nav>
-      <AuthorizeContracts
-        data={tbtcAuthState.data}
-        onAuthorizeBtn={authorizeContract}
-        onAuthorizeSuccessCallback={refreshData}
-      />
-      <BondingSection data={bondingState.data} />
+      <LoadingOverlay isFetching={tbtcAuthState.isFetching}>
+        <AuthorizeContracts
+          data={tbtcAuthState.data}
+          onAuthorizeBtn={authorizeContract}
+        />
+      </LoadingOverlay>
+      <LoadingOverlay isFetching={bondingState.isFetching}>
+        <BondingSection data={bondingState.data} />
+      </LoadingOverlay>
     </PageWrapper>
   )
 }
