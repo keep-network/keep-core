@@ -1,10 +1,11 @@
-import React from "react"
+import React, { useCallback } from "react"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 
 const AuthorizeContracts = ({
   data,
@@ -39,24 +40,50 @@ const AuthorizeContracts = ({
           headerStyle={{ width: "55%" }}
           header="operator contract details"
           field=""
-          renderContent={({ contracts }) => <Contracts contracts={contracts} />}
+          renderContent={({ contracts, operatorAddress }) => (
+            <Contracts
+              contracts={contracts}
+              operatorAddress={operatorAddress}
+              onAuthorizeBtn={onAuthorizeBtn}
+            />
+          )}
         />
       </DataTable>
     </Tile>
   )
 }
 
-const Contracts = ({ contracts }) => {
+const Contracts = ({ contracts, operatorAddress, onAuthorizeBtn }) => {
   return (
     <ul className="line-separator">
       {contracts.map((contract) => (
-        <AuthorizeContractItem key={contract.contractName} {...contract} />
+        <AuthorizeContractItem
+          key={contract.contractName}
+          {...contract}
+          operatorAddress={operatorAddress}
+          onAuthorizeBtn={onAuthorizeBtn}
+        />
       ))}
     </ul>
   )
 }
 
-const AuthorizeContractItem = ({ contractName, operatorContractAddress }) => {
+const AuthorizeContractItem = ({
+  contractName,
+  operatorAddress,
+  isAuthorized,
+  operatorContractAddress,
+  onAuthorizeBtn,
+}) => {
+  const onAuthorize = useCallback(
+    async (transactionHashCallback) => {
+      await onAuthorizeBtn(
+        { operatorAddress, contractName },
+        transactionHashCallback
+      )
+    },
+    [contractName, operatorAddress, onAuthorizeBtn]
+  )
   return (
     <li className="pb-1 mt-1">
       <div className="flex row wrap space-between center">
@@ -64,12 +91,21 @@ const AuthorizeContractItem = ({ contractName, operatorContractAddress }) => {
           <div className="text-big">{contractName}</div>
           <ViewAddressInBlockExplorer address={operatorContractAddress} />
         </div>
-        <SubmitButton
-          className="btn btn-secondary btn-sm"
-          style={{ marginLeft: "auto" }}
-        >
-          authorize
-        </SubmitButton>
+        {isAuthorized ? (
+          <StatusBadge
+            className="self-start"
+            status={BADGE_STATUS.COMPLETE}
+            text="authorized"
+          />
+        ) : (
+          <SubmitButton
+            onSubmitAction={onAuthorize}
+            className="btn btn-secondary btn-sm"
+            style={{ marginLeft: "auto" }}
+          >
+            authorize
+          </SubmitButton>
+        )}
       </div>
     </li>
   )
