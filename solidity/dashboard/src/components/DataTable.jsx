@@ -1,4 +1,5 @@
 import React from "react"
+import { isEmptyArray } from "../utils/array.utils"
 
 export class DataTable extends React.Component {
   constructor(props) {
@@ -61,10 +62,24 @@ export class DataTable extends React.Component {
         <thead>
           <tr>{this.state.headers.map(this.renderHeader)}</tr>
         </thead>
-        <tbody>{this.props.data.map(this.renderItemRow)}</tbody>
+        <tbody>
+          {isEmptyArray(this.props.data) ? (
+            <tr className="text-center">
+              <td colSpan={this.state.headers.length}>
+                <h4 className="text-grey-30">{this.props.noDataMessage}</h4>
+              </td>
+            </tr>
+          ) : (
+            this.props.data.map(this.renderItemRow)
+          )}
+        </tbody>
       </table>
     )
   }
+}
+
+DataTable.defaultProps = {
+  noDataMessage: "No data.",
 }
 
 export const Column = ({ header, headerStyle, field, renderContent }) => null
