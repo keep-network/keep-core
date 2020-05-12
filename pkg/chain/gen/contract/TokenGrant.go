@@ -37,6 +37,7 @@ type TokenGrant struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *ethutil.ErrorResolver
+	nonceManager      *ethutil.NonceManager
 
 	transactionMutex *sync.Mutex
 }
@@ -45,6 +46,7 @@ func NewTokenGrant(
 	contractAddress common.Address,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
+	nonceManager *ethutil.NonceManager,
 	transactionMutex *sync.Mutex,
 ) (*TokenGrant, error) {
 	callerOptions := &bind.CallOpts{
@@ -81,11 +83,111 @@ func NewTokenGrant(
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
+		nonceManager:      nonceManager,
 		transactionMutex:  transactionMutex,
 	}, nil
 }
 
 // ----- Non-const Methods ------
+
+// Transaction submission.
+func (tg *TokenGrant) AuthorizeStakingContract(
+	_stakingContract common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tgLogger.Debug(
+		"submitting transaction authorizeStakingContract",
+		"params: ",
+		fmt.Sprint(
+			_stakingContract,
+		),
+	)
+
+	tg.transactionMutex.Lock()
+	defer tg.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tg.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tg.contract.AuthorizeStakingContract(
+		transactorOptions,
+		_stakingContract,
+	)
+	if err != nil {
+		return transaction, tg.errorResolver.ResolveError(
+			err,
+			tg.transactorOptions.From,
+			nil,
+			"authorizeStakingContract",
+			_stakingContract,
+		)
+	}
+
+	tgLogger.Debugf(
+		"submitted transaction authorizeStakingContract with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	tg.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tg *TokenGrant) CallAuthorizeStakingContract(
+	_stakingContract common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tg.transactorOptions.From,
+		blockNumber, nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"authorizeStakingContract",
+		&result,
+		_stakingContract,
+	)
+
+	return err
+}
+
+func (tg *TokenGrant) AuthorizeStakingContractGasEstimate(
+	_stakingContract common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tg.callerOptions.From,
+		tg.contractAddress,
+		"authorizeStakingContract",
+		tg.contractABI,
+		tg.transactor,
+		_stakingContract,
+	)
+
+	return result, err
+}
 
 // Transaction submission.
 func (tg *TokenGrant) RecoverStake(
@@ -116,11 +218,17 @@ func (tg *TokenGrant) RecoverStake(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := tg.contract.RecoverStake(
 		transactorOptions,
 		_operator,
 	)
-
 	if err != nil {
 		return transaction, tg.errorResolver.ResolveError(
 			err,
@@ -135,6 +243,8 @@ func (tg *TokenGrant) RecoverStake(
 		"submitted transaction recoverStake with id: [%v]",
 		transaction.Hash().Hex(),
 	)
+
+	tg.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -179,97 +289,6 @@ func (tg *TokenGrant) RecoverStakeGasEstimate(
 }
 
 // Transaction submission.
-func (tg *TokenGrant) UndelegateRevoked(
-	_operator common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tgLogger.Debug(
-		"submitting transaction undelegateRevoked",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-		),
-	)
-
-	tg.transactionMutex.Lock()
-	defer tg.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tg.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := tg.contract.UndelegateRevoked(
-		transactorOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return transaction, tg.errorResolver.ResolveError(
-			err,
-			tg.transactorOptions.From,
-			nil,
-			"undelegateRevoked",
-			_operator,
-		)
-	}
-
-	tgLogger.Debugf(
-		"submitted transaction undelegateRevoked with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tg *TokenGrant) CallUndelegateRevoked(
-	_operator common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tg.transactorOptions.From,
-		blockNumber, nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"undelegateRevoked",
-		&result,
-		_operator,
-	)
-
-	return err
-}
-
-func (tg *TokenGrant) UndelegateRevokedGasEstimate(
-	_operator common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tg.callerOptions.From,
-		tg.contractAddress,
-		"undelegateRevoked",
-		tg.contractABI,
-		tg.transactor,
-		_operator,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (tg *TokenGrant) Stake(
 	_id *big.Int,
 	_stakingContract common.Address,
@@ -304,6 +323,13 @@ func (tg *TokenGrant) Stake(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := tg.contract.Stake(
 		transactorOptions,
 		_id,
@@ -311,7 +337,6 @@ func (tg *TokenGrant) Stake(
 		_amount,
 		_extraData,
 	)
-
 	if err != nil {
 		return transaction, tg.errorResolver.ResolveError(
 			err,
@@ -329,6 +354,8 @@ func (tg *TokenGrant) Stake(
 		"submitted transaction stake with id: [%v]",
 		transaction.Hash().Hex(),
 	)
+
+	tg.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -413,11 +440,17 @@ func (tg *TokenGrant) WithdrawRevoked(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := tg.contract.WithdrawRevoked(
 		transactorOptions,
 		_id,
 	)
-
 	if err != nil {
 		return transaction, tg.errorResolver.ResolveError(
 			err,
@@ -432,6 +465,8 @@ func (tg *TokenGrant) WithdrawRevoked(
 		"submitted transaction withdrawRevoked with id: [%v]",
 		transaction.Hash().Hex(),
 	)
+
+	tg.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -476,370 +511,6 @@ func (tg *TokenGrant) WithdrawRevokedGasEstimate(
 }
 
 // Transaction submission.
-func (tg *TokenGrant) CancelRevokedStake(
-	_operator common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tgLogger.Debug(
-		"submitting transaction cancelRevokedStake",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-		),
-	)
-
-	tg.transactionMutex.Lock()
-	defer tg.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tg.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := tg.contract.CancelRevokedStake(
-		transactorOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return transaction, tg.errorResolver.ResolveError(
-			err,
-			tg.transactorOptions.From,
-			nil,
-			"cancelRevokedStake",
-			_operator,
-		)
-	}
-
-	tgLogger.Debugf(
-		"submitted transaction cancelRevokedStake with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tg *TokenGrant) CallCancelRevokedStake(
-	_operator common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tg.transactorOptions.From,
-		blockNumber, nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"cancelRevokedStake",
-		&result,
-		_operator,
-	)
-
-	return err
-}
-
-func (tg *TokenGrant) CancelRevokedStakeGasEstimate(
-	_operator common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tg.callerOptions.From,
-		tg.contractAddress,
-		"cancelRevokedStake",
-		tg.contractABI,
-		tg.transactor,
-		_operator,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tg *TokenGrant) Revoke(
-	_id *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tgLogger.Debug(
-		"submitting transaction revoke",
-		"params: ",
-		fmt.Sprint(
-			_id,
-		),
-	)
-
-	tg.transactionMutex.Lock()
-	defer tg.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tg.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := tg.contract.Revoke(
-		transactorOptions,
-		_id,
-	)
-
-	if err != nil {
-		return transaction, tg.errorResolver.ResolveError(
-			err,
-			tg.transactorOptions.From,
-			nil,
-			"revoke",
-			_id,
-		)
-	}
-
-	tgLogger.Debugf(
-		"submitted transaction revoke with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tg *TokenGrant) CallRevoke(
-	_id *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tg.transactorOptions.From,
-		blockNumber, nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"revoke",
-		&result,
-		_id,
-	)
-
-	return err
-}
-
-func (tg *TokenGrant) RevokeGasEstimate(
-	_id *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tg.callerOptions.From,
-		tg.contractAddress,
-		"revoke",
-		tg.contractABI,
-		tg.transactor,
-		_id,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tg *TokenGrant) Withdraw(
-	_id *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tgLogger.Debug(
-		"submitting transaction withdraw",
-		"params: ",
-		fmt.Sprint(
-			_id,
-		),
-	)
-
-	tg.transactionMutex.Lock()
-	defer tg.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tg.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := tg.contract.Withdraw(
-		transactorOptions,
-		_id,
-	)
-
-	if err != nil {
-		return transaction, tg.errorResolver.ResolveError(
-			err,
-			tg.transactorOptions.From,
-			nil,
-			"withdraw",
-			_id,
-		)
-	}
-
-	tgLogger.Debugf(
-		"submitted transaction withdraw with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tg *TokenGrant) CallWithdraw(
-	_id *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tg.transactorOptions.From,
-		blockNumber, nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"withdraw",
-		&result,
-		_id,
-	)
-
-	return err
-}
-
-func (tg *TokenGrant) WithdrawGasEstimate(
-	_id *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tg.callerOptions.From,
-		tg.contractAddress,
-		"withdraw",
-		tg.contractABI,
-		tg.transactor,
-		_id,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (tg *TokenGrant) CancelStake(
-	_operator common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tgLogger.Debug(
-		"submitting transaction cancelStake",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-		),
-	)
-
-	tg.transactionMutex.Lock()
-	defer tg.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *tg.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := tg.contract.CancelStake(
-		transactorOptions,
-		_operator,
-	)
-
-	if err != nil {
-		return transaction, tg.errorResolver.ResolveError(
-			err,
-			tg.transactorOptions.From,
-			nil,
-			"cancelStake",
-			_operator,
-		)
-	}
-
-	tgLogger.Debugf(
-		"submitted transaction cancelStake with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (tg *TokenGrant) CallCancelStake(
-	_operator common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		tg.transactorOptions.From,
-		blockNumber, nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"cancelStake",
-		&result,
-		_operator,
-	)
-
-	return err
-}
-
-func (tg *TokenGrant) CancelStakeGasEstimate(
-	_operator common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		tg.callerOptions.From,
-		tg.contractAddress,
-		"cancelStake",
-		tg.contractABI,
-		tg.transactor,
-		_operator,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (tg *TokenGrant) ReceiveApproval(
 	_from common.Address,
 	_amount *big.Int,
@@ -874,6 +545,13 @@ func (tg *TokenGrant) ReceiveApproval(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := tg.contract.ReceiveApproval(
 		transactorOptions,
 		_from,
@@ -881,7 +559,6 @@ func (tg *TokenGrant) ReceiveApproval(
 		_token,
 		_extraData,
 	)
-
 	if err != nil {
 		return transaction, tg.errorResolver.ResolveError(
 			err,
@@ -899,6 +576,8 @@ func (tg *TokenGrant) ReceiveApproval(
 		"submitted transaction receiveApproval with id: [%v]",
 		transaction.Hash().Hex(),
 	)
+
+	tg.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -955,16 +634,16 @@ func (tg *TokenGrant) ReceiveApprovalGasEstimate(
 }
 
 // Transaction submission.
-func (tg *TokenGrant) AuthorizeStakingContract(
-	_stakingContract common.Address,
+func (tg *TokenGrant) Revoke(
+	_id *big.Int,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tgLogger.Debug(
-		"submitting transaction authorizeStakingContract",
+		"submitting transaction revoke",
 		"params: ",
 		fmt.Sprint(
-			_stakingContract,
+			_id,
 		),
 	)
 
@@ -983,32 +662,40 @@ func (tg *TokenGrant) AuthorizeStakingContract(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := tg.contract.AuthorizeStakingContract(
-		transactorOptions,
-		_stakingContract,
-	)
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
 
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tg.contract.Revoke(
+		transactorOptions,
+		_id,
+	)
 	if err != nil {
 		return transaction, tg.errorResolver.ResolveError(
 			err,
 			tg.transactorOptions.From,
 			nil,
-			"authorizeStakingContract",
-			_stakingContract,
+			"revoke",
+			_id,
 		)
 	}
 
 	tgLogger.Debugf(
-		"submitted transaction authorizeStakingContract with id: [%v]",
+		"submitted transaction revoke with id: [%v]",
 		transaction.Hash().Hex(),
 	)
+
+	tg.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (tg *TokenGrant) CallAuthorizeStakingContract(
-	_stakingContract common.Address,
+func (tg *TokenGrant) CallRevoke(
+	_id *big.Int,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1020,26 +707,224 @@ func (tg *TokenGrant) CallAuthorizeStakingContract(
 		tg.caller,
 		tg.errorResolver,
 		tg.contractAddress,
-		"authorizeStakingContract",
+		"revoke",
 		&result,
-		_stakingContract,
+		_id,
 	)
 
 	return err
 }
 
-func (tg *TokenGrant) AuthorizeStakingContractGasEstimate(
-	_stakingContract common.Address,
+func (tg *TokenGrant) RevokeGasEstimate(
+	_id *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		tg.callerOptions.From,
 		tg.contractAddress,
-		"authorizeStakingContract",
+		"revoke",
 		tg.contractABI,
 		tg.transactor,
-		_stakingContract,
+		_id,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tg *TokenGrant) CancelStake(
+	_operator common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tgLogger.Debug(
+		"submitting transaction cancelStake",
+		"params: ",
+		fmt.Sprint(
+			_operator,
+		),
+	)
+
+	tg.transactionMutex.Lock()
+	defer tg.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tg.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tg.contract.CancelStake(
+		transactorOptions,
+		_operator,
+	)
+	if err != nil {
+		return transaction, tg.errorResolver.ResolveError(
+			err,
+			tg.transactorOptions.From,
+			nil,
+			"cancelStake",
+			_operator,
+		)
+	}
+
+	tgLogger.Debugf(
+		"submitted transaction cancelStake with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	tg.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tg *TokenGrant) CallCancelStake(
+	_operator common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tg.transactorOptions.From,
+		blockNumber, nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"cancelStake",
+		&result,
+		_operator,
+	)
+
+	return err
+}
+
+func (tg *TokenGrant) CancelStakeGasEstimate(
+	_operator common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tg.callerOptions.From,
+		tg.contractAddress,
+		"cancelStake",
+		tg.contractABI,
+		tg.transactor,
+		_operator,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tg *TokenGrant) UndelegateRevoked(
+	_operator common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tgLogger.Debug(
+		"submitting transaction undelegateRevoked",
+		"params: ",
+		fmt.Sprint(
+			_operator,
+		),
+	)
+
+	tg.transactionMutex.Lock()
+	defer tg.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tg.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tg.contract.UndelegateRevoked(
+		transactorOptions,
+		_operator,
+	)
+	if err != nil {
+		return transaction, tg.errorResolver.ResolveError(
+			err,
+			tg.transactorOptions.From,
+			nil,
+			"undelegateRevoked",
+			_operator,
+		)
+	}
+
+	tgLogger.Debugf(
+		"submitted transaction undelegateRevoked with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	tg.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tg *TokenGrant) CallUndelegateRevoked(
+	_operator common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tg.transactorOptions.From,
+		blockNumber, nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"undelegateRevoked",
+		&result,
+		_operator,
+	)
+
+	return err
+}
+
+func (tg *TokenGrant) UndelegateRevokedGasEstimate(
+	_operator common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tg.callerOptions.From,
+		tg.contractAddress,
+		"undelegateRevoked",
+		tg.contractABI,
+		tg.transactor,
+		_operator,
 	)
 
 	return result, err
@@ -1074,11 +959,17 @@ func (tg *TokenGrant) Undelegate(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := tg.contract.Undelegate(
 		transactorOptions,
 		_operator,
 	)
-
 	if err != nil {
 		return transaction, tg.errorResolver.ResolveError(
 			err,
@@ -1093,6 +984,8 @@ func (tg *TokenGrant) Undelegate(
 		"submitted transaction undelegate with id: [%v]",
 		transaction.Hash().Hex(),
 	)
+
+	tg.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -1128,6 +1021,204 @@ func (tg *TokenGrant) UndelegateGasEstimate(
 		tg.callerOptions.From,
 		tg.contractAddress,
 		"undelegate",
+		tg.contractABI,
+		tg.transactor,
+		_operator,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tg *TokenGrant) Withdraw(
+	_id *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tgLogger.Debug(
+		"submitting transaction withdraw",
+		"params: ",
+		fmt.Sprint(
+			_id,
+		),
+	)
+
+	tg.transactionMutex.Lock()
+	defer tg.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tg.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tg.contract.Withdraw(
+		transactorOptions,
+		_id,
+	)
+	if err != nil {
+		return transaction, tg.errorResolver.ResolveError(
+			err,
+			tg.transactorOptions.From,
+			nil,
+			"withdraw",
+			_id,
+		)
+	}
+
+	tgLogger.Debugf(
+		"submitted transaction withdraw with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	tg.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tg *TokenGrant) CallWithdraw(
+	_id *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tg.transactorOptions.From,
+		blockNumber, nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"withdraw",
+		&result,
+		_id,
+	)
+
+	return err
+}
+
+func (tg *TokenGrant) WithdrawGasEstimate(
+	_id *big.Int,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tg.callerOptions.From,
+		tg.contractAddress,
+		"withdraw",
+		tg.contractABI,
+		tg.transactor,
+		_id,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (tg *TokenGrant) CancelRevokedStake(
+	_operator common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tgLogger.Debug(
+		"submitting transaction cancelRevokedStake",
+		"params: ",
+		fmt.Sprint(
+			_operator,
+		),
+	)
+
+	tg.transactionMutex.Lock()
+	defer tg.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *tg.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := tg.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := tg.contract.CancelRevokedStake(
+		transactorOptions,
+		_operator,
+	)
+	if err != nil {
+		return transaction, tg.errorResolver.ResolveError(
+			err,
+			tg.transactorOptions.From,
+			nil,
+			"cancelRevokedStake",
+			_operator,
+		)
+	}
+
+	tgLogger.Debugf(
+		"submitted transaction cancelRevokedStake with id: [%v]",
+		transaction.Hash().Hex(),
+	)
+
+	tg.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (tg *TokenGrant) CallCancelRevokedStake(
+	_operator common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		tg.transactorOptions.From,
+		blockNumber, nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"cancelRevokedStake",
+		&result,
+		_operator,
+	)
+
+	return err
+}
+
+func (tg *TokenGrant) CancelRevokedStakeGasEstimate(
+	_operator common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		tg.callerOptions.From,
+		tg.contractAddress,
+		"cancelRevokedStake",
 		tg.contractABI,
 		tg.transactor,
 		_operator,
@@ -1190,6 +1281,103 @@ func (tg *TokenGrant) GetGrantUnlockingScheduleAtBlock(
 	return result, err
 }
 
+func (tg *TokenGrant) GetGrants(
+	_granteeOrGrantManager common.Address,
+) ([]*big.Int, error) {
+	var result []*big.Int
+	result, err := tg.contract.GetGrants(
+		tg.callerOptions,
+		_granteeOrGrantManager,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"getGrants",
+			_granteeOrGrantManager,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) GetGrantsAtBlock(
+	_granteeOrGrantManager common.Address,
+	blockNumber *big.Int,
+) ([]*big.Int, error) {
+	var result []*big.Int
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"getGrants",
+		&result,
+		_granteeOrGrantManager,
+	)
+
+	return result, err
+}
+
+type Grant struct {
+	Amount        *big.Int
+	Withdrawn     *big.Int
+	Staked        *big.Int
+	RevokedAmount *big.Int
+	RevokedAt     *big.Int
+	Grantee       common.Address
+}
+
+func (tg *TokenGrant) GetGrant(
+	_id *big.Int,
+) (Grant, error) {
+	var result Grant
+	result, err := tg.contract.GetGrant(
+		tg.callerOptions,
+		_id,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"getGrant",
+			_id,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) GetGrantAtBlock(
+	_id *big.Int,
+	blockNumber *big.Int,
+) (Grant, error) {
+	var result Grant
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"getGrant",
+		&result,
+		_id,
+	)
+
+	return result, err
+}
+
 func (tg *TokenGrant) GranteesToOperators(
 	arg0 common.Address,
 	arg1 *big.Int,
@@ -1239,6 +1427,214 @@ func (tg *TokenGrant) GranteesToOperatorsAtBlock(
 	return result, err
 }
 
+func (tg *TokenGrant) UnlockedAmount(
+	_id *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+	result, err := tg.contract.UnlockedAmount(
+		tg.callerOptions,
+		_id,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"unlockedAmount",
+			_id,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) UnlockedAmountAtBlock(
+	_id *big.Int,
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"unlockedAmount",
+		&result,
+		_id,
+	)
+
+	return result, err
+}
+
+func (tg *TokenGrant) Token() (common.Address, error) {
+	var result common.Address
+	result, err := tg.contract.Token(
+		tg.callerOptions,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"token",
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) TokenAtBlock(
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"token",
+		&result,
+	)
+
+	return result, err
+}
+
+func (tg *TokenGrant) Withdrawable(
+	_id *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+	result, err := tg.contract.Withdrawable(
+		tg.callerOptions,
+		_id,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"withdrawable",
+			_id,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) WithdrawableAtBlock(
+	_id *big.Int,
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"withdrawable",
+		&result,
+		_id,
+	)
+
+	return result, err
+}
+
+func (tg *TokenGrant) GrantStakes(
+	arg0 common.Address,
+) (common.Address, error) {
+	var result common.Address
+	result, err := tg.contract.GrantStakes(
+		tg.callerOptions,
+		arg0,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"grantStakes",
+			arg0,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) GrantStakesAtBlock(
+	arg0 common.Address,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"grantStakes",
+		&result,
+		arg0,
+	)
+
+	return result, err
+}
+
+func (tg *TokenGrant) NumGrants() (*big.Int, error) {
+	var result *big.Int
+	result, err := tg.contract.NumGrants(
+		tg.callerOptions,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"numGrants",
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) NumGrantsAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"numGrants",
+		&result,
+	)
+
+	return result, err
+}
+
 func (tg *TokenGrant) AvailableToStake(
 	_grantId *big.Int,
 ) (*big.Int, error) {
@@ -1278,6 +1674,50 @@ func (tg *TokenGrant) AvailableToStakeAtBlock(
 		"availableToStake",
 		&result,
 		_grantId,
+	)
+
+	return result, err
+}
+
+func (tg *TokenGrant) Balances(
+	arg0 common.Address,
+) (*big.Int, error) {
+	var result *big.Int
+	result, err := tg.contract.Balances(
+		tg.callerOptions,
+		arg0,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"balances",
+			arg0,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) BalancesAtBlock(
+	arg0 common.Address,
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"balances",
+		&result,
+		arg0,
 	)
 
 	return result, err
@@ -1332,13 +1772,13 @@ func (tg *TokenGrant) GrantIndicesAtBlock(
 	return result, err
 }
 
-func (tg *TokenGrant) GrantStakes(
-	arg0 common.Address,
-) (common.Address, error) {
-	var result common.Address
-	result, err := tg.contract.GrantStakes(
+func (tg *TokenGrant) BalanceOf(
+	_owner common.Address,
+) (*big.Int, error) {
+	var result *big.Int
+	result, err := tg.contract.BalanceOf(
 		tg.callerOptions,
-		arg0,
+		_owner,
 	)
 
 	if err != nil {
@@ -1346,19 +1786,19 @@ func (tg *TokenGrant) GrantStakes(
 			err,
 			tg.callerOptions.From,
 			nil,
-			"grantStakes",
-			arg0,
+			"balanceOf",
+			_owner,
 		)
 	}
 
 	return result, err
 }
 
-func (tg *TokenGrant) GrantStakesAtBlock(
-	arg0 common.Address,
+func (tg *TokenGrant) BalanceOfAtBlock(
+	_owner common.Address,
 	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
+) (*big.Int, error) {
+	var result *big.Int
 
 	err := ethutil.CallAtBlock(
 		tg.callerOptions.From,
@@ -1368,9 +1808,103 @@ func (tg *TokenGrant) GrantStakesAtBlock(
 		tg.caller,
 		tg.errorResolver,
 		tg.contractAddress,
-		"grantStakes",
+		"balanceOf",
 		&result,
-		arg0,
+		_owner,
+	)
+
+	return result, err
+}
+
+type GrantStakeDetails struct {
+	GrantId         *big.Int
+	Amount          *big.Int
+	StakingContract common.Address
+}
+
+func (tg *TokenGrant) GetGrantStakeDetails(
+	operator common.Address,
+) (GrantStakeDetails, error) {
+	var result GrantStakeDetails
+	result, err := tg.contract.GetGrantStakeDetails(
+		tg.callerOptions,
+		operator,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"getGrantStakeDetails",
+			operator,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) GetGrantStakeDetailsAtBlock(
+	operator common.Address,
+	blockNumber *big.Int,
+) (GrantStakeDetails, error) {
+	var result GrantStakeDetails
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"getGrantStakeDetails",
+		&result,
+		operator,
+	)
+
+	return result, err
+}
+
+func (tg *TokenGrant) GetGranteeOperators(
+	grantee common.Address,
+) ([]common.Address, error) {
+	var result []common.Address
+	result, err := tg.contract.GetGranteeOperators(
+		tg.callerOptions,
+		grantee,
+	)
+
+	if err != nil {
+		return result, tg.errorResolver.ResolveError(
+			err,
+			tg.callerOptions.From,
+			nil,
+			"getGranteeOperators",
+			grantee,
+		)
+	}
+
+	return result, err
+}
+
+func (tg *TokenGrant) GetGranteeOperatorsAtBlock(
+	grantee common.Address,
+	blockNumber *big.Int,
+) ([]common.Address, error) {
+	var result []common.Address
+
+	err := ethutil.CallAtBlock(
+		tg.callerOptions.From,
+		blockNumber,
+		nil,
+		tg.contractABI,
+		tg.caller,
+		tg.errorResolver,
+		tg.contractAddress,
+		"getGranteeOperators",
+		&result,
+		grantee,
 	)
 
 	return result, err
@@ -1480,450 +2014,126 @@ func (tg *TokenGrant) StakeBalanceOfAtBlock(
 	return result, err
 }
 
-func (tg *TokenGrant) Withdrawable(
-	_id *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := tg.contract.Withdrawable(
-		tg.callerOptions,
-		_id,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"withdrawable",
-			_id,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) WithdrawableAtBlock(
-	_id *big.Int,
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"withdrawable",
-		&result,
-		_id,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) Token() (common.Address, error) {
-	var result common.Address
-	result, err := tg.contract.Token(
-		tg.callerOptions,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"token",
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) TokenAtBlock(
-	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"token",
-		&result,
-	)
-
-	return result, err
-}
-
-type Grant struct {
-	Amount        *big.Int
-	Withdrawn     *big.Int
-	Staked        *big.Int
-	RevokedAmount *big.Int
-	RevokedAt     *big.Int
-	Grantee       common.Address
-}
-
-func (tg *TokenGrant) GetGrant(
-	_id *big.Int,
-) (Grant, error) {
-	var result Grant
-	result, err := tg.contract.GetGrant(
-		tg.callerOptions,
-		_id,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"getGrant",
-			_id,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) GetGrantAtBlock(
-	_id *big.Int,
-	blockNumber *big.Int,
-) (Grant, error) {
-	var result Grant
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"getGrant",
-		&result,
-		_id,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) GetGrants(
-	_granteeOrGrantManager common.Address,
-) ([]*big.Int, error) {
-	var result []*big.Int
-	result, err := tg.contract.GetGrants(
-		tg.callerOptions,
-		_granteeOrGrantManager,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"getGrants",
-			_granteeOrGrantManager,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) GetGrantsAtBlock(
-	_granteeOrGrantManager common.Address,
-	blockNumber *big.Int,
-) ([]*big.Int, error) {
-	var result []*big.Int
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"getGrants",
-		&result,
-		_granteeOrGrantManager,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) BalanceOf(
-	_owner common.Address,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := tg.contract.BalanceOf(
-		tg.callerOptions,
-		_owner,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"balanceOf",
-			_owner,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) BalanceOfAtBlock(
-	_owner common.Address,
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"balanceOf",
-		&result,
-		_owner,
-	)
-
-	return result, err
-}
-
-type GrantStakeDetails struct {
-	GrantId         *big.Int
-	Amount          *big.Int
-	StakingContract common.Address
-}
-
-func (tg *TokenGrant) GetGrantStakeDetails(
-	operator common.Address,
-) (GrantStakeDetails, error) {
-	var result GrantStakeDetails
-	result, err := tg.contract.GetGrantStakeDetails(
-		tg.callerOptions,
-		operator,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"getGrantStakeDetails",
-			operator,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) GetGrantStakeDetailsAtBlock(
-	operator common.Address,
-	blockNumber *big.Int,
-) (GrantStakeDetails, error) {
-	var result GrantStakeDetails
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"getGrantStakeDetails",
-		&result,
-		operator,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) UnlockedAmount(
-	_id *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := tg.contract.UnlockedAmount(
-		tg.callerOptions,
-		_id,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"unlockedAmount",
-			_id,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) UnlockedAmountAtBlock(
-	_id *big.Int,
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"unlockedAmount",
-		&result,
-		_id,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) Balances(
-	arg0 common.Address,
-) (*big.Int, error) {
-	var result *big.Int
-	result, err := tg.contract.Balances(
-		tg.callerOptions,
-		arg0,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"balances",
-			arg0,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) BalancesAtBlock(
-	arg0 common.Address,
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"balances",
-		&result,
-		arg0,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) NumGrants() (*big.Int, error) {
-	var result *big.Int
-	result, err := tg.contract.NumGrants(
-		tg.callerOptions,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"numGrants",
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) NumGrantsAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"numGrants",
-		&result,
-	)
-
-	return result, err
-}
-
-func (tg *TokenGrant) GetGranteeOperators(
-	grantee common.Address,
-) ([]common.Address, error) {
-	var result []common.Address
-	result, err := tg.contract.GetGranteeOperators(
-		tg.callerOptions,
-		grantee,
-	)
-
-	if err != nil {
-		return result, tg.errorResolver.ResolveError(
-			err,
-			tg.callerOptions.From,
-			nil,
-			"getGranteeOperators",
-			grantee,
-		)
-	}
-
-	return result, err
-}
-
-func (tg *TokenGrant) GetGranteeOperatorsAtBlock(
-	grantee common.Address,
-	blockNumber *big.Int,
-) ([]common.Address, error) {
-	var result []common.Address
-
-	err := ethutil.CallAtBlock(
-		tg.callerOptions.From,
-		blockNumber,
-		nil,
-		tg.contractABI,
-		tg.caller,
-		tg.errorResolver,
-		tg.contractAddress,
-		"getGranteeOperators",
-		&result,
-		grantee,
-	)
-
-	return result, err
-}
-
 // ------ Events -------
+
+type tokenGrantTokenGrantRevokedFunc func(
+	Id *big.Int,
+	blockNumber uint64,
+)
+
+func (tg *TokenGrant) WatchTokenGrantRevoked(
+	success tokenGrantTokenGrantRevokedFunc,
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := tg.subscribeTokenGrantRevoked(
+			success,
+			failCallback,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				tgLogger.Warning(
+					"subscription to event TokenGrantRevoked terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (tg *TokenGrant) subscribeTokenGrantRevoked(
+	success tokenGrantTokenGrantRevokedFunc,
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.TokenGrantTokenGrantRevoked)
+	eventSubscription, err := tg.contract.WatchTokenGrantRevoked(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for TokenGrantRevoked events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.Id,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
 
 type tokenGrantTokenGrantStakedFunc func(
 	GrantId *big.Int,
@@ -2382,125 +2592,6 @@ func (tg *TokenGrant) subscribeTokenGrantCreated(
 		close(eventChan)
 		return eventSubscription, fmt.Errorf(
 			"error creating watch for TokenGrantCreated events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Id,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type tokenGrantTokenGrantRevokedFunc func(
-	Id *big.Int,
-	blockNumber uint64,
-)
-
-func (tg *TokenGrant) WatchTokenGrantRevoked(
-	success tokenGrantTokenGrantRevokedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := tg.subscribeTokenGrantRevoked(
-			success,
-			failCallback,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tgLogger.Warning(
-					"subscription to event TokenGrantRevoked terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (tg *TokenGrant) subscribeTokenGrantRevoked(
-	success tokenGrantTokenGrantRevokedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenGrantTokenGrantRevoked)
-	eventSubscription, err := tg.contract.WatchTokenGrantRevoked(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for TokenGrantRevoked events: [%v]",
 			err,
 		)
 	}

@@ -93,11 +93,17 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
 
+	nonceManager := ethutil.NewNonceManager(
+		pv.accountKey.Address,
+		pv.client,
+	)
+
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
 			*address,
 			pv.accountKey,
 			pv.client,
+			nonceManager,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -115,6 +121,7 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			nonceManager,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -141,11 +148,17 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
 	}
 
+	nonceManager := ethutil.NewNonceManager(
+		base.accountKey.Address,
+		base.client,
+	)
+
 	keepRandomBeaconServiceContract, err :=
 		contract.NewKeepRandomBeaconService(
 			*address,
 			base.accountKey,
 			base.client,
+			nonceManager,
 			base.transactionMutex,
 		)
 	if err != nil {

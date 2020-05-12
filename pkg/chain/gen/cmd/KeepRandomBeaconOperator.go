@@ -50,13 +50,6 @@ func init() {
 		Usage:       `Provides access to the KeepRandomBeaconOperator contract.`,
 		Description: keepRandomBeaconOperatorDescription,
 		Subcommands: []cli.Command{{
-			Name:      "group-creation-fee",
-			Usage:     "Calls the constant method groupCreationFee on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboGroupCreationFee,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "get-group-members",
 			Usage:     "Calls the constant method getGroupMembers on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "[groupPubKey] ",
@@ -64,80 +57,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "group-size",
-			Usage:     "Calls the constant method groupSize on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboGroupSize,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "selected-participants",
-			Usage:     "Calls the constant method selectedParticipants on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboSelectedParticipants,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-first-active-group-index",
-			Usage:     "Calls the constant method getFirstActiveGroupIndex on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboGetFirstActiveGroupIndex,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "dkg-gas-estimate",
-			Usage:     "Calls the constant method dkgGasEstimate on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboDkgGasEstimate,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "current-request-group-index",
-			Usage:     "Calls the constant method currentRequestGroupIndex on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboCurrentRequestGroupIndex,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-group-public-key",
-			Usage:     "Calls the constant method getGroupPublicKey on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[groupIndex] ",
-			Action:    krboGetGroupPublicKey,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-group-selection-possible",
-			Usage:     "Calls the constant method isGroupSelectionPossible on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboIsGroupSelectionPossible,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "current-request-start-block",
-			Usage:     "Calls the constant method currentRequestStartBlock on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboCurrentRequestStartBlock,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "dkg-submitter-reimbursement-fee",
-			Usage:     "Calls the constant method dkgSubmitterReimbursementFee on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboDkgSubmitterReimbursementFee,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "gas-price-ceiling",
-			Usage:     "Calls the constant method gasPriceCeiling on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboGasPriceCeiling,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-group-registered",
-			Usage:     "Calls the constant method isGroupRegistered on the KeepRandomBeaconOperator contract.",
+			Name:      "is-stale-group",
+			Usage:     "Calls the constant method isStaleGroup on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "[groupPubKey] ",
-			Action:    krboIsGroupRegistered,
+			Action:    krboIsStaleGroup,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -148,45 +71,17 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "has-minimum-stake",
-			Usage:     "Calls the constant method hasMinimumStake on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[staker] ",
-			Action:    krboHasMinimumStake,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "has-withdrawn-rewards",
-			Usage:     "Calls the constant method hasWithdrawnRewards on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[operator] [groupIndex] ",
-			Action:    krboHasWithdrawnRewards,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "is-stale-group",
-			Usage:     "Calls the constant method isStaleGroup on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[groupPubKey] ",
-			Action:    krboIsStaleGroup,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-group-member-rewards",
-			Usage:     "Calls the constant method getGroupMemberRewards on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[groupPubKey] ",
-			Action:    krboGetGroupMemberRewards,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "entry-verification-gas-estimate",
-			Usage:     "Calls the constant method entryVerificationGasEstimate on the KeepRandomBeaconOperator contract.",
+			Name:      "entry-verification-fee",
+			Usage:     "Calls the constant method entryVerificationFee on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboEntryVerificationGasEstimate,
+			Action:    krboEntryVerificationFee,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "group-member-base-reward",
-			Usage:     "Calls the constant method groupMemberBaseReward on the KeepRandomBeaconOperator contract.",
+			Name:      "get-first-active-group-index",
+			Usage:     "Calls the constant method getFirstActiveGroupIndex on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboGroupMemberBaseReward,
+			Action:    krboGetFirstActiveGroupIndex,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -197,17 +92,31 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "group-selection-gas-estimate",
-			Usage:     "Calls the constant method groupSelectionGasEstimate on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "",
-			Action:    krboGroupSelectionGasEstimate,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "relay-entry-timeout",
 			Usage:     "Calls the constant method relayEntryTimeout on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
 			Action:    krboRelayEntryTimeout,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "selected-participants",
+			Usage:     "Calls the constant method selectedParticipants on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboSelectedParticipants,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "dkg-gas-estimate",
+			Usage:     "Calls the constant method dkgGasEstimate on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboDkgGasEstimate,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "group-selection-gas-estimate",
+			Usage:     "Calls the constant method groupSelectionGasEstimate on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboGroupSelectionGasEstimate,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -218,24 +127,24 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "entry-verification-fee",
-			Usage:     "Calls the constant method entryVerificationFee on the KeepRandomBeaconOperator contract.",
+			Name:      "current-request-start-block",
+			Usage:     "Calls the constant method currentRequestStartBlock on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboEntryVerificationFee,
+			Action:    krboCurrentRequestStartBlock,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "ticket-submission-timeout",
-			Usage:     "Calls the constant method ticketSubmissionTimeout on the KeepRandomBeaconOperator contract.",
+			Name:      "group-creation-fee",
+			Usage:     "Calls the constant method groupCreationFee on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboTicketSubmissionTimeout,
+			Action:    krboGroupCreationFee,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "group-threshold",
-			Usage:     "Calls the constant method groupThreshold on the KeepRandomBeaconOperator contract.",
+			Name:      "entry-verification-gas-estimate",
+			Usage:     "Calls the constant method entryVerificationGasEstimate on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboGroupThreshold,
+			Action:    krboEntryVerificationGasEstimate,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -246,10 +155,38 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "result-publication-block-step",
-			Usage:     "Calls the constant method resultPublicationBlockStep on the KeepRandomBeaconOperator contract.",
+			Name:      "gas-price-ceiling",
+			Usage:     "Calls the constant method gasPriceCeiling on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboResultPublicationBlockStep,
+			Action:    krboGasPriceCeiling,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "group-size",
+			Usage:     "Calls the constant method groupSize on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboGroupSize,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "has-withdrawn-rewards",
+			Usage:     "Calls the constant method hasWithdrawnRewards on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[operator] [groupIndex] ",
+			Action:    krboHasWithdrawnRewards,
+			Before:    cmd.ArgCountChecker(2),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-group-registered",
+			Usage:     "Calls the constant method isGroupRegistered on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[groupPubKey] ",
+			Action:    krboIsGroupRegistered,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "is-group-selection-possible",
+			Usage:     "Calls the constant method isGroupSelectionPossible on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboIsGroupSelectionPossible,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -260,33 +197,68 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "relay-entry",
-			Usage:     "Calls the method relayEntry on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[_groupSignature] ",
-			Action:    krboRelayEntry,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "sign",
-			Usage:     "Calls the payable method sign on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[requestId] [previousEntry] ",
-			Action:    krboSign,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.PayableFlags,
-		}, {
-			Name:      "genesis",
-			Usage:     "Calls the payable method genesis on the KeepRandomBeaconOperator contract.",
+			Name:      "dkg-submitter-reimbursement-fee",
+			Usage:     "Calls the constant method dkgSubmitterReimbursementFee on the KeepRandomBeaconOperator contract.",
 			ArgsUsage: "",
-			Action:    krboGenesis,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.PayableFlags,
+			Action:    krboDkgSubmitterReimbursementFee,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "add-service-contract",
-			Usage:     "Calls the method addServiceContract on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[serviceContract] ",
-			Action:    krboAddServiceContract,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
+			Name:      "result-publication-block-step",
+			Usage:     "Calls the constant method resultPublicationBlockStep on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboResultPublicationBlockStep,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "ticket-submission-timeout",
+			Usage:     "Calls the constant method ticketSubmissionTimeout on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboTicketSubmissionTimeout,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "current-request-group-index",
+			Usage:     "Calls the constant method currentRequestGroupIndex on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboCurrentRequestGroupIndex,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-group-member-rewards",
+			Usage:     "Calls the constant method getGroupMemberRewards on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[groupPubKey] ",
+			Action:    krboGetGroupMemberRewards,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "group-member-base-reward",
+			Usage:     "Calls the constant method groupMemberBaseReward on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboGroupMemberBaseReward,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "group-threshold",
+			Usage:     "Calls the constant method groupThreshold on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboGroupThreshold,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "has-minimum-stake",
+			Usage:     "Calls the constant method hasMinimumStake on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[staker] ",
+			Action:    krboHasMinimumStake,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-group-public-key",
+			Usage:     "Calls the constant method getGroupPublicKey on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[groupIndex] ",
+			Action:    krboGetGroupPublicKey,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "report-relay-entry-timeout",
 			Usage:     "Calls the method reportRelayEntryTimeout on the KeepRandomBeaconOperator contract.",
@@ -302,11 +274,18 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.PayableFlags,
 		}, {
-			Name:      "remove-service-contract",
-			Usage:     "Calls the method removeServiceContract on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[serviceContract] ",
-			Action:    krboRemoveServiceContract,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Name:      "sign",
+			Usage:     "Calls the payable method sign on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[requestId] [previousEntry] ",
+			Action:    krboSign,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "withdraw-group-member-rewards",
+			Usage:     "Calls the method withdrawGroupMemberRewards on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[operator] [groupIndex] ",
+			Action:    krboWithdrawGroupMemberRewards,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "report-unauthorized-signing",
@@ -316,37 +295,38 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "withdraw-group-member-rewards",
-			Usage:     "Calls the method withdrawGroupMemberRewards on the KeepRandomBeaconOperator contract.",
-			ArgsUsage: "[operator] [groupIndex] ",
-			Action:    krboWithdrawGroupMemberRewards,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Name:      "genesis",
+			Usage:     "Calls the payable method genesis on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "",
+			Action:    krboGenesis,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "remove-service-contract",
+			Usage:     "Calls the method removeServiceContract on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[serviceContract] ",
+			Action:    krboRemoveServiceContract,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "relay-entry",
+			Usage:     "Calls the method relayEntry on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[_groupSignature] ",
+			Action:    krboRelayEntry,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "add-service-contract",
+			Usage:     "Calls the method addServiceContract on the KeepRandomBeaconOperator contract.",
+			ArgsUsage: "[serviceContract] ",
+			Action:    krboAddServiceContract,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}},
 	})
 }
 
 /// ------------------- Const methods -------------------
-
-func krboGroupCreationFee(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GroupCreationFeeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
 
 func krboGetGroupMembers(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
@@ -376,215 +356,7 @@ func krboGetGroupMembers(c *cli.Context) error {
 	return nil
 }
 
-func krboGroupSize(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GroupSizeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboSelectedParticipants(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.SelectedParticipantsAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboGetFirstActiveGroupIndex(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GetFirstActiveGroupIndexAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboDkgGasEstimate(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.DkgGasEstimateAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboCurrentRequestGroupIndex(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.CurrentRequestGroupIndexAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboGetGroupPublicKey(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-	groupIndex, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter groupIndex, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetGroupPublicKeyAtBlock(
-		groupIndex,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboIsGroupSelectionPossible(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.IsGroupSelectionPossibleAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboCurrentRequestStartBlock(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.CurrentRequestStartBlockAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboDkgSubmitterReimbursementFee(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.DkgSubmitterReimbursementFeeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboGasPriceCeiling(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GasPriceCeilingAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboIsGroupRegistered(c *cli.Context) error {
+func krboIsStaleGroup(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
@@ -597,7 +369,7 @@ func krboIsGroupRegistered(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.IsGroupRegisteredAtBlock(
+	result, err := contract.IsStaleGroupAtBlock(
 		groupPubKey,
 
 		cmd.BlockFlagValue.Uint,
@@ -632,21 +404,273 @@ func krboNumberOfGroups(c *cli.Context) error {
 	return nil
 }
 
-func krboHasMinimumStake(c *cli.Context) error {
+func krboEntryVerificationFee(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
 	}
-	staker, err := ethutil.AddressFromHex(c.Args()[0])
+
+	result, err := contract.EntryVerificationFeeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
 	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter staker, a address, from passed value %v",
-			c.Args()[0],
-		)
+		return err
 	}
 
-	result, err := contract.HasMinimumStakeAtBlock(
-		staker,
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboGetFirstActiveGroupIndex(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GetFirstActiveGroupIndexAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboGroupProfitFee(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GroupProfitFeeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboRelayEntryTimeout(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.RelayEntryTimeoutAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboSelectedParticipants(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.SelectedParticipantsAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboDkgGasEstimate(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.DkgGasEstimateAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboGroupSelectionGasEstimate(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GroupSelectionGasEstimateAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboSubmittedTickets(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.SubmittedTicketsAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboCurrentRequestStartBlock(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.CurrentRequestStartBlockAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboGroupCreationFee(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GroupCreationFeeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboEntryVerificationGasEstimate(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.EntryVerificationGasEstimateAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboIsEntryInProgress(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsEntryInProgressAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboGasPriceCeiling(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GasPriceCeilingAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboGroupSize(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.GroupSizeAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -697,7 +721,7 @@ func krboHasWithdrawnRewards(c *cli.Context) error {
 	return nil
 }
 
-func krboIsStaleGroup(c *cli.Context) error {
+func krboIsGroupRegistered(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
@@ -710,8 +734,128 @@ func krboIsStaleGroup(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.IsStaleGroupAtBlock(
+	result, err := contract.IsGroupRegisteredAtBlock(
 		groupPubKey,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboIsGroupSelectionPossible(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.IsGroupSelectionPossibleAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboCurrentRequestPreviousEntry(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.CurrentRequestPreviousEntryAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboDkgSubmitterReimbursementFee(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.DkgSubmitterReimbursementFeeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboResultPublicationBlockStep(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.ResultPublicationBlockStepAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboTicketSubmissionTimeout(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.TicketSubmissionTimeoutAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krboCurrentRequestGroupIndex(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.CurrentRequestGroupIndexAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -753,26 +897,6 @@ func krboGetGroupMemberRewards(c *cli.Context) error {
 	return nil
 }
 
-func krboEntryVerificationGasEstimate(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.EntryVerificationGasEstimateAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 func krboGroupMemberBaseReward(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
@@ -780,126 +904,6 @@ func krboGroupMemberBaseReward(c *cli.Context) error {
 	}
 
 	result, err := contract.GroupMemberBaseRewardAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboGroupProfitFee(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GroupProfitFeeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboGroupSelectionGasEstimate(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.GroupSelectionGasEstimateAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboRelayEntryTimeout(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.RelayEntryTimeoutAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboSubmittedTickets(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.SubmittedTicketsAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboEntryVerificationFee(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.EntryVerificationFeeAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboTicketSubmissionTimeout(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.TicketSubmissionTimeoutAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -933,13 +937,21 @@ func krboGroupThreshold(c *cli.Context) error {
 	return nil
 }
 
-func krboIsEntryInProgress(c *cli.Context) error {
+func krboHasMinimumStake(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
 	}
+	staker, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter staker, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
 
-	result, err := contract.IsEntryInProgressAtBlock(
+	result, err := contract.HasMinimumStakeAtBlock(
+		staker,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -953,33 +965,21 @@ func krboIsEntryInProgress(c *cli.Context) error {
 	return nil
 }
 
-func krboResultPublicationBlockStep(c *cli.Context) error {
+func krboGetGroupPublicKey(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
 	}
-
-	result, err := contract.ResultPublicationBlockStepAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
+	groupIndex, err := hexutil.DecodeBig(c.Args()[0])
 	if err != nil {
-		return err
+		return fmt.Errorf(
+			"couldn't parse parameter groupIndex, a uint256, from passed value %v",
+			c.Args()[0],
+		)
 	}
 
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krboCurrentRequestPreviousEntry(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.CurrentRequestPreviousEntryAtBlock(
+	result, err := contract.GetGroupPublicKeyAtBlock(
+		groupIndex,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -994,182 +994,6 @@ func krboCurrentRequestPreviousEntry(c *cli.Context) error {
 }
 
 /// ------------------- Non-const methods -------------------
-
-func krboRelayEntry(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	_groupSignature, err := hexutil.Decode(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _groupSignature, a bytes, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RelayEntry(
-			_groupSignature,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallRelayEntry(
-			_groupSignature,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krboSign(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	requestId, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter requestId, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	previousEntry, err := hexutil.Decode(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter previousEntry, a bytes, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Sign(
-			requestId,
-			previousEntry,
-			cmd.ValueFlagValue.Uint)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallSign(
-			requestId,
-			previousEntry,
-			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krboGenesis(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Genesis(
-			cmd.ValueFlagValue.Uint)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallGenesis(
-			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krboAddServiceContract(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconOperator(c)
-	if err != nil {
-		return err
-	}
-
-	serviceContract, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter serviceContract, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.AddServiceContract(
-			serviceContract,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallAddServiceContract(
-			serviceContract,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
 
 func krboReportRelayEntryTimeout(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
@@ -1258,17 +1082,25 @@ func krboCreateGroup(c *cli.Context) error {
 	return nil
 }
 
-func krboRemoveServiceContract(c *cli.Context) error {
+func krboSign(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
 	}
 
-	serviceContract, err := ethutil.AddressFromHex(c.Args()[0])
+	requestId, err := hexutil.DecodeBig(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter serviceContract, a address, from passed value %v",
+			"couldn't parse parameter requestId, a uint256, from passed value %v",
 			c.Args()[0],
+		)
+	}
+
+	previousEntry, err := hexutil.Decode(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter previousEntry, a bytes, from passed value %v",
+			c.Args()[1],
 		)
 	}
 
@@ -1278,8 +1110,63 @@ func krboRemoveServiceContract(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RemoveServiceContract(
-			serviceContract,
+		transaction, err = contract.Sign(
+			requestId,
+			previousEntry,
+			cmd.ValueFlagValue.Uint)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallSign(
+			requestId,
+			previousEntry,
+			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krboWithdrawGroupMemberRewards(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	groupIndex, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter groupIndex, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.WithdrawGroupMemberRewards(
+			operator,
+			groupIndex,
 		)
 		if err != nil {
 			return err
@@ -1288,8 +1175,9 @@ func krboRemoveServiceContract(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallRemoveServiceContract(
-			serviceContract,
+		err = contract.CallWithdrawGroupMemberRewards(
+			operator,
+			groupIndex,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1356,25 +1244,51 @@ func krboReportUnauthorizedSigning(c *cli.Context) error {
 	return nil
 }
 
-func krboWithdrawGroupMemberRewards(c *cli.Context) error {
+func krboGenesis(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconOperator(c)
 	if err != nil {
 		return err
 	}
 
-	operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operator, a address, from passed value %v",
-			c.Args()[0],
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Genesis(
+			cmd.ValueFlagValue.Uint)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallGenesis(
+			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
 		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
 	}
 
-	groupIndex, err := hexutil.DecodeBig(c.Args()[1])
+	return nil
+}
+
+func krboRemoveServiceContract(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	serviceContract, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter groupIndex, a uint256, from passed value %v",
-			c.Args()[1],
+			"couldn't parse parameter serviceContract, a address, from passed value %v",
+			c.Args()[0],
 		)
 	}
 
@@ -1384,9 +1298,8 @@ func krboWithdrawGroupMemberRewards(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.WithdrawGroupMemberRewards(
-			operator,
-			groupIndex,
+		transaction, err = contract.RemoveServiceContract(
+			serviceContract,
 		)
 		if err != nil {
 			return err
@@ -1395,9 +1308,96 @@ func krboWithdrawGroupMemberRewards(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallWithdrawGroupMemberRewards(
-			operator,
-			groupIndex,
+		err = contract.CallRemoveServiceContract(
+			serviceContract,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krboRelayEntry(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	_groupSignature, err := hexutil.Decode(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _groupSignature, a bytes, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RelayEntry(
+			_groupSignature,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallRelayEntry(
+			_groupSignature,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krboAddServiceContract(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconOperator(c)
+	if err != nil {
+		return err
+	}
+
+	serviceContract, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter serviceContract, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.AddServiceContract(
+			serviceContract,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallAddServiceContract(
+			serviceContract,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1441,6 +1441,7 @@ func initializeKeepRandomBeaconOperator(c *cli.Context) (*contract.KeepRandomBea
 		address,
 		key,
 		client,
+		ethutil.NewNonceManager(key.Address, client),
 		&sync.Mutex{},
 	)
 }
