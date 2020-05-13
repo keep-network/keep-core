@@ -86,7 +86,7 @@ const KeepRandomBeaconApplicationPage = () => {
         throw error
       }
     },
-    [showMessage, onAuthorizationSuccessCallback]
+    [showMessage, onAuthorizationSuccessCallback, web3Context]
   )
 
   const authorizeContractsData = useMemo(() => {
