@@ -9,6 +9,7 @@ const ViewAddressInBlockExplorer = ({ address, text, urlSuffix }) => {
       href={`${etherscanDefaultUrl}/address/${address}${urlSuffix}`}
       rel="noopener noreferrer"
       target="_blank"
+      className="arrow-link"
     >
       {text}
     </a>

@@ -1,14 +1,25 @@
-.select-wrapper {
-    width: 100%;
-    position: relative;
-    margin-bottom: 1rem;
-}
-
 .select {
     position: relative;
     display: flex;
     flex-direction: column;
     border: 1px solid @color-black;
+
+    &.filter {
+        border-radius: 100px;
+        min-width: 250px;
+        border: 1px solid @color-grey-20;
+
+        > .options {
+            top: 110%;
+            border: 1px solid @color-grey-20;
+        }
+
+        .arrow {
+            &:before, &:after {
+                background-color: @color-grey-50;
+            }
+        }
+    }
 
     &-trigger {
         min-height: 50px;
@@ -22,7 +33,6 @@
         font-weight: normal;
         color: @color-black;
         line-height: 25px;
-        background: @white;
         cursor: pointer;
     }
 

@@ -85,6 +85,11 @@ hr {
     &.space-between {
       justify-content: space-between;
     }
+
+    &.space-evenly {
+      justify-content: space-evenly;
+    }
+
     &.center {
       align-items: center;
     }
@@ -140,6 +145,35 @@ svg.keep-outline {
   &.grey-40 {
     * {
       fill: @color-grey-40
+    }
+  }
+}
+
+ul.line-separator { 
+  li {
+    border-bottom: 1px solid @color-grey-20;
+    padding-bottom: 1rem;
+    margin-top: 1rem;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+    
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+}
+
+svg.arrow-right {
+  &.lg {
+    width: 26px;
+    height: 20px;
+  }
+  &.black {
+    path {
+      fill: @color-black;
+      stroke: @color-black;
     }
   }
 }

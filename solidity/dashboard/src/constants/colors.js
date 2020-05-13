@@ -14,6 +14,7 @@ export const colors = {
   bgPending: "#F8E9D3",
   bgSecondary: "#EFE8FF",
   grey10: "#F7F7F7",
+  grey20: "#E6E6E6",
   grey70: "#4C4C4C",
   grey60: "#6D6D6D  ",
 }

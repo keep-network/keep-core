@@ -2,6 +2,9 @@ import KeepToken from "@keep-network/keep-core/artifacts/KeepToken.json"
 import TokenStaking from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
 import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
+import BondedECDSAKeepFactory from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
+import KeepBonding from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
+import TBTCSystem from "@keep-network/tbtc/artifacts/TBTCSystem.json"
 import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
@@ -16,6 +19,8 @@ import {
   REGISTRY_CONTRACT_NAME,
   KEEP_OPERATOR_STATISTICS_CONTRACT_NAME,
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
+  BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
+  KEEP_BONDING_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -42,6 +47,14 @@ export async function getTokenGrant(web3) {
 
 export async function getKeepRandomBeaconOperator(web3) {
   return getContract(web3, KeepRandomBeaconOperator, OPERATOR_CONTRACT_NAME)
+}
+
+export async function getBondedEcdsaKeepFactoryContract(web3) {
+  return getContract(web3, BondedECDSAKeepFactory, BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME)
+}
+
+export async function getKeepBondingContract(web3) {
+  return getContract(web3, KeepBonding, KEEP_BONDING_CONTRACT_NAME)
 }
 
 export async function getRegistry(web3) {
@@ -83,6 +96,8 @@ export async function getContracts(web3) {
     getRegistry(web3),
     getKeepRandomBeaconOperatorStatistics(web3),
     getManagedGrantFactory(web3),
+    getBondedEcdsaKeepFactoryContract(web3),
+    getKeepBondingContract(web3),
   ])
 
   return {
@@ -93,6 +108,8 @@ export async function getContracts(web3) {
     registryContract: contracts[4],
     keepRandomBeaconOperatorStatistics: contracts[5],
     managedGrantFactoryContract: contracts[6],
+    bondedEcdsaKeepFactoryContract: contracts[7],
+    keepBondingContract: contracts[8],
   }
 }
 
@@ -135,4 +152,16 @@ export function getGuaranteedMinimumStakingPolicyContractAddress() {
 
 export function createManagedGrantContractInstance(web3, address) {
   return new web3.eth.Contract(ManagedGrant.abi, address)
+}
+
+export function getKeepRandomBeaconOperatorAddress() {
+  return getContractAddress(KeepRandomBeaconOperator)
+}
+
+export function getBondedECDSAKeepFactoryAddress() {
+  return getContractAddress(BondedECDSAKeepFactory)
+}
+
+export function getTBTCSystemAddress() {
+  return getContractAddress(TBTCSystem)
 }

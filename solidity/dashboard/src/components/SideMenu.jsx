@@ -48,10 +48,18 @@ export const SideMenu = (props) => {
         />
         <NavLink exact to="/rewards" label="rewards" icon={<Icons.Rewards />} />
         <NavLink
-          exact
-          to="/authorizer"
-          label="authorizer"
+          to="/applications"
+          label="applications"
           icon={<Icons.Authorizer />}
+          sublinks={[
+            { to: "/applications/overview", exact: true, label: "Overview" },
+            {
+              to: "/applications/random-beacon",
+              exact: true,
+              label: "Random Beacon",
+            },
+            { to: "/applications/tbtc", exact: true, label: "tBTC" },
+          ]}
         />
         {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />

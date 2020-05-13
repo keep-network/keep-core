@@ -1,4 +1,5 @@
 import React from "react"
+import { isEmptyArray } from "../utils/array.utils"
 
 export class DataTable extends React.Component {
   constructor(props) {
@@ -15,7 +16,10 @@ export class DataTable extends React.Component {
   initializeDataTable = () => {
     const headers = []
     React.Children.forEach(this.props.children, (children) => {
-      headers.push(children.props.header)
+      headers.push({
+        title: children.props.header,
+        headerStyle: children.props.headerStyle,
+      })
     })
     this.setState({ headers })
   }
@@ -46,7 +50,11 @@ export class DataTable extends React.Component {
     return column.props.renderContent(item)
   }
 
-  renderHeader = (header) => <th key={header}>{header}</th>
+  renderHeader = ({ title, headerStyle }) => (
+    <th key={title} style={headerStyle}>
+      {title}
+    </th>
+  )
 
   render() {
     return (
@@ -54,10 +62,27 @@ export class DataTable extends React.Component {
         <thead>
           <tr>{this.state.headers.map(this.renderHeader)}</tr>
         </thead>
-        <tbody>{this.props.data.map(this.renderItemRow)}</tbody>
+        <tbody>
+          {isEmptyArray(this.props.data) ? (
+            <tr className="text-center">
+              <td colSpan={this.state.headers.length}>
+                <h4 className="text-grey-30">{this.props.noDataMessage}</h4>
+              </td>
+            </tr>
+          ) : (
+            this.props.data.map(this.renderItemRow)
+          )}
+        </tbody>
       </table>
     )
   }
 }
 
-export const Column = ({ header, field, renderContent }) => null
+DataTable.defaultProps = {
+  noDataMessage: "No data.",
+}
+
+export const Column = ({ header, headerStyle, field, renderContent }) => null
+Column.defaultProps = {
+  headerStyle: {},
+}
