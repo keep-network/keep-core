@@ -46,12 +46,7 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
     )
 
     if (isSameEthAddress(authorizerOfOperator, yourAddress)) {
-      const delegatedTokens = await contractService.makeCall(
-        web3Context,
-        TOKEN_STAKING_CONTRACT_NAME,
-        "getDelegationInfo",
-        operatorAddress
-      )
+      const delegatedTokens = await fetchDelegationInfo(web3Context, operatorAddress)
 
       const isBondedECDSAKeepFactoryAuthorized = await contractService.makeCall(
         web3Context,
@@ -206,12 +201,7 @@ const getBondingData = async (web3Context) => {
     } 
 
     for (let i = 0; i < operators.length; i++) {
-      const delegatedTokens = await contractService.makeCall(
-        web3Context,
-        TOKEN_STAKING_CONTRACT_NAME,
-        "getDelegationInfo",  
-        yourAddress,
-      )
+      const delegatedTokens = await fetchDelegationInfo(web3Context, operators[i])
       const availableEth = await fetchAvailableAmount(web3Context, operators[i], bondedECDSAKeepFactoryAddress, sortitionPoolAddress)
         
       let bondedEth = 0
@@ -256,6 +246,15 @@ const fetchSortitionPoolForTbtc = async (web3Context) => {
   )
 }
 
+const fetchDelegationInfo = async (web3Context, operatorAddress) => {
+  return contractService.makeCall(
+    web3Context,
+    TOKEN_STAKING_CONTRACT_NAME,
+    "getDelegationInfo",
+    operatorAddress
+  )
+}
+
 const fetchCreatedBondsEvents = async (
   web3Context, 
   operatorAddresses, 
@@ -292,12 +291,18 @@ const fetchOperatorsOf = async (
   web3Context,
   yourAddress
 ) => {
-  return contractService.makeCall(
+  let ownerOperators = await contractService.makeCall(
     web3Context,
     TOKEN_STAKING_CONTRACT_NAME,
     "operatorsOf",
     yourAddress,
   )
+
+  if (ownerOperators.length == 0) {
+    ownerOperators[0] = yourAddress
+  }
+
+  return ownerOperators;
 }
 
 // aka lockedBonds
