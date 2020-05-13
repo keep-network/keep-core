@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
 import AuthorizationHistory from "../components/AuthorizationHistory"
@@ -8,11 +8,12 @@ import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { useShowMessage, messageType } from "../components/Message"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { LoadingOverlay } from "../components/Loadable"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const mockFetch = async () => {
   const data = [
     {
-      operatorAddress: "address",
+      operatorAddress: "0x28e8b68049595D6575A6aFb710A02eF3049c31AD",
       stakeAmount: "1000",
       contracts: [
         {
@@ -29,6 +30,7 @@ const mockFetch = async () => {
 const KeepRandomBeaconApplicationPage = () => {
   const web3Context = useWeb3Context()
   const showMessage = useShowMessage()
+  const [selectedOperator, setOperator] = useState({})
 
   const [{ data, isFetching }, updateData] = useFetchData(mockFetch, [])
 
@@ -102,14 +104,28 @@ const KeepRandomBeaconApplicationPage = () => {
   )
 
   const authorizeContractsData = useMemo(() => {
-    return data.filter((authData) => !authData.contracts[0].isAuthorized)
-  }, [data])
+    if (!selectedOperator.operatorAddress)
+      return data.filter((authData) => !authData.contracts[0].isAuthorized)
+    return data.filter(
+      ({ operatorAddress, contracts }) =>
+        !contracts[0].isAuthorized &&
+        isSameEthAddress(operatorAddress, selectedOperator.operatorAddress)
+    )
+  }, [data, selectedOperator.operatorAddress])
 
   const authorizationHistoryData = useMemo(() => {
+    if (!selectedOperator.operatorAddress)
+      return data
+        .filter((authData) => authData.contracts[0].isAuthorized)
+        .map(toAuthHistoryData)
     return data
-      .filter((authData) => authData.contracts[0].isAuthorized)
-      .map((authData) => ({ ...authData, ...authData.contracts[0] }))
-  }, [data])
+      .filter(
+        ({ operatorAddress, contracts }) =>
+          contracts[0].isAuthorized &&
+          isSameEthAddress(operatorAddress, selectedOperator.operatorAddress)
+      )
+      .map(toAuthHistoryData)
+  }, [data, selectedOperator.operatorAddress])
 
   return (
     <PageWrapper
@@ -131,6 +147,9 @@ const KeepRandomBeaconApplicationPage = () => {
       </nav>
       <LoadingOverlay isFetching={isFetching}>
         <AuthorizeContracts
+          filterDropdownOptions={data}
+          onSelectOperator={setOperator}
+          selectedOperator={selectedOperator}
           data={authorizeContractsData}
           onAuthorizeBtn={authorizeContract}
         />
@@ -139,5 +158,10 @@ const KeepRandomBeaconApplicationPage = () => {
     </PageWrapper>
   )
 }
+
+const toAuthHistoryData = (authData) => ({
+  ...authData,
+  ...authData.contracts[0],
+})
 
 export default KeepRandomBeaconApplicationPage

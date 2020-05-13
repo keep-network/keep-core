@@ -1,4 +1,4 @@
-import React, { useCallback } from "react"
+import React, { useCallback, useState, useMemo } from "react"
 import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
 import * as Icons from "../components/Icons"
@@ -13,11 +13,13 @@ import { add } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const initialData = []
 const TBTCApplicationPage = () => {
   const web3Context = useWeb3Context()
   const showMessage = useShowMessage()
+  const [selectedOperator, setOperator] = useState({})
 
   // fetch data from service
   const [tbtcAuthState, updateTbtcAuthData] = useFetchData(
@@ -136,6 +138,15 @@ const TBTCApplicationPage = () => {
     [showMessage, web3Context, onAuthorizationSuccessCallback]
   )
 
+  const tbtcAuthData = useMemo(() => {
+    if (!selectedOperator.operatorAddress) {
+      return tbtcAuthState.data
+    }
+    return tbtcAuthState.data.filter((data) =>
+      isSameEthAddress(data.operatorAddress, selectedOperator.operatorAddress)
+    )
+  }, [selectedOperator.operatorAddress, tbtcAuthState.data])
+
   return (
     <PageWrapper
       className=""
@@ -156,7 +167,10 @@ const TBTCApplicationPage = () => {
       </nav>
       <LoadingOverlay isFetching={tbtcAuthState.isFetching}>
         <AuthorizeContracts
-          data={tbtcAuthState.data}
+          filterDropdownOptions={tbtcAuthState.data}
+          onSelectOperator={setOperator}
+          selectedOperator={selectedOperator}
+          data={tbtcAuthData}
           onAuthorizeBtn={authorizeContract}
         />
       </LoadingOverlay>
