@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useMemo } from "react"
 import AuthorizeContracts from "../components/AuthorizeContracts"
 import AuthorizationHistory from "../components/AuthorizationHistory"
-import { authorizationService } from "../services/authorization.service"
+import { authorizationService } from "../services/beeacon-authorization.service"
 import { LoadingOverlay } from "../components/Loadable"
 import { useFetchData } from "../hooks/useFetchData"
 import Dropdown from "../components/Dropdown"
@@ -13,6 +13,7 @@ import Tile from "../components/Tile"
 const initialData = {}
 
 const AuthorizerPage = () => {
+  //TODO: refactor
   const [state, , refreshData] = useFetchData(
     authorizationService.fetchAuthorizationPageData,
     initialData

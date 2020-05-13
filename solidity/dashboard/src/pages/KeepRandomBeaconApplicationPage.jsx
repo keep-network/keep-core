@@ -8,29 +8,16 @@ import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { useShowMessage, messageType } from "../components/Message"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { LoadingOverlay } from "../components/Loadable"
-
-const mockFetch = async () => {
-  const data = [
-    {
-      operatorAddress: "address",
-      stakeAmount: "1000",
-      contracts: [
-        {
-          contractName: "Keep Random Beacon Operator Contract",
-          operatorContractAddress: "address",
-          isAuthorized: true,
-        },
-      ],
-    },
-  ]
-  return data
-}
+import { beaconAuthorizationService } from "../services/beacon-authorization.service"
 
 const KeepRandomBeaconApplicationPage = () => {
   const web3Context = useWeb3Context()
   const showMessage = useShowMessage()
 
-  const [{ data, isFetching }, updateData] = useFetchData(mockFetch, [])
+  const [{ data, isFetching }, updateData] = useFetchData(
+    beaconAuthorizationService.fetchRandomBeaconAuthorizationData, 
+    []
+  )
 
   const onAuthorizationSuccessCallback = useCallback(
     (contractName, operatorAddress) => {
