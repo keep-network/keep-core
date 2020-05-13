@@ -9,7 +9,6 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   getBondedECDSAKeepFactoryAddress,
   getTBTCSystemAddress,
-  getKeepRandomBeaconOperatorAddress,
 } from "../contracts"
 import web3Utils from "web3-utils"
 
@@ -29,10 +28,6 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
     getBondedECDSAKeepFactoryAddress()
   )
   console.log("getTBTCSystemAddress: ", getTBTCSystemAddress())
-  console.log(
-    "getKeepRandomBeaconOperatorAddress: ",
-    getKeepRandomBeaconOperatorAddress()
-  )
 
   // Fetch all authorizer operators
   for (let i = 0; i < stakedEvents.length; i++) {
@@ -227,9 +222,9 @@ const getBondingData = async (web3Context) => {
       const bonding = {
         operatorAddress: operators[i],
         stakeAmount: delegatedTokens.amount,
-        bondedETH: bondedEth,
-        availableETH: availableEth,
-        availableETHInWei: web3Utils.toWei(bondedEth.toString(), "ether"),
+        bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
+        availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
+        availableETHInWei: availableEth,
       }
 
       bondingData.push(bonding)
