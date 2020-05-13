@@ -63,12 +63,11 @@ const KeepRandomBeaconApplicationPage = () => {
     async (data, transactionHashCallback) => {
       const { operatorAddress, contractName } = data
       try {
-        // TODO call service here
-        // await serviceMethod(
-        //   web3Context,
-        //   operatorAddress,
-        //   transactionHashCallback
-        // )
+        await beaconAuthorizationService.authorizeKeepRandomBeaconOperatorContract(
+          web3Context,
+          operatorAddress,
+          transactionHashCallback
+        )
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",

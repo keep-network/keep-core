@@ -1,8 +1,8 @@
 import { contractService } from "./contracts.service"
 import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
-import { 
-  CONTRACT_DEPLOY_BLOCK_NUMBER, 
+import {
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
   getKeepRandomBeaconOperatorAddress,
 } from "../contracts"
 
@@ -75,6 +75,26 @@ const fetchRandomBeaconAuthorizationData = async (web3Context) => {
   return authorizerOperators
 }
 
+const authorizeKeepRandomBeaconOperatorContract = async (
+  web3Context,
+  operatorAddress,
+  onTransactionHashCallback
+) => {
+  const { stakingContract, yourAddress } = web3Context
+  try {
+    await stakingContract.methods
+      .authorizeOperatorContract(
+        operatorAddress,
+        keepRandomBeaconOperatorAddress
+      )
+      .send({ from: yourAddress })
+      .on("transactionHash", onTransactionHashCallback)
+  } catch (error) {
+    throw error
+  }
+}
+
 export const beaconAuthorizationService = {
   fetchRandomBeaconAuthorizationData,
+  authorizeKeepRandomBeaconOperatorContract,
 }
