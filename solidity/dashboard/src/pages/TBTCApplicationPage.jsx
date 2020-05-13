@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useMemo } from "react"
 import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
-import * as Icons from "../components/Icons"
+// import * as Icons from "../components/Icons"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useFetchData } from "../hooks/useFetchData"
 import { BondingSection } from "../components/BondingSection"
@@ -151,9 +151,10 @@ const TBTCApplicationPage = () => {
     <PageWrapper
       className=""
       title="tBTC"
-      nextPageLink="/rewards"
-      nextPageTitle="Rewards"
-      nextPageIcon={Icons.TBTC}
+      // The rewards page for the tbtc is not yet implemented
+      // nextPageLink="/rewards"
+      // nextPageTitle="Rewards"
+      // nextPageIcon={Icons.TBTC}
     >
       <nav className="mb-2">
         <a
