@@ -457,7 +457,7 @@ workflows:
         #         only: /releases\/.*/
         #     requires:
         #       - publish_npm_package
-        - build_token_dashboard_dapp:
+        - build_token_dashboard_dapp
             # filters:
             #   tags:
             #     only: /^v.*/
