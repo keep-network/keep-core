@@ -7,16 +7,18 @@ import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
 import Dropdown from "./Dropdown"
+import { shortenAddress } from "../utils/general.utils"
 
 const AuthorizeContracts = ({
   data,
   onAuthorizeBtn,
-  onSelect,
+  onSelectOperator,
   selectedOperator,
+  filterDropdownOptions,
 }) => {
   return (
     <section className="tile">
-      <div className="flex center space-between">
+      <div className="flex row wrap center space-between">
         <header>
           <div className="flex row">
             <h4 className="mr-1 text-grey-70">Authorize Contracts</h4>
@@ -33,12 +35,22 @@ const AuthorizeContracts = ({
         <div style={{ marginLeft: "auto" }}>
           <Dropdown
             withLabel={false}
-            options={[]}
-            onSelect={(operator) => onSelect(operator)}
+            options={filterDropdownOptions}
+            onSelect={(operator) => onSelectOperator(operator)}
             valuePropertyName="operatorAddress"
             labelPropertyName="operatorAddress"
-            selectedItem={{}}
+            selectedItem={selectedOperator}
             noItemSelectedText="All operators"
+            renderOptionComponent={({ operatorAddress }) => (
+              <OperatorDropdownItem operatorAddress={operatorAddress} />
+            )}
+            selectedItemComponent={
+              <OperatorDropdownItem
+                operatorAddress={selectedOperator.operatorAddress}
+              />
+            }
+            isFilterDropdow
+            allItemsFilterText="All Operators"
           />
         </div>
       </div>
@@ -131,5 +143,11 @@ const AuthorizeContractItem = ({
     </li>
   )
 }
+
+const OperatorDropdownItem = React.memo(({ operatorAddress }) => (
+  <span key={operatorAddress} title={operatorAddress}>
+    {shortenAddress(operatorAddress)}
+  </span>
+))
 
 export default AuthorizeContracts
