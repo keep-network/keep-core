@@ -199,7 +199,10 @@ const getBondingData = async (web3Context) => {
           bondReferenceId
         )
 
-        operatorBondingDataMap.set(operator.toLowerCase(), bondedEth)
+        operatorBondingDataMap.set(
+          web3Utils.toChecksumAddress(operator),
+          bondedEth
+        )
       }
     }
 
@@ -215,10 +218,11 @@ const getBondingData = async (web3Context) => {
         sortitionPoolAddress
       )
 
-      let bondedEth = 0
-      if (operatorBondingDataMap.get(operators[i].toLowerCase())) {
-        bondedEth = operatorBondingDataMap.get(operators[i])
-      }
+      const bondedEth = operatorBondingDataMap.get(
+        web3Utils.toChecksumAddress(operators[i])
+      )
+        ? operatorBondingDataMap.get(web3Utils.toChecksumAddress(operators[i]))
+        : 0
 
       const bonding = {
         operatorAddress: operators[i],
