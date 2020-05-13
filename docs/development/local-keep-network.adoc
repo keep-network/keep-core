@@ -213,6 +213,10 @@ To run the script some manual preparation is needed:
 - <<client-config-file>> for the single client (default name: `config.toml`).
 
 === Install script
+First be sure you have created a `src` directory in `$HOME/go/src`
+for our go packages if it does not already exist. Then ensure you have
+`protoc-gen-gogoslick` already installed and your go `bin` is accessible from your path `/Users/username/go/bin`. To check run `which protoc-gen-gogoslick`.
+
 The `install.sh` script will:
 
 - run <<contracts-deployment>>,
@@ -400,13 +404,16 @@ Please use addresses of `KeepRandomBeaconOperator`, `KeepRandomBeaconService` an
         TokenStaking = "0xDfc7251170abd753342B585Adcd8BCEE48aDb379"
 ```
 
-In the `config.local.1.toml` enable *network settings* for bootstrap peer:
+In the `config.local.1.toml` enable *network settings* for bootstrap peer and be
+sure to remove your `Peers` section for your first client since no other peers exist
+for the first:
 ```toml
 [LibP2P]
         Port = 3919
 ```
 
-And set a *storage directory* for the bootstrap peer:
+In the base `keep-core` directory create a *storage directory*. Then inside of the
+storage directory create directories for each client. Lastly, update your `DataDir` path:
 ```toml
 [Storage]
   DataDir = "/Users/username/.keep/keep-core/storage/client-1"
@@ -437,7 +444,7 @@ go build -a -o keep-core .
 
 Start the bootstrap peer:
 ```
-$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.1.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config ./configs/config.local.1.toml start
 ------------------------------------------------------------------------------------------------
 | Port: 3919                                                                                   |
 | IPs : /ip6/::1/tcp/3919/ipfs/16Uiu2HAkvcmFM53nzHN4dAB4sfemFAu86ytA8wJveKQqYsHvfsca           |
@@ -522,7 +529,7 @@ In `config.local.5.toml`:
 
 Finally, we can start each instance:
 ```
-$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.2.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config ./configs/config.local.2.toml start
 ------------------------------------------------------------------------------------------------
 | Port: 3920                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmGsfKJaP4UGoGWYV6nxY8RPhVoHxT9rUQbPsxFedMHzEr     |
@@ -532,7 +539,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ```
 
 ```
-$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.3.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config ./configs/config.local.3.toml start
 ------------------------------------------------------------------------------------------------
 | Port: 3921                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmAeFbeTZstFhAiEL8jGQiNR9sygKstrhpG4F2wKmt1784     |
@@ -542,7 +549,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ```
 
 ```
-$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.4.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config ./configs/config.local.4.toml start
 ------------------------------------------------------------------------------------------------
 | Port: 3922                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAmQcPbBVftPR8SKctpG9ToDmu7kLpaKPUc3AreEwzWbuyb     |
@@ -552,7 +559,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 ```
 
 ```
-$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config.local.5.toml start
+$ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config ./configs/config.local.5.toml start
 ------------------------------------------------------------------------------------------------
 | Port: 3923                                                                                   |
 | IPs : /ip4/127.0.0.1/tcp/3919/ipfs/16Uiu2HAm7wzWEs3fUbA9rgzKRP82Zhtnq2CxZZdXPMrJJgNNra1p     |
@@ -565,7 +572,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 == Genesis entry
 
 In order to trigger creation of the first group genesis entry must be submitted. The script includes
-the required DKG fee.
+the required DKG fee. Run the following command from the `keep-core/solidity` directory:
 ```
 $ truffle exec ./scripts/genesis.js --network local
 
@@ -577,7 +584,11 @@ Genesis entry successfully submitted.
 
 == Request relay entry
 
-Once the first group is created we can request relay entry with the following script:
+In order to send the request relay entry the first group must be formed. This process can take some time
+but you should eventually see a log something like `INFO keep-relay: [member:7] ready to operate in the group node.go:137`
+
+Once the first group is created we can request relay entry with the following script.
+Run the following command from the `keep-core/solidity` directory:
 ```
 $ truffle exec ./scripts/request-relay-entry.js --network local
 
@@ -639,8 +650,8 @@ endpoints.  Reach out in the https://www.flowdock.com/app/cardforcoin/ops[DevOps
 
 - *Dashboard:* http://eth-dashboard.internal.keep-dev.com:3000
 - *Transactions:*
-  ** _RPC:_ http://eth-tx-node.default.svc.cluster.local:8545
-  ** _WebSocket:_ link:[ws://eth-tx-node.default.svc.cluster.local:8546]
+** _RPC:_ http://eth-tx-node.default.svc.cluster.local:8545
+** _WebSocket:_ link:[ws://eth-tx-node.default.svc.cluster.local:8546]
 
 ==== Keep Network
 
