@@ -650,8 +650,8 @@ endpoints.  Reach out in the https://www.flowdock.com/app/cardforcoin/ops[DevOps
 
 - *Dashboard:* http://eth-dashboard.internal.keep-dev.com:3000
 - *Transactions:*
-** _RPC:_ http://eth-tx-node.default.svc.cluster.local:8545
-** _WebSocket:_ link:[ws://eth-tx-node.default.svc.cluster.local:8546]
+  ** _RPC:_ http://eth-tx-node.default.svc.cluster.local:8545
+  ** _WebSocket:_ link:[ws://eth-tx-node.default.svc.cluster.local:8546]
 
 ==== Keep Network
 
