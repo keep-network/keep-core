@@ -1,6 +1,6 @@
 import React from "react"
 import { useFetchData } from "../hooks/useFetchData"
-import { authorizationService } from "../services/authorization.service"
+import { beaconAuthorizationService } from "../services/beacon-authorization.service"
 import { LoadingOverlay } from "../components/Loadable"
 import AddressShortcut from "../components/AddressShortcut"
 import Tile from "./Tile"
@@ -9,8 +9,9 @@ import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
 const initialData = { isOperator: false, contracts: [] }
 
 const AuthorizationInfo = (props) => {
+  //TODO: refactor
   const [state] = useFetchData(
-    authorizationService.fetchOperatorAuthorizedContracts,
+    beaconAuthorizationService.fetchRandomBeaconAuthorizationData,
     initialData
   )
   const { isFetching, data } = state
