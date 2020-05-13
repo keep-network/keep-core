@@ -22,13 +22,6 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
   const visitedOperators = {}
   const authorizerOperators = []
 
-  // TODO: remove console logs
-  console.log(
-    "getBondedECDSAKeepFactoryAddress: ",
-    getBondedECDSAKeepFactoryAddress()
-  )
-  console.log("getTBTCSystemAddress: ", getTBTCSystemAddress())
-
   // Fetch all authorizer operators
   for (let i = 0; i < stakedEvents.length; i++) {
     const {
@@ -206,7 +199,7 @@ const getBondingData = async (web3Context) => {
           bondReferenceId
         )
 
-        operatorBondingDataMap.set(operator, bondedEth)
+        operatorBondingDataMap.set(operator.toLowerCase(), bondedEth)
       }
     }
 
@@ -223,7 +216,7 @@ const getBondingData = async (web3Context) => {
       )
 
       let bondedEth = 0
-      if (operatorBondingDataMap.get(operators[i])) {
+      if (operatorBondingDataMap.get(operators[i].toLowerCase())) {
         bondedEth = operatorBondingDataMap.get(operators[i])
       }
 
