@@ -346,7 +346,16 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
   }
 
   if (ownerOperators.length === 0) {
-    ownerOperators[0] = yourAddress
+    const ownerAddress = await contractService.makeCall(
+      web3Context,
+      TOKEN_STAKING_CONTRACT_NAME,
+      "ownerOf",
+      yourAddress
+    )
+
+    if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
+      ownerOperators[0] = yourAddress
+    }
   }
 
   return ownerOperators
