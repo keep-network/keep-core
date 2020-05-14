@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import Button from "./Button"
 import { shortenAddress } from "../utils/general.utils"
-import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 
 const ChooseWalletAddress = ({ addresses, onSelectAccount }) => {
   const [selectedAccount, setAccount] = useState("")

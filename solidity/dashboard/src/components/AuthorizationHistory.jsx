@@ -3,7 +3,7 @@ import AddressShortcut from "./AddressShortcut"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
-import ViewAddressInBlockExplorer from "./ViewAddressInBlockExplorer"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
 
 const AuthorizationHistory = ({ contracts }) => {
