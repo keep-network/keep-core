@@ -45,7 +45,7 @@ const Banner = ({
       </div>
       {withCloseIcon && (
         <div className="banner-close-icon" onClick={onCloseIcon}>
-          <Icons.Cross color={colors[type.className]} height={10} width={10} />
+          <Icons.Cross color={colors.grey70} height={12} width={12} />
         </div>
       )}
       {children}
