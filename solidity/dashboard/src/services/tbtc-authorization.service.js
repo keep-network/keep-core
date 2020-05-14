@@ -1,5 +1,5 @@
 import { contractService } from "./contracts.service"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import { TOKEN_STAKING_CONTRACT_NAME, TOKEN_GRANT_CONTRACT_NAME } from "../constants/constants"
 import {
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
   KEEP_BONDING_CONTRACT_NAME,
@@ -330,6 +330,13 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     "operatorsOf",
     yourAddress
   )
+
+  ownerOperators.push(...await contractService.makeCall(
+    web3Context,
+    TOKEN_GRANT_CONTRACT_NAME,
+    "getGranteeOperators",
+    yourAddress,
+  ))
 
   const managedGrantAddresses = await fetchManagedGrantAddresses(
     web3Context,
