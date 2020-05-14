@@ -1,44 +1,15 @@
-import React, { useRef, useState, useEffect } from "react"
+import React, { useState } from "react"
 import { shortenAddress } from "../utils/general.utils"
+import copy from "copy-to-clipboard"
 
 const AddressShortcut = ({ address, classNames }) => {
-  const addressElement = useRef(null)
   const [copyStatus, setCopyStatus] = useState("Copy to clipboard")
 
-  useEffect(() => {
-    const { current } = { ...addressElement }
-    const copyEventListener = (event) => {
-      event.preventDefault()
-      if (event.clipboardData) {
-        event.clipboardData.setData("text/plain", address)
-      } else if (window.clipboardData) {
-        window.clipboardData.setData("Text", address)
-      } else {
-        setCopyStatus(`Cannot copy value: ${address}!`)
-      }
-    }
-    if (current !== null) {
-      current.addEventListener("copy", copyEventListener)
-      return () => {
-        current.removeEventListener("copy", copyEventListener)
-      }
-    }
-  })
-
   const copyToClipboard = () => {
-    try {
-      if (document.selection) {
-        const range = document.body.createTextRange()
-        range.moveToElementText(addressElement.current)
-        range.select().createTextRange()
-      } else if (window.getSelection) {
-        const range = document.createRange()
-        range.selectNode(addressElement.current)
-        window.getSelection().addRange(range)
-      }
-      document.execCommand("copy")
+    const isCopied = copy(address)
+    if (isCopied) {
       setCopyStatus("Copied!")
-    } catch (error) {
+    } else {
       setCopyStatus(`Cannot copy value: ${address}!`)
     }
   }
@@ -50,9 +21,6 @@ const AddressShortcut = ({ address, classNames }) => {
       className={`address-shortcut tooltip address ${classNames}`}
     >
       <span className="tooltip-text address bottom">{copyStatus}</span>
-      <span className="full-address" ref={addressElement}>
-        {address}
-      </span>
       {shortenAddress(address)}
     </span>
   )
