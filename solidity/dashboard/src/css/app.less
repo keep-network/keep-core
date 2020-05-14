@@ -47,13 +47,13 @@ ul {
   padding-left: 0;
 }
 
-.main {
+main {
   height: 100vh;
   display: flex;
   flex-direction: column;
   background: @background-color;
   
-  > .content {
+  > content {
     display: flex;
     flex: 1 0 auto;
     flex-direction: column;
@@ -334,8 +334,8 @@ footer {
      }
    }
 
-   .main {
-     > .content {
+   main {
+     > content {
       max-width: 1400px;
      }
    }
@@ -373,17 +373,26 @@ footer {
     }
   }
 
-  .main {
-    > .content {
+  main {
+    > content {
       margin: calc(@header-height + 2rem) 1.5rem 0 calc(@side-menu-width + 1.5rem)
     }
   }
 }
 
 @media screen and (min-width: 1400px) {
-  .main {
-    > .content {
-      margin: calc(@header-height + 2rem) 5rem 0 calc(@side-menu-width + 5rem)
+  main {
+    > content {
+      margin: calc(@header-height + 2rem) 3rem 0 calc(@side-menu-width + 3rem);
+    }
+  }
+}
+
+@media screen and (min-width: 1600px) {
+  main {
+    > content {
+      align-self: center;
+      width: 100%;
     }
   }
 }
