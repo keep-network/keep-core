@@ -4,7 +4,6 @@ import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
 import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import BondedECDSAKeepFactory from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import KeepBonding from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
-import TBTCSystem from "@keep-network/tbtc/artifacts/TBTCSystem.json"
 import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
@@ -160,8 +159,4 @@ export function getKeepRandomBeaconOperatorAddress() {
 
 export function getBondedECDSAKeepFactoryAddress() {
   return getContractAddress(BondedECDSAKeepFactory)
-}
-
-export function getTBTCSystemAddress() {
-  return getContractAddress(TBTCSystem)
 }
