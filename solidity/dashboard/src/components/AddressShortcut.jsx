@@ -6,12 +6,9 @@ const AddressShortcut = ({ address, classNames }) => {
   const [copyStatus, setCopyStatus] = useState("Copy to clipboard")
 
   const copyToClipboard = () => {
-    const isCopied = copy(address)
-    if (isCopied) {
-      setCopyStatus("Copied!")
-    } else {
-      setCopyStatus(`Cannot copy value: ${address}!`)
-    }
+    copy(address)
+      ? setCopyStatus("Copied!")
+      : setCopyStatus(`Cannot copy value: ${address}!`)
   }
 
   return (
