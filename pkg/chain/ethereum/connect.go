@@ -18,9 +18,20 @@ import (
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
 )
 
-const defaultCheckInterval = 6 * time.Second // TODO: set some reasonable value?
+var (
+	// DefaultMiningCheckInterval is the default interval in which transaction
+	// mining status is checked. If the transaction is not mined within this
+	// time, the gas price is increased and transaction is resubmitted.
+	// This value can be overwritten in the configuration file.
+	DefaultMiningCheckInterval = 60 * time.Second
 
-var defaultMaxGasPrice = big.NewInt(50000000000) // 50Gwei
+	// DefaultMaxGasPrice specifies the default maximum gas price the client is
+	// willing to pay for the transaction to be mined. The offered transaction
+	// gas price can not be higher than the max gas price value. If the maximum
+	// allowed gas price is reached, no further resubmission attempts are
+	// performed. This value can be overwritten in the configuration file.
+	DefaultMaxGasPrice = big.NewInt(50000000000) // 50 Gwei
+)
 
 type ethereumChain struct {
 	config                           ethereum.Config
@@ -105,8 +116,8 @@ func connectWithClient(
 		pv.accountKey = key
 	}
 
-	checkInterval := defaultCheckInterval
-	maxGasPrice := defaultMaxGasPrice
+	checkInterval := DefaultMiningCheckInterval
+	maxGasPrice := DefaultMaxGasPrice
 	if config.MiningCheckInterval != 0 {
 		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
 	}
@@ -182,8 +193,8 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		return nil, err
 	}
 
-	checkInterval := defaultCheckInterval
-	maxGasPrice := defaultMaxGasPrice
+	checkInterval := DefaultMiningCheckInterval
+	maxGasPrice := DefaultMaxGasPrice
 	if config.MiningCheckInterval != 0 {
 		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
 	}
