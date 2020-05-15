@@ -15,7 +15,7 @@ export const BANNER_TYPE = {
   },
   ERROR: {
     className: "error",
-    iconComponent: <Icons.Cross color={colors.error} height={10} width={10} />,
+    iconComponent: <Icons.Cross color={colors.error} height={12} width={12} />,
   },
   DISABLED: { className: "disabled", iconComponent: null },
 }
@@ -35,12 +35,14 @@ const Banner = ({
     <div className={`banner banner-${type.className}`}>
       {withIcon && <div className="banner-icon flex">{type.iconComponent}</div>}
       <div className="banner-content-wrapper">
-        <div
-          className={`banner-title ${titleClassName}`}
-          onClick={onTitleClick}
-        >
-          {title}
-        </div>
+        {title && (
+          <div
+            className={`banner-title ${titleClassName}`}
+            onClick={onTitleClick}
+          >
+            {title}
+          </div>
+        )}
         {subtitle && <div className="banner-subtitle">{subtitle}</div>}
       </div>
       {withCloseIcon && (

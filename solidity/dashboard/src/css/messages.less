@@ -32,6 +32,16 @@
 
     .banner {
         border: none !important;
+        margin-bottom: 0;
+        &-icon {
+            align-self: center;
+            margin-right: 0;
+        }
+
+        &-title {
+            margin-left: 1rem;
+        }
+
         .box-shadow(2px 2px 7px rgba(10, 8, 6, 0.45));
         &-content-wrapper {
             display: flex;
@@ -40,17 +50,12 @@
             flex: 1;
             word-wrap: break-word;
             word-break: break-all;
-
-            .banner-title {
-                flex: 1;
-            }
         }
         
         &-close-icon {
-            margin-left: 2rem;
+            margin-left: 3rem;
         }
 
-        margin-bottom: 1rem;
         &-enter {
             opacity: .01;
             &-active {
