@@ -84,8 +84,6 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
 
 const isTbtcSystemAuthorized = async (web3Context, operatorAddress) => {
   try {
-    throw "nope"
-
     const sortitionPoolAddress = await contractService.makeCall(
       web3Context,
       BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
@@ -394,7 +392,7 @@ const fetchAvailableAmount = async (
   return contractService.makeCall(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
-    "unbondedValue", // "availableUnbondedValue",
+    "availableUnbondedValue",
     operator,
     bondedECDSAKeepFactoryAddress,
     authorizedSortitionPool
