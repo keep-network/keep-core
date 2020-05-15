@@ -5,6 +5,21 @@
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
 	URLRPC             = "http://127.0.0.1:8545"
+	# Uncomment to override the defaults for transaction status monitoring.
+	#
+	# MiningCheckInterval is the interval in which transaction
+	# mining status is checked. If the transaction is not mined within this
+	# time, the gas price is increased and transaction is resubmitted.
+	#
+	# MiningCheckInterval = 60  # 60 sec (default value)
+	#
+	# MaxGasPrice specifies the default maximum gas price the client is
+	# willing to pay for the transaction to be mined. The offered transaction
+	# gas price can not be higher than the max gas price value. If the maximum
+	# allowed gas price is reached, no further resubmission attempts are
+	# performed.
+	#
+	# MaxGasPrice = 50000000000 # 50 gwei (default value)
 
 [ethereum.account]
 	Address            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
