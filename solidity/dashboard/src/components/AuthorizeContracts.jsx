@@ -60,7 +60,7 @@ const AuthorizeContracts = ({
         noDataMessage="No contracts to authorize."
       >
         <Column
-          header="opeartor address"
+          header="operator address"
           field="operatorAddress"
           renderContent={({ operatorAddress }) => (
             <AddressShortcut address={operatorAddress} />

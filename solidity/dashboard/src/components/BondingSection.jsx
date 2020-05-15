@@ -15,7 +15,7 @@ export const BondingSection = ({ data }) => {
     >
       <DataTable data={data} itemFieldId="operatorAddress">
         <Column
-          header="opeartor"
+          header="operator"
           field="operatorAddress"
           renderContent={({ operatorAddress }) => (
             <AddressShortcut address={operatorAddress} />

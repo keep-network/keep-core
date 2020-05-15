@@ -1,8 +1,9 @@
 import { contractService } from "./contracts.service"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import { TOKEN_STAKING_CONTRACT_NAME, TOKEN_GRANT_CONTRACT_NAME } from "../constants/constants"
 import {
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
   KEEP_BONDING_CONTRACT_NAME,
+  MANAGED_GRANT_FACTORY_CONTRACT_NAME
 } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import {
@@ -12,8 +13,8 @@ import {
 } from "../contracts"
 import web3Utils from "web3-utils"
 
-const tBTCSystemAddress = getTBTCSystemAddress()
 const bondedECDSAKeepFactoryAddress = getBondedECDSAKeepFactoryAddress()
+const tBTCSystemAddress = getTBTCSystemAddress()
 
 const fetchTBTCAuthorizationData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -215,7 +216,7 @@ const getBondingData = async (web3Context) => {
         web3Context,
         operators[i],
         bondedECDSAKeepFactoryAddress,
-        sortitionPoolAddress
+        sortitionPoolAddress,
       )
 
       const bondedEth = operatorBondingDataMap.get(
@@ -304,6 +305,21 @@ const fetchBondReassignedEvents = async (
   )
 }
 
+const fetchManagedGrantAddresses = async (
+  web3Context,
+  lookupAddress,
+) => {
+  return (await contractService.getPastEvents(
+    web3Context,
+    MANAGED_GRANT_FACTORY_CONTRACT_NAME,
+    "ManagedGrantCreated",
+    {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[MANAGED_GRANT_FACTORY_CONTRACT_NAME],
+      filter: { grantee: lookupAddress },
+    }
+  )).map(_ => _.returnValues.grantAddress)
+}
+
 const fetchOperatorsOf = async (web3Context, yourAddress) => {
   const ownerOperators = await contractService.makeCall(
     web3Context,
@@ -312,8 +328,38 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress
   )
 
+  ownerOperators.push(...await contractService.makeCall(
+    web3Context,
+    TOKEN_GRANT_CONTRACT_NAME,
+    "getGranteeOperators",
+    yourAddress,
+  ))
+
+  const managedGrantAddresses = await fetchManagedGrantAddresses(
+    web3Context,
+    yourAddress,
+  )
+  for (let i = 0; i < managedGrantAddresses.length; ++i) {
+    const managedGrantAddress = managedGrantAddresses[i]
+    ownerOperators.push(...await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGranteeOperators",
+      managedGrantAddress
+    ))
+  }
+
   if (ownerOperators.length === 0) {
-    ownerOperators[0] = yourAddress
+    const ownerAddress = await contractService.makeCall(
+      web3Context,
+      TOKEN_STAKING_CONTRACT_NAME,
+      "ownerOf",
+      yourAddress
+    )
+
+    if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
+      ownerOperators[0] = yourAddress
+    }
   }
 
   return ownerOperators
@@ -341,7 +387,7 @@ const fetchAvailableAmount = async (
   web3Context,
   operator,
   bondedECDSAKeepFactoryAddress,
-  authorizedSortitionPool
+  authorizedSortitionPool,
 ) => {
   return contractService.makeCall(
     web3Context,

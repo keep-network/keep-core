@@ -3,6 +3,8 @@ import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
 import { getWsUrl } from "./utils"
 
+const DEFAULT_NUM_ADDRESSES_TO_FETCH = 15
+
 export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
   provider
 
@@ -23,7 +25,7 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
   }
 
   getAccounts = async () => {
-    return await this.provider.getAccountsAsync()
+    return await this.provider.getAccountsAsync(DEFAULT_NUM_ADDRESSES_TO_FETCH)
   }
 
   setProvider = (provider) => {
