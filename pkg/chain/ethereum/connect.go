@@ -125,6 +125,8 @@ func connectWithClient(
 		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
 	}
 
+	logger.Infof("Using [%v] mining check interval", checkInterval)
+	logger.Infof("Using [%v] wei max gas price", maxGasPrice)
 	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
 
 	address, err := addressForContract(config, "KeepRandomBeaconOperator")
