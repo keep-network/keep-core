@@ -19,9 +19,9 @@ const App = () => (
               <aside>
                 <SideMenu />
               </aside>
-              <content>
+              <div className="content">
                 <Routing />
-              </content>
+              </div>
               <Footer />
             </main>
           </Router>
