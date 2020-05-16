@@ -312,8 +312,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 
 // responderReceiveAct1 unmarshals a pb.HandshakeEnvelope from an initiator,
 // verifies that the signed messages matches the expected peer.ID, and returns
-// the handshake.Act1Message for processing by the responder. It also makes
-// sure that the initiator is running the same protocol as the responder.
+// the handshake.Act1Message for processing by the responder.
 func (ac *authenticatedConnection) responderReceiveAct1(
 	responderConnectionReader protoio.ReadCloser,
 ) (*handshake.Act1Message, error) {
