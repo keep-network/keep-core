@@ -31,6 +31,8 @@ type authenticatedConnection struct {
 	remotePeerPublicKey libp2pcrypto.PubKey
 
 	firewall keepNet.Firewall
+
+	protocol string
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -44,12 +46,14 @@ func newAuthenticatedInboundConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	firewall keepNet.Firewall,
+	protocol string,
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
 		firewall:            firewall,
+		protocol:            protocol,
 	}
 
 	if err := ac.runHandshakeAsResponder(); err != nil {
@@ -78,6 +82,7 @@ func newAuthenticatedOutboundConnection(
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
 	firewall keepNet.Firewall,
+	protocol string,
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
@@ -94,6 +99,7 @@ func newAuthenticatedOutboundConnection(
 		remotePeerID:        remotePeerID,
 		remotePeerPublicKey: remotePublicKey,
 		firewall:            firewall,
+		protocol:            protocol,
 	}
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
@@ -128,7 +134,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 1
 	//
 
-	initiatorAct1, err := handshake.InitiateHandshake()
+	initiatorAct1, err := handshake.InitiateHandshake(ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -269,7 +275,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 		return err
 	}
 
-	responderAct2, err := handshake.AnswerHandshake(act1Message)
+	responderAct2, err := handshake.AnswerHandshake(act1Message, ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -306,7 +312,8 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 
 // responderReceiveAct1 unmarshals a pb.HandshakeEnvelope from an initiator,
 // verifies that the signed messages matches the expected peer.ID, and returns
-// the handshake.Act1Message for processing by the responder.
+// the handshake.Act1Message for processing by the responder. It also makes
+// sure that the initiator is running the same protocol as the responder.
 func (ac *authenticatedConnection) responderReceiveAct1(
 	responderConnectionReader protoio.ReadCloser,
 ) (*handshake.Act1Message, error) {

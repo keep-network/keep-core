@@ -17,7 +17,7 @@ const (
 func (am *Act1Message) Marshal() ([]byte, error) {
 	nonceBytes := make([]byte, nonceByteLength)
 	binary.LittleEndian.PutUint64(nonceBytes, am.nonce1)
-	return (&pb.Act1Message{Nonce: nonceBytes}).Marshal()
+	return (&pb.Act1Message{Nonce: nonceBytes, Protocol: am.protocol1}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a Act1Message.
@@ -34,6 +34,8 @@ func (am *Act1Message) Unmarshal(bytes []byte) error {
 
 	am.nonce1 = binary.LittleEndian.Uint64(pbAct1.Nonce)
 
+	am.protocol1 = pbAct1.Protocol
+
 	return nil
 }
 
@@ -42,7 +44,11 @@ func (am *Act1Message) Unmarshal(bytes []byte) error {
 func (am *Act2Message) Marshal() ([]byte, error) {
 	nonceBytes := make([]byte, nonceByteLength)
 	binary.LittleEndian.PutUint64(nonceBytes, am.nonce2)
-	return (&pb.Act2Message{Nonce: nonceBytes, Challenge: am.challenge[:]}).Marshal()
+	return (&pb.Act2Message{
+		Nonce:     nonceBytes,
+		Challenge: am.challenge[:],
+		Protocol:  am.protocol2,
+	}).Marshal()
 }
 
 // Unmarshal converts a byte array produced by Marshal to a Act2Message.
@@ -65,6 +71,8 @@ func (am *Act2Message) Unmarshal(bytes []byte) error {
 	}
 
 	copy(am.challenge[:], pbAct2.Challenge[:challengeByteLength])
+
+	am.protocol2 = pbAct2.Protocol
 
 	return nil
 }

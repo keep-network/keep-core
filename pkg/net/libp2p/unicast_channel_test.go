@@ -207,6 +207,7 @@ func withNetwork(
 			Port: provider1Port,
 		},
 		privKey1,
+		ProtocolBeacon,
 		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
@@ -226,6 +227,7 @@ func withNetwork(
 			Port: provider2Port,
 		},
 		privKey2,
+		ProtocolBeacon,
 		firewall.Disabled,
 		retransmission.NewTicker(make(chan uint64)),
 	)
