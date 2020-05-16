@@ -6,12 +6,13 @@ package pb
 import (
 	bytes "bytes"
 	fmt "fmt"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
+
+	proto "github.com/gogo/protobuf/proto"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -90,14 +91,16 @@ func (m *HandshakeEnvelope) GetPeerID() []byte {
 	return nil
 }
 
-// act1Message is sent in the first handshake act by the initiator to the
+// Act1Message is sent in the first handshake act by the initiator to the
 // responder. It contains randomly generated `nonce1`, an 8-byte (64-bit)
-// unsigned integer.
+// unsigned integer, and the protocol identifier.
 //
-// act1Message should be signed with initiator's static private key.
+// Act1Message should be signed with initiator's static private key.
 type Act1Message struct {
 	// nonce by initiator; 8-byte (64-bit) nonce as bytes
 	Nonce []byte `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	// the identifier of the protocol the initiator is executing
+	Protocol string `protobuf:"bytes,2,opt,name=protocol,proto3" json:"protocol,omitempty"`
 }
 
 func (m *Act1Message) Reset()      { *m = Act1Message{} }
@@ -139,17 +142,26 @@ func (m *Act1Message) GetNonce() []byte {
 	return nil
 }
 
-// act2Message is sent in the second handshake act by the responder to the
+func (m *Act1Message) GetProtocol() string {
+	if m != nil {
+		return m.Protocol
+	}
+	return ""
+}
+
+// Act2Message is sent in the second handshake act by the responder to the
 // initiator. It contains randomly generated `nonce2`, an 8-byte unsigned
 // integer and `challenge` which is a result of SHA256 on the concatenated
-// bytes of `nonce1` and `nonce2`.
+// bytes of `nonce1` and `nonce2`, and the protocol identifier.
 //
-// act2Message should be signed with responder's static private key.
+// Act2Message should be signed with responder's static private key.
 type Act2Message struct {
 	// nonce from responder; 8-byte (64-bit) nonce as bytes
 	Nonce []byte `protobuf:"bytes,1,opt,name=nonce,proto3" json:"nonce,omitempty"`
 	// bytes of sha256(nonce1||nonce2)
 	Challenge []byte `protobuf:"bytes,2,opt,name=challenge,proto3" json:"challenge,omitempty"`
+	// the identifier of the protocol the responder is executing
+	Protocol string `protobuf:"bytes,3,opt,name=protocol,proto3" json:"protocol,omitempty"`
 }
 
 func (m *Act2Message) Reset()      { *m = Act2Message{} }
@@ -198,11 +210,18 @@ func (m *Act2Message) GetChallenge() []byte {
 	return nil
 }
 
-// act1Message is sent in the first handshake act by the initiator to the
+func (m *Act2Message) GetProtocol() string {
+	if m != nil {
+		return m.Protocol
+	}
+	return ""
+}
+
+// Act1Message is sent in the first handshake act by the initiator to the
 // responder. It contains randomly generated `nonce1`, an 8-byte (64-bit)
 // unsigned integer.
 //
-// act1Message should be signed with initiator's static private key.
+// Act1Message should be signed with initiator's static private key.
 type Act3Message struct {
 	// bytes of sha256(nonce1||nonce2)
 	Challenge []byte `protobuf:"bytes,1,opt,name=challenge,proto3" json:"challenge,omitempty"`
@@ -257,23 +276,24 @@ func init() {
 func init() { proto.RegisterFile("pb/handshake.proto", fileDescriptor_73dffe19bde0f856) }
 
 var fileDescriptor_73dffe19bde0f856 = []byte{
-	// 241 bytes of a gzipped FileDescriptorProto
+	// 262 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x2a, 0x48, 0xd2, 0xcf,
 	0x48, 0xcc, 0x4b, 0x29, 0xce, 0x48, 0xcc, 0x4e, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62,
 	0xce, 0x4b, 0x2d, 0x51, 0x4a, 0xe6, 0x12, 0xf4, 0x80, 0x89, 0xbb, 0xe6, 0x95, 0xa5, 0xe6, 0xe4,
 	0x17, 0xa4, 0x0a, 0x49, 0x70, 0xb1, 0xe7, 0xa6, 0x16, 0x17, 0x27, 0xa6, 0xa7, 0x4a, 0x30, 0x2a,
 	0x30, 0x6a, 0xf0, 0x04, 0xc1, 0xb8, 0x42, 0x32, 0x5c, 0x9c, 0xc5, 0x99, 0xe9, 0x79, 0x89, 0x25,
 	0xa5, 0x45, 0xa9, 0x12, 0x4c, 0x60, 0x39, 0x84, 0x80, 0x90, 0x18, 0x17, 0x5b, 0x41, 0x6a, 0x6a,
-	0x91, 0xa7, 0x8b, 0x04, 0x33, 0x58, 0x0a, 0xca, 0x53, 0x52, 0xe6, 0xe2, 0x76, 0x4c, 0x2e, 0x31,
-	0xf4, 0x85, 0x1a, 0x22, 0xc2, 0xc5, 0x9a, 0x97, 0x9f, 0x97, 0x0c, 0x33, 0x1c, 0xc2, 0x51, 0x72,
-	0x04, 0x2b, 0x32, 0xc2, 0xab, 0x08, 0x64, 0x7f, 0x72, 0x46, 0x62, 0x4e, 0x4e, 0x6a, 0x5e, 0x3a,
-	0xdc, 0x7e, 0xb8, 0x80, 0x92, 0x36, 0xd8, 0x08, 0x63, 0x5f, 0x84, 0x63, 0x11, 0x8a, 0x19, 0xd1,
-	0x14, 0x3b, 0x59, 0x5c, 0x78, 0x28, 0xc7, 0x70, 0xe3, 0xa1, 0x1c, 0xc3, 0x87, 0x87, 0x72, 0x8c,
-	0x0d, 0x8f, 0xe4, 0x18, 0x57, 0x3c, 0x92, 0x63, 0x3c, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39,
-	0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x5f, 0x3c, 0x92, 0x63, 0xf8, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63,
-	0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x62, 0x2a, 0x48, 0x4a, 0x62,
-	0x03, 0x87, 0x9f, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x37, 0x4c, 0x1a, 0x5a, 0x55, 0x01, 0x00,
-	0x00,
+	0x91, 0xa7, 0x8b, 0x04, 0x33, 0x58, 0x0a, 0xca, 0x53, 0xb2, 0xe7, 0xe2, 0x76, 0x4c, 0x2e, 0x31,
+	0xf4, 0x85, 0x1a, 0x22, 0xc2, 0xc5, 0x9a, 0x97, 0x9f, 0x97, 0x0c, 0x33, 0x1c, 0xc2, 0x11, 0x92,
+	0xe2, 0xe2, 0x00, 0xbb, 0x2b, 0x39, 0x3f, 0x07, 0x6c, 0x32, 0x67, 0x10, 0x9c, 0xaf, 0x14, 0x0b,
+	0x36, 0xc0, 0x08, 0xbf, 0x01, 0x32, 0x5c, 0x9c, 0xc9, 0x19, 0x89, 0x39, 0x39, 0xa9, 0x79, 0xe9,
+	0x70, 0xb7, 0xc1, 0x05, 0x50, 0x8c, 0x67, 0x46, 0x33, 0x5e, 0x1b, 0x6c, 0xbc, 0xb1, 0x2f, 0xc2,
+	0x93, 0x08, 0x83, 0x18, 0xd1, 0x0c, 0x72, 0xb2, 0xb8, 0xf0, 0x50, 0x8e, 0xe1, 0xc6, 0x43, 0x39,
+	0x86, 0x0f, 0x0f, 0xe5, 0x18, 0x1b, 0x1e, 0xc9, 0x31, 0xae, 0x78, 0x24, 0xc7, 0x78, 0xe2, 0x91,
+	0x1c, 0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f, 0x1e, 0xc9, 0x31, 0xbe, 0x78, 0x24, 0xc7, 0xf0, 0xe1,
+	0x91, 0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7, 0x10,
+	0xc5, 0x54, 0x90, 0x94, 0xc4, 0x06, 0xb6, 0xd0, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0xa1, 0x59,
+	0x1f, 0x3f, 0x8d, 0x01, 0x00, 0x00,
 }
 
 func (this *HandshakeEnvelope) Equal(that interface{}) bool {
@@ -328,6 +348,9 @@ func (this *Act1Message) Equal(that interface{}) bool {
 	if !bytes.Equal(this.Nonce, that1.Nonce) {
 		return false
 	}
+	if this.Protocol != that1.Protocol {
+		return false
+	}
 	return true
 }
 func (this *Act2Message) Equal(that interface{}) bool {
@@ -353,6 +376,9 @@ func (this *Act2Message) Equal(that interface{}) bool {
 		return false
 	}
 	if !bytes.Equal(this.Challenge, that1.Challenge) {
+		return false
+	}
+	if this.Protocol != that1.Protocol {
 		return false
 	}
 	return true
@@ -397,9 +423,10 @@ func (this *Act1Message) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 6)
 	s = append(s, "&pb.Act1Message{")
 	s = append(s, "Nonce: "+fmt.Sprintf("%#v", this.Nonce)+",\n")
+	s = append(s, "Protocol: "+fmt.Sprintf("%#v", this.Protocol)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -407,10 +434,11 @@ func (this *Act2Message) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 6)
+	s := make([]string, 0, 7)
 	s = append(s, "&pb.Act2Message{")
 	s = append(s, "Nonce: "+fmt.Sprintf("%#v", this.Nonce)+",\n")
 	s = append(s, "Challenge: "+fmt.Sprintf("%#v", this.Challenge)+",\n")
+	s = append(s, "Protocol: "+fmt.Sprintf("%#v", this.Protocol)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -496,6 +524,13 @@ func (m *Act1Message) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Protocol) > 0 {
+		i -= len(m.Protocol)
+		copy(dAtA[i:], m.Protocol)
+		i = encodeVarintHandshake(dAtA, i, uint64(len(m.Protocol)))
+		i--
+		dAtA[i] = 0x12
+	}
 	if len(m.Nonce) > 0 {
 		i -= len(m.Nonce)
 		copy(dAtA[i:], m.Nonce)
@@ -526,6 +561,13 @@ func (m *Act2Message) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Protocol) > 0 {
+		i -= len(m.Protocol)
+		copy(dAtA[i:], m.Protocol)
+		i = encodeVarintHandshake(dAtA, i, uint64(len(m.Protocol)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.Challenge) > 0 {
 		i -= len(m.Challenge)
 		copy(dAtA[i:], m.Challenge)
@@ -615,6 +657,10 @@ func (m *Act1Message) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovHandshake(uint64(l))
 	}
+	l = len(m.Protocol)
+	if l > 0 {
+		n += 1 + l + sovHandshake(uint64(l))
+	}
 	return n
 }
 
@@ -629,6 +675,10 @@ func (m *Act2Message) Size() (n int) {
 		n += 1 + l + sovHandshake(uint64(l))
 	}
 	l = len(m.Challenge)
+	if l > 0 {
+		n += 1 + l + sovHandshake(uint64(l))
+	}
+	l = len(m.Protocol)
 	if l > 0 {
 		n += 1 + l + sovHandshake(uint64(l))
 	}
@@ -672,6 +722,7 @@ func (this *Act1Message) String() string {
 	}
 	s := strings.Join([]string{`&Act1Message{`,
 		`Nonce:` + fmt.Sprintf("%v", this.Nonce) + `,`,
+		`Protocol:` + fmt.Sprintf("%v", this.Protocol) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -683,6 +734,7 @@ func (this *Act2Message) String() string {
 	s := strings.Join([]string{`&Act2Message{`,
 		`Nonce:` + fmt.Sprintf("%v", this.Nonce) + `,`,
 		`Challenge:` + fmt.Sprintf("%v", this.Challenge) + `,`,
+		`Protocol:` + fmt.Sprintf("%v", this.Protocol) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -923,6 +975,38 @@ func (m *Act1Message) Unmarshal(dAtA []byte) error {
 				m.Nonce = []byte{}
 			}
 			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Protocol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHandshake
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHandshake
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHandshake
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Protocol = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipHandshake(dAtA[iNdEx:])
@@ -1043,6 +1127,38 @@ func (m *Act2Message) Unmarshal(dAtA []byte) error {
 			if m.Challenge == nil {
 				m.Challenge = []byte{}
 			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Protocol", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHandshake
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHandshake
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHandshake
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Protocol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

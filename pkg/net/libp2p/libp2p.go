@@ -58,6 +58,12 @@ const (
 	ConnectedPeersCheckTick = time.Minute * 1
 )
 
+// Keep Network protocol identifiers
+const (
+	ProtocolBeacon = "keep-beacon"
+	ProtocolECDSA  = "keep-ecdsa"
+)
+
 // MaximumDisseminationTime is the maximum dissemination time of messages in
 // topics we are not subscribed to. By default courteous dissemination is
 // disabled and it should be enabled only on selected fast bootstrap nodes.
@@ -267,6 +273,7 @@ func Connect(
 	ctx context.Context,
 	config Config,
 	staticKey *key.NetworkPrivate,
+	protocol string,
 	firewall net.Firewall,
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
@@ -290,6 +297,7 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
+		protocol,
 		config.AnnouncedAddresses,
 		firewall,
 	)
@@ -353,6 +361,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
+	protocol string,
 	announcedAddresses []string,
 	firewall net.Firewall,
 ) (host.Host, error) {
@@ -366,6 +375,7 @@ func discoverAndListen(
 
 	transport, err := newEncryptedAuthenticatedTransport(
 		identity.privKey,
+		protocol,
 		firewall,
 	)
 	if err != nil {
