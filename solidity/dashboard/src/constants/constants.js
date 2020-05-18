@@ -6,7 +6,8 @@ export const REGISTRY_CONTRACT_NAME = "registryContract"
 export const KEEP_OPERATOR_STATISTICS_CONTRACT_NAME =
   "keepRandomBeaconOperatorStatistics"
 export const MANAGED_GRANT_FACTORY_CONTRACT_NAME = "managedGrantFactoryContract"
-export const BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME = "bondedEcdsaKeepFactoryContract"
+export const BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME =
+  "bondedEcdsaKeepFactoryContract"
 export const KEEP_BONDING_CONTRACT_NAME = "keepBondingContract"
 
 export const PENDING_STATUS = "PENDING"
