@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import TokenGrantOverview from "./TokenGrantOverview"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import OwnedTokensOverview from "./OwnedTokensOverview.jsx"
@@ -11,10 +11,18 @@ const TokensOverview = (props) => {
     keepTokenBalance,
     ownedTokensUndelegationsBalance,
     ownedTokensDelegationsBalance,
+    getGrantStakedAmount,
   } = useTokensPageContext()
 
+  const selectedGrantStakedAmount = useMemo(() => {
+    return getGrantStakedAmount(selectedGrant.id)
+  }, [getGrantStakedAmount, selectedGrant.id])
+
   return tokensContext === "granted" ? (
-    <TokenGrantOverview selectedGrant={selectedGrant} />
+    <TokenGrantOverview
+      selectedGrant={selectedGrant}
+      selectedGrantStakedAmount={selectedGrantStakedAmount}
+    />
   ) : (
     <OwnedTokensOverview
       keepBalance={keepTokenBalance}

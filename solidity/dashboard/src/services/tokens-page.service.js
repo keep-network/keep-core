@@ -187,13 +187,6 @@ const getDelegations = async (
       }
     }
 
-    let grantId;
-    if (isFromGrant) {
-      let grantStakeDetails = await contractService.makeCall(web3Context, TOKEN_GRANT_CONTRACT_NAME, 'getGrantStakeDetails', operatorAddress)
-      
-      grantId = grantStakeDetails.grantId
-    }
-
     const operatorData = {
       undelegatedAt,
       amount,

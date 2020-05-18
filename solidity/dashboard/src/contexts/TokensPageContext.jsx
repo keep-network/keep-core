@@ -19,6 +19,7 @@ import tokensPageReducer, {
 } from "../reducers/tokens-page.reducer"
 import { isEmptyObj } from "../utils/general.utils"
 import { findIndexAndObject } from "../utils/array.utils"
+import { add } from "../utils/arithmetics.utils"
 import { usePrevious } from "../hooks/usePrevious"
 
 const tokensPageServiceInitialData = {
@@ -70,6 +71,7 @@ const TokenPageContextProvider = (props) => {
     isFetching: true,
     tokensContext: "granted",
     selectedGrant: {},
+    getGrantStakedAmount: () => {},
   })
   const previousSelectedGrant = usePrevious(state.selectedGrant)
 
@@ -151,6 +153,18 @@ const TokenPageContextProvider = (props) => {
     [web3Context, dispatch]
   )
 
+  const getGrantStakedAmount = useCallback(
+    (grantId) => {
+      if (!grantId) return 0
+
+      return state.delegations
+        .filter((delegation) => delegation.grantId === grantId)
+        .map((grantDelegation) => grantDelegation.amount)
+        .reduce(add, 0)
+    },
+    [state.delegations]
+  )
+
   return (
     <TokensPageContext.Provider
       value={{
@@ -162,6 +176,7 @@ const TokenPageContextProvider = (props) => {
         refreshData,
         grantWithdrawn,
         grantStaked,
+        getGrantStakedAmount,
       }}
     >
       {props.children}

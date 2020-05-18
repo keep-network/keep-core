@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo } from "react"
 import {
   TokenGrantDetails,
   TokenGrantStakedDetails,
@@ -28,7 +28,17 @@ const TokenGrantsPage = () => {
   )
 }
 
-const renderTokenGrantOverview = (tokenGrant) => {
+const renderTokenGrantOverview = (tokenGrant) => (
+  <TokenGrantOverview tokenGrant={tokenGrant} />
+)
+
+const TokenGrantOverview = React.memo(({ tokenGrant }) => {
+  const { getGrantStakedAmount } = useTokensPageContext()
+
+  const selectedGrantStakedAmount = useMemo(() => {
+    return getGrantStakedAmount(tokenGrant.id)
+  }, [getGrantStakedAmount, tokenGrant.id])
+
   return (
     <section key={tokenGrant.id} className="tile token-grant-overview">
       <div className="grant-amount">
@@ -38,10 +48,13 @@ const renderTokenGrantOverview = (tokenGrant) => {
         <TokenGrantUnlockingdDetails selectedGrant={tokenGrant} />
       </div>
       <div className="staked-details">
-        <TokenGrantStakedDetails selectedGrant={tokenGrant} />
+        <TokenGrantStakedDetails
+          selectedGrant={tokenGrant}
+          stakedAmount={selectedGrantStakedAmount}
+        />
       </div>
     </section>
   )
-}
+})
 
 export default React.memo(TokenGrantsPage)
