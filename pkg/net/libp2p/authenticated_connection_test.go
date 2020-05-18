@@ -53,6 +53,7 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 		responder.peerID,
 		responder.privKey,
 		firewall,
+		ProtocolBeacon,
 	)
 	if err == nil {
 		t.Fatal("should not have successfully completed handshake")
@@ -67,7 +68,7 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
 	initiatorConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
 
-	initiatorAct1, err := handshake.InitiateHandshake()
+	initiatorAct1, err := handshake.InitiateHandshake(ProtocolBeacon)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,6 +238,7 @@ func connectInitiatorAndResponder(
 			initiatorPrivKey,
 			responderPeerID,
 			firewall,
+			ProtocolBeacon,
 		)
 		done <- struct{}{}
 	}(initiatorConn, initiator.peerID, initiator.privKey, responder.peerID)
@@ -246,6 +248,7 @@ func connectInitiatorAndResponder(
 		responder.peerID,
 		responder.privKey,
 		firewall,
+		ProtocolBeacon,
 	)
 
 	<-done // handshake is done

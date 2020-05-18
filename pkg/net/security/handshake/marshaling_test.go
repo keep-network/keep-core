@@ -11,7 +11,8 @@ import (
 
 func TestAct1MessageRoundTrip(t *testing.T) {
 	message := &Act1Message{
-		nonce1: 100,
+		nonce1:    100,
+		protocol1: "keep-beacon",
 	}
 
 	unmarshaler := &Act1Message{}
@@ -28,13 +29,18 @@ func TestAct1MessageRoundTrip(t *testing.T) {
 
 func TestFuzzAct1MessageRoundtrip(t *testing.T) {
 	for i := 0; i < 10; i++ {
-		var nonce1 uint64
+		var (
+			nonce1   uint64
+			protocol string
+		)
 
 		f := fuzz.New().NilChance(0.1)
 		f.Fuzz(&nonce1)
+		f.Fuzz(&protocol)
 
 		message := &Act1Message{
-			nonce1: nonce1,
+			nonce1:    nonce1,
+			protocol1: protocol,
 		}
 
 		_ = pbutils.RoundTrip(message, &Act1Message{})
@@ -56,6 +62,7 @@ func TestAct2MessageRoundTrip(t *testing.T) {
 	message := &Act2Message{
 		nonce2:    100,
 		challenge: challenge,
+		protocol2: "keep-ecdsa",
 	}
 
 	unmarshaler := &Act2Message{}
@@ -75,15 +82,18 @@ func TestFuzzAct2MessageRoundtrip(t *testing.T) {
 		var (
 			nonce2    uint64
 			challenge [32]byte
+			protocol  string
 		)
 
 		f := fuzz.New().NilChance(0.1)
 		f.Fuzz(&nonce2)
 		f.Fuzz(&challenge)
+		f.Fuzz(&protocol)
 
 		message := &Act2Message{
 			nonce2:    nonce2,
 			challenge: challenge,
+			protocol2: protocol,
 		}
 
 		_ = pbutils.RoundTrip(message, &Act2Message{})

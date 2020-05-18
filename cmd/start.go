@@ -120,6 +120,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
+		libp2p.ProtocolBeacon,
 		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
