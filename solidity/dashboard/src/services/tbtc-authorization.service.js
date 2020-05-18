@@ -283,23 +283,6 @@ const fetchCreatedBonds = async (
   })
 }
 
-// TODO: add later when fetching bonding section
-const fetchBondReassignedEvents = async (
-  web3Context,
-  operatorAddresses,
-  referenceId
-) => {
-  return contractService.getPastEvents(
-    web3Context,
-    KEEP_BONDING_CONTRACT_NAME,
-    "BondReassigned",
-    {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[KEEP_BONDING_CONTRACT_NAME],
-      filter: { operator: operatorAddresses, referenceID: referenceId },
-    }
-  )
-}
-
 const fetchManagedGrantAddresses = async (web3Context, lookupAddress) => {
   return (
     await contractService.getPastEvents(
