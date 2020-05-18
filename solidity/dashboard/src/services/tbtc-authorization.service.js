@@ -192,10 +192,7 @@ const fetchBondingData = async (web3Context) => {
         web3Context,
         operators[i]
       )
-      const availableEth = await fetchAvailableAmount(
-        web3Context,
-        operators[i]
-      )
+      const availableEth = await fetchAvailableAmount(web3Context, operators[i])
 
       const bondedEth = operatorBondingDataMap.get(
         web3Utils.toChecksumAddress(operators[i])
@@ -397,15 +394,12 @@ const fetchLockedBondAmount = async (
 }
 
 // aka unbondedValue
-const fetchAvailableAmount = async (
-  web3Context,
-  operator
-) => {
+const fetchAvailableAmount = async (web3Context, operator) => {
   return contractService.makeCall(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
     "unbondedValue",
-    operator,
+    operator
   )
 }
 
