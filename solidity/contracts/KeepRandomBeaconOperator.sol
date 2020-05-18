@@ -1,8 +1,23 @@
+/**
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+                           Trust math, not hardware.
+*/
+
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
+import "./KeepRegistry.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
@@ -10,20 +25,20 @@ import "./libraries/operator/GroupSelection.sol";
 import "./libraries/operator/Groups.sol";
 import "./libraries/operator/DKGResultVerification.sol";
 import "./libraries/operator/Reimbursements.sol";
+import "./libraries/operator/DelayFactor.sol";
 
 interface ServiceContract {
     function entryCreated(uint256 requestId, bytes calldata entry, address payable submitter) external;
     function fundRequestSubsidyFeePool() external payable;
     function fundDkgFeePool() external payable;
+    function callbackSurplusRecipient(uint256 requestId) external view returns(address payable);
 }
 
-/**
- * @title KeepRandomBeaconOperator
- * @dev Keep client facing contract for random beacon security-critical operations.
- * Handles group creation and expiration, BLS signature verification and incentives.
- * The contract is not upgradeable. New functionality can be implemented by deploying
- * new versions following Keep client update and re-authorization by the stakers.
- */
+/// @title KeepRandomBeaconOperator
+/// @notice Keep client facing contract for random beacon security-critical operations.
+/// Handles group creation and expiration, BLS signature verification and incentives.
+/// The contract is not upgradeable. New functionality can be implemented by deploying
+/// new versions following Keep client update and re-authorization by the stakers.
 contract KeepRandomBeaconOperator is ReentrancyGuard {
     using SafeMath for uint256;
     using PercentUtils for uint256;
@@ -33,106 +48,98 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     using DKGResultVerification for DKGResultVerification.Storage;
 
     event OnGroupRegistered(bytes groupPubKey);
-
     event DkgResultSubmittedEvent(
         uint256 memberIndex,
         bytes groupPubKey,
         bytes misbehaved
     );
-
     event RelayEntryRequested(bytes previousEntry, bytes groupPublicKey);
     event RelayEntrySubmitted();
-
     event GroupSelectionStarted(uint256 newEntry);
-
-    event GroupMemberRewardsWithdrawn(address indexed beneficiary, address operator, uint256 amount, uint256 groupIndex);
-
+    event GroupMemberRewardsWithdrawn(
+        address indexed beneficiary,
+        address operator,
+        uint256 amount,
+        uint256 groupIndex
+    );
     event RelayEntryTimeoutReported(uint256 indexed groupIndex);
-
     event UnauthorizedSigningReported(uint256 indexed groupIndex);
 
     GroupSelection.Storage groupSelection;
     Groups.Storage groups;
     DKGResultVerification.Storage dkgResultVerification;
 
-    // Contract owner.
-    address internal owner;
-
     address[] internal serviceContracts;
 
-    // TODO: replace with a secure authorization protocol (addressed in RFC 11).
+    KeepRegistry internal registry;
+
     TokenStaking internal stakingContract;
 
-    // Each signing group member reward expressed in wei.
+    /// @dev Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1000000*1e9; // 1M Gwei
 
-    // Gas price ceiling value used to calculate the gas price for reimbursement
-    // next to the actual gas price from the transaction. We use gas price
-    // ceiling to defend against malicious miner-submitters who can manipulate
-    // transaction gas price.
+    /// @dev Gas price ceiling value used to calculate the gas price for reimbursement
+    /// next to the actual gas price from the transaction. We use gas price
+    /// ceiling to defend against malicious miner-submitters who can manipulate
+    /// transaction gas price.
     uint256 public gasPriceCeiling = 30*1e9; // (30 Gwei = 30 * 10^9 wei)
 
-    // Size of a group in the threshold relay.
+    /// @dev Size of a group in the threshold relay.
     uint256 public groupSize = 64;
 
-    // Minimum number of group members needed to interact according to the
-    // protocol to produce a relay entry.
+    /// @dev Minimum number of group members needed to interact according to the
+    /// protocol to produce a relay entry.
     uint256 public groupThreshold = 33;
 
-    // Time in blocks after which the next group member is eligible
-    // to submit the result.
-    uint256 public resultPublicationBlockStep = 3;
+    /// @dev Time in blocks after which the next group member is eligible
+    /// to submit the result.
+    uint256 public resultPublicationBlockStep = 6;
 
-    // Timeout in blocks for a relay entry to appear on the chain. Blocks are
-    // counted from the moment relay request occur.
-    //
-    // Timeout is never shorter than the time needed by clients to generate
-    // relay entry and the time it takes for the last group member to become
-    // eligible to submit the result plus at least one block to submit it.
+    /// @dev Timeout in blocks for a relay entry to appear on the chain. Blocks
+    /// are counted from the moment relay request occur.
+    ///
+    /// Timeout is never shorter than the time needed by clients to generate
+    /// relay entry and the time it takes for the last group member to become
+    /// eligible to submit the result plus at least one block to submit it.
     uint256 public relayEntryTimeout = groupSize.mul(resultPublicationBlockStep);
 
-    // Gas required to verify BLS signature and produce successful relay
-    // entry. Excludes callback and DKG gas. The worst case (most expensive)
-    // scenario.
+    /// @dev Gas required to verify BLS signature and produce successful relay
+    /// entry. Excludes callback and DKG gas. The worst case (most expensive)
+    /// scenario.
     uint256 public entryVerificationGasEstimate = 280000;
 
-    // Gas required to submit DKG result. Excludes initiation of group selection.
+    /// @dev Gas required to submit DKG result. Excludes initiation of group selection.
     uint256 public dkgGasEstimate = 1740000;
 
-    // Gas required to trigger DKG (starting group selection).
+    /// @dev Gas required to trigger DKG (starting group selection).
     uint256 public groupSelectionGasEstimate = 200000;
 
-    // Reimbursement for the submitter of the DKG result. This value is set when
-    // a new DKG request comes to the operator contract.
-    //
-    // When submitting DKG result, the submitter is reimbursed with the actual cost
-    // and some part of the fee stored in this field may be returned to the service
-    // contract.
+    /// @dev Reimbursement for the submitter of the DKG result. This value is set
+    /// when a new DKG request comes to the operator contract.
+    ///
+    /// When submitting DKG result, the submitter is reimbursed with the actual cost
+    /// and some part of the fee stored in this field may be returned to the service
+    /// contract.
     uint256 public dkgSubmitterReimbursementFee;
 
-    uint256 internal currentEntryStartBlock;
-
-    // Seed value used for the genesis group selection.
-    // https://www.wolframalpha.com/input/?i=pi+to+78+digits
+    /// @dev Seed value used for the genesis group selection.
+    /// https://www.wolframalpha.com/input/?i=pi+to+78+digits
     uint256 internal constant _genesisGroupSeed = 31415926535897932384626433832795028841971693993751058209749445923078164062862;
 
-    // Service contract that triggered current group selection.
+    /// @dev Service contract that triggered current group selection.
     ServiceContract internal groupSelectionStarterContract;
 
-    struct SigningRequest {
-        uint256 relayRequestId;
-        uint256 entryVerificationAndProfitFee;
-        uint256 callbackFee;
-        uint256 groupIndex;
-        bytes previousEntry;
-        address serviceContract;
-    }
-    SigningRequest internal signingRequest;
+    // current relay request data
+    uint256 internal currentRequestId;
+    uint256 public currentRequestStartBlock;
+    uint256 public currentRequestGroupIndex;
+    bytes public currentRequestPreviousEntry;
+    uint256 internal  currentRequestEntryVerificationAndProfitFee;
+    uint256 internal currentRequestCallbackFee;
+    address internal currentRequestServiceContract;
 
 
-    /**
-     * @dev Triggers group selection if there are no active groups.
-     */
+    /// @notice Triggers group selection if there are no active groups.
     function genesis() public payable {
         // If we run into a very unlikely situation when there are no active
         // groups on the contract because of slashing and groups terminated
@@ -145,17 +152,14 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner.
-     */
-    modifier onlyOwner() {
-        require(owner == msg.sender, "Caller is not the owner");
+    modifier onlyServiceContractUpgrader() {
+        require(
+            registry.serviceContractUpgraderFor(address(this)) == msg.sender,
+            "Not authorized"
+        );
         _;
     }
 
-    /**
-     * @dev Checks if sender is authorized.
-     */
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
@@ -164,21 +168,25 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         _;
     }
 
-    constructor(address _serviceContract, address _stakingContract) public {
-        owner = msg.sender;
+    constructor(
+        address _serviceContract,
+        address _stakingContract,
+        address _registryContract
+    ) public {
+        registry = KeepRegistry(_registryContract);
 
         serviceContracts.push(_serviceContract);
         stakingContract = TokenStaking(_stakingContract);
 
         groups.stakingContract = TokenStaking(_stakingContract);
-        groups.groupActiveTime = 86400 * 7 / 15; // 7 days equivalent in 15s blocks
+        groups.groupActiveTime = 86400 * 14 / 15; // 14 days equivalent in 15s blocks
 
-        // There are 39 blocks to submit group selection tickets. To minimize
+        // There are 78 blocks to submit group selection tickets. To minimize
         // the submitter's cost by minimizing the number of redundant tickets
         // that are not selected into the group, the following approach is
         // recommended:
         //
-        // Tickets are submitted in 11 rounds, each round taking 3 blocks.
+        // Tickets are submitted in 11 rounds, each round taking 6 blocks.
         // As the basic principle, the number of leading zeros in the ticket
         // value is subtracted from the number of rounds to determine the round
         // the ticket should be submitted in:
@@ -192,10 +200,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // the candidate not yet submitted to determine if continuing with
         // ticket submission still makes sense.
         //
-        // After 33 blocks, there is a 6 blocks mining lag allowing all
+        // After 66 blocks, there is a 12 blocks mining lag allowing all
         // outstanding ticket submissions to have a higher chance of being
         // mined before the deadline.
-        groupSelection.ticketSubmissionTimeout = 3 * 11 + 6;
+        groupSelection.ticketSubmissionTimeout = 6 * 11 + 12;
 
         groupSelection.groupSize = groupSize;
 
@@ -205,28 +213,22 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         dkgResultVerification.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
     }
 
-    /**
-     * @dev Adds service contract
-     * @param serviceContract Address of the service contract.
-     */
-    function addServiceContract(address serviceContract) public onlyOwner {
+    /// @notice Adds service contract
+    /// @param serviceContract Address of the service contract.
+    function addServiceContract(address serviceContract) public onlyServiceContractUpgrader {
         serviceContracts.push(serviceContract);
     }
 
-    /**
-     * @dev Removes service contract
-     * @param serviceContract Address of the service contract.
-     */
-    function removeServiceContract(address serviceContract) public onlyOwner {
+    /// @notice Removes service contract
+    /// @param serviceContract Address of the service contract.
+    function removeServiceContract(address serviceContract) public onlyServiceContractUpgrader {
         serviceContracts.removeAddress(serviceContract);
     }
 
-    /**
-     * @dev Triggers the selection process of a new candidate group.
-     * @param _newEntry New random beacon value that stakers will use to
-     * generate their tickets.
-     * @param submitter Operator of this contract.
-     */
+    /// @notice Triggers the selection process of a new candidate group.
+    /// @param _newEntry New random beacon value that stakers will use to
+    /// generate their tickets.
+    /// @param submitter Operator of this contract.
     function createGroup(uint256 _newEntry, address payable submitter) public payable onlyServiceContract {
         uint256 groupSelectionStartFee = groupSelectionGasEstimate.mul(gasPriceCeiling);
 
@@ -234,7 +236,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_newEntry, msg.value.sub(groupSelectionStartFee));
 
         // reimbursing a submitter that triggered group selection
-        (bool success, ) = stakingContract.magpieOf(submitter).call.value(groupSelectionStartFee)("");
+        (bool success, ) = stakingContract.beneficiaryOf(submitter).call.value(groupSelectionStartFee)("");
         require(success, "Group selection reimbursement failed");
     }
 
@@ -251,7 +253,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         if (dkgSubmitterReimbursementFee > 0) {
             uint256 surplus = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            ServiceContract(msg.sender).fundDkgFeePool.value(surplus)();
+            ServiceContract(groupSelectionStarterContract).fundDkgFeePool.value(surplus)();
         }
 
         groupSelection.minimumStake = stakingContract.minimumStake();
@@ -260,6 +262,9 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         dkgSubmitterReimbursementFee = _payment;
     }
 
+    /// @notice Checks if it is possible to fire a new group selection.
+    /// Triggering new group selection is only possible when there is no
+    /// pending group selection or when the pending group selection timed out.
     function isGroupSelectionPossible() public view returns (bool) {
         if (!groupSelection.inProgress) {
             return true;
@@ -275,58 +280,49 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         return block.number > dkgTimeout;
     }
 
-    /**
-     * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticket Bytes representation of a ticket that holds the following:
-     * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
-     *   function on the combination of the group selection seed (previous
-     *   beacon output), staker-specific value (address) and virtual staker index.
-     * - stakerValue: a staker-specific value which is the address of the staker.
-     * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
-     *   has to be unique for all tickets submitted by the given staker for the
-     *   current candidate group selection.
-     */
+    /// @notice Submits ticket to request to participate in a new candidate group.
+    /// @param ticket Bytes representation of a ticket that holds the following:
+    /// - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
+    ///   function on the combination of the group selection seed (previous
+    ///   beacon output), staker-specific value (address) and virtual staker index.
+    /// - stakerValue: a staker-specific value which is the address of the staker.
+    /// - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
+    ///   has to be unique for all tickets submitted by the given staker for the
+    ///   current candidate group selection.
     function submitTicket(bytes32 ticket) public {
-        uint256 stakingWeight = stakingContract.eligibleStake(msg.sender, address(this)).div(groupSelection.minimumStake);
+        uint256 stakingWeight = stakingContract.eligibleStake(
+            msg.sender, address(this)
+        ).div(groupSelection.minimumStake);
         groupSelection.submitTicket(ticket, stakingWeight);
     }
 
-    /**
-     * @dev Gets the timeout in blocks after which group candidate ticket
-     * submission is finished.
-     */
+    /// @notice Gets the timeout in blocks after which group candidate ticket
+    /// submission is finished.
     function ticketSubmissionTimeout() public view returns (uint256) {
         return groupSelection.ticketSubmissionTimeout;
     }
 
-    /**
-     * @dev Gets the submitted group candidate tickets so far.
-     */
+    /// @notice Gets the submitted group candidate tickets so far.
     function submittedTickets() public view returns (uint64[] memory) {
         return groupSelection.tickets;
     }
 
-    /**
-     * @dev Gets selected participants in ascending order of their tickets.
-     */
+    /// @notice Gets selected participants in ascending order of their tickets.
     function selectedParticipants() public view returns (address[] memory) {
         return groupSelection.selectedParticipants();
     }
 
-    /**
-     * @dev Submits result of DKG protocol. It is on-chain part of phase 14 of
-     * the protocol.
-     *
-     * @param submitterMemberIndex Claimed submitter candidate group member index
-     * @param groupPubKey Generated candidate group public key
-     * @param misbehaved Bytes array of misbehaved (disqualified or inactive)
-     * group members indexes in ascending order; Indexes reflect positions of
-     * members in the group as outputted by the group selection protocol.
-     * @param signatures Concatenation of signatures from members supporting the
-     * result.
-     * @param signingMembersIndexes Indices of members corresponding to each
-     * signature.
-     */
+    /// @notice Submits result of DKG protocol. It is on-chain part of phase 14 of
+    /// the protocol.
+    /// @param submitterMemberIndex Claimed submitter candidate group member index
+    /// @param groupPubKey Generated candidate group public key
+    /// @param misbehaved Bytes array of misbehaved (disqualified or inactive)
+    /// group members indexes in ascending order; Indexes reflect positions of
+    /// members in the group as outputted by the group selection protocol.
+    /// @param signatures Concatenation of signatures from members supporting the
+    /// result.
+    /// @param signingMembersIndexes Indices of members corresponding to each
+    /// signature.
     function submitDkgResult(
         uint256 submitterMemberIndex,
         bytes memory groupPubKey,
@@ -353,12 +349,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groupSelection.stop();
     }
 
-    /**
-     * @dev Compare the reimbursement fee calculated based on the current transaction gas
-     * price and the current price feed estimate with the DKG reimbursement fee calculated
-     * and paid at the moment when the DKG was requested. If there is any surplus, it will
-     * be returned to the DKG fee pool of the service contract which triggered the DKG.
-     */
+    /// @notice Compare the reimbursement fee calculated based on the current
+    /// transaction gas price and the current price feed estimate with the DKG
+    /// reimbursement fee calculated and paid at the moment when the DKG was
+    /// requested. If there is any surplus, it will be returned to the DKG fee
+    /// pool of the service contract which triggered the DKG.
     function reimburseDkgSubmitter() internal {
         uint256 gasPrice = gasPriceCeiling;
         // We need to check if tx.gasprice is non-zero as a workaround to a bug
@@ -369,30 +364,29 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         }
 
         uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        address payable magpie = stakingContract.magpieOf(msg.sender);
+        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);
 
         if (reimbursementFee < dkgSubmitterReimbursementFee) {
             uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
             dkgSubmitterReimbursementFee = 0;
             // Reimburse submitter with actual DKG cost.
-            magpie.call.value(reimbursementFee)("");
+            beneficiary.call.value(reimbursementFee)("");
 
             // Return surplus to the contract that started DKG.
             groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
         } else {
-            // If submitter used higher gas price reimburse only dkgSubmitterReimbursementFee max.
+            // If submitter used higher gas price reimburse only
+            // dkgSubmitterReimbursementFee max.
             reimbursementFee = dkgSubmitterReimbursementFee;
             dkgSubmitterReimbursementFee = 0;
-            magpie.call.value(reimbursementFee)("");
+            beneficiary.call.value(reimbursementFee)("");
         }
     }
 
-    /**
-     * @dev Creates a request to generate a new relay entry, which will include a
-     * random number (by signing the previous entry's random number).
-     * @param requestId Request Id trackable by service contract
-     * @param previousEntry Previous relay entry
-     */
+    /// @notice Creates a request to generate a new relay entry, which will include
+    /// a random number (by signing the previous entry's random number).
+    /// @param requestId Request Id trackable by service contract
+    /// @param previousEntry Previous relay entry
     function sign(
         uint256 requestId,
         bytes memory previousEntry
@@ -420,37 +414,33 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     ) internal {
         require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
 
-        currentEntryStartBlock = block.number;
-
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
-        signingRequest = SigningRequest(
-            requestId,
-            entryVerificationAndProfitFee,
-            callbackFee,
-            groupIndex,
-            previousEntry,
-            serviceContract
-        );
+
+        currentRequestId = requestId;
+        currentRequestStartBlock = block.number;
+        currentRequestEntryVerificationAndProfitFee = entryVerificationAndProfitFee;
+        currentRequestCallbackFee = callbackFee;
+        currentRequestGroupIndex = groupIndex;
+        currentRequestPreviousEntry = previousEntry;
+        currentRequestServiceContract = serviceContract;
 
         bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
         emit RelayEntryRequested(previousEntry, groupPubKey);
     }
 
-    /**
-     * @dev Creates a new relay entry and stores the associated data on the chain.
-     * @param _groupSignature Group BLS signature over the concatenation of the
-     * previous entry and seed.
-     */
+    /// @notice Creates a new relay entry and stores the associated data on the chain.
+    /// @param _groupSignature Group BLS signature over the concatenation of the
+    /// previous entry and seed.
     function relayEntry(bytes memory _groupSignature) public nonReentrant {
         require(isEntryInProgress(), "Entry was submitted");
         require(!hasEntryTimedOut(), "Entry timed out");
 
-        bytes memory groupPubKey = groups.getGroupPublicKey(signingRequest.groupIndex);
+        bytes memory groupPubKey = groups.getGroupPublicKey(currentRequestGroupIndex);
 
         require(
             BLS.verify(
                 groupPubKey,
-                signingRequest.previousEntry,
+                currentRequestPreviousEntry,
                 _groupSignature
             ),
             "Invalid signature"
@@ -460,52 +450,62 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         // Spend no more than groupSelectionGasEstimate + 40000 gas max
         // This will prevent relayEntry failure in case the service contract is compromised
-        signingRequest.serviceContract.call.gas(groupSelectionGasEstimate.add(40000))(
+        currentRequestServiceContract.call.gas(groupSelectionGasEstimate.add(40000))(
             abi.encodeWithSignature(
                 "entryCreated(uint256,bytes,address)",
-                signingRequest.relayRequestId,
+                currentRequestId,
                 _groupSignature,
                 msg.sender
             )
         );
 
-        if (signingRequest.callbackFee > 0) {
-            executeCallback(signingRequest, uint256(keccak256(_groupSignature)));
+        if (currentRequestCallbackFee > 0) {
+            executeCallback(uint256(keccak256(_groupSignature)));
         }
 
         (uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) = newEntryRewardsBreakdown();
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
 
-        stakingContract.magpieOf(msg.sender).call.value(submitterReward)("");
+        stakingContract.beneficiaryOf(msg.sender).call.value(submitterReward)("");
 
         if (subsidy > 0) {
-            signingRequest.serviceContract.call.gas(35000).value(subsidy)(abi.encodeWithSignature("fundRequestSubsidyFeePool()"));
+            currentRequestServiceContract.call.gas(35000).value(subsidy)(
+                abi.encodeWithSignature("fundRequestSubsidyFeePool()")
+            );
         }
 
-        currentEntryStartBlock = 0;
+        currentRequestStartBlock = 0;
     }
 
-    /**
-     * @dev Executes customer specified callback for the relay entry request.
-     * @param signingRequest Request data tracked internally by this contract.
-     * @param entry The generated random number.
-     */
-    function executeCallback(SigningRequest memory signingRequest, uint256 entry) internal {
-        uint256 callbackFee = signingRequest.callbackFee;
-
+    /// @notice Executes customer specified callback for the relay entry request.
+    /// @param entry The generated random number.
+    function executeCallback(uint256 entry) internal {
         // Make sure not to spend more than what was received from the service
         // contract for the callback
-        uint256 gasLimit = callbackFee.div(gasPriceCeiling);
+        uint256 gasLimit = currentRequestCallbackFee.div(gasPriceCeiling);
 
-        bytes memory callbackReturnData;
+        // Make sure not to spend more than 2 million gas on a callback.
+        // This is to protect members from relay entry failure and potential
+        // slashing in case of any changes in .call() gas limit.
+        gasLimit = gasLimit > 2000000 ? 2000000 : gasLimit;
+
+        bytes memory callbackSurplusRecipientData;
+        (, callbackSurplusRecipientData) = currentRequestServiceContract.call.gas(
+            40000
+        )(abi.encodeWithSignature(
+            "callbackSurplusRecipient(uint256)",
+            currentRequestId
+        ));
+
         uint256 gasBeforeCallback = gasleft();
-        (, callbackReturnData) = signingRequest.serviceContract.call.gas(
+        currentRequestServiceContract.call.gas(
             gasLimit
         )(abi.encodeWithSignature(
             "executeCallback(uint256,uint256)",
-            signingRequest.relayRequestId,
+            currentRequestId,
             entry
         ));
+
         uint256 gasAfterCallback = gasleft();
         uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
 
@@ -514,18 +514,24 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
             gasPriceCeiling,
             gasLimit,
             gasSpent,
-            callbackFee,
-            callbackReturnData
+            currentRequestCallbackFee,
+            callbackSurplusRecipientData
         );
     }
 
-    /**
-     * @dev Get rewards breakdown in wei for successful entry for the current signing request.
-     */
-    function newEntryRewardsBreakdown() internal view returns(uint256 groupMemberReward, uint256 submitterReward, uint256 subsidy) {
+    /// @notice Get rewards breakdown in wei for successful entry for the
+    /// current signing request.
+    function newEntryRewardsBreakdown() internal view returns(
+        uint256 groupMemberReward,
+        uint256 submitterReward,
+        uint256 subsidy
+    ) {
         uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
 
-        uint256 delayFactor = getDelayFactor();
+        uint256 delayFactor = DelayFactor.calculate(
+            currentRequestStartBlock,
+            relayEntryTimeout
+        );
         groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
 
         // delay penalty = base reward * (1 - delay factor)
@@ -537,238 +543,165 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // paid regardless of their gas expenditure
         // Submitter extra reward - 5% of the delay penalties of the entire group
         uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).percent(5).div(decimals);
-        uint256 entryVerificationFee = signingRequest.entryVerificationAndProfitFee.sub(groupProfitFee());
+        uint256 entryVerificationFee = currentRequestEntryVerificationAndProfitFee.sub(groupProfitFee());
         submitterReward = entryVerificationFee.add(submitterExtraReward);
 
         // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
         subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
     }
 
-    /**
-     * @dev Gets delay factor for rewards calculation.
-     * @return Integer representing floating-point number with 16 decimals places.
-     */
-    function getDelayFactor() internal view returns(uint256 delayFactor) {
-        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-
-        // T_deadline is the earliest block when no submissions are accepted
-        // and an entry timed out. The last block the entry can be published in is
-        //     currentEntryStartBlock + relayEntryTimeout
-        // and submission are no longer accepted from block
-        //     currentEntryStartBlock + relayEntryTimeout + 1.
-        uint256 deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).add(1);
-
-        // T_begin is the earliest block the result can be published in.
-        // Relay entry can be generated instantly after relay request is
-        // registered on-chain so a new entry can be published at the next
-        // block the earliest.
-        uint256 submissionStartBlock = currentEntryStartBlock.add(1);
-
-        // Use submissionStartBlock block as entryReceivedBlock if entry submitted earlier than expected.
-        uint256 entryReceivedBlock = block.number <= submissionStartBlock ? submissionStartBlock:block.number;
-
-        // T_remaining = T_deadline - T_received
-        uint256 remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
-
-        // T_deadline - T_begin
-        uint256 submissionWindow = deadlineBlock.sub(submissionStartBlock);
-
-        // delay factor = [ T_remaining / (T_deadline - T_begin)]^2
-        //
-        // Since we add 16 decimal places to perform float division, we do:
-        // delay factor = [ T_temaining * decimals / (T_deadline - T_begin)]^2 / decimals =
-        //    = [T_remaining / (T_deadline - T_begin) ]^2 * decimals
-        delayFactor = ((remainingBlocks.mul(decimals).div(submissionWindow))**2).div(decimals);
+    /// @notice Returns true if generation of a new relay entry is currently in
+    /// progress.
+    function isEntryInProgress() public view returns (bool) {
+        return currentRequestStartBlock != 0;
     }
 
-    /**
-     * @dev Returns true if generation of a new relay entry is currently in
-     * progress.
-     */
-    function isEntryInProgress() internal view returns (bool) {
-        return currentEntryStartBlock != 0;
-    }
-
-    /**
-     * @dev Returns true if the currently ongoing new relay entry generation
-     * operation timed out. There is a certain timeout for a new relay entry
-     * to be produced, see `relayEntryTimeout` value.
-     */
+    /// @notice Returns true if the currently ongoing new relay entry generation
+    /// operation timed out. There is a certain timeout for a new relay entry
+    /// to be produced, see `relayEntryTimeout` value.
     function hasEntryTimedOut() internal view returns (bool) {
-        return currentEntryStartBlock != 0 && block.number > currentEntryStartBlock + relayEntryTimeout;
+        return currentRequestStartBlock != 0 && block.number > currentRequestStartBlock + relayEntryTimeout;
     }
 
-    /**
-     * @dev Function used to inform about the fact the currently ongoing
-     * new relay entry generation operation timed out. As a result, the group
-     * which was supposed to produce a new relay entry is immediately
-     * terminated and a new group is selected to produce a new relay entry.
-     * All members of the group are punished by seizing minimum stake of
-     * their tokens. The submitter of the transaction is rewarded with a
-     * tattletale reward which is limited to min(1, 20 / group_size) of the
-     * maximum tattletale reward.
-     */
+    /// @notice Function used to inform about the fact the currently ongoing
+    /// new relay entry generation operation timed out. As a result, the group
+    /// which was supposed to produce a new relay entry is immediately
+    /// terminated and a new group is selected to produce a new relay entry.
+    /// All members of the group are punished by seizing minimum stake of
+    /// their tokens. The submitter of the transaction is rewarded with a
+    /// tattletale reward which is limited to min(1, 20 / group_size) of the
+    /// maximum tattletale reward.
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
-
-        uint256 minimumStake = stakingContract.minimumStake();
-        groups.reportRelayEntryTimeout(signingRequest.groupIndex, groupSize, minimumStake);
+        groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize);
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
         // which can handle it.
         if (numberOfGroups() > 0) {
             signRelayEntry(
-                signingRequest.relayRequestId,
-                signingRequest.previousEntry,
-                signingRequest.serviceContract,
-                signingRequest.entryVerificationAndProfitFee,
-                signingRequest.callbackFee
+                currentRequestId,
+                currentRequestPreviousEntry,
+                currentRequestServiceContract,
+                currentRequestEntryVerificationAndProfitFee,
+                currentRequestCallbackFee
             );
         }
 
-        emit RelayEntryTimeoutReported(signingRequest.groupIndex);
+        emit RelayEntryTimeoutReported(currentRequestGroupIndex);
     }
 
-    /**
-     * @dev Gets group profit fee expressed in wei.
-     */
+    /// @notice Gets group profit fee expressed in wei.
     function groupProfitFee() public view returns(uint256) {
         return groupMemberBaseReward.mul(groupSize);
     }
 
-    /**
-     * @dev Checks if the specified account has enough active stake to become
-     * network operator and that this contract has been authorized for potential
-     * slashing.
-     *
-     * Having the required minimum of active stake makes the operator eligible
-     * to join the network. If the active stake is not currently undelegating,
-     * operator is also eligible for work selection.
-     *
-     * @param staker Staker's address
-     * @return True if has enough active stake to participate in the network,
-     * false otherwise.
-     */
+    /// @notice Checks if the specified account has enough active stake to become
+    /// network operator and that this contract has been authorized for potential
+    /// slashing.
+    ///
+    /// Having the required minimum of active stake makes the operator eligible
+    /// to join the network. If the active stake is not currently undelegating,
+    /// operator is also eligible for work selection.
+    ///
+    /// @param staker Staker's address
+    /// @return True if has enough active stake to participate in the network,
+    /// false otherwise.
     function hasMinimumStake(address staker) public view returns(bool) {
         return stakingContract.hasMinimumStake(staker, address(this));
     }
 
-    /**
-     * @dev Checks if group with the given public key is registered.
-     */
+    /// @notice Checks if group with the given public key is registered.
     function isGroupRegistered(bytes memory groupPubKey) public view returns(bool) {
         return groups.isGroupRegistered(groupPubKey);
     }
 
-    /**
-     * @dev Checks if a group with the given public key is a stale group.
-     * Stale group is an expired group which is no longer performing any
-     * operations. It is important to understand that an expired group may
-     * still perform some operations for which it was selected when it was still
-     * active. We consider a group to be stale when it's expired and when its
-     * expiration time and potentially executed operation timeout are both in
-     * the past.
-     */
+    /// @notice Checks if a group with the given public key is a stale group.
+    /// Stale group is an expired group which is no longer performing any
+    /// operations. It is important to understand that an expired group may
+    /// still perform some operations for which it was selected when it was still
+    /// active. We consider a group to be stale when it's expired and when its
+    /// expiration time and potentially executed operation timeout are both in
+    /// the past.
     function isStaleGroup(bytes memory groupPubKey) public view returns(bool) {
         return groups.isStaleGroup(groupPubKey);
     }
 
-    /**
-     * @notice Gets the number of active groups as currently marked in the
-     * contract. This is the state from when the expired groups were last updated
-     * without accounting for recent expirations.
-     *
-     * @dev Even if numberOfGroups() > 0, it is still possible requesting for
-     * a new relay entry will revert with "no active groups" failure message.
-     * This function returns the number of active groups as they are currently
-     * marked on-chain. However, during relay request, before group selection,
-     * we run group expiration and it may happen that some groups seen as active
-     * turns out to be expired.
-     */
+    /// @notice Gets the number of active groups as currently marked in the
+    /// contract. This is the state from when the expired groups were last updated
+    /// without accounting for recent expirations.
+    ///
+    /// @dev Even if numberOfGroups() > 0, it is still possible requesting for
+    /// a new relay entry will revert with "no active groups" failure message.
+    /// This function returns the number of active groups as they are currently
+    /// marked on-chain. However, during relay request, before group selection,
+    /// we run group expiration and it may happen that some groups seen as active
+    /// turns out to be expired.
     function numberOfGroups() public view returns(uint256) {
         return groups.numberOfGroups();
     }
 
-    /**
-     * @dev Returns accumulated group member rewards for provided group.
-     */
+    /// @notice Returns accumulated group member rewards for provided group.
     function getGroupMemberRewards(bytes memory groupPubKey) public view returns (uint256) {
         return groups.groupMemberRewards[groupPubKey];
     }
 
-    /**
-     * @notice Return whether the given operator
-     * has withdrawn their rewards from the given group.
-     */
+    /// @notice Return whether the given operator has withdrawn their rewards
+    /// from the given group.
     function hasWithdrawnRewards(address operator, uint256 groupIndex)
         public view returns (bool) {
         return groups.hasWithdrawnRewards(operator, groupIndex);
     }
 
-    /**
-     * @dev Withdraws accumulated group member rewards for operator
-     * using the provided group index.
-     * Once the accumulated reward is withdrawn from the selected group,
-     * the operator is flagged as withdrawn.
-     * Rewards can be withdrawn only from stale group.
-     * @param operator Operator address.
-     * @param groupIndex Group index.
-     */
+    /// @notice Withdraws accumulated group member rewards for operator
+    /// using the provided group index.
+    /// Once the accumulated reward is withdrawn from the selected group,
+    /// the operator is flagged as withdrawn.
+    /// Rewards can be withdrawn only from stale group.
+    /// @param operator Operator address
+    /// @param groupIndex Group index
     function withdrawGroupMemberRewards(address operator, uint256 groupIndex)
         public nonReentrant {
         uint256 accumulatedRewards = groups.withdrawFromGroup(operator, groupIndex);
-        (bool success, ) = stakingContract.magpieOf(operator).call.value(accumulatedRewards)("");
+        (bool success, ) = stakingContract.beneficiaryOf(operator).call.value(accumulatedRewards)("");
         if (success) {
-            emit GroupMemberRewardsWithdrawn(stakingContract.magpieOf(operator), operator, accumulatedRewards, groupIndex);
+            emit GroupMemberRewardsWithdrawn(stakingContract.beneficiaryOf(operator), operator, accumulatedRewards, groupIndex);
         }
     }
 
-    /**
-    * @dev Gets the index of the first active group.
-    */
+    /// @notice Gets the index of the first active group.
     function getFirstActiveGroupIndex() public view returns (uint256) {
         return groups.expiredGroupOffset;
     }
 
-    /**
-    * @dev Gets group public key.
-    */
+    /// @notice Gets public key of the group with the given index.
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.getGroupPublicKey(groupIndex);
     }
 
-    /**
-     * @dev Returns fee for entry verification in wei. Does not include group
-     * profit fee, DKG contribution or callback fee.
-     */
+    /// @notice Returns fee for entry verification in wei. Does not include group
+    /// profit fee, DKG contribution or callback fee.
     function entryVerificationFee() public view returns (uint256) {
         return entryVerificationGasEstimate.mul(gasPriceCeiling);
     }
 
-    /**
-     * @dev Returns fee for group creation in wei. Includes the cost of DKG
-     * and the cost of triggering group selection.
-     */
+    /// @notice Returns fee for group creation in wei. Includes the cost of DKG
+    /// and the cost of triggering group selection.
     function groupCreationFee() public view returns (uint256) {
         return dkgGasEstimate.add(groupSelectionGasEstimate).mul(gasPriceCeiling);
     }
 
-    /**
-     * @dev Returns members of the given group by group public key.
-     */
+    /// @notice Returns members of the given group by group public key.
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
     }
 
-    /**
-     * @dev Reports unauthorized signing for the provided group. Must provide
-     * a valid signature of the tattletale address as a message. Successful signature
-     * verification means the private key has been leaked and all group members
-     * should be punished by seizing their tokens. The submitter of this proof is
-     * rewarded with 5% of the total seized amount scaled by the reward adjustment
-     * parameter and the rest 95% is burned.
-     */
+    /// @notice Reports unauthorized signing for the provided group. Must provide
+    /// a valid signature of the tattletale address as a message. Successful signature
+    /// verification means the private key has been leaked and all group members
+    /// should be punished by seizing their tokens. The submitter of this proof is
+    /// rewarded with 5% of the total seized amount scaled by the reward adjustment
+    /// parameter and the rest 95% is burned.
     function reportUnauthorizedSigning(
         uint256 groupIndex,
         bytes memory signedMsgSender

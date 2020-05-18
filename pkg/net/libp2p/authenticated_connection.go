@@ -31,6 +31,8 @@ type authenticatedConnection struct {
 	remotePeerPublicKey libp2pcrypto.PubKey
 
 	firewall keepNet.Firewall
+
+	protocol string
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -44,19 +46,21 @@ func newAuthenticatedInboundConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	firewall keepNet.Firewall,
+	protocol string,
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
 		firewall:            firewall,
+		protocol:            protocol,
 	}
 
 	if err := ac.runHandshakeAsResponder(); err != nil {
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	if err := ac.checkFirewallRules(); err != nil {
@@ -78,11 +82,12 @@ func newAuthenticatedOutboundConnection(
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
 	firewall keepNet.Firewall,
+	protocol string,
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not create new authenticated outbound connection [%v]",
+			"could not create new authenticated outbound connection: [%v]",
 			err,
 		)
 	}
@@ -94,11 +99,12 @@ func newAuthenticatedOutboundConnection(
 		remotePeerID:        remotePeerID,
 		remotePeerPublicKey: remotePublicKey,
 		firewall:            firewall,
+		protocol:            protocol,
 	}
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	if err := ac.checkFirewallRules(); err != nil {
@@ -128,7 +134,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 1
 	//
 
-	initiatorAct1, err := handshake.InitiateHandshake()
+	initiatorAct1, err := handshake.InitiateHandshake(ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -269,7 +275,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 		return err
 	}
 
-	responderAct2, err := handshake.AnswerHandshake(act1Message)
+	responderAct2, err := handshake.AnswerHandshake(act1Message, ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -425,7 +431,7 @@ func (ac *authenticatedConnection) verify(
 	ok, err := pubKey.Verify(messageBytes, signatureBytes)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
+			"failed to verify signature [0x%v] for sender [%v]: [%v]",
 			hex.EncodeToString(signatureBytes),
 			actualSender.Pretty(),
 			err,
@@ -434,7 +440,7 @@ func (ac *authenticatedConnection) verify(
 
 	if !ok {
 		return fmt.Errorf(
-			"invalid signature [0x%v] on message from sender [%v] ",
+			"invalid signature [0x%v] on message from sender [%v]",
 			hex.EncodeToString(signatureBytes),
 			actualSender.Pretty(),
 		)

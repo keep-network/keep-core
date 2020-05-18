@@ -17,7 +17,7 @@ const timeRoundMargin = time.duration.minutes(1)
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 const EvilStakingPolicy = contract.fromArtifact("EvilStakingPolicy");
@@ -32,7 +32,7 @@ describe('TokenGrant/Stake', function() {
     grantee = accounts[1],
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5],
     revocableGrantee = accounts[6],
     evilGrantee = accounts[7];
@@ -50,7 +50,7 @@ describe('TokenGrant/Stake', function() {
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
-    registryContract = await Registry.new({from: accounts[0]});
+    registryContract = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       tokenContract.address,
       registryContract.address,
@@ -129,7 +129,7 @@ describe('TokenGrant/Stake', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       amount,
       grantId
@@ -142,7 +142,7 @@ describe('TokenGrant/Stake', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       amount,
       revocableGrantId
@@ -155,7 +155,7 @@ describe('TokenGrant/Stake', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       amount,
       evilGrantId
@@ -321,7 +321,7 @@ describe('TokenGrant/Stake', function() {
 
   it("should not allow to delegate to not authorized staking contract", async () => {
     const delegation = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operatorOne.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);

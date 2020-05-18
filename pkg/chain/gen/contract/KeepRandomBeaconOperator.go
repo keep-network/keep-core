@@ -37,6 +37,8 @@ type KeepRandomBeaconOperator struct {
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
 	errorResolver     *ethutil.ErrorResolver
+	nonceManager      *ethutil.NonceManager
+	miningWaiter      *ethutil.MiningWaiter
 
 	transactionMutex *sync.Mutex
 }
@@ -45,11 +47,14 @@ func NewKeepRandomBeaconOperator(
 	contractAddress common.Address,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
+	nonceManager *ethutil.NonceManager,
+	miningWaiter *ethutil.MiningWaiter,
 	transactionMutex *sync.Mutex,
 ) (*KeepRandomBeaconOperator, error) {
 	callerOptions := &bind.CallOpts{
-		From: contractAddress,
+		From: accountKey.Address,
 	}
+
 	transactorOptions := bind.NewKeyedTransactor(
 		accountKey.PrivateKey,
 	)
@@ -80,6 +85,8 @@ func NewKeepRandomBeaconOperator(
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
+		nonceManager:      nonceManager,
+		miningWaiter:      miningWaiter,
 		transactionMutex:  transactionMutex,
 	}, nil
 }
@@ -87,16 +94,18 @@ func NewKeepRandomBeaconOperator(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (krbo *KeepRandomBeaconOperator) RelayEntry(
-	_groupSignature []uint8,
+func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewards(
+	operator common.Address,
+	groupIndex *big.Int,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
-		"submitting transaction relayEntry",
+		"submitting transaction withdrawGroupMemberRewards",
 		"params: ",
 		fmt.Sprint(
-			_groupSignature,
+			operator,
+			groupIndex,
 		),
 	)
 
@@ -115,32 +124,76 @@ func (krbo *KeepRandomBeaconOperator) RelayEntry(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := krbo.contract.RelayEntry(
-		transactorOptions,
-		_groupSignature,
-	)
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
 
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.WithdrawGroupMemberRewards(
+		transactorOptions,
+		operator,
+		groupIndex,
+	)
 	if err != nil {
 		return transaction, krbo.errorResolver.ResolveError(
 			err,
 			krbo.transactorOptions.From,
 			nil,
-			"relayEntry",
-			_groupSignature,
+			"withdrawGroupMemberRewards",
+			operator,
+			groupIndex,
 		)
 	}
 
-	krboLogger.Debugf(
-		"submitted transaction relayEntry with id: [%v]",
+	krboLogger.Infof(
+		"submitted transaction withdrawGroupMemberRewards with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
+		transaction.Nonce(),
 	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.WithdrawGroupMemberRewards(
+				transactorOptions,
+				operator,
+				groupIndex,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"withdrawGroupMemberRewards",
+					operator,
+					groupIndex,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction withdrawGroupMemberRewards with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallRelayEntry(
-	_groupSignature []uint8,
+func (krbo *KeepRandomBeaconOperator) CallWithdrawGroupMemberRewards(
+	operator common.Address,
+	groupIndex *big.Int,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -152,26 +205,29 @@ func (krbo *KeepRandomBeaconOperator) CallRelayEntry(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"relayEntry",
+		"withdrawGroupMemberRewards",
 		&result,
-		_groupSignature,
+		operator,
+		groupIndex,
 	)
 
 	return err
 }
 
-func (krbo *KeepRandomBeaconOperator) RelayEntryGasEstimate(
-	_groupSignature []uint8,
+func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewardsGasEstimate(
+	operator common.Address,
+	groupIndex *big.Int,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		krbo.callerOptions.From,
 		krbo.contractAddress,
-		"relayEntry",
+		"withdrawGroupMemberRewards",
 		krbo.contractABI,
 		krbo.transactor,
-		_groupSignature,
+		operator,
+		groupIndex,
 	)
 
 	return result, err
@@ -208,12 +264,18 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigning(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := krbo.contract.ReportUnauthorizedSigning(
 		transactorOptions,
 		groupIndex,
 		signedMsgSender,
 	)
-
 	if err != nil {
 		return transaction, krbo.errorResolver.ResolveError(
 			err,
@@ -225,10 +287,45 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigning(
 		)
 	}
 
-	krboLogger.Debugf(
-		"submitted transaction reportUnauthorizedSigning with id: [%v]",
+	krboLogger.Infof(
+		"submitted transaction reportUnauthorizedSigning with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
+		transaction.Nonce(),
 	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.ReportUnauthorizedSigning(
+				transactorOptions,
+				groupIndex,
+				signedMsgSender,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"reportUnauthorizedSigning",
+					groupIndex,
+					signedMsgSender,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction reportUnauthorizedSigning with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -277,19 +374,409 @@ func (krbo *KeepRandomBeaconOperator) ReportUnauthorizedSigningGasEstimate(
 }
 
 // Transaction submission.
-func (krbo *KeepRandomBeaconOperator) Sign(
-	requestId *big.Int,
-	previousEntry []uint8,
+func (krbo *KeepRandomBeaconOperator) SubmitTicket(
+	ticket [32]uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krboLogger.Debug(
+		"submitting transaction submitTicket",
+		"params: ",
+		fmt.Sprint(
+			ticket,
+		),
+	)
+
+	krbo.transactionMutex.Lock()
+	defer krbo.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbo.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.SubmitTicket(
+		transactorOptions,
+		ticket,
+	)
+	if err != nil {
+		return transaction, krbo.errorResolver.ResolveError(
+			err,
+			krbo.transactorOptions.From,
+			nil,
+			"submitTicket",
+			ticket,
+		)
+	}
+
+	krboLogger.Infof(
+		"submitted transaction submitTicket with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.SubmitTicket(
+				transactorOptions,
+				ticket,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"submitTicket",
+					ticket,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction submitTicket with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbo *KeepRandomBeaconOperator) CallSubmitTicket(
+	ticket [32]uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		krbo.transactorOptions.From,
+		blockNumber, nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"submitTicket",
+		&result,
+		ticket,
+	)
+
+	return err
+}
+
+func (krbo *KeepRandomBeaconOperator) SubmitTicketGasEstimate(
+	ticket [32]uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		krbo.callerOptions.From,
+		krbo.contractAddress,
+		"submitTicket",
+		krbo.contractABI,
+		krbo.transactor,
+		ticket,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (krbo *KeepRandomBeaconOperator) RelayEntry(
+	_groupSignature []uint8,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krboLogger.Debug(
+		"submitting transaction relayEntry",
+		"params: ",
+		fmt.Sprint(
+			_groupSignature,
+		),
+	)
+
+	krbo.transactionMutex.Lock()
+	defer krbo.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbo.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.RelayEntry(
+		transactorOptions,
+		_groupSignature,
+	)
+	if err != nil {
+		return transaction, krbo.errorResolver.ResolveError(
+			err,
+			krbo.transactorOptions.From,
+			nil,
+			"relayEntry",
+			_groupSignature,
+		)
+	}
+
+	krboLogger.Infof(
+		"submitted transaction relayEntry with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.RelayEntry(
+				transactorOptions,
+				_groupSignature,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"relayEntry",
+					_groupSignature,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction relayEntry with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbo *KeepRandomBeaconOperator) CallRelayEntry(
+	_groupSignature []uint8,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		krbo.transactorOptions.From,
+		blockNumber, nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"relayEntry",
+		&result,
+		_groupSignature,
+	)
+
+	return err
+}
+
+func (krbo *KeepRandomBeaconOperator) RelayEntryGasEstimate(
+	_groupSignature []uint8,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		krbo.callerOptions.From,
+		krbo.contractAddress,
+		"relayEntry",
+		krbo.contractABI,
+		krbo.transactor,
+		_groupSignature,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (krbo *KeepRandomBeaconOperator) AddServiceContract(
+	serviceContract common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krboLogger.Debug(
+		"submitting transaction addServiceContract",
+		"params: ",
+		fmt.Sprint(
+			serviceContract,
+		),
+	)
+
+	krbo.transactionMutex.Lock()
+	defer krbo.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbo.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.AddServiceContract(
+		transactorOptions,
+		serviceContract,
+	)
+	if err != nil {
+		return transaction, krbo.errorResolver.ResolveError(
+			err,
+			krbo.transactorOptions.From,
+			nil,
+			"addServiceContract",
+			serviceContract,
+		)
+	}
+
+	krboLogger.Infof(
+		"submitted transaction addServiceContract with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.AddServiceContract(
+				transactorOptions,
+				serviceContract,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"addServiceContract",
+					serviceContract,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction addServiceContract with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbo *KeepRandomBeaconOperator) CallAddServiceContract(
+	serviceContract common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		krbo.transactorOptions.From,
+		blockNumber, nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"addServiceContract",
+		&result,
+		serviceContract,
+	)
+
+	return err
+}
+
+func (krbo *KeepRandomBeaconOperator) AddServiceContractGasEstimate(
+	serviceContract common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		krbo.callerOptions.From,
+		krbo.contractAddress,
+		"addServiceContract",
+		krbo.contractABI,
+		krbo.transactor,
+		serviceContract,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (krbo *KeepRandomBeaconOperator) CreateGroup(
+	_newEntry *big.Int,
+	submitter common.Address,
 	value *big.Int,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
-		"submitting transaction sign",
+		"submitting transaction createGroup",
 		"params: ",
 		fmt.Sprint(
-			requestId,
-			previousEntry,
+			_newEntry,
+			submitter,
 		),
 		"value: ", value,
 	)
@@ -311,35 +798,76 @@ func (krbo *KeepRandomBeaconOperator) Sign(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := krbo.contract.Sign(
-		transactorOptions,
-		requestId,
-		previousEntry,
-	)
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
 
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.CreateGroup(
+		transactorOptions,
+		_newEntry,
+		submitter,
+	)
 	if err != nil {
 		return transaction, krbo.errorResolver.ResolveError(
 			err,
 			krbo.transactorOptions.From,
 			value,
-			"sign",
-			requestId,
-			previousEntry,
+			"createGroup",
+			_newEntry,
+			submitter,
 		)
 	}
 
-	krboLogger.Debugf(
-		"submitted transaction sign with id: [%v]",
+	krboLogger.Infof(
+		"submitted transaction createGroup with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
+		transaction.Nonce(),
 	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.CreateGroup(
+				transactorOptions,
+				_newEntry,
+				submitter,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					value,
+					"createGroup",
+					_newEntry,
+					submitter,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction createGroup with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallSign(
-	requestId *big.Int,
-	previousEntry []uint8,
+func (krbo *KeepRandomBeaconOperator) CallCreateGroup(
+	_newEntry *big.Int,
+	submitter common.Address,
 	value *big.Int,
 	blockNumber *big.Int,
 ) error {
@@ -352,29 +880,266 @@ func (krbo *KeepRandomBeaconOperator) CallSign(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"sign",
+		"createGroup",
 		&result,
-		requestId,
-		previousEntry,
+		_newEntry,
+		submitter,
 	)
 
 	return err
 }
 
-func (krbo *KeepRandomBeaconOperator) SignGasEstimate(
-	requestId *big.Int,
-	previousEntry []uint8,
+func (krbo *KeepRandomBeaconOperator) CreateGroupGasEstimate(
+	_newEntry *big.Int,
+	submitter common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		krbo.callerOptions.From,
 		krbo.contractAddress,
-		"sign",
+		"createGroup",
 		krbo.contractABI,
 		krbo.transactor,
-		requestId,
-		previousEntry,
+		_newEntry,
+		submitter,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (krbo *KeepRandomBeaconOperator) Genesis(
+	value *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krboLogger.Debug(
+		"submitting transaction genesis",
+		"value: ", value,
+	)
+
+	krbo.transactionMutex.Lock()
+	defer krbo.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbo.transactorOptions
+
+	transactorOptions.Value = value
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.Genesis(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, krbo.errorResolver.ResolveError(
+			err,
+			krbo.transactorOptions.From,
+			value,
+			"genesis",
+		)
+	}
+
+	krboLogger.Infof(
+		"submitted transaction genesis with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.Genesis(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					value,
+					"genesis",
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction genesis with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbo *KeepRandomBeaconOperator) CallGenesis(
+	value *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		krbo.transactorOptions.From,
+		blockNumber, value,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"genesis",
+		&result,
+	)
+
+	return err
+}
+
+func (krbo *KeepRandomBeaconOperator) GenesisGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		krbo.callerOptions.From,
+		krbo.contractAddress,
+		"genesis",
+		krbo.contractABI,
+		krbo.transactor,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeout(
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krboLogger.Debug(
+		"submitting transaction reportRelayEntryTimeout",
+	)
+
+	krbo.transactionMutex.Lock()
+	defer krbo.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbo.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.ReportRelayEntryTimeout(
+		transactorOptions,
+	)
+	if err != nil {
+		return transaction, krbo.errorResolver.ResolveError(
+			err,
+			krbo.transactorOptions.From,
+			nil,
+			"reportRelayEntryTimeout",
+		)
+	}
+
+	krboLogger.Infof(
+		"submitted transaction reportRelayEntryTimeout with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.ReportRelayEntryTimeout(
+				transactorOptions,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"reportRelayEntryTimeout",
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction reportRelayEntryTimeout with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbo *KeepRandomBeaconOperator) CallReportRelayEntryTimeout(
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		krbo.transactorOptions.From,
+		blockNumber, nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"reportRelayEntryTimeout",
+		&result,
+	)
+
+	return err
+}
+
+func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeoutGasEstimate() (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		krbo.callerOptions.From,
+		krbo.contractAddress,
+		"reportRelayEntryTimeout",
+		krbo.contractABI,
+		krbo.transactor,
 	)
 
 	return result, err
@@ -417,6 +1182,13 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := krbo.contract.SubmitDkgResult(
 		transactorOptions,
 		submitterMemberIndex,
@@ -425,7 +1197,6 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 		signatures,
 		signingMembersIndexes,
 	)
-
 	if err != nil {
 		return transaction, krbo.errorResolver.ResolveError(
 			err,
@@ -440,10 +1211,51 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResult(
 		)
 	}
 
-	krboLogger.Debugf(
-		"submitted transaction submitDkgResult with id: [%v]",
+	krboLogger.Infof(
+		"submitted transaction submitDkgResult with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
+		transaction.Nonce(),
 	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.SubmitDkgResult(
+				transactorOptions,
+				submitterMemberIndex,
+				groupPubKey,
+				misbehaved,
+				signatures,
+				signingMembersIndexes,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"submitDkgResult",
+					submitterMemberIndex,
+					groupPubKey,
+					misbehaved,
+					signatures,
+					signingMembersIndexes,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction submitDkgResult with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -504,19 +1316,19 @@ func (krbo *KeepRandomBeaconOperator) SubmitDkgResultGasEstimate(
 }
 
 // Transaction submission.
-func (krbo *KeepRandomBeaconOperator) CreateGroup(
-	_newEntry *big.Int,
-	submitter common.Address,
+func (krbo *KeepRandomBeaconOperator) Sign(
+	requestId *big.Int,
+	previousEntry []uint8,
 	value *big.Int,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krboLogger.Debug(
-		"submitting transaction createGroup",
+		"submitting transaction sign",
 		"params: ",
 		fmt.Sprint(
-			_newEntry,
-			submitter,
+			requestId,
+			previousEntry,
 		),
 		"value: ", value,
 	)
@@ -538,35 +1350,76 @@ func (krbo *KeepRandomBeaconOperator) CreateGroup(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
-	transaction, err := krbo.contract.CreateGroup(
-		transactorOptions,
-		_newEntry,
-		submitter,
-	)
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
 
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbo.contract.Sign(
+		transactorOptions,
+		requestId,
+		previousEntry,
+	)
 	if err != nil {
 		return transaction, krbo.errorResolver.ResolveError(
 			err,
 			krbo.transactorOptions.From,
 			value,
-			"createGroup",
-			_newEntry,
-			submitter,
+			"sign",
+			requestId,
+			previousEntry,
 		)
 	}
 
-	krboLogger.Debugf(
-		"submitted transaction createGroup with id: [%v]",
+	krboLogger.Infof(
+		"submitted transaction sign with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
+		transaction.Nonce(),
 	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.Sign(
+				transactorOptions,
+				requestId,
+				previousEntry,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					value,
+					"sign",
+					requestId,
+					previousEntry,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction sign with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
 
 // Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallCreateGroup(
-	_newEntry *big.Int,
-	submitter common.Address,
+func (krbo *KeepRandomBeaconOperator) CallSign(
+	requestId *big.Int,
+	previousEntry []uint8,
 	value *big.Int,
 	blockNumber *big.Int,
 ) error {
@@ -579,481 +1432,29 @@ func (krbo *KeepRandomBeaconOperator) CallCreateGroup(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"createGroup",
+		"sign",
 		&result,
-		_newEntry,
-		submitter,
+		requestId,
+		previousEntry,
 	)
 
 	return err
 }
 
-func (krbo *KeepRandomBeaconOperator) CreateGroupGasEstimate(
-	_newEntry *big.Int,
-	submitter common.Address,
+func (krbo *KeepRandomBeaconOperator) SignGasEstimate(
+	requestId *big.Int,
+	previousEntry []uint8,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		krbo.callerOptions.From,
 		krbo.contractAddress,
-		"createGroup",
+		"sign",
 		krbo.contractABI,
 		krbo.transactor,
-		_newEntry,
-		submitter,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeout(
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krboLogger.Debug(
-		"submitting transaction reportRelayEntryTimeout",
-	)
-
-	krbo.transactionMutex.Lock()
-	defer krbo.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbo.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := krbo.contract.ReportRelayEntryTimeout(
-		transactorOptions,
-	)
-
-	if err != nil {
-		return transaction, krbo.errorResolver.ResolveError(
-			err,
-			krbo.transactorOptions.From,
-			nil,
-			"reportRelayEntryTimeout",
-		)
-	}
-
-	krboLogger.Debugf(
-		"submitted transaction reportRelayEntryTimeout with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallReportRelayEntryTimeout(
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbo.transactorOptions.From,
-		blockNumber, nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"reportRelayEntryTimeout",
-		&result,
-	)
-
-	return err
-}
-
-func (krbo *KeepRandomBeaconOperator) ReportRelayEntryTimeoutGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbo.callerOptions.From,
-		krbo.contractAddress,
-		"reportRelayEntryTimeout",
-		krbo.contractABI,
-		krbo.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbo *KeepRandomBeaconOperator) SubmitTicket(
-	ticket [32]uint8,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krboLogger.Debug(
-		"submitting transaction submitTicket",
-		"params: ",
-		fmt.Sprint(
-			ticket,
-		),
-	)
-
-	krbo.transactionMutex.Lock()
-	defer krbo.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbo.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := krbo.contract.SubmitTicket(
-		transactorOptions,
-		ticket,
-	)
-
-	if err != nil {
-		return transaction, krbo.errorResolver.ResolveError(
-			err,
-			krbo.transactorOptions.From,
-			nil,
-			"submitTicket",
-			ticket,
-		)
-	}
-
-	krboLogger.Debugf(
-		"submitted transaction submitTicket with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallSubmitTicket(
-	ticket [32]uint8,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbo.transactorOptions.From,
-		blockNumber, nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"submitTicket",
-		&result,
-		ticket,
-	)
-
-	return err
-}
-
-func (krbo *KeepRandomBeaconOperator) SubmitTicketGasEstimate(
-	ticket [32]uint8,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbo.callerOptions.From,
-		krbo.contractAddress,
-		"submitTicket",
-		krbo.contractABI,
-		krbo.transactor,
-		ticket,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewards(
-	operator common.Address,
-	groupIndex *big.Int,
-	groupMemberIndices []*big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krboLogger.Debug(
-		"submitting transaction withdrawGroupMemberRewards",
-		"params: ",
-		fmt.Sprint(
-			operator,
-			groupIndex,
-			groupMemberIndices,
-		),
-	)
-
-	krbo.transactionMutex.Lock()
-	defer krbo.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbo.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := krbo.contract.WithdrawGroupMemberRewards(
-		transactorOptions,
-		operator,
-		groupIndex,
-		groupMemberIndices,
-	)
-
-	if err != nil {
-		return transaction, krbo.errorResolver.ResolveError(
-			err,
-			krbo.transactorOptions.From,
-			nil,
-			"withdrawGroupMemberRewards",
-			operator,
-			groupIndex,
-			groupMemberIndices,
-		)
-	}
-
-	krboLogger.Debugf(
-		"submitted transaction withdrawGroupMemberRewards with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallWithdrawGroupMemberRewards(
-	operator common.Address,
-	groupIndex *big.Int,
-	groupMemberIndices []*big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbo.transactorOptions.From,
-		blockNumber, nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"withdrawGroupMemberRewards",
-		&result,
-		operator,
-		groupIndex,
-		groupMemberIndices,
-	)
-
-	return err
-}
-
-func (krbo *KeepRandomBeaconOperator) WithdrawGroupMemberRewardsGasEstimate(
-	operator common.Address,
-	groupIndex *big.Int,
-	groupMemberIndices []*big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbo.callerOptions.From,
-		krbo.contractAddress,
-		"withdrawGroupMemberRewards",
-		krbo.contractABI,
-		krbo.transactor,
-		operator,
-		groupIndex,
-		groupMemberIndices,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbo *KeepRandomBeaconOperator) Genesis(
-	value *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krboLogger.Debug(
-		"submitting transaction genesis",
-		"value: ", value,
-	)
-
-	krbo.transactionMutex.Lock()
-	defer krbo.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbo.transactorOptions
-
-	transactorOptions.Value = value
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := krbo.contract.Genesis(
-		transactorOptions,
-	)
-
-	if err != nil {
-		return transaction, krbo.errorResolver.ResolveError(
-			err,
-			krbo.transactorOptions.From,
-			value,
-			"genesis",
-		)
-	}
-
-	krboLogger.Debugf(
-		"submitted transaction genesis with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallGenesis(
-	value *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbo.transactorOptions.From,
-		blockNumber, value,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"genesis",
-		&result,
-	)
-
-	return err
-}
-
-func (krbo *KeepRandomBeaconOperator) GenesisGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbo.callerOptions.From,
-		krbo.contractAddress,
-		"genesis",
-		krbo.contractABI,
-		krbo.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbo *KeepRandomBeaconOperator) AddServiceContract(
-	serviceContract common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krboLogger.Debug(
-		"submitting transaction addServiceContract",
-		"params: ",
-		fmt.Sprint(
-			serviceContract,
-		),
-	)
-
-	krbo.transactionMutex.Lock()
-	defer krbo.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbo.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	transaction, err := krbo.contract.AddServiceContract(
-		transactorOptions,
-		serviceContract,
-	)
-
-	if err != nil {
-		return transaction, krbo.errorResolver.ResolveError(
-			err,
-			krbo.transactorOptions.From,
-			nil,
-			"addServiceContract",
-			serviceContract,
-		)
-	}
-
-	krboLogger.Debugf(
-		"submitted transaction addServiceContract with id: [%v]",
-		transaction.Hash().Hex(),
-	)
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbo *KeepRandomBeaconOperator) CallAddServiceContract(
-	serviceContract common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbo.transactorOptions.From,
-		blockNumber, nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"addServiceContract",
-		&result,
-		serviceContract,
-	)
-
-	return err
-}
-
-func (krbo *KeepRandomBeaconOperator) AddServiceContractGasEstimate(
-	serviceContract common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbo.callerOptions.From,
-		krbo.contractAddress,
-		"addServiceContract",
-		krbo.contractABI,
-		krbo.transactor,
-		serviceContract,
+		requestId,
+		previousEntry,
 	)
 
 	return result, err
@@ -1088,11 +1489,17 @@ func (krbo *KeepRandomBeaconOperator) RemoveServiceContract(
 		transactionOptions[0].Apply(transactorOptions)
 	}
 
+	nonce, err := krbo.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
 	transaction, err := krbo.contract.RemoveServiceContract(
 		transactorOptions,
 		serviceContract,
 	)
-
 	if err != nil {
 		return transaction, krbo.errorResolver.ResolveError(
 			err,
@@ -1103,10 +1510,43 @@ func (krbo *KeepRandomBeaconOperator) RemoveServiceContract(
 		)
 	}
 
-	krboLogger.Debugf(
-		"submitted transaction removeServiceContract with id: [%v]",
+	krboLogger.Infof(
+		"submitted transaction removeServiceContract with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
+		transaction.Nonce(),
 	)
+
+	go krbo.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbo.contract.RemoveServiceContract(
+				transactorOptions,
+				serviceContract,
+			)
+			if err != nil {
+				return transaction, krbo.errorResolver.ResolveError(
+					err,
+					krbo.transactorOptions.From,
+					nil,
+					"removeServiceContract",
+					serviceContract,
+				)
+			}
+
+			krboLogger.Infof(
+				"submitted transaction removeServiceContract with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	krbo.nonceManager.IncrementNonce()
 
 	return transaction, err
 }
@@ -1152,126 +1592,6 @@ func (krbo *KeepRandomBeaconOperator) RemoveServiceContractGasEstimate(
 
 // ----- Const Methods ------
 
-func (krbo *KeepRandomBeaconOperator) IsGroupRegistered(
-	groupPubKey []uint8,
-) (bool, error) {
-	var result bool
-	result, err := krbo.contract.IsGroupRegistered(
-		krbo.callerOptions,
-		groupPubKey,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"isGroupRegistered",
-			groupPubKey,
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) IsGroupRegisteredAtBlock(
-	groupPubKey []uint8,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"isGroupRegistered",
-		&result,
-		groupPubKey,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) SubmittedTickets() ([]uint64, error) {
-	var result []uint64
-	result, err := krbo.contract.SubmittedTickets(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"submittedTickets",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) SubmittedTicketsAtBlock(
-	blockNumber *big.Int,
-) ([]uint64, error) {
-	var result []uint64
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"submittedTickets",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GasPriceCeiling() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.GasPriceCeiling(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"gasPriceCeiling",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GasPriceCeilingAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"gasPriceCeiling",
-		&result,
-	)
-
-	return result, err
-}
-
 func (krbo *KeepRandomBeaconOperator) TicketSubmissionTimeout() (*big.Int, error) {
 	var result *big.Int
 	result, err := krbo.contract.TicketSubmissionTimeout(
@@ -1310,158 +1630,6 @@ func (krbo *KeepRandomBeaconOperator) TicketSubmissionTimeoutAtBlock(
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) EntryVerificationGasEstimate() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.EntryVerificationGasEstimate(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"entryVerificationGasEstimate",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) EntryVerificationGasEstimateAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"entryVerificationGasEstimate",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) EntryVerificationFee() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.EntryVerificationFee(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"entryVerificationFee",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) EntryVerificationFeeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"entryVerificationFee",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) IsGroupSelectionPossible() (bool, error) {
-	var result bool
-	result, err := krbo.contract.IsGroupSelectionPossible(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"isGroupSelectionPossible",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) IsGroupSelectionPossibleAtBlock(
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"isGroupSelectionPossible",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) RelayEntryTimeout() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.RelayEntryTimeout(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"relayEntryTimeout",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) RelayEntryTimeoutAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"relayEntryTimeout",
-		&result,
-	)
-
-	return result, err
-}
-
 func (krbo *KeepRandomBeaconOperator) DkgSubmitterReimbursementFee() (*big.Int, error) {
 	var result *big.Int
 	result, err := krbo.contract.DkgSubmitterReimbursementFee(
@@ -1494,6 +1662,44 @@ func (krbo *KeepRandomBeaconOperator) DkgSubmitterReimbursementFeeAtBlock(
 		krbo.errorResolver,
 		krbo.contractAddress,
 		"dkgSubmitterReimbursementFee",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GasPriceCeiling() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.GasPriceCeiling(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"gasPriceCeiling",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GasPriceCeilingAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"gasPriceCeiling",
 		&result,
 	)
 
@@ -1588,9 +1794,9 @@ func (krbo *KeepRandomBeaconOperator) IsStaleGroupAtBlock(
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) DkgGasEstimate() (*big.Int, error) {
+func (krbo *KeepRandomBeaconOperator) GroupMemberBaseReward() (*big.Int, error) {
 	var result *big.Int
-	result, err := krbo.contract.DkgGasEstimate(
+	result, err := krbo.contract.GroupMemberBaseReward(
 		krbo.callerOptions,
 	)
 
@@ -1599,14 +1805,14 @@ func (krbo *KeepRandomBeaconOperator) DkgGasEstimate() (*big.Int, error) {
 			err,
 			krbo.callerOptions.From,
 			nil,
-			"dkgGasEstimate",
+			"groupMemberBaseReward",
 		)
 	}
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) DkgGasEstimateAtBlock(
+func (krbo *KeepRandomBeaconOperator) GroupMemberBaseRewardAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -1619,16 +1825,16 @@ func (krbo *KeepRandomBeaconOperator) DkgGasEstimateAtBlock(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"dkgGasEstimate",
+		"groupMemberBaseReward",
 		&result,
 	)
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupCreationFee() (*big.Int, error) {
+func (krbo *KeepRandomBeaconOperator) GroupSelectionGasEstimate() (*big.Int, error) {
 	var result *big.Int
-	result, err := krbo.contract.GroupCreationFee(
+	result, err := krbo.contract.GroupSelectionGasEstimate(
 		krbo.callerOptions,
 	)
 
@@ -1637,14 +1843,14 @@ func (krbo *KeepRandomBeaconOperator) GroupCreationFee() (*big.Int, error) {
 			err,
 			krbo.callerOptions.From,
 			nil,
-			"groupCreationFee",
+			"groupSelectionGasEstimate",
 		)
 	}
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupCreationFeeAtBlock(
+func (krbo *KeepRandomBeaconOperator) GroupSelectionGasEstimateAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -1657,20 +1863,17 @@ func (krbo *KeepRandomBeaconOperator) GroupCreationFeeAtBlock(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"groupCreationFee",
+		"groupSelectionGasEstimate",
 		&result,
 	)
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GetGroupPublicKey(
-	groupIndex *big.Int,
-) ([]uint8, error) {
-	var result []uint8
-	result, err := krbo.contract.GetGroupPublicKey(
+func (krbo *KeepRandomBeaconOperator) GetFirstActiveGroupIndex() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.GetFirstActiveGroupIndex(
 		krbo.callerOptions,
-		groupIndex,
 	)
 
 	if err != nil {
@@ -1678,19 +1881,17 @@ func (krbo *KeepRandomBeaconOperator) GetGroupPublicKey(
 			err,
 			krbo.callerOptions.From,
 			nil,
-			"getGroupPublicKey",
-			groupIndex,
+			"getFirstActiveGroupIndex",
 		)
 	}
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GetGroupPublicKeyAtBlock(
-	groupIndex *big.Int,
+func (krbo *KeepRandomBeaconOperator) GetFirstActiveGroupIndexAtBlock(
 	blockNumber *big.Int,
-) ([]uint8, error) {
-	var result []uint8
+) (*big.Int, error) {
+	var result *big.Int
 
 	err := ethutil.CallAtBlock(
 		krbo.callerOptions.From,
@@ -1700,9 +1901,84 @@ func (krbo *KeepRandomBeaconOperator) GetGroupPublicKeyAtBlock(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"getGroupPublicKey",
+		"getFirstActiveGroupIndex",
 		&result,
-		groupIndex,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GroupSize() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.GroupSize(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"groupSize",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GroupSizeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"groupSize",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) NumberOfGroups() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.NumberOfGroups(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"numberOfGroups",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) NumberOfGroupsAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"numberOfGroups",
+		&result,
 	)
 
 	return result, err
@@ -1752,82 +2028,6 @@ func (krbo *KeepRandomBeaconOperator) GetGroupMemberRewardsAtBlock(
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupMemberBaseReward() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.GroupMemberBaseReward(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"groupMemberBaseReward",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GroupMemberBaseRewardAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"groupMemberBaseReward",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GroupSize() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.GroupSize(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"groupSize",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GroupSizeAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"groupSize",
-		&result,
-	)
-
-	return result, err
-}
-
 func (krbo *KeepRandomBeaconOperator) GroupThreshold() (*big.Int, error) {
 	var result *big.Int
 	result, err := krbo.contract.GroupThreshold(
@@ -1866,9 +2066,58 @@ func (krbo *KeepRandomBeaconOperator) GroupThresholdAtBlock(
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupSelectionGasEstimate() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.GroupSelectionGasEstimate(
+func (krbo *KeepRandomBeaconOperator) HasWithdrawnRewards(
+	operator common.Address,
+	groupIndex *big.Int,
+) (bool, error) {
+	var result bool
+	result, err := krbo.contract.HasWithdrawnRewards(
+		krbo.callerOptions,
+		operator,
+		groupIndex,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"hasWithdrawnRewards",
+			operator,
+			groupIndex,
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) HasWithdrawnRewardsAtBlock(
+	operator common.Address,
+	groupIndex *big.Int,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"hasWithdrawnRewards",
+		&result,
+		operator,
+		groupIndex,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) IsGroupSelectionPossible() (bool, error) {
+	var result bool
+	result, err := krbo.contract.IsGroupSelectionPossible(
 		krbo.callerOptions,
 	)
 
@@ -1877,14 +2126,90 @@ func (krbo *KeepRandomBeaconOperator) GroupSelectionGasEstimate() (*big.Int, err
 			err,
 			krbo.callerOptions.From,
 			nil,
-			"groupSelectionGasEstimate",
+			"isGroupSelectionPossible",
 		)
 	}
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupSelectionGasEstimateAtBlock(
+func (krbo *KeepRandomBeaconOperator) IsGroupSelectionPossibleAtBlock(
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"isGroupSelectionPossible",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) CurrentRequestPreviousEntry() ([]uint8, error) {
+	var result []uint8
+	result, err := krbo.contract.CurrentRequestPreviousEntry(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"currentRequestPreviousEntry",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) CurrentRequestPreviousEntryAtBlock(
+	blockNumber *big.Int,
+) ([]uint8, error) {
+	var result []uint8
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"currentRequestPreviousEntry",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) RelayEntryTimeout() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.RelayEntryTimeout(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"relayEntryTimeout",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) RelayEntryTimeoutAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
@@ -1897,7 +2222,393 @@ func (krbo *KeepRandomBeaconOperator) GroupSelectionGasEstimateAtBlock(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"groupSelectionGasEstimate",
+		"relayEntryTimeout",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GroupCreationFee() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.GroupCreationFee(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"groupCreationFee",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GroupCreationFeeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"groupCreationFee",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) IsGroupRegistered(
+	groupPubKey []uint8,
+) (bool, error) {
+	var result bool
+	result, err := krbo.contract.IsGroupRegistered(
+		krbo.callerOptions,
+		groupPubKey,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"isGroupRegistered",
+			groupPubKey,
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) IsGroupRegisteredAtBlock(
+	groupPubKey []uint8,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"isGroupRegistered",
+		&result,
+		groupPubKey,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) ResultPublicationBlockStep() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.ResultPublicationBlockStep(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"resultPublicationBlockStep",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) ResultPublicationBlockStepAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"resultPublicationBlockStep",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) EntryVerificationFee() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.EntryVerificationFee(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"entryVerificationFee",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) EntryVerificationFeeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"entryVerificationFee",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) EntryVerificationGasEstimate() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.EntryVerificationGasEstimate(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"entryVerificationGasEstimate",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) EntryVerificationGasEstimateAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"entryVerificationGasEstimate",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GroupProfitFee() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.GroupProfitFee(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"groupProfitFee",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) GroupProfitFeeAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"groupProfitFee",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) SubmittedTickets() ([]uint64, error) {
+	var result []uint64
+	result, err := krbo.contract.SubmittedTickets(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"submittedTickets",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) SubmittedTicketsAtBlock(
+	blockNumber *big.Int,
+) ([]uint64, error) {
+	var result []uint64
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"submittedTickets",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) CurrentRequestGroupIndex() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.CurrentRequestGroupIndex(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"currentRequestGroupIndex",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) CurrentRequestGroupIndexAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"currentRequestGroupIndex",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) CurrentRequestStartBlock() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.CurrentRequestStartBlock(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"currentRequestStartBlock",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) CurrentRequestStartBlockAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"currentRequestStartBlock",
+		&result,
+	)
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) DkgGasEstimate() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbo.contract.DkgGasEstimate(
+		krbo.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbo.errorResolver.ResolveError(
+			err,
+			krbo.callerOptions.From,
+			nil,
+			"dkgGasEstimate",
+		)
+	}
+
+	return result, err
+}
+
+func (krbo *KeepRandomBeaconOperator) DkgGasEstimateAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		krbo.callerOptions.From,
+		blockNumber,
+		nil,
+		krbo.contractABI,
+		krbo.caller,
+		krbo.errorResolver,
+		krbo.contractAddress,
+		"dkgGasEstimate",
 		&result,
 	)
 
@@ -1937,55 +2648,6 @@ func (krbo *KeepRandomBeaconOperator) SelectedParticipantsAtBlock(
 		krbo.contractAddress,
 		"selectedParticipants",
 		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GetGroupMemberIndices(
-	groupPubKey []uint8,
-	member common.Address,
-) ([]*big.Int, error) {
-	var result []*big.Int
-	result, err := krbo.contract.GetGroupMemberIndices(
-		krbo.callerOptions,
-		groupPubKey,
-		member,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"getGroupMemberIndices",
-			groupPubKey,
-			member,
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GetGroupMemberIndicesAtBlock(
-	groupPubKey []uint8,
-	member common.Address,
-	blockNumber *big.Int,
-) ([]*big.Int, error) {
-	var result []*big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"getGroupMemberIndices",
-		&result,
-		groupPubKey,
-		member,
 	)
 
 	return result, err
@@ -2035,10 +2697,13 @@ func (krbo *KeepRandomBeaconOperator) GetGroupMembersAtBlock(
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupProfitFee() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.GroupProfitFee(
+func (krbo *KeepRandomBeaconOperator) GetGroupPublicKey(
+	groupIndex *big.Int,
+) ([]uint8, error) {
+	var result []uint8
+	result, err := krbo.contract.GetGroupPublicKey(
 		krbo.callerOptions,
+		groupIndex,
 	)
 
 	if err != nil {
@@ -2046,17 +2711,19 @@ func (krbo *KeepRandomBeaconOperator) GroupProfitFee() (*big.Int, error) {
 			err,
 			krbo.callerOptions.From,
 			nil,
-			"groupProfitFee",
+			"getGroupPublicKey",
+			groupIndex,
 		)
 	}
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) GroupProfitFeeAtBlock(
+func (krbo *KeepRandomBeaconOperator) GetGroupPublicKeyAtBlock(
+	groupIndex *big.Int,
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) ([]uint8, error) {
+	var result []uint8
 
 	err := ethutil.CallAtBlock(
 		krbo.callerOptions.From,
@@ -2066,16 +2733,17 @@ func (krbo *KeepRandomBeaconOperator) GroupProfitFeeAtBlock(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"groupProfitFee",
+		"getGroupPublicKey",
 		&result,
+		groupIndex,
 	)
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) NumberOfGroups() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.NumberOfGroups(
+func (krbo *KeepRandomBeaconOperator) IsEntryInProgress() (bool, error) {
+	var result bool
+	result, err := krbo.contract.IsEntryInProgress(
 		krbo.callerOptions,
 	)
 
@@ -2084,17 +2752,17 @@ func (krbo *KeepRandomBeaconOperator) NumberOfGroups() (*big.Int, error) {
 			err,
 			krbo.callerOptions.From,
 			nil,
-			"numberOfGroups",
+			"isEntryInProgress",
 		)
 	}
 
 	return result, err
 }
 
-func (krbo *KeepRandomBeaconOperator) NumberOfGroupsAtBlock(
+func (krbo *KeepRandomBeaconOperator) IsEntryInProgressAtBlock(
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) (bool, error) {
+	var result bool
 
 	err := ethutil.CallAtBlock(
 		krbo.callerOptions.From,
@@ -2104,83 +2772,7 @@ func (krbo *KeepRandomBeaconOperator) NumberOfGroupsAtBlock(
 		krbo.caller,
 		krbo.errorResolver,
 		krbo.contractAddress,
-		"numberOfGroups",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) ResultPublicationBlockStep() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.ResultPublicationBlockStep(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"resultPublicationBlockStep",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) ResultPublicationBlockStepAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"resultPublicationBlockStep",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GetFirstActiveGroupIndex() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbo.contract.GetFirstActiveGroupIndex(
-		krbo.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbo.errorResolver.ResolveError(
-			err,
-			krbo.callerOptions.From,
-			nil,
-			"getFirstActiveGroupIndex",
-		)
-	}
-
-	return result, err
-}
-
-func (krbo *KeepRandomBeaconOperator) GetFirstActiveGroupIndexAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbo.callerOptions.From,
-		blockNumber,
-		nil,
-		krbo.contractABI,
-		krbo.caller,
-		krbo.errorResolver,
-		krbo.contractAddress,
-		"getFirstActiveGroupIndex",
+		"isEntryInProgress",
 		&result,
 	)
 
@@ -2188,6 +2780,246 @@ func (krbo *KeepRandomBeaconOperator) GetFirstActiveGroupIndexAtBlock(
 }
 
 // ------ Events -------
+
+type keepRandomBeaconOperatorOnGroupRegisteredFunc func(
+	GroupPubKey []uint8,
+	blockNumber uint64,
+)
+
+func (krbo *KeepRandomBeaconOperator) WatchOnGroupRegistered(
+	success keepRandomBeaconOperatorOnGroupRegisteredFunc,
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := krbo.subscribeOnGroupRegistered(
+			success,
+			failCallback,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				krboLogger.Warning(
+					"subscription to event OnGroupRegistered terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (krbo *KeepRandomBeaconOperator) subscribeOnGroupRegistered(
+	success keepRandomBeaconOperatorOnGroupRegisteredFunc,
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepRandomBeaconOperatorOnGroupRegistered)
+	eventSubscription, err := krbo.contract.WatchOnGroupRegistered(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for OnGroupRegistered events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.GroupPubKey,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+type keepRandomBeaconOperatorRelayEntryRequestedFunc func(
+	PreviousEntry []uint8,
+	GroupPublicKey []uint8,
+	blockNumber uint64,
+)
+
+func (krbo *KeepRandomBeaconOperator) WatchRelayEntryRequested(
+	success keepRandomBeaconOperatorRelayEntryRequestedFunc,
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	errorChan := make(chan error)
+	unsubscribeChan := make(chan struct{})
+
+	// Delay which must be preserved before a new resubscription attempt.
+	// There is no sense to resubscribe immediately after the fail of current
+	// subscription because the publisher must have some time to recover.
+	retryDelay := 5 * time.Second
+
+	watch := func() {
+		failCallback := func(err error) error {
+			fail(err)
+			errorChan <- err // trigger resubscription signal
+			return err
+		}
+
+		subscription, err := krbo.subscribeRelayEntryRequested(
+			success,
+			failCallback,
+		)
+		if err != nil {
+			errorChan <- err // trigger resubscription signal
+			return
+		}
+
+		// wait for unsubscription signal
+		<-unsubscribeChan
+		subscription.Unsubscribe()
+	}
+
+	// trigger the resubscriber goroutine
+	go func() {
+		go watch() // trigger first subscription
+
+		for {
+			select {
+			case <-errorChan:
+				krboLogger.Warning(
+					"subscription to event RelayEntryRequested terminated with error; " +
+						"resubscription attempt will be performed after the retry delay",
+				)
+				time.Sleep(retryDelay)
+				go watch()
+			case <-unsubscribeChan:
+				// shutdown the resubscriber goroutine on unsubscribe signal
+				return
+			}
+		}
+	}()
+
+	// closing the unsubscribeChan will trigger a unsubscribe signal and
+	// run unsubscription for all subscription instances
+	unsubscribeCallback := func() {
+		close(unsubscribeChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
+
+func (krbo *KeepRandomBeaconOperator) subscribeRelayEntryRequested(
+	success keepRandomBeaconOperatorRelayEntryRequestedFunc,
+	fail func(err error) error,
+) (subscription.EventSubscription, error) {
+	eventChan := make(chan *abi.KeepRandomBeaconOperatorRelayEntryRequested)
+	eventSubscription, err := krbo.contract.WatchRelayEntryRequested(
+		nil,
+		eventChan,
+	)
+	if err != nil {
+		close(eventChan)
+		return eventSubscription, fmt.Errorf(
+			"error creating watch for RelayEntryRequested events: [%v]",
+			err,
+		)
+	}
+
+	var subscriptionMutex = &sync.Mutex{}
+
+	go func() {
+		for {
+			select {
+			case event, subscribed := <-eventChan:
+				subscriptionMutex.Lock()
+				// if eventChan has been closed, it means we have unsubscribed
+				if !subscribed {
+					subscriptionMutex.Unlock()
+					return
+				}
+				success(
+					event.PreviousEntry,
+					event.GroupPublicKey,
+					event.Raw.BlockNumber,
+				)
+				subscriptionMutex.Unlock()
+			case ee := <-eventSubscription.Err():
+				fail(ee)
+				return
+			}
+		}
+	}()
+
+	unsubscribeCallback := func() {
+		subscriptionMutex.Lock()
+		defer subscriptionMutex.Unlock()
+
+		eventSubscription.Unsubscribe()
+		close(eventChan)
+	}
+
+	return subscription.NewEventSubscription(unsubscribeCallback), nil
+}
 
 type keepRandomBeaconOperatorRelayEntrySubmittedFunc func(
 	blockNumber uint64,
@@ -2902,246 +3734,6 @@ func (krbo *KeepRandomBeaconOperator) subscribeGroupSelectionStarted(
 				}
 				success(
 					event.NewEntry,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type keepRandomBeaconOperatorOnGroupRegisteredFunc func(
-	GroupPubKey []uint8,
-	blockNumber uint64,
-)
-
-func (krbo *KeepRandomBeaconOperator) WatchOnGroupRegistered(
-	success keepRandomBeaconOperatorOnGroupRegisteredFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := krbo.subscribeOnGroupRegistered(
-			success,
-			failCallback,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				krboLogger.Warning(
-					"subscription to event OnGroupRegistered terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (krbo *KeepRandomBeaconOperator) subscribeOnGroupRegistered(
-	success keepRandomBeaconOperatorOnGroupRegisteredFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.KeepRandomBeaconOperatorOnGroupRegistered)
-	eventSubscription, err := krbo.contract.WatchOnGroupRegistered(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for OnGroupRegistered events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.GroupPubKey,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type keepRandomBeaconOperatorRelayEntryRequestedFunc func(
-	PreviousEntry []uint8,
-	GroupPublicKey []uint8,
-	blockNumber uint64,
-)
-
-func (krbo *KeepRandomBeaconOperator) WatchRelayEntryRequested(
-	success keepRandomBeaconOperatorRelayEntryRequestedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := krbo.subscribeRelayEntryRequested(
-			success,
-			failCallback,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				krboLogger.Warning(
-					"subscription to event RelayEntryRequested terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (krbo *KeepRandomBeaconOperator) subscribeRelayEntryRequested(
-	success keepRandomBeaconOperatorRelayEntryRequestedFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.KeepRandomBeaconOperatorRelayEntryRequested)
-	eventSubscription, err := krbo.contract.WatchRelayEntryRequested(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for RelayEntryRequested events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.PreviousEntry,
-					event.GroupPublicKey,
 					event.Raw.BlockNumber,
 				)
 				subscriptionMutex.Unlock()

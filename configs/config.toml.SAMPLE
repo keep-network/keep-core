@@ -5,6 +5,21 @@
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
 	URLRPC             = "http://127.0.0.1:8545"
+	# Uncomment to override the defaults for transaction status monitoring.
+	#
+	# MiningCheckInterval is the interval in which transaction
+	# mining status is checked. If the transaction is not mined within this
+	# time, the gas price is increased and transaction is resubmitted.
+	#
+	# MiningCheckInterval = 60  # 60 sec (default value)
+	#
+	# MaxGasPrice specifies the default maximum gas price the client is
+	# willing to pay for the transaction to be mined. The offered transaction
+	# gas price can not be higher than the max gas price value. If the maximum
+	# allowed gas price is reached, no further resubmission attempts are
+	# performed.
+	#
+	# MaxGasPrice = 50000000000 # 50 gwei (default value)
 
 [ethereum.account]
 	Address            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
@@ -20,11 +35,22 @@
 	# relay subcommand).
 	KeepRandomBeaconService = "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
 
-# [LibP2P]
-# 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
-# 	Port = 3920
-#   # Uncomment to override the node's default addresses announced in the network
-#   # AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]
+[LibP2P]
+ 	Peers = ["/ip4/127.0.0.1/tcp/3919/ipfs/njOXcNpVTweO3fmX72OTgDX9lfb1AYiiq4BN6Da1tFy9nT3sRT2h1"]
+ 	Port = 3920
+	#
+	# Uncomment to override the node's default addresses announced in the network
+	# AnnouncedAddresses = ["/dns4/example.com/tcp/3919", "/ip4/80.70.60.50/tcp/3919"]    
+	#
+	# Uncomment to enable courtesy message dissemination for topics this node is
+	# not subscribed to. Messages will be forwarded to peers for the duration
+	# specified as a value in seconds.
+	# Message dissemination is disabled by default and should be enabled only
+	# on selected bootstrap nodes. It is not a good idea to enable dissemination
+	# on non-bootstrap node as it may clutter communication and eventually lead
+	# to blacklisting the node. The maximum allowed value is 90 seconds.
+	#
+	# DisseminationTime = 90
 
 [Storage]
   DataDir = "/my/secure/location"

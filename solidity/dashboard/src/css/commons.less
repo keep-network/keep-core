@@ -51,7 +51,7 @@ hr {
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
   border: 0;
-  border-top: 1px solid @color-grey-70 ;  
+  border-top: 1px solid @color-grey-20 ;  
 }
 
 .flex {
@@ -85,6 +85,11 @@ hr {
     &.space-between {
       justify-content: space-between;
     }
+
+    &.space-evenly {
+      justify-content: space-evenly;
+    }
+
     &.center {
       align-items: center;
     }
@@ -136,21 +141,39 @@ hr {
   }
 }
 
-.speech-bubble-icon-wrapper {
-  align-self: flex-start;
-  position: relative;
-  top: 0.5rem;
-
-  svg {
-    &:nth-child(2) {
-      position: absolute;
-      top: -3px;
-      left: -3px;
+svg.keep-outline { 
+  &.grey-40 {
+    * {
+      fill: @color-grey-40
     }
+  }
+}
+
+ul.line-separator { 
+  li {
+    border-bottom: 1px solid @color-grey-20;
+    padding-bottom: 1rem;
+    margin-top: 1rem;
+
+    &:first-of-type {
+      margin-top: 0;
+    }
+    
     &:last-of-type {
-      position: absolute;
-      top: 2px;
-      left: 2px;
+      border-bottom: none;
+    }
+  }
+}
+
+svg.arrow-right {
+  &.lg {
+    width: 26px;
+    height: 20px;
+  }
+  &.black {
+    path {
+      fill: @color-black;
+      stroke: @color-black;
     }
   }
 }

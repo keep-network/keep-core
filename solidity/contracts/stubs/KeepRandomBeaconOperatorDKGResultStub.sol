@@ -4,10 +4,15 @@ import "../KeepRandomBeaconOperator.sol";
 
 
 contract KeepRandomBeaconOperatorDKGResultStub is KeepRandomBeaconOperator {
-    constructor(address _serviceContract, address _stakingContract)
-        public
-        KeepRandomBeaconOperator(_serviceContract, _stakingContract)
-    {
+    constructor(
+        address _serviceContract,
+        address _stakingContract,
+        address _registryContract
+    ) KeepRandomBeaconOperator(
+        _serviceContract,
+        _stakingContract,
+        _registryContract
+    ) public {
         groupSelection.ticketSubmissionTimeout = 100;
     }
 
@@ -24,10 +29,6 @@ contract KeepRandomBeaconOperatorDKGResultStub is KeepRandomBeaconOperator {
 
     function setDKGResultSignatureThreshold(uint256 threshold) public {
         dkgResultVerification.signatureThreshold = threshold;
-    }
-
-    function setResultPublicationBlockStep(uint256 step) public {
-        resultPublicationBlockStep = step;
     }
 
     function getGroupSelectionRelayEntry() public view returns (uint256) {

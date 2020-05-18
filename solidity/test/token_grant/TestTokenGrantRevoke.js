@@ -12,7 +12,7 @@ const expect = chai.expect
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 
 describe('TokenGrant/Revoke', function() {
@@ -21,7 +21,7 @@ describe('TokenGrant/Revoke', function() {
 
   const tokenOwner = accounts[0],
         grantee = accounts[1],
-        magpie = accounts[2],
+        beneficiary = accounts[2],
         authorizer = accounts[3],
         operator = accounts[4];
 
@@ -39,7 +39,7 @@ describe('TokenGrant/Revoke', function() {
 
   before(async () => {
     tokenContract = await KeepToken.new( {from: accounts[0]});
-    registryContract = await Registry.new( {from: accounts[0]});
+    registryContract = await KeepRegistry.new( {from: accounts[0]});
     stakingContract = await TokenStaking.new(
       tokenContract.address, 
       registryContract.address, 
@@ -207,7 +207,7 @@ describe('TokenGrant/Revoke', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       minimumStake,
       grantId
@@ -236,7 +236,7 @@ describe('TokenGrant/Revoke', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       minimumStake,
       grantId
@@ -273,7 +273,7 @@ describe('TokenGrant/Revoke', function() {
       stakingContract.address,
       grantee,
       operator,
-      magpie,
+      beneficiary,
       authorizer,
       minimumStake,
       grantId

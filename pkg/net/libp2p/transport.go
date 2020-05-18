@@ -24,12 +24,14 @@ var _ sec.SecureConn = (*authenticatedConnection)(nil)
 type transport struct {
 	localPeerID     peer.ID
 	privateKey      libp2pcrypto.PrivKey
+	protocol        string
 	firewall        keepNet.Firewall
 	encryptionLayer sec.SecureTransport
 }
 
 func newEncryptedAuthenticatedTransport(
 	pk libp2pcrypto.PrivKey,
+	protocol string,
 	firewall keepNet.Firewall,
 ) (*transport, error) {
 	id, err := peer.IDFromPrivateKey(pk)
@@ -47,6 +49,7 @@ func newEncryptedAuthenticatedTransport(
 		privateKey:      pk,
 		firewall:        firewall,
 		encryptionLayer: encryptionLayer,
+		protocol:        protocol,
 	}, nil
 }
 
@@ -65,6 +68,7 @@ func (t *transport) SecureInbound(
 		t.localPeerID,
 		t.privateKey,
 		t.firewall,
+		t.protocol,
 	)
 }
 
@@ -89,5 +93,6 @@ func (t *transport) SecureOutbound(
 		t.privateKey,
 		remotePeerID,
 		t.firewall,
+		t.protocol,
 	)
 }

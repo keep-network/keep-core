@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react'
-import { colors } from '../constants/colors'
-import * as Icons from './Icons'
-import BigNumber from 'bignumber.js'
-import { renderProgressBarLegendItem } from './ProgressBar'
+import React, { useMemo } from "react"
+import { colors } from "../constants/colors"
+import * as Icons from "./Icons"
+import BigNumber from "bignumber.js"
+import { renderProgressBarLegendItem } from "./ProgressBar"
 
 const countCircumference = (radius) => {
   return new BigNumber(2 * Math.PI * radius)
@@ -31,26 +31,25 @@ const CircularProgressBar = ({
 }) => {
   return (
     <svg className="circular-progress-bar" width={120} height={120}>
-      {
-        withBackgroundStroke &&
+      {withBackgroundStroke && (
         <circle
           fill="none"
           className="background"
           cx={60}
           cy={60}
-          r={radius-(barWidth / 2)}
+          r={radius - barWidth / 2}
           strokeWidth={barWidth}
           stroke={backgroundStroke}
         />
-      }
+      )}
       <circle
         fill="none"
-        strokeDashoffset={countProgressValue(value, total, radius-5)}
-        strokeDasharray={countCircumference(radius-5)}
+        strokeDashoffset={countProgressValue(value, total, radius - 5)}
+        strokeDasharray={countCircumference(radius - 5)}
         className="value"
         cx={60}
         cy={60}
-        r={radius-(barWidth / 2)}
+        r={radius - barWidth / 2}
         strokeWidth={barWidth}
         stroke={color}
         strokeLinecap="round"
@@ -67,29 +66,33 @@ CircularProgressBar.defaultProps = {
   withBackgroundStroke: true,
 }
 
-export const CircularProgressBars = React.memo(({ withLegend, total, items }) => {
-  const bars = useMemo(() => {
-    return items
-      .map((item, index) =>
-        <CircularProgressBar
-          key={index}
-          {...item}
-          total={total}
-        />
-      )
-  }, [total, items])
+export const CircularProgressBars = React.memo(
+  ({ withLegend, total, items }) => {
+    const bars = useMemo(() => {
+      return items.map((item, index) => (
+        <CircularProgressBar key={index} {...item} total={total} />
+      ))
+    }, [total, items])
 
-  return (
-    <>
-      <svg className="wrapper-circular-progress-bar" width={120} height={120} viewBox="0 0 120 120">
-        {bars}
-        <Icons.KeepCircle />
-      </svg>
-      <div className="mb-1">
-        {withLegend && items.map(renderProgressBarLegendItem)}
-      </div>
-    </>
-  )
-})
+    return (
+      <>
+        <svg
+          className="wrapper-circular-progress-bar"
+          width={120}
+          height={120}
+          viewBox="0 0 120 120"
+        >
+          {bars}
+          <g className="keep-circle">
+            <Icons.KeepCircle />
+          </g>
+        </svg>
+        <div className="mb-1">
+          {withLegend && items.map(renderProgressBarLegendItem)}
+        </div>
+      </>
+    )
+  }
+)
 
 export default React.memo(CircularProgressBar)

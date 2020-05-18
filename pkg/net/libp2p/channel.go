@@ -103,7 +103,7 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 		for {
 			select {
 			case <-ctx.Done():
-				logger.Debug("context is done, removing handler")
+				logger.Debug("context is done; removing message handler")
 				c.removeHandler(messageHandler)
 				return
 
@@ -210,7 +210,7 @@ func (c *channel) subscriptionWorker(ctx context.Context) {
 			select {
 			case c.incomingMessageQueue <- message:
 			default:
-				logger.Warningf("consumers too slow, dropping message")
+				logger.Warningf("message workers are too slow; dropping message")
 			}
 		}
 	}
@@ -264,7 +264,7 @@ func (c *channel) processContainerMessage(
 	//     sender identifier we grab from the message (inner layer).
 	if proposedSender != senderIdentifier.id {
 		return fmt.Errorf(
-			"Outer layer sender [%v] does not match inner layer sender [%v]",
+			"outer layer sender [%v] does not match inner layer sender [%v]",
 			proposedSender,
 			senderIdentifier,
 		)
@@ -299,7 +299,8 @@ func (c *channel) getUnmarshalingContainerByType(messageType string) (net.Tagged
 	unmarshaler, found := c.unmarshalersByType[messageType]
 	if !found {
 		return nil, fmt.Errorf(
-			"couldn't find unmarshaler for type %s", messageType,
+			"couldn't find unmarshaler for type [%s]",
+			messageType,
 		)
 	}
 
@@ -316,7 +317,7 @@ func (c *channel) deliver(message net.Message) {
 		select {
 		case handler.channel <- message:
 		default:
-			logger.Warningf("handler too slow, dropping message")
+			logger.Warningf("message handler is too slow; dropping message")
 		}
 	}
 }

@@ -17,35 +17,41 @@ message HandshakeEnvelope {
   bytes peerID = 3;
 }
 
-// act1Message is sent in the first handshake act by the initiator to the
+// Act1Message is sent in the first handshake act by the initiator to the
 // responder. It contains randomly generated `nonce1`, an 8-byte (64-bit)
-// unsigned integer.
+// unsigned integer, and the protocol identifier.
 //
-// act1Message should be signed with initiator's static private key.
+// Act1Message should be signed with initiator's static private key.
 message Act1Message {
   // nonce by initiator; 8-byte (64-bit) nonce as bytes
   bytes nonce = 1;
+
+  // the identifier of the protocol the initiator is executing
+  string protocol = 2;
 }
 
-// act2Message is sent in the second handshake act by the responder to the
+// Act2Message is sent in the second handshake act by the responder to the
 // initiator. It contains randomly generated `nonce2`, an 8-byte unsigned
 // integer and `challenge` which is a result of SHA256 on the concatenated
-// bytes of `nonce1` and `nonce2`.
+// bytes of `nonce1` and `nonce2`, and the protocol identifier.
 //
-// act2Message should be signed with responder's static private key.
+// Act2Message should be signed with responder's static private key.
 message Act2Message {
   // nonce from responder; 8-byte (64-bit) nonce as bytes
   bytes nonce = 1;
 
   // bytes of sha256(nonce1||nonce2)
   bytes challenge = 2;
+
+  // the identifier of the protocol the responder is executing
+  string protocol = 3;
 }
 
-// act1Message is sent in the first handshake act by the initiator to the
+// Act1Message is sent in the first handshake act by the initiator to the
 // responder. It contains randomly generated `nonce1`, an 8-byte (64-bit)
 // unsigned integer.
 //
-// act1Message should be signed with initiator's static private key.
+// Act1Message should be signed with initiator's static private key.
 message Act3Message {
   // bytes of sha256(nonce1||nonce2)
   bytes challenge = 1;

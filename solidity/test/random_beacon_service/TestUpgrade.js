@@ -21,13 +21,14 @@ describe('KeepRandomBeaconService/Upgrade', function() {
 
   const admin = accounts[1]
   const nonAdmin = accounts[2]
+  const newAdmin = accounts[3]
 
   before(async () => {
     implementationV1 = await ServiceContractImplV1.new({from: admin})
     implementationV2 = await ServiceContractImplV2.new({from: admin})
     
     initializeCallData = implementationV1.contract.methods.initialize(
-      100, 200, '0x0000000000000000000000000000000000000001'
+      100, '0x0000000000000000000000000000000000000001'
     ).encodeABI()
 
     proxy = await ServiceContractProxy.new(
@@ -305,7 +306,7 @@ describe('KeepRandomBeaconService/Upgrade', function() {
 
     it("reverts when initialization fails", async () => {
       const failingData = implementationV1.contract.methods.initialize(
-        100, 200, constants.ZERO_ADDRESS
+        100, constants.ZERO_ADDRESS
       ).encodeABI()
 
       await proxy.upgradeTo(
@@ -338,6 +339,30 @@ describe('KeepRandomBeaconService/Upgrade', function() {
         await v2.getNewVar(),
         1234,
         "Should be able to get new data from upgraded contract"
+      )
+    })
+  })
+
+  describe("updateAdmin", async () => {
+    it("sets new admin when called by admin", async () => {
+      await proxy.updateAdmin(newAdmin, { from: admin })
+
+      assert.equal(await proxy.admin(), newAdmin, "Unexpected admin")
+    })
+
+    it("reverts when called by non-admin", async () => {
+      await expectRevert(
+        proxy.updateAdmin(newAdmin, { from: nonAdmin }),
+        "Caller is not the admin"
+      )
+    })
+
+    it("reverts when called by admin after role transfer", async () => {
+      await proxy.updateAdmin(newAdmin, { from: admin })
+
+      await expectRevert(
+        proxy.updateAdmin(nonAdmin, { from: admin }),
+        "Caller is not the admin"
       )
     })
   })

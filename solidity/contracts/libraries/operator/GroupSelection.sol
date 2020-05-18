@@ -3,27 +3,26 @@ pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../utils/BytesLib.sol";
 
-/**
- * The group selection protocol is an interactive method of selecting candidate
- * group from the set of all stakers given a pseudorandom seed value.
- *
- * The protocol produces a representative result, where each staker's profit is
- * proportional to the number of tokens they have staked. Produced candidate
- * groups are of constant size.
- *
- * Group selection protocol accepts seed as an input - a pseudorandom value
- * used to construct candidate tickets. Each candidate group member can
- * submit their tickets. The maximum number of tickets one can submit depends
- * on their staking weight - relation of the minimum stake to the candidate's
- * stake.
- *
- * There is a certain timeout, expressed in blocks, when tickets can be
- * submitted. Each ticket is a mix of staker's address, virtual staker index
- * and group selection seed. Candidate group members are selected based on
- * the best tickets submitted. There has to be a minimum number of tickets
- * submitted, equal to the candidate group size so that the protocol can
- * complete successfully.
- */
+/// @title Group Selection
+/// @notice The group selection protocol is an interactive method of selecting
+/// candidate group from the set of all stakers given a pseudorandom seed value.
+///
+/// The protocol produces a representative result, where each staker's profit is
+/// proportional to the number of tokens they have staked. Produced candidate
+/// groups are of constant size.
+///
+/// Group selection protocol accepts seed as an input - a pseudorandom value
+/// used to construct candidate tickets. Each candidate group member can
+/// submit their tickets. The maximum number of tickets one can submit depends
+/// on their staking weight - relation of the minimum stake to the candidate's
+/// stake.
+///
+/// There is a certain timeout, expressed in blocks, when tickets can be
+/// submitted. Each ticket is a mix of staker's address, virtual staker index
+/// and group selection seed. Candidate group members are selected based on
+/// the best tickets submitted. There has to be a minimum number of tickets
+/// submitted, equal to the candidate group size so that the protocol can
+/// complete successfully.
 library GroupSelection {
 
     using SafeMath for uint256;
@@ -80,12 +79,10 @@ library GroupSelection {
         uint256 groupSize;
     }
 
-    /**
-     * @dev Starts group selection protocol.
-     * @param _seed pseudorandom seed value used as an input for the group
-     * selection. All submitted tickets needs to have the seed mixed-in into the
-     * value.
-     */
+    /// @notice Starts group selection protocol.
+    /// @param _seed pseudorandom seed value used as an input for the group
+    /// selection. All submitted tickets needs to have the seed mixed-in into the
+    /// value.
     function start(Storage storage self, uint256 _seed) public {
         // We execute the minimum required cleanup here needed in case the
         // previous group selection failed and did not clean up properly in
@@ -96,31 +93,27 @@ library GroupSelection {
         self.ticketSubmissionStartBlock = block.number;
     }
 
-    /**
-     * @dev Stops group selection protocol clearing up all the submitted
-     * tickets. This function may be expensive if not executed as a part of
-     * another transaction consuming a lot of gas and as a result, getting
-     * gas refund for clearing up the storage.
-     */
+    /// @notice Stops group selection protocol clearing up all the submitted
+    /// tickets. This function may be expensive if not executed as a part of
+    /// another transaction consuming a lot of gas and as a result, getting
+    /// gas refund for clearing up the storage.
     function stop(Storage storage self) public {
         cleanupCandidates(self);
         cleanupTickets(self);
         self.inProgress = false;
     }
 
-    /**
-     * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticket Bytes representation of a ticket that holds the following:
-     * - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
-     *   function on the combination of the group selection seed (previous
-     *   beacon output), staker-specific value (address) and virtual staker index.
-     * - stakerValue: a staker-specific value which is the address of the staker.
-     * - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
-     *   has to be unique for all tickets submitted by the given staker for the
-     *   current candidate group selection.
-     * @param stakingWeight Ratio of the minimum stake to the candidate's
-     * stake.
-     */
+    /// @notice Submits ticket to request to participate in a new candidate group.
+    /// @param ticket Bytes representation of a ticket that holds the following:
+    /// - ticketValue: first 8 bytes of a result of keccak256 cryptography hash
+    ///   function on the combination of the group selection seed (previous
+    ///   beacon output), staker-specific value (address) and virtual staker index.
+    /// - stakerValue: a staker-specific value which is the address of the staker.
+    /// - virtualStakerIndex: 4-bytes number within a range of 1 to staker's weight;
+    ///   has to be unique for all tickets submitted by the given staker for the
+    ///   current candidate group selection.
+    /// @param stakingWeight Ratio of the minimum stake to the candidate's
+    /// stake.
     function submitTicket(
         Storage storage self,
         bytes32 ticket,
@@ -150,19 +143,16 @@ library GroupSelection {
         );
     }
 
-
-    /**
-     * @dev Submits ticket to request to participate in a new candidate group.
-     * @param ticketValue First 8 bytes of a result of keccak256 cryptography hash
-     * function on the combination of the group selection seed (previous
-     * beacon output), staker-specific value (address) and virtual staker index.
-     * @param stakerValue Staker-specific value which is the address of the staker.
-     * @param virtualStakerIndex 4-bytes number within a range of 1 to staker's weight;
-     * has to be unique for all tickets submitted by the given staker for the
-     * current candidate group selection.
-     * @param stakingWeight Ratio of the minimum stake to the candidate's
-     * stake.
-     */
+    /// @notice Submits ticket to request to participate in a new candidate group.
+    /// @param ticketValue First 8 bytes of a result of keccak256 cryptography hash
+    /// function on the combination of the group selection seed (previous
+    /// beacon output), staker-specific value (address) and virtual staker index.
+    /// @param stakerValue Staker-specific value which is the address of the staker.
+    /// @param virtualStakerIndex 4-bytes number within a range of 1 to staker's weight;
+    /// has to be unique for all tickets submitted by the given staker for the
+    /// current candidate group selection.
+    /// @param stakingWeight Ratio of the minimum stake to the candidate's
+    /// stake.
     function submitTicket(
         Storage storage self,
         uint64 ticketValue,
@@ -187,14 +177,11 @@ library GroupSelection {
         )) {
             addTicket(self, ticketValue);
         } else {
-            // TODO: should we slash instead of reverting?
             revert("Invalid ticket");
         }
     }
 
-    /**
-     * @dev Performs full verification of the ticket.
-     */
+    /// @notice Performs full verification of the ticket.
     function isTicketValid(
         uint64 ticketValue,
         uint256 stakerValue,
@@ -225,11 +212,9 @@ library GroupSelection {
         return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
     }
 
-    /**
-     * @dev Adds a new, verified ticket. Ticket is accepted when it is lower
-     * than the currently highest ticket or when the number of tickets is still
-     * below the group size.
-     */
+    /// @notice Adds a new, verified ticket. Ticket is accepted when it is lower
+    /// than the currently highest ticket or when the number of tickets is still
+    /// below the group size.
     function addTicket(Storage storage self, uint64 newTicketValue) internal {
         uint256[] memory previousTicketIndex = readPreviousTicketIndices(self);
         uint256[] memory ordered = getTicketValueOrderedIndices(
@@ -292,9 +277,7 @@ library GroupSelection {
         storePreviousTicketIndices(self, previousTicketIndex);
     }
 
-    /**
-     * @dev Use binary search to find an index for a new ticket in the tickets[] array
-     */
+    /// @notice Use binary search to find an index for a new ticket in the tickets[] array
     function findReplacementIndex(
         Storage storage self,
         uint64 newTicketValue,
@@ -338,13 +321,12 @@ library GroupSelection {
         self.previousTicketIndices = compressed;
     }
 
-    /**
-     * @dev Creates an array of ticket indexes based on their values in the ascending order:
-     *
-     * ordered[n-1] = tail
-     * ordered[n-2] = previousTicketIndex[tail]
-     * ordered[n-3] = previousTicketIndex[ordered[n-2]]
-     */
+    /// @notice Creates an array of ticket indexes based on their values in the
+    ///  ascending order:
+    ///
+    /// ordered[n-1] = tail
+    /// ordered[n-2] = previousTicketIndex[tail]
+    /// ordered[n-3] = previousTicketIndex[ordered[n-2]]
     function getTicketValueOrderedIndices(
         Storage storage self,
         uint256[] memory previousIndices
@@ -362,9 +344,7 @@ library GroupSelection {
         return ordered;
     }
 
-    /**
-     * @dev Gets selected participants in ascending order of their tickets.
-     */
+    /// @notice Gets selected participants in ascending order of their tickets.
     function selectedParticipants(Storage storage self) public view returns (address[] memory) {
         require(
             block.number >= self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout),
@@ -385,20 +365,16 @@ library GroupSelection {
         return selected;
     }
 
-    /**
-     * @dev Clears up data of the group selection tickets.
-     */
+    /// @notice Clears up data of the group selection tickets.
     function cleanupTickets(Storage storage self) internal {
         delete self.tickets;
         self.tail = 0;
     }
 
-    /**
-     * @dev Clears up data of the group selection candidates.
-     * This operation may have a significant cost if not executed as a part of
-     * another transaction consuming a lot of gas and as a result, getting
-     * gas refund for clearing up the storage.
-     */
+    /// @notice Clears up data of the group selection candidates.
+    /// This operation may have a significant cost if not executed as a part of
+    /// another transaction consuming a lot of gas and as a result, getting
+    /// gas refund for clearing up the storage.
     function cleanupCandidates(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.candidate[self.tickets[i]];

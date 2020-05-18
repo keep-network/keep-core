@@ -1,4 +1,5 @@
-import React from 'react'
+import React from "react"
+import { isEmptyArray } from "../utils/array.utils"
 
 export class DataTable extends React.Component {
   constructor(props) {
@@ -15,27 +16,33 @@ export class DataTable extends React.Component {
   initializeDataTable = () => {
     const headers = []
     React.Children.forEach(this.props.children, (children) => {
-      headers.push(children.props.header)
+      headers.push({
+        title: children.props.header,
+        headerStyle: children.props.headerStyle,
+      })
     })
     this.setState({ headers })
   }
 
-  renderItemRow = (item) => {
+  renderItemRow = (item, index) => {
+    const { itemFieldId } = this.props
     return (
-      <tr key={item[this.props.itemFieldId]}>
-        {React.Children.map(this.props.children, (column) => {
+      <tr key={`${item[itemFieldId]}-${index}`}>
+        {React.Children.map(this.props.children, (column, index) => {
+          const {
+            props: { field },
+          } = column
+          const cellKey = `${item[itemFieldId]}-${field}-${item[field]}-${index}`
           return (
-            <td key={`${item[this.props.itemFieldId]}-${column.props.field}-${item[column.props.field]}`}>
+            <td key={cellKey}>
               <span className="responsive-header">{column.props.header}</span>
               {this.renderColumnContent(column, item)}
             </td>
           )
-        })
-        }
+        })}
       </tr>
     )
   }
-
   renderColumnContent = (column, item) => {
     if (!column.props.renderContent) {
       return item[column.props.field]
@@ -43,9 +50,9 @@ export class DataTable extends React.Component {
     return column.props.renderContent(item)
   }
 
-  renderHeader = (header) => (
-    <th key={header}>
-      {header}
+  renderHeader = ({ title, headerStyle }) => (
+    <th key={title} style={headerStyle}>
+      {title}
     </th>
   )
 
@@ -53,16 +60,29 @@ export class DataTable extends React.Component {
     return (
       <table>
         <thead>
-          <tr>
-            {this.state.headers.map(this.renderHeader)}
-          </tr>
+          <tr>{this.state.headers.map(this.renderHeader)}</tr>
         </thead>
         <tbody>
-          {this.props.data.map(this.renderItemRow)}
+          {isEmptyArray(this.props.data) ? (
+            <tr className="text-center">
+              <td colSpan={this.state.headers.length}>
+                <h4 className="text-grey-30">{this.props.noDataMessage}</h4>
+              </td>
+            </tr>
+          ) : (
+            this.props.data.map(this.renderItemRow)
+          )}
         </tbody>
       </table>
     )
   }
 }
 
-export const Column = ({ header, field, renderContent }) => null
+DataTable.defaultProps = {
+  noDataMessage: "No data.",
+}
+
+export const Column = ({ header, headerStyle, field, renderContent }) => null
+Column.defaultProps = {
+  headerStyle: {},
+}

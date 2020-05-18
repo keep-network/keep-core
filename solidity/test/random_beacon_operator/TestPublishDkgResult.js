@@ -15,10 +15,10 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
   const groupSize = 20;
   const groupThreshold = 11;
   const dkgResultSignatureThreshold = 15;
-  const resultPublicationBlockStep = 3;
+  const resultPublicationBlockStep = 6;
 
   let resultPublicationTime, token, stakingContract, operatorContract,
-    owner = accounts[0], magpie = accounts[4], ticket,
+    owner = accounts[0], beneficiary = accounts[4], ticket,
     operator1 = accounts[0],
     operator2 = accounts[1],
     operator3 = accounts[2],
@@ -46,16 +46,15 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     await operatorContract.setGroupSize(groupSize);
     await operatorContract.setGroupThreshold(groupThreshold);
     await operatorContract.setDKGResultSignatureThreshold(dkgResultSignatureThreshold);
-    await operatorContract.setResultPublicationBlockStep(resultPublicationBlockStep);
 
     const operator1StakingWeight = 100;
     const operator2StakingWeight = 200;
     const operator3StakingWeight = 300;
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, owner, minimumStake.muln(operator1StakingWeight))
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, owner, minimumStake.muln(operator2StakingWeight))
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, owner, minimumStake.muln(operator3StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary, owner, minimumStake.muln(operator1StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary, owner, minimumStake.muln(operator2StakingWeight))
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary, owner, minimumStake.muln(operator3StakingWeight))
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, { from: owner })
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, { from: owner })
@@ -124,7 +123,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
-    let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
+    let beneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
     let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(35), 'gwei');
     let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.gasPriceCeiling());
@@ -134,8 +133,8 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
       { from: selectedParticipants[0], gasPrice: submitterCustomGasPrice }
     )
 
-    let updatedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
-    assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
+    let updatedBeneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    assert.isTrue(updatedBeneficiaryBalance.eq(beneficiaryBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
   });
 
   it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than gas price ceiling", async function () {
@@ -143,7 +142,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     await time.advanceBlockTo(resultPublicationTime);
 
     let dkgSubmitterReimbursementFee = web3.utils.toBN(await web3.eth.getBalance(operatorContract.address));
-    let magpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
+    let beneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
 
     await operatorContract.setGasPriceCeiling(web3.utils.toWei(web3.utils.toBN(100), 'gwei'));
 
@@ -151,8 +150,8 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       { from: selectedParticipants[0], gasPrice: web3.utils.toWei(web3.utils.toBN(100), 'gwei') }
     )
-    let updatedMagpieBalance = web3.utils.toBN(await web3.eth.getBalance(magpie));
-    assert.isTrue(updatedMagpieBalance.eq(magpieBalance.add(dkgSubmitterReimbursementFee)), "Submitter should receive dkgSubmitterReimbursementFee");
+    let updatedBeneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
+    assert.isTrue(updatedBeneficiaryBalance.eq(beneficiaryBalance.add(dkgSubmitterReimbursementFee)), "Submitter should receive dkgSubmitterReimbursementFee");
   });
 
   it("should be able to submit correct result with unordered signatures and indexes.", async function () {

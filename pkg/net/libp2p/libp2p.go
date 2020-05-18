@@ -53,13 +53,30 @@ const (
 	// FirewallCheckTick is the amount of time between periodic checks of all
 	// firewall rules against all peers connected to this one.
 	FirewallCheckTick = time.Minute * 10
+	// ConnectedPeersCheckTick is the amount of time between periodic checks of
+	// the number of connected peers.
+	ConnectedPeersCheckTick = time.Minute * 1
 )
+
+// Keep Network protocol identifiers
+const (
+	ProtocolBeacon = "keep-beacon"
+	ProtocolECDSA  = "keep-ecdsa"
+)
+
+// MaximumDisseminationTime is the maximum dissemination time of messages in
+// topics we are not subscribed to. By default courteous dissemination is
+// disabled and it should be enabled only on selected fast bootstrap nodes.
+// This value should never be higher than the lifetime of libp2p cache (120 sec)
+// to prevent uncontrolled message propagation.
+const MaximumDisseminationTime = 90
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
+	DisseminationTime  int
 }
 
 type provider struct {
@@ -67,9 +84,10 @@ type provider struct {
 	broadcastChannelManager *channelManager
 	unicastChannelManager   *unicastChannelManager
 
-	identity *identity
-	host     host.Host
-	routing  *dht.IpfsDHT
+	identity          *identity
+	host              host.Host
+	routing           *dht.IpfsDHT
+	disseminationTime int
 
 	connectionManager *connectionManager
 }
@@ -113,14 +131,14 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 }
 
 func (p *provider) BroadcastChannelForwarderFor(name string) {
-	logger.Infof("requested message forwarder for channel: [%v]", name)
+	if p.disseminationTime == 0 {
+		return
+	}
 
-	// TTL for a single message forwarder should be limited to avoid unnecessary
-	// resource consumption. One hour seems to be a reasonable value as no
-	// single protocol execution will exceed this time.
-	ttl := 1 * time.Hour
+	logger.Infof("starting message forwarder for channel [%v]", name)
+	timeout := time.Duration(p.disseminationTime) * time.Second
 
-	if err := p.broadcastChannelManager.newForwarder(name, ttl); err != nil {
+	if err := p.broadcastChannelManager.newForwarder(name, timeout); err != nil {
 		logger.Warningf(
 			"could not create message forwarder for channel [%v]: [%v]",
 			name,
@@ -131,6 +149,14 @@ func (p *provider) BroadcastChannelForwarderFor(name string) {
 
 type connectionManager struct {
 	host.Host
+}
+
+func newConnectionManager(ctx context.Context, host host.Host) *connectionManager {
+	connectionManager := &connectionManager{host}
+
+	go connectionManager.monitorConnectedPeers(ctx)
+
+	return connectionManager
 }
 
 func (cm *connectionManager) ConnectedPeers() []string {
@@ -145,7 +171,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerID, err := peer.IDB58Decode(connectedPeer)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to decode peer ID from [%s] with error: [%v]",
+			"failed to decode peer ID from [%s]: [%v]",
 			connectedPeer,
 			err,
 		)
@@ -154,7 +180,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerPublicKey, err := peerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to extract peer [%s] public key with error: [%v]",
+			"failed to extract peer [%s] public key: [%v]",
 			connectedPeer,
 			err,
 		)
@@ -166,7 +192,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
 	peerID, err := peer.IDB58Decode(peerHash)
 	if err != nil {
-		logger.Errorf("failed to decode peer hash: [%v] [%v]", peerHash, err)
+		logger.Errorf("failed to decode peer hash [%v]: [%v]", peerHash, err)
 		return
 	}
 
@@ -188,6 +214,23 @@ func (cm *connectionManager) AddrStrings() []string {
 	}
 
 	return multiaddrStrings
+}
+
+func (cm *connectionManager) monitorConnectedPeers(ctx context.Context) {
+	ticker := time.NewTicker(ConnectedPeersCheckTick)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			connectedPeers := cm.ConnectedPeers()
+
+			logger.Infof("number of connected peers: [%v]", len(connectedPeers))
+			logger.Debugf("connected peers: [%v]", connectedPeers)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 // ConnectOptions allows to set various options used by libp2p.
@@ -230,10 +273,18 @@ func Connect(
 	ctx context.Context,
 	config Config,
 	staticKey *key.NetworkPrivate,
+	protocol string,
 	firewall net.Firewall,
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
 ) (net.Provider, error) {
+	if config.DisseminationTime < 0 || config.DisseminationTime > MaximumDisseminationTime {
+		return nil, fmt.Errorf(
+			"dissemination time mut be in range [0, %v]",
+			MaximumDisseminationTime,
+		)
+	}
+
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
@@ -246,6 +297,7 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
+		protocol,
 		config.AnnouncedAddresses,
 		firewall,
 	)
@@ -281,24 +333,25 @@ func Connect(
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
+		disseminationTime:       config.DisseminationTime,
 	}
 
 	if len(config.Peers) == 0 {
-		logger.Infof("node's peers list is empty")
+		logger.Infof("bootstrap peers list is empty")
 	}
 
-	if err := provider.bootstrap(
-		ctx,
-		config.Peers,
-	); err != nil {
-		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
+	if err := provider.bootstrap(ctx, config.Peers); err != nil {
+		return nil, fmt.Errorf("bootstrap failed: [%v]", err)
 	}
 
-	provider.connectionManager = &connectionManager{provider.host}
+	provider.connectionManager = newConnectionManager(ctx, provider.host)
 
-	// Instantiates and starts the connection management background process
+	// Instantiates and starts the connection management background process.
 	watchtower.NewGuard(
-		ctx, FirewallCheckTick, firewall, provider.connectionManager,
+		ctx,
+		FirewallCheckTick,
+		firewall,
+		provider.connectionManager,
 	)
 
 	return provider, nil
@@ -308,6 +361,7 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
+	protocol string,
 	announcedAddresses []string,
 	firewall net.Firewall,
 ) (host.Host, error) {
@@ -321,11 +375,12 @@ func discoverAndListen(
 
 	transport, err := newEncryptedAuthenticatedTransport(
 		identity.privKey,
+		protocol,
 		firewall,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not create authenticated transport [%v]",
+			"could not create authenticated transport: [%v]",
 			err,
 		)
 	}

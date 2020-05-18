@@ -1,0 +1,39 @@
+section.token-grant-overview {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-gap: 2rem;
+    padding: 0;
+
+    .grant-amount,
+    .unlocking-details,
+    .staked-details {
+        padding: 2rem;
+    }
+
+    .unlocking-details,
+    .staked-details {
+        display: flex;
+    }
+
+    @media screen and (min-width: 550px) {
+        grid-template-columns: repeat(auto-fit, 33%);
+
+        .grant-amount {
+            border-right: none;
+        }
+    }
+
+    @media screen and (min-width: 900px) {
+        grid-template-columns: repeat(3, 1fr);
+
+        .grant-amount {
+            border-right: 1px solid @color-grey-30;
+        }
+
+        .grant-amount,
+        .unlocking-details,
+        .staked-details {
+            margin-top: 0;
+        }
+    }
+}

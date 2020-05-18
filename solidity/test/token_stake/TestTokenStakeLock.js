@@ -4,7 +4,7 @@ const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/Lock', () => {
   let token, registry, stakingContract, stakingAmount, minimumStake;
@@ -12,7 +12,7 @@ describe('TokenStaking/Lock', () => {
     operator1 = accounts[1],
     operator2 = accounts[2],
     operator3 = accounts[3],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6],
     operatorContract2 = accounts[7];
@@ -26,7 +26,7 @@ describe('TokenStaking/Lock', () => {
 
   before(async () => {
     token = await KeepToken.new({from: owner});
-    registry = await Registry.new({from: owner});
+    registry = await KeepRegistry.new({from: owner});
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod,
       {from: owner}
@@ -49,7 +49,7 @@ describe('TokenStaking/Lock', () => {
 
   async function delegate(operator, amount) {
     let data = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);
@@ -219,7 +219,7 @@ describe('TokenStaking/Lock', () => {
         {from: operatorContract}
       )
       await stakingContract.seize(
-        minimumStake, 100, magpie, [operator],
+        minimumStake, 100, beneficiary, [operator],
         {from: operatorContract}
       )
       // ok, no revert
@@ -239,7 +239,28 @@ describe('TokenStaking/Lock', () => {
       )
       await expectRevert(
         stakingContract.seize(
-          minimumStake, 100, magpie, [operator],
+          minimumStake, 100, beneficiary, [operator],
+          {from: operatorContract}
+        ),
+        "Stake is released"
+      )
+    })
+
+    it("should not allow slashing/seizing unlocked stake after undelegation", async () => {
+      await undelegate(operator)
+      await stakingContract.unlockStake(operator, {from: operatorContract})
+
+      await expectRevert(
+        stakingContract.slash(
+          minimumStake, [operator],
+          {from: operatorContract}
+        ),
+        "Stake is released"
+      )
+
+      await expectRevert(
+        stakingContract.seize(
+          minimumStake, 100, beneficiary, [operator],
           {from: operatorContract}
         ),
         "Stake is released"
@@ -263,7 +284,7 @@ describe('TokenStaking/Lock', () => {
       )
       await expectRevert(
         stakingContract.seize(
-          minimumStake, 100, magpie, [operator],
+          minimumStake, 100, beneficiary, [operator],
           {from: operatorContract2}
         ),
         "Stake is released"

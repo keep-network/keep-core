@@ -17,8 +17,6 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function () {
     operator3 = accounts[3],
     operator4 = accounts[4],
     operator5 = accounts[5],
-    operator6 = accounts[6],
-    operator7 = accounts[7],
     authorizer = owner,
     selectedParticipants, signatures, signingMemberIndices = [],
     misbehaved = '0x0305', // disqualified operator with selected member index 3 and inactive with 5
@@ -32,14 +30,12 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function () {
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-      contract.fromArtifact('KeepRandomBeaconOperatorStub')
+      contract.fromArtifact('KeepRandomBeaconOperatorMisbehaviorStub')
     )
 
     token = contracts.token
     stakingContract = contracts.stakingContract
     operatorContract = contracts.operatorContract
-    operatorContract.setGroupSize(5, { from: owner })
-    operatorContract.setGroupThreshold(3, { from: owner })
 
     let minimumStake = await stakingContract.minimumStake()
     await stakeDelegate(stakingContract, token, owner, operator1, owner, authorizer, minimumStake, { from: owner })

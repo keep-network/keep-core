@@ -1,26 +1,26 @@
-import React, { useContext } from 'react'
-import { SubmitButton } from './Button'
-import FormInput from './FormInput'
-import FormCheckbox from './FormCheckbox'
-import { withFormik } from 'formik'
+import React, { useContext } from "react"
+import { SubmitButton } from "./Button"
+import FormInput from "./FormInput"
+import FormCheckbox from "./FormCheckbox"
+import { withFormik } from "formik"
 import {
   validateAmountInRange,
   validateEthAddress,
   getErrorsObj,
   validateRequiredValue,
-} from '../forms/common-validators'
-import { useCustomOnSubmitFormik } from '../hooks/useCustomOnSubmitFormik'
-import moment from 'moment'
-import { Web3Context } from './WithWeb3Context'
-import { tokenGrantsService } from '../services/token-grants.service'
-import { useShowMessage, messageType } from './Message'
-import ProgressBar from './ProgressBar'
-import { colors } from '../constants/colors'
-import { formatAmount, displayAmount } from '../utils/general.utils.js'
+} from "../forms/common-validators"
+import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
+import moment from "moment"
+import { Web3Context } from "./WithWeb3Context"
+import { tokenGrantsService } from "../services/token-grants.service"
+import { useShowMessage, messageType } from "./Message"
+import ProgressBar from "./ProgressBar"
+import { colors } from "../constants/colors"
+import { fromTokenUnit, displayAmount } from "../utils/token.utils.js"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
-} from '../forms/form.utils.js'
+} from "../forms/form.utils.js"
 
 const CreateTokenGrantForm = ({
   keepBalance,
@@ -29,14 +29,26 @@ const CreateTokenGrantForm = ({
 }) => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
-  const amount = formatAmount(formikProps.values.amount)
+  const amount = fromTokenUnit(formikProps.values.amount)
 
   const submit = async (values, onTransactionHashCallback) => {
     try {
-      await tokenGrantsService.createGrant(web3Context, values, onTransactionHashCallback)
-      showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Grant tokens transaction has been successfully completed' })
+      await tokenGrantsService.createGrant(
+        web3Context,
+        values,
+        onTransactionHashCallback
+      )
+      showMessage({
+        type: messageType.SUCCESS,
+        title: "Success",
+        content: "Grant tokens transaction has been successfully completed",
+      })
     } catch (error) {
-      showMessage({ type: messageType.ERROR, title: 'Grant tokens action has been failed ', content: error.message })
+      showMessage({
+        type: messageType.ERROR,
+        title: "Grant tokens action has failed ",
+        content: error.message,
+      })
       throw error
     }
   }
@@ -44,11 +56,7 @@ const CreateTokenGrantForm = ({
 
   return (
     <form>
-      <FormInput
-        name="grantee"
-        type="text"
-        label="Grantee Address"
-      />
+      <FormInput name="grantee" type="text" label="Grantee Address" />
       <FormInput
         name="amount"
         type="text"
@@ -99,22 +107,16 @@ const CreateTokenGrantForm = ({
 
 const connectedWithFormik = withFormik({
   mapPropsToValues: () => ({
-    grantee: '0x0',
-    amount: '0',
-    duration: '',
+    grantee: "0x0",
+    amount: "0",
+    duration: "",
     start: moment().unix(),
-    cliff: '',
+    cliff: "",
     revocable: true,
   }),
   validate: (values, props) => {
     const { keepBalance } = props
-    const {
-      grantee,
-      amount,
-      duration,
-      start,
-      cliff,
-    } = values
+    const { grantee, amount, duration, start, cliff } = values
     const errors = {}
     errors.grantee = validateEthAddress(grantee)
     errors.amount = validateAmountInRange(amount, keepBalance, 1)
@@ -124,7 +126,7 @@ const connectedWithFormik = withFormik({
 
     return getErrorsObj(errors)
   },
-  displayName: 'CrateGrantForm',
+  displayName: "CrateGrantForm",
 })(CreateTokenGrantForm)
 
 export default connectedWithFormik

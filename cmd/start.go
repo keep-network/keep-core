@@ -120,6 +120,7 @@ func Start(c *cli.Context) error {
 		ctx,
 		config.LibP2P,
 		networkPrivateKey,
+		libp2p.ProtocolBeacon,
 		firewall.MinimumStakePolicy(stakeMonitor),
 		retransmission.NewTicker(blockCounter.WatchBlocks(ctx)),
 	)
@@ -188,7 +189,7 @@ func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) 
 		if hasMinimumStake {
 			return nil
 		}
-		logger.Warningf("below min stake for %d min \n", address, waitMins)
+		logger.Warningf("%s below min stake for %d min \n", address, waitMins)
 		time.Sleep(time.Minute)
 		waitMins++
 	}
