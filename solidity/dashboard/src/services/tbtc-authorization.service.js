@@ -194,9 +194,7 @@ const fetchBondingData = async (web3Context) => {
       )
       const availableEth = await fetchAvailableAmount(
         web3Context,
-        operators[i],
-        bondedECDSAKeepFactoryAddress,
-        sortitionPoolAddress
+        operators[i]
       )
 
       const bondedEth = operatorBondingDataMap.get(
@@ -288,6 +286,7 @@ const fetchCreatedBonds = async (
   })
 }
 
+// TODO: add later when fetching bonding section
 const fetchBondReassignedEvents = async (
   web3Context,
   operatorAddresses,
@@ -400,17 +399,13 @@ const fetchLockedBondAmount = async (
 // aka unbondedValue
 const fetchAvailableAmount = async (
   web3Context,
-  operator,
-  bondedECDSAKeepFactoryAddress,
-  authorizedSortitionPool
+  operator
 ) => {
   return contractService.makeCall(
     web3Context,
     KEEP_BONDING_CONTRACT_NAME,
-    "availableUnbondedValue",
+    "unbondedValue",
     operator,
-    bondedECDSAKeepFactoryAddress,
-    authorizedSortitionPool
   )
 }
 

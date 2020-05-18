@@ -28,7 +28,7 @@ const TBTCApplicationPage = () => {
   )
   // fetch bonding data
   const [bondingState, updateBondinData] = useFetchData(
-    tbtcAuthorizationService.getBondingData,
+    tbtcAuthorizationService.fetchBondingData,
     initialData
   )
 
