@@ -5,7 +5,7 @@ import {
 } from "../constants/constants"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
-import { add } from "../utils/arithmetics.utils"
+import { add, lte } from "../utils/arithmetics.utils"
 import moment from "moment"
 
 const fetchSlashedTokens = async (web3Context) => {
@@ -77,6 +77,8 @@ const fetchSlashedTokens = async (web3Context) => {
       const { amount } = seizedTokensGroupedByTxtHash[transactionHash]
       punishmentData = { amount, type: "SEIZED", event }
     }
+
+    if (lte(punishmentData.amount, 0)) continue
 
     punishmentData.date = moment.unix(
       (await eth.getBlock(blockNumber)).timestamp

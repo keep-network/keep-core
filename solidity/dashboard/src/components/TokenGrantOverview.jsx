@@ -14,7 +14,7 @@ import {
   displayAmount,
 } from "../utils/token.utils"
 
-const TokenGrantOverview = ({ selectedGrant }) => {
+const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
     <section id="tokens-overview" className="tile">
       <TokenGrantDetails selectedGrant={selectedGrant} />
@@ -23,7 +23,10 @@ const TokenGrantOverview = ({ selectedGrant }) => {
         <TokenGrantUnlockingdDetails selectedGrant={selectedGrant} />
       </div>
       <div className="flex mt-1">
-        <TokenGrantStakedDetails selectedGrant={selectedGrant} />
+        <TokenGrantStakedDetails
+          selectedGrant={selectedGrant}
+          stakedAmount={selectedGrantStakedAmount}
+        />
       </div>
     </section>
   )
@@ -157,7 +160,7 @@ export const TokenGrantUnlockingdDetails = ({ selectedGrant }) => {
   )
 }
 
-export const TokenGrantStakedDetails = ({ selectedGrant }) => {
+export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
   return (
     <>
       <div className="flex-1 self-center">
@@ -165,7 +168,7 @@ export const TokenGrantStakedDetails = ({ selectedGrant }) => {
           total={selectedGrant.amount}
           items={[
             {
-              value: selectedGrant.staked,
+              value: stakedAmount,
               color: colors.grey70,
               backgroundStroke: colors.grey10,
               label: "Staked",
@@ -176,7 +179,7 @@ export const TokenGrantStakedDetails = ({ selectedGrant }) => {
       </div>
       <div className="ml-2 mt-1 self-start flex-1">
         <h5 className="text-grey-70">staked</h5>
-        <h4 className="text-grey-70">{displayAmount(selectedGrant.staked)}</h4>
+        <h4 className="text-grey-70">{displayAmount(stakedAmount)}</h4>
         <div className="text-smaller text-grey-40">
           of {displayAmountWithMetricSuffix(selectedGrant.amount)} Total
         </div>

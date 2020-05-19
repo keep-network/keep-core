@@ -10,9 +10,7 @@ const SelectedGrantDropdown = ({ grant }) => {
         className="text-instruction text-grey-50"
         style={{ fontSize: "0.7rem" }}
       >
-        Issued on{" "}
-        {grant.start &&
-          formatDate(moment.unix(grant.start))}
+        Issued on {grant.start && formatDate(moment.unix(grant.start))}
       </div>
     </div>
   )
