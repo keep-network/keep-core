@@ -1,21 +1,17 @@
-import React from 'react'
-import AddressShortcut from './AddressShortcut'
-import StatusBadge, { BADGE_STATUS } from './StatusBadge'
-import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
-import { DataTable, Column } from './DataTable'
+import React from "react"
+import AddressShortcut from "./AddressShortcut"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import { DataTable, Column } from "./DataTable"
+import Tile from "./Tile"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
+import { displayAmount } from "../utils/token.utils"
 
 const AuthorizationHistory = ({ contracts }) => {
   return (
-    <section className="tile">
-      <h3 className="text-grey-60">Authorization History</h3>
+    <Tile title="Authorizations History">
       <DataTable data={contracts || []} itemFieldId="contractAddress">
         <Column
-          header="contract address"
-          field="contractAddress"
-          renderContent={({ contractAddress }) => <AddressShortcut address={contractAddress} />}
-        />
-        <Column
-          header="status"
+          header="details"
           field="status"
           renderContent={({ status }) => (
             <StatusBadge
@@ -26,16 +22,31 @@ const AuthorizationHistory = ({ contracts }) => {
           )}
         />
         <Column
-          header="contract details"
+          header="operator"
+          field="operatorAddress"
+          renderContent={({ operatorAddress }) => (
+            <AddressShortcut address={operatorAddress} />
+          )}
+        />
+        <Column
+          header="stake"
+          field="stakeAmount"
+          renderContent={({ stakeAmount }) =>
+            `${displayAmount(stakeAmount)} KEEP`
+          }
+        />
+        <Column
+          header="operator contract details"
           field="details"
-          renderContent={(contractAddress) => (
-            <a href={ETHERSCAN_DEFAULT_URL + contractAddress} rel="noopener noreferrer" target="_blank">
-              View in Block Explorer
-            </a>
+          renderContent={({ contractName, operatorContractAddress }) => (
+            <div>
+              <div className="text-big">{contractName}</div>
+              <ViewAddressInBlockExplorer address={operatorContractAddress} />
+            </div>
           )}
         />
       </DataTable>
-    </section>
+    </Tile>
   )
 }
 

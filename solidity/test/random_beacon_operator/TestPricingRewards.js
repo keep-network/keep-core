@@ -1,9 +1,14 @@
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
-const mineBlocks = require("../helpers/mineBlocks")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
+
+const BN = web3.utils.BN
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
 
 describe('KeepRandomBeaconOperator/PricingRewards', function() {
   let serviceContract;
@@ -36,46 +41,50 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    let delayFactor = await operatorContract.delayFactor.call();        
-
-    let expectedDelayFactor = web3.utils.toBN(10000000000000000);
-    assert.isTrue(expectedDelayFactor.eq(delayFactor));
+    let delayFactor = await operatorContract.delayFactor.call();
+    expect(delayFactor).to.eq.BN('10000000000000000') 
   });
 
   it("should correctly evaluate delay factor at the first submission block", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1));
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     let delayFactor = await operatorContract.delayFactor.call();
-
-    let expectedDelayFactor = web3.utils.toBN(10000000000000000);
-    assert.isTrue(expectedDelayFactor.eq(delayFactor));
+    expect(delayFactor).to.eq.BN('10000000000000000') 
   });
 
   it("should correctly evaluate delay factor at the second submission block", async () => {
+    let startBlock = await operatorContract.currentRequestStartBlock()
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(2));
 
     let delayFactor = await operatorContract.delayFactor.call();
-
-    let expectedDelayFactor = web3.utils.toBN('9896104600694443');
-    assert.isTrue(expectedDelayFactor.eq(delayFactor));
+    // currentRequestStartBlock = 0
+    // T_received = 2
+    // T_deadline = 0 + 384 + 1 = 385
+    // T_begin = 0 + 1 = 1
+    // [(T_deadline - T_received) / (T_deadline - T_begin)]^2 = [(385 - 2) / (385 - 1)]^2
+    expect(delayFactor).to.eq.BN('9947984483506943')                                  
   });
 
   it("should correctly evaluate delay factor in the last block before timeout", async () => {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     let delayFactor = await operatorContract.delayFactor.call();        
-
-    let expectedDelayFactor = web3.utils.toBN('271267361111');
-    assert.isTrue(expectedDelayFactor.eq(delayFactor));        
+    // currentRequestStartBlock = 0
+    // T_received = 384
+    // T_deadline = 0 + 384 + 1 = 385
+    // T_begin = 0 + 1 = 1
+    // [(T_deadline - T_received) / (T_deadline - T_begin)]^2 = [(385 - 384) / (385 - 1)]^2
+    expect(delayFactor).to.eq.BN('67816840277')       
   });
 
   it("should correctly evaluate rewards for entry submitted " + 
@@ -99,18 +108,9 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     
     let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
 
-    assert.isTrue(
-      expectedGroupMemberReward.eq(rewards.groupMemberReward),
-      "unexpected group member reward"
-    );
-    assert.isTrue(
-      expectedSubmitterReward.eq(rewards.submitterReward),
-      "unexpected submitter reward"
-    );
-    assert.isTrue(
-      expectedSubsidy.eq(rewards.subsidy),
-      "unexpected subsidy"
-    );
+    expect(rewards.groupMemberReward).to.eq.BN(expectedGroupMemberReward)
+    expect(rewards.submitterReward).to.eq.BN(expectedSubmitterReward)
+    expect(rewards.subsidy).to.eq.BN(expectedSubsidy)
   });
 
   it("should correctly evaluate rewards for entry submitted " +
@@ -122,7 +122,7 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(1)); 
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     // No delay so entire group member base reward is paid and nothing
     // goes to the subsidy pool.
@@ -136,18 +136,9 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     
     let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
     
-    assert.isTrue(
-      expectedGroupMemberReward.eq(rewards.groupMemberReward),
-      "unexpected group member reward"
-    );
-    assert.isTrue(
-      expectedSubmitterReward.eq(rewards.submitterReward),
-      "unexpected submitter reward"
-    );
-    assert.isTrue(
-      expectedSubsidy.eq(rewards.subsidy),
-      "unexpected subsidy"
-    );
+    expect(rewards.groupMemberReward).to.eq.BN(expectedGroupMemberReward)
+    expect(rewards.submitterReward).to.eq.BN(expectedSubmitterReward)
+    expect(rewards.subsidy).to.eq.BN(expectedSubsidy)
   });  
 
   it("should correctly evaluate rewards for the entry submitted " + 
@@ -159,12 +150,12 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]});  
 
-    mineBlocks((await operatorContract.relayEntryGenerationTime()).addn(2));  
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(2));
 
-    // There is one block of delay so the delay factor is 0.9896104600694443.
+    // There is one block of delay so the delay factor is 0.9947984483506943.
     // Group member reward should be scaled by the delay factor: 
-    // 1987000 * 0.9896104600694443 = ~1966355
-    let expectedGroupMemberReward = web3.utils.toBN("1966355");
+    // 1987000 * 0.9947984483506943 = ~1966355
+    let expectedGroupMemberReward = web3.utils.toBN("1976664");
 
     // The entire entry verification fee is paid to the submitter 
     // regardless of their gas expenditure. The submitter is free to spend 
@@ -173,10 +164,10 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     // 
     // To incentivize a race for the submitter position, the submitter 
     // receives delay penalty * group size * 0.05 as an extra reward:
-    // 1987000 * (1 - 0.9896104600694443) * 64 * 5% = ~66060
+    // 1987000 * (1 - 0.9947984483506943) * 64 * 5% = ~33073
     //
-    // 70070000000 + 66060 = 70070066060          
-    let expectedSubmitterReward = web3.utils.toBN("70070066060");  
+    // 70070000000 + 33073 = 70070033073          
+    let expectedSubmitterReward = web3.utils.toBN("70070033073");  
 
     // If the amount paid out to the signing group in group rewards and the 
     // submitter’s extra reward is less than the profit margin, the 
@@ -184,26 +175,17 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     // incentivize customers to request entries.
     //
     // profit margin: 1987000 * 64 = 127168000
-    // paid member rewards: 1966355 * 64 = 125846720
-    // submitter extra reward: 66060
+    // paid member rewards: 1976664 * 64 = 126506496
+    // submitter extra reward: 33073
     // 
-    // 127168000 - 125846720 - 66060 = 1255220
-    let expectedSubsidy = web3.utils.toBN("1255220");              
+    // 127168000 - 126506496 - 33073 = 628431
+    let expectedSubsidy = web3.utils.toBN("628431");              
 
     let rewards = await operatorContract.getNewEntryRewardsBreakdown.call(); 
     
-    assert.isTrue(
-      expectedGroupMemberReward.eq(rewards.groupMemberReward),
-      "unexpected group member reward"
-    );
-    assert.isTrue(
-      expectedSubmitterReward.eq(rewards.submitterReward),
-      "unexpected submitter reward"
-    );
-    assert.isTrue(
-      expectedSubsidy.eq(rewards.subsidy),
-      "unexpected subsidy"
-    );
+    expect(rewards.groupMemberReward).to.eq.BN(expectedGroupMemberReward)
+    expect(rewards.submitterReward).to.eq.BN(expectedSubmitterReward)
+    expect(rewards.subsidy).to.eq.BN(expectedSubsidy)
   });  
 
   it("should correctly evaluate rewards for the entry submitted " + 
@@ -215,13 +197,14 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     let entryFeeEstimate = await serviceContract.entryFeeEstimate(0);
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: accounts[0]}); 
 
-    mineBlocks(await operatorContract.relayEntryTimeout());
+    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
+    await time.advanceBlockTo(relayEntryTimeout.addn(await web3.eth.getBlockNumber()));
 
     // There is one block left before the timeout so the delay factor is 
-    // 0.0000271267361111.
+    // 0.000067816840277.
     // Group member reward should be scaled by the delay factor: 
-    // 1382000000 * 0.0000271267361111 = ~37489
-    let expectedGroupMemberReward = web3.utils.toBN("37489");  
+    // 1382000000 * 0.0000067816840277 = ~9372
+    let expectedGroupMemberReward = web3.utils.toBN("9372");  
 
     // The entire entry verification fee is paid to the submitter 
     // regardless of their gas expenditure. The submitter is free to spend 
@@ -230,10 +213,10 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     // 
     // To incentivize a race for the submitter position, the submitter 
     // receives delay penalty * group size * 0.05 as an extra reward:
-    // 1382000000 * (1 - 0.0000271267361111) * 64 * 5% = ~4422280034
+    // 1382000000 * (1 - 0.0000067816840277) * 64 * 5% = ~4422370008
     //
-    // 100040000000 + 4422280034 = 104462280034          
-    let expectedSubmitterReward = web3.utils.toBN("104462280034"); 
+    // 100040000000 + 4422370008 = 104462370008          
+    let expectedSubmitterReward = web3.utils.toBN("104462370008"); 
 
     // If the amount paid out to the signing group in group rewards and the 
     // submitter’s extra reward is less than the profit margin, the 
@@ -241,25 +224,16 @@ describe('KeepRandomBeaconOperator/PricingRewards', function() {
     // incentivize customers to request entries.
     //
     // profit margin: 1382000000 * 64 = 88448000000
-    // paid member rewards: 37489 * 64 = 2399296
+    // paid member rewards: 9372 * 64 = 599808
     // submitter extra reward: 4422280034
     // 
-    // 88448000000 - 2399296 - 4422280034 = 84023320670
-    let expectedSubsidy = web3.utils.toBN("84023320670");    
+    // 88448000000 - 599808 - 4422370008 = 84025030184
+    let expectedSubsidy = web3.utils.toBN("84025030184");    
 
     let rewards = await operatorContract.getNewEntryRewardsBreakdown.call();
     
-    assert.isTrue(
-      expectedGroupMemberReward.eq(rewards.groupMemberReward),
-      "unexpected group member reward"
-    );
-    assert.isTrue(
-      expectedSubmitterReward.eq(rewards.submitterReward),
-      "unexpected submitter reward"
-    );
-    assert.isTrue(
-      expectedSubsidy.eq(rewards.subsidy),
-      "unexpected subsidy"
-    );
+    expect(rewards.groupMemberReward).to.eq.BN(expectedGroupMemberReward)
+    expect(rewards.submitterReward).to.eq.BN(expectedSubmitterReward)
+    expect(rewards.subsidy).to.eq.BN(expectedSubsidy)
   });
 });

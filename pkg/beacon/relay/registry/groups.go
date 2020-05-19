@@ -16,6 +16,7 @@ import (
 type Groups struct {
 	mutex sync.Mutex
 
+	// key is group public key in uncompressed form
 	myGroups map[string][]*Membership
 
 	relayChain relaychain.GroupRegistrationInterface
@@ -86,25 +87,49 @@ func (g *Groups) UnregisterStaleGroups() {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
-	for publicKey := range g.myGroups {
+	for publicKey, memberships := range g.myGroups {
 		publicKeyBytes, err := groupKeyFromString(publicKey)
 		if err != nil {
 			logger.Errorf(
-				"error occured while decoding public key into bytes: [%v]",
+				"error occurred while decoding public key into bytes: [%v]",
 				err,
 			)
+			continue
 		}
 
 		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 		if err != nil {
-			logger.Errorf("stale group check has failed: [%v]", err)
+			logger.Errorf(
+				"failed to check if stale for group with public key [%s]: [%v]",
+				publicKey,
+				err,
+			)
+			continue
 		}
 
 		if isStaleGroup {
-			err = g.storage.archive(publicKey)
-			if err != nil {
-				logger.Errorf("group archiving has failed: [%v]", err)
+			if len(memberships) == 0 {
+				logger.Errorf(
+					"inconsistent state; group with public key [%s] has no members",
+					publicKey,
+				)
+				continue
 			}
+
+			compressedPublicKey := memberships[0].Signer.GroupPublicKeyBytesCompressed()
+			err = g.storage.archive(compressedPublicKey)
+			if err != nil {
+				logger.Errorf("failed to archive group with compressed public key [%s]: [%v]",
+					hex.EncodeToString(compressedPublicKey),
+					err,
+				)
+				continue
+			}
+
+			logger.Infof(
+				"archived group with compressed public key [%s]",
+				hex.EncodeToString(compressedPublicKey),
+			)
 
 			delete(g.myGroups, publicKey)
 		}

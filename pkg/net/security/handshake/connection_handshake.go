@@ -18,11 +18,11 @@
 //
 // [Act 1]
 // nonce1 = random_nonce()
-// act1Message{nonce1} ---->
+// act1Message{nonce1, protocol_id1} ---->
 //                                       [Act 2]
 //                                       nonce2 = random_nonce()
 //                                       challenge = sha256(nonce1 || nonce2)
-//                                       <---- act2Message{challenge, nonce2}
+//                                       <---- act2Message{challenge, nonce2, protocol_id2}
 // [Act 3]
 // challenge = sha256(nonce1 || nonce2)
 // act3Message{challenge} ---->
@@ -52,27 +52,29 @@ import (
 	"fmt"
 )
 
-// act1Message is sent in the first handshake act by the initiator to the
+// Act1Message is sent in the first handshake act by the initiator to the
 // responder. It contains randomly generated `nonce1`, an 8-byte (64-bit)
-// unsigned integer.
+// unsigned integer as well as the protocol identifier.
 //
 // act1Message should be signed with initiator's static private key.
 type Act1Message struct {
-	nonce1 uint64
+	nonce1    uint64
+	protocol1 string
 }
 
-// act2Message is sent in the second handshake act by the responder to the
+// Act2Message is sent in the second handshake act by the responder to the
 // initiator. It contains randomly generated `nonce2`, which is an 8-byte
-// unsigned integer, and `challenge`, which is the result of SHA256 on the
-// concatenated bytes of `nonce1` and `nonce2`.
+// unsigned integer, `challenge`, which is the result of SHA256 on the
+// concatenated bytes of `nonce1` and `nonce2`, and the protocol identifier.
 //
 // act2Message should be signed with responder's static private key.
 type Act2Message struct {
 	nonce2    uint64
 	challenge [sha256.Size]byte
+	protocol2 string
 }
 
-// act3Message is sent in the third handshake act by the initiator to the
+// Act3Message is sent in the third handshake act by the initiator to the
 // responder. It contains the challenge that has been recomputed by the
 // initiator as a SHA256 of the concatenated bytes of `nonce1` and `nonce2`.
 //
@@ -84,52 +86,59 @@ type Act3Message struct {
 // initiatorAct1 represents the state of the initiator in the first act of the
 // handshake protocol.
 type initiatorAct1 struct {
-	nonce1 uint64
+	nonce1    uint64
+	protocol1 string
 }
 
 // InitiateHandshake function allows to initiate a handshake by creating
 // and initializing a state machine representing initiator in the first round
 // of the handshake, ready to execute the protocol.
-func InitiateHandshake() (*initiatorAct1, error) {
+func InitiateHandshake(protocol string) (*initiatorAct1, error) {
 	nonce1, err := randomNonce()
 	if err != nil {
-		return nil, fmt.Errorf("could not initiate the handshake [%v]", err)
+		return nil, fmt.Errorf("could not initiate the handshake: [%v]", err)
 	}
 
-	return &initiatorAct1{nonce1}, nil
+	return &initiatorAct1{nonce1, protocol}, nil
 }
 
 // Message returns the message sent by initiator to the responder in the first
 // act of the handshake protocol.
 func (ia1 *initiatorAct1) Message() *Act1Message {
-	return &Act1Message{nonce1: ia1.nonce1}
+	return &Act1Message{nonce1: ia1.nonce1, protocol1: ia1.protocol1}
 }
 
 // Next performs a state transition and returns initiator in a state ready to
 // execute the second act of the handshake protocol.
 func (ia1 *initiatorAct1) Next() *initiatorAct2 {
-	return &initiatorAct2{nonce1: ia1.nonce1}
+	return &initiatorAct2{nonce1: ia1.nonce1, protocol1: ia1.protocol1}
 }
 
 // AnswerHandshake is used to initiate a responder as a result of receiving
 // message from initiator in the first act of the handshake protocol.
 // The returned responder is in a state ready to execute the second act of the
 // handshake protocol.
-func AnswerHandshake(message *Act1Message) (*responderAct2, error) {
+// The function also validates if both parties run the same protocol.
+func AnswerHandshake(message *Act1Message, protocol string) (*responderAct2, error) {
+	if message.protocol1 != protocol {
+		return nil, fmt.Errorf("unsupported protocol: [%v]", message.protocol1)
+	}
+
 	nonce1 := message.nonce1
 	nonce2, err := randomNonce()
 	if err != nil {
-		return nil, fmt.Errorf("could not answer the handshake [%v]", err)
+		return nil, fmt.Errorf("could not answer the handshake: [%v]", err)
 	}
 	challenge := hashToChallenge(nonce1, nonce2)
 
-	return &responderAct2{nonce2, challenge}, nil
+	return &responderAct2{nonce2, challenge, protocol}, nil
 }
 
 // initiatorAct2 represents the state of the initiator in the second act of the
 // handshake protocol.
 type initiatorAct2 struct {
-	nonce1 uint64
+	nonce1    uint64
+	protocol1 string
 }
 
 // responderAct2 represents the state of the responder in the second act of the
@@ -137,12 +146,17 @@ type initiatorAct2 struct {
 type responderAct2 struct {
 	nonce2    uint64
 	challenge [sha256.Size]byte
+	protocol2 string
 }
 
 // Message returns the message sent by responder to the initiator in the second
 // act of the handshake protocol.
 func (ra2 *responderAct2) Message() *Act2Message {
-	return &Act2Message{nonce2: ra2.nonce2, challenge: ra2.challenge}
+	return &Act2Message{
+		nonce2:    ra2.nonce2,
+		challenge: ra2.challenge,
+		protocol2: ra2.protocol2,
+	}
 }
 
 // Next performs a state transition and returns responder in a state ready to
@@ -158,7 +172,13 @@ func (ra2 *responderAct2) Next() *responderAct3 {
 // the protocol. If the challenge is the same as expected one, new state of
 // initiator is returned. Otherwise, function reports an error and handshake
 // protocol should be immediately aborted.
+//
+// The function also validates if both parties run the same protocol.
 func (ia2 *initiatorAct2) Next(message *Act2Message) (*initiatorAct3, error) {
+	if message.protocol2 != ia2.protocol1 {
+		return nil, fmt.Errorf("unsupported protocol: [%v]", message.protocol2)
+	}
+
 	expectedChallenge := hashToChallenge(ia2.nonce1, message.nonce2)
 	if expectedChallenge != message.challenge {
 		return nil, fmt.Errorf("unexpected responder's challenge")
@@ -215,7 +235,7 @@ func randomNonce() (uint64, error) {
 	bytes := make([]byte, 8)
 	_, err := crand.Read(bytes)
 	if err != nil {
-		return 0, fmt.Errorf("could not generate a new nonce [%v]", err)
+		return 0, fmt.Errorf("could not generate a new nonce: [%v]", err)
 	}
 
 	return binary.LittleEndian.Uint64(bytes), nil

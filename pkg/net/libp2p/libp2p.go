@@ -9,7 +9,6 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -51,20 +50,33 @@ const (
 
 // watchtower constants
 const (
-	// StakeCheckTick is the amount of time between periodic checks for
-	// minimum stake for all peers connected to this one.
-	StakeCheckTick = time.Minute * 1
-	// BootstrapCheckPeriod is the amount of time between periodic checks
-	// for ensuring we are connected to an appropriate number of bootstrap
-	// peers.
-	BootstrapCheckPeriod = 10 * time.Second
+	// FirewallCheckTick is the amount of time between periodic checks of all
+	// firewall rules against all peers connected to this one.
+	FirewallCheckTick = time.Minute * 10
+	// ConnectedPeersCheckTick is the amount of time between periodic checks of
+	// the number of connected peers.
+	ConnectedPeersCheckTick = time.Minute * 1
 )
+
+// Keep Network protocol identifiers
+const (
+	ProtocolBeacon = "keep-beacon"
+	ProtocolECDSA  = "keep-ecdsa"
+)
+
+// MaximumDisseminationTime is the maximum dissemination time of messages in
+// topics we are not subscribed to. By default courteous dissemination is
+// disabled and it should be enabled only on selected fast bootstrap nodes.
+// This value should never be higher than the lifetime of libp2p cache (120 sec)
+// to prevent uncontrolled message propagation.
+const MaximumDisseminationTime = 90
 
 // Config defines the configuration for the libp2p network provider.
 type Config struct {
 	Peers              []string
 	Port               int
 	AnnouncedAddresses []string
+	DisseminationTime  int
 }
 
 type provider struct {
@@ -72,9 +84,10 @@ type provider struct {
 	broadcastChannelManager *channelManager
 	unicastChannelManager   *unicastChannelManager
 
-	identity *identity
-	host     host.Host
-	routing  *dht.IpfsDHT
+	identity          *identity
+	host              host.Host
+	routing           *dht.IpfsDHT
+	disseminationTime int
 
 	connectionManager *connectionManager
 }
@@ -117,8 +130,33 @@ func (p *provider) CreateTransportIdentifier(publicKey ecdsa.PublicKey) (
 	return peer.IDFromPublicKey(&networkPublicKey)
 }
 
+func (p *provider) BroadcastChannelForwarderFor(name string) {
+	if p.disseminationTime == 0 {
+		return
+	}
+
+	logger.Infof("starting message forwarder for channel [%v]", name)
+	timeout := time.Duration(p.disseminationTime) * time.Second
+
+	if err := p.broadcastChannelManager.newForwarder(name, timeout); err != nil {
+		logger.Warningf(
+			"could not create message forwarder for channel [%v]: [%v]",
+			name,
+			err,
+		)
+	}
+}
+
 type connectionManager struct {
 	host.Host
+}
+
+func newConnectionManager(ctx context.Context, host host.Host) *connectionManager {
+	connectionManager := &connectionManager{host}
+
+	go connectionManager.monitorConnectedPeers(ctx)
+
+	return connectionManager
 }
 
 func (cm *connectionManager) ConnectedPeers() []string {
@@ -133,7 +171,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerID, err := peer.IDB58Decode(connectedPeer)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to decode peer ID from [%s] with error: [%v]",
+			"failed to decode peer ID from [%s]: [%v]",
 			connectedPeer,
 			err,
 		)
@@ -142,7 +180,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	peerPublicKey, err := peerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"Failed to extract peer [%s] public key with error: [%v]",
+			"failed to extract peer [%s] public key: [%v]",
 			connectedPeer,
 			err,
 		)
@@ -154,7 +192,7 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
 	peerID, err := peer.IDB58Decode(peerHash)
 	if err != nil {
-		logger.Errorf("failed to decode peer hash: [%v] [%v]", peerHash, err)
+		logger.Errorf("failed to decode peer hash [%v]: [%v]", peerHash, err)
 		return
 	}
 
@@ -178,18 +216,33 @@ func (cm *connectionManager) AddrStrings() []string {
 	return multiaddrStrings
 }
 
+func (cm *connectionManager) monitorConnectedPeers(ctx context.Context) {
+	ticker := time.NewTicker(ConnectedPeersCheckTick)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			connectedPeers := cm.ConnectedPeers()
+
+			logger.Infof("number of connected peers: [%v]", len(connectedPeers))
+			logger.Debugf("connected peers: [%v]", connectedPeers)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 // ConnectOptions allows to set various options used by libp2p.
 type ConnectOptions struct {
 	RoutingTableRefreshPeriod time.Duration
-	BootstrapMinPeerThreshold int
 }
 
-// Defaults from libp2p.
 func defaultConnectOptions() *ConnectOptions {
 	var options ConnectOptions
 
-	options.RoutingTableRefreshPeriod = 1 * time.Hour
-	options.BootstrapMinPeerThreshold = 4
+	// Half of the default value from libp2p.
+	options.RoutingTableRefreshPeriod = 30 * time.Minute
 
 	return &options
 }
@@ -210,13 +263,6 @@ func WithRoutingTableRefreshPeriod(period time.Duration) ConnectOption {
 	}
 }
 
-// WithBootstrapMinPeerThreshold set a minimal peer threshold for bootstrap process.
-func WithBootstrapMinPeerThreshold(threshold int) ConnectOption {
-	return func(options *ConnectOptions) {
-		options.BootstrapMinPeerThreshold = threshold
-	}
-}
-
 // Connect connects to a libp2p network based on the provided config. The
 // connection is managed in part by the passed context, and provides access to
 // the functionality specified in the net.Provider interface.
@@ -227,10 +273,18 @@ func Connect(
 	ctx context.Context,
 	config Config,
 	staticKey *key.NetworkPrivate,
-	stakeMonitor chain.StakeMonitor,
+	protocol string,
+	firewall net.Firewall,
 	ticker *retransmission.Ticker,
 	options ...ConnectOption,
 ) (net.Provider, error) {
+	if config.DisseminationTime < 0 || config.DisseminationTime > MaximumDisseminationTime {
+		return nil, fmt.Errorf(
+			"dissemination time mut be in range [0, %v]",
+			MaximumDisseminationTime,
+		)
+	}
+
 	connectOptions := defaultConnectOptions()
 	connectOptions.apply(options...)
 
@@ -243,8 +297,9 @@ func Connect(
 		ctx,
 		identity,
 		config.Port,
+		protocol,
 		config.AnnouncedAddresses,
-		stakeMonitor,
+		firewall,
 	)
 	if err != nil {
 		return nil, err
@@ -278,25 +333,25 @@ func Connect(
 		identity:                identity,
 		host:                    rhost.Wrap(host, router),
 		routing:                 router,
+		disseminationTime:       config.DisseminationTime,
 	}
 
 	if len(config.Peers) == 0 {
-		logger.Infof("node's peers list is empty")
+		logger.Infof("bootstrap peers list is empty")
 	}
 
-	if err := provider.bootstrap(
-		ctx,
-		config.Peers,
-		connectOptions.BootstrapMinPeerThreshold,
-	); err != nil {
-		return nil, fmt.Errorf("Failed to bootstrap nodes with err: %v", err)
+	if err := provider.bootstrap(ctx, config.Peers); err != nil {
+		return nil, fmt.Errorf("bootstrap failed: [%v]", err)
 	}
 
-	provider.connectionManager = &connectionManager{provider.host}
+	provider.connectionManager = newConnectionManager(ctx, provider.host)
 
-	// Instantiates and starts the connection management background process
+	// Instantiates and starts the connection management background process.
 	watchtower.NewGuard(
-		ctx, StakeCheckTick, stakeMonitor, provider.connectionManager,
+		ctx,
+		FirewallCheckTick,
+		firewall,
+		provider.connectionManager,
 	)
 
 	return provider, nil
@@ -306,8 +361,9 @@ func discoverAndListen(
 	ctx context.Context,
 	identity *identity,
 	port int,
+	protocol string,
 	announcedAddresses []string,
-	stakeMonitor chain.StakeMonitor,
+	firewall net.Firewall,
 ) (host.Host, error) {
 	var err error
 
@@ -319,11 +375,12 @@ func discoverAndListen(
 
 	transport, err := newEncryptedAuthenticatedTransport(
 		identity.privKey,
-		stakeMonitor,
+		protocol,
+		firewall,
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not create authenticated transport [%v]",
+			"could not create authenticated transport: [%v]",
 			err,
 		)
 	}
@@ -393,7 +450,6 @@ func parseMultiaddresses(addresses []string) []ma.Multiaddr {
 func (p *provider) bootstrap(
 	ctx context.Context,
 	bootstrapPeers []string,
-	minPeerThreshold int,
 ) error {
 	peerInfos, err := extractMultiAddrFromPeers(bootstrapPeers)
 	if err != nil {
@@ -401,10 +457,6 @@ func (p *provider) bootstrap(
 	}
 
 	bootstrapConfig := bootstrap.BootstrapConfigWithPeers(peerInfos)
-
-	// TODO: allow this to be a configurable value
-	bootstrapConfig.Period = BootstrapCheckPeriod
-	bootstrapConfig.MinPeerThreshold = minPeerThreshold
 
 	// TODO: use the io.Closer to shutdown the bootstrapper when we build out
 	// a shutdown process.

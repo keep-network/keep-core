@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-core",
-  "version": "0.13.0-pre",
+  "version": "1.2.0-pre",
   "description": "Smart Contracts for the Keep Network Core",
   "repository": {
     "type": "git",
@@ -17,7 +17,9 @@
     "test": "truffle compile && mocha --exit --recursive --timeout 75000",
     "test:quick": "mocha --exit --recursive --timeout 45000",
     "demo": "truffle migrate --reset && truffle exec ./scripts/delegate-tokens.js",
-    "lint": "solium --dir ./contracts"
+    "lint": "solium --dir ./contracts",
+    "lint:js": "eslint ${npm_package_config_eslintPaths}",
+    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}"
   },
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
@@ -45,10 +47,16 @@
     "ethereumjs-abi": "^0.6.5",
     "mocha": "^7.1.1",
     "mocha-junit-reporter": "^1.23.1",
-    "solc": "^0.5.7",
+    "solc": "0.5.17",
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
     "truffle": "^5.1.9",
-    "websocket": "^1.0.28"
+    "websocket": "^1.0.28",
+    "solium": "^1.2.5",
+    "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
+    "eslint": "^6.8.0",
+    "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
+    "prettier": "^2.0.2",
+    "prettier-plugin-solidity": "^1.0.0-alpha.47"
   }
 }

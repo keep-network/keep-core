@@ -15,7 +15,7 @@ User has the ability to visualize their token and stake balances, token grant un
 * Deploy contracts demo setup to it:
 
 ```
-cd keep-core/contracts/solidity
+cd keep-core/solidity
 npm install
 npm run demo
 ```
@@ -39,7 +39,7 @@ npm run demo
 * Deploy contracts demo setup:
 
 ```
-cd keep-core/contracts/solidity
+cd keep-core/solidity
 npm install
 ```
 * run package.json demo scripts individually:
@@ -63,9 +63,9 @@ truffle exec ./scripts/delegate-tokens.js
 * Go to the `dashboard` directory and tell the application to use the global symlink with `npm link @keep-network/keep-core`.
 * When you don’t want to use the local version of `@keep-network/keep-core` anymore, delete the symlink with `npm uninstall --no-save @keep-network/keep-core && npm install`.
 
-## Internal testnet
+### Internal testnet
 
-A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed by VPN at `http://keep-dapp-staking.default.svc.cluster.local/` and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
+A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed at [https://dashboard.dev.keep.network/](https://dashboard.dev.keep.network/) and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
 
 ### MetaMask extension setup
 
@@ -95,3 +95,22 @@ To use this account in the dApp, it needs to be imported from [the JSON file](ht
 4. Click `Browse` and point MetaMask to the previously downloaded account JSON file
 5. Copy-paste the password from the referenced password file
 6. Click `Import`
+
+### Hardware wallets
+
+## TREZOR EMULATOR
+
+### Quick setup
+1. [Download and run the trezor bridge](https://github.com/trezor/trezord-go)
+- Navigate to `/trezord-go` directory and run `./trezord-go -e 21324`
+2. [Clone the Trezor repo](https://github.com/trezor/trezor-firmware)
+- Navigate to `/trezor-firmware/core` directory and run `make emu`
+
+For more config information you can follow these links:
+
+1. [Trezor Bridge](https://github.com/trezor/trezord-go)
+2. [pip3 dependencies](https://github.com/trezor/trezor-firmware/blob/master/docs/core/build/index.md)
+3. [Setup and run the emulator](https://github.com/trezor/trezor-firmware/blob/master/docs/core/emulator/index.md)
+
+## LEDGER
+To test the dapp with the ledger hardware wallet run the following command: `HTTPS=true npm start`

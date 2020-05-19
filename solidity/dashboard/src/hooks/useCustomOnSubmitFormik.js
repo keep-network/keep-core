@@ -1,4 +1,4 @@
-import { useFormikContext } from 'formik'
+import { useFormikContext } from "formik"
 
 export const useCustomOnSubmitFormik = (onSubmitAction) => {
   const {
@@ -10,7 +10,11 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
     setFormikState,
   } = useFormikContext()
 
-  const onSubmit = async (onTransactionHashCallback, openInfoMessage, setIsFetchng) => {
+  const onSubmit = async (
+    onTransactionHashCallback,
+    openInfoMessage,
+    setIsFetchng
+  ) => {
     // Pre-submit
     const touched = {}
     Object.keys(values).forEach((name) => {
@@ -18,13 +22,16 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
     })
     setTouched(touched, false)
     setSubmitting(true)
-    setFormikState((prevState) => ({ ...prevState, submitCount: prevState.submitCount + 1 }))
+    setFormikState((prevState) => ({
+      ...prevState,
+      submitCount: prevState.submitCount + 1,
+    }))
 
     // Validation
     const errors = await validateForm(values)
     if (Object.keys(errors).length > 0) {
       setSubmitting(false)
-      throw new Error('Invalid form')
+      throw new Error("Invalid form")
     }
 
     // Submission

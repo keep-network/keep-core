@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../utils/BytesLib.sol";
@@ -8,24 +8,22 @@ library Reimbursements {
     using SafeMath for uint256;
     using BytesLib for bytes;
 
-    /**
-     * @dev Reimburses callback execution cost and surplus based on actual gas
-     * usage to the submitter's beneficiary address and if necessary to the
-     * callback requestor (surplus recipient).
-     * @param stakingContract Staking contract to get the address of the beneficiary
-     * @param gasPriceCeiling Gas price ceiling in wei
-     * @param gasLimit Gas limit set for the callback
-     * @param gasSpent Gas spent by the submitter on the callback
-     * @param callbackFee Fee paid for the callback by the requestor
-     * @param callbackReturnData Data containing surplus recipient address
-     */
+    /// @notice Reimburses callback execution cost and surplus based on actual gas
+    /// usage to the submitter's beneficiary address and if necessary to the
+    /// callback requestor (surplus recipient).
+    /// @param stakingContract Staking contract to get the address of the beneficiary
+    /// @param gasPriceCeiling Gas price ceiling in wei
+    /// @param gasLimit Gas limit set for the callback
+    /// @param gasSpent Gas spent by the submitter on the callback
+    /// @param callbackFee Fee paid for the callback by the requestor
+    /// @param callbackSurplusRecipientData Data containing surplus recipient address
     function reimburseCallback(
         TokenStaking stakingContract,
         uint256 gasPriceCeiling,
         uint256 gasLimit,
         uint256 gasSpent,
         uint256 callbackFee,
-        bytes memory callbackReturnData
+        bytes memory callbackSurplusRecipientData
     ) public {
         uint256 gasPrice = gasPriceCeiling;
         // We need to check if tx.gasprice is non-zero as a workaround to a bug
@@ -45,24 +43,24 @@ library Reimbursements {
         uint256 actualCallbackFee = actualCallbackGas.mul(gasPrice);
 
         // Get the beneficiary.
-        address payable magpie = stakingContract.magpieOf(msg.sender);
+        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);
 
         // If we spent less on the callback than the customer transferred for the
         // callback execution, we need to reimburse the difference.
         if (actualCallbackFee < callbackFee) {
             uint256 callbackSurplus = callbackFee.sub(actualCallbackFee);
             // Reimburse submitter with his actual callback cost.
-            magpie.call.value(actualCallbackFee)("");
+            beneficiary.call.value(actualCallbackFee)("");
 
             // Return callback surplus to the requestor.
             // Expecting 32 bytes data containing 20 byte address
-            if (callbackReturnData.length == 32) {
-                address surplusRecipient = callbackReturnData.toAddress(12);
+            if (callbackSurplusRecipientData.length == 32) {
+                address surplusRecipient = callbackSurplusRecipientData.toAddress(12);
                 surplusRecipient.call.gas(8000).value(callbackSurplus)("");
             }
         } else {
             // Reimburse submitter with the callback payment sent by the requestor.
-            magpie.call.value(callbackFee)("");
+            beneficiary.call.value(callbackFee)("");
         }
     }
 }

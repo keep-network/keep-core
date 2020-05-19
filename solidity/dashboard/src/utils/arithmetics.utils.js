@@ -1,4 +1,4 @@
-import web3Utils from 'web3-utils'
+import web3Utils from "web3-utils"
 
 export const add = (a, b) => {
   return web3Utils.toBN(a).add(web3Utils.toBN(b))

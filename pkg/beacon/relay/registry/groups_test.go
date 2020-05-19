@@ -141,7 +141,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		t.Fatalf("Group2 was expected to be unregistered, but is still present")
 	}
 	if len(persistenceMock.archivedGroups) != 1 ||
-		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
+		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytesCompressed()) {
 		t.Fatalf("Group2 was expected to be archived")
 	}
 

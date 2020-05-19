@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useRef, useContext } from 'react'
-import { CSSTransition } from 'react-transition-group'
-import { ClockIndicator } from './Loadable'
-import { messageType, MessagesContext } from './Message'
-import * as Icons from './Icons'
+import React, { useEffect, useState, useRef, useContext } from "react"
+import { CSSTransition } from "react-transition-group"
+import { ClockIndicator } from "./Loadable"
+import { messageType, MessagesContext } from "./Message"
+import * as Icons from "./Icons"
+import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -16,11 +17,14 @@ const useMinimumLoaderDuration = (showLoader, setShowLoader, isFetching) => {
     }
 
     if (!isFetching && showLoader) {
-      const timeout = setTimeout(() => setShowLoader(false), minimumLoaderDurationInMs)
+      const timeout = setTimeout(
+        () => setShowLoader(false),
+        minimumLoaderDurationInMs
+      )
 
       return () => clearTimeout(timeout)
     }
-  }, [isFetching, showLoader])
+  }, [isFetching, showLoader, setShowLoader])
 }
 
 const useCurrentButtonDimensions = (buttonRef, children) => {
@@ -39,7 +43,7 @@ const useCurrentButtonDimensions = (buttonRef, children) => {
     } else {
       setHeight(minHeightPendingButton)
     }
-  }, [children])
+  }, [buttonRef, children])
 
   return [width, height]
 }
@@ -48,16 +52,15 @@ export default function Button({ isFetching, children, ...props }) {
   const [showLoader, setShowLoader] = React.useState(false)
   const buttonRef = useRef(null)
   const [width, height] = useCurrentButtonDimensions(buttonRef, children)
-
   useMinimumLoaderDuration(showLoader, setShowLoader, isFetching)
 
   return (
     <button
       {...props}
       ref={buttonRef}
-      style={showLoader ? { width: `${width}px`, height: `${height}px` } : {} }
+      style={showLoader ? { width: `${width}px`, height: `${height}px` } : {}}
       disabled={props.disabled || showLoader}
-      className={`${props.className}${showLoader ? ' pending' : ''}`}
+      className={`${props.className}${showLoader ? " pending" : ""}`}
     >
       <CSSTransition
         in={showLoader}
@@ -65,13 +68,17 @@ export default function Button({ isFetching, children, ...props }) {
         classNames="button-content"
       >
         <div className="button-content">
-          { showLoader ?
+          {showLoader ? (
             <div className="flex full-center">
-              <span style={{ display: 'inline-block' }}> <ClockIndicator color='primary' /></span>
+              <span style={{ display: "inline-block" }}>
+                {" "}
+                <ClockIndicator color="primary" />
+              </span>
               <span className="ml-1 text-primary">pending</span>
-            </div> :
+            </div>
+          ) : (
             children
-          }
+          )}
         </div>
       </CSSTransition>
     </button>
@@ -100,13 +107,30 @@ export const SubmitButton = ({
       }, successBtnVisibilityDuration)
       return () => clearTimeout(timeout)
     }
-  }, [showSuccessBtn])
+  }, [showSuccessBtn, successCallback])
 
-  let pendingMessage = { type: messageType.PENDING_ACTION, sticky: true, title: pendingMessageTitle, content: pendingMessageContent }
-  let infoMessage = { type: messageType.INFO, sticky: true, title: 'Waiting for the transaction confirmation...' }
+  let pendingMessage = {
+    type: messageType.PENDING_ACTION,
+    sticky: true,
+    title: "",
+    content: pendingMessageContent,
+  }
+  let infoMessage = {
+    type: messageType.INFO,
+    sticky: true,
+    title: "Waiting for the transaction confirmation...",
+  }
 
   const onTransactionHashCallback = (hash) => {
-    pendingMessage = showMessage({ ...pendingMessage, content: `Transaction hash: ${hash}` })
+    pendingMessage = showMessage({
+      ...pendingMessage,
+      content: (
+        <TransactionIsPendingMsgContent
+          txHash={hash}
+          title={pendingMessageTitle}
+        />
+      ),
+    })
     closeMessage(infoMessage)
   }
 
@@ -126,7 +150,11 @@ export const SubmitButton = ({
     }
 
     try {
-      await onSubmitAction(onTransactionHashCallback, openMessageInfo, setFetching)
+      await onSubmitAction(
+        onTransactionHashCallback,
+        openMessageInfo,
+        setFetching
+      )
       setIsFetching(false)
       setShowSuccessBtn(true)
     } catch (error) {
@@ -145,13 +173,14 @@ export const SubmitButton = ({
       isFetching={isFetching}
       disabled={showSuccessBtn || props.disabled}
     >
-      {showSuccessBtn ?
+      {showSuccessBtn ? (
         <div className="flex row full-center flex-1">
           <Icons.OK />
           <span className="ml-1 text-black">success</span>
-        </div> :
+        </div>
+      ) : (
         props.children
-      }
+      )}
     </Button>
   )
 }
@@ -159,7 +188,7 @@ export const SubmitButton = ({
 SubmitButton.defaultProps = {
   withMessageActionIsPending: true,
   triggerManuallyFetch: false,
-  pendingMessageTitle: 'Action is pending',
-  pendingMessageContent: '',
+  pendingMessageTitle: "Action is pending",
+  pendingMessageContent: "",
   successCallback: () => {},
 }

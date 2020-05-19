@@ -1,0 +1,114 @@
+.wallets-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    margin-top: 3rem;
+
+    .wallet {
+        width: 240px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        margin-bottom: 1rem;
+        border: 1px solid @color-grey-20;
+
+        h4 {
+            position: relative;
+            font-family: 'Vitesse';
+            font-style: normal;
+            font-weight: bold;
+            font-size: 1.5rem;
+            line-height: 1.625rem;
+
+            &::after {
+                content: "";
+                position: absolute;
+                bottom: -6px;
+                left: 0;
+                width: 100%;
+                height: 4px;
+                background-color: @color-black;
+                opacity: 0;
+                transition: opacity 0.3s ease-in;
+            }
+        }
+    
+        svg.arrow-right {
+            width: 26px;
+            height: 20px;
+            * {
+                fill: @color-black !important;
+                stroke: @color-black !important;
+            }
+        }
+
+        &-type { 
+            font-style: normal;
+            font-weight: 500;
+            font-size: 0.8rem;
+            line-height: 145%;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-feature-settings: 'tnum' on, 'lnum' on;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: @color-grey-40;
+        }
+
+        &-description {
+            text-align: center;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 0.9rem;
+            line-height: 145%;
+            font-feature-settings: 'tnum' on, 'lnum' on;
+            color: @color-grey-60;
+            margin-bottom: 1rem;
+        }
+
+        .wallet-icon {
+            > circle {
+                fill: @white !important;
+            }
+            > * {
+                fill: @color-grey-70;
+                transition: all 0.3s ease-in;
+            }
+            &.coinbase {
+                .c-letter {
+                    stroke: @color-grey-70;
+                }
+            }
+        }
+
+        &:hover {
+            cursor: pointer;
+
+            h4 {
+                &::after {
+                    opacity: 1;
+                }
+            }
+
+            .wallet-icon { 
+                > circle {
+                    fill: @primary-color !important;;
+                }
+                > * {
+                    fill: @color-black;
+                }
+                &.coinbase {
+                    .c-letter {
+                        stroke: @color-black;
+                    }
+                }
+            }
+        }
+
+        &-icon {
+            margin-bottom: 2rem;
+        }
+    }
+}

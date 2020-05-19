@@ -14,7 +14,7 @@ const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const Registry = contract.fromArtifact("Registry");
+const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking', function() {
 
@@ -24,7 +24,7 @@ describe('TokenStaking', function() {
     ownerTwo = accounts[1],
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
-    magpie = accounts[4],
+    beneficiary = accounts[4],
     authorizer = accounts[5],
     operatorContract = accounts[6];
 
@@ -33,7 +33,7 @@ describe('TokenStaking', function() {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
-    registry = await Registry.new({from: accounts[0]});
+    registry = await KeepRegistry.new({from: accounts[0]});
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );
@@ -54,7 +54,7 @@ describe('TokenStaking', function() {
 
   async function delegate(operator, amount) {
     let data = Buffer.concat([
-      Buffer.from(magpie.substr(2), 'hex'),
+      Buffer.from(beneficiary.substr(2), 'hex'),
       Buffer.from(operator.substr(2), 'hex'),
       Buffer.from(authorizer.substr(2), 'hex')
     ]);
@@ -648,7 +648,7 @@ describe('TokenStaking', function() {
       )
     })
   
-    it("should report no active stake after recovering stake", async () => {
+    it("should report no active stake after undelegation is finished", async () => {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
       await stakingContract.authorizeOperatorContract(
@@ -658,8 +658,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await stakingContract.undelegate(operatorOne, {from: ownerOne});
       await time.increase(undelegationPeriod.addn(1));
-      await stakingContract.recoverStake(operatorOne);
-      
+
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
       expect(activeStake).to.eq.BN(
@@ -762,9 +761,10 @@ describe('TokenStaking', function() {
       const delegationTime = time.duration.seconds(10)
 
       let currentTime = await time.latest()
+      let undelegateAt = currentTime.add(initializationPeriod).add(delegationTime)
       await stakingContract.undelegateAt(
         operatorOne, 
-        currentTime.add(initializationPeriod).add(delegationTime), 
+        undelegateAt,
         {from: ownerOne}
       );
 
@@ -775,7 +775,7 @@ describe('TokenStaking', function() {
         "Eligible stake should equal staked amount"
       )
 
-      await time.increase(delegationTime.subn(1));
+      await time.increaseTo(undelegateAt.subn(1));
       eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(
         stakingAmount,
@@ -784,8 +784,7 @@ describe('TokenStaking', function() {
     })
 
     it("should report no eligible stake for passed future undelegation", async () => {
-      let tx = await delegate(operatorOne, stakingAmount)
-      let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+      await delegate(operatorOne, stakingAmount)
       await stakingContract.authorizeOperatorContract(
         operatorOne, operatorContract, {from: authorizer}
       )
@@ -793,13 +792,15 @@ describe('TokenStaking', function() {
       const delegationTime = time.duration.seconds(10)
 
       let currentTime = await time.latest()
+      let undelegateAt = currentTime.add(initializationPeriod).add(delegationTime)
+
       await stakingContract.undelegateAt(
-        operatorOne, 
-        currentTime.add(initializationPeriod).add(delegationTime), 
+        operatorOne,
+        undelegateAt,
         {from: ownerOne}
       );
 
-      await time.increaseTo(createdAt.add(initializationPeriod).add(delegationTime).addn(1))
+      await time.increaseTo(undelegateAt.addn(1))
 
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
       expect(eligibleStake).to.eq.BN(

@@ -1,9 +1,9 @@
-const mineBlocks = require('../helpers/mineBlocks')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const blsData = require("../helpers/data.js")
 const initContracts = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {time} = require("@openzeppelin/test-helpers")
 const CallbackContract = contract.fromArtifact('CallbackContract')
 
 describe('TestKeepRandomBeaconService/Pricing', function() {
@@ -14,9 +14,9 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     operator1 = accounts[2],
     operator2 = accounts[3],
     operator3 = accounts[4],
-    magpie1 = accounts[5],
-    magpie2 = accounts[6],
-    magpie3 = accounts[7];
+    beneficiary1 = accounts[5],
+    beneficiary2 = accounts[6],
+    beneficiary3 = accounts[7];
 
   beforeEach(async () => {
     let contracts = await initContracts(
@@ -24,7 +24,7 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-      contract.fromArtifact('KeepRandomBeaconOperatorStub')
+      contract.fromArtifact('KeepRandomBeaconOperatorServicePricingStub')
     );
 
     token = contracts.token;
@@ -37,14 +37,13 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     await operatorContract.registerNewGroup(blsData.groupPubKey);
 
     groupSize = web3.utils.toBN(3);
-    await operatorContract.setGroupSize(groupSize);
     group = await operatorContract.getGroupPublicKey(0);
     await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie1, operator1, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie2, operator2, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie3, operator3, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake);
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, minimumStake);
 
     entryFee = await serviceContract.entryFeeBreakdown()
   });
@@ -85,11 +84,10 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
+    let currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout);
-    let entryReceivedBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout);
+    let entryReceivedBlock = currentRequestStartBlock.addn(1);
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
     let submissionWindow = deadlineBlock.sub(entryReceivedBlock);
     let decimalPoints = web3.utils.toBN(1e16);
@@ -116,7 +114,7 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     // signing fee: 37200000000000000 wei
     // DKG fee: 6780000000000000 wei
     // relayEntryTimeout: 10 blocks
-    // currentEntryStartBlock: 38
+    // currentRequestStartBlock: 38
     // relay entry submission block: 44
     // decimals: 1e16
     // groupProfitFee: 42450000000000000 - 37200000000000000 = 5250000000000000 wei
@@ -136,14 +134,13 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
       {value: entryFeeEstimate, from: requestor}
     );
 
-    let currentEntryStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
+    let currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
     let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let relayEntryGenerationTime = await operatorContract.relayEntryGenerationTime();
-    let deadlineBlock = currentEntryStartBlock.add(relayEntryTimeout).addn(1);
-    let submissionStartBlock = currentEntryStartBlock.add(relayEntryGenerationTime).add(web3.utils.toBN(1));
+    let deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout).addn(1);
+    let submissionStartBlock = currentRequestStartBlock.addn(1);
     let decimalPoints = web3.utils.toBN(1e16);
 
-    mineBlocks(relayEntryGenerationTime.toNumber() + 1);
+    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
 
     let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
     let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);

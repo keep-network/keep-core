@@ -1,113 +1,150 @@
-import React from 'react'
-import { getWeb3 } from '../utils/general.utils'
-import { Web3Context } from './WithWeb3Context'
-import { MessagesContext, messageType } from './Message'
-import { getContracts } from '../contracts'
+import React from "react"
+import Web3 from "web3"
+import { TrezorProvider } from "../connectors/trezor"
+import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
+import { Web3Context } from "./WithWeb3Context"
+import { MessagesContext, messageType } from "./Message"
+import { getContracts } from "../contracts"
 
 export default class Web3ContextProvider extends React.Component {
-    static contextType = MessagesContext
+  static contextType = MessagesContext
 
-    constructor(props) {
-      super(props)
-      this.state = {
-        web3: null,
+  constructor(props) {
+    super(props)
+    this.state = {
+      provider: null,
+      web3: null,
+      isFetching: false,
+      yourAddress: "",
+      networkType: "",
+      token: { options: { address: "" } },
+      stakingContract: { options: { address: "" } },
+      grantContract: { options: { address: "" } },
+      utils: {},
+      eth: {},
+      error: "",
+    }
+  }
+
+  getWeb3 = (providerName) => {
+    switch (providerName) {
+      case "TREZOR": {
+        return new Web3(new TrezorProvider())
+      }
+      case "METAMASK": {
+        if (window.ethereum || window.web3) {
+          return new Web3(window.ethereum || window.web3.currentProvider)
+        }
+        throw new Error("No browser extention")
+      }
+      case "COINBASE": {
+        throw new Error("Coinbase wallet is not yet supported")
+      }
+      case "LEDGER_LIVE":
+      case "LEDGER_LEGACY": {
+        return new Web3(
+          new LedgerProvider(LEDGER_DERIVATION_PATHS[providerName])
+        )
+      }
+      default:
+        throw new Error("Unsupported wallet")
+    }
+  }
+
+  connectAppWithWallet = async (
+    providerName,
+    firstAccountAsSelected = false
+  ) => {
+    let web3
+    let accounts
+    this.setState({ isFetching: true })
+    try {
+      web3 = this.getWeb3(providerName)
+      accounts = await web3.currentProvider.enable()
+    } catch (error) {
+      this.setState({ providerError: error.message, isFetching: false })
+      this.context.showMessage({
+        type: messageType.ERROR,
+        title: error.message,
+      })
+      return
+    }
+    this.setState(
+      {
+        web3,
+        provider: providerName,
+        yourAddress: firstAccountAsSelected ? accounts[0] : null,
+        networkType: await web3.eth.net.getNetworkType(),
+      },
+      this.setData
+    )
+    return accounts
+  }
+
+  setData = async () => {
+    this.initializeContracts()
+    this.state.web3.eth.currentProvider.on("accountsChanged", this.setAccount)
+  }
+
+  connectAppWithAccount = async () => {
+    const { web3 } = this.state
+    this.setState({ isFetching: true })
+    try {
+      const [yourAddress] = await web3.currentProvider.enable()
+      this.setState({ yourAddress, isFetching: false })
+    } catch (error) {
+      this.setState({ providerError: error.message, isFetching: false })
+      this.context.showMessage({
+        type: messageType.ERROR,
+        title: error.message,
+      })
+    }
+  }
+
+  initializeContracts = async () => {
+    const { web3 } = this.state
+    try {
+      const contracts = await getContracts(web3)
+      this.setState({
+        ...contracts,
+        utils: web3.utils,
+        eth: web3.eth,
         isFetching: false,
-        yourAddress: '',
-        networkType: '',
-        token: { options: { address: '' } },
-        stakingContract: { options: { address: '' } },
-        grantContract: { options: { address: '' } },
-        utils: {},
-        eth: {},
-        error: '',
-      }
+      })
+    } catch (error) {
+      this.setState({
+        isFetching: false,
+        error: "Please select correct network",
+      })
     }
+  }
 
-    componentDidMount() {
-      this.initialize()
+  setAccount = ([yourAddress]) => {
+    if (!yourAddress) {
+      this.setState({
+        isFetching: false,
+        yourAddress: "",
+        token: { options: { address: "" } },
+        stakingContract: { options: { address: "" } },
+        grantContract: { options: { address: "" } },
+      })
+      return
     }
+    this.setState({ yourAddress })
+  }
 
-    initialize = async () => {
-      const web3 = getWeb3()
-      if (!web3) {
-        return
-      }
-      this.setState({ web3 }, this.setData)
-    }
-
-    setData = async () => {
-      const { web3 } = this.state
-      this.setState({ isFetching: true })
-      const accounts = await web3.eth.getAccounts()
-      this.connectAppWithAccount(!accounts || accounts.length === 0)
-      this.initializeContracts()
-      this.state.web3.eth.currentProvider.on('accountsChanged', this.accountHasBeenChanged)
-    }
-
-    connectAppWithAccount = async (withInfoMessage = true) => {
-      const { web3 } = this.state
-      this.setState({ isFetching: true })
-      withInfoMessage && this.context.showMessage({ type: messageType.INFO, title: 'Please check web3 provider' })
-
-      try {
-        const [account] = await web3.currentProvider.enable()
-        this.setState({
-          yourAddress: account,
-          networkType: await web3.eth.net.getNetworkType(),
-          isFetching: false,
-        })
-      } catch (error) {
-        this.context.showMessage({ type: 'error', title: error.message })
-        this.setState({ isFetching: false })
-      }
-    }
-
-    initializeContracts = async () => {
-      const { web3 } = this.state
-      try {
-        const contracts = await getContracts(web3)
-        this.setState({
-          ...contracts,
-          defaultContract: contracts.stakingContract,
-          utils: web3.utils,
-          eth: web3.eth,
-        })
-      } catch (error) {
-        this.setState({
-          error: 'Please select correct network',
-        })
-      }
-    }
-
-    accountHasBeenChanged = ([yourAddress]) => {
-      if (!yourAddress) {
-        this.setState({
-          isFetching: false,
-          yourAddress: '',
-          token: { options: { address: '' } },
-          stakingContract: { options: { address: '' } },
-          grantContract: { options: { address: '' } },
-        })
-        return
-      }
-      this.setState({ yourAddress })
-    }
-
-    changeDefaultContract = (defaultContract) => {
-      this.setState({ defaultContract })
-    }
-
-    render() {
-      return (
-        <Web3Context.Provider
-          value={{
-            ...this.state,
-            changeDefaultContract: this.changeDefaultContract,
-            connectAppWithAccount: this.connectAppWithAccount,
-          }}
-        >
-          {this.props.children}
-        </Web3Context.Provider>
-      )
-    }
+  render() {
+    return (
+      <Web3Context.Provider
+        value={{
+          ...this.state,
+          connectAppWithAccount: this.connectAppWithAccount,
+          connectAppWithWallet: this.connectAppWithWallet,
+          setAccount: this.setAccount,
+        }}
+      >
+        {this.props.children}
+      </Web3Context.Provider>
+    )
+  }
 }

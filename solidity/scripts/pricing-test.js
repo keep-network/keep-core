@@ -1,6 +1,7 @@
 const KeepRandomBeaconServiceImplV1 = artifacts.require("KeepRandomBeaconServiceImplV1.sol");
 const KeepRandomBeaconService = artifacts.require('KeepRandomBeaconService.sol');
 const KeepRandomBeaconOperator = artifacts.require('KeepRandomBeaconOperator.sol');
+const KeepRandomBeaconOperatorStatistics = artifacts.require('KeepRandomBeaconOperatorStatistics.sol');
 const fs = require('fs');
 
 // MAKE SURE NONE OF THOSE ACCOUNTS IS A MINER ACCOUNT
@@ -20,6 +21,7 @@ module.exports = async function() {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
     const contractService = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
     const contractOperator = await KeepRandomBeaconOperator.deployed();
+    const contractStatistics = await KeepRandomBeaconOperatorStatistics.deployed();
 
     let accounts = operators.slice();
     accounts.push(requestor);
@@ -39,8 +41,45 @@ module.exports = async function() {
 
             for (let i = 0; i < accounts.length; i++) {
                 prevBalances[i] = await web3.eth.getBalance(accounts[i]);
-                prevRewards[i] = (await availableRewards(accounts[i], contractOperator)).toString();
+                prevRewards[i] = (await availableRewards(accounts[i], contractOperator, contractStatistics)).toString();
             }
+
+
+            let rewardsSum = web3.utils.toBN(0);
+            for (let i = 0; i < accounts.length; i++) {
+                rewardsSum = rewardsSum.add(web3.utils.toBN(prevRewards[i]));
+            }
+
+            const serviceContractBalance = await web3.eth.getBalance(contractService.address);
+            const dkgFeePool = await contractService.dkgFeePool();
+            const requestSubsidyFeePool = await contractService.requestSubsidyFeePool();
+            const dkgContributionMargin = await contractService.dkgContributionMargin();
+
+            const serviceContractSummary = new ServiceContractSummary(
+                serviceContractBalance,
+                dkgFeePool.toString(),
+                requestSubsidyFeePool.toString(),
+                dkgContributionMargin.toString(),
+                dkgFeePool.add(requestSubsidyFeePool).toString() === serviceContractBalance
+            )
+
+            console.log("Service Contract Summary (before request)");
+            console.table([serviceContractSummary]);
+            console.log("\n");
+
+            const operatorContractBalance = await web3.eth.getBalance(contractOperator.address);
+            const dkgSubmitterReimbursementFee = await contractOperator.dkgSubmitterReimbursementFee();
+
+            const operatorContractSummary = new OperatorContractSummary(
+                operatorContractBalance,
+                rewardsSum.toString(),
+                dkgSubmitterReimbursementFee.toString(),
+                rewardsSum.add(dkgSubmitterReimbursementFee).toString() === operatorContractBalance
+            )
+
+            console.log("Operator Contract Summary (before request)");
+            console.table([operatorContractSummary]);
+            console.log("\n");
 
             let gasPrice = await web3.eth.getGasPrice();
 
@@ -64,10 +103,12 @@ module.exports = async function() {
                 entryFeeEstimate.toString(),
                 txCost.toString(),
                 requestorAccountBalance,
-                requestorAccountBalanceChange
+                requestorAccountBalanceChange,
+                operatorContractBalance,
+                rewardsSum.toString()
             );
 
-            console.log("Summary");
+            console.log("Pricing Summary");
             console.table([pricingSummary]);
             console.log("\n");
             let file = pricingSummary.toString();
@@ -79,7 +120,7 @@ module.exports = async function() {
                 const balance = await web3.eth.getBalance(address);
                 const balanceChange = web3.utils.toBN(balance).sub(web3.utils.toBN(prevBalances[i])).toString();
 
-                const reward = (await availableRewards(address, contractOperator)).toString();
+                const reward = (await availableRewards(address, contractOperator, contractStatistics)).toString();
                 const rewardChange = web3.utils.toBN(reward).sub(web3.utils.toBN(prevRewards[i])).toString();
 
                 const pricingClient = new PricingClient(
@@ -94,7 +135,7 @@ module.exports = async function() {
                 file = file + pricingClient.toString();
             }
 
-            console.log("Clients");
+            console.log("Clients Summary");
             console.table(clientsTable);
             console.log("\n");
 
@@ -110,7 +151,7 @@ module.exports = async function() {
     }
 };
 
-async function availableRewards(account, contractOperator) {
+async function availableRewards(account, contractOperator, contractStatistics) {
     const expiredGroupCount = (await contractOperator.getFirstActiveGroupIndex()).toNumber();
     const activeGroupCount = (await contractOperator.numberOfGroups()).toNumber();
     const totalGroupCount = expiredGroupCount + activeGroupCount;
@@ -122,12 +163,38 @@ async function availableRewards(account, contractOperator) {
 
     let accountRewards = web3.utils.toBN(0);
     for (let i = 0; i < groupsPublicKeys.length; i++) {
-        const groupMembersCount = (await contractOperator.getGroupMemberIndices(groupsPublicKeys[i], account)).length;
+        const groupMembersCount = await contractStatistics.countGroupMembership(groupsPublicKeys[i], account);
         const groupMemberReward = await contractOperator.getGroupMemberRewards(groupsPublicKeys[i]);
-        accountRewards = accountRewards.add(web3.utils.toBN(groupMembersCount).mul(groupMemberReward));
+        accountRewards = accountRewards.add(groupMembersCount.mul(groupMemberReward));
     }
 
     return accountRewards;
+}
+
+function ServiceContractSummary(
+    balance,
+    dkgFeePool,
+    requestSubsidyFeePool,
+    dkgContributionMargin,
+    hasCorrectBalance
+) {
+    this.balance = balance,
+    this.dkgFeePool = dkgFeePool
+    this.requestSubsidyFeePool = requestSubsidyFeePool
+    this.dkgContributionMargin = dkgContributionMargin
+    this.hasCorrectBalance = hasCorrectBalance
+}
+
+function OperatorContractSummary(
+    balance,
+    sumOfRewards,
+    dkgSubmitterReimbursementFee,
+    hasCorrectBalance
+) {
+    this.balance = balance
+    this.sumOfRewards = sumOfRewards
+    this.dkgSubmitterReimbursementFee = dkgSubmitterReimbursementFee
+    this.hasCorrectBalance = hasCorrectBalance
 }
 
 function PricingSummary(
@@ -135,13 +202,17 @@ function PricingSummary(
     entryFeeEstimate,
     relayRequestTransactionCost,
     requestorAccountBalance,
-    requestorAccountBalanceChange
+    requestorAccountBalanceChange,
+    operatorContractBalance,
+    sumOfRewards
 ) {
-    this.callbackGas = callbackGas,
-    this.entryFeeEstimate = entryFeeEstimate,
-    this.relayRequestTransactionCost = relayRequestTransactionCost,
-    this.requestorAccountBalance = requestorAccountBalance,
+    this.callbackGas = callbackGas
+    this.entryFeeEstimate = entryFeeEstimate
+    this.relayRequestTransactionCost = relayRequestTransactionCost
+    this.requestorAccountBalance = requestorAccountBalance
     this.requestorAccountBalanceChange = requestorAccountBalanceChange
+    this.operatorContractBalance = operatorContractBalance
+    this.sumOfRewards = sumOfRewards
 }
 
 function PricingClient(address, balance, balanceChange, reward, rewardChange) {
@@ -152,12 +223,29 @@ function PricingClient(address, balance, balanceChange, reward, rewardChange) {
     this.rewardChange = rewardChange
 }
 
+ServiceContractSummary.prototype.toString = function serviceContractSummaryToString() {
+    return '' + this.balance + ', ' + 
+        this.dkgFeePool + ', ' + 
+        this.requestSubsidyFeePool + ', ' + 
+        this.dkgContributionMargin + ', ' + 
+        this.hasCorrectBalance + ', ';
+}
+
+OperatorContractSummary.prototype.toString = function operatorContractSummaryToString() {
+    return '' + this.balance + ', ' +
+        this.sumOfRewards + ', ' + 
+        this.dkgSubmitterReimbursementFee + ', ' +
+        this.hasCorrectBalance + ', ';
+}
+
 PricingSummary.prototype.toString = function pricingSummaryToString() {
     return '' + this.callbackGas + ', ' +
         this.entryFeeEstimate + ', ' +
         this.relayRequestTransactionCost + ', ' +
         this.requestorAccountBalance + ', ' +
-        this.requestorAccountBalanceChange + ', ';
+        this.requestorAccountBalanceChange + ', ' +
+        this.operatorContractBalance + ', ' + 
+        this.sumOfRewards + ', ';
 };
 
 PricingClient.prototype.toString = function pricingClientToString() {

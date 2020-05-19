@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./libraries/grant/UnlockingSchedule.sol";
@@ -6,7 +6,7 @@ import "./GrantStakingPolicy.sol";
 import "./TokenStaking.sol";
 
 /// @title GuaranteedMinimumStakingPolicy
-/// @dev A staking policy which allows the grantee
+/// @notice A staking policy which allows the grantee
 /// to always stake the defined minimum stake,
 /// or the unlocked amount if greater.
 ///

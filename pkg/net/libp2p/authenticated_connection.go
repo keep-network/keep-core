@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/keep-network/keep-core/pkg/chain"
+	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
@@ -30,7 +30,9 @@ type authenticatedConnection struct {
 	remotePeerID        peer.ID
 	remotePeerPublicKey libp2pcrypto.PubKey
 
-	stakeMonitor chain.StakeMonitor
+	firewall keepNet.Firewall
+
+	protocol string
 }
 
 // newAuthenticatedInboundConnection is the connection that's formed by
@@ -43,33 +45,27 @@ func newAuthenticatedInboundConnection(
 	unauthenticatedConn net.Conn,
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
-	stakeMonitor chain.StakeMonitor,
+	firewall keepNet.Firewall,
+	protocol string,
 ) (*authenticatedConnection, error) {
 	ac := &authenticatedConnection{
 		Conn:                unauthenticatedConn,
 		localPeerID:         localPeerID,
 		localPeerPrivateKey: privateKey,
-		stakeMonitor:        stakeMonitor,
+		firewall:            firewall,
+		protocol:            protocol,
 	}
 
 	if err := ac.runHandshakeAsResponder(); err != nil {
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
-	hasMinimumStake, err := ac.checkRemotePeerStake()
-	if err != nil {
+	if err := ac.checkFirewallRules(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
-	}
-
-	if !hasMinimumStake {
-		ac.Close()
-		return nil, fmt.Errorf(
-			"connection handshake failed - remote peer has no minimum stake",
-		)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	return ac, nil
@@ -85,12 +81,13 @@ func newAuthenticatedOutboundConnection(
 	localPeerID peer.ID,
 	privateKey libp2pcrypto.PrivKey,
 	remotePeerID peer.ID,
-	stakeMonitor chain.StakeMonitor,
+	firewall keepNet.Firewall,
+	protocol string,
 ) (*authenticatedConnection, error) {
 	remotePublicKey, err := remotePeerID.ExtractPublicKey()
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not create new authenticated outbound connection [%v]",
+			"could not create new authenticated outbound connection: [%v]",
 			err,
 		)
 	}
@@ -101,39 +98,30 @@ func newAuthenticatedOutboundConnection(
 		localPeerPrivateKey: privateKey,
 		remotePeerID:        remotePeerID,
 		remotePeerPublicKey: remotePublicKey,
-		stakeMonitor:        stakeMonitor,
+		firewall:            firewall,
+		protocol:            protocol,
 	}
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
-	hasMinimumStake, err := ac.checkRemotePeerStake()
-	if err != nil {
+	if err := ac.checkFirewallRules(); err != nil {
 		ac.Close()
-		return nil, fmt.Errorf("connection handshake failed [%v]", err)
-	}
-
-	if !hasMinimumStake {
-		ac.Close()
-		return nil, fmt.Errorf(
-			"connection handshake failed - remote peer has no minimum stake",
-		)
+		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
 	}
 
 	return ac, nil
 }
 
-func (ac *authenticatedConnection) checkRemotePeerStake() (bool, error) {
+func (ac *authenticatedConnection) checkFirewallRules() error {
 	networkKey, ok := ac.remotePeerPublicKey.(*key.NetworkPublic)
 	if !ok {
-		return false, fmt.Errorf("unexpected type of remote peer's public key")
+		return fmt.Errorf("unexpected type of remote peer's public key")
 	}
 
-	return ac.stakeMonitor.HasMinimumStake(
-		key.NetworkPubKeyToEthAddress(networkKey),
-	)
+	return ac.firewall.Validate(key.NetworkKeyToECDSAKey(networkKey))
 }
 
 func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
@@ -146,7 +134,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 1
 	//
 
-	initiatorAct1, err := handshake.InitiateHandshake()
+	initiatorAct1, err := handshake.InitiateHandshake(ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -287,7 +275,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 		return err
 	}
 
-	responderAct2, err := handshake.AnswerHandshake(act1Message)
+	responderAct2, err := handshake.AnswerHandshake(act1Message, ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -443,7 +431,7 @@ func (ac *authenticatedConnection) verify(
 	ok, err := pubKey.Verify(messageBytes, signatureBytes)
 	if err != nil {
 		return fmt.Errorf(
-			"failed to verify signature [0x%v] for sender [%v] with err [%v]",
+			"failed to verify signature [0x%v] for sender [%v]: [%v]",
 			hex.EncodeToString(signatureBytes),
 			actualSender.Pretty(),
 			err,
@@ -452,7 +440,7 @@ func (ac *authenticatedConnection) verify(
 
 	if !ok {
 		return fmt.Errorf(
-			"invalid signature [0x%v] on message from sender [%v] ",
+			"invalid signature [0x%v] on message from sender [%v]",
 			hex.EncodeToString(signatureBytes),
 			actualSender.Pretty(),
 		)

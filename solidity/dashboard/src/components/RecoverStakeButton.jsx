@@ -1,36 +1,58 @@
-import React, { useContext, useCallback } from 'react'
-import { SubmitButton } from './Button'
-import { Web3Context } from './WithWeb3Context'
-import { useShowMessage, messageType } from './Message'
-import { TOKEN_GRANT_CONTRACT_NAME, TOKEN_STAKING_CONTRACT_NAME } from '../constants/constants'
+import React, { useContext, useCallback, useMemo } from "react"
+import { SubmitButton } from "./Button"
+import { Web3Context } from "./WithWeb3Context"
+import { useShowMessage, messageType } from "./Message"
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   const web3Context = useContext(Web3Context)
-  const { yourAddress } = web3Context
+  const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
-
-  const recoverStake = useCallback(async (onTransactionHashCallback) => {
-    const { isFromGrant } = props
-    const contract = web3Context[isFromGrant ? TOKEN_GRANT_CONTRACT_NAME : TOKEN_STAKING_CONTRACT_NAME]
-
-    try {
-      await contract
-        .methods
-        .recoverStake(operatorAddress)
-        .send({ from: yourAddress })
-        .on('transactionHash', onTransactionHashCallback)
-      showMessage({ type: messageType.SUCCESS, title: 'Success', content: 'Recover stake transaction successfully completed' })
-    } catch (error) {
-      showMessage({ type: messageType.ERROR, title: 'Recover stake action has been failed ', content: error.message })
-      throw error
+  const { isFromGrant, isManagedGrant, managedGrantContractInstance } = props
+  const contract = useMemo(() => {
+    if (isManagedGrant) {
+      return managedGrantContractInstance
+    } else if (isFromGrant) {
+      return grantContract
+    } else {
+      return stakingContract
     }
-  }, [operatorAddress, yourAddress, props.isFromGrant])
+  }, [
+    grantContract,
+    isFromGrant,
+    isManagedGrant,
+    managedGrantContractInstance,
+    stakingContract,
+  ])
+
+  const recoverStake = useCallback(
+    async (onTransactionHashCallback) => {
+      try {
+        await contract.methods
+          .recoverStake(operatorAddress)
+          .send({ from: yourAddress })
+          .on("transactionHash", onTransactionHashCallback)
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content: "Recover stake transaction successfully completed",
+        })
+      } catch (error) {
+        showMessage({
+          type: messageType.ERROR,
+          title: "Recover stake action has failed ",
+          content: error.message,
+        })
+        throw error
+      }
+    },
+    [operatorAddress, yourAddress, contract.methods, showMessage]
+  )
 
   return (
     <SubmitButton
       className={props.btnClassName}
       onSubmitAction={recoverStake}
-      pendingMessageTitle='Recover stake transaction is pending...'
+      pendingMessageTitle="Recover stake transaction is pending..."
       successCallback={props.successCallback}
     >
       {props.btnText}
@@ -39,8 +61,8 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
 }
 
 RecoverStakeButton.defaultProps = {
-  btnClassName: 'btn btn-sm btn-secondary',
-  btnText: 'recover',
+  btnClassName: "btn btn-sm btn-secondary",
+  btnText: "recover",
   successCallback: () => {},
   isFromGrant: false,
 }

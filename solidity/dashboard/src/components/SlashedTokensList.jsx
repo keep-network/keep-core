@@ -1,6 +1,7 @@
-import React from 'react'
-import { formatDate, displayAmount } from '../utils/general.utils'
-import AddressShortcut from './AddressShortcut'
+import React from "react"
+import { formatDate } from "../utils/general.utils"
+import { displayAmount } from "../utils/token.utils"
+import AddressShortcut from "./AddressShortcut"
 
 const SlashedTokensList = ({ slashedTokens }) => {
   return (
@@ -16,28 +17,35 @@ const SlashedTokensList = ({ slashedTokens }) => {
   )
 }
 
-const renderSlashedTokensItem = (item) => <SlashedTokensItem key={item.id} {...item} />
+const renderSlashedTokensItem = (item) => (
+  <SlashedTokensItem key={item.id} {...item} />
+)
 
-const SlashedTokensItem = React.memo(({ amount, date, event, groupPublicKey }) => (
-  <li className="flex row flex-1" >
-    <div className="text-big flex-1">
-      <span className="text-error">{amount && `-${displayAmount(amount)} `}</span>
-      <span className="text-grey-40">KEEP</span>
-    </div>
-    <div className="details flex-2">
-      <div className="text-big text-grey-70">
-        Group <AddressShortcut address={groupPublicKey} classNames="text-big text-grey-70" />&nbsp;
-        {event === 'UnauthorizedSigningReported' ?
-          'key was leaked. Private key was published outside of the members of the signing group.' :
-          'was selected to do work and not enough members participated.'
-        }
+const SlashedTokensItem = React.memo(
+  ({ amount, date, event, groupPublicKey }) => (
+    <li className="flex row flex-1">
+      <div className="text-big flex-1">
+        <span className="text-error">
+          {amount && `-${displayAmount(amount)} `}
+        </span>
+        <span className="text-grey-40">KEEP</span>
       </div>
-      <div className="text-small text-grey-50">
-        {formatDate(date)}
+      <div className="details flex-2">
+        <div className="text-big text-grey-70">
+          Group{" "}
+          <AddressShortcut
+            address={groupPublicKey}
+            classNames="text-big text-grey-70"
+          />
+          &nbsp;
+          {event === "UnauthorizedSigningReported"
+            ? "key was leaked. Private key was published outside of the members of the signing group."
+            : "was selected to do work and not enough members participated."}
+        </div>
+        <div className="text-small text-grey-50">{formatDate(date)}</div>
       </div>
-    </div>
-  </li>
-))
-
+    </li>
+  )
+)
 
 export default SlashedTokensList

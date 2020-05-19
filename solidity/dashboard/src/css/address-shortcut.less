@@ -1,23 +1,11 @@
 span.address-shortcut {
     position: relative;
     text-align: center;
-    font-size: 1rem;
     border-radius: 10px;
     transition: all .3s ease-in;
 
     &:hover {
         cursor: pointer;
         background: @success-bg-color;
-    }
-
-    .full-address {
-        position: absolute;
-        background-color: transparent !important;
-        border: none;
-        color: transparent !important;
-        
-        &::selection, &::-moz-selection {
-            background: transparent !important;
-        }
     }
 }

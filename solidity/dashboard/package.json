@@ -4,24 +4,35 @@
   "private": true,
   "license": "MIT",
   "dependencies": {
-    "react": "^16.6.3",
-    "react-dom": "^16.6.3",
-    "react-router-dom": "^5.1.2",
-    "react-scripts": "^2.1.1",
-    "react-transition-group": "^4.3.0",
+    "@0x/subproviders": "^6.0.8",
+    "@keep-network/keep-core": ">1.1.0-pre <1.1.0-rc",
+    "@keep-network/keep-ecdsa": "0.16.0-rc.0",
+    "@keep-network/tbtc": "0.15.0-rc.0",
+    "@ledgerhq/hw-app-eth": "^5.13.0",
+    "@ledgerhq/hw-transport-u2f": "^5.13.0",
+    "bignumber.js": "9.0.0",
+    "copy-to-clipboard": "^3.3.1",
+    "ethereumjs-common": "^1.5.0",
+    "ethereumjs-tx": "^2.1.2",
+    "formik": "^2.1.3",
     "less": "^3.9.0",
     "less-plugin-clean-css": "^1.5.1",
     "less-watch-compiler": "^1.10.0",
-    "bignumber.js": "9.0.0",
-    "formik": "^2.1.3",
-    "moment": "^2.20.1",
+    "moment": "2.24.0",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-router-dom": "^5.1.2",
+    "react-scripts": "^3.4.1",
+    "react-transition-group": "^4.3.0",
+    "trezor-connect": "^8.0.13",
     "web3": "^1.2.4",
-    "@keep-network/keep-core": ">0.13.0-pre <0.13.0-rc"
+    "web3-provider-engine": "^15.0.6"
   },
   "scripts": {
-    "build-css": "lessc --clean-css src/css/app.less src/app.css",
-    "watch-css": "npm run build-css && less-watch-compiler src/css src app.less",
+    "build-css": "lessc --clean-css src/css/app.less src/css/app.css",
+    "watch-css": "npm run build-css && less-watch-compiler src/css src/css app.less",
     "start-js": "react-scripts start",
+    "setup": "./scripts/copy-contracts.sh ../build/contracts",
     "start": "npm run watch-css & npm run start-js",
     "build": "npm run build-css && react-scripts build",
     "test": "react-scripts test --env=jsdom",
@@ -30,7 +41,9 @@
     "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx"
   },
   "devDependencies": {
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git#0.2.0"
+    "eslint": "^6.8.0",
+    "prettier": "^2.0.4",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
   },
   "browserslist": [
     ">0.2%",

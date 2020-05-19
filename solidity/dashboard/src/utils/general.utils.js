@@ -1,52 +1,34 @@
-import Web3 from 'web3'
-import BigNumber from 'bignumber.js'
-import moment from 'moment'
-import { PENDING_STATUS, COMPLETE_STATUS } from '../constants/constants'
-import web3Utils from 'web3-utils'
+import moment from "moment"
+import web3Utils from "web3-utils"
 
-moment.updateLocale('en', {
+moment.updateLocale("en", {
   relativeTime: {
-    d: '1 day',
+    d: "1 day",
     dd: (number, withoutSuffix, key, isFuture) => {
       const weeks = Math.round(number / 7)
       if (number < 7) {
-        return number + ' days'
+        return number + " days"
       } else {
-        return weeks + ' week' + (weeks === 1 ? '' : 's')
+        return weeks + " week" + (weeks === 1 ? "" : "s")
       }
     },
   },
 })
 
-export function displayAmount(amount, decimals = 18, precision = 0) {
-  if (amount) {
-    return new BigNumber(amount)
-      .div(new BigNumber(10).pow(new BigNumber(decimals)))
-      .toFormat(precision, BigNumber.ROUND_DOWN)
-  }
-}
-
-export function formatAmount(amount, decimals = 18) {
-  amount = new BigNumber(amount)
-  return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
-}
-
-export const getWeb3 = () => {
-  if (window.ethereum || window.web3) {
-    return new Web3(window.ethereum || window.web3.currentProvider)
-  }
-
-  return null
-}
-
 export const shortenAddress = (address) => {
   if (!address) {
-    return ''
+    return ""
   }
   const firstFourCharacters = address.substr(2, 4)
-  const lastFourCharacters = address.substr(address.length - 4, address.length - 1)
+  const lastFourCharacters = address.substr(
+    address.length - 4,
+    address.length - 1
+  )
 
-  return '0x'.concat(firstFourCharacters).concat('...').concat(lastFourCharacters)
+  return "0x"
+    .concat(firstFourCharacters)
+    .concat("...")
+    .concat(lastFourCharacters)
 }
 
 export const wait = (ms) => {
@@ -58,19 +40,28 @@ export const wait = (ms) => {
 export const formatDate = (dateMillis) => {
   const date = moment(dateMillis)
 
-  return date.format('MM/DD/YYYY')
+  return date.format("MM/DD/YYYY")
 }
 
-export const isEmptyObj = (obj) => Object.keys(obj).length === 0 && obj.constructor === Object
-
-export const getAvailableAtBlock = (blockNumber, status) => {
-  if (status === PENDING_STATUS) {
-    return `until ${blockNumber} block`
-  } else if (status === COMPLETE_STATUS) {
-    return `at ${blockNumber} block`
-  }
-}
+export const isEmptyObj = (obj) =>
+  Object.keys(obj).length === 0 && obj.constructor === Object
 
 export const isSameEthAddress = (address1, address2) => {
-  return web3Utils.toChecksumAddress(address1) === web3Utils.toChecksumAddress(address2)
+  return (
+    web3Utils.toChecksumAddress(address1) ===
+    web3Utils.toChecksumAddress(address2)
+  )
+}
+
+export const getBufferFromHex = (hex) => {
+  const validHex = toValidHex(hex).toLowerCase()
+  return new Buffer(validHex, "hex")
+}
+
+const toValidHex = (hex) => {
+  hex = hex.substring(0, 2) === "0x" ? hex.substring(2) : hex
+  if (hex === "") {
+    return ""
+  }
+  return hex.length % 2 !== 0 ? `0${hex}` : hex
 }

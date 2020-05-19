@@ -19,18 +19,6 @@ orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
-  test_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - run:
-          name: Set up test and test result environment
-          command: |
-            cd solidity
-            npm install
-      - run: cd solidity && npm run test
-      - store_test_results:
-          path: /tmp/test-results
   generate_docs_solidity:
     executor: docker-node
     steps:
@@ -134,6 +122,24 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/keep-client/docker-images/keep-client.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
+      - gcp-gcr/push-image:
+          google-project-id: GOOGLE_PROJECT_ID
+          registry-url: $GCR_REGISTRY_URL
+          image: keep-client
+          tag: latest
+  publish_initcontainer_provision_keep_client:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - run:
+          name: Load Docker images
+          command: |
             docker load -i /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
@@ -144,11 +150,6 @@ jobs:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-client
-          tag: latest
-      - gcp-gcr/push-image:
-          google-project-id: GOOGLE_PROJECT_ID
-          registry-url: $GCR_REGISTRY_URL
-          image: keep-client
           tag: latest
   publish_contract_data:
     executor: gcp-cli/default
@@ -189,7 +190,7 @@ jobs:
             # this is because npm show json contains a single string if there
             # is only one matching version, or an array if there are multiple,
             # and we want to look at an array always.
-            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | sort | .[-1]")
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
             latest_version=${latest_version:-$version}
             if [ -z $latest_version ]; then
               echo "Latest version calculation failed. Resolved info:"
@@ -230,6 +231,11 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
+      - run:
+          name: Resolve latest contracts
+          working_directory: ~/project/solidity/dashboard
+          command: |
+            npm upgrade @keep-network/keep-core
       - run:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
@@ -328,9 +334,6 @@ jobs:
 
 workflows:
   version: 2
-  solidity:
-    jobs:
-      - test_solidity
   build-and-test:
     jobs:
       - build_client_and_test_go:
@@ -342,34 +345,13 @@ workflows:
           filters:
             branches:
               ignore: master
-  build-test-migrate-publish-keep-dev:
+  build-test-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
           filters:
             branches:
               only: master
           context: keep-dev
-      - build_initcontainer:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_client_and_test_go
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-      - publish_npm_package:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_client_and_test_go
       - publish_keep_client:
           filters:
             branches:
@@ -377,31 +359,10 @@ workflows:
           context: keep-dev
           requires:
             - build_client_and_test_go
-            - build_initcontainer
-            - migrate_contracts
-      - trigger_downstream_builds:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - publish_npm_package
-      - publish_contract_data:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - build_client_and_test_go
-            - migrate_contracts
-      # When building the token dashboard for a master merge, wait for npm
-      # package publish
       - build_token_dashboard_dapp:
           filters:
             branches:
               only: master
-          requires:
-            - publish_npm_package
       - publish_token_dashboard_dapp:
           filters:
             branches:
@@ -417,14 +378,14 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
         - build_client_and_test_go:
             context: keep-test
             filters:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - keep_test_approval
         - build_initcontainer:
@@ -433,7 +394,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - migrate_contracts
               - build_client_and_test_go
@@ -443,7 +404,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_client_and_test_go
         - publish_keep_client:
@@ -452,7 +413,18 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
+            requires:
+              - build_client_and_test_go
+              - build_initcontainer
+              - migrate_contracts
+        - publish_initcontainer_provision_keep_client:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
             requires:
               - build_client_and_test_go
               - build_initcontainer
@@ -463,7 +435,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_client_and_test_go
               - migrate_contracts
@@ -473,7 +445,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - migrate_contracts
         - trigger_downstream_builds:
@@ -482,7 +454,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - publish_npm_package
         - build_token_dashboard_dapp:
@@ -490,7 +462,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - publish_npm_package
         - publish_token_dashboard_dapp:
@@ -499,7 +471,7 @@ workflows:
               tags:
                 only: /^v.*/
               branches:
-                ignore: /.*/
+                only: /releases\/.*/
             requires:
               - build_token_dashboard_dapp
   docs:

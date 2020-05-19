@@ -2,17 +2,35 @@ package ethereum
 
 import (
 	"fmt"
+	"math/big"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
+)
+
+var (
+	// DefaultMiningCheckInterval is the default interval in which transaction
+	// mining status is checked. If the transaction is not mined within this
+	// time, the gas price is increased and transaction is resubmitted.
+	// This value can be overwritten in the configuration file.
+	DefaultMiningCheckInterval = 60 * time.Second
+
+	// DefaultMaxGasPrice specifies the default maximum gas price the client is
+	// willing to pay for the transaction to be mined. The offered transaction
+	// gas price can not be higher than the max gas price value. If the maximum
+	// allowed gas price is reached, no further resubmission attempts are
+	// performed. This value can be overwritten in the configuration file.
+	DefaultMaxGasPrice = big.NewInt(50000000000) // 50 Gwei
 )
 
 type ethereumChain struct {
@@ -56,6 +74,16 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		)
 	}
 
+	return connectWithClient(config, client, clientWS, clientRPC)
+}
+
+func connectWithClient(
+	config ethereum.Config,
+	client *ethclient.Client,
+	clientWS *rpc.Client,
+	clientRPC *rpc.Client,
+) (*ethereumChain, error) {
+
 	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -88,16 +116,36 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		pv.accountKey = key
 	}
 
+	checkInterval := DefaultMiningCheckInterval
+	maxGasPrice := DefaultMaxGasPrice
+	if config.MiningCheckInterval != 0 {
+		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
+	}
+	if config.MaxGasPrice != 0 {
+		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	}
+
+	logger.Infof("using [%v] mining check interval", checkInterval)
+	logger.Infof("using [%v] wei max gas price", maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+
 	address, err := addressForContract(config, "KeepRandomBeaconOperator")
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
+
+	nonceManager := ethutil.NewNonceManager(
+		pv.accountKey.Address,
+		pv.client,
+	)
 
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
 			*address,
 			pv.accountKey,
 			pv.client,
+			nonceManager,
+			miningWaiter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -115,6 +163,8 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 			*address,
 			pv.accountKey,
 			pv.client,
+			nonceManager,
+			miningWaiter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -131,21 +181,48 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 // the configuration will need to reference a websocket, "ws://", or local IPC
 // connection.
 func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
-	base, err := connect(config)
+	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error connecting to Ethereum server: %s [%v]",
+			config.URL,
+			err,
+		)
+	}
+
+	base, err := connectWithClient(config, client, clientWS, clientRPC)
 	if err != nil {
 		return nil, err
 	}
+
+	checkInterval := DefaultMiningCheckInterval
+	maxGasPrice := DefaultMaxGasPrice
+	if config.MiningCheckInterval != 0 {
+		checkInterval = time.Duration(config.MiningCheckInterval) * time.Second
+	}
+	if config.MaxGasPrice != 0 {
+		maxGasPrice = new(big.Int).SetUint64(config.MaxGasPrice)
+	}
+
+	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
 
 	address, err := addressForContract(config, "KeepRandomBeaconService")
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
 	}
 
+	nonceManager := ethutil.NewNonceManager(
+		base.accountKey.Address,
+		base.client,
+	)
+
 	keepRandomBeaconServiceContract, err :=
 		contract.NewKeepRandomBeaconService(
 			*address,
 			base.accountKey,
 			base.client,
+			nonceManager,
+			miningWaiter,
 			base.transactionMutex,
 		)
 	if err != nil {

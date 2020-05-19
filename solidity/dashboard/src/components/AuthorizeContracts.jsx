@@ -1,52 +1,153 @@
-import React from 'react'
-import AddressShortcut from './AddressShortcut'
-import { SubmitButton } from './Button'
-import { ETHERSCAN_DEFAULT_URL } from '../constants/constants'
-import { DataTable, Column } from './DataTable'
+import React, { useCallback } from "react"
+import AddressShortcut from "./AddressShortcut"
+import { SubmitButton } from "./Button"
+import { DataTable, Column } from "./DataTable"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
+import { displayAmount } from "../utils/token.utils"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
+import Dropdown from "./Dropdown"
+import { shortenAddress } from "../utils/general.utils"
 
 const AuthorizeContracts = ({
-  contracts,
+  data,
   onAuthorizeBtn,
-  onAuthorizeSuccessCallback,
+  onSelectOperator,
+  selectedOperator,
+  filterDropdownOptions,
 }) => {
   return (
     <section className="tile">
-      <h3 className="text-grey-60">Authorize Contracts</h3>
-      <DataTable data={contracts || []} itemFieldId={'contractAddress'}>
+      <div className="flex row wrap center space-between">
+        <header>
+          <div className="flex row">
+            <h4 className="mr-1 text-grey-70">Authorize Contracts</h4>
+            <SpeechBubbleTooltip
+              text={
+                "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens."
+              }
+            />
+          </div>
+          <div className="text-grey-40 text-small">
+            Below are the available operator contracts to authorize.
+          </div>
+        </header>
+        <div style={{ marginLeft: "auto" }}>
+          <Dropdown
+            withLabel={false}
+            options={filterDropdownOptions}
+            onSelect={(operator) => onSelectOperator(operator)}
+            valuePropertyName="operatorAddress"
+            labelPropertyName="operatorAddress"
+            selectedItem={selectedOperator}
+            noItemSelectedText="All operators"
+            renderOptionComponent={({ operatorAddress }) => (
+              <OperatorDropdownItem operatorAddress={operatorAddress} />
+            )}
+            selectedItemComponent={
+              <OperatorDropdownItem
+                operatorAddress={selectedOperator.operatorAddress}
+              />
+            }
+            isFilterDropdow
+            allItemsFilterText="All Operators"
+          />
+        </div>
+      </div>
+      <DataTable
+        data={data}
+        itemFieldId="operatorAddress"
+        noDataMessage="No contracts to authorize."
+      >
         <Column
-          header="contract address"
-          field="contractAddress"
-          renderContent={({ contractAddress }) => <AddressShortcut address={contractAddress} />}
-        />
-        <Column
-          header="added to the registry"
-          field="blockNumber"
-        />
-        <Column
-          header="contract details"
-          field="details"
-          renderContent={(contractAddress) => (
-            <a href={ETHERSCAN_DEFAULT_URL + contractAddress} rel="noopener noreferrer" target="_blank">
-              View in Block Explorer
-            </a>
+          header="operator address"
+          field="operatorAddress"
+          renderContent={({ operatorAddress }) => (
+            <AddressShortcut address={operatorAddress} />
           )}
         />
         <Column
-          header=""
-          field=""
-          renderContent={(contract) =>
-            <SubmitButton
-              className="btn btn-primary btn-lg flex-1"
-              onSubmitAction={(onTransactionHashCallback) => onAuthorizeBtn(contract, onTransactionHashCallback)}
-              successCallback={onAuthorizeSuccessCallback}
-            >
-              authorize
-            </SubmitButton>
+          header="stake"
+          field="stakeAmount"
+          renderContent={({ stakeAmount }) =>
+            `${displayAmount(stakeAmount)} KEEP`
           }
+        />
+        <Column
+          headerStyle={{ width: "55%" }}
+          header="operator contract details"
+          field=""
+          renderContent={({ contracts, operatorAddress }) => (
+            <Contracts
+              contracts={contracts}
+              operatorAddress={operatorAddress}
+              onAuthorizeBtn={onAuthorizeBtn}
+            />
+          )}
         />
       </DataTable>
     </section>
   )
 }
+
+const Contracts = ({ contracts, operatorAddress, onAuthorizeBtn }) => {
+  return (
+    <ul className="line-separator">
+      {contracts.map((contract) => (
+        <AuthorizeContractItem
+          key={contract.contractName}
+          {...contract}
+          operatorAddress={operatorAddress}
+          onAuthorizeBtn={onAuthorizeBtn}
+        />
+      ))}
+    </ul>
+  )
+}
+
+const AuthorizeContractItem = ({
+  contractName,
+  operatorAddress,
+  isAuthorized,
+  operatorContractAddress,
+  onAuthorizeBtn,
+}) => {
+  const onAuthorize = useCallback(
+    async (transactionHashCallback) => {
+      await onAuthorizeBtn(
+        { operatorAddress, contractName },
+        transactionHashCallback
+      )
+    },
+    [contractName, operatorAddress, onAuthorizeBtn]
+  )
+  return (
+    <li className="pb-1 mt-1">
+      <div className="flex row wrap space-between center">
+        <div>
+          <div className="text-big">{contractName}</div>
+          <ViewAddressInBlockExplorer address={operatorContractAddress} />
+        </div>
+        {isAuthorized ? (
+          <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
+        ) : (
+          <SubmitButton
+            onSubmitAction={onAuthorize}
+            className="btn btn-secondary btn-sm"
+            style={{ marginLeft: "auto" }}
+          >
+            authorize
+          </SubmitButton>
+        )}
+      </div>
+    </li>
+  )
+}
+
+const OperatorDropdownItem = React.memo(({ operatorAddress }) => (
+  <span key={operatorAddress} title={operatorAddress}>
+    {shortenAddress(operatorAddress)}
+  </span>
+))
 
 export default AuthorizeContracts

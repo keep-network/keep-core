@@ -1,4 +1,4 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconOperator.sol";
 
@@ -6,8 +6,13 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
 
     constructor(
         address _serviceContract,
-        address _stakingContract
-    ) KeepRandomBeaconOperator(_serviceContract, _stakingContract) public {
+        address _stakingContract,
+        address _registryContract
+    ) KeepRandomBeaconOperator(
+        _serviceContract,
+        _stakingContract,
+        _registryContract
+    ) public {
     }
 
     function registerNewGroup(bytes memory groupPublicKey) public {
@@ -34,7 +39,7 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         groupSelectionGasEstimate = gas;
     }
 
-    function setGasPriceCeiling(uint256 _gasPriceCeiling) public onlyOwner {
+    function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
         gasPriceCeiling = _gasPriceCeiling;
     }
 
@@ -47,6 +52,9 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
     }
 
     function delayFactor() public view returns(uint256) {
-        return super.getDelayFactor();
+        return DelayFactor.calculate(
+            currentRequestStartBlock,
+            relayEntryTimeout
+        );
     }
 }

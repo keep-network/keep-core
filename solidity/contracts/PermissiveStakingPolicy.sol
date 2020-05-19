@@ -1,10 +1,10 @@
-pragma solidity ^0.5.4;
+pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./GrantStakingPolicy.sol";
 
 /// @title PermissiveStakingPolicy
-/// @dev A staking policy which allows the grantee to stake the entire grant,
+/// @notice A staking policy which allows the grantee to stake the entire grant,
 /// regardless of its unlocking status.
 contract PermissiveStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;

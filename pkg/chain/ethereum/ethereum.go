@@ -118,7 +118,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 
 func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
 	ticketBytes := []uint8{}
-	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Value.Bytes(), 32)[:8]...)
+	ticketBytes = append(ticketBytes, ticket.Value[:]...)
 	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
 	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
 
@@ -157,27 +157,22 @@ func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error
 	// retry calling for selected participants up to 4 times.
 	// Synchronization issue can occur on any setup where we have more than one
 	// Ethereum clients behind a load balancer.
-	if err := ec.withRetry(fetchParticipants); err != nil {
-		return nil, err
-	}
-
-	return stakerAddresses, nil
-}
-
-func (ec *ethereumChain) withRetry(fn func() error) error {
-	const numberOfRetries = 4
-	const delay = 250 * time.Millisecond
+	const numberOfRetries = 10
+	const delay = time.Second
 
 	for i := 1; ; i++ {
-		err := fn()
+		err := fetchParticipants()
 		if err != nil {
-			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
 			if i == numberOfRetries {
-				return err
+				return nil, err
 			}
 			time.Sleep(delay)
+			logger.Infof(
+				"Retrying getting selected participants; attempt [%v]",
+				i,
+			)
 		} else {
-			return nil
+			return stakerAddresses, nil
 		}
 	}
 }
@@ -237,7 +232,18 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entry)
+	gasEstimate, err := ec.keepRandomBeaconOperatorContract.RelayEntryGasEstimate(entry)
+	if err != nil {
+		logger.Errorf("failed to estimate gas [%v]", err)
+	}
+
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2) // 20% more than original
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
+		entry,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -392,6 +398,27 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	}
 
 	return nil
+}
+
+func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
+}
+
+func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestStartBlock()
+}
+
+func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestPreviousEntry()
+}
+
+func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+	currentRequestGroupIndex, err := ec.keepRandomBeaconOperatorContract.CurrentRequestGroupIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
 }
 
 func (ec *ethereumChain) SubmitDKGResult(

@@ -3,9 +3,14 @@ package relay
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"sync"
 
+	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
+	"github.com/keep-network/keep-core/pkg/altbn128"
+
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
@@ -71,10 +76,12 @@ func (n *Node) JoinGroupIfEligible(
 		}
 	}
 
+	// create temporary broadcast channel name for DKG using the
+	// group selection seed
+	channelName := newEntry.Text(16)
+
 	if len(indexes) > 0 {
-		// create temporary broadcast channel for DKG using the group selection
-		// seed
-		broadcastChannel, err := n.netProvider.BroadcastChannelFor(newEntry.Text(16))
+		broadcastChannel, err := n.netProvider.BroadcastChannelFor(channelName)
 		if err != nil {
 			logger.Errorf("failed to get broadcast channel: [%v]", err)
 			return
@@ -136,4 +143,95 @@ func (n *Node) JoinGroupIfEligible(
 	}
 
 	return
+}
+
+// ForwardSignatureShares enables the ability to forward signature shares
+// messages to other nodes even if this node is not a part of the group which
+// signs the relay entry.
+func (n *Node) ForwardSignatureShares(groupPublicKeyBytes []byte) {
+	name, err := channelNameForPublicKeyBytes(groupPublicKeyBytes)
+	if err != nil {
+		logger.Warningf("could not forward signature shares: [%v]", err)
+		return
+	}
+
+	n.netProvider.BroadcastChannelForwarderFor(name)
+}
+
+// ResumeSigningIfEligible enables a client to rejoin the ongoing signing process
+// after it was crashed or restarted and if it belongs to the signing group.
+func (n *Node) ResumeSigningIfEligible(
+	relayChain relayChain.Interface,
+	signing chain.Signing,
+) {
+	isEntryInProgress, err := relayChain.IsEntryInProgress()
+	if err != nil {
+		logger.Errorf(
+			"failed checking if an entry is in progress: [%v]",
+			err,
+		)
+		return
+	}
+
+	if isEntryInProgress {
+		previousEntry, err := relayChain.CurrentRequestPreviousEntry()
+		if err != nil {
+			logger.Errorf(
+				"failed to get a previous entry for the current request: [%v]",
+				err,
+			)
+			return
+		}
+		entryStartBlock, err := relayChain.CurrentRequestStartBlock()
+		if err != nil {
+			logger.Errorf(
+				"failed to get a start block for the current request: [%v]",
+				err,
+			)
+			return
+		}
+		groupPublicKey, err := relayChain.CurrentRequestGroupPublicKey()
+		if err != nil {
+			logger.Errorf(
+				"failed to get a group public key for the current request: [%v]",
+				err,
+			)
+			return
+		}
+
+		logger.Infof(
+			"attempting to rejoin the current signing process [0x%x]",
+			groupPublicKey,
+		)
+		n.GenerateRelayEntry(
+			previousEntry,
+			relayChain,
+			signing,
+			groupPublicKey,
+			entryStartBlock.Uint64(),
+		)
+	}
+}
+
+// channelNameForPublicKey takes group public key represented by marshalled
+// G2 point and transforms it into a broadcast channel name.
+// Broadcast channel name for group is the hexadecimal representation of
+// compressed public key of the group.
+func channelNameForPublicKeyBytes(groupPublicKey []byte) (string, error) {
+	g2 := new(bn256.G2)
+
+	if _, err := g2.Unmarshal(groupPublicKey); err != nil {
+		return "", fmt.Errorf("could not create channel name: [%v]", err)
+	}
+
+	return channelNameForPublicKey(g2), nil
+}
+
+// channelNameForPublicKey takes group public key represented by G2 point
+// and transforms it into a broadcast channel name.
+// Broadcast channel name for group is the hexadecimal representation of
+// compressed public key of the group.
+func channelNameForPublicKey(groupPublicKey *bn256.G2) string {
+	altbn128GroupPublicKey := altbn128.G2Point{G2: groupPublicKey}
+	return hex.EncodeToString(altbn128GroupPublicKey.Compress())
 }

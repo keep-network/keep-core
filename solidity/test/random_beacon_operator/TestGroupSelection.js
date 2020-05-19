@@ -1,17 +1,16 @@
-const {contract, accounts} = require("@openzeppelin/test-environment")
+const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
 const initContracts = require('../helpers/initContracts')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
-const mineBlocks = require("../helpers/mineBlocks")
 const generateTickets = require('../helpers/generateTickets')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 
 describe('KeepRandomBeaconOperator/GroupSelection', function() {
-  let operatorContract,
+  let operatorContract, submissionTimeout,
   owner = accounts[0], 
-  magpie = accounts[1],
+  beneficiary = accounts[1],
   operator1 = accounts[2], tickets1,
   operator2 = accounts[3], tickets2,
   operator3 = accounts[4], tickets3,
@@ -20,7 +19,6 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
   const operator1StakingWeight = 100;
   const operator2StakingWeight = 200;
   const operator3StakingWeight = 300;
-  const groupSize = 3;
 
   before(async () => {
     let contracts = await initContracts(
@@ -36,12 +34,11 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
     operatorContract = contracts.operatorContract;
 
-    await operatorContract.setGroupSize(groupSize)
     let minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, magpie, authorizer, minimumStake.muln(operator1StakingWeight));
-    await stakeDelegate(stakingContract, token, owner, operator2, magpie, authorizer, minimumStake.muln(operator2StakingWeight));
-    await stakeDelegate(stakingContract, token, owner, operator3, magpie, authorizer, minimumStake.muln(operator3StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary, authorizer, minimumStake.muln(operator1StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary, authorizer, minimumStake.muln(operator2StakingWeight));
+    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary, authorizer, minimumStake.muln(operator3StakingWeight));
 
     await stakingContract.authorizeOperatorContract(operator1, operatorContract.address, {from: authorizer})
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, {from: authorizer})
@@ -65,6 +62,8 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
       operator3, 
       operator3StakingWeight
     );
+
+    submissionTimeout = await operatorContract.ticketSubmissionTimeout();
   });
 
   beforeEach(async () => {
@@ -148,8 +147,8 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
       ticket = packTicket(tickets1[i].valueHex, tickets1[i].virtualStakerIndex, operator1);
       await operatorContract.submitTicket(ticket, {from: operator1});
     }
-  
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(
@@ -178,7 +177,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     let ticket3 = packTicket(tickets3[0].valueHex, tickets3[0].virtualStakerIndex, operator3);
     await operatorContract.submitTicket(ticket3, {from: operator3});
 
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(
@@ -213,7 +212,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
         {from: operator2}
     );
 
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     // Start new group selection
     const seed = await operatorContract.getGroupSelectionRelayEntry();
@@ -237,7 +236,7 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
     let ticket3 = packTicket(tickets3[0].valueHex, tickets3[0].virtualStakerIndex, operator3);
     await operatorContract.submitTicket(ticket3, {from: operator3});
 
-    mineBlocks(await operatorContract.ticketSubmissionTimeout());
+    await time.advanceBlockTo(submissionTimeout.addn(await web3.eth.getBlockNumber()));
 
     let selectedParticipants = await operatorContract.selectedParticipants();
     assert.equal(

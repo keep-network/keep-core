@@ -2,17 +2,16 @@ package libp2p
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"io"
-	"math/big"
 	"net"
 	"reflect"
 	"testing"
 	"time"
 
 	protoio "github.com/gogo/protobuf/io"
-	"github.com/keep-network/keep-core/pkg/chain"
-	"github.com/keep-network/keep-core/pkg/chain/local"
+	keepNet "github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/gen/pb"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/security/handshake"
@@ -24,9 +23,9 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+	firewall := newMockFirewall()
+	firewall.updatePeer(initiator.pubKey, true)
+	firewall.updatePeer(responder.pubKey, true)
 
 	initiatorConn, responderConn := newConnPair()
 
@@ -53,7 +52,8 @@ func TestPinnedAndMessageKeyMismatch(t *testing.T) {
 		responderConn,
 		responder.peerID,
 		responder.privKey,
-		stakeMonitor,
+		firewall,
+		ProtocolBeacon,
 	)
 	if err == nil {
 		t.Fatal("should not have successfully completed handshake")
@@ -68,7 +68,7 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
 	initiatorConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
 
-	initiatorAct1, err := handshake.InitiateHandshake()
+	initiatorAct1, err := handshake.InitiateHandshake(ProtocolBeacon)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,12 +123,12 @@ func TestHandshake(t *testing.T) {
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+	firewall := newMockFirewall()
+	firewall.updatePeer(initiator.pubKey, true)
+	firewall.updatePeer(responder.pubKey, true)
 
 	authnInboundConn, authnOutboundConn, inboundError, outboundError :=
-		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
+		connectInitiatorAndResponder(initiator, responder, firewall, t)
 	if inboundError != nil {
 		t.Fatal(inboundError)
 	}
@@ -154,25 +154,25 @@ func TestHandshake(t *testing.T) {
 	}
 }
 
-func TestHandshakeNoInitiatorStake(t *testing.T) {
+func TestHandshakeInitiatorBlockedByFirewallRules(t *testing.T) {
 	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
-	// only responder is staked
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(responder.pubKey))
+	firewall := newMockFirewall()
+	// only responder meets firewall rules
+	firewall.updatePeer(responder.pubKey, true)
 
 	_, _, inboundError, outboundError :=
-		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
+		connectInitiatorAndResponder(initiator, responder, firewall, t)
 
 	if inboundError != nil {
 		t.Fatal(inboundError)
 	}
 
-	expectedOutboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
+	expectedOutboundError := fmt.Errorf("connection handshake failed: [remote peer does not meet firewall criteria]")
 	if !reflect.DeepEqual(expectedOutboundError, outboundError) {
 		t.Fatalf(
 			"unexpected outbound connection error\nexpected: %v\nactual: %v",
@@ -182,21 +182,21 @@ func TestHandshakeNoInitiatorStake(t *testing.T) {
 	}
 }
 
-func TestHandshakeNoResponderStake(t *testing.T) {
+func TestHandshakeResponderBlockedByFirewallRules(t *testing.T) {
 	_, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	initiator := createTestConnectionConfig(t)
 	responder := createTestConnectionConfig(t)
 
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
-	// only initiator is staked
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(initiator.pubKey))
+	firewall := newMockFirewall()
+	// only initiator meets firewall rules
+	firewall.updatePeer(initiator.pubKey, true)
 
 	_, _, inboundError, outboundError :=
-		connectInitiatorAndResponder(initiator, responder, stakeMonitor, t)
+		connectInitiatorAndResponder(initiator, responder, firewall, t)
 
-	expectedInboundError := fmt.Errorf("connection handshake failed - remote peer has no minimum stake")
+	expectedInboundError := fmt.Errorf("connection handshake failed: [remote peer does not meet firewall criteria]")
 	if !reflect.DeepEqual(expectedInboundError, inboundError) {
 		t.Fatalf(
 			"unexpected outbound connection error\nexpected: %v\nactual: %v",
@@ -213,7 +213,7 @@ func TestHandshakeNoResponderStake(t *testing.T) {
 func connectInitiatorAndResponder(
 	initiator *testConnectionConfig,
 	responder *testConnectionConfig,
-	stakeMonitor chain.StakeMonitor,
+	firewall keepNet.Firewall,
 	t *testing.T,
 ) (
 	authnInboundConn *authenticatedConnection,
@@ -237,7 +237,8 @@ func connectInitiatorAndResponder(
 			initiatorPeerID,
 			initiatorPrivKey,
 			responderPeerID,
-			stakeMonitor,
+			firewall,
+			ProtocolBeacon,
 		)
 		done <- struct{}{}
 	}(initiatorConn, initiator.peerID, initiator.privKey, responder.peerID)
@@ -246,7 +247,8 @@ func connectInitiatorAndResponder(
 		responderConn,
 		responder.peerID,
 		responder.privKey,
-		stakeMonitor,
+		firewall,
+		ProtocolBeacon,
 	)
 
 	<-done // handshake is done
@@ -277,4 +279,29 @@ func createTestConnectionConfig(t *testing.T) *testConnectionConfig {
 // on one end should be matched with writes on the other).
 func newConnPair() (net.Conn, net.Conn) {
 	return net.Pipe()
+}
+
+func newMockFirewall() *mockFirewall {
+	return &mockFirewall{
+		meetsCriteria: make(map[uint64]bool),
+	}
+}
+
+type mockFirewall struct {
+	meetsCriteria map[uint64]bool
+}
+
+func (mf *mockFirewall) Validate(remotePeerPublicKey *ecdsa.PublicKey) error {
+	if !mf.meetsCriteria[remotePeerPublicKey.X.Uint64()] {
+		return fmt.Errorf("remote peer does not meet firewall criteria")
+	}
+	return nil
+}
+
+func (mf *mockFirewall) updatePeer(
+	remotePeerPublicKey *key.NetworkPublic,
+	meetsCriteria bool,
+) {
+	x := key.NetworkKeyToECDSAKey(remotePeerPublicKey).X.Uint64()
+	mf.meetsCriteria[x] = meetsCriteria
 }
