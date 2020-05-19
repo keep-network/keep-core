@@ -3,6 +3,7 @@ import { CSSTransition } from "react-transition-group"
 import { ClockIndicator } from "./Loadable"
 import { messageType, MessagesContext } from "./Message"
 import * as Icons from "./Icons"
+import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -111,7 +112,7 @@ export const SubmitButton = ({
   let pendingMessage = {
     type: messageType.PENDING_ACTION,
     sticky: true,
-    title: pendingMessageTitle,
+    title: "",
     content: pendingMessageContent,
   }
   let infoMessage = {
@@ -123,7 +124,12 @@ export const SubmitButton = ({
   const onTransactionHashCallback = (hash) => {
     pendingMessage = showMessage({
       ...pendingMessage,
-      content: `Transaction hash: ${hash}`,
+      content: (
+        <TransactionIsPendingMsgContent
+          txHash={hash}
+          title={pendingMessageTitle}
+        />
+      ),
     })
     closeMessage(infoMessage)
   }

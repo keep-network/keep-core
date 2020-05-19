@@ -47,7 +47,7 @@ ul {
   padding-left: 0;
 }
 
-.main {
+main {
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -334,7 +334,7 @@ footer {
      }
    }
 
-   .main {
+   main {
      > .content {
       max-width: 1400px;
      }
@@ -373,7 +373,7 @@ footer {
     }
   }
 
-  .main {
+  main {
     > .content {
       margin: calc(@header-height + 2rem) 1.5rem 0 calc(@side-menu-width + 1.5rem)
     }
@@ -381,9 +381,18 @@ footer {
 }
 
 @media screen and (min-width: 1400px) {
-  .main {
+  main {
     > .content {
-      margin: calc(@header-height + 2rem) 5rem 0 calc(@side-menu-width + 5rem)
+      margin: calc(@header-height + 2rem) 3rem 0 calc(@side-menu-width + 3rem);
+    }
+  }
+}
+
+@media screen and (min-width: 1600px) {
+  main {
+    > .content {
+      align-self: center;
+      width: 100%;
     }
   }
 }
