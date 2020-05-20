@@ -158,8 +158,8 @@ const withdrawAllEthForOperator = async (
   
 
   // await keepBondingContract.methods
-  //   .withdraw(operatorAddress)
-  //   .send({ from: yourAddress, value: valueInWei })
+  //   .withdraw(availableInWei, operatorAddress)//.send({ from: yourAddress, value: valueInWei })
+  //   .send({ from: yourAddress, value: availableInWei })
   //   .on("transactionHash", onTransactionHashCallback)
 }
 
@@ -196,7 +196,7 @@ const fetchBondingData = async (web3Context) => {
     const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
     const createdBonds = await fetchCreatedBonds(
       web3Context,
-      operators,
+      operators.map(_ => _[0]),
       sortitionPoolAddress
     )
 
@@ -218,22 +218,23 @@ const fetchBondingData = async (web3Context) => {
     for (let i = 0; i < operators.length; i++) {
       const delegatedTokens = await fetchDelegationInfo(
         web3Context,
-        operators[i]
+        operators[i][0]
       )
-      const availableEth = await fetchAvailableAmount(web3Context, operators[i])
+      const availableEth = await fetchAvailableAmount(web3Context, operators[i][0])
 
       const bondedEth = operatorBondingDataMap.get(
-        web3Utils.toChecksumAddress(operators[i])
+        web3Utils.toChecksumAddress(operators[i][0])
       )
-        ? operatorBondingDataMap.get(web3Utils.toChecksumAddress(operators[i]))
+        ? operatorBondingDataMap.get(web3Utils.toChecksumAddress(operators[i][0]))
         : 0
 
       const bonding = {
-        operatorAddress: operators[i],
+        operatorAddress: operators[i][0],
+        isWithdrawable: operators[i][1],
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
-        availableETHInWei: availableEth,
+        availableETHInWei: availableEth
       }
 
       bondingData.push(bonding)
