@@ -140,27 +140,14 @@ const withdrawAllEthForOperator = async (
   data,
   onTransactionHashCallback
 ) => {
-  // const { keepBondingContract, yourAddress } = web3Context
-  // const { operatorAddress, availableETH } = data
-  // console.log("data: ", data)
-  // console.log("msg.sender: ", yourAddress)
-  // console.log("operatorAddress: ", operatorAddress)
-  // const ownerAddress = await contractService.makeCall(
-  //   web3Context,
-  //   TOKEN_STAKING_CONTRACT_NAME,
-  //   "ownerOf",
-  //   operatorAddress
-  // )
-  // console.log("ownerAddress: ", ownerAddress)
-  // console.log("value: ", availableETH)
-  // const availableInWei = web3Utils.toWei(availableETH.toString(), "ether")
-  // console.log("valueInWei: ", availableInWei)
-  
+  const { keepBondingContract, yourAddress } = web3Context
+  const { operatorAddress, availableETH } = data
+  const availableInWei = web3Utils.toWei(availableETH.toString(), "ether")
 
-  // await keepBondingContract.methods
-  //   .withdraw(availableInWei, operatorAddress)//.send({ from: yourAddress, value: valueInWei })
-  //   .send({ from: yourAddress, value: availableInWei })
-  //   .on("transactionHash", onTransactionHashCallback)
+  await keepBondingContract.methods
+    .withdraw(availableInWei, operatorAddress)
+    .send({ from: yourAddress })
+    .on("transactionHash", onTransactionHashCallback)
 }
 
 const fetchOperatorsOfAuthorizer = async (web3Context) => {
