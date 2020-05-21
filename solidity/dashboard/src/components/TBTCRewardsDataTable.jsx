@@ -3,6 +3,7 @@ import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
+import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
 
 const TBTCRewardsDataTable = ({ rewards }) => {
   return (
@@ -20,7 +21,13 @@ const TBTCRewardsDataTable = ({ rewards }) => {
           />
         )}
       />
-      <Column header="date" field="date" />
+      <Column
+        header="transactionHash"
+        field="transactionHash"
+        renderContent={({ transactionHash }) => (
+          <ViewInBlockExplorer type="tx" id={transactionHash} />
+        )}
+      />
       <Column
         header="deposit token id"
         field="depositTokenId"
