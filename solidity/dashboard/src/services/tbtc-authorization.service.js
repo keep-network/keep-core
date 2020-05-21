@@ -183,7 +183,7 @@ const fetchBondingData = async (web3Context) => {
     const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
     const createdBonds = await fetchCreatedBonds(
       web3Context,
-      operators.map(_ => _[0]),
+      operators.map((_) => _[0]),
       sortitionPoolAddress
     )
 
@@ -207,7 +207,10 @@ const fetchBondingData = async (web3Context) => {
         web3Context,
         operators[i][0]
       )
-      const availableEth = await fetchAvailableAmount(web3Context, operators[i][0])
+      const availableEth = await fetchAvailableAmount(
+        web3Context,
+        operators[i][0]
+      )
 
       const bondedEth = operatorBondingDataMap.get(
         operators[i][0]
@@ -221,7 +224,7 @@ const fetchBondingData = async (web3Context) => {
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
-        availableETHInWei: availableEth
+        availableETHInWei: availableEth,
       }
 
       bondingData.push(bonding)
@@ -318,7 +321,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
   const operators = new Map()
 
   // operators of grantee (yourAddress)
-  let operatorsOfGrantee = await contractService.makeCall(
+  const operatorsOfGrantee = await contractService.makeCall(
     web3Context,
     TOKEN_GRANT_CONTRACT_NAME,
     "getGranteeOperators",
@@ -331,6 +334,15 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
   const managedGrantAddresses = await fetchManagedGrantAddresses(
     web3Context,
     yourAddress
+  )
+  for (let i = 0; i < managedGrantAddresses.length; ++i) {
+    const managedGrantAddress = managedGrantAddresses[i]
+    // operators of grantee (managedGrantAddress)
+    const operatorsOfManagedGrant = await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGranteeOperators",
+      managedGrantAddress
     )
     for (let i = 0; i < managedGrantAddresses.length; ++i) {
       const managedGrantAddress = managedGrantAddresses[i]
@@ -345,6 +357,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
           operators.set(web3Utils.toChecksumAddress(operatorsOfManagedGrant[i]), false)
         }
     }
+  }
 
   // operators of authorizer
   const operatorsOfAuthorizer = await fetchOperatorsOfAuthorizer(web3Context)
@@ -353,7 +366,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
   }
 
   // operators of owner
-  let operatorsOfOwner = await contractService.makeCall(
+  const operatorsOfOwner = await contractService.makeCall(
     web3Context,
     TOKEN_STAKING_CONTRACT_NAME,
     "operatorsOf",
@@ -411,5 +424,5 @@ export const tbtcAuthorizationService = {
   authorizeTBTCSystem,
   fetchBondingData,
   depositEthForOperator,
-  withdrawAllEthForOperator
+  withdrawAllEthForOperator,
 }

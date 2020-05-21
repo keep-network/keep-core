@@ -128,7 +128,7 @@ const ActionCell = React.memo(
       },
       [operatorAddress, availableETH, showMessage, web3Context]
     )
-    
+
     return (
       <>
         <ModalComponent title="Add ETH">
