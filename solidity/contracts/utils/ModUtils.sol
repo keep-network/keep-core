@@ -33,8 +33,9 @@ library ModUtils {
     }
 
     /**
-     * @dev Calculates and returns the square root of a mod p,
-     * or 0 if there is no such root.
+     * @dev Calculates and returns the square root of a mod p if such a square
+     * root exists. The modulus p must be an odd prime. If a square root does
+     * not exist, function returns 0.
      */
     function modSqrt(uint256 a, uint256 p)
         internal
