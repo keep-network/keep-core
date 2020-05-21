@@ -183,7 +183,7 @@ const fetchBondingData = async (web3Context) => {
     const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
     const createdBonds = await fetchCreatedBonds(
       web3Context,
-      operators.map((_) => _[0]),
+      Array.from(operators.keys()),
       sortitionPoolAddress
     )
 
@@ -202,23 +202,26 @@ const fetchBondingData = async (web3Context) => {
       )
     }
 
-    for (let i = 0; i < operators.length; i++) {
+    for (const [
+      operatorAddress,
+      isAddressWithdrawable,
+    ] of operators.entries()) {
       const delegatedTokens = await fetchDelegationInfo(
         web3Context,
-        operators[i][0]
+        operatorAddress
       )
       const availableEth = await fetchAvailableAmount(
         web3Context,
-        operators[i][0]
+        operatorAddress
       )
 
-      const bondedEth = operatorBondingDataMap.get(operators[i][0])
-        ? operatorBondingDataMap.get(operators[i][0])
+      const bondedEth = operatorBondingDataMap.get(operatorAddress)
+        ? operatorBondingDataMap.get(operatorAddress)
         : 0
 
       const bonding = {
-        operatorAddress: operators[i][0],
-        isWithdrawable: operators[i][1],
+        operatorAddress: operatorAddress,
+        isWithdrawable: isAddressWithdrawable,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
@@ -379,7 +382,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     operators.set(web3Utils.toChecksumAddress(yourAddress), true)
   }
 
-  return [...operators]
+  return operators
 }
 
 // aka lockedBonds
