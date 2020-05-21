@@ -63,7 +63,7 @@ const fetchBeneficiaryOperatorsFromDeposit = async (
       benficiaryOperators.push(operator)
   }
 
-  return bondedMembers
+  return benficiaryOperators
 }
 
 export const tbtcRewardsService = {
