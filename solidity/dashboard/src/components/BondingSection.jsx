@@ -115,12 +115,12 @@ const ActionCell = React.memo(
           showMessage({
             type: messageType.SUCCESS,
             title: "Success",
-            content: "Withdrawal of ETH transaction successfully completed",
+            content: "Withdrawal of ETH transaction has successfully completed",
           })
         } catch (error) {
           showMessage({
             type: messageType.ERROR,
-            title: "Withrawal of ETH has failed ",
+            title: "Withdrawal of ETH has failed ",
             content: error.message,
           })
           throw error
