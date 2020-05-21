@@ -210,9 +210,9 @@ const fetchBondingData = async (web3Context) => {
       const availableEth = await fetchAvailableAmount(web3Context, operators[i][0])
 
       const bondedEth = operatorBondingDataMap.get(
-        web3Utils.toChecksumAddress(operators[i][0])
+        operators[i][0]
       )
-        ? operatorBondingDataMap.get(web3Utils.toChecksumAddress(operators[i][0]))
+        ? operatorBondingDataMap.get(operators[i][0])
         : 0
 
       const bonding = {
@@ -325,31 +325,31 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress
   )
   for (let i = 0; i < operatorsOfGrantee.length; i++) {
-    operators.set(operatorsOfGrantee[i], false)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfGrantee[i]), false)
   }
 
   const managedGrantAddresses = await fetchManagedGrantAddresses(
     web3Context,
     yourAddress
-  )
-  for (let i = 0; i < managedGrantAddresses.length; ++i) {
-    const managedGrantAddress = managedGrantAddresses[i]
-    // operators of grantee (managedGrantAddress)
-    let operatorsOfManagedGrant = await contractService.makeCall(
-      web3Context,
-      TOKEN_GRANT_CONTRACT_NAME,
-      "getGranteeOperators",
-      managedGrantAddress
     )
-    for (let i = 0; i < operatorsOfManagedGrant.length; i++) {
-      operators.set(operatorsOfManagedGrant[i], false)
+    for (let i = 0; i < managedGrantAddresses.length; ++i) {
+      const managedGrantAddress = managedGrantAddresses[i]
+      // operators of grantee (managedGrantAddress)
+      let operatorsOfManagedGrant = await contractService.makeCall(
+        web3Context,
+        TOKEN_GRANT_CONTRACT_NAME,
+        "getGranteeOperators",
+        managedGrantAddress
+        )
+        for (let i = 0; i < operatorsOfManagedGrant.length; i++) {
+          operators.set(web3Utils.toChecksumAddress(operatorsOfManagedGrant[i]), false)
+        }
     }
-  }
 
   // operators of authorizer
   const operatorsOfAuthorizer = await fetchOperatorsOfAuthorizer(web3Context)
   for (let i = 0; i < operatorsOfAuthorizer.length; i++) {
-    operators.set(operatorsOfAuthorizer[i], false)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfAuthorizer[i]), false)
   }
 
   // operators of owner
@@ -360,21 +360,19 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress // as owner
   )
   for (let i = 0; i < operatorsOfOwner.length; i++) {
-    operators.set(operatorsOfOwner[i], true)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), true)
   }
 
-  if (operators.length === 0) {
-    const ownerAddress = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "ownerOf",
-      yourAddress
-    )
+  const ownerAddress = await contractService.makeCall(
+    web3Context,
+    TOKEN_STAKING_CONTRACT_NAME,
+    "ownerOf",
+    yourAddress
+  )
 
-    if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
-      // yourAddress is an operator
-      operators.set(yourAddress, true)
-    }
+  if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
+    // yourAddress is an operator
+    operators.set(web3Utils.toChecksumAddress(yourAddress), true)
   }
 
   return [...operators]
