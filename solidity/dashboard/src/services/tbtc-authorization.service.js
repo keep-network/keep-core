@@ -212,9 +212,7 @@ const fetchBondingData = async (web3Context) => {
         operators[i][0]
       )
 
-      const bondedEth = operatorBondingDataMap.get(
-        operators[i][0]
-      )
+      const bondedEth = operatorBondingDataMap.get(operators[i][0])
         ? operatorBondingDataMap.get(operators[i][0])
         : 0
 
@@ -344,18 +342,11 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
       "getGranteeOperators",
       managedGrantAddress
     )
-    for (let i = 0; i < managedGrantAddresses.length; ++i) {
-      const managedGrantAddress = managedGrantAddresses[i]
-      // operators of grantee (managedGrantAddress)
-      let operatorsOfManagedGrant = await contractService.makeCall(
-        web3Context,
-        TOKEN_GRANT_CONTRACT_NAME,
-        "getGranteeOperators",
-        managedGrantAddress
-        )
-        for (let i = 0; i < operatorsOfManagedGrant.length; i++) {
-          operators.set(web3Utils.toChecksumAddress(operatorsOfManagedGrant[i]), false)
-        }
+    for (let i = 0; i < operatorsOfManagedGrant.length; i++) {
+      operators.set(
+        web3Utils.toChecksumAddress(operatorsOfManagedGrant[i]),
+        false
+      )
     }
   }
 
