@@ -418,7 +418,7 @@ library AltBn128 {
             mstore(arg, mload(p_1))
             mstore(add(arg, 0x20), mload(add(p_1, 0x20)))
             mstore(add(arg, 0x40), scalar)
-            // 0x70 is the ECMUL precompile address
+            // 0x07 is the ECMUL precompile address
             if iszero(staticcall(not(0), 0x07, arg, 0x60, p_2, 0x40)) {
                 revert(0, 0)
             }
