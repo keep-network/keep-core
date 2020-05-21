@@ -1,106 +1,11 @@
+.delegation-overview {
+    flex: 1;
 
-#pending-undelegation {
-    .pending-undelegation {
-        &-summary {
-            display: flex;
-            flex-direction: column;
-            padding-bottom: 1.5rem;
-        }
-        &-list {
-            background: @color-grey-20;
-            padding: 2rem;
-            ul {
-                padding-left: 0;
-            }
-        }
-
-        &-item {
-            &:last-of-type {
-                margin-bottom: 0;
-            }
-            margin-bottom: .8rem;
-        }
-    
-        @media screen and (min-width: 1000px) {
-            &-summary {
-                flex-direction: row;
-            }
-        }
-    }
+    @media screen and (min-width: 650px) {
+        flex: 0.35;
+    }   
 }
 
-#delegated-tokens {
-    flex-direction: column;
-
-    #delegated-tokens-summary {
-        h4 {
-            font-family: 'Vitesse';
-            font-style: normal;
-            font-weight: bold;
-            font-size: 1.75rem;
-            line-height: 2,3rem;  
-        }
-    }
-
-    @media screen and (min-width: 950px) {
-        flex-direction: row;
-
-        #delegated-tokens-summary {
-            justify-content: space-between;
-            flex-basis: 50%;
-        }
-
-        #delegated-form-section {
-            flex-basis: 50%;
-        }
-    }
-
-    @media screen and (min-width: 1000px) {
-        #delegated-tokens-summary {
-            justify-content: space-between;
-            flex-basis: 38%;
-        }
-
-        #delegated-form-section {
-            flex-basis: 60%;
-        }
-    }
-
-    @media screen and (min-width: 1250px) and (max-width: 1450px) {
-        #delegated-tokens-summary {
-            justify-content: space-between;
-            flex-basis: 49%;
-        }
-        
-        #delegated-form-section {
-            flex-basis: 49%;
-        }
-    }
-}
-
-#slashed-tokens {
-
-    .slashed-tokens-list {
-        margin-top: 2rem;
-        ul {    
-            margin-top: 1rem;
-            padding-left: 0;
-        }
-        
-        li {
-            border-bottom: 1px solid @color-grey-70;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-
-            p {
-                margin-bottom: 2px;
-            }
-
-            &:last-of-type {
-                border-bottom: none;
-                margin-bottom: 0;
-
-            }
-        }
-    }
+.undelegation-section {
+    flex: 1;
 }
