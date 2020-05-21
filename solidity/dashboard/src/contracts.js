@@ -12,6 +12,8 @@ import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifact
 import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
 import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
+import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
+import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -166,6 +168,14 @@ export function getGuaranteedMinimumStakingPolicyContractAddress() {
 
 export function createManagedGrantContractInstance(web3, address) {
   return new web3.eth.Contract(ManagedGrant.abi, address)
+}
+
+export function createDepositContractInstance(web3, address) {
+  return new web3.eth.Contract(Deposit.abi, address)
+}
+
+export function createBondedECDSAKeepContractInstance(web3, address) {
+  return new web3.eth.Contract(BondedECDSAKeep.abi, address)
 }
 
 export function getKeepRandomBeaconOperatorAddress() {
