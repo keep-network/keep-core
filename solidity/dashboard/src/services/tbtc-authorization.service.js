@@ -202,10 +202,7 @@ const fetchBondingData = async (web3Context) => {
       )
     }
 
-    for (const [
-      operatorAddress,
-      isAddressWithdrawable,
-    ] of operators.entries()) {
+    for (const [operatorAddress, isWithdrawable] of operators.entries()) {
       const delegatedTokens = await fetchDelegationInfo(
         web3Context,
         operatorAddress
@@ -220,8 +217,8 @@ const fetchBondingData = async (web3Context) => {
         : 0
 
       const bonding = {
-        operatorAddress: operatorAddress,
-        isWithdrawable: isAddressWithdrawable,
+        operatorAddress,
+        isWithdrawable,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
