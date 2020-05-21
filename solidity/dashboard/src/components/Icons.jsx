@@ -20,6 +20,7 @@ import { ReactComponent as TrezorDevice } from "../static/svg/trezor-device.svg"
 import { ReactComponent as TBTC } from "../static/svg/tbtc.svg"
 import { ReactComponent as KeepBlackGreen } from "../static/svg/keep-token.svg"
 import { ReactComponent as Filter } from "../static/svg/filter-icon.svg"
+import { ReactComponent as Load } from "../static/svg/load.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -486,4 +487,5 @@ export {
   TBTC,
   KeepBlackGreen,
   Filter,
+  Load,
 }
