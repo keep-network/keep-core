@@ -9,7 +9,7 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import { useShowMessage, messageType } from "../components/Message"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
-import { add } from "../utils/arithmetics.utils"
+import { add, sub } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
@@ -32,38 +32,55 @@ const TBTCApplicationPage = () => {
     initialData
   )
 
-  const subscribeToUnbondedValueDepositedCallback = (event) => {
-    const {
-      returnValues: { operator, amount },
-    } = event
-    const { indexInArray, obj: obsoleteData } = findIndexAndObject(
-      "operatorAddress",
-      operator,
-      bondingState.data,
-      compareEthAddresses
-    )
-    if (indexInArray === null) {
-      return
-    }
+  const unbondedValueUpdated = useCallback(
+    (event, arithmeticOpration = add) => {
+      const {
+        returnValues: { operator, amount },
+      } = event
+      const { indexInArray, obj: obsoleteData } = findIndexAndObject(
+        "operatorAddress",
+        operator,
+        bondingState.data,
+        compareEthAddresses
+      )
+      if (indexInArray === null) {
+        return
+      }
 
-    const availableETHInWei = add(
-      obsoleteData.availableETHInWei,
-      amount
-    ).toString()
-    const availableETH = web3Utils.fromWei(availableETHInWei, "ether")
-    const updatedBondinData = [...bondingState.data]
-    updatedBondinData[indexInArray] = {
-      ...obsoleteData,
-      availableETH,
-      availableETHInWei,
-    }
-    updateBondinData(updatedBondinData)
+      const availableETHInWei = arithmeticOpration(
+        obsoleteData.availableETHInWei,
+        amount
+      ).toString()
+      const availableETH = web3Utils.fromWei(availableETHInWei, "ether")
+      const updatedBondinData = [...bondingState.data]
+      updatedBondinData[indexInArray] = {
+        ...obsoleteData,
+        availableETH,
+        availableETHInWei,
+      }
+      updateBondinData(updatedBondinData)
+    },
+    [updateBondinData, bondingState.data]
+  )
+
+  const subscribeToUnbondedValueDepositedCallback = (event) => {
+    unbondedValueUpdated(event)
   }
 
   useSubscribeToContractEvent(
     KEEP_BONDING_CONTRACT_NAME,
     "UnbondedValueDeposited",
     subscribeToUnbondedValueDepositedCallback
+  )
+
+  const unbondedValueWithdrawnCallback = (event) => {
+    unbondedValueUpdated(event, sub)
+  }
+
+  useSubscribeToContractEvent(
+    KEEP_BONDING_CONTRACT_NAME,
+    "UnbondedValueWithdrawn",
+    unbondedValueWithdrawnCallback
   )
 
   const onAuthorizationSuccessCallback = useCallback(
