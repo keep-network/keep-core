@@ -5,10 +5,10 @@ import { useFetchData } from "../hooks/useFetchData"
 import { LoadingOverlay } from "./Loadable"
 import { Web3Context } from "./WithWeb3Context"
 import UndelegateStakeButton from "./UndelegateStakeButton"
-import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import Banner, { BANNER_TYPE } from "./Banner"
 import moment from "moment"
 import TokenAmount from "./TokenAmount"
+import { formatDate } from "../utils/general.utils"
 
 const DelegatedTokens = (props) => {
   const { yourAddress } = useContext(Web3Context)
@@ -23,46 +23,56 @@ const DelegatedTokens = (props) => {
       ownerAddress,
       beneficiaryAddress,
       authorizerAddress,
-      undelegationStatus,
       isUndelegationFromGrant,
       isInInitializationPeriod,
       undelegationPeriod,
       isManagedGrant,
       managedGrantContractInstance,
+      delegationStatus,
+      undelegationCompletedAt,
     },
   } = state
 
   const undelegationSuccessCallback = () => {
-    setData({ ...state.data, undelegationStatus: PENDING_STATUS })
+    setData({ ...state.data, delegationStatus: "UNDELEGATED" })
   }
 
   const cancelSuccessCallback = () => {
     setData({
       ...state.data,
       stakedBalance: "0",
-      undelegationStatus: COMPLETE_STATUS,
+      delegationStatus: "CANCELED",
     })
   }
 
+  const getUndelegationBannerTitle = () => {
+    const undelegationPeriodRelativeTime = moment()
+      .add(undelegationPeriod, "seconds")
+      .fromNow(true)
+    const isUndelegationPeriodOver = moment().isAfter(undelegationCompletedAt)
+    const title = isUndelegationPeriodOver
+      ? `Completed at ${formatDate(undelegationCompletedAt)}`
+      : `Estimated to complete in ${undelegationPeriodRelativeTime}.`
+
+    return `Undelegation is pending. ${title}`
+  }
+
   const renderUndelegationStatus = () => {
-    if (undelegationStatus === PENDING_STATUS) {
-      const undelegationPeriodRelativeTime = moment()
-        .add(undelegationPeriod, "seconds")
-        .fromNow(true)
-      const title = `Undelegation is pending. Estimated to complete in ${undelegationPeriodRelativeTime}.`
+    if (delegationStatus) {
+      const title =
+        delegationStatus === "UNDELEGATED"
+          ? getUndelegationBannerTitle()
+          : `Delegation ${delegationStatus}`
+      let bannerType = BANNER_TYPE.PENDING
+      if (delegationStatus === "CANCELED") {
+        bannerType = BANNER_TYPE.DISABLED
+      } else if (delegationStatus === "RECOVERED") {
+        bannerType = BANNER_TYPE.SUCCESS
+      }
+
       return (
         <div className="self-start">
-          <Banner type={BANNER_TYPE.PENDING} title={title} withIcon />
-        </div>
-      )
-    } else if (undelegationStatus === COMPLETE_STATUS) {
-      return (
-        <div className="self-start">
-          <Banner
-            type={BANNER_TYPE.SUCCESS}
-            title="Undelegation completed"
-            withIcon
-          />
+          <Banner type={bannerType} title={title} withIcon />
         </div>
       )
     } else {
@@ -80,10 +90,12 @@ const DelegatedTokens = (props) => {
           isInInitializationPeriod={isInInitializationPeriod}
           isManagedGrant={isManagedGrant}
           managedGrantContractInstance={managedGrantContractInstance}
+          disabled={stakedBalance === "0" || !stakedBalance}
         />
       )
     }
   }
+
   return (
     <LoadingOverlay isFetching={isFetching}>
       <section className="flex row wrap">
