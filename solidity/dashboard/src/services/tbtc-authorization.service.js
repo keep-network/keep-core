@@ -200,12 +200,9 @@ const fetchBondingData = async (web3Context) => {
         createdBonds[i].referenceID
       )
 
-      if (operatorBondingDataMap.has(operatorAddress)) {
-        const updatedBondedEth = add(
-          operatorBondingDataMap.get(operatorAddress),
-          bondedEth
-        )
-        operatorBondingDataMap.set(operatorAddress, updatedBondedEth)
+      const currentBond = operatorBondingDataMap.get(operatorAddress)
+      if (currentBond) {
+        operatorBondingDataMap.set(operatorAddress, add(currentBond, bondedEth))
       } else {
         operatorBondingDataMap.set(operatorAddress, bondedEth)
       }
