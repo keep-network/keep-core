@@ -9,6 +9,7 @@ import {
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
 } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
+import { add } from "../utils/arithmetics.utils"
 import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   getBondedECDSAKeepFactoryAddress,
@@ -189,17 +190,25 @@ const fetchBondingData = async (web3Context) => {
 
     const operatorBondingDataMap = new Map()
     for (let i = 0; i < createdBonds.length; i++) {
+      const operatorAddress = web3Utils.toChecksumAddress(
+        createdBonds[i].operator
+      )
       const bondedEth = await fetchLockedBondAmount(
         web3Context,
-        createdBonds[i].operator,
+        operatorAddress,
         createdBonds[i].holder,
         createdBonds[i].referenceID
       )
 
-      operatorBondingDataMap.set(
-        web3Utils.toChecksumAddress(createdBonds[i].operator),
-        bondedEth
-      )
+      if (operatorBondingDataMap.has(operatorAddress)) {
+        const updatedBondedEth = add(
+          operatorBondingDataMap.get(operatorAddress),
+          bondedEth
+        )
+        operatorBondingDataMap.set(operatorAddress, updatedBondedEth)
+      } else {
+        operatorBondingDataMap.set(operatorAddress, bondedEth)
+      }
     }
 
     for (const [operatorAddress, isWithdrawable] of operators.entries()) {
