@@ -135,17 +135,17 @@ const depositEthForOperator = async (
     .on("transactionHash", onTransactionHashCallback)
 }
 
-const withdrawAllEthForOperator = async (
+const withdrawUnbondedEth = async (
   web3Context,
   data,
   onTransactionHashCallback
 ) => {
   const { keepBondingContract, yourAddress } = web3Context
-  const { operatorAddress, availableETH } = data
-  const availableInWei = web3Utils.toWei(availableETH.toString(), "ether")
+  const { operatorAddress, ethToWithdraw } = data
+  const weiToWithdraw = web3Utils.toWei(ethToWithdraw.toString(), "ether")
 
   await keepBondingContract.methods
-    .withdraw(availableInWei, operatorAddress)
+    .withdraw(weiToWithdraw, operatorAddress)
     .send({ from: yourAddress })
     .on("transactionHash", onTransactionHashCallback)
 }
@@ -415,5 +415,5 @@ export const tbtcAuthorizationService = {
   authorizeTBTCSystem,
   fetchBondingData,
   depositEthForOperator,
-  withdrawAllEthForOperator,
+  withdrawUnbondedEth,
 }
