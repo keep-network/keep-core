@@ -72,6 +72,9 @@ FROM runtime
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 
+# Run as a user without privileges.
+USER nobody
+
 # ENTRYPOINT cant handle ENV variables.
 ENTRYPOINT ["keep-client", "-config", "/keepclient/config.toml"]
 
