@@ -30,6 +30,10 @@ require (
 	github.com/pborman/uuid v1.2.0
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/urfave/cli v1.22.1
+	go.uber.org/automaxprocs v1.3.0
 	golang.org/x/crypto v0.0.0-20200208060501-ecb85df21340
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
+	golang.org/x/tools v0.0.0-20200522201501-cb1345f3a375 // indirect
+	honnef.co/go/tools v0.0.1-2020.1.4 // indirect
 )

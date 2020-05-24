@@ -11,6 +11,7 @@ import (
 	"github.com/keep-network/keep-common/pkg/logging"
 	"github.com/keep-network/keep-core/cmd"
 	"github.com/urfave/cli"
+	_ "go.uber.org/automaxprocs"
 )
 
 const defaultConfigPath = "./config.toml"
