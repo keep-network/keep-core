@@ -3,12 +3,12 @@ import { DataTable, Column } from "../DataTable"
 
 const TerminologyDataTable = () => (
   <section className="tile">
-    <header className="flex row wrap">
+    <header className="flex row wrap mb-1">
       <h3 className="text-grey-70">Quick Terminology</h3>
       <a
         href="https://github.com/keep-network/keep-core/blob/master/docs/glossary.adoc"
         className="arrow-link"
-        style={{ marginLeft: "auto", paddingRight: "2rem" }}
+        style={{ marginLeft: "auto", marginRight: "2rem" }}
       >
         Further Reading in GitHub
       </a>

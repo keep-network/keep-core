@@ -26,11 +26,11 @@ const roles = [
 const DelegationDiagram = () => {
   return (
     <Tile title="Diagram of Delegation Roles" titleClassName="h3 text-grey-70">
-      <div className="flex row center">
+      <div className="flex row center mt-2">
         <Icons.KeepOutline />
         <h4 className="ml-1">Owner</h4>
       </div>
-      <div className="text-big text-grey-60">
+      <div className="text-big text-grey-60" style={{ marginTop: "0.5rem" }}>
         The original KEEP token holder. The owner delegates stake to a trusted
         third party (operator) to stake on their behalf.
       </div>

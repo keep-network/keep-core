@@ -1,3 +1,12 @@
+.glossary-page-wrapper {
+    display: flex;
+    flex-direction: column-reverse;
+
+    @media screen and (min-width: 1250px) {
+        flex-direction: row;
+    }
+}
+
 section#documentation {
     
     ul.documentation-list {
@@ -22,13 +31,14 @@ section#documentation {
 
 section#delegation-diagram {
     display: flex;
+    flex-direction: column;
     margin-top: 2rem;
 
     section.roles {
         flex: 1;
         align-self: start;
         border-left: 1px solid @color-grey-30;
-        // padding: 2rem;
+        margin-bottom: 2rem;
 
         ul {
             padding-left: 1.25rem;
@@ -46,7 +56,59 @@ section#delegation-diagram {
         flex: 1;
         align-items: center;
         justify-content: center;
-        padding: 3.875rem 2.8rem;
+        padding: 2rem 1rem;
         background-color: @color-grey-10;
+    }
+
+    @media screen and (min-width: 850px) {
+        flex-direction: row;
+    }
+}
+
+nav.glossary-nav {
+    position: sticky;
+    min-width: 250px;
+
+    @media screen and (min-width: 1250px) {
+        align-self: start;
+        margin-left: 2rem;
+    }
+
+    ul {
+        margin-top: 1rem;
+        padding: 2px 0 0 10px;
+        border-left: 1px solid @color-grey-20;
+
+        li {
+            a {
+                position: relative;
+                color:  @color-grey-50;
+                transition: all 0.3s ease;
+
+                &::before {
+                    content: " ";
+                    position: absolute;
+                    width: 2px;
+                    height: 100%;
+                    left: -10px;
+                    top: 12.5%;
+                    background-color: @primary-color;
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                }
+
+                &:hover {
+                    text-decoration: none;
+                }
+
+                .active, &:hover {
+                    color: @color-black;
+
+                    &::before {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
     }
 }
