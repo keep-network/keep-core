@@ -1,0 +1,52 @@
+section#documentation {
+    
+    ul.documentation-list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        li {
+            display: flex;
+            margin: 1rem;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @media screen and (min-width: 600px) {
+            flex-direction: row;
+            justify-content: space-evenly;
+        }
+    }
+}
+
+section#delegation-diagram {
+    display: flex;
+    margin-top: 2rem;
+
+    section.roles {
+        flex: 1;
+        align-self: start;
+        border-left: 1px solid @color-grey-30;
+        // padding: 2rem;
+
+        ul {
+            padding-left: 1.25rem;
+            li {
+                margin-bottom: 2rem;
+                &:last-of-type {
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
+
+    section.diagram {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        padding: 3.875rem 2.8rem;
+        background-color: @color-grey-10;
+    }
+}
