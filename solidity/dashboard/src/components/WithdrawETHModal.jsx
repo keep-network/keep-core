@@ -9,6 +9,7 @@ import web3Utils from "web3-utils"
 import { useWeb3Context } from "./WithWeb3Context"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useShowMessage, messageType } from "./Message"
+import * as Icons from "./Icons"
 
 const AvailableEthCell = React.memo(({ availableETH }) => {
   return (
@@ -26,7 +27,7 @@ const AvailableEthCell = React.memo(({ availableETH }) => {
       >
         {availableETH}
       </span>
-      &nbsp;ETH
+      <span style={{ color: `${colors.grey60}` }}>&nbsp;ETH</span>
     </>
   )
 })
@@ -65,10 +66,14 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
   return (
     <>
       <h4 style={{ marginBottom: "0.5rem" }}>Amount available to withdraw.</h4>
-      <AvailableEthCell availableETH={availableETH} />
-      {/* TODO: add a "diamond" icon */}
-      <div className="text-validation">
-        Withdrawn ETH will go the beneficiary address.
+      <div className="mt-1">
+        <AvailableEthCell availableETH={availableETH} />
+      </div>
+      <div className="text-validation mb-1 mt-2 flex row center">
+        <Icons.Diamond />
+        <span className="pl-1">
+          Withdrawn ETH will go the beneficiary address.
+        </span>
       </div>
       <WithdrawETHFormik
         web3={web3}
