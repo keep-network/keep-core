@@ -22,7 +22,7 @@ cd $KEEP_CORE_SOL_PATH
 # printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 # rm -f package-lock.json
 # rm -rf node_modules/
-# npm install
+npm install
 
 printf "${LOG_START}Migrating contracts for Keep-Core...${LOG_END}"
 rm -rf build/
@@ -75,7 +75,7 @@ cd $DASHBOARD_DIR_PATH
 # printf "${LOG_START}Installing NPM dependencies in dashboard...${LOG_END}"
 # rm -rf node_modules/
 # rm package-lock.json
-# npm install
+npm install
 
 cd $KEEP_CORE_SOL_PATH
 
