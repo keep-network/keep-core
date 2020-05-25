@@ -50,10 +50,6 @@ library ModUtils {
             return 0;
         }
 
-        if (p == 2) {
-            return p;
-        }
-
         if (p % 4 == 3) {
             return modExp(a, (p + 1) / 4, p);
         }
