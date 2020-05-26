@@ -5,7 +5,7 @@ import { Link } from "react-scroll"
 const Navigation = () => {
   return (
     <nav className="tile glossary-nav">
-      <h5>Content</h5>
+      <h5 className="text-grey-50">Contents</h5>
       <ul>
         <GlossaryLink
           to={{ pathname: "/glossary", hash: "#documentation" }}
