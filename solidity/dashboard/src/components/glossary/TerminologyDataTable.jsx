@@ -2,7 +2,7 @@ import React from "react"
 import { DataTable, Column } from "../DataTable"
 
 const TerminologyDataTable = () => (
-  <section className="tile">
+  <section className="tile" id="quick-terminology">
     <header className="flex row wrap mb-1">
       <h3 className="text-grey-70">Quick Terminology</h3>
       <a
