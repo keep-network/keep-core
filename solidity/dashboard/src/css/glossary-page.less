@@ -72,6 +72,7 @@ nav.glossary-nav {
     @media screen and (min-width: 1250px) {
         align-self: start;
         margin-left: 2rem;
+        top: calc(@header-height + 2rem);
     }
 
     ul {
@@ -101,7 +102,7 @@ nav.glossary-nav {
                     text-decoration: none;
                 }
 
-                .active, &:hover {
+                &.active, &:hover {
                     color: @color-black;
 
                     &::before {
