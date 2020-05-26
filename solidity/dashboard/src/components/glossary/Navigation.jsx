@@ -1,18 +1,22 @@
 import React from "react"
-import { Link, useRouteMatch } from "react-router-dom"
+import { useLocation, useHistory } from "react-router-dom"
+import { Link } from "react-scroll"
 
 const Navigation = () => {
   return (
     <nav className="tile glossary-nav">
       <h5>Content</h5>
       <ul>
-        <GlossaryLink to={"/glossary#documentation"} label="Documentation" />
         <GlossaryLink
-          to={"/glossary#documentation"}
+          to={{ pathname: "/glossary", hash: "#documentation" }}
+          label="Documentation"
+        />
+        <GlossaryLink
+          to={{ pathname: "/glossary", hash: "#quick-terminology" }}
           label="Quick Terminology"
         />
         <GlossaryLink
-          to={"/glossary#documentation"}
+          to={{ pathname: "/glossary", hash: "#diagram" }}
           label="Delegation Diagram"
         />
       </ul>
@@ -20,15 +24,22 @@ const Navigation = () => {
   )
 }
 
-const GlossaryLink = ({ label, to, exact }) => {
-  const match = useRouteMatch({
-    path: to,
-    exact,
-  })
+const GlossaryLink = ({ label, to }) => {
+  const { hash } = useLocation()
+  const history = useHistory()
 
   return (
-    <li className="">
-      <Link to={to} exact className="text-small">
+    <li>
+      <Link
+        className={`text-small${hash === to.hash ? " active" : ""}`}
+        activeClass="active"
+        to={to.hash.slice(1)}
+        spy={true}
+        smooth={true}
+        offset={-200}
+        duration={500}
+        onSetActive={() => history.replace(to)}
+      >
         {label}
       </Link>
     </li>
