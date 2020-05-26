@@ -25,7 +25,11 @@ const roles = [
 
 const DelegationDiagram = () => {
   return (
-    <Tile title="Diagram of Delegation Roles" titleClassName="h3 text-grey-70">
+    <Tile
+      title="Diagram of Delegation Roles"
+      titleClassName="h3 text-grey-70"
+      id="diagram"
+    >
       <div className="flex row center mt-2">
         <Icons.KeepOutline />
         <h4 className="ml-1">Owner</h4>
