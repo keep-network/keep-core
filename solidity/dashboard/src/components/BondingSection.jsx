@@ -1,15 +1,12 @@
-import React, { useCallback } from "react"
+import React, { useState } from "react"
 import Tile from "./Tile"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
-import Button, { SubmitButton } from "./Button"
+import Button from "./Button"
 import { displayAmount } from "../utils/token.utils"
 import { useModal } from "../hooks/useModal"
 import AddEthModal from "./AddETHModal"
 import WithdrawEthModal from "./WithdrawETHModal"
-import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
-import { useWeb3Context } from "./WithWeb3Context"
-import { useShowMessage, messageType } from "./Message"
 import { colors } from "../constants/colors"
 import { gt } from "../utils/arithmetics.utils"
 
@@ -100,36 +97,44 @@ const AvailableEthCell = React.memo(({ availableETH }) => {
 
 const ActionCell = React.memo(
   ({ availableETH, availableETHInWei, operatorAddress, isWithdrawable }) => {
-    const addEthModal = useModal()
-    const withdrawalEthModal = useModal()
+    const { openModal, closeModal, ModalComponent } = useModal()
+    const [action, setAction] = useState("withdraw")
+    const title = action === "add" ? "Add ETH" : "Withdraw ETH"
 
     return (
       <>
-        <addEthModal.ModalComponent title="Add ETH">
-          <AddEthModal
-            operatorAddress={operatorAddress}
-            closeModal={addEthModal.closeModal}
-          />
-        </addEthModal.ModalComponent>
-        <withdrawalEthModal.ModalComponent title="Withdraw ETH">
-          <WithdrawEthModal
-            operatorAddress={operatorAddress}
-            availableETH={availableETH}
-            closeModal={withdrawalEthModal.closeModal}
-          />
-        </withdrawalEthModal.ModalComponent>
+        <ModalComponent title={title}>
+          {action === "add" ? (
+            <AddEthModal
+              operatorAddress={operatorAddress}
+              closeModal={closeModal}
+            />
+          ) : (
+            <WithdrawEthModal
+              operatorAddress={operatorAddress}
+              availableETH={availableETH}
+              closeModal={closeModal}
+            />
+          )}
+        </ModalComponent>
         <div
           className="flex row center space-between"
           style={{ marginLeft: "auto" }}
         >
           <Button
-            onClick={addEthModal.openModal}
+            onClick={() => {
+              setAction("add")
+              openModal()
+            }}
             className="btn btn-secondary btn-sm"
           >
             add eth
           </Button>
           <Button
-            onClick={withdrawalEthModal.openModal}
+            onClick={() => {
+              setAction("withdraw")
+              openModal()
+            }}
             className="btn btn-secondary btn-sm"
             disabled={!(isWithdrawable && gt(availableETHInWei, 0))}
           >
