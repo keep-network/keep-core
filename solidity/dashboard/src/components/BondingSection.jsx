@@ -7,7 +7,7 @@ import { displayAmount } from "../utils/token.utils"
 import { useModal } from "../hooks/useModal"
 import AddEthModal from "./AddETHModal"
 import WithdrawEthModal from "./WithdrawETHModal"
-import { colors } from "../constants/colors"
+import AvailableEthAmount from "./AvailableEthAmount"
 import { gt } from "../utils/arithmetics.utils"
 
 export const BondingSection = ({ data }) => {
@@ -44,7 +44,7 @@ export const BondingSection = ({ data }) => {
           header="available eth"
           field="availableETH"
           renderContent={({ availableETH }) => {
-            return <AvailableEthCell availableETH={availableETH} />
+            return <AvailableEthAmount availableETH={availableETH} />
           }}
         />
         <Column
@@ -73,27 +73,6 @@ export const BondingSection = ({ data }) => {
 }
 
 export default React.memo(BondingSection)
-
-const AvailableEthCell = React.memo(({ availableETH }) => {
-  return (
-    <>
-      <span
-        className="text-big text-grey-70"
-        style={{
-          textAlign: "right",
-          padding: "0.25rem 1rem",
-          paddingLeft: "2rem",
-          borderRadius: "100px",
-          border: `1px solid ${colors.grey20}`,
-          backgroundColor: `${colors.grey10}`,
-        }}
-      >
-        {availableETH}
-      </span>
-      &nbsp;ETH
-    </>
-  )
-})
 
 const ActionCell = React.memo(
   ({ availableETH, availableETHInWei, operatorAddress, isWithdrawable }) => {
