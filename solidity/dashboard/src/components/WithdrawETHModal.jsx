@@ -34,12 +34,12 @@ const AvailableEthCell = React.memo(({ availableETH }) => {
 
 const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
   const web3Context = useWeb3Context()
-  const { yourAddress, web3 } = web3Context
+  const { web3 } = web3Context
   const showMessage = useShowMessage()
 
   const onSubmit = useCallback(
     async (formValues, onTransactionHashCallback) => {
-      const { ethAmount: ethToWithdraw } = formValues
+      const { ethToWithdraw: ethToWithdraw } = formValues
       try {
         await tbtcAuthorizationService.withdrawUnbondedEth(
           web3Context,
@@ -78,7 +78,7 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
       <WithdrawETHFormik
         web3={web3}
         onSubmit={onSubmit}
-        yourAddress={yourAddress}
+        availableETH={availableETH}
         closeModal={closeModal}
       />
     </>
@@ -93,7 +93,7 @@ const WithdrawETHForm = ({ onSubmit, closeModal, ...formikProps }) => {
   return (
     <form>
       <FormInput
-        name="ethAmount"
+        name="ethToWithdraw"
         type="text"
         label="ETH Amount"
         placeholder="0"
@@ -127,31 +127,33 @@ const WithdrawETHFormik = withFormik({
   validateOnChange: false,
   validateOnBlur: false,
   mapPropsToValues: () => ({
-    ethAmount: "0",
+    ethToWithdraw: "0",
   }),
-  validate: (values, { yourAddress, web3 }) => {
-    return web3.eth.getBalance(yourAddress).then((balance) => {
-      const { ethAmount } = values
-      const errors = {}
+  validate: (values, { availableETH }) => {
+    const { ethToWithdraw } = values
+    const errors = {}
 
-      const ethBalance = web3Utils.toBN(balance)
-      const valueInWei = web3Utils.toBN(
-        web3Utils.toWei(ethAmount ? ethAmount.toString() : "0")
-      )
-
-      if (!ethAmount) {
-        errors.ethAmount = "Required"
-      } else if (valueInWei.gt(ethBalance)) {
-        errors.ethAmount = `The value should be less than ${web3Utils.fromWei(
-          ethBalance.toString(),
-          "ether"
-        )}`
-      } else if (valueInWei.lte(web3Utils.toBN(0))) {
-        errors.ethAmount = "The value should be greater than 0"
-      }
-
+    if (isNaN(ethToWithdraw)) {
+      errors.ethToWithdraw = "A valid number must be provided"
       return getErrorsObj(errors)
-    })
+    }
+
+    const unbondedValueInWei = web3Utils.toBN(
+      web3Utils.toWei(availableETH ? availableETH.toString() : "0")
+    )
+    const valueToWithdrawInWei = web3Utils.toBN(
+      web3Utils.toWei(ethToWithdraw.toString())
+    )
+
+    if (valueToWithdrawInWei.gt(unbondedValueInWei)) {
+      errors.ethToWithdraw = `The withdrawable amount should be less than ${availableETH} Eth`
+    }
+
+    if (valueToWithdrawInWei.lte(web3Utils.toBN(0))) {
+      errors.ethToWithdraw = "The withdrawable amount should be greater than 0"
+    }
+
+    return getErrorsObj(errors)
   },
   displayName: "WithdrawETHForm",
 })(WithdrawETHForm)
