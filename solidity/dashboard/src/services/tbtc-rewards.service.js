@@ -51,7 +51,7 @@ const fetchBeneficiaryOperatorsFromDeposit = async (
     await bondedECDSAKeepContract.methods.getMembers().call()
   )
 
-  const benficiaryOperators = []
+  const beneficiaryOperators = []
   for (const operator of bondedMembers) {
     const beneficiaryOfOperator = await contractService.makeCall(
       web3Context,
@@ -60,10 +60,10 @@ const fetchBeneficiaryOperatorsFromDeposit = async (
       operator
     )
     if (isSameEthAddress(beneficiaryOfOperator, beneficairyAddress))
-      benficiaryOperators.push(operator)
+      beneficiaryOperators.push(operator)
   }
 
-  return benficiaryOperators
+  return beneficiaryOperators
 }
 
 export const tbtcRewardsService = {
