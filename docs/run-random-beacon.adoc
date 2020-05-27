@@ -29,10 +29,10 @@ these capabilities consider the following criteria:
 |n1-standard-2
 
 |AWS
-|m5.large
+|t3.medium
 
 |Azure
-|D2s v3
+|A2 v2
 
 |Self-hosted
 |2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
