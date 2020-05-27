@@ -20,6 +20,11 @@ these capabilities consider the following criteria:
   application port running under the same IP.
 - Recommended machine types by provider:
 
+Your operating environment will ultimately dictate what machine type to go with.  This is
+particulary relevant if you're running a containerized solution where multiple applications
+are sharing VM resources.  The below types are sufficient for running at least one instance of the
+Keep Random Beacon client.
+
 [%header,cols=2*]
 |===
 |Cloud Provider
