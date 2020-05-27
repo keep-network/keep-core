@@ -57,6 +57,11 @@ truffle exec ./scripts/delegate-tokens.js
 
 ### Work with contracts deployed locally
 
+#### Prerequisite
+
+* clone [keep-ecdsa](https://github.com/keep-network/keep-ecdsa)
+* clone [tbtc](https://github.com/keep-network/tbtc)
+
 #### To quickly install and start working on the Keep Dashboard dApp, run `./scripts/start_dashboard.sh`. This script will:
 * migrate `keep-core`, `tbtc`, `keep-ecdsa` contracts,
 * fetch the necessary addresses and replace them in `keep-ecdsa/solidity/migrations/external-contracts/js`
