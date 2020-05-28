@@ -9,7 +9,7 @@ import * as Icons from "./Icons"
 import AvailableEthAmount from "./AvailableEthAmount"
 import AvailableETHForm from "./AvailableETHForm"
 
-const WithdrawETHModal = ({ operatorAddress, availableETH, onCancel }) => {
+const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
   const web3Context = useWeb3Context()
   const { web3 } = web3Context
   const showMessage = useShowMessage()
@@ -56,7 +56,7 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, onCancel }) => {
         web3={web3}
         onSubmit={onSubmit}
         availableETH={availableETH}
-        onCancel={onCancel}
+        onCancel={closeModal}
         submitBtnText="withdraw eth"
       />
     </>
