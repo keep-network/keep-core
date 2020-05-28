@@ -1,4 +1,5 @@
 import React from "react"
+import * as Icons from "./Icons"
 
 const Loadable = ({ text, isFetching, children }) =>
   isFetching ? <div>{text}</div> : children
@@ -22,7 +23,7 @@ export const LoadingOverlay = React.memo(
       <div className={`loading-overlay-container ${classNames}`}>
         {children}
         <div className={`loading-overlay${isFetching ? "" : " hidden"}`}>
-          Loading...
+          <Icons.KeepLoadingIndicator />
         </div>
       </div>
     )
