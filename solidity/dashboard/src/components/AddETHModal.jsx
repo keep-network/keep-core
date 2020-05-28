@@ -7,7 +7,7 @@ import { useWeb3Context } from "./WithWeb3Context"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useShowMessage, messageType } from "./Message"
 
-const AddEthModal = ({ operatorAddress, closeModal }) => {
+const AddEthModal = ({ operatorAddress, onCancel }) => {
   const web3Context = useWeb3Context()
   const { yourAddress, web3 } = web3Context
   const showMessage = useShowMessage()
@@ -49,7 +49,7 @@ const AddEthModal = ({ operatorAddress, closeModal }) => {
         web3={web3}
         onSubmit={onSubmit}
         yourAddress={yourAddress}
-        closeModal={closeModal}
+        onCancel={onCancel}
         submitBtnText="add eth"
       />
     </>

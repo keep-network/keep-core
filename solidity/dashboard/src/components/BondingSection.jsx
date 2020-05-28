@@ -90,13 +90,13 @@ const ActionCell = React.memo(
           {action === "add" ? (
             <AddEthModal
               operatorAddress={operatorAddress}
-              closeModal={closeModal}
+              onCancel={closeModal}
             />
           ) : (
             <WithdrawEthModal
               operatorAddress={operatorAddress}
               availableETH={availableETH}
-              closeModal={closeModal}
+              onCancel={closeModal}
             />
           )}
         </ModalComponent>

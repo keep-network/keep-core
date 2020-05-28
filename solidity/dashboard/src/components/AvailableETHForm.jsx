@@ -6,7 +6,7 @@ import { colors } from "../constants/colors"
 
 const AvailableETHForm = ({
   onSubmit,
-  closeModal,
+  onCancel,
   submitBtnText,
   ...formikProps
 }) => {
@@ -38,7 +38,7 @@ const AvailableETHForm = ({
         >
           {submitBtnText}
         </SubmitButton>
-        <span onClick={closeModal} className="ml-1 text-link">
+        <span onClick={onCancel} className="ml-1 text-link">
           Cancel
         </span>
       </div>
