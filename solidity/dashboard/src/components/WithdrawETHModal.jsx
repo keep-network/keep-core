@@ -73,8 +73,6 @@ const WithdrawETHFormik = withFormik({
   }),
   validate: (values, { availableETH }) => {
     const { ethAmount } = values
-
-    console.log("ethAmount in withdrawal", ethAmount)
     const errors = {}
 
     if (isNaN(ethAmount)) {
