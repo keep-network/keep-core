@@ -4,7 +4,12 @@ import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import FormInput from "./FormInput"
 import { colors } from "../constants/colors"
 
-const AvailableETHForm = ({ onSubmit, closeModal, action, ...formikProps }) => {
+const AvailableETHForm = ({
+  onSubmit,
+  closeModal,
+  submitBtnText,
+  ...formikProps
+}) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
 
   return (
@@ -31,7 +36,7 @@ const AvailableETHForm = ({ onSubmit, closeModal, action, ...formikProps }) => {
           triggerManuallyFetch={true}
           disabled={!formikProps.dirty}
         >
-          {action}
+          {submitBtnText}
         </SubmitButton>
         <span onClick={closeModal} className="ml-1 text-link">
           Cancel

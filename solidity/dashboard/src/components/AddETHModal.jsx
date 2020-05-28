@@ -50,7 +50,7 @@ const AddEthModal = ({ operatorAddress, closeModal }) => {
         onSubmit={onSubmit}
         yourAddress={yourAddress}
         closeModal={closeModal}
-        action="add"
+        submitBtnText="add eth"
       />
     </>
   )

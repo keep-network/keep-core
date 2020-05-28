@@ -57,7 +57,7 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
         onSubmit={onSubmit}
         availableETH={availableETH}
         closeModal={closeModal}
-        action="withdraw"
+        submitBtnText="withdraw eth"
       />
     </>
   )
