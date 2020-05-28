@@ -79,6 +79,10 @@ const ActionCell = React.memo(
     const { openModal, closeModal, ModalComponent } = useModal()
     const [action, setAction] = useState("withdraw")
     const title = action === "add" ? "Add ETH" : "Withdraw ETH"
+    const onBtnClick = (event) => {
+      setAction(event.currentTarget.id)
+      openModal()
+    }
 
     return (
       <>
@@ -101,19 +105,15 @@ const ActionCell = React.memo(
           style={{ marginLeft: "auto" }}
         >
           <Button
-            onClick={() => {
-              setAction("add")
-              openModal()
-            }}
+            id="add"
+            onClick={onBtnClick}
             className="btn btn-secondary btn-sm"
           >
             add eth
           </Button>
           <Button
-            onClick={() => {
-              setAction("withdraw")
-              openModal()
-            }}
+            id="withdraw"
+            onClick={onBtnClick}
             className="btn btn-secondary btn-sm"
             disabled={!(isWithdrawable && gt(availableETHInWei, 0))}
           >
