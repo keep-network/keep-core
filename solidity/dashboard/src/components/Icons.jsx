@@ -21,6 +21,7 @@ import { ReactComponent as TBTC } from "../static/svg/tbtc.svg"
 import { ReactComponent as KeepBlackGreen } from "../static/svg/keep-token.svg"
 import { ReactComponent as Filter } from "../static/svg/filter-icon.svg"
 import { ReactComponent as Diamond } from "../static/svg/diamond.svg"
+import { ReactComponent as KeepLoadingIndicator } from "../static/svg/keep-loading-indicator.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -488,4 +489,5 @@ export {
   KeepBlackGreen,
   Filter,
   Diamond,
+  KeepLoadingIndicator,
 }
