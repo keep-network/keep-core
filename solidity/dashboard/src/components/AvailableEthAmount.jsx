@@ -17,7 +17,7 @@ const AvailableEthAmount = React.memo(({ availableETH }) => {
       >
         {availableETH}
       </span>
-      <span style={{ color: `${colors.grey60}` }}>&nbsp;ETH</span>
+      <span className="text-grey-60">&nbsp;ETH</span>
     </>
   )
 })
