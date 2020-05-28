@@ -10,7 +10,7 @@ const AvailableETHForm = ({ onSubmit, closeModal, action, ...formikProps }) => {
   return (
     <form>
       <FormInput
-        name="ethToWithdraw"
+        name="ethAmount"
         type="text"
         label="ETH Amount"
         placeholder="0"

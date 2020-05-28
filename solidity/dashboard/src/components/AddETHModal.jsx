@@ -14,11 +14,11 @@ const AddEthModal = ({ operatorAddress, closeModal }) => {
 
   const onSubmit = useCallback(
     async (formValues, onTransactionHashCallback) => {
-      const { ethAmount: value } = formValues
+      const { ethAmount } = formValues
       try {
         await tbtcAuthorizationService.depositEthForOperator(
           web3Context,
-          { operatorAddress, value },
+          { operatorAddress, ethAmount },
           onTransactionHashCallback
         )
         showMessage({

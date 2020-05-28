@@ -16,11 +16,11 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
 
   const onSubmit = useCallback(
     async (formValues, onTransactionHashCallback) => {
-      const { ethToWithdraw: ethToWithdraw } = formValues
+      const { ethAmount } = formValues
       try {
         await tbtcAuthorizationService.withdrawUnbondedEth(
           web3Context,
-          { operatorAddress, ethToWithdraw },
+          { operatorAddress, ethAmount },
           onTransactionHashCallback
         )
         showMessage({
@@ -69,14 +69,16 @@ const WithdrawETHFormik = withFormik({
   validateOnChange: false,
   validateOnBlur: false,
   mapPropsToValues: () => ({
-    ethToWithdraw: "0",
+    ethAmount: "0",
   }),
   validate: (values, { availableETH }) => {
-    const { ethToWithdraw } = values
+    const { ethAmount } = values
+
+    console.log("ethAmount in withdrawal", ethAmount)
     const errors = {}
 
-    if (isNaN(ethToWithdraw)) {
-      errors.ethToWithdraw = "A valid number must be provided"
+    if (isNaN(ethAmount)) {
+      errors.ethAmount = "A valid number must be provided"
       return getErrorsObj(errors)
     }
 
@@ -84,15 +86,15 @@ const WithdrawETHFormik = withFormik({
       web3Utils.toWei(availableETH ? availableETH.toString() : "0")
     )
     const valueToWithdrawInWei = web3Utils.toBN(
-      web3Utils.toWei(ethToWithdraw.toString())
+      web3Utils.toWei(ethAmount.toString())
     )
 
     if (valueToWithdrawInWei.gt(unbondedValueInWei)) {
-      errors.ethToWithdraw = `The withdrawable amount should be less than ${availableETH} Eth`
+      errors.ethAmount = `The withdrawable amount should be less than ${availableETH} Eth`
     }
 
     if (valueToWithdrawInWei.lte(web3Utils.toBN(0))) {
-      errors.ethToWithdraw = "The withdrawable amount should be greater than 0"
+      errors.ethAmount = "The withdrawable amount should be greater than 0"
     }
 
     return getErrorsObj(errors)
