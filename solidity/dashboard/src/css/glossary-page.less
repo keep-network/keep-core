@@ -1,0 +1,116 @@
+.glossary-page-wrapper {
+    display: flex;
+    flex-direction: column-reverse;
+
+    @media screen and (min-width: 1250px) {
+        flex-direction: row;
+    }
+}
+
+section#documentation {
+    
+    ul.documentation-list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        li {
+            display: flex;
+            margin: 1rem;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        @media screen and (min-width: 600px) {
+            flex-direction: row;
+            justify-content: space-evenly;
+        }
+    }
+}
+
+section#delegation-diagram {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
+
+    section.roles {
+        flex: 1;
+        align-self: start;
+        border-left: 1px solid @color-grey-30;
+        margin-bottom: 2rem;
+        padding-right: 1rem;
+
+        ul {
+            padding-left: 1.25rem;
+            li {
+                margin-bottom: 2rem;
+                &:last-of-type {
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
+
+    section.diagram {
+        display: flex;
+        flex: 1;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background-color: @color-grey-10;
+    }
+
+    @media screen and (min-width: 850px) {
+        flex-direction: row;
+    }
+}
+
+nav.glossary-nav {
+    position: sticky;
+    min-width: 250px;
+
+    @media screen and (min-width: 1250px) {
+        align-self: start;
+        margin-left: 2rem;
+        top: calc(@header-height + 2rem);
+    }
+
+    ul {
+        margin-top: 1rem;
+        padding: 2px 0 0 10px;
+        border-left: 1px solid @color-grey-20;
+
+        li {
+            a {
+                position: relative;
+                color:  @color-grey-50;
+                transition: all 0.3s ease;
+
+                &::before {
+                    content: " ";
+                    position: absolute;
+                    width: 2px;
+                    height: 100%;
+                    left: -10px;
+                    top: 12.5%;
+                    background-color: @primary-color;
+                    opacity: 0;
+                    transition: all 0.3s ease;
+                }
+
+                &:hover {
+                    text-decoration: none;
+                }
+
+                &.active, &:hover {
+                    color: @color-black;
+
+                    &::before {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+    }
+}
