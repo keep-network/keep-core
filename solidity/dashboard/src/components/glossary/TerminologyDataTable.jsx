@@ -53,7 +53,7 @@ const terminology = [
   {
     term: "Signing Group",
     explanation:
-      "The signing group that will produce the next relay entry candidate. If this group fails to respond to the request in time, the lead responsibility may shift to another group. Signing members are membes of one complete signing group in the threshold relay.",
+      "The signing group that will produce the next relay entry candidate. If this group fails to respond to the request in time, the lead responsibility may shift to another group. Signing members are members of one complete signing group in the threshold relay.",
   },
   {
     term: "Stake",
