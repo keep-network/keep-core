@@ -22,12 +22,14 @@ export const LoadingOverlay = React.memo(
     return (
       <div className={`loading-overlay-container ${classNames}`}>
         {children}
-        <div className={`loading-overlay${isFetching ? "" : " hidden"}`}>
-          <Icons.KeepLoadingIndicator />
+        <div className={`loading-overlay ${isFetching ? "show" : "hidden"}`}>
+          <KeepLoadingIndicator />
         </div>
       </div>
     )
   }
 )
+
+export const KeepLoadingIndicator = () => <Icons.KeepLoadingIndicator />
 
 export default Loadable
