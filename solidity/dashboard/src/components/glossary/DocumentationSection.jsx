@@ -9,8 +9,16 @@ const docs = [
     link:
       "https://github.com/keep-network/keep-core/blob/master/docs/run-random-beacon.adoc",
   },
-  { title: "GitBook Staking Documentation", link: "https://github.com/" },
-  { title: "Staking Overview", link: "https://github.com/" },
+  {
+    title: "GitBook Staking Documentation",
+    link:
+      "https://keep-network.gitbook.io/staking-documentation/staking-basics/staking-101",
+  },
+  {
+    title: "Staking Overview",
+    link:
+      "https://github.com/keep-network/keep-core/blob/master/docs/random-beacon/staking/index.adoc ",
+  },
 ]
 
 const DocumentationSection = () => {
