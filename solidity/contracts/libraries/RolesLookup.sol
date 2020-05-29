@@ -22,7 +22,7 @@ library RolesLookup {
         address tokenOwner,
         address operator,
         TokenStaking tokenStaking
-    ) public view returns (bool) {
+    ) internal view returns (bool) {
         return tokenStaking.ownerOf(operator) == tokenOwner;
     }
 
@@ -35,7 +35,7 @@ library RolesLookup {
         address grantee,
         address operator,
         TokenGrant tokenGrant
-    ) public view returns (bool) {
+    ) internal view returns (bool) {
         address[] memory operators = tokenGrant.getGranteeOperators(grantee);
         return operators.contains(operator);
     }
@@ -52,7 +52,7 @@ library RolesLookup {
         address operator,
         address granteeContract,
         TokenGrant tokenGrant
-    ) public view returns (bool) {
+    ) internal view returns (bool) {
         require(
             ManagedGrant(granteeContract).grantee() == grantee,
             "Not a grantee of the provided contract"
