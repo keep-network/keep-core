@@ -415,6 +415,33 @@ const fetchAvailableAmount = async (web3Context, operator) => {
   )
 }
 
+const deauthorizeSortitionPoolContract = async (
+  web3Context,
+  data,
+  onTransactionHashCallback
+) => {
+  const { keepBondingContract, yourAddress } = web3Context
+  const { operatorAddress, poolAddress } = data
+
+  await keepBondingContract.methods
+    .deauthorizeSortitionPoolContract(operatorAddress, poolAddress)
+    .send({ from: yourAddress })
+    .on("transactionHash", onTransactionHashCallback)
+}
+
+const deauthorizeTBTCSystem = async (
+  web3Context,
+  operatorAddress,
+  onTransactionHashCallback
+) => {
+  const poolAddress = await fetchSortitionPoolForTbtc(web3Context)
+  await deauthorizeSortitionPoolContract(
+    web3Context,
+    { operatorAddress, poolAddress },
+    onTransactionHashCallback
+  )
+}
+
 export const tbtcAuthorizationService = {
   fetchTBTCAuthorizationData,
   authorizeBondedECDSAKeepFactory,
@@ -422,4 +449,5 @@ export const tbtcAuthorizationService = {
   fetchBondingData,
   depositEthForOperator,
   withdrawUnbondedEth,
+  deauthorizeTBTCSystem,
 }
