@@ -54,14 +54,14 @@ export const BondingSection = ({ data }) => {
           renderContent={({
             availableETH,
             operatorAddress,
-            isWithdrawable,
+            managedGrantAddress,
             availableETHInWei,
           }) => {
             return (
               <ActionCell
                 availableETH={availableETH}
                 operatorAddress={operatorAddress}
-                isWithdrawable={isWithdrawable}
+                managedGrantAddress={managedGrantAddress}
                 availableETHInWei={availableETHInWei}
               />
             )
@@ -75,7 +75,12 @@ export const BondingSection = ({ data }) => {
 export default React.memo(BondingSection)
 
 const ActionCell = React.memo(
-  ({ availableETH, availableETHInWei, operatorAddress, isWithdrawable }) => {
+  ({
+    availableETH,
+    availableETHInWei,
+    operatorAddress,
+    managedGrantAddress,
+  }) => {
     const { openModal, closeModal, ModalComponent } = useModal()
     const [action, setAction] = useState("withdraw")
     const title = action === "add" ? "Add ETH" : "Withdraw ETH"
@@ -97,6 +102,7 @@ const ActionCell = React.memo(
               operatorAddress={operatorAddress}
               availableETH={availableETH}
               closeModal={closeModal}
+              managedGrantAddress={managedGrantAddress}
             />
           )}
         </ModalComponent>
@@ -115,7 +121,7 @@ const ActionCell = React.memo(
             id="withdraw"
             onClick={onBtnClick}
             className="btn btn-secondary btn-sm"
-            disabled={!(isWithdrawable && gt(availableETHInWei, 0))}
+            disabled={!gt(availableETHInWei, 0)}
           >
             withdraw
           </Button>

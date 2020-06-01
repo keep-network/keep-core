@@ -9,7 +9,12 @@ import * as Icons from "./Icons"
 import AvailableEthAmount from "./AvailableEthAmount"
 import AvailableETHForm from "./AvailableETHForm"
 
-const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
+const WithdrawETHModal = ({
+  operatorAddress,
+  availableETH,
+  closeModal,
+  managedGrantAddress,
+}) => {
   const web3Context = useWeb3Context()
   const { web3 } = web3Context
   const showMessage = useShowMessage()
@@ -20,7 +25,7 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
       try {
         await tbtcAuthorizationService.withdrawUnbondedEth(
           web3Context,
-          { operatorAddress, ethAmount },
+          { operatorAddress, ethAmount, managedGrantAddress },
           onTransactionHashCallback
         )
         showMessage({
@@ -37,7 +42,7 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
         throw error
       }
     },
-    [operatorAddress, showMessage, web3Context]
+    [operatorAddress, showMessage, managedGrantAddress, web3Context]
   )
 
   return (

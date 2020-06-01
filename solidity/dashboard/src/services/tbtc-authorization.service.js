@@ -142,11 +142,17 @@ const withdrawUnbondedEth = async (
   onTransactionHashCallback
 ) => {
   const { keepBondingContract, yourAddress } = web3Context
-  const { operatorAddress, ethAmount } = data
+  const { operatorAddress, ethAmount, managedGrantAddress } = data
   const weiToWithdraw = web3Utils.toWei(ethAmount.toString(), "ether")
+  const contractSendMethod = managedGrantAddress
+    ? keepBondingContract.methods.withdrawAsManagedGrantee(
+        weiToWithdraw,
+        operatorAddress,
+        managedGrantAddress
+      )
+    : keepBondingContract.methods.withdraw(weiToWithdraw, operatorAddress)
 
-  await keepBondingContract.methods
-    .withdraw(weiToWithdraw, operatorAddress)
+  await contractSendMethod
     .send({ from: yourAddress })
     .on("transactionHash", onTransactionHashCallback)
 }
@@ -208,7 +214,7 @@ const fetchBondingData = async (web3Context) => {
       }
     }
 
-    for (const [operatorAddress, isWithdrawable] of operators.entries()) {
+    for (const [operatorAddress, managedGrantAddress] of operators.entries()) {
       const delegatedTokens = await fetchDelegationInfo(
         web3Context,
         operatorAddress
@@ -224,7 +230,7 @@ const fetchBondingData = async (web3Context) => {
 
       const bonding = {
         operatorAddress,
-        isWithdrawable,
+        managedGrantAddress,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
@@ -322,6 +328,7 @@ const fetchManagedGrantAddresses = async (web3Context, lookupAddress) => {
 }
 
 const fetchOperatorsOf = async (web3Context, yourAddress) => {
+  // operatorAddress to managed grant address
   const operators = new Map()
 
   // operators of grantee (yourAddress)
@@ -332,15 +339,14 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress
   )
   for (let i = 0; i < operatorsOfGrantee.length; i++) {
-    operators.set(web3Utils.toChecksumAddress(operatorsOfGrantee[i]), false)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfGrantee[i]), null)
   }
 
   const managedGrantAddresses = await fetchManagedGrantAddresses(
     web3Context,
     yourAddress
   )
-  for (let i = 0; i < managedGrantAddresses.length; ++i) {
-    const managedGrantAddress = managedGrantAddresses[i]
+  for (const managedGrantAddress of managedGrantAddresses) {
     // operators of grantee (managedGrantAddress)
     const operatorsOfManagedGrant = await contractService.makeCall(
       web3Context,
@@ -348,10 +354,10 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
       "getGranteeOperators",
       managedGrantAddress
     )
-    for (let i = 0; i < operatorsOfManagedGrant.length; i++) {
+    for (const operatorOfManagedGrant of operatorsOfManagedGrant) {
       operators.set(
-        web3Utils.toChecksumAddress(operatorsOfManagedGrant[i]),
-        false
+        web3Utils.toChecksumAddress(operatorOfManagedGrant),
+        managedGrantAddress
       )
     }
   }
@@ -359,7 +365,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
   // operators of authorizer
   const operatorsOfAuthorizer = await fetchOperatorsOfAuthorizer(web3Context)
   for (let i = 0; i < operatorsOfAuthorizer.length; i++) {
-    operators.set(web3Utils.toChecksumAddress(operatorsOfAuthorizer[i]), false)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfAuthorizer[i]), null)
   }
 
   // operators of owner
@@ -370,7 +376,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress // as owner
   )
   for (let i = 0; i < operatorsOfOwner.length; i++) {
-    operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), true)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), null)
   }
 
   const ownerAddress = await contractService.makeCall(
@@ -382,7 +388,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
 
   if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
     // yourAddress is an operator
-    operators.set(web3Utils.toChecksumAddress(yourAddress), true)
+    operators.set(web3Utils.toChecksumAddress(yourAddress), null)
   }
 
   return operators
