@@ -83,8 +83,8 @@ const TBTCApplicationPage = () => {
     unbondedValueWithdrawnCallback
   )
 
-  const onAuthorizationSuccessCallback = useCallback(
-    (contractName, operatorAddress) => {
+  const onSuccessCallback = useCallback(
+    (contractName, operatorAddress, isDeauthorization = false) => {
       const {
         indexInArray: operatorIndexInArray,
         obj: obsoleteOperator,
@@ -108,7 +108,7 @@ const TBTCApplicationPage = () => {
       const updatedContracts = [...obsoleteOperator.contracts]
       updatedContracts[contractIndexInArray] = {
         ...obsoleteContract,
-        isAuthorized: true,
+        isAuthorized: !isDeauthorization,
       }
       const updatedOperators = [...tbtcAuthState.data]
       updatedOperators[operatorIndexInArray] = {
@@ -139,10 +139,7 @@ const TBTCApplicationPage = () => {
           title: "Success",
           content: "Authorization transaction successfully completed",
         })
-        setTimeout(
-          () => onAuthorizationSuccessCallback(contractName, operatorAddress),
-          5000
-        )
+        setTimeout(() => onSuccessCallback(contractName, operatorAddress), 5000)
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
@@ -152,7 +149,37 @@ const TBTCApplicationPage = () => {
         throw error
       }
     },
-    [showMessage, web3Context, onAuthorizationSuccessCallback]
+    [showMessage, web3Context, onSuccessCallback]
+  )
+
+  const deauthorizeTBTCSystem = useCallback(
+    async (data, transactionHashCallback) => {
+      const { operatorAddress } = data
+      try {
+        await tbtcAuthorizationService.deauthorizeTBTCSystem(
+          web3Context,
+          operatorAddress,
+          transactionHashCallback
+        )
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content: "Deauthorization transaction successfully completed",
+        })
+        setTimeout(
+          () => onSuccessCallback("TBTCSystem", operatorAddress, true),
+          5000
+        )
+      } catch (error) {
+        showMessage({
+          type: messageType.ERROR,
+          title: "Deauthorization action has failed ",
+          content: error.message,
+        })
+        throw error
+      }
+    },
+    [showMessage, web3Context, onSuccessCallback]
   )
 
   const tbtcAuthData = useMemo(() => {
@@ -190,6 +217,7 @@ const TBTCApplicationPage = () => {
           selectedOperator={selectedOperator}
           data={tbtcAuthData}
           onAuthorizeBtn={authorizeContract}
+          onDeauthorizeBtn={deauthorizeTBTCSystem}
         />
       </LoadingOverlay>
       <LoadingOverlay isFetching={bondingState.isFetching}>
