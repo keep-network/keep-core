@@ -4,14 +4,15 @@ import "../utils/AddressArrayUtils.sol";
 import "../TokenStaking.sol";
 import "../TokenGrant.sol";
 
-interface ManagedGrant {
-    function grantee() external view returns(address);
+
+interface IManagedGrant {
+    function grantee() external view returns (address);
 }
+
 
 /// @title Roles Lookup
 /// @notice Library facilitating lookup of roles in stake delegation setup.
 library RolesLookup {
-
     using AddressArrayUtils for address[];
 
     /// @notice Returns true if the tokenOwner delegated tokens to operator
@@ -54,7 +55,7 @@ library RolesLookup {
         TokenGrant tokenGrant
     ) internal view returns (bool) {
         require(
-            ManagedGrant(granteeContract).grantee() == grantee,
+            IManagedGrant(granteeContract).grantee() == grantee,
             "Not a grantee of the provided contract"
         );
 
