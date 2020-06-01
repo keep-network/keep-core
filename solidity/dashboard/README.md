@@ -55,6 +55,21 @@ truffle exec ./scripts/delegate-tokens.js
 
 * Use metamask with `localhost:8545` to use Ganache test network. Import your first Ganache test account into metamask and you should be able to see the demo data.
 
+### Work with contracts deployed locally
+
+#### Prerequisite
+
+* clone [keep-ecdsa](https://github.com/keep-network/keep-ecdsa)
+* clone [tbtc](https://github.com/keep-network/tbtc)
+
+#### To quickly install and start working on the Keep Dashboard dApp, run `./scripts/start_dashboard.sh`. This script will:
+* migrate `keep-core`, `tbtc`, `keep-ecdsa` contracts,
+* fetch the necessary addresses and replace them in `keep-ecdsa/solidity/migrations/external-contracts/js`
+* create symlinks for `keep-core`
+
+After the steps above, run `npm start`
+
+When you don’t want to use the local version of `@keep-network/keep-core` anymore, delete the symlink with `npm uninstall --no-save @keep-network/keep-core && npm install`.
 
 ### Internal testnet
 
