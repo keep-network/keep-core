@@ -3,11 +3,14 @@ package bls
 import (
 	"errors"
 	"fmt"
+	"github.com/ipfs/go-log"
 	"math/big"
 
 	bn256 "github.com/ethereum/go-ethereum/crypto/bn256/cloudflare"
 	"github.com/keep-network/keep-core/pkg/altbn128"
 )
+
+var logger = log.Logger("keep-entry")
 
 // SecretKeyShare represents secret key share and its index.
 type SecretKeyShare struct {
@@ -90,6 +93,11 @@ func RecoverSignature(shares []*SignatureShare, threshold int) (*bn256.G1, error
 		if s == nil || s.V == nil || s.I < 0 {
 			continue
 		}
+		logger.Debugf(
+			"recovering signature share index [%v] with the value [%v]", 
+			s.I,
+			s.V,
+		)
 		validParticipants = append(validParticipants, big.NewInt(int64(s.I)))
 	}
 
