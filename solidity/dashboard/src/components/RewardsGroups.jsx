@@ -18,6 +18,8 @@ import { sub, lte, gt } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import Tile from "./Tile"
 import { usePrevious } from "../hooks/usePrevious"
+import TokenAmount from "./TokenAmount"
+import * as Icons from "./Icons"
 
 const previewDataCount = 3
 const initialData = [[], "0"]
@@ -173,7 +175,15 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
             <Column
               header="amount"
               field="reward"
-              renderContent={({ reward }) => `${reward.toString()} ETH`}
+              renderContent={({ reward }) => (
+                <TokenAmount
+                  currencyIcon={Icons.ETH}
+                  currencyIconProps={{ width: 16, height: 16 }}
+                  withMetricSuffix={false}
+                  amount={reward}
+                  amountClassName="text-big text-grey-70"
+                />
+              )}
             />
             <Column
               header="status"
@@ -195,12 +205,16 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
                   )
                 } else {
                   return (
-                    <div className="text-big text-grey-70">
-                      Active
+                    <>
+                      <StatusBadge
+                        text="active"
+                        status={BADGE_STATUS[PENDING_STATUS]}
+                        bgClassName="bg-success-light"
+                      />
                       <div className="text-smaller">
                         Signing group still working.
                       </div>
-                    </div>
+                    </>
                   )
                 }
               }}
