@@ -18,7 +18,7 @@ export const BADGE_STATUS = {
 
 const badgeStyle = { padding: "0.1rem 0.5rem", borderRadius: "100px" }
 
-const StatusBadge = ({ status, text, className, onlyIcon }) => {
+const StatusBadge = ({ status, text, className, onlyIcon, bgClassName }) => {
   return onlyIcon ? (
     <span className="flex row center">
       {status.icon}
@@ -26,7 +26,9 @@ const StatusBadge = ({ status, text, className, onlyIcon }) => {
     </span>
   ) : (
     <span
-      className={`${status.textClassName} ${status.bgClassName} text-label text-normal ${className}`}
+      className={`${status.textClassName} ${
+        bgClassName || status.bgClassName
+      } text-label text-normal ${className}`}
       style={badgeStyle}
     >
       {text}
