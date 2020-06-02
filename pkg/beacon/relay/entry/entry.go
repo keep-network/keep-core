@@ -204,7 +204,10 @@ func extractAndValidateShare(
 	}
 
 	if !bls.VerifyG1(publicKeyShare, previousEntry, share) {
-		return nil, fmt.Errorf("invalid signature share")
+		return nil, fmt.Errorf(
+			"invalid signature share when verifying " + 
+				"publicKeyShare: [%v], previousEntry: [%v] and share: [%v]", 
+					publicKeyShare, previousEntry, share)
 	}
 
 	return share, nil
