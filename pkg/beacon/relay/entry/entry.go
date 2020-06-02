@@ -71,7 +71,10 @@ func SignAndSubmit(
 		return err
 	}
 
-	logger.Debugf("previous entry: [%v]", previousEntry)
+	logger.Debugf(
+		"previous entry is used to calculate self signature share: [%v]",
+		 previousEntry,
+	)
 	selfShare := signer.CalculateSignatureShare(previousEntry)
 
 	go broadcastShare(ctx, signer.MemberID(), selfShare, channel)
@@ -220,15 +223,16 @@ func completeSignature(
 	honestThreshold int,
 ) (*bn256.G1, error) {
 	signatureShares := make([]*bls.SignatureShare, 0)
+	signatureSharesLogs := []string{}
 	for memberID, share := range shares {
 		signatureShare := &bls.SignatureShare{I: int(memberID), V: share}
-		logger.Debugf(
-			"signature share member id: [%d], share [%v]", 
-			memberID, 
-			share,
-		)
 		signatureShares = append(signatureShares, signatureShare)
+		signatureSharesLogs = append(signatureSharesLogs, fmt.Sprintf("[member:%d] signature share [%v]", memberID, share))
 	}
+	logger.Debugf(
+		"signatureShares: [%v]", 
+		signatureSharesLogs,
+	)
 
 	logger.Infof(
 		"[member:%v] restoring signature from [%v] shares",
