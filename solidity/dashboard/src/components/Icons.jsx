@@ -23,6 +23,7 @@ import { ReactComponent as Filter } from "../static/svg/filter-icon.svg"
 import { ReactComponent as DocumentWithBg } from "../static/svg/document-bg-green.svg"
 import { ReactComponent as DelegationDiagram } from "../static/svg/delegation-diagram.svg"
 import { ReactComponent as Diamond } from "../static/svg/diamond.svg"
+import { ReactComponent as ETH } from "../static/svg/eth.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -492,4 +493,5 @@ export {
   DocumentWithBg,
   DelegationDiagram,
   Diamond,
+  ETH,
 }
