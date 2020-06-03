@@ -230,7 +230,8 @@ func completeSignature(
 		signatureSharesLogs = append(signatureSharesLogs, fmt.Sprintf("[member:%d] signature share [%v]", memberID, share))
 	}
 	logger.Debugf(
-		"signatureShares used to complete final signature for a group: [%v]", 
+		"[member:%v] signature shares used to complete final signature for a group: [%v]",
+		signer.MemberID(),
 		signatureSharesLogs,
 	)
 
