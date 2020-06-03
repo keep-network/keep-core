@@ -60,7 +60,7 @@ library RolesLookup {
         );
 
         address[] memory operators = tokenGrant.getGranteeOperators(
-            granteeContract
+            managedGrantContract
         );
         return operators.contains(operator);
     }
