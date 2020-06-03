@@ -1,5 +1,5 @@
 import web3Utils from "web3-utils"
-import { formatDate, wait, isSameEthAddress } from "../utils/general.utils"
+import { wait, isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { OPERATOR_CONTRACT_NAME } from "../constants/constants"
@@ -142,12 +142,7 @@ const withdrawRewardFromGroup = async (
 }
 
 const fetchWithdrawalHistory = async (web3Context) => {
-  const {
-    keepRandomBeaconOperatorContract,
-    yourAddress,
-    utils,
-    eth,
-  } = web3Context
+  const { keepRandomBeaconOperatorContract, yourAddress, utils } = web3Context
   const searchFilters = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
     filter: { beneficiary: yourAddress },
@@ -164,18 +159,18 @@ const fetchWithdrawalHistory = async (web3Context) => {
           const {
             transactionHash,
             blockNumber,
-            returnValues: { groupIndex, amount },
+            returnValues: { groupIndex, amount, operator },
           } = event
-          const withdrawnAt = (await eth.getBlock(blockNumber)).timestamp
           const groupPublicKey = await keepRandomBeaconOperatorContract.methods
             .getGroupPublicKey(groupIndex)
             .call()
           return {
             blockNumber,
             groupPublicKey,
-            date: formatDate(withdrawnAt * 1000),
-            amount: utils.fromWei(amount, "ether"),
+            reward: utils.fromWei(amount, "ether"),
             transactionHash,
+            operator,
+            status: "WITHDRAWN",
           }
         })
         .reverse()
