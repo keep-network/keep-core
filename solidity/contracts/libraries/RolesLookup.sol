@@ -41,21 +41,21 @@ library RolesLookup {
         return operators.contains(operator);
     }
 
-    /// @notice Returns true if the grantee from the given managed granteeContract
+    /// @notice Returns true if the grantee from the given managed grant contract
     /// delegated tokens to operator with the provided tokenGrant contract.
     /// Otherwise, returns false. In case the grantee declared by the managed
-    /// granteeContract does not match the provided grantee, function reverts.
+    /// grant contract does not match the provided grantee, function reverts.
     /// This function works only for cases when grantee, from TokenGrant's
     /// perspective, is a smart contract exposing grantee() function returning
     /// the final grantee. One possibility is the ManagedGrant contract.
     function isManagedGranteeForOperator(
         address grantee,
         address operator,
-        address granteeContract,
+        address managedGrantContract,
         TokenGrant tokenGrant
     ) internal view returns (bool) {
         require(
-            IManagedGrant(granteeContract).grantee() == grantee,
+            IManagedGrant(managedGrantContract).grantee() == grantee,
             "Not a grantee of the provided contract"
         );
 
