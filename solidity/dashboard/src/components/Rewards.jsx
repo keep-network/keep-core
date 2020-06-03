@@ -10,8 +10,7 @@ import { SubmitButton } from "./Button"
 import { useShowMessage, messageType, useCloseMessage } from "./Message"
 import { Web3Context } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
-import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
-import { COMPLETE_STATUS, PENDING_STATUS } from "../constants/constants"
+import { PENDING_STATUS } from "../constants/constants"
 import SelectedRewardDropdown from "./SelectedRewardDropdown"
 import { isEmptyObj, isSameEthAddress } from "../utils/general.utils"
 import { sub, lte, gt } from "../utils/arithmetics.utils"
@@ -20,15 +19,24 @@ import Tile from "./Tile"
 import { usePrevious } from "../hooks/usePrevious"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
+import RewardsStatus from "./RewardsStatus"
+import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
+import { OPERATOR_CONTRACT_NAME } from "../constants/constants"
 
-const previewDataCount = 3
+const previewDataCount = 10
 const initialData = [[], "0"]
 
-export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
-  const { yourAddress } = useContext(Web3Context)
+export const Rewards = React.memo(() => {
+  const { yourAddress, keepRandomBeaconOperatorContract } = useContext(
+    Web3Context
+  )
   const [state, updateData] = useFetchData(
     rewardsService.fetchAvailableRewards,
     initialData
+  )
+  const [withdrawalHistoryState, updateWithdrawalHistoryData] = useFetchData(
+    rewardsService.fetchWithdrawalHistory,
+    []
   )
   const {
     isFetching,
@@ -37,21 +45,55 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
   const [showAll, setShowAll] = useState(false)
   const [selectedReward, setSelectedReward] = useState({})
   const [withdrawAction] = useWithdrawAction()
-  const previousWithdrawalEvent = usePrevious(latestWithdrawalEvent)
+  const { data: withdrawals } = withdrawalHistoryState
+  const { latestEvent } = useSubscribeToContractEvent(
+    OPERATOR_CONTRACT_NAME,
+    "GroupMemberRewardsWithdrawn"
+  )
+  const previousWithdrawalEvent = usePrevious(latestEvent)
 
   useEffect(() => {
-    if (isEmptyObj(latestWithdrawalEvent)) {
+    if (isEmptyObj(latestEvent)) {
       return
     } else if (
-      previousWithdrawalEvent.transactionHash ===
-      latestWithdrawalEvent.transactionHash
+      previousWithdrawalEvent.transactionHash === latestEvent.transactionHash
+    ) {
+      return
+    }
+    const {
+      transactionHash,
+      blockNumber,
+      returnValues: { groupIndex, amount, beneficiary },
+    } = latestEvent
+    if (!isSameEthAddress(yourAddress, beneficiary)) {
+      return
+    }
+    keepRandomBeaconOperatorContract.methods
+      .getGroupPublicKey(groupIndex)
+      .call()
+      .then((groupPublicKey) => {
+        const withdrawal = {
+          blockNumber,
+          groupPublicKey,
+          transactionHash,
+          amount: web3Utils.fromWei(amount, "ether"),
+        }
+        updateWithdrawalHistoryData([withdrawal, ...withdrawals])
+      })
+  })
+
+  useEffect(() => {
+    if (isEmptyObj(latestEvent)) {
+      return
+    } else if (
+      previousWithdrawalEvent.transactionHash === latestEvent.transactionHash
     ) {
       return
     }
 
     const {
       returnValues: { groupIndex, amount, operator, beneficiary },
-    } = latestWithdrawalEvent
+    } = latestEvent
     if (!isSameEthAddress(yourAddress, beneficiary)) {
       return
     }
@@ -95,7 +137,7 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
     ])
   }, [
     groups,
-    latestWithdrawalEvent,
+    latestEvent,
     previousWithdrawalEvent,
     yourAddress,
     totalRewardsBalance,
@@ -122,15 +164,26 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
     return groups.filter((group) => group.isStale)
   }, [groups])
 
+  const rewardsData = useMemo(() => {
+    const data = [...groups, ...withdrawals]
+    return showAll ? data : data.slice(0, previewDataCount)
+  }, [groups, withdrawals, showAll])
+
   return (
     <>
       <LoadingOverlay isFetching={isFetching}>
-        <section className="tile total-rewards-section">
-          <div className="total-rewards-balance">
-            <h2 className="text-grey-70 pb-2">Total Balance</h2>
-            <h2 className="balance">{`${totalRewardsBalance} ETH`}</h2>
-          </div>
-          <Tile title="Withdraw" className="withdraw-dropdown-section">
+        <section className="flex row wrap">
+          <Tile
+            title="Balance"
+            titleClassName="text-grey-70 h2"
+            id="rewards-total-balance"
+          >
+            <h1 className="balance">
+              {totalRewardsBalance}
+              <span className="h3 mr-1">&nbsp;ETH</span>
+            </h1>
+          </Tile>
+          <Tile title="Available to Withdraw" id="withdraw-dropdown-section">
             <div className="withdraw-dropdown">
               <div className="dropdown">
                 <Dropdown
@@ -167,57 +220,27 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
         isFetching={isFetching}
         classNames="group-items self-start"
       >
-        <Tile title="Totals" className="group-items tile">
-          <DataTable
-            data={showAll ? groups : groups.slice(0, previewDataCount)}
-            itemFieldId="groupPublicKey"
-          >
+        <Tile title="Rewards Status" className="group-items tile">
+          <DataTable data={rewardsData} itemFieldId="groupPublicKey">
             <Column
               header="amount"
               field="reward"
               renderContent={({ reward }) => (
                 <TokenAmount
                   currencyIcon={Icons.ETH}
-                  currencyIconProps={{ width: 16, height: 16 }}
+                  currencyIconProps={{ width: 20, height: 20 }}
                   withMetricSuffix={false}
                   amount={reward}
                   amountClassName="text-big text-grey-70"
+                  currencySymbol="ETH"
+                  displayAmountFunction={(amount) => amount}
                 />
               )}
             />
             <Column
               header="status"
               field="isStale"
-              renderContent={({ isStale, status }) => {
-                if (status && status === PENDING_STATUS) {
-                  return (
-                    <StatusBadge
-                      text="pending"
-                      status={BADGE_STATUS[PENDING_STATUS]}
-                    />
-                  )
-                } else if (isStale) {
-                  return (
-                    <StatusBadge
-                      text="available"
-                      status={BADGE_STATUS[COMPLETE_STATUS]}
-                    />
-                  )
-                } else {
-                  return (
-                    <>
-                      <StatusBadge
-                        text="active"
-                        status={BADGE_STATUS[PENDING_STATUS]}
-                        bgClassName="bg-success-light"
-                      />
-                      <div className="text-smaller">
-                        Signing group still working.
-                      </div>
-                    </>
-                  )
-                }
-              }}
+              renderContent={(rewards) => <RewardsStatus {...rewards} />}
             />
             <Column
               header="group key"

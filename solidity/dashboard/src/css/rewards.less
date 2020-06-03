@@ -1,69 +1,39 @@
-section.total-rewards-section {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+#rewards-total-balance {
+    flex: 1;
+}
 
-    .total-rewards-balance {
+#withdraw-dropdown-section {
+    flex: 1;
+
+    button {
+        margin-top: 1rem;
         width: 100%;
-        border-bottom: 1px solid @color-grey-20;
-    }
-
-    .withdraw-dropdown-section {
-        width: 100%;
-
-        .withdraw-dropdown {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: space-between;
-
-            .dropdown {
-                width: 100%;
-            }
-
-            button {
-                width: 100%;
-                margin-top: 0.8rem;
-                flex: none;
-            }
-        }
     }
 }
 
 @media screen and (min-width: 800px) {
-    section.total-rewards-section {
-        .total-rewards-balance {
-            position: relative;
-            width: 38%;
-            border: none;
-            margin-right: 2%;
-
-            &:after {
-                content: '';
-                position: absolute;
-                top: -2rem;
-                right: 0;
-                width: 1px;
-                background-color: @color-grey-20;
-                height: calc(100% + 4rem);
-            }
-        }
-
-        .withdraw-dropdown-section {
-            width: 60%;
-
-            .withdraw-dropdown {
-                .dropdown {
-                    width: 70%;
-                }
-    
-                button {
-                    width: 28%;
-                    margin-top: 0.8rem;
-                    flex: none;
-                }
-            }
-        }
+    #rewards-total-balance {
+        flex: 0.4;
+        max-width: 40%;
     }
+    
+    #withdraw-dropdown-section {
+        flex: 1;
+
+        .withdraw-dropdown {
+            display: flex;
+            justify-content: space-between;
+
+            .dropdown {
+                flex: 1;
+                margin-right: 3rem;
+            }
+
+            button {
+                width: auto;
+                flex: unset;
+                align-self: flex-end;
+            }
+        }
+    }  
 }
