@@ -19,7 +19,7 @@ const ManagedGrant = contract.fromArtifact('ManagedGrant')
 const RolesLookup = contract.fromArtifact('RolesLookup')
 const RolesLookupStub = contract.fromArtifact('RolesLookupStub')
 
-describe.only('RolesLookup', () => {
+describe('RolesLookup', () => {
   const deployer = accounts[0],
     tokenOwner1 = accounts[1],
     tokenOwner2 = accounts[2],
