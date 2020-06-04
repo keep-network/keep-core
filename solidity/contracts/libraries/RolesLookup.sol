@@ -3,12 +3,7 @@ pragma solidity 0.5.17;
 import "../utils/AddressArrayUtils.sol";
 import "../TokenStaking.sol";
 import "../TokenGrant.sol";
-
-
-interface IManagedGrant {
-    function grantee() external view returns (address);
-}
-
+import "../ManagedGrant.sol";
 
 /// @title Roles Lookup
 /// @notice Library facilitating lookup of roles in stake delegation setup.
@@ -55,7 +50,7 @@ library RolesLookup {
         TokenGrant tokenGrant
     ) internal view returns (bool) {
         require(
-            IManagedGrant(managedGrantContract).grantee() == grantee,
+            ManagedGrant(managedGrantContract).grantee() == grantee,
             "Not a grantee of the provided contract"
         );
 
