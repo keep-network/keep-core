@@ -388,9 +388,6 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 ```
 "/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
 "/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
-"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",
-"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
-"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4",
 "/dns4/bootstrap-1.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAkuTUKNh6HkfvWBEkftZbqZHPHi3Kak5ZUygAxvsdQ2UgG",
 "/dns4/bootstrap-2.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAmQirGruZBvtbLHr5SDebsYGcq6Djw7ijF3gnkqsdQs3wK"
 ```
@@ -405,7 +402,7 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |TokenStaking
-|`0xEb2bA3f065081B6459A6784ba8b34A1DfeCc183A`
+|`0xbcA9e1817c9a4258Ddff8E553F5C45192389380e`
 |===
 
 [%header,cols=2*]
@@ -414,10 +411,10 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |KeepRandomBeaconService
-|`0xF9AEdd99357514d9D1AE389A65a4bd270cBCb56c`
+|`0x0a556bf7cA341cC0cA4f38E6C96A9DBD04CC7fdF`
 
 |KeepRandomBeaconOperator
-|`0x440626169759ad6598cd53558F0982b84A28Ad7a`
+|`0xb858BC6f450FCAd8688199c498CDeD5827Cb1F07`
 |===
 
 == Staking
