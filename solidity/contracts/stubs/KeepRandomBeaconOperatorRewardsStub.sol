@@ -17,12 +17,10 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         groups.relayEntryTimeout = 10;
     }
 
-    function registerNewGroup(bytes memory groupPublicKey) public {
+    function registerNewGroup(bytes memory groupPublicKey, address[] memory members) public {
         groups.addGroup(groupPublicKey);
-    }
-
-    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
         groups.setGroupMembers(groupPublicKey, members, hex"");
+        emit DkgResultSubmittedEvent(0, groupPublicKey, "");
     }
 
     function addGroupMemberReward(bytes memory groupPubKey, uint256 groupMemberReward) public {
@@ -34,28 +32,17 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
     }
 
     function reportUnauthorizedSigning(
-        uint256 groupIndex,
-        bytes memory signedMsgSender
+        uint256 groupIndex
     ) public {
-        uint256 minimumStake = stakingContract.minimumStake();
-        stakingContract.seize(
-            minimumStake,
-            100,
-            msg.sender,
-            groups.getGroupMembers(0)
-        );
+        // Makes a given group as terminated
+        groups.activeTerminatedGroups.push(groupIndex);
         emit UnauthorizedSigningReported(groupIndex);
     }
 
-    function reportRelayEntryTimeout() public {
-        uint256 minimumStake = stakingContract.minimumStake();
-        stakingContract.seize(
-            minimumStake,
-            100,
-            msg.sender,
-            groups.getGroupMembers(0)
-        );
-        emit RelayEntryTimeoutReported(0);
+    function reportRelayEntryTimeout(uint256 groupIndex) public {
+        // Makes a given group as terminated
+        groups.reportRelayEntryTimeout(groupIndex, groupSize);
+        emit RelayEntryTimeoutReported(groupIndex);
     }
 
 }
