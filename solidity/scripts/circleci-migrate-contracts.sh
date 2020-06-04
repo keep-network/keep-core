@@ -59,7 +59,7 @@ ssh utilitybox << EOF
   npm ci
 
   export ETH_HOSTNAME=$ETH_HOSTNAME
-  echo  $ETH_HOSTNAME
+  
   ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
   echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
   echo "<<<<<<START Tenderly Push START<<<<<<"
