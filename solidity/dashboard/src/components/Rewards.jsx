@@ -76,7 +76,8 @@ export const Rewards = React.memo(() => {
           blockNumber,
           groupPublicKey,
           transactionHash,
-          amount: web3Utils.fromWei(amount, "ether"),
+          reward: web3Utils.fromWei(amount, "ether"),
+          status: "WITHDRAWN",
         }
         updateWithdrawalHistoryData([withdrawal, ...withdrawals])
       })
@@ -165,6 +166,7 @@ export const Rewards = React.memo(() => {
   }, [groups])
 
   const rewardsData = useMemo(() => {
+    console.log("updategin rewards data")
     const data = [...groups, ...withdrawals]
     return showAll ? data : data.slice(0, previewDataCount)
   }, [groups, withdrawals, showAll])
