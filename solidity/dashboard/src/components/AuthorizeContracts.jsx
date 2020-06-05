@@ -131,7 +131,7 @@ const AuthorizeContractItem = ({
     [contractName, operatorAddress, onAuthorizeBtn]
   )
 
-  const deauthorize = useCallback(
+  const onDeauthorize = useCallback(
     async (transactionHashCallback) => {
       await onDeauthorizeBtn(
         { operatorAddress, contractName },
@@ -153,7 +153,7 @@ const AuthorizeContractItem = ({
             <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
             {contractName === "TBTCSystem" && (
               <SubmitButton
-                onSubmitAction={deauthorize}
+                onSubmitAction={onDeauthorize}
                 className="btn btn-secondary btn-sm ml-1"
               >
                 deauthorize
