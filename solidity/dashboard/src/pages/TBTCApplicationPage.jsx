@@ -84,7 +84,7 @@ const TBTCApplicationPage = () => {
   )
 
   const onSuccessCallback = useCallback(
-    (contractName, operatorAddress, isDeauthorization = false) => {
+    (contractName, operatorAddress, isAuthorized = true) => {
       const {
         indexInArray: operatorIndexInArray,
         obj: obsoleteOperator,
@@ -108,7 +108,7 @@ const TBTCApplicationPage = () => {
       const updatedContracts = [...obsoleteOperator.contracts]
       updatedContracts[contractIndexInArray] = {
         ...obsoleteContract,
-        isAuthorized: !isDeauthorization,
+        isAuthorized,
       }
       const updatedOperators = [...tbtcAuthState.data]
       updatedOperators[operatorIndexInArray] = {
@@ -137,13 +137,13 @@ const TBTCApplicationPage = () => {
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",
-          content: "Authorization transaction successfully completed",
+          content: "Authorization successfully completed",
         })
         setTimeout(() => onSuccessCallback(contractName, operatorAddress), 5000)
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Authorization action has failed ",
+          title: "Authorization has failed",
           content: error.message,
         })
         throw error
@@ -164,16 +164,16 @@ const TBTCApplicationPage = () => {
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",
-          content: "Deauthorization transaction successfully completed",
+          content: "Deauthorization successfully completed",
         })
         setTimeout(
-          () => onSuccessCallback("TBTCSystem", operatorAddress, true),
+          () => onSuccessCallback("TBTCSystem", operatorAddress, false),
           5000
         )
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Deauthorization action has failed ",
+          title: "Deauthorization has failed",
           content: error.message,
         })
         throw error
