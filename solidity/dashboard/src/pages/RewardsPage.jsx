@@ -4,7 +4,7 @@ import PageWrapper from "../components/PageWrapper"
 
 const RewardsPage = () => {
   return (
-    <PageWrapper title="My Rewards">
+    <PageWrapper title="Random Beacon Rewards">
       <Rewards />
     </PageWrapper>
   )
