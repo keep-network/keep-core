@@ -1,5 +1,6 @@
 import React from "react"
 import { isEmptyArray } from "../utils/array.utils"
+import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
 
 export class DataTable extends React.Component {
   constructor(props) {
@@ -57,8 +58,26 @@ export class DataTable extends React.Component {
   )
 
   render() {
+    const {
+      title,
+      titleClassName,
+      titleStyle,
+      withTooltip,
+      tooltipProps,
+      subtitle,
+    } = this.props
+
     return (
       <table>
+        <caption className="mb-1">
+          <div className="flex center">
+            <h4 className={titleClassName} style={titleStyle}>
+              {title}
+            </h4>
+            {withTooltip && <SpeechBubbleTooltip {...tooltipProps} />}
+          </div>
+          <div className="text-grey-40 text-small">{subtitle}</div>
+        </caption>
         <thead>
           <tr>{this.state.headers.map(this.renderHeader)}</tr>
         </thead>
@@ -80,6 +99,9 @@ export class DataTable extends React.Component {
 
 DataTable.defaultProps = {
   noDataMessage: "No data.",
+  titleClassName: "mr-1 text-grey-70",
+  titleStyle: {},
+  withTooltip: false,
 }
 
 export const Column = ({ header, headerStyle, field, renderContent }) => null
