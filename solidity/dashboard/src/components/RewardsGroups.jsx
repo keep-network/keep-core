@@ -165,10 +165,11 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
         isFetching={isFetching}
         classNames="group-items self-start"
       >
-        <Tile title="Totals" className="group-items tile">
+        <Tile className="group-items tile">
           <DataTable
             data={showAll ? groups : groups.slice(0, previewDataCount)}
             itemFieldId="groupPublicKey"
+            title="Totals"
           >
             <Column
               header="amount"

@@ -8,8 +8,19 @@ const SlashedTokensList = ({ slashedTokens }) => {
   return (
     <DataTable
       data={slashedTokens}
-      itemFieldId={"id"}
-      noDataMessage="No slashed tokens"
+      itemFieldId="id"
+      title="Slashed Tokens"
+      withTooltip
+      tooltipProps={{
+        text: (
+          <>
+            A &nbsp;<span className="text-bold">slash</span>&nbsp; is a penalty
+            for signing group misbehavior. It results in a removal of a portion
+            of your delegated KEEP tokens.
+          </>
+        ),
+      }}
+      noDataMessage="No slashed tokens."
     >
       <Column
         header="amount"
