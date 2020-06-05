@@ -1,5 +1,5 @@
 import React, { useState, useContext, useMemo, useEffect } from "react"
-import { SeeAllButton } from "./SeeAllButton"
+import Button from "./Button"
 import { LoadingOverlay } from "./Loadable"
 import { useFetchData } from "../hooks/useFetchData"
 import rewardsService from "../services/rewards.service"
@@ -25,27 +25,45 @@ import { OPERATOR_CONTRACT_NAME } from "../constants/constants"
 
 const previewDataCount = 10
 const initialData = [[], "0"]
+const rewardsStatusFilterOptions = [
+  { status: "AVAILABLE" },
+  { status: "WITHDRAWN" },
+  { status: "ACTIVE" },
+]
 
 export const Rewards = React.memo(() => {
   const { yourAddress, keepRandomBeaconOperatorContract } = useContext(
     Web3Context
   )
+  // fetch rewards
   const [state, updateData] = useFetchData(
     rewardsService.fetchAvailableRewards,
     initialData
-  )
-  const [withdrawalHistoryState, updateWithdrawalHistoryData] = useFetchData(
-    rewardsService.fetchWithdrawalHistory,
-    []
   )
   const {
     isFetching,
     data: [groups, totalRewardsBalance],
   } = state
-  const [showAll, setShowAll] = useState(false)
-  const [selectedReward, setSelectedReward] = useState({})
-  const [withdrawAction] = useWithdrawAction()
+
+  // fetch withdrawals
+  const [withdrawalHistoryState, updateWithdrawalHistoryData] = useFetchData(
+    rewardsService.fetchWithdrawalHistory,
+    []
+  )
   const { data: withdrawals } = withdrawalHistoryState
+
+  // see more/less button state
+  const [showAll, setShowAll] = useState(false)
+
+  // selected reward to withdraw
+  const [selectedReward, setSelectedReward] = useState({})
+
+  // filter dropdown
+  const [rewardFilter, setRewardFilter] = useState({})
+
+  const [withdrawAction] = useWithdrawAction()
+
+  // subscribe to `GroupMemberRewardsWithdrawn` event
   const { latestEvent } = useSubscribeToContractEvent(
     OPERATOR_CONTRACT_NAME,
     "GroupMemberRewardsWithdrawn"
@@ -68,6 +86,7 @@ export const Rewards = React.memo(() => {
     if (!isSameEthAddress(yourAddress, beneficiary)) {
       return
     }
+    updateRewards(latestEvent)
     keepRandomBeaconOperatorContract.methods
       .getGroupPublicKey(groupIndex)
       .call()
@@ -83,21 +102,10 @@ export const Rewards = React.memo(() => {
       })
   })
 
-  useEffect(() => {
-    if (isEmptyObj(latestEvent)) {
-      return
-    } else if (
-      previousWithdrawalEvent.transactionHash === latestEvent.transactionHash
-    ) {
-      return
-    }
-
+  const updateRewards = (latestEvent) => {
     const {
-      returnValues: { groupIndex, amount, operator, beneficiary },
+      returnValues: { groupIndex, amount, operator },
     } = latestEvent
-    if (!isSameEthAddress(yourAddress, beneficiary)) {
-      return
-    }
     const { indexInArray, obj } = findIndexAndObject(
       "groupIndex",
       groupIndex,
@@ -136,14 +144,7 @@ export const Rewards = React.memo(() => {
       updatedGroups,
       web3Utils.fromWei(updateTotalRewardsBalance, "ether"),
     ])
-  }, [
-    groups,
-    latestEvent,
-    previousWithdrawalEvent,
-    yourAddress,
-    totalRewardsBalance,
-    updateData,
-  ])
+  }
 
   const updateWithdrawStatus = (status) => {
     const { groupIndex } = selectedReward
@@ -161,15 +162,31 @@ export const Rewards = React.memo(() => {
     updateData([updatedGroups, totalRewardsBalance])
   }
 
-  const dropdownOptions = useMemo(() => {
+  const availableRewardsOptions = useMemo(() => {
     return groups.filter((group) => group.isStale)
   }, [groups])
 
   const rewardsData = useMemo(() => {
-    console.log("updategin rewards data")
-    const data = [...groups, ...withdrawals]
-    return showAll ? data : data.slice(0, previewDataCount)
-  }, [groups, withdrawals, showAll])
+    const allData = [...groups, ...withdrawals]
+    let dataToReturn
+    switch (rewardFilter.status) {
+      case "AVAILABLE":
+        dataToReturn = allData.filter(({ isStale }) => isStale)
+        break
+      case "ACTIVE":
+        dataToReturn = allData.filter(
+          ({ isStale, status }) => !isStale && !status
+        )
+        break
+      case "WITHDRAWN":
+        dataToReturn = allData.filter(({ status }) => status === "WITHDRAWN")
+        break
+      default:
+        dataToReturn = allData
+    }
+
+    return showAll ? dataToReturn : dataToReturn.slice(0, previewDataCount)
+  }, [groups, withdrawals, showAll, rewardFilter.status])
 
   return (
     <>
@@ -189,8 +206,8 @@ export const Rewards = React.memo(() => {
             <div className="withdraw-dropdown">
               <div className="dropdown">
                 <Dropdown
-                  options={dropdownOptions}
-                  onSelect={(reward) => setSelectedReward(reward)}
+                  options={availableRewardsOptions}
+                  onSelect={setSelectedReward}
                   valuePropertyName="groupPublicKey"
                   labelPropertyName="groupPublicKey"
                   selectedItem={selectedReward}
@@ -222,18 +239,42 @@ export const Rewards = React.memo(() => {
         isFetching={isFetching}
         classNames="group-items self-start"
       >
-        <Tile title="Rewards Status" className="group-items tile">
+        <section className="group-items tile">
+          <div className="flex row space-between">
+            <h4 className="text-grey-70">Rewards Status</h4>
+            <Dropdown
+              withLabel={false}
+              options={rewardsStatusFilterOptions}
+              onSelect={setRewardFilter}
+              valuePropertyName="status"
+              labelPropertyName="status"
+              selectedItem={rewardFilter}
+              noItemSelectedText="All rewards"
+              selectedItemComponent={rewardFilter.status}
+              renderOptionComponent={({ status }) => status}
+              isFilterDropdow
+              allItemsFilterText="All rewards"
+            />
+          </div>
           <DataTable data={rewardsData} itemFieldId="groupPublicKey">
             <Column
               header="amount"
               field="reward"
-              renderContent={({ reward }) => (
+              renderContent={({ reward, status }) => (
                 <TokenAmount
                   currencyIcon={Icons.ETH}
-                  currencyIconProps={{ width: 20, height: 20 }}
+                  currencyIconProps={{
+                    width: 20,
+                    height: 20,
+                    className: `eth-icon${
+                      status === "WITHDRAWN" ? " grey-40" : ""
+                    }`,
+                  }}
                   withMetricSuffix={false}
                   amount={reward}
-                  amountClassName="text-big text-grey-70"
+                  amountClassName={`text-big text-grey-${
+                    status === "WITHDRAWN" ? "40" : "70"
+                  }`}
                   currencySymbol="ETH"
                   displayAmountFunction={(amount) => amount}
                 />
@@ -247,18 +288,25 @@ export const Rewards = React.memo(() => {
             <Column
               header="group key"
               field="groupPublicKey"
-              renderContent={({ groupPublicKey }) => (
-                <AddressShortcut address={groupPublicKey} />
+              renderContent={({ groupPublicKey, status }) => (
+                <AddressShortcut
+                  address={groupPublicKey}
+                  classNames={status === "WITHDRAWN" ? "text-grey-40" : ""}
+                />
               )}
             />
           </DataTable>
-          <SeeAllButton
-            dataLength={groups.length}
-            previewDataCount={previewDataCount}
-            onClickCallback={() => setShowAll(!showAll)}
-            showAll={showAll}
-          />
-        </Tile>
+          <div className="flex full-center">
+            {rewardsData.length + withdrawals.length > previewDataCount && (
+              <Button
+                className="btn btn-secondary"
+                onClick={() => setShowAll(!showAll)}
+              >
+                {showAll ? "see less" : "see more"}
+              </Button>
+            )}
+          </div>
+        </section>
       </LoadingOverlay>
     </>
   )
