@@ -84,13 +84,19 @@ library DKGResultVerification {
 
         bytes memory current; // Current signature to be checked.
 
+        bool[] memory memberIndicesUsed = new bool[](self.groupSize);
+
         for(uint i = 0; i < signaturesCount; i++){
-            require(signingMemberIndices[i] > 0, "Invalid index");
-            require(signingMemberIndices[i] <= members.length, "Index out of range");
+            uint256 memberIndex = signingMemberIndices[i];
+            require(memberIndex > 0, "Invalid index");
+            require(memberIndex <= members.length, "Index out of range");
+
+            require(!memberIndicesUsed[memberIndex - 1], "Duplicate member index");
+            memberIndicesUsed[memberIndex - 1] = true;
+
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
-
-            require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
+            require(members[memberIndex - 1] == recoveredAddress, "Invalid signature");
         }
     }
 }
