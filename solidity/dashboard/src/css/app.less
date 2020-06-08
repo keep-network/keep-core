@@ -243,6 +243,45 @@ main {
       margin: 1rem;
     }
   }
+
+  &.disabled {
+    ul li:not(.glossary-link) {
+      ul.sublinks {
+        height: 0 !important;
+        margin: 0 !important;
+      }
+
+      &:after {
+        content: none;
+      }
+
+      &:hover, a, a:hover, &.active-page-link { 
+        color: inherit;
+        cursor: not-allowed;
+        font-weight: inherit;
+      }
+        a, a:hover, &.active-page-link {
+          color: @color-grey-30 !important;
+
+          svg {
+            * {
+              transition: 0.3s ease;
+              stroke: @color-grey-20;
+            }
+            &.glossary .outline, &.tokens .outline {
+              stroke: @color-grey-20;
+              fill: @color-grey-20;
+            }
+            &.arrow-right {
+              path {
+                fill: @color-grey-20;
+                stroke: none !important;
+              }
+            }
+          }
+        }
+    }
+  }
 }
 
 footer {
