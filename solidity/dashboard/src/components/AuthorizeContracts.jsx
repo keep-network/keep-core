@@ -5,8 +5,6 @@ import { DataTable, Column } from "./DataTable"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
-import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
-import Dropdown from "./Dropdown"
 import { shortenAddress } from "../utils/general.utils"
 
 const AuthorizeContracts = ({
@@ -18,46 +16,35 @@ const AuthorizeContracts = ({
 }) => {
   return (
     <section className="tile">
-      <div className="flex row wrap center space-between">
-        <header>
-          <div className="flex row">
-            <h4 className="mr-1 text-grey-70">Authorize Contracts</h4>
-            <SpeechBubbleTooltip
-              text={
-                "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens."
-              }
-            />
-          </div>
-          <div className="text-grey-40 text-small">
-            Below are the available operator contracts to authorize.
-          </div>
-        </header>
-        <div style={{ marginLeft: "auto" }}>
-          <Dropdown
-            withLabel={false}
-            options={filterDropdownOptions}
-            onSelect={(operator) => onSelectOperator(operator)}
-            valuePropertyName="operatorAddress"
-            labelPropertyName="operatorAddress"
-            selectedItem={selectedOperator}
-            noItemSelectedText="All operators"
-            renderOptionComponent={({ operatorAddress }) => (
-              <OperatorDropdownItem operatorAddress={operatorAddress} />
-            )}
-            selectedItemComponent={
-              <OperatorDropdownItem
-                operatorAddress={selectedOperator.operatorAddress}
-              />
-            }
-            isFilterDropdow
-            allItemsFilterText="All Operators"
-          />
-        </div>
-      </div>
       <DataTable
         data={data}
         itemFieldId="operatorAddress"
+        title="Authorize Contracts"
+        subtitle="Below are the available operator contracts to authorize."
+        withTooltip
+        tooltipProps={{
+          text:
+            "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens.",
+        }}
         noDataMessage="No contracts to authorize."
+        withFilterDropdown
+        filterDropdownProps={{
+          options: filterDropdownOptions,
+          onSelect: onSelectOperator,
+          valuePropertyName: "operatorAddress",
+          labelPropertyName: "operatorAddress",
+          selectedItem: selectedOperator,
+          noItemSelectedText: "All operators",
+          renderOptionComponent: ({ operatorAddress }) => (
+            <OperatorDropdownItem operatorAddress={operatorAddress} />
+          ),
+          selectedItemComponent: (
+            <OperatorDropdownItem
+              operatorAddress={selectedOperator.operatorAddress}
+            />
+          ),
+          allItemsFilterText: "All Operators",
+        }}
       >
         <Column
           header="operator address"
