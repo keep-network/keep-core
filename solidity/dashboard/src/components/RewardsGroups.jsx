@@ -170,6 +170,7 @@ export const RewardsGroups = React.memo(({ latestWithdrawalEvent }) => {
             data={showAll ? groups : groups.slice(0, previewDataCount)}
             itemFieldId="groupPublicKey"
             title="Totals"
+            noDataMessage="No rewards."
           >
             <Column
               header="amount"
