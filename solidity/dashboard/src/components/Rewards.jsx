@@ -71,21 +71,22 @@ export const Rewards = React.memo(() => {
   const previousWithdrawalEvent = usePrevious(latestEvent)
 
   useEffect(() => {
-    if (isEmptyObj(latestEvent)) {
-      return
-    } else if (
+    const isSameEvent =
       previousWithdrawalEvent.transactionHash === latestEvent.transactionHash
-    ) {
+    if (isEmptyObj(latestEvent) || isSameEvent) {
       return
     }
+
     const {
       transactionHash,
       blockNumber,
       returnValues: { groupIndex, amount, beneficiary },
     } = latestEvent
+
     if (!isSameEthAddress(yourAddress, beneficiary)) {
       return
     }
+
     updateRewards(latestEvent)
     keepRandomBeaconOperatorContract.methods
       .getGroupPublicKey(groupIndex)
