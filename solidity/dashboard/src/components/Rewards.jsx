@@ -42,7 +42,7 @@ export const Rewards = React.memo(() => {
   )
   const {
     isFetching,
-    data: [groups, totalRewardsBalance],
+    data: [rewards, totalRewardsBalance],
   } = state
 
   // fetch withdrawals
@@ -110,14 +110,14 @@ export const Rewards = React.memo(() => {
     const { indexInArray, obj } = findIndexAndObject(
       "groupIndex",
       groupIndex,
-      groups
+      rewards
     )
     if (indexInArray === null) {
       return
     }
 
-    const updatedGroups = [...groups]
-    const updatedGroupReward = sub(web3Utils.toWei(obj.reward, "ether"), amount)
+    const updatedRewards = [...rewards]
+    const updatedReward = sub(web3Utils.toWei(obj.reward, "ether"), amount)
     let updateTotalRewardsBalance = sub(
       web3Utils.toWei(totalRewardsBalance, "ether"),
       amount
@@ -126,8 +126,8 @@ export const Rewards = React.memo(() => {
       ? updateTotalRewardsBalance
       : "0"
 
-    if (lte(updatedGroupReward, 0)) {
-      updatedGroups.splice(indexInArray, 1)
+    if (lte(updatedReward, 0)) {
+      updatedRewards.splice(indexInArray, 1)
       setSelectedReward({})
     } else {
       const updatedMembersIndeces = { ...obj.membersIndeces }
@@ -135,14 +135,14 @@ export const Rewards = React.memo(() => {
       const updatedGroup = {
         ...obj,
         membersIndeces: updatedMembersIndeces,
-        reward: web3Utils.fromWei(updatedGroupReward, "ether"),
+        reward: web3Utils.fromWei(updatedReward, "ether"),
       }
-      updatedGroups[indexInArray] = updatedGroup
+      updatedRewards[indexInArray] = updatedGroup
       setSelectedReward(updatedGroup)
     }
 
     updateData([
-      updatedGroups,
+      updatedRewards,
       web3Utils.fromWei(updateTotalRewardsBalance, "ether"),
     ])
   }
@@ -152,23 +152,23 @@ export const Rewards = React.memo(() => {
     const { indexInArray } = findIndexAndObject(
       "groupIndex",
       groupIndex,
-      groups
+      rewards
     )
     if (indexInArray === null) {
       return
     }
-    const updatedGroups = [...groups]
+    const updatedGroups = [...rewards]
     updatedGroups[indexInArray].status = status
 
     updateData([updatedGroups, totalRewardsBalance])
   }
 
   const availableRewardsOptions = useMemo(() => {
-    return groups.filter((group) => group.isStale)
-  }, [groups])
+    return rewards.filter((group) => group.isStale)
+  }, [rewards])
 
   const rewardsData = useMemo(() => {
-    const allRewards = [...groups, ...withdrawals]
+    const allRewards = [...rewards, ...withdrawals]
     let rewardsToReturn
     switch (rewardFilter.status) {
       case REWARD_STATUS.AVAILABLE:
@@ -191,7 +191,7 @@ export const Rewards = React.memo(() => {
     return showAll
       ? rewardsToReturn
       : rewardsToReturn.slice(0, previewDataCount)
-  }, [groups, withdrawals, showAll, rewardFilter.status])
+  }, [rewards, withdrawals, showAll, rewardFilter.status])
 
   return (
     <>
@@ -304,7 +304,7 @@ export const Rewards = React.memo(() => {
             />
           </DataTable>
           <div className="flex full-center">
-            {rewardsData.length + withdrawals.length > previewDataCount && (
+            {rewards.length + withdrawals.length > previewDataCount && (
               <Button
                 className="btn btn-secondary"
                 onClick={() => setShowAll(!showAll)}
