@@ -24,6 +24,7 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
 import moment from "moment"
 import { createManagedGrantContractInstance, isCodeValid } from "../contracts"
+import TokenOverviewPage from "./TokenOverviewPage"
 
 const TokensPageContainer = () => {
   useSubscribeToStakedEvent()
@@ -33,9 +34,10 @@ const TokensPageContainer = () => {
 
   return (
     <Switch>
+      <Route exact path="/tokens/overview" component={TokenOverviewPage} />
       <Route exact path="/tokens/delegate" component={TokensPage} />
       <Route exact path="/tokens/grants" component={TokenGrantsPage} />
-      <Redirect to="/tokens/delegate" />
+      <Redirect to="/tokens/overview" />
     </Switch>
   )
 }
