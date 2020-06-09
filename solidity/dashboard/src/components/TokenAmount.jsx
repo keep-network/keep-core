@@ -9,11 +9,11 @@ const TokenAmount = ({
   amount,
   amountClassName,
   suffixClassName,
-  withMetricSuffix,
+  displayWithMetricSuffix,
   currencySymbol,
   displayAmountFunction,
 }) => {
-  const { value, suffix } = withMetricSuffix
+  const { value, suffix } = displayWithMetricSuffix
     ? getNumberWithMetricSuffix(displayAmountFunction(amount, false))
     : { value: "0", suffix: "" }
   const CurrencyIcon = currencyIcon
@@ -22,8 +22,8 @@ const TokenAmount = ({
     <div className={`token-amount flex row center ${wrapperClassName || ""}`}>
       <CurrencyIcon {...currencyIconProps} />
       <span className={amountClassName} style={{ marginLeft: "10px" }}>
-        {withMetricSuffix ? value : displayAmountFunction(amount)}
-        {withMetricSuffix && (
+        {displayWithMetricSuffix ? value : displayAmountFunction(amount)}
+        {displayWithMetricSuffix && (
           <span
             className={suffixClassName}
             style={{ marginLeft: "3px", alignSelf: "flex-end" }}
@@ -42,7 +42,7 @@ TokenAmount.defaultProps = {
   currencyIconProps: {},
   amountClassName: "h1 text-primary",
   suffixClassName: "h3",
-  withMetricSuffix: true,
+  displayWithMetricSuffix: true,
   wrapperClassName: "",
   currencySymbol: null,
   displayAmountFunction: displayAmount,

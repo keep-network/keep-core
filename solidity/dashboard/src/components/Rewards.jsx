@@ -275,7 +275,7 @@ export const Rewards = React.memo(() => {
                       status === REWARD_STATUS.WITHDRAWN ? " grey-40" : ""
                     }`,
                   }}
-                  withMetricSuffix={false}
+                  displayWithMetricSuffix={false}
                   amount={reward}
                   amountClassName={`text-big text-grey-${
                     status === REWARD_STATUS.WITHDRAWN ? "40" : "70"
