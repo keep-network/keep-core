@@ -14,6 +14,11 @@ export const BADGE_STATUS = {
     icon: <Icons.OKBadge />,
   },
   DISABLED: { textClassName: "text-grey-50", bgClassName: "bg-grey-10" },
+  ACTIVE: {
+    textClassName: "text-grey-70 text-normal",
+    bgClassName: "bg-success-light",
+    icon: <Icons.OKBadge />,
+  },
 }
 
 const badgeStyle = { padding: "0.1rem 0.5rem", borderRadius: "100px" }

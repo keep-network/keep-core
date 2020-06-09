@@ -31,11 +31,7 @@ const RewardsStatus = ({ isStale, status, transactionHash }) => {
   } else {
     return (
       <>
-        <StatusBadge
-          text="active"
-          status={BADGE_STATUS[PENDING_STATUS]}
-          bgClassName="bg-success-light"
-        />
+        <StatusBadge text="active" status={BADGE_STATUS.ACTIVE} />
         <div className="text-smaller">Signing group still working.</div>
       </>
     )
