@@ -168,25 +168,29 @@ export const Rewards = React.memo(() => {
   }, [groups])
 
   const rewardsData = useMemo(() => {
-    const allData = [...groups, ...withdrawals]
-    let dataToReturn
+    const allRewards = [...groups, ...withdrawals]
+    let rewardsToReturn
     switch (rewardFilter.status) {
       case "AVAILABLE":
-        dataToReturn = allData.filter(({ isStale }) => isStale)
+        rewardsToReturn = allRewards.filter(({ isStale }) => isStale)
         break
       case "ACTIVE":
-        dataToReturn = allData.filter(
+        rewardsToReturn = allRewards.filter(
           ({ isStale, status }) => !isStale && !status
         )
         break
       case "WITHDRAWN":
-        dataToReturn = allData.filter(({ status }) => status === "WITHDRAWN")
+        rewardsToReturn = allRewards.filter(
+          ({ status }) => status === "WITHDRAWN"
+        )
         break
       default:
-        dataToReturn = allData
+        rewardsToReturn = allRewards
     }
 
-    return showAll ? dataToReturn : dataToReturn.slice(0, previewDataCount)
+    return showAll
+      ? rewardsToReturn
+      : rewardsToReturn.slice(0, previewDataCount)
   }, [groups, withdrawals, showAll, rewardFilter.status])
 
   return (
