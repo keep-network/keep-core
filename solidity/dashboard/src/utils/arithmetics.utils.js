@@ -10,6 +10,8 @@ export const sub = (a, b) => {
 
 export const mul = (a, b) => web3Utils.toBN(a).mul(web3Utils.toBN(b))
 
+export const div = (a, b) => web3Utils.toBN(a).div(web3Utils.toBN(b))
+
 export const gt = (a, b) => {
   return web3Utils.toBN(a).gt(web3Utils.toBN(b))
 }
@@ -25,3 +27,5 @@ export const lt = (a, b) => {
 export const lte = (a, b) => {
   return web3Utils.toBN(a).lte(web3Utils.toBN(b))
 }
+
+export const isZero = (a) => web3Utils.toBN(a).isZero()
