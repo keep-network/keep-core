@@ -20,3 +20,9 @@ export const WALLETS = {
   LEDGER_LEGACY: { label: "Ledger" },
   COINBASE: { label: "Coinbase" },
 }
+
+export const REWARD_STATUS = {
+  AVAILABLE: "AVAILABLE",
+  ACTIVE: "ACTIVE",
+  WITHDRAWN: "WITHDRAWN",
+}

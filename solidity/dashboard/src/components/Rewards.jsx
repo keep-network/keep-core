@@ -21,14 +21,14 @@ import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
 import RewardsStatus from "./RewardsStatus"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
-import { OPERATOR_CONTRACT_NAME } from "../constants/constants"
+import { OPERATOR_CONTRACT_NAME, REWARD_STATUS } from "../constants/constants"
 
 const previewDataCount = 10
 const initialData = [[], "0"]
 const rewardsStatusFilterOptions = [
-  { status: "AVAILABLE" },
-  { status: "WITHDRAWN" },
-  { status: "ACTIVE" },
+  { status: REWARD_STATUS.AVAILABLE },
+  { status: REWARD_STATUS.ACTIVE },
+  { status: REWARD_STATUS.WITHDRAWN },
 ]
 
 export const Rewards = React.memo(() => {
@@ -97,7 +97,7 @@ export const Rewards = React.memo(() => {
           groupPublicKey,
           transactionHash,
           reward: web3Utils.fromWei(amount, "ether"),
-          status: "WITHDRAWN",
+          status: REWARD_STATUS.WITHDRAWN,
         }
         updateWithdrawalHistoryData([withdrawal, ...withdrawals])
       })
@@ -171,17 +171,17 @@ export const Rewards = React.memo(() => {
     const allRewards = [...groups, ...withdrawals]
     let rewardsToReturn
     switch (rewardFilter.status) {
-      case "AVAILABLE":
+      case REWARD_STATUS.AVAILABLE:
         rewardsToReturn = allRewards.filter(({ isStale }) => isStale)
         break
-      case "ACTIVE":
+      case REWARD_STATUS.ACTIVE:
         rewardsToReturn = allRewards.filter(
           ({ isStale, status }) => !isStale && !status
         )
         break
-      case "WITHDRAWN":
+      case REWARD_STATUS.WITHDRAWN:
         rewardsToReturn = allRewards.filter(
-          ({ status }) => status === "WITHDRAWN"
+          ({ status }) => status === REWARD_STATUS.WITHDRAWN
         )
         break
       default:
@@ -272,13 +272,13 @@ export const Rewards = React.memo(() => {
                     width: 20,
                     height: 20,
                     className: `eth-icon${
-                      status === "WITHDRAWN" ? " grey-40" : ""
+                      status === REWARD_STATUS.WITHDRAWN ? " grey-40" : ""
                     }`,
                   }}
                   withMetricSuffix={false}
                   amount={reward}
                   amountClassName={`text-big text-grey-${
-                    status === "WITHDRAWN" ? "40" : "70"
+                    status === REWARD_STATUS.WITHDRAWN ? "40" : "70"
                   }`}
                   currencySymbol="ETH"
                   displayAmountFunction={(amount) => amount}
@@ -296,7 +296,9 @@ export const Rewards = React.memo(() => {
               renderContent={({ groupPublicKey, status }) => (
                 <AddressShortcut
                   address={groupPublicKey}
-                  classNames={status === "WITHDRAWN" ? "text-grey-40" : ""}
+                  classNames={
+                    status === REWARD_STATUS.WITHDRAWN ? "text-grey-40" : ""
+                  }
                 />
               )}
             />

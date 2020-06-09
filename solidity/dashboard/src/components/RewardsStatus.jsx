@@ -1,12 +1,16 @@
 import React from "react"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
-import { COMPLETE_STATUS, PENDING_STATUS } from "../constants/constants"
+import {
+  COMPLETE_STATUS,
+  PENDING_STATUS,
+  REWARD_STATUS,
+} from "../constants/constants"
 import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
 
 const RewardsStatus = ({ isStale, status, transactionHash }) => {
   if (status && status === PENDING_STATUS) {
     return <StatusBadge text="pending" status={BADGE_STATUS[PENDING_STATUS]} />
-  } else if (status === "WITHDRAWN") {
+  } else if (status === REWARD_STATUS.WITHDRAWN) {
     return (
       <>
         <StatusBadge text="WITHDRAWN" status={BADGE_STATUS.DISABLED} />
