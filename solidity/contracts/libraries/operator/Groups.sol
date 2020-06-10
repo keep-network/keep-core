@@ -85,7 +85,7 @@ library Groups {
         bytes memory groupPubKey,
         address[] memory members,
         bytes memory misbehaved
-    ) internal {
+    ) public {
         self.groupMembers[groupPubKey] = members;
 
         // Iterate misbehaved array backwards, replace misbehaved
@@ -338,6 +338,13 @@ library Groups {
     ) public view returns (address[] memory members) {
         bytes memory groupPubKey = self.groups[groupIndex].groupPubKey;
         return self.groupMembers[groupPubKey];
+    }
+
+    function getGroupRegistrationBlockHeight(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns (uint256) {
+        return uint256(self.groups[groupIndex].registrationBlockHeight);
     }
 
     /// @notice Reports unauthorized signing for the provided group. Must provide
