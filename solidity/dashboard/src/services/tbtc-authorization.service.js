@@ -9,6 +9,7 @@ import {
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
 } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
+import { add } from "../utils/arithmetics.utils"
 import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   getBondedECDSAKeepFactoryAddress,
@@ -126,12 +127,27 @@ const depositEthForOperator = async (
   onTransactionHashCallback
 ) => {
   const { keepBondingContract, yourAddress } = web3Context
-  const { operatorAddress, value } = data
-  const valueInWei = web3Utils.toWei(value.toString(), "ether")
+  const { operatorAddress, ethAmount } = data
+  const weiToAdd = web3Utils.toWei(ethAmount.toString(), "ether")
 
   await keepBondingContract.methods
     .deposit(operatorAddress)
-    .send({ from: yourAddress, value: valueInWei })
+    .send({ from: yourAddress, value: weiToAdd })
+    .on("transactionHash", onTransactionHashCallback)
+}
+
+const withdrawUnbondedEth = async (
+  web3Context,
+  data,
+  onTransactionHashCallback
+) => {
+  const { keepBondingContract, yourAddress } = web3Context
+  const { operatorAddress, ethAmount } = data
+  const weiToWithdraw = web3Utils.toWei(ethAmount.toString(), "ether")
+
+  await keepBondingContract.methods
+    .withdraw(weiToWithdraw, operatorAddress)
+    .send({ from: yourAddress })
     .on("transactionHash", onTransactionHashCallback)
 }
 
@@ -168,40 +184,47 @@ const fetchBondingData = async (web3Context) => {
     const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
     const createdBonds = await fetchCreatedBonds(
       web3Context,
-      operators,
+      Array.from(operators.keys()),
       sortitionPoolAddress
     )
 
     const operatorBondingDataMap = new Map()
     for (let i = 0; i < createdBonds.length; i++) {
+      const operatorAddress = web3Utils.toChecksumAddress(
+        createdBonds[i].operator
+      )
       const bondedEth = await fetchLockedBondAmount(
         web3Context,
-        createdBonds[i].operator,
+        operatorAddress,
         createdBonds[i].holder,
         createdBonds[i].referenceID
       )
 
-      operatorBondingDataMap.set(
-        web3Utils.toChecksumAddress(createdBonds[i].operator),
-        bondedEth
-      )
+      const currentBond = operatorBondingDataMap.get(operatorAddress)
+      if (currentBond) {
+        operatorBondingDataMap.set(operatorAddress, add(currentBond, bondedEth))
+      } else {
+        operatorBondingDataMap.set(operatorAddress, bondedEth)
+      }
     }
 
-    for (let i = 0; i < operators.length; i++) {
+    for (const [operatorAddress, isWithdrawable] of operators.entries()) {
       const delegatedTokens = await fetchDelegationInfo(
         web3Context,
-        operators[i]
+        operatorAddress
       )
-      const availableEth = await fetchAvailableAmount(web3Context, operators[i])
+      const availableEth = await fetchAvailableAmount(
+        web3Context,
+        operatorAddress
+      )
 
-      const bondedEth = operatorBondingDataMap.get(
-        web3Utils.toChecksumAddress(operators[i])
-      )
-        ? operatorBondingDataMap.get(web3Utils.toChecksumAddress(operators[i]))
+      const bondedEth = operatorBondingDataMap.get(operatorAddress)
+        ? operatorBondingDataMap.get(operatorAddress)
         : 0
 
       const bonding = {
-        operatorAddress: operators[i],
+        operatorAddress,
+        isWithdrawable,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
@@ -299,27 +322,18 @@ const fetchManagedGrantAddresses = async (web3Context, lookupAddress) => {
 }
 
 const fetchOperatorsOf = async (web3Context, yourAddress) => {
-  const operators = []
-
-  // operators of owner
-  operators.push(
-    ...(await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "operatorsOf",
-      yourAddress
-    ))
-  )
+  const operators = new Map()
 
   // operators of grantee (yourAddress)
-  operators.push(
-    ...(await contractService.makeCall(
-      web3Context,
-      TOKEN_GRANT_CONTRACT_NAME,
-      "getGranteeOperators",
-      yourAddress
-    ))
+  const operatorsOfGrantee = await contractService.makeCall(
+    web3Context,
+    TOKEN_GRANT_CONTRACT_NAME,
+    "getGranteeOperators",
+    yourAddress
   )
+  for (let i = 0; i < operatorsOfGrantee.length; i++) {
+    operators.set(web3Utils.toChecksumAddress(operatorsOfGrantee[i]), false)
+  }
 
   const managedGrantAddresses = await fetchManagedGrantAddresses(
     web3Context,
@@ -328,35 +342,50 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
   for (let i = 0; i < managedGrantAddresses.length; ++i) {
     const managedGrantAddress = managedGrantAddresses[i]
     // operators of grantee (managedGrantAddress)
-    operators.push(
-      ...(await contractService.makeCall(
-        web3Context,
-        TOKEN_GRANT_CONTRACT_NAME,
-        "getGranteeOperators",
-        managedGrantAddress
-      ))
+    const operatorsOfManagedGrant = await contractService.makeCall(
+      web3Context,
+      TOKEN_GRANT_CONTRACT_NAME,
+      "getGranteeOperators",
+      managedGrantAddress
     )
+    for (let i = 0; i < operatorsOfManagedGrant.length; i++) {
+      operators.set(
+        web3Utils.toChecksumAddress(operatorsOfManagedGrant[i]),
+        false
+      )
+    }
   }
 
   // operators of authorizer
   const operatorsOfAuthorizer = await fetchOperatorsOfAuthorizer(web3Context)
-  operators.push(...operatorsOfAuthorizer)
-
-  if (operators.length === 0) {
-    const ownerAddress = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "ownerOf",
-      yourAddress
-    )
-
-    if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
-      // owner of yourAddress
-      operators.push(yourAddress)
-    }
+  for (let i = 0; i < operatorsOfAuthorizer.length; i++) {
+    operators.set(web3Utils.toChecksumAddress(operatorsOfAuthorizer[i]), false)
   }
 
-  return [...new Set(operators)]
+  // operators of owner
+  const operatorsOfOwner = await contractService.makeCall(
+    web3Context,
+    TOKEN_STAKING_CONTRACT_NAME,
+    "operatorsOf",
+    yourAddress // as owner
+  )
+  for (let i = 0; i < operatorsOfOwner.length; i++) {
+    operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), true)
+  }
+
+  const ownerAddress = await contractService.makeCall(
+    web3Context,
+    TOKEN_STAKING_CONTRACT_NAME,
+    "ownerOf",
+    yourAddress
+  )
+
+  if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
+    // yourAddress is an operator
+    operators.set(web3Utils.toChecksumAddress(yourAddress), true)
+  }
+
+  return operators
 }
 
 // aka lockedBonds
@@ -386,10 +415,26 @@ const fetchAvailableAmount = async (web3Context, operator) => {
   )
 }
 
+const deauthorizeTBTCSystem = async (
+  web3Context,
+  operatorAddress,
+  onTransactionHashCallback
+) => {
+  const { keepBondingContract, yourAddress } = web3Context
+  const poolAddress = await fetchSortitionPoolForTbtc(web3Context)
+
+  await keepBondingContract.methods
+    .deauthorizeSortitionPoolContract(operatorAddress, poolAddress)
+    .send({ from: yourAddress })
+    .on("transactionHash", onTransactionHashCallback)
+}
+
 export const tbtcAuthorizationService = {
   fetchTBTCAuthorizationData,
   authorizeBondedECDSAKeepFactory,
   authorizeTBTCSystem,
   fetchBondingData,
   depositEthForOperator,
+  withdrawUnbondedEth,
+  deauthorizeTBTCSystem,
 }

@@ -61,6 +61,12 @@ export const SideMenu = (props) => {
             { to: "/applications/tbtc", exact: true, label: "tBTC" },
           ]}
         />
+        <NavLink
+          exact
+          to="/glossary"
+          label="glossary"
+          icon={<Icons.Glossary />}
+        />
         {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
         )}

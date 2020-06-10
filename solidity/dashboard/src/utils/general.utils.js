@@ -37,10 +37,10 @@ export const wait = (ms) => {
   })
 }
 
-export const formatDate = (dateMillis) => {
+export const formatDate = (dateMillis, format = "MM/DD/YYYY") => {
   const date = moment(dateMillis)
 
-  return date.format("MM/DD/YYYY")
+  return date.format(format)
 }
 
 export const isEmptyObj = (obj) =>

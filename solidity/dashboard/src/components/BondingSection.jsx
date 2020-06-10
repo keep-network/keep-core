@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import Tile from "./Tile"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
@@ -6,12 +6,23 @@ import Button from "./Button"
 import { displayAmount } from "../utils/token.utils"
 import { useModal } from "../hooks/useModal"
 import AddEthModal from "./AddETHModal"
+import WithdrawEthModal from "./WithdrawETHModal"
+import AvailableEthAmount from "./AvailableEthAmount"
+import { gt } from "../utils/arithmetics.utils"
 
 export const BondingSection = ({ data }) => {
   return (
     <Tile
       title="Add ETH for Bonding"
-      subtitle="Add an amount of ETH to the available balance."
+      subtitle={
+        <>
+          Add an amount of ETH to the available balance to be eligible for
+          signing group selection.&nbsp;
+          <span className="text-bold text-validation">
+            NOTE: Withdrawn ETH will go to the beneficiary address.
+          </span>
+        </>
+      }
     >
       <DataTable data={data} itemFieldId="operatorAddress">
         <Column
@@ -31,13 +42,27 @@ export const BondingSection = ({ data }) => {
         <Column header="bonded eth" field="bondedETH" />
         <Column
           header="available eth"
+          field="availableETH"
+          renderContent={({ availableETH }) => {
+            return <AvailableEthAmount availableETH={availableETH} />
+          }}
+        />
+        <Column
+          header=""
           headerStyle={{ textAlign: "right" }}
           field="availableETH"
-          renderContent={({ availableETH, operatorAddress }) => {
+          renderContent={({
+            availableETH,
+            operatorAddress,
+            isWithdrawable,
+            availableETHInWei,
+          }) => {
             return (
-              <AddEthCell
+              <ActionCell
                 availableETH={availableETH}
                 operatorAddress={operatorAddress}
+                isWithdrawable={isWithdrawable}
+                availableETHInWei={availableETHInWei}
               />
             )
           }}
@@ -49,25 +74,53 @@ export const BondingSection = ({ data }) => {
 
 export default React.memo(BondingSection)
 
-const AddEthCell = ({ availableETH, operatorAddress }) => {
-  const { ModalComponent, openModal, closeModal } = useModal()
+const ActionCell = React.memo(
+  ({ availableETH, availableETHInWei, operatorAddress, isWithdrawable }) => {
+    const { openModal, closeModal, ModalComponent } = useModal()
+    const [action, setAction] = useState("withdraw")
+    const title = action === "add" ? "Add ETH" : "Withdraw ETH"
+    const onBtnClick = (event) => {
+      setAction(event.currentTarget.id)
+      openModal()
+    }
 
-  return (
-    <>
-      <ModalComponent title="Add ETH">
-        <AddEthModal
-          operatorAddress={operatorAddress}
-          closeModal={closeModal}
-        />
-      </ModalComponent>
-      <div className="flex">
-        <div className="flex row center" style={{ marginLeft: "auto" }}>
-          <span className="mr-1">{availableETH}</span>
-          <Button onClick={openModal} className="btn btn-secondary btn-sm">
+    return (
+      <>
+        <ModalComponent title={title}>
+          {action === "add" ? (
+            <AddEthModal
+              operatorAddress={operatorAddress}
+              closeModal={closeModal}
+            />
+          ) : (
+            <WithdrawEthModal
+              operatorAddress={operatorAddress}
+              availableETH={availableETH}
+              closeModal={closeModal}
+            />
+          )}
+        </ModalComponent>
+        <div
+          className="flex row center space-between"
+          style={{ marginLeft: "auto" }}
+        >
+          <Button
+            id="add"
+            onClick={onBtnClick}
+            className="btn btn-secondary btn-sm"
+          >
             add eth
           </Button>
+          <Button
+            id="withdraw"
+            onClick={onBtnClick}
+            className="btn btn-secondary btn-sm"
+            disabled={!(isWithdrawable && gt(availableETHInWei, 0))}
+          >
+            withdraw
+          </Button>
         </div>
-      </div>
-    </>
-  )
-}
+      </>
+    )
+  }
+)

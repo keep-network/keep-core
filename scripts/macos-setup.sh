@@ -7,7 +7,7 @@ brew list golang &> /dev/null || brew install golang
 echo "Installing ethereum requirements..."
 brew tap ethereum/ethereum
 brew list geth &>/dev/null || brew install geth
-brew list solidity &>/dev/null || brew install solidity
+brew list solidity &>/dev/null || brew install solidity@5
 
 echo "Installing protobuf requirements..."
 # Protobuf
