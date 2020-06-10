@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/metrics"
+	"github.com/keep-network/keep-core/pkg/net"
+
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/persistence"
@@ -150,6 +153,11 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
+	err = initializeMetrics(ctx, config, netProvider, stakeMonitor)
+	if err != nil {
+		return fmt.Errorf("error initializing metrics: [%v]", err)
+	}
+
 	select {
 	case <-ctx.Done():
 		if err != nil {
@@ -194,4 +202,54 @@ func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) 
 		waitMins++
 	}
 	return fmt.Errorf("timed out waiting for %s to have required minimum stake", address)
+}
+
+func initializeMetrics(
+	ctx context.Context,
+	config *config.Config,
+	netProvider net.Provider,
+	stakeMonitor chain.StakeMonitor,
+) error {
+	registry, err := metrics.Initialize(
+		"keep-core",
+		config.Metrics.Identifier,
+		config.Metrics.Port,
+	)
+	if err != nil {
+		logger.Infof("metrics are not configured")
+		return nil
+	}
+
+	logger.Infof(
+		"enabled metrics with identifier [%v] on port [%v]",
+		config.Metrics.Identifier,
+		config.Metrics.Port,
+	)
+
+	observationTick := 1 * time.Minute
+
+	metrics.ObserveConnectedPeersCount(
+		ctx,
+		registry,
+		netProvider,
+		observationTick,
+	)
+
+	metrics.ObserveConnectedBootstrapPercentage(
+		ctx,
+		registry,
+		netProvider,
+		config.LibP2P.Peers,
+		observationTick,
+	)
+
+	metrics.ObserveEthConnectivity(
+		ctx,
+		registry,
+		stakeMonitor,
+		config.Ethereum.Account.Address,
+		observationTick,
+	)
+
+	return nil
 }
