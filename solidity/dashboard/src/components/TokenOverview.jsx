@@ -1,10 +1,9 @@
-import React from "react"
+import React, { useMemo } from "react"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
 import { Link } from "react-router-dom"
 import { colors } from "../constants/colors"
-import { add, div, isZero } from "../utils/arithmetics.utils"
-import web3Utils from "web3-utils"
+import { add, percentageOf } from "../utils/arithmetics.utils"
 
 const boxWrapperStyle = {
   border: `1px solid ${colors.grey20}`,
@@ -20,24 +19,24 @@ const TokenOverview = ({
   totalGrantedStakedBalance,
   totalOwnedStakedBalance,
 }) => {
-  const totalKeep = add(totalKeepTokenBalance, totalGrantedTokenBalance)
+  const totalKeep = useMemo(() => {
+    return add(totalKeepTokenBalance, totalGrantedTokenBalance)
+  }, [totalKeepTokenBalance, totalGrantedTokenBalance])
 
-  const totalStakedInPercentage = add(
-    totalGrantedStakedBalance,
-    totalOwnedStakedBalance
-  )
-    .div(isZero(totalKeep) ? web3Utils.toBN("1") : totalKeep)
-    .mul(web3Utils.toBN(100))
+  const totalStakedInPercentage = useMemo(() => {
+    return percentageOf(
+      add(totalGrantedStakedBalance, totalOwnedStakedBalance),
+      totalKeep
+    )
+  }, [totalGrantedStakedBalance, totalOwnedStakedBalance, totalKeep])
 
-  const ownedStakedInPercentage = div(
-    totalOwnedStakedBalance,
-    isZero(totalKeepTokenBalance) ? "1" : totalKeepTokenBalance
-  ).mul(web3Utils.toBN(100))
+  const ownedStakedInPercentage = useMemo(() => {
+    return percentageOf(totalOwnedStakedBalance, totalKeepTokenBalance)
+  }, [totalOwnedStakedBalance, totalKeepTokenBalance])
 
-  const grantedStakedInPercentage = div(
-    totalGrantedStakedBalance,
-    isZero(totalGrantedTokenBalance) ? "1" : totalGrantedTokenBalance
-  ).mul(web3Utils.toBN(100))
+  const grantedStakedInPercentage = useMemo(() => {
+    return percentageOf(totalGrantedStakedBalance, totalGrantedTokenBalance)
+  }, [totalGrantedStakedBalance, totalGrantedTokenBalance])
 
   return (
     <section className="tile" id="token-overview-balance">
@@ -56,7 +55,7 @@ const TokenOverview = ({
           currencyIconProps={{ width: 18, heigh: 18 }}
           amountClassName="h4 text-primary"
           suffixClassName="text-small text-primary"
-          amount={totalGrantedStakedBalance}
+          amount={totalGrantedTokenBalance}
           withMetricSuffix
         />
         <p className="text-small">{`${grantedStakedInPercentage}% Staked`}</p>
@@ -75,7 +74,7 @@ const TokenOverview = ({
           amountClassName="h4 text-primary"
           suffixClassName="text-small text-primary"
           icons
-          amount={totalOwnedStakedBalance}
+          amount={totalKeepTokenBalance}
           withMetricSuffix
         />
         <p className="text-small">{`${ownedStakedInPercentage}% Staked`}</p>
