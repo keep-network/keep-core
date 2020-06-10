@@ -31,6 +31,7 @@ type Storage struct {
 type Metrics struct {
 	Identifier string
 	Port       int
+	Tick       int
 }
 
 var (

@@ -226,7 +226,12 @@ func initializeMetrics(
 		config.Metrics.Port,
 	)
 
-	observationTick := 1 * time.Minute
+	var observationTick time.Duration
+	if tick := config.Metrics.Tick; tick != 0 {
+		observationTick = time.Duration(tick) * time.Second
+	} else {
+		observationTick = 60 * time.Second
+	}
 
 	metrics.ObserveConnectedPeersCount(
 		ctx,

@@ -58,3 +58,4 @@
 # [Metrics]
     # Identifier = "example-id"
     # Port = 8080
+    # Tick = 60
