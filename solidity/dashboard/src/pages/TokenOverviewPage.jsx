@@ -3,8 +3,10 @@ import PageWrapper from "../components/PageWrapper"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import Undelegations from "../components/Undelegations"
 import TokenOverview from "../components/TokenOverview"
+import { LoadingOverlay } from "../components/Loadable"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { add } from "../utils/arithmetics.utils"
+import { isEmptyArray } from "../utils/array.utils"
 
 const TokenOverviewPage = () => {
   const {
@@ -16,8 +18,8 @@ const TokenOverviewPage = () => {
     grants,
     refreshGrants,
     refreshData,
+    isFetching,
   } = useTokensPageContext()
-
   const cancelStakeSuccessCallback = useCallback(() => {
     refreshGrants()
     refreshData()
@@ -44,23 +46,27 @@ const TokenOverviewPage = () => {
   }, [grants, totalGrantedStakedBalance])
 
   return (
-    <PageWrapper title="Token Overview">
-      <TokenOverview
-        totalKeepTokenBalance={totalKeepTokenBalance}
-        totalGrantedTokenBalance={totalGrantedTokenBalance}
-        totalGrantedStakedBalance={totalGrantedStakedBalance}
-        totalOwnedStakedBalance={totalOwnedStakedBalance}
-      />
-      <DelegatedTokensTable
-        title="Delegation History"
-        delegatedTokens={delegations}
-        cancelStakeSuccessCallback={cancelStakeSuccessCallback}
-      />
-      <Undelegations
-        title="Undelegation History"
-        undelegations={undelegations}
-      />
-    </PageWrapper>
+    <LoadingOverlay isFetching={isFetching}>
+      <PageWrapper title="Token Overview">
+        <TokenOverview
+          totalKeepTokenBalance={totalKeepTokenBalance}
+          totalOwnedStakedBalance={totalOwnedStakedBalance}
+          totalGrantedTokenBalance={totalGrantedTokenBalance}
+          totalGrantedStakedBalance={totalGrantedStakedBalance}
+        />
+        <DelegatedTokensTable
+          title="Delegation History"
+          delegatedTokens={delegations}
+          cancelStakeSuccessCallback={cancelStakeSuccessCallback}
+        />
+        {!isEmptyArray(undelegations) && (
+          <Undelegations
+            title="Undelegation History"
+            undelegations={undelegations}
+          />
+        )}
+      </PageWrapper>
+    </LoadingOverlay>
   )
 }
 
