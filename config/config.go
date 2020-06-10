@@ -19,11 +19,18 @@ type Config struct {
 	Ethereum ethereum.Config
 	LibP2P   libp2p.Config
 	Storage  Storage
+	Metrics  Metrics
 }
 
 // Storage stores meta-info about keeping data on disk
 type Storage struct {
 	DataDir string
+}
+
+// Metrics stores meta-info about metrics.
+type Metrics struct {
+	Identifier string
+	Port       int
 }
 
 var (
