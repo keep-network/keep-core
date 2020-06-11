@@ -16,8 +16,8 @@ func TestFilterSymmetricKeyGeneratingMembers(t *testing.T) {
 		InitializeSymmetricKeyGeneration()
 
 	messages := []*EphemeralPublicKeyMessage{
-		&EphemeralPublicKeyMessage{senderID: 11},
-		&EphemeralPublicKeyMessage{senderID: 14},
+		{senderID: 11},
+		{senderID: 14},
 	}
 
 	member.MarkInactiveMembers(messages)
@@ -41,15 +41,15 @@ func TestFilterCommitmentsVefiryingMembers(t *testing.T) {
 		InitializeCommitmentsVerification()
 
 	sharesMessages := []*PeerSharesMessage{
-		&PeerSharesMessage{senderID: 91},
-		&PeerSharesMessage{senderID: 92},
-		&PeerSharesMessage{senderID: 94},
+		{senderID: 91},
+		{senderID: 92},
+		{senderID: 94},
 	}
 
 	commitmentsMessages := []*MemberCommitmentsMessage{
-		&MemberCommitmentsMessage{senderID: 92},
-		&MemberCommitmentsMessage{senderID: 94},
-		&MemberCommitmentsMessage{senderID: 95},
+		{senderID: 92},
+		{senderID: 94},
+		{senderID: 95},
 	}
 
 	member.MarkInactiveMembers(sharesMessages, commitmentsMessages)
@@ -86,8 +86,8 @@ func TestFilterSharingMembers(t *testing.T) {
 		InitializeSharing()
 
 	messages := []*MemberPublicKeySharePointsMessage{
-		&MemberPublicKeySharePointsMessage{senderID: 21},
-		&MemberPublicKeySharePointsMessage{senderID: 23},
+		{senderID: 21},
+		{senderID: 23},
 	}
 
 	member.MarkInactiveMembers(messages)

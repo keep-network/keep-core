@@ -43,7 +43,7 @@ func TestReadConfig(t *testing.T) {
 		"Ethereum.ContractAddresses": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
-				"KeepRandomBeaconOperator":  "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+				"KeepRandomBeaconOperator": "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
 			},
 		},
 		"Storage.DataDir": {

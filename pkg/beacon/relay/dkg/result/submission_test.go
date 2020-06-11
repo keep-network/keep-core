@@ -29,10 +29,10 @@ func TestSubmitDKGResult(t *testing.T) {
 		GroupPublicKey: []byte{123, 45},
 	}
 	signatures := map[group.MemberIndex][]byte{
-		1: []byte{101},
-		2: []byte{102},
-		3: []byte{103},
-		4: []byte{104},
+		1: {101},
+		2: {102},
+		3: {103},
+		4: {104},
 	}
 
 	tStep := config.ResultPublicationBlockStep
@@ -128,10 +128,10 @@ func TestConcurrentPublishResult(t *testing.T) {
 	}
 
 	signatures := map[group.MemberIndex][]byte{
-		1: []byte{101},
-		2: []byte{102},
-		3: []byte{103},
-		4: []byte{104},
+		1: {101},
+		2: {102},
+		3: {103},
+		4: {104},
 	}
 
 	var tests = map[string]struct {

@@ -70,20 +70,20 @@ func TestExecute(t *testing.T) {
 	}
 
 	expectedTestLog := map[uint64][]string{
-		1: []string{
+		1: {
 			"1-state.testState1-initiate",
 			"1-state.testState1-receive-message_1",
 		},
-		3: []string{"1-state.testState2-initiate"},
-		4: []string{"1-state.testState2-receive-message_2"},
-		6: []string{
+		3: {"1-state.testState2-initiate"},
+		4: {"1-state.testState2-receive-message_2"},
+		6: {
 			"1-state.testState3-initiate",
 			"1-state.testState4-initiate",
 		},
-		7: []string{
+		7: {
 			"1-state.testState4-receive-message_3",
 		},
-		8: []string{
+		8: {
 			"1-state.testState5-initiate",
 		},
 	}

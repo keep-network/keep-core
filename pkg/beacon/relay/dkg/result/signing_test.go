@@ -106,13 +106,13 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 	}{
 		"received valid messages with signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
 					publicKey:   signing2.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
@@ -127,19 +127,19 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"received messages from other member with duplicated different signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
 					publicKey:   signing3.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
 					publicKey:   signing3.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
@@ -152,13 +152,13 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"received messages from other member with the same signatures for the preferred result": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
 					publicKey:   signing3.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
@@ -171,13 +171,13 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"received messages from other member with signatures for two different results": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature411,
 					publicKey:   signing4.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature421,
@@ -190,7 +190,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"received a message from other member with signature for result different than preferred": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature52,
@@ -203,7 +203,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"received a message from other member with invalid signature": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   []byte{99},
@@ -216,7 +216,7 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		},
 		"received a message from other member with invalid public key": {
 			messages: []*DKGResultHashSignatureMessage{
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
@@ -230,40 +230,40 @@ func TestVerifyDKGResultSignatures(t *testing.T) {
 		"mixed cases with received valid signatures and duplicated signatures": {
 			messages: []*DKGResultHashSignatureMessage{
 				// Valid signature supporting the same result as preferred.
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member2.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature21,
 					publicKey:   signing2.PublicKey(),
 				},
 				// Multiple signatures from the same member supporting the same result as preferred.
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature311,
 					publicKey:   signing3.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member3.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature312,
 					publicKey:   signing3.PublicKey(),
 				},
 				// Multiple signatures from the same member supporting two different results.
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash1,
 					signature:   signature411,
 					publicKey:   signing4.PublicKey(),
 				},
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member4.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature421,
 					publicKey:   signing4.PublicKey(),
 				},
 				// Member supporting different result than preferred.
-				&DKGResultHashSignatureMessage{
+				{
 					senderIndex: member5.index,
 					resultHash:  dkgResultHash2,
 					signature:   signature52,
