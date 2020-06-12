@@ -15,15 +15,13 @@ var logger = log.Logger("keep-metrics")
 
 // Initialize set up the metrics registry and enables metrics server.
 func Initialize(
-	application string,
-	identifier string,
 	port int,
 ) (*metrics.Registry, error) {
-	if application == "" || identifier == "" || port == 0 {
-		return nil, fmt.Errorf("invalid parameters")
+	if port == 0 {
+		return nil, fmt.Errorf("invalid port")
 	}
 
-	registry := metrics.NewRegistry(application, identifier)
+	registry := metrics.NewRegistry()
 
 	registry.EnableServer(port)
 
@@ -139,7 +137,7 @@ func ExposeLibP2PInfo(
 
 	id := metrics.NewLabel("id", netProvider.ID().String())
 
-	_, err := registry.NewInfo(name, id)
+	_, err := registry.NewInfo(name, []metrics.Label{id})
 	if err != nil {
 		logger.Warningf("could not create info metric [%v]", name)
 		return

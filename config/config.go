@@ -29,9 +29,8 @@ type Storage struct {
 
 // Metrics stores meta-info about metrics.
 type Metrics struct {
-	Identifier string
-	Port       int
-	Tick       int
+	Port int
+	Tick int
 }
 
 var (

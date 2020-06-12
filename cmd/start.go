@@ -211,8 +211,6 @@ func initializeMetrics(
 	stakeMonitor chain.StakeMonitor,
 ) error {
 	registry, err := metrics.Initialize(
-		"keep-core",
-		config.Metrics.Identifier,
 		config.Metrics.Port,
 	)
 	if err != nil {
@@ -221,8 +219,7 @@ func initializeMetrics(
 	}
 
 	logger.Infof(
-		"enabled metrics with identifier [%v] on port [%v]",
-		config.Metrics.Identifier,
+		"enabled metrics on port [%v]",
 		config.Metrics.Port,
 	)
 
