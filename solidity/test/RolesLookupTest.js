@@ -1,6 +1,6 @@
 const {accounts, contract} = require('@openzeppelin/test-environment')
 const {time, expectRevert} = require('@openzeppelin/test-helpers')
-const grantTokens = require('./helpers/grantTokens')
+const {grantTokens} = require('./helpers/grantTokens')
 const {
   delegateStake,
   delegateStakeFromGrant,
