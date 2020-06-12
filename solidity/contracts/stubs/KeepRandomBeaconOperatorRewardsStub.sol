@@ -45,4 +45,8 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         emit RelayEntryTimeoutReported(groupIndex);
     }
 
+    function isGroupTerminated(uint256 groupIndex) public view returns (bool) {
+        return groups.isGroupTerminated(groupIndex);
+    }
+
 }

@@ -29,6 +29,7 @@ const rewardsStatusFilterOptions = [
   { status: REWARD_STATUS.AVAILABLE },
   { status: REWARD_STATUS.ACTIVE },
   { status: REWARD_STATUS.WITHDRAWN },
+  { status: REWARD_STATUS.TERMINATED },
 ]
 
 export const Rewards = React.memo(() => {
@@ -169,23 +170,14 @@ export const Rewards = React.memo(() => {
 
   const rewardsData = useMemo(() => {
     const allRewards = [...rewards, ...withdrawals]
-    let rewardsToReturn
-    switch (rewardFilter.status) {
-      case REWARD_STATUS.AVAILABLE:
-        rewardsToReturn = allRewards.filter(({ isStale }) => isStale)
-        break
-      case REWARD_STATUS.ACTIVE:
-        rewardsToReturn = allRewards.filter(
-          ({ isStale, status }) => !isStale && !status
-        )
-        break
-      case REWARD_STATUS.WITHDRAWN:
-        rewardsToReturn = allRewards.filter(
-          ({ status }) => status === REWARD_STATUS.WITHDRAWN
-        )
-        break
-      default:
-        rewardsToReturn = allRewards
+    let rewardsToReturn = []
+
+    if (!rewardFilter.status) {
+      rewardsToReturn = allRewards
+    } else {
+      rewardsToReturn = allRewards.filter(
+        ({ status }) => status === rewardFilter.status
+      )
     }
 
     return showAll

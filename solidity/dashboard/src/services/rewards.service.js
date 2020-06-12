@@ -64,6 +64,19 @@ const fetchAvailableRewards = async (web3Context) => {
           .isStaleGroup(groupPubKey)
           .call()
 
+        const isTerminated =
+          !isStale &&
+          (await keepRandomBeaconOperatorContract.methods
+            .isGroupTerminated(groupIndex)
+            .call())
+
+        let status = REWARD_STATUS.ACTIVE
+        if (isTerminated) {
+          status = REWARD_STATUS.TERMINATED
+        } else if (isStale) {
+          status = REWARD_STATUS.AVAILABLE
+        }
+
         totalRewardsBalance = add(totalRewardsBalance, reward)
         rewards.push({
           groupIndex: groupIndex.toString(),
@@ -71,6 +84,7 @@ const fetchAvailableRewards = async (web3Context) => {
           membersIndeces: groupMemberIndices[groupPubKey],
           reward: web3Utils.fromWei(reward, "ether"),
           isStale,
+          status,
         })
       }
     }
