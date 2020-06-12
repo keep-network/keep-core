@@ -2,7 +2,7 @@ import web3Utils from "web3-utils"
 import { wait, isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
-import { OPERATOR_CONTRACT_NAME } from "../constants/constants"
+import { OPERATOR_CONTRACT_NAME, REWARD_STATUS } from "../constants/constants"
 import { contractService } from "./contracts.service"
 
 const fetchAvailableRewards = async (web3Context) => {
@@ -177,7 +177,7 @@ const fetchWithdrawalHistory = async (web3Context) => {
             reward: utils.fromWei(amount, "ether"),
             transactionHash,
             operator,
-            status: "WITHDRAWN",
+            status: REWARD_STATUS.WITHDRAWN,
           }
         })
         .reverse()
