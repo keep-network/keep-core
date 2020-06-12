@@ -256,5 +256,10 @@ func initializeMetrics(
 		observationTick,
 	)
 
+	metrics.ExposeLibP2PInfo(
+		registry,
+		netProvider,
+	)
+
 	return nil
 }

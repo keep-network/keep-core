@@ -129,3 +129,19 @@ func observe(
 
 	observer.Observe(ctx, tick)
 }
+
+// ExposeLibP2PInfo provides some basic information about libp2p config.
+func ExposeLibP2PInfo(
+	registry *metrics.Registry,
+	netProvider net.Provider,
+) {
+	name := "libp2p_info"
+
+	id := metrics.NewLabel("id", netProvider.ID().String())
+
+	_, err := registry.NewInfo(name, id)
+	if err != nil {
+		logger.Warningf("could not create info metric [%v]", name)
+		return
+	}
+}
