@@ -141,7 +141,7 @@ library Groups {
         uint256 groupIndex
     ) internal {
         self.groups[groupIndex].terminated = true;
-        self.activeTerminatedGroups.push(groupIndex);
+        self.activeTerminatedGroups.length++;
 
         // Sorting activeTerminatedGroups in ascending order so a non-terminated
         // group is properly selected.
