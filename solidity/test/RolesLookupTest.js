@@ -12,6 +12,7 @@ const assert = require('chai').assert
 const KeepToken = contract.fromArtifact('KeepToken')
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking')
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
@@ -45,6 +46,7 @@ describe('RolesLookup', () => {
   let token,
     tokenGrant,
     tokenStaking,
+    tokenStakingEscrow,
     tokenGrantStakingPolicy,
     managedGrantFactory,
     lookup
@@ -53,7 +55,11 @@ describe('RolesLookup', () => {
     const registry = await KeepRegistry.new({from: deployer})
     token = await KeepToken.new({from: deployer})
     tokenGrant = await TokenGrant.new(token.address, {from: deployer})
-
+    tokenStakingEscrow = await TokenStakingEscrow.new(
+      token.address, 
+      tokenGrant.address, 
+      {from: deployer}
+    )
     await TokenStaking.detectNetwork()
     await TokenStaking.link(
       'MinimumStakeSchedule', 
@@ -61,11 +67,13 @@ describe('RolesLookup', () => {
     )
     tokenStaking = await TokenStaking.new(
       token.address,
+      tokenStakingEscrow.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
       {from: deployer}
     )
+    await tokenStakingEscrow.transferOwnership(tokenStaking.address, {from: deployer})
     tokenGrantStakingPolicy = await PermissiveStakingPolicy.new()
     managedGrantFactory = await ManagedGrantFactory.new(
       token.address,

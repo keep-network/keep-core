@@ -9,8 +9,10 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/MinimumStake', function() {
@@ -24,15 +26,22 @@ describe('TokenStaking/MinimumStake', function() {
 
   before(async () => {
     token = await KeepToken.new();
+    grant = await TokenGrant.new(token.address);
     registry = await KeepRegistry.new();
-    await TokenStaking.detectNetwork()
+    escrow = await TokenStakingEscrow.new(token.address, grant.address);
+    await TokenStaking.detectNetwork();
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new()).address
-    )
-    stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod
     );
+    stakingContract = await TokenStaking.new(
+      token.address,
+      escrow.address,
+      registry.address,
+      initializationPeriod,
+      undelegationPeriod
+    );
+    await escrow.transferOwnership(stakingContract.address);
 
     keepDecimals = web3.utils.toBN(10).pow(web3.utils.toBN(18));
   });

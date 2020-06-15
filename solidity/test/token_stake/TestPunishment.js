@@ -4,8 +4,10 @@ const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 const stakeDelegate = require('../helpers/stakeDelegate')
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 const BN = web3.utils.BN
@@ -30,7 +32,13 @@ describe('TokenStaking/Punishment', () => {
 
     before(async () => {
         token = await KeepToken.new({ from: owner })
+        tokenGrant = await TokenGrant.new(token.address,  {from: owner})
         registry = await KeepRegistry.new({ from: owner })
+        stakingEscrow = await TokenStakingEscrow.new(
+            token.address, 
+            tokenGrant.address, 
+            {from: owner}
+        )
         await TokenStaking.detectNetwork()
         await TokenStaking.link(
             'MinimumStakeSchedule', 
@@ -38,6 +46,7 @@ describe('TokenStaking/Punishment', () => {
         )
         stakingContract = await TokenStaking.new(
             token.address,
+            stakingEscrow.address,
             registry.address,
             initializationPeriod,
             undelegationPeriod,

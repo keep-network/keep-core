@@ -1,6 +1,6 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -14,7 +14,9 @@ const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
+const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking', function() {
@@ -34,16 +36,27 @@ describe('TokenStaking', function() {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
+    tokenGrant = await TokenGrant.new(token.address,  {from: accounts[0]});
     registry = await KeepRegistry.new({from: accounts[0]});
+    stakingEscrow = await TokenStakingEscrow.new(
+      token.address, 
+      tokenGrant.address, 
+      {from: accounts[0]}
+    );
     await TokenStaking.detectNetwork();
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: accounts[0]})).address
-    )
-    stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );
-
+    stakingContract = await TokenStaking.new(
+      token.address,
+      stakingEscrow.address,
+      registry.address,
+      initializationPeriod,
+      undelegationPeriod,
+      {from: accounts[0]}
+    );
+    await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
     await registry.approveOperatorContract(operatorContract, {from: accounts[0]});
 
     minimumStake = await stakingContract.minimumStake();
