@@ -200,7 +200,10 @@ export const SubmitButton = ({
 
   return (
     <>
-      <ModalComponent title={confirmationModalTitle}>
+      <ModalComponent
+        title={confirmationModalTitle}
+        closeModal={onCancelConfrimationModal}
+      >
         <ConfirmationModal
           onCancel={onCancelConfrimationModal}
           onBtnClick={onSubmitConfirmationModal}
