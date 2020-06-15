@@ -183,7 +183,7 @@ contract TokenStakingEscrow is Ownable {
 
     function getManagedGrantee(
         address managedGrantee
-    ) internal view returns(address) {
+    ) public view returns(address) {
         ManagedGrant grant = ManagedGrant(managedGrantee);
         return grant.grantee();
     }
