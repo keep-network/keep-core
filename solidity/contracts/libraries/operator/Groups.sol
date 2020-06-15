@@ -134,7 +134,7 @@ library Groups {
     ) internal view returns (address) {
         return self.groupMembers[groupPubKey][memberIndex];
     }
-    
+
     /// @notice Terminates group.
     function terminateGroup(
         Storage storage self,
@@ -142,6 +142,14 @@ library Groups {
     ) internal {
         self.groups[groupIndex].terminated = true;
         self.activeTerminatedGroups.push(groupIndex);
+
+        // Sorting activeTerminatedGroups in ascending order so a non-terminated
+        // group is properly selected.
+        uint256 i;
+        for (i = self.activeTerminatedGroups.length - 1; (i > 0 && self.activeTerminatedGroups[i - 1] > groupIndex); i--) {
+            self.activeTerminatedGroups[i] = self.activeTerminatedGroups[i - 1];
+        }
+        self.activeTerminatedGroups[i] = groupIndex;
     }
 
     /// @notice Checks if group with the given index is terminated.

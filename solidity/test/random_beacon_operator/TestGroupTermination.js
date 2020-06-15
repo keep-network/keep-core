@@ -40,6 +40,53 @@ describe('KeepRandomBeaconOperator/GroupTermination', function() {
 
       return groups.selectGroup.call(beaconValue);
     }
+
+    describe("performs selection with terminated groups not in ascending order", async () => {
+      it("AATAT beacon_value = 0", async () => {
+        let selectedIndex = await runTerminationTest(5, 0, [4, 2], 0)
+        assert.equal(0, selectedIndex)
+      })
+      it("AATAT beacon_value = 1", async () => {
+        let selectedIndex = await runTerminationTest(5, 0, [4, 2], 1)
+        assert.equal(1, selectedIndex)
+      })
+      it("AATAT beacon_value = 2", async () => {
+        let selectedIndex = await runTerminationTest(5, 0, [4, 2], 2)
+        assert.equal(3, selectedIndex)
+      })
+      it("TATATTA beacon_value = 0", async () => {
+        let selectedIndex = await runTerminationTest(7, 0, [5, 2, 4, 0], 0)
+        assert.equal(1, selectedIndex)
+      })
+      it("TATATTA beacon_value = 1", async () => {
+        let selectedIndex = await runTerminationTest(7, 0, [5, 2, 4, 0], 1)
+        assert.equal(3, selectedIndex)
+      })
+      it("TATATTA beacon_value = 2", async () => {
+        let selectedIndex = await runTerminationTest(7, 0, [5, 2, 4, 0], 2)
+        assert.equal(6, selectedIndex)
+      })
+      it("AATATTA beacon_value = 0", async () => {
+        let selectedIndex = await runTerminationTest(7, 0, [5, 2, 4], 0)
+        assert.equal(0, selectedIndex)
+      })
+      it("TATATAAT beacon_value = 0", async () => {
+        let selectedIndex = await runTerminationTest(8, 0, [7, 0, 4, 2], 0)
+        assert.equal(1, selectedIndex)
+      })
+      it("TATATAAT beacon_value = 1", async () => {
+        let selectedIndex = await runTerminationTest(8, 0, [7, 0, 4, 2], 1)
+        assert.equal(3, selectedIndex)
+      })
+      it("TATATAAT beacon_value = 2", async () => {
+        let selectedIndex = await runTerminationTest(8, 0, [7, 0, 4, 2], 2)
+        assert.equal(5, selectedIndex)
+      })
+      it("TATATAAT beacon_value = 3", async () => {
+        let selectedIndex = await runTerminationTest(8, 0, [7, 0, 4, 2], 3)
+        assert.equal(6, selectedIndex)
+      })
+    })
     
     describe("should not select terminated groups", async () => {
       it("TA beacon_value = 0", async function() {
