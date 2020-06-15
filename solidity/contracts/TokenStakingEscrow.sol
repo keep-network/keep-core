@@ -112,15 +112,11 @@ contract TokenStakingEscrow is Ownable {
     function withdrawable(address operator) public view returns (uint256) {
         Deposit memory deposit = deposits[operator];
 
-        (uint256 amountGranted, uint256 amountRevoked) = getGrantAmounts(
-            deposit.grantId
-        );
-
         // Staked tokens can be only withdrawn by grantee for non-revoked grant.
         // It is not possible for the escrow to determine the number of tokens
         // it should return to the grantee of a revoked grant given different
         // possible staking contracts and staking policies.
-        if (amountRevoked == 0) {
+        if (getAmountRevoked(deposit.grantId) == 0) {
             (
                 uint256 duration,
                 uint256 start,
@@ -202,9 +198,10 @@ contract TokenStakingEscrow is Ownable {
         // This is fine as long as the staking contract works with the same
         // assumption so we are limiting deposits to the staking contract only.
         require(from == owner(), "Only owner can deposit");
-
-        (uint256 grantAmount,) = getGrantAmounts(grantId);
-        require(grantAmount > 0, "Grant with this ID does not exist");
+        require(
+            getAmountGranted(grantId) > 0,
+            "Grant with this ID does not exist"
+        );
 
         keepToken.safeTransferFrom(from, address(this), value);
         deposits[operator] = Deposit(grantId, value, 0);
@@ -225,14 +222,19 @@ contract TokenStakingEscrow is Ownable {
         emit DepositWithdrawn(operator, grantee, amount);
     }
 
-    function getGrantAmounts(uint256 grantId) internal view returns (
-        uint256 amountGranted,
-        uint256 amountRevoked
+    function getAmountGranted(uint256 grantId) internal view returns (
+        uint256 amountGranted
     ) {
-        (amountGranted,,,amountRevoked,,) = tokenGrant.getGrant(grantId);
+       (amountGranted,,,,,) = tokenGrant.getGrant(grantId);
     }
 
-    function getUnlockingSchedule(uint256 grantId) internal view returns(
+    function getAmountRevoked(uint256 grantId) internal view returns (
+        uint256 amountRevoked
+    ) {
+        (,,,amountRevoked,,) = tokenGrant.getGrant(grantId);
+    }
+
+    function getUnlockingSchedule(uint256 grantId) internal view returns (
         uint256 duration,
         uint256 start,
         uint256 cliff
