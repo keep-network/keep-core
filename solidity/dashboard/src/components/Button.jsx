@@ -4,6 +4,8 @@ import { ClockIndicator } from "./Loadable"
 import { messageType, MessagesContext } from "./Message"
 import * as Icons from "./Icons"
 import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
+import ConfirmationModal from "./ConfirmationModal"
+import { useModal } from "../hooks/useModal"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -94,11 +96,41 @@ export const SubmitButton = ({
   pendingMessageContent,
   triggerManuallyFetch,
   successCallback,
+  confirmationModalTitle,
   ...props
 }) => {
   const [isFetching, setIsFetching] = useState(false)
   const { showMessage, closeMessage } = useContext(MessagesContext)
   const [showSuccessBtn, setShowSuccessBtn] = useState(false)
+  const { ModalComponent, openModal, closeModal } = useModal()
+  const [confirmationModalState, setConfirmationModalState] = useState(null)
+
+  const awaitingPromiseRef = useRef()
+
+  const openConfirmationModal = (options) => {
+    setConfirmationModalState(options)
+    openModal()
+    return new Promise((resolve, reject) => {
+      awaitingPromiseRef.current = { resolve, reject }
+    })
+  }
+
+  const onCancelConfrimationModal = () => {
+    if (awaitingPromiseRef.current) {
+      awaitingPromiseRef.current.reject()
+    }
+    closeModal()
+    setConfirmationModalState(null)
+  }
+
+  const onSubmitConfirmationModal = () => {
+    if (awaitingPromiseRef.current) {
+      awaitingPromiseRef.current.resolve()
+    }
+    closeModal()
+    setConfirmationModalState(null)
+  }
+
   useEffect(() => {
     if (showSuccessBtn) {
       const timeout = setTimeout(() => {
@@ -153,7 +185,8 @@ export const SubmitButton = ({
       await onSubmitAction(
         onTransactionHashCallback,
         openMessageInfo,
-        setFetching
+        setFetching,
+        openConfirmationModal
       )
       setIsFetching(false)
       setShowSuccessBtn(true)
@@ -166,22 +199,31 @@ export const SubmitButton = ({
   }
 
   return (
-    <Button
-      {...props}
-      className={`${props.className} ${showSuccessBtn && `btn btn-success`}`}
-      onClick={onButtonClick}
-      isFetching={isFetching}
-      disabled={showSuccessBtn || props.disabled}
-    >
-      {showSuccessBtn ? (
-        <div className="flex row full-center flex-1">
-          <Icons.OK />
-          <span className="ml-1 text-black">success</span>
-        </div>
-      ) : (
-        props.children
-      )}
-    </Button>
+    <>
+      <ModalComponent title={confirmationModalTitle}>
+        <ConfirmationModal
+          onCancel={onCancelConfrimationModal}
+          onBtnClick={onSubmitConfirmationModal}
+          {...confirmationModalState}
+        />
+      </ModalComponent>
+      <Button
+        {...props}
+        className={`${props.className} ${showSuccessBtn && `btn btn-success`}`}
+        onClick={onButtonClick}
+        isFetching={isFetching}
+        disabled={showSuccessBtn || props.disabled}
+      >
+        {showSuccessBtn ? (
+          <div className="flex row full-center flex-1">
+            <Icons.OK />
+            <span className="ml-1 text-black">success</span>
+          </div>
+        ) : (
+          props.children
+        )}
+      </Button>
+    </>
   )
 }
 
@@ -191,4 +233,5 @@ SubmitButton.defaultProps = {
   pendingMessageTitle: "Action is pending",
   pendingMessageContent: "",
   successCallback: () => {},
+  confirmationModalTitle: "Are you sure?",
 }
