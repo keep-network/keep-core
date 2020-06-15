@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useCallback } from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
@@ -78,7 +78,11 @@ const Wallet = ({
   modalProps,
 }) => {
   const { ModalComponent, openModal, closeModal } = useModal()
-  const { connectAppWithWallet, setAccount } = useWeb3Context()
+  const {
+    connectAppWithWallet,
+    setAccount,
+    abortWalletConnection,
+  } = useWeb3Context()
   const [accounts, setAccounts] = useState(null)
 
   const onSelectProvider = async (providerName) => {
@@ -94,6 +98,11 @@ const Wallet = ({
     setAccount([account])
     closeModal()
   }
+
+  const customCloseModal = useCallback(() => {
+    abortWalletConnection()
+    closeModal()
+  }, [abortWalletConnection, closeModal])
 
   const renderModalContent = () => {
     switch (providerName) {
@@ -120,7 +129,7 @@ const Wallet = ({
 
   return (
     <>
-      <ModalComponent title="Connect Wallet">
+      <ModalComponent title="Connect Wallet" closeModal={customCloseModal}>
         {renderModalContent()}
       </ModalComponent>
       <li
