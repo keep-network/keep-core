@@ -16,12 +16,13 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe('TokenStakingEscrow', () => {
+describe.only('TokenStakingEscrow', () => {
   
-  const owner = accounts[0],
+  const deployer = accounts[0],
     grantee = accounts[1],
     operator = accounts[2],
-    operator2 = accounts[3]
+    operator2 = accounts[3],
+    tokenStaking = accounts[4]
 
   let grantedAmount, grantStart, grantUnlockingDuration,
   grantId, managedGrantId, managedGrant
@@ -29,21 +30,24 @@ describe('TokenStakingEscrow', () => {
   let token, tokenGrant, permissivePolicy, managedGrantFactory, escrow
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
-    tokenGrant = await TokenGrant.new(token.address, {from: owner})
+    token = await KeepToken.new({from: deployer})
+    await token.transfer(tokenStaking, 100000, {from: deployer})
+
+    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
     permissivePolicy = await PermissiveStakingPolicy.new()
     managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      {from: owner}
+      {from: deployer}
     );
     
     escrow = await TokenStakingEscrow.new(
       token.address, 
       tokenGrant.address,
-      owner, // set the owner as TokenStaking address for test simplicity
-      {from: owner}
+      {from: deployer}
     )
+
+    await escrow.transferOwnership(tokenStaking, {from: deployer})
 
     grantedAmount = 10000
     grantStart = await time.latest()
@@ -54,7 +58,7 @@ describe('TokenStakingEscrow', () => {
       tokenGrant, 
       token, 
       grantedAmount, 
-      owner, 
+      deployer, 
       grantee, 
       grantUnlockingDuration,
       grantStart,
@@ -67,7 +71,7 @@ describe('TokenStakingEscrow', () => {
       managedGrantFactory,
       token,
       grantedAmount,
-      owner,
+      deployer,
       grantee,
       grantUnlockingDuration,
       grantStart,
@@ -89,14 +93,14 @@ describe('TokenStakingEscrow', () => {
 
   describe('receiveApproval', async () => {
     it('reverts for unknown token', async () => {
-      let anotherToken = await KeepToken.new({from: owner})
+      let anotherToken = await KeepToken.new({from: deployer})
       const data = web3.eth.abi.encodeParameters(
         ['address', 'uint256'], [operator, grantId]
       )
 
       await expectRevert(
         anotherToken.approveAndCall(
-            escrow.address, grantedAmount, data, {from: owner}
+            escrow.address, grantedAmount, data, {from: tokenStaking}
         ),
         "Not a KEEP token"
       )
@@ -109,7 +113,7 @@ describe('TokenStakingEscrow', () => {
 
       await expectRevert(
         token.approveAndCall(
-            escrow.address, grantedAmount, corruptedData, {from: owner}
+            escrow.address, grantedAmount, corruptedData, {from: tokenStaking}
         ),
         "Unexpected data length"
       )
@@ -122,7 +126,7 @@ describe('TokenStakingEscrow', () => {
 
       await expectRevert(
         token.approveAndCall(
-            escrow.address, grantedAmount, data, {from: owner}
+            escrow.address, grantedAmount, data, {from: tokenStaking}
         ),
         "Grant with this ID does not exist"
       )
@@ -133,14 +137,14 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator, grantId]
       )
       await token.approveAndCall(
-        escrow.address, grantedAmount, data, {from: owner}
+        escrow.address, grantedAmount, data, {from: tokenStaking}
       )
 
       const deposited = await escrow.depositedAmount(operator)
       expect(deposited).to.eq.BN(grantedAmount)
     })
 
-    it('can not be called by anyone but staking contract', async () => {
+    it('accepts deposits only from the owner', async () => {
       const data = web3.eth.abi.encodeParameters(
         ['address', 'uint256'], [operator, grantId]
       )
@@ -149,13 +153,19 @@ describe('TokenStakingEscrow', () => {
         token.approveAndCall(
           escrow.address, grantedAmount, data, {from: operator}
         ),
-        "Only staking contract can deposit"
+        "Only owner can deposit"
       )
       await expectRevert(
         token.approveAndCall(
           escrow.address, grantedAmount, data, {from: grantee}
         ),
-        "Only staking contract can deposit"
+        "Only owner can deposit"
+      )
+      await expectRevert(
+        token.approveAndCall(
+          escrow.address, grantedAmount, data, {from: deployer}
+        ),
+        "Only owner can deposit"
       )
     })
   })
@@ -166,7 +176,7 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator, grantId]
       )
       await token.approveAndCall(
-        escrow.address, grantedAmount, data, {from: owner}
+        escrow.address, grantedAmount, data, {from: tokenStaking}
       )
 
       const deposited = await escrow.depositedAmount(grantee)
@@ -181,7 +191,7 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator, grantId]
       )
       await token.approveAndCall(
-        escrow.address, depositedAmount, data, {from: owner}
+        escrow.address, depositedAmount, data, {from: tokenStaking}
       )
     })
 
@@ -234,7 +244,7 @@ describe('TokenStakingEscrow', () => {
 
     it('returns 0 for revoked grant', async () => {
       await time.increaseTo(grantStart.add(grantCliff))
-      await tokenGrant.revoke(grantId, {from: owner})
+      await tokenGrant.revoke(grantId, {from: deployer})
       const withdrawable = await escrow.withdrawable(operator)
       expect(withdrawable).to.eq.BN(0)
     })
@@ -247,7 +257,7 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator, grantId]
       )
       await token.approveAndCall(
-        escrow.address, depositedAmount, data, {from: owner}
+        escrow.address, depositedAmount, data, {from: tokenStaking}
       )
     })
 
@@ -263,7 +273,7 @@ describe('TokenStakingEscrow', () => {
 
     it('can not be called by third-party', async () => {
       await expectRevert(
-        escrow.withdraw(operator, {from: owner}),
+        escrow.withdraw(operator, {from: deployer}),
         "Only grantee or operator can withdraw" 
       )
     })
@@ -319,7 +329,7 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator2, managedGrantId]
       )
       await token.approveAndCall(
-        escrow.address, 600, data, {from: owner}
+        escrow.address, 600, data, {from: tokenStaking}
       )
 
       await expectRevert(
@@ -336,7 +346,7 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator2, managedGrantId]
       )
       await token.approveAndCall(
-        escrow.address, depositedAmount, data, {from: owner}
+        escrow.address, depositedAmount, data, {from: tokenStaking}
       )
     })
 
@@ -352,7 +362,7 @@ describe('TokenStakingEscrow', () => {
 
     it('can not be called by third-party', async () => {
       await expectRevert(
-        escrow.withdrawToManagedGrantee(operator2, {from: owner}),
+        escrow.withdrawToManagedGrantee(operator2, {from: deployer}),
         "Only grantee or operator can withdraw" 
       )
     })
@@ -412,7 +422,7 @@ describe('TokenStakingEscrow', () => {
         ['address', 'uint256'], [operator, grantId]
       )
       await token.approveAndCall(
-        escrow.address, depositedAmount, data, {from: owner}
+        escrow.address, depositedAmount, data, {from: tokenStaking}
       )
     })
 

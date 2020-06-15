@@ -14,6 +14,7 @@
 
 pragma solidity 0.5.17;
 
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -26,7 +27,9 @@ import "./ManagedGrant.sol";
 /// @notice Escrow lets the staking contract to deposit undelegated, granted
 /// tokens and either withdraw them based on the grant unlocking schedule or
 /// re-delegate them to another operator.
-contract TokenStakingEscrow {
+/// @dev The owner of TokenStakingEscrow is TokenStaking contract and only owner
+/// can deposit. This contract works with an assumption that operator is unique.
+contract TokenStakingEscrow is Ownable {
 
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -44,7 +47,6 @@ contract TokenStakingEscrow {
 
     IERC20 public keepToken;
     TokenGrant public tokenGrant;
-    address public tokenStaking;
 
     struct Deposit {
         uint256 grantId;
@@ -57,12 +59,10 @@ contract TokenStakingEscrow {
 
     constructor(
         IERC20 _keepToken,
-        TokenGrant _tokenGrant,
-        address _tokenStaking
+        TokenGrant _tokenGrant
     ) public {
         keepToken = _keepToken;
         tokenGrant = _tokenGrant;
-        tokenStaking = _tokenStaking;
     }
 
     /// @notice receiveApproval accepts deposits from staking contract and
@@ -201,7 +201,7 @@ contract TokenStakingEscrow {
         // This contract works with an assumption that operator is unique.
         // This is fine as long as the staking contract works with the same
         // assumption so we are limiting deposits to the staking contract only.
-        require(from == tokenStaking, "Only staking contract can deposit");
+        require(from == owner(), "Only owner can deposit");
 
         (uint256 grantAmount,) = getGrantAmounts(grantId);
         require(grantAmount > 0, "Grant with this ID does not exist");
