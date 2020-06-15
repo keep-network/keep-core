@@ -95,13 +95,13 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Returns grant ID for the amount deposited in the escrow after
     /// undelegating it from the provided operator.
-    function grantId(address operator) public view returns (uint256) {
+    function depositGrantId(address operator) public view returns (uint256) {
         return deposits[operator].grantId;
     }
 
     /// @notice Returns the amount withdrawn so far from the value deposited
     /// in the escrow contract after undelegating it from the provided operator.
-    function withdrawnAmount(address operator) public view returns (uint256) {
+    function depositWithdrawnAmount(address operator) public view returns (uint256) {
         return deposits[operator].withdrawn;
     }
 

@@ -16,7 +16,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe.only('TokenStakingEscrow', () => {
+describe('TokenStakingEscrow', () => {
   
   const deployer = accounts[0],
     grantee = accounts[1],
@@ -414,7 +414,7 @@ describe.only('TokenStakingEscrow', () => {
     })
   })
   
-  describe('withdrawnAmount', async () => {
+  describe('depositWithdrawnAmount', async () => {
     const depositedAmount = 3000
 
     beforeEach(async () => {
@@ -427,26 +427,26 @@ describe.only('TokenStakingEscrow', () => {
     })
 
     it('returns 0 for unknown operator', async () => {
-      const withdrawn = await escrow.withdrawnAmount(grantee)
+      const withdrawn = await escrow.depositWithdrawnAmount(grantee)
       expect(withdrawn).to.eq.BN(0)   
     })
 
     it('returns 0 if nothing has been withdrawn', async () => {
-      const withdrawn = await escrow.withdrawnAmount(operator)
+      const withdrawn = await escrow.depositWithdrawnAmount(operator)
       expect(withdrawn).to.eq.BN(0)   
     })
   
     it('returns withdrawn amount in the middle of unlocking period', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
       await escrow.withdraw(operator, {from: grantee})
-      const withdrawn = await escrow.withdrawnAmount(operator)
+      const withdrawn = await escrow.depositWithdrawnAmount(operator)
       expect(withdrawn).to.eq.BN(1500) // (3000 / 30) * 15 = 1500  
     })
   
     it('returns withdrawn amount at the end of unlocking period', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(grantUnlockingDuration)))
       await escrow.withdraw(operator, {from: grantee})
-      const withdrawn = await escrow.withdrawnAmount(operator)
+      const withdrawn = await escrow.depositWithdrawnAmount(operator)
       expect(withdrawn).to.eq.BN(depositedAmount)
     })
   })
