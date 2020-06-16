@@ -11,6 +11,7 @@ import {
   createManagedGrantContractInstance,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
+import BigNumber from "bignumber.js"
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -218,10 +219,28 @@ const getOperatorsFromManagedGrants = async (web3Context) => {
   return operators
 }
 
+const fetchGrantById = async (web3Context, grantId) => {
+  const id = new BigNumber(grantId)
+
+  if (!id.isInteger() || id.isNegative()) {
+    throw new Error({
+      type: "INVALID_GRANT_ID",
+      message: "Grant ID is not a number",
+    })
+  }
+
+  try {
+    return await getGrantDetails(id.toString(), web3Context, true)
+  } catch (error) {
+    throw new Error({ type: "NOT_FOUND", message: "Grant ID not found" })
+  }
+}
+
 export const tokenGrantsService = {
   fetchGrants,
   createGrant,
   fetchManagedGrants,
   stake,
   getOperatorsFromManagedGrants,
+  fetchGrantById,
 }

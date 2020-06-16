@@ -50,7 +50,11 @@ export async function getKeepRandomBeaconOperator(web3) {
 }
 
 export async function getBondedEcdsaKeepFactoryContract(web3) {
-  return getContract(web3, BondedECDSAKeepFactory, BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME)
+  return getContract(
+    web3,
+    BondedECDSAKeepFactory,
+    BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME
+  )
 }
 
 export async function getKeepBondingContract(web3) {
@@ -133,7 +137,7 @@ function getTransactionHashOfContractDeploy({ networks }) {
   return networks[Object.keys(networks)[0]].transactionHash
 }
 
-function getContractAddress({ networks }) {
+export function getContractAddress({ networks }) {
   return networks[Object.keys(networks)[0]].address
 }
 
@@ -164,4 +168,4 @@ export function getBondedECDSAKeepFactoryAddress() {
 
 export function getTBTCSystemAddress() {
   return getContractAddress(TBTCSystem)
-} 
+}
