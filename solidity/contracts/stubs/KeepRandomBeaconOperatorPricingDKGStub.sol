@@ -31,14 +31,6 @@ contract KeepRandomBeaconOperatorPricingDKGStub is KeepRandomBeaconOperator {
         dkgResultVerification.signatureThreshold = 11;
     }
 
-    function registerNewGroup(bytes memory groupPublicKey) public {
-        groups.addGroup(groupPublicKey);
-    }
-
-    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
-        groups.setGroupMembers(groupPublicKey, members, hex"");
-    }
-
     function getGroupSelectionRelayEntry() public view returns (uint256) {
         return groupSelection.seed;
     }
@@ -49,14 +41,6 @@ contract KeepRandomBeaconOperatorPricingDKGStub is KeepRandomBeaconOperator {
 
     function isGroupSelectionInProgress() public view returns (bool) {
         return groupSelection.inProgress;
-    }
-
-    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
-        return groups.groups[groupIndex].groupPubKey;
-    }
-
-    function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
-        gasPriceCeiling = _gasPriceCeiling;
     }
 
     function timeDKG() public view returns (uint256) {
