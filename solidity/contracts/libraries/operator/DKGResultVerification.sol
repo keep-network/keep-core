@@ -29,7 +29,9 @@ library DKGResultVerification {
     }
 
     /// @notice Verifies the submitted DKG result against supporting member
-    /// signatures and if the submitter is eligible to submit at the current block.
+    /// signatures and if the submitter is eligible to submit at the current
+    /// block. Every signature supporting the result has to be from a unique
+    /// group member.
     ///
     /// @param submitterMemberIndex Claimed submitter candidate group member index
     /// @param groupPubKey Generated candidate group public key
@@ -39,7 +41,7 @@ library DKGResultVerification {
     /// @param signatures Concatenation of signatures from members supporting the
     /// result.
     /// @param signingMemberIndices Indices of members corresponding to each
-    /// signature.
+    /// signature. Indices have to be unique.
     /// @param members Addresses of candidate group members as outputted by the
     /// group selection protocol.
     /// @param groupSelectionEndBlock Block height at which the group selection
