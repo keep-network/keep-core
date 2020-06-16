@@ -143,7 +143,7 @@ library Groups {
     ) internal {
         require(
             !self.groups[groupIndex].terminated,
-            "Group already terminated"
+            "Group has been already terminated"
         );
         self.groups[groupIndex].terminated = true;
         self.activeTerminatedGroups.push(groupIndex);
@@ -363,7 +363,6 @@ library Groups {
             ),
             "Invalid signature"
         );
-
 
         terminateGroup(self, groupIndex);
         self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);

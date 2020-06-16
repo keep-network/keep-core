@@ -135,7 +135,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
           tattletaleSignature,
           { from: tattletale }
         ),
-        "Group already terminated"
+        "Group has been already terminated"
       )
     })
   })
@@ -166,7 +166,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
       await expectRevert(
         operatorContract.reportRelayEntryTimeout({ from: tattletale }),
-        "Group already terminated"
+        "Group has been already terminated"
       )
     })
 
