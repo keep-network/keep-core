@@ -135,11 +135,16 @@ library Groups {
         return self.groupMembers[groupPubKey][memberIndex];
     }
 
-    /// @notice Terminates group.
+    /// @notice Terminates group with the provided index. Reverts if the group
+    /// is already terminated.
     function terminateGroup(
         Storage storage self,
         uint256 groupIndex
     ) internal {
+        require(
+            !self.groups[groupIndex].terminated,
+            "Group has been already terminated"
+        );
         self.groups[groupIndex].terminated = true;
         self.activeTerminatedGroups.length++;
 
@@ -150,14 +155,6 @@ library Groups {
             self.activeTerminatedGroups[i] = self.activeTerminatedGroups[i - 1];
         }
         self.activeTerminatedGroups[i] = groupIndex;
-    }
-
-    /// @notice Checks if group with the given index is terminated.
-    function isGroupTerminated(
-        Storage storage self,
-        uint256 groupIndex
-    ) internal view returns(bool) {
-        return self.groups[groupIndex].terminated;
     }
 
     /// @notice Checks if group with the given public key is registered.
@@ -366,14 +363,17 @@ library Groups {
         require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
-        bool isSignatureValid = BLS.verifyBytes(groupPubKey, abi.encodePacked(msg.sender), signedMsgSender);
+        require(
+            BLS.verifyBytes(
+                groupPubKey,
+                abi.encodePacked(msg.sender),
+                signedMsgSender
+            ),
+            "Invalid signature"
+        );
 
-        if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
-            terminateGroup(self, groupIndex);
-            self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
-        } else {
-            revert("Group terminated or sig invalid");
-        }
+        terminateGroup(self, groupIndex);
+        self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
     }
 
     function reportRelayEntryTimeout(

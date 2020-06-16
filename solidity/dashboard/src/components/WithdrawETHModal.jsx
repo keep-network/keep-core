@@ -49,7 +49,7 @@ const WithdrawETHModal = ({ operatorAddress, availableETH, closeModal }) => {
       <div className="text-validation mb-1 mt-2 flex row center">
         <Icons.Diamond />
         <span className="pl-1">
-          Withdrawn ETH will go the beneficiary address.
+          Withdrawn ETH will go to the beneficiary address.
         </span>
       </div>
       <WithdrawETHFormik
