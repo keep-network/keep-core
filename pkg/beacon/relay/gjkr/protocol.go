@@ -536,6 +536,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against commitments
+// - accused member ID does not exist 
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -548,7 +549,7 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if sjm.ID == accusedID {
+			if sjm.ID == accusedID || int(accusedID) > sjm.group.GroupSize() {
 				// The member does not resolve the dispute as an accused.
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
