@@ -237,6 +237,16 @@ jobs:
           command: |
             npm upgrade @keep-network/keep-core
       - run:
+          name: Set ETH Host
+          working_directory: ~/projects/solidity/dashboard
+          command: |
+            if [ -z $CIRCLE_CONTEXT ]
+            then
+              echo "No Circle Context set, using default values"
+            else
+              jq -n '.networks[env.ETH_NETWORK_ID].wsURL = env.ETH_WS_HOST_TOKEN_DASHBOARD' config.json > config.json
+            fi
+      - run:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
           command: |
@@ -363,6 +373,7 @@ workflows:
           filters:
             branches:
               only: master
+              context: keep-dev
       - publish_token_dashboard_dapp:
           filters:
             branches:
@@ -458,6 +469,7 @@ workflows:
             requires:
               - publish_npm_package
         - build_token_dashboard_dapp:
+            context: keep-test
             filters:
               tags:
                 only: /^v.*/
