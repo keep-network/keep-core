@@ -19,6 +19,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakeDelegatable.sol";
 import "./libraries/staking/MinimumStakeSchedule.sol";
+import "./libraries/staking/GrantStakingInfo.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
 import "./utils/BytesLib.sol";
@@ -36,6 +37,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using PercentUtils for uint256;
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
+    using GrantStakingInfo for GrantStakingInfo.Storage;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
