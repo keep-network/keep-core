@@ -17,6 +17,7 @@ const timeRoundMargin = time.duration.minutes(1)
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
@@ -63,6 +64,10 @@ describe('TokenGrant/Stake', function() {
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    );
+    await TokenStaking.link(
+      'GrantStakingInfo', 
+      (await GrantStakingInfo.new({from: accounts[0]})).address
     );
     stakingContract = await TokenStaking.new(
       tokenContract.address,

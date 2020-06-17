@@ -7,6 +7,7 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
+const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
@@ -43,6 +44,10 @@ describe('TokenStaking/Punishment', () => {
         await TokenStaking.link(
             'MinimumStakeSchedule', 
             (await MinimumStakeSchedule.new({from: owner})).address
+        )
+        await TokenStaking.link(
+            'GrantStakingInfo', 
+            (await GrantStakingInfo.new({from: owner})).address
         )
         stakingContract = await TokenStaking.new(
             token.address,

@@ -11,6 +11,7 @@ const expect = chai.expect
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
@@ -51,16 +52,20 @@ describe('TokenGrant/ManagedGrant', () => {
     token = await KeepToken.new({from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
     tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
-    stakingEscrow = await TokenStakingEscrow.new(
+        stakingEscrow = await TokenStakingEscrow.new(
       token.address, 
       tokenGrant.address, 
       {from: grantCreator}
     );
-    await TokenStaking.detectNetwork()
+    await TokenStaking.detectNetwork();
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: grantCreator})).address
-    )
+    );
+    await TokenStaking.link(
+      'GrantStakingInfo', 
+      (await GrantStakingInfo.new({from: grantCreator})).address
+    );
     staking = await TokenStaking.new(
       token.address,
       tokenGrant.address,
