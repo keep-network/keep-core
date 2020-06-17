@@ -1,5 +1,7 @@
 pragma solidity 0.5.17;
 
+import "../../TokenGrant.sol";
+
 library GrantStakingInfo {
 
     /// @dev Grant ID is flagged with the most significant bit set, to
@@ -15,6 +17,20 @@ library GrantStakingInfo {
         /// `hasGrantDelegated`, `setGrantForOperator`, and `getGrantForOperator`
         /// instead.
         mapping (address => uint256) _operatorToGrant;
+    }
+
+    function tryCapturingGrantId(
+        Storage storage self,
+        TokenGrant tokenGrant,
+        address operator
+    ) public {
+        (bool success, bytes memory data) = address(tokenGrant).call(
+            abi.encodeWithSignature("getGrantStakeDetails(address)", operator)
+        );
+        if (success) {
+            uint256 grantId = abi.decode(data, (uint256));
+            setGrantForOperator(self, operator, grantId);
+        }
     }
 
     function hasGrantDelegated(

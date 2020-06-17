@@ -59,6 +59,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     TokenStakingEscrow public escrow;
 
+    GrantStakingInfo.Storage grantStakingInfo;
+
     // KEEP token grant contract.
     TokenGrant public tokenGrant;
 
@@ -133,6 +135,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         );
         ownerOperators[_from].push(operator);
 
+        grantStakingInfo.tryCapturingGrantId(tokenGrant, operator);
+
         emit Staked(operator, _value);
     }
 
@@ -156,7 +160,19 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 amount = operatorParams.getAmount();
         operators[_operator].packedParams = operatorParams.setAmount(0);
 
-        token.safeTransfer(owner, amount);
+
+        if (grantStakingInfo.hasGrantDelegated(_operator)) {
+            // For tokens staked from a grant, transfer them to the escrow.
+            uint256 grantId = grantStakingInfo.getGrantForOperator(_operator);
+            tokenSender(address(token)).approveAndCall(
+                address(escrow),
+                amount,
+                abi.encode(_operator, grantId)
+            );
+        } else {
+            // For liquid tokens staked, transfer them straight to the owner.
+            token.safeTransfer(owner, amount);
+        }
     }
 
     /// @notice Undelegates staked tokens. You will be able to recover your stake by calling
