@@ -1,7 +1,7 @@
 pragma solidity 0.5.17;
 
 import "../utils/AddressArrayUtils.sol";
-import "../TokenStaking.sol";
+import "../StakeDelegatable.sol";
 import "../TokenGrant.sol";
 import "../ManagedGrant.sol";
 
@@ -17,7 +17,7 @@ library RolesLookup {
     function isTokenOwnerForOperator(
         address tokenOwner,
         address operator,
-        TokenStaking tokenStaking
+        StakeDelegatable tokenStaking
     ) internal view returns (bool) {
         return tokenStaking.ownerOf(operator) == tokenOwner;
     }
