@@ -34,6 +34,7 @@ describe('TokenGrant', function() {
     );
     stakingContract = await TokenStaking.new(
       token.address,
+      grantContract.address,
       stakingEscrow.address,
       registry.address,
       time.duration.days(1),

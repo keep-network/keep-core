@@ -46,6 +46,7 @@ describe('TokenStaking/Punishment', () => {
         )
         stakingContract = await TokenStaking.new(
             token.address,
+            tokenGrant.address,
             stakingEscrow.address,
             registry.address,
             initializationPeriod,

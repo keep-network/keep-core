@@ -43,6 +43,7 @@ describe('TokenStaking/Lock', () => {
     );
     stakingContract = await TokenStaking.new(
       token.address,
+      grant.address,
       escrow.address,
       registry.address,
       initializationPeriod,

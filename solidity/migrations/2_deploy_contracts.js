@@ -45,6 +45,7 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(
     TokenStaking,
     KeepToken.address,
+    TokenGrant.address,
     TokenStakingEscrow.address,
     KeepRegistry.address,
     initializationPeriod,

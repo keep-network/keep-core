@@ -55,6 +55,7 @@ describe('TokenGrant/Revoke', function() {
     );
     stakingContract = await TokenStaking.new(
       tokenContract.address,
+      grantContract.address,
       stakingEscrow.address,
       registryContract.address, 
       initializationPeriod, 

@@ -50,6 +50,7 @@ describe('TokenStaking', function() {
     );
     stakingContract = await TokenStaking.new(
       token.address,
+      tokenGrant.address,
       stakingEscrow.address,
       registry.address,
       initializationPeriod,
