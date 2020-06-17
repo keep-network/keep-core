@@ -1,37 +1,18 @@
 pragma solidity 0.5.17;
 
-import "./StakeDelegatable.sol";
+import "./KeepStaking.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
 import "./KeepRegistry.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
-/// @title AuthorityDelegator
-/// @notice An operator contract can delegate authority to other operator
-/// contracts by implementing the AuthorityDelegator interface.
-///
-/// To delegate authority,
-/// the recipient of delegated authority must call `claimDelegatedAuthority`,
-/// specifying the contract it wants delegated authority from.
-/// The staking contract calls `delegator.__isRecognized(recipient)`
-/// and if the call returns `true`,
-/// the named delegator contract is set as the recipient's authority delegator.
-/// Any future checks of registry approval or per-operator authorization
-/// will transparently mirror the delegator's status.
-///
-/// Authority can be delegated recursively;
-/// an operator contract receiving delegated authority
-/// can recognize other operator contracts as recipients of its authority.
-interface AuthorityDelegator {
-    function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
-}
 
 /// @title TokenStaking
 /// @notice A token staking contract for a specified standard ERC20Burnable token.
 /// A holder of the specified token can stake delegate its tokens to this contract
 /// and recover the stake after undelegation period is over.
-contract TokenStaking is StakeDelegatable {
+contract TokenStaking is KeepStaking {
     using UintArrayUtils for uint256[];
     using PercentUtils for uint256;
     using LockUtils for LockUtils.LockSet;
@@ -58,27 +39,11 @@ contract TokenStaking is StakeDelegatable {
     // Registry contract with a list of approved operator contracts and upgraders.
     KeepRegistry public registry;
 
-    // Authorized operator contracts.
-    mapping(address => mapping (address => bool)) internal authorizations;
-
     // Locks placed on the operator.
     // `operatorLocks[operator]` returns all locks placed on the operator.
     // Each authorized operator contract can place one lock on an operator.
     mapping(address => LockUtils.LockSet) internal operatorLocks;
     uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
-
-    // Granters of delegated authority to operator contracts.
-    // E.g. keep factories granting delegated authority to keeps.
-    // `delegatedAuthority[keep] = factory`
-    mapping(address => address) internal delegatedAuthority;
-
-    modifier onlyApprovedOperatorContract(address operatorContract) {
-        require(
-            registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),
-            "Operator contract is not approved"
-        );
-        _;
-    }
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _tokenAddress Address of a token that will be linked to this contract.
@@ -478,32 +443,6 @@ contract TokenStaking is StakeDelegatable {
         token.burn(totalAmountToBurn.sub(tattletaleReward));
     }
 
-    /// @notice Authorizes operator contract to access staked token balance of
-    /// the provided operator. Can only be executed by stake operator authorizer.
-    /// Contracts using delegated authority
-    /// cannot be authorized with `authorizeOperatorContract`.
-    /// Instead, authorize `getAuthoritySource(_operatorContract)`.
-    /// @param _operator address of stake operator.
-    /// @param _operatorContract address of operator contract.
-    function authorizeOperatorContract(address _operator, address _operatorContract)
-        public
-        onlyOperatorAuthorizer(_operator)
-        onlyApprovedOperatorContract(_operatorContract) {
-        require(
-            getAuthoritySource(_operatorContract) == _operatorContract,
-            "Contract uses delegated authority"
-        );
-        authorizations[_operatorContract][_operator] = true;
-    }
-
-    /// @notice Checks if operator contract has access to the staked token balance of
-    /// the provided operator.
-    /// @param _operator address of stake operator.
-    /// @param _operatorContract address of operator contract.
-    function isAuthorizedForOperator(address _operator, address _operatorContract) public view returns (bool) {
-        return authorizations[getAuthoritySource(_operatorContract)][_operator];
-    }
-
     /// @notice Gets the eligible stake balance of the specified address.
     /// An eligible stake is a stake that passed the initialization period
     /// and is not currently undelegating. Also, the operator had to approve
@@ -591,41 +530,6 @@ contract TokenStaking is StakeDelegatable {
         address operatorContract
     ) public view returns(bool) {
         return activeStake(staker, operatorContract) >= minimumStake();
-    }
-
-    /// @notice Grant the sender the same authority as `delegatedAuthoritySource`
-    /// @dev If `delegatedAuthoritySource` is an approved operator contract
-    /// and recognizes the claimant,
-    /// this relationship will be recorded in `delegatedAuthority`.
-    /// Later, the claimant can slash, seize, place locks etc.
-    /// on operators that have authorized the `delegatedAuthoritySource`.
-    /// If the `delegatedAuthoritySource` is disabled with the panic button,
-    /// any recipients of delegated authority from it will also be disabled.
-    function claimDelegatedAuthority(
-        address delegatedAuthoritySource
-    ) public onlyApprovedOperatorContract(delegatedAuthoritySource) {
-        require(
-            AuthorityDelegator(delegatedAuthoritySource).__isRecognized(msg.sender),
-            "Unrecognized claimant"
-        );
-        delegatedAuthority[msg.sender] = delegatedAuthoritySource;
-    }
-
-    /// @notice Get the source of the operator contract's authority.
-    /// If the contract uses delegated authority,
-    /// returns the original source of the delegated authority.
-    /// If the contract doesn't use delegated authority,
-    /// returns the contract itself.
-    /// Authorize `getAuthoritySource(operatorContract)`
-    /// to grant `operatorContract` the authority to penalize an operator.
-    function getAuthoritySource(
-        address operatorContract
-    ) public view returns (address) {
-        address delegatedAuthoritySource = delegatedAuthority[operatorContract];
-        if (delegatedAuthoritySource == address(0)) {
-            return operatorContract;
-        }
-        return getAuthoritySource(delegatedAuthoritySource);
     }
 
     /// @notice Is the operator with the given params initialized
