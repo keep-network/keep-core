@@ -121,7 +121,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
     console.log('Operator account already staked, exiting!');
     return;
   } else {
-    console.log(`Staking 2000000 KEEP tokens on operator account ${operatorAddress}`);
+    console.log(`Staking 4000000 KEEP tokens on operator account ${operatorAddress}`);
   }
 
   let delegation = '0x' + Buffer.concat([
@@ -132,7 +132,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
 
   await keepTokenContract.methods.approveAndCall(
     tokenStakingContract.address,
-    formatAmount(2000000, 18),
+    formatAmount(4000000, 18),
     delegation).send({from: contractOwnerAddress})
 
   console.log(`Staked!`);

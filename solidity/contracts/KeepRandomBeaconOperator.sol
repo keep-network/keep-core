@@ -329,7 +329,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory misbehaved,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
-    ) public {
+    ) public nonReentrant {
         address[] memory members = selectedParticipants();
 
         dkgResultVerification.verify(
