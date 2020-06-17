@@ -214,7 +214,8 @@ const fetchBondingData = async (web3Context) => {
       }
     }
 
-    for (const [operatorAddress, managedGrantAddress] of operators.entries()) {
+    for (const [operatorAddress, value] of operators.entries()) {
+      const { isWithdrawableForOperator, managedGrantInfo } = value
       const delegatedTokens = await fetchDelegationInfo(
         web3Context,
         operatorAddress
@@ -230,7 +231,8 @@ const fetchBondingData = async (web3Context) => {
 
       const bonding = {
         operatorAddress,
-        managedGrantAddress,
+        managedGrantAddress: managedGrantInfo.address,
+        isWithdrawableForOperator,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
@@ -328,7 +330,7 @@ const fetchManagedGrantAddresses = async (web3Context, lookupAddress) => {
 }
 
 const fetchOperatorsOf = async (web3Context, yourAddress) => {
-  // operatorAddress to managed grant address
+  // operatorAddress -> { managedGrantInfo: { address }, isWithdrawableForOperator: true  }
   const operators = new Map()
 
   // operators of grantee (yourAddress)
@@ -339,7 +341,10 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress
   )
   for (let i = 0; i < operatorsOfGrantee.length; i++) {
-    operators.set(web3Utils.toChecksumAddress(operatorsOfGrantee[i]), null)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfGrantee[i]), {
+      managedGrantInfo: {},
+      isWithdrawableForOperator: true,
+    })
   }
 
   const managedGrantAddresses = await fetchManagedGrantAddresses(
@@ -355,17 +360,20 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
       managedGrantAddress
     )
     for (const operatorOfManagedGrant of operatorsOfManagedGrant) {
-      operators.set(
-        web3Utils.toChecksumAddress(operatorOfManagedGrant),
-        managedGrantAddress
-      )
+      operators.set(web3Utils.toChecksumAddress(operatorOfManagedGrant), {
+        managedGrantInfo: { address: managedGrantAddress },
+        isWithdrawableForOperator: true,
+      })
     }
   }
 
   // operators of authorizer
   const operatorsOfAuthorizer = await fetchOperatorsOfAuthorizer(web3Context)
   for (let i = 0; i < operatorsOfAuthorizer.length; i++) {
-    operators.set(web3Utils.toChecksumAddress(operatorsOfAuthorizer[i]), null)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfAuthorizer[i]), {
+      managedGrantInfo: {},
+      isWithdrawableForOperator: false,
+    })
   }
 
   // operators of owner
@@ -376,7 +384,10 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress // as owner
   )
   for (let i = 0; i < operatorsOfOwner.length; i++) {
-    operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), null)
+    operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), {
+      managedGrantInfo: {},
+      isWithdrawableForOperator: true,
+    })
   }
 
   const ownerAddress = await contractService.makeCall(
@@ -388,7 +399,10 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
 
   if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
     // yourAddress is an operator
-    operators.set(web3Utils.toChecksumAddress(yourAddress), null)
+    operators.set(web3Utils.toChecksumAddress(yourAddress), {
+      managedGrantInfo: {},
+      isWithdrawableForOperator: true,
+    })
   }
 
   return operators
