@@ -1,4 +1,4 @@
-import React, { useState, useContext, useMemo, useEffect } from "react"
+import React, { useState, useMemo } from "react"
 import Button from "./Button"
 import { LoadingOverlay } from "./Loadable"
 import { useFetchData } from "../hooks/useFetchData"
@@ -7,21 +7,20 @@ import Dropdown from "./Dropdown"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
-import { useShowMessage, messageType, useCloseMessage } from "./Message"
-import { Web3Context } from "./WithWeb3Context"
+import { useShowMessage, messageType } from "./Message"
+import { useWeb3Context } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
-import SelectedRewardDropdown from "./SelectedRewardDropdown"
-import { isEmptyObj, isSameEthAddress } from "../utils/general.utils"
-import { sub, lte, gt } from "../utils/arithmetics.utils"
+import { isSameEthAddress } from "../utils/general.utils"
+import { sub } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import Tile from "./Tile"
-import { usePrevious } from "../hooks/usePrevious"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
 import RewardsStatus from "./RewardsStatus"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
 import { OPERATOR_CONTRACT_NAME, REWARD_STATUS } from "../constants/constants"
+import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
 
 const previewDataCount = 10
 const initialData = [[], "0"]
@@ -33,9 +32,10 @@ const rewardsStatusFilterOptions = [
 ]
 
 export const Rewards = React.memo(() => {
-  const { yourAddress, keepRandomBeaconOperatorContract } = useContext(
-    Web3Context
-  )
+  const web3Context = useWeb3Context()
+  const showMessage = useShowMessage()
+
+  const { yourAddress, keepRandomBeaconOperatorContract } = web3Context
   // fetch rewards
   const [state, updateData] = useFetchData(
     rewardsService.fetchAvailableRewards,
@@ -56,32 +56,14 @@ export const Rewards = React.memo(() => {
   // see more/less button state
   const [showAll, setShowAll] = useState(false)
 
-  // selected reward to withdraw
-  const [selectedReward, setSelectedReward] = useState({})
-
   // filter dropdown
   const [rewardFilter, setRewardFilter] = useState({})
 
-  const [withdrawAction] = useWithdrawAction()
-
-  // subscribe to `GroupMemberRewardsWithdrawn` event
-  const { latestEvent } = useSubscribeToContractEvent(
-    OPERATOR_CONTRACT_NAME,
-    "GroupMemberRewardsWithdrawn"
-  )
-  const previousWithdrawalEvent = usePrevious(latestEvent)
-
-  useEffect(() => {
-    const isSameEvent =
-      previousWithdrawalEvent.transactionHash === latestEvent.transactionHash
-    if (isEmptyObj(latestEvent) || isSameEvent) {
-      return
-    }
-
+  const withdrawnEventCallback = (latestEvent) => {
     const {
       transactionHash,
       blockNumber,
-      returnValues: { groupIndex, amount, beneficiary },
+      returnValues: { groupIndex, amount, beneficiary, operator },
     } = latestEvent
 
     if (!isSameEthAddress(yourAddress, beneficiary)) {
@@ -98,49 +80,41 @@ export const Rewards = React.memo(() => {
           groupPublicKey,
           transactionHash,
           reward: web3Utils.fromWei(amount, "ether"),
+          operatorAddress: operator,
           status: REWARD_STATUS.WITHDRAWN,
         }
         updateWithdrawalHistoryData([withdrawal, ...withdrawals])
       })
-  })
+  }
+
+  // subscribe to `GroupMemberRewardsWithdrawn` event
+  useSubscribeToContractEvent(
+    OPERATOR_CONTRACT_NAME,
+    "GroupMemberRewardsWithdrawn",
+    withdrawnEventCallback
+  )
 
   const updateRewards = (latestEvent) => {
     const {
-      returnValues: { groupIndex, amount, operator },
+      returnValues: { groupIndex, operator, amount },
     } = latestEvent
-    const { indexInArray, obj } = findIndexAndObject(
+    const { indexInArray } = findIndexAndObject(
       "groupIndex",
       groupIndex,
-      rewards
+      rewards,
+      (object) => isSameRewardRecord(object, groupIndex, operator)
     )
+
     if (indexInArray === null) {
       return
     }
 
-    const updatedRewards = [...rewards]
-    const updatedReward = sub(web3Utils.toWei(obj.reward, "ether"), amount)
-    let updateTotalRewardsBalance = sub(
+    const updateTotalRewardsBalance = sub(
       web3Utils.toWei(totalRewardsBalance, "ether"),
       amount
     )
-    updateTotalRewardsBalance = gt(updateTotalRewardsBalance, 0)
-      ? updateTotalRewardsBalance
-      : "0"
-
-    if (lte(updatedReward, 0)) {
-      updatedRewards.splice(indexInArray, 1)
-      setSelectedReward({})
-    } else {
-      const updatedMembersIndeces = { ...obj.membersIndeces }
-      delete updatedMembersIndeces[operator]
-      const updatedGroup = {
-        ...obj,
-        membersIndeces: updatedMembersIndeces,
-        reward: web3Utils.fromWei(updatedReward, "ether"),
-      }
-      updatedRewards[indexInArray] = updatedGroup
-      setSelectedReward(updatedGroup)
-    }
+    const updatedRewards = [...rewards]
+    updatedRewards.splice(indexInArray, 1)
 
     updateData([
       updatedRewards,
@@ -148,12 +122,39 @@ export const Rewards = React.memo(() => {
     ])
   }
 
-  const updateWithdrawStatus = (status) => {
-    const { groupIndex } = selectedReward
+  const withdrawReward = async (
+    operatorAddress,
+    groupIndex,
+    onTransactionHashCallback
+  ) => {
+    try {
+      updateWithdrawStatus(PENDING_STATUS, groupIndex, operatorAddress)
+      await rewardsService.withdrawRewardFromGroup(
+        web3Context,
+        { operatorAddress, groupIndex },
+        onTransactionHashCallback
+      )
+      showMessage({
+        type: messageType.SUCCESS,
+        title: "Success",
+        content: "Withdrawal successfully completed",
+      })
+    } catch (error) {
+      showMessage({
+        type: messageType.ERROR,
+        title: "Withdrawal action has failed ",
+        content: error.message,
+      })
+      throw error
+    }
+  }
+
+  const updateWithdrawStatus = (status, groupIndex, operator) => {
     const { indexInArray } = findIndexAndObject(
       "groupIndex",
       groupIndex,
-      rewards
+      rewards,
+      (object) => isSameRewardRecord(object, groupIndex, operator)
     )
     if (indexInArray === null) {
       return
@@ -163,10 +164,6 @@ export const Rewards = React.memo(() => {
 
     updateData([updatedGroups, totalRewardsBalance])
   }
-
-  const availableRewardsOptions = useMemo(() => {
-    return rewards.filter((group) => group.isStale)
-  }, [rewards])
 
   const rewardsData = useMemo(() => {
     const allRewards = [...rewards, ...withdrawals]
@@ -188,49 +185,15 @@ export const Rewards = React.memo(() => {
   return (
     <>
       <LoadingOverlay isFetching={isFetching}>
-        <section className="flex row wrap">
-          <Tile
-            title="Balance"
-            titleClassName="text-grey-70 h2"
-            id="rewards-total-balance"
-          >
+        <Tile title="Total Balance" titleClassName="text-grey-70 h2">
+          <header className="flex row center">
             <h1 className="balance">
               {totalRewardsBalance}
               <span className="h3 mr-1">&nbsp;ETH</span>
             </h1>
-          </Tile>
-          <Tile title="Available to Withdraw" id="withdraw-dropdown-section">
-            <div className="withdraw-dropdown">
-              <div className="dropdown">
-                <Dropdown
-                  options={availableRewardsOptions}
-                  onSelect={setSelectedReward}
-                  valuePropertyName="groupPublicKey"
-                  labelPropertyName="groupPublicKey"
-                  selectedItem={selectedReward}
-                  labelPrefix="Group:"
-                  noItemSelectedText="Select Group"
-                  label="Choose Amount"
-                  selectedItemComponent={
-                    <SelectedRewardDropdown groupReward={selectedReward} />
-                  }
-                  renderOptionComponent={(groupReward) => (
-                    <SelectedRewardDropdown groupReward={groupReward} />
-                  )}
-                />
-              </div>
-              <SubmitButton
-                className="btn btn-primary btn-lg flex-1"
-                onSubmitAction={() =>
-                  withdrawAction(selectedReward, updateWithdrawStatus)
-                }
-                disabled={isEmptyObj(selectedReward)}
-              >
-                withdraw
-              </SubmitButton>
-            </div>
-          </Tile>
-        </section>
+            <SpeechBubbleTooltip text="The total balance reflects the total Available and Active rewards. Available rewards are ready to be withdrawn. Active rewards become available after a signing group expires." />
+          </header>
+        </Tile>
       </LoadingOverlay>
       <LoadingOverlay
         isFetching={isFetching}
@@ -294,6 +257,40 @@ export const Rewards = React.memo(() => {
                 />
               )}
             />
+            <Column
+              header="operator"
+              field="operatorAddress"
+              renderContent={({ operatorAddress, status }) => (
+                <AddressShortcut
+                  address={operatorAddress}
+                  classNames={
+                    status === REWARD_STATUS.WITHDRAWN ? "text-grey-40" : ""
+                  }
+                />
+              )}
+            />
+            <Column
+              header=""
+              field="operatorAddress"
+              renderContent={({ status, operatorAddress, groupIndex }) =>
+                status !== REWARD_STATUS.WITHDRAWN && (
+                  <SubmitButton
+                    className="btn btn-secondary btn-sm"
+                    pendingMessageTitle="Pending rewards withdrawal"
+                    disabled={status !== REWARD_STATUS.AVAILABLE}
+                    onSubmitAction={(onTransactionHashCallback) =>
+                      withdrawReward(
+                        operatorAddress,
+                        groupIndex,
+                        onTransactionHashCallback
+                      )
+                    }
+                  >
+                    withdraw
+                  </SubmitButton>
+                )
+              }
+            />
           </DataTable>
           <div className="flex full-center">
             {rewards.length + withdrawals.length > previewDataCount && (
@@ -311,49 +308,6 @@ export const Rewards = React.memo(() => {
   )
 })
 
-const useWithdrawAction = () => {
-  const web3Context = useContext(Web3Context)
-  const showMessage = useShowMessage()
-  const closeMessage = useCloseMessage()
-
-  const withdraw = async (group, updateWithdrawStatus) => {
-    const { groupIndex, membersIndeces } = group
-    try {
-      updateWithdrawStatus(PENDING_STATUS)
-      const message = showMessage({
-        type: messageType.PENDING_ACTION,
-        sticky: true,
-        title: "Withdrawal in progress",
-      })
-      const result = await rewardsService.withdrawRewardFromGroup(
-        groupIndex,
-        membersIndeces,
-        web3Context
-      )
-      closeMessage(message)
-      const unacceptedTransactions = result.filter((reward) => reward.isError)
-      const errorTransactionCount = unacceptedTransactions.length
-
-      if (errorTransactionCount === 0) {
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Reward withdrawal completed",
-        })
-      } else if (errorTransactionCount === result.length) {
-        throw new Error("Reward withdrawal failed")
-      } else {
-        updateWithdrawStatus(null)
-        showMessage({
-          type: messageType.INFO,
-          title: `${errorTransactionCount} of ${result.length} transactions have been not approved`,
-        })
-      }
-    } catch (error) {
-      updateWithdrawStatus(null)
-      showMessage({ type: messageType.ERROR, title: error.message })
-      throw error
-    }
-  }
-
-  return [withdraw]
-}
+const isSameRewardRecord = (reward, groupIndex, operator) =>
+  reward.groupIndex === groupIndex &&
+  isSameEthAddress(operator, reward.operatorAddress)
