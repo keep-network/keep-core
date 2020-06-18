@@ -35,7 +35,7 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         uint256 groupIndex
     ) public {
         // Makes a given group as terminated
-        groups.activeTerminatedGroups.push(groupIndex);
+        groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize);
         emit UnauthorizedSigningReported(groupIndex);
     }
 
