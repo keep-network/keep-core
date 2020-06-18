@@ -373,7 +373,7 @@ workflows:
           filters:
             branches:
               only: master
-              context: keep-dev
+          context: keep-dev
       - publish_token_dashboard_dapp:
           filters:
             branches:
