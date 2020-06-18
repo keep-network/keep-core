@@ -240,7 +240,7 @@ jobs:
           name: Set ETH Host
           working_directory: ~/projects/solidity/dashboard
           command: |
-            if [ -z $CIRCLE_CONTEXT ]
+            if [ -z $ETH_WS_HOSTNAME_TOKEN_DASHBOARD ]
             then
               echo "No Circle Context set, using default values"
             else
