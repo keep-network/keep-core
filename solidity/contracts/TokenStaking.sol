@@ -40,8 +40,6 @@ contract TokenStaking is StakeDelegatable {
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
 
-    uint256 public minimumStakeScheduleStart;
-
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator, uint256 recoveredAt);
@@ -50,6 +48,13 @@ contract TokenStaking is StakeDelegatable {
     event StakeLocked(address indexed operator, address lockCreator, uint256 until);
     event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
+
+    uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
+
+    uint256 public initializationPeriod;
+    uint256 public undelegationPeriod;
+
+    uint256 public minimumStakeScheduleStart;
 
     ERC20Burnable internal token;
 
@@ -63,15 +68,11 @@ contract TokenStaking is StakeDelegatable {
     // `operatorLocks[operator]` returns all locks placed on the operator.
     // Each authorized operator contract can place one lock on an operator.
     mapping(address => LockUtils.LockSet) internal operatorLocks;
-    uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
 
     // Granters of delegated authority to operator contracts.
     // E.g. keep factories granting delegated authority to keeps.
     // `delegatedAuthority[keep] = factory`
     mapping(address => address) internal delegatedAuthority;
-
-    uint256 public initializationPeriod;
-    uint256 public undelegationPeriod;
 
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
