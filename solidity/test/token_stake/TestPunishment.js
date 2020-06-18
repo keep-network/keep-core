@@ -5,6 +5,7 @@ const stakeDelegate = require('../helpers/stakeDelegate')
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 const BN = web3.utils.BN
@@ -30,6 +31,11 @@ describe('TokenStaking/Punishment', () => {
     before(async () => {
         token = await KeepToken.new({ from: owner })
         registry = await KeepRegistry.new({ from: owner })
+        await TokenStaking.detectNetwork()
+        await TokenStaking.link(
+            'MinimumStakeSchedule', 
+            (await MinimumStakeSchedule.new({from: owner})).address
+        )
         stakingContract = await TokenStaking.new(
             token.address,
             registry.address,

@@ -13,6 +13,7 @@ const expect = chai.expect
 const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
@@ -34,6 +35,11 @@ describe('TokenStaking', function() {
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await KeepRegistry.new({from: accounts[0]});
+    await TokenStaking.detectNetwork();
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    )
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );

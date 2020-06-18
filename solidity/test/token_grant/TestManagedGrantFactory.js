@@ -8,6 +8,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
@@ -39,6 +40,11 @@ describe('TokenGrant/ManagedGrantFactory', () => {
   before(async () => {
     token = await KeepToken.new({from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: grantCreator})).address
+    )
     staking = await TokenStaking.new(
       token.address,
       registry.address,

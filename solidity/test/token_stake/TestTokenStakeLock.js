@@ -3,6 +3,7 @@ const {expectRevert, time} = require("@openzeppelin/test-helpers");
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
@@ -27,6 +28,11 @@ describe('TokenStaking/Lock', () => {
   before(async () => {
     token = await KeepToken.new({from: owner});
     registry = await KeepRegistry.new({from: owner});
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: owner})).address
+    )
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod,
       {from: owner}

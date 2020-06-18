@@ -7,6 +7,7 @@ const DKGResultVerification = contract.fromArtifact("DKGResultVerification");
 const DelayFactor = contract.fromArtifact("DelayFactor");
 const Reimbursements = contract.fromArtifact("Reimbursements");
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 
 async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -26,7 +27,18 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   registry = await KeepRegistry.new({from: accounts[0]});
 
   // Initialize staking contract
-  stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod, {from: accounts[0]});
+  await TokenStaking.detectNetwork()
+  await TokenStaking.link(
+    'MinimumStakeSchedule', 
+    (await MinimumStakeSchedule.new({from: accounts[0]})).address
+  )
+  stakingContract = await TokenStaking.new(
+    token.address,
+    registry.address,
+    stakeInitializationPeriod,
+    stakeUndelegationPeriod,
+    {from: accounts[0]}
+  );
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({from: accounts[0]});

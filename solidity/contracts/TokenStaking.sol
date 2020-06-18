@@ -1,6 +1,7 @@
 pragma solidity 0.5.17;
 
 import "./StakeDelegatable.sol";
+import "./libraries/staking/MinimumStakeSchedule.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
@@ -37,14 +38,7 @@ contract TokenStaking is StakeDelegatable {
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
 
-    // Minimum amount of KEEP that allows sMPC cluster client to participate in
-    // the Keep network. Expressed as number with 18-decimal places.
-    // Initial minimum stake is higher than the final and lowered periodically based
-    // on the amount of steps and the length of the minimum stake schedule in seconds.
     uint256 public minimumStakeScheduleStart;
-    uint256 public constant minimumStakeSchedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
-    uint256 public constant minimumStakeSteps = 10;
-    uint256 public constant minimumStakeBase = 10000 * 1e18;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -107,13 +101,7 @@ contract TokenStaking is StakeDelegatable {
     /// Initial minimum stake is higher than the final and lowered periodically based
     /// on the amount of steps and the length of the minimum stake schedule in seconds.
     function minimumStake() public view returns (uint256) {
-        if (block.timestamp < minimumStakeScheduleStart.add(minimumStakeSchedule)) {
-            uint256 currentStep = minimumStakeSteps.mul(
-                block.timestamp.sub(minimumStakeScheduleStart)
-            ).div(minimumStakeSchedule);
-            return minimumStakeBase.mul(minimumStakeSteps.sub(currentStep));
-        }
-        return minimumStakeBase;
+        return MinimumStakeSchedule.current(minimumStakeScheduleStart);
     }
 
     /// @notice Receives approval of token transfer and stakes the approved amount.
