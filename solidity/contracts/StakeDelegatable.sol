@@ -22,9 +22,9 @@ contract StakeDelegatable {
     uint256 public initializationPeriod;
     uint256 public undelegationPeriod;
 
-    mapping(address => address[]) public ownerOperators;
+    mapping(address => address[]) internal ownerOperators;
 
-    mapping(address => Operator) public operators;
+    mapping(address => Operator) internal operators;
 
     struct Operator {
         uint256 packedParams;
