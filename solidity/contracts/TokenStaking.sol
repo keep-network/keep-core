@@ -70,6 +70,9 @@ contract TokenStaking is StakeDelegatable {
     // `delegatedAuthority[keep] = factory`
     mapping(address => address) internal delegatedAuthority;
 
+    uint256 public initializationPeriod;
+    uint256 public undelegationPeriod;
+
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
             registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),

@@ -15,9 +15,6 @@ contract StakeDelegatable {
     using AddressArrayUtils for address[];
     using OperatorParams for uint256;
 
-    uint256 public initializationPeriod;
-    uint256 public undelegationPeriod;
-
     mapping(address => address[]) internal ownerOperators;
 
     mapping(address => Operator) internal operators;
