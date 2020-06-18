@@ -11,7 +11,7 @@ import {
 import web3Utils from "web3-utils"
 import { isSameEthAddress } from "../utils/general.utils"
 
-const fetchTBTCReawrds = async (web3Context, beneficiaryAddress) => {
+const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
   const searchFilter = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_TOKEN_CONTRACT_NAME],
     filter: { to: web3Utils.toChecksumAddress(beneficiaryAddress) },
@@ -67,6 +67,6 @@ const fetchBeneficiaryOperatorsFromDeposit = async (
 }
 
 export const tbtcRewardsService = {
-  fetchTBTCReawrds,
+  fetchTBTCRewards,
   fetchBeneficiaryOperatorsFromDeposit,
 }

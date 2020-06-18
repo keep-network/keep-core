@@ -12,7 +12,7 @@ const TBTCRewardsPage = () => {
   const web3Context = useWeb3Context()
   const { yourAddress } = web3Context
   const [{ data }, updateRewardsData] = useFetchData(
-    tbtcRewardsService.fetchTBTCReawrds,
+    tbtcRewardsService.fetchTBTCRewards,
     [],
     yourAddress
   )
