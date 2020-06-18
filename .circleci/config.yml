@@ -375,9 +375,9 @@ workflows:
           #     only: master
           context: keep-dev
       - publish_token_dashboard_dapp:
-          filters:
-            branches:
-              only: master
+          # filters:
+          #   branches:
+          #     only: master
           context: keep-dev
           requires:
             - build_token_dashboard_dapp
