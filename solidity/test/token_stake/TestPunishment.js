@@ -109,7 +109,7 @@ describe('TokenStaking/Punishment', () => {
             let amountToSlash = web3.utils.toBN(1000)
             await expectRevert(
                 stakingContract.slash(amountToSlash, [operator], { from: operatorContract }),
-                "Operator stake must be active"
+                "Stake must be active"
             )
         })
 
@@ -214,7 +214,7 @@ describe('TokenStaking/Punishment', () => {
                     amountToSeize, rewardMultiplier, tattletale,
                     [operator], { from: operatorContract }
                 ),
-                "Operator stake must be active"
+                "Stake must be active"
             )
         })
 

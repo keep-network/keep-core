@@ -87,7 +87,7 @@ describe('TokenStaking/Lock', () => {
     it("should not permit locks on non-initialized operators", async () => {
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator stake must be active"
+        "Stake must be active"
       )
     })
 
@@ -115,7 +115,7 @@ describe('TokenStaking/Lock', () => {
       await registry.disableOperatorContract(operatorContract, {from: owner})
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       )
     })
 
@@ -123,7 +123,7 @@ describe('TokenStaking/Lock', () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operator}),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       )
     })
 

@@ -119,7 +119,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           badAuthorityDelegator.address,
           {from: unapprovedContract}
         ),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       );
     })
 
@@ -162,7 +162,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           recognizedContract,
           {from: unrecognizedContract}
         ),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       );
     })
 

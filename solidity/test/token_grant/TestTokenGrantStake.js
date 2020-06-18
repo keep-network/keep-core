@@ -266,7 +266,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       stakingContract.recoverStake(operatorOne),
-      "Can not recover stake before undelegation period is over"
+      "Can not recover before undelegation period is over"
     )
   })
 
@@ -276,7 +276,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, amountToDelegate, grantId),
-      "Operator address is already in use"
+      "Operator already in use"
     )
   })
 
@@ -291,7 +291,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, grantAmount),
-      "Operator address is already in use."
+      "Operator already in use"
     )
   })
 

@@ -75,7 +75,7 @@ contract TokenStaking is StakeDelegatable {
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
             registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),
-            "Operator contract is not approved"
+            "Operator contract unapproved"
         );
         _;
     }
@@ -94,7 +94,7 @@ contract TokenStaking is StakeDelegatable {
         uint256 _initializationPeriod,
         uint256 _undelegationPeriod
     ) public {
-        require(_tokenAddress != address(0x0), "Token address can't be zero.");
+        require(_tokenAddress != address(0x0), "Token address can't be zero");
         token = ERC20Burnable(_tokenAddress);
         registry = KeepRegistry(_registry);
         initializationPeriod = _initializationPeriod;
@@ -127,13 +127,13 @@ contract TokenStaking is StakeDelegatable {
     /// - Operator address (20 bytes)
     /// - Authorizer address (20 bytes)
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
-        require(_extraData.length == 60, "Stake delegation data must be provided.");
+        require(ERC20Burnable(_token) == token, "Unrecognized token contract");
+        require(_value >= minimumStake(), "Value must be greater than the minimum stake");
+        require(_extraData.length == 60, "Corrupted delegation data");
 
         address payable beneficiary = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
-        require(operators[operator].owner == address(0), "Operator address is already in use.");
+        require(operators[operator].owner == address(0), "Operator already in use");
         address authorizer = _extraData.toAddress(40);
 
         // Transfer tokens to this contract.
@@ -158,7 +158,7 @@ contract TokenStaking is StakeDelegatable {
         address owner = operators[_operator].owner;
         require(
             msg.sender == _operator ||
-            msg.sender == owner, "Only operator or the owner of the stake can cancel the delegation."
+            msg.sender == owner, "Unauthorized"
         );
         uint256 operatorParams = operators[_operator].packedParams;
 
@@ -185,7 +185,7 @@ contract TokenStaking is StakeDelegatable {
     /// You will be able to recover your stake by calling
     /// `recoverStake()` with operator address once undelegation period is over.
     /// @param _operator Address of the stake operator.
-    /// @param _undelegationTimestamp The timestamp undelegation is to start at.    
+    /// @param _undelegationTimestamp The timestamp undelegation is to start at.
     function undelegateAt(
         address _operator,
         uint256 _undelegationTimestamp
@@ -194,18 +194,18 @@ contract TokenStaking is StakeDelegatable {
         bool sentByOwner = msg.sender == owner;
         require(
             msg.sender == _operator ||
-            sentByOwner, "Only operator or the owner of the stake can undelegate."
+            sentByOwner, "Unauthorized"
         );
         require(
             _undelegationTimestamp >= block.timestamp,
-            "May not set undelegation timestamp in the past"
+            "Undelegation timestamp in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
         uint256 existingCreationTimestamp = oldParams.getCreationTimestamp();
         uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
             _undelegationTimestamp > existingCreationTimestamp.add(initializationPeriod),
-            "Cannot undelegate in initialization period, use cancelStake instead"
+            "Cannot undelegate in initialization period"
         );
         require(
             // Undelegation not in progress OR
@@ -214,7 +214,7 @@ contract TokenStaking is StakeDelegatable {
             existingUndelegationTimestamp > _undelegationTimestamp ||
             // Owner may override
             sentByOwner,
-            "Only the owner may postpone previously set undelegation"
+            "Only the owner may postpone undelegation"
         );
         uint256 newParams = oldParams.setUndelegationTimestamp(_undelegationTimestamp);
         operators[_operator].packedParams = newParams;
@@ -233,7 +233,7 @@ contract TokenStaking is StakeDelegatable {
         );
         require(
             _isUndelegatingFinished(operatorParams),
-            "Can not recover stake before undelegation period is over."
+            "Can not recover before undelegation period is over"
         );
 
         require(
@@ -281,7 +281,7 @@ contract TokenStaking is StakeDelegatable {
 
         require(
             _isInitialized(operatorParams),
-            "Operator stake must be active"
+            "Stake must be active"
         );
         require(
             !_isUndelegating(operatorParams),
@@ -397,7 +397,7 @@ contract TokenStaking is StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 _isInitialized(operatorParams),
-                "Operator stake must be active"
+                "Stake must be active"
             );
 
             require(
@@ -447,7 +447,7 @@ contract TokenStaking is StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 _isInitialized(operatorParams),
-                "Operator stake must be active"
+                "Stake must be active"
             );
 
             require(
