@@ -32,7 +32,7 @@ const fetchAvailableRewards = async (web3Context) => {
     // { groupIndex: { isStale, isTerminated, groupPubKey } }
     const groups = {}
 
-    for (let groupIndex = 0; groupIndex < 2; groupIndex++) {
+    for (let groupIndex = 0; groupIndex < groupPubKeys.length; groupIndex++) {
       const groupPubKey = groupPubKeys[groupIndex]
       const groupMembers = new Set(
         await keepRandomBeaconOperatorContract.methods
