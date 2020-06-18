@@ -45,4 +45,12 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
     function timeDKG() public view returns (uint256) {
         return dkgResultVerification.timeDKG;
     }
+
+    function getRelayEntryTimeout() public view returns (uint256) {
+        return groups.relayEntryTimeout;
+    }
+
+    function getGroupActiveTime() public view returns (uint256) {
+        return groups.groupActiveTime;
+    }
 }
