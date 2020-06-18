@@ -1,12 +1,14 @@
 pragma solidity 0.5.17;
 
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "./StakeDelegatable.sol";
 import "./libraries/staking/MinimumStakeSchedule.sol";
 import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
 import "./KeepRegistry.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+
 
 /// @title AuthorityDelegator
 /// @notice An operator contract can delegate authority to other operator
@@ -49,8 +51,10 @@ contract TokenStaking is StakeDelegatable {
     event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
+    ERC20Burnable internal token;
+
     // Registry contract with a list of approved operator contracts and upgraders.
-    KeepRegistry public registry;
+    KeepRegistry internal registry;
 
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
