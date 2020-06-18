@@ -17,7 +17,7 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         _registryContract
     ) public {
         groupSize = 3;
-        groups.groupActiveTime = 5;
+        groups.groupActiveTime = 3;
         groups.relayEntryTimeout = 10;
     }
 
