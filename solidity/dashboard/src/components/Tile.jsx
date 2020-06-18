@@ -4,6 +4,7 @@ import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
 const Tile = ({
   title,
   titleStyle,
+  titleClassName,
   withTooltip,
   tooltipProps,
   subtitle,
@@ -13,7 +14,7 @@ const Tile = ({
   return (
     <section className="tile" {...sectionProps}>
       <div className="flex center">
-        <h4 className="mr-1 text-grey-70" style={titleStyle}>
+        <h4 className={titleClassName} style={titleStyle}>
           {title}
         </h4>
         {withTooltip && <SpeechBubbleTooltip {...tooltipProps} />}
@@ -26,6 +27,7 @@ const Tile = ({
 
 Tile.defaultProps = {
   withTooltip: false,
+  titleClassName: "mr-1 text-grey-70",
 }
 
 export default Tile

@@ -21,6 +21,6 @@ spec:
     spec:
       containers:
       - name: keep-dapp-token-dashboard
-        image: keepnetwork/token-dashboard:v1.0.2
+        image: keepnetwork/token-dashboard:v1.0.3
         ports:
           - containerPort: 80

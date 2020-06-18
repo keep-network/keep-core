@@ -51,6 +51,7 @@ const UndelegateStakeButton = (props) => {
       onSubmitAction={undelegate}
       pendingMessageTitle="Undelegate transaction is pending..."
       successCallback={props.successCallback}
+      disabled={props.disabled}
     >
       {props.isInInitializationPeriod ? "cancel" : props.btnText}
     </SubmitButton>
@@ -63,6 +64,7 @@ UndelegateStakeButton.defaultProps = {
   isInInitializationPeriod: false,
   successCallback: () => {},
   isFromGrant: false,
+  disabled: false,
 }
 
 export default UndelegateStakeButton

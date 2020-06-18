@@ -9,7 +9,7 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import { useShowMessage, messageType } from "../components/Message"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
-import { add } from "../utils/arithmetics.utils"
+import { add, sub } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
@@ -32,32 +32,39 @@ const TBTCApplicationPage = () => {
     initialData
   )
 
-  const subscribeToUnbondedValueDepositedCallback = (event) => {
-    const {
-      returnValues: { operator, amount },
-    } = event
-    const { indexInArray, obj: obsoleteData } = findIndexAndObject(
-      "operatorAddress",
-      operator,
-      bondingState.data,
-      compareEthAddresses
-    )
-    if (indexInArray === null) {
-      return
-    }
+  const unbondedValueUpdated = useCallback(
+    (event, arithmeticOpration = add) => {
+      const {
+        returnValues: { operator, amount },
+      } = event
+      const { indexInArray, obj: obsoleteData } = findIndexAndObject(
+        "operatorAddress",
+        operator,
+        bondingState.data,
+        compareEthAddresses
+      )
+      if (indexInArray === null) {
+        return
+      }
 
-    const availableETHInWei = add(
-      obsoleteData.availableETHInWei,
-      amount
-    ).toString()
-    const availableETH = web3Utils.fromWei(availableETHInWei, "ether")
-    const updatedBondinData = [...bondingState.data]
-    updatedBondinData[indexInArray] = {
-      ...obsoleteData,
-      availableETH,
-      availableETHInWei,
-    }
-    updateBondinData(updatedBondinData)
+      const availableETHInWei = arithmeticOpration(
+        obsoleteData.availableETHInWei,
+        amount
+      ).toString()
+      const availableETH = web3Utils.fromWei(availableETHInWei, "ether")
+      const updatedBondinData = [...bondingState.data]
+      updatedBondinData[indexInArray] = {
+        ...obsoleteData,
+        availableETH,
+        availableETHInWei,
+      }
+      updateBondinData(updatedBondinData)
+    },
+    [updateBondinData, bondingState.data]
+  )
+
+  const subscribeToUnbondedValueDepositedCallback = (event) => {
+    unbondedValueUpdated(event)
   }
 
   useSubscribeToContractEvent(
@@ -66,8 +73,18 @@ const TBTCApplicationPage = () => {
     subscribeToUnbondedValueDepositedCallback
   )
 
-  const onAuthorizationSuccessCallback = useCallback(
-    (contractName, operatorAddress) => {
+  const unbondedValueWithdrawnCallback = (event) => {
+    unbondedValueUpdated(event, sub)
+  }
+
+  useSubscribeToContractEvent(
+    KEEP_BONDING_CONTRACT_NAME,
+    "UnbondedValueWithdrawn",
+    unbondedValueWithdrawnCallback
+  )
+
+  const onSuccessCallback = useCallback(
+    (contractName, operatorAddress, isAuthorized = true) => {
       const {
         indexInArray: operatorIndexInArray,
         obj: obsoleteOperator,
@@ -91,7 +108,7 @@ const TBTCApplicationPage = () => {
       const updatedContracts = [...obsoleteOperator.contracts]
       updatedContracts[contractIndexInArray] = {
         ...obsoleteContract,
-        isAuthorized: true,
+        isAuthorized,
       }
       const updatedOperators = [...tbtcAuthState.data]
       updatedOperators[operatorIndexInArray] = {
@@ -120,22 +137,49 @@ const TBTCApplicationPage = () => {
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",
-          content: "Authorization transaction successfully completed",
+          content: "Authorization successfully completed",
         })
-        setTimeout(
-          () => onAuthorizationSuccessCallback(contractName, operatorAddress),
-          5000
-        )
+        setTimeout(() => onSuccessCallback(contractName, operatorAddress), 5000)
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Authorization action has failed ",
+          title: "Authorization has failed",
           content: error.message,
         })
         throw error
       }
     },
-    [showMessage, web3Context, onAuthorizationSuccessCallback]
+    [showMessage, web3Context, onSuccessCallback]
+  )
+
+  const deauthorizeTBTCSystem = useCallback(
+    async (data, transactionHashCallback) => {
+      const { operatorAddress } = data
+      try {
+        await tbtcAuthorizationService.deauthorizeTBTCSystem(
+          web3Context,
+          operatorAddress,
+          transactionHashCallback
+        )
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content: "Deauthorization successfully completed",
+        })
+        setTimeout(
+          () => onSuccessCallback("TBTCSystem", operatorAddress, false),
+          5000
+        )
+      } catch (error) {
+        showMessage({
+          type: messageType.ERROR,
+          title: "Deauthorization has failed",
+          content: error.message,
+        })
+        throw error
+      }
+    },
+    [showMessage, web3Context, onSuccessCallback]
   )
 
   const tbtcAuthData = useMemo(() => {
@@ -172,6 +216,7 @@ const TBTCApplicationPage = () => {
           selectedOperator={selectedOperator}
           data={tbtcAuthData}
           onAuthorizeBtn={authorizeContract}
+          onDeauthorizeBtn={deauthorizeTBTCSystem}
         />
       </LoadingOverlay>
       <LoadingOverlay isFetching={bondingState.isFetching}>

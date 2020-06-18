@@ -11,6 +11,7 @@ import TokenGrantsPage from "../pages/TokenGrantsPage"
 import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ChooseWallet from "./ChooseWallet"
+import GlossaryPage from "../pages/GlossaryPage"
 
 class Routing extends React.Component {
   renderContent() {
@@ -55,7 +56,12 @@ class Routing extends React.Component {
   }
 
   render() {
-    return <>{this.renderContent()}</>
+    return (
+      <Switch>
+        <Route exact path="/glossary" component={GlossaryPage} />
+        <Route path="/">{this.renderContent()}</Route>
+      </Switch>
+    )
   }
 }
 
