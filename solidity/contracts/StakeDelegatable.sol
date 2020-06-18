@@ -18,14 +18,6 @@ contract StakeDelegatable {
         address authorizer;
     }
 
-    modifier onlyOperatorAuthorizer(address _operator) {
-        require(
-            operators[_operator].authorizer == msg.sender,
-            "Not operator authorizer"
-        );
-        _;
-    }
-
     /// @notice Gets the list of operators of the specified address.
     /// @return An array of addresses.
     function operatorsOf(address _address) public view returns (address[] memory) {
