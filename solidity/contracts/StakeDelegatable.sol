@@ -1,18 +1,10 @@
 pragma solidity 0.5.17;
 
-import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "./utils/BytesLib.sol";
-import "./utils/AddressArrayUtils.sol";
 import "./utils/OperatorParams.sol";
-
 
 /// @title Stake Delegatable
 /// @notice A base contract to allow stake delegation for staking contracts.
 contract StakeDelegatable {
-    using SafeMath for uint256;
-    using BytesLib for bytes;
-    using AddressArrayUtils for address[];
     using OperatorParams for uint256;
 
     mapping(address => address[]) internal ownerOperators;

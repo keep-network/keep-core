@@ -2,11 +2,12 @@ pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
+import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakeDelegatable.sol";
 import "./libraries/staking/MinimumStakeSchedule.sol";
-import "./utils/UintArrayUtils.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
+import "./utils/BytesLib.sol";
 import "./KeepRegistry.sol";
 
 
@@ -35,7 +36,8 @@ interface AuthorityDelegator {
 /// A holder of the specified token can stake delegate its tokens to this contract
 /// and recover the stake after undelegation period is over.
 contract TokenStaking is StakeDelegatable {
-    using UintArrayUtils for uint256[];
+    using BytesLib for bytes;
+    using SafeMath for uint256;
     using PercentUtils for uint256;
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
