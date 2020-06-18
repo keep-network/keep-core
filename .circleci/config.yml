@@ -238,7 +238,7 @@ jobs:
             npm upgrade @keep-network/keep-core
       - run:
           name: Set ETH Host
-          working_directory: ~/projects/solidity/dashboard
+          working_directory: ~/projects/solidity/dashboard/src/config
           command: |
             if [ -z $ETH_WS_HOSTNAME_TOKEN_DASHBOARD ]
             then
