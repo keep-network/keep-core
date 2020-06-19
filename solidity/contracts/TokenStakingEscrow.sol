@@ -149,7 +149,7 @@ contract TokenStakingEscrow is Ownable {
             );
 
             if (deposit.withdrawn < unlocked) {
-              return unlocked - deposit.withdrawn;
+                return unlocked - deposit.withdrawn;
             }
         }
 
@@ -250,7 +250,7 @@ contract TokenStakingEscrow is Ownable {
     function getAmountGranted(uint256 grantId) internal view returns (
         uint256 amountGranted
     ) {
-       (amountGranted,,,,,) = tokenGrant.getGrant(grantId);
+        (amountGranted,,,,,) = tokenGrant.getGrant(grantId);
     }
 
     function getAmountRevoked(uint256 grantId) internal view returns (
