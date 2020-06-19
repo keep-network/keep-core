@@ -28,7 +28,10 @@ import "./ManagedGrant.sol";
 /// tokens and either withdraw them based on the grant unlocking schedule or
 /// re-delegate them to another operator.
 /// @dev The owner of TokenStakingEscrow is TokenStaking contract and only owner
-/// can deposit. This contract works with an assumption that operator is unique.
+/// can deposit. This contract works with an assumption that operator is unique
+/// in the scope of `TokenStaking`, that is, no more than one delegation in the
+/// `TokenStaking` can be done do the given operator ever. Even if the previous
+/// delegation ended, operator address cannot be reused.
 contract TokenStakingEscrow is Ownable {
 
     using SafeERC20 for IERC20;
@@ -70,6 +73,12 @@ contract TokenStakingEscrow is Ownable {
     /// undelegated. Function expects operator address and grant identifier to
     /// be passed as ABI-encoded information in extraData. Grant with the given
     /// identifier has to exist.
+    /// @param from Address depositing tokens - it has to be the address of
+    /// TokenStaking contract owning TokenStakingEscrow.
+    /// @param value The amount of KEEP tokens deposited.
+    /// @param token The address of KEEP token contract.
+    /// @param extraData ABI-encoded data containing operator address (32 bytes)
+    /// and grant ID (32 bytes).
     function receiveApproval(
         address from,
         uint256 value,
@@ -89,18 +98,24 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Returns the total amount deposited in the escrow after
     /// undelegating it from the provided operator.
+    /// @param operator Address of the operator from which undelegated tokens
+    /// were deposited.
     function depositedAmount(address operator) public view returns (uint256) {
         return deposits[operator].amount;
     }
 
     /// @notice Returns grant ID for the amount deposited in the escrow after
     /// undelegating it from the provided operator.
+    /// @param operator Address of the operator from which undelegated tokens
+    /// were deposited.
     function depositGrantId(address operator) public view returns (uint256) {
         return deposits[operator].grantId;
     }
 
     /// @notice Returns the amount withdrawn so far from the value deposited
     /// in the escrow contract after undelegating it from the provided operator.
+    /// @param operator Address of the operator from which undelegated tokens
+    /// were deposited.
     function depositWithdrawnAmount(address operator) public view returns (uint256) {
         return deposits[operator].withdrawn;
     }
@@ -109,6 +124,8 @@ contract TokenStakingEscrow is Ownable {
     /// deposited in the escrow after undelegating it from the provided operator.
     /// Tokens are unlocked base on their grant unlocking schedule.
     /// Function returns 0 for non-existing deposits and revoked grants.
+    /// @param operator Address of the operator for which undelegated tokens
+    /// were deposited.
     function withdrawable(address operator) public view returns (uint256) {
         Deposit memory deposit = deposits[operator];
 
@@ -143,6 +160,8 @@ contract TokenStakingEscrow is Ownable {
     /// operator can call this function. Important: this function can not be
     /// called for a `ManagedGrant` grantee. This may lead to locking tokens.
     /// For `ManagedGrant`, please use `withdrawToManagedGrantee` instead.
+    /// @param operator Address of the operator for which undelegated tokens
+    /// were deposited.
     function withdraw(address operator) public {
         Deposit memory deposit = deposits[operator];
         address grantee = getGrantee(deposit.grantId);
@@ -168,6 +187,8 @@ contract TokenStakingEscrow is Ownable {
     /// operator can call this function. This function works only for
     /// `ManagedGrant` grantees. For a standard grant, please use `withdraw`
     /// instead.
+    /// @param operator Address of the operator for which undelegated tokens
+    /// were deposited.
     function withdrawToManagedGrantee(address operator) public {
         Deposit memory deposit = deposits[operator];
         address managedGrant = getGrantee(deposit.grantId);
@@ -181,6 +202,9 @@ contract TokenStakingEscrow is Ownable {
         withdraw(deposit, operator, grantee);
     }
 
+    /// @notice Resolves the final grantee of ManagedGrant contract. If the
+    /// provided address is not a ManagedGrant contract, function reverts.
+    /// @address managedGrantee Address of the managed grant contract.
     function getManagedGrantee(
         address managedGrantee
     ) public view returns(address) {
