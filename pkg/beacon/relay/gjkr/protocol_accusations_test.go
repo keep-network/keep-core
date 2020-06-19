@@ -86,16 +86,6 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			},
 			expectedResult: []group.MemberIndex{3},
 		},
-		"incorrect accused member ID - accuser is disqualified": {
-			accuserID: 2,
-			accusedID: 5,
-			modifyAccusedMemberKey: func(accuser *SharesJustifyingMember) map[group.MemberIndex]*ephemeral.PrivateKey {
-				modifiedMemberKeys := make(map[group.MemberIndex]*ephemeral.PrivateKey)
-				modifiedMemberKeys[uint8(6)] = accuser.ephemeralKeyPairs[5].PrivateKey
-				return modifiedMemberKeys
-			},
-			expectedResult: []group.MemberIndex{2},
-		},
 		"inactive member as an accused (no EphemeralPublicKeyMessage sent) - " +
 			"accuser is disqualified": {
 			accuserID: 3,
@@ -201,10 +191,6 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			accusedMembersKeys[test.accusedID] = accuser.ephemeralKeyPairs[test.accusedID].PrivateKey
 			if test.modifyAccusedPrivateKey != nil {
 				accusedMembersKeys[test.accusedID] = test.modifyAccusedPrivateKey(accusedMembersKeys[test.accusedID])
-			}
-
-			if test.modifyAccusedMemberKey != nil {
-				accusedMembersKeys = test.modifyAccusedMemberKey(accuser)
 			}
 
 			var messages []*SecretSharesAccusationsMessage
