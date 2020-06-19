@@ -398,6 +398,90 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 	}
 }
 
+func TestResolveSecretSharesAccusationsIncorrectAccussedMemberId(t *testing.T) {
+	dishonestThreshold := 2
+	groupSize := 5
+
+	accusserMemberID := group.MemberIndex(1)
+	accussedMemberID := group.MemberIndex(6)
+	currentMemberID := group.MemberIndex(3)
+
+	members, err := initializeSharesJustifyingMemberGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	messages := [1]*SecretSharesAccusationsMessage{
+		{
+			senderID: accusserMemberID,
+			accusedMembersKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
+				accussedMemberID: {},
+			},
+		},
+	}
+
+	justifyingMember := findSharesJustifyingMemberByID(members, currentMemberID)
+	err = justifyingMember.ResolveSecretSharesAccusationsMessages(messages[:])
+	if err != nil {
+		t.Fatalf("resolving of secret shares accustion messages failed [%s]", err)
+	}
+
+	actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
+	expectedDisqualified := [1]group.MemberIndex{accusserMemberID}
+	if !reflect.DeepEqual(actualDisqualified, expectedDisqualified[:]) {
+		t.Fatalf(
+			"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
+			expectedDisqualified,
+			actualDisqualified,
+		)
+	}
+}
+
+func TestResolvePublicKeySharePointsAccusationsIncorrectAccusedMemberId(t *testing.T) {
+	dishonestThreshold := 2
+	groupSize := 5
+
+	accusserMemberID := group.MemberIndex(1)
+	accussedMemberID := group.MemberIndex(6)
+	currentMemberID := group.MemberIndex(3)
+
+	members, err := initializePointsJustifyingMemberGroup(
+		dishonestThreshold,
+		groupSize,
+	)
+	if err != nil {
+		t.Fatalf("group initialization failed [%s]", err)
+	}
+
+	messages := [1]*PointsAccusationsMessage{
+		{
+			senderID: accusserMemberID,
+			accusedMembersKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
+				accussedMemberID: {},
+			},
+		},
+	}
+
+	justifyingMember := findCoefficientsJustifyingMemberByID(members, currentMemberID)
+	err = justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(messages[:])
+	if err != nil {
+		t.Fatalf("resolving of public key share points accusation messages failed [%s]", err)
+	}
+
+	actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
+	expectedDisqualified := [1]group.MemberIndex{accusserMemberID}
+	if !reflect.DeepEqual(actualDisqualified, expectedDisqualified[:]) {
+		t.Fatalf(
+			"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
+			expectedDisqualified,
+			actualDisqualified,
+		)
+	}
+}
+
 func findSharesJustifyingMemberByID(
 	members []*SharesJustifyingMember,
 	id group.MemberIndex,
