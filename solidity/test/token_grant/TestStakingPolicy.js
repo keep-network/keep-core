@@ -83,6 +83,7 @@ describe('GuaranteedMinimumStakingPolicy', async () => {
       accounts[9],
       accounts[9],
       accounts[9],
+      accounts[9],
       0, 0
     );
     policy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
@@ -244,6 +245,7 @@ describe('AdaptiveStakingPolicy', async () => {
       (await MinimumStakeSchedule.new()).address
     )
     stakingContract = await TokenStaking.new(
+      accounts[9],
       accounts[9],
       accounts[9],
       accounts[9],

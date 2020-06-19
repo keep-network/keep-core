@@ -63,6 +63,7 @@ describe('TokenGrant/ManagedGrant', () => {
     )
     staking = await TokenStaking.new(
       token.address,
+      tokenGrant.address,
       stakingEscrow.address,
       registry.address,
       initializationPeriod,

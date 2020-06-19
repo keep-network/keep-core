@@ -67,6 +67,7 @@ describe('RolesLookup', () => {
     )
     tokenStaking = await TokenStaking.new(
       token.address,
+      tokenGrant.address,
       tokenStakingEscrow.address,
       registry.address,
       initializationPeriod,

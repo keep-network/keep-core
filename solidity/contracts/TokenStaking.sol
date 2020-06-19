@@ -57,6 +57,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     TokenStakingEscrow public escrow;
 
+    // KEEP token grant contract.
+    TokenGrant public tokenGrant;
+
     // Locks placed on the operator.
     // `operatorLocks[operator]` returns all locks placed on the operator.
     // Each authorized operator contract can place one lock on an operator.
@@ -64,6 +67,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
+    /// @param _tokenGrant KEEP token grant contract.
     /// @param _escrow Escrow dedicated for this staking contract.
     /// @param _registry Keep contract registry contract.
     /// @param _initializationPeriod To avoid certain attacks on work selection, recently created
@@ -73,12 +77,14 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// collateral for any work the operator is engaged in.
     constructor(
         ERC20Burnable _token,
+        TokenGrant _tokenGrant,
         TokenStakingEscrow _escrow,
         KeepRegistry _registry,
         uint256 _initializationPeriod,
         uint256 _undelegationPeriod
     ) Authorizations(_registry) public {
         token = _token;
+        tokenGrant = _tokenGrant;
         escrow = _escrow;
         registry = _registry;
         initializationPeriod = _initializationPeriod;

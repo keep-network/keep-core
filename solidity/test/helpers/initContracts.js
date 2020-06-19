@@ -40,6 +40,7 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
   )
   stakingContract = await TokenStaking.new(
     token.address,
+    tokenGrant.address,
     stakingEscrow.address,
     registry.address,
     stakeInitializationPeriod,
