@@ -2,10 +2,15 @@ pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+/// @notice MinimumStakeSchedule defines the minimum stake parametrization and
+/// schedule. It starts with a minimum stake of 100k KEEP. Over the following
+/// 2 years, the minimum stake is lowered periodically using a uniform stepwise
+/// function, eventually ending at 10k.
 library MinimumStakeSchedule {
     using SafeMath for uint256;
 
-    uint256 public constant schedule = 86400 * 365 * 2; // 2 years in seconds (seconds per day * days in a year * years)
+    // 2 years in seconds (seconds per day * days in a year * years)
+    uint256 public constant schedule = 86400 * 365 * 2;
     uint256 public constant steps = 10;
     uint256 public constant base = 10000 * 1e18;
 
