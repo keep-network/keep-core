@@ -40,6 +40,7 @@ contract TokenStakingEscrow is Ownable {
 
     event Deposited(
         address indexed operator,
+        uint256 indexed grantId,
         uint256 amount
     );
     event DepositWithdrawn(
@@ -230,7 +231,7 @@ contract TokenStakingEscrow is Ownable {
         keepToken.safeTransferFrom(from, address(this), value);
         deposits[operator] = Deposit(grantId, value, 0);
 
-        emit Deposited(operator, value);
+        emit Deposited(operator, grantId, value);
     }
 
     function withdraw(
