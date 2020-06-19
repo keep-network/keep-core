@@ -983,7 +983,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if pjm.ID == accusedID {
+			if pjm.ID == accusedID || int(accusedID) > pjm.group.GroupSize()  {
 				// The member does not resolve the dispute as an accused.
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
