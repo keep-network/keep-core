@@ -42,22 +42,6 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
     await restoreSnapshot()
   });
 
-  it("should set fields for groups library", async () => {
-    let relayEntryTimeout = await operatorContract.getRelayEntryTimeout()
-    assert.equal(
-      relayEntryTimeout.toNumber(), 
-      384,
-      "relay entry should have been set to (groupSize * resultPublicationBlockStep)"
-    )
-
-    let groupActiveTimeout = await operatorContract.getGroupActiveTime()
-    assert.equal(
-      groupActiveTimeout.toNumber(), 
-      80640,
-      "group active time should have been set"
-    )
-  })
-
   it("should not throw an error when entry is in progress and " +
      "block number > relay entry timeout", async () => {
     await operatorContract.sign(
