@@ -204,11 +204,11 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Resolves the final grantee of ManagedGrant contract. If the
     /// provided address is not a ManagedGrant contract, function reverts.
-    /// @address managedGrantee Address of the managed grant contract.
+    /// @param managedGrant Address of the managed grant contract.
     function getManagedGrantee(
-        address managedGrantee
+        address managedGrant
     ) public view returns(address) {
-        ManagedGrant grant = ManagedGrant(managedGrantee);
+        ManagedGrant grant = ManagedGrant(managedGrant);
         return grant.grantee();
     }
 
