@@ -16,10 +16,10 @@ pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
-import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./libraries/grant/UnlockingSchedule.sol";
+import "./KeepToken.sol";
 import "./TokenGrant.sol";
 import "./ManagedGrant.sol";
 
@@ -62,7 +62,7 @@ contract TokenStakingEscrow is Ownable {
     mapping(address => Deposit) internal deposits;
 
     constructor(
-        IERC20 _keepToken,
+        KeepToken _keepToken,
         TokenGrant _tokenGrant
     ) public {
         keepToken = _keepToken;
