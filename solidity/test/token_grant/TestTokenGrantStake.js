@@ -15,6 +15,7 @@ const expect = chai.expect
 const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
@@ -51,6 +52,11 @@ describe('TokenGrant/Stake', function() {
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
     registryContract = await KeepRegistry.new({from: accounts[0]});
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    )
     stakingContract = await TokenStaking.new(
       tokenContract.address,
       registryContract.address,
@@ -266,7 +272,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       stakingContract.recoverStake(operatorOne),
-      "Can not recover stake before undelegation period is over"
+      "Can not recover before undelegation period is over"
     )
   })
 
@@ -276,7 +282,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, amountToDelegate, grantId),
-      "Operator address is already in use"
+      "Operator already in use"
     )
   })
 
@@ -291,7 +297,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, grantAmount),
-      "Operator address is already in use."
+      "Operator already in use"
     )
   })
 

@@ -3,6 +3,7 @@ const {expectRevert, time} = require("@openzeppelin/test-helpers");
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
@@ -27,6 +28,11 @@ describe('TokenStaking/Lock', () => {
   before(async () => {
     token = await KeepToken.new({from: owner});
     registry = await KeepRegistry.new({from: owner});
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: owner})).address
+    )
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod,
       {from: owner}
@@ -87,7 +93,7 @@ describe('TokenStaking/Lock', () => {
     it("should not permit locks on non-initialized operators", async () => {
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator stake must be active"
+        "Stake must be active"
       )
     })
 
@@ -115,7 +121,7 @@ describe('TokenStaking/Lock', () => {
       await registry.disableOperatorContract(operatorContract, {from: owner})
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       )
     })
 
@@ -123,7 +129,7 @@ describe('TokenStaking/Lock', () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operator}),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       )
     })
 

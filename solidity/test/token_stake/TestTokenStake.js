@@ -13,6 +13,7 @@ const expect = chai.expect
 const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
@@ -34,6 +35,11 @@ describe('TokenStaking', function() {
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await KeepRegistry.new({from: accounts[0]});
+    await TokenStaking.detectNetwork();
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    )
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod, {from: accounts[0]}
     );
@@ -136,7 +142,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         delegate(operatorOne, stakingAmount),
-        "Operator address is already in use."
+        "Operator already in use"
       )
     })
   
@@ -151,14 +157,14 @@ describe('TokenStaking', function() {
           
       await expectRevert(
         delegate(operatorOne, stakingAmount),
-        "Operator address is already in use."
+        "Operator already in use"
       )
     })
   
     it("should not allow to delegate less than the minimum stake", async () => {    
       await expectRevert(
         delegate(operatorOne, minimumStake.subn(1)),
-        "Tokens amount must be greater than the minimum stake"
+        "Value must be greater than the minimum stake"
       )
     })
   
@@ -205,7 +211,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: operatorTwo}),
-        "Only operator or the owner of the stake can cancel the delegation"
+        "Unauthorized"
       )
     })
 
@@ -305,7 +311,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
-        "Only operator or the owner of the stake can undelegate"
+        "Unauthorized"
       )
     })
 
@@ -326,7 +332,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Cannot undelegate in initialization period, use cancelStake instead"
+        "Cannot undelegate in initialization period"
       )
     })
 
@@ -370,7 +376,7 @@ describe('TokenStaking', function() {
 
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Only the owner may postpone previously set undelegation"
+        "Only the owner may postpone undelegation"
       )
     })
   })
@@ -405,7 +411,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(10),
           {from: operatorTwo}
         ),
-        "Only operator or the owner of the stake can undelegate"
+        "Unauthorized"
       )
     })
 
@@ -447,7 +453,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.add(initializationPeriod).sub(timeRoundMargin),
           {from: operatorOne}
         ),
-        "Cannot undelegate in initialization period, use cancelStake instead"
+        "Cannot undelegate in initialization period"
       )
     })
 
@@ -464,7 +470,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime - 1,
           {from: operatorOne}
         ),
-        "May not set undelegation timestamp in the past"
+        "Undelegation timestamp in the past"
       )
     })
 
@@ -520,7 +526,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
         ),
-        "Only the owner may postpone previously set undelegation"
+        "Only the owner may postpone undelegation"
       )
     })
   })
@@ -549,7 +555,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.recoverStake(operatorOne),
-        "Can not recover stake before undelegation period is over"
+        "Can not recover before undelegation period is over"
       )
     })
 

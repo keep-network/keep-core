@@ -10,6 +10,7 @@ const {createSnapshot, restoreSnapshot} = require('./helpers/snapshot')
 const assert = require('chai').assert
 
 const KeepToken = contract.fromArtifact('KeepToken')
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
@@ -52,6 +53,12 @@ describe('RolesLookup', () => {
     const registry = await KeepRegistry.new({from: deployer})
     token = await KeepToken.new({from: deployer})
     tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: deployer})).address
+    )
     tokenStaking = await TokenStaking.new(
       token.address,
       registry.address,

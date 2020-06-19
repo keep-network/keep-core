@@ -9,6 +9,7 @@ const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
@@ -34,6 +35,11 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await KeepRegistry.new();
 
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new()).address
+    )
     stakingContract = await TokenStaking.new(
       token.address, registry.address, initializationPeriod, undelegationPeriod
     );
@@ -119,7 +125,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           badAuthorityDelegator.address,
           {from: unapprovedContract}
         ),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       );
     })
 
@@ -162,7 +168,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           recognizedContract,
           {from: unrecognizedContract}
         ),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       );
     })
 
