@@ -1,6 +1,6 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
+const {grantTokens} = require('../helpers/grantTokens');
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
