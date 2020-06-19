@@ -180,6 +180,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = 86400 * 14 / 15; // 14 days equivalent in 15s blocks
+        groups.relayEntryTimeout = relayEntryTimeout;
 
         // There are 78 blocks to submit group selection tickets. To minimize
         // the submitter's cost by minimizing the number of redundant tickets
