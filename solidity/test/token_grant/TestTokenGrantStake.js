@@ -228,7 +228,7 @@ describe('TokenGrant/Stake', function() {
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
-    let availableForStaking = await grantContract.availableToStake.call(grantId)
+    let availableForStaking = await stakingEscrow.depositedAmount.call(operatorOne)
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
 
     expect(availableForStaking).to.eq.BN(
@@ -249,7 +249,7 @@ describe('TokenGrant/Stake', function() {
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
-    let availableForStaking = await grantContract.availableToStake.call(grantId)
+    let availableForStaking = await stakingEscrow.depositedAmount.call(operatorOne)
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
 
     expect(availableForStaking).to.eq.BN(
