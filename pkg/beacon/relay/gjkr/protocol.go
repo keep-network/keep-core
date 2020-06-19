@@ -972,6 +972,7 @@ func (sm *SharingMember) publicKeyShare(
 // - shares of the accused member are valid against public key share points
 // - shares of the accused member can not be decrypted and the accuser didn't
 //   complain about this fact in phase 4 (protocol violation)
+// - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
