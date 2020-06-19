@@ -64,8 +64,8 @@ contract Authorizations {
         _;
     }
 
-    constructor(address _registry) public {
-        registry = KeepRegistry(_registry);
+    constructor(KeepRegistry _registry) public {
+        registry = _registry;
     }
 
     /// @notice Gets the authorizer for the specified operator address.

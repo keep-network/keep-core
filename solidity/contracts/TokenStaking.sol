@@ -23,6 +23,7 @@ import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
 import "./utils/BytesLib.sol";
 import "./Authorizations.sol";
+import "./TokenStakingEscrow.sol";
 
 
 /// @title TokenStaking
@@ -54,28 +55,32 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     ERC20Burnable internal token;
 
+    TokenStakingEscrow public escrow;
+
     // Locks placed on the operator.
     // `operatorLocks[operator]` returns all locks placed on the operator.
     // Each authorized operator contract can place one lock on an operator.
     mapping(address => LockUtils.LockSet) internal operatorLocks;
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
-    /// @param _tokenAddress Address of a token that will be linked to this contract.
-    /// @param _registry Address of a keep registry that will be linked to this contract.
+    /// @param _token KEEP token contract.
+    /// @param _escrow Escrow dedicated for this staking contract.
+    /// @param _registry Keep contract registry contract.
     /// @param _initializationPeriod To avoid certain attacks on work selection, recently created
     /// operators must wait for a specific period of time before being eligible for work selection.
     /// @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
     /// stakes will stay locked for a period of time after undelegation, and thus available as
     /// collateral for any work the operator is engaged in.
     constructor(
-        address _tokenAddress,
-        address _registry,
+        ERC20Burnable _token,
+        TokenStakingEscrow _escrow,
+        KeepRegistry _registry,
         uint256 _initializationPeriod,
         uint256 _undelegationPeriod
     ) Authorizations(_registry) public {
-        require(_tokenAddress != address(0x0), "Token address can't be zero");
-        token = ERC20Burnable(_tokenAddress);
-        registry = KeepRegistry(_registry);
+        token = _token;
+        escrow = _escrow;
+        registry = _registry;
         initializationPeriod = _initializationPeriod;
         undelegationPeriod = _undelegationPeriod;
         minimumStakeScheduleStart = block.timestamp;

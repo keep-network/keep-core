@@ -4,6 +4,7 @@ const {grantTokens} = require('../helpers/grantTokens');
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
@@ -20,19 +21,26 @@ describe('TokenGrant', function() {
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await KeepRegistry.new({from: accounts[0]});
+    grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
+    stakingEscrow = await TokenStakingEscrow.new(
+      token.address, 
+      grantContract.address, 
+      {from: accounts[0]}
+    );
     await TokenStaking.detectNetwork()
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: accounts[0]})).address
-    )
+    );
     stakingContract = await TokenStaking.new(
       token.address,
+      stakingEscrow.address,
       registry.address,
       time.duration.days(1),
       time.duration.days(30),
       {from: accounts[0]}
     );
-    grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
+    await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
     permissivePolicy = await PermissiveStakingPolicy.new()
     amount = web3.utils.toBN(100);

@@ -4,7 +4,9 @@ const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
+const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/Lock', () => {
@@ -27,17 +29,27 @@ describe('TokenStaking/Lock', () => {
 
   before(async () => {
     token = await KeepToken.new({from: owner});
+    grant = await TokenGrant.new(token.address, {from: owner});
     registry = await KeepRegistry.new({from: owner});
-    await TokenStaking.detectNetwork()
+    escrow = await TokenStakingEscrow.new(
+      token.address, 
+      grant.address, 
+      {from: owner}
+    );
+    await TokenStaking.detectNetwork();
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: owner})).address
-    )
+    );
     stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod,
+      token.address,
+      escrow.address,
+      registry.address,
+      initializationPeriod,
+      undelegationPeriod,
       {from: owner}
     );
-
+    await escrow.transferOwnership(stakingContract.address, {from: owner});
     await registry.approveOperatorContract(operatorContract, {from: owner});
     await registry.approveOperatorContract(operatorContract2, {from: owner});
 
