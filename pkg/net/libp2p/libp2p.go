@@ -219,6 +219,22 @@ func (cm *connectionManager) monitorConnectedPeers(ctx context.Context) {
 		case <-ticker.C:
 			connectedPeers := cm.ConnectedPeers()
 
+			//Slice for connected peers' addresses strings
+			var addrStrings []string
+			//Loop over connected peers' IDs
+			for _, peerID := range cm.Network().Peers() {
+				//PeerInfo gets a struc containing ID + array of multiaddresses for a given peer
+				info := cm.Peerstore().PeerInfo(peerID)
+				//For multiaddresses of current peer
+				peerAddrStrings := make([]string, 0, len(info.Addrs))
+				//For the set of multiaddresses of this peer, construct an array of valid transport addresses strings
+				for _, multiaddr := range info.Addrs {
+					peerAddrStrings = append(peerAddrStrings, multiaddressWithIdentity(multiaddr, peerID))
+				}
+				//Append to slice of addresses of all connected peers
+				addrStrings = append(addrStrings, peerAddrStrings...)
+			}  
+
 			logger.Infof("number of connected peers: [%v]", len(connectedPeers))
 			logger.Debugf("connected peers: [%v]", connectedPeers)
 		case <-ctx.Done():
