@@ -281,6 +281,13 @@ describe('TokenStakingEscrow', () => {
       )
     })
 
+    it('can not be called by deployer', async () => {
+      await expectRevert(
+        escrow.withdraw(operator, {from: deployer}),
+        "Only grantee or operator can withdraw" 
+      )
+    })
+
     it('withdraws entire unlocked amount just after the cliff', async () => {
       await time.increaseTo(grantStart.add(grantCliff))
       await escrow.withdraw(operator, {from: grantee})
@@ -382,6 +389,13 @@ describe('TokenStakingEscrow', () => {
     it('can not be called by third-party', async () => {
       await expectRevert(
         escrow.withdrawToManagedGrantee(operator2, {from: thirdParty}),
+        "Only grantee or operator can withdraw" 
+      )
+    })
+
+    it('can not be called by deployer', async () => {
+      await expectRevert(
+        escrow.withdrawToManagedGrantee(operator2, {from: deployer}),
         "Only grantee or operator can withdraw" 
       )
     })
