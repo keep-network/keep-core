@@ -129,16 +129,23 @@ contract TokenStakingEscrow is Ownable {
     /// @notice Returns the currently withdrawable amount that was previously
     /// deposited in the escrow after undelegating it from the provided operator.
     /// Tokens are unlocked base on their grant unlocking schedule.
-    /// Function returns 0 for non-existing deposits and revoked grants.
+    /// Function returns 0 for non-existing deposits and revoked grants if they
+    /// have been revoked before they fully unlocked.
     /// @param operator Address of the operator for which undelegated tokens
     /// were deposited.
     function withdrawable(address operator) public view returns (uint256) {
         Deposit memory deposit = deposits[operator];
 
-        // Staked tokens can be only withdrawn by grantee for non-revoked grant.
+        // Staked tokens can be only withdrawn by grantee for non-revoked grant
+        // assuming that grant has not fully unlocked before it's been
+        // revoked.
+        //
         // It is not possible for the escrow to determine the number of tokens
         // it should return to the grantee of a revoked grant given different
         // possible staking contracts and staking policies.
+        //
+        // If the entire grant unlocked before it's been reverted, escrow
+        // lets to withdraw the entire deposited amount.
         if (getAmountRevoked(deposit.grantId) == 0) {
             (
                 uint256 duration,
@@ -218,7 +225,7 @@ contract TokenStakingEscrow is Ownable {
 
         require(
             getAmountRevoked(deposit.grantId) > 0,
-            "Grant not revoked"
+            "No revoked tokens to withdraw"
         );
 
         address grantManager = getGrantManager(deposit.grantId);

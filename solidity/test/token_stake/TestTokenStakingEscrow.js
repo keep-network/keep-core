@@ -316,6 +316,14 @@ describe('TokenStakingEscrow', () => {
       expect(balance).to.eq.BN(depositedAmount)
     })
 
+    it('withdraws entire deposit for fully unlocked, revoked grant', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      await escrow.withdraw(operator, {from: grantee})
+      const balance = await token.balanceOf(grantee);
+      expect(balance).to.eq.BN(depositedAmount)
+    })
+
     it('emits an event', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
       const receipt = await escrow.withdraw(operator, {from: grantee})
@@ -455,7 +463,7 @@ describe('TokenStakingEscrow', () => {
     it('can not be called for non-revoked grant', async () => {
       await expectRevert(
         escrow.withdrawRevoked(operator, {from: grantManager}),
-        "Grant not revoked"
+        "No revoked tokens to withdraw"
       )
     })
 
@@ -482,6 +490,16 @@ describe('TokenStakingEscrow', () => {
 
       const diff = balanceAfter.sub(balanceBefore)
       expect(diff).to.eq.BN(depositedAmount)
+    })
+
+    it('reverts if the entire grant unlocked', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await escrow.withdraw(operator, {from: operator})
+
+      await expectRevert(
+        escrow.withdrawRevoked(operator, {from: grantManager}),
+        "No revoked tokens to withdraw"
+      )
     })
 
     it('emits an event', async () => {
