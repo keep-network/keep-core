@@ -19,12 +19,12 @@ const expect = chai.expect
 describe('TokenStakingEscrow', () => {
   
   const deployer = accounts[0],
-    grantManager = accounts[0],
-    grantee = accounts[1],
-    operator = accounts[2],
-    operator2 = accounts[3],
-    thirdParty = accounts[4],
-    tokenStaking = accounts[5]
+    grantManager = accounts[1],
+    grantee = accounts[2],
+    operator = accounts[3],
+    operator2 = accounts[4],
+    thirdParty = accounts[5],
+    tokenStaking = accounts[6]
 
   let grantedAmount, grantStart, grantUnlockingDuration,
   grantId, managedGrantId, managedGrant
@@ -34,6 +34,7 @@ describe('TokenStakingEscrow', () => {
   before(async () => {
     token = await KeepToken.new({from: deployer})
     await token.transfer(tokenStaking, 100000, {from: deployer})
+    await token.transfer(grantManager, 100000, {from: deployer})
 
     tokenGrant = await TokenGrant.new(token.address, {from: deployer})
     permissivePolicy = await PermissiveStakingPolicy.new()
@@ -60,7 +61,7 @@ describe('TokenStakingEscrow', () => {
       tokenGrant, 
       token, 
       grantedAmount, 
-      deployer, 
+      grantManager, 
       grantee, 
       grantUnlockingDuration,
       grantStart,
@@ -73,7 +74,7 @@ describe('TokenStakingEscrow', () => {
       managedGrantFactory,
       token,
       grantedAmount,
-      deployer,
+      grantManager,
       grantee,
       grantUnlockingDuration,
       grantStart,
@@ -246,7 +247,7 @@ describe('TokenStakingEscrow', () => {
 
     it('returns 0 for revoked grant', async () => {
       await time.increaseTo(grantStart.add(grantCliff))
-      await tokenGrant.revoke(grantId, {from: deployer})
+      await tokenGrant.revoke(grantId, {from: grantManager})
       const withdrawable = await escrow.withdrawable(operator)
       expect(withdrawable).to.eq.BN(0)
     })
