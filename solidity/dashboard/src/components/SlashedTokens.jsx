@@ -4,13 +4,17 @@ import { LoadingOverlay } from "./Loadable"
 import { useFetchData } from "../hooks/useFetchData"
 import { slashedTokensService } from "../services/slashed-tokens.service"
 import Tile from "./Tile"
+import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 
 const SlashedTokens = (props) => {
   const [state] = useFetchData(slashedTokensService.fetchSlashedTokens, [])
   const { data, isFetching } = state
 
   return (
-    <LoadingOverlay isFetching={isFetching}>
+    <LoadingOverlay
+      isFetching={isFetching}
+      skeletonComponent={<DataTableSkeleton />}
+    >
       <Tile
         title="Slashed Tokens"
         id="slashed-tokens"

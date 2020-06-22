@@ -10,6 +10,7 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import { LoadingOverlay } from "../components/Loadable"
 import { beaconAuthorizationService } from "../services/beacon-authorization.service"
 import { isSameEthAddress } from "../utils/general.utils"
+import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 
 const KeepRandomBeaconApplicationPage = () => {
   const web3Context = useWeb3Context()
@@ -131,7 +132,10 @@ const KeepRandomBeaconApplicationPage = () => {
           Keep Website
         </a>
       </nav>
-      <LoadingOverlay isFetching={isFetching}>
+      <LoadingOverlay
+        isFetching={isFetching}
+        skeletonComponent={<DataTableSkeleton />}
+      >
         <AuthorizeContracts
           filterDropdownOptions={data}
           onSelectOperator={setOperator}
@@ -139,6 +143,11 @@ const KeepRandomBeaconApplicationPage = () => {
           data={authorizeContractsData}
           onAuthorizeBtn={authorizeContract}
         />
+      </LoadingOverlay>
+      <LoadingOverlay
+        isFetching={isFetching}
+        skeletonComponent={<DataTableSkeleton />}
+      >
         <AuthorizationHistory contracts={authorizationHistoryData} />
       </LoadingOverlay>
     </PageWrapper>

@@ -69,22 +69,14 @@
 		position: absolute;
 		display: flex;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start;
+		bottom: 2rem;
 		top: 0;
 		left: 0;
-		opacity: .8;
 		width: 100%;
 		height: 100%;
 		z-index: 9;
-		background-repeat: no-repeat;
-		background: linear-gradient(
-			to right,
-			@color-grey-10 2%,
-			@color-grey-20 20%,
-			@color-grey-10 70%
-		);
-		background-size: 50%;
-		animation: bg-horizontal 3.5s linear infinite;
+		background: @white;
 
 		.keep-loading-indicator-icon {
 			animation: show 0.5s 1s forwards;

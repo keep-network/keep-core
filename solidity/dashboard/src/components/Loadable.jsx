@@ -18,12 +18,12 @@ ClockIndicator.defaultProps = {
 }
 
 export const LoadingOverlay = React.memo(
-  ({ isFetching, classNames, children }) => {
+  ({ isFetching, classNames, children, skeletonComponent }) => {
     return (
       <div className={`loading-overlay-container ${classNames}`}>
         {children}
         <div className={`loading-overlay ${isFetching ? "show" : "hidden"}`}>
-          <KeepLoadingIndicator />
+          {skeletonComponent}
         </div>
       </div>
     )

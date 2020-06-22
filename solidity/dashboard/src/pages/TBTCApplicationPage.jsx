@@ -14,6 +14,7 @@ import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
 import { isSameEthAddress } from "../utils/general.utils"
+import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 
 const initialData = []
 const TBTCApplicationPage = () => {
@@ -210,7 +211,10 @@ const TBTCApplicationPage = () => {
           tBTC Website
         </a>
       </nav>
-      <LoadingOverlay isFetching={tbtcAuthState.isFetching}>
+      <LoadingOverlay
+        isFetching={tbtcAuthState.isFetching}
+        skeletonComponent={<DataTableSkeleton />}
+      >
         <AuthorizeContracts
           filterDropdownOptions={tbtcAuthState.data}
           onSelectOperator={setOperator}
@@ -220,7 +224,10 @@ const TBTCApplicationPage = () => {
           onDeauthorizeBtn={deauthorizeTBTCSystem}
         />
       </LoadingOverlay>
-      <LoadingOverlay isFetching={bondingState.isFetching}>
+      <LoadingOverlay
+        isFetching={bondingState.isFetching}
+        skeletonComponent={<DataTableSkeleton />}
+      >
         <BondingSection data={bondingState.data} />
       </LoadingOverlay>
     </PageWrapper>
