@@ -324,6 +324,14 @@ describe('TokenStakingEscrow', () => {
       expect(balance).to.eq.BN(depositedAmount)
     })
 
+    it('withdraws nothing if already withdrawn', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await escrow.withdraw(operator, {from: grantee})
+      await escrow.withdraw(operator, {from: grantee})
+      const balance = await token.balanceOf(grantee);
+      expect(balance).to.eq.BN(depositedAmount)
+    })
+
     it('emits an event', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
       const receipt = await escrow.withdraw(operator, {from: grantee})
@@ -413,6 +421,14 @@ describe('TokenStakingEscrow', () => {
       expect(balance).to.eq.BN(depositedAmount)
     })
 
+    it('withdraws nothing if already withdrawn', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await escrow.withdrawToManagedGrantee(operator2, {from: grantee})
+      await escrow.withdrawToManagedGrantee(operator2, {from: grantee})
+      const balance = await token.balanceOf(grantee);
+      expect(balance).to.eq.BN(depositedAmount) 
+    })
+
     it('emits an event', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
       const receipt = await escrow.withdrawToManagedGrantee(operator2, {from: grantee})
@@ -490,6 +506,20 @@ describe('TokenStakingEscrow', () => {
 
       const diff = balanceAfter.sub(balanceBefore)
       expect(diff).to.eq.BN(depositedAmount)
+    })
+
+    it('withdraws nothing if already withdrawn', async () => {
+      await time.increaseTo(grantStart.add(time.duration.days(15)))
+      await tokenGrant.revoke(grantId, {from: grantManager})
+
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+
+      const balanceBefore = await token.balanceOf(grantManager)
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      const balanceAfter = await token.balanceOf(grantManager)
+
+      const diff = balanceAfter.sub(balanceBefore)
+      expect(diff).to.eq.BN(0) 
     })
 
     it('reverts if the entire grant unlocked', async () => {
