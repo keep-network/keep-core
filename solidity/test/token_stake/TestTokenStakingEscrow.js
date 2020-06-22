@@ -16,7 +16,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe.only('TokenStakingEscrow', () => {
+describe('TokenStakingEscrow', () => {
   
   const deployer = accounts[0],
     grantManager = accounts[0],
