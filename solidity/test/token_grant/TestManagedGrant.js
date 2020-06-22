@@ -52,7 +52,7 @@ describe('TokenGrant/ManagedGrant', () => {
     token = await KeepToken.new({from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
     tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
-        stakingEscrow = await TokenStakingEscrow.new(
+    stakingEscrow = await TokenStakingEscrow.new(
       token.address, 
       tokenGrant.address, 
       {from: grantCreator}
@@ -612,7 +612,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: grantee});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -624,7 +624,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: operator});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: operator});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -636,7 +636,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: grantCreator});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -648,7 +648,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: unrelatedAddress});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -662,7 +662,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await managedGrant.recoverStake(operator, {from: newGrantee});
-      await managedGrant.withdraw({from: newGrantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: newGrantee});
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
     });
 
@@ -676,7 +676,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await managedGrant.recoverStake(operator, {from: grantee});
-      await managedGrant.withdraw({from: newGrantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: newGrantee});
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
     });
   });

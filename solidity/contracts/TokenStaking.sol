@@ -160,19 +160,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 amount = operatorParams.getAmount();
         operators[_operator].packedParams = operatorParams.setAmount(0);
 
-
-        if (grantStakingInfo.hasGrantDelegated(_operator)) {
-            // For tokens staked from a grant, transfer them to the escrow.
-            uint256 grantId = grantStakingInfo.getGrantForOperator(_operator);
-            tokenSender(address(token)).approveAndCall(
-                address(escrow),
-                amount,
-                abi.encode(_operator, grantId)
-            );
-        } else {
-            // For liquid tokens staked, transfer them straight to the owner.
-            token.safeTransfer(owner, amount);
-        }
+        depositTokensToEscrow(owner, _operator, amount);
     }
 
     /// @notice Undelegates staked tokens. You will be able to recover your stake by calling
@@ -247,8 +235,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 amount = operatorParams.getAmount();
 
         operators[_operator].packedParams = operatorParams.setAmount(0);
+        depositTokensToEscrow(owner, _operator, amount);
 
-        token.safeTransfer(owner, amount);
         emit RecoveredStake(_operator, block.timestamp);
     }
 
@@ -609,5 +597,24 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         // `getLockTime` returns 0 if the lock doesn't exist,
         // thus we don't need to check for its presence separately.
         return block.timestamp >= locks.getLockTime(_operatorContract);
+    }
+
+    function depositTokensToEscrow(
+        address _owner,
+        address _operator,
+        uint256 _amount
+    ) internal {
+        if (grantStakingInfo.hasGrantDelegated(_operator)) {
+            // For tokens staked from a grant, transfer them to the escrow.
+            uint256 grantId = grantStakingInfo.getGrantForOperator(_operator);
+            tokenSender(address(token)).approveAndCall(
+                address(escrow),
+                _amount,
+                abi.encode(_operator, grantId)
+            );
+        } else {
+            // For liquid tokens staked, transfer them straight to the owner.
+            token.safeTransfer(_owner, _amount);
+        }
     }
 }

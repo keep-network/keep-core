@@ -274,7 +274,7 @@ describe('TokenGrant/Revoke', function() {
     await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
     const grantManagerKeepBalanceMidWithdraw = await tokenContract.balanceOf(tokenOwner);
     await grantContract.cancelRevokedStake(operator, { from: tokenOwner });
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    await stakingEscrow.withdrawRevoked(operator, { from: tokenOwner });
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
 
     expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(
@@ -315,7 +315,7 @@ describe('TokenGrant/Revoke', function() {
     await time.increase(undelegationPeriod.add(time.duration.minutes(5)));
     await grantContract.recoverStake(operator, { from: tokenOwner });
 
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    await stakingEscrow.withdrawRevoked(operator, { from: tokenOwner });
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
 
     expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(
