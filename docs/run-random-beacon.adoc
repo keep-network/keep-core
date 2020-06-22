@@ -20,6 +20,11 @@ these capabilities consider the following criteria:
   application port running under the same IP.
 - Recommended machine types by provider:
 
+Your operating environment will ultimately dictate what machine type to go with.  This is
+particulary relevant if you're running a containerized solution where multiple applications
+are sharing VM resources.  The below types are sufficient for running at least one instance of the
+Keep Random Beacon client.
+
 [%header,cols=2*]
 |===
 |Cloud Provider
@@ -29,10 +34,10 @@ these capabilities consider the following criteria:
 |n1-standard-2
 
 |AWS
-|m5.large
+|t3.medium
 
 |Azure
-|D2s v3
+|A2 v2
 
 |Self-hosted
 |2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
@@ -381,11 +386,6 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 [.small]
 ```
-"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
-"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
-"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",
-"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
-"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4",
 "/dns4/bootstrap-1.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAkuTUKNh6HkfvWBEkftZbqZHPHi3Kak5ZUygAxvsdQ2UgG",
 "/dns4/bootstrap-2.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAmQirGruZBvtbLHr5SDebsYGcq6Djw7ijF3gnkqsdQs3wK"
 ```
