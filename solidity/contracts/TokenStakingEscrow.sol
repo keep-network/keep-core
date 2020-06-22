@@ -48,6 +48,11 @@ contract TokenStakingEscrow is Ownable {
         address indexed grantee,
         uint256 amount
     );
+    event RevokedDepositWithdrawn(
+        address indexed operator,
+        address indexed grantManager,
+        uint256 amount
+    );
 
     IERC20 public keepToken;
     TokenGrant public tokenGrant;
@@ -203,6 +208,23 @@ contract TokenStakingEscrow is Ownable {
         withdraw(deposit, operator, grantee);
     }
 
+    /// @notice Withdraws the entire amount that is still deposited in the
+    /// escrow in case the grant has been revoked. Anyone can call this function
+    /// and the entire amount is transferred back to the grant manager.
+    /// @param operator Address of the operator for which undelegated tokens
+    /// were deposited.
+    function withdrawRevoked(address operator) public {
+        Deposit memory deposit = deposits[operator];
+
+        require(
+            getAmountRevoked(deposit.grantId) > 0,
+            "Grant not revoked"
+        );
+
+        address grantManager = getGrantManager(deposit.grantId);
+        withdrawRevoked(deposit, operator, grantManager);
+    }
+
     /// @notice Resolves the final grantee of ManagedGrant contract. If the
     /// provided address is not a ManagedGrant contract, function reverts.
     /// @param managedGrant Address of the managed grant contract.
@@ -247,6 +269,19 @@ contract TokenStakingEscrow is Ownable {
         emit DepositWithdrawn(operator, grantee, amount);
     }
 
+    function withdrawRevoked(
+        Deposit memory deposit,
+        address operator,
+        address grantManager
+    ) internal {
+        uint256 amount = deposit.amount - deposit.withdrawn;
+
+        deposits[operator].withdrawn = deposit.amount;
+        keepToken.safeTransfer(grantManager, amount);
+
+        emit RevokedDepositWithdrawn(operator, grantManager, amount);
+    }
+
     function getAmountGranted(uint256 grantId) internal view returns (
         uint256 amountGranted
     ) {
@@ -271,5 +306,11 @@ contract TokenStakingEscrow is Ownable {
         address grantee
     ) {
         (,,,,,grantee) = tokenGrant.getGrant(grantId);
+    }
+
+    function getGrantManager(uint256 grantId) internal view returns (
+        address grantManager
+    ) {
+        (grantManager,,,,) = tokenGrant.getGrantUnlockingSchedule(grantId);
     }
 }
