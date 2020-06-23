@@ -13,7 +13,7 @@ const SlashedTokens = (props) => {
   return (
     <LoadingOverlay
       isFetching={isFetching}
-      skeletonComponent={<DataTableSkeleton />}
+      skeletonComponent={<DataTableSkeleton columns={2} />}
     >
       <Tile
         title="Slashed Tokens"

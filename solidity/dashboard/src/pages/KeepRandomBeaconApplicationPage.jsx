@@ -134,7 +134,9 @@ const KeepRandomBeaconApplicationPage = () => {
       </nav>
       <LoadingOverlay
         isFetching={isFetching}
-        skeletonComponent={<DataTableSkeleton />}
+        skeletonComponent={
+          <DataTableSkeleton columns={4} subtitleWidth="30%" />
+        }
       >
         <AuthorizeContracts
           filterDropdownOptions={data}
@@ -146,7 +148,7 @@ const KeepRandomBeaconApplicationPage = () => {
       </LoadingOverlay>
       <LoadingOverlay
         isFetching={isFetching}
-        skeletonComponent={<DataTableSkeleton />}
+        skeletonComponent={<DataTableSkeleton columns={4} subtitleWidth="0" />}
       >
         <AuthorizationHistory contracts={authorizationHistoryData} />
       </LoadingOverlay>

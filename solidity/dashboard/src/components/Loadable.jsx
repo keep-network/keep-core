@@ -19,7 +19,7 @@ ClockIndicator.defaultProps = {
 }
 
 export const LoadingOverlay = React.memo(
-  ({ isFetching, delay, children, skeletonComponent }) => {
+  ({ isFetching, children, skeletonComponent }) => {
     return (
       <div className="loading-overlay-container">
         <SwitchTransition mode={"out-in"}>
@@ -28,7 +28,6 @@ export const LoadingOverlay = React.memo(
             addEndListener={(node, done) => {
               node.addEventListener("transitionend", done, false)
             }}
-            // timeout={5000}
             classNames="loading-overlay"
           >
             <div className="loading-overlay">

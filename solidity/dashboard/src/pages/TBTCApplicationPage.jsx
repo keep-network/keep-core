@@ -213,7 +213,9 @@ const TBTCApplicationPage = () => {
       </nav>
       <LoadingOverlay
         isFetching={tbtcAuthState.isFetching}
-        skeletonComponent={<DataTableSkeleton />}
+        skeletonComponent={
+          <DataTableSkeleton columns={4} subtitleWidth="40%" />
+        }
       >
         <AuthorizeContracts
           filterDropdownOptions={tbtcAuthState.data}
@@ -226,7 +228,7 @@ const TBTCApplicationPage = () => {
       </LoadingOverlay>
       <LoadingOverlay
         isFetching={bondingState.isFetching}
-        skeletonComponent={<DataTableSkeleton />}
+        skeletonComponent={<DataTableSkeleton subtitleWidth="70%" />}
       >
         <BondingSection data={bondingState.data} />
       </LoadingOverlay>
