@@ -536,6 +536,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against commitments
+// - accused member ID does not exist 
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -548,8 +549,9 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if sjm.ID == accusedID {
-				// The member does not resolve the dispute as an accused.
+			if sjm.ID == accusedID || int(accusedID) > sjm.group.GroupSize() {
+				// The member does not resolve the dispute as an accused
+				// or the accussed member ID is not valid.
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
 				sjm.group.MarkMemberAsDisqualified(accuserID)
@@ -970,6 +972,7 @@ func (sm *SharingMember) publicKeyShare(
 // - shares of the accused member are valid against public key share points
 // - shares of the accused member can not be decrypted and the accuser didn't
 //   complain about this fact in phase 4 (protocol violation)
+// - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -982,8 +985,9 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if pjm.ID == accusedID {
-				// The member does not resolve the dispute as an accused.
+			if pjm.ID == accusedID || int(accusedID) > pjm.group.GroupSize()  {
+				// The member does not resolve the dispute as an accused
+				// or the accussed member ID is not valid.
 				// Mark the accuser as disqualified immediately,
 				// as each member consider itself as a honest participant.
 				pjm.group.MarkMemberAsDisqualified(accuserID)
