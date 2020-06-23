@@ -1,4 +1,5 @@
 import React from "react"
+import { CSSTransition, SwitchTransition } from "react-transition-group"
 import * as Icons from "./Icons"
 
 const Loadable = ({ text, isFetching, children }) =>
@@ -18,13 +19,23 @@ ClockIndicator.defaultProps = {
 }
 
 export const LoadingOverlay = React.memo(
-  ({ isFetching, classNames, children, skeletonComponent }) => {
+  ({ isFetching, delay, children, skeletonComponent }) => {
     return (
-      <div className={`loading-overlay-container ${classNames}`}>
-        {children}
-        <div className={`loading-overlay ${isFetching ? "show" : "hidden"}`}>
-          {skeletonComponent}
-        </div>
+      <div className="loading-overlay-container">
+        <SwitchTransition mode={"out-in"}>
+          <CSSTransition
+            key={isFetching}
+            addEndListener={(node, done) => {
+              node.addEventListener("transitionend", done, false)
+            }}
+            // timeout={5000}
+            classNames="loading-overlay"
+          >
+            <div className="loading-overlay">
+              {isFetching ? skeletonComponent : children}
+            </div>
+          </CSSTransition>
+        </SwitchTransition>
       </div>
     )
   }
