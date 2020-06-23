@@ -160,7 +160,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 amount = operatorParams.getAmount();
         operators[_operator].packedParams = operatorParams.setAmount(0);
 
-        depositTokensToEscrow(owner, _operator, amount);
+        transferOrDeposit(owner, _operator, amount);
     }
 
     /// @notice Undelegates staked tokens. You will be able to recover your stake by calling
@@ -235,7 +235,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 amount = operatorParams.getAmount();
 
         operators[_operator].packedParams = operatorParams.setAmount(0);
-        depositTokensToEscrow(owner, _operator, amount);
+        transferOrDeposit(owner, _operator, amount);
 
         emit RecoveredStake(_operator, block.timestamp);
     }
@@ -599,7 +599,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         return block.timestamp >= locks.getLockTime(_operatorContract);
     }
 
-    function depositTokensToEscrow(
+    function transferOrDeposit(
         address _owner,
         address _operator,
         uint256 _amount
