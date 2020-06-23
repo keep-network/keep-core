@@ -28,7 +28,6 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 		modifyAccusedPrivateKey func(symmetricKey *ephemeral.PrivateKey) *ephemeral.PrivateKey
 		expectedResult          []group.MemberIndex
 		expectedError           error
-		modifyAccusedMemberKey  func(accuser *SharesJustifyingMember) map[group.MemberIndex]*ephemeral.PrivateKey
 	}{
 		"false accusation - accuser is disqualified": {
 			accuserID:      3,
