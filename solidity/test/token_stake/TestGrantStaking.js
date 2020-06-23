@@ -24,7 +24,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe('TokenStaking/GrantStaking', () => {
+describe.only('TokenStaking/GrantStaking', () => {
 
     const deployer = accounts[0],
     grantManager = accounts[1],
@@ -32,9 +32,9 @@ describe('TokenStaking/GrantStaking', () => {
     managedGrantee = accounts[3],
     operatorOne = accounts[4],
     operatorTwo = accounts[5],
-    beneficiary = accounts[7],
-    authorizer = accounts[8],
-    thirdParty = accounts[9]
+    beneficiary = accounts[6],
+    authorizer = accounts[7],
+    thirdParty = accounts[8]
 
     const initializationPeriod = time.duration.seconds(10),
       undelegationPeriod = time.duration.seconds(10),
@@ -274,6 +274,26 @@ describe('TokenStaking/GrantStaking', () => {
           tokenStaking.undelegate(operatorTwo, {from: thirdParty}),
           'Unauthorized'
         )    
+      })
+    })
+
+    describe('recoverStake', async () => {
+      before(async () => {
+        await time.increase(initializationPeriod)
+        await tokenStaking.undelegate(operatorOne, {from: operatorOne})
+        await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+        await time.increase(undelegationPeriod.addn(1))
+      })
+
+      it('transfers granted and undelegated tokens to escrow', async () => {
+        await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
+        await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
+
+        let deposited = await tokenStakingEscrow.depositedAmount(operatorOne)
+        expect(deposited).to.eq.BN(delegatedAmount)
+
+        deposited = await tokenStakingEscrow.depositedAmount(operatorTwo)
+        expect(deposited).to.eq.BN(delegatedAmount)
       })
     })
 })
