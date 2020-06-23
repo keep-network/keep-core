@@ -36,7 +36,7 @@ A good place to start is the link:docs/[the docs directory].
 === Running a Node
 
 To run your own node in the Keep network, follow the
-link:docs/keep-client-quickstart.adoc[`keep-client` quickstart]. Feedback on
+link:docs/run-random-beacon.adoc[run Random Beacon doc]. Feedback on
 this process and the documentation
 https://github.com/keep-network/keep-core/issues[is appreciated!]
 
