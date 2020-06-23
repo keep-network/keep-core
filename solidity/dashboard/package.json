@@ -6,8 +6,8 @@
   "dependencies": {
     "@0x/subproviders": "^6.0.8",
     "@keep-network/keep-core": ">1.2.4-rc <1.2.4",
-    "@keep-network/keep-ecdsa": "0.16.0-rc.0",
-    "@keep-network/tbtc": "0.15.0-rc.0",
+    "@keep-network/keep-ecdsa": ">1.1.2-rc <1.1.2",
+    "@keep-network/tbtc": ">1.0.2-rc <1.0.2",
     "@ledgerhq/hw-app-eth": "^5.13.0",
     "@ledgerhq/hw-transport-u2f": "^5.13.0",
     "bignumber.js": "9.0.0",
