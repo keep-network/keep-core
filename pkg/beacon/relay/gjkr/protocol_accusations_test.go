@@ -402,7 +402,7 @@ func TestResolveSecretSharesAccusationsIncorrectAccussedMemberId(t *testing.T) {
 	dishonestThreshold := 2
 	groupSize := 5
 
-	accusserMemberID := group.MemberIndex(1)
+	accuserMemberID := group.MemberIndex(1)
 	accussedMemberID := group.MemberIndex(6)
 	currentMemberID := group.MemberIndex(3)
 
@@ -416,7 +416,7 @@ func TestResolveSecretSharesAccusationsIncorrectAccussedMemberId(t *testing.T) {
 
 	messages := [1]*SecretSharesAccusationsMessage{
 		{
-			senderID: accusserMemberID,
+			senderID: accuserMemberID,
 			accusedMembersKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
 				accussedMemberID: {},
 			},
@@ -430,7 +430,7 @@ func TestResolveSecretSharesAccusationsIncorrectAccussedMemberId(t *testing.T) {
 	}
 
 	actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
-	expectedDisqualified := [1]group.MemberIndex{accusserMemberID}
+	expectedDisqualified := [1]group.MemberIndex{accuserMemberID}
 	if !reflect.DeepEqual(actualDisqualified, expectedDisqualified[:]) {
 		t.Fatalf(
 			"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
@@ -444,7 +444,7 @@ func TestResolvePublicKeySharePointsAccusationsIncorrectAccusedMemberId(t *testi
 	dishonestThreshold := 2
 	groupSize := 5
 
-	accusserMemberID := group.MemberIndex(1)
+	accuserMemberID := group.MemberIndex(1)
 	accussedMemberID := group.MemberIndex(6)
 	currentMemberID := group.MemberIndex(3)
 
@@ -458,7 +458,7 @@ func TestResolvePublicKeySharePointsAccusationsIncorrectAccusedMemberId(t *testi
 
 	messages := [1]*PointsAccusationsMessage{
 		{
-			senderID: accusserMemberID,
+			senderID: accuserMemberID,
 			accusedMembersKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
 				accussedMemberID: {},
 			},
@@ -472,7 +472,7 @@ func TestResolvePublicKeySharePointsAccusationsIncorrectAccusedMemberId(t *testi
 	}
 
 	actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
-	expectedDisqualified := [1]group.MemberIndex{accusserMemberID}
+	expectedDisqualified := [1]group.MemberIndex{accuserMemberID}
 	if !reflect.DeepEqual(actualDisqualified, expectedDisqualified[:]) {
 		t.Fatalf(
 			"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
