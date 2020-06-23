@@ -22,7 +22,7 @@
     padding-left: 0;
   }
 
-  .datagrid__row {
+  &__row {
     position: relative;
     animation: aniVertical 3s ease;
     animation-iteration-count: infinite;
@@ -41,19 +41,6 @@
     &::before {
         mix-blend-mode: overlay;
     }
-  
-    .datagrid__loader {
-        padding: 0.5rem;
-        background-color: #F4F4F4;
-        background-image: linear-gradient(
-          to right,
-          transparent 33%,
-          @color-grey-20 50%,
-          transparent 66%,
-        );
-        background-size: 400% 100%;
-        animation: shine 2.5s infinite;
-    }
   }
 
 }
@@ -69,7 +56,7 @@
       transparent 66%,
     );
     background-size: 300% 100%;
-    animation: shine 3s infinite;
+    animation: shine 2.5s infinite;
 }
 
 

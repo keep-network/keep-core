@@ -1,33 +1,25 @@
 import React from "react"
+import Skeleton from "./Skeleton"
 
 const DelegatedTokensSkeleton = () => {
   return (
     <section className="flex flex-1 row wrap">
-      <section className="tile mb-0 delegation-overview">
-        <div className="skeleton h2 mb-1" />
-        <div className="skeleton h1 mb-1" />
-        <div
-          className="skeleton h6"
-          style={{ width: "70%", marginTop: "2rem" }}
-        />
-        <div
-          className="skeleton h6"
-          style={{ width: "40%", marginTop: "1rem" }}
-        />
-        <div
-          className="skeleton h6"
-          style={{ width: "55%", marginTop: "1rem" }}
-        />
+      <section className="tile delegation-overview">
+        <Skeleton className="h2 mb-1" />
+        <Skeleton className="h1 mb-1" />
+        <Skeleton className="h6" styles={{ width: "70%", marginTop: "2rem" }} />
+        <Skeleton className="h6" styles={{ width: "40%", marginTop: "1rem" }} />
+        <Skeleton className="h6" styles={{ width: "55%", marginTop: "1rem" }} />
       </section>
-      <section className="tile mb-0 flex column undelegation-section">
-        <div className="skeleton h4 mb-1" />
-        <div
-          className="skeleton mt-1"
-          style={{ marginBottom: "auto", width: "75%" }}
+      <section className="tile flex column undelegation-section">
+        <Skeleton className="h4 mb-1" />
+        <Skeleton
+          className="mt-1"
+          styles={{ marginBottom: "auto", width: "75%" }}
         />
-        <div
+        <Skeleton
           className="skeleton self-start"
-          style={{ width: "40%", padding: "2rem 4rem" }}
+          styles={{ width: "40%", padding: "2rem 4rem" }}
         />
       </section>
     </section>
