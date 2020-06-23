@@ -147,8 +147,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function cancelStake(address _operator) public {
         address owner = operators[_operator].owner;
         require(
-            msg.sender == _operator ||
-            msg.sender == owner, "Unauthorized"
+            grantStakingInfo.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
+            "Unauthorized"
         );
         uint256 operatorParams = operators[_operator].packedParams;
 
@@ -183,8 +183,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address owner = operators[_operator].owner;
         bool sentByOwner = msg.sender == owner;
         require(
-            msg.sender == _operator ||
-            sentByOwner, "Unauthorized"
+            grantStakingInfo.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
+           "Unauthorized"
         );
         require(
             _undelegationTimestamp >= block.timestamp,
