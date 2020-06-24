@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"io/ioutil"
+	"strings"
 
 	"github.com/ipfs/go-log"
 
@@ -225,15 +227,25 @@ func (cm *connectionManager) monitorConnectedPeers(ctx context.Context) {
 			for _, peerID := range cm.Network().Peers() {
 				//PeerInfo gets a struc containing ID + array of multiaddresses for a given peer
 				info := cm.Peerstore().PeerInfo(peerID)
-				//For multiaddresses of current peer
+				//Get multiaddresses for the current peer
 				peerAddrStrings := make([]string, 0, len(info.Addrs))
-				//For the set of multiaddresses of this peer, construct an array of valid transport addresses strings
+				//For the set of multiaddresses of the current peer, construct an array of valid transport addresses strings
 				for _, multiaddr := range info.Addrs {
 					peerAddrStrings = append(peerAddrStrings, multiaddressWithIdentity(multiaddr, peerID))
 				}
 				//Append to slice of addresses of all connected peers
 				addrStrings = append(addrStrings, peerAddrStrings...)
 			}  
+
+			//Get string of file path to write to
+			peersPath := fmt.Sprintf("%v", ctx.Value("peersPath"))
+			//Convert addresses slice to splitted string
+			addresses := strings.Join(addrStrings, ",")
+			//Write addresses string in specified file
+			err := ioutil.WriteFile(peersPath, []byte(addresses), 0644)
+			if err != nil {
+				logger.Debugf("Error writing peers addresses to file")
+			}
 
 			logger.Infof("number of connected peers: [%v]", len(connectedPeers))
 			logger.Debugf("connected peers: [%v]", connectedPeers)
