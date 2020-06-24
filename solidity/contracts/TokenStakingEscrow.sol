@@ -53,6 +53,10 @@ contract TokenStakingEscrow is Ownable {
         address indexed grantManager,
         uint256 amount
     );
+    event EscrowAuthorized(
+        address indexed grantManager,
+        address escrow
+    );
 
     IERC20 public keepToken;
     TokenGrant public tokenGrant;
@@ -65,6 +69,11 @@ contract TokenStakingEscrow is Ownable {
 
     // operator address -> KEEP deposit
     mapping(address => Deposit) internal deposits;
+
+    // Other escrows authorized by grant manager. Grantee may request to migrate
+    // tokens to another authorized escrow.
+    // grant manager -> escrow -> authorized?
+    mapping(address => mapping (address => bool)) internal authorizedEscrows;
 
     constructor(
         KeepToken _keepToken,
@@ -105,7 +114,7 @@ contract TokenStakingEscrow is Ownable {
     /// @param previousOperator Operator from which tokens were undelegated
     /// and deposited in the escrow.
     /// @param amount Amount of tokens to delegate.
-    /// @param _extraData Data for stake delegation. This byte array must have
+    /// @param extraData Data for stake delegation. This byte array must have
     /// the following values concatenated:
     /// - Beneficiary address (20 bytes)
     /// - Operator address (20 bytes)
@@ -117,29 +126,13 @@ contract TokenStakingEscrow is Ownable {
     ) public {
         Deposit memory deposit = deposits[previousOperator];
 
-        require(canRedelegate(deposit.grantId), "Not authorized");
+        require(isGrantee(msg.sender, deposit.grantId), "Not authorized");
         require(getAmountRevoked(deposit.grantId) == 0, "Grant revoked");
         require(deposit.amount >= amount, "Insufficient funds");
 
         deposits[previousOperator].amount = deposit.amount.sub(amount);
 
         tokenSender(address(keepToken)).approveAndCall(owner(), amount, extraData);
-    }
-
-    function canRedelegate(uint256 grantId) internal returns (bool) {
-        address grantee = getGrantee(grantId);
-        if (msg.sender == grantee) {
-            return true;
-        }
-
-        (, bytes memory result) = address(this).call(
-            abi.encodeWithSignature("getManagedGrantee(address)", grantee)
-        );
-        if (result.length == 0) {
-            return false;
-        }
-        address managedGrantee = abi.decode(result, (address));
-        return msg.sender == managedGrantee;
     }
 
     /// @notice Returns the total amount deposited in the escrow after
@@ -255,6 +248,32 @@ contract TokenStakingEscrow is Ownable {
         withdraw(deposit, operator, grantee);
     }
 
+    /// @notice Migrates all available tokens to another authorized escrow.
+    /// Can be requested only by grantee.
+    /// @dev The target escrow needs to accept deposits from this escrow, at
+    /// least for the period of migration.
+    function migrate(
+        address operator,
+        address anotherEscrow
+    ) public {
+        Deposit memory deposit = deposits[operator];
+        require(isGrantee(msg.sender, deposit.grantId), "Not authorized");
+
+        address grantManager = getGrantManager(deposit.grantId);
+        require(
+            authorizedEscrows[grantManager][anotherEscrow],
+            "Escrow not authorized"
+        );
+
+        uint256 amountLeft = deposit.amount.sub(deposit.withdrawn);
+        deposits[operator].withdrawn = deposit.withdrawn.add(amountLeft);
+        tokenSender(address(keepToken)).approveAndCall(
+            address(anotherEscrow),
+            amountLeft,
+            abi.encode(operator, deposit.grantId)
+        );
+    }
+
     /// @notice Withdraws the entire amount that is still deposited in the
     /// escrow in case the grant has been revoked. Anyone can call this function
     /// and the entire amount is transferred back to the grant manager.
@@ -270,6 +289,17 @@ contract TokenStakingEscrow is Ownable {
 
         address grantManager = getGrantManager(deposit.grantId);
         withdrawRevoked(deposit, operator, grantManager);
+    }
+
+    /// @notice Used by grant manager to authorize another escrows for
+    // funds migration.
+    function authorizeEscrow(address anotherEscrow) public {
+        require(
+            anotherEscrow != address(0x0),
+            "Escrow address can't be zero"
+        );
+        authorizedEscrows[msg.sender][anotherEscrow] = true;
+        emit EscrowAuthorized(msg.sender, anotherEscrow);
     }
 
     /// @notice Resolves the final grantee of ManagedGrant contract. If the
@@ -301,6 +331,25 @@ contract TokenStakingEscrow is Ownable {
         deposits[operator] = Deposit(grantId, value, 0);
 
         emit Deposited(operator, grantId, value);
+    }
+
+    function isGrantee(
+        address maybeGrantee,
+        uint256 grantId
+    ) internal returns (bool) {
+        address grantee = getGrantee(grantId);
+        if (maybeGrantee == grantee) {
+            return true;
+        }
+
+        (, bytes memory result) = address(this).call(
+            abi.encodeWithSignature("getManagedGrantee(address)", grantee)
+        );
+        if (result.length == 0) {
+            return false;
+        }
+        address managedGrantee = abi.decode(result, (address));
+        return maybeGrantee == managedGrantee;
     }
 
     function withdraw(

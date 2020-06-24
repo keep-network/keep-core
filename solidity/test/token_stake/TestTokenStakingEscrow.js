@@ -10,6 +10,7 @@ const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
 const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory')
 const ManagedGrant = contract.fromArtifact('ManagedGrant')
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
+const MigrationEscrowStub = contract.fromArtifact('MigrationEscrowStub')
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -592,6 +593,88 @@ describe('TokenStakingEscrow', () => {
       await escrow.withdraw(operator, {from: grantee})
       const withdrawn = await escrow.depositWithdrawnAmount(operator)
       expect(withdrawn).to.eq.BN(depositedAmount)
+    })
+  })
+
+  describe('migrate', async () => {
+    const depositedAmount = 3000
+    let anotherEscrow
+
+    beforeEach(async () => {
+      let data = web3.eth.abi.encodeParameters(
+        ['address', 'uint256'], [operator, grantId]
+      )
+      await token.approveAndCall(
+        escrow.address, depositedAmount, data, {from: tokenStaking}
+      )
+
+      data = web3.eth.abi.encodeParameters(
+        ['address', 'uint256'], [operator2, managedGrantId]
+      )
+      await token.approveAndCall(
+        escrow.address, depositedAmount, data, {from: tokenStaking}
+      )
+
+      anotherEscrow = await MigrationEscrowStub.new({from: deployer})
+      await escrow.authorizeEscrow(anotherEscrow.address, {from: grantManager})
+    })
+
+    it('fails for not authorized escrow', async () => {
+      await expectRevert(
+        escrow.migrate(operator, thirdParty, {from: grantee}),
+        "Escrow not authorized"
+      )
+    })
+
+    it('can be called by grantee', async () => {
+      await escrow.migrate(operator, anotherEscrow.address, {from: grantee})
+      // on, no revert
+    })
+
+    it('can be called by grantee of managed grant', async () => {
+      await escrow.migrate(operator2, anotherEscrow.address, {from: grantee})
+      // on, no revert
+    })
+
+    it('can not be called by operator', async () => {
+      await expectRevert(
+        escrow.migrate(operator, anotherEscrow.address, {from: operator}),
+        "Not authorized"
+      )
+    })
+
+    it('can not be called by grant manager', async () => {
+      await expectRevert(
+        escrow.migrate(operator, anotherEscrow.address, {from: grantManager}),
+        "Not authorized"
+      )
+    })
+
+    it('can not be called by third party', async () => {
+      await expectRevert(
+        escrow.migrate(operator, anotherEscrow.address, {from: thirdParty}),
+        "Not authorized"
+      )
+    })
+
+    it('moves all tokens to another escrow', async () => {
+      await escrow.migrate(operator, anotherEscrow.address, {from: grantee})
+
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      expect(await escrow.withdrawable(operator)).to.eq.BN(0)
+      expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(depositedAmount)
+    })
+
+    it('move the rest of tokens to another escrow', async () => {
+      await time.increaseTo(grantStart.add(time.duration.days(15)))
+      await escrow.withdraw(operator, {from: grantee}) // (3000 / 30) * 15 = 1500
+      
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+
+      await escrow.migrate(operator, anotherEscrow.address, {from: grantee})
+
+      expect(await escrow.withdrawable(operator)).to.eq.BN(0)
+      expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(1500) // 3000 - 1500
     })
   })
 })
