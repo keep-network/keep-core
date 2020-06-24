@@ -1,10 +1,6 @@
 {
   "name": "dashboard",
-<<<<<<< HEAD
-  "version": "0.1.0",
-=======
   "version": "1.0.0",
->>>>>>> parent of bf4ba6327... Increment token-dashboard patch version
   "private": true,
   "license": "MIT",
   "dependencies": {
