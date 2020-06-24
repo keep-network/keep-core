@@ -1,5 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
+const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot');
 
 const {grantTokens, grantTokensToManagedGrant} = require('../helpers/grantTokens');
@@ -32,14 +32,16 @@ describe('TokenStaking/StakingGrant', () => {
     managedGrantee = accounts[3],
     operatorOne = accounts[4],
     operatorTwo = accounts[5],
-    beneficiary = accounts[6],
-    authorizer = accounts[7],
-    thirdParty = accounts[8]
+    operatorThree = accounts[6],
+    operatorFour = accounts[7],
+    beneficiary = accounts[8],
+    authorizer = accounts[9],
+    thirdParty = accounts[10]
 
     const initializationPeriod = time.duration.seconds(10),
       undelegationPeriod = time.duration.seconds(10),
-      grantUnlockingDuration = time.duration.seconds(0),
       grantStart = time.duration.seconds(0),
+      grantUnlockingDuration = time.duration.years(100),
       grantCliff = time.duration.seconds(0),
       grantRevocable = true
 
@@ -233,7 +235,7 @@ describe('TokenStaking/StakingGrant', () => {
 
     describe('undelegate', async () => {
       before(async () => {
-        await time.increase(initializationPeriod)
+        await time.increase(initializationPeriod.addn(1))
       })
 
       it('should let operator undelegate', async () => {
@@ -314,14 +316,14 @@ describe('TokenStaking/StakingGrant', () => {
     })
 
     describe('recoverStake', async () => {
-      before(async () => {
-        await time.increase(initializationPeriod)
+      it('transfers granted and undelegated tokens to escrow', async () => {
+        await time.increase(initializationPeriod.addn(1))
+
         await tokenStaking.undelegate(operatorOne, {from: operatorOne})
         await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
-        await time.increase(undelegationPeriod.addn(1))
-      })
 
-      it('transfers granted and undelegated tokens to escrow', async () => {
+        await time.increase(undelegationPeriod.addn(1))
+
         await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
         await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
 
@@ -330,6 +332,142 @@ describe('TokenStaking/StakingGrant', () => {
 
         deposited = await tokenStakingEscrow.depositedAmount(operatorTwo)
         expect(deposited).to.eq.BN(delegatedAmount)
+      })
+    })
+
+    describe('redelegate from escrow', async () => {
+      const data3 = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operatorThree.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+      const data4 = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operatorFour.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+
+      beforeEach(async () => {
+        await time.increase(initializationPeriod.addn(1))
+        await tokenStaking.undelegate(operatorOne, {from: operatorOne})
+        await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+        await time.increase(undelegationPeriod.addn(1))
+        await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
+        await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
+      })
+      
+      it('can be done by grantee', async () => {
+        await tokenStakingEscrow.redelegate(
+          operatorOne, delegatedAmount, data3, {from: grantee}
+        )
+        // ok, no revert
+      })
+
+      it('can be done by managed grantee', async () => {
+        await tokenStakingEscrow.redelegate(
+          operatorTwo, delegatedAmount, data3, {from: managedGrantee}
+        )
+        // ok, no revert
+      })
+
+      it('can not be done by operator', async () => {
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, delegatedAmount, data3, {from: operatorOne}
+          ),
+          "Not authorized"
+        )
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, delegatedAmount, data3, {from: operatorThree}
+          ),
+          "Not authorized"
+        )
+      })
+
+      it('can not be done by grant manager', async () => {
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, delegatedAmount, data3, {from: grantManager}
+          ),
+          "Not authorized"
+        )
+      })
+
+      it('can not be done by third party', async () => {
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, delegatedAmount, data3, {from: thirdParty}
+          ),
+          "Not authorized"
+        )
+      })
+
+      it('redelegates token to a new operator', async () => {
+        const redelegatedAmount = delegatedAmount
+
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+
+        const delegationInfo = await tokenStaking.getDelegationInfo(operatorThree)
+        expect(delegationInfo.amount).to.eq.BN(redelegatedAmount)
+
+        const depositedAmount = await tokenStakingEscrow.depositedAmount(operatorOne)
+        expect(depositedAmount).to.eq.BN(0)
+      })
+
+      it('redelegates tokens to more than one operator', async () => {
+        const redelegatedAmount = delegatedAmount.divn(2)
+
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        let depositedAmount = await tokenStakingEscrow.depositedAmount(operatorOne)
+        expect(depositedAmount).to.eq.BN(redelegatedAmount)
+        let delegationInfo = await tokenStaking.getDelegationInfo(operatorThree)
+        expect(delegationInfo.amount).to.eq.BN(redelegatedAmount)
+      
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data4, {from: grantee}
+        )
+        depositedAmount = await tokenStakingEscrow.depositedAmount(operatorOne)
+        expect(depositedAmount).to.eq.BN(0)
+        delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+        expect(delegationInfo.amount).to.eq.BN(redelegatedAmount)
+      })
+
+      it('fails for revoked grant', async () => {
+        await tokenGrant.revoke(grantId, {from: grantManager})
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, delegatedAmount, data3, {from: grantee}
+          ),
+          "Grant revoked"
+        )
+      })
+
+      it('fails for insufficient funds', async () => {
+        let redelegatedAmount = delegatedAmount.addn(1)
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, redelegatedAmount, data3, {from: grantee}
+          ),
+          "Insufficient funds"
+        )
+
+        redelegatedAmount = delegatedAmount.divn(2)
+        await tokenStakingEscrow.redelegate(
+          operatorOne, delegatedAmount, data3, {from: grantee}
+        )
+
+        redelegatedAmount = redelegatedAmount.addn(1)
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, redelegatedAmount, data4, {from: grantee}
+          ),
+          "Insufficient funds"
+        )
       })
     })
 })

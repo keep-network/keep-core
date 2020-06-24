@@ -100,7 +100,47 @@ contract TokenStakingEscrow is Ownable {
         receiveDeposit(from, value, operator, grantId);
     }
 
-    // TODO: redelegateTo(fromOperator, toOperator)
+    /// @notice Redelegates deposit or part of the deposit to another operator.
+    /// Uses the same staking contract as the original delegation.
+    /// @param previousOperator Operator from which tokens were undelegated
+    /// and deposited in the escrow.
+    /// @param amount Amount of tokens to delegate.
+    /// @param _extraData Data for stake delegation. This byte array must have
+    /// the following values concatenated:
+    /// - Beneficiary address (20 bytes)
+    /// - Operator address (20 bytes)
+    /// - Authorizer address (20 bytes)
+    function redelegate(
+        address previousOperator,
+        uint256 amount,
+        bytes memory extraData
+    ) public {
+        Deposit memory deposit = deposits[previousOperator];
+
+        require(canRedelegate(deposit.grantId), "Not authorized");
+        require(getAmountRevoked(deposit.grantId) == 0, "Grant revoked");
+        require(deposit.amount >= amount, "Insufficient funds");
+
+        deposits[previousOperator].amount = deposit.amount.sub(amount);
+
+        tokenSender(address(keepToken)).approveAndCall(owner(), amount, extraData);
+    }
+
+    function canRedelegate(uint256 grantId) internal returns (bool) {
+        address grantee = getGrantee(grantId);
+        if (msg.sender == grantee) {
+            return true;
+        }
+
+        (, bytes memory result) = address(this).call(
+            abi.encodeWithSignature("getManagedGrantee(address)", grantee)
+        );
+        if (result.length == 0) {
+            return false;
+        }
+        address managedGrantee = abi.decode(result, (address));
+        return msg.sender == managedGrantee;
+    }
 
     /// @notice Returns the total amount deposited in the escrow after
     /// undelegating it from the provided operator.
