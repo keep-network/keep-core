@@ -2,7 +2,11 @@ import web3Utils from "web3-utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
-import { OPERATOR_CONTRACT_NAME, REWARD_STATUS } from "../constants/constants"
+import {
+  OPERATOR_CONTRACT_NAME,
+  REWARD_STATUS,
+  SIGNING_GROUP_STATUS,
+} from "../constants/constants"
 import { contractService } from "./contracts.service"
 
 const fetchAvailableRewards = async (web3Context) => {
@@ -70,17 +74,21 @@ const fetchAvailableRewards = async (web3Context) => {
               .isGroupTerminated(groupIndex)
               .call())
 
-          let status = REWARD_STATUS.ACTIVE
+          let status = REWARD_STATUS.ACCUMULATING
+          let groupStatus = SIGNING_GROUP_STATUS.ACTIVE
           if (isTerminated) {
-            status = REWARD_STATUS.TERMINATED
+            status = REWARD_STATUS.ACCUMULATING
+            groupStatus = SIGNING_GROUP_STATUS.TERMINATED
           } else if (isStale) {
             status = REWARD_STATUS.AVAILABLE
+            groupStatus = SIGNING_GROUP_STATUS.COMPLETED
           }
 
           groupInfo = {
             groupPublicKey: groupPubKey,
             isStale,
             status,
+            groupStatus,
           }
 
           groups[groupIndex] = groupInfo
@@ -143,8 +151,9 @@ const fetchWithdrawalHistory = async (web3Context) => {
             groupPublicKey,
             reward: utils.fromWei(amount, "ether"),
             transactionHash,
-            operator,
+            operatorAddress: operator,
             status: REWARD_STATUS.WITHDRAWN,
+            groupStatus: SIGNING_GROUP_STATUS.COMPLETED,
           }
         })
         .reverse()

@@ -23,7 +23,12 @@ export const WALLETS = {
 
 export const REWARD_STATUS = {
   AVAILABLE: "AVAILABLE",
-  ACTIVE: "ACTIVE",
   WITHDRAWN: "WITHDRAWN",
-  TERMINATED: "TERMINATED",
+  ACCUMULATING: "ACCUMULATING",
+}
+
+export const SIGNING_GROUP_STATUS = {
+  COMPLETED: "Completed",
+  TERMINATED: "Terminated",
+  ACTIVE: "Active work",
 }

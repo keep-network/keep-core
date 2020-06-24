@@ -15,15 +15,8 @@ const RewardsStatus = ({ status, transactionHash }) => {
       return (
         <StatusBadge text={status} status={BADGE_STATUS[COMPLETE_STATUS]} />
       )
-    case REWARD_STATUS.ACTIVE:
-      return (
-        <>
-          <StatusBadge text={status} status={BADGE_STATUS.ACTIVE} />
-          <div className="text-smaller">Signing group still working.</div>
-        </>
-      )
-    case REWARD_STATUS.TERMINATED:
-      return <StatusBadge text={status} status={BADGE_STATUS.DISABLED} />
+    case REWARD_STATUS.ACCUMULATING:
+      return <StatusBadge text={status} status={BADGE_STATUS.ACTIVE} />
 
     case REWARD_STATUS.WITHDRAWN:
       return (

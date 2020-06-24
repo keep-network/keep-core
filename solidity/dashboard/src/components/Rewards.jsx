@@ -19,16 +19,20 @@ import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
 import RewardsStatus from "./RewardsStatus"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
-import { OPERATOR_CONTRACT_NAME, REWARD_STATUS } from "../constants/constants"
+import {
+  OPERATOR_CONTRACT_NAME,
+  REWARD_STATUS,
+  SIGNING_GROUP_STATUS,
+} from "../constants/constants"
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
+import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 
 const previewDataCount = 10
 const initialData = [[], "0"]
 const rewardsStatusFilterOptions = [
   { status: REWARD_STATUS.AVAILABLE },
-  { status: REWARD_STATUS.ACTIVE },
+  { status: REWARD_STATUS.ACCUMULATING },
   { status: REWARD_STATUS.WITHDRAWN },
-  { status: REWARD_STATUS.TERMINATED },
 ]
 
 export const Rewards = React.memo(() => {
@@ -82,6 +86,7 @@ export const Rewards = React.memo(() => {
           reward: web3Utils.fromWei(amount, "ether"),
           operatorAddress: operator,
           status: REWARD_STATUS.WITHDRAWN,
+          groupStatus: SIGNING_GROUP_STATUS.COMPLETED,
         }
         updateWithdrawalHistoryData([withdrawal, ...withdrawals])
       })
@@ -128,7 +133,7 @@ export const Rewards = React.memo(() => {
     onTransactionHashCallback
   ) => {
     try {
-      updateWithdrawStatus(PENDING_STATUS, groupIndex, operatorAddress)
+      updateRewardStatus(PENDING_STATUS, groupIndex, operatorAddress)
       await rewardsService.withdrawRewardFromGroup(
         web3Context,
         { operatorAddress, groupIndex },
@@ -149,7 +154,7 @@ export const Rewards = React.memo(() => {
     }
   }
 
-  const updateWithdrawStatus = (status, groupIndex, operator) => {
+  const updateRewardStatus = (status, groupIndex, operator) => {
     const { indexInArray } = findIndexAndObject(
       "groupIndex",
       groupIndex,
@@ -193,6 +198,17 @@ export const Rewards = React.memo(() => {
             </h1>
             <SpeechBubbleTooltip text="The total balance reflects the total Available and Active rewards. Available rewards are ready to be withdrawn. Active rewards become available after a signing group expires." />
           </header>
+          <div className="flex row wrap">
+            <StatusBadge
+              className="mr-1"
+              text={REWARD_STATUS.AVAILABLE}
+              status={BADGE_STATUS.COMPLETE}
+            />
+            <StatusBadge
+              text={REWARD_STATUS.ACCUMULATING}
+              status={BADGE_STATUS.ACTIVE}
+            />
+          </div>
         </Tile>
       </LoadingOverlay>
       <LoadingOverlay
@@ -244,6 +260,19 @@ export const Rewards = React.memo(() => {
               header="status"
               field="isStale"
               renderContent={(rewards) => <RewardsStatus {...rewards} />}
+            />
+            <Column
+              header="signing group"
+              field="groupStatus"
+              renderContent={({ status, groupStatus }) => (
+                <span
+                  className={
+                    status === REWARD_STATUS.WITHDRAWN ? "text-grey-40" : ""
+                  }
+                >
+                  {groupStatus}
+                </span>
+              )}
             />
             <Column
               header="group key"
