@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"strings"
+	"io/ioutil"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
@@ -111,11 +113,25 @@ func Start(c *cli.Context) error {
 				"contract has been authorized to operate on the stake",
 		)
 	}
-
-	ctx := context.Background()
+	//Past the last seen peers file path to context for use in keep-core/libp2p.go
+	ctx := context.WithValue(context.Background(), "peersPath", c.GlobalString("peers"))
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
 		operatorPrivateKey, operatorPublicKey,
 	)
+
+	//Read last seen peers file as a bytearray and convert to a slice of strings
+	s, err := ioutil.ReadFile(c.GlobalString("peers"))
+	if err != nil {
+		logger.Debugf("Error reading last seen peers file")
+	}
+	lastSeenPeersString := string(s[:])
+	lastSeenPeers := strings.Split(lastSeenPeersString, ",")
+
+	//If the slice of last seen peers slice is non empty, use it as bootstrap peers list
+	if len(lastSeenPeers) != 0 {
+		config.LibP2P.Peers = lastSeenPeers
+	}
+	
 	netProvider, err := libp2p.Connect(
 		ctx,
 		config.LibP2P,

@@ -13,13 +13,19 @@ import (
 	"github.com/urfave/cli"
 )
 
-const defaultConfigPath = "./config.toml"
+const (
+	defaultConfigPath = "./config.toml"
+	//Default path to last seen peers file
+	defaultPeersListPath = ".peers.dat"
+)
 
 var (
 	version  string
 	revision string
 
 	configPath string
+	//String for last seen peers path
+	peersListPath string
 
 	logger = log.Logger("keep-main")
 )
@@ -55,6 +61,13 @@ func main() {
 			Value:       defaultConfigPath,
 			Destination: &configPath,
 			Usage:       "full path to the configuration file",
+		},
+		//Define new flag to specify location of file where to store last seen peers
+		cli.StringFlag{
+			Name: "peers",
+			Value: defaultPeersListPath,
+			Destination: &peersListPath,
+			Usage: "full path to the last connected peers list file"
 		},
 	}
 	app.Commands = []cli.Command{
