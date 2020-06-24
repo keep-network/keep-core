@@ -12,7 +12,7 @@ const assert = require('chai').assert
 const KeepToken = contract.fromArtifact('KeepToken')
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking')
-const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo')
+const GrantStaking = contract.fromArtifact('GrantStaking')
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
@@ -67,8 +67,8 @@ describe('RolesLookup', () => {
       (await MinimumStakeSchedule.new({from: deployer})).address
     )
     await TokenStaking.link(
-      'GrantStakingInfo', 
-      (await GrantStakingInfo.new({from: deployer})).address
+      'GrantStaking', 
+      (await GrantStaking.new({from: deployer})).address
     );
     tokenStaking = await TokenStaking.new(
       token.address,

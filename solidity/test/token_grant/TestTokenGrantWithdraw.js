@@ -12,7 +12,7 @@ const expect = chai.expect
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo');
+const GrantStaking = contract.fromArtifact('GrantStaking');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
@@ -52,8 +52,8 @@ describe('TokenGrant/Withdraw', function() {
       (await MinimumStakeSchedule.new({from: accounts[0]})).address
     );
     await TokenStaking.link(
-      'GrantStakingInfo', 
-      (await GrantStakingInfo.new({from: accounts[0]})).address
+      'GrantStaking', 
+      (await GrantStaking.new({from: accounts[0]})).address
     );
     stakingContract = await TokenStaking.new(
       tokenContract.address,

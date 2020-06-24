@@ -19,7 +19,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakeDelegatable.sol";
 import "./libraries/staking/MinimumStakeSchedule.sol";
-import "./libraries/staking/GrantStakingInfo.sol";
+import "./libraries/staking/GrantStaking.sol";
 import "./utils/PercentUtils.sol";
 import "./utils/LockUtils.sol";
 import "./utils/BytesLib.sol";
@@ -37,7 +37,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using PercentUtils for uint256;
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
-    using GrantStakingInfo for GrantStakingInfo.Storage;
+    using GrantStaking for GrantStaking.Storage;
 
     event Staked(address indexed from, uint256 value);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -59,7 +59,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     TokenStakingEscrow public escrow;
 
-    GrantStakingInfo.Storage grantStakingInfo;
+    GrantStaking.Storage grantStaking;
 
     // KEEP token grant contract.
     TokenGrant public tokenGrant;
@@ -135,7 +135,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         );
         ownerOperators[_from].push(operator);
 
-        grantStakingInfo.tryCapturingGrantId(tokenGrant, operator);
+        grantStaking.tryCapturingGrantId(tokenGrant, operator);
 
         emit Staked(operator, _value);
     }
@@ -147,7 +147,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function cancelStake(address _operator) public {
         address owner = operators[_operator].owner;
         require(
-            grantStakingInfo.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
+            grantStaking.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
             "Unauthorized"
         );
         uint256 operatorParams = operators[_operator].packedParams;
@@ -183,7 +183,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address owner = operators[_operator].owner;
         bool sentByOwner = msg.sender == owner;
         require(
-            grantStakingInfo.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
+            grantStaking.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
            "Unauthorized"
         );
         require(
@@ -604,9 +604,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         uint256 _amount
     ) internal {
-        if (grantStakingInfo.hasGrantDelegated(_operator)) {
+        if (grantStaking.hasGrantDelegated(_operator)) {
             // For tokens staked from a grant, transfer them to the escrow.
-            uint256 grantId = grantStakingInfo.getGrantForOperator(_operator);
+            uint256 grantId = grantStaking.getGrantForOperator(_operator);
             tokenSender(address(token)).approveAndCall(
                 address(escrow),
                 _amount,

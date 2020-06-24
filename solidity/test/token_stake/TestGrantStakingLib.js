@@ -8,10 +8,10 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo')
-const GrantStakingInfoStub = contract.fromArtifact('GrantStakingInfoStub')
+const GrantStaking = contract.fromArtifact('GrantStaking')
+const GrantStakingStub = contract.fromArtifact('GrantStakingStub')
 
-describe('GrantStakingInfo', () => {
+describe('GrantStaking', () => {
   
   const deployer = accounts[0],
     operator1 = accounts[1]
@@ -20,10 +20,10 @@ describe('GrantStakingInfo', () => {
   let info
 
   before(async () => {
-    const infoLib = await GrantStakingInfo.new({from: deployer})
-    await GrantStakingInfoStub.detectNetwork()
-    await GrantStakingInfoStub.link('GrantStakingInfo', infoLib.address)
-    info = await GrantStakingInfoStub.new({from: deployer})
+    const infoLib = await GrantStaking.new({from: deployer})
+    await GrantStakingStub.detectNetwork()
+    await GrantStakingStub.link('GrantStaking', infoLib.address)
+    info = await GrantStakingStub.new({from: deployer})
   })
 
   beforeEach(async () => {

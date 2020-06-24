@@ -3,7 +3,7 @@ pragma solidity 0.5.17;
 import "../../TokenGrant.sol";
 import "../RolesLookup.sol";
 
-library GrantStakingInfo {
+library GrantStaking {
 
     using RolesLookup for address payable;
 

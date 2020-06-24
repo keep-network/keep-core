@@ -5,7 +5,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const TokenStaking = contract.fromArtifact('TokenStaking');
-const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo');
+const GrantStaking = contract.fromArtifact('GrantStaking');
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact('GuaranteedMinimumStakingPolicy');
 const AdaptiveStakingPolicy = contract.fromArtifact('AdaptiveStakingPolicy');
@@ -81,8 +81,8 @@ describe('GuaranteedMinimumStakingPolicy', async () => {
       (await MinimumStakeSchedule.new()).address
     );
     await TokenStaking.link(
-      'GrantStakingInfo', 
-      (await GrantStakingInfo.new()).address
+      'GrantStaking', 
+      (await GrantStaking.new()).address
     );
     stakingContract = await TokenStaking.new(
       accounts[9],
@@ -250,8 +250,8 @@ describe('AdaptiveStakingPolicy', async () => {
       (await MinimumStakeSchedule.new()).address
     );
     await TokenStaking.link(
-      'GrantStakingInfo', 
-      (await GrantStakingInfo.new()).address
+      'GrantStaking', 
+      (await GrantStaking.new()).address
     );
     stakingContract = await TokenStaking.new(
       accounts[9],

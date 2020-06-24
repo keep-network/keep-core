@@ -11,7 +11,7 @@ const {
 const KeepToken = contract.fromArtifact('KeepToken')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const GrantStakingInfo = contract.fromArtifact('GrantStakingInfo')
+const GrantStaking = contract.fromArtifact('GrantStaking')
 const TokenStaking = contract.fromArtifact('TokenStaking')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
@@ -24,7 +24,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe.only('TokenStaking/GrantStaking', () => {
+describe('TokenStaking/StakingGrant', () => {
 
     const deployer = accounts[0],
     grantManager = accounts[1],
@@ -73,8 +73,8 @@ describe.only('TokenStaking/GrantStaking', () => {
         (await MinimumStakeSchedule.new({from: deployer})).address
       )
       await TokenStaking.link(
-        'GrantStakingInfo', 
-        (await GrantStakingInfo.new({from: deployer})).address
+        'GrantStaking', 
+        (await GrantStaking.new({from: deployer})).address
       )
       tokenStaking = await TokenStaking.new(
         token.address,
