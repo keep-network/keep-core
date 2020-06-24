@@ -147,6 +147,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // groups expired, we first want to make a cleanup.
         groups.expireOldGroups();
         require(numberOfGroups() == 0, "Groups exist");
+        // Executing candidate cleanup in case of previous genesis failure.
+        groupSelection.cleanupCandidates();
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);

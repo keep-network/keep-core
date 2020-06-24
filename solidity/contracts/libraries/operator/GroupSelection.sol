@@ -375,7 +375,7 @@ library GroupSelection {
     /// This operation may have a significant cost if not executed as a part of
     /// another transaction consuming a lot of gas and as a result, getting
     /// gas refund for clearing up the storage.
-    function cleanupCandidates(Storage storage self) internal {
+    function cleanupCandidates(Storage storage self) public {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.candidate[self.tickets[i]];
         }
