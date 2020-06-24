@@ -60,11 +60,11 @@ library GrantStaking {
         return grantId ^ GRANT_ID_FLAG;
     }
 
-    function isOwnerOperatorOrGrantee(
+    function canUndelegate(
         Storage storage self,
-        TokenGrant tokenGrant,
-        address _owner,
-        address _operator
+        address owner,
+        address operator,
+        TokenGrant tokenGrant
     ) public returns (bool) {
         // First, check three simple cases:
         // - msg.sender is the operator,
@@ -74,9 +74,9 @@ library GrantStaking {
         //
         // If one of them is the case, we return true.
         if (
-            msg.sender == _operator ||
-            msg.sender == _owner ||
-            (msg.sender).isGranteeForOperator(_operator, tokenGrant)
+            msg.sender == operator ||
+            msg.sender == owner ||
+            (msg.sender).isGranteeForOperator(operator, tokenGrant)
         ) {
             return true;
         }
@@ -86,15 +86,26 @@ library GrantStaking {
         //
         // First of all, we need to see if the operator has grant delegated.
         // If it does not, there is no chance it's a managed grantee calling.
-        if (!hasGrantDelegated(self, _operator)) {
+        if (!hasGrantDelegated(self, operator)) {
             return false;
         }
 
         // We know the operator has grant delegated, we are going to retrieve
         // the grant ID and check if msg.sender is grantee from a managed grant.
-        uint256 grantId = getGrantForOperator(self, _operator);
-        return (msg.sender).isManagedGranteeForOperatorAndGrant(
-            _operator, grantId, tokenGrant
-        );
+        uint256 grantId = getGrantForOperator(self, operator);
+        if ((msg.sender).isManagedGranteeForOperatorAndGrant(
+            operator, grantId, tokenGrant
+        )) {
+            return true;
+        }
+
+        // There is only one possibility left - grant has been revoked and
+        // grant manager wants to take back delegated tokens.
+        (,,,,uint256 revokedAt,) = tokenGrant.getGrant(grantId);
+        if (revokedAt == 0) {
+            return false;
+        }
+        (address grantManager,,,,) = tokenGrant.getGrantUnlockingSchedule(grantId);
+        return msg.sender == grantManager;
     }
 }

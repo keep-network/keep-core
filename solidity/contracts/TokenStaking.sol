@@ -147,7 +147,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function cancelStake(address _operator) public {
         address owner = operators[_operator].owner;
         require(
-            grantStaking.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
+            grantStaking.canUndelegate(owner, _operator, tokenGrant),
             "Unauthorized"
         );
         uint256 operatorParams = operators[_operator].packedParams;
@@ -181,10 +181,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 _undelegationTimestamp
     ) public {
         address owner = operators[_operator].owner;
-        bool sentByOwner = msg.sender == owner;
         require(
-            grantStaking.isOwnerOperatorOrGrantee(tokenGrant, owner, _operator),
-           "Unauthorized"
+            grantStaking.canUndelegate(owner, _operator, tokenGrant),
+            "Unauthorized"
         );
         require(
             _undelegationTimestamp >= block.timestamp,
@@ -202,9 +201,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             existingUndelegationTimestamp == 0 ||
             // Undelegating sooner than previously set time OR
             existingUndelegationTimestamp > _undelegationTimestamp ||
-            // Owner may override
-            sentByOwner,
-            "Only the owner may postpone undelegation"
+            // Operator may not override
+            msg.sender != _operator,
+            "Operator may not postpone undelegation"
         );
         uint256 newParams = oldParams.setUndelegationTimestamp(_undelegationTimestamp);
         operators[_operator].packedParams = newParams;

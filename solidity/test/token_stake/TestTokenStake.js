@@ -373,7 +373,7 @@ describe('TokenStaking', function() {
 
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Only the owner may postpone undelegation"
+        "Operator may not postpone undelegation"
       )
     })
   })
@@ -523,7 +523,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
         ),
-        "Only the owner may postpone undelegation"
+        "Operator may not postpone undelegation"
       )
     })
   })

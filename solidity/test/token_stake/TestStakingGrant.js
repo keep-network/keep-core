@@ -211,6 +211,24 @@ describe('TokenStaking/StakingGrant', () => {
           'Unauthorized'
         )    
       })
+
+      it('should not let grant manager cancel delegation of non-revoked grant', async () => {
+        await expectRevert(
+          tokenStaking.cancelStake(operatorOne, {from: grantManager}),
+          'Unauthorized'
+        )  
+      })
+
+      it('should let grant manager cancel delegation of revoked grant', async () => {
+        await tokenGrant.revoke(grantId, {from: grantManager})
+        await tokenGrant.revoke(managedGrantId, {from: grantManager})
+
+        await tokenStaking.cancelStake(operatorOne, {from: grantManager})
+        // ok, no revert
+
+        await tokenStaking.cancelStake(operatorTwo, {from: grantManager})
+        // ok, no revert
+      })
     })
 
     describe('undelegate', async () => {
@@ -274,6 +292,24 @@ describe('TokenStaking/StakingGrant', () => {
           tokenStaking.undelegate(operatorTwo, {from: thirdParty}),
           'Unauthorized'
         )    
+      })
+
+      it('should not let grant manager undelegate non-revoked grant', async () => {
+        await expectRevert(
+          tokenStaking.undelegate(operatorOne, {from: grantManager}),
+          'Unauthorized'
+        ) 
+      })
+
+      it('should let grant manager undelegate revoked grant', async () => {
+        await tokenGrant.revoke(grantId, {from: grantManager})
+        await tokenGrant.revoke(managedGrantId, {from: grantManager})
+
+        await tokenStaking.undelegate(operatorOne, {from: grantManager})
+        // ok, no revert
+
+        await tokenStaking.undelegate(operatorTwo, {from: grantManager})
+        // ok, no revert
       })
     })
 
