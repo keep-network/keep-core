@@ -24,9 +24,9 @@ const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
       "Transfer",
       searchFilter
     )
-  ).map(({ transactionHash, returnValues: { from, amount } }) => ({
+  ).map(({ transactionHash, returnValues: { from, value } }) => ({
     depositTokenId: from,
-    amount,
+    amount: value,
     transactionHash,
   }))
 
