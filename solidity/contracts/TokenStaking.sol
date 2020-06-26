@@ -210,8 +210,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             // Undelegation not in progress OR
             existingUndelegationTimestamp == 0 ||
             // Undelegating sooner than previously set time OR
-            existingUndelegationTimestamp > _undelegationTimestamp ||
-            // Operator may not override
+            existingUndelegationTimestamp > _undelegationTimestamp ||            
+            // We have already checked above that msg.sender is owner, grantee,
+            // or operator. Only owner and grantee are eligible to postpone the
+            // delegation so it is enough if we exclude operator here.
             msg.sender != _operator,
             "Operator may not postpone undelegation"
         );
