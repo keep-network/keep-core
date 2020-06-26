@@ -3,6 +3,9 @@ pragma solidity 0.5.17;
 import "../../TokenGrant.sol";
 import "../RolesLookup.sol";
 
+/// @notice TokenStaking contract library allowing to capture the details of
+/// delegated grants and offering functions allowing to check grantee
+/// authentication for stake delegation management.
 library GrantStaking {
 
     using RolesLookup for address payable;
@@ -22,6 +25,12 @@ library GrantStaking {
         mapping (address => uint256) _operatorToGrant;
     }
 
+    /// @notice Checks if the delegation for the given operator has been created
+    /// from a grant defined in the passed token grant contract and if so,
+    /// captures the grant ID for that delegation.
+    /// Grant ID can be later retrieved based on the operator address and used
+    /// to authenticate grantee or to fetch the information about grant
+    /// unlocking schedule for escrow.
     function tryCapturingGrantId(
         Storage storage self,
         TokenGrant tokenGrant,
@@ -36,6 +45,8 @@ library GrantStaking {
         }
     }
 
+    /// @notice Returns true if the given operator operates on stake delegated
+    /// from a grant. False is returned otherwise.
     function hasGrantDelegated(
         Storage storage self,
         address operator
@@ -43,6 +54,8 @@ library GrantStaking {
         return self._operatorToGrant[operator] != 0;
     }
 
+    /// @notice Associates operator with the provided grant ID. It means that
+    /// the given operator delegates on stake from the grant with this ID.
     function setGrantForOperator(
         Storage storage self,
         address operator,
@@ -51,6 +64,10 @@ library GrantStaking {
         self._operatorToGrant[operator] = grantId ^ GRANT_ID_FLAG;
     }
 
+    /// @notice Returns grant ID for the provided operator. If the operator
+    /// does not operate on stake delegated from a grant, function reverts.
+    /// @dev To avoid reverting in case the grant ID for the operator does not
+    /// exist, consider calling hasGrantDelegated before.
     function getGrantForOperator(
         Storage storage self,
         address operator
@@ -60,6 +77,8 @@ library GrantStaking {
         return grantId ^ GRANT_ID_FLAG;
     }
 
+    /// @notice Returns true if msg.sender is eligible to trigger stake
+    /// undelegation.
     function canUndelegate(
         Storage storage self,
         address owner,
