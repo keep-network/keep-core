@@ -185,39 +185,39 @@ describe('TokenStaking/StakingGrant', () => {
       it('should not let operator cancel delegation for another operator', async () => {
         await expectRevert(
           tokenStaking.cancelStake(operatorOne, {from: operatorTwo}),
-          'Unauthorized'
+          'Not authorized'
         )
       })
 
       it('should not let grantee cancel delegation of another grantee', async () => {
         await expectRevert(
           tokenStaking.cancelStake(operatorTwo, {from: grantee}),
-          'Unauthorized'
+          'Not authorized'
         ) 
       })
 
       it('should not let managed grantee cancel delegation of another grantee', async () => {
         await expectRevert(
           tokenStaking.cancelStake(operatorOne, {from: managedGrantee}),
-          'Unauthorized'
+          'Not authorized'
         )     
       })
 
       it('should not let third party cancel delegation', async () => {
         await expectRevert(
           tokenStaking.cancelStake(operatorOne, {from: thirdParty}),
-          'Unauthorized'
+          'Not authorized'
         )
         await expectRevert(
           tokenStaking.cancelStake(operatorTwo, {from: thirdParty}),
-          'Unauthorized'
+          'Not authorized'
         )    
       })
 
       it('should not let grant manager cancel delegation of non-revoked grant', async () => {
         await expectRevert(
           tokenStaking.cancelStake(operatorOne, {from: grantManager}),
-          'Unauthorized'
+          'Not authorized'
         )  
       })
 
@@ -267,39 +267,39 @@ describe('TokenStaking/StakingGrant', () => {
       it('should not let operator undelegate for another operator', async () => {
         await expectRevert(
           tokenStaking.undelegate(operatorOne, {from: operatorTwo}),
-          'Unauthorized'
+          'Not authorized'
         )   
       })
 
       it('should not let grantee undelegate for another grantee', async () => {
         await expectRevert(
           tokenStaking.undelegate(operatorTwo, {from: grantee}),
-          'Unauthorized'
+          'Not authorized'
         )     
       })
 
       it('should not let managed grantee undelegate for another grantee', async () => {
         await expectRevert(
           tokenStaking.undelegate(operatorOne, {from: managedGrantee}),
-          'Unauthorized'
+          'Not authorized'
         )    
       })
 
       it('should not let third party undelegate', async () => {
         await expectRevert(
           tokenStaking.undelegate(operatorOne, {from: thirdParty}),
-          'Unauthorized'
+          'Not authorized'
         )
         await expectRevert(
           tokenStaking.undelegate(operatorTwo, {from: thirdParty}),
-          'Unauthorized'
+          'Not authorized'
         )    
       })
 
       it('should not let grant manager undelegate non-revoked grant', async () => {
         await expectRevert(
           tokenStaking.undelegate(operatorOne, {from: grantManager}),
-          'Unauthorized'
+          'Not authorized'
         ) 
       })
 

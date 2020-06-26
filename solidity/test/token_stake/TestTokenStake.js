@@ -208,7 +208,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: operatorTwo}),
-        "Unauthorized"
+        "Not authorized"
       )
     })
 
@@ -308,7 +308,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
-        "Unauthorized"
+        "Not authorized"
       )
     })
 
@@ -408,7 +408,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(10),
           {from: operatorTwo}
         ),
-        "Unauthorized"
+        "Not authorized"
       )
     })
 

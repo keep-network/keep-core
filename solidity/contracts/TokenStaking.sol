@@ -156,7 +156,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             msg.sender == owner ||
             msg.sender == _operator ||
             grantStaking.canUndelegate(_operator, tokenGrant),
-            "Unauthorized"
+            "Not authorized"
         );
         uint256 operatorParams = operators[_operator].packedParams;
 
@@ -193,7 +193,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             msg.sender == owner ||
             msg.sender == _operator ||
             grantStaking.canUndelegate(_operator, tokenGrant),
-            "Unauthorized"
+            "Not authorized"
         );
         require(
             _undelegationTimestamp >= block.timestamp,
