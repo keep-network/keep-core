@@ -39,7 +39,13 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using SafeERC20 for ERC20Burnable;
     using GrantStaking for GrantStaking.Storage;
 
-    event Staked(address indexed from, uint256 value);
+    event Staked(
+        address owner,
+        address indexed operator,
+        address indexed beneficiary,
+        address indexed authorizer,
+        uint256 value
+    );
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator, uint256 recoveredAt);
     event TokensSlashed(address indexed operator, uint256 amount);
@@ -137,7 +143,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         grantStaking.tryCapturingGrantId(tokenGrant, operator);
 
-        emit Staked(operator, _value);
+        emit Staked(_from, operator, beneficiary, authorizer, _value);
     }
 
     /// @notice Cancels stake of tokens within the operator initialization period
