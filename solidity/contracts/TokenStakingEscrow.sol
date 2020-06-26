@@ -132,7 +132,11 @@ contract TokenStakingEscrow is Ownable {
 
         deposits[previousOperator].amount = deposit.amount.sub(amount);
 
-        tokenSender(address(keepToken)).approveAndCall(owner(), amount, extraData);
+        tokenSender(address(keepToken)).approveAndCall(
+            owner(), // TokenStaking contract associated with the escrow
+            amount,
+            extraData
+        );
     }
 
     /// @notice Returns the total amount deposited in the escrow after
