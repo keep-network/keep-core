@@ -1,6 +1,8 @@
 pragma solidity 0.5.17;
 
-contract MigrationEscrowStub {
+/// @dev Stub used in TokenStakingEscrow to test migration of tokens between
+/// escrows.
+contract ReceivingEscrowStub {
 
     struct Received {
         uint256 grantId;

@@ -10,7 +10,7 @@ const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
 const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory')
 const ManagedGrant = contract.fromArtifact('ManagedGrant')
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
-const MigrationEscrowStub = contract.fromArtifact('MigrationEscrowStub')
+const ReceivingEscrowStub = contract.fromArtifact('ReceivingEscrowStub')
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -615,7 +615,7 @@ describe('TokenStakingEscrow', () => {
         escrow.address, depositedAmount, data, {from: tokenStaking}
       )
 
-      anotherEscrow = await MigrationEscrowStub.new({from: deployer})
+      anotherEscrow = await ReceivingEscrowStub.new({from: deployer})
       await escrow.authorizeEscrow(anotherEscrow.address, {from: grantManager})
     })
 

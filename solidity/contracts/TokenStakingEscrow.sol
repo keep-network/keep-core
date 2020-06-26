@@ -250,25 +250,28 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Migrates all available tokens to another authorized escrow.
     /// Can be requested only by grantee.
-    /// @dev The target escrow needs to accept deposits from this escrow, at
+    /// @param operator Address of the operator for which undelegated tokens
+    /// were deposited.
+    /// @param receivingEscrow Escrow to which tokens should be migrated.
+    /// @dev The receiving escrow needs to accept deposits from this escrow, at
     /// least for the period of migration.
     function migrate(
         address operator,
-        address anotherEscrow
+        address receivingEscrow
     ) public {
         Deposit memory deposit = deposits[operator];
         require(isGrantee(msg.sender, deposit.grantId), "Not authorized");
 
         address grantManager = getGrantManager(deposit.grantId);
         require(
-            authorizedEscrows[grantManager][anotherEscrow],
+            authorizedEscrows[grantManager][receivingEscrow],
             "Escrow not authorized"
         );
 
         uint256 amountLeft = deposit.amount.sub(deposit.withdrawn);
         deposits[operator].withdrawn = deposit.withdrawn.add(amountLeft);
         tokenSender(address(keepToken)).approveAndCall(
-            address(anotherEscrow),
+            address(receivingEscrow),
             amountLeft,
             abi.encode(operator, deposit.grantId)
         );
