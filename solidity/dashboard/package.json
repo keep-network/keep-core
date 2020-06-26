@@ -26,8 +26,8 @@
     "react-scroll": "^1.7.16",
     "react-transition-group": "^4.3.0",
     "trezor-connect": "^8.0.13",
-    "web3": "^1.2.4",
-    "web3-provider-engine": "^15.0.6"
+    "web3": "1.2.4",
+    "web3-provider-engine": "15.0.6"
   },
   "scripts": {
     "build-css": "lessc --clean-css src/css/app.less src/css/app.css",
