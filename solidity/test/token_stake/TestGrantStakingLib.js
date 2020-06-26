@@ -1,5 +1,5 @@
 const {accounts, contract, web3} = require('@openzeppelin/test-environment')
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const {constants, expectRevert} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot')
 
 const assert = require('chai').assert
@@ -16,6 +16,8 @@ describe('GrantStaking', () => {
   const deployer = accounts[0],
     operator1 = accounts[1]
     operator2 = accounts[2]
+    operator3 = accounts[3]
+    operator4 = accounts[4]
 
   let info
 
@@ -54,12 +56,18 @@ describe('GrantStaking', () => {
     it('returns grant ID for operator having grant staked', async () => {
       await info.setGrantForOperator(operator1, 0)
       await info.setGrantForOperator(operator2, 10)
+      await info.setGrantForOperator(operator3, 200)
+      await info.setGrantForOperator(operator4, constants.MAX_UINT256)
 
       const operator1GrantId = await info.getGrantForOperator(operator1)
       const operator2GrantId = await info.getGrantForOperator(operator2)
+      const operator3GrantId = await info.getGrantForOperator(operator3)
+      const operator4GrantId = await info.getGrantForOperator(operator4)
 
       expect(operator1GrantId).to.eq.BN(0)
       expect(operator2GrantId).to.eq.BN(10)
+      expect(operator3GrantId).to.eq.BN(200)
+      expect(operator4GrantId).to.eq.BN(constants.MAX_UINT256)
     })
 
     it('reverts where there is no grant for operator', async () => {
