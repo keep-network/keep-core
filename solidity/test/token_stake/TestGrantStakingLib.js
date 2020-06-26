@@ -40,15 +40,26 @@ describe('GrantStaking', () => {
     it('returns true if grant is set for operator', async () => {
       await info.setGrantForOperator(operator1, 0)
       await info.setGrantForOperator(operator2, 1)
+      await info.setGrantForOperator(operator3, 200)
+      await info.setGrantForOperator(operator4, constants.MAX_UINT256)
 
       assert.isTrue(await info.hasGrantDelegated(operator1))
       assert.isTrue(await info.hasGrantDelegated(operator2))
+      assert.isTrue(await info.hasGrantDelegated(operator3))
+      assert.isTrue(await info.hasGrantDelegated(operator4))
     })
 
     it('returns false if grant is not set for operator', async () => {        
       assert.isFalse(await info.hasGrantDelegated(operator1))
+      assert.isFalse(await info.hasGrantDelegated(operator2))
+      assert.isFalse(await info.hasGrantDelegated(operator3))
+      assert.isFalse(await info.hasGrantDelegated(operator4))
+
       await info.setGrantForOperator(operator2, 0)
+      
       assert.isFalse(await info.hasGrantDelegated(operator1))
+      assert.isFalse(await info.hasGrantDelegated(operator3))
+      assert.isFalse(await info.hasGrantDelegated(operator4))
     })
   })
 
