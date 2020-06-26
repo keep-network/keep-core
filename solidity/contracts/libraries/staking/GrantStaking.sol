@@ -77,31 +77,21 @@ library GrantStaking {
         return grantId ^ GRANT_ID_FLAG;
     }
 
-    /// @notice Returns true if msg.sender is eligible to trigger stake
-    /// undelegation.
+    /// @notice Returns true if msg.sender is grantee eligible to trigger stake
+    /// undelegation for this operator. Function checks both standard grantee
+    /// and managed grantee case.
     function canUndelegate(
         Storage storage self,
-        address owner,
         address operator,
         TokenGrant tokenGrant
     ) public returns (bool) {
-        // First, check three simple cases:
-        // - msg.sender is the operator,
-        // - msg.sender is the owner (liquid tokens case or TokenGrantStaking
-        //   contract is calling),
-        // - msg.sender is a grantee of a standard grant.
-        //
-        // If one of them is the case, we return true.
-        if (
-            msg.sender == operator ||
-            msg.sender == owner ||
-            (msg.sender).isGranteeForOperator(operator, tokenGrant)
-        ) {
+        // First, check if msg.sender is a grantee of a standard grant.
+        if ((msg.sender).isGranteeForOperator(operator, tokenGrant)) {
             return true;
         }
 
-        // If none of the above is true, we need to dig deeper and see if we
-        // are dealing with a grantee from a managed grant.
+        // If not, we need to dig deeper and see if we are dealing with
+        // a grantee from a managed grant.
         //
         // First of all, we need to see if the operator has grant delegated.
         // If it does not, there is no chance it's a managed grantee calling.
