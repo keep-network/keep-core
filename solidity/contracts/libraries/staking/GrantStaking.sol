@@ -61,7 +61,7 @@ library GrantStaking {
     /// @notice Associates operator with the provided grant ID. It means that
     /// the given operator delegates on stake from the grant with this ID.
     /// @param operator The operator tokens are delegate to.
-    /// @param grantID Identifier of a grant from which the tokens are delegated
+    /// @param grantId Identifier of a grant from which the tokens are delegated
     /// to.
     function setGrantForOperator(
         Storage storage self,
