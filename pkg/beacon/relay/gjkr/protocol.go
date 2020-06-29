@@ -536,7 +536,7 @@ func (cm *CommittingMember) areSharesValidAgainstCommitments(
 // - accused inactive or already disqualified member and as a result, we do not
 //   have enough information to resolve that accusation
 // - shares of the accused member are valid against commitments
-// - accused member ID does not exist 
+// - accused member ID does not exist
 //
 // Accused member is disqualified if:
 // - shares of the accused member can not be decrypted
@@ -985,7 +985,7 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if pjm.ID == accusedID || int(accusedID) > pjm.group.GroupSize()  {
+			if pjm.ID == accusedID || int(accusedID) > pjm.group.GroupSize() {
 				// The member does not resolve the dispute as an accused
 				// or the accussed member ID is not valid.
 				// Mark the accuser as disqualified immediately,
@@ -1186,18 +1186,26 @@ func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	members := make([]group.MemberIndex, 0)
 
-	// From disqualified members list filter those who provided valid shares in
-	// Phase 3 and are sharing the group private key.
+	// The given member needs reconstruction if two conditions are met:
+	// - member provided qualified shares in Phase 3
+	// - member DID NOT provide valid public key share in phase 7
+	needsReconstruction := func(member group.MemberIndex) bool {
+		_, providedQualifiedShares := rm.receivedQualifiedSharesS[member]
+		_, providedValidPublicKeyShare := rm.receivedValidPeerPublicKeySharePoints[member]
+
+		return providedQualifiedShares && !providedValidPublicKeyShare
+	}
+
+	// From disqualified members list filter those who need reconstruction.
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
-		if _, ok := rm.receivedQualifiedSharesS[disqualifiedMemberID]; ok {
+		if needsReconstruction(disqualifiedMemberID) {
 			members = append(members, disqualifiedMemberID)
 		}
 	}
 
-	// From inactive members list filter those who provided valid shares in
-	// Phase 3 and are sharing the group private key.
+	// From inactive members list filter those who need reconstruction.
 	for _, inactiveMemberID := range rm.group.InactiveMemberIDs() {
-		if _, ok := rm.receivedQualifiedSharesS[inactiveMemberID]; ok {
+		if needsReconstruction(inactiveMemberID) {
 			members = append(members, inactiveMemberID)
 		}
 	}
