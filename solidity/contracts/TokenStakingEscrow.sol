@@ -113,6 +113,8 @@ contract TokenStakingEscrow is Ownable {
     /// Uses the same staking contract as the original delegation.
     /// @param previousOperator Operator from which tokens were undelegated
     /// and deposited in the escrow.
+    /// @dev Only grantee is allowed to call this function. For managed grant,
+    /// caller has to be the managed grantee.
     /// @param amount Amount of tokens to delegate.
     /// @param extraData Data for stake delegation. This byte array must have
     /// the following values concatenated:
