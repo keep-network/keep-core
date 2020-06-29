@@ -25,6 +25,7 @@ import "./utils/LockUtils.sol";
 import "./utils/BytesLib.sol";
 import "./Authorizations.sol";
 import "./TokenStakingEscrow.sol";
+import "./TokenSender.sol";
 
 
 /// @title TokenStaking
@@ -618,7 +619,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         if (grantStaking.hasGrantDelegated(_operator)) {
             // For tokens staked from a grant, transfer them to the escrow.
             uint256 grantId = grantStaking.getGrantForOperator(_operator);
-            tokenSender(address(token)).approveAndCall(
+            TokenSender(address(token)).approveAndCall(
                 address(escrow),
                 _amount,
                 abi.encode(_operator, grantId)

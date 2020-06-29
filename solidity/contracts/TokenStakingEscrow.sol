@@ -22,6 +22,7 @@ import "./libraries/grant/UnlockingSchedule.sol";
 import "./KeepToken.sol";
 import "./TokenGrant.sol";
 import "./ManagedGrant.sol";
+import "./TokenSender.sol";
 
 /// @title TokenStakingEscrow
 /// @notice Escrow lets the staking contract to deposit undelegated, granted
@@ -138,7 +139,7 @@ contract TokenStakingEscrow is Ownable {
 
         deposits[previousOperator].redelegated = deposit.redelegated.add(amount);
 
-        tokenSender(address(keepToken)).approveAndCall(
+        TokenSender(address(keepToken)).approveAndCall(
             owner(), // TokenStaking contract associated with the escrow
             amount,
             extraData
@@ -300,7 +301,7 @@ contract TokenStakingEscrow is Ownable {
 
         uint256 amountLeft = deposit.amount.sub(deposit.withdrawn);
         deposits[operator].withdrawn = deposit.withdrawn.add(amountLeft);
-        tokenSender(address(keepToken)).approveAndCall(
+        TokenSender(address(keepToken)).approveAndCall(
             address(receivingEscrow),
             amountLeft,
             abi.encode(operator, deposit.grantId)
