@@ -40,16 +40,18 @@ describe('TokenStaking/StakingGrant', () => {
 
     const initializationPeriod = time.duration.seconds(10),
       undelegationPeriod = time.duration.seconds(10),
-      grantStart = time.duration.seconds(0),
-      grantUnlockingDuration = time.duration.years(100),
+      grantUnlockingDuration = time.duration.years(2),
       grantCliff = time.duration.seconds(0),
       grantRevocable = true
 
     let token, tokenGrant, tokenStakingEscrow, tokenStaking
 
-    let grantId, managedGrantId, managedGrant, grantedAmount, delegatedAmount
+    let grantStart, grantId, managedGrantId, managedGrant, 
+      grantedAmount, delegatedAmount
 
     before(async () => {
+      grantStart = await time.latest()
+
       const registry = await KeepRegistry.new({from: deployer})
       token = await KeepToken.new({from: deployer})
       const allTokens = await token.balanceOf(deployer)
@@ -424,8 +426,8 @@ describe('TokenStaking/StakingGrant', () => {
         const delegationInfo = await tokenStaking.getDelegationInfo(operatorThree)
         expect(delegationInfo.amount).to.eq.BN(redelegatedAmount)
 
-        const depositedAmount = await tokenStakingEscrow.depositedAmount(operatorOne)
-        expect(depositedAmount).to.eq.BN(0)
+        const availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+        expect(availableAmount).to.eq.BN(0)
       })
 
       it('redelegates tokens to more than one operator', async () => {
@@ -434,16 +436,16 @@ describe('TokenStaking/StakingGrant', () => {
         await tokenStakingEscrow.redelegate(
           operatorOne, redelegatedAmount, data3, {from: grantee}
         )
-        let depositedAmount = await tokenStakingEscrow.depositedAmount(operatorOne)
-        expect(depositedAmount).to.eq.BN(redelegatedAmount)
+        let availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+        expect(availableAmount).to.eq.BN(redelegatedAmount)
         let delegationInfo = await tokenStaking.getDelegationInfo(operatorThree)
         expect(delegationInfo.amount).to.eq.BN(redelegatedAmount)
       
         await tokenStakingEscrow.redelegate(
           operatorOne, redelegatedAmount, data4, {from: grantee}
         )
-        depositedAmount = await tokenStakingEscrow.depositedAmount(operatorOne)
-        expect(depositedAmount).to.eq.BN(0)
+        availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+        expect(availableAmount).to.eq.BN(0)
         delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
         expect(delegationInfo.amount).to.eq.BN(redelegatedAmount)
       })
@@ -458,7 +460,7 @@ describe('TokenStaking/StakingGrant', () => {
         )
       })
 
-      it('fails for insufficient funds', async () => {
+      it('fails when trying to redelegate more then deposited', async () => {
         let redelegatedAmount = delegatedAmount.addn(1)
         await expectRevert(
           tokenStakingEscrow.redelegate(
@@ -466,8 +468,10 @@ describe('TokenStaking/StakingGrant', () => {
           ),
           "Insufficient funds"
         )
+      })
 
-        redelegatedAmount = delegatedAmount.divn(2)
+      it('fails when trying to redelegate more than remaining', async () => {
+        let redelegatedAmount = delegatedAmount.divn(2)
         await tokenStakingEscrow.redelegate(
           operatorOne, delegatedAmount, data3, {from: grantee}
         )
@@ -479,6 +483,76 @@ describe('TokenStaking/StakingGrant', () => {
           ),
           "Insufficient funds"
         )
+      })
+
+      it('redelegates not yet withdrawn tokens', async () => {
+        await time.increaseTo(grantStart.add(time.duration.years(1)))
+        // 2 000 000 undelegated to escrow for 2-years grant.
+        // One year passed, so 50% of tokens, 1 000 000, is withdrawable
+        // from the escrow. Let's withdraw them.
+        await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+
+        // And now, let's redelegate the remaining 1 000 000 KEEP...
+
+        // 1000000000000000000000000 
+        const redelegatedAmount = web3.utils.toWei('1000000')
+
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+
+        const availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+        expect(availableAmount).to.eq.BN(0)
+      })
+
+      it('fails when trying to redelegate withdrawn tokens', async () => {
+        await time.increaseTo(grantStart.add(time.duration.years(1)))
+        // 2 000 000 undelegated to escrow for 2-years grant.
+        // One year passed, so 50% of tokens, 1 000 000, is withdrawable
+        // from the escrow. Let's withdraw them.
+        await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+
+        // And now, let's try to redelegate 1 000 000 KEEP + 1e-18 KEEP...
+
+        let redelegatedAmount = web3.utils.toWei('1000000')
+        // 1000000000000000000000000 + 1 =
+        // 1000000000000000000000001
+        redelegatedAmount = web3.utils.toBN(redelegatedAmount).addn(1)
+        
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne, redelegatedAmount, data3, {from: grantee}
+          ),
+          "Insufficient funds"
+        )
+      })
+
+      it('allows to withdraw not redelegated tokens', async () => {
+        await time.increaseTo(grantStart.add(time.duration.years(1)))
+        // 2 000 000 undelegated to escrow for 2-years grant.
+        // One year passed, so 50% of tokens, 1 000 000, is withdrawable
+        // from the escrow. Let's withdraw them.
+        await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+
+        // And now, let's redelegate 1 000 000 - 1 KEEP ...
+        const redelegatedAmount = web3.utils.toWei('999999')
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+
+        let availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+        expect(availableAmount).to.eq.BN(web3.utils.toWei('1'))
+
+        // Finally, we need to wait until the remaining 1 KEEP becomes
+        // withdrawable and withdraw it.
+        await time.increaseTo(grantStart.add(time.duration.years(2)))
+        const withdrawable = await tokenStakingEscrow.withdrawable(operatorOne)
+        expect(withdrawable).to.eq.BN(web3.utils.toWei('1'))
+        await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+        // ok, no revert
+
+        availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+        expect(availableAmount).to.eq.BN(0)
       })
     })
 })

@@ -65,6 +65,7 @@ contract TokenStakingEscrow is Ownable {
         uint256 grantId;
         uint256 amount;
         uint256 withdrawn;
+        uint256 redelegated;
     }
 
     // operator address -> KEEP deposit
@@ -130,15 +131,29 @@ contract TokenStakingEscrow is Ownable {
 
         require(isGrantee(msg.sender, deposit.grantId), "Not authorized");
         require(getAmountRevoked(deposit.grantId) == 0, "Grant revoked");
-        require(deposit.amount >= amount, "Insufficient funds");
+        require(
+            availableAmount(previousOperator) >= amount,
+            "Insufficient funds"
+        );
 
-        deposits[previousOperator].amount = deposit.amount.sub(amount);
+        deposits[previousOperator].redelegated = deposit.redelegated.add(amount);
 
         tokenSender(address(keepToken)).approveAndCall(
             owner(), // TokenStaking contract associated with the escrow
             amount,
             extraData
         );
+    }
+
+    /// @notice Returns the currently available amount deposited in the escrow
+    /// that may or may not be currently withdrawable. The available amount
+    /// is the amount initially deposited minus the amount withdrawn and
+    /// redelegated so far from that deposit.
+    /// @param operator Address of the operator from which undelegated tokens
+    /// were deposited.
+    function availableAmount(address operator) public view returns (uint256) {
+        Deposit memory deposit = deposits[operator];
+        return deposit.amount.sub(deposit.withdrawn).sub(deposit.redelegated);
     }
 
     /// @notice Returns the total amount deposited in the escrow after
@@ -165,9 +180,18 @@ contract TokenStakingEscrow is Ownable {
         return deposits[operator].withdrawn;
     }
 
+    /// @notice Returns the total amount redelegated so far from the value
+    /// deposited in the escrow contract after undelegating it from the provided
+    /// operator.
+    /// @param operator Address of the operator from which undelegated tokens
+    /// were deposited.
+    function depositRedelegatedAmount(address operator) public view returns (uint256) {
+        return deposits[operator].redelegated;
+    }
+
     /// @notice Returns the currently withdrawable amount that was previously
     /// deposited in the escrow after undelegating it from the provided operator.
-    /// Tokens are unlocked base on their grant unlocking schedule.
+    /// Tokens are unlocked based on their grant unlocking schedule.
     /// Function returns 0 for non-existing deposits and revoked grants if they
     /// have been revoked before they fully unlocked.
     /// @param operator Address of the operator for which undelegated tokens
@@ -199,8 +223,8 @@ contract TokenStakingEscrow is Ownable {
                 cliff
             );
 
-            if (deposit.withdrawn < unlocked) {
-                return unlocked - deposit.withdrawn;
+            if (deposit.withdrawn.add(deposit.redelegated) < unlocked) {
+                return unlocked.sub(deposit.withdrawn).sub(deposit.redelegated);
             }
         }
 
@@ -337,7 +361,7 @@ contract TokenStakingEscrow is Ownable {
         );
 
         keepToken.safeTransferFrom(from, address(this), value);
-        deposits[operator] = Deposit(grantId, value, 0);
+        deposits[operator] = Deposit(grantId, value, 0, 0);
 
         emit Deposited(operator, grantId, value);
     }
