@@ -231,6 +231,17 @@ describe('TokenStaking/StakingGrant', () => {
         await tokenStaking.cancelStake(operatorTwo, {from: grantManager})
         // ok, no revert
       })
+
+      it('transfers tokens to escrow', async () => {
+        await tokenStaking.cancelStake(operatorOne, {from: grantee})
+        await tokenStaking.cancelStake(operatorTwo, {from: managedGrantee})
+
+        let deposited = await tokenStakingEscrow.depositedAmount(operatorOne)
+        expect(deposited).to.eq.BN(delegatedAmount)
+
+        deposited = await tokenStakingEscrow.depositedAmount(operatorTwo)
+        expect(deposited).to.eq.BN(delegatedAmount)
+      })
     })
 
     describe('undelegate', async () => {
@@ -316,7 +327,7 @@ describe('TokenStaking/StakingGrant', () => {
     })
 
     describe('recoverStake', async () => {
-      it('transfers granted and undelegated tokens to escrow', async () => {
+      it('transfers tokens to escrow', async () => {
         await time.increase(initializationPeriod.addn(1))
 
         await tokenStaking.undelegate(operatorOne, {from: operatorOne})
