@@ -370,17 +370,28 @@ contract TokenStakingEscrow is Ownable {
         address maybeGrantee,
         uint256 grantId
     ) internal returns (bool) {
+        // Let's check the simplest case first - standard grantee.
+        // If the given address is set as a grantee for grant with the given ID,
+        // we return true.
         address grantee = getGrantee(grantId);
         if (maybeGrantee == grantee) {
             return true;
         }
 
+        // If the given address is not a standard grantee, there is still
+        // a chance that address is a managed grantee. We are calling
+        // getManagedGrantee that will cast the grantee to ManagedGrant and try
+        // to call getGrantee() function. If this call returns non-zero address,
+        // it means we are dealing with a ManagedGrant.
         (, bytes memory result) = address(this).call(
             abi.encodeWithSignature("getManagedGrantee(address)", grantee)
         );
         if (result.length == 0) {
             return false;
         }
+        // At this point we know we are dealing with a ManagedGrant, so the last
+        // thing we need to check is whether the managed grantee of that grant
+        // is the grantee address passed as a parameter.
         address managedGrantee = abi.decode(result, (address));
         return maybeGrantee == managedGrantee;
     }
