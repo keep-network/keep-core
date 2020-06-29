@@ -31,6 +31,8 @@ library GrantStaking {
     /// Grant ID can be later retrieved based on the operator address and used
     /// to authenticate grantee or to fetch the information about grant
     /// unlocking schedule for escrow.
+    /// @param tokenGrant KEEP token grant contract reference.
+    /// @param operator The operator tokens are delegated to.
     function tryCapturingGrantId(
         Storage storage self,
         TokenGrant tokenGrant,
@@ -46,7 +48,9 @@ library GrantStaking {
     }
 
     /// @notice Returns true if the given operator operates on stake delegated
-    /// from a grant. False is returned otherwise.
+    /// from a grant. false is returned otherwise.
+    /// @param operator The operator to which tokens from a grant are
+    /// potentially delegated to.
     function hasGrantDelegated(
         Storage storage self,
         address operator
@@ -56,6 +60,9 @@ library GrantStaking {
 
     /// @notice Associates operator with the provided grant ID. It means that
     /// the given operator delegates on stake from the grant with this ID.
+    /// @param operator The operator tokens are delegate to.
+    /// @param grantID Identifier of a grant from which the tokens are delegated
+    /// to.
     function setGrantForOperator(
         Storage storage self,
         address operator,
@@ -68,6 +75,7 @@ library GrantStaking {
     /// does not operate on stake delegated from a grant, function reverts.
     /// @dev To avoid reverting in case the grant ID for the operator does not
     /// exist, consider calling hasGrantDelegated before.
+    /// @param operator The operator tokens are delegate to.
     function getGrantForOperator(
         Storage storage self,
         address operator
@@ -80,6 +88,8 @@ library GrantStaking {
     /// @notice Returns true if msg.sender is grantee eligible to trigger stake
     /// undelegation for this operator. Function checks both standard grantee
     /// and managed grantee case.
+    /// @param operator The operator tokens are delegated to.
+    /// @param tokenGrant KEEP token grant contract reference.
     function canUndelegate(
         Storage storage self,
         address operator,
