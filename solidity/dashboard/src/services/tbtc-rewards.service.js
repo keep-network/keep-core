@@ -2,6 +2,7 @@ import { contractService } from "./contracts.service"
 import {
   TBTC_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
+  TBTC_SYSTEM_CONTRACT_NAME,
 } from "../constants/constants"
 import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
@@ -12,25 +13,48 @@ import web3Utils from "web3-utils"
 import { isSameEthAddress } from "../utils/general.utils"
 
 const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
-  const searchFilter = {
+  const transferEventSearchFilter = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_TOKEN_CONTRACT_NAME],
     filter: { to: web3Utils.toChecksumAddress(beneficiaryAddress) },
   }
 
-  const transferEventToBeneficiary = (
-    await contractService.getPastEvents(
-      web3Context,
-      TBTC_TOKEN_CONTRACT_NAME,
-      "Transfer",
-      searchFilter
-    )
-  ).map(({ transactionHash, returnValues: { from, value } }) => ({
-    depositTokenId: from,
-    amount: value,
-    transactionHash,
-  }))
+  const transferEventToBeneficiary = await contractService.getPastEvents(
+    web3Context,
+    TBTC_TOKEN_CONTRACT_NAME,
+    "Transfer",
+    transferEventSearchFilter
+  )
 
-  return transferEventToBeneficiary
+  const depositCreatedSearchFilter = {
+    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_SYSTEM_CONTRACT_NAME],
+    filter: {
+      _depositContractAddress: transferEventToBeneficiary.map(
+        (_) => _.returnValues.from
+      ),
+    },
+  }
+
+  const depositCreatedEvents = await contractService.getPastEvents(
+    web3Context,
+    TBTC_SYSTEM_CONTRACT_NAME,
+    "Created",
+    depositCreatedSearchFilter
+  )
+
+  const data = transferEventToBeneficiary
+    .filter(({ returnValues: { from } }) =>
+      depositCreatedEvents.some(
+        ({ returnValues: { _depositContractAddress } }) =>
+          isSameEthAddress(_depositContractAddress, from)
+      )
+    )
+    .map(({ transactionHash, returnValues: { from, value } }) => ({
+      depositTokenId: from,
+      amount: value,
+      transactionHash,
+    }))
+
+  return data
 }
 
 const fetchBeneficiaryOperatorsFromDeposit = async (
