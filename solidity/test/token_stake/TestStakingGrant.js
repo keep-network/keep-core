@@ -466,7 +466,7 @@ describe('TokenStaking/StakingGrant', () => {
           tokenStakingEscrow.redelegate(
             operatorOne, redelegatedAmount, data3, {from: grantee}
           ),
-          "Insufficient funds"
+          "Insufficient balance"
         )
       })
 
@@ -481,7 +481,7 @@ describe('TokenStaking/StakingGrant', () => {
           tokenStakingEscrow.redelegate(
             operatorOne, redelegatedAmount, data4, {from: grantee}
           ),
-          "Insufficient funds"
+          "Insufficient balance"
         )
       })
 
@@ -523,7 +523,7 @@ describe('TokenStaking/StakingGrant', () => {
           tokenStakingEscrow.redelegate(
             operatorOne, redelegatedAmount, data3, {from: grantee}
           ),
-          "Insufficient funds"
+          "Insufficient balance"
         )
       })
 

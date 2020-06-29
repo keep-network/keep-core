@@ -133,7 +133,7 @@ contract TokenStakingEscrow is Ownable {
         require(getAmountRevoked(deposit.grantId) == 0, "Grant revoked");
         require(
             availableAmount(previousOperator) >= amount,
-            "Insufficient funds"
+            "Insufficient balance"
         );
 
         deposits[previousOperator].redelegated = deposit.redelegated.add(amount);
