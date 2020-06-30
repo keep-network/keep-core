@@ -1186,8 +1186,8 @@ func (rm *RevealingMember) RevealMisbehavedMembersKeys() (
 func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 	members := make([]group.MemberIndex, 0)
 
-	// The given member needs reconstruction if two conditions are met:
-	// - member provided qualified shares in Phase 3
+	// Member shares needs reconstruction if two conditions are met:
+	// - member provided valid shares in Phase 3 and is in QUAL set
 	// - member DID NOT provide valid public key share in phase 7
 	needsReconstruction := func(member group.MemberIndex) bool {
 		_, providedQualifiedShares := rm.receivedQualifiedSharesS[member]
@@ -1196,14 +1196,16 @@ func (rm *RevealingMember) membersForReconstruction() []group.MemberIndex {
 		return providedQualifiedShares && !providedValidPublicKeyShare
 	}
 
-	// From disqualified members list filter those who need reconstruction.
+	// From disqualified members list filter those
+	// whose shares need to be reconstructed.
 	for _, disqualifiedMemberID := range rm.group.DisqualifiedMemberIDs() {
 		if needsReconstruction(disqualifiedMemberID) {
 			members = append(members, disqualifiedMemberID)
 		}
 	}
 
-	// From inactive members list filter those who need reconstruction.
+	// From inactive members list filter those
+	// whose shares need to be reconstructed.
 	for _, inactiveMemberID := range rm.group.InactiveMemberIDs() {
 		if needsReconstruction(inactiveMemberID) {
 			members = append(members, inactiveMemberID)
