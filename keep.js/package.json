@@ -1,0 +1,37 @@
+{
+  "name": "keep.js",
+  "version": "1.0.0",
+  "description": "web3 wrapper for KEEP contracts",
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com/keep-network/keep-core"
+  },
+  "bugs": {
+    "url": "https://github.com/keep-network/keep-core/issues"
+  },
+  "homepage": "https://github.com/keep-network/keep-core/tree/master/keep.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint:js": "eslint .",
+    "lint:fix:js": "eslint --fix ."
+  },
+  "keywords": [
+    "keep",
+    "keep-network",
+    "keep.js",
+    "web3.js"
+  ],
+  "author": "Rafal Czajkowski <rafal.czajkowski@thesis.co>",
+  "license": "MIT",
+  "dependencies": {
+    "@keep-network/keep-core": ">1.1.0-pre <1.1.0-rc",
+    "@keep-network/keep-ecdsa": "0.16.0-rc.0",
+    "@keep-network/tbtc": "0.15.0-rc.0"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "prettier": "^2.0.4",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
+  }
+}
