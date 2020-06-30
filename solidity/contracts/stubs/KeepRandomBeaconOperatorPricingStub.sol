@@ -19,10 +19,6 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         groups.addGroup(groupPublicKey);
     }
 
-    function setDkgGasEstimate(uint256 gasEstimate) public {
-        dkgGasEstimate = gasEstimate;
-    }
-
     function setEntryVerificationGasEstimate(uint256 gasEstimate) public {
         entryVerificationGasEstimate = gasEstimate;
     }
@@ -33,10 +29,6 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
 
     function setGroupSize(uint256 size) public {
         groupSize = size;
-    }
-
-    function setGroupSelectionGasEstimate(uint256 gas) public {
-        groupSelectionGasEstimate = gas;
     }
 
     function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
