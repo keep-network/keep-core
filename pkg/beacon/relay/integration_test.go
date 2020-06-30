@@ -168,6 +168,60 @@ func TestInactiveMemberPublicKeySharesReconstructionAndSigning(t *testing.T) {
 	}
 }
 
+// Success: honest threshold of the signing group members participate in
+// signing.
+//
+// In this scenario, one of the members doesn't send `PointsAccusationsMessage`
+// thus they become inactive at the beginning of phase 9 during DKG.
+// This is problematic because that member provided valid shares in phase 3
+// and all group members include that shares in their private key shares.
+// What is even more important, that member also provided valid public key share
+// points during the phase 8 of DKG so other members have to decide whether they
+// use those received public key share points or they qualify the inactive member
+// to the reconstruction phase and reconstruct them on their own.
+// Otherwise, we may end up with a situation when a signature does not match the
+// group public key.
+func TestInactivePointsAccusationsReconstructionAndSigning(t *testing.T) {
+	t.Parallel()
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		pointsAccusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
+		if ok && pointsAccusationsMessage.SenderID() == group.MemberIndex(3) {
+			return nil
+		}
+
+		return msg
+	}
+
+	signingMembersCount := honestThreshold
+	dkgResult, signingResult := runTestWithInterceptor(
+		t,
+		groupSize,
+		honestThreshold,
+		signingMembersCount,
+		interceptor,
+	)
+
+	dkgtest.AssertDkgResultPublished(t, dkgResult)
+	dkgtest.AssertSamePublicKey(t, dkgResult)
+	entrytest.AssertEntryPublished(t, signingResult)
+	entrytest.AssertNoSignerFailures(t, signingResult)
+
+	groupPublicKey, err := getFirstGroupPublicKey(dkgResult)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	newEntry, err := signingResult.EntryValue()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !bls.VerifyG1(groupPublicKey, previousEntryG1(), newEntry) {
+		t.Errorf("threshold signature failed BLS verification")
+	}
+}
+
 func TestSigningWithInvalidSignatureShare(t *testing.T) {
 	t.Parallel()
 
