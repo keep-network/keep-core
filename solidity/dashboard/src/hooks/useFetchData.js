@@ -57,9 +57,9 @@ export const useFetchData = (
     }
   })
 
-  const updateData = (updatedData) => {
+  const updateData = useCallback((updatedData) => {
     dispatch({ type: UPDATE_DATA, payload: updatedData })
-  }
+  }, [])
 
   const refreshData = useCallback(() => {
     dispatch({ type: REFRESH_DATA })
