@@ -15,6 +15,7 @@ import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import ContractFactory from "./contract-wrapper"
+import { TokenStakingConstants } from "./constants"
 
 export default class KEEP {
   static async initialize(config) {
@@ -76,5 +77,9 @@ export default class KEEP {
         this.config
       )
     }
+
+    this.tokenStakingConstants = await TokenStakingConstants.initialize(
+      this.tokenStakingContract
+    )
   }
 }
