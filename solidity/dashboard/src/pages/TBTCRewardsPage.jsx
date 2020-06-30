@@ -5,7 +5,7 @@ import { tbtcRewardsService } from "../services/tbtc-rewards.service"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { useFetchData } from "../hooks/useFetchData"
 import { add } from "../utils/arithmetics.utils"
-import { displayAmount } from "../utils/token.utils"
+import { toTokenUnit } from "../utils/token.utils"
 import { findIndexAndObject } from "../utils/array.utils"
 
 const TBTCRewardsPage = () => {
@@ -18,7 +18,9 @@ const TBTCRewardsPage = () => {
   )
 
   const totalAmount = useMemo(() => {
-    return displayAmount(data.map((reward) => reward.amount).reduce(add, 0))
+    return toTokenUnit(
+      data.map((reward) => reward.amount).reduce(add, 0)
+    ).toString()
   }, [data])
 
   const fetchOperatorByDepositId = useCallback(

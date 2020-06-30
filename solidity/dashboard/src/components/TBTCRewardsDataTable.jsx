@@ -4,6 +4,7 @@ import AddressShortcut from "./AddressShortcut"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
 import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
+import { toTokenUnit } from "../utils/token.utils"
 
 const TBTCRewardsDataTable = ({ rewards, fetchOperatorByDepositId }) => {
   return (
@@ -16,8 +17,9 @@ const TBTCRewardsDataTable = ({ rewards, fetchOperatorByDepositId }) => {
             currencyIcon={Icons.TBTC}
             currencyIconProps={{ width: 15, height: 15 }}
             amount={amount}
-            amountClassName="text-big text-grey-70"
             withMetricSuffix={false}
+            displayAmountFunction={(amount) => toTokenUnit(amount).toString()}
+            amountClassName="text-big text-grey-70 overflow-x-scroll"
           />
         )}
       />
