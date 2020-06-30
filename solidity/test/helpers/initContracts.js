@@ -7,8 +7,12 @@ const DKGResultVerification = contract.fromArtifact("DKGResultVerification");
 const DelayFactor = contract.fromArtifact("DelayFactor");
 const Reimbursements = contract.fromArtifact("Reimbursements");
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenGrant = contract.fromArtifact('TokenGrant');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 
-async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
+async function initContracts(TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
   let token, registry, stakingContract,
@@ -19,14 +23,31 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     stakeInitializationPeriod = 30, // In seconds
     stakeUndelegationPeriod = 300; // In seconds
 
-  // Initialize Keep token contract
   token = await KeepToken.new({from: accounts[0]});
-
-  // Initialize registry contract
+  tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]});
   registry = await KeepRegistry.new({from: accounts[0]});
 
   // Initialize staking contract
-  stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod, {from: accounts[0]});
+  await TokenStaking.detectNetwork()
+  await TokenStaking.link(
+    'MinimumStakeSchedule', 
+    (await MinimumStakeSchedule.new({from: accounts[0]})).address
+  )
+  stakingEscrow = await TokenStakingEscrow.new(
+    token.address,
+    tokenGrant.address,
+    {from: accounts[0]}
+  )
+  stakingContract = await TokenStaking.new(
+    token.address,
+    tokenGrant.address,
+    stakingEscrow.address,
+    registry.address,
+    stakeInitializationPeriod,
+    stakeUndelegationPeriod,
+    {from: accounts[0]}
+  );
+  await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({from: accounts[0]});

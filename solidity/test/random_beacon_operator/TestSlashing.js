@@ -33,7 +33,6 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
   before(async () => {
 
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStakingStub'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

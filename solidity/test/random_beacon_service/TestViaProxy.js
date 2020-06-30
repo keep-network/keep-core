@@ -17,7 +17,6 @@ describe('TestKeepRandomBeaconService/ViaProxy', function() {
 
   before(async () => {
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       ServiceContractProxy,
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
