@@ -19,10 +19,12 @@ const expect = chai.expect
 describe('TokenStakingEscrow', () => {
   
   const deployer = accounts[0],
-    grantee = accounts[1],
-    operator = accounts[2],
-    operator2 = accounts[3],
-    tokenStaking = accounts[4]
+    grantManager = accounts[1],
+    grantee = accounts[2],
+    operator = accounts[3],
+    operator2 = accounts[4],
+    thirdParty = accounts[5],
+    tokenStaking = accounts[6]
 
   let grantedAmount, grantStart, grantUnlockingDuration,
   grantId, managedGrantId, managedGrant
@@ -32,6 +34,7 @@ describe('TokenStakingEscrow', () => {
   before(async () => {
     token = await KeepToken.new({from: deployer})
     await token.transfer(tokenStaking, 100000, {from: deployer})
+    await token.transfer(grantManager, 100000, {from: deployer})
 
     tokenGrant = await TokenGrant.new(token.address, {from: deployer})
     permissivePolicy = await PermissiveStakingPolicy.new()
@@ -58,7 +61,7 @@ describe('TokenStakingEscrow', () => {
       tokenGrant, 
       token, 
       grantedAmount, 
-      deployer, 
+      grantManager, 
       grantee, 
       grantUnlockingDuration,
       grantStart,
@@ -71,7 +74,7 @@ describe('TokenStakingEscrow', () => {
       managedGrantFactory,
       token,
       grantedAmount,
-      deployer,
+      grantManager,
       grantee,
       grantUnlockingDuration,
       grantStart,
@@ -244,7 +247,7 @@ describe('TokenStakingEscrow', () => {
 
     it('returns 0 for revoked grant', async () => {
       await time.increaseTo(grantStart.add(grantCliff))
-      await tokenGrant.revoke(grantId, {from: deployer})
+      await tokenGrant.revoke(grantId, {from: grantManager})
       const withdrawable = await escrow.withdrawable(operator)
       expect(withdrawable).to.eq.BN(0)
     })
@@ -272,6 +275,13 @@ describe('TokenStakingEscrow', () => {
     })
 
     it('can not be called by third-party', async () => {
+      await expectRevert(
+        escrow.withdraw(operator, {from: thirdParty}),
+        "Only grantee or operator can withdraw" 
+      )
+    })
+
+    it('can not be called by deployer', async () => {
       await expectRevert(
         escrow.withdraw(operator, {from: deployer}),
         "Only grantee or operator can withdraw" 
@@ -309,6 +319,22 @@ describe('TokenStakingEscrow', () => {
       await time.increaseTo(grantStart.add(grantUnlockingDuration))
       await escrow.withdraw(operator, {from: grantee})
 
+      const balance = await token.balanceOf(grantee);
+      expect(balance).to.eq.BN(depositedAmount)
+    })
+
+    it('withdraws entire deposit for fully unlocked, revoked grant', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      await escrow.withdraw(operator, {from: grantee})
+      const balance = await token.balanceOf(grantee);
+      expect(balance).to.eq.BN(depositedAmount)
+    })
+
+    it('withdraws nothing if already withdrawn', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await escrow.withdraw(operator, {from: grantee})
+      await escrow.withdraw(operator, {from: grantee})
       const balance = await token.balanceOf(grantee);
       expect(balance).to.eq.BN(depositedAmount)
     })
@@ -362,6 +388,13 @@ describe('TokenStakingEscrow', () => {
 
     it('can not be called by third-party', async () => {
       await expectRevert(
+        escrow.withdrawToManagedGrantee(operator2, {from: thirdParty}),
+        "Only grantee or operator can withdraw" 
+      )
+    })
+
+    it('can not be called by deployer', async () => {
+      await expectRevert(
         escrow.withdrawToManagedGrantee(operator2, {from: deployer}),
         "Only grantee or operator can withdraw" 
       )
@@ -402,6 +435,14 @@ describe('TokenStakingEscrow', () => {
       expect(balance).to.eq.BN(depositedAmount)
     })
 
+    it('withdraws nothing if already withdrawn', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await escrow.withdrawToManagedGrantee(operator2, {from: grantee})
+      await escrow.withdrawToManagedGrantee(operator2, {from: grantee})
+      const balance = await token.balanceOf(grantee);
+      expect(balance).to.eq.BN(depositedAmount) 
+    })
+
     it('emits an event', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
       const receipt = await escrow.withdrawToManagedGrantee(operator2, {from: grantee})
@@ -410,6 +451,109 @@ describe('TokenStakingEscrow', () => {
         operator: operator2,
         grantee: grantee,
         amount: web3.utils.toBN(1000)// (2000 / 30) * 15 = 1000 
+      })
+    })
+  })
+
+  describe('withdrawRevoked', async () => {
+    const depositedAmount = 10000
+    beforeEach(async () => {
+      const data = web3.eth.abi.encodeParameters(
+        ['address', 'uint256'], [operator, grantId]
+      )
+      await token.approveAndCall(
+        escrow.address, depositedAmount, data, {from: tokenStaking}
+      )
+    })
+
+    it('can be called by grant manager', async () => {
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      // ok, no reverts
+    })
+
+    it('can be called by grantee', async () => {
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      await escrow.withdrawRevoked(operator, {from: grantee})
+      // ok, no reverts
+    })
+
+    it('can be called by operator', async () => {
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      await escrow.withdrawRevoked(operator, {from: operator})
+      // ok, no reverts
+    })
+
+    it('can be called by third party', async () => {
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      await escrow.withdrawRevoked(operator, {from: thirdParty})
+      // ok, no reverts
+    })
+
+    it('can not be called for non-revoked grant', async () => {
+      await expectRevert(
+        escrow.withdrawRevoked(operator, {from: grantManager}),
+        "No revoked tokens to withdraw"
+      )
+    })
+
+    it('withdraws part of deposited amount if something has been withdrawn before', async () => {
+      await time.increaseTo(grantStart.add(time.duration.days(15)))
+      await escrow.withdraw(operator, {from: operator}) // (1000 / 30) * 15 = 5000
+      await tokenGrant.revoke(grantId, {from: grantManager})
+
+      const balanceBefore = await token.balanceOf(grantManager)
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      const balanceAfter = await token.balanceOf(grantManager)
+
+      const diff = balanceAfter.sub(balanceBefore)
+      expect(diff).to.eq.BN(5000) // 10000 - 5000 = 5000
+    })
+
+    it('withdraws entire deposited amount if nothing has been withdrawn before', async () => {
+      await time.increaseTo(grantStart.add(time.duration.days(15)))
+      await tokenGrant.revoke(grantId, {from: grantManager})
+
+      const balanceBefore = await token.balanceOf(grantManager)
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      const balanceAfter = await token.balanceOf(grantManager)
+
+      const diff = balanceAfter.sub(balanceBefore)
+      expect(diff).to.eq.BN(depositedAmount)
+    })
+
+    it('withdraws nothing if already withdrawn', async () => {
+      await time.increaseTo(grantStart.add(time.duration.days(15)))
+      await tokenGrant.revoke(grantId, {from: grantManager})
+
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+
+      const balanceBefore = await token.balanceOf(grantManager)
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      const balanceAfter = await token.balanceOf(grantManager)
+
+      const diff = balanceAfter.sub(balanceBefore)
+      expect(diff).to.eq.BN(0) 
+    })
+
+    it('reverts if the entire grant unlocked', async () => {
+      await time.increaseTo(grantStart.add(grantUnlockingDuration))
+      await escrow.withdraw(operator, {from: operator})
+
+      await expectRevert(
+        escrow.withdrawRevoked(operator, {from: grantManager}),
+        "No revoked tokens to withdraw"
+      )
+    })
+
+    it('emits an event', async () => {
+      await tokenGrant.revoke(grantId, {from: grantManager})
+      const receipt = await escrow.withdrawRevoked(operator, {from: grantManager})
+
+      await expectEvent(receipt, 'RevokedDepositWithdrawn', {
+        operator: operator,
+        grantManager: grantManager,
+        amount: web3.utils.toBN(depositedAmount)
       })
     })
   })
