@@ -46,7 +46,19 @@ export const SideMenu = (props) => {
           label="operations"
           icon={<Icons.Operations />}
         />
-        <NavLink exact to="/rewards" label="rewards" icon={<Icons.Rewards />} />
+        <NavLink
+          to="/rewards"
+          label="rewards"
+          icon={<Icons.Rewards />}
+          sublinks={[
+            {
+              to: "/rewards/random-beacon",
+              exact: true,
+              label: "Beacon Rewards",
+            },
+            { to: "/rewards/tbtc", exact: true, label: "tBTC Rewards" },
+          ]}
+        />
         <NavLink
           to="/applications"
           label="applications"

@@ -118,7 +118,7 @@ const KeepRandomBeaconApplicationPage = () => {
     <PageWrapper
       className=""
       title="Random Beacon"
-      nextPageLink="/rewards"
+      nextPageLink="/rewards/random-beacon"
       nextPageTitle="Rewards"
       nextPageIcon={Icons.KeepBlackGreen}
     >
