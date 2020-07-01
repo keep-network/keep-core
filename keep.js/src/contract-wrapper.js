@@ -1,13 +1,8 @@
 class ContractWrapper {
   constructor(instance, deployedAtBlock) {
-    this.address = instance.options.address
     this.deployedAtBlock = deployedAtBlock
     this.instance = instance
   }
-
-  instance
-  deployedAtBlock
-  address
 
   async makeCall(contractMethodName, ...args) {
     return await this.instance.methods[contractMethodName](...args).call()
@@ -22,20 +17,12 @@ class ContractWrapper {
     return await this.instance.getPastEvents(eventName, searchFilter)
   }
 
-  get instance() {
-    return this.instance
-  }
-
-  get deployedAtBlock() {
-    return this.deployedAtBlock
-  }
-
   get address() {
-    return this.address
+    return this.instance.options.address
   }
 
   get methods() {
-    this.instance.methods
+    return this.instance.methods
   }
 }
 
@@ -54,7 +41,7 @@ class ContractFactory {
     }
 
     const contractDeployedAtBlock = async () => {
-      const deployTransactionHash = contract.networks[networkId].transactionHash
+      const deployTransactionHash = artifact.networks[networkId].transactionHash
       const transaction = await web3.eth.getTransaction(deployTransactionHash)
 
       return transaction.blockNumber.toString()

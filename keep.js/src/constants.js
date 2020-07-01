@@ -16,9 +16,9 @@ export class TokenStakingConstants {
 
   constructor(constants) {
     Object.assign(this, constants)
-  }
 
-  minimumStake
-  undelegationPeriod
-  initializationPeriod
+    this.minimumStake
+    this.undelegationPeriod
+    this.initializationPeriod
+  }
 }

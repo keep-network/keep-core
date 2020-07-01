@@ -9,13 +9,36 @@ import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
 import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
-import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
+// import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
 import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import ContractFactory from "./contract-wrapper"
 import { TokenStakingConstants } from "./constants"
+
+const contracts = new Map([
+  [KeepToken, "keepTokenContract"],
+  [TokenStaking, "tokenStakingContract"],
+  [TokenGrant, "tokenGrantContract"],
+  [KeepRandomBeaconOperator, "keepRandomBeaconOperatorContract"],
+  [
+    KeepRandomBeaconOperatorStatistics,
+    "keepRandomBeaconOperatorStatisticsContract",
+  ],
+  [KeepRegistry, "keepRegirstyContract"],
+  [BondedECDSAKeepFactory, "bondedECDSAKeepFactoryContract"],
+  [KeepBonding, "keepBondingContract"],
+  [TBTCSystem, "tbtcSystemContract"],
+  [TBTCToken, "tbtcTokenContract"],
+  [Deposit, "depositContract"],
+  [BondedECDSAKeep, "bondedECDSAKeepContract"],
+  [GuaranteedMinimumStakingPolicy, "guaranteedMinimumStakingPolicyContract"],
+  [PermissiveStakingPolicy, "permissiveStakingPolicyContract"],
+  // TODO create managed grant instance for a given address
+  // [ManagedGrant, "managedGrantContract"],
+  [ManagedGrantFactory, "managedGrantFactoryContract"],
+])
 
 export default class KEEP {
   static async initialize(config) {
@@ -29,48 +52,7 @@ export default class KEEP {
     this.config = config
   }
 
-  keepTokenContract
-  tokenStakingContract
-  tokenGrantContract
-  keepRandomBeaconOperatorContract
-  keepRandomBeaconOperatorStatisticsContract
-  keepRegirstyContract
-  bondedECDSAKeepFactoryContract
-  keepBondingContract
-  tbtcSystemContract
-  guaranteedMinimumStakingPolicyContract
-  managedGrantContract
-  managedGrantFactoryContract
-  tbtcTokenContract
-  depositContract
-  bondedECDSAKeepContract
-
   async initializeContracts() {
-    const contracts = new Map([
-      [KeepToken, "keepTokenContract"],
-      [TokenStaking, "tokenStakingContract"],
-      [TokenGrant, "tokenGrantContract"],
-      [KeepRandomBeaconOperator, "keepRandomBeaconOperatorContract"],
-      [
-        KeepRandomBeaconOperatorStatistics,
-        "keepRandomBeaconOperatorStatisticsContract",
-      ],
-      [KeepRegistry, "keepRegirstyContract"],
-      [BondedECDSAKeepFactory, "bondedECDSAKeepFactoryContract"],
-      [KeepBonding, "keepBondingContract"],
-      [TBTCSystem, "tbtcSystemContract"],
-      [TBTCToken, "tbtcTokenContract"],
-      [Deposit, "depositContract"],
-      [BondedECDSAKeep, bondedECDSAKeepContract],
-      [
-        GuaranteedMinimumStakingPolicy,
-        "guaranteedMinimumStakingPolicyContract",
-      ],
-      [PermissiveStakingPolicy, "permissiveStakingPolicyContract"],
-      [ManagedGrant, "managedGrantContract"],
-      [ManagedGrantFactory, "managedGrantFactoryContract"],
-    ])
-
     for (const [artifact, propertyName] of contracts) {
       this[propertyName] = await ContractFactory.createContractInstance(
         artifact,
@@ -81,5 +63,21 @@ export default class KEEP {
     this.tokenStakingConstants = await TokenStakingConstants.initialize(
       this.tokenStakingContract
     )
+
+    this.keepTokenContract
+    this.tokenStakingContract
+    this.tokenGrantContract
+    this.keepRandomBeaconOperatorContract
+    this.keepRandomBeaconOperatorStatisticsContract
+    this.keepRegirstyContract
+    this.bondedECDSAKeepFactoryContract
+    this.keepBondingContract
+    this.tbtcSystemContract
+    this.guaranteedMinimumStakingPolicyContract
+    // this.managedGrantContract
+    this.managedGrantFactoryContract
+    this.tbtcTokenContract
+    this.depositContract
+    this.bondedECDSAKeepContract
   }
 }
