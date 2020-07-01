@@ -1,18 +1,19 @@
 {
-  "name": "keep.js",
+  "name": "@keep-network/keep.js",
   "version": "1.0.0",
   "description": "web3 wrapper for KEEP contracts",
   "repository": {
     "type": "git",
     "url": "ssh://git@github.com/keep-network/keep-core"
   },
+  "type": "module",
   "bugs": {
     "url": "https://github.com/keep-network/keep-core/issues"
   },
   "homepage": "https://github.com/keep-network/keep-core/tree/master/keep.js",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha",
     "lint:js": "eslint .",
     "lint:fix:js": "eslint --fix ."
   },
@@ -30,8 +31,11 @@
     "@keep-network/tbtc": "0.15.0-rc.0"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
     "eslint": "^6.8.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
+    "mocha": "^8.0.1",
     "prettier": "^2.0.4",
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
+    "sinon": "^9.0.2"
   }
 }
