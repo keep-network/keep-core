@@ -6,6 +6,7 @@
   "dependencies": {
     "@0x/subproviders": "^6.0.8",
     "@keep-network/keep-core": ">1.1.0-pre <1.1.0-rc",
+    "@keep-network/keep.js": "file:../../keep.js",
     "@keep-network/keep-ecdsa": "0.16.0-rc.0",
     "@keep-network/tbtc": "0.15.0-rc.0",
     "@ledgerhq/hw-app-eth": "^5.13.0",

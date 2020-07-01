@@ -5,6 +5,7 @@ import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext, messageType } from "./Message"
 import { getContracts } from "../contracts"
+import KEEP from "@keep-network/keep.js"
 
 export default class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -61,7 +62,11 @@ export default class Web3ContextProvider extends React.Component {
     try {
       web3 = this.getWeb3(providerName)
       accounts = await web3.currentProvider.enable()
+      const keep = await KEEP.initialize({ web3, networkId: 1101 })
+      console.log("keep", keep)
     } catch (error) {
+      console.log("keep error", error)
+
       this.setState({ providerError: error.message, isFetching: false })
       this.context.showMessage({
         type: messageType.ERROR,
