@@ -25,6 +25,7 @@
 @import 'delegate-stake-form.less';
 @import 'token-grants-page.less';
 @import 'choose-wallet-address.less';
+@import 'skeletons.less';
 @import 'glossary-page.less';
 
 * {
@@ -41,6 +42,15 @@ html {
 
 html, body, #root {
   height: 100vh;
+}
+
+#app-loader {
+  position: absolute;
+
+  &.loader--hide {
+    display: none;
+  }
+
 }
 
 ul {

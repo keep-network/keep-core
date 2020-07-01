@@ -16,7 +16,7 @@ import {
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
-    <section id="tokens-overview" className="tile">
+    <>
       <TokenGrantDetails selectedGrant={selectedGrant} />
       <hr />
       <div className="flex">
@@ -28,7 +28,7 @@ const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
           stakedAmount={selectedGrantStakedAmount}
         />
       </div>
-    </section>
+    </>
   )
 }
 
