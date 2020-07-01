@@ -4,7 +4,6 @@ import {
   TOKEN_GRANT_CONTRACT_NAME,
 } from "../constants/constants"
 import moment from "moment"
-import { COMPLETE_STATUS, PENDING_STATUS } from "../constants/constants"
 import { isCodeValid, createManagedGrantContractInstance } from "../contracts"
 
 const fetchDelegatedTokensData = async (web3Context) => {
@@ -81,6 +80,8 @@ const fetchDelegatedTokensData = async (web3Context) => {
     undelegationStatus,
     undelegation,
     undelegationPeriod,
+    delegationStatus,
+    undelegationCompletedAt,
   } = await fetchPendingUndelegation(web3Context)
   const { createdAt } = undelegation
   const initializationOverAt = moment
@@ -99,6 +100,8 @@ const fetchDelegatedTokensData = async (web3Context) => {
     undelegationPeriod,
     isManagedGrant,
     managedGrantContractInstance,
+    delegationStatus,
+    undelegationCompletedAt,
   }
 }
 
@@ -118,31 +121,31 @@ const fetchPendingUndelegation = async (web3Context) => {
     ),
   ])
 
-  const { undelegatedAt } = delegation
+  const { undelegatedAt, createdAt, amount } = delegation
 
   const isUndelegation = delegation.undelegatedAt !== "0"
   const pendingUnstakeBalance = isUndelegation ? delegation.amount : 0
   const undelegationCompletedAt = isUndelegation
     ? moment.unix(undelegatedAt).add(undelegationPeriod, "seconds")
     : null
-  let undelegationStatus
-  if (isUndelegation) {
-    undelegationStatus = undelegationCompletedAt.isBefore(moment())
-      ? COMPLETE_STATUS
-      : PENDING_STATUS
-  } else if (
-    delegation.undelegatedAt === "0" &&
-    delegation.createdAt !== "0" &&
-    delegation.amount === "0"
-  ) {
-    undelegationStatus = COMPLETE_STATUS
+
+  let delegationStatus
+  if (amount !== "0" && createdAt !== "0" && undelegatedAt !== "0") {
+    // delegation undelegated
+    delegationStatus = "UNDELEGATED"
+  } else if (amount === "0" && createdAt !== "0" && undelegatedAt === "0") {
+    // delegation canceled
+    delegationStatus = "CANCELED"
+  } else if (amount === "0" && createdAt !== "0" && undelegatedAt !== "0") {
+    // delegation recovered
+    delegationStatus = "RECOVERED"
   }
 
   return {
     pendingUnstakeBalance,
     undelegationCompletedAt,
     undelegationPeriod,
-    undelegationStatus,
+    delegationStatus,
     undelegation: delegation,
   }
 }

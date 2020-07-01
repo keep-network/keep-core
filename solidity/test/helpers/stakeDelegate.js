@@ -4,6 +4,6 @@ async function stakeDelegate(stakingContract, token, owner, operator, beneficiar
     Buffer.from(operator.substr(2), 'hex'),
     Buffer.from(authorizer.substr(2), 'hex')
   ]);
-  token.approveAndCall(stakingContract.address, stake, delegation, {from: owner});
+  return token.approveAndCall(stakingContract.address, stake, delegation, {from: owner});
 }
 module.exports = stakeDelegate

@@ -8,23 +8,32 @@ import PageWrapper from "../components/PageWrapper"
 import TokenAmount from "../components/TokenAmount"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { LoadingOverlay } from "../components/Loadable"
+import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
 
 const TokenGrantsPage = () => {
-  const { grants, isFetching, grantTokenBalance } = useTokensPageContext()
+  const {
+    grants,
+    grantsAreFetching,
+    grantTokenBalance,
+  } = useTokensPageContext()
 
   return (
-    <LoadingOverlay isFetching={isFetching}>
-      <PageWrapper title="Token Grants" className="">
-        <TokenAmount
-          wrapperClassName="mb-2"
-          amount={grantTokenBalance}
-          amountClassName="h2 text-grey-40"
-          currencyIconProps={{ className: "keep-outline grey-40" }}
-          displayWithMetricSuffix={false}
-        />
+    <PageWrapper title="Token Grants" className="">
+      <TokenAmount
+        wrapperClassName="mb-2"
+        amount={grantTokenBalance}
+        amountClassName="h2 text-grey-40"
+        currencyIconProps={{ className: "keep-outline grey-40" }}
+        displayWithMetricSuffix={false}
+      />
+
+      <LoadingOverlay
+        isFetching={grantsAreFetching}
+        skeletonComponent={<TokenGrantSkeletonOverview />}
+      >
         {grants.map(renderTokenGrantOverview)}
-      </PageWrapper>
-    </LoadingOverlay>
+      </LoadingOverlay>
+    </PageWrapper>
   )
 }
 

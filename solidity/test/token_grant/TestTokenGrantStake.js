@@ -1,7 +1,7 @@
-const delegateStakeFromGrant = require('../helpers/delegateStakeFromGrant')
+const { delegateStakeFromGrant } = require('../helpers/delegateStake')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
+const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -15,7 +15,9 @@ const expect = chai.expect
 const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
@@ -50,16 +52,28 @@ describe('TokenGrant/Stake', function() {
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
+    grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
     registryContract = await KeepRegistry.new({from: accounts[0]});
+    stakingEscrow = await TokenStakingEscrow.new(
+      tokenContract.address, 
+      grantContract.address, 
+      {from: accounts[0]}
+    );
+    await TokenStaking.detectNetwork();
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    );
     stakingContract = await TokenStaking.new(
       tokenContract.address,
+      grantContract.address,
+      stakingEscrow.address,
       registryContract.address,
       initializationPeriod,
       undelegationPeriod,
       {from: accounts[0]}
     );
-
-    grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
+    await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
 
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
@@ -266,7 +280,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       stakingContract.recoverStake(operatorOne),
-      "Can not recover stake before undelegation period is over"
+      "Can not recover before undelegation period is over"
     )
   })
 
@@ -276,7 +290,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, amountToDelegate, grantId),
-      "Operator address is already in use"
+      "Operator already in use"
     )
   })
 
@@ -291,7 +305,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, grantAmount),
-      "Operator address is already in use."
+      "Operator already in use"
     )
   })
 
