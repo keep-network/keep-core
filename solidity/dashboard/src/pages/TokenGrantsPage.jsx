@@ -8,7 +8,7 @@ import PageWrapper from "../components/PageWrapper"
 import TokenAmount from "../components/TokenAmount"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { LoadingOverlay } from "../components/Loadable"
-import { TokenGraantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
+import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
 
 const TokenGrantsPage = () => {
   const {
@@ -29,7 +29,7 @@ const TokenGrantsPage = () => {
 
       <LoadingOverlay
         isFetching={grantsAreFetching}
-        skeletonComponent={<TokenGraantSkeletonOverview />}
+        skeletonComponent={<TokenGrantSkeletonOverview />}
       >
         {grants.map(renderTokenGrantOverview)}
       </LoadingOverlay>

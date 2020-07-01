@@ -43,7 +43,7 @@ const CircularSumUpSkeleton = ({ wrapperClassName = "" }) => (
   </div>
 )
 
-export const TokenGraantSkeletonOverview = () => (
+export const TokenGrantSkeletonOverview = () => (
   <section className="tile token-grant-overview">
     <div className="grant-amount">
       <Header />
