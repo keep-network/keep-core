@@ -36,7 +36,7 @@ export class StakeMangedGrantStrategy {
   }
 
   stake(stakingContractAddress, amount, delegationExtraData) {
-    return this.tokenGrantContract.sendTransaction(
+    return this.managedGrantContract.sendTransaction(
       "stake",
       stakingContractAddress,
       amount,
