@@ -55,7 +55,7 @@ button, .btn {
       color: @white;
     }
 
-    &:active, :active:enabled {
+    &:active, &:active:enabled {
       background-color: @primary-color;
       border-color: @primary-color;
       color: @color-black;
@@ -90,7 +90,7 @@ button, .btn {
       transition: all 0.25s ease-in-out;
     }
 
-    &:hover, :hover:enabled, &:focus {
+    &:hover, &:hover:enabled, &:focus {
       &:after {
         opacity: 1;
       }
