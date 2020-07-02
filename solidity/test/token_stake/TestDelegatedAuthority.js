@@ -8,7 +8,10 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
@@ -32,11 +35,28 @@ describe("TokenStaking/DelegatedAuthority", async () => {
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
+    grant = await TokenGrant.new(token.address,  {from: accounts[0]});
     registry = await KeepRegistry.new();
-
-    stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod
+    escrow = await TokenStakingEscrow.new(
+      token.address, 
+      grant.address, 
+      {from: accounts[0]}
     );
+    await TokenStaking.detectNetwork();
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new()).address
+    );
+    stakingContract = await TokenStaking.new(
+      token.address,
+      grant.address,
+      escrow.address,
+      registry.address,
+      initializationPeriod,
+      undelegationPeriod
+    );
+    await escrow.transferOwnership(stakingContract.address, {from: accounts[0]});
+
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);
     let tx = await delegate(operator, stakingAmount);
@@ -119,7 +139,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           badAuthorityDelegator.address,
           {from: unapprovedContract}
         ),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       );
     })
 
@@ -162,7 +182,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           recognizedContract,
           {from: unrecognizedContract}
         ),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       );
     })
 

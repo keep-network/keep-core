@@ -10,6 +10,7 @@ import { shortenAddress } from "../utils/general.utils"
 const AuthorizeContracts = ({
   data,
   onAuthorizeBtn,
+  onDeauthorizeBtn,
   onSelectOperator,
   selectedOperator,
   filterDropdownOptions,
@@ -69,6 +70,7 @@ const AuthorizeContracts = ({
               contracts={contracts}
               operatorAddress={operatorAddress}
               onAuthorizeBtn={onAuthorizeBtn}
+              onDeauthorizeBtn={onDeauthorizeBtn}
             />
           )}
         />
@@ -77,7 +79,12 @@ const AuthorizeContracts = ({
   )
 }
 
-const Contracts = ({ contracts, operatorAddress, onAuthorizeBtn }) => {
+const Contracts = ({
+  contracts,
+  operatorAddress,
+  onAuthorizeBtn,
+  onDeauthorizeBtn,
+}) => {
   return (
     <ul className="line-separator">
       {contracts.map((contract) => (
@@ -86,6 +93,7 @@ const Contracts = ({ contracts, operatorAddress, onAuthorizeBtn }) => {
           {...contract}
           operatorAddress={operatorAddress}
           onAuthorizeBtn={onAuthorizeBtn}
+          onDeauthorizeBtn={onDeauthorizeBtn}
         />
       ))}
     </ul>
@@ -98,6 +106,7 @@ const AuthorizeContractItem = ({
   isAuthorized,
   operatorContractAddress,
   onAuthorizeBtn,
+  onDeauthorizeBtn,
 }) => {
   const onAuthorize = useCallback(
     async (transactionHashCallback) => {
@@ -108,6 +117,17 @@ const AuthorizeContractItem = ({
     },
     [contractName, operatorAddress, onAuthorizeBtn]
   )
+
+  const onDeauthorize = useCallback(
+    async (transactionHashCallback) => {
+      await onDeauthorizeBtn(
+        { operatorAddress, contractName },
+        transactionHashCallback
+      )
+    },
+    [contractName, operatorAddress, onDeauthorizeBtn]
+  )
+
   return (
     <li className="pb-1 mt-1">
       <div className="flex row wrap space-between center">
@@ -116,7 +136,17 @@ const AuthorizeContractItem = ({
           <ViewAddressInBlockExplorer address={operatorContractAddress} />
         </div>
         {isAuthorized ? (
-          <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
+          <div>
+            <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
+            {contractName === "TBTCSystem" && (
+              <SubmitButton
+                onSubmitAction={onDeauthorize}
+                className="btn btn-secondary btn-sm ml-1"
+              >
+                deauthorize
+              </SubmitButton>
+            )}
+          </div>
         ) : (
           <SubmitButton
             onSubmitAction={onAuthorize}
