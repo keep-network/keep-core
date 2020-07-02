@@ -305,7 +305,7 @@ contract TokenStakingEscrow is Ownable {
         uint256 amountLeft = deposit.amount.sub(deposit.withdrawn);
         deposits[operator].withdrawn = deposit.withdrawn.add(amountLeft);
         TokenSender(address(keepToken)).approveAndCall(
-            address(receivingEscrow),
+            receivingEscrow,
             amountLeft,
             abi.encode(operator, deposit.grantId)
         );
