@@ -7,6 +7,10 @@ import "./TokenStaking.sol";
 import "./TokenSender.sol";
 import "./utils/BytesLib.sol";
 
+/// @dev Interface of sender contract for approveAndCall pattern.
+interface tokenSender {
+    function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
+}
 
 contract TokenGrantStake {
     using SafeMath for uint256;
@@ -47,7 +51,7 @@ contract TokenGrantStake {
     ) public onlyGrant {
         amount = _amount;
         operator = _extraData.toAddress(20);
-        TokenSender(address(token)).approveAndCall(
+        tokenSender(address(token)).approveAndCall(
             address(tokenStaking),
             _amount,
             _extraData
