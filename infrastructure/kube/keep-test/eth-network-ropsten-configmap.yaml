@@ -4,7 +4,5 @@ metadata:
   name: eth-network-ropsten
   namespace: default
 data:
-  rpc-url: https://ropsten.infura.io/v3/414a548bc7434bbfb7a135b694b15aa4
-  ws-url: wss://ropsten.infura.io/ws/v3/414a548bc7434bbfb7a135b694b15aa4
   network-id: '3'
   contract-owner-eth-account-address: '0x923c5dbf353e99394a21aa7b67f3327ca111c67d'

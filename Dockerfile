@@ -1,9 +1,4 @@
-FROM golang:1.13.6-alpine3.10 AS runtime
-
-ENV APP_NAME=keep-client \
-	BIN_PATH=/usr/local/bin
-
-FROM runtime AS gobuild
+FROM golang:1.13.6-alpine3.10 AS gobuild
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -68,7 +63,10 @@ RUN go generate ./pkg/gen
 RUN GOOS=linux go build -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
-FROM runtime
+FROM alpine:3.10
+
+ENV APP_NAME=keep-client \
+	BIN_PATH=/usr/local/bin
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 

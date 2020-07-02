@@ -5,6 +5,8 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { formatDate } from "../utils/general.utils"
 import moment from "moment"
+import { LoadingOverlay } from "./Loadable"
+import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 
 const filterByOwned = (delegation) => !delegation.grantId
 const filterBySelectedGrant = (delegation, selectedGrant) =>
@@ -18,6 +20,8 @@ const DelegationOverview = () => {
     refreshGrants,
     tokensContext,
     selectedGrant,
+    isFetching,
+    grantsAreFetching,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -92,11 +96,25 @@ const DelegationOverview = () => {
           </>
         )}
       </div>
-      <DelegatedTokensTable
-        delegatedTokens={getDelegations()}
-        cancelStakeSuccessCallback={cancelStakeSuccessCallback}
-      />
-      <Undelegations undelegations={getUndelegations()} />
+      <LoadingOverlay
+        isFetching={
+          tokensContext === "granted" ? grantsAreFetching : isFetching
+        }
+        skeletonComponent={<DataTableSkeleton />}
+      >
+        <DelegatedTokensTable
+          delegatedTokens={getDelegations()}
+          cancelStakeSuccessCallback={cancelStakeSuccessCallback}
+        />
+      </LoadingOverlay>
+      <LoadingOverlay
+        isFetching={
+          tokensContext === "granted" ? grantsAreFetching : isFetching
+        }
+        skeletonComponent={<DataTableSkeleton />}
+      >
+        <Undelegations undelegations={getUndelegations()} />
+      </LoadingOverlay>
     </section>
   )
 }
