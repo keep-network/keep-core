@@ -29,7 +29,9 @@ library DKGResultVerification {
     }
 
     /// @notice Verifies the submitted DKG result against supporting member
-    /// signatures and if the submitter is eligible to submit at the current block.
+    /// signatures and if the submitter is eligible to submit at the current
+    /// block. Every signature supporting the result has to be from a unique
+    /// group member.
     ///
     /// @param submitterMemberIndex Claimed submitter candidate group member index
     /// @param groupPubKey Generated candidate group public key
@@ -39,7 +41,7 @@ library DKGResultVerification {
     /// @param signatures Concatenation of signatures from members supporting the
     /// result.
     /// @param signingMemberIndices Indices of members corresponding to each
-    /// signature.
+    /// signature. Indices have to be unique.
     /// @param members Addresses of candidate group members as outputted by the
     /// group selection protocol.
     /// @param groupSelectionEndBlock Block height at which the group selection
@@ -84,13 +86,19 @@ library DKGResultVerification {
 
         bytes memory current; // Current signature to be checked.
 
+        bool[] memory usedMemberIndices = new bool[](self.groupSize);
+
         for(uint i = 0; i < signaturesCount; i++){
-            require(signingMemberIndices[i] > 0, "Invalid index");
-            require(signingMemberIndices[i] <= members.length, "Index out of range");
+            uint256 memberIndex = signingMemberIndices[i];
+            require(memberIndex > 0, "Invalid index");
+            require(memberIndex <= members.length, "Index out of range");
+
+            require(!usedMemberIndices[memberIndex - 1], "Duplicate member index");
+            usedMemberIndices[memberIndex - 1] = true;
+
             current = signatures.slice(65*i, 65);
             address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
-
-            require(members[signingMemberIndices[i] - 1] == recoveredAddress, "Invalid signature");
+            require(members[memberIndex - 1] == recoveredAddress, "Invalid signature");
         }
     }
 }

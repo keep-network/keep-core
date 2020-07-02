@@ -5,59 +5,47 @@ import { DataTable, Column } from "./DataTable"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
-import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
-import Dropdown from "./Dropdown"
 import { shortenAddress } from "../utils/general.utils"
 
 const AuthorizeContracts = ({
   data,
   onAuthorizeBtn,
+  onDeauthorizeBtn,
   onSelectOperator,
   selectedOperator,
   filterDropdownOptions,
 }) => {
   return (
     <section className="tile">
-      <div className="flex row wrap center space-between">
-        <header>
-          <div className="flex row">
-            <h4 className="mr-1 text-grey-70">Authorize Contracts</h4>
-            <SpeechBubbleTooltip
-              text={
-                "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens."
-              }
-            />
-          </div>
-          <div className="text-grey-40 text-small">
-            Below are the available operator contracts to authorize.
-          </div>
-        </header>
-        <div style={{ marginLeft: "auto" }}>
-          <Dropdown
-            withLabel={false}
-            options={filterDropdownOptions}
-            onSelect={(operator) => onSelectOperator(operator)}
-            valuePropertyName="operatorAddress"
-            labelPropertyName="operatorAddress"
-            selectedItem={selectedOperator}
-            noItemSelectedText="All operators"
-            renderOptionComponent={({ operatorAddress }) => (
-              <OperatorDropdownItem operatorAddress={operatorAddress} />
-            )}
-            selectedItemComponent={
-              <OperatorDropdownItem
-                operatorAddress={selectedOperator.operatorAddress}
-              />
-            }
-            isFilterDropdow
-            allItemsFilterText="All Operators"
-          />
-        </div>
-      </div>
       <DataTable
         data={data}
         itemFieldId="operatorAddress"
+        title="Authorize Contracts"
+        subtitle="Below are the available operator contracts to authorize."
+        withTooltip
+        tooltipProps={{
+          text:
+            "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens.",
+        }}
         noDataMessage="No contracts to authorize."
+        withFilterDropdown
+        filterDropdownProps={{
+          options: filterDropdownOptions,
+          onSelect: onSelectOperator,
+          valuePropertyName: "operatorAddress",
+          labelPropertyName: "operatorAddress",
+          selectedItem: selectedOperator,
+          noItemSelectedText: "All operators",
+          renderOptionComponent: ({ operatorAddress }) => (
+            <OperatorDropdownItem operatorAddress={operatorAddress} />
+          ),
+          selectedItemComponent: (
+            <OperatorDropdownItem
+              operatorAddress={selectedOperator.operatorAddress}
+            />
+          ),
+          allItemsFilterText: "All Operators",
+        }}
       >
         <Column
           header="operator address"
@@ -82,6 +70,7 @@ const AuthorizeContracts = ({
               contracts={contracts}
               operatorAddress={operatorAddress}
               onAuthorizeBtn={onAuthorizeBtn}
+              onDeauthorizeBtn={onDeauthorizeBtn}
             />
           )}
         />
@@ -90,7 +79,12 @@ const AuthorizeContracts = ({
   )
 }
 
-const Contracts = ({ contracts, operatorAddress, onAuthorizeBtn }) => {
+const Contracts = ({
+  contracts,
+  operatorAddress,
+  onAuthorizeBtn,
+  onDeauthorizeBtn,
+}) => {
   return (
     <ul className="line-separator">
       {contracts.map((contract) => (
@@ -99,6 +93,7 @@ const Contracts = ({ contracts, operatorAddress, onAuthorizeBtn }) => {
           {...contract}
           operatorAddress={operatorAddress}
           onAuthorizeBtn={onAuthorizeBtn}
+          onDeauthorizeBtn={onDeauthorizeBtn}
         />
       ))}
     </ul>
@@ -111,6 +106,7 @@ const AuthorizeContractItem = ({
   isAuthorized,
   operatorContractAddress,
   onAuthorizeBtn,
+  onDeauthorizeBtn,
 }) => {
   const onAuthorize = useCallback(
     async (transactionHashCallback) => {
@@ -121,6 +117,17 @@ const AuthorizeContractItem = ({
     },
     [contractName, operatorAddress, onAuthorizeBtn]
   )
+
+  const onDeauthorize = useCallback(
+    async (transactionHashCallback) => {
+      await onDeauthorizeBtn(
+        { operatorAddress, contractName },
+        transactionHashCallback
+      )
+    },
+    [contractName, operatorAddress, onDeauthorizeBtn]
+  )
+
   return (
     <li className="pb-1 mt-1">
       <div className="flex row wrap space-between center">
@@ -129,7 +136,17 @@ const AuthorizeContractItem = ({
           <ViewAddressInBlockExplorer address={operatorContractAddress} />
         </div>
         {isAuthorized ? (
-          <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
+          <div>
+            <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
+            {contractName === "TBTCSystem" && (
+              <SubmitButton
+                onSubmitAction={onDeauthorize}
+                className="btn btn-secondary btn-sm ml-1"
+              >
+                deauthorize
+              </SubmitButton>
+            )}
+          </div>
         ) : (
           <SubmitButton
             onSubmitAction={onAuthorize}

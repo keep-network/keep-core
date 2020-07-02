@@ -8,6 +8,7 @@ const TokenStaking = contract.fromArtifact('TokenStaking');
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact('GuaranteedMinimumStakingPolicy');
 const AdaptiveStakingPolicy = contract.fromArtifact('AdaptiveStakingPolicy');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 
 describe('PermissiveStakingPolicy', async () => {
   let policy;
@@ -73,7 +74,14 @@ describe('GuaranteedMinimumStakingPolicy', async () => {
   function tokens(n) { return minimumStake.divn(100000).muln(n); }
 
   before(async () => {
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new()).address
+    )
     stakingContract = await TokenStaking.new(
+      accounts[9],
+      accounts[9],
       accounts[9],
       accounts[9],
       0, 0
@@ -231,7 +239,14 @@ describe('AdaptiveStakingPolicy', async () => {
   function tokens(n) { return minimumStake.divn(100000).muln(n); }
 
   before(async () => {
+    await TokenStaking.detectNetwork()
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new()).address
+    )
     stakingContract = await TokenStaking.new(
+      accounts[9],
+      accounts[9],
       accounts[9],
       accounts[9],
       0, 0

@@ -1,7 +1,7 @@
 pragma solidity 0.5.17;
 
 import "../utils/AddressArrayUtils.sol";
-import "../TokenStaking.sol";
+import "../StakeDelegatable.sol";
 import "../TokenGrant.sol";
 import "../ManagedGrant.sol";
 
@@ -11,15 +11,15 @@ library RolesLookup {
     using AddressArrayUtils for address[];
 
     /// @notice Returns true if the tokenOwner delegated tokens to operator
-    /// using the provided tokenStaking contract. Othwerwise, returns false.
+    /// using the provided stakeDelegatable contract. Othwerwise, returns false.
     /// This function works only for the case when tokenOwner own those tokens
     /// and those are not tokens from a grant.
     function isTokenOwnerForOperator(
         address tokenOwner,
         address operator,
-        TokenStaking tokenStaking
+        StakeDelegatable stakeDelegatable
     ) internal view returns (bool) {
-        return tokenStaking.ownerOf(operator) == tokenOwner;
+        return stakeDelegatable.ownerOf(operator) == tokenOwner;
     }
 
     /// @notice Returns true if the grantee delegated tokens to operator

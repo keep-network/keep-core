@@ -32,7 +32,6 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
   before(async () => {
 
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
@@ -110,7 +109,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     await restoreSnapshot()
   });
 
-  it("should be able to submit correct result as first member after DKG finished.", async function () {
+  it("allows to submit correct result as the first member after DKG finished", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -119,7 +118,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
-  it("should send reward to the DKG submitter", async function () {
+  it("sends reward to the DKG submitter", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -137,7 +136,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.isTrue(updatedBeneficiaryBalance.eq(beneficiaryBalance.add(expectedSubmitterReward)), "Submitter should receive expected reward.");
   });
 
-  it("should send max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than gas price ceiling", async function () {
+  it("sends max dkgSubmitterReimbursementFee to the submitter in case of a much higher price than gas price ceiling", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -154,7 +153,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.isTrue(updatedBeneficiaryBalance.eq(beneficiaryBalance.add(dkgSubmitterReimbursementFee)), "Submitter should receive dkgSubmitterReimbursementFee");
   });
 
-  it("should be able to submit correct result with unordered signatures and indexes.", async function () {
+  it("allows to submit correct result with unordered signatures and indexes", async () => {
     let unorderedSigningMembersIndexes = [];
     for (let i = 0; i < selectedParticipants.length; i++) {
       unorderedSigningMembersIndexes[i] = i + 1;
@@ -177,7 +176,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
-  it("should only be able to submit result at eligible block time based on member index.", async function () {
+  it("allows to submit result at eligible block time based on member index", async () => {
     let submitter1MemberIndex = 4;
     let submitter2MemberIndex = 5;
     let submitter2 = selectedParticipants[submitter2MemberIndex - 1];
@@ -202,7 +201,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
-  it("should not be able to submit if submitter was not selected to be part of the group.", async function () {
+  it("reverts if submitter was not selected to the group.", async () => {
     await expectRevert(operatorContract.submitDkgResult(
       1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
       { from: operator4 }),
@@ -212,12 +211,11 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
-  it("should reject the result with invalid signatures.", async function () {
+  it("reverts for invalid signatures", async () => {
     signingMemberIndices = [];
     signatures = undefined;
     let lastParticipantIdx = dkgResultSignatureThreshold - 1;
 
-    // Create less than minimum amount of valid signatures
     for (let i = 0; i < lastParticipantIdx; i++) {
       let signature = await sign(resultHash, selectedParticipants[i]);
       signingMemberIndices.push(i + 1);
@@ -229,7 +227,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     let nonsenseHash = web3.utils.soliditySha3("ducky duck");
     let invalidSignature = await sign(nonsenseHash, selectedParticipants[lastParticipantIdx]);
     signatures += invalidSignature.slice(2, invalidSignature.length);
-    signingMemberIndices.push(lastParticipantIdx);
+    signingMemberIndices.push(lastParticipantIdx + 1);
 
     // Jump in time to when first member is eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
@@ -243,7 +241,39 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
-  it("should be able to submit the result with minimum number of valid signatures", async function () {
+  it("reverts for duplicate member indices", async () => {
+    signingMemberIndices = [];
+    signatures = undefined;
+    let lastParticipantIdx = dkgResultSignatureThreshold - 1;
+
+    for (let i = 0; i < lastParticipantIdx; i++) {
+      let signature = await sign(resultHash, selectedParticipants[i]);
+      signingMemberIndices.push(i + 1);
+      if (signatures == undefined) signatures = signature
+      else signatures += signature.slice(2, signature.length);
+    }
+
+    // Duplicate member and signature
+    let signature = await sign(resultHash, selectedParticipants[0]);
+    signatures += signature.slice(2, signature.length);
+    signingMemberIndices.push(1);
+
+    // Jump in time to when first member is eligible to submit
+    await time.advanceBlockTo(resultPublicationTime);
+
+    await expectRevert(operatorContract.submitDkgResult(
+      1, groupPubKey, noMisbehaved, signatures, signingMemberIndices,
+      { from: selectedParticipants[0] }),
+      "Duplicate member index"
+    );
+
+    assert.isFalse(
+      await operatorContract.isGroupRegistered(groupPubKey), 
+      "group should not be registered"
+    );
+  })
+
+  it("allows to submit the result with minimum number of valid signatures", async () => {
     signingMemberIndices = [];
     signatures = undefined;
 
@@ -266,7 +296,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.equal(await operatorContract.numberOfGroups(), 1, "expected 1 group to be registered")
   });
 
-  it("should not be able to submit without minimum number of signatures", async function () {
+  it("reverts without minimum number of signatures", async () => {
     signingMemberIndices = [];
     signatures = undefined;
 
@@ -290,7 +320,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     assert.isFalse(await operatorContract.isGroupRegistered(groupPubKey), "group should not be registered");
   });
 
-  it("should fail to submit with a public key having less than 128 bytes", async () => {
+  it("reverts for a public key having less than 128 bytes", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -306,7 +336,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     )
   })
 
-  it("should fail to submit with a public key having more than 128 bytes", async () => {
+  it("reverts for a public key having more than 128 bytes", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -322,7 +352,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     )
   })
 
-  it("should fail to submit with too many misbehaved", async () => {
+  it("reverts for too many misbehaved", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -338,7 +368,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     )
   })
 
-  it("should allow to submit with maximum possible misbehaved", async () => {
+  it("allows to submit with maximum possible misbehaved", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 
@@ -351,7 +381,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
     // ok, no exceptions
   })
 
-  it("should not allow to submit with more signatures than the group size", async () => {
+  it("allows to submit with more signatures than the group size", async () => {
     // Jump in time to when submitter becomes eligible to submit
     await time.advanceBlockTo(resultPublicationTime);
 

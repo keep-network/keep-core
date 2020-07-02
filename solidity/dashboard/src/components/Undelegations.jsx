@@ -10,19 +10,22 @@ import Tile from "./Tile"
 
 const Undelegations = ({ undelegations, title }) => {
   return (
-    <Tile
-      title={title}
-      withTooltip={true}
-      tooltipProps={{
-        text: (
-          <>
-            <span className="text-bold">Recover</span>
-            &nbsp;undelegated tokens to return them to your token balance.
-          </>
-        ),
-      }}
-    >
-      <DataTable data={undelegations} itemFieldId="operatorAddress">
+    <Tile>
+      <DataTable
+        data={undelegations}
+        itemFieldId="operatorAddress"
+        title="Undelegations"
+        withTooltip={true}
+        tooltipProps={{
+          text: (
+            <>
+              <span className="text-bold">Recover</span>
+              &nbsp;undelegated tokens to return them to your token balance.
+            </>
+          ),
+        }}
+        noDataMessage="No undelegated tokens."
+      >
         <Column
           header="amount"
           field="amount"

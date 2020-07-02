@@ -384,15 +384,15 @@ Once you've got your KEEP token grant you can manage it with our https://dashboa
 
 ==== Bootstrap Peers
 
+Bootstrap peers will come and go on testnet.  As long as at least one of your configured peers is
+up, there is no need to worry.
+
 [.small]
 ```
-"/dns4/bootstrap-0.test.keep.network/tcp/3919/ipfs/16Uiu2HAmCcfVpHwfBKNFbQuhvGuFXHVLQ65gB4sJm7HyrcZuLttH",
-"/dns4/bootstrap-1.test.keep.network/tcp/3919/ipfs/16Uiu2HAm3eJtyFKAttzJ85NLMromHuRg4yyum3CREMf6CHBBV6KY",
-"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp",
-"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
-"/dns4/bootstrap-4.test.keep.network/tcp/3919/ipfs/16Uiu2HAkxRTeySEWZfW9C83GPFpQUXvrygmZryCN6DL4piZrbAv4",
 "/dns4/bootstrap-1.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAkuTUKNh6HkfvWBEkftZbqZHPHi3Kak5ZUygAxvsdQ2UgG",
-"/dns4/bootstrap-2.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAmQirGruZBvtbLHr5SDebsYGcq6Djw7ijF3gnkqsdQs3wK"
+"/dns4/bootstrap-2.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAmQirGruZBvtbLHr5SDebsYGcq6Djw7ijF3gnkqsdQs3wK",
+"/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
+"/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp"
 ```
 
 ==== Contracts
@@ -405,7 +405,7 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |TokenStaking
-|`0xEb2bA3f065081B6459A6784ba8b34A1DfeCc183A`
+|`0x88B3D0Bfb8F207292Dc4Cee7C923d0E7C3078a18`
 |===
 
 [%header,cols=2*]
@@ -414,10 +414,10 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |KeepRandomBeaconService
-|`0xF9AEdd99357514d9D1AE389A65a4bd270cBCb56c`
+|`0xa5018dbeB6920A04e0CFd3D8F0F45BC851838b0D`
 
 |KeepRandomBeaconOperator
-|`0x440626169759ad6598cd53558F0982b84A28Ad7a`
+|`0x9233Fd6C58e37dab223EF1dFD5e33eD69FD1f93b`
 |===
 
 == Staking
