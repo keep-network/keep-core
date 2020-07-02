@@ -393,7 +393,7 @@ describe('RolesLookup', () => {
     })
   })
 
-  describe('isManagedGranteeForOperatorAndGrant', async () => {
+  describe('isManagedGranteeForGrant', async () => {
     let managedGrant1Address, managedGrant2Address,
       managedGrant1Id, managedGrant2Id
 
@@ -427,15 +427,6 @@ describe('RolesLookup', () => {
       )
       const managedGrant1 = await ManagedGrant.at(managedGrant1Address)
       managedGrant1Id = await managedGrant1.grantId();
-      await delegateStakeFromManagedGrant(
-        managedGrant1,
-        tokenStaking.address,
-        grantee1,
-        operator1,
-        beneficiary1,
-        authorizer,
-        amount
-      )
 
       await token.approve(managedGrantFactory.address, amount, {
         from: deployer,
@@ -462,15 +453,6 @@ describe('RolesLookup', () => {
       )
       const managedGrant2 = await ManagedGrant.at(managedGrant2Address)
       managedGrant2Id = await managedGrant2.grantId();
-      await delegateStakeFromManagedGrant(
-        managedGrant2,
-        tokenStaking.address,
-        grantee2,
-        operator2,
-        beneficiary2,
-        authorizer,
-        amount
-      )
     })
 
     after(async () => {
@@ -478,67 +460,44 @@ describe('RolesLookup', () => {
     })
 
     it('returns true for managed grant and correct operator and grant ID', async () => {
-      assert.isTrue(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isTrue(await lookup.isManagedGranteeForGrant.call(
         grantee1,
-        operator1,
         managedGrant1Id
       ))
-      assert.isTrue(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isTrue(await lookup.isManagedGranteeForGrant.call(
         grantee2,
-        operator2,
         managedGrant2Id
       ))
     })
 
-    it('returns false for mismatched operator', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
-        grantee1,
-        operator2,
-        managedGrant1Id
-      ))
-    })
-
     it('returns false for mismatched managed grant', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
         grantee1,
-        operator1,
         managedGrant2Id
       ))
     })
 
     it('returns false for mismatched grantee', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
         grantee2,
-        operator1,
         managedGrant1Id
       ))
     })
 
-    it('returns false for not an operator', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
-        grantee1,
-        nonOperator,
-        managedGrant1Id
-      ))  
-    })
-
     it('returns false for not a grantee', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
         nonGrantee,
-        operator1,
         managedGrant1Id
       ))  
     })
 
     it('returns false for not a managed grant', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
         grantee1,
-        operator1,
         token.address // not a managed grant contract
       ))
-      assert.isFalse(await lookup.isManagedGranteeForOperatorAndGrant.call(
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
         grantee1,
-        operator1,
         deployer // not a contract
       ))
     })

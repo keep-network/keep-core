@@ -61,18 +61,13 @@ library RolesLookup {
     }
 
     /// @notice Returns true if grant with the given ID has been created with
-    /// managed grant pointing currently to the grantee passed as a parameter
-    /// and the provided operator has tokens delegated from that grant. If any
-    /// of those is not correct, function returns false. The function does not
-    /// revert if grant has not been created with a managed grantee.
-    /// This function is an alternative for isManagedGranteeForOperator for
-    /// cases when the grant ID is known.
-    /// @dev This function is not a view because it uses low-level call to
-    /// check if the grant has been created with a managed grant. It does not
-    /// however modify any state.
-    function isManagedGranteeForOperatorAndGrant(
+    /// managed grant pointing currently to the grantee passed as a parameter.
+    /// @dev The function does not revert if grant has not been created with
+    /// a managed grantee. This function is not a view because it uses low-level
+    /// call to check if the grant has been created with a managed grant.
+    /// It does not however modify any state.
+    function isManagedGranteeForGrant(
         address grantee,
-        address operator,
         uint256 grantId,
         TokenGrant tokenGrant
     ) internal returns (bool) {
@@ -84,11 +79,6 @@ library RolesLookup {
             return false;
         }
         address managedGrantee = abi.decode(result, (address));
-        if (grantee != managedGrantee) {
-            return false;
-        }
-
-        address[] memory operators = tokenGrant.getGranteeOperators(managedGrant);
-        return operators.contains(operator);
+        return grantee == managedGrantee;
     }
 }

@@ -47,14 +47,12 @@ contract RolesLookupStub {
         );
     }
 
-    function isManagedGranteeForOperatorAndGrant(
+    function isManagedGranteeForGrant(
         address grantee,
-        address operator,
         uint256 grantId
     ) public returns (bool) {
-        return RolesLookup.isManagedGranteeForOperatorAndGrant(
+        return RolesLookup.isManagedGranteeForGrant(
             grantee,
-            operator,
             grantId,
             tokenGrant
         );

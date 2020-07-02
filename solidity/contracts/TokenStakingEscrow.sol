@@ -128,10 +128,13 @@ contract TokenStakingEscrow is Ownable {
         uint256 amount,
         bytes memory extraData
     ) public {
+        require(extraData.length == 60, "Corrupted delegation data");
+
         Deposit memory deposit = deposits[previousOperator];
 
-        require(isGrantee(msg.sender, deposit.grantId), "Not authorized");
-        require(getAmountRevoked(deposit.grantId) == 0, "Grant revoked");
+        uint256 grantId = deposit.grantId;
+        require(isGrantee(msg.sender, grantId), "Not authorized");
+        require(getAmountRevoked(grantId) == 0, "Grant revoked");
         require(
             availableAmount(previousOperator) >= amount,
             "Insufficient balance"
@@ -142,7 +145,7 @@ contract TokenStakingEscrow is Ownable {
         TokenSender(address(keepToken)).approveAndCall(
             owner(), // TokenStaking contract associated with the escrow
             amount,
-            extraData
+            abi.encodePacked(extraData, grantId)
         );
     }
 

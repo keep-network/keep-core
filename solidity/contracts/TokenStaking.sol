@@ -64,12 +64,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     ERC20Burnable internal token;
 
-    TokenStakingEscrow public escrow;
+    TokenStakingEscrow internal escrow;
 
-    GrantStaking.Storage grantStaking;
+    GrantStaking.Storage internal grantStaking;
 
     // KEEP token grant contract.
-    TokenGrant public tokenGrant;
+    TokenGrant internal tokenGrant;
 
     // Locks placed on the operator.
     // `operatorLocks[operator]` returns all locks placed on the operator.
@@ -124,7 +124,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
         require(ERC20Burnable(_token) == token, "Unrecognized token contract");
         require(_value >= minimumStake(), "Value must be greater than the minimum stake");
-        require(_extraData.length == 60, "Corrupted delegation data");
+        require(_extraData.length >= 60, "Corrupted delegation data");
 
         address payable beneficiary = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
@@ -142,7 +142,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         );
         ownerOperators[_from].push(operator);
 
-        grantStaking.tryCapturingGrantId(tokenGrant, operator);
+        if (_from == address(escrow)) {
+            grantStaking.setGrantForOperator(operator, _extraData.toUint(60));
+        } else {
+            grantStaking.tryCapturingGrantId(tokenGrant, operator);
+        }
 
         emit Staked(_from, operator, beneficiary, authorizer, _value);
     }

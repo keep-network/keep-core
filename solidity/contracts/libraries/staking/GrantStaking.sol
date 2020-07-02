@@ -95,32 +95,29 @@ library GrantStaking {
         address operator,
         TokenGrant tokenGrant
     ) public returns (bool) {
-        // First, check if msg.sender is a grantee of a standard grant.
-        if ((msg.sender).isGranteeForOperator(operator, tokenGrant)) {
+        // First of all, we need to see if the operator has grant delegated.
+        // If not, we don't want need to bother about checking grantee or
+        // managed grantee.
+        if (!hasGrantDelegated(self, operator)) {
+            return false;
+        }
+
+        uint256 grantId = getGrantForOperator(self, operator);
+        (,,,,uint256 revokedAt, address grantee) = tokenGrant.getGrant(grantId);
+
+        // Is msg.sender grantee of a standard grant?
+        if (msg.sender == grantee) {
             return true;
         }
 
         // If not, we need to dig deeper and see if we are dealing with
         // a grantee from a managed grant.
-        //
-        // First of all, we need to see if the operator has grant delegated.
-        // If it does not, there is no chance it's a managed grantee calling.
-        if (!hasGrantDelegated(self, operator)) {
-            return false;
-        }
-
-        // We know the operator has grant delegated, we are going to retrieve
-        // the grant ID and check if msg.sender is grantee from a managed grant.
-        uint256 grantId = getGrantForOperator(self, operator);
-        if ((msg.sender).isManagedGranteeForOperatorAndGrant(
-            operator, grantId, tokenGrant
-        )) {
+        if ((msg.sender).isManagedGranteeForGrant(grantId, tokenGrant)) {
             return true;
         }
 
         // There is only one possibility left - grant has been revoked and
         // grant manager wants to take back delegated tokens.
-        (,,,,uint256 revokedAt,) = tokenGrant.getGrant(grantId);
         if (revokedAt == 0) {
             return false;
         }

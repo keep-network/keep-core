@@ -554,5 +554,89 @@ describe('TokenStaking/StakingGrant', () => {
         availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
         expect(availableAmount).to.eq.BN(0)
       })
+  
+      it('can be cancelled by grantee', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        await tokenStaking.cancelStake(operatorThree, {from: grantee})
+        // ok, no reverts
+      })
+
+      it('can be cancelled by managed grantee', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorTwo, redelegatedAmount, data3, {from: managedGrantee}
+        )
+        await tokenStaking.cancelStake(operatorThree, {from: managedGrantee})
+        // ok, no reverts 
+      })
+
+      it('can be cancelled by operator', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        await tokenStaking.cancelStake(operatorThree, {from: operatorThree})
+        // ok, no reverts  
+      })
+
+      it('can not be cancelled by the previous operator', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        await expectRevert(
+          tokenStaking.cancelStake(operatorThree, {from: operatorOne}),
+          "Not authorized"
+        )
+      })
+
+      it('can be undelegated by grantee', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        await time.increase(initializationPeriod.addn(1))
+
+        await tokenStaking.undelegate(operatorThree, {from: grantee})
+        // ok, no reverts 
+      })
+
+      it('can be undelegated by managed grantee', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorTwo, redelegatedAmount, data3, {from: managedGrantee}
+        )
+        await time.increase(initializationPeriod.addn(1))
+
+        await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+        // ok, no reverts  
+      })
+
+      it('can be undelegated by operator', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        await time.increase(initializationPeriod.addn(1))
+
+        await tokenStaking.undelegate(operatorThree, {from: operatorThree})
+        // ok, no reverts 
+      })
+
+      it('can not be undelegated by the previous operator', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        await time.increase(initializationPeriod.addn(1))
+
+        await expectRevert(
+          tokenStaking.undelegate(operatorThree, {from: operatorOne}),
+          "Not authorized"
+        )
+      })
     })
 })
