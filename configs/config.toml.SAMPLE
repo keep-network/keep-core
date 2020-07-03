@@ -57,4 +57,5 @@
 
 # [Metrics]
     # Port = 8080
-    # Tick = 60
+    # NetworkMetricsTick = 60
+    # EthereumMetricsTick = 600

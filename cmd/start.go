@@ -223,18 +223,11 @@ func initializeMetrics(
 		config.Metrics.Port,
 	)
 
-	var observationTick time.Duration
-	if tick := config.Metrics.Tick; tick != 0 {
-		observationTick = time.Duration(tick) * time.Second
-	} else {
-		observationTick = 60 * time.Second
-	}
-
 	metrics.ObserveConnectedPeersCount(
 		ctx,
 		registry,
 		netProvider,
-		observationTick,
+		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
 	metrics.ObserveConnectedBootstrapPercentage(
@@ -242,7 +235,7 @@ func initializeMetrics(
 		registry,
 		netProvider,
 		config.LibP2P.Peers,
-		observationTick,
+		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
 	metrics.ObserveEthConnectivity(
@@ -250,7 +243,7 @@ func initializeMetrics(
 		registry,
 		stakeMonitor,
 		config.Ethereum.Account.Address,
-		observationTick,
+		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 
 	metrics.ExposeLibP2PInfo(

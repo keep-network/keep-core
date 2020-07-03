@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -11,6 +12,15 @@ import (
 )
 
 var logger = log.Logger("keep-metrics")
+
+const (
+	// DefaultNetworkMetricsTick is the default duration of the
+	// observation tick for network metrics.
+	DefaultNetworkMetricsTick = 1 * time.Minute
+	// DefaultEthereumMetricsTick is the default duration of the
+	// observation tick for Ethereum metrics.
+	DefaultEthereumMetricsTick = 10 * time.Minute
+)
 
 // Initialize set up the metrics registry and enables metrics server.
 func Initialize(
@@ -45,7 +55,7 @@ func ObserveConnectedPeersCount(
 		"connected_peers_count",
 		input,
 		registry,
-		tick,
+		validateTick(tick, DefaultNetworkMetricsTick),
 	)
 }
 
@@ -79,7 +89,7 @@ func ObserveConnectedBootstrapPercentage(
 		"connected_bootstrap_percentage",
 		input,
 		registry,
-		tick,
+		validateTick(tick, DefaultNetworkMetricsTick),
 	)
 }
 
@@ -107,7 +117,7 @@ func ObserveEthConnectivity(
 		"eth_connectivity",
 		input,
 		registry,
-		tick,
+		validateTick(tick, DefaultEthereumMetricsTick),
 	)
 }
 
@@ -118,6 +128,7 @@ func observe(
 	registry *metrics.Registry,
 	tick time.Duration,
 ) {
+	fmt.Printf("observe metric [%v] with tick: [%v]\n", name, tick)
 	observer, err := registry.NewGaugeObserver(name, input)
 	if err != nil {
 		logger.Warningf("could not create gauge observer [%v]", name)
@@ -125,6 +136,14 @@ func observe(
 	}
 
 	observer.Observe(ctx, tick)
+}
+
+func validateTick(tick time.Duration, defaultTick time.Duration) time.Duration {
+	if tick > 0 {
+		return tick
+	}
+
+	return defaultTick
 }
 
 // ExposeLibP2PInfo provides some basic information about libp2p config.
