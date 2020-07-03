@@ -142,7 +142,7 @@ library Groups {
         uint256 groupIndex
     ) internal {
         require(
-            !self.groups[groupIndex].terminated,
+            !isGroupTerminated(self, groupIndex),
             "Group has been already terminated"
         );
         self.groups[groupIndex].terminated = true;
@@ -159,6 +159,14 @@ library Groups {
             self.activeTerminatedGroups[i] = self.activeTerminatedGroups[i - 1];
         }
         self.activeTerminatedGroups[i] = groupIndex;
+    }
+
+    /// @notice Checks if group with the given index is terminated.
+    function isGroupTerminated(
+        Storage storage self,
+        uint256 groupIndex
+    ) internal view returns(bool) {
+        return self.groups[groupIndex].terminated;
     }
 
     /// @notice Checks if group with the given public key is registered.
