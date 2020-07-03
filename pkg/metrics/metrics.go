@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -124,7 +123,6 @@ func observe(
 	registry *metrics.Registry,
 	tick time.Duration,
 ) {
-	fmt.Printf("observe metric [%v] with tick: [%v]\n", name, tick)
 	observer, err := registry.NewGaugeObserver(name, input)
 	if err != nil {
 		logger.Warningf("could not create gauge observer [%v]", name)
