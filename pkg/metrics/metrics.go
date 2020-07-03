@@ -2,7 +2,6 @@ package metrics
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -16,16 +15,16 @@ var logger = log.Logger("keep-metrics")
 // Initialize set up the metrics registry and enables metrics server.
 func Initialize(
 	port int,
-) (*metrics.Registry, error) {
+) (*metrics.Registry, bool) {
 	if port == 0 {
-		return nil, fmt.Errorf("invalid port")
+		return nil, false
 	}
 
 	registry := metrics.NewRegistry()
 
 	registry.EnableServer(port)
 
-	return registry, nil
+	return registry, true
 }
 
 // ObserveConnectedPeersCount triggers an observation process of the

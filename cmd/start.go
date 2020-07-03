@@ -210,10 +210,10 @@ func initializeMetrics(
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
 ) error {
-	registry, err := metrics.Initialize(
+	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
 	)
-	if err != nil {
+	if !isConfigured {
 		logger.Infof("metrics are not configured")
 		return nil
 	}
