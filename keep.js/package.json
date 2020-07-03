@@ -13,7 +13,7 @@
   "homepage": "https://github.com/keep-network/keep-core/tree/master/keep.js",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --experimental-json-modules",
     "lint:js": "eslint .",
     "lint:fix:js": "eslint --fix ."
   },
@@ -28,7 +28,8 @@
   "dependencies": {
     "@keep-network/keep-core": ">1.1.0-pre <1.1.0-rc",
     "@keep-network/keep-ecdsa": "0.16.0-rc.0",
-    "@keep-network/tbtc": "0.15.0-rc.0"
+    "@keep-network/tbtc": "0.15.0-rc.0",
+    "web3-utils": "^1.2.8"
   },
   "devDependencies": {
     "chai": "^4.2.0",
