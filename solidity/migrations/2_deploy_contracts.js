@@ -3,6 +3,7 @@ const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const AltBn128 = artifacts.require("./cryptography/AltBn128.sol");
 const BLS = artifacts.require("./cryptography/BLS.sol");
 const MinimumStakeSchedule = artifacts.require("./MinimumStakeSchedule.sol");
+const GrantStaking = artifacts.require("./GrantStaking.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenStakingEscrow = artifacts.require("./TokenStakingEscrow.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
@@ -41,7 +42,9 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(KeepRegistry);
   await deployer.deploy(TokenStakingEscrow, KeepToken.address, TokenGrant.address);
   await deployer.deploy(MinimumStakeSchedule);
+  await deployer.deploy(GrantStaking);
   await deployer.link(MinimumStakeSchedule, TokenStaking);
+  await deployer.link(GrantStaking, TokenStaking);
   await deployer.deploy(
     TokenStaking,
     KeepToken.address,

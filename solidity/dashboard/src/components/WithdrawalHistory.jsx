@@ -67,10 +67,11 @@ export const WithdrawalHistory = ({ latestWithdrawalEvent }) => {
 
   return (
     <LoadingOverlay isFetching={isFetching}>
-      <Tile title="Rewards History">
+      <Tile>
         <DataTable
           data={showAll ? data : data.slice(0, previewDataCount)}
           itemFieldId="transactionHash"
+          title="Rewards History"
         >
           <Column
             header="amount"

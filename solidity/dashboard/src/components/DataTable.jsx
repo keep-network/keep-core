@@ -1,5 +1,7 @@
 import React from "react"
 import { isEmptyArray } from "../utils/array.utils"
+import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
+import Dropdown from "./Dropdown"
 
 export class DataTable extends React.Component {
   constructor(props) {
@@ -57,29 +59,62 @@ export class DataTable extends React.Component {
   )
 
   render() {
+    const {
+      title,
+      titleClassName,
+      titleStyle,
+      withTooltip,
+      tooltipProps,
+      subtitle,
+    } = this.props
+
     return (
-      <table>
-        <thead>
-          <tr>{this.state.headers.map(this.renderHeader)}</tr>
-        </thead>
-        <tbody>
-          {isEmptyArray(this.props.data) ? (
-            <tr className="text-center">
-              <td colSpan={this.state.headers.length}>
-                <h4 className="text-grey-30">{this.props.noDataMessage}</h4>
-              </td>
-            </tr>
-          ) : (
-            this.props.data.map(this.renderItemRow)
+      <>
+        <header className="table-header-wrapper">
+          <div>
+            <div className="flex center">
+              <h4 className={titleClassName} style={titleStyle}>
+                {title}
+              </h4>
+              {withTooltip && <SpeechBubbleTooltip {...tooltipProps} />}
+            </div>
+            <div className="text-grey-40 text-small">{subtitle}</div>
+          </div>
+          {this.props.withFilterDropdown && (
+            <Dropdown
+              withLabel={false}
+              isFilterDropdow
+              {...this.props.filterDropdownProps}
+            />
           )}
-        </tbody>
-      </table>
+        </header>
+        <table>
+          <thead>
+            <tr>{this.state.headers.map(this.renderHeader)}</tr>
+          </thead>
+          <tbody>
+            {isEmptyArray(this.props.data) ? (
+              <tr className="text-center">
+                <td colSpan={this.state.headers.length}>
+                  <h4 className="text-grey-30">{this.props.noDataMessage}</h4>
+                </td>
+              </tr>
+            ) : (
+              this.props.data.map(this.renderItemRow)
+            )}
+          </tbody>
+        </table>
+      </>
     )
   }
 }
 
 DataTable.defaultProps = {
   noDataMessage: "No data.",
+  titleClassName: "mr-1 text-grey-70",
+  titleStyle: {},
+  withTooltip: false,
+  withFilterDropdown: false,
 }
 
 export const Column = ({ header, headerStyle, field, renderContent }) => null
