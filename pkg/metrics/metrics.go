@@ -59,9 +59,9 @@ func ObserveConnectedPeersCount(
 	)
 }
 
-// ObserveConnectedBootstrapPercentage triggers an observation process of the
-// connected_bootstrap_percentage metric.
-func ObserveConnectedBootstrapPercentage(
+// ObserveConnectedBootstrapCount triggers an observation process of the
+// connected_bootstrap_count metric.
+func ObserveConnectedBootstrapCount(
 	ctx context.Context,
 	registry *metrics.Registry,
 	netProvider net.Provider,
@@ -69,24 +69,20 @@ func ObserveConnectedBootstrapPercentage(
 	tick time.Duration,
 ) {
 	input := func() float64 {
-		maxCount := len(bootstraps)
-		if maxCount == 0 {
-			return 0
-		}
-
 		currentCount := 0
+
 		for _, address := range bootstraps {
 			if netProvider.ConnectionManager().IsConnected(address) {
 				currentCount++
 			}
 		}
 
-		return float64((currentCount * 100) / maxCount)
+		return float64(currentCount)
 	}
 
 	observe(
 		ctx,
-		"connected_bootstrap_percentage",
+		"connected_bootstrap_count",
 		input,
 		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),

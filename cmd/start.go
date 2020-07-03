@@ -230,7 +230,7 @@ func initializeMetrics(
 		time.Duration(config.Metrics.NetworkMetricsTick)*time.Second,
 	)
 
-	metrics.ObserveConnectedBootstrapPercentage(
+	metrics.ObserveConnectedBootstrapCount(
 		ctx,
 		registry,
 		netProvider,
