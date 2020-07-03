@@ -12,6 +12,7 @@ const assert = require('chai').assert
 const KeepToken = contract.fromArtifact('KeepToken')
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking')
+const GrantStaking = contract.fromArtifact('GrantStaking')
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
@@ -65,6 +66,10 @@ describe('RolesLookup', () => {
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: deployer})).address
     )
+    await TokenStaking.link(
+      'GrantStaking', 
+      (await GrantStaking.new({from: deployer})).address
+    );
     tokenStaking = await TokenStaking.new(
       token.address,
       tokenGrant.address,
@@ -385,6 +390,116 @@ describe('RolesLookup', () => {
         ),
         'Not a grantee of the provided contract'
       )
+    })
+  })
+
+  describe('isManagedGranteeForGrant', async () => {
+    let managedGrant1Address, managedGrant2Address,
+      managedGrant1Id, managedGrant2Id
+
+    before(async () => {
+      await createSnapshot()
+      const amount = await tokenStaking.minimumStake()
+
+      await token.approve(managedGrantFactory.address, amount, {
+        from: deployer,
+      })
+
+      managedGrant1Address = await managedGrantFactory.createManagedGrant.call(
+        grantee1,
+        amount,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        grantRevocable,
+        tokenGrantStakingPolicy.address,
+        {from: deployer}
+      )
+      await managedGrantFactory.createManagedGrant(
+        grantee1,
+        amount,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        grantRevocable,
+        tokenGrantStakingPolicy.address,
+        {from: deployer}
+      )
+      const managedGrant1 = await ManagedGrant.at(managedGrant1Address)
+      managedGrant1Id = await managedGrant1.grantId();
+
+      await token.approve(managedGrantFactory.address, amount, {
+        from: deployer,
+      })
+      managedGrant2Address = await managedGrantFactory.createManagedGrant.call(
+        grantee2,
+        amount,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        grantRevocable,
+        tokenGrantStakingPolicy.address,
+        {from: deployer}
+      )
+      await managedGrantFactory.createManagedGrant(
+        grantee2,
+        amount,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        grantRevocable,
+        tokenGrantStakingPolicy.address,
+        {from: deployer}
+      )
+      const managedGrant2 = await ManagedGrant.at(managedGrant2Address)
+      managedGrant2Id = await managedGrant2.grantId();
+    })
+
+    after(async () => {
+      await restoreSnapshot()
+    })
+
+    it('returns true for managed grant and correct operator and grant ID', async () => {
+      assert.isTrue(await lookup.isManagedGranteeForGrant.call(
+        grantee1,
+        managedGrant1Id
+      ))
+      assert.isTrue(await lookup.isManagedGranteeForGrant.call(
+        grantee2,
+        managedGrant2Id
+      ))
+    })
+
+    it('returns false for mismatched managed grant', async () => {
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
+        grantee1,
+        managedGrant2Id
+      ))
+    })
+
+    it('returns false for mismatched grantee', async () => {
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
+        grantee2,
+        managedGrant1Id
+      ))
+    })
+
+    it('returns false for not a grantee', async () => {
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
+        nonGrantee,
+        managedGrant1Id
+      ))  
+    })
+
+    it('returns false for not a managed grant', async () => {
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
+        grantee1,
+        token.address // not a managed grant contract
+      ))
+      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
+        grantee1,
+        deployer // not a contract
+      ))
     })
   })
 })

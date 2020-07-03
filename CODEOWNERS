@@ -23,7 +23,7 @@
 /solidity/contracts/libraries/operator/Reimbursements.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/AddressArrayUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/BytesLib.sol @Shadowfiend @pdyraga
-/solidity/contracts/utils/LockUtils.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/LockUtils.sol @Shadowfiend @pdyraga @nkuba
 /solidity/contracts/utils/OperatorParams.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/PercentUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/UIntArrayUtils.sol @Shadowfiend @pdyraga

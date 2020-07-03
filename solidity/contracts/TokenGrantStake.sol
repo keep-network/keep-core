@@ -4,8 +4,8 @@ import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./TokenStaking.sol";
+import "./TokenSender.sol";
 import "./utils/BytesLib.sol";
-
 
 /// @dev Interface of sender contract for approveAndCall pattern.
 interface tokenSender {

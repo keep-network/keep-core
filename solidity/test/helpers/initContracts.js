@@ -11,6 +11,7 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
+const GrantStaking = contract.fromArtifact('GrantStaking');
 
 async function initContracts(TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -38,6 +39,9 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
     tokenGrant.address,
     {from: accounts[0]}
   )
+  const grantStakingInfoLib = await GrantStaking.new({from: accounts[0]});
+  await TokenStaking.detectNetwork();
+  await TokenStaking.link("GrantStaking", grantStakingInfoLib.address);
   stakingContract = await TokenStaking.new(
     token.address,
     tokenGrant.address,

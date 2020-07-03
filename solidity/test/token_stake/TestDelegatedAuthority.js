@@ -11,6 +11,7 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
+const GrantStaking = contract.fromArtifact('GrantStaking');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
@@ -46,6 +47,10 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new()).address
+    );
+    await TokenStaking.link(
+      'GrantStaking', 
+      (await GrantStaking.new()).address
     );
     stakingContract = await TokenStaking.new(
       token.address,
