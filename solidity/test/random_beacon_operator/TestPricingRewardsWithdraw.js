@@ -1,10 +1,14 @@
 const initContracts = require('../helpers/initContracts')
-const assert = require('chai').assert
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const crypto = require("crypto")
 const stakeDelegate = require('../helpers/stakeDelegate')
+
+const BN = web3.utils.BN
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
 
 describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
@@ -22,7 +26,6 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   before(async () => {
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
@@ -77,15 +80,15 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
 
   it("should allow fetching public key of active group", async() => {
     let groupPublicKey = await operatorContract.getGroupPublicKey(1)
-    assert.equal(groupPublicKey, '0x' + group2.toString('hex'))
+    expect(groupPublicKey).to.equal('0x' + group2.toString('hex'))
   })
 
   it("should allow fetching public key of stale group", async() => {
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale").to.be.true;
 
     let groupPublicKey = await operatorContract.getGroupPublicKey(0)
-    assert.equal(groupPublicKey, '0x' + group1.toString('hex'))
+    expect(groupPublicKey).to.equal('0x' + group1.toString('hex'))
   })
 
   it("should be able to withdraw group rewards from multiple staled groups", async () => {
@@ -95,15 +98,15 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale").to.be.true
+    expect(await operatorContract.isStaleGroup('0x' + group2.toString('hex')), "Group should be stale").to.be.true
 
     // operator1 has 1 member in group1 and 3 members in group2
     let expectedReward = memberBaseReward.muln(4)
     await operatorContract.withdrawGroupMemberRewards(operator1, 0)
     await operatorContract.withdrawGroupMemberRewards(operator1, 1)
 
-    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance.add(expectedReward)), "Unexpected beneficiary balance")
+    expect((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance.add(expectedReward)), "Unexpected beneficiary balance").to.be.true
   })
 
   it("should be able to withdraw group rewards from a staled group", async () => {
@@ -113,12 +116,12 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale").to.be.true
 
     // operator2 has 2 members in group1 only
     let expectedReward = memberBaseReward.muln(2)
     await operatorContract.withdrawGroupMemberRewards(operator2, 0)
-    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance")
+    expect((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance").to.be.true
   })
 
   it("should record whether the operator has withdrawn", async () => {
@@ -127,13 +130,13 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale").to.be.true
 
     let preWithdrawn = await operatorContract.hasWithdrawnRewards(operator2, 0);
-    assert.isFalse(preWithdrawn, "Incorrect status before withdrawal");
+    expect(preWithdrawn, "Incorrect status before withdrawal").to.be.false;
     await operatorContract.withdrawGroupMemberRewards(operator2, 0)
     let postWithdrawn = await operatorContract.hasWithdrawnRewards(operator2, 0);
-    assert.isTrue(postWithdrawn, "Incorrect status after withdrawal");
+    expect(postWithdrawn, "Incorrect status after withdrawal").to.be.true
   })
 
   it("should not be able to withdraw group rewards without correct data", async () => {
@@ -142,42 +145,45 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     await serviceContract.methods['requestRelayEntry()']({value: entryFeeEstimate, from: requestor})
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale").to.be.true
 
     let beneficiary3balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary3))
 
     // operator3 doesn't have any group members, nothing can be withdrawn
     await operatorContract.withdrawGroupMemberRewards(operator3, 0)
-    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary3))).eq(beneficiary3balance), "Unexpected beneficiary balance")
+    expect((web3.utils.toBN(await web3.eth.getBalance(beneficiary3))).eq(beneficiary3balance), "Unexpected beneficiary balance").to.be.true
   })
 
   it("should not be able to withdraw group rewards if group is active", async () => {
     // operator1 has 3 members in group2
+    let firstActiveGroupIndex = await operatorContract.getFirstActiveGroupIndex()
+    expect(firstActiveGroupIndex).to.eq.BN(1)
 
-    assert.isFalse(await operatorContract.isExpiredGroup('0x' + group2.toString('hex')), "Group should not be expired")
     let beneficiary1balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary1))
 
     // Nothing can be withdrawn
     await expectRevert(
-      operatorContract.withdrawGroupMemberRewards(operator1, 1),
+      operatorContract.withdrawGroupMemberRewards(operator1, firstActiveGroupIndex),
       "Group must be expired and stale"
     )
-    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance), "Unexpected beneficiary balance")
+    expect((web3.utils.toBN(await web3.eth.getBalance(beneficiary1))).eq(beneficiary1balance), "Unexpected beneficiary balance").to.be.true
   })
 
   it("should not be able to withdraw group rewards if group is expired but not stale", async () => {
     // operator2 has 2 members in group1
+    let firstActiveGroupIndex = await operatorContract.getFirstActiveGroupIndex()
+    expect(firstActiveGroupIndex).to.eq.BN(1)
 
-    assert.isTrue(await operatorContract.isExpiredGroup('0x' + group1.toString('hex')), "Group should be expired")
-    assert.isFalse(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should not be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should not be stale").to.be.false
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
+    let mostRecentExpiredGroup = firstActiveGroupIndex.toNumber() - 1
 
     // Nothing can be withdrawn
     await expectRevert(
-      operatorContract.withdrawGroupMemberRewards(operator2, 0),
+      operatorContract.withdrawGroupMemberRewards(operator2, mostRecentExpiredGroup),
       "Group must be expired and stale"
     )
-    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance), "Unexpected beneficiary balance")
+    expect((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance), "Unexpected beneficiary balance").to.be.true
   })
 
   it("should not be able to withdraw group rewards multiple times", async () => {
@@ -187,12 +193,12 @@ describe('KeepRandomBeaconOperator/PricingRewardsWithdraw', function() {
     let beneficiary2balance = web3.utils.toBN(await web3.eth.getBalance(beneficiary2))
 
     await time.advanceBlockTo(web3.utils.toBN(10).addn(await web3.eth.getBlockNumber()))
-    assert.isTrue(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale")
+    expect(await operatorContract.isStaleGroup('0x' + group1.toString('hex')), "Group should be stale").to.be.true
 
     // operator2 has 2 members in group1 only
     let expectedReward = memberBaseReward.muln(2)
     await operatorContract.withdrawGroupMemberRewards(operator2, 0)
-    assert.isTrue((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance")
+    expect((web3.utils.toBN(await web3.eth.getBalance(beneficiary2))).eq(beneficiary2balance.add(expectedReward)), "Unexpected beneficiary balance").to.be.true
 
     await expectRevert(
       operatorContract.withdrawGroupMemberRewards(operator2, 0),

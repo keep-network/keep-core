@@ -8,8 +8,13 @@ import { displayAmount } from "../utils/token.utils"
 
 const AuthorizationHistory = ({ contracts }) => {
   return (
-    <Tile title="Authorizations History">
-      <DataTable data={contracts || []} itemFieldId="contractAddress">
+    <Tile>
+      <DataTable
+        data={contracts || []}
+        title="Authorizations History"
+        itemFieldId="contractAddress"
+        noDataMessage="No authorization history."
+      >
         <Column
           header="details"
           field="status"

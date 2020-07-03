@@ -147,6 +147,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // groups expired, we first want to make a cleanup.
         groups.expireOldGroups();
         require(numberOfGroups() == 0, "Groups exist");
+        // Cleanup after potential failed DKG
+        groupSelection.finish();
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
@@ -180,6 +182,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
         groups.stakingContract = TokenStaking(_stakingContract);
         groups.groupActiveTime = 86400 * 14 / 15; // 14 days equivalent in 15s blocks
+        groups.relayEntryTimeout = relayEntryTimeout;
 
         // There are 78 blocks to submit group selection tickets. To minimize
         // the submitter's cost by minimizing the number of redundant tickets
@@ -329,7 +332,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         bytes memory misbehaved,
         bytes memory signatures,
         uint[] memory signingMembersIndexes
-    ) public {
+    ) public nonReentrant {
         address[] memory members = selectedParticipants();
 
         dkgResultVerification.verify(
@@ -346,7 +349,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultSubmittedEvent(submitterMemberIndex, groupPubKey, misbehaved);
-        groupSelection.stop();
+        groupSelection.finish();
     }
 
     /// @notice Compare the reimbursement fee calculated based on the current
