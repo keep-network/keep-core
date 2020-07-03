@@ -14,10 +14,11 @@ import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantF
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
-import ContractFactory from "./contract-wrapper"
-import { TokenStakingConstants } from "./constants"
+import ContractFactory from "./contract-wrapper.js"
+import { TokenStakingConstants } from "./constants.js"
+import { isSameEthAddress, gt, lte } from "./utils.js"
 
-const contracts = new Map([
+export const contracts = new Map([
   [KeepToken, "keepTokenContract"],
   [TokenStaking, "tokenStakingContract"],
   [TokenGrant, "tokenGrantContract"],
