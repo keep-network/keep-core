@@ -231,4 +231,154 @@ export default class KEEP {
       this.keepRandomBeaconOperatorContract.address
     )
   }
+
+  /**
+   * @typedef {Object} GroupMemberRewardsWithdrawnEventValues
+   * @property {Object} returnValues
+   * @property {string} returnValues.beneficiary
+   * @property {string} returnValues.operator
+   * @property {string} returnValues.amount
+   * @property {string} returnValues.groupIndex
+   *
+   * @typedef {import("./contract-wrapper").EventData & GroupMemberRewardsWithdrawnEventValues} GroupMemberRewardsWithdrawnEvent
+   */
+
+  /**
+   * Returns withdrawn rewards for a given beneficiary address.
+   *
+   * @param {string} beneficiaryAddress
+   *
+   * @return {Promise<Array<GroupMemberRewardsWithdrawnEvent>>} Withdrawal Events
+   */
+  async getWithdrawnRewardsForBeneficiary(beneficiaryAddress) {
+    return await this.keepRandomBeaconOperatorContract.getPastEvents(
+      "GroupMemberRewardsWithdrawn",
+      { beneficiary: beneficiaryAddress }
+    )
+  }
+
+  /**
+   *  Withdraws accumulated group member rewards for operator using the provided group index.
+   *
+   * @param {string} memberAddress
+   * @param {string | number} groupIndex
+   *
+   * @return {*}
+   */
+  withdrawGroupMemberRewards(memberAddress, groupIndex) {
+    return this.keepRandomBeaconOperatorContract.sendTransaction(
+      "withdrawGroupMemberRewards",
+      memberAddress,
+      groupIndex
+    )
+  }
+
+  /**
+   * @typedef {Object} DkgResultSubmittedEventValues
+   * @property {Object} returnValues
+   * @property {string} returnValues.memberIndex
+   * @property {string} returnValues.groupPubKey
+   * @property {*} returnValues.misbehaved
+   *
+   * @typedef {import("./contract-wrapper").EventData & DkgResultSubmittedEventValues} DkgResultSubmittedEvent
+   */
+  /**
+   *
+   * @return {Promise<Array<DkgResultSubmittedEvent>>}
+   */
+  async getAllCreatedGroups() {
+    return await this.keepRandomBeaconOperatorContract.getPastEvents(
+      "DkgResultSubmittedEvent"
+    )
+  }
+
+  /**
+   * Returns available rewards for a provided beneficiary address
+   * @param {*} beneficiaryAddress
+   *
+   * @typedef {Object} Reward
+   * @property {string} groupIndex
+   * @property {string} groupPublicKey
+   * @property {boolean} isStale
+   * @property {boolean} isTerminated
+   * @property {string} operatorAddress
+   * @property {string} reward
+   *
+   * @return {Promise<Array<Reward>>} Available rewards
+   */
+  async findKeepRandomBeaconRewardsForBeneficiary(beneficiaryAddress) {
+    const groupPublicKeys = (await this.getAllCreatedGroups()).map(
+      (event) => event.returnValues.groupPubKey
+    )
+
+    const groupsInfo = {}
+    const rewards = []
+
+    for (
+      let groupIndex = 0;
+      groupIndex < groupPublicKeys.length;
+      groupIndex++
+    ) {
+      const groupPublicKey = groupPublicKeys[groupIndex]
+      const groupMembers = new Set(
+        await this.keepRandomBeaconOperatorContract.makeCall(
+          "getGroupMembers",
+          groupPublicKey
+        )
+      )
+
+      for (const memberAddress of groupMembers) {
+        const beneficiaryAddressForMember = await this.beneficiaryOf(
+          memberAddress
+        )
+
+        if (
+          !isSameEthAddress(beneficiaryAddressForMember, beneficiaryAddress)
+        ) {
+          continue
+        }
+        const awaitingRewards = await this.keepRandomBeaconOperatorStatisticsContract.makeCall(
+          "awaitingRewards",
+          memberAddress,
+          groupIndex
+        )
+
+        if (!gt(awaitingRewards, 0)) {
+          continue
+        }
+
+        let groupInfo = {}
+        if (groupsInfo.hasOwnProperty(groupIndex)) {
+          groupInfo = { ...groupsInfo[groupIndex] }
+        } else {
+          const isStale = await this.keepRandomBeaconOperatorContract.makeCall(
+            "isStaleGroup",
+            groupPublicKey
+          )
+
+          const isTerminated =
+            !isStale &&
+            (await this.keepRandomBeaconOperatorContract.makeCall(
+              "isGroupTerminated",
+              groupIndex
+            ))
+
+          groupInfo = {
+            groupPublicKey,
+            isStale,
+            isTerminated,
+          }
+
+          groups[groupIndex] = groupInfo
+        }
+
+        rewards.push({
+          groupIndex: groupIndex.toString(),
+          ...groupInfo,
+          operatorAddress: memberAddress,
+          reward: awaitingRewards,
+        })
+      }
+    }
+  }
 }
