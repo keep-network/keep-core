@@ -14,8 +14,13 @@ const DelegatedTokensTable = ({
   title,
 }) => {
   return (
-    <Tile title={title}>
-      <DataTable data={delegatedTokens} itemFieldId="operatorAddress">
+    <Tile>
+      <DataTable
+        title="Delegations"
+        data={delegatedTokens}
+        itemFieldId="operatorAddress"
+        noDataMessage="No delegated tokens."
+      >
         <Column
           header="amount"
           field="amount"

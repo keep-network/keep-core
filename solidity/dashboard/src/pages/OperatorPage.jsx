@@ -8,6 +8,7 @@ import PageWrapper from "../components/PageWrapper"
 import { operatorService } from "../services/token-staking.service"
 import { useFetchData } from "../hooks/useFetchData"
 import { LoadingOverlay } from "../components/Loadable"
+import DelegatedTokensSkeleton from "../components/skeletons/DelegatedTokensSkeleton"
 
 const OperatorPage = (props) => {
   const [state, setData] = useFetchData(
@@ -23,7 +24,10 @@ const OperatorPage = (props) => {
 
   return (
     <PageWrapper title="Operations">
-      <LoadingOverlay isFetching={isFetching}>
+      <LoadingOverlay
+        isFetching={isFetching}
+        skeletonComponent={<DelegatedTokensSkeleton />}
+      >
         <DelegatedTokens
           isFetching={isFetching}
           data={data}

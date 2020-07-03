@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useMemo } from "react"
 import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
-// import * as Icons from "../components/Icons"
+import * as Icons from "../components/Icons"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useFetchData } from "../hooks/useFetchData"
 import { BondingSection } from "../components/BondingSection"
@@ -14,6 +14,7 @@ import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
 import { isSameEthAddress } from "../utils/general.utils"
+import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 
 const initialData = []
 const TBTCApplicationPage = () => {
@@ -83,8 +84,8 @@ const TBTCApplicationPage = () => {
     unbondedValueWithdrawnCallback
   )
 
-  const onAuthorizationSuccessCallback = useCallback(
-    (contractName, operatorAddress) => {
+  const onSuccessCallback = useCallback(
+    (contractName, operatorAddress, isAuthorized = true) => {
       const {
         indexInArray: operatorIndexInArray,
         obj: obsoleteOperator,
@@ -108,7 +109,7 @@ const TBTCApplicationPage = () => {
       const updatedContracts = [...obsoleteOperator.contracts]
       updatedContracts[contractIndexInArray] = {
         ...obsoleteContract,
-        isAuthorized: true,
+        isAuthorized,
       }
       const updatedOperators = [...tbtcAuthState.data]
       updatedOperators[operatorIndexInArray] = {
@@ -137,22 +138,49 @@ const TBTCApplicationPage = () => {
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",
-          content: "Authorization transaction successfully completed",
+          content: "Authorization successfully completed",
         })
-        setTimeout(
-          () => onAuthorizationSuccessCallback(contractName, operatorAddress),
-          5000
-        )
+        setTimeout(() => onSuccessCallback(contractName, operatorAddress), 5000)
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Authorization action has failed ",
+          title: "Authorization has failed",
           content: error.message,
         })
         throw error
       }
     },
-    [showMessage, web3Context, onAuthorizationSuccessCallback]
+    [showMessage, web3Context, onSuccessCallback]
+  )
+
+  const deauthorizeTBTCSystem = useCallback(
+    async (data, transactionHashCallback) => {
+      const { operatorAddress } = data
+      try {
+        await tbtcAuthorizationService.deauthorizeTBTCSystem(
+          web3Context,
+          operatorAddress,
+          transactionHashCallback
+        )
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content: "Deauthorization successfully completed",
+        })
+        setTimeout(
+          () => onSuccessCallback("TBTCSystem", operatorAddress, false),
+          5000
+        )
+      } catch (error) {
+        showMessage({
+          type: messageType.ERROR,
+          title: "Deauthorization has failed",
+          content: error.message,
+        })
+        throw error
+      }
+    },
+    [showMessage, web3Context, onSuccessCallback]
   )
 
   const tbtcAuthData = useMemo(() => {
@@ -168,10 +196,9 @@ const TBTCApplicationPage = () => {
     <PageWrapper
       className=""
       title="tBTC"
-      // The rewards page for the tbtc is not yet implemented
-      // nextPageLink="/rewards"
-      // nextPageTitle="Rewards"
-      // nextPageIcon={Icons.TBTC}
+      nextPageLink="/rewards/tbtc"
+      nextPageTitle="Rewards"
+      nextPageIcon={Icons.TBTC}
     >
       <nav className="mb-2">
         <a
@@ -183,16 +210,25 @@ const TBTCApplicationPage = () => {
           tBTC Website
         </a>
       </nav>
-      <LoadingOverlay isFetching={tbtcAuthState.isFetching}>
+      <LoadingOverlay
+        isFetching={tbtcAuthState.isFetching}
+        skeletonComponent={
+          <DataTableSkeleton columns={4} subtitleWidth="40%" />
+        }
+      >
         <AuthorizeContracts
           filterDropdownOptions={tbtcAuthState.data}
           onSelectOperator={setOperator}
           selectedOperator={selectedOperator}
           data={tbtcAuthData}
           onAuthorizeBtn={authorizeContract}
+          onDeauthorizeBtn={deauthorizeTBTCSystem}
         />
       </LoadingOverlay>
-      <LoadingOverlay isFetching={bondingState.isFetching}>
+      <LoadingOverlay
+        isFetching={bondingState.isFetching}
+        skeletonComponent={<DataTableSkeleton subtitleWidth="70%" />}
+      >
         <BondingSection data={bondingState.data} />
       </LoadingOverlay>
     </PageWrapper>

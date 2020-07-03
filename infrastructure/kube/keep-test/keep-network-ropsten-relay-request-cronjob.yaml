@@ -58,12 +58,12 @@ spec:
                 value: relay-requester
               - name: ETH_RPC_URL
                 valueFrom:
-                  configMapKeyRef:
+                  secretKeyRef:
                     name: eth-network-ropsten
                     key: rpc-url
               - name: ETH_WS_URL
                 valueFrom:
-                  configMapKeyRef:
+                  secretKeyRef:
                     name: eth-network-ropsten
                     key: ws-url
               - name: ETH_NETWORK_ID

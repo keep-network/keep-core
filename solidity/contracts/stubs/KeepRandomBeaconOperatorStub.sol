@@ -38,16 +38,8 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groupSelection.ticketSubmissionStartBlock;
     }
 
-    function isGroupSelectionInProgress() public view returns (bool) {
-        return groupSelection.inProgress;
-    }
-
     function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
         return groups.groups[groupIndex].groupPubKey;
-    }
-
-    function setGasPriceCeiling(uint256 _gasPriceCeiling) public {
-        gasPriceCeiling = _gasPriceCeiling;
     }
 
     function timeDKG() public view returns (uint256) {
