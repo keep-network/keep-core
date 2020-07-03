@@ -699,6 +699,18 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         return groups.getGroupMembers(groupPubKey);
     }
 
+    function getNumberOfCreatedGroups() public view returns (uint256) {
+        return groups.groups.length;
+    }
+
+    function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns (uint256) {
+        return groups.getGroupRegistrationBlockHeight(groupIndex);
+    }
+
+    function isGroupTerminated(uint256 groupIndex) public view returns (bool) {
+        return groups.isGroupTerminated(groupIndex);
+    }
+
     /// @notice Reports unauthorized signing for the provided group. Must provide
     /// a valid signature of the tattletale address as a message. Successful signature
     /// verification means the private key has been leaked and all group members
