@@ -81,4 +81,50 @@ export default class KEEP {
     this.depositContract
     this.bondedECDSAKeepContract
   }
+
+  /**
+   * Returns the authorizer for the given operator address.
+   *
+   * @param {string} operatorAddress
+   * @return {Promise<string>} Authrorizer address.
+   */
+  async authorizerOf(operatorAddress) {
+    return await this.tokenStakingContract.makeCall(
+      "authorizerOf",
+      operatorAddress
+    )
+  }
+
+  /**
+   * Returns the beneficiary for the given operator address.
+   *
+   * @param {string} operatorAddress
+   * @return {Promise<string>} Beneficiary address.
+   */
+  async beneficiaryOf(operatorAddress) {
+    return await this.tokenStakingContract.makeCall(
+      "beneficiaryOf",
+      operatorAddress
+    )
+  }
+
+  /**
+   * Returns the stake owner for the specified operator address.
+   *
+   * @param {string} operatorAddress
+   * @return {Promise<string>} Stake owner address.
+   */
+  async ownerOf(operatorAddress) {
+    return await this.tokenStakingContract.makeCall("ownerOf", operatorAddress)
+  }
+
+  /**
+   * Returns the list of operators of the given owner address.
+   *
+   * @param {string} ownerAddress
+   * @return {Promise<string[]>} An array of addresses.
+   */
+  async oepratorsOf(ownerAddress) {
+    return await this.tokenStakingContract.makeCall("operatorsOf", ownerAddress)
+  }
 }
