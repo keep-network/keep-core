@@ -381,4 +381,92 @@ export default class KEEP {
       }
     }
   }
+
+  /**
+   * Returns slashed tokens for a provided operator address
+   *
+   * @param {string} operatorAddress
+   * @return {Promise<any[]>} Slashed tokens data.
+   */
+  async getSlashedTokens(operatorAddress) {
+    const data = []
+
+    const slashedTokensEvents = await this.tokenStakingContract.getPastEvents(
+      "TokensSlashed",
+      { operator: operatorAddress }
+    )
+    const seizedTokensEvents = await this.tokenStakingContract.getPastEvents(
+      "TokensSeized",
+      { operator: operatorAddress }
+    )
+
+    if (slashedTokensEvents.length === 0 && seizedTokensEvents.length === 0) {
+      return data
+    }
+
+    const unauthorizedSigningEvents = await this.keepRandomBeaconOperatorContract.getPastEvents(
+      "UnauthorizedSigningReported"
+    )
+
+    const relayEntryTimeoutEvents = await this.keepRandomBeaconOperatorContract.getPastEvents(
+      "RelayEntryTimeoutReported"
+    )
+
+    const punishmentEvents = [
+      ...unauthorizedSigningEvents,
+      ...relayEntryTimeoutEvents,
+    ]
+
+    const groupByTransactionHash = (events) => {
+      const groupedByTransactionHash = {}
+
+      events.forEach((event) => {
+        const { transactionHash, returnValues } = event
+        if (groupedByTransactionHash.hasOwnProperty(transactionHash)) {
+          const prevData = groupedByTransactionHash[transactionHash]
+          groupedByTransactionHash[transactionHash] = {
+            ...returnValues,
+            amount: add(returnValues.amount, prevData.amount),
+          }
+        } else {
+          groupedByTransactionHash[transactionHash] = { ...returnValues }
+        }
+      })
+
+      return groupedByTransactionHash
+    }
+
+    const slashedTokensGroupedByTxtHash = groupByTransactionHash(
+      slashedTokensEvents
+    )
+    const seizedTokensGroupedByTxtHash = groupByTransactionHash(
+      seizedTokensEvents
+    )
+
+    for (let i = 0; i < punishmentEvents.length; i++) {
+      const {
+        returnValues: { groupIndex },
+      } = punishmentEvents[i]
+      let punishmentData = {}
+      if (slashedTokensGroupedByTxtHash.hasOwnProperty(transactionHash)) {
+        const { amount } = slashedTokensGroupedByTxtHash[transactionHash]
+        punishmentData = {
+          amount,
+          groupIndex,
+          ...punishmentEvents[i],
+        }
+      } else if (seizedTokensGroupedByTxtHash.hasOwnProperty(transactionHash)) {
+        const { amount } = seizedTokensGroupedByTxtHash[transactionHash]
+        punishmentData = {
+          amount,
+          groupIndex,
+          ...punishmentEvents[i],
+        }
+      }
+
+      if (lte(punishmentData.amount, 0)) continue
+
+      data.push(punishmentData)
+    }
+  }
 }
