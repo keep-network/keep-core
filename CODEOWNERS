@@ -21,9 +21,12 @@
 /solidity/contracts/libraries/operator/Groups.sol @Shadowfiend @pdyraga
 /solidity/contracts/libraries/operator/GroupSelection.sol @Shadowfiend @pdyraga
 /solidity/contracts/libraries/operator/Reimbursements.sol @Shadowfiend @pdyraga
+/solidity/contracts/libraries/staking/GrantStaking.sol @Shadowfiend @pdyraga @nkuba
+/solidity/contracts/libraries/staking/LockUtils.sol @Shadowfiend @pdyraga @nkuba
+/solidity/contracts/libraries/staking/Locks.sol @Shadowfiend @pdyraga @nkuba
+/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol @Shadowfiend @pdyraga @nkuba
 /solidity/contracts/utils/AddressArrayUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/BytesLib.sol @Shadowfiend @pdyraga
-/solidity/contracts/utils/LockUtils.sol @Shadowfiend @pdyraga @nkuba
 /solidity/contracts/utils/OperatorParams.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/PercentUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/UIntArrayUtils.sol @Shadowfiend @pdyraga
