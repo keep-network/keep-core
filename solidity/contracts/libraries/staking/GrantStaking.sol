@@ -96,8 +96,8 @@ library GrantStaking {
         TokenGrant tokenGrant
     ) public returns (bool) {
         // First of all, we need to see if the operator has grant delegated.
-        // If not, we don't want need to bother about checking grantee or
-        // managed grantee.
+        // If not, we don't need to bother about checking grantee or
+        // managed grantee and we just return false.
         if (!hasGrantDelegated(self, operator)) {
             return false;
         }
