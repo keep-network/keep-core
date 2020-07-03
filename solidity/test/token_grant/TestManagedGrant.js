@@ -1,6 +1,6 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
+const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -9,7 +9,10 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const GrantStaking = contract.fromArtifact('GrantStaking');
+const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
@@ -48,15 +51,31 @@ describe('TokenGrant/ManagedGrant', () => {
   before(async () => {
     token = await KeepToken.new({from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
+    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
+    stakingEscrow = await TokenStakingEscrow.new(
+      token.address, 
+      tokenGrant.address, 
+      {from: grantCreator}
+    );
+    await TokenStaking.detectNetwork();
+    await TokenStaking.link(
+      'MinimumStakeSchedule', 
+      (await MinimumStakeSchedule.new({from: grantCreator})).address
+    );
+    await TokenStaking.link(
+      'GrantStaking', 
+      (await GrantStaking.new({from: grantCreator})).address
+    );
     staking = await TokenStaking.new(
       token.address,
+      tokenGrant.address,
+      stakingEscrow.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
       {from: grantCreator}
     );
-
-    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
+    await stakingEscrow.transferOwnership(staking.address, {from: grantCreator})
 
     await tokenGrant.authorizeStakingContract(staking.address, {from: grantCreator});
 
@@ -593,7 +612,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: grantee});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -605,7 +624,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: operator});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: operator});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -617,7 +636,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: grantCreator});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -629,7 +648,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.undelegate(operator, {from: grantee});
       await time.increase(undelegationPeriod.add(grantUnlockingDuration));
       await managedGrant.recoverStake(operator, {from: unrelatedAddress});
-      await managedGrant.withdraw({from: grantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee});
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount);
     });
 
@@ -643,7 +662,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await managedGrant.recoverStake(operator, {from: newGrantee});
-      await managedGrant.withdraw({from: newGrantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: newGrantee});
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
     });
 
@@ -657,7 +676,7 @@ describe('TokenGrant/ManagedGrant', () => {
       await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee});
       await managedGrant.confirmGranteeReassignment(newGrantee, {from: grantCreator});
       await managedGrant.recoverStake(operator, {from: grantee});
-      await managedGrant.withdraw({from: newGrantee});
+      await stakingEscrow.withdrawToManagedGrantee(operator, {from: newGrantee});
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount);
     });
   });

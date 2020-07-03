@@ -2,7 +2,10 @@ const KeepToken = artifacts.require("./KeepToken.sol");
 const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const AltBn128 = artifacts.require("./cryptography/AltBn128.sol");
 const BLS = artifacts.require("./cryptography/BLS.sol");
+const MinimumStakeSchedule = artifacts.require("./MinimumStakeSchedule.sol");
+const GrantStaking = artifacts.require("./GrantStaking.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
+const TokenStakingEscrow = artifacts.require("./TokenStakingEscrow.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
 const GuaranteedMinimumStakingPolicy = artifacts.require('./GuaranteedMinimumStakingPolicy.sol');
 const TokenGrant = artifacts.require("./TokenGrant.sol");
@@ -35,11 +38,24 @@ module.exports = async function(deployer, network) {
   await deployer.link(AltBn128, BLS);
   await deployer.deploy(BLS);
   await deployer.deploy(KeepToken);
+  await deployer.deploy(TokenGrant, KeepToken.address);
   await deployer.deploy(KeepRegistry);
-  await deployer.deploy(TokenStaking, KeepToken.address, KeepRegistry.address, initializationPeriod, undelegationPeriod);
+  await deployer.deploy(TokenStakingEscrow, KeepToken.address, TokenGrant.address);
+  await deployer.deploy(MinimumStakeSchedule);
+  await deployer.deploy(GrantStaking);
+  await deployer.link(MinimumStakeSchedule, TokenStaking);
+  await deployer.link(GrantStaking, TokenStaking);
+  await deployer.deploy(
+    TokenStaking,
+    KeepToken.address,
+    TokenGrant.address,
+    TokenStakingEscrow.address,
+    KeepRegistry.address,
+    initializationPeriod,
+    undelegationPeriod
+  );
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);
-  await deployer.deploy(TokenGrant, KeepToken.address);
   await deployer.deploy(
     ManagedGrantFactory,
     KeepToken.address,
