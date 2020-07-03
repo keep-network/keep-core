@@ -86,7 +86,7 @@ library GroupSelection {
     function start(Storage storage self, uint256 _seed) public {
         // We execute the minimum required cleanup here needed in case the
         // previous group selection failed and did not clean up properly in
-        // stop function.
+        // finish function.
         cleanupTickets(self);
         self.inProgress = true;
         self.seed = _seed;
@@ -375,7 +375,7 @@ library GroupSelection {
     /// This operation may have a significant cost if not executed as a part of
     /// another transaction consuming a lot of gas and as a result, getting
     /// gas refund for clearing up the storage.
-    function cleanupCandidates(Storage storage self) public {
+    function cleanupCandidates(Storage storage self) internal {
         for (uint i = 0; i < self.tickets.length; i++) {
             delete self.candidate[self.tickets[i]];
         }
