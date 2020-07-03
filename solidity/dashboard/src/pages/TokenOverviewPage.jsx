@@ -7,6 +7,7 @@ import { LoadingOverlay } from "../components/Loadable"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 
 const TokenOverviewPage = () => {
   const {
@@ -46,27 +47,30 @@ const TokenOverviewPage = () => {
   }, [grants, totalGrantedStakedBalance])
 
   return (
-    <LoadingOverlay isFetching={isFetching}>
-      <PageWrapper title="Token Overview">
-        <TokenOverview
-          totalKeepTokenBalance={totalKeepTokenBalance}
-          totalOwnedStakedBalance={totalOwnedStakedBalance}
-          totalGrantedTokenBalance={totalGrantedTokenBalance}
-          totalGrantedStakedBalance={totalGrantedStakedBalance}
-        />
+    <PageWrapper title="Token Overview">
+      <TokenOverview
+        totalKeepTokenBalance={totalKeepTokenBalance}
+        totalOwnedStakedBalance={totalOwnedStakedBalance}
+        totalGrantedTokenBalance={totalGrantedTokenBalance}
+        totalGrantedStakedBalance={totalGrantedStakedBalance}
+      />
+      <LoadingOverlay
+        isFetching={isFetching}
+        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}
+      >
         <DelegatedTokensTable
           title="Delegation History"
           delegatedTokens={delegations}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
         />
-        {!isEmptyArray(undelegations) && (
-          <Undelegations
-            title="Undelegation History"
-            undelegations={undelegations}
-          />
-        )}
-      </PageWrapper>
-    </LoadingOverlay>
+      </LoadingOverlay>
+      {!isEmptyArray(undelegations) && (
+        <Undelegations
+          title="Undelegation History"
+          undelegations={undelegations}
+        />
+      )}
+    </PageWrapper>
   )
 }
 

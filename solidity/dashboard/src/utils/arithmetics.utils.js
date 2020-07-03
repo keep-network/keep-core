@@ -1,6 +1,5 @@
 import web3Utils from "web3-utils"
 
-const ONE = web3Utils.toBN(1)
 const ONE_HUNDRED = web3Utils.toBN(100)
 
 export const add = (a, b) => {
@@ -34,8 +33,9 @@ export const lte = (a, b) => {
 export const isZero = (a) => web3Utils.toBN(a).isZero()
 
 export const percentageOf = (value, total) => {
-  return web3Utils
-    .toBN(value)
-    .mul(ONE_HUNDRED)
-    .div(isZero(total) ? ONE : total)
+  if (isZero(total)) {
+    return 0
+  }
+
+  return web3Utils.toBN(value).mul(ONE_HUNDRED).div(total)
 }
