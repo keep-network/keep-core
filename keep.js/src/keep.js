@@ -127,4 +127,48 @@ export default class KEEP {
   async oepratorsOf(ownerAddress) {
     return await this.tokenStakingContract.makeCall("operatorsOf", ownerAddress)
   }
+
+  /**
+   * @typedef {Object} DelegationInfo
+   * @property {string} amount The amount of tokens the given operator delegated.
+   * @property {string} createdAt The time when the stake has been delegated.
+   * @property {string} undelegatedAt The time when undelegation has been requested.
+   */
+  /**
+   * Returns stake delegation info for the given operator address.
+   *
+   * @param {string} operatorAddress
+   * @return {Promise<DelegationInfo>} Stake delegation info.
+   */
+  async getDelegationInfo(operatorAddress) {
+    return await this.tokenStakingContract.makeCall(
+      "getDelegationInfo",
+      operatorAddress
+    )
+  }
+
+  /**
+   * @typedef {Object} DelegationAddresses
+   * @property {string} authroizer
+   * @property {string} beneficiary
+   * @property {string} operator
+   *
+   * @typedef {DelegationInfo | DelegationAddresses} FullDelegationInfo
+   */
+  /**
+   * Returns delegations for given operators.
+   * @param {string[]} operatorAddresses An array of operator addresses.
+   * @return {Promise<FullDelegationInfo[]>} Array of delegations
+   */
+  async getDelegations(operatorAddresses) {
+    const delegations = []
+    for (const operator of operatorAddresses) {
+      const delegationInfo = await this.getDelegationInfo(operator)
+      const beneficiary = await this.beneficiaryOf(operator)
+      const authorizer = await this.authorizerOf(operator)
+      delegations.push({ ...delegationInfo, beneficiary, authorizer, operator })
+    }
+
+    return delegations
+  }
 }
