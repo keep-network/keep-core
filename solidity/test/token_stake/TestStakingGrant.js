@@ -1,6 +1,7 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot');
+const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot')
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const {grantTokens, grantTokensToManagedGrant} = require('../helpers/grantTokens');
 const {
@@ -10,14 +11,10 @@ const {
 
 const KeepToken = contract.fromArtifact('KeepToken')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const GrantStaking = contract.fromArtifact('GrantStaking')
-const TokenStaking = contract.fromArtifact('TokenStaking')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
 const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory')
 const ManagedGrant = contract.fromArtifact('ManagedGrant')
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -65,34 +62,18 @@ describe('TokenStaking/StakingGrant', () => {
         {from: deployer}
       )
       
-      tokenStakingEscrow = await TokenStakingEscrow.new(
-        token.address, 
-        tokenGrant.address,
-        {from: deployer}
-      )
-
-      await TokenStaking.detectNetwork()
-      await TokenStaking.link(
-        'MinimumStakeSchedule', 
-        (await MinimumStakeSchedule.new({from: deployer})).address
-      )
-      await TokenStaking.link(
-        'GrantStaking', 
-        (await GrantStaking.new({from: deployer})).address
-      )
-      tokenStaking = await TokenStaking.new(
+      const stakingContracts = await initTokenStaking(
         token.address,
         tokenGrant.address,
-        tokenStakingEscrow.address,
         registry.address,
         initializationPeriod,
         undelegationPeriod,
-        {from: deployer}
+        contract.fromArtifact('TokenStakingEscrow'),
+        contract.fromArtifact('TokenStaking')
       )
-      await tokenStakingEscrow.transferOwnership(
-        tokenStaking.address, 
-        {from: deployer}
-      )
+      tokenStaking = stakingContracts.tokenStaking;
+      tokenStakingEscrow = stakingContracts.tokenStakingEscrow;
+
       await tokenGrant.authorizeStakingContract(tokenStaking.address, {
         from: grantManager,
       })

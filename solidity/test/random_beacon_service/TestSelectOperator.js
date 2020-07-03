@@ -1,6 +1,6 @@
 const {expectRevert} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, accounts} = require("@openzeppelin/test-environment")
 const OperatorContract = contract.fromArtifact('KeepRandomBeaconOperatorStub')

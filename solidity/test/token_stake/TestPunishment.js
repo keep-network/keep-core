@@ -1,14 +1,11 @@
 const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {initTokenStaking} = require('../helpers/initContracts')
 const stakeDelegate = require('../helpers/stakeDelegate')
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
-const GrantStaking = contract.fromArtifact('GrantStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 const BN = web3.utils.BN
@@ -35,29 +32,16 @@ describe('TokenStaking/Punishment', () => {
         token = await KeepToken.new({ from: owner })
         tokenGrant = await TokenGrant.new(token.address,  {from: owner})
         registry = await KeepRegistry.new({ from: owner })
-        stakingEscrow = await TokenStakingEscrow.new(
-            token.address, 
-            tokenGrant.address, 
-            {from: owner}
-        )
-        await TokenStaking.detectNetwork()
-        await TokenStaking.link(
-            'MinimumStakeSchedule', 
-            (await MinimumStakeSchedule.new({from: owner})).address
-        )
-        await TokenStaking.link(
-            'GrantStaking', 
-            (await GrantStaking.new({from: owner})).address
-        )
-        stakingContract = await TokenStaking.new(
+        const stakingContracts = await initTokenStaking(
             token.address,
             tokenGrant.address,
-            stakingEscrow.address,
             registry.address,
             initializationPeriod,
             undelegationPeriod,
-            { from: owner }
+            contract.fromArtifact('TokenStakingEscrow'),
+            contract.fromArtifact('TokenStaking')
         )
+        stakingContract = stakingContracts.tokenStaking;
 
         await registry.setRegistryKeeper(registryKeeper, { from: owner })
 

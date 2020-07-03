@@ -1,6 +1,7 @@
 const { delegateStake, delegateStakeFromGrant } = require('../helpers/delegateStake')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {initTokenStaking} = require('../helpers/initContracts')
 const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -15,10 +16,6 @@ const expect = chai.expect
 const timeRoundMargin = time.duration.minutes(1)
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const GrantStaking = contract.fromArtifact('GrantStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
@@ -55,30 +52,17 @@ describe('TokenGrant/Stake', function() {
     tokenContract = await KeepToken.new({from: accounts[0]});
     grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
     registryContract = await KeepRegistry.new({from: accounts[0]});
-    stakingEscrow = await TokenStakingEscrow.new(
-      tokenContract.address, 
-      grantContract.address, 
-      {from: accounts[0]}
-    );
-    await TokenStaking.detectNetwork();
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: accounts[0]})).address
-    );
-    await TokenStaking.link(
-      'GrantStaking', 
-      (await GrantStaking.new({from: accounts[0]})).address
-    );
-    stakingContract = await TokenStaking.new(
+    const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
-      stakingEscrow.address,
       registryContract.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: accounts[0]}
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
-    await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
+    stakingContract = stakingContracts.tokenStaking;
+    stakingEscrowContract = stakingContracts.tokenStakingEscrow;
 
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
@@ -222,7 +206,7 @@ describe('TokenGrant/Stake', function() {
     await time.increaseTo(undelegatedAt.add(undelegationPeriod).addn(1))
     await grantContract.recoverStake(operatorOne);
 
-    let availableForStaking = await stakingEscrow.depositedAmount(operatorOne);
+    let availableForStaking = await stakingEscrowContract.depositedAmount(operatorOne);
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
 
     expect(availableForStaking).to.eq.BN(
@@ -240,7 +224,7 @@ describe('TokenGrant/Stake', function() {
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
-    let availableForStaking = await stakingEscrow.depositedAmount.call(operatorOne)
+    let availableForStaking = await stakingEscrowContract.depositedAmount.call(operatorOne)
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
 
     expect(availableForStaking).to.eq.BN(
@@ -261,7 +245,7 @@ describe('TokenGrant/Stake', function() {
 
     await grantContract.cancelStake(operatorOne, {from: grantee});
 
-    let availableForStaking = await stakingEscrow.depositedAmount.call(operatorOne)
+    let availableForStaking = await stakingEscrowContract.depositedAmount.call(operatorOne)
     let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
 
     expect(availableForStaking).to.eq.BN(
@@ -318,7 +302,7 @@ describe('TokenGrant/Stake', function() {
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
     await time.increaseTo(createdAt.add(grantUnlockingDuration))
     await grantContract.recoverStake(operatorOne, {from: grantee});
-    await stakingEscrow.withdraw(operatorOne, {from: grantee});
+    await stakingEscrowContract.withdraw(operatorOne, {from: grantee});
 
     await expectRevert(
       delegateLiquid(grantee, operatorOne, minimumStake),

@@ -20,8 +20,8 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakeDelegatable.sol";
 import "./libraries/staking/MinimumStakeSchedule.sol";
 import "./libraries/staking/GrantStaking.sol";
+import "./libraries/staking/Locks.sol";
 import "./utils/PercentUtils.sol";
-import "./utils/LockUtils.sol";
 import "./utils/BytesLib.sol";
 import "./Authorizations.sol";
 import "./TokenStakingEscrow.sol";
@@ -39,6 +39,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
     using GrantStaking for GrantStaking.Storage;
+    using Locks for Locks.Storage;
 
     event Staked(
         address owner,
@@ -55,8 +56,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
-    uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
-
     uint256 public initializationPeriod;
     uint256 public undelegationPeriod;
 
@@ -68,13 +67,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     GrantStaking.Storage internal grantStaking;
 
+    Locks.Storage internal locks;
+
     // KEEP token grant contract.
     TokenGrant internal tokenGrant;
-
-    // Locks placed on the operator.
-    // `operatorLocks[operator]` returns all locks placed on the operator.
-    // Each authorized operator contract can place one lock on an operator.
-    mapping(address => LockUtils.LockSet) internal operatorLocks;
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
@@ -281,7 +277,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
-        require(duration <= maximumLockDuration, "Lock duration too long");
 
         uint256 operatorParams = operators[operator].packedParams;
 
@@ -294,11 +289,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             "Operator undelegating"
         );
 
-        operatorLocks[operator].setLock(
-            msg.sender,
-            uint96(block.timestamp.add(duration))
-        );
-        emit StakeLocked(operator, msg.sender, block.timestamp.add(duration));
+        locks.lockStake(operator, duration);
     }
 
     /// @notice Removes a lock the caller had previously placed on the operator.
@@ -318,8 +309,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
-        operatorLocks[operator].releaseLock(msg.sender);
-        emit LockReleased(operator, msg.sender);
+        locks.releaseLock(operator);
     }
 
     /// @notice Removes the lock of the specified operator contract
@@ -332,38 +322,14 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address operator,
         address operatorContract
     ) public {
-        LockUtils.LockSet storage locks = operatorLocks[operator];
-        require(
-            locks.contains(operatorContract),
-            "No matching lock present"
-        );
-        bool expired = block.timestamp >= locks.getLockTime(operatorContract);
-        bool disabled = !registry.isApprovedOperatorContract(operatorContract);
-        require(
-            expired || disabled,
-            "Lock still active and valid"
-        );
-        locks.releaseLock(operatorContract);
-        emit ExpiredLockReleased(operator, operatorContract);
+        locks.releaseExpiredLock(operator, operatorContract, registry);
     }
 
     /// @notice Check whether the operator has any active locks
     /// that haven't expired yet
     /// and whose creators aren't disabled by the panic button.
-    function isStakeLocked(
-        address operator
-    ) public view returns (bool) {
-        LockUtils.Lock[] storage _locks = operatorLocks[operator].locks;
-        LockUtils.Lock memory lock;
-        for (uint i = 0; i < _locks.length; i++) {
-            lock = _locks[i];
-            if (block.timestamp < lock.expiresAt) {
-                if (registry.isApprovedOperatorContract(lock.creator)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    function isStakeLocked(address operator) public view returns (bool) {
+        return locks.isStakeLocked(operator, registry);
     }
 
     /// @notice Get the locks placed on the operator.
@@ -375,15 +341,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         public
         view
         returns (address[] memory creators, uint256[] memory expirations) {
-        uint256 lockCount = operatorLocks[operator].locks.length;
-        creators = new address[](lockCount);
-        expirations = new uint256[](lockCount);
-        LockUtils.Lock memory lock;
-        for (uint i = 0; i < lockCount; i++) {
-            lock = operatorLocks[operator].locks[i];
-            creators[i] = lock.creator;
-            expirations[i] = lock.expiresAt;
-        }
+        return locks.getLocks(operator);
     }
 
     /// @notice Slash provided token amount from every member in the misbehaved
@@ -609,10 +567,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             return false;
         }
         // Undelegating finished, so check locks
-        LockUtils.LockSet storage locks = operatorLocks[_operator];
-        // `getLockTime` returns 0 if the lock doesn't exist,
-        // thus we don't need to check for its presence separately.
-        return block.timestamp >= locks.getLockTime(_operatorContract);
+        return locks.isStakeReleased(_operator, _operatorContract);
     }
 
     function transferOrDeposit(

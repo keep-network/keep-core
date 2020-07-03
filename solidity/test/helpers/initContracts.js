@@ -10,8 +10,57 @@ const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const GrantStaking = contract.fromArtifact('GrantStaking');
+const Locks = contract.fromArtifact('Locks');
+
+async function initTokenStaking(
+  tokenAddress,
+  tokenGrantAddress,
+  keepRegistryAddress,
+  stakeInitializationPeriod,
+  stakeUndelegationPeriod,
+  TokenStakingEscrow,
+  TokenStaking
+) {
+  let tokenStakingEscrow = await TokenStakingEscrow.new(
+    tokenAddress,
+    tokenGrantAddress,
+    {from: accounts[0]}
+  )
+
+  await TokenStaking.detectNetwork()
+  await TokenStaking.link(
+    'MinimumStakeSchedule', 
+    (await MinimumStakeSchedule.new({from: accounts[0]})).address
+  )
+  await TokenStaking.link(
+    'GrantStaking',
+    (await GrantStaking.new({from: accounts[0]})).address
+  )
+  await TokenStaking.link(
+    'Locks',
+    (await Locks.new({from: accounts[0]})).address
+  )
+
+  let tokenStaking = await TokenStaking.new(
+    tokenAddress,
+    tokenGrantAddress,
+    tokenStakingEscrow.address,
+    keepRegistryAddress,
+    stakeInitializationPeriod,
+    stakeUndelegationPeriod,
+    {from: accounts[0]}
+  );
+  await tokenStakingEscrow.transferOwnership(
+    tokenStaking.address,
+    {from: accounts[0]}
+  );
+
+  return {
+    tokenStakingEscrow: tokenStakingEscrow,
+    tokenStaking: tokenStaking
+  };
+}
 
 async function initContracts(TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
@@ -29,29 +78,16 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
   registry = await KeepRegistry.new({from: accounts[0]});
 
   // Initialize staking contract
-  await TokenStaking.detectNetwork()
-  await TokenStaking.link(
-    'MinimumStakeSchedule', 
-    (await MinimumStakeSchedule.new({from: accounts[0]})).address
-  )
-  stakingEscrow = await TokenStakingEscrow.new(
+  const stakingContracts = await initTokenStaking(
     token.address,
     tokenGrant.address,
-    {from: accounts[0]}
-  )
-  const grantStakingInfoLib = await GrantStaking.new({from: accounts[0]});
-  await TokenStaking.detectNetwork();
-  await TokenStaking.link("GrantStaking", grantStakingInfoLib.address);
-  stakingContract = await TokenStaking.new(
-    token.address,
-    tokenGrant.address,
-    stakingEscrow.address,
     registry.address,
     stakeInitializationPeriod,
     stakeUndelegationPeriod,
-    {from: accounts[0]}
-  );
-  await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
+    contract.fromArtifact('TokenStakingEscrow'),
+    TokenStaking
+  )
+  stakingContract = stakingContracts.tokenStaking
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({from: accounts[0]});
@@ -113,4 +149,5 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
   };
 };
 
-module.exports = initContracts;
+module.exports.initTokenStaking = initTokenStaking;
+module.exports.initContracts = initContracts;
