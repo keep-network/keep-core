@@ -135,3 +135,7 @@ func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
 func (lcm *localConnectionManager) AddrStrings() []string {
 	return make([]string, 0)
 }
+
+func (lcm *localConnectionManager) IsConnected(address string) bool {
+	panic("not implemented")
+}

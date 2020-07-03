@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import "../utils/LockUtils.sol";
+import "../libraries/staking/LockUtils.sol";
 
 contract LockStub {
     using LockUtils for LockUtils.LockSet;

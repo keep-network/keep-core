@@ -1,6 +1,7 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -9,10 +10,6 @@ const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const GrantStaking = contract.fromArtifact('GrantStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
@@ -38,29 +35,16 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     token = await KeepToken.new({from: accounts[0]});
     grant = await TokenGrant.new(token.address,  {from: accounts[0]});
     registry = await KeepRegistry.new();
-    escrow = await TokenStakingEscrow.new(
-      token.address, 
-      grant.address, 
-      {from: accounts[0]}
-    );
-    await TokenStaking.detectNetwork();
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new()).address
-    );
-    await TokenStaking.link(
-      'GrantStaking', 
-      (await GrantStaking.new()).address
-    );
-    stakingContract = await TokenStaking.new(
+    const stakingContracts = await initTokenStaking(
       token.address,
       grant.address,
-      escrow.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod
-    );
-    await escrow.transferOwnership(stakingContract.address, {from: accounts[0]});
+      undelegationPeriod,
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking;
 
     minimumStake = await stakingContract.minimumStake();
     stakingAmount = minimumStake.muln(20);

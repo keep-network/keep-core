@@ -1,7 +1,8 @@
 
 const {contract, web3} = require("@openzeppelin/test-environment")
 const {time} = require("@openzeppelin/test-helpers")
-const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot');
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -10,10 +11,6 @@ const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const GrantStaking = contract.fromArtifact('GrantStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/MinimumStake', function() {
@@ -29,25 +26,16 @@ describe('TokenStaking/MinimumStake', function() {
     token = await KeepToken.new();
     grant = await TokenGrant.new(token.address);
     registry = await KeepRegistry.new();
-    escrow = await TokenStakingEscrow.new(token.address, grant.address);
-    await TokenStaking.detectNetwork();
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new()).address
-    );
-    await TokenStaking.link(
-      'GrantStaking', 
-      (await GrantStaking.new()).address
-    );
-    stakingContract = await TokenStaking.new(
+    const stakingContracts = await initTokenStaking(
       token.address,
       grant.address,
-      escrow.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod
-    );
-    await escrow.transferOwnership(stakingContract.address);
+      undelegationPeriod,
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking;
 
     keepDecimals = web3.utils.toBN(10).pow(web3.utils.toBN(18));
   });

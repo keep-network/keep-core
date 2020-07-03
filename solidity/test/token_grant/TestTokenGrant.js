@@ -1,14 +1,13 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {initTokenStaking} = require('../helpers/initContracts')
 const {grantTokens} = require('../helpers/grantTokens');
+
 const KeepToken = contract.fromArtifact('KeepToken');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const GrantStaking = contract.fromArtifact('GrantStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
+
 const assert = require('chai').assert
 
 describe('TokenGrant', function() {
@@ -23,30 +22,17 @@ describe('TokenGrant', function() {
     token = await KeepToken.new({from: accounts[0]});
     registry = await KeepRegistry.new({from: accounts[0]});
     grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
-    stakingEscrow = await TokenStakingEscrow.new(
-      token.address, 
-      grantContract.address, 
-      {from: accounts[0]}
-    );
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: accounts[0]})).address
-    );
-    await TokenStaking.link(
-      'GrantStaking', 
-      (await GrantStaking.new({from: accounts[0]})).address
-    );
-    stakingContract = await TokenStaking.new(
+    const contracts = await initTokenStaking(
       token.address,
       grantContract.address,
-      stakingEscrow.address,
       registry.address,
       time.duration.days(1),
       time.duration.days(30),
-      {from: accounts[0]}
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
-    await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
+    stakingContract = contracts.tokenStaking;
+
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
     permissivePolicy = await PermissiveStakingPolicy.new()
     amount = web3.utils.toBN(100);
@@ -56,7 +42,6 @@ describe('TokenGrant', function() {
   });
 
   it("should grant tokens correctly", async function() {
-
     let amount = web3.utils.toBN(1000000000);
     let unlockingDuration = time.duration.days(30);
     let start = await time.latest();
@@ -115,7 +100,6 @@ describe('TokenGrant', function() {
   });
 
   it("token holder should be able to grant it's tokens to a grantee.", async function() {
-
     let grant_manager_starting_balance = await token.balanceOf.call(grant_manager);
 
     let id = await grantTokens(
