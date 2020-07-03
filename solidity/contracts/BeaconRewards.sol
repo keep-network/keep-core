@@ -36,10 +36,11 @@ contract BeaconRewards is Rewards {
     }
 
     function _getCreationTime(bytes32 groupIndexBytes) internal view returns (uint256) {
-        return operatorContract.getGroupRegistrationBlockHeight(uint256(groupIndexBytes));
+        return operatorContract.getGroupRegistrationTime(uint256(groupIndexBytes));
     }
 
     function _isClosed(bytes32 groupIndexBytes) internal view returns (bool) {
+        if (_isTerminated(groupIndexBytes)) { return false; }
         bytes memory groupPubkey = operatorContract.getGroupPublicKey(
             uint256(groupIndexBytes)
         );
