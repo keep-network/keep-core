@@ -260,6 +260,8 @@ github.com/keep-network/keep-common v1.1.1-0.20200612121439-e1944b162625 h1:ZDb+
 github.com/keep-network/keep-common v1.1.1-0.20200612121439-e1944b162625/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/keep-network/keep-common v1.1.1-0.20200701100953-c1c03e75403b h1:sQfkPbDdCp8zTp486gIG/LrpMJscbJ4CQvsYSuGg81I=
 github.com/keep-network/keep-common v1.1.1-0.20200701100953-c1c03e75403b/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
+github.com/keep-network/keep-common v1.1.1-0.20200703125023-d9872a19ebd1 h1:SCjStilprtxkLaY6+pw/xqvCJFPEm71n3GJyC+cbLU0=
+github.com/keep-network/keep-common v1.1.1-0.20200703125023-d9872a19ebd1/go.mod h1:0uY+hufkP66nFnL+3GXMwWXRiKKsFyXFQTby1xR7AwY=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
