@@ -349,7 +349,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultSubmittedEvent(submitterMemberIndex, groupPubKey, misbehaved);
-        groupSelection.stop();
+        groupSelection.finish();
     }
 
     /// @notice Compare the reimbursement fee calculated based on the current

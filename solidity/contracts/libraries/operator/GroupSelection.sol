@@ -93,11 +93,11 @@ library GroupSelection {
         self.ticketSubmissionStartBlock = block.number;
     }
 
-    /// @notice Stops group selection protocol clearing up all the submitted
+    /// @notice Finishes group selection protocol clearing up all the submitted
     /// tickets. This function may be expensive if not executed as a part of
     /// another transaction consuming a lot of gas and as a result, getting
     /// gas refund for clearing up the storage.
-    function stop(Storage storage self) public {
+    function finish(Storage storage self) public {
         cleanupCandidates(self);
         cleanupTickets(self);
         self.inProgress = false;
