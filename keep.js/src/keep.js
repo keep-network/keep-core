@@ -171,4 +171,64 @@ export default class KEEP {
 
     return delegations
   }
+
+  /**
+   * Authorizes operator contract to access staked token balance of the provided operator.
+   * Can only be executed by stake operator authorizer.
+   *
+   * @param {string} operatorAddress
+   * @return {*}
+   */
+  authorizeKeepRandomBeaconOperatorContract(operatorAddress) {
+    const keepRandomBeaconOperatorContractAddress = this
+      .keepRandomBeaconOperatorContract.address
+    return this.tokenStakingContract.sendTransaction(
+      "authorizeOperatorContract",
+      operatorAddress,
+      keepRandomBeaconOperatorContractAddress
+    )
+  }
+
+  /**
+   * Returns the array of the operators of the given authorizer address.
+   *
+   * @param {string} authorizerAddress
+   * @return {Promise<string[]>} Operators of authorizer.
+   */
+  async getAuthorizerOperators(authorizerAddress) {
+    const stakedEvents = await this.tokenStakingContract.getPastEvents("Staked")
+
+    const authorizerOperators = []
+
+    // Fetch all authorizer operators
+    for (let i = 0; i < stakedEvents.length; i++) {
+      const {
+        returnValues: { from: operatorAddress },
+      } = stakedEvents[i]
+
+      const authorizerOfOperator = await this.authorizerOfOperator(
+        operatorAddress
+      )
+
+      if (isSameEthAddress(authorizerOfOperator, authorizerAddress)) {
+        authorizerOperators.push(operatorAddress)
+      }
+    }
+
+    return authorizerOperators
+  }
+
+  /**
+   * Checks if operator contract has access to the staked token balance of the provided operator.
+   *
+   * @param {string} operatorAddress
+   * @return {Promise<boolean>}
+   */
+  async isAuthorizedForKeepRandomBeacon(operatorAddress) {
+    return await this.tokenStakingContract.makeCall(
+      "isAuthorizedForOperator",
+      operatorAddress,
+      this.keepRandomBeaconOperatorContract.address
+    )
+  }
 }
