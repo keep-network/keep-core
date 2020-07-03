@@ -5,7 +5,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @title Rewards
-/// @dev A contract for distributing KEEP token rewards to ECDSA keeps.
+/// @dev A contract for distributing KEEP token rewards to keeps.
 /// When a reward contract is created,
 /// the creator defines a reward schedule
 /// consisting of one or more reward intervals and their interval weights,
@@ -38,7 +38,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// meaning that all remaining unallocated rewards
 /// will be allocated to the interval.
 ///
-/// ECDSA keeps created by the defined `factory` can receive rewards
+/// Keeps of the appropriate type can receive rewards
 /// once the interval they were created in is over,
 /// and the keep has closed happily.
 /// There is no time limit to receiving rewards,
@@ -51,6 +51,13 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// that fact can be reported to the reward contract.
 /// Reporting a terminated keep returns its allocated reward
 /// to the pool of unallocated rewards.
+///
+/// A concrete implementation of the abstract rewards contract
+/// must specify functions for accessing information about keeps
+/// and paying out rewards.
+/// For the purpose of rewards,
+/// Random Beacon signing groups count as "keeps"
+/// and the beacon operator contract acts as the "factory".
 contract Rewards {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -137,23 +144,24 @@ contract Rewards {
     }
 
     /// @notice Sends the reward for a keep to the keep members.
-    /// @param keepAddress ECDSA keep factory address.
-    function receiveReward(bytes32 keepAddress)
-        factoryMustRecognize(keepAddress)
-        rewardsNotClaimed(keepAddress)
-        mustBeClosed(keepAddress)
+    /// @param keepIdentifier A unique identifier for the keep,
+    /// e.g. address or number converted to a `bytes32`.
+    function receiveReward(bytes32 keepIdentifier)
+        factoryMustRecognize(keepIdentifier)
+        rewardsNotClaimed(keepIdentifier)
+        mustBeClosed(keepIdentifier)
         public
     {
-        _processKeep(true, keepAddress);
+        _processKeep(true, keepIdentifier);
     }
 
-    function reportTermination(bytes32 keepAddress)
-        factoryMustRecognize(keepAddress)
-        rewardsNotClaimed(keepAddress)
-        mustBeTerminated(keepAddress)
+    function reportTermination(bytes32 keepIdentifier)
+        factoryMustRecognize(keepIdentifier)
+        rewardsNotClaimed(keepIdentifier)
+        mustBeTerminated(keepIdentifier)
         public
     {
-        _processKeep(false, keepAddress);
+        _processKeep(false, keepIdentifier);
     }
 
     /// @notice Checks if a keep is eligible to receive rewards.
@@ -430,9 +438,9 @@ contract Rewards {
 
     function _processKeep(
         bool eligible,
-        bytes32 keepAddress
+        bytes32 keepIdentifier
     ) internal {
-        uint256 creationTime = _getCreationTime(keepAddress);
+        uint256 creationTime = _getCreationTime(keepIdentifier);
         uint256 interval = intervalOf(creationTime);
         if (!_isAllocated(interval)) {
             _allocateRewards(interval);
@@ -441,12 +449,12 @@ contract Rewards {
         uint256 __keepsInInterval = _keepsInInterval(interval);
         uint256 perKeepReward = allocation.div(__keepsInInterval);
         uint256 processedKeeps = intervalKeepsProcessed[interval];
-        claimed[keepAddress] = true;
+        claimed[keepIdentifier] = true;
         intervalKeepsProcessed[interval] = processedKeeps + 1;
 
         if (eligible) {
             paidOutRewards += perKeepReward;
-            _distributeReward(keepAddress, perKeepReward);
+            _distributeReward(keepIdentifier, perKeepReward);
         } else {
             // Return the reward to the unallocated pool
             unallocatedRewards += perKeepReward;
