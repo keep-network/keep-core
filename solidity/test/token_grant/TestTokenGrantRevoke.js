@@ -12,6 +12,7 @@ const expect = chai.expect
 const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const GrantStaking = contract.fromArtifact('GrantStaking');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
@@ -52,6 +53,10 @@ describe('TokenGrant/Revoke', function() {
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    );
+    await TokenStaking.link(
+      'GrantStaking', 
+      (await GrantStaking.new({from: accounts[0]})).address
     );
     stakingContract = await TokenStaking.new(
       tokenContract.address,
@@ -269,7 +274,7 @@ describe('TokenGrant/Revoke', function() {
     await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
     const grantManagerKeepBalanceMidWithdraw = await tokenContract.balanceOf(tokenOwner);
     await grantContract.cancelRevokedStake(operator, { from: tokenOwner });
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    await stakingEscrow.withdrawRevoked(operator, { from: tokenOwner });
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
 
     expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(
@@ -310,7 +315,7 @@ describe('TokenGrant/Revoke', function() {
     await time.increase(undelegationPeriod.add(time.duration.minutes(5)));
     await grantContract.recoverStake(operator, { from: tokenOwner });
 
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    await stakingEscrow.withdrawRevoked(operator, { from: tokenOwner });
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
 
     expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(

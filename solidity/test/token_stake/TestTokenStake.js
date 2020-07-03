@@ -16,6 +16,7 @@ const KeepToken = contract.fromArtifact('KeepToken');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const TokenStaking = contract.fromArtifact('TokenStaking');
+const GrantStaking = contract.fromArtifact('GrantStaking');
 const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
@@ -23,8 +24,7 @@ describe('TokenStaking', function() {
 
   let token, registry, stakingContract, stakingAmount, minimumStake;
     
-  const ownerOne = accounts[0],
-    ownerTwo = accounts[1],
+  const owner = accounts[0],
     operatorOne = accounts[2],
     operatorTwo = accounts[3],
     beneficiary = accounts[4],
@@ -47,6 +47,10 @@ describe('TokenStaking', function() {
     await TokenStaking.link(
       'MinimumStakeSchedule', 
       (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    );
+    await TokenStaking.link(
+      'GrantStaking', 
+      (await GrantStaking.new({from: accounts[0]})).address
     );
     stakingContract = await TokenStaking.new(
       token.address,
@@ -82,63 +86,17 @@ describe('TokenStaking', function() {
     return token.approveAndCall(
       stakingContract.address, amount, 
       '0x' + data.toString('hex'), 
-      {from: ownerOne}
+      {from: owner}
     );
   }
 
-  it("should send tokens correctly", async () => {
-    let amount = web3.utils.toBN(1000000000);
-
-    let ownerOneStartingBalance = await token.balanceOf.call(ownerOne);
-    let ownerTwoStartingBalance = await token.balanceOf.call(ownerTwo);
-
-    await token.transfer(ownerTwo, amount, {from: ownerOne});
-
-    let ownerOneEndingBalance = await token.balanceOf.call(ownerOne);
-    let ownerTwoEndingBalance = await token.balanceOf.call(ownerTwo);
-
-    expect(ownerOneEndingBalance).to.eq.BN(
-      ownerOneStartingBalance.sub(amount), 
-      "Amount wasn't correctly taken from the sender"
-    )
-    expect(ownerTwoEndingBalance).to.eq.BN(
-      ownerTwoStartingBalance.add(amount), 
-      "Amount wasn't correctly sent to the receiver"
-    );
-  });
-
-  it("should allow to delegate, undelegate, and recover stake", async () => {
-    let ownerStartBalance = await token.balanceOf.call(ownerOne)
-
-    let tx = await delegate(operatorOne, stakingAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
-
-    await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-
-    await stakingContract.undelegate(operatorOne, {from: ownerOne});
-    await time.increase(undelegationPeriod.addn(1));
-    await stakingContract.recoverStake(operatorOne);
-        
-    let ownerEndBalance = await token.balanceOf.call(ownerOne);
-    let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
-
-    expect(ownerEndBalance).to.eq.BN(
-      ownerStartBalance,
-      "Staking amount should be transferred back to owner"
-    );
-    expect(operatorEndStakeBalance).to.eq.BN( 
-      0, 
-      "Staking amount should be removed from operator balance"
-    );
-  })
-
   describe("delegate", async () => {
     it("should update balances", async () => {
-      let ownerStartBalance = await token.balanceOf.call(ownerOne);
+      let ownerStartBalance = await token.balanceOf.call(owner);
   
       await delegate(operatorOne, stakingAmount);
       
-      let ownerEndBalance = await token.balanceOf.call(ownerOne);
+      let ownerEndBalance = await token.balanceOf.call(owner);
       let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
       
       expect(ownerEndBalance).to.eq.BN(
@@ -165,7 +123,7 @@ describe('TokenStaking', function() {
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
   
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: ownerOne});
+      await stakingContract.undelegate(operatorOne, {from: owner});
       await time.increase(undelegationPeriod.addn(1));
       await stakingContract.recoverStake(operatorOne);
           
@@ -188,12 +146,12 @@ describe('TokenStaking', function() {
     })
   
     it("should allow to delegate to two different operators", async () => {
-      let ownerStartBalance = await token.balanceOf.call(ownerOne)
+      let ownerStartBalance = await token.balanceOf.call(owner)
   
       await delegate(operatorOne, stakingAmount);
       await delegate(operatorTwo, stakingAmount);
   
-      let ownerEndBalance = await token.balanceOf.call(ownerOne);
+      let ownerEndBalance = await token.balanceOf.call(owner);
       let operatorOneEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
       let operatorTwoEndStakeBalance = await stakingContract.balanceOf.call(operatorTwo);
   
@@ -225,51 +183,25 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: operatorTwo}),
-        "Unauthorized"
+        "Not authorized"
       )
     })
 
     it("should allow to cancel delegation right away", async () => {
-      let ownerStartBalance = await token.balanceOf.call(ownerOne);
-  
       await delegate(operatorOne, stakingAmount);
   
-      await stakingContract.cancelStake(operatorOne, {from: ownerOne});
-  
-      let ownerEndBalance = await token.balanceOf.call(ownerOne);
-      let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
-  
-      expect(ownerEndBalance).to.eq.BN(
-        ownerStartBalance,
-        "Staking amount should be transferred back to owner"
-      );
-      expect(operatorEndStakeBalance).to.eq.BN( 
-        0, 
-        "Staking amount should be removed from operator balance"
-      );
+      await stakingContract.cancelStake(operatorOne, {from: owner});
+      // ok, no revert
     })
   
     it("should allow to cancel delegation just before initialization period is over", async () => {
-      let ownerStartBalance = await token.balanceOf.call(ownerOne);
-      
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
   
       await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
   
-      await stakingContract.cancelStake(operatorOne, {from: ownerOne})
-  
-      let ownerEndBalance = await token.balanceOf.call(ownerOne);
-      let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
-  
-      expect(ownerEndBalance).to.eq.BN(
-        ownerStartBalance,
-        "Staking amount should be transferred back to owner"
-      );
-      expect(operatorEndStakeBalance).to.eq.BN( 
-        0, 
-        "Staking amount should be removed from operator balance"
-      );
+      await stakingContract.cancelStake(operatorOne, {from: owner})
+      // ok, no revert
     })
   
     it("should not allow to cancel delegation after initialization period is over", async () => {
@@ -279,8 +211,28 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
   
       await expectRevert(
-        stakingContract.cancelStake(operatorOne, {from: ownerOne}),
+        stakingContract.cancelStake(operatorOne, {from: owner}),
         "Initialization period is over"
+      );
+    })
+
+    it("should transfer tokens back to the owner", async () => {
+      let ownerStartBalance = await token.balanceOf.call(owner);
+  
+      await delegate(operatorOne, stakingAmount);
+  
+      await stakingContract.cancelStake(operatorOne, {from: owner});
+  
+      let ownerEndBalance = await token.balanceOf.call(owner);
+      let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+  
+      expect(ownerEndBalance).to.eq.BN(
+        ownerStartBalance,
+        "Staking amount should be transferred back to owner"
+      );
+      expect(operatorEndStakeBalance).to.eq.BN( 
+        0, 
+        "Staking amount should be removed from operator balance"
       );
     })
 
@@ -289,7 +241,7 @@ describe('TokenStaking', function() {
   
       let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
   
-      await stakingContract.cancelStake(operatorOne, {from: ownerOne});
+      await stakingContract.cancelStake(operatorOne, {from: owner});
   
       let delegationInfoAfter = await stakingContract.getDelegationInfo.call(operatorOne)
   
@@ -325,7 +277,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorTwo}),
-        "Unauthorized"
+        "Not authorized"
       )
     })
 
@@ -376,7 +328,7 @@ describe('TokenStaking', function() {
 
       await stakingContract.undelegate(
         operatorOne,
-        {from: ownerOne}
+        {from: owner}
       )
       // ok, no revert
     })
@@ -390,7 +342,7 @@ describe('TokenStaking', function() {
 
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Only the owner may postpone undelegation"
+        "Operator may not postpone undelegation"
       )
     })
   })
@@ -425,7 +377,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(10),
           {from: operatorTwo}
         ),
-        "Unauthorized"
+        "Not authorized"
       )
     })
 
@@ -521,7 +473,7 @@ describe('TokenStaking', function() {
       await stakingContract.undelegateAt(
         operatorOne,
         currentTime.addn(1),
-        {from: ownerOne}
+        {from: owner}
       )
       // ok, no revert
     })
@@ -540,7 +492,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
         ),
-        "Only the owner may postpone undelegation"
+        "Operator may not postpone undelegation"
       )
     })
   })
@@ -563,7 +515,7 @@ describe('TokenStaking', function() {
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
   
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      tx = await stakingContract.undelegate(operatorOne, {from: ownerOne});
+      tx = await stakingContract.undelegate(operatorOne, {from: owner});
       let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp);
       await time.increaseTo(undelegatedAt.add(undelegationPeriod).sub(timeRoundMargin));
   
@@ -573,6 +525,31 @@ describe('TokenStaking', function() {
       )
     })
 
+    it("should transfer tokens back to the owner", async () => {
+      let ownerStartBalance = await token.balanceOf.call(owner)
+
+      let tx = await delegate(operatorOne, stakingAmount)
+      let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+  
+      await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
+  
+      await stakingContract.undelegate(operatorOne, {from: owner});
+      await time.increase(undelegationPeriod.addn(1));
+      await stakingContract.recoverStake(operatorOne);
+          
+      let ownerEndBalance = await token.balanceOf.call(owner);
+      let operatorEndStakeBalance = await stakingContract.balanceOf.call(operatorOne);
+  
+      expect(ownerEndBalance).to.eq.BN(
+        ownerStartBalance,
+        "Staking amount should be transferred back to owner"
+      );
+      expect(operatorEndStakeBalance).to.eq.BN( 
+        0, 
+        "Staking amount should be removed from operator balance"
+      );
+    })
+
     it("should retain delegation info", async () => {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
@@ -580,7 +557,7 @@ describe('TokenStaking', function() {
   
       let delegationInfoBefore = await stakingContract.getDelegationInfo.call(operatorOne)
       
-      await stakingContract.undelegate(operatorOne, {from: ownerOne})
+      await stakingContract.undelegate(operatorOne, {from: owner})
       let blockNumber = await web3.eth.getBlockNumber()
       let undelegationBlock = await web3.eth.getBlock(blockNumber)
       
@@ -658,7 +635,7 @@ describe('TokenStaking', function() {
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await stakingContract.cancelStake(operatorOne, {from: ownerOne});
+      await stakingContract.cancelStake(operatorOne, {from: owner});
   
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
   
@@ -676,7 +653,7 @@ describe('TokenStaking', function() {
       )
   
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: ownerOne});
+      await stakingContract.undelegate(operatorOne, {from: owner});
       await time.increase(undelegationPeriod.addn(1));
 
       let activeStake = await stakingContract.activeStake.call(operatorOne, operatorContract)
@@ -741,7 +718,7 @@ describe('TokenStaking', function() {
         operatorOne, operatorContract, {from: authorizer}
       )
   
-      await stakingContract.cancelStake(operatorOne, {from: ownerOne})
+      await stakingContract.cancelStake(operatorOne, {from: owner})
   
       let eligibleStake = await stakingContract.eligibleStake.call(operatorOne, operatorContract)
   
@@ -759,7 +736,7 @@ describe('TokenStaking', function() {
       )
   
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: ownerOne})
+      await stakingContract.undelegate(operatorOne, {from: owner})
   
       await time.increase(1);
 
@@ -785,7 +762,7 @@ describe('TokenStaking', function() {
       await stakingContract.undelegateAt(
         operatorOne, 
         undelegateAt,
-        {from: ownerOne}
+        {from: owner}
       );
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
@@ -817,7 +794,7 @@ describe('TokenStaking', function() {
       await stakingContract.undelegateAt(
         operatorOne,
         undelegateAt,
-        {from: ownerOne}
+        {from: owner}
       );
 
       await time.increaseTo(undelegateAt.addn(1))
