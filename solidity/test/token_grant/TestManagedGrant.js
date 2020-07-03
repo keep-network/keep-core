@@ -2,6 +2,7 @@ const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -9,10 +10,6 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const GrantStaking = contract.fromArtifact('GrantStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
@@ -23,7 +20,7 @@ const ManagedGrant = contract.fromArtifact('ManagedGrant');
 const nullAddress = '0x0000000000000000000000000000000000000000';
 
 describe('TokenGrant/ManagedGrant', () => {
-  let token, registry, tokenGrant, staking;
+  let token, registry, tokenGrant, staking, stakingEscrow;
   let permissivePolicy, minimumPolicy;
   let minimumStake, grantAmount;
 
@@ -52,30 +49,17 @@ describe('TokenGrant/ManagedGrant', () => {
     token = await KeepToken.new({from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
     tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
-    stakingEscrow = await TokenStakingEscrow.new(
-      token.address, 
-      tokenGrant.address, 
-      {from: grantCreator}
-    );
-    await TokenStaking.detectNetwork();
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: grantCreator})).address
-    );
-    await TokenStaking.link(
-      'GrantStaking', 
-      (await GrantStaking.new({from: grantCreator})).address
-    );
-    staking = await TokenStaking.new(
+    const contracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
-      stakingEscrow.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: grantCreator}
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
-    await stakingEscrow.transferOwnership(staking.address, {from: grantCreator})
+    staking = contracts.tokenStaking;
+    stakingEscrow = contracts.tokenStakingEscrow;
 
     await tokenGrant.authorizeStakingContract(staking.address, {from: grantCreator});
 

@@ -1,4 +1,4 @@
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")

@@ -1,5 +1,6 @@
 const {accounts, contract} = require('@openzeppelin/test-environment')
 const {time, expectRevert} = require('@openzeppelin/test-helpers')
+const {initTokenStaking} = require('./helpers/initContracts')
 const {grantTokens} = require('./helpers/grantTokens')
 const {
   delegateStake,
@@ -10,10 +11,6 @@ const {createSnapshot, restoreSnapshot} = require('./helpers/snapshot')
 const assert = require('chai').assert
 
 const KeepToken = contract.fromArtifact('KeepToken')
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const TokenStaking = contract.fromArtifact('TokenStaking')
-const GrantStaking = contract.fromArtifact('GrantStaking')
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const KeepRegistry = contract.fromArtifact('KeepRegistry')
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
@@ -47,7 +44,6 @@ describe('RolesLookup', () => {
   let token,
     tokenGrant,
     tokenStaking,
-    tokenStakingEscrow,
     tokenGrantStakingPolicy,
     managedGrantFactory,
     lookup
@@ -56,30 +52,16 @@ describe('RolesLookup', () => {
     const registry = await KeepRegistry.new({from: deployer})
     token = await KeepToken.new({from: deployer})
     tokenGrant = await TokenGrant.new(token.address, {from: deployer})
-    tokenStakingEscrow = await TokenStakingEscrow.new(
-      token.address, 
-      tokenGrant.address, 
-      {from: deployer}
-    )
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: deployer})).address
-    )
-    await TokenStaking.link(
-      'GrantStaking', 
-      (await GrantStaking.new({from: deployer})).address
-    );
-    tokenStaking = await TokenStaking.new(
+    const stakingContracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
-      tokenStakingEscrow.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: deployer}
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     )
-    await tokenStakingEscrow.transferOwnership(tokenStaking.address, {from: deployer})
+    tokenStaking = stakingContracts.tokenStaking
     tokenGrantStakingPolicy = await PermissiveStakingPolicy.new()
     managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
