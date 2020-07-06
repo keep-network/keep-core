@@ -27,9 +27,9 @@ library Groups {
 
     struct Group {
         bytes groupPubKey;
-        uint64 registrationBlockHeight;
-        uint64 registrationTime;
+        uint256 registrationBlockHeight;
         bool terminated;
+        uint248 registrationTime;
     }
 
     struct Storage {
@@ -69,7 +69,7 @@ library Groups {
         bytes memory groupPubKey
     ) public {
         self.groupIndices[groupPubKey] = (self.groups.length ^ GROUP_INDEX_FLAG);
-        self.groups.push(Group(groupPubKey, uint64(block.number), uint64(block.timestamp), false));
+        self.groups.push(Group(groupPubKey, block.number, false, uint248(block.timestamp)));
     }
 
     /// @notice Sets addresses of members for the group with the given public key
