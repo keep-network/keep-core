@@ -149,7 +149,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         } else {
             // If there is an existing delegation, top-up of the stake is
             // initiated.
-            initiateTopUp(_from, _value, operator);
+            initiateTopUp(_from, _value, operator, _extraData);
         }
     }
 
@@ -158,12 +158,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _value Approved amount for the transfer and stake.
     /// @param _operator The new operator address.
-    /// @param _extraData Data for stake delegation. This byte array must have
-    /// the following values concatenated:
-    /// - Beneficiary address (20 bytes)
-    /// - Operator address (20 bytes)
-    /// - Authorizer address (20 bytes)
-    /// - Grant ID (32 bytes) - required only when called by TokenStakingEscrow
+    /// @param _extraData Data for stake delegation as passed to receiveApproval.
     function delegate(
         address _from,
         uint256 _value,
@@ -205,10 +200,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @param _value Approved amount for the transfer and top-up to
     /// an existing stake.
     /// @param _operator The new operator address.
+    /// @param _extraData Data for stake delegation as passed to receiveApproval
     function initiateTopUp(
         address _from,
         uint256 _value,
-        address _operator
+        address _operator,
+        bytes memory _extraData
     ) internal {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
@@ -220,7 +217,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             "Operator undelegated"
         );
 
-        bool isFromGrant = address(tokenGrant.grantStakes(_operator)) == _from;
+        // Top-up comes from a grant if it's been initiated from TokenGrantStake
+        // contract or if it's been initiated from TokenStakingEscrow by
+        // redelegation.
+        bool isFromGrant = address(tokenGrant.grantStakes(_operator)) == _from ||
+            address(escrow) == _from;
+
         if (grantStaking.hasGrantDelegated(_operator)) {
             // Operator has grant delegated. We need to see if the top-up
             // is performed also from a grant.
@@ -229,8 +231,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             // grant as the original delegation. We do not want to mix unlocking
             // schedules.
             uint256 previousGrantId = grantStaking.getGrantForOperator(_operator);
-            (, uint256 grantId) = grantStaking.tryCapturingGrantId(
-                tokenGrant, _operator
+            (, uint256 grantId) = grantStaking.tryCapturingDelegationData(
+                tokenGrant, address(escrow), _from, _operator, _extraData
             );
             require(grantId == previousGrantId, "Not the same grant");
         } else {

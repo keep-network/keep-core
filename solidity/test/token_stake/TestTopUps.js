@@ -32,10 +32,11 @@ describe('TokenStaking/TopUps', () => {
     operatorOne = accounts[5],
     operatorTwo = accounts[6],
     operatorThree = accounts[7],
-    beneficiary = accounts[8],
-    authorizer = accounts[9],
-    thirdParty = accounts[10]
-    operatorContract = accounts[11]
+    operatorFour = accounts[8],
+    beneficiary = accounts[9],
+    authorizer = accounts[10],
+    thirdParty = accounts[11]
+    operatorContract = accounts[12]
 
   const initializationPeriod = time.duration.seconds(10),
     undelegationPeriod = time.duration.seconds(10),
@@ -203,7 +204,7 @@ describe('TokenStaking/TopUps', () => {
     await restoreSnapshot()
   })
 
-  describe("delegated liquid tokens top ups", async () => {
+  describe("delegated liquid tokens top-ups", async () => {
     async function initiateTopUp() {
       return delegateStake(
         token, tokenStaking, tokenOwner, operatorOne,
@@ -332,7 +333,7 @@ describe('TokenStaking/TopUps', () => {
     })
   })
 
-  describe("delegated grant top ups", async () => {
+  describe("delegated grant top-ups", async () => {
     async function initiateTopUp() {
       await delegateStakeFromGrant(
         tokenGrant,
@@ -463,7 +464,7 @@ describe('TokenStaking/TopUps', () => {
     })
   })
 
-  describe("delegated managed grant top ups", async () => {
+  describe("delegated managed grant top-ups", async () => {
     async function initiateTopUp() {
       await delegateStakeFromManagedGrant(
         managedGrant,
@@ -590,6 +591,86 @@ describe('TokenStaking/TopUps', () => {
       const after = await tokenStakingEscrow.depositedAmount(operatorThree)
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
+    })
+  })
+
+  describe("escrow redelegation top-ups", async () => {
+    beforeEach(async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.undelegate(operatorTwo, {from: grantee})
+      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await time.increase(undelegationPeriod.addn(1))
+      await tokenStaking.recoverStake(operatorTwo)
+      await tokenStaking.recoverStake(operatorThree)
+    })
+
+    it("can be done for a grant", async () => {
+      await delegateStakeFromGrant(
+        tokenGrant,
+        tokenStaking.address,
+        grantee,
+        operatorFour,
+        beneficiary,
+        authorizer,
+        delegatedAmount,
+        grantId
+      )
+      await time.increase(initializationPeriod.addn(1))
+
+      let delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
+
+      const data = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operatorFour.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+      await tokenStakingEscrow.redelegate(
+        operatorTwo, delegatedAmount, data, {from: grantee}
+      )
+
+      await time.increase(initializationPeriod.addn(1))
+      delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
+  
+      await tokenStaking.commitTopUp(operatorFour, {from: grantee})
+        
+      delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
+    })
+
+    it("can be done for a managed grant", async () => {
+      await delegateStakeFromManagedGrant(
+        managedGrant,
+        tokenStaking.address,
+        managedGrantee,
+        operatorFour,
+        beneficiary,
+        authorizer,
+        delegatedAmount
+      ) 
+      await time.increase(initializationPeriod.addn(1))
+
+      let delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
+
+      const data = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operatorFour.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+      await tokenStakingEscrow.redelegate(
+        operatorThree, delegatedAmount, data, {from: managedGrantee}
+      )
+
+      await time.increase(initializationPeriod.addn(1))
+      delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
+  
+      await tokenStaking.commitTopUp(operatorFour, {from: managedGrantee})
+        
+      delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
     })
   })
 }) 

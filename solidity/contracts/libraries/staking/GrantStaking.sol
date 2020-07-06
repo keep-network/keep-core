@@ -49,12 +49,14 @@ library GrantStaking {
         address from,
         address operator,
         bytes memory extraData
-    ) public {
+    ) public returns (bool, uint256) {
         if (from == address(escrow)) {
             require(extraData.length == 92, "Corrupted delegation data from escrow");
-            setGrantForOperator(self, operator, extraData.toUint(60));
+            uint256 grantId = extraData.toUint(60);
+            setGrantForOperator(self, operator, grantId);
+            return (true, grantId);
         } else {
-            tryCapturingGrantId(self, tokenGrant, operator);
+            return tryCapturingGrantId(self, tokenGrant, operator);
         }
     }
 
@@ -70,7 +72,7 @@ library GrantStaking {
         Storage storage self,
         TokenGrant tokenGrant,
         address operator
-    ) public returns (bool, uint256) {
+    ) internal returns (bool, uint256) {
         (bool success, bytes memory data) = address(tokenGrant).call(
             abi.encodeWithSignature("getGrantStakeDetails(address)", operator)
         );
