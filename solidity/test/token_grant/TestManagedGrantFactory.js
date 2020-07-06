@@ -1,6 +1,7 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {initTokenStaking} = require('../helpers/initContracts');
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -8,7 +9,6 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
@@ -38,16 +38,18 @@ describe('TokenGrant/ManagedGrantFactory', () => {
 
   before(async () => {
     token = await KeepToken.new({from: grantCreator});
+    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
-    staking = await TokenStaking.new(
+    const contracts = await initTokenStaking(
       token.address,
+      tokenGrant.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: grantCreator}
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
-
-    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
+    staking = contracts.tokenStaking;
 
     await tokenGrant.authorizeStakingContract(staking.address, {from: grantCreator});
 

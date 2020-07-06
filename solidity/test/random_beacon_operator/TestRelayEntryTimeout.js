@@ -1,6 +1,6 @@
 const blsData = require("../helpers/data.js")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
@@ -12,7 +12,6 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
 
   before(async() => {
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

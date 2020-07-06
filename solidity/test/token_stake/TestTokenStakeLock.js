@@ -1,9 +1,10 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment");
 const {expectRevert, time} = require("@openzeppelin/test-helpers");
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const TokenStaking = contract.fromArtifact('TokenStaking');
+const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/Lock', () => {
@@ -26,11 +27,18 @@ describe('TokenStaking/Lock', () => {
 
   before(async () => {
     token = await KeepToken.new({from: owner});
+    grant = await TokenGrant.new(token.address, {from: owner});
     registry = await KeepRegistry.new({from: owner});
-    stakingContract = await TokenStaking.new(
-      token.address, registry.address, initializationPeriod, undelegationPeriod,
-      {from: owner}
-    );
+    const stakingContracts = await initTokenStaking(
+      token.address,
+      grant.address,
+      registry.address,
+      initializationPeriod,
+      undelegationPeriod,
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking;
 
     await registry.approveOperatorContract(operatorContract, {from: owner});
     await registry.approveOperatorContract(operatorContract2, {from: owner});
@@ -87,7 +95,7 @@ describe('TokenStaking/Lock', () => {
     it("should not permit locks on non-initialized operators", async () => {
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator stake must be active"
+        "Stake must be active"
       )
     })
 
@@ -115,7 +123,7 @@ describe('TokenStaking/Lock', () => {
       await registry.disableOperatorContract(operatorContract, {from: owner})
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       )
     })
 
@@ -123,19 +131,18 @@ describe('TokenStaking/Lock', () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operator}),
-        "Operator contract is not approved"
+        "Operator contract unapproved"
       )
     })
 
     it("should not permit locks that exceed the maximum lock duration", async () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
-      let maximumDuration = await stakingContract.maximumLockDuration();
-      let longPeriod = maximumDuration.addn(1);
+      const maximumDuration = time.duration.days(200);
+      const longPeriod = maximumDuration.addn(1);
       await expectRevert(
         stakingContract.lockStake(operator, longPeriod, {from: operatorContract}),
         "Lock duration too long"
       )
-
     })
   })
 

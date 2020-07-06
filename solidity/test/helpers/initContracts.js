@@ -7,8 +7,62 @@ const DKGResultVerification = contract.fromArtifact("DKGResultVerification");
 const DelayFactor = contract.fromArtifact("DelayFactor");
 const Reimbursements = contract.fromArtifact("Reimbursements");
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
+const KeepToken = contract.fromArtifact('KeepToken');
+const TokenGrant = contract.fromArtifact('TokenGrant');
+const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
+const GrantStaking = contract.fromArtifact('GrantStaking');
+const Locks = contract.fromArtifact('Locks');
 
-async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
+async function initTokenStaking(
+  tokenAddress,
+  tokenGrantAddress,
+  keepRegistryAddress,
+  stakeInitializationPeriod,
+  stakeUndelegationPeriod,
+  TokenStakingEscrow,
+  TokenStaking
+) {
+  let tokenStakingEscrow = await TokenStakingEscrow.new(
+    tokenAddress,
+    tokenGrantAddress,
+    {from: accounts[0]}
+  )
+
+  await TokenStaking.detectNetwork()
+  await TokenStaking.link(
+    'MinimumStakeSchedule', 
+    (await MinimumStakeSchedule.new({from: accounts[0]})).address
+  )
+  await TokenStaking.link(
+    'GrantStaking',
+    (await GrantStaking.new({from: accounts[0]})).address
+  )
+  await TokenStaking.link(
+    'Locks',
+    (await Locks.new({from: accounts[0]})).address
+  )
+
+  let tokenStaking = await TokenStaking.new(
+    tokenAddress,
+    tokenGrantAddress,
+    tokenStakingEscrow.address,
+    keepRegistryAddress,
+    stakeInitializationPeriod,
+    stakeUndelegationPeriod,
+    {from: accounts[0]}
+  );
+  await tokenStakingEscrow.transferOwnership(
+    tokenStaking.address,
+    {from: accounts[0]}
+  );
+
+  return {
+    tokenStakingEscrow: tokenStakingEscrow,
+    tokenStaking: tokenStaking
+  };
+}
+
+async function initContracts(TokenStaking, KeepRandomBeaconService,
   KeepRandomBeaconServiceImplV1, KeepRandomBeaconOperator) {
 
   let token, registry, stakingContract,
@@ -19,14 +73,21 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
     stakeInitializationPeriod = 30, // In seconds
     stakeUndelegationPeriod = 300; // In seconds
 
-  // Initialize Keep token contract
   token = await KeepToken.new({from: accounts[0]});
-
-  // Initialize registry contract
+  tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]});
   registry = await KeepRegistry.new({from: accounts[0]});
 
   // Initialize staking contract
-  stakingContract = await TokenStaking.new(token.address, registry.address, stakeInitializationPeriod, stakeUndelegationPeriod, {from: accounts[0]});
+  const stakingContracts = await initTokenStaking(
+    token.address,
+    tokenGrant.address,
+    registry.address,
+    stakeInitializationPeriod,
+    stakeUndelegationPeriod,
+    contract.fromArtifact('TokenStakingEscrow'),
+    TokenStaking
+  )
+  stakingContract = stakingContracts.tokenStaking
 
   // Initialize Keep Random Beacon service contract
   serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({from: accounts[0]});
@@ -88,4 +149,5 @@ async function initContracts(KeepToken, TokenStaking, KeepRandomBeaconService,
   };
 };
 
-module.exports = initContracts;
+module.exports.initTokenStaking = initTokenStaking;
+module.exports.initContracts = initContracts;
