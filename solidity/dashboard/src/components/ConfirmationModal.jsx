@@ -76,7 +76,7 @@ const ConfirmationFormFormik = withFormik({
     const errors = {}
 
     if (values.confirmationText !== confirmationText) {
-      errors.confirmationText = "Not match"
+      errors.confirmationText = "Does not match"
     }
 
     return getErrorsObj(errors)
