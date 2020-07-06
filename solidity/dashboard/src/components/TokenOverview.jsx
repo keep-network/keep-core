@@ -59,7 +59,10 @@ const TokenOverview = ({
           withMetricSuffix
         />
         <p className="text-small">{`${grantedStakedInPercentage}% Staked`}</p>
-        <Link to="/tokens/delegate" className="btn btn-primary mt-2">
+        <Link
+          to={{ pathname: "/tokens/delegate", hash: "#granted" }}
+          className="btn btn-primary mt-2"
+        >
           manage
         </Link>
       </div>
@@ -78,7 +81,10 @@ const TokenOverview = ({
           withMetricSuffix
         />
         <p className="text-small">{`${ownedStakedInPercentage}% Staked`}</p>
-        <Link to="/tokens/delegate" className="btn btn-primary mt-2">
+        <Link
+          to={{ pathname: "/tokens/delegate", hash: "#owned" }}
+          className="btn btn-primary mt-2"
+        >
           manage
         </Link>
       </div>
