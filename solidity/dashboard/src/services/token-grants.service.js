@@ -225,7 +225,7 @@ const fetchGrantById = async (web3Context, grantId) => {
   if (!id.isInteger() || id.isNegative()) {
     throw new Error({
       type: "INVALID_GRANT_ID",
-      message: "Grant ID is not a number",
+      message: "Invalid grant ID",
     })
   }
 
