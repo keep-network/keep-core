@@ -1,7 +1,7 @@
 pragma solidity 0.5.17;
 
 import "../utils/AddressArrayUtils.sol";
-import "../TokenStaking.sol";
+import "../StakeDelegatable.sol";
 import "../TokenGrant.sol";
 import "../ManagedGrant.sol";
 
@@ -11,15 +11,15 @@ library RolesLookup {
     using AddressArrayUtils for address[];
 
     /// @notice Returns true if the tokenOwner delegated tokens to operator
-    /// using the provided tokenStaking contract. Othwerwise, returns false.
+    /// using the provided stakeDelegatable contract. Othwerwise, returns false.
     /// This function works only for the case when tokenOwner own those tokens
     /// and those are not tokens from a grant.
     function isTokenOwnerForOperator(
         address tokenOwner,
         address operator,
-        TokenStaking tokenStaking
+        StakeDelegatable stakeDelegatable
     ) internal view returns (bool) {
-        return tokenStaking.ownerOf(operator) == tokenOwner;
+        return stakeDelegatable.ownerOf(operator) == tokenOwner;
     }
 
     /// @notice Returns true if the grantee delegated tokens to operator
@@ -58,5 +58,27 @@ library RolesLookup {
             managedGrantContract
         );
         return operators.contains(operator);
+    }
+
+    /// @notice Returns true if grant with the given ID has been created with
+    /// managed grant pointing currently to the grantee passed as a parameter.
+    /// @dev The function does not revert if grant has not been created with
+    /// a managed grantee. This function is not a view because it uses low-level
+    /// call to check if the grant has been created with a managed grant.
+    /// It does not however modify any state.
+    function isManagedGranteeForGrant(
+        address grantee,
+        uint256 grantId,
+        TokenGrant tokenGrant
+    ) internal returns (bool) {
+        (,,,,, address managedGrant) = tokenGrant.getGrant(grantId);
+        (, bytes memory result) = managedGrant.call(
+            abi.encodeWithSignature("grantee()")
+        );
+        if (result.length == 0) {
+            return false;
+        }
+        address managedGrantee = abi.decode(result, (address));
+        return grantee == managedGrantee;
     }
 }

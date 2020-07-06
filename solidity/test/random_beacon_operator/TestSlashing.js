@@ -1,5 +1,5 @@
 const blsData = require("../helpers/data.js")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
@@ -33,7 +33,6 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
   before(async () => {
 
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStakingStub'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

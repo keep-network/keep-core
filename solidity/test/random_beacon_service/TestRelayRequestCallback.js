@@ -1,7 +1,7 @@
 const stakeAndGenesis = require('../helpers/stakeAndGenesis')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 const {expectRevert} = require("@openzeppelin/test-helpers")
 
@@ -27,7 +27,6 @@ describe('KeepRandomBeacon/RelayRequestCallback', function() {
 
   before(async () => {
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

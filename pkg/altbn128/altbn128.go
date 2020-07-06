@@ -60,8 +60,11 @@ func mod(i, m *big.Int) *big.Int {
 	return new(big.Int).Mod(i, m)
 }
 
-func modSqrt(i, m *big.Int) *big.Int {
-	return new(big.Int).ModSqrt(i, m)
+// modSqrt returns square root of x mod p if such a square root exists. The
+// modulus p must be an odd prime. If x is not a square mod p, function returns
+// nil.
+func modSqrt(x, p *big.Int) *big.Int {
+	return new(big.Int).ModSqrt(x, p)
 }
 
 // yFromX calculates and returns only one of the two possible Ys, by

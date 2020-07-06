@@ -69,6 +69,7 @@ const TokenPageContextProvider = (props) => {
     initializationPeriod: "0",
     undelegationPeriod: "0",
     isFetching: true,
+    grantsAreFetching: true,
     tokensContext: "granted",
     selectedGrant: {},
     getGrantStakedAmount: () => {},
@@ -85,7 +86,7 @@ const TokenPageContextProvider = (props) => {
   useEffect(() => {
     dispatch({
       type: SET_STATE,
-      payload: { grants, isFetching: grantsAreFetching },
+      payload: { grants, grantsAreFetching },
     })
     if (!isEmptyObj(state.selectedGrant)) {
       const { obj: updatedGrant } = findIndexAndObject(

@@ -11,6 +11,9 @@ import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/Permissiv
 import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
 import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
 import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
+import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
+import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
+import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -21,6 +24,8 @@ import {
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
   KEEP_BONDING_CONTRACT_NAME,
+  TBTC_TOKEN_CONTRACT_NAME,
+  TBTC_SYSTEM_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -31,6 +36,9 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [REGISTRY_CONTRACT_NAME]: 0,
   [KEEP_OPERATOR_STATISTICS_CONTRACT_NAME]: 0,
   [MANAGED_GRANT_FACTORY_CONTRACT_NAME]: 0,
+  [KEEP_BONDING_CONTRACT_NAME]: 0,
+  [TBTC_TOKEN_CONTRACT_NAME]: 0,
+  [TBTC_SYSTEM_CONTRACT_NAME]: 0,
 }
 
 export async function getKeepToken(web3) {
@@ -77,6 +85,14 @@ export async function getManagedGrantFactory(web3) {
   return getContract(web3, ManagedGrantFactory)
 }
 
+export async function getTBTCTokenContract(web3) {
+  return getContract(web3, TBTCToken, TBTC_TOKEN_CONTRACT_NAME)
+}
+
+export async function getTBTCSystemContract(web3) {
+  return getContract(web3, TBTCSystem, TBTC_SYSTEM_CONTRACT_NAME)
+}
+
 export async function getKeepTokenContractDeployerAddress(web3) {
   const deployTransactionHash = getTransactionHashOfContractDeploy(KeepToken)
   const transaction = await web3.eth.getTransaction(deployTransactionHash)
@@ -102,6 +118,8 @@ export async function getContracts(web3) {
     getManagedGrantFactory(web3),
     getBondedEcdsaKeepFactoryContract(web3),
     getKeepBondingContract(web3),
+    getTBTCTokenContract(web3),
+    getTBTCSystemContract(web3),
   ])
 
   return {
@@ -114,6 +132,8 @@ export async function getContracts(web3) {
     managedGrantFactoryContract: contracts[6],
     bondedEcdsaKeepFactoryContract: contracts[7],
     keepBondingContract: contracts[8],
+    tbtcTokenContract: contracts[9],
+    tbtcSystemContract: contracts[10],
   }
 }
 
@@ -156,6 +176,14 @@ export function getGuaranteedMinimumStakingPolicyContractAddress() {
 
 export function createManagedGrantContractInstance(web3, address) {
   return new web3.eth.Contract(ManagedGrant.abi, address)
+}
+
+export function createDepositContractInstance(web3, address) {
+  return new web3.eth.Contract(Deposit.abi, address)
+}
+
+export function createBondedECDSAKeepContractInstance(web3, address) {
+  return new web3.eth.Contract(BondedECDSAKeep.abi, address)
 }
 
 export function getKeepRandomBeaconOperatorAddress() {

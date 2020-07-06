@@ -3,7 +3,7 @@ const sign = require('../helpers/signature');
 const packTicket = require('../helpers/packTicket')
 const generateTickets = require('../helpers/generateTickets');
 const shuffleArray = require('../helpers/shuffle');
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
@@ -32,7 +32,6 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
   before(async () => {
 
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

@@ -1,7 +1,7 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
 const generateTickets = require('../helpers/generateTickets')
@@ -22,7 +22,6 @@ describe('KeepRandomBeaconOperator/GroupSelection', function() {
 
   before(async () => {
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

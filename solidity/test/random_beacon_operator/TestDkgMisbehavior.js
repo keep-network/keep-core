@@ -2,7 +2,7 @@ const blsData = require("../helpers/data")
 const { contract, web3, accounts } = require("@openzeppelin/test-environment")
 const { time } = require("@openzeppelin/test-helpers")
 var assert = require('chai').assert
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const sign = require('../helpers/signature')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
@@ -26,7 +26,6 @@ describe('KeepRandomBeaconOperator/DkgMisbehavior', function () {
   before(async () => {
 
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

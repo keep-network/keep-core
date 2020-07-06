@@ -85,7 +85,7 @@ library Groups {
         bytes memory groupPubKey,
         address[] memory members,
         bytes memory misbehaved
-    ) internal {
+    ) public {
         self.groupMembers[groupPubKey] = members;
 
         // Iterate misbehaved array backwards, replace misbehaved
@@ -142,11 +142,31 @@ library Groups {
         uint256 groupIndex
     ) internal {
         require(
-            !self.groups[groupIndex].terminated,
+            !isGroupTerminated(self, groupIndex),
             "Group has been already terminated"
         );
         self.groups[groupIndex].terminated = true;
-        self.activeTerminatedGroups.push(groupIndex);
+        self.activeTerminatedGroups.length++;
+
+        // Sorting activeTerminatedGroups in ascending order so a non-terminated
+        // group is properly selected.
+        uint256 i;
+        for (
+            i = self.activeTerminatedGroups.length - 1;
+            i > 0 && self.activeTerminatedGroups[i - 1] > groupIndex;
+            i--
+        ) {
+            self.activeTerminatedGroups[i] = self.activeTerminatedGroups[i - 1];
+        }
+        self.activeTerminatedGroups[i] = groupIndex;
+    }
+
+    /// @notice Checks if group with the given index is terminated.
+    function isGroupTerminated(
+        Storage storage self,
+        uint256 groupIndex
+    ) internal view returns(bool) {
+        return self.groups[groupIndex].terminated;
     }
 
     /// @notice Checks if group with the given public key is registered.
@@ -335,6 +355,13 @@ library Groups {
     ) public view returns (address[] memory members) {
         bytes memory groupPubKey = self.groups[groupIndex].groupPubKey;
         return self.groupMembers[groupPubKey];
+    }
+
+    function getGroupRegistrationBlockHeight(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns (uint256) {
+        return uint256(self.groups[groupIndex].registrationBlockHeight);
     }
 
     /// @notice Reports unauthorized signing for the provided group. Must provide
