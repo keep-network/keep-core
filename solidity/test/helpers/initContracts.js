@@ -12,6 +12,7 @@ const TokenGrant = contract.fromArtifact('TokenGrant');
 const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 const GrantStaking = contract.fromArtifact('GrantStaking');
 const Locks = contract.fromArtifact('Locks');
+const TopUps = contract.fromArtifact('TopUps');
 
 async function initTokenStaking(
   tokenAddress,
@@ -40,6 +41,10 @@ async function initTokenStaking(
   await TokenStaking.link(
     'Locks',
     (await Locks.new({from: accounts[0]})).address
+  )
+  await TokenStaking.link(
+    'TopUps',
+    (await TopUps.new({from: accounts[0]})).address
   )
 
   let tokenStaking = await TokenStaking.new(
