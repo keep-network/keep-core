@@ -212,6 +212,7 @@ func initializeMetrics(
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
+		return
 	}
 
 	logger.Infof(
