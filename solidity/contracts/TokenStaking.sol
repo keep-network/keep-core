@@ -322,14 +322,14 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address operator,
         address operatorContract
     ) public {
-        locks.releaseExpiredLock(operator, operatorContract, registry);
+        locks.releaseExpiredLock(operator, operatorContract, address(this));
     }
 
     /// @notice Check whether the operator has any active locks
     /// that haven't expired yet
     /// and whose creators aren't disabled by the panic button.
     function isStakeLocked(address operator) public view returns (bool) {
-        return locks.isStakeLocked(operator, registry);
+        return locks.isStakeLocked(operator, address(this));
     }
 
     /// @notice Get the locks placed on the operator.

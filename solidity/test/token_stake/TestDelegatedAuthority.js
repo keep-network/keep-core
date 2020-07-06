@@ -98,7 +98,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
   }
 
   async function disable(operatorContract) {
-    registry.disableOperatorContract(operatorContract.address);
+    await registry.disableOperatorContract(operatorContract.address);
   }
 
   describe("claimDelegatedAuthority", async () => {
@@ -147,144 +147,227 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     })
   })
 
-  describe("isAuthorizedForOperator", async () => {
+  describe('after authority delegation', async () => {
     before(async () => {
       await stakingContract.claimDelegatedAuthority(
         authorityDelegator.address,
         {from: recognizedContract}
-      );
+      )
     })
 
-    it("delegates authorization correctly", async () => {
-      expect(await hasDelegatedAuthorization(recognizedContract)).to.be.false;
-      await authorize(authorityDelegator);
-      expect(await hasDelegatedAuthorization(recognizedContract)).to.be.true;
+    describe("isAuthorizedForOperator", async () => {
+      before(async () => {
+        await stakingContract.claimDelegatedAuthority(
+          authorityDelegator.address,
+          {from: recognizedContract}
+        );
+      })
+
+      it("delegates authorization correctly", async () => {
+        expect(await hasDelegatedAuthorization(recognizedContract)).to.be.false;
+        await authorize(authorityDelegator);
+        expect(await hasDelegatedAuthorization(recognizedContract)).to.be.true;
+      })
+
+      it("disables delegated authorization with the panic button", async () => {
+        await authorize(authorityDelegator);
+        await disable(authorityDelegator);
+        // Indirect test;
+        // `claimDelegatedAuthority` checks `onlyApprovedOperatorContract`
+        await expectRevert(
+          stakingContract.claimDelegatedAuthority(
+            recognizedContract,
+            {from: unrecognizedContract}
+          ),
+          "Operator contract unapproved"
+        );
+      })
+
+      it("works recursively", async () => {
+        await innerRecursiveDelegator.claimAuthorityRecursively(
+          stakingContract.address,
+          outerRecursiveDelegator.address
+        );
+        await stakingContract.claimDelegatedAuthority(
+          innerRecursiveDelegator.address,
+          {from: recursivelyAuthorizedContract}
+        );
+        await authorize(outerRecursiveDelegator);
+        expect(await hasDelegatedAuthorization(recursivelyAuthorizedContract)).to.be.true;
+      })
     })
 
-    it("disables delegated authorization with the panic button", async () => {
-      await authorize(authorityDelegator);
-      await disable(authorityDelegator);
-      // Indirect test;
-      // `claimDelegatedAuthority` checks `onlyApprovedOperatorContract`
-      await expectRevert(
-        stakingContract.claimDelegatedAuthority(
-          recognizedContract,
-          {from: unrecognizedContract}
-        ),
-        "Operator contract unapproved"
-      );
+    describe("authorizeOperatorContract", async () => {
+      it("doesn't authorize contracts using delegated authority", async () => {
+        await expectRevert(
+          stakingContract.authorizeOperatorContract(
+            operator,
+            recognizedContract,
+            {from: authorizer}
+          ),
+          "Contract uses delegated authority"
+        );
+      })
     })
 
-    it("works recursively", async () => {
-      await innerRecursiveDelegator.claimAuthorityRecursively(
-        stakingContract.address,
-        outerRecursiveDelegator.address
-      );
-      await stakingContract.claimDelegatedAuthority(
-        innerRecursiveDelegator.address,
-        {from: recursivelyAuthorizedContract}
-      );
-      await authorize(outerRecursiveDelegator);
-      expect(await hasDelegatedAuthorization(recursivelyAuthorizedContract)).to.be.true;
-    })
-  })
-
-  describe("authorizeOperatorContract", async () => {
-    it("doesn't authorize contracts using delegated authority", async () => {
-      await expectRevert(
-        stakingContract.authorizeOperatorContract(
-          operator,
-          recognizedContract,
-          {from: authorizer}
-        ),
-        "Contract uses delegated authority"
-      );
-    })
-  })
-
-  describe("slash", async () => {
-    it("uses delegated authorization correctly", async () => {
-      await expectRevert(
-        stakingContract.slash(
+    describe("slash", async () => {
+      it("uses delegated authorization correctly", async () => {
+        await expectRevert(
+          stakingContract.slash(
+            minimumStake,
+            [operator],
+            {from: recognizedContract}
+          ),
+          "Not authorized"
+        );
+        await authorize(authorityDelegator);
+        await stakingContract.slash(
           minimumStake,
           [operator],
           {from: recognizedContract}
-        ),
-        "Not authorized"
-      );
-      await authorize(authorityDelegator);
-      await stakingContract.slash(
-        minimumStake,
-        [operator],
-        {from: recognizedContract}
-      );
-      // no error
+        );
+        // no error
+      })
     })
-  })
 
-  describe("seize", async () => {
-    it("uses delegated authorization correctly", async () => {
-      await expectRevert(
-        stakingContract.seize(
+    describe("seize", async () => {
+      it("uses delegated authorization correctly", async () => {
+        await expectRevert(
+          stakingContract.seize(
+            minimumStake,
+            100,
+            beneficiary,
+            [operator],
+            {from: recognizedContract}
+          ),
+          "Not authorized"
+        );
+        await authorize(authorityDelegator);
+        await stakingContract.seize(
           minimumStake,
           100,
           beneficiary,
           [operator],
           {from: recognizedContract}
-        ),
-        "Not authorized"
-      );
-      await authorize(authorityDelegator);
-      await stakingContract.seize(
-        minimumStake,
-        100,
-        beneficiary,
-        [operator],
-        {from: recognizedContract}
-      );
-      // no error
+        );
+        // no error
+      })
     })
-  })
 
 
-  describe("lockStake", async () => {
-    it("uses delegated authorization correctly", async () => {
-      let lockPeriod = time.duration.weeks(12);
-      await expectRevert(
-        stakingContract.lockStake(
+    describe("lockStake", async () => {
+      it("uses delegated authorization correctly", async () => {
+        let lockPeriod = time.duration.weeks(12);
+        await expectRevert(
+          stakingContract.lockStake(
+            operator,
+            lockPeriod,
+            {from: recognizedContract}
+          ),
+          "Not authorized"
+        );
+        await authorize(authorityDelegator);
+        await stakingContract.lockStake(
           operator,
           lockPeriod,
           {from: recognizedContract}
-        ),
-        "Not authorized"
-      );
-      await authorize(authorityDelegator);
-      await stakingContract.lockStake(
-        operator,
-        lockPeriod,
-        {from: recognizedContract}
-      );
-      // no error
+        );
+        // no error
+      })
     })
-  })
 
-  describe("eligibleStake", async () => {
-    it("uses delegated authorization correctly", async () => {
-      expect(await stakingContract.eligibleStake(operator, recognizedContract))
-        .to.eq.BN(0);
-      await authorize(authorityDelegator);
-      expect(await stakingContract.eligibleStake(operator, recognizedContract))
-        .to.eq.BN(stakingAmount);
+    describe('releaseExpiredLock', async () => {
+      it('reverts for authority delegator', async () => {
+        await authorize(authorityDelegator)
+        let lockPeriod = time.duration.weeks(12)
+        await stakingContract.lockStake(operator, lockPeriod, {
+          from: recognizedContract,
+        })
+
+        await expectRevert(
+          stakingContract.releaseExpiredLock(
+            operator,
+            authorityDelegator.address
+          ),
+          'No matching lock present'
+        )
+      })
+
+      it('uses delegated authorization correctly and validates expiration', async () => {
+        await authorize(authorityDelegator)
+        let lockPeriod = time.duration.weeks(12)
+        await stakingContract.lockStake(operator, lockPeriod, {
+          from: recognizedContract,
+        })
+
+        await expectRevert(
+          stakingContract.releaseExpiredLock(
+            operator,
+            authorityDelegator.address
+          ),
+          'No matching lock present'
+        )
+
+        await expectRevert(
+          stakingContract.releaseExpiredLock(operator, recognizedContract),
+          'Lock still active and valid'
+        )
+
+        time.increase(lockPeriod.addn(1))
+
+        await stakingContract.releaseExpiredLock(operator, recognizedContract)
+        // no error
+      })
+
+      it('uses delegated authorization correctly and checks if operator contract is enabled', async () => {
+        await authorize(authorityDelegator)
+        let lockPeriod = time.duration.weeks(12)
+        await stakingContract.lockStake(operator, lockPeriod, {
+          from: recognizedContract,
+        })
+
+        await expectRevert(
+          stakingContract.releaseExpiredLock(operator, recognizedContract),
+          'Lock still active and valid'
+        )
+
+        await disable(authorityDelegator)
+
+        await stakingContract.releaseExpiredLock(operator, recognizedContract)
+        // no error
+      })
     })
-  })
 
-  describe("activeStake", async () => {
-    it("uses delegated authorization correctly", async () => {
-      expect(await stakingContract.activeStake(operator, recognizedContract))
-        .to.eq.BN(0);
-      await authorize(authorityDelegator);
-      expect(await stakingContract.activeStake(operator, recognizedContract))
-        .to.eq.BN(stakingAmount);
+    describe('isStakeLocked', async () => {
+      it('uses delegated authorization correctly', async () => {
+        await authorize(authorityDelegator)
+        let lockPeriod = time.duration.weeks(12)
+        await stakingContract.lockStake(operator, lockPeriod, {
+          from: recognizedContract,
+        })
+
+        expect(await stakingContract.isStakeLocked(operator)).to.be.true
+      })
+    })
+
+    describe("eligibleStake", async () => {
+      it("uses delegated authorization correctly", async () => {
+        expect(await stakingContract.eligibleStake(operator, recognizedContract))
+          .to.eq.BN(0);
+        await authorize(authorityDelegator);
+        expect(await stakingContract.eligibleStake(operator, recognizedContract))
+          .to.eq.BN(stakingAmount);
+      })
+    })
+
+    describe("activeStake", async () => {
+      it("uses delegated authorization correctly", async () => {
+        expect(await stakingContract.activeStake(operator, recognizedContract))
+          .to.eq.BN(0);
+        await authorize(authorityDelegator);
+        expect(await stakingContract.activeStake(operator, recognizedContract))
+          .to.eq.BN(stakingAmount);
+      })
     })
   })
 })
