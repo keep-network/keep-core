@@ -1,4 +1,4 @@
-const initContracts = require('./helpers/initContracts')
+const { initContracts } = require('./helpers/initContracts')
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
@@ -27,7 +27,6 @@ describe('BeaconRewards', () => {
 
     before(async () => {
         let contracts = await initContracts(
-            contract.fromArtifact('KeepToken'),
             contract.fromArtifact('TokenStaking'),
             contract.fromArtifact('KeepRandomBeaconService'),
             contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
