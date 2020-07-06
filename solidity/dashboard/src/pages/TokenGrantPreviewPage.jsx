@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React from "react"
 import { useParams } from "react-router-dom"
 import { useFetchData } from "../hooks/useFetchData"
 import PageWrapper from "../components/PageWrapper"
@@ -14,36 +14,46 @@ import {
   TokenGrantStakedDetails,
   TokenGrantUnlockingdDetails,
 } from "../components/TokenGrantOverview"
+import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
 
 const TokenGrantPreview = () => {
   const { grantId } = useParams()
   const [state] = useFetchData(tokenGrantsService.fetchGrantById, {}, grantId)
 
   return (
-    <LoadingOverlay isFetching={state.isFetching}>
-      <PageWrapper title={`Grant ID ${grantId}`}>
-        <section className="tile token-grant-overview">
-          <div className="grant-amount">
-            <TokenGrantDetails
-              title="Grant Amount"
-              selectedGrant={state.data}
-            />
-          </div>
-          <div className="unlocking-details">
-            <TokenGrantUnlockingdDetails
-              selectedGrant={state.data}
-              hideReleaseTokensBtn
-            />
-          </div>
-          <div className="staked-details">
-            <TokenGrantStakedDetails
-              selectedGrant={state.data}
-              stakedAmount={state.data.staked}
-            />
-          </div>
-        </section>
-      </PageWrapper>
-    </LoadingOverlay>
+    <PageWrapper title={`Grant ID ${grantId}`}>
+      <LoadingOverlay
+        isFetching={state.isFetching}
+        skeletonComponent={<TokenGrantSkeletonOverview />}
+      >
+        {state.isError ? (
+          <section className="tile flex full-center">
+            <h3 className="text-validation">{state.error.message}</h3>
+          </section>
+        ) : (
+          <section className="tile token-grant-overview">
+            <div className="grant-amount">
+              <TokenGrantDetails
+                title="Grant Amount"
+                selectedGrant={state.data}
+              />
+            </div>
+            <div className="unlocking-details">
+              <TokenGrantUnlockingdDetails
+                selectedGrant={state.data}
+                hideReleaseTokensBtn
+              />
+            </div>
+            <div className="staked-details">
+              <TokenGrantStakedDetails
+                selectedGrant={state.data}
+                stakedAmount={state.data.staked}
+              />
+            </div>
+          </section>
+        )}
+      </LoadingOverlay>
+    </PageWrapper>
   )
 }
 
@@ -59,7 +69,6 @@ const getCustomWeb3Context = () => {
 }
 
 const TokenGrantPreviewPage = () => {
-  useEffect(() => {})
   return (
     <Web3Context.Provider value={getCustomWeb3Context()}>
       <TokenGrantPreview />

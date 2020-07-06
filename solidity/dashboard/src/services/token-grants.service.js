@@ -223,16 +223,13 @@ const fetchGrantById = async (web3Context, grantId) => {
   const id = new BigNumber(grantId)
 
   if (!id.isInteger() || id.isNegative()) {
-    throw new Error({
-      type: "INVALID_GRANT_ID",
-      message: "Invalid grant ID",
-    })
+    throw new Error("Invalid grant ID")
   }
 
   try {
     return await getGrantDetails(id.toString(), web3Context, true)
   } catch (error) {
-    throw new Error({ type: "NOT_FOUND", message: "Grant ID not found" })
+    throw new Error("Grant ID not found")
   }
 }
 
