@@ -67,7 +67,7 @@ library Groups {
     function addGroup(
         Storage storage self,
         bytes memory groupPubKey
-    ) internal {
+    ) public {
         self.groupIndices[groupPubKey] = (self.groups.length ^ GROUP_INDEX_FLAG);
         self.groups.push(Group(groupPubKey, uint64(block.number), uint64(block.timestamp), false));
     }
@@ -141,7 +141,7 @@ library Groups {
     function terminateGroup(
         Storage storage self,
         uint256 groupIndex
-    ) internal {
+    ) public {
         require(
             !isGroupTerminated(self, groupIndex),
             "Group has been already terminated"
