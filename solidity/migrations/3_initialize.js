@@ -3,6 +3,7 @@ const KeepRandomBeaconServiceImplV1 = artifacts.require("./KeepRandomBeaconServi
 const KeepRandomBeaconOperator = artifacts.require("./KeepRandomBeaconOperator.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
+const TokenStakingEscrow = artifacts.require("./TokenStakingEscrow.sol");
 const TokenGrant = artifacts.require("./TokenGrant.sol");
 
 module.exports = async function(deployer, network) {
@@ -11,11 +12,14 @@ module.exports = async function(deployer, network) {
     const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
     const keepRegistry = await KeepRegistry.deployed();
     const tokenStaking = await TokenStaking.deployed();
+    const tokenStakingEscrow = await TokenStakingEscrow.deployed();
     const tokenGrant = await TokenGrant.deployed();
 
     if (!(await keepRandomBeaconServiceImplV1.initialized())) {
         throw Error("keep random beacon service not initialized")
     }
+
+    await tokenStakingEscrow.transferOwnership(tokenStaking.address);
 
     await tokenGrant.authorizeStakingContract(tokenStaking.address);
 

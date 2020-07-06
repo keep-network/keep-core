@@ -1,11 +1,13 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
+const {initTokenStaking} = require('../helpers/initContracts')
+const {grantTokens} = require('../helpers/grantTokens');
+
 const KeepToken = contract.fromArtifact('KeepToken');
-const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
+
 const assert = require('chai').assert
 
 describe('TokenGrant', function() {
@@ -19,8 +21,18 @@ describe('TokenGrant', function() {
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
     registry = await KeepRegistry.new({from: accounts[0]});
-    stakingContract = await TokenStaking.new(token.address, registry.address, time.duration.days(1), time.duration.days(30), {from: accounts[0]});
     grantContract = await TokenGrant.new(token.address, {from: accounts[0]});
+    const contracts = await initTokenStaking(
+      token.address,
+      grantContract.address,
+      registry.address,
+      time.duration.days(1),
+      time.duration.days(30),
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    );
+    stakingContract = contracts.tokenStaking;
+
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
     permissivePolicy = await PermissiveStakingPolicy.new()
     amount = web3.utils.toBN(100);
@@ -30,7 +42,6 @@ describe('TokenGrant', function() {
   });
 
   it("should grant tokens correctly", async function() {
-
     let amount = web3.utils.toBN(1000000000);
     let unlockingDuration = time.duration.days(30);
     let start = await time.latest();
@@ -89,7 +100,6 @@ describe('TokenGrant', function() {
   });
 
   it("token holder should be able to grant it's tokens to a grantee.", async function() {
-
     let grant_manager_starting_balance = await token.balanceOf.call(grant_manager);
 
     let id = await grantTokens(

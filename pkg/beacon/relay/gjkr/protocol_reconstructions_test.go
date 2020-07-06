@@ -31,6 +31,10 @@ func TestRevealMisbehavedMembersKeys(t *testing.T) {
 	// Simulate a case where member is disqualified in Phase 5.
 	delete(firstMember.receivedQualifiedSharesS, disqualifiedNotSharingMember)
 
+	// Simulate a case where members are disqualified in Phase 8.
+	delete(firstMember.receivedValidPeerPublicKeySharePoints, disqualifiedSharingMember1)
+	delete(firstMember.receivedValidPeerPublicKeySharePoints, disqualifiedSharingMember2)
+
 	expectedDisqualifiedKeys := map[group.MemberIndex]*ephemeral.PrivateKey{
 		disqualifiedSharingMember1: firstMember.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
 		disqualifiedSharingMember2: firstMember.ephemeralKeyPairs[disqualifiedSharingMember2].PrivateKey,
@@ -160,6 +164,7 @@ func generateMisbehavedEphemeralKeysMessages(
 	for _, otherMember := range otherMembers {
 		for _, disqualifiedMember := range disqualifiedMembers {
 			otherMember.group.MarkMemberAsDisqualified(disqualifiedMember.ID)
+			delete(otherMember.receivedValidPeerPublicKeySharePoints, disqualifiedMember.ID)
 		}
 		misbehavedEphemeralKeysMessage, err := otherMember.RevealMisbehavedMembersKeys()
 		if err != nil {

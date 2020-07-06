@@ -1,7 +1,8 @@
 const { delegateStakeFromGrant } = require('../helpers/delegateStake')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
+const {initTokenStaking} = require('../helpers/initContracts')
+const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -10,7 +11,6 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
@@ -36,19 +36,21 @@ describe('TokenGrant/Withdraw', function() {
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
-    registryContract = await KeepRegistry.new({from: accounts[0]});
-    stakingContract = await TokenStaking.new(
-      tokenContract.address, 
-      registryContract.address, 
-      initializationPeriod, 
-      undelegationPeriod,
-      {from: accounts[0]}
-    );
-    grantAmount = (await stakingContract.minimumStake()).muln(10);
-
     grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
-    
+    registryContract = await KeepRegistry.new({from: accounts[0]});
+    const stakingContracts = await initTokenStaking(
+      tokenContract.address,
+      grantContract.address,
+      registryContract.address, 
+      initializationPeriod,
+      undelegationPeriod,
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
+
+    grantAmount = (await stakingContract.minimumStake()).muln(10);
 
     permissivePolicy = await PermissiveStakingPolicy.new()
 

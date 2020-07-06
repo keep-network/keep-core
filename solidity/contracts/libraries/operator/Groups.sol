@@ -85,7 +85,7 @@ library Groups {
         bytes memory groupPubKey,
         address[] memory members,
         bytes memory misbehaved
-    ) internal {
+    ) public {
         self.groupMembers[groupPubKey] = members;
 
         // Iterate misbehaved array backwards, replace misbehaved
@@ -134,14 +134,31 @@ library Groups {
     ) internal view returns (address) {
         return self.groupMembers[groupPubKey][memberIndex];
     }
-    
-    /// @notice Terminates group.
+
+    /// @notice Terminates group with the provided index. Reverts if the group
+    /// is already terminated.
     function terminateGroup(
         Storage storage self,
         uint256 groupIndex
     ) internal {
+        require(
+            !isGroupTerminated(self, groupIndex),
+            "Group has been already terminated"
+        );
         self.groups[groupIndex].terminated = true;
-        self.activeTerminatedGroups.push(groupIndex);
+        self.activeTerminatedGroups.length++;
+
+        // Sorting activeTerminatedGroups in ascending order so a non-terminated
+        // group is properly selected.
+        uint256 i;
+        for (
+            i = self.activeTerminatedGroups.length - 1;
+            i > 0 && self.activeTerminatedGroups[i - 1] > groupIndex;
+            i--
+        ) {
+            self.activeTerminatedGroups[i] = self.activeTerminatedGroups[i - 1];
+        }
+        self.activeTerminatedGroups[i] = groupIndex;
     }
 
     /// @notice Checks if group with the given index is terminated.
@@ -340,6 +357,13 @@ library Groups {
         return self.groupMembers[groupPubKey];
     }
 
+    function getGroupRegistrationBlockHeight(
+        Storage storage self,
+        uint256 groupIndex
+    ) public view returns (uint256) {
+        return uint256(self.groups[groupIndex].registrationBlockHeight);
+    }
+
     /// @notice Reports unauthorized signing for the provided group. Must provide
     /// a valid signature of the group address as a message. Successful signature
     /// verification means the private key has been leaked and all group members
@@ -358,14 +382,17 @@ library Groups {
         require(!isStaleGroup(self, groupIndex), "Group can not be stale");
         bytes memory groupPubKey = getGroupPublicKey(self, groupIndex);
 
-        bool isSignatureValid = BLS.verifyBytes(groupPubKey, abi.encodePacked(msg.sender), signedMsgSender);
+        require(
+            BLS.verifyBytes(
+                groupPubKey,
+                abi.encodePacked(msg.sender),
+                signedMsgSender
+            ),
+            "Invalid signature"
+        );
 
-        if (!isGroupTerminated(self, groupIndex) && isSignatureValid) {
-            terminateGroup(self, groupIndex);
-            self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
-        } else {
-            revert("Group terminated or sig invalid");
-        }
+        terminateGroup(self, groupIndex);
+        self.stakingContract.seize(minimumStake, 100, msg.sender, self.groupMembers[groupPubKey]);
     }
 
     function reportRelayEntryTimeout(

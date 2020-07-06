@@ -1,7 +1,7 @@
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const stakeAndGenesis = require('../helpers/stakeAndGenesis')
 const blsData = require("../helpers/data.js")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 
@@ -12,7 +12,6 @@ describe('KeepRandomBeaconService/PricingDkg', () => {
 
     before(async () => {
         let contracts = await initContracts(
-          contract.fromArtifact('KeepToken'),
           contract.fromArtifact('TokenStaking'),
           contract.fromArtifact('KeepRandomBeaconService'),
           contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
