@@ -124,7 +124,7 @@ describe('KeepRandomBeaconOperator/PublishDkgResult', function () {
 
     let beneficiaryBalance = web3.utils.toBN(await web3.eth.getBalance(beneficiary));
     let dkgGasEstimate = await operatorContract.dkgGasEstimate();
-    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(35), 'gwei');
+    let submitterCustomGasPrice = web3.utils.toWei(web3.utils.toBN(55), 'gwei');
     let expectedSubmitterReward = dkgGasEstimate.mul(await operatorContract.gasPriceCeiling());
 
     await operatorContract.submitDkgResult(
