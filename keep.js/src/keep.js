@@ -14,9 +14,9 @@ import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantF
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
-import ContractFactory from "./contract-wrapper.js"
+import ContractFactory, { ContractWrapper } from "./contract-wrapper.js"
 import { TokenStakingConstants } from "./constants.js"
-import { isSameEthAddress, gt, lte } from "./utils.js"
+import { gt, lte } from "./utils.js"
 
 export const contracts = new Map([
   [KeepToken, "keepTokenContract"],
@@ -129,6 +129,34 @@ export default class KEEP {
   }
 
   /**
+   * Returns the list of operators of the provided beneficiary address.
+   *
+   * @param {string} beneficiary Beneficiary address.
+   * @return {Primise<string[]>} An array of addresses.
+   */
+  async operatorsOfBeneficiary(beneficiary) {
+    return (
+      await this.tokenStakingContract.getPastEvents("Staked", {
+        beneficiary,
+      })
+    ).map((_) => _.returnValues.operator)
+  }
+
+  /**
+   * Returns the list of operators of the provided authorizer address.
+   *
+   * @param {string} authorizer Authorizer address.
+   * @return {Primise<string[]>} An array of addresses.
+   */
+  async operatorsOfAuthorizer(authorizer) {
+    return (
+      await this.tokenStakingContract.getPastEvents("Staked", {
+        authorizer,
+      })
+    ).map((_) => _.returnValues.operator)
+  }
+
+  /**
    * @typedef {Object} DelegationInfo
    * @property {string} amount The amount of tokens the given operator delegated.
    * @property {string} createdAt The time when the stake has been delegated.
@@ -187,35 +215,6 @@ export default class KEEP {
       operatorAddress,
       keepRandomBeaconOperatorContractAddress
     )
-  }
-
-  /**
-   * Returns the array of the operators of the given authorizer address.
-   *
-   * @param {string} authorizerAddress
-   * @return {Promise<string[]>} Operators of authorizer.
-   */
-  async getAuthorizerOperators(authorizerAddress) {
-    const stakedEvents = await this.tokenStakingContract.getPastEvents("Staked")
-
-    const authorizerOperators = []
-
-    // Fetch all authorizer operators
-    for (let i = 0; i < stakedEvents.length; i++) {
-      const {
-        returnValues: { from: operatorAddress },
-      } = stakedEvents[i]
-
-      const authorizerOfOperator = await this.authorizerOfOperator(
-        operatorAddress
-      )
-
-      if (isSameEthAddress(authorizerOfOperator, authorizerAddress)) {
-        authorizerOperators.push(operatorAddress)
-      }
-    }
-
-    return authorizerOperators
   }
 
   /**
@@ -310,6 +309,9 @@ export default class KEEP {
     const groupPublicKeys = (await this.getAllCreatedGroups()).map(
       (event) => event.returnValues.groupPubKey
     )
+    const beneficiaryOperators = await this.operatorsOfBeneficiary(
+      beneficiaryAddress
+    )
 
     const groupsInfo = {}
     const rewards = []
@@ -320,23 +322,7 @@ export default class KEEP {
       groupIndex++
     ) {
       const groupPublicKey = groupPublicKeys[groupIndex]
-      const groupMembers = new Set(
-        await this.keepRandomBeaconOperatorContract.makeCall(
-          "getGroupMembers",
-          groupPublicKey
-        )
-      )
-
-      for (const memberAddress of groupMembers) {
-        const beneficiaryAddressForMember = await this.beneficiaryOf(
-          memberAddress
-        )
-
-        if (
-          !isSameEthAddress(beneficiaryAddressForMember, beneficiaryAddress)
-        ) {
-          continue
-        }
+      for (const memberAddress of beneficiaryOperators) {
         const awaitingRewards = await this.keepRandomBeaconOperatorStatisticsContract.makeCall(
           "awaitingRewards",
           memberAddress,
@@ -380,6 +366,8 @@ export default class KEEP {
         })
       }
     }
+
+    return rewards
   }
 
   /**
@@ -468,5 +456,7 @@ export default class KEEP {
 
       data.push(punishmentData)
     }
+
+    return data
   }
 }
