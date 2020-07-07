@@ -1,11 +1,11 @@
-import React, { useContext } from "react"
+import React, { useContext, useEffect } from "react"
 import { Web3Context } from "../components/WithWeb3Context"
 import TokensPage from "./TokensPage"
 import TokenGrantsPage from "./TokenGrantsPage"
 import TokensPageContextProvider, {
   useTokensPageContext,
 } from "../contexts/TokensPageContext"
-import { Route, Switch, Redirect } from "react-router-dom"
+import { Route, Switch, Redirect, useLocation } from "react-router-dom"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent.js"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import {
@@ -15,6 +15,7 @@ import {
   ADD_UNDELEGATION,
   UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
   REMOVE_UNDELEGATION,
+  SET_TOKENS_CONTEXT,
 } from "../reducers/tokens-page.reducer.js"
 import {
   TOKEN_STAKING_CONTRACT_NAME,
@@ -24,18 +25,29 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
 import moment from "moment"
 import { createManagedGrantContractInstance, isCodeValid } from "../contracts"
+import TokenOverviewPage from "./TokenOverviewPage"
 
 const TokensPageContainer = () => {
   useSubscribeToStakedEvent()
   useSubscribeToUndelegatedEvent()
   useSubscribeToRecoveredStakeEvent()
   useSubscribeToTokenGrantEvents()
+  const { hash } = useLocation()
+  const { dispatch } = useTokensPageContext()
+
+  useEffect(() => {
+    const tokenContext = hash.substring(1)
+    if (tokenContext === "owned" || tokenContext === "granted") {
+      dispatch({ type: SET_TOKENS_CONTEXT, payload: tokenContext })
+    }
+  }, [hash, dispatch])
 
   return (
     <Switch>
+      <Route exact path="/tokens/overview" component={TokenOverviewPage} />
       <Route exact path="/tokens/delegate" component={TokensPage} />
       <Route exact path="/tokens/grants" component={TokenGrantsPage} />
-      <Redirect to="/tokens/delegate" />
+      <Redirect to="/tokens/overview" />
     </Switch>
   )
 }
