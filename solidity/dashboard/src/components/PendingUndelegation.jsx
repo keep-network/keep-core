@@ -44,8 +44,13 @@ const PendingUndelegation = ({ latestUnstakeEvent, data, setData }) => {
   })
 
   return data.delegationStatus === "UNDELEGATED" ? (
-    <Tile title="Pending Undelegations" id="pending-undelegation">
-      <DataTable data={[{ ...data }]} itemFieldId="pendingUnstakeBalance">
+    <Tile id="pending-undelegation">
+      <DataTable
+        data={[{ ...data }]}
+        itemFieldId="pendingUnstakeBalance"
+        title="Pending Undelegations"
+        noDataMessage="No undelegated tokens."
+      >
         <Column
           header="amount"
           field="stakedBalance"

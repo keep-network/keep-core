@@ -1,6 +1,6 @@
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
