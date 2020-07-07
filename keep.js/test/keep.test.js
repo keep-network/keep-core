@@ -4,7 +4,10 @@ import sinon from "sinon"
 import KEEP, { contracts } from "../src/keep.js"
 import ContractFactory, { ContractWrapper } from "../src/contract-wrapper.js"
 import { TokenStakingConstants } from "../src/constants.js"
-import { ContractWrapperMock } from "./mocks.js"
+
+const operatorAddress = "0x0"
+const beneficiaryAddress = "0x1"
+const authorizerAddress = "0x2"
 
 describe("Keep initialization", () => {
   let config
@@ -54,7 +57,7 @@ describe("KEEP.js functions", () => {
   before(async () => {
     sinon
       .stub(ContractFactory, "createContractInstance")
-      .callsFake(() => Promise.resolve(ContractWrapperMock))
+      .callsFake(() => Promise.resolve(new ContractWrapper()))
 
     sinon.stub(TokenStakingConstants, "initialize").callsFake(() =>
       Promise.resolve({
@@ -67,15 +70,51 @@ describe("KEEP.js functions", () => {
     keep = await KEEP.initialize({})
   })
 
-  it("should beneficiary", async () => {
-    const mockAddress = "0x0"
-    await keep.beneficiaryOf(mockAddress)
+  it("should return beneficiary of the provided operator", async () => {
+    const stub = sinon
+      .stub(keep.tokenStakingContract, "makeCall")
+      .returns(beneficiaryAddress)
 
-    expect(
-      keep.tokenStakingContract.makeCall.calledOnceWithExactly(
-        "beneficiaryOf",
-        mockAddress
-      )
-    ).to.be.true
+    const beneficiary = await keep.beneficiaryOf(operatorAddress)
+
+    expect(stub.calledOnce).to.be.true
+    const args = stub.getCall(0).args
+    expect(args[0]).to.equal("beneficiaryOf")
+    expect(args[1]).equal(operatorAddress)
+    expect(beneficiary).equal(beneficiaryAddress)
+
+    stub.restore()
+  })
+
+  it("should return operators of beneficiary", async () => {
+    const stub = sinon
+      .stub(keep.tokenStakingContract, "getPastEvents")
+      .returns([{ returnValues: { operator: operatorAddress } }])
+
+    const operators = await keep.operatorsOfBeneficiary(beneficiaryAddress)
+
+    expect(stub.calledOnce).to.be.true
+    const args = stub.getCall(0).args
+    expect(args[0]).to.equal("Staked")
+    expect(args[1]).to.deep.eq({ beneficiary: beneficiaryAddress })
+    expect(operators).to.deep.equal([operatorAddress])
+
+    stub.restore()
+  })
+
+  it("should return operators of authorizer", async () => {
+    const stub = sinon
+      .stub(keep.tokenStakingContract, "getPastEvents")
+      .returns([{ returnValues: { operator: operatorAddress } }])
+
+    const operators = await keep.operatorsOfAuthorizer(authorizerAddress)
+
+    expect(stub.calledOnce).to.be.true
+    const args = stub.getCall(0).args
+    expect(args[0]).to.equal("Staked")
+    expect(args[1]).to.deep.eq({ authorizer: authorizerAddress })
+    expect(operators).to.deep.equal([operatorAddress])
+
+    stub.restore()
   })
 })
