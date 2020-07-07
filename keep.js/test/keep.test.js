@@ -53,13 +53,14 @@ describe("Keep initialization", () => {
 
 describe("KEEP.js functions", () => {
   let keep
+  const sandbox = sinon.createSandbox()
 
   before(async () => {
-    sinon
+    sandbox
       .stub(ContractFactory, "createContractInstance")
       .callsFake(() => Promise.resolve(new ContractWrapper()))
 
-    sinon.stub(TokenStakingConstants, "initialize").callsFake(() =>
+    sandbox.stub(TokenStakingConstants, "initialize").callsFake(() =>
       Promise.resolve({
         minimumStake: "1",
         initializationPeriod: "2",
@@ -70,8 +71,12 @@ describe("KEEP.js functions", () => {
     keep = await KEEP.initialize({})
   })
 
+  afterEach(() => {
+    sandbox.restore()
+  })
+
   it("should return beneficiary of the provided operator", async () => {
-    const stub = sinon
+    const stub = sandbox
       .stub(keep.tokenStakingContract, "makeCall")
       .returns(beneficiaryAddress)
 
@@ -82,12 +87,10 @@ describe("KEEP.js functions", () => {
     expect(args[0]).to.equal("beneficiaryOf")
     expect(args[1]).equal(operatorAddress)
     expect(beneficiary).equal(beneficiaryAddress)
-
-    stub.restore()
   })
 
   it("should return operators of beneficiary", async () => {
-    const stub = sinon
+    const stub = sandbox
       .stub(keep.tokenStakingContract, "getPastEvents")
       .returns([{ returnValues: { operator: operatorAddress } }])
 
@@ -98,12 +101,10 @@ describe("KEEP.js functions", () => {
     expect(args[0]).to.equal("Staked")
     expect(args[1]).to.deep.eq({ beneficiary: beneficiaryAddress })
     expect(operators).to.deep.equal([operatorAddress])
-
-    stub.restore()
   })
 
   it("should return operators of authorizer", async () => {
-    const stub = sinon
+    const stub = sandbox
       .stub(keep.tokenStakingContract, "getPastEvents")
       .returns([{ returnValues: { operator: operatorAddress } }])
 
@@ -114,7 +115,5 @@ describe("KEEP.js functions", () => {
     expect(args[0]).to.equal("Staked")
     expect(args[1]).to.deep.eq({ authorizer: authorizerAddress })
     expect(operators).to.deep.equal([operatorAddress])
-
-    stub.restore()
   })
 })
