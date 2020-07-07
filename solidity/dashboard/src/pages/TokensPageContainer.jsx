@@ -71,7 +71,7 @@ const useSubscribeToStakedEvent = async () => {
       : {}
     let isManagedGrant
     let managedGrantContractInstance
-    if (isFromGrant && isGranteeInManagedGrant(web3Context, grantee)) {
+    if (isFromGrant && (await isGranteeInManagedGrant(web3Context, grantee))) {
       isManagedGrant = true
       managedGrantContractInstance = createManagedGrantContractInstance(
         web3,
@@ -118,7 +118,7 @@ const useSubscribeToStakedEvent = async () => {
 
 const useSubscribeToUndelegatedEvent = () => {
   const web3Context = useContext(Web3Context)
-  const { grantContract, stakingContract, web3 } = web3Context
+  const { grantContract, stakingContract, web3, yourAddress } = web3Context
 
   const { undelegationPeriod, dispatch, delegations } = useTokensPageContext()
 
@@ -141,19 +141,23 @@ const useSubscribeToUndelegatedEvent = () => {
       }
     } else {
       const grantStakeDetails = await getGrantDetails(operator, grantContract)
+      const owner = await stakingContract.methods.ownerOf(operator).call()
       const isFromGrant = grantStakeDetails !== null
       const { grantee } = isFromGrant
         ? await grantContract.methods.getGrant(grantStakeDetails.grantId).call()
         : {}
       let isManagedGrant
       let managedGrantContractInstance
-      if (isFromGrant && isGranteeInManagedGrant(web3Context, grantee)) {
+      if (
+        isFromGrant &&
+        (await isGranteeInManagedGrant(web3Context, grantee))
+      ) {
         isManagedGrant = true
         managedGrantContractInstance = createManagedGrantContractInstance(
           web3,
           grantee
         )
-      } else if (!isAddressedToCurrentAccount(operator, web3Context, grantee)) {
+      } else if (!isAddressedToCurrentAccount(owner, yourAddress, grantee)) {
         return
       }
       const { amount } = await stakingContract.methods
@@ -312,6 +316,7 @@ const isGranteeInManagedGrant = async (web3Context, grantee) => {
 
   // check if grantee is a contract
   const code = await web3.eth.getCode(grantee)
+
   if (!isCodeValid(code)) {
     return false
   }
