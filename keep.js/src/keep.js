@@ -459,4 +459,64 @@ export default class KEEP {
 
     return data
   }
+
+  /**
+   * @typedef {Object} TbtcReward
+   * @property {string} depositTokenId,
+   * @property {string} amount
+   * @property {string} transactionHash
+   */
+  /**
+   * Returns withdrawn tbtc rewards for a provided beneficiary address
+   *
+   * @param {string} beneficiaryAddress
+   * @return {Promise<Array<TbtcReward>>} An array of tbtc rewards.
+   */
+  async getWithdrawnTBTCRewards(beneficiaryAddress) {
+    const transefEventsToBeneficiary = await this.tbtcTokenContract.getPastEvents(
+      "Transfer",
+      { to: beneficiaryAddress }
+    )
+    const fromAddresses = transefEventsToBeneficiary.map(
+      (_) => _.returnValues.from
+    )
+
+    const depositCreatedEvents = await this.tbtcSystemContract("Created", {
+      _depositContractAddress: fromAddresses,
+    })
+
+    const tbtcRewards = transferEventToBeneficiary
+      .filter(({ returnValues: { from } }) =>
+        depositCreatedEvents.some(
+          ({ returnValues: { _depositContractAddress } }) =>
+            isSameEthAddress(_depositContractAddress, from)
+        )
+      )
+      .map(({ returnValues: { from, value }, ...eventData }) => ({
+        depositTokenId: from,
+        amount: value,
+        ...eventData,
+      }))
+
+    return tbtcRewards
+  }
+
+  /**
+   * Returns the KEEP operator addresses associated with the Deposit.
+   *
+   * @param {string} depositAddress
+   * @return {Promise<string[]>}
+   */
+  async getOperatorsForDeposit(depositAddress) {
+    const depositContract = new ContractWrapper(
+      new this.config.web3.eth.Contract(Deposit.abi, depositAddress)
+    )
+    const keepAddress = await depositContract.makeCall("getKeepAddress")
+
+    const bondedECDSAKeepContract = new ContractWrapper(
+      new this.config.web3.eth.Contract(BondedECDSAKeep.abi, keepAddress)
+    )
+
+    return await bondedECDSAKeepContract.makeCall("getMembers")
+  }
 }
