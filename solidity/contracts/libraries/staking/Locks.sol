@@ -1,7 +1,7 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import "../../KeepRegistry.sol";
+import { AuthorityVerifier } from "../../Authorizations.sol";
 import "./LockUtils.sol";
 
 library Locks {
@@ -46,34 +46,43 @@ library Locks {
         Storage storage self,
         address operator,
         address operatorContract,
-        KeepRegistry registry
+        address authorityVerifier
     ) public {
         LockUtils.LockSet storage locks = self.operatorLocks[operator];
+
         require(
             locks.contains(operatorContract),
             "No matching lock present"
         );
+
         bool expired = block.timestamp >= locks.getLockTime(operatorContract);
-        bool disabled = !registry.isApprovedOperatorContract(operatorContract);
+        bool disabled = !AuthorityVerifier(authorityVerifier)
+            .isApprovedOperatorContract(operatorContract);
+
         require(
             expired || disabled,
             "Lock still active and valid"
         );
+
         locks.releaseLock(operatorContract);
+
         emit ExpiredLockReleased(operator, operatorContract);
     }
 
     function isStakeLocked(
         Storage storage self,
         address operator,
-        KeepRegistry registry
+        address authorityVerifier
     ) public view returns (bool) {
         LockUtils.Lock[] storage _locks = self.operatorLocks[operator].locks;
         LockUtils.Lock memory lock;
         for (uint i = 0; i < _locks.length; i++) {
             lock = _locks[i];
             if (block.timestamp < lock.expiresAt) {
-                if (registry.isApprovedOperatorContract(lock.creator)) {
+                if (
+                    AuthorityVerifier(authorityVerifier)
+                        .isApprovedOperatorContract(lock.creator)
+                ) {
                     return true;
                 }
             }

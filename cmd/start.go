@@ -153,10 +153,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	err = initializeMetrics(ctx, config, netProvider, stakeMonitor)
-	if err != nil {
-		return fmt.Errorf("error initializing metrics: [%v]", err)
-	}
+	initializeMetrics(ctx, config, netProvider, stakeMonitor)
 
 	select {
 	case <-ctx.Done():
@@ -209,13 +206,13 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
-) error {
+) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
 	)
 	if !isConfigured {
 		logger.Infof("metrics are not configured")
-		return nil
+		return
 	}
 
 	logger.Infof(
@@ -250,6 +247,4 @@ func initializeMetrics(
 		registry,
 		netProvider,
 	)
-
-	return nil
 }
