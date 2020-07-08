@@ -651,8 +651,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @notice Is the operator with the given params initialized
     function _isInitialized(uint256 _operatorParams)
         internal view returns (bool) {
-        uint256 createdAt = _operatorParams.getCreationTimestamp();
-        return block.timestamp > createdAt.add(initializationPeriod);
+        return block.timestamp > _operatorParams.getCreationTimestamp().add(initializationPeriod);
     }
 
     /// @notice Is the operator with the given params undelegating
@@ -666,8 +665,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function _isUndelegatingFinished(uint256 _operatorParams)
         internal view returns (bool) {
         uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
-        uint256 finishedAt = undelegatedAt.add(undelegationPeriod);
-        return (undelegatedAt != 0) && (block.timestamp > finishedAt);
+        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt.add(undelegationPeriod));
     }
 
     /// @notice Get whether the operator's stake is released
