@@ -615,19 +615,16 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
-
         uint256 operatorParams = operators[_operator].packedParams;
-
-        bool isActive = _isInitialized(operatorParams);
-
-        bool stakeReleased = _isStakeReleased(
-            _operator,
-            operatorParams,
-            _operatorContract
-        );
-
-        if (isAuthorized && isActive && !stakeReleased) {
+        if (
+            isAuthorizedForOperator(_operator, _operatorContract) &&
+            _isInitialized(operatorParams) &&
+            !_isStakeReleased(
+                _operator,
+                operatorParams,
+                _operatorContract
+            )
+        ) {
             balance = operatorParams.getAmount();
         }
     }
