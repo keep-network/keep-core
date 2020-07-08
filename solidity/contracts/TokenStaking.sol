@@ -37,7 +37,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using BytesLib for bytes;
     using SafeMath for uint256;
     using PercentUtils for uint256;
-    using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
     using GrantStaking for GrantStaking.Storage;
     using Locks for Locks.Storage;
