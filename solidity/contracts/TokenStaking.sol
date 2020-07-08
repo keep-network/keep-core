@@ -332,8 +332,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             msg.sender != _operator,
             "Operator may not postpone undelegation"
         );
-        uint256 newParams = oldParams.setUndelegationTimestamp(_undelegationTimestamp);
-        operators[_operator].packedParams = newParams;
+        operators[_operator].packedParams = oldParams.setUndelegationTimestamp(
+            _undelegationTimestamp
+        );
         emit Undelegated(_operator, _undelegationTimestamp);
     }
 
