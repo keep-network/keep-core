@@ -473,7 +473,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         public
         onlyApprovedOperatorContract(msg.sender) {
 
-        uint256 totalAmountToBurn = 0;
+        uint256 totalAmountToBurn;
         address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
@@ -521,7 +521,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address tattletale,
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
-        uint256 totalAmountToBurn = 0;
+        uint256 totalAmountToBurn;
         address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
