@@ -66,6 +66,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     ERC20Burnable internal token;
     TokenGrant internal tokenGrant;
     TokenStakingEscrow internal escrow;
+
     GrantStaking.Storage internal grantStaking;
     Locks.Storage internal locks;
     TopUps.Storage internal topUps;
@@ -578,18 +579,16 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
-
         uint256 operatorParams = operators[_operator].packedParams;
-
-        bool isActive = _isInitialized(operatorParams);
-        // `undelegatedAt` may be set to a time in the future,
-        // to schedule undelegation in advance.
-        // In this case the operator is still eligible
-        // until the timestamp `undelegatedAt`.
-        bool isUndelegating = _isUndelegating(operatorParams);
-
-        if (isAuthorized && isActive && !isUndelegating) {
+        if (
+            isAuthorizedForOperator(_operator, _operatorContract) &&
+            _isInitialized(operatorParams) &&
+            !_isUndelegating(operatorParams)
+            // `undelegatedAt` may be set to a time in the future,
+            // to schedule undelegation in advance.
+            // In this case the operator is still eligible
+            // until the timestamp `undelegatedAt`.
+        ) {
             balance = operatorParams.getAmount();
         }
     }
