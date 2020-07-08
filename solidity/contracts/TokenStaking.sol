@@ -310,14 +310,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             grantStaking.canUndelegate(_operator, tokenGrant),
             "Not authorized"
         );
-        require(
-            _undelegationTimestamp >= block.timestamp,
-            "Timestamp in the past"
-        );
         uint256 oldParams = operators[_operator].packedParams;
         require(
+            _undelegationTimestamp >= block.timestamp &&
             _undelegationTimestamp > oldParams.getCreationTimestamp().add(initializationPeriod),
-            "Timestamp in initialization period"
+            "Invalid timestamp"
         );
         uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(

@@ -274,7 +274,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Timestamp in initialization period"
+        "Invalid timestamp"
       )
     })
 
@@ -395,7 +395,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.add(initializationPeriod).sub(timeRoundMargin),
           {from: operatorOne}
         ),
-        "Timestamp in initialization period"
+        "Invalid timestamp"
       )
     })
 
@@ -412,7 +412,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime - 1,
           {from: operatorOne}
         ),
-        "Timestamp in the past"
+        "Invalid timestamp"
       )
     })
 
