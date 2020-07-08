@@ -66,7 +66,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     ERC20Burnable internal token;
     TokenGrant internal tokenGrant;
     TokenStakingEscrow internal escrow;
-
     GrantStaking.Storage internal grantStaking;
     Locks.Storage internal locks;
     TopUps.Storage internal topUps;
@@ -499,15 +498,13 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
             if (currentAmount < amountToSlash) {
                 totalAmountToBurn = totalAmountToBurn.add(currentAmount);
-
-                uint256 newAmount = 0;
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(0);
                 emit TokensSlashed(operator, currentAmount);
             } else {
                 totalAmountToBurn = totalAmountToBurn.add(amountToSlash);
-
-                uint256 newAmount = currentAmount.sub(amountToSlash);
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(
+                    currentAmount.sub(amountToSlash)
+                );
                 emit TokensSlashed(operator, amountToSlash);
             }
         }
@@ -549,15 +546,13 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
             if (currentAmount < amountToSeize) {
                 totalAmountToBurn = totalAmountToBurn.add(currentAmount);
-
-                uint256 newAmount = 0;
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(0);
                 emit TokensSeized(operator, currentAmount);
             } else {
                 totalAmountToBurn = totalAmountToBurn.add(amountToSeize);
-
-                uint256 newAmount = currentAmount.sub(amountToSeize);
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(
+                    currentAmount.sub(amountToSeize)
+                );
                 emit TokensSeized(operator, amountToSeize);
             }
         }
