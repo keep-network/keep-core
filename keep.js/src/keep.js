@@ -16,7 +16,7 @@ import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import ContractFactory, { ContractWrapper } from "./contract-wrapper.js"
 import { TokenStakingConstants } from "./constants.js"
-import { gt, lte } from "./utils.js"
+import { add, gt, lte, isSameEthAddress } from "./utils.js"
 
 export const contracts = new Map([
   [KeepToken, "keepTokenContract"],
@@ -124,7 +124,7 @@ export default class KEEP {
    * @param {string} ownerAddress
    * @return {Promise<string[]>} An array of addresses.
    */
-  async oepratorsOf(ownerAddress) {
+  async operatorsOf(ownerAddress) {
     return await this.tokenStakingContract.makeCall("operatorsOf", ownerAddress)
   }
 
@@ -355,7 +355,7 @@ export default class KEEP {
             isTerminated,
           }
 
-          groups[groupIndex] = groupInfo
+          groupsInfo[groupIndex] = groupInfo
         }
 
         rewards.push({
@@ -433,6 +433,7 @@ export default class KEEP {
 
     for (let i = 0; i < punishmentEvents.length; i++) {
       const {
+        transactionHash,
         returnValues: { groupIndex },
       } = punishmentEvents[i]
       let punishmentData = {}
@@ -481,11 +482,14 @@ export default class KEEP {
       (_) => _.returnValues.from
     )
 
-    const depositCreatedEvents = await this.tbtcSystemContract("Created", {
-      _depositContractAddress: fromAddresses,
-    })
+    const depositCreatedEvents = await this.tbtcSystemContract.getPastEvents(
+      "Created",
+      {
+        _depositContractAddress: fromAddresses,
+      }
+    )
 
-    const tbtcRewards = transferEventToBeneficiary
+    const tbtcRewards = transefEventsToBeneficiary
       .filter(({ returnValues: { from } }) =>
         depositCreatedEvents.some(
           ({ returnValues: { _depositContractAddress } }) =>
