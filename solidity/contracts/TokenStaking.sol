@@ -263,8 +263,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     ) internal returns (uint256) {
         uint256 oldParams = operators[_operator].packedParams;
         uint256 newAmount = oldParams.getAmount().add(_topUp);
-        uint256 newParams = oldParams.setAmount(newAmount);
-        operators[_operator].packedParams = newParams;
+        operators[_operator].packedParams = oldParams.setAmount(newAmount);
         return newAmount;
     }
 
