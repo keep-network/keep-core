@@ -82,7 +82,9 @@ const Wallet = ({
       providerName,
       firstAccountAsSelected
     )
-    setAccounts(availableAccounts)
+    if (!firstAccountAsSelected) {
+      setAccounts(availableAccounts)
+    }
   }
 
   const onSelectAccount = (account) => {
