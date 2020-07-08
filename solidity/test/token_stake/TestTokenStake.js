@@ -105,7 +105,7 @@ describe('TokenStaking', function() {
           
       await expectRevert(
         delegate(operatorOne, stakingAmount),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 

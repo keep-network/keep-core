@@ -297,7 +297,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegateLiquid(grantee, operatorOne, minimumStake),
-      "Operator undelegated"
+      "Stake undelegated"
     )
   })
 

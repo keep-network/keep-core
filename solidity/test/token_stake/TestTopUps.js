@@ -227,7 +227,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       ) 
     })
 
@@ -239,7 +239,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -362,7 +362,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -374,7 +374,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -492,7 +492,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -504,7 +504,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 

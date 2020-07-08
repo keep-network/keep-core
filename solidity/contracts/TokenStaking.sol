@@ -208,7 +208,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         );
         require(
             !_isUndelegating(operatorParams),
-            "Operator undelegated"
+            "Stake undelegated"
         );
 
         // Top-up comes from a grant if it's been initiated from TokenGrantStake
