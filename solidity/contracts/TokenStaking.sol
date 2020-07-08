@@ -304,10 +304,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         uint256 _undelegationTimestamp
     ) public {
-        address owner = operators[_operator].owner;
         require(
-            msg.sender == owner ||
             msg.sender == _operator ||
+            msg.sender == operators[_operator].owner ||
             grantStaking.canUndelegate(_operator, tokenGrant),
             "Not authorized"
         );
