@@ -321,12 +321,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             "Timestamp in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
-        uint256 existingCreationTimestamp = oldParams.getCreationTimestamp();
-        uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
-            _undelegationTimestamp > existingCreationTimestamp.add(initializationPeriod),
+            _undelegationTimestamp > oldParams.getCreationTimestamp().add(initializationPeriod),
             "Timestamp in initialization period"
         );
+        uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
             // Undelegation not in progress OR
             existingUndelegationTimestamp == 0 ||
