@@ -356,7 +356,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             "Locked stake"
         );
 
-        address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
 
         // If there is a pending top-up, force-commit it before returning
@@ -367,7 +366,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         }
 
         operators[_operator].packedParams = operatorParams.setAmount(0);
-        transferOrDeposit(owner, _operator, amount);
+        transferOrDeposit(operators[_operator].owner, _operator, amount);
 
         emit RecoveredStake(_operator, block.timestamp);
     }
