@@ -331,6 +331,14 @@ describe('TokenStaking/TopUps', () => {
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
     })
+
+    it("fails to commit if not first initialized", async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await expectRevert(
+        tokenStaking.commitTopUp(operatorOne),
+        "No top up to commit"
+      )
+    })
   })
 
   describe("delegated grant top-ups", async () => {
@@ -462,6 +470,14 @@ describe('TokenStaking/TopUps', () => {
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))  
     })
+
+    it("fails to commit if not first initialized", async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await expectRevert(
+        tokenStaking.commitTopUp(operatorTwo),
+        "No top up to commit"
+      )
+    })
   })
 
   describe("delegated managed grant top-ups", async () => {
@@ -591,6 +607,14 @@ describe('TokenStaking/TopUps', () => {
       const after = await tokenStakingEscrow.depositedAmount(operatorThree)
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
+    })
+
+    it("fails to commit if not first initialized", async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await expectRevert(
+        tokenStaking.commitTopUp(operatorThree),
+        "No top up to commit"
+      )
     })
   })
 
