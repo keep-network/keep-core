@@ -38,7 +38,9 @@ const UndelegateStakeButton = (props) => {
       contract = stakingContract
     }
     try {
-      await openConfirmationModal(confirmationModalOptions)
+      if (!isInInitializationPeriod) {
+        await openConfirmationModal(confirmationModalOptions)
+      }
       await contract.methods[
         isInInitializationPeriod ? "cancelStake" : "undelegate"
       ](operator)
