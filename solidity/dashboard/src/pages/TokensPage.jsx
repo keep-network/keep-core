@@ -10,6 +10,14 @@ import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
 
+const confirmationModalOptions = {
+  title: "You’re about to delegate stake.",
+  subtitle:
+    "You’re delegating KEEP tokens. You will be able to cancel the delegation for up to 1 week. After that time, you can undelegate your stake.",
+  btnText: "delegate",
+  confirmationText: "DELEGATE",
+}
+
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
@@ -21,10 +29,15 @@ const TokensPage = () => {
     tokensContext,
   } = useTokensPageContext()
 
-  const handleSubmit = async (values, onTransactionHashCallback) => {
+  const handleSubmit = async (
+    values,
+    onTransactionHashCallback,
+    openConfirmationModal
+  ) => {
     values.context = tokensContext
     values.selectedGrant = { ...selectedGrant }
     try {
+      await openConfirmationModal(confirmationModalOptions)
       await tokensPageService.delegateStake(
         web3Context,
         values,
