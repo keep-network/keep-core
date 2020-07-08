@@ -92,7 +92,7 @@ contract Authorizations is AuthorityVerifier {
         );
         require(
             getAuthoritySource(_operatorContract) == _operatorContract,
-            "Contract uses delegated authority"
+            "Delegated authority used"
         );
         authorizations[_operatorContract][_operator] = true;
     }

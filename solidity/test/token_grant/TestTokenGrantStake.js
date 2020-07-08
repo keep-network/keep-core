@@ -266,7 +266,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       grantContract.cancelStake(operatorOne, {from: grantee}),
-      "Initialization period is over"
+      "Initialized stake"
     );
   })
 
@@ -281,7 +281,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       stakingContract.recoverStake(operatorOne),
-      "Can not recover before undelegation period is over"
+      "Still undelegating"
     )
   })
 

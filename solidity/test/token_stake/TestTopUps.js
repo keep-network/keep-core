@@ -215,7 +215,7 @@ describe('TokenStaking/TopUps', () => {
     it("can not be done during initialization period", async () => {
       await expectRevert(
         initiateTopUp(),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -300,7 +300,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp()
       await expectRevert(
         tokenStaking.commitTopUp(operatorOne),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -350,7 +350,7 @@ describe('TokenStaking/TopUps', () => {
     it("can not be done during initialization period", async () => {
       await expectRevert(
         initiateTopUp(),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -431,7 +431,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp()
       await expectRevert(
         tokenStaking.commitTopUp(operatorTwo),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -480,7 +480,7 @@ describe('TokenStaking/TopUps', () => {
     it("can not be done during initialization period", async () => {
       await expectRevert(
         initiateTopUp(),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -561,7 +561,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp()
       await expectRevert(
         tokenStaking.commitTopUp(operatorThree),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 

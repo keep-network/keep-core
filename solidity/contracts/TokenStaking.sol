@@ -133,8 +133,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _token,
         bytes memory _extraData
     ) public {
-        require(ERC20Burnable(_token) == token, "Unrecognized token contract");
-        require(_value >= minimumStake(), "Value must be greater than the minimum stake");
+        require(ERC20Burnable(_token) == token, "Unrecognized token");
+        require(_value >= minimumStake(), "Less than the minimum stake");
         require(_extraData.length >= 60, "Corrupted delegation data");
 
         // Transfer tokens to this contract.
@@ -210,7 +210,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
             _isInitialized(operatorParams),
-            "Initialization period is not over"
+            "Stake is initializing"
         );
         require(
             !_isUndelegating(operatorParams),
@@ -285,7 +285,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         require(
             !_isInitialized(operatorParams),
-            "Initialization period is over"
+            "Initialized stake"
         );
 
         uint256 amount = operatorParams.getAmount();
@@ -320,14 +320,14 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         );
         require(
             _undelegationTimestamp >= block.timestamp,
-            "Undelegation timestamp in the past"
+            "Timestamp in the past"
         );
         uint256 oldParams = operators[_operator].packedParams;
         uint256 existingCreationTimestamp = oldParams.getCreationTimestamp();
         uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
             _undelegationTimestamp > existingCreationTimestamp.add(initializationPeriod),
-            "Cannot undelegate in initialization period"
+            "Timestamp in initialization period"
         );
         require(
             // Undelegation not in progress OR
@@ -353,16 +353,15 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
             operatorParams.getUndelegationTimestamp() != 0,
-            "Can not recover without first undelegating"
+            "Not undelegated"
         );
         require(
             _isUndelegatingFinished(operatorParams),
-            "Can not recover before undelegation period is over"
+            "Still undelegating"
         );
-
         require(
             !isStakeLocked(_operator),
-            "Can not recover locked stake"
+            "Locked stake"
         );
 
         address owner = operators[_operator].owner;
@@ -411,11 +410,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         require(
             _isInitialized(operatorParams),
-            "Stake must be active"
+            "Inactive stake"
         );
         require(
             !_isUndelegating(operatorParams),
-            "Operator undelegating"
+            "Undelegating stake"
         );
 
         locks.lockStake(operator, duration);
@@ -490,7 +489,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 _isInitialized(operatorParams),
-                "Stake must be active"
+                "Inactive stake"
             );
 
             require(
@@ -540,7 +539,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 _isInitialized(operatorParams),
-                "Stake must be active"
+                "Inactive stake"
             );
 
             require(

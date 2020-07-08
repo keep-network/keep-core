@@ -205,7 +205,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
             recognizedContract,
             {from: authorizer}
           ),
-          "Contract uses delegated authority"
+          "Delegated authority used"
         );
       })
     })

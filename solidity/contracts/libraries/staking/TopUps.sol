@@ -49,7 +49,7 @@ library TopUps {
         require(topUp.amount > 0, "No top up to commit");
         require(
             now > topUp.createdAt.add(initializationPeriod),
-            "Initialization period is not over"
+            "Stake is initializing"
         );
 
         delete self.topUps[operator];

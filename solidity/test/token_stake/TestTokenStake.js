@@ -111,7 +111,7 @@ describe('TokenStaking', function() {
     it("should not allow to delegate less than the minimum stake", async () => {    
       await expectRevert(
         delegate(operatorOne, minimumStake.subn(1)),
-        "Value must be greater than the minimum stake"
+        "Less than the minimum stake"
       )
     })
   
@@ -187,7 +187,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: owner}),
-        "Initialization period is over"
+        "Initialized stake"
       );
     })
 
@@ -273,7 +273,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Cannot undelegate in initialization period"
+        "Timestamp in initialization period"
       )
     })
 
@@ -394,7 +394,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.add(initializationPeriod).sub(timeRoundMargin),
           {from: operatorOne}
         ),
-        "Cannot undelegate in initialization period"
+        "Timestamp in initialization period"
       )
     })
 
@@ -411,7 +411,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime - 1,
           {from: operatorOne}
         ),
-        "Undelegation timestamp in the past"
+        "Timestamp in the past"
       )
     })
 
@@ -481,7 +481,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.recoverStake(operatorOne),
-        "Can not recover without first undelegating"
+        "Not undelegated"
       )
     })
 
@@ -496,7 +496,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.recoverStake(operatorOne),
-        "Can not recover before undelegation period is over"
+        "Still undelegating"
       )
     })
 
