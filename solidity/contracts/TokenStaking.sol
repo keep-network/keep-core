@@ -60,8 +60,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
     uint256 public minimumStakeScheduleStart;
-    uint256 public initializationPeriod;
-    uint256 public undelegationPeriod;
+    uint256 public initializationPeriod; // varies between mainnet and testnet
+    uint256 public constant undelegationPeriod = 5184000; // ~60 days
 
     ERC20Burnable internal token;
     TokenGrant internal tokenGrant;
@@ -78,23 +78,18 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @param _registry Keep contract registry contract.
     /// @param _initializationPeriod To avoid certain attacks on work selection, recently created
     /// operators must wait for a specific period of time before being eligible for work selection.
-    /// @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
-    /// stakes will stay locked for a period of time after undelegation, and thus available as
-    /// collateral for any work the operator is engaged in.
     constructor(
         ERC20Burnable _token,
         TokenGrant _tokenGrant,
         TokenStakingEscrow _escrow,
         KeepRegistry _registry,
-        uint256 _initializationPeriod,
-        uint256 _undelegationPeriod
+        uint256 _initializationPeriod
     ) Authorizations(_registry) public {
         token = _token;
         tokenGrant = _tokenGrant;
         escrow = _escrow;
         registry = _registry;
         initializationPeriod = _initializationPeriod;
-        undelegationPeriod = _undelegationPeriod;
         minimumStakeScheduleStart = block.timestamp;
     }
 

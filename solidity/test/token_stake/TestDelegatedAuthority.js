@@ -14,7 +14,6 @@ const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const DelegatedAuthorityStub = contract.fromArtifact("DelegatedAuthorityStub");
 
 const initializationPeriod = time.duration.seconds(10);
-const undelegationPeriod = time.duration.seconds(30);
 
 let token, registry, stakingContract;
 let authorityDelegator, badAuthorityDelegator;
@@ -40,7 +39,6 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       grant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )

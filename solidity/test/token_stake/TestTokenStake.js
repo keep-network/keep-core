@@ -29,7 +29,7 @@ describe('TokenStaking', function() {
     operatorContract = accounts[6];
 
   const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
+  let undelegationPeriod;
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
@@ -40,11 +40,12 @@ describe('TokenStaking', function() {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
     stakingContract = stakingContracts.tokenStaking;
+
+    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     await registry.approveOperatorContract(operatorContract, {from: accounts[0]});
 

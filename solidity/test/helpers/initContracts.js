@@ -1,4 +1,5 @@
 const {contract, accounts} = require("@openzeppelin/test-environment")
+const {time} = require('@openzeppelin/test-helpers')
 
 const BLS = contract.fromArtifact('BLS');
 const GroupSelection = contract.fromArtifact('GroupSelection');
@@ -19,7 +20,6 @@ async function initTokenStaking(
   tokenGrantAddress,
   keepRegistryAddress,
   stakeInitializationPeriod,
-  stakeUndelegationPeriod,
   TokenStakingEscrow,
   TokenStaking
 ) {
@@ -53,7 +53,6 @@ async function initTokenStaking(
     tokenStakingEscrow.address,
     keepRegistryAddress,
     stakeInitializationPeriod,
-    stakeUndelegationPeriod,
     {from: accounts[0]}
   );
   await tokenStakingEscrow.transferOwnership(
@@ -75,8 +74,7 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
     operatorContract;
 
   let dkgContributionMargin = 5, // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
-    stakeInitializationPeriod = 30, // In seconds
-    stakeUndelegationPeriod = 300; // In seconds
+    stakeInitializationPeriod = time.duration.hours(6)
 
   token = await KeepToken.new({from: accounts[0]});
   tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]});
@@ -88,7 +86,6 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
     tokenGrant.address,
     registry.address,
     stakeInitializationPeriod,
-    stakeUndelegationPeriod,
     contract.fromArtifact('TokenStakingEscrow'),
     TokenStaking
   )

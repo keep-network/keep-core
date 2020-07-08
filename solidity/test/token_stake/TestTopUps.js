@@ -38,12 +38,13 @@ describe('TokenStaking/TopUps', () => {
     thirdParty = accounts[11]
     operatorContract = accounts[12]
 
-  const initializationPeriod = time.duration.seconds(10),
-    undelegationPeriod = time.duration.seconds(10),
+  const initializationPeriod = time.duration.days(10),
     grantStart = time.duration.seconds(0),
     grantUnlockingDuration = time.duration.years(100),
     grantCliff = time.duration.seconds(0),
     grantRevocable = true
+
+  let undelegationPeriod;
 
   let token, tokenGrant, tokenStakingEscrow, tokenStaking
 
@@ -78,7 +79,6 @@ describe('TokenStaking/TopUps', () => {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
@@ -87,6 +87,8 @@ describe('TokenStaking/TopUps', () => {
     await tokenGrant.authorizeStakingContract(tokenStaking.address, {
       from: grantManager,
     })
+
+    undelegationPeriod = await tokenStaking.undelegationPeriod()
 
     //
     // Create three grants:

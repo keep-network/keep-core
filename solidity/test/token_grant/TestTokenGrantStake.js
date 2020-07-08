@@ -42,11 +42,11 @@ describe('TokenGrant/Stake', function() {
   let evilGrantId;
   let grantStart;
 
-  const grantUnlockingDuration = time.duration.days(60);
+  const grantUnlockingDuration = time.duration.days(180);
   const grantCliff = time.duration.days(10);
 
-  const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
+  const initializationPeriod = time.duration.days(10);
+  let undelegationPeriod;
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
@@ -57,7 +57,6 @@ describe('TokenGrant/Stake', function() {
       grantContract.address,
       registryContract.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     );
@@ -65,6 +64,8 @@ describe('TokenGrant/Stake', function() {
     stakingEscrowContract = stakingContracts.tokenStakingEscrow;
 
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
+
+    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     grantStart = await time.latest();
     minimumStake = await stakingContract.minimumStake()

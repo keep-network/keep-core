@@ -11,9 +11,8 @@ contract TokenStakingSlashingStub is TokenStaking {
         TokenGrant _tokenGrant,
         TokenStakingEscrow _escrow,
         KeepRegistry _registry,
-        uint256 _initializationPeriod,
-        uint256 _undelegationPeriod
-    ) TokenStaking(_token, _tokenGrant, _escrow, _registry, _initializationPeriod, _undelegationPeriod) public {
+        uint256 _initializationPeriod
+    ) TokenStaking(_token, _tokenGrant, _escrow, _registry, _initializationPeriod) public {
     }
 
     function slash(uint256 amountToSlash, address[] memory misbehavedOperators) public {

@@ -79,7 +79,6 @@ describe('GuaranteedMinimumStakingPolicy', async () => {
       accounts[9],
       accounts[9],
       accounts[9],
-      0, 
       0,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
@@ -243,7 +242,6 @@ describe('AdaptiveStakingPolicy', async () => {
       accounts[9],
       accounts[9],
       0, 
-      0,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     );

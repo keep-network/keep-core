@@ -16,7 +16,6 @@ const KeepRegistry = contract.fromArtifact("KeepRegistry");
 describe('TokenStaking/MinimumStake', function() {
   let token, registry, stakingContract, keepDecimals;
   const initializationPeriod = time.duration.seconds(10);
-  const undelegationPeriod = time.duration.seconds(30);
 
   const schedule = web3.utils.toBN(86400 * 365 * 2)
   const steps = web3.utils.toBN(10)
@@ -31,7 +30,6 @@ describe('TokenStaking/MinimumStake', function() {
       grant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )

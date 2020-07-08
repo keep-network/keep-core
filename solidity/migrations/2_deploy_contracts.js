@@ -24,7 +24,6 @@ const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 let initializationPeriod = 43200; // ~12 hours
-let undelegationPeriod = 7776000; // ~3 months
 const dkgContributionMargin = 1; // 1%
 
 module.exports = async function(deployer, network) {
@@ -57,8 +56,7 @@ module.exports = async function(deployer, network) {
     TokenGrant.address,
     TokenStakingEscrow.address,
     KeepRegistry.address,
-    initializationPeriod,
-    undelegationPeriod
+    initializationPeriod
   );
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);

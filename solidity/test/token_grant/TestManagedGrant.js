@@ -38,8 +38,8 @@ describe('TokenGrant/ManagedGrant', () => {
   const grantUnlockingDuration = time.duration.days(60);
   const grantCliff = time.duration.days(10);
 
-  const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
+  const initializationPeriod = time.duration.hours(12);
+  let undelegationPeriod
 
   let managedGrant;
 
@@ -54,7 +54,6 @@ describe('TokenGrant/ManagedGrant', () => {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     );
@@ -63,6 +62,7 @@ describe('TokenGrant/ManagedGrant', () => {
 
     await tokenGrant.authorizeStakingContract(staking.address, {from: grantCreator});
 
+    undelegationPeriod = await staking.undelegationPeriod()
     minimumStake = await staking.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()

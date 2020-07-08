@@ -18,8 +18,8 @@ describe('TokenStaking/Lock', () => {
     operatorContract = accounts[6],
     operatorContract2 = accounts[7];
 
-  const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(10);
+  const initializationPeriod = time.duration.days(10);
+  let undelegationPeriod;
   const lockPeriod = time.duration.weeks(12);
 
   let createdAt;
@@ -34,11 +34,12 @@ describe('TokenStaking/Lock', () => {
       grant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
     stakingContract = stakingContracts.tokenStaking;
+
+    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     await registry.approveOperatorContract(operatorContract, {from: owner});
     await registry.approveOperatorContract(operatorContract2, {from: owner});
