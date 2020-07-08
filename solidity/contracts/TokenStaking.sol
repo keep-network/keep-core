@@ -704,11 +704,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     ) internal {
         if (grantStaking.hasGrantDelegated(_operator)) {
             // For tokens staked from a grant, transfer them to the escrow.
-            uint256 grantId = grantStaking.getGrantForOperator(_operator);
             TokenSender(address(token)).approveAndCall(
                 address(escrow),
                 _amount,
-                abi.encode(_operator, grantId)
+                abi.encode(_operator, grantStaking.getGrantForOperator(_operator))
             );
         } else {
             // For liquid tokens staked, transfer them straight to the owner.
