@@ -678,11 +678,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 _operatorParams,
         address _operatorContract
     ) internal view returns (bool) {
-        if (!_isUndelegatingFinished(_operatorParams)) {
-            return false;
-        }
-        // Undelegating finished, so check locks
-        return locks.isStakeReleased(_operator, _operatorContract);
+        return _isUndelegatingFinished(_operatorParams) &&
+            locks.isStakeReleased(_operator, _operatorContract);
     }
 
     function transferOrDeposit(
