@@ -52,7 +52,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCommitted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
-    event RecoveredStake(address operator, uint256 recoveredAt);
+    event RecoveredStake(address operator);
     event TokensSlashed(address indexed operator, uint256 amount);
     event TokensSeized(address indexed operator, uint256 amount);
     event StakeLocked(address indexed operator, address lockCreator, uint256 until);
@@ -365,7 +365,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         operators[_operator].packedParams = operatorParams.setAmount(0);
         transferOrDeposit(operators[_operator].owner, _operator, amount);
 
-        emit RecoveredStake(_operator, block.timestamp);
+        emit RecoveredStake(_operator);
     }
 
     /// @notice Gets stake delegation info for the given operator.
