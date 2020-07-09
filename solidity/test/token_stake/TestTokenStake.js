@@ -1,5 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot')
 const {initTokenStaking} = require('../helpers/initContracts')
 
@@ -26,7 +26,8 @@ describe('TokenStaking', function() {
     operatorTwo = accounts[3],
     beneficiary = accounts[4],
     authorizer = accounts[5],
-    operatorContract = accounts[6];
+    operatorContract = accounts[6],
+    thirdParty = accounts[7]
 
   const initializationPeriod = time.duration.minutes(10);
   let undelegationPeriod;
@@ -780,6 +781,46 @@ describe('TokenStaking', function() {
         0,
         "There should be no active stake"
       )
+    })
+  })
+  
+  describe("transferStakeOwnership", async () => {
+    it("fails when not called by staking relationship owner", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await expectRevert(
+        stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+          {from: thirdParty}
+        ),
+        "Not authorized"
+      )
+    })
+
+    it("transfers stake relationship ownership", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+        {from: owner}
+      )
+      const newOwner = await stakingContract.ownerOf(operatorOne)
+      expect(newOwner).to.equal(thirdParty)
+    })
+
+    it("emits an event", async () => {
+      await delegate(operatorOne, stakingAmount)
+      const receipt = await stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+        {from: owner}
+      )
+
+      await expectEvent(receipt, "StakeOwnershipTransferred", {
+        operator: operatorOne,
+        oldOwner: owner,
+        newOwner: thirdParty
+      })
     })
   })
 });
