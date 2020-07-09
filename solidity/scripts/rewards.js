@@ -82,7 +82,8 @@ module.exports = async function() {
     const numberOfGroups = await keepRandomBeaconOperator.numberOfGroups()
     const firstActiveIndex = await keepRandomBeaconOperator.getFirstActiveGroupIndex()
   
-    for (let i = 0; i < 30; i++) {
+    const allGroups = (await keepRandomBeaconOperator.getNumberOfCreatedGroups()).toNumber()
+    for (let i = 0; i < allGroups; i++) {
       const groupPublicKey =  await keepRandomBeaconOperator.getGroupPublicKey(i);
       const isStale = await keepRandomBeaconOperator.isStaleGroup(groupPublicKey);
   
@@ -91,12 +92,6 @@ module.exports = async function() {
   
     console.log('number of active groups:', numberOfGroups.toString());
     console.log('first active index:', firstActiveIndex.toString());
-    
-    // await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 1)
-    // await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 3)
-    // await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 1)
-    // await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 5)
-    // await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 6)  
 
     async function registerNewGroups (numberOfGroups) {
       const groupReward = web3.utils.toWei('145000', 'Gwei');

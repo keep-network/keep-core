@@ -27,20 +27,16 @@ contract KeepRandomBeaconOperatorRewardsStub is KeepRandomBeaconOperator {
         groups.addGroupMemberReward(groupPubKey, groupMemberReward);
     }
 
-    function emitRewardsWithdrawnEvent(address operator, uint256 groupIndex) public {
-        emit GroupMemberRewardsWithdrawn(stakingContract.beneficiaryOf(operator), operator, 1000 wei, groupIndex);
-    }
-
     function reportUnauthorizedSigning(
         uint256 groupIndex
     ) public {
-        // Makes a given group as terminated
-        groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize);
+        // Marks the given group as terminated.
+        groups.reportRelayEntryTimeout(groupIndex, groupSize);
         emit UnauthorizedSigningReported(groupIndex);
     }
 
     function reportRelayEntryTimeout(uint256 groupIndex) public {
-        // Makes a given group as terminated
+        // Marks the given group as terminated.
         groups.reportRelayEntryTimeout(groupIndex, groupSize);
         emit RelayEntryTimeoutReported(groupIndex);
     }
