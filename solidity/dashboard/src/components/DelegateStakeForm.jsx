@@ -67,6 +67,7 @@ const DelegateStakeForm = ({
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
         disabled={!(formikProps.isValid && formikProps.dirty)}
+        confirmationModalTitle="Initiate Delegation"
       >
         delegate stake
       </SubmitButton>

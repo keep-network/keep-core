@@ -4,7 +4,11 @@ import {
   TOKEN_GRANT_CONTRACT_NAME,
 } from "../constants/constants"
 import moment from "moment"
-import { isCodeValid, createManagedGrantContractInstance } from "../contracts"
+import {
+  isCodeValid,
+  createManagedGrantContractInstance,
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
+} from "../contracts"
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress, grantContract, eth, web3 } = web3Context
@@ -148,6 +152,20 @@ const fetchPendingUndelegation = async (web3Context) => {
     delegationStatus,
     undelegation: delegation,
   }
+}
+
+export const getOperatorsOfAuthorizer = async (web3Context, authorizer) => {
+  return (
+    await contractService.getPastEvents(
+      web3Context,
+      TOKEN_STAKING_CONTRACT_NAME,
+      "Staked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
+        filter: { authorizer },
+      }
+    )
+  ).map((_) => _.returnValues.operator)
 }
 
 export const operatorService = {

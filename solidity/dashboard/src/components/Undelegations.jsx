@@ -8,7 +8,7 @@ import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 
-const Undelegations = ({ undelegations }) => {
+const Undelegations = ({ undelegations, title }) => {
   return (
     <Tile>
       <DataTable
@@ -95,6 +95,10 @@ const Undelegations = ({ undelegations }) => {
       </DataTable>
     </Tile>
   )
+}
+
+Undelegations.defaultProps = {
+  title: "Undelegations",
 }
 
 export default Undelegations
