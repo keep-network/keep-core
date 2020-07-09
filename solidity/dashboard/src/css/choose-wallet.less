@@ -14,6 +14,46 @@
         margin-bottom: 1rem;
         border: 1px solid @color-grey-20;
 
+        &.disabled {
+            border: 1px solid @color-grey-10;
+
+            h4 {
+                color: @color-grey-30;
+            }
+
+            svg.arrow-right {
+                * {
+                    fill: @color-grey-20 !important;
+                    stroke: @color-grey-20 !important;
+                }
+            }
+
+            .wallet {
+                &-type {
+                    color: @color-grey-30 !important;
+                }
+
+                &-description {
+                    color: @color-grey-20 !important;
+                }
+
+                &-icon {
+                    > circle {
+                        fill: @white !important;
+                        stroke: @color-grey-20;
+                    }
+                    > * {
+                        fill: @color-grey-20;
+                    }
+                    &.coinbase {
+                        .c-letter {
+                            stroke: @color-grey-20;
+                        }
+                    }
+                }
+            }
+        }
+
         h4 {
             position: relative;
             font-family: 'Vitesse';
@@ -102,6 +142,31 @@
                 &.coinbase {
                     .c-letter {
                         stroke: @color-black;
+                    }
+                }
+            }
+        }
+
+        &.disabled:hover {
+            cursor: not-allowed;
+        
+            h4 {
+                &::after {
+                    opacity: 0;
+                }
+            }
+
+            .wallet-icon { 
+                > circle {
+                    fill: @white !important;
+                    stroke: @color-grey-20;
+                }
+                > * {
+                    fill: @color-grey-20;
+                }
+                &.coinbase {
+                    .c-letter {
+                        stroke: @color-grey-20;
                     }
                 }
             }
