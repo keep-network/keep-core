@@ -1,5 +1,4 @@
 import web3Utils from "web3-utils"
-import { isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import {
@@ -8,12 +7,12 @@ import {
   SIGNING_GROUP_STATUS,
 } from "../constants/constants"
 import { contractService } from "./contracts.service"
+import { getOperatorsOfBeneficiary } from "./token-staking.service"
 
 const fetchAvailableRewards = async (web3Context) => {
   const {
     keepRandomBeaconOperatorContract,
     keepRandomBeaconOperatorStatistics,
-    stakingContract,
     yourAddress,
   } = web3Context
   try {
@@ -31,28 +30,18 @@ const fetchAvailableRewards = async (web3Context) => {
         operatorEventsSearchFilters
       )
     ).map((event) => event.returnValues.groupPubKey)
+
+    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(
+      web3Context,
+      yourAddress
+    )
     const rewards = []
-    const groupMemberIndices = {}
     // { groupIndex: { isStale, isTerminated, groupPubKey } }
     const groups = {}
 
     for (let groupIndex = 0; groupIndex < groupPubKeys.length; groupIndex++) {
       const groupPubKey = groupPubKeys[groupIndex]
-      const groupMembers = new Set(
-        await keepRandomBeaconOperatorContract.methods
-          .getGroupMembers(groupPubKey)
-          .call()
-      )
-      groupMemberIndices[groupPubKey] = {}
-      for (const memberAddress of groupMembers) {
-        const beneficiaryAddressForMember = await stakingContract.methods
-          .beneficiaryOf(memberAddress)
-          .call()
-
-        if (!isSameEthAddress(yourAddress, beneficiaryAddressForMember)) {
-          continue
-        }
-
+      for (const memberAddress of operatorsOfBeneficiary) {
         const awaitingRewards = await keepRandomBeaconOperatorStatistics.methods
           .awaitingRewards(memberAddress, groupIndex)
           .call()
@@ -60,6 +49,7 @@ const fetchAvailableRewards = async (web3Context) => {
         if (!gt(awaitingRewards, 0)) {
           continue
         }
+
         let groupInfo = {}
         if (groups.hasOwnProperty(groupIndex)) {
           groupInfo = { ...groups[groupIndex] }
