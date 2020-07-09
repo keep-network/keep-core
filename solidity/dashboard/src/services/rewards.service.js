@@ -36,7 +36,6 @@ const fetchAvailableRewards = async (web3Context) => {
       yourAddress
     )
     const rewards = []
-    // { groupIndex: { isStale, isTerminated, groupPubKey } }
     const groups = {}
 
     for (let groupIndex = 0; groupIndex < groupPubKeys.length; groupIndex++) {
