@@ -3,7 +3,7 @@ import Button from "./Button"
 import { LoadingOverlay } from "./Loadable"
 import { useFetchData } from "../hooks/useFetchData"
 import rewardsService from "../services/rewards.service"
-import Dropdown from "./Dropdown"
+import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
@@ -26,6 +26,7 @@ import {
 } from "../constants/constants"
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
+import Skeleton from "./skeletons/Skeleton"
 
 const previewDataCount = 10
 const initialData = [[], "0"]
@@ -189,50 +190,56 @@ export const Rewards = React.memo(() => {
 
   return (
     <>
-      <LoadingOverlay isFetching={isFetching}>
-        <Tile title="Total Balance" titleClassName="text-grey-70 h2">
-          <header className="flex row center">
-            <h1 className="balance">
-              {totalRewardsBalance}
-              <span className="h3 mr-1">&nbsp;ETH</span>
-            </h1>
-            <SpeechBubbleTooltip text="The total balance reflects the total Available and Active rewards. Available rewards are ready to be withdrawn. Active rewards become available after a signing group expires." />
-          </header>
-          <div className="flex row wrap">
-            <StatusBadge
-              className="mr-1"
-              text={REWARD_STATUS.AVAILABLE}
-              status={BADGE_STATUS.COMPLETE}
-            />
-            <StatusBadge
-              text={REWARD_STATUS.ACCUMULATING}
-              status={BADGE_STATUS.ACTIVE}
-            />
-          </div>
-        </Tile>
-      </LoadingOverlay>
+      <Tile title="Total Balance" titleClassName="text-grey-70 h2">
+        <header className="flex row center">
+          {isFetching ? (
+            <Skeleton className="h1 mb-1" styles={{ width: "25%" }} />
+          ) : (
+            <>
+              <h1 className="balance">
+                {totalRewardsBalance}
+                <span className="h3 mr-1">&nbsp;ETH</span>
+              </h1>
+              <SpeechBubbleTooltip text="The total balance reflects the total Available and Active rewards. Available rewards are ready to be withdrawn. Active rewards become available after a signing group expires." />
+            </>
+          )}
+        </header>
+        <div className="flex row wrap">
+          <StatusBadge
+            className="mr-1"
+            text={REWARD_STATUS.AVAILABLE}
+            status={BADGE_STATUS.COMPLETE}
+          />
+          <StatusBadge
+            text={REWARD_STATUS.ACCUMULATING}
+            status={BADGE_STATUS.ACTIVE}
+          />
+        </div>
+      </Tile>
       <LoadingOverlay
         isFetching={isFetching}
-        classNames="group-items self-start"
+        skeletonComponent={<DataTableSkeleton columns={6} />}
       >
         <section className="group-items tile">
-          <div className="flex row space-between">
-            <h4 className="text-grey-70">Rewards Status</h4>
-            <Dropdown
-              withLabel={false}
-              options={rewardsStatusFilterOptions}
-              onSelect={setRewardFilter}
-              valuePropertyName="status"
-              labelPropertyName="status"
-              selectedItem={rewardFilter}
-              noItemSelectedText="All rewards"
-              selectedItemComponent={rewardFilter.status}
-              renderOptionComponent={({ status }) => status}
-              isFilterDropdow
-              allItemsFilterText="All rewards"
-            />
-          </div>
-          <DataTable data={rewardsData} itemFieldId="groupPublicKey">
+          <DataTable
+            data={rewardsData}
+            itemFieldId="groupPublicKey"
+            title="Rewards Status"
+            withFilterDropdown
+            filterDropdownProps={{
+              withLabel: false,
+              options: rewardsStatusFilterOptions,
+              onSelect: setRewardFilter,
+              valuePropertyName: "status",
+              labelPropertyName: "status",
+              selectedItem: rewardFilter,
+              noItemSelectedText: "All rewards",
+              selectedItemComponent: rewardFilter.status,
+              renderOptionComponent: ({ status }) => status,
+              isFilterDropdow: true,
+              allItemsFilterText: "All rewards",
+            }}
+          >
             <Column
               header="amount"
               field="reward"
