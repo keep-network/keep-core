@@ -29,7 +29,7 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import Skeleton from "./skeletons/Skeleton"
 
 const previewDataCount = 10
-const initialData = [[], "0"]
+const initialRewardsData = [[], "0"]
 const rewardsStatusFilterOptions = [
   { status: REWARD_STATUS.AVAILABLE },
   { status: REWARD_STATUS.ACCUMULATING },
@@ -44,7 +44,7 @@ export const Rewards = React.memo(() => {
   // fetch rewards
   const [state, updateData] = useFetchData(
     rewardsService.fetchAvailableRewards,
-    initialData
+    initialRewardsData
   )
   const {
     isFetching,
@@ -200,7 +200,7 @@ export const Rewards = React.memo(() => {
                 {totalRewardsBalance}
                 <span className="h3 mr-1">&nbsp;ETH</span>
               </h1>
-              <SpeechBubbleTooltip text="The total balance reflects the total Available and Active rewards. Available rewards are ready to be withdrawn. Active rewards become available after a signing group expires." />
+              <SpeechBubbleTooltip text="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires." />
             </>
           )}
         </header>
