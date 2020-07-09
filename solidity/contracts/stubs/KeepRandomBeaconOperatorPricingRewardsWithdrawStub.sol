@@ -17,15 +17,8 @@ contract KeepRandomBeaconOperatorPricingRewardsWithdrawStub is KeepRandomBeaconO
         _registryContract
     ) public {
         groupSize = 3;
-        groups.groupActiveTime = 5;
+        groups.groupActiveTime = 3;
         groups.relayEntryTimeout = 10;
-    }
-
-    function isExpiredGroup(bytes memory groupPubKey) public view returns(bool) {
-        uint256 flaggedIndex = groups.groupIndices[groupPubKey];
-        require(flaggedIndex > 0, "Group does not exist");
-        uint256 i = flaggedIndex ^ (1 << 255);
-        return groups.expiredGroupOffset > i;
     }
 
     function registerNewGroup(bytes memory groupPublicKey, address[] memory members) public {

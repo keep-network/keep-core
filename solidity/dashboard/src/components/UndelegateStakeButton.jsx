@@ -3,12 +3,25 @@ import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { SubmitButton } from "./Button"
 
+const confirmationModalOptions = {
+  title: "You’re about to undelegate.",
+  subtitle:
+    "Undelegating will return all of your tokens to their owner. There is an undelegation period of 1 week until the tokens will be completely undelegated.",
+  btnText: "undelegate",
+  confirmationText: "UNDELEGATE",
+}
+
 const UndelegateStakeButton = (props) => {
   const web3Context = useContext(Web3Context)
   const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
 
-  const undelegate = async (onTransactionHashCallback) => {
+  const undelegate = async (
+    onTransactionHashCallback,
+    openMessageInfo,
+    setFetching,
+    openConfirmationModal
+  ) => {
     const {
       operator,
       isInInitializationPeriod,
@@ -25,6 +38,9 @@ const UndelegateStakeButton = (props) => {
       contract = stakingContract
     }
     try {
+      if (!isInInitializationPeriod) {
+        await openConfirmationModal(confirmationModalOptions)
+      }
       await contract.methods[
         isInInitializationPeriod ? "cancelStake" : "undelegate"
       ](operator)
@@ -36,11 +52,13 @@ const UndelegateStakeButton = (props) => {
         content: "Undelegate transaction successfully completed",
       })
     } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Undelegate action has failed ",
-        content: error.message,
-      })
+      if (!error.type || error.type !== "canceled") {
+        showMessage({
+          type: messageType.ERROR,
+          title: "Undelegate action has failed ",
+          content: error.message,
+        })
+      }
       throw error
     }
   }

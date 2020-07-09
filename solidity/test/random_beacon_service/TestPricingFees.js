@@ -1,6 +1,6 @@
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, accounts} = require("@openzeppelin/test-environment")
 
@@ -10,12 +10,10 @@ describe('KeepRandomBeaconService/PricingFees', function() {
 
     before(async () => {
         let contracts = await initContracts(
-
-        contract.fromArtifact('KeepToken'),
-        contract.fromArtifact('TokenStaking'),
-        contract.fromArtifact('KeepRandomBeaconService'),
-        contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-        contract.fromArtifact('KeepRandomBeaconOperatorPricingStub')
+          contract.fromArtifact('TokenStaking'),
+          contract.fromArtifact('KeepRandomBeaconService'),
+          contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+          contract.fromArtifact('KeepRandomBeaconOperatorPricingStub')
         );
     
         serviceContract = contracts.serviceContract;
@@ -45,23 +43,19 @@ describe('KeepRandomBeaconService/PricingFees', function() {
 
     it("should correctly evaluate DKG contribution fee", async () => {
         await operatorContract.setGasPriceCeiling(1234, {from: accounts[0]});
-        await operatorContract.setDkgGasEstimate(13);
-        await operatorContract.setGroupSelectionGasEstimate(2);
 
         let fees = await serviceContract.entryFeeBreakdown();
         let dkgContributionFee = fees.dkgContributionFee;
 
-        let expectedDkgContributionFee = 925; // 1234 * (13+2) * 5% = 925.5
+        let expectedDkgContributionFee = 119698000; // 1234 * (1740000 + 200000) * 5% = 119698000
         assert.equal(expectedDkgContributionFee, dkgContributionFee);
     });
 
     it("should correctly evaluate entry fee estimate", async () => {
         await operatorContract.setGasPriceCeiling(200, {from: accounts[0]});
         await operatorContract.setEntryVerificationGasEstimate(12); 
-        await operatorContract.setDkgGasEstimate(14); 
         await operatorContract.setGroupSize(13);
         await operatorContract.setGroupMemberBaseReward(3);
-        await operatorContract.setGroupSelectionGasEstimate(2);
 
         let callbackGas = 7;
 
@@ -70,11 +64,11 @@ describe('KeepRandomBeaconService/PricingFees', function() {
         );
 
         // entry verification fee = 12 * 200 = 2400
-        // dkg contribution fee = (14 + 2) * 200 * 5% = 160
+        // dkg contribution fee = (1740000 + 200000) * 200 * 5% = 19400000
         // group profit fee = 13 * 3 = 39
         // callback fee = (10226 + 7) * 200 = 2046600
-        // entry fee = 2400 + 160 + 39 + 2046600 = 2049199
-        let expectedEntryFeeEstimate = 2049199;
+        // entry fee = 2400 + 19400000 + 39 + 2046600 = 21449039
+        let expectedEntryFeeEstimate = 21449039;
         assert.equal(expectedEntryFeeEstimate, entryFeeEstimate)
     });
 });

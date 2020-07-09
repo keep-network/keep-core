@@ -1,7 +1,8 @@
 const { delegateStakeFromGrant } = require('../helpers/delegateStake')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const grantTokens = require('../helpers/grantTokens');
+const {initTokenStaking} = require('../helpers/initContracts')
+const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
 const BN = web3.utils.BN
@@ -10,14 +11,14 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const TokenStaking = contract.fromArtifact('TokenStaking');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
 
 describe('TokenGrant/Revoke', function() {
 
-  let tokenContract, registryContract, grantContract, stakingContract, minimumPolicy;
+  let tokenContract, registryContract, grantContract, 
+    stakingContract, stakingEscrowContract, minimumPolicy;
 
   const tokenOwner = accounts[0],
         grantee = accounts[1],
@@ -39,17 +40,21 @@ describe('TokenGrant/Revoke', function() {
 
   before(async () => {
     tokenContract = await KeepToken.new( {from: accounts[0]});
+    grantContract = await TokenGrant.new(tokenContract.address,  {from: accounts[0]});
     registryContract = await KeepRegistry.new( {from: accounts[0]});
-    stakingContract = await TokenStaking.new(
-      tokenContract.address, 
-      registryContract.address, 
-      initializationPeriod, 
+    const stakingContracts = await initTokenStaking(
+      tokenContract.address,
+      grantContract.address,
+      registryContract.address,
+      initializationPeriod,
       undelegationPeriod,
-      {from: accounts[0]}
-    );
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking
+    stakingEscrowContract = stakingContracts.tokenStakingEscrow
     minimumStake = await stakingContract.minimumStake();
     grantAmount = minimumStake.muln(10);
-    grantContract = await TokenGrant.new(tokenContract.address,  {from: accounts[0]});
 
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
@@ -254,7 +259,7 @@ describe('TokenGrant/Revoke', function() {
     await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
     const grantManagerKeepBalanceMidWithdraw = await tokenContract.balanceOf(tokenOwner);
     await grantContract.cancelRevokedStake(operator, { from: tokenOwner });
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    await stakingEscrowContract.withdrawRevoked(operator, { from: tokenOwner });
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
 
     expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(
@@ -295,7 +300,7 @@ describe('TokenGrant/Revoke', function() {
     await time.increase(undelegationPeriod.add(time.duration.minutes(5)));
     await grantContract.recoverStake(operator, { from: tokenOwner });
 
-    await grantContract.withdrawRevoked(grantId, { from: tokenOwner });
+    await stakingEscrowContract.withdrawRevoked(operator, { from: tokenOwner });
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(tokenOwner);
 
     expect(grantManagerKeepBalanceMidWithdraw).to.eq.BN(

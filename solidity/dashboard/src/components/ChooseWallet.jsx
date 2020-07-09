@@ -3,7 +3,6 @@ import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
 import SelectedWalletModal from "./SelectedWalletModal"
-import { LoadingOverlay } from "./Loadable"
 import Tile from "./Tile"
 import PageWrapper from "./PageWrapper"
 import LedgerModal from "./LedgerModal"
@@ -54,16 +53,12 @@ const WALLETS = [
 ]
 
 const ChooseWallet = () => {
-  const { isFetching } = useWeb3Context()
-
   return (
-    <LoadingOverlay isFetching={isFetching}>
-      <PageWrapper title="Connect Wallet">
-        <Tile title="Choose a wallet type.">
-          <ul className="wallets-list">{WALLETS.map(renderWallet)}</ul>
-        </Tile>
-      </PageWrapper>
-    </LoadingOverlay>
+    <PageWrapper title="Connect Wallet">
+      <Tile title="Choose a wallet type.">
+        <ul className="wallets-list">{WALLETS.map(renderWallet)}</ul>
+      </Tile>
+    </PageWrapper>
   )
 }
 
@@ -91,7 +86,9 @@ const Wallet = ({
       providerName,
       firstAccountAsSelected
     )
-    setAccounts(availableAccounts)
+    if (!firstAccountAsSelected) {
+      setAccounts(availableAccounts)
+    }
   }
 
   const onSelectAccount = (account) => {

@@ -1,6 +1,6 @@
 const {contract, accounts} = require("@openzeppelin/test-environment")
 const {expectRevert} = require("@openzeppelin/test-helpers")
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
 
@@ -17,7 +17,6 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
 
   before(async () => {
     let contracts = await initContracts(
-      contract.fromArtifact('KeepToken'),
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),

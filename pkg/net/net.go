@@ -77,6 +77,8 @@ type ConnectionManager interface {
 
 	// AddrStrings returns all listen addresses of the provider.
 	AddrStrings() []string
+
+	IsConnected(address string) bool
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler

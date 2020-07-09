@@ -904,16 +904,12 @@ func TestExecute_DQ_member2_notRevealsDisqualifiedQualMemberKey_phase11(t *testi
 	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		// Member 1 misbehaves by sending an accusation with wrong private key.
+		// Member 1 misbehaves by sending an invalid public key share points message.
 		// As result, they should be disqualified by other members.
-		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
-		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
-			randomKeyPair, _ := ephemeral.GenerateKeyPair()
-			accusationsMessage.SetAccusedMemberKey(
-				group.MemberIndex(2),
-				randomKeyPair.PrivateKey,
-			)
-			return accusationsMessage
+		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(1) {
+			publicKeyShareMessage.RemovePublicKeyShare(2)
+			return publicKeyShareMessage
 		}
 
 		// Member 2 does not reveal private key generated for the sake
