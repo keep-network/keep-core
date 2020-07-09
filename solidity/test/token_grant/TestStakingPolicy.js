@@ -1,14 +1,15 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+
+const {initTokenStaking} = require('../helpers/initContracts');
+
+const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
+const GuaranteedMinimumStakingPolicy = contract.fromArtifact('GuaranteedMinimumStakingPolicy');
+const AdaptiveStakingPolicy = contract.fromArtifact('AdaptiveStakingPolicy');
+
 const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
-
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
-const GuaranteedMinimumStakingPolicy = contract.fromArtifact('GuaranteedMinimumStakingPolicy');
-const AdaptiveStakingPolicy = contract.fromArtifact('AdaptiveStakingPolicy');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
 
 describe('PermissiveStakingPolicy', async () => {
   let policy;
@@ -74,18 +75,16 @@ describe('GuaranteedMinimumStakingPolicy', async () => {
   function tokens(n) { return minimumStake.divn(100000).muln(n); }
 
   before(async () => {
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new()).address
-    )
-    stakingContract = await TokenStaking.new(
+    const contracts = await initTokenStaking(
       accounts[9],
       accounts[9],
       accounts[9],
-      accounts[9],
-      0, 0
+      0, 
+      0,
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
+    stakingContract = contracts.tokenStaking;
     policy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
     minimumStake = await stakingContract.minimumStake();
     largeGrant = tokens(500000); // 5x minimum stake
@@ -239,18 +238,16 @@ describe('AdaptiveStakingPolicy', async () => {
   function tokens(n) { return minimumStake.divn(100000).muln(n); }
 
   before(async () => {
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new()).address
-    )
-    stakingContract = await TokenStaking.new(
+    let contracts = await initTokenStaking(
       accounts[9],
       accounts[9],
       accounts[9],
-      accounts[9],
-      0, 0
+      0, 
+      0,
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
+    stakingContract = contracts.tokenStaking;
     cliffPolicy = await AdaptiveStakingPolicy.new(
       stakingContract.address,
       minimumMultiplier,

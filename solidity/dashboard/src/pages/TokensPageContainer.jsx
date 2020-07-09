@@ -1,11 +1,11 @@
-import React, { useContext } from "react"
+import React, { useContext, useEffect } from "react"
 import { Web3Context } from "../components/WithWeb3Context"
 import TokensPage from "./TokensPage"
 import TokenGrantsPage from "./TokenGrantsPage"
 import TokensPageContextProvider, {
   useTokensPageContext,
 } from "../contexts/TokensPageContext"
-import { Route, Switch, Redirect } from "react-router-dom"
+import { Route, Switch, Redirect, useLocation } from "react-router-dom"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent.js"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import {
@@ -15,6 +15,7 @@ import {
   ADD_UNDELEGATION,
   UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
   REMOVE_UNDELEGATION,
+  SET_TOKENS_CONTEXT,
 } from "../reducers/tokens-page.reducer.js"
 import {
   TOKEN_STAKING_CONTRACT_NAME,
@@ -24,18 +25,29 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
 import moment from "moment"
 import { createManagedGrantContractInstance, isCodeValid } from "../contracts"
+import TokenOverviewPage from "./TokenOverviewPage"
 
 const TokensPageContainer = () => {
   useSubscribeToStakedEvent()
   useSubscribeToUndelegatedEvent()
   useSubscribeToRecoveredStakeEvent()
   useSubscribeToTokenGrantEvents()
+  const { hash } = useLocation()
+  const { dispatch } = useTokensPageContext()
+
+  useEffect(() => {
+    const tokenContext = hash.substring(1)
+    if (tokenContext === "owned" || tokenContext === "granted") {
+      dispatch({ type: SET_TOKENS_CONTEXT, payload: tokenContext })
+    }
+  }, [hash, dispatch])
 
   return (
     <Switch>
+      <Route exact path="/tokens/overview" component={TokenOverviewPage} />
       <Route exact path="/tokens/delegate" component={TokensPage} />
       <Route exact path="/tokens/grants" component={TokenGrantsPage} />
-      <Redirect to="/tokens/delegate" />
+      <Redirect to="/tokens/overview" />
     </Switch>
   )
 }
@@ -50,7 +62,7 @@ export default React.memo(TokensPageContainerWithContext)
 
 const useSubscribeToStakedEvent = async () => {
   const web3Context = useContext(Web3Context)
-  const { grantContract, stakingContract, eth, web3 } = web3Context
+  const { grantContract, eth, web3, yourAddress } = web3Context
 
   const {
     initializationPeriod,
@@ -61,22 +73,23 @@ const useSubscribeToStakedEvent = async () => {
   const subscribeToEventCallback = async (event) => {
     const {
       blockNumber,
-      returnValues: { from, value },
+      returnValues: { owner, operator, authorizer, beneficiary, value },
     } = event
-    const grantStakeDetails = await getGrantDetails(from, grantContract)
+
+    const grantStakeDetails = await getGrantDetails(operator, grantContract)
     const isFromGrant = grantStakeDetails !== null
     const { grantee } = isFromGrant
       ? await grantContract.methods.getGrant(grantStakeDetails.grantId).call()
       : {}
     let isManagedGrant
     let managedGrantContractInstance
-    if (isFromGrant && isGranteeInManagedGrant(web3Context, grantee)) {
+    if (isFromGrant && (await isGranteeInManagedGrant(web3Context, grantee))) {
       isManagedGrant = true
       managedGrantContractInstance = createManagedGrantContractInstance(
         web3,
         grantee
       )
-    } else if (!isAddressedToCurrentAccount(from, web3Context, grantee)) {
+    } else if (!isAddressedToCurrentAccount(owner, yourAddress, grantee)) {
       return
     }
 
@@ -84,11 +97,9 @@ const useSubscribeToStakedEvent = async () => {
 
     const delegation = {
       createdAt,
-      operatorAddress: from,
-      authorizerAddress: await stakingContract.methods
-        .authorizerOf(from)
-        .call(),
-      beneficiary: await stakingContract.methods.beneficiaryOf(from).call(),
+      operatorAddress: operator,
+      authorizerAddress: authorizer,
+      beneficiary: beneficiary,
       amount: value,
       isInInitializationPeriod: true,
       initializationOverAt: moment
@@ -119,62 +130,80 @@ const useSubscribeToStakedEvent = async () => {
 
 const useSubscribeToUndelegatedEvent = () => {
   const web3Context = useContext(Web3Context)
-  const { grantContract, stakingContract, web3 } = web3Context
+  const { grantContract, stakingContract, web3, yourAddress } = web3Context
 
-  const { undelegationPeriod, dispatch } = useTokensPageContext()
+  const { undelegationPeriod, dispatch, delegations } = useTokensPageContext()
 
   const subscribeToEventCallback = async (event) => {
     const {
       returnValues: { operator, undelegatedAt },
     } = event
-    const grantStakeDetails = await getGrantDetails(operator, grantContract)
-    const isFromGrant = grantStakeDetails !== null
-    const { grantee } = isFromGrant
-      ? await grantContract.methods.getGrant(grantStakeDetails.grantId).call()
-      : {}
-    let isManagedGrant
-    let managedGrantContractInstance
-    if (isFromGrant && isGranteeInManagedGrant(web3Context, grantee)) {
-      isManagedGrant = true
-      managedGrantContractInstance = createManagedGrantContractInstance(
-        web3,
-        grantee
-      )
-    } else if (!isAddressedToCurrentAccount(operator, web3Context, grantee)) {
-      return
+    const delegation = delegations.find(({ operatorAddress }) =>
+      isSameEthAddress(operatorAddress, operator)
+    )
+    let undelegation = {}
+    if (delegation) {
+      undelegation = {
+        ...delegation,
+        undelegatedAt: moment.unix(undelegatedAt),
+        undelegationCompleteAt: moment
+          .unix(undelegatedAt)
+          .add(undelegationPeriod, "seconds"),
+        canRecoverStake: false,
+      }
+    } else {
+      const grantStakeDetails = await getGrantDetails(operator, grantContract)
+      const owner = await stakingContract.methods.ownerOf(operator).call()
+      const isFromGrant = grantStakeDetails !== null
+      const { grantee } = isFromGrant
+        ? await grantContract.methods.getGrant(grantStakeDetails.grantId).call()
+        : {}
+      let isManagedGrant
+      let managedGrantContractInstance
+      if (
+        isFromGrant &&
+        (await isGranteeInManagedGrant(web3Context, grantee))
+      ) {
+        isManagedGrant = true
+        managedGrantContractInstance = createManagedGrantContractInstance(
+          web3,
+          grantee
+        )
+      } else if (!isAddressedToCurrentAccount(owner, yourAddress, grantee)) {
+        return
+      }
+      const { amount } = await stakingContract.methods
+        .getDelegationInfo(operator)
+        .call()
+      undelegation = {
+        operatorAddress: operator,
+        authorizerAddress: await stakingContract.methods
+          .authorizerOf(operator)
+          .call(),
+        beneficiary: await stakingContract.methods
+          .beneficiaryOf(operator)
+          .call(),
+        amount,
+        undelegatedAt: moment.unix(undelegatedAt),
+        undelegationCompleteAt: moment
+          .unix(undelegatedAt)
+          .add(undelegationPeriod, "seconds"),
+        canRecoverStake: false,
+        isFromGrant,
+        grantId: isFromGrant ? grantStakeDetails.grantId : null,
+        isManagedGrant,
+        managedGrantContractInstance,
+      }
     }
 
-    const { amount } = await stakingContract.methods
-      .getDelegationInfo(operator)
-      .call()
-
-    const undelegation = {
-      operatorAddress: operator,
-      authorizerAddress: await stakingContract.methods
-        .authorizerOf(operator)
-        .call(),
-      beneficiary: await stakingContract.methods.beneficiaryOf(operator).call(),
-      amount,
-      undelegatedAt: moment.unix(undelegatedAt),
-      undelegationCompleteAt: moment
-        .unix(undelegatedAt)
-        .add(undelegationPeriod, "seconds"),
-      canRecoverStake: false,
-      isFromGrant,
-      grantId: isFromGrant ? grantStakeDetails.grantId : null,
-      isManagedGrant,
-      managedGrantContractInstance,
-    }
-    dispatch({ type: REMOVE_DELEGATION, payload: operator })
-
-    if (!isFromGrant) {
+    if (!undelegation.isFromGrant) {
       dispatch({
         type: UPDATE_OWNED_DELEGATED_TOKENS_BALANCE,
-        payload: { operation: sub, value: amount },
+        payload: { operation: sub, value: undelegation.amount },
       })
       dispatch({
         type: UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
-        payload: { operation: add, value: amount },
+        payload: { operation: add, value: undelegation.amount },
       })
     }
 
@@ -244,15 +273,13 @@ const getGrantDetails = async (operator, grantContract) => {
   return grantStakeDetails
 }
 
-const isAddressedToCurrentAccount = async (operator, web3Context, grantee) => {
-  const { yourAddress, stakingContract } = web3Context
+const isAddressedToCurrentAccount = async (owner, yourAddress, grantee) => {
   const isFromGrant = !!grantee
 
   if (isFromGrant) {
     return isSameEthAddress(grantee, yourAddress)
   }
 
-  const owner = await stakingContract.methods.ownerOf(operator).call()
   return isSameEthAddress(owner, yourAddress)
 }
 
@@ -301,6 +328,7 @@ const isGranteeInManagedGrant = async (web3Context, grantee) => {
 
   // check if grantee is a contract
   const code = await web3.eth.getCode(grantee)
+
   if (!isCodeValid(code)) {
     return false
   }

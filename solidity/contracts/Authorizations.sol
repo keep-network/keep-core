@@ -36,7 +36,19 @@ interface AuthorityDelegator {
     function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
 }
 
-contract Authorizations {
+/// @title AuthorityVerifier
+/// @notice An operator contract can delegate authority to other operator
+/// contracts. Entry in the registry is not updated and source contract remains
+/// listed there as authorized. This interface is a verifier that support verification
+/// of contract authorization in case of authority delegation from the source contract.
+interface AuthorityVerifier {
+    function isApprovedOperatorContract(address _operatorContract)
+        external
+        view
+        returns (bool);
+}
+
+contract Authorizations is AuthorityVerifier {
     // Authorized operator contracts.
     mapping(address => mapping (address => bool)) internal authorizations;
 
@@ -50,7 +62,7 @@ contract Authorizations {
 
     modifier onlyApprovedOperatorContract(address operatorContract) {
         require(
-            registry.isApprovedOperatorContract(getAuthoritySource(operatorContract)),
+            isApprovedOperatorContract(operatorContract),
             "Operator contract unapproved"
         );
         _;
@@ -117,6 +129,23 @@ contract Authorizations {
             "Unrecognized claimant"
         );
         delegatedAuthority[msg.sender] = delegatedAuthoritySource;
+    }
+
+    /// @notice Checks if the operator contract is authorized in the registry.
+    /// If the contract uses delegated authority it checks authorization of the
+    /// source contract.
+    /// @param _operatorContract address of operator contract.
+    /// @return True if operator contract is approved, false if operator contract
+    /// has not been approved or if it was disabled by the panic button.
+    function isApprovedOperatorContract(address _operatorContract)
+        public
+        view
+        returns (bool)
+    {
+        return
+            registry.isApprovedOperatorContract(
+                getAuthoritySource(_operatorContract)
+            );
     }
 
     /// @notice Get the source of the operator contract's authority.

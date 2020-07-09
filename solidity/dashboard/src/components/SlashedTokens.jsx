@@ -15,20 +15,7 @@ const SlashedTokens = (props) => {
       isFetching={isFetching}
       skeletonComponent={<DataTableSkeleton columns={2} />}
     >
-      <Tile
-        title="Slashed Tokens"
-        id="slashed-tokens"
-        withTooltip
-        tooltipProps={{
-          text: (
-            <>
-              A &nbsp;<span className="text-bold">slash</span>&nbsp; is a
-              penalty for signing group misbehavior. It results in a removal of
-              a portion of your delegated KEEP tokens.
-            </>
-          ),
-        }}
-      >
+      <Tile id="slashed-tokens">
         <SlashedTokensList slashedTokens={data} />
       </Tile>
     </LoadingOverlay>

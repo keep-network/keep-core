@@ -86,18 +86,18 @@ library GroupSelection {
     function start(Storage storage self, uint256 _seed) public {
         // We execute the minimum required cleanup here needed in case the
         // previous group selection failed and did not clean up properly in
-        // stop function.
+        // finish function.
         cleanupTickets(self);
         self.inProgress = true;
         self.seed = _seed;
         self.ticketSubmissionStartBlock = block.number;
     }
 
-    /// @notice Stops group selection protocol clearing up all the submitted
+    /// @notice Finishes group selection protocol clearing up all the submitted
     /// tickets. This function may be expensive if not executed as a part of
     /// another transaction consuming a lot of gas and as a result, getting
     /// gas refund for clearing up the storage.
-    function stop(Storage storage self) public {
+    function finish(Storage storage self) public {
         cleanupCandidates(self);
         cleanupTickets(self);
         self.inProgress = false;
