@@ -13,12 +13,15 @@ const LedgerModal = ({ onSelectProvider, accounts, onSelectAccount }) => {
       <Icons.LedgerDevice className="mb3" />
       <span className="text-center">Plug in Ledger device and unlock.</span>
       <div
-        className="flex mt-1"
-        style={{ alignSelf: "normal", justifyContent: "space-around" }}
+        className="flex column mt-1"
+        style={{
+          alignSelf: "normal",
+          justifyContent: "space-around",
+        }}
       >
         <Button
           onClick={() => onSelectProvider("LEDGER_LIVE")}
-          className="btn btn-primary btn-md"
+          className="btn btn-primary btn-md mb-1"
         >
           ledger live
         </Button>

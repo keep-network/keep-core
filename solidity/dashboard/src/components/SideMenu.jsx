@@ -25,17 +25,24 @@ export const SideMenuProvider = (props) => {
 
 export const SideMenu = (props) => {
   const { isOpen } = useContext(SideMenuContext)
-  const { yourAddress } = useContext(Web3Context)
+  const { yourAddress, provider } = useContext(Web3Context)
   const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
 
+  const isDisabled = !yourAddress || !provider
+
   return (
-    <nav className={`${isOpen ? "active " : ""}side-menu`}>
-      <ul>
+    <nav
+      className={`${isOpen ? "active " : ""}side-menu ${
+        isDisabled ? " disabled" : ""
+      }`}
+    >
+      <ul title={isDisabled ? "Please choose a wallet first." : ""}>
         <NavLink
           to="/tokens"
           label="tokens"
           icon={<Icons.KeepToken />}
           sublinks={[
+            { to: "/tokens/overview", exact: true, label: "Overview" },
             { to: "/tokens/delegate", exact: true, label: "Delegate Tokens" },
             { to: "/tokens/grants", exact: true, label: "Token Grants" },
           ]}
@@ -46,7 +53,19 @@ export const SideMenu = (props) => {
           label="operations"
           icon={<Icons.Operations />}
         />
-        <NavLink exact to="/rewards" label="rewards" icon={<Icons.Rewards />} />
+        <NavLink
+          to="/rewards"
+          label="rewards"
+          icon={<Icons.Rewards />}
+          sublinks={[
+            {
+              to: "/rewards/random-beacon",
+              exact: true,
+              label: "Beacon Rewards",
+            },
+            { to: "/rewards/tbtc", exact: true, label: "tBTC Rewards" },
+          ]}
+        />
         <NavLink
           to="/applications"
           label="applications"
@@ -66,6 +85,7 @@ export const SideMenu = (props) => {
           to="/glossary"
           label="glossary"
           icon={<Icons.Glossary />}
+          wrapperClassName="glossary-link text-label"
         />
         {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
@@ -73,8 +93,8 @@ export const SideMenu = (props) => {
         <Web3Status />
         <div className="account-address">
           <h5 className="text-grey-50">
-            <span>ADDRESS&nbsp;</span>
-            <AddressShortcut classNames="text-small" address={yourAddress} />
+            <span>address:&nbsp;</span>
+            <AddressShortcut classNames="h5" address={yourAddress} />
           </h5>
           <NetworkStatus />
         </div>

@@ -1,7 +1,7 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const assert = require('chai').assert
-const initContracts = require('../helpers/initContracts')
+const {initContracts} = require('../helpers/initContracts')
 const stakeDelegate = require('../helpers/stakeDelegate')
 const packTicket = require('../helpers/packTicket')
 const generateTickets = require('../helpers/generateTickets')

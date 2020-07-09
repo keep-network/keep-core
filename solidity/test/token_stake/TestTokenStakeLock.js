@@ -1,12 +1,10 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment");
 const {expectRevert, time} = require("@openzeppelin/test-helpers");
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot.js');
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
 const TokenGrant = contract.fromArtifact('TokenGrant');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 
 describe('TokenStaking/Lock', () => {
@@ -31,26 +29,17 @@ describe('TokenStaking/Lock', () => {
     token = await KeepToken.new({from: owner});
     grant = await TokenGrant.new(token.address, {from: owner});
     registry = await KeepRegistry.new({from: owner});
-    escrow = await TokenStakingEscrow.new(
-      token.address, 
-      grant.address, 
-      {from: owner}
-    );
-    await TokenStaking.detectNetwork();
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: owner})).address
-    );
-    stakingContract = await TokenStaking.new(
+    const stakingContracts = await initTokenStaking(
       token.address,
       grant.address,
-      escrow.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: owner}
-    );
-    await escrow.transferOwnership(stakingContract.address, {from: owner});
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking;
+
     await registry.approveOperatorContract(operatorContract, {from: owner});
     await registry.approveOperatorContract(operatorContract2, {from: owner});
 
@@ -148,13 +137,12 @@ describe('TokenStaking/Lock', () => {
 
     it("should not permit locks that exceed the maximum lock duration", async () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
-      let maximumDuration = await stakingContract.maximumLockDuration();
-      let longPeriod = maximumDuration.addn(1);
+      const maximumDuration = time.duration.days(200);
+      const longPeriod = maximumDuration.addn(1);
       await expectRevert(
         stakingContract.lockStake(operator, longPeriod, {from: operatorContract}),
         "Lock duration too long"
       )
-
     })
   })
 

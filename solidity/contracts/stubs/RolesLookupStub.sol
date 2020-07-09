@@ -46,4 +46,15 @@ contract RolesLookupStub {
             tokenGrant
         );
     }
+
+    function isManagedGranteeForGrant(
+        address grantee,
+        uint256 grantId
+    ) public returns (bool) {
+        return RolesLookup.isManagedGranteeForGrant(
+            grantee,
+            grantId,
+            tokenGrant
+        );
+    }
 }

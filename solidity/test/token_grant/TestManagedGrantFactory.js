@@ -1,6 +1,7 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {initTokenStaking} = require('../helpers/initContracts');
 
 const BN = web3.utils.BN
 const chai = require('chai')
@@ -8,9 +9,6 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
@@ -42,26 +40,16 @@ describe('TokenGrant/ManagedGrantFactory', () => {
     token = await KeepToken.new({from: grantCreator});
     tokenGrant = await TokenGrant.new(token.address, {from: grantCreator});
     registry = await KeepRegistry.new({from: grantCreator});
-    stakingEscrow = await TokenStakingEscrow.new(
-      token.address, 
-      tokenGrant.address, 
-      {from: grantCreator}
-    );
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: grantCreator})).address
-    );
-    staking = await TokenStaking.new(
+    const contracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
-      stakingEscrow.address,
       registry.address,
       initializationPeriod,
       undelegationPeriod,
-      {from: grantCreator}
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
     );
-    await stakingEscrow.transferOwnership(staking.address, {from: grantCreator})
+    staking = contracts.tokenStaking;
 
     await tokenGrant.authorizeStakingContract(staking.address, {from: grantCreator});
 

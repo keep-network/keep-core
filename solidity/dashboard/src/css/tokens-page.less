@@ -13,6 +13,18 @@
     align-self: flex-start;
 }
 
+#token-overview-balance {
+    display: flex;
+    flex-direction: column; 
+}
+
+@media screen and (min-width: 800px) {
+    #token-overview-balance {
+        flex-direction: row;
+        justify-content: space-evenly
+    } 
+}
+
 @media screen and (min-width: 950px) {
     .tokens-wrapper {
         flex-direction: row;

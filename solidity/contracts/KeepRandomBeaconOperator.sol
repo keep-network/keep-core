@@ -147,6 +147,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         // groups expired, we first want to make a cleanup.
         groups.expireOldGroups();
         require(numberOfGroups() == 0, "Groups exist");
+        // Cleanup after potential failed DKG
+        groupSelection.finish();
         // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
         groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
         startGroupSelection(_genesisGroupSeed, msg.value);
@@ -347,7 +349,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         groups.addGroup(groupPubKey);
         reimburseDkgSubmitter();
         emit DkgResultSubmittedEvent(submitterMemberIndex, groupPubKey, misbehaved);
-        groupSelection.stop();
+        groupSelection.finish();
     }
 
     /// @notice Compare the reimbursement fee calculated based on the current
@@ -695,6 +697,18 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /// @notice Returns members of the given group by group public key.
     function getGroupMembers(bytes memory groupPubKey) public view returns (address[] memory members) {
         return groups.getGroupMembers(groupPubKey);
+    }
+
+    function getNumberOfCreatedGroups() public view returns (uint256) {
+        return groups.groups.length;
+    }
+
+    function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns (uint256) {
+        return groups.getGroupRegistrationBlockHeight(groupIndex);
+    }
+
+    function isGroupTerminated(uint256 groupIndex) public view returns (bool) {
+        return groups.isGroupTerminated(groupIndex);
     }
 
     /// @notice Reports unauthorized signing for the provided group. Must provide

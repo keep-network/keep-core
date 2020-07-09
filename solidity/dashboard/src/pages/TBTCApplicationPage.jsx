@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useMemo } from "react"
 import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
-// import * as Icons from "../components/Icons"
+import * as Icons from "../components/Icons"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useFetchData } from "../hooks/useFetchData"
 import { BondingSection } from "../components/BondingSection"
@@ -14,6 +14,7 @@ import web3Utils from "web3-utils"
 import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
 import { isSameEthAddress } from "../utils/general.utils"
+import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 
 const initialData = []
 const TBTCApplicationPage = () => {
@@ -195,10 +196,9 @@ const TBTCApplicationPage = () => {
     <PageWrapper
       className=""
       title="tBTC"
-      // The rewards page for the tbtc is not yet implemented
-      // nextPageLink="/rewards"
-      // nextPageTitle="Rewards"
-      // nextPageIcon={Icons.TBTC}
+      nextPageLink="/rewards/tbtc"
+      nextPageTitle="Rewards"
+      nextPageIcon={Icons.TBTC}
     >
       <nav className="mb-2">
         <a
@@ -210,7 +210,12 @@ const TBTCApplicationPage = () => {
           tBTC Website
         </a>
       </nav>
-      <LoadingOverlay isFetching={tbtcAuthState.isFetching}>
+      <LoadingOverlay
+        isFetching={tbtcAuthState.isFetching}
+        skeletonComponent={
+          <DataTableSkeleton columns={4} subtitleWidth="40%" />
+        }
+      >
         <AuthorizeContracts
           filterDropdownOptions={tbtcAuthState.data}
           onSelectOperator={setOperator}
@@ -220,7 +225,10 @@ const TBTCApplicationPage = () => {
           onDeauthorizeBtn={deauthorizeTBTCSystem}
         />
       </LoadingOverlay>
-      <LoadingOverlay isFetching={bondingState.isFetching}>
+      <LoadingOverlay
+        isFetching={bondingState.isFetching}
+        skeletonComponent={<DataTableSkeleton subtitleWidth="70%" />}
+      >
         <BondingSection data={bondingState.data} />
       </LoadingOverlay>
     </PageWrapper>

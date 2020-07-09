@@ -59,4 +59,26 @@ library RolesLookup {
         );
         return operators.contains(operator);
     }
+
+    /// @notice Returns true if grant with the given ID has been created with
+    /// managed grant pointing currently to the grantee passed as a parameter.
+    /// @dev The function does not revert if grant has not been created with
+    /// a managed grantee. This function is not a view because it uses low-level
+    /// call to check if the grant has been created with a managed grant.
+    /// It does not however modify any state.
+    function isManagedGranteeForGrant(
+        address grantee,
+        uint256 grantId,
+        TokenGrant tokenGrant
+    ) internal returns (bool) {
+        (,,,,, address managedGrant) = tokenGrant.getGrant(grantId);
+        (, bytes memory result) = managedGrant.call(
+            abi.encodeWithSignature("grantee()")
+        );
+        if (result.length == 0) {
+            return false;
+        }
+        address managedGrantee = abi.decode(result, (address));
+        return grantee == managedGrantee;
+    }
 }

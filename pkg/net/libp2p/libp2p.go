@@ -216,6 +216,15 @@ func (cm *connectionManager) AddrStrings() []string {
 	return multiaddrStrings
 }
 
+func (cm *connectionManager) IsConnected(address string) bool {
+	peerInfos, err := extractMultiAddrFromPeers([]string{address})
+	if err != nil {
+		return false
+	}
+
+	return cm.Network().Connectedness(peerInfos[0].ID) == libp2pnet.Connected
+}
+
 func (cm *connectionManager) monitorConnectedPeers(ctx context.Context) {
 	ticker := time.NewTicker(ConnectedPeersCheckTick)
 	defer ticker.Stop()

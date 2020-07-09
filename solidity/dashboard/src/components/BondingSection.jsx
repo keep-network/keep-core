@@ -12,19 +12,22 @@ import { gt } from "../utils/arithmetics.utils"
 
 export const BondingSection = ({ data }) => {
   return (
-    <Tile
-      title="Add ETH for Bonding"
-      subtitle={
-        <>
-          Add an amount of ETH to the available balance to be eligible for
-          signing group selection.&nbsp;
-          <span className="text-bold text-validation">
-            NOTE: Withdrawn ETH will go to the beneficiary address.
-          </span>
-        </>
-      }
-    >
-      <DataTable data={data} itemFieldId="operatorAddress">
+    <Tile>
+      <DataTable
+        data={data}
+        itemFieldId="operatorAddress"
+        title="Add ETH for Bonding"
+        subtitle={
+          <div>
+            Add an amount of ETH to the available balance to be eligible for
+            signing group selection.&nbsp;
+            <span className="text-bold text-validation">
+              NOTE: Withdrawn ETH will go to the beneficiary address.
+            </span>
+          </div>
+        }
+        noDataMessage="No bonding data."
+      >
         <Column
           header="operator"
           field="operatorAddress"
