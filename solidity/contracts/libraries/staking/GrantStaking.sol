@@ -30,7 +30,7 @@ library GrantStaking {
     /// @notice Tries to capture delegation data if the pending delegation has
     /// been created from a grant. There are only two possibilities and they
     /// need to be handled differently: delegation comes from the TokenGrant
-    /// contract or delegation comes from TokenStakincEscrow. In those two cases
+    /// contract or delegation comes from TokenStakingEscrow. In those two cases
     /// grant ID has to be captured in a different way.
     /// @dev In case of a delegation from the escrow, it is expected that grant
     /// ID is passed in extraData bytes array. When the delegation comes from

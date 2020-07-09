@@ -108,16 +108,16 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     }
 
     /// @notice Receives approval of token transfer and stakes the approved
-    /// amount or top-ups an existing delegation with the approved amount.
-    /// In case of a top-up, it is expected that the operator stake passed
-    /// initialization period, it is not undelegated and that the top-up is
+    /// amount or adds the approved amount to an existing delegation (a “top-up”).
+    /// In case of an existing delegation, it is required that the operator stake
+    /// passed initialization period, it is not undelegated and that the top-up is
     /// performed from the same source of tokens as the initial delegation.
     /// That is, if the tokens were delegated from a grant, top-up
     /// has to be performed from the same grant. If the delegation was done
     /// using liquid tokens, only liquid tokens from the same owner can be used
     /// to top-up the stake.
-    /// @dev Makes sure provided token contract is the same one linked to this
-    /// contract.
+    /// @dev Requires that the provided token contract be the same one linked to
+    /// this contract.
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _value Approved amount for the transfer and stake.
     /// @param _token Token contract address.
