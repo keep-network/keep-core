@@ -139,8 +139,8 @@ contract Rewards {
 
         uint256 addedBalance = currentBalance.sub(beforeBalance);
 
-        totalRewards += addedBalance;
-        unallocatedRewards += addedBalance;
+        totalRewards = totalRewards.add(addedBalance);
+        unallocatedRewards = unallocatedRewards.add(addedBalance);
     }
 
     /// @notice Sends the reward for a keep to the keep members.
@@ -200,8 +200,8 @@ contract Rewards {
             return 0;
         }
 
-        uint256 difference = timestamp - _firstIntervalStart;
-        uint256 interval = difference / _termLength;
+        uint256 difference = timestamp.sub(_firstIntervalStart);
+        uint256 interval = difference.div(_termLength);
 
         return interval;
     }
@@ -210,14 +210,14 @@ contract Rewards {
     /// @dev The start of an interval is inclusive;
     /// a keep created at the timestamp `startOf(i)` is in interval `i`.
     function startOf(uint256 interval) public view returns (uint256) {
-        return firstIntervalStart + (interval * termLength);
+        return firstIntervalStart.add(interval.mul(termLength));
     }
 
     /// @notice Return the timestamp corresponding to the end of the interval.
     /// @dev The end of an interval is exclusive;
     /// a keep created at the timestamp `endOf(i)` is in interval `i+1`.
     function endOf(uint256 interval) public view returns (uint256) {
-        return startOf(interval + 1);
+        return startOf(interval.add(1));
     }
 
     /// @notice Return the number of keeps created before `intervalEndpoint`
@@ -241,7 +241,7 @@ contract Rewards {
             return 0;
         }
 
-        uint256 ub = keepCount - 1; // upper bound, inclusive
+        uint256 ub = keepCount.sub(1); // upper bound, inclusive
         uint256 timestampUB = _getCreationTime(_getKeepAtIndex(ub));
         // all keeps created in or before the interval -> return keep count
         if (timestampUB < intervalEndpoint) {
@@ -278,11 +278,11 @@ contract Rewards {
         uint256 lbTime = _lbTime;
         uint256 ub = _ub;
         uint256 ubTime = _ubTime;
-        uint256 len = ub - lb;
+        uint256 len = ub.sub(lb);
         while (len > 1) {
             // ub >= lb + 2
             // mid > lb
-            uint256 mid = lb + (len / 2);
+            uint256 mid = lb.add(len.div(2));
             uint256 midTime = _getCreationTime(_getKeepAtIndex(mid));
 
             if (midTime >= targetTime) {
@@ -292,7 +292,7 @@ contract Rewards {
                 lb = mid;
                 lbTime = midTime;
             }
-            len = ub - lb;
+            len = ub.sub(lb);
         }
         return ub;
     }
@@ -340,12 +340,12 @@ contract Rewards {
         if (interval == 0) {
             return 0;
         } else {
-            return _getEndpoint(interval - 1);
+            return _getEndpoint(interval.sub(1));
         }
     }
 
     function _keepsInInterval(uint256 interval) internal returns (uint256) {
-        return (_getEndpoint(interval) - _getPreviousEndpoint(interval));
+        return (_getEndpoint(interval).sub(_getPreviousEndpoint(interval)));
     }
 
     /// @notice Calculate the reward allocation adjustment percentage
@@ -413,13 +413,13 @@ contract Rewards {
         );
         // Allocate previous intervals first
         if (interval > allocatedIntervals) {
-            _allocateRewards(interval - 1);
+            _allocateRewards(interval.sub(1));
         }
         uint256 keepCount = _keepsInInterval(interval);
         uint256 perKeepAllocation = _rewardPerKeep(interval);
         // Calculate like this so rewards divide equally among keeps
-        uint256 totalAllocation = keepCount * perKeepAllocation;
-        unallocatedRewards -= totalAllocation;
+        uint256 totalAllocation = keepCount.mul(perKeepAllocation);
+        unallocatedRewards = unallocatedRewards.sub(totalAllocation);
         intervalAllocations.push(totalAllocation);
     }
 
@@ -450,14 +450,14 @@ contract Rewards {
         uint256 perKeepReward = allocation.div(__keepsInInterval);
         uint256 processedKeeps = intervalKeepsProcessed[interval];
         claimed[keepIdentifier] = true;
-        intervalKeepsProcessed[interval] = processedKeeps + 1;
+        intervalKeepsProcessed[interval] = processedKeeps.add(1);
 
         if (eligible) {
-            paidOutRewards += perKeepReward;
+            paidOutRewards = paidOutRewards.add(perKeepReward);
             _distributeReward(keepIdentifier, perKeepReward);
         } else {
             // Return the reward to the unallocated pool
-            unallocatedRewards += perKeepReward;
+            unallocatedRewards = unallocatedRewards.add(perKeepReward);
         }
     }
 
