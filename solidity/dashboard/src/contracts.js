@@ -157,7 +157,7 @@ function getTransactionHashOfContractDeploy({ networks }) {
   return networks[Object.keys(networks)[0]].transactionHash
 }
 
-function getContractAddress({ networks }) {
+export function getContractAddress({ networks }) {
   return networks[Object.keys(networks)[0]].address
 }
 

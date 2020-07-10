@@ -74,7 +74,10 @@ export const TokenGrantDetails = ({
   )
 }
 
-export const TokenGrantUnlockingdDetails = ({ selectedGrant }) => {
+export const TokenGrantUnlockingdDetails = ({
+  selectedGrant,
+  hideReleaseTokensBtn = false,
+}) => {
   const { yourAddress, grantContract } = useContext(Web3Context)
   const showMessage = useShowMessage()
 
@@ -147,12 +150,14 @@ export const TokenGrantUnlockingdDetails = ({ selectedGrant }) => {
               </span>
               <SpeechBubbleTooltip text="Releasing tokens allows them to be withdrawn from a grant." />
             </div>
-            <SubmitButton
-              className="btn btn-sm btn-secondary"
-              onSubmitAction={releaseTokens}
-            >
-              release tokens
-            </SubmitButton>
+            {!hideReleaseTokensBtn && (
+              <SubmitButton
+                className="btn btn-sm btn-secondary"
+                onSubmitAction={releaseTokens}
+              >
+                release tokens
+              </SubmitButton>
+            )}
           </div>
         )}
       </div>
