@@ -60,7 +60,7 @@ func TestHasNoMinimumStake(t *testing.T) {
 	}
 }
 
-func TestCachesActiveKeepMembers(t *testing.T) {
+func TestCachesHasMinimumStake(t *testing.T) {
 	stakeMonitor := local.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
 		stakeMonitor:        stakeMonitor,
@@ -104,7 +104,7 @@ func TestCachesActiveKeepMembers(t *testing.T) {
 	}
 }
 
-func TestCachesInactiveKeepMembers(t *testing.T) {
+func TestCachesHasNoMinimumStake(t *testing.T) {
 	stakeMonitor := local.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
 		stakeMonitor:        stakeMonitor,
