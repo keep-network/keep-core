@@ -27,6 +27,11 @@ library RolesLookup {
     /// This function works only for the case when tokens were generated from
     /// a non-managed grant, that is, the grantee is a non-contract address to
     /// which the delegated tokens were granted.
+    /// @dev This function does not validate the staking reltionship on
+    /// a particular staking contract. It only checks whether the grantee
+    /// staked at least one time with the given operator. If you are interested
+    /// in a particular token staking contract, you need to perform additional
+    /// check.
     function isGranteeForOperator(
         address grantee,
         address operator,
@@ -43,6 +48,11 @@ library RolesLookup {
     /// This function works only for cases when grantee, from TokenGrant's
     /// perspective, is a smart contract exposing grantee() function returning
     /// the final grantee. One possibility is the ManagedGrant contract.
+    /// @dev This function does not validate the staking reltionship on
+    /// a particular staking contract. It only checks whether the grantee
+    /// staked at least one time with the given operator. If you are interested
+    /// in a particular token staking contract, you need to perform additional
+    /// check.
     function isManagedGranteeForOperator(
         address grantee,
         address operator,
