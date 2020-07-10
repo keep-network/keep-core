@@ -85,6 +85,7 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
         throw new Error("Invalid chainID")
       }
 
+      await this._destroyLedgerClientAsync()
       return `0x${tx.serialize().toString("hex")}`
     } catch (error) {
       await this._destroyLedgerClientAsync()
