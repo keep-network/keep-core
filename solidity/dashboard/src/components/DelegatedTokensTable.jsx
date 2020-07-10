@@ -11,6 +11,7 @@ import Tile from "./Tile"
 const DelegatedTokensTable = ({
   delegatedTokens,
   cancelStakeSuccessCallback,
+  title,
 }) => {
   return (
     <Tile>
@@ -94,6 +95,10 @@ const DelegatedTokensTable = ({
       </DataTable>
     </Tile>
   )
+}
+
+DelegatedTokensTable.defaultProps = {
+  title: "Delegations",
 }
 
 export default DelegatedTokensTable

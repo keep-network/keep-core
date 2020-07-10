@@ -11,7 +11,7 @@ export const NetworkStatus = () => {
           yourAddress && !error && provider !== null ? "connected" : "error"
         }`}
       />
-      <h5 className="text-label">
+      <h5 className="text-grey-50">
         {!yourAddress && "not connected"}
         {yourAddress &&
           !error &&

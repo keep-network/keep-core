@@ -51,11 +51,11 @@ button, .btn {
     color: @primary-color;
     padding: 1rem 2.5rem;
 
-    &:hover:enabled, &:focus {
+    &:hover, &:hover:enabled, &:focus {
       color: @white;
     }
 
-    &:active:enabled {
+    &:active, &:active:enabled {
       background-color: @primary-color;
       border-color: @primary-color;
       color: @color-black;
@@ -90,13 +90,13 @@ button, .btn {
       transition: all 0.25s ease-in-out;
     }
 
-    &:hover:enabled, &:focus {
+    &:hover, &:hover:enabled, &:focus {
       &:after {
         opacity: 1;
       }
     }
 
-    &:active:enabled {
+    &:active, &:active:enabled {
       &:after {
         background-color: @primary-color;
         opacity: 1;
@@ -163,4 +163,8 @@ fieldset[disabled] .btn {
     background-color: @primary-color;
     border-color:  @primary-color;
   }
+}
+
+a.btn {
+  text-decoration: none !important;
 }

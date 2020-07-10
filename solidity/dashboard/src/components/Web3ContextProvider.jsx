@@ -86,6 +86,22 @@ export default class Web3ContextProvider extends React.Component {
     return accounts
   }
 
+  abortWalletConnection = () => {
+    this.setState({
+      provider: null,
+      web3: null,
+      isFetching: false,
+      yourAddress: "",
+      networkType: "",
+      token: { options: { address: "" } },
+      stakingContract: { options: { address: "" } },
+      grantContract: { options: { address: "" } },
+      utils: {},
+      eth: {},
+      error: "",
+    })
+  }
+
   setData = async () => {
     this.initializeContracts()
     this.state.web3.eth.currentProvider.on("accountsChanged", this.setAccount)
@@ -146,6 +162,7 @@ export default class Web3ContextProvider extends React.Component {
           connectAppWithAccount: this.connectAppWithAccount,
           connectAppWithWallet: this.connectAppWithWallet,
           setAccount: this.setAccount,
+          abortWalletConnection: this.abortWalletConnection,
         }}
       >
         {this.props.children}

@@ -22,6 +22,7 @@ const ChooseWalletAddress = ({ addresses, onSelectAccount }) => {
                 name="address"
                 value={address}
                 checked={address === selectedAccount}
+                onChange={() => setAccount(address)}
               />
               {shortenAddress(address)}
             </label>

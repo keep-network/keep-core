@@ -13,9 +13,11 @@ const DataTableSkeleton = ({
       <Skeleton className="text-small" styles={{ width: subtitleWidth }} />
       <table className="table__skeleton">
         <thead>
-          {Array.from(Array(columns)).map((_, index) => (
-            <th key={index} />
-          ))}
+          <tr>
+            {Array.from(Array(columns)).map((_, index) => (
+              <th key={index} />
+            ))}
+          </tr>
         </thead>
         <tbody>
           {Array.from(Array(rows)).map((_, rowIndex) => (
