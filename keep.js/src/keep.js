@@ -14,7 +14,7 @@ import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantF
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
-import ContractFactory, { ContractWrapper } from "./contract-wrapper.js"
+import ContractFactory from "./contract-wrapper.js"
 import { TokenStakingConstants } from "./constants.js"
 import { add, gt, lte, isSameEthAddress } from "./utils.js"
 
