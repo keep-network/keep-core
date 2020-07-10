@@ -24,7 +24,7 @@ const TokenGrantsPage = () => {
         amount={grantTokenBalance}
         amountClassName="h2 text-grey-40"
         currencyIconProps={{ className: "keep-outline grey-40" }}
-        withMetricSuffix={false}
+        displayWithMetricSuffix={false}
       />
 
       <LoadingOverlay

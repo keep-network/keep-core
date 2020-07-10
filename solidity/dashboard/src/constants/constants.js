@@ -22,3 +22,15 @@ export const WALLETS = {
   LEDGER_LEGACY: { label: "Ledger" },
   COINBASE: { label: "Coinbase" },
 }
+
+export const REWARD_STATUS = {
+  AVAILABLE: "AVAILABLE",
+  WITHDRAWN: "WITHDRAWN",
+  ACCUMULATING: "ACCUMULATING",
+}
+
+export const SIGNING_GROUP_STATUS = {
+  COMPLETED: "Completed",
+  TERMINATED: "Terminated",
+  ACTIVE: "Active work",
+}
