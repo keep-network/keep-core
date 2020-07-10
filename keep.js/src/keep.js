@@ -9,7 +9,7 @@ import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
 import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
-// import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
+import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
 import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
@@ -36,8 +36,6 @@ export const contracts = new Map([
   [BondedECDSAKeep, "bondedECDSAKeepContract"],
   [GuaranteedMinimumStakingPolicy, "guaranteedMinimumStakingPolicyContract"],
   [PermissiveStakingPolicy, "permissiveStakingPolicyContract"],
-  // TODO create managed grant instance for a given address
-  // [ManagedGrant, "managedGrantContract"],
   [ManagedGrantFactory, "managedGrantFactoryContract"],
 ])
 
@@ -512,15 +510,177 @@ export default class KEEP {
    * @return {Promise<string[]>}
    */
   async getOperatorsForDeposit(depositAddress) {
-    const depositContract = new ContractWrapper(
+    const depositContract = ContractFactory.new(
       new this.config.web3.eth.Contract(Deposit.abi, depositAddress)
     )
     const keepAddress = await depositContract.makeCall("getKeepAddress")
 
-    const bondedECDSAKeepContract = new ContractWrapper(
+    const bondedECDSAKeepContract = ContractFactory.new(
       new this.config.web3.eth.Contract(BondedECDSAKeep.abi, keepAddress)
     )
 
     return await bondedECDSAKeepContract.makeCall("getMembers")
+  }
+
+  /**
+   * @typedef {Object} CreateGrantData
+   * @property {string} grantManager Address of the grant manager.
+   * @property {string} grantee Address of the grantee.
+   * @property {string | number} start Timestamp at which unlocking will start.
+   * @property {string | number} duration Duration in seconds of the unlocking period.
+   * @property {string | number} cliffDuration in seconds of the cliff; no tokens will be unlocked until the time `start + cliff`.
+   * @property {boolean} revocable Whether the token grant is revocable or not (1 or 0).
+   * @property {string} stakingPolicy Address of the staking policy for the grant.
+   * @property {string} amount Approved amount in wei for the transfer to create token grant.
+   */
+  /**
+   * Creates a token grant with a unlocking schedule where balance withdrawn to
+   * the grantee gradually in a linear fashion until start + duration.
+   * By then all of the balance will have unlocked.
+   *
+   * @param {CreateGrantData} data
+   */
+  async createGrant(data) {
+    const {
+      grantManager,
+      grantee,
+      duration,
+      start,
+      cliffDuration,
+      revocable,
+      stakingPolicyAddress,
+      amount,
+    } = data
+    const extraData = this.config.web3.eth.abi.encodeParameters(
+      [
+        "address",
+        "address",
+        "uint256",
+        "uint256",
+        "uint256",
+        "bool",
+        "address",
+      ],
+      [
+        grantManager,
+        grantee,
+        duration,
+        start,
+        cliffDuration,
+        revocable,
+        stakingPolicyAddress,
+      ]
+    )
+
+    return this.keepTokenContract.sendTransaction(
+      "approveAndCall",
+      this.tokenGrantContract.address,
+      amount,
+      extraData
+    )
+  }
+
+  /**
+   * Returns a managed grants addresses for a provided grantee address.
+   *
+   * @param {string} grantee Address of the grantee.
+   * @return {Promis<string[]>}
+   */
+  async getGranteeManagedGrantAddresses(grantee) {
+    const managedGrantCreatedEvents = await this.managedGrantFactoryContract.getPastEvents(
+      "ManagedGrantCreated"
+    )
+    const managedGrantAddresses = []
+
+    for (const event of managedGrantCreatedEvents) {
+      const {
+        returnValues: { grantAddress },
+      } = event
+
+      const managedGrantContractInstance = ContractFactory.new(
+        new this.config.web3.eth.Contract(ManagedGrant.abi, grantAddress)
+      )
+      const managedGrantGrantee = await managedGrantContractInstance.makeCall(
+        "grantee"
+      )
+
+      if (!isSameEthAddress(grantee, managedGrantGrantee)) {
+        continue
+      }
+
+      managedGrantAddresses.push(grantAddress)
+    }
+
+    return managedGrantAddresses
+  }
+
+  /**
+   *
+   * @typedef {Object} GrantDetails
+   * @property {string} id Grant ID.
+   * @property {string} unlcoked Unlocked grant amount
+   * @property {string} released The amount of tokens that have already been withdrawn from the grant.
+   * @property {string} readyToRelease Withdrawable granted amount.
+   * @property {string} availableToStake The amount of tokens available for staking from the grant
+   * @property {string} amount The amount of tokens the grant provides.
+   * @property {string} staked The amount of tokens that have been staked from the grant.
+   * @property {string} revokedAmount The number of tokens revoked from the grantee.
+   * @property {string} revokedAt Timestamp at which grant was revoked by the grant manager.
+   * @property {string} grantee The grantee of grant.
+   * @property {string} grantManager The address designated as the manager of the grant, which is the only address that can revoke this grant.
+   * @property {string | number} duration The duration, in seconds, during which the tokens will unlocking linearly.
+   * @property {string | number} start The start time, as a timestamp comparing to `now`.
+   * @property {string | number} cliff The timestamp, before which none of the tokens
+   * in the grant will be unlocked, and after which a linear amount based on
+   * the time elapsed since the start will be unlocked.
+   * @property {string} policy The address of the grant's staking policy.
+   */
+  /**
+   * Returns a details of the provided grant id.
+   *
+   * @param {string} grantId
+   * @return {GrantDetails} Grant details
+   */
+  async getGrantDetails(grantId) {
+    const grantDetails = await this.tokenGrantContract.makeCall(
+      "getGrant",
+      grantId
+    )
+
+    const unlockingSchedule = await this.tokenGrantContract.makeCall(
+      "getGrantUnlockingSchedule",
+      grantId
+    )
+
+    const unlocked = await this.tokenGrantContract.makeCall(
+      "unlockedAmount",
+      grantId
+    )
+
+    let readyToRelease = "0"
+    try {
+      readyToRelease = await this.tokenGrantContract.makeCall(
+        "withdrawable",
+        grantId
+      )
+    } catch (error) {
+      readyToRelease = "0"
+    }
+
+    const released = grantDetails.withdrawn
+    const availableToStake = await this.tokenGrantContract.makeCall(
+      "availableToStake",
+      grantId
+    )
+
+    return {
+      id: grantId,
+      unlocked,
+      released,
+      readyToRelease,
+      availableToStake,
+      ...unlockingSchedule,
+      ...grantDetails,
+    }
   }
 }

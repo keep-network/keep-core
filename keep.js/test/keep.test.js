@@ -589,7 +589,7 @@ describe("KEEP.js functions", () => {
       tbtcTokenContractStub.calledWithExactly("Transfer", {
         to: beneficiaryAddress,
       })
-    )
+    ).to.be.true
 
     expect(
       tbtcSystemContractStub.calledWithExactly("Created", {
@@ -597,13 +597,208 @@ describe("KEEP.js functions", () => {
           (_) => _.returnValues.from
         ),
       })
-    )
+    ).to.be.true
     expect(tbtcRewards.length).eq(2)
   })
 
-  // it("should return a operators for deposit", async () => {
-  //   const stub = sandbox
-  //     .stub(keep, "config")
-  //     .values({ web3: { eth: { Contract: } } })
-  // })
+  it("should return a operators for deposit", async () => {
+    const depositAddressMock = "0x1"
+    const keepAddressMock = "0x2"
+    const makeCallStub = sandbox
+      .stub()
+      .withArgs("getKeepAddress")
+      .returns(keepAddressMock)
+    sandbox
+      .stub(ContractFactory, "new")
+      .callsFake(() => ({ makeCall: makeCallStub }))
+
+    const ethContractStub = sandbox.stub()
+    sandbox
+      .stub(keep, "config")
+      .value({ web3: { eth: { Contract: ethContractStub } } })
+
+    await keep.getOperatorsForDeposit(depositAddressMock)
+
+    expect(ethContractStub.callCount).eq(2)
+    expect(ethContractStub.getCall(0).args[1]).eq(depositAddressMock)
+    expect(ethContractStub.getCall(1).args[1]).eq(keepAddressMock)
+    expect(makeCallStub.getCall(0).calledWithExactly("getKeepAddress")).to.be
+      .true
+    expect(makeCallStub.getCall(1).calledWithExactly("getMembers")).to.be.true
+  })
+
+  it("should create grants", () => {
+    const tokenGrantContractMock = { address: "0x0011" }
+    const extraDataMock = "extraData"
+    const encodeParametersStub = sinon.stub().returns(extraDataMock)
+    sandbox.stub(keep, "config").value({
+      web3: { eth: { abi: { encodeParameters: encodeParametersStub } } },
+    })
+    sandbox.stub(keep, "tokenGrantContract").value(tokenGrantContractMock)
+
+    const keepTokenContractStub = sandbox.stub(
+      keep.keepTokenContract,
+      "sendTransaction"
+    )
+
+    const mockData = {
+      grantManager: "0x123",
+      grantee: "0x456",
+      duration: 1,
+      start: 1,
+      cliffDuration: 1,
+      revocable: true,
+      stakingPolicyAddress: "0x789",
+      amount: "1000000000",
+    }
+
+    const {
+      grantManager,
+      grantee,
+      duration,
+      start,
+      cliffDuration,
+      revocable,
+      stakingPolicyAddress,
+    } = mockData
+
+    keep.createGrant(mockData)
+
+    expect(
+      encodeParametersStub.calledWithExactly(
+        [
+          "address",
+          "address",
+          "uint256",
+          "uint256",
+          "uint256",
+          "bool",
+          "address",
+        ],
+        [
+          grantManager,
+          grantee,
+          duration,
+          start,
+          cliffDuration,
+          revocable,
+          stakingPolicyAddress,
+        ]
+      )
+    ).to.be.true
+
+    expect(
+      keepTokenContractStub.calledWithExactly(
+        "approveAndCall",
+        tokenGrantContractMock.address,
+        mockData.amount,
+        extraDataMock
+      )
+    ).to.be.true
+  })
+
+  it("should get managed grant addresses for the provided grantee", async () => {
+    // given
+    const granteeAddress = "0x2A489EacBf4de172B4018D2b4a405F05C400f530"
+    const granteeAddress2 = "0xeA56cDa2dfE567EF5ac9F5aDa6cF62036D298050"
+    const grantAddress1 = "0x9bB49eEB07FDFE8EC10c49e6668d7E55F902BcF7"
+    const grantAddress2 = "0x942e505ce0194b42dc87D06e9a6dc2dcF8f77733"
+    const managedGrantCreatedEventsMock = [
+      { returnValues: { grantAddress: grantAddress1 } },
+      { returnValues: { grantAddress: grantAddress2 } },
+    ]
+    const makeCallManagedGrantStub = sandbox
+      .stub()
+      .onFirstCall()
+      .returns(granteeAddress)
+      .onSecondCall()
+      .returns(granteeAddress2)
+
+    sandbox
+      .stub(ContractFactory, "new")
+      .callsFake(() => ({ makeCall: makeCallManagedGrantStub }))
+
+    const ethContractStub = sandbox.stub()
+    sandbox
+      .stub(keep, "config")
+      .value({ web3: { eth: { Contract: ethContractStub } } })
+
+    const manageGrantFactoryStub = sandbox
+      .stub(keep.managedGrantFactoryContract, "getPastEvents")
+      .returns(managedGrantCreatedEventsMock)
+
+    // when
+    const managedGrantAddresses = await keep.getGranteeManagedGrantAddresses(
+      granteeAddress
+    )
+
+    // then
+    expect(manageGrantFactoryStub.calledWithExactly("ManagedGrantCreated")).to
+      .be.true
+    expect(managedGrantAddresses.length).eq(1)
+    expect(makeCallManagedGrantStub.callCount).eq(2)
+    expect(ethContractStub.callCount).eq(2)
+    expect(ethContractStub.getCall(0).args[1]).eq(grantAddress1)
+    expect(ethContractStub.getCall(1).args[1]).eq(grantAddress2)
+  })
+
+  it("should return grant details by id", async () => {
+    // given
+    const grantId = "1"
+    const getGrantMockData = {
+      amount: "200",
+      withdrawn: "100",
+      staked: "100",
+      revokedAmount: "0",
+      revokedAt: "1",
+      grantee: operatorAddress,
+    }
+    const getGrantUnlockingScheduleMockData = {
+      grantManager: ownerAddress,
+      duration: "1",
+      start: "1",
+      cliff: "1",
+      policy: "0x0",
+    }
+    const unlcokedAmountMockData = "200"
+    const withdrawableMockData = "300"
+    const availableToStakeMockData = "400"
+    const stub = sandbox
+      .stub(keep.tokenGrantContract, "makeCall")
+      .onFirstCall()
+      .returns(getGrantMockData)
+      .onSecondCall()
+      .returns(getGrantUnlockingScheduleMockData)
+      .onThirdCall()
+      .returns(unlcokedAmountMockData)
+      .onCall(3)
+      .returns(withdrawableMockData)
+      .onCall(4)
+      .returns(availableToStakeMockData)
+
+    // when
+    const grantDetails = await keep.getGrantDetails(grantId)
+
+    // then
+    expect(stub.callCount).eq(5)
+    expect(stub.getCall(0).calledWithExactly("getGrant", grantId)).to.be.true
+    expect(
+      stub.getCall(1).calledWithExactly("getGrantUnlockingSchedule", grantId)
+    ).to.be.true
+    expect(stub.getCall(2).calledWithExactly("unlockedAmount", grantId)).to.be
+      .true
+    expect(stub.getCall(3).calledWithExactly("withdrawable", grantId)).to.be
+      .true
+    expect(stub.getCall(4).calledWithExactly("availableToStake", grantId)).to.be
+      .true
+    expect(grantDetails).to.deep.eq({
+      id: grantId,
+      unlocked: unlcokedAmountMockData,
+      released: getGrantMockData.withdrawn,
+      readyToRelease: withdrawableMockData,
+      availableToStake: availableToStakeMockData,
+      ...getGrantUnlockingScheduleMockData,
+      ...getGrantMockData,
+    })
+  })
 })

@@ -103,6 +103,10 @@ class ContractFactory {
 
     return new ContractWrapper(instance, deployedAtBlock)
   }
+
+  static new(instance) {
+    return new ContractWrapper(instance)
+  }
 }
 
 /**
