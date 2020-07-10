@@ -31,7 +31,7 @@ const (
 	// NegativeMinimumStakeCachePeriod is the time period the cache maintains
 	// the negative result of the last HasMinimumStake check.
 	// We use the cache to minimize calls to Ethereum client.
-	NegativeMinimumStakeCachePeriod = 6 * time.Hour
+	NegativeMinimumStakeCachePeriod = 1 * time.Hour
 )
 
 var errNoMinimumStake = fmt.Errorf("remote peer has no minimum stake")
