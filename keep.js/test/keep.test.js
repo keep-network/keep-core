@@ -873,4 +873,43 @@ describe("KEEP.js functions", () => {
     expect(stub.calledWithExactly("getSortitionPool", TBTCSystemMockAddress))
     expect(tbtcSortitionPoolAddress).eq(TBTCSortitionPollMockAddress)
   })
+
+  it("should check if the TBTC sortition pool has been authorized for the provided operator", async () => {
+    sandbox
+      .stub(keep, "getTBTCSortitionPoolAddress")
+      .resolves(TBTCSortitionPollMockAddress)
+
+    const stub = sandbox.stub(keep.keepBondingContract, "makeCall")
+
+    await keep.isTBTCSystemAuthorized(operatorAddress)
+
+    expect(
+      stub.calledWithExactly(
+        "hasSecondaryAuthorization",
+        operatorAddress,
+        TBTCSortitionPollMockAddress
+      )
+    ).to.be.true
+  })
+
+  it("should return false if the hasSecondaryAuthorization fn throws error", async () => {
+    sandbox
+      .stub(keep, "getTBTCSortitionPoolAddress")
+      .resolves(TBTCSortitionPollMockAddress)
+
+    const stub = sandbox
+      .stub(keep.keepBondingContract, "makeCall")
+      .throws("Error")
+
+    const result = await keep.isTBTCSystemAuthorized(operatorAddress)
+
+    expect(
+      stub.calledWithExactly(
+        "hasSecondaryAuthorization",
+        operatorAddress,
+        TBTCSortitionPollMockAddress
+      )
+    ).to.be.true
+    expect(result).to.be.false
+  })
 })

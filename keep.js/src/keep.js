@@ -732,4 +732,24 @@ export default class KEEP {
 
     return this.tbtcSortitionPoolAddress
   }
+
+  /**
+   * Checks if the TBTC sortition pool has been authorized for the provided operator by its authorizer.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @return {Promise<boolean>}
+   */
+  async isTBTCSystemAuthorized(operatorAddress) {
+    try {
+      const tbtcSortitionPoolAddress = await this.getTBTCSortitionPoolAddress()
+
+      return await this.keepBondingContract.makeCall(
+        "hasSecondaryAuthorization",
+        operatorAddress,
+        tbtcSortitionPoolAddress
+      )
+    } catch (error) {
+      return false
+    }
+  }
 }
