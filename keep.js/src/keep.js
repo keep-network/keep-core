@@ -777,4 +777,25 @@ export default class KEEP {
       operatorAddress
     )
   }
+
+  /**
+   * Withdraws amount from operator's value available for bonding as a grantee in managed grant.
+   *
+   * @param {string} value Value to withdraw in wei.
+   * @param {string} operatorAddress Address of the operator.
+   * @param {string} managedGrantAddress Address of the managed grant.
+   * @return {*}
+   */
+  withdrawUnbondedEthForOperatorAsManagedGrantee(
+    value,
+    operatorAddress,
+    managedGrantAddress
+  ) {
+    return this.keepBondingContract.sendTransaction(
+      "withdrawAsManagedGrantee",
+      value,
+      operatorAddress,
+      managedGrantAddress
+    )
+  }
 }

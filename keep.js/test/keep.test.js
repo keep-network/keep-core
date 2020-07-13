@@ -930,4 +930,25 @@ describe("KEEP.js functions", () => {
     expect(stub.calledWithExactly("withdraw", mockValue, operatorAddress)).to.be
       .true
   })
+
+  it("should withdraw ETH for the provided operator and managed grant address", () => {
+    const mockValue = "1000"
+    const manageGrantAddressMock = "0x00001"
+    const stub = sandbox.stub(keep.keepBondingContract, "sendTransaction")
+
+    keep.withdrawUnbondedEthForOperatorAsManagedGrantee(
+      mockValue,
+      operatorAddress,
+      manageGrantAddressMock
+    )
+
+    expect(
+      stub.calledWithExactly(
+        "withdrawAsManagedGrantee",
+        mockValue,
+        operatorAddress,
+        manageGrantAddressMock
+      )
+    ).to.be.true
+  })
 })
