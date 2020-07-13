@@ -93,16 +93,7 @@ describe('TokenStaking', function() {
       ); 
     })
 
-    it("should not allow to delegate to the same operator twice", async () => {
-      await delegate(operatorOne, stakingAmount)
-  
-      await expectRevert(
-        delegate(operatorOne, stakingAmount),
-        "Operator already in use"
-      )
-    })
-  
-    it("should not allow to delegate to the same operator even after recovering stake", async () => {
+    it("should not allow to delegate to the same operator after recovering stake", async () => {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
   
@@ -113,10 +104,10 @@ describe('TokenStaking', function() {
           
       await expectRevert(
         delegate(operatorOne, stakingAmount),
-        "Operator already in use"
+        "Operator undelegated"
       )
     })
-  
+
     it("should not allow to delegate less than the minimum stake", async () => {    
       await expectRevert(
         delegate(operatorOne, minimumStake.subn(1)),
