@@ -434,6 +434,8 @@ contract Rewards {
         intervalAllocations.push(totalAllocation);
     }
 
+    /// @notice Get the total amount of tokens
+    /// allocated for all keeps in the specified interval.
     function _getAllocatedRewards(uint256 interval) internal view returns (uint256) {
         require(
             interval < intervalAllocations.length,
@@ -442,6 +444,7 @@ contract Rewards {
         return intervalAllocations[interval];
     }
 
+    /// @notice Return whether the specified interval has been allocated.
     function _isAllocated(uint256 interval) internal view returns (bool) {
         uint256 allocatedIntervals = intervalAllocations.length;
         return (interval < allocatedIntervals);
