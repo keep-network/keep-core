@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/ipfs/go-log"
@@ -46,6 +47,23 @@ func ObserveConnectedPeersCount(
 ) {
 	input := func() float64 {
 		connectedPeers := netProvider.ConnectionManager().ConnectedPeers()
+
+		peersList := make([]PeerInfo, len(connectedPeers))
+		for i := 0; i < len(connectedPeers); i++ {
+			peerAddress, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
+			if err == nil {
+				peersList[i] = PeerInfo{PeerId: connectedPeers[i], PeerAddress: peerAddress.X.String()}
+			}
+		}
+
+		bytes, err := json.Marshal(peersList)
+		if err == nil {
+			logger.Debug("nodes list: ", string(bytes))
+
+			label := metrics.NewLabel("list", string(bytes))
+			registry.UpdateInfo("peerList", []metrics.Label{label})
+		}
+
 		return float64(len(connectedPeers))
 	}
 
@@ -56,6 +74,11 @@ func ObserveConnectedPeersCount(
 		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
+}
+
+type PeerInfo struct {
+	PeerId      string
+	PeerAddress string
 }
 
 // ObserveConnectedBootstrapCount triggers an observation process of the
@@ -150,6 +173,15 @@ func ExposeLibP2PInfo(
 	id := metrics.NewLabel("id", netProvider.ID().String())
 
 	_, err := registry.NewInfo(name, []metrics.Label{id})
+	if err != nil {
+		logger.Warningf("could not create info metric [%v]", name)
+		return
+	}
+
+	name = "peerList"
+	id = metrics.NewLabel("list", "")
+
+	_, err = registry.NewInfo(name, []metrics.Label{id})
 	if err != nil {
 		logger.Warningf("could not create info metric [%v]", name)
 		return
