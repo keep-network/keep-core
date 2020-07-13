@@ -78,6 +78,7 @@ export default class KEEP {
     this.tbtcTokenContract
     this.depositContract
     this.bondedECDSAKeepContract
+    this.tbtcSortitionPoolAddress = ""
   }
 
   /**
@@ -682,5 +683,19 @@ export default class KEEP {
       ...unlockingSchedule,
       ...grantDetails,
     }
+  }
+
+  /**
+   * Authorizes BondedECDSAKeepFactory contract to access staked token balance of the provided operator.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @return {*}
+   */
+  authorizeBondedECDSAKeepFactory(operatorAddress) {
+    return this.tokenStakingContract.sendTransaction(
+      "authorizeOperatorContract",
+      operatorAddress,
+      this.bondedECDSAKeepFactoryContract.address
+    )
   }
 }

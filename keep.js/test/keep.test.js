@@ -9,6 +9,7 @@ const operatorAddress = "0x0"
 const beneficiaryAddress = "0x1"
 const authorizerAddress = "0x2"
 const ownerAddress = "0x3"
+const TBTCSortitionPollMockAddress = "0x4"
 
 describe("Keep initialization", () => {
   let config
@@ -800,5 +801,24 @@ describe("KEEP.js functions", () => {
       ...getGrantUnlockingScheduleMockData,
       ...getGrantMockData,
     })
+  })
+
+  it("should authorize BondedECDSAKeepFactory contract", () => {
+    const bondedECDSAKeepFactoryMockAddress = "0x0"
+    sandbox
+      .stub(keep, "bondedECDSAKeepFactoryContract")
+      .value({ address: bondedECDSAKeepFactoryMockAddress })
+
+    const stub = sandbox.stub(keep.tokenStakingContract, "sendTransaction")
+
+    keep.authorizeBondedECDSAKeepFactory(operatorAddress)
+
+    expect(
+      stub.calledWithExactly(
+        "authorizeOperatorContract",
+        operatorAddress,
+        bondedECDSAKeepFactoryMockAddress
+      )
+    ).to.be.true
   })
 })
