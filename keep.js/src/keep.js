@@ -848,4 +848,33 @@ export default class KEEP {
       referenceID
     )
   }
+
+  /**
+   * @typedef {Object} CreatedBond
+   * @property {string} operator Address of the operator to bond.
+   * @property {string} holder Address of the holder of the bond.
+   * @property {string} referenceID Reference ID used to track the bond by holder.
+   */
+  /**
+   * Returns created bonds for the TBTC sortition pool and provided operator addresses.
+   *
+   * @param {string[]} operatorAddresses Address of the operator.
+   * @return {Promise<Array<CreatedBond>>} Created bonds.
+   */
+  async getCreatedBondsForTBTC(operatorAddresses) {
+    const tbtcSortitionPoolAddress = await this.getTBTCSortitionPoolAddress()
+
+    return (
+      await this.keepBondingContract.getPastEvents("BondCreated", {
+        operator: operatorAddresses,
+        sortitionPool: tbtcSortitionPoolAddress,
+      })
+    ).map((_) => {
+      return {
+        operator: _.returnValues.operator,
+        holder: _.returnValues.holder,
+        referenceID: _.returnValues.referenceID,
+      }
+    })
+  }
 }

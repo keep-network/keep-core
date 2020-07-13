@@ -998,4 +998,57 @@ describe("KEEP.js functions", () => {
       )
     ).to.be.true
   })
+
+  it("should return created bonds for tbtc app", async () => {
+    const holder1 = "holder1"
+    const referenceID1 = "referenceID1"
+    const holder2 = "holder2"
+    const referenceID2 = "referenceID2"
+    const bondCreatedEventsMock = [
+      {
+        returnValues: {
+          operator: operatorAddress,
+          holder: holder1,
+          referenceID: referenceID1,
+        },
+      },
+      {
+        returnValues: {
+          operator: beneficiaryAddress,
+          holder: holder2,
+          referenceID: referenceID2,
+        },
+      },
+    ]
+    const stub = sandbox
+      .stub(keep.keepBondingContract, "getPastEvents")
+      .returns(bondCreatedEventsMock)
+    sandbox
+      .stub(keep, "getTBTCSortitionPoolAddress")
+      .resolves(TBTCSortitionPollMockAddress)
+
+    const result = await keep.getCreatedBondsForTBTC([
+      operatorAddress,
+      beneficiaryAddress,
+    ])
+
+    expect(
+      stub.calledOnceWithExactly("BondCreated", {
+        operator: [operatorAddress, beneficiaryAddress],
+        TBTCSortitionPollMockAddress,
+      })
+    )
+
+    expect(result.length).eq(2)
+    expect(result[0]).to.deep.eq({
+      operator: operatorAddress,
+      holder: holder1,
+      referenceID: referenceID1,
+    })
+    expect(result[1]).to.deep.eq({
+      operator: beneficiaryAddress,
+      holder: holder2,
+      referenceID: referenceID2,
+    })
+  })
 })
