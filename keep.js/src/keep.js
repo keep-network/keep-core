@@ -698,4 +698,38 @@ export default class KEEP {
       this.bondedECDSAKeepFactoryContract.address
     )
   }
+
+  /**
+   * Authorizes TBTC sortition pool for the provided operator.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @return {*}
+   */
+  async authorizeTBTCSystem(operatorAddress) {
+    const tbtcSortitionPoolAddress = await this.getTBTCSortitionPoolAddress()
+
+    return this.keepBondingContract.sendTransaction(
+      "authorizeSortitionPoolContract",
+      operatorAddress,
+      tbtcSortitionPoolAddress
+    )
+  }
+
+  /**
+   * Returns the sortition pool address of the TBTC application.
+   *
+   * @return {Promise<string>} The TBTC sortition pool address
+   */
+  async getTBTCSortitionPoolAddress() {
+    if (this.tbtcSortitionPoolAddress) {
+      return this.tbtcSortitionPoolAddress
+    }
+
+    this.tbtcSortitionPoolAddress = await this.bondedECDSAKeepFactoryContract.makeCall(
+      "getSortitionPool",
+      this.tbtcSystemContract.address
+    )
+
+    return this.tbtcSortitionPoolAddress
+  }
 }

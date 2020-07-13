@@ -821,4 +821,56 @@ describe("KEEP.js functions", () => {
       )
     ).to.be.true
   })
+
+  it("should authorize tbtc sortition poll", async () => {
+    sandbox
+      .stub(keep, "getTBTCSortitionPoolAddress")
+      .resolves(TBTCSortitionPollMockAddress)
+
+    const stub = sandbox.stub(keep.keepBondingContract, "sendTransaction")
+
+    await keep.authorizeTBTCSystem(operatorAddress)
+
+    expect(
+      stub.calledWithExactly(
+        "authorizeSortitionPoolContract",
+        operatorAddress,
+        TBTCSortitionPollMockAddress
+      )
+    ).to.be.true
+  })
+
+  it("should not call getSortitionPool fn if tbtcSortitionPoolAddress has already been initialized", async () => {
+    const TBTCSystemMockAddress = "0x0000123"
+    sandbox
+      .stub(keep, "tbtcSortitionPoolAddress")
+      .value(TBTCSortitionPollMockAddress)
+
+    sandbox
+      .stub(keep, "tbtcSystemContract")
+      .value({ address: TBTCSystemMockAddress })
+    const stub = sandbox.stub(keep.bondedECDSAKeepFactoryContract, "makeCall")
+
+    const tbtcSortitionPoolAddress = await keep.getTBTCSortitionPoolAddress()
+
+    expect(stub.neverCalledWith("getSortitionPool", TBTCSystemMockAddress))
+    expect(tbtcSortitionPoolAddress).eq(TBTCSortitionPollMockAddress)
+  })
+
+  it("should call getSortitionPool fn if the tbtcSortitionPoolAddress has not yet been initialized", async () => {
+    const TBTCSystemMockAddress = "0x0000123"
+    sandbox
+      .stub(keep, "tbtcSystemContract")
+      .value({ address: TBTCSystemMockAddress })
+    const stub = sandbox
+      .stub(keep.bondedECDSAKeepFactoryContract, "makeCall")
+      .withArgs("getSortitionPool", TBTCSystemMockAddress)
+      .resolves(TBTCSortitionPollMockAddress)
+
+    const tbtcSortitionPoolAddress = await keep.getTBTCSortitionPoolAddress()
+
+    expect(stub.calledOnce).to.be.true
+    expect(stub.calledWithExactly("getSortitionPool", TBTCSystemMockAddress))
+    expect(tbtcSortitionPoolAddress).eq(TBTCSortitionPollMockAddress)
+  })
 })
