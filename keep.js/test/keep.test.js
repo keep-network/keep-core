@@ -951,4 +951,21 @@ describe("KEEP.js functions", () => {
       )
     ).to.be.true
   })
+
+  it("should deauthroize TBTC system for the provided operator", () => {
+    sandbox
+      .stub(keep, "getTBTCSortitionPoolAddress")
+      .resolves(TBTCSortitionPollMockAddress)
+    const stub = sandbox.stub(keep.keepBondingContract, "sendTransaction")
+
+    keep.deauthorizeTBTCSystem(operatorAddress)
+
+    expect(
+      stub.calledOnceWithExactly(
+        "deauthorizeSortitionPoolContract",
+        operatorAddress,
+        TBTCSortitionPollMockAddress
+      )
+    )
+  })
 })

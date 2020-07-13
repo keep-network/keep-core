@@ -798,4 +798,20 @@ export default class KEEP {
       managedGrantAddress
     )
   }
+
+  /**
+   * Deauthorizes sortition pool for the provided operator.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @return {*}
+   */
+  async deauthorizeTBTCSystem(operatorAddress) {
+    const tbtcSortitionPoolAddress = await this.getTBTCSortitionPoolAddress()
+
+    return this.keepBondingContract.sendTransaction(
+      "deauthorizeSortitionPoolContract",
+      operatorAddress,
+      tbtcSortitionPoolAddress
+    )
+  }
 }
