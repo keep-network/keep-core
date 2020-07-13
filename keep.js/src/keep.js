@@ -814,4 +814,17 @@ export default class KEEP {
       tbtcSortitionPoolAddress
     )
   }
+
+  /**
+   * Returns unassigned value in wei deposited by operators.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @return {Promise<string>} Unbonded value in wei.
+   */
+  async getOperatorUnbondedValue(operatorAddress) {
+    return await this.keepBondingContract.makeCall(
+      "unbondedValue",
+      operatorAddress
+    )
+  }
 }

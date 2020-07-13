@@ -968,4 +968,13 @@ describe("KEEP.js functions", () => {
       )
     )
   })
+
+  it("should return unbonded value for the provided operator address", async () => {
+    const stub = sandbox.stub(keep.keepBondingContract, "makeCall")
+
+    await keep.getOperatorUnbondedValue(operatorAddress)
+
+    expect(stub.calledOnceWithExactly("unbondedValue", operatorAddress)).to.be
+      .true
+  })
 })
