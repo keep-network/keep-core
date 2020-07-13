@@ -977,4 +977,25 @@ describe("KEEP.js functions", () => {
     expect(stub.calledOnceWithExactly("unbondedValue", operatorAddress)).to.be
       .true
   })
+
+  it("should return bond amount for the provided operator address", async () => {
+    const stub = sandbox.stub(keep.keepBondingContract, "makeCall")
+    const holderMock = "mockHolder"
+    const referenceIDMock = "referenceID"
+
+    await keep.getOperatorBondAmount(
+      operatorAddress,
+      holderMock,
+      referenceIDMock
+    )
+
+    expect(
+      stub.calledWithExactly(
+        "bondAmount",
+        operatorAddress,
+        holderMock,
+        referenceIDMock
+      )
+    ).to.be.true
+  })
 })

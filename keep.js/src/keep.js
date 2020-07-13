@@ -827,4 +827,25 @@ export default class KEEP {
       operatorAddress
     )
   }
+
+  /**
+   * Returns the amount of wei the operator has made available for
+   * bonding and that is still unbounded. If the operator doesn't exist or
+   * bond creator is not authorized as an operator contract or it is not
+   * authorized by the operator or there is no secondary authorization for
+   * the provided sortition pool, function returns 0.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @param {string} holder Address of the holder of the bond.
+   * @param {string} referenceID Reference ID used to track the bond by holder.
+   * @return {Promise<string>} Amount of authorized wei deposit available for bonding.
+   */
+  async getOperatorBondAmount(operatorAddress, holder, referenceID) {
+    return await this.keepBondingContract.makeCall(
+      "bondAmount",
+      operatorAddress,
+      holder,
+      referenceID
+    )
+  }
 }
