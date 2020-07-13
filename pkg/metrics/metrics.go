@@ -48,13 +48,14 @@ func ObserveConnectedPeersCount(
 	input := func() float64 {
 		connectedPeers := netProvider.ConnectionManager().ConnectedPeers()
 
-		peersList := make([]PeerInfo, len(connectedPeers))
+		peersList := make([]metrics.PeerInfo, len(connectedPeers))
 		for i := 0; i < len(connectedPeers); i++ {
 			peerAddress, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
 			if err == nil {
-				peersList[i] = PeerInfo{PeerId: connectedPeers[i], PeerAddress: peerAddress.X.String()}
+				peersList[i] = metrics.PeerInfo{PeerId: connectedPeers[i], PeerAddress: peerAddress.X.String()}
 			}
 		}
+		registry.UpdatePeers(peersList)
 
 		bytes, err := json.Marshal(peersList)
 		if err == nil {
@@ -74,11 +75,6 @@ func ObserveConnectedPeersCount(
 		registry,
 		validateTick(tick, DefaultNetworkMetricsTick),
 	)
-}
-
-type PeerInfo struct {
-	PeerId      string
-	PeerAddress string
 }
 
 // ObserveConnectedBootstrapCount triggers an observation process of the
