@@ -62,7 +62,7 @@ contract Rewards {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    IERC20 token;
+    IERC20 public token;
 
     // Total number of keep tokens to distribute.
     uint256 totalRewards;
@@ -112,14 +112,20 @@ contract Rewards {
         intervalWeights = _intervalWeights;
     }
 
-    /// @notice `approveAndCall` funds the rewards contract.
+    /// @notice Funds the rewards contract.
     /// @dev Adds the received amount of tokens
     /// to `totalRewards` and `unallocatedRewards`.
     /// May be called at any time, even after allocating some intervals.
     /// Changes to `unallocatedRewards`
     /// will take effect on subsequent interval allocations.
+    /// Intended to be used with `approveAndCall`.
     /// If the reward contract has received tokens outside `approveAndCall`,
     /// this collects them as well.
+    /// @param _from The original sender of the tokens.
+    /// Must have approved at least `_value` tokens for the rewards contract.
+    /// @param _value The amount of tokens to fund.
+    /// @param _token The token to fund the rewards in.
+    /// Must match the one specified in the rewards contract.
     function receiveApproval(
         address _from,
         uint256 _value,
