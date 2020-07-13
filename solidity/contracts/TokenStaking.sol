@@ -570,14 +570,17 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operatorContract
     ) public view returns (uint256 balance) {
         uint256 operatorParams = operators[_operator].packedParams;
+        // To be eligible for work selection, the operator must:
+        // - have the operator contract authorized
+        // - have the stake initialized
+        // - must not be undelegating; keep in mind the `undelegatedAt` may be
+        // set to a time in the future, to schedule undelegation in advance.
+        // In this case the operator is still eligible until the timestamp
+        // `undelegatedAt`.
         if (
             isAuthorizedForOperator(_operator, _operatorContract) &&
             _isInitialized(operatorParams) &&
             !_isUndelegating(operatorParams)
-            // `undelegatedAt` may be set to a time in the future,
-            // to schedule undelegation in advance.
-            // In this case the operator is still eligible
-            // until the timestamp `undelegatedAt`.
         ) {
             balance = operatorParams.getAmount();
         }
