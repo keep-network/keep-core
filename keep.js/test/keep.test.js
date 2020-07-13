@@ -912,4 +912,12 @@ describe("KEEP.js functions", () => {
     ).to.be.true
     expect(result).to.be.false
   })
+
+  it("should deposit ETH for the provided operator", () => {
+    const stub = sandbox.stub(keep.keepBondingContract, "sendTransaction")
+
+    keep.depositEthForBondingOperator(operatorAddress)
+
+    expect(stub.calledWithExactly("deposit", operatorAddress)).to.be.true
+  })
 })

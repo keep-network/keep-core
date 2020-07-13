@@ -752,4 +752,14 @@ export default class KEEP {
       return false
     }
   }
+
+  /**
+   * Add the provided value to operator's pool available for bonding.
+   *
+   * @param {string} operatorAddress Address of the operator.
+   * @return {*}
+   */
+  depositEthForBondingOperator(operatorAddress) {
+    return this.keepBondingContract.sendTransaction("deposit", operatorAddress)
+  }
 }
