@@ -155,6 +155,9 @@ contract Rewards {
         _processKeep(true, keepIdentifier);
     }
 
+    /// @notice Report that the keep was terminated,
+    /// and return its allocated rewards to the unallocated pool.
+    /// @param keepIdentifier The terminated keep.
     function reportTermination(bytes32 keepIdentifier)
         factoryMustRecognize(keepIdentifier)
         rewardsNotClaimed(keepIdentifier)
