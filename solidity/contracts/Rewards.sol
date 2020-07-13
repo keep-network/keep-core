@@ -218,6 +218,7 @@ contract Rewards {
     /// @notice Return the timestamp corresponding to the start of the interval.
     /// @dev The start of an interval is inclusive;
     /// a keep created at the timestamp `startOf(i)` is in interval `i`.
+    /// @param interval The interval whose start is queried.
     function startOf(uint256 interval) public view returns (uint256) {
         return firstIntervalStart.add(interval.mul(termLength));
     }
@@ -225,6 +226,7 @@ contract Rewards {
     /// @notice Return the timestamp corresponding to the end of the interval.
     /// @dev The end of an interval is exclusive;
     /// a keep created at the timestamp `endOf(i)` is in interval `i+1`.
+    /// @param interval The interval whose end is queried.
     function endOf(uint256 interval) public view returns (uint256) {
         return startOf(interval.add(1));
     }
