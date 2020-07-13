@@ -16,8 +16,9 @@ var cachingPeriod = time.Second
 func TestHasMinimumStake(t *testing.T) {
 	stakeMonitor := local.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
-		stakeMonitor: stakeMonitor,
-		cache:        cache.NewTimeCache(cachingPeriod),
+		stakeMonitor:        stakeMonitor,
+		positiveResultCache: cache.NewTimeCache(cachingPeriod),
+		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -38,8 +39,9 @@ func TestHasMinimumStake(t *testing.T) {
 func TestHasNoMinimumStake(t *testing.T) {
 	stakeMonitor := local.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
-		stakeMonitor: stakeMonitor,
-		cache:        cache.NewTimeCache(cachingPeriod),
+		stakeMonitor:        stakeMonitor,
+		positiveResultCache: cache.NewTimeCache(cachingPeriod),
+		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -58,11 +60,12 @@ func TestHasNoMinimumStake(t *testing.T) {
 	}
 }
 
-func TestCachesActiveKeepMembers(t *testing.T) {
+func TestCachesHasMinimumStake(t *testing.T) {
 	stakeMonitor := local.NewStakeMonitor(minimumStake)
 	policy := &minimumStakePolicy{
-		stakeMonitor: stakeMonitor,
-		cache:        cache.NewTimeCache(cachingPeriod),
+		stakeMonitor:        stakeMonitor,
+		positiveResultCache: cache.NewTimeCache(cachingPeriod),
+		negativeResultCache: cache.NewTimeCache(cachingPeriod),
 	}
 
 	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
@@ -98,5 +101,52 @@ func TestCachesActiveKeepMembers(t *testing.T) {
 			err,
 			errNoMinimumStake,
 		)
+	}
+}
+
+func TestCachesHasNoMinimumStake(t *testing.T) {
+	stakeMonitor := local.NewStakeMonitor(minimumStake)
+	policy := &minimumStakePolicy{
+		stakeMonitor:        stakeMonitor,
+		positiveResultCache: cache.NewTimeCache(cachingPeriod),
+		negativeResultCache: cache.NewTimeCache(cachingPeriod),
+	}
+
+	_, remotePeerPublicKey, err := key.GenerateStaticNetworkKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	remotePeerAddress := key.NetworkPubKeyToEthAddress(remotePeerPublicKey)
+
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != errNoMinimumStake {
+		t.Fatalf(
+			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
+			err,
+			errNoMinimumStake,
+		)
+	}
+
+	stakeMonitor.StakeTokens(remotePeerAddress)
+
+	// still caching the old result
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != errNoMinimumStake {
+		t.Fatalf(
+			"unexpected validation error\nactual:   [%v]\nexpected: [%v]",
+			err,
+			errNoMinimumStake,
+		)
+	}
+
+	time.Sleep(time.Second)
+
+	// no longer caches the previous result
+	if err := policy.Validate(
+		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
+	); err != nil {
+		t.Fatalf("validation should pass: [%v]", err)
 	}
 }

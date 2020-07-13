@@ -1,5 +1,4 @@
 import React, { useMemo } from "react"
-import Tile from "./Tile"
 import { CircularProgressBars } from "./CircularProgressBar"
 import { add } from "../utils/arithmetics.utils"
 import {
@@ -15,7 +14,8 @@ const OwnedTokensOverview = ({ keepBalance, stakedBalance }) => {
   }, [keepBalance, stakedBalance])
 
   return (
-    <Tile id="tokens-overview" title="Owned Tokens">
+    <>
+      <h4>Owned Tokens</h4>
       <TokenAmount amount={keepBalance} />
       <hr />
       <div className="flex">
@@ -41,7 +41,7 @@ const OwnedTokensOverview = ({ keepBalance, stakedBalance }) => {
           </div>
         </div>
       </div>
-    </Tile>
+    </>
   )
 }
 

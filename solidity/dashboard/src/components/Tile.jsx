@@ -19,8 +19,10 @@ const Tile = ({
         </h4>
         {withTooltip && <SpeechBubbleTooltip {...tooltipProps} />}
       </div>
-      <div className="text-grey-40 text-small">{subtitle}</div>
-      <div className="mt-1">{children}</div>
+      {subtitle && (
+        <div className="text-grey-40 text-small mb-1">{subtitle}</div>
+      )}
+      <div>{children}</div>
     </section>
   )
 }

@@ -13,7 +13,7 @@ async function delegateStake(
     Buffer.from(authorizer.substr(2), 'hex')
   ]);
     
-  await tokenContract.approveAndCall(
+  return tokenContract.approveAndCall(
     stakingContract.address, amount, 
     '0x' + data.toString('hex'), 
     {from: tokenOwner}

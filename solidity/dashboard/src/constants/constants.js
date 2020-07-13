@@ -9,6 +9,8 @@ export const MANAGED_GRANT_FACTORY_CONTRACT_NAME = "managedGrantFactoryContract"
 export const BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME =
   "bondedEcdsaKeepFactoryContract"
 export const KEEP_BONDING_CONTRACT_NAME = "keepBondingContract"
+export const TBTC_TOKEN_CONTRACT_NAME = "tbtcTokenContract"
+export const TBTC_SYSTEM_CONTRACT_NAME = "tbtcSystemContract"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
@@ -19,4 +21,16 @@ export const WALLETS = {
   LEDGER_LIVE: { label: "Ledger" },
   LEDGER_LEGACY: { label: "Ledger" },
   COINBASE: { label: "Coinbase" },
+}
+
+export const REWARD_STATUS = {
+  AVAILABLE: "AVAILABLE",
+  WITHDRAWN: "WITHDRAWN",
+  ACCUMULATING: "ACCUMULATING",
+}
+
+export const SIGNING_GROUP_STATUS = {
+  COMPLETED: "Completed",
+  TERMINATED: "Terminated",
+  ACTIVE: "Active work",
 }

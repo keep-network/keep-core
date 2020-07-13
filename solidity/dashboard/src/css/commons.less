@@ -177,3 +177,29 @@ svg.arrow-right {
     }
   }
 }
+
+svg.eth-icon {
+  &.grey-40 {
+    .color {
+      fill: @color-grey-40;
+    }
+  }
+}
+
+.text-fade-out {
+  background-image: linear-gradient(90deg, @color-black, rgba(255, 255, 255, 0) 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.overflow {
+  &-x {
+    &-scroll {
+      overflow-x: scroll;
+    }
+  }
+}

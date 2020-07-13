@@ -19,11 +19,14 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "./StakeDelegatable.sol";
 import "./libraries/staking/MinimumStakeSchedule.sol";
+import "./libraries/staking/GrantStaking.sol";
+import "./libraries/staking/Locks.sol";
+import "./libraries/staking/TopUps.sol";
 import "./utils/PercentUtils.sol";
-import "./utils/LockUtils.sol";
 import "./utils/BytesLib.sol";
 import "./Authorizations.sol";
 import "./TokenStakingEscrow.sol";
+import "./TokenSender.sol";
 
 
 /// @title TokenStaking
@@ -36,8 +39,19 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using PercentUtils for uint256;
     using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
+    using GrantStaking for GrantStaking.Storage;
+    using Locks for Locks.Storage;
+    using TopUps for TopUps.Storage;
 
-    event Staked(address indexed from, uint256 value);
+    event Staked(
+        address owner,
+        address indexed operator,
+        address indexed beneficiary,
+        address indexed authorizer,
+        uint256 value
+    );
+    event TopUpInitiated(address indexed operator, uint256 topUp);
+    event TopUpCommitted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator, uint256 recoveredAt);
     event TokensSlashed(address indexed operator, uint256 amount);
@@ -46,24 +60,17 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
-    uint256 public constant maximumLockDuration = 86400 * 200; // 200 days in seconds
-
+    uint256 public minimumStakeScheduleStart;
     uint256 public initializationPeriod;
     uint256 public undelegationPeriod;
 
-    uint256 public minimumStakeScheduleStart;
-
     ERC20Burnable internal token;
+    TokenGrant internal tokenGrant;
+    TokenStakingEscrow internal escrow;
 
-    TokenStakingEscrow public escrow;
-
-    // KEEP token grant contract.
-    TokenGrant public tokenGrant;
-
-    // Locks placed on the operator.
-    // `operatorLocks[operator]` returns all locks placed on the operator.
-    // Each authorized operator contract can place one lock on an operator.
-    mapping(address => LockUtils.LockSet) internal operatorLocks;
+    GrantStaking.Storage internal grantStaking;
+    Locks.Storage internal locks;
+    TopUps.Storage internal topUps;
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
@@ -100,38 +107,166 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         return MinimumStakeSchedule.current(minimumStakeScheduleStart);
     }
 
-    /// @notice Receives approval of token transfer and stakes the approved amount.
-    /// @dev Makes sure provided token contract is the same one linked to this contract.
+    /// @notice Receives approval of token transfer and stakes the approved
+    /// amount or adds the approved amount to an existing delegation (a “top-up”).
+    /// In case of an existing delegation, it is required that the operator stake
+    /// passed initialization period, it is not undelegated and that the top-up is
+    /// performed from the same source of tokens as the initial delegation.
+    /// That is, if the tokens were delegated from a grant, top-up
+    /// has to be performed from the same grant. If the delegation was done
+    /// using liquid tokens, only liquid tokens from the same owner can be used
+    /// to top-up the stake.
+    /// @dev Requires that the provided token contract be the same one linked to
+    /// this contract.
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _value Approved amount for the transfer and stake.
     /// @param _token Token contract address.
     /// @param _extraData Data for stake delegation. This byte array must have
     /// the following values concatenated:
-    /// - Beneficiary address (20 bytes)
+    /// - Beneficiary address (20 bytes), ignored for a top-up
     /// - Operator address (20 bytes)
-    /// - Authorizer address (20 bytes)
-    function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
+    /// - Authorizer address (20 bytes), ignored for a top-up
+    /// - Grant ID (32 bytes) - required only when called by TokenStakingEscrow
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory _extraData
+    ) public {
         require(ERC20Burnable(_token) == token, "Unrecognized token contract");
         require(_value >= minimumStake(), "Value must be greater than the minimum stake");
-        require(_extraData.length == 60, "Corrupted delegation data");
-
-        address payable beneficiary = address(uint160(_extraData.toAddress(0)));
-        address operator = _extraData.toAddress(20);
-        require(operators[operator].owner == address(0), "Operator already in use");
-        address authorizer = _extraData.toAddress(40);
+        require(_extraData.length >= 60, "Corrupted delegation data");
 
         // Transfer tokens to this contract.
         token.safeTransferFrom(_from, address(this), _value);
 
-        operators[operator] = Operator(
+        address operator = _extraData.toAddress(20);
+        // See if there is an existing delegation for this operator...
+        if (operators[operator].packedParams.getCreationTimestamp() == 0) {
+            // If there is no existing delegation, tokens are delegated using
+            // beneficiary and authorizer passed in _extraData.
+            delegate(_from, _value, operator, _extraData);
+        } else {
+            // If there is an existing delegation, top-up of the stake is
+            // initiated.
+            initiateTopUp(_from, _value, operator, _extraData);
+        }
+    }
+
+    /// @notice Delegates tokens to a new operator using beneficiary and
+    /// authorizer passed in _extraData parameter.
+    /// @param _from The owner of the tokens who approved them to transfer.
+    /// @param _value Approved amount for the transfer and stake.
+    /// @param _operator The new operator address.
+    /// @param _extraData Data for stake delegation as passed to receiveApproval.
+    function delegate(
+        address _from,
+        uint256 _value,
+        address _operator,
+        bytes memory _extraData
+    ) internal {
+        address payable beneficiary = address(uint160(_extraData.toAddress(0)));
+        address authorizer = _extraData.toAddress(40);
+
+        operators[_operator] = Operator(
             OperatorParams.pack(_value, block.timestamp, 0),
             _from,
             beneficiary,
             authorizer
         );
-        ownerOperators[_from].push(operator);
+        ownerOperators[_from].push(_operator);
 
-        emit Staked(operator, _value);
+        grantStaking.tryCapturingDelegationData(
+            tokenGrant,
+            address(escrow),
+            _from,
+            _operator,
+            _extraData
+        );
+
+        emit Staked(_from, _operator, beneficiary, authorizer, _value);
+    }
+
+    /// @notice Initializes top-up to an existing operator. Tokens added in
+    /// a top-up are not included in the operator stake until the initialization
+    /// period for a top-up passes and top-up is committed. Operator must not
+    /// have the stake undelegated and it has to be initialized. It is expected
+    /// that the top-up is done from the same source of tokens as the initial
+    /// delegation. That is, if the tokens were delegated from a grant, top-up
+    /// has to be performed from the same grant. If the delegation was done
+    /// using liquid tokens, only liquid tokens from the same owner can be used
+    /// to top-up the stake.
+    /// @param _from The owner of the tokens who approved them to transfer.
+    /// @param _value Approved amount for the transfer and top-up to
+    /// an existing stake.
+    /// @param _operator The new operator address.
+    /// @param _extraData Data for stake delegation as passed to receiveApproval
+    function initiateTopUp(
+        address _from,
+        uint256 _value,
+        address _operator,
+        bytes memory _extraData
+    ) internal {
+        uint256 operatorParams = operators[_operator].packedParams;
+        require(
+            _isInitialized(operatorParams),
+            "Initialization period is not over"
+        );
+        require(
+            !_isUndelegating(operatorParams),
+            "Operator undelegated"
+        );
+
+        // Top-up comes from a grant if it's been initiated from TokenGrantStake
+        // contract or if it's been initiated from TokenStakingEscrow by
+        // redelegation.
+        bool isFromGrant = address(tokenGrant.grantStakes(_operator)) == _from ||
+            address(escrow) == _from;
+
+        if (grantStaking.hasGrantDelegated(_operator)) {
+            // Operator has grant delegated. We need to see if the top-up
+            // is performed also from a grant.
+            require(isFromGrant, "Must be from a grant");
+            // If it is from a grant, we need to make sure it's from the same
+            // grant as the original delegation. We do not want to mix unlocking
+            // schedules.
+            uint256 previousGrantId = grantStaking.getGrantForOperator(_operator);
+            (, uint256 grantId) = grantStaking.tryCapturingDelegationData(
+                tokenGrant, address(escrow), _from, _operator, _extraData
+            );
+            require(grantId == previousGrantId, "Not the same grant");
+        } else {
+            // Operator has no grant delegated. We need to see if the top-up
+            // is performed from liquid tokens of the same owner.
+            require(!isFromGrant, "Must not be from a grant");
+            require(operators[_operator].owner == _from, "Not the same owner");
+        }
+
+        topUps.initiate(_value, _operator);
+        emit TopUpInitiated(_operator, _value);
+    }
+
+    /// @notice Commits pending top-up for the provided operator. If the top-up
+    /// did not pass the initialization period, the function fails.
+    /// @param _operator The operator with a pending top-up that is getting
+    /// committed.
+    function commitTopUp(address _operator) public {
+        uint256 newAmount = addStakeAmount(
+            topUps.commit(_operator, initializationPeriod),
+            _operator
+        );
+        emit TopUpCommitted(_operator, newAmount);
+    }
+
+    function addStakeAmount(
+        uint256 _topUp,
+        address _operator
+    ) internal returns (uint256) {
+        uint256 oldParams = operators[_operator].packedParams;
+        uint256 newAmount = oldParams.getAmount().add(_topUp);
+        uint256 newParams = oldParams.setAmount(newAmount);
+        operators[_operator].packedParams = newParams;
+        return newAmount;
     }
 
     /// @notice Cancels stake of tokens within the operator initialization period
@@ -141,8 +276,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function cancelStake(address _operator) public {
         address owner = operators[_operator].owner;
         require(
+            msg.sender == owner ||
             msg.sender == _operator ||
-            msg.sender == owner, "Unauthorized"
+            grantStaking.canUndelegate(_operator, tokenGrant),
+            "Not authorized"
         );
         uint256 operatorParams = operators[_operator].packedParams;
 
@@ -154,7 +291,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 amount = operatorParams.getAmount();
         operators[_operator].packedParams = operatorParams.setAmount(0);
 
-        token.safeTransfer(owner, amount);
+        transferOrDeposit(owner, _operator, amount);
     }
 
     /// @notice Undelegates staked tokens. You will be able to recover your stake by calling
@@ -175,10 +312,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 _undelegationTimestamp
     ) public {
         address owner = operators[_operator].owner;
-        bool sentByOwner = msg.sender == owner;
         require(
+            msg.sender == owner ||
             msg.sender == _operator ||
-            sentByOwner, "Unauthorized"
+            grantStaking.canUndelegate(_operator, tokenGrant),
+            "Not authorized"
         );
         require(
             _undelegationTimestamp >= block.timestamp,
@@ -196,9 +334,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             existingUndelegationTimestamp == 0 ||
             // Undelegating sooner than previously set time OR
             existingUndelegationTimestamp > _undelegationTimestamp ||
-            // Owner may override
-            sentByOwner,
-            "Only the owner may postpone undelegation"
+            // We have already checked above that msg.sender is owner, grantee,
+            // or operator. Only owner and grantee are eligible to postpone the
+            // delegation so it is enough if we exclude operator here.
+            msg.sender != _operator,
+            "Operator may not postpone undelegation"
         );
         uint256 newParams = oldParams.setUndelegationTimestamp(_undelegationTimestamp);
         operators[_operator].packedParams = newParams;
@@ -228,9 +368,16 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
 
-        operators[_operator].packedParams = operatorParams.setAmount(0);
+        // If there is a pending top-up, force-commit it before returning
+        // tokens.
+        uint256 topUp = topUps.forceCommit(_operator);
+        if (topUp > 0) {
+            amount = addStakeAmount(topUp, _operator);
+        }
 
-        token.safeTransfer(owner, amount);
+        operators[_operator].packedParams = operatorParams.setAmount(0);
+        transferOrDeposit(owner, _operator, amount);
+
         emit RecoveredStake(_operator, block.timestamp);
     }
 
@@ -259,7 +406,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
-        require(duration <= maximumLockDuration, "Lock duration too long");
 
         uint256 operatorParams = operators[operator].packedParams;
 
@@ -272,11 +418,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             "Operator undelegating"
         );
 
-        operatorLocks[operator].setLock(
-            msg.sender,
-            uint96(block.timestamp.add(duration))
-        );
-        emit StakeLocked(operator, msg.sender, block.timestamp.add(duration));
+        locks.lockStake(operator, duration);
     }
 
     /// @notice Removes a lock the caller had previously placed on the operator.
@@ -296,8 +438,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             isAuthorizedForOperator(operator, msg.sender),
             "Not authorized"
         );
-        operatorLocks[operator].releaseLock(msg.sender);
-        emit LockReleased(operator, msg.sender);
+        locks.releaseLock(operator);
     }
 
     /// @notice Removes the lock of the specified operator contract
@@ -310,38 +451,14 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address operator,
         address operatorContract
     ) public {
-        LockUtils.LockSet storage locks = operatorLocks[operator];
-        require(
-            locks.contains(operatorContract),
-            "No matching lock present"
-        );
-        bool expired = block.timestamp >= locks.getLockTime(operatorContract);
-        bool disabled = !registry.isApprovedOperatorContract(operatorContract);
-        require(
-            expired || disabled,
-            "Lock still active and valid"
-        );
-        locks.releaseLock(operatorContract);
-        emit ExpiredLockReleased(operator, operatorContract);
+        locks.releaseExpiredLock(operator, operatorContract, address(this));
     }
 
     /// @notice Check whether the operator has any active locks
     /// that haven't expired yet
     /// and whose creators aren't disabled by the panic button.
-    function isStakeLocked(
-        address operator
-    ) public view returns (bool) {
-        LockUtils.Lock[] storage _locks = operatorLocks[operator].locks;
-        LockUtils.Lock memory lock;
-        for (uint i = 0; i < _locks.length; i++) {
-            lock = _locks[i];
-            if (block.timestamp < lock.expiresAt) {
-                if (registry.isApprovedOperatorContract(lock.creator)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+    function isStakeLocked(address operator) public view returns (bool) {
+        return locks.isStakeLocked(operator, address(this));
     }
 
     /// @notice Get the locks placed on the operator.
@@ -353,15 +470,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         public
         view
         returns (address[] memory creators, uint256[] memory expirations) {
-        uint256 lockCount = operatorLocks[operator].locks.length;
-        creators = new address[](lockCount);
-        expirations = new uint256[](lockCount);
-        LockUtils.Lock memory lock;
-        for (uint i = 0; i < lockCount; i++) {
-            lock = operatorLocks[operator].locks[i];
-            creators[i] = lock.creator;
-            expirations[i] = lock.expiresAt;
-        }
+        return locks.getLocks(operator);
     }
 
     /// @notice Slash provided token amount from every member in the misbehaved
@@ -587,9 +696,25 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             return false;
         }
         // Undelegating finished, so check locks
-        LockUtils.LockSet storage locks = operatorLocks[_operator];
-        // `getLockTime` returns 0 if the lock doesn't exist,
-        // thus we don't need to check for its presence separately.
-        return block.timestamp >= locks.getLockTime(_operatorContract);
+        return locks.isStakeReleased(_operator, _operatorContract);
+    }
+
+    function transferOrDeposit(
+        address _owner,
+        address _operator,
+        uint256 _amount
+    ) internal {
+        if (grantStaking.hasGrantDelegated(_operator)) {
+            // For tokens staked from a grant, transfer them to the escrow.
+            uint256 grantId = grantStaking.getGrantForOperator(_operator);
+            TokenSender(address(token)).approveAndCall(
+                address(escrow),
+                _amount,
+                abi.encode(_operator, grantId)
+            );
+        } else {
+            // For liquid tokens staked, transfer them straight to the owner.
+            token.safeTransfer(_owner, _amount);
+        }
     }
 }

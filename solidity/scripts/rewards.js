@@ -75,33 +75,31 @@ module.exports = async function() {
   
     await registerNewGroups(10);
   
+    // terminate groups
+    await keepRandomBeaconOperator.reportUnauthorizedSigning(25, { from: owner })
+    await keepRandomBeaconOperator.reportUnauthorizedSigning(26, { from: owner })
+
     const numberOfGroups = await keepRandomBeaconOperator.numberOfGroups()
     const firstActiveIndex = await keepRandomBeaconOperator.getFirstActiveGroupIndex()
   
-    for (let i = 0; i < firstActiveIndex; i++) {
+    const allGroups = (await keepRandomBeaconOperator.getNumberOfCreatedGroups()).toNumber()
+    for (let i = 0; i < allGroups; i++) {
       const groupPublicKey =  await keepRandomBeaconOperator.getGroupPublicKey(i);
       const isStale = await keepRandomBeaconOperator.isStaleGroup(groupPublicKey);
   
       console.log('group: ', groupPublicKey, 'isStale: ', isStale);
-    }
+  }
   
-    console.log('number of groups:', numberOfGroups.toString());
+    console.log('number of active groups:', numberOfGroups.toString());
     console.log('first active index:', firstActiveIndex.toString());
-  
-    await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 1)
-    await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 3)
-    await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 1)
-    await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 5)
-    await keepRandomBeaconOperator.emitRewardsWithdrawnEvent(accounts[1], 6)  
-  
+
     async function registerNewGroups (numberOfGroups) {
-      const groupReward = web3.utils.toWei('14500', 'Gwei');
+      const groupReward = web3.utils.toWei('145000', 'Gwei');
       for (let i = 0; i < numberOfGroups; i++) {
         console.log('register group', i+1);
         const groupPublicKey = crypto.randomBytes(32);
-        await keepRandomBeaconOperator.registerNewGroup(groupPublicKey)
+        await keepRandomBeaconOperator.registerNewGroup(groupPublicKey, [accounts[1], accounts[2]])
         await keepRandomBeaconOperator.addGroupMemberReward(groupPublicKey, groupReward);
-        await keepRandomBeaconOperator.setGroupMembers(groupPublicKey, [accounts[1], accounts[2]]);
         console.log('created group', await keepRandomBeaconOperator.getGroupPublicKey(i));
       }
     }

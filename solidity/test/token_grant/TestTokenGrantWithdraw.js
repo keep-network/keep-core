@@ -1,6 +1,7 @@
 const { delegateStakeFromGrant } = require('../helpers/delegateStake')
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {initTokenStaking} = require('../helpers/initContracts')
 const {grantTokens} = require('../helpers/grantTokens');
 const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
 
@@ -10,9 +11,6 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
 const KeepToken = contract.fromArtifact('KeepToken');
-const TokenStaking = contract.fromArtifact('TokenStaking');
-const MinimumStakeSchedule = contract.fromArtifact('MinimumStakeSchedule')
-const TokenStakingEscrow = contract.fromArtifact('TokenStakingEscrow');
 const TokenGrant = contract.fromArtifact('TokenGrant');
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
@@ -40,26 +38,16 @@ describe('TokenGrant/Withdraw', function() {
     tokenContract = await KeepToken.new({from: accounts[0]});
     grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
     registryContract = await KeepRegistry.new({from: accounts[0]});
-    stakingEscrow = await TokenStakingEscrow.new(
-      tokenContract.address, 
-      grantContract.address, 
-      {from: accounts[0]}
-    );
-    await TokenStaking.detectNetwork()
-    await TokenStaking.link(
-      'MinimumStakeSchedule', 
-      (await MinimumStakeSchedule.new({from: accounts[0]})).address
-    );
-    stakingContract = await TokenStaking.new(
+    const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
-      stakingEscrow.address, 
       registryContract.address, 
-      initializationPeriod, 
+      initializationPeriod,
       undelegationPeriod,
-      {from: accounts[0]}
-    );
-    await stakingEscrow.transferOwnership(stakingContract.address, {from: accounts[0]});
+      contract.fromArtifact('TokenStakingEscrow'),
+      contract.fromArtifact('TokenStaking')
+    )
+    stakingContract = stakingContracts.tokenStaking
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
 
     grantAmount = (await stakingContract.minimumStake()).muln(10);
