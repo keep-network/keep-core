@@ -3,6 +3,7 @@ pragma solidity ^0.5.17;
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/math/Math.sol";
 
 /// @title Rewards
 /// @dev A contract for distributing KEEP token rewards to keeps.
@@ -366,15 +367,6 @@ contract Rewards {
     /// An interval with fewer keeps will only be allocated
     /// a fraction of the base reward
     /// equaling the fraction of the quota that was met.
-    function _keepCountAdjustment(uint256 interval) internal returns (uint256) {
-        uint256 minimumKeeps = minimumKeepsPerInterval;
-        uint256 keepCount = _keepsInInterval(interval);
-        if (keepCount >= minimumKeeps) {
-            return 100;
-        } else {
-            return keepCount.mul(100).div(minimumKeeps);
-        }
-    }
 
     /// @notice Return the percentage of remaining unallocated rewards
     /// that is to be allocated to the specified `interval`
@@ -398,8 +390,13 @@ contract Rewards {
 
     function _adjustedAllocation(uint256 interval) internal returns (uint256) {
         uint256 __baseAllocation = _baseAllocation(interval);
-        uint256 adjustmentPercentage = _keepCountAdjustment(interval);
-        return __baseAllocation.mul(adjustmentPercentage).div(100);
+        if (__baseAllocation == 0) {
+            return 0;
+        }
+        uint256 keepCount = _keepsInInterval(interval);
+        uint256 minimumKeeps = minimumKeepsPerInterval;
+        uint256 adjustmentCount = Math.max(keepCount, minimumKeeps);
+        return __baseAllocation.div(adjustmentCount).mul(keepCount);
     }
 
     function _rewardPerKeep(uint256 interval) internal returns (uint256) {
@@ -426,10 +423,8 @@ contract Rewards {
         if (interval > allocatedIntervals) {
             _allocateRewards(interval.sub(1));
         }
-        uint256 keepCount = _keepsInInterval(interval);
-        uint256 perKeepAllocation = _rewardPerKeep(interval);
+        uint256 totalAllocation = _adjustedAllocation(interval);
         // Calculate like this so rewards divide equally among keeps
-        uint256 totalAllocation = keepCount.mul(perKeepAllocation);
         unallocatedRewards = unallocatedRewards.sub(totalAllocation);
         intervalAllocations.push(totalAllocation);
     }

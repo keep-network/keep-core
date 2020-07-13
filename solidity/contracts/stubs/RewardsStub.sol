@@ -57,9 +57,6 @@ contract RewardsStub is Rewards {
     function keepsInInterval(uint256 interval) public returns (uint256) {
         return _keepsInInterval(interval);
     }
-    function keepCountAdjustment(uint256 interval) public returns (uint256) {
-        return _keepCountAdjustment(interval);
-    }
     function getIntervalWeight(uint256 interval) public view returns (uint256) {
         return _getIntervalWeight(interval);
     }

@@ -79,7 +79,7 @@ describe('Rewards', () => {
         1000000,
     ]
     const inVacuumAdjustedRewards = [
-        200000,
+        199998,
         500000,
         125000,
         500000,
@@ -330,18 +330,6 @@ describe('Rewards', () => {
             for (let i = 0; i < expectedCounts.length; i++) {
                 let keepCount = await rewards.keepsInInterval.call(i)
                 expect(keepCount.toNumber()).to.equal(expectedCounts[i])
-            }
-        })
-    })
-
-    describe("keepCountAdjustment", async () => {
-        it("returns the adjustment percentage of the interval", async () => {
-            let timestamps = rewardTimestamps
-            let expectedPercentages = rewardIntervalAdjustments
-            await createKeeps(timestamps)
-            for (let i = 0; i < expectedPercentages.length; i++) {
-                let keepCount = await rewards.keepCountAdjustment.call(i)
-                expect(keepCount.toNumber()).to.equal(expectedPercentages[i])
             }
         })
     })
