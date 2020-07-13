@@ -920,4 +920,14 @@ describe("KEEP.js functions", () => {
 
     expect(stub.calledWithExactly("deposit", operatorAddress)).to.be.true
   })
+
+  it("should withdraw ETH for the provided operator", () => {
+    const mockValue = "1000"
+    const stub = sandbox.stub(keep.keepBondingContract, "sendTransaction")
+
+    keep.withdrawUnbondedEthForOperator(mockValue, operatorAddress)
+
+    expect(stub.calledWithExactly("withdraw", mockValue, operatorAddress)).to.be
+      .true
+  })
 })

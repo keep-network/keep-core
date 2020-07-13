@@ -762,4 +762,19 @@ export default class KEEP {
   depositEthForBondingOperator(operatorAddress) {
     return this.keepBondingContract.sendTransaction("deposit", operatorAddress)
   }
+
+  /**
+   * Withdraws amount from operator's value available for bonding.
+   *
+   * @param {string} value Value to withdraw in wei.
+   * @param {string} operatorAddress Address of the operator.
+   * @return {*}
+   */
+  withdrawUnbondedEthForOperator(value, operatorAddress) {
+    return this.keepBondingContract.sendTransaction(
+      "withdraw",
+      value,
+      operatorAddress
+    )
+  }
 }
