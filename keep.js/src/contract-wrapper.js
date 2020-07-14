@@ -55,18 +55,24 @@ export class ContractWrapper {
   }
 
   /**
-   * {@link https://web3js.readthedocs.io/en/v1.2.9/web3-eth-contract.html#id26}
-   * @retun {any} Contract methods.
+   * Contract's methods {@link https://web3js.readthedocs.io/en/v1.2.9/web3-eth-contract.html#id26}
    */
   get methods() {
     return this.instance.methods
+  }
+
+  /**
+   * Contract's events {@link https://web3js.readthedocs.io/en/v1.2.9/web3-eth-contract.html#contract-events}
+   */
+  get events() {
+    return this.instance.events
   }
 }
 
 class ContractFactory {
   /**
    * @typedef {Object} Config
-   * @property {Object} web3 Web3 instance {@link https://web3js.readthedocs.io/en/v1.2.9/index.html}
+   * @property {Web3} web3 Web3 instance {@link https://web3js.readthedocs.io/en/v1.2.9/index.html}
    * @property {number} networkId Network id.
    */
 
