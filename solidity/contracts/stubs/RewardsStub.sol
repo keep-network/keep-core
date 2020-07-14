@@ -51,33 +51,43 @@ contract RewardsStub is Rewards {
     function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         return _findEndpoint(intervalEndpoint);
     }
+
     function getEndpoint(uint256 interval) public returns (uint256) {
         return _getEndpoint(interval);
     }
+
     function keepsInInterval(uint256 interval) public returns (uint256) {
         return _keepsInInterval(interval);
     }
+
     function getIntervalWeight(uint256 interval) public view returns (uint256) {
         return _getIntervalWeight(interval);
     }
+
     function getIntervalCount() public view returns (uint256) {
         return _getIntervalCount();
     }
+
     function baseAllocation(uint256 interval) public view returns (uint256) {
         return _baseAllocation(interval);
     }
+
     function adjustedAllocation(uint256 interval) public returns (uint256) {
         return _adjustedAllocation(interval);
     }
+
     function rewardPerKeep(uint256 interval) public returns (uint256) {
         return _rewardPerKeep(interval);
     }
+
     function allocateRewards(uint256 interval) public {
         _allocateRewards(interval);
     }
+
     function getAllocatedRewards(uint256 interval) public view returns (uint256) {
         return _getAllocatedRewards(interval);
     }
+
     function isAllocated(uint256 interval) public view returns (bool) {
         return _isAllocated(interval);
     }
