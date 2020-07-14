@@ -66,7 +66,7 @@ contract BeaconRewards is Rewards {
 
         // Only pay other members if dividend is nonzero.
         if(dividend > 0) {
-            for (uint16 i = 0; i < memberCount - 1; i++) {
+            for (uint256 i = 0; i < memberCount - 1; i++) {
                 token.safeTransfer(
                     tokenStaking.beneficiaryOf(members[i]),
                     dividend
