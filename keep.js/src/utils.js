@@ -32,3 +32,13 @@ export const lt = (a, b) => {
 export const lte = (a, b) => {
   return web3Utils.toBN(a).lte(web3Utils.toBN(b))
 }
+
+export const lookupArtifactAddress = (artifact, networkId) => {
+  const networkInfo = artifact.networks[networkId]
+  if (!networkInfo) {
+    throw new Error(
+      `No contract ${artifact.contractName} for a given network ID ${networkId}.`
+    )
+  }
+  return networkInfo.address
+}

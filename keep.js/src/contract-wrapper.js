@@ -1,3 +1,5 @@
+import { lookupArtifactAddress } from "./utils.js"
+
 /**
  * A wrapper for Web3.Contract {@link https://web3js.readthedocs.io/en/v1.2.9/web3-eth-contract.html#}
  */
@@ -79,16 +81,6 @@ class ContractFactory {
   static async createContractInstance(artifact, config) {
     const { web3, networkId } = config
 
-    const lookupArtifactAddress = () => {
-      const networkInfo = artifact.networks[networkId]
-      if (!networkInfo) {
-        throw new Error(
-          `No contract ${artifact.contractName} for a given network ID ${networkId}.`
-        )
-      }
-      return networkInfo.address
-    }
-
     const contractDeployedAtBlock = async () => {
       const deployTransactionHash = artifact.networks[networkId].transactionHash
       const transaction = await web3.eth.getTransaction(deployTransactionHash)
@@ -97,7 +89,7 @@ class ContractFactory {
     }
 
     const address = lookupArtifactAddress(artifact)
-    const deployedAtBlock = await contractDeployedAtBlock(web3, artifact)
+    const deployedAtBlock = await contractDeployedAtBlock()
     const instance = new web3.eth.Contract(artifact.abi, address)
     instance.options.from = web3.eth.defaultAccount
 
