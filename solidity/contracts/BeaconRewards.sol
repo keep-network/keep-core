@@ -64,13 +64,14 @@ contract BeaconRewards is Rewards {
         uint256 memberCount = members.length;
         uint256 dividend = _value.div(memberCount);
 
-        require(dividend > 0, "Dividend value must be non-zero");
-
-        for (uint16 i = 0; i < memberCount - 1; i++) {
-            token.safeTransfer(
-                tokenStaking.beneficiaryOf(members[i]),
-                dividend
-            );
+        // Only pay other members if dividend is nonzero.
+        if(dividend > 0) {
+            for (uint16 i = 0; i < memberCount - 1; i++) {
+                token.safeTransfer(
+                    tokenStaking.beneficiaryOf(members[i]),
+                    dividend
+                );
+            }
         }
 
         // Transfer of dividend for the last member. Remainder might be equal to
