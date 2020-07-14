@@ -274,8 +274,8 @@ contract Rewards {
     /// @notice Return the number of keeps created before `targetTime`,
     /// with specified upper and lower bounds.
     /// @dev Binary search assumes the following invariants:
-    ///   lb >= 0, lbTime < targetTime
-    ///   ub < keepCount, ubTime >= targetTime
+    ///   lower bound >= 0, lbTime < targetTime
+    ///   upper bound < keepCount, ubTime >= targetTime
     /// @param _lb The lower bound of the search (inclusive)
     /// @param _lbTime The creation time of keep number `lb`
     /// @param _ub The upper bound of the search (inclusive)
@@ -294,8 +294,8 @@ contract Rewards {
         uint256 ubTime = _ubTime;
         uint256 len = ub.sub(lb);
         while (len > 1) {
-            // ub >= lb + 2
-            // mid > lb
+            // upper bound >= lower bound + 2
+            // mid > lower bound
             uint256 mid = lb.add(len.div(2));
             uint256 midTime = _getCreationTime(_getKeepAtIndex(mid));
 
