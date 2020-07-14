@@ -16,7 +16,14 @@ import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import ContractFactory from "./contract-wrapper.js"
 import { TokenStakingConstants } from "./constants.js"
-import { add, gt, lte, isSameEthAddress } from "./utils.js"
+import {
+  add,
+  gt,
+  lte,
+  isSameEthAddress,
+  lookupArtifactAddress,
+} from "./utils.js"
+/** @typedef {import("./contract-wrapper").ContractWrapper} ContractWrapper */
 
 export const contracts = new Map([
   [KeepToken, "keepTokenContract"],
@@ -579,6 +586,17 @@ export default class KEEP {
       amount,
       extraData
     )
+  }
+
+  get guaranteedMinimumStakingPolicyAddress() {
+    return lookupArtifactAddress(
+      GuaranteedMinimumStakingPolicy,
+      this.config.networkId
+    )
+  }
+
+  get permissiveStakingPolicyAddress() {
+    return lookupArtifactAddress(PermissiveStakingPolicy, this.config.networkId)
   }
 
   /**
