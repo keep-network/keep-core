@@ -39,10 +39,7 @@ export const contracts = new Map([
   [KeepBonding, "keepBondingContract"],
   [TBTCSystem, "tbtcSystemContract"],
   [TBTCToken, "tbtcTokenContract"],
-  [Deposit, "depositContract"],
   [BondedECDSAKeep, "bondedECDSAKeepContract"],
-  [GuaranteedMinimumStakingPolicy, "guaranteedMinimumStakingPolicyContract"],
-  [PermissiveStakingPolicy, "permissiveStakingPolicyContract"],
   [ManagedGrantFactory, "managedGrantFactoryContract"],
 ])
 
@@ -66,25 +63,73 @@ export default class KEEP {
       )
     }
 
+    /**
+     * @type TokenStakingConstants
+     */
     this.tokenStakingConstants = await TokenStakingConstants.initialize(
       this.tokenStakingContract
     )
 
+    /**
+     * @type ContractWrapper
+     */
     this.keepTokenContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.tokenStakingContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.tokenGrantContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.keepRandomBeaconOperatorContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.keepRandomBeaconOperatorStatisticsContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.keepRegirstyContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.bondedECDSAKeepFactoryContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.keepBondingContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.tbtcSystemContract
-    this.guaranteedMinimumStakingPolicyContract
-    // this.managedGrantContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.managedGrantFactoryContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.tbtcTokenContract
-    this.depositContract
+
+    /**
+     * @type ContractWrapper
+     */
     this.bondedECDSAKeepContract
+
     this.tbtcSortitionPoolAddress = ""
   }
 
