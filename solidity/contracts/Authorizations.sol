@@ -68,14 +68,6 @@ contract Authorizations is AuthorityVerifier {
         _;
     }
 
-    modifier onlyOperatorAuthorizer(address _operator) {
-        require(
-            authorizerOf(_operator) == msg.sender,
-            "Not operator authorizer"
-        );
-        _;
-    }
-
     constructor(KeepRegistry _registry) public {
         registry = _registry;
     }
@@ -93,11 +85,14 @@ contract Authorizations is AuthorityVerifier {
     /// @param _operatorContract address of operator contract.
     function authorizeOperatorContract(address _operator, address _operatorContract)
         public
-        onlyOperatorAuthorizer(_operator)
         onlyApprovedOperatorContract(_operatorContract) {
         require(
+            authorizerOf(_operator) == msg.sender,
+            "Not operator authorizer"
+        );
+        require(
             getAuthoritySource(_operatorContract) == _operatorContract,
-            "Contract uses delegated authority"
+            "Delegated authority used"
         );
         authorizations[_operatorContract][_operator] = true;
     }

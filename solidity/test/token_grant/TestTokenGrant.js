@@ -27,7 +27,6 @@ describe('TokenGrant', function() {
       grantContract.address,
       registry.address,
       time.duration.days(1),
-      time.duration.days(30),
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     );

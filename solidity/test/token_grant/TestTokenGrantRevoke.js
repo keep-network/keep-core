@@ -34,7 +34,7 @@ describe('TokenGrant/Revoke', function() {
   const grantCliff = time.duration.minutes(1);
 
   const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
+  let undelegationPeriod;
 
   let minimumStake;
 
@@ -47,12 +47,12 @@ describe('TokenGrant/Revoke', function() {
       grantContract.address,
       registryContract.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
     stakingContract = stakingContracts.tokenStaking
     stakingEscrowContract = stakingContracts.tokenStakingEscrow
+    undelegationPeriod = await stakingContract.undelegationPeriod()
     minimumStake = await stakingContract.minimumStake();
     grantAmount = minimumStake.muln(10);
 

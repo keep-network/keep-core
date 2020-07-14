@@ -37,7 +37,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using BytesLib for bytes;
     using SafeMath for uint256;
     using PercentUtils for uint256;
-    using LockUtils for LockUtils.LockSet;
     using SafeERC20 for ERC20Burnable;
     using GrantStaking for GrantStaking.Storage;
     using Locks for Locks.Storage;
@@ -53,7 +52,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCommitted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
-    event RecoveredStake(address operator, uint256 recoveredAt);
+    event RecoveredStake(address operator);
     event TokensSlashed(address indexed operator, uint256 amount);
     event TokensSeized(address indexed operator, uint256 amount);
     event StakeLocked(address indexed operator, address lockCreator, uint256 until);
@@ -61,8 +60,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
     uint256 public minimumStakeScheduleStart;
-    uint256 public initializationPeriod;
-    uint256 public undelegationPeriod;
+    uint256 public initializationPeriod; // varies between mainnet and testnet
+    uint256 public constant undelegationPeriod = 5184000; // ~60 days
 
     ERC20Burnable internal token;
     TokenGrant internal tokenGrant;
@@ -79,23 +78,18 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @param _registry Keep contract registry contract.
     /// @param _initializationPeriod To avoid certain attacks on work selection, recently created
     /// operators must wait for a specific period of time before being eligible for work selection.
-    /// @param _undelegationPeriod The staking contract guarantees that an undelegated operator’s
-    /// stakes will stay locked for a period of time after undelegation, and thus available as
-    /// collateral for any work the operator is engaged in.
     constructor(
         ERC20Burnable _token,
         TokenGrant _tokenGrant,
         TokenStakingEscrow _escrow,
         KeepRegistry _registry,
-        uint256 _initializationPeriod,
-        uint256 _undelegationPeriod
+        uint256 _initializationPeriod
     ) Authorizations(_registry) public {
         token = _token;
         tokenGrant = _tokenGrant;
         escrow = _escrow;
         registry = _registry;
         initializationPeriod = _initializationPeriod;
-        undelegationPeriod = _undelegationPeriod;
         minimumStakeScheduleStart = block.timestamp;
     }
 
@@ -133,8 +127,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _token,
         bytes memory _extraData
     ) public {
-        require(ERC20Burnable(_token) == token, "Unrecognized token contract");
-        require(_value >= minimumStake(), "Value must be greater than the minimum stake");
+        require(ERC20Burnable(_token) == token, "Unrecognized token");
+        require(_value >= minimumStake(), "Less than the minimum stake");
         require(_extraData.length >= 60, "Corrupted delegation data");
 
         // Transfer tokens to this contract.
@@ -210,11 +204,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
             _isInitialized(operatorParams),
-            "Initialization period is not over"
+            "Stake is initializing"
         );
         require(
             !_isUndelegating(operatorParams),
-            "Operator undelegated"
+            "Stake undelegated"
         );
 
         // Top-up comes from a grant if it's been initiated from TokenGrantStake
@@ -264,8 +258,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     ) internal returns (uint256) {
         uint256 oldParams = operators[_operator].packedParams;
         uint256 newAmount = oldParams.getAmount().add(_topUp);
-        uint256 newParams = oldParams.setAmount(newAmount);
-        operators[_operator].packedParams = newParams;
+        operators[_operator].packedParams = oldParams.setAmount(newAmount);
         return newAmount;
     }
 
@@ -285,7 +278,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         require(
             !_isInitialized(operatorParams),
-            "Initialization period is over"
+            "Initialized stake"
         );
 
         uint256 amount = operatorParams.getAmount();
@@ -311,24 +304,19 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         uint256 _undelegationTimestamp
     ) public {
-        address owner = operators[_operator].owner;
         require(
-            msg.sender == owner ||
             msg.sender == _operator ||
+            msg.sender == operators[_operator].owner ||
             grantStaking.canUndelegate(_operator, tokenGrant),
             "Not authorized"
         );
-        require(
-            _undelegationTimestamp >= block.timestamp,
-            "Undelegation timestamp in the past"
-        );
         uint256 oldParams = operators[_operator].packedParams;
-        uint256 existingCreationTimestamp = oldParams.getCreationTimestamp();
-        uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
-            _undelegationTimestamp > existingCreationTimestamp.add(initializationPeriod),
-            "Cannot undelegate in initialization period"
+            _undelegationTimestamp >= block.timestamp &&
+            _undelegationTimestamp > oldParams.getCreationTimestamp().add(initializationPeriod),
+            "Invalid timestamp"
         );
+        uint256 existingUndelegationTimestamp = oldParams.getUndelegationTimestamp();
         require(
             // Undelegation not in progress OR
             existingUndelegationTimestamp == 0 ||
@@ -340,8 +328,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             msg.sender != _operator,
             "Operator may not postpone undelegation"
         );
-        uint256 newParams = oldParams.setUndelegationTimestamp(_undelegationTimestamp);
-        operators[_operator].packedParams = newParams;
+        operators[_operator].packedParams = oldParams.setUndelegationTimestamp(
+            _undelegationTimestamp
+        );
         emit Undelegated(_operator, _undelegationTimestamp);
     }
 
@@ -353,19 +342,17 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 operatorParams = operators[_operator].packedParams;
         require(
             operatorParams.getUndelegationTimestamp() != 0,
-            "Can not recover without first undelegating"
+            "Not undelegated"
         );
         require(
             _isUndelegatingFinished(operatorParams),
-            "Can not recover before undelegation period is over"
+            "Still undelegating"
         );
-
         require(
             !isStakeLocked(_operator),
-            "Can not recover locked stake"
+            "Locked stake"
         );
 
-        address owner = operators[_operator].owner;
         uint256 amount = operatorParams.getAmount();
 
         // If there is a pending top-up, force-commit it before returning
@@ -376,9 +363,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         }
 
         operators[_operator].packedParams = operatorParams.setAmount(0);
-        transferOrDeposit(owner, _operator, amount);
+        transferOrDeposit(operators[_operator].owner, _operator, amount);
 
-        emit RecoveredStake(_operator, block.timestamp);
+        emit RecoveredStake(_operator);
     }
 
     /// @notice Gets stake delegation info for the given operator.
@@ -411,11 +398,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         require(
             _isInitialized(operatorParams),
-            "Stake must be active"
+            "Inactive stake"
         );
         require(
             !_isUndelegating(operatorParams),
-            "Operator undelegating"
+            "Undelegating stake"
         );
 
         locks.lockStake(operator, duration);
@@ -481,7 +468,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         public
         onlyApprovedOperatorContract(msg.sender) {
 
-        uint256 totalAmountToBurn = 0;
+        uint256 totalAmountToBurn;
         address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
@@ -490,7 +477,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 _isInitialized(operatorParams),
-                "Stake must be active"
+                "Inactive stake"
             );
 
             require(
@@ -502,15 +489,13 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
             if (currentAmount < amountToSlash) {
                 totalAmountToBurn = totalAmountToBurn.add(currentAmount);
-
-                uint256 newAmount = 0;
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(0);
                 emit TokensSlashed(operator, currentAmount);
             } else {
                 totalAmountToBurn = totalAmountToBurn.add(amountToSlash);
-
-                uint256 newAmount = currentAmount.sub(amountToSlash);
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(
+                    currentAmount.sub(amountToSlash)
+                );
                 emit TokensSlashed(operator, amountToSlash);
             }
         }
@@ -531,7 +516,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address tattletale,
         address[] memory misbehavedOperators
     ) public onlyApprovedOperatorContract(msg.sender) {
-        uint256 totalAmountToBurn = 0;
+        uint256 totalAmountToBurn;
         address authoritySource = getAuthoritySource(msg.sender);
         for (uint i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
@@ -540,7 +525,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             uint256 operatorParams = operators[operator].packedParams;
             require(
                 _isInitialized(operatorParams),
-                "Stake must be active"
+                "Inactive stake"
             );
 
             require(
@@ -552,15 +537,13 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
             if (currentAmount < amountToSeize) {
                 totalAmountToBurn = totalAmountToBurn.add(currentAmount);
-
-                uint256 newAmount = 0;
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(0);
                 emit TokensSeized(operator, currentAmount);
             } else {
                 totalAmountToBurn = totalAmountToBurn.add(amountToSeize);
-
-                uint256 newAmount = currentAmount.sub(amountToSeize);
-                operators[operator].packedParams = operatorParams.setAmount(newAmount);
+                operators[operator].packedParams = operatorParams.setAmount(
+                    currentAmount.sub(amountToSeize)
+                );
                 emit TokensSeized(operator, amountToSeize);
             }
         }
@@ -586,18 +569,19 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
-
         uint256 operatorParams = operators[_operator].packedParams;
-
-        bool isActive = _isInitialized(operatorParams);
-        // `undelegatedAt` may be set to a time in the future,
-        // to schedule undelegation in advance.
-        // In this case the operator is still eligible
-        // until the timestamp `undelegatedAt`.
-        bool isUndelegating = _isUndelegating(operatorParams);
-
-        if (isAuthorized && isActive && !isUndelegating) {
+        // To be eligible for work selection, the operator must:
+        // - have the operator contract authorized
+        // - have the stake initialized
+        // - must not be undelegating; keep in mind the `undelegatedAt` may be
+        // set to a time in the future, to schedule undelegation in advance.
+        // In this case the operator is still eligible until the timestamp
+        // `undelegatedAt`.
+        if (
+            isAuthorizedForOperator(_operator, _operatorContract) &&
+            _isInitialized(operatorParams) &&
+            !_isUndelegating(operatorParams)
+        ) {
             balance = operatorParams.getAmount();
         }
     }
@@ -624,19 +608,16 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         address _operatorContract
     ) public view returns (uint256 balance) {
-        bool isAuthorized = isAuthorizedForOperator(_operator, _operatorContract);
-
         uint256 operatorParams = operators[_operator].packedParams;
-
-        bool isActive = _isInitialized(operatorParams);
-
-        bool stakeReleased = _isStakeReleased(
-            _operator,
-            operatorParams,
-            _operatorContract
-        );
-
-        if (isAuthorized && isActive && !stakeReleased) {
+        if (
+            isAuthorizedForOperator(_operator, _operatorContract) &&
+            _isInitialized(operatorParams) &&
+            !_isStakeReleased(
+                _operator,
+                operatorParams,
+                _operatorContract
+            )
+        ) {
             balance = operatorParams.getAmount();
         }
     }
@@ -663,8 +644,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @notice Is the operator with the given params initialized
     function _isInitialized(uint256 _operatorParams)
         internal view returns (bool) {
-        uint256 createdAt = _operatorParams.getCreationTimestamp();
-        return block.timestamp > createdAt.add(initializationPeriod);
+        return block.timestamp > _operatorParams.getCreationTimestamp().add(initializationPeriod);
     }
 
     /// @notice Is the operator with the given params undelegating
@@ -678,8 +658,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function _isUndelegatingFinished(uint256 _operatorParams)
         internal view returns (bool) {
         uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
-        uint256 finishedAt = undelegatedAt.add(undelegationPeriod);
-        return (undelegatedAt != 0) && (block.timestamp > finishedAt);
+        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt.add(undelegationPeriod));
     }
 
     /// @notice Get whether the operator's stake is released
@@ -692,11 +671,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         uint256 _operatorParams,
         address _operatorContract
     ) internal view returns (bool) {
-        if (!_isUndelegatingFinished(_operatorParams)) {
-            return false;
-        }
-        // Undelegating finished, so check locks
-        return locks.isStakeReleased(_operator, _operatorContract);
+        return _isUndelegatingFinished(_operatorParams) &&
+            locks.isStakeReleased(_operator, _operatorContract);
     }
 
     function transferOrDeposit(
@@ -706,11 +682,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     ) internal {
         if (grantStaking.hasGrantDelegated(_operator)) {
             // For tokens staked from a grant, transfer them to the escrow.
-            uint256 grantId = grantStaking.getGrantForOperator(_operator);
             TokenSender(address(token)).approveAndCall(
                 address(escrow),
                 _amount,
-                abi.encode(_operator, grantId)
+                abi.encode(_operator, grantStaking.getGrantForOperator(_operator))
             );
         } else {
             // For liquid tokens staked, transfer them straight to the owner.

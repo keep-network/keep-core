@@ -35,11 +35,12 @@ describe('TokenStaking/StakingGrant', () => {
     authorizer = accounts[9],
     thirdParty = accounts[10]
 
-    const initializationPeriod = time.duration.seconds(10),
-      undelegationPeriod = time.duration.seconds(10),
+    const initializationPeriod = time.duration.hours(6),
       grantUnlockingDuration = time.duration.years(2),
       grantCliff = time.duration.seconds(0),
       grantRevocable = true
+
+    let undelegationPeriod
 
     let token, tokenGrant, tokenStakingEscrow, tokenStaking
 
@@ -67,7 +68,6 @@ describe('TokenStaking/StakingGrant', () => {
         tokenGrant.address,
         registry.address,
         initializationPeriod,
-        undelegationPeriod,
         contract.fromArtifact('TokenStakingEscrow'),
         contract.fromArtifact('TokenStaking')
       )
@@ -77,6 +77,8 @@ describe('TokenStaking/StakingGrant', () => {
       await tokenGrant.authorizeStakingContract(tokenStaking.address, {
         from: grantManager,
       })
+
+      undelegationPeriod = await tokenStaking.undelegationPeriod()
       
       const minimumStake = await tokenStaking.minimumStake();
       grantedAmount = minimumStake.muln(40);

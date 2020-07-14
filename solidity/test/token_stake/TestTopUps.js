@@ -38,12 +38,13 @@ describe('TokenStaking/TopUps', () => {
     thirdParty = accounts[11]
     operatorContract = accounts[12]
 
-  const initializationPeriod = time.duration.seconds(10),
-    undelegationPeriod = time.duration.seconds(10),
+  const initializationPeriod = time.duration.days(10),
     grantStart = time.duration.seconds(0),
     grantUnlockingDuration = time.duration.years(100),
     grantCliff = time.duration.seconds(0),
     grantRevocable = true
+
+  let undelegationPeriod;
 
   let token, tokenGrant, tokenStakingEscrow, tokenStaking
 
@@ -78,7 +79,6 @@ describe('TokenStaking/TopUps', () => {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
@@ -87,6 +87,8 @@ describe('TokenStaking/TopUps', () => {
     await tokenGrant.authorizeStakingContract(tokenStaking.address, {
       from: grantManager,
     })
+
+    undelegationPeriod = await tokenStaking.undelegationPeriod()
 
     //
     // Create three grants:
@@ -215,7 +217,7 @@ describe('TokenStaking/TopUps', () => {
     it("can not be done during initialization period", async () => {
       await expectRevert(
         initiateTopUp(),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -225,7 +227,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       ) 
     })
 
@@ -237,7 +239,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -300,7 +302,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp()
       await expectRevert(
         tokenStaking.commitTopUp(operatorOne),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -358,7 +360,7 @@ describe('TokenStaking/TopUps', () => {
     it("can not be done during initialization period", async () => {
       await expectRevert(
         initiateTopUp(),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -368,7 +370,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -380,7 +382,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -439,7 +441,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp()
       await expectRevert(
         tokenStaking.commitTopUp(operatorTwo),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -496,7 +498,7 @@ describe('TokenStaking/TopUps', () => {
     it("can not be done during initialization period", async () => {
       await expectRevert(
         initiateTopUp(),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 
@@ -506,7 +508,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -518,7 +520,7 @@ describe('TokenStaking/TopUps', () => {
       time.increase(1) // we need the block timestamp to increase
       await expectRevert(
         initiateTopUp(),
-        "Operator undelegated"
+        "Stake undelegated"
       )
     })
 
@@ -577,7 +579,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp()
       await expectRevert(
         tokenStaking.commitTopUp(operatorThree),
-        "Initialization period is not over"
+        "Stake is initializing"
       )
     })
 

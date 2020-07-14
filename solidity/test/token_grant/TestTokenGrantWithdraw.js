@@ -32,7 +32,6 @@ describe('TokenGrant/Withdraw', function() {
   const grantCliff = time.duration.seconds(1);
     
   const initializationPeriod = time.duration.seconds(10);
-  const undelegationPeriod = time.duration.seconds(30);
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
@@ -43,7 +42,6 @@ describe('TokenGrant/Withdraw', function() {
       grantContract.address,
       registryContract.address, 
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
