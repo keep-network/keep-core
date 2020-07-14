@@ -1,6 +1,12 @@
-name: Node.js CI
+name: Keep.js CI
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 defaults:
     run:
