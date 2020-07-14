@@ -58,9 +58,6 @@ describe('Rewards', () => {
     const keepsInRewardIntervals = [
         3, 4, 1, 2, 0, 1, 2, 0,
     ]
-    const rewardIntervalAdjustments = [
-        100, 100, 50, 100, 0, 50, 100, 0,
-    ]
 
     const intervalWeights = [
         // percentage of unallocated rewards, allocated : remaining
