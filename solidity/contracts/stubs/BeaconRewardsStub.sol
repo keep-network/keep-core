@@ -53,4 +53,8 @@ contract BeaconRewardsStub is BeaconRewards {
     function getUnallocatedRewards() public view returns (uint256) {
         return unallocatedRewards;
     }
+
+    function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
+        return _findEndpoint(intervalEndpoint);
+    }
 }

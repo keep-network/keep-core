@@ -231,7 +231,7 @@ contract Rewards {
     /// @notice Return whether the given interval is finished.
     /// @param interval The interval.
     /// @return Whether the interval is finished.
-    function isFinished(uint256 interval) internal view returns (bool) {
+    function isFinished(uint256 interval) public view returns (bool) {
         return block.timestamp >= endOf(interval);
     }
 
@@ -241,14 +241,14 @@ contract Rewards {
     /// @return True if rewards have been paid out for the keep,
     /// or its termination has been reported.
     /// False otherwise.
-    function rewardClaimed(bytes32 _keep) internal view returns (bool) {
+    function rewardClaimed(bytes32 _keep) public view returns (bool) {
         return claimed[_keep];
     }
 
     /// @notice Return the number of keeps created before `intervalEndpoint`
     /// @dev Wraps the binary search of `_find`
     /// with a number of checks for edge cases.
-    function _findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
+    function _findEndpoint(uint256 intervalEndpoint) internal view returns (uint256) {
         require(
             intervalEndpoint <= block.timestamp,
             "interval hasn't ended yet"

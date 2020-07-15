@@ -139,7 +139,7 @@ describe('BeaconRewards', () => {
     })
 
     it("should register 2 keeps in the first interval", async () => {
-        let count = await rewards._findEndpoint(await rewards.endOf(0))
+        let count = await rewards.findEndpoint(await rewards.endOf(0))
         expect(count).to.eq.BN(2)
     })
 
