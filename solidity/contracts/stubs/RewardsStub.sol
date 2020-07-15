@@ -36,6 +36,10 @@ contract RewardsStub is Rewards {
         return eligibleForReward(bytes32(i));
     }
 
+    function eligibleButTerminatedWithUint(uint256 i) public view returns (bool) {
+        return eligibleButTerminated(bytes32(i));
+    }
+
     function getTotalRewards() public view returns (uint256) {
         return totalRewards;
     }

@@ -183,6 +183,29 @@ describe('Rewards', () => {
         })
     })
 
+    describe("eligibleButTerminated", async () => {
+        it("returns false for happily closed keeps", async () => {
+            await createKeeps([1000])
+            await rewards.setCloseTime(1000)
+            let eligible = await rewards.eligibleButTerminatedWithUint(0)
+            expect(eligible).to.equal(false)
+        })
+
+        it("returns true for terminated keeps", async () => {
+            await createKeeps([1000])
+            await rewards.terminate(0)
+            let eligible = await rewards.eligibleButTerminatedWithUint(0)
+            expect(eligible).to.equal(true)
+        })
+
+        it("returns false for active keeps", async () => {
+            await createKeeps([1000])
+            await rewards.setCloseTime(999)
+            let eligible = await rewards.eligibleButTerminatedWithUint(0)
+            expect(eligible).to.equal(false)
+        })
+    })
+
     describe("intervalOf", async () => {
         it("returns the correct interval", async () => {
             await createKeeps([])
