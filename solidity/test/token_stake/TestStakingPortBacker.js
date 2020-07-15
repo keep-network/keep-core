@@ -212,37 +212,37 @@ describe("TokenStaking/StakingPortBacker", () => {
     await restoreSnapshot()
   })
 
-  describe("addAllowedOperator", async () => {
+  describe("allowOperator", async () => {
     it("fails when not called by the owner", async () => {
       await expectRevert(
-        stakingPortBacker.addAllowedOperator(operatorOne, {from: deployer}),
+        stakingPortBacker.allowOperator(operatorOne, {from: deployer}),
         "Ownable: caller is not the owner"
       )
       await expectRevert(
-        stakingPortBacker.addAllowedOperator(operatorOne, {from: operatorOne}),
+        stakingPortBacker.allowOperator(operatorOne, {from: operatorOne}),
         "Ownable: caller is not the owner"
       )
       await expectRevert(
-        stakingPortBacker.addAllowedOperator(operatorOne, {from: tokenOwner}),
+        stakingPortBacker.allowOperator(operatorOne, {from: tokenOwner}),
         "Ownable: caller is not the owner"
       )
     })
 
     it("can be called by the owner", async () => {
-      await stakingPortBacker.addAllowedOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
       // ok, no revert
     })
   })
 
   describe("copyStake", async () => {
     beforeEach(async() => {
-      await stakingPortBacker.addAllowedOperator(operatorOne, {from: owner})
-      await stakingPortBacker.addAllowedOperator(operatorTwo, {from: owner})
-      await stakingPortBacker.addAllowedOperator(operatorThree, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorTwo, {from: owner})
+      await stakingPortBacker.allowOperator(operatorThree, {from: owner})
     })
 
     it("fails when operator is not staked on the old contract", async () => {
-      await stakingPortBacker.addAllowedOperator(operatorFour, {from: owner})
+      await stakingPortBacker.allowOperator(operatorFour, {from: owner})
       await expectRevert(
         stakingPortBacker.copyStake(operatorFour),
         "No stake on the old staking contract"
@@ -325,9 +325,9 @@ describe("TokenStaking/StakingPortBacker", () => {
 
   describe("repaying backed balances", async () => {
     beforeEach(async () => {
-      await stakingPortBacker.addAllowedOperator(operatorOne, {from: owner})
-      await stakingPortBacker.addAllowedOperator(operatorTwo, {from: owner})
-      await stakingPortBacker.addAllowedOperator(operatorThree, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorTwo, {from: owner})
+      await stakingPortBacker.allowOperator(operatorThree, {from: owner})
 
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
       await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
@@ -465,9 +465,9 @@ describe("TokenStaking/StakingPortBacker", () => {
 
   describe("undelegate", async () => {
     beforeEach(async () => {
-      await stakingPortBacker.addAllowedOperator(operatorOne, {from: owner})
-      await stakingPortBacker.addAllowedOperator(operatorTwo, {from: owner})
-      await stakingPortBacker.addAllowedOperator(operatorThree, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorTwo, {from: owner})
+      await stakingPortBacker.allowOperator(operatorThree, {from: owner})
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
       await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
       await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
@@ -507,7 +507,7 @@ describe("TokenStaking/StakingPortBacker", () => {
 
   describe("forceUndelegate", async () => {
     beforeEach(async () => {
-      await stakingPortBacker.addAllowedOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
     })
 
@@ -537,7 +537,7 @@ describe("TokenStaking/StakingPortBacker", () => {
 
   describe("recoverStake", async () => {
     beforeEach(async () => {
-      await stakingPortBacker.addAllowedOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
     })
 

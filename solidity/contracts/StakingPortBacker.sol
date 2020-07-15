@@ -107,7 +107,7 @@ contract StakingPortBacker is Ownable {
     /// @param operator The operator from the staking relationship on the old
     /// staking contract that will be allowed to use the token supply provided
     /// by this contract.
-    function addAllowedOperator(address operator) public onlyOwner {
+    function allowOperator(address operator) public onlyOwner {
         allowedOperators[operator] = true;
     }
 
