@@ -362,16 +362,10 @@ contract Rewards {
         return (_getEndpoint(interval).sub(_getPreviousEndpoint(interval)));
     }
 
-    /// @notice Calculate the reward allocation adjustment percentage
-    /// when an interval has an insufficient number of keeps.
-    /// @dev An interval with at least `minimumKeepsPerInterval` keeps
-    /// will have the full reward allocated to it.
-    /// An interval with fewer keeps will only be allocated
-    /// a fraction of the base reward
-    /// equaling the fraction of the quota that was met.
-
     /// @notice Return the percentage of remaining unallocated rewards
-    /// that is to be allocated to the specified `interval`
+    /// that is to be allocated to the specified interval.
+    /// @param interval The interval.
+    /// @return The percentage weight of the interval.
     function _getIntervalWeight(uint256 interval) internal view returns (uint256) {
         if (interval < _getIntervalCount()) {
             return intervalWeights[interval];
@@ -380,16 +374,45 @@ contract Rewards {
         }
     }
 
+    /// @notice Get the number of intervals with explicitly specified weights.
+    /// All subsequent intervals will have an implicit weight of 100.
+    /// @return The number of explicitly specified intervals.
     function _getIntervalCount() internal view returns (uint256) {
         return intervalWeights.length;
     }
 
+    /// @notice Calculate the reward allocation for an interval
+    /// without adjusting for the number of keeps in the interval.
+    /// @param interval The next interval to be allocated.
+    /// Results for other intervals will not be accurate.
+    /// @return The base reward allocation for the interval.
     function _baseAllocation(uint256 interval) internal view returns (uint256) {
         uint256 _unallocatedRewards = unallocatedRewards;
         uint256 weightPercentage = _getIntervalWeight(interval);
         return _unallocatedRewards.mul(weightPercentage).div(100);
     }
 
+    /// @notice Calculate the reward allocation for an interval
+    /// after adjusting for the number of keeps in the interval.
+    /// @dev An interval with at least `minimumKeepsPerInterval` keeps
+    /// will have the full reward allocated to it.
+    /// An interval with fewer keeps will only be allocated
+    /// a fraction of the base reward
+    /// equaling the fraction of the quota that was met.
+    /// The reward allocated for each keep in the interval
+    /// is constant regardless of the number of keeps in the interval
+    /// until the quota is met,
+    /// and further increases in the number of keeps
+    /// will lead to the same allocation being shared among more of them.
+    /// Each keep in an interval is allocated the same reward.
+    /// If the number of keeps in an interval meets the quota,
+    /// but the base allocation isn't divisible by the number of keeps,
+    /// the remainder will remain unallocated.
+    /// @param interval The next interval to be allocated.
+    /// Allocations for an already allocated interval,
+    /// or when all prior intervals haven't been allocated yet,
+    /// will produce incorrect results.
+    /// @return The amount of tokens to allocate as rewards for the interval.
     function _adjustedAllocation(uint256 interval) internal returns (uint256) {
         uint256 __baseAllocation = _baseAllocation(interval);
         if (__baseAllocation == 0) {
@@ -412,6 +435,16 @@ contract Rewards {
         return __adjustedAllocation.div(keepCount);
     }
 
+    /// @notice Allocate rewards for unallocated intervals
+    /// up to and including the given interval.
+    /// @dev The given interval must be finished and unallocated.
+    /// To allocate rewards correctly,
+    /// any earlier intervals that are still unallocated
+    /// will be allocated before the given interval.
+    /// With reasonable interval lengths this should not pose a problem,
+    /// and if allocating a later interval results in an out-of-gas issue,
+    /// forcing the allocation of an earlier interval should fix it.
+    /// @param interval The interval to allocate.
     function _allocateRewards(uint256 interval)
         mustBeFinished(interval)
         internal
@@ -433,6 +466,14 @@ contract Rewards {
 
     /// @notice Get the total amount of tokens
     /// allocated for all keeps in the specified interval.
+    /// @dev This function returns correct results for any allocated interval.
+    /// Dividing the allocated rewards by the number of keeps in the interval
+    /// will give the correct reward for a keep in the interval.
+    /// However, if a keep in the interval is terminated
+    /// its reward will be returned to the pool of unallocated tokens.
+    /// This will not be reflected in the return value of this function.
+    /// @param interval A previously allocated interval.
+    /// @return The total number of tokens allocated for keeps in the interval.
     function _getAllocatedRewards(uint256 interval) internal view returns (uint256) {
         require(
             interval < intervalAllocations.length,
@@ -442,6 +483,8 @@ contract Rewards {
     }
 
     /// @notice Return whether the specified interval has been allocated.
+    /// @param interval The interval.
+    /// @return Whether the interval has been allocated yet.
     function _isAllocated(uint256 interval) internal view returns (bool) {
         uint256 allocatedIntervals = intervalAllocations.length;
         return (interval < allocatedIntervals);
