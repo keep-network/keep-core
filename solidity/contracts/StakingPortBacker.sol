@@ -72,8 +72,8 @@ contract StakingPortBacker is Ownable {
 
     IERC20 public keepToken;
     TokenGrant internal tokenGrant;
-    StakeDelegatable public oldTokenStaking;
-    TokenStaking public newTokenStaking;
+    StakeDelegatable public oldStakingContract;
+    TokenStaking public newStakingContract;
 
     struct CopiedStake {
         address owner;
@@ -88,13 +88,13 @@ contract StakingPortBacker is Ownable {
     constructor(
         IERC20 _keepToken,
         TokenGrant _tokenGrant,
-        StakeDelegatable _oldTokenStaking,
-        TokenStaking _newTokenStaking
+        StakeDelegatable _oldStakingContract,
+        TokenStaking _newStakingContract
     ) public {
         keepToken = _keepToken;
         tokenGrant = _tokenGrant;
-        oldTokenStaking = _oldTokenStaking;
-        newTokenStaking = _newTokenStaking;
+        oldStakingContract = _oldStakingContract;
+        newStakingContract = _newStakingContract;
     }
 
     /// @notice Lets the owner of the contract to register operator from staking
@@ -121,7 +121,7 @@ contract StakingPortBacker is Ownable {
     /// @param operator The operator from the staking relationship on the old
     /// staking contract that should be copied to the new staking contract.
     function copyStake(address operator) public {
-        uint256 oldStakeBalance = oldTokenStaking.balanceOf(operator);
+        uint256 oldStakeBalance = oldStakingContract.balanceOf(operator);
         require(oldStakeBalance > 0, "No stake on the old staking contract");
         require(copiedStakes[operator].amount == 0, "Stake already copied");
         require(allowedOperators[operator], "Operator not allowed");
@@ -142,7 +142,7 @@ contract StakingPortBacker is Ownable {
                 address grantee
             ) = getGrantDelegation(operator);
             require(
-                stakingContract == address(oldTokenStaking),
+                stakingContract == address(oldStakingContract),
                 "Unexpected grant staking contract"
             );
             require(
@@ -160,7 +160,7 @@ contract StakingPortBacker is Ownable {
         );
 
         TokenSender(address(keepToken)).approveAndCall(
-            address(newTokenStaking),
+            address(newStakingContract),
             oldStakeBalance,
             delegationData
         );
@@ -200,7 +200,7 @@ contract StakingPortBacker is Ownable {
         keepToken.safeTransferFrom(from, address(this), value);
         copiedStakes[operator].paidBack = true;
 
-        newTokenStaking.transferStakeOwnership(operator, stake.owner);
+        newStakingContract.transferStakeOwnership(operator, stake.owner);
 
         emit StakePaidBack(stake.owner, operator);
     }
@@ -214,7 +214,7 @@ contract StakingPortBacker is Ownable {
             stake.owner == msg.sender || operator == msg.sender,
             "Not authorized"
         );
-        newTokenStaking.undelegate(operator);
+        newStakingContract.undelegate(operator);
     }
 
     /// @notice Force-undelegates stake on the new staking contract from the
@@ -227,14 +227,14 @@ contract StakingPortBacker is Ownable {
             stake.timestamp.add(maxAllowedBackingDuration) < block.timestamp,
             "Maximum allowed backing duration not exceeded yet"
         );
-        newTokenStaking.undelegate(operator);
+        newStakingContract.undelegate(operator);
     }
 
     /// @notice Recovers stake on the new staking contract from the provided
     /// operator.
     /// @param operator The operator address.
     function recoverStake(address operator) public {
-        newTokenStaking.recoverStake(operator);
+        newStakingContract.recoverStake(operator);
         delete copiedStakes[operator];
     }
 
@@ -250,9 +250,9 @@ contract StakingPortBacker is Ownable {
         address owner,
         bytes memory delegationData
     ) {
-        owner = oldTokenStaking.ownerOf(operator);
-        address beneficiary = oldTokenStaking.beneficiaryOf(operator);
-        address authorizer = oldTokenStaking.authorizerOf(operator);
+        owner = oldStakingContract.ownerOf(operator);
+        address beneficiary = oldStakingContract.beneficiaryOf(operator);
+        address authorizer = oldStakingContract.authorizerOf(operator);
         delegationData = abi.encodePacked(beneficiary, operator, authorizer);
     }
 
