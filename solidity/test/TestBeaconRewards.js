@@ -14,7 +14,7 @@ const assert = chai.assert
 describe('BeaconRewards', () => {
 
     let token, stakingContract, operatorContract, serviceContract, rewards,
-        groupSize,
+        groupSize, minimumStake,
         group1, group2, group3,
         owner = accounts[0],
         requestor = accounts[1],
@@ -61,7 +61,7 @@ describe('BeaconRewards', () => {
         )
 
         groupSize = await operatorContract.groupSize()
-        let minimumStake = await stakingContract.minimumStake()
+        minimumStake = await stakingContract.minimumStake()
 
         await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake)
         await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake)
