@@ -479,6 +479,13 @@ contract Rewards {
         return (interval < allocatedIntervals);
     }
 
+    /// @notice Process the rewards for the given keep,
+    /// allocating finished intervals as necessary,
+    /// and then either paying out the rewards to the keep's members
+    /// or returning them to the unallocated pool,
+    /// depending on the keep's eligibility.
+    /// @param eligible Whether the keep is eligible for rewards or not.
+    /// @param keepIdentifier The specified keep.
     function _processKeep(
         bool eligible,
         bytes32 keepIdentifier
