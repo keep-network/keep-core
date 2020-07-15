@@ -40,36 +40,12 @@ contract RewardsStub is Rewards {
         return eligibleButTerminated(bytes32(i));
     }
 
-    function getTotalRewards() public view returns (uint256) {
-        return totalRewards;
-    }
-
-    function getUnallocatedRewards() public view returns (uint256) {
-        return unallocatedRewards;
-    }
-
-    function getPaidOutRewards() public view returns (uint256) {
-        return paidOutRewards;
-    }
-
     function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
         return _findEndpoint(intervalEndpoint);
     }
 
     function getEndpoint(uint256 interval) public returns (uint256) {
         return _getEndpoint(interval);
-    }
-
-    function keepsInInterval(uint256 interval) public returns (uint256) {
-        return _keepsInInterval(interval);
-    }
-
-    function getIntervalWeight(uint256 interval) public view returns (uint256) {
-        return _getIntervalWeight(interval);
-    }
-
-    function getIntervalCount() public view returns (uint256) {
-        return _getIntervalCount();
     }
 
     function baseAllocation(uint256 interval) public view returns (uint256) {
@@ -85,18 +61,10 @@ contract RewardsStub is Rewards {
         if (__adjustedAllocation == 0) {
             return 0;
         }
-        uint256 keepCount = _keepsInInterval(interval);
+        uint256 keepCount = keepsInInterval(interval);
         // Adjusted allocation would be zero if keep count was zero
         assert(keepCount > 0);
         return __adjustedAllocation.div(keepCount);
-    }
-
-    function getAllocatedRewards(uint256 interval) public view returns (uint256) {
-        return _getAllocatedRewards(interval);
-    }
-
-    function isAllocated(uint256 interval) public view returns (bool) {
-        return _isAllocated(interval);
     }
 
     function terminate(uint256 i) public {

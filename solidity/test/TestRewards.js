@@ -139,11 +139,11 @@ describe('Rewards', () => {
     describe("receiveApproval", async () => {
         it("funds the rewards correctly", async () => {
             await createKeeps([])
-            let preRewards = await rewards.getTotalRewards()
+            let preRewards = await rewards.totalRewards()
             expect(preRewards.toNumber()).to.equal(totalRewards)
 
             await fund(totalRewards)
-            let postRewards = await rewards.getTotalRewards()
+            let postRewards = await rewards.totalRewards()
             expect(postRewards.toNumber()).to.equal(totalRewards * 2)
         })
 
@@ -151,11 +151,11 @@ describe('Rewards', () => {
             await createKeeps([])
             await token.transfer(rewards.address, totalRewards, {from: funder})
 
-            let preRewards = await rewards.getTotalRewards()
+            let preRewards = await rewards.totalRewards()
             expect(preRewards.toNumber()).to.equal(totalRewards)
 
             await fund(0)
-            let postRewards = await rewards.getTotalRewards()
+            let postRewards = await rewards.totalRewards()
             expect(postRewards.toNumber()).to.equal(totalRewards * 2)
         })
     })
@@ -531,9 +531,9 @@ describe('Rewards', () => {
             await rewards.receiveReward(0, { from: aliceBeneficiary }) // allocate rewards
 
             await rewards.terminate(1)
-            let preUnallocated = await rewards.getUnallocatedRewards()
+            let preUnallocated = await rewards.unallocatedRewards()
             await rewards.reportTermination(1)
-            let postUnallocated = await rewards.getUnallocatedRewards()
+            let postUnallocated = await rewards.unallocatedRewards()
             expect(postUnallocated.toNumber()).to.equal(
                 preUnallocated.toNumber() + 66666
             )

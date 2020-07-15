@@ -66,21 +66,21 @@ contract Rewards {
     IERC20 public token;
 
     // Total number of keep tokens to distribute.
-    uint256 totalRewards;
+    uint256 public totalRewards;
     // Rewards that haven't been allocated to finished intervals
-    uint256 unallocatedRewards;
+    uint256 public unallocatedRewards;
     // Rewards that have been paid out;
     // `token.balanceOf(address(this))` should always equal
     // `totalRewards.sub(paidOutRewards)`
-    uint256 paidOutRewards;
+    uint256 public paidOutRewards;
 
     // Length of one interval in seconds (timestamp diff).
-    uint256 termLength;
+    uint256 public termLength;
     // Timestamp of first interval beginning.
-    uint256 firstIntervalStart;
+    uint256 public firstIntervalStart;
 
     // Minimum number of keep submissions for each interval.
-    uint256 minimumKeepsPerInterval;
+    uint256 public minimumKeepsPerInterval;
 
     // Array representing the percentage of unallocated rewards
     // available for each reward interval.
@@ -376,7 +376,7 @@ contract Rewards {
     /// @notice Return the number of keeps created in the specified interval.
     /// @param interval The interval.
     /// @return Number of keeps created in the interval.
-    function _keepsInInterval(uint256 interval) internal returns (uint256) {
+    function keepsInInterval(uint256 interval) public returns (uint256) {
         return (_getEndpoint(interval).sub(_getPreviousEndpoint(interval)));
     }
 
@@ -384,8 +384,8 @@ contract Rewards {
     /// that is to be allocated to the specified interval.
     /// @param interval The interval.
     /// @return The percentage weight of the interval.
-    function _getIntervalWeight(uint256 interval) internal view returns (uint256) {
-        if (interval < _getIntervalCount()) {
+    function getIntervalWeight(uint256 interval) public view returns (uint256) {
+        if (interval < getIntervalCount()) {
             return intervalWeights[interval];
         } else {
             return 100;
@@ -395,7 +395,7 @@ contract Rewards {
     /// @notice Get the number of intervals with explicitly specified weights.
     /// All subsequent intervals will have an implicit weight of 100.
     /// @return The number of explicitly specified intervals.
-    function _getIntervalCount() internal view returns (uint256) {
+    function getIntervalCount() public view returns (uint256) {
         return intervalWeights.length;
     }
 
@@ -406,7 +406,7 @@ contract Rewards {
     /// @return The base reward allocation for the interval.
     function _baseAllocation(uint256 interval) internal view returns (uint256) {
         uint256 _unallocatedRewards = unallocatedRewards;
-        uint256 weightPercentage = _getIntervalWeight(interval);
+        uint256 weightPercentage = getIntervalWeight(interval);
         return _unallocatedRewards.mul(weightPercentage).div(100);
     }
 
@@ -436,7 +436,7 @@ contract Rewards {
         if (__baseAllocation == 0) {
             return 0;
         }
-        uint256 keepCount = _keepsInInterval(interval);
+        uint256 keepCount = keepsInInterval(interval);
         uint256 minimumKeeps = minimumKeepsPerInterval;
         uint256 adjustmentCount = Math.max(keepCount, minimumKeeps);
         return __baseAllocation.div(adjustmentCount).mul(keepCount);
@@ -481,7 +481,7 @@ contract Rewards {
     /// This will not be reflected in the return value of this function.
     /// @param interval A previously allocated interval.
     /// @return The total number of tokens allocated for keeps in the interval.
-    function _getAllocatedRewards(uint256 interval) internal view returns (uint256) {
+    function getAllocatedRewards(uint256 interval) public view returns (uint256) {
         require(
             interval < intervalAllocations.length,
             "Interval not allocated yet"
@@ -492,7 +492,7 @@ contract Rewards {
     /// @notice Return whether the specified interval has been allocated.
     /// @param interval The interval.
     /// @return Whether the interval has been allocated yet.
-    function _isAllocated(uint256 interval) internal view returns (bool) {
+    function isAllocated(uint256 interval) public view returns (bool) {
         uint256 allocatedIntervals = intervalAllocations.length;
         return (interval < allocatedIntervals);
     }
@@ -510,12 +510,12 @@ contract Rewards {
     ) internal {
         uint256 creationTime = _getCreationTime(keepIdentifier);
         uint256 interval = intervalOf(creationTime);
-        if (!_isAllocated(interval)) {
+        if (!isAllocated(interval)) {
             allocateRewards(interval);
         }
         uint256 allocation = intervalAllocations[interval];
-        uint256 __keepsInInterval = _keepsInInterval(interval);
-        uint256 perKeepReward = allocation.div(__keepsInInterval);
+        uint256 _keepsInInterval = keepsInInterval(interval);
+        uint256 perKeepReward = allocation.div(_keepsInInterval);
         uint256 processedKeeps = intervalKeepsProcessed[interval];
         claimed[keepIdentifier] = true;
         intervalKeepsProcessed[interval] = processedKeeps.add(1);
