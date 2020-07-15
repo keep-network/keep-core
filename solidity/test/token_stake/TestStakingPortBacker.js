@@ -558,13 +558,6 @@ describe("TokenStaking/StakingPortBacker", () => {
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
     })
 
-    it("fails when not called by the owner", async () => {
-      await expectRevert(
-        stakingPortBacker.recoverStake(operatorOne, {from: operatorOne}),
-        "Ownable: caller is not the owner"
-      )
-    }) 
-
     it("allows to recover previously undelegated stake", async () => {
       await time.increase(time.duration.days(91))
       await stakingPortBacker.undelegate(operatorOne, {from: tokenOwner})
