@@ -179,7 +179,7 @@ contract Rewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is eligible, false otherwise
     function eligibleForReward(bytes32 _keep) public view returns (bool){
-        return _recognizedByFactory(_keep) && _isClosed(_keep) && !_rewardClaimed(_keep);
+        return _recognizedByFactory(_keep) && _isClosed(_keep) && !rewardClaimed(_keep);
     }
 
     /// @notice Checks if a keep is terminated
@@ -187,7 +187,7 @@ contract Rewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is terminated, false otherwise
     function eligibleButTerminated(bytes32 _keep) public view returns (bool) {
-        return _recognizedByFactory(_keep) && _isTerminated(_keep) && !_rewardClaimed(_keep);
+        return _recognizedByFactory(_keep) && _isTerminated(_keep) && !rewardClaimed(_keep);
     }
 
     /// @notice Return the interval number
@@ -233,6 +233,16 @@ contract Rewards {
     /// @return Whether the interval is finished.
     function isFinished(uint256 interval) internal view returns (bool) {
         return block.timestamp >= endOf(interval);
+    }
+
+    /// @notice Return whether the given keep has already claimed rewards
+    /// or had its rewards reallocated due to termination.
+    /// @param _keep The identifier of the keep.
+    /// @return True if rewards have been paid out for the keep,
+    /// or its termination has been reported.
+    /// False otherwise.
+    function rewardClaimed(bytes32 _keep) internal view returns (bool) {
+        return claimed[_keep];
     }
 
     /// @notice Return the number of keeps created before `intervalEndpoint`
@@ -519,10 +529,6 @@ contract Rewards {
         }
     }
 
-    function _rewardClaimed(bytes32 _keep) internal view returns (bool) {
-        return claimed[_keep];
-    }
-
     function _getKeepCount() internal view returns (uint256);
     function _getKeepAtIndex(uint256 index) internal view returns (bytes32);
     function _getCreationTime(bytes32 _keep) internal view returns (uint256);
@@ -533,7 +539,7 @@ contract Rewards {
 
     modifier rewardsNotClaimed(bytes32 _keep) {
         require(
-            !_rewardClaimed(_keep),
+            !rewardClaimed(_keep),
             "Rewards already claimed");
         _;
     }
