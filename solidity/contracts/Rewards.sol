@@ -529,12 +529,46 @@ contract Rewards {
         }
     }
 
+    /// @notice Get the total number of keeps ever created by the factory,
+    /// including closed and terminated keeps.
+    /// @return The number of keeps.
     function _getKeepCount() internal view returns (uint256);
+
+    /// @notice Get the identifier of the keep at the given index,
+    /// when all keeps created by the factory are ordered by creation time.
+    /// @param index The index of the queried keep.
+    /// @return The `bytes32` identifier of the keep at the given index
+    /// for any index lower than `_getKeepCount()`.
+    /// Revert if the given index is outside the range of created keeps.
     function _getKeepAtIndex(uint256 index) internal view returns (bytes32);
+
+    /// @notice Get the creation time of the given keep.
+    /// @param _keep The identifier of the keep.
+    /// @return The creation timestamp of the keep.
+    /// Revert if the identifier is invalid.
     function _getCreationTime(bytes32 _keep) internal view returns (uint256);
+
+    /// @notice Is the given keep closed.
+    /// @param _keep The identifier of the keep.
+    /// @return True if the keep is closed, false otherwise.
+    /// If the identifier is invalid, may return false or an error.
     function _isClosed(bytes32 _keep) internal view returns (bool);
+
+    /// @notice Is the given keep terminated.
+    /// @param _keep The identifier of the keep.
+    /// @return True if the keep is terminated, false otherwise.
+    /// If the identifier is invalid, may return false or an error.
     function _isTerminated(bytes32 _keep) internal view returns (bool);
+
+    /// @notice Does the given `bytes32` identifier match a valid keep.
+    /// @param _keep A possible keep identifier.
+    /// @return True if the identifier matches a keep created by the factory.
+    /// For any other identifier, must return false and not an error.
     function _recognizedByFactory(bytes32 _keep) internal view returns (bool);
+
+    /// @notice Pay the given amount of tokens to members of the keep.
+    /// @param _keep The keep whose members to reward.
+    /// @param amount The total amount of tokens to distribute to the members.
     function _distributeReward(bytes32 _keep, uint256 amount) internal;
 
     modifier rewardsNotClaimed(bytes32 _keep) {
