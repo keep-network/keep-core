@@ -77,7 +77,14 @@ contract RewardsStub is Rewards {
     }
 
     function rewardPerKeep(uint256 interval) public returns (uint256) {
-        return _rewardPerKeep(interval);
+        uint256 __adjustedAllocation = _adjustedAllocation(interval);
+        if (__adjustedAllocation == 0) {
+            return 0;
+        }
+        uint256 keepCount = _keepsInInterval(interval);
+        // Adjusted allocation would be zero if keep count was zero
+        assert(keepCount > 0);
+        return __adjustedAllocation.div(keepCount);
     }
 
     function allocateRewards(uint256 interval) public {

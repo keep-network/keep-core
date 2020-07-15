@@ -424,17 +424,6 @@ contract Rewards {
         return __baseAllocation.div(adjustmentCount).mul(keepCount);
     }
 
-    function _rewardPerKeep(uint256 interval) internal returns (uint256) {
-        uint256 __adjustedAllocation = _adjustedAllocation(interval);
-        if (__adjustedAllocation == 0) {
-            return 0;
-        }
-        uint256 keepCount = _keepsInInterval(interval);
-        // Adjusted allocation would be zero if keep count was zero
-        assert(keepCount > 0);
-        return __adjustedAllocation.div(keepCount);
-    }
-
     /// @notice Allocate rewards for unallocated intervals
     /// up to and including the given interval.
     /// @dev The given interval must be finished and unallocated.
