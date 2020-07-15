@@ -563,7 +563,7 @@ contract Rewards {
     modifier factoryMustRecognize(bytes32 _keep) {
         require(
             _recognizedByFactory(_keep),
-            "Keep address not recognized by factory");
+            "Keep not recognized by factory");
         _;
     }
 }

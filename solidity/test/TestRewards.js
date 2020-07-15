@@ -506,7 +506,7 @@ describe('Rewards', () => {
             await createKeeps(rewardTimestamps)
             await expectRevert(
                 rewards.receiveReward(rewardTimestamps.length),
-                "Keep address not recognized by factory"
+                "Keep not recognized by factory"
             )
         })
 
@@ -571,7 +571,7 @@ describe('Rewards', () => {
             await createKeeps(rewardTimestamps)
             await expectRevert(
                 rewards.reportTermination(rewardTimestamps.length),
-                "Keep address not recognized by factory"
+                "Keep not recognized by factory"
             )
         })
 
