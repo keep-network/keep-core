@@ -210,7 +210,10 @@ contract StakingPortBacker is Ownable {
     /// @param operator The operator address.
     function undelegate(address operator) public {
         CopiedStake memory stake = copiedStakes[operator];
-        require(stake.owner == msg.sender, "Not authorized");
+        require(
+            stake.owner == msg.sender || operator == msg.sender,
+            "Not authorized"
+        );
         newTokenStaking.undelegate(operator);
     }
 

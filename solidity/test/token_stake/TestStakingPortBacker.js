@@ -492,7 +492,7 @@ describe("TokenStaking/StakingPortBacker", () => {
       await time.increase(initializationPeriod.addn(1))
     })
 
-    it("fails when not called by the relationship owner", async () => {
+    it("fails when not called by the relationship owner or operator", async () => {
       await expectRevert(
         stakingPortBacker.undelegate(operatorOne, {from: owner}),
         "Not authorized"
@@ -512,6 +512,13 @@ describe("TokenStaking/StakingPortBacker", () => {
       await stakingPortBacker.undelegate(operatorTwo, {from: grantee})
       await stakingPortBacker.undelegate(operatorThree, {from: managedGrantee})
       // ok, no revert
+    })
+
+    it("can be called by the operator", async () => {
+      await stakingPortBacker.undelegate(operatorOne, {from: operatorOne})
+      await stakingPortBacker.undelegate(operatorTwo, {from: operatorTwo})
+      await stakingPortBacker.undelegate(operatorThree, {from: operatorThree})
+      // ok, no revert  
     })
 
     it("undelegates stake from the operator", async () => {
