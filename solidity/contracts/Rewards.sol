@@ -179,10 +179,7 @@ contract Rewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is eligible, false otherwise
     function eligibleForReward(bytes32 _keep) public view returns (bool){
-        bool _claimed = _rewardClaimed(_keep);
-        bool closed = _isClosed(_keep);
-        bool recognized = _recognizedByFactory(_keep);
-        return !_claimed && closed && recognized;
+        return _recognizedByFactory(_keep) && _isClosed(_keep) && !_rewardClaimed(_keep);
     }
 
     /// @notice Checks if a keep is terminated
@@ -190,10 +187,7 @@ contract Rewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is terminated, false otherwise
     function eligibleButTerminated(bytes32 _keep) public view returns (bool) {
-        bool _claimed = _rewardClaimed(_keep);
-        bool terminated = _isTerminated(_keep);
-        bool recognized = _recognizedByFactory(_keep);
-        return !_claimed && terminated && recognized;
+        return _recognizedByFactory(_keep) && _isTerminated(_keep) && !_rewardClaimed(_keep);
     }
 
     /// @notice Return the interval number

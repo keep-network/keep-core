@@ -181,6 +181,12 @@ describe('Rewards', () => {
             let eligible = await rewards.eligibleForReward(0)
             expect(eligible).to.equal(false)
         })
+
+        it("returns false for unrecognized keeps", async () => {
+            await createKeeps([1000])
+            let eligible = await rewards.eligibleForReward(1)
+            expect(eligible).to.equal(false)
+        })
     })
 
     describe("eligibleButTerminated", async () => {
@@ -202,6 +208,12 @@ describe('Rewards', () => {
             await createKeeps([1000])
             await rewards.setCloseTime(999)
             let eligible = await rewards.eligibleButTerminatedWithUint(0)
+            expect(eligible).to.equal(false)
+        })
+
+        it("returns false for unrecognized keeps", async () => {
+            await createKeeps([1000])
+            let eligible = await rewards.eligibleButTerminatedWithUint(1)
             expect(eligible).to.equal(false)
         })
     })
