@@ -344,6 +344,10 @@ contract Rewards {
         return endpoint;
     }
 
+    /// @notice Get the endpoint of the previous interval.
+    /// @dev Like _getEndpoint, gracefully handles the beginning of interval 0.
+    /// @param interval The interval.
+    /// @return The number of keeps created by the end of the preceding interval.
     function _getPreviousEndpoint(uint256 interval) internal returns (uint256) {
         if (interval == 0) {
             return 0;
@@ -352,6 +356,9 @@ contract Rewards {
         }
     }
 
+    /// @notice Return the number of keeps created in the specified interval.
+    /// @param interval The interval.
+    /// @return Number of keeps created in the interval.
     function _keepsInInterval(uint256 interval) internal returns (uint256) {
         return (_getEndpoint(interval).sub(_getPreviousEndpoint(interval)));
     }
