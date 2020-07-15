@@ -249,6 +249,23 @@ describe("TokenStaking/StakingPortBacker", () => {
       )
     })
 
+    it("fails when the operator is not on the allowed operators list", async () => {
+      await delegateStake(
+        token, 
+        oldTokenStaking, 
+        tokenOwner,
+        operatorFour,
+        beneficiaryOne,
+        authorizerOne,
+        delegatedAmount
+      )
+
+      await expectRevert(
+        stakingPortBacker.copyStake(operatorFour),
+        "Operator not allowed"
+      )
+    })
+
     it("copies liquid tokens stake to the new staking contract", async () => {
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
       

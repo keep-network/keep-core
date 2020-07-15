@@ -124,7 +124,7 @@ contract StakingPortBacker is Ownable {
         uint256 oldStakeBalance = oldTokenStaking.balanceOf(operator);
         require(oldStakeBalance > 0, "No stake on the old staking contract");
         require(copiedStakes[operator].amount == 0, "Stake already copied");
-        require(allowedOperators[operator], "Not allowed operator");
+        require(allowedOperators[operator], "Operator not allowed");
 
         // Get the delegation data from the old TokenStaking contract.
         (address owner, bytes memory delegationData) = getDelegation(operator);
