@@ -138,7 +138,7 @@ contract Rewards {
         token.safeTransferFrom(_from, address(this), _value);
 
         uint256 currentBalance = token.balanceOf(address(this));
-        uint256 beforeBalance = _unpaidRewards();
+        uint256 beforeBalance = totalRewards.sub(paidOutRewards);
         require(
             currentBalance >= beforeBalance,
             "Reward contract has lost tokens"
@@ -510,10 +510,6 @@ contract Rewards {
             // Return the reward to the unallocated pool
             unallocatedRewards = unallocatedRewards.add(perKeepReward);
         }
-    }
-
-    function _unpaidRewards() internal view returns (uint256) {
-        return totalRewards.sub(paidOutRewards);
     }
 
     function _rewardClaimed(bytes32 _keep) internal view returns (bool) {
