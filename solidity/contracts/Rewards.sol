@@ -228,6 +228,13 @@ contract Rewards {
         return startOf(interval.add(1));
     }
 
+    /// @notice Return whether the given interval is finished.
+    /// @param interval The interval.
+    /// @return Whether the interval is finished.
+    function isFinished(uint256 interval) internal view returns (bool) {
+        return block.timestamp >= endOf(interval);
+    }
+
     /// @notice Return the number of keeps created before `intervalEndpoint`
     /// @dev Wraps the binary search of `_find`
     /// with a number of checks for edge cases.
@@ -516,10 +523,6 @@ contract Rewards {
         return claimed[_keep];
     }
 
-    function _isFinished(uint256 interval) internal view returns (bool) {
-        return block.timestamp >= endOf(interval);
-    }
-
     function _getKeepCount() internal view returns (uint256);
     function _getKeepAtIndex(uint256 index) internal view returns (bytes32);
     function _getCreationTime(bytes32 _keep) internal view returns (uint256);
@@ -537,7 +540,7 @@ contract Rewards {
 
     modifier mustBeFinished(uint256 interval) {
         require(
-            _isFinished(interval),
+            isFinished(interval),
             "Interval hasn't ended yet");
         _;
     }
