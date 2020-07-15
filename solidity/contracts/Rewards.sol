@@ -434,9 +434,9 @@ contract Rewards {
     /// and if allocating a later interval results in an out-of-gas issue,
     /// forcing the allocation of an earlier interval should fix it.
     /// @param interval The interval to allocate.
-    function _allocateRewards(uint256 interval)
+    function allocateRewards(uint256 interval)
         mustBeFinished(interval)
-        internal
+        public
     {
         uint256 allocatedIntervals = intervalAllocations.length;
         require(
@@ -445,7 +445,7 @@ contract Rewards {
         );
         // Allocate previous intervals first
         if (interval > allocatedIntervals) {
-            _allocateRewards(interval.sub(1));
+            allocateRewards(interval.sub(1));
         }
         uint256 totalAllocation = _adjustedAllocation(interval);
         // Calculate like this so rewards divide equally among keeps
@@ -486,7 +486,7 @@ contract Rewards {
         uint256 creationTime = _getCreationTime(keepIdentifier);
         uint256 interval = intervalOf(creationTime);
         if (!_isAllocated(interval)) {
-            _allocateRewards(interval);
+            allocateRewards(interval);
         }
         uint256 allocation = intervalAllocations[interval];
         uint256 __keepsInInterval = _keepsInInterval(interval);

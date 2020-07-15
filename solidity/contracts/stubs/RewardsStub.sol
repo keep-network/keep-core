@@ -87,10 +87,6 @@ contract RewardsStub is Rewards {
         return __adjustedAllocation.div(keepCount);
     }
 
-    function allocateRewards(uint256 interval) public {
-        _allocateRewards(interval);
-    }
-
     function getAllocatedRewards(uint256 interval) public view returns (uint256) {
         return _getAllocatedRewards(interval);
     }
