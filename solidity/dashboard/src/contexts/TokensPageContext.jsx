@@ -158,12 +158,12 @@ const TokenPageContextProvider = (props) => {
     (grantId) => {
       if (!grantId) return 0
 
-      return state.delegations
+      return [...state.delegations, ...state.undelegations]
         .filter((delegation) => delegation.grantId === grantId)
         .map((grantDelegation) => grantDelegation.amount)
         .reduce(add, 0)
     },
-    [state.delegations]
+    [state.delegations, state.undelegations]
   )
 
   return (
