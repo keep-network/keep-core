@@ -110,6 +110,20 @@ describe('TokenStakingEscrow', () => {
       )
     })
 
+    it('reverts when it is not KEEP token calling', async () => {
+      const data = web3.eth.abi.encodeParameters(
+        ['address', 'uint256'], [operator, grantId]
+      )
+
+      await expectRevert(
+        escrow.receiveApproval(
+          tokenStaking, grantedAmount, 
+          token.address, data, {from: thirdParty}
+        ),
+        "KEEP token is not the sender"
+      )
+    })
+
     it('reverts for corrupted extraData', async () => {
       const corruptedData = web3.eth.abi.encodeParameters(
         ['address'], [operator]
