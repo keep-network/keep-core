@@ -78,6 +78,7 @@ const fetchSlashedTokens = async (web3Context) => {
       punishmentData = { amount, type: "SEIZED", event }
     }
 
+    if (!punishmentData.hasOwnProperty("amount")) continue
     if (lte(punishmentData.amount, 0)) continue
 
     punishmentData.date = moment.unix(
