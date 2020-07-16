@@ -4,6 +4,7 @@ import {
 } from "../constants/constants"
 import { contractService } from "./contracts.service"
 import { isSameEthAddress } from "../utils/general.utils"
+import { add, gt } from "../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
 import {
   getGuaranteedMinimumStakingPolicyContractAddress,
@@ -12,6 +13,11 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
 import BigNumber from "bignumber.js"
+import {
+  fetchEscrowDepositsByGrantId,
+  fetchWithdrawableAmountForDeposit,
+  fetchDepositWithdrawnAmount,
+} from "./token-staking-escrow.service"
 
 const fetchGrants = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -53,6 +59,26 @@ const getGrantDetails = async (
   isManagedGrant = false
 ) => {
   const { yourAddress } = web3Context
+  const escrowDepositsEvents = await fetchEscrowDepositsByGrantId(grantId)
+  const escrowOperatorsToWithdraw = []
+  let escrowWithdrawableAmount = 0
+  let escrowWithdrawTotalAmount = 0
+
+  for (const event of escrowDepositsEvents) {
+    const {
+      returnValues: { operator },
+    } = event
+    const withdrawable = await fetchWithdrawableAmountForDeposit(operator)
+    const withdraw = await fetchDepositWithdrawnAmount(operator)
+
+    escrowWithdrawTotalAmount = add(escrowWithdrawTotalAmount, withdraw)
+
+    if (gt(withdrawable, 0)) {
+      escrowOperatorsToWithdraw.push(operator)
+      escrowWithdrawableAmount = add(escrowWithdrawableAmount, withdrawable)
+    }
+  }
+
   const grantDetails = await contractService.makeCall(
     web3Context,
     TOKEN_GRANT_CONTRACT_NAME,
@@ -88,7 +114,8 @@ const getGrantDetails = async (
   } catch (error) {
     readyToRelease = "0"
   }
-  const released = grantDetails.withdrawn
+  readyToRelease = add(readyToRelease, escrowWithdrawableAmount)
+  const released = add(grantDetails.withdrawn, escrowWithdrawTotalAmount)
   const availableToStake = await contractService.makeCall(
     web3Context,
     TOKEN_GRANT_CONTRACT_NAME,
@@ -102,6 +129,7 @@ const getGrantDetails = async (
     released,
     readyToRelease,
     availableToStake,
+    escrowOperatorsToWithdraw,
     ...unlockingSchedule,
     ...grantDetails,
   }

@@ -118,8 +118,10 @@ async function getTokenStakingEscrowContract(web3) {
   )
 }
 
+export let contracts = {}
+
 export async function getContracts(web3) {
-  const contracts = await Promise.all([
+  const web3Contracts = await Promise.all([
     getKeepToken(web3),
     getTokenGrant(web3),
     getTokenStaking(web3),
@@ -134,20 +136,22 @@ export async function getContracts(web3) {
     getTokenStakingEscrowContract(web3),
   ])
 
-  return {
-    token: contracts[0],
-    grantContract: contracts[1],
-    stakingContract: contracts[2],
-    keepRandomBeaconOperatorContract: contracts[3],
-    registryContract: contracts[4],
-    keepRandomBeaconOperatorStatistics: contracts[5],
-    managedGrantFactoryContract: contracts[6],
-    bondedEcdsaKeepFactoryContract: contracts[7],
-    keepBondingContract: contracts[8],
-    tbtcTokenContract: contracts[9],
-    tbtcSystemContract: contracts[10],
-    tokenStakingEscrow: contracts[11],
+  contracts = {
+    token: web3Contracts[0],
+    grantContract: web3Contracts[1],
+    stakingContract: web3Contracts[2],
+    keepRandomBeaconOperatorContract: web3Contracts[3],
+    registryContract: web3Contracts[4],
+    keepRandomBeaconOperatorStatistics: web3Contracts[5],
+    managedGrantFactoryContract: web3Contracts[6],
+    bondedEcdsaKeepFactoryContract: web3Contracts[7],
+    keepBondingContract: web3Contracts[8],
+    tbtcTokenContract: web3Contracts[9],
+    tbtcSystemContract: web3Contracts[10],
+    tokenStakingEscrow: web3Contracts[11],
   }
+
+  return contracts
 }
 
 async function getContract(web3, contract, contractName) {
