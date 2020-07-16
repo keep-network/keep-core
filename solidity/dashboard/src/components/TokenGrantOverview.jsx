@@ -78,12 +78,28 @@ export const TokenGrantUnlockingdDetails = ({
   selectedGrant,
   hideReleaseTokensBtn = false,
 }) => {
-  const { yourAddress, grantContract } = useContext(Web3Context)
+  const { yourAddress, grantContract, tokenStakingEscrow } = useContext(
+    Web3Context
+  )
   const showMessage = useShowMessage()
 
   const releaseTokens = async (onTransactionHashCallback) => {
     try {
-      const { isManagedGrant, managedGrantContractInstance } = selectedGrant
+      const {
+        isManagedGrant,
+        managedGrantContractInstance,
+        escrowOperatorsToWithdraw,
+      } = selectedGrant
+
+      const escrowMethodName = isManagedGrant
+        ? "withdrawToManagedGrantee"
+        : "withdraw"
+      for (const operator of escrowOperatorsToWithdraw) {
+        await tokenStakingEscrow.methods[escrowMethodName](operator)
+          .send({ from: yourAddress })
+          .on("transactionHash", onTransactionHashCallback)
+      }
+
       const contractMethod = isManagedGrant
         ? managedGrantContractInstance.methods.withdraw()
         : grantContract.methods.withdraw(selectedGrant.id)
