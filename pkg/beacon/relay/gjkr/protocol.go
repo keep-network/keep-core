@@ -549,7 +549,8 @@ func (sjm *SharesJustifyingMember) ResolveSecretSharesAccusationsMessages(
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if sjm.ID == accusedID || int(accusedID) > sjm.group.GroupSize() {
+			isAccusedValid := accusedID > 0 && int(accusedID) <= sjm.group.GroupSize()
+			if sjm.ID == accusedID || !isAccusedValid {
 				// The member does not resolve the dispute as an accused
 				// or the accussed member ID is not valid.
 				// Mark the accuser as disqualified immediately,
@@ -985,7 +986,8 @@ func (pjm *PointsJustifyingMember) ResolvePublicKeySharePointsAccusationsMessage
 	for _, message := range messages {
 		accuserID := message.senderID
 		for accusedID, revealedAccuserPrivateKey := range message.accusedMembersKeys {
-			if pjm.ID == accusedID || int(accusedID) > pjm.group.GroupSize() {
+			isAccusedValid := accusedID > 0 && int(accusedID) <= pjm.group.GroupSize()
+			if pjm.ID == accusedID || !isAccusedValid {
 				// The member does not resolve the dispute as an accused
 				// or the accussed member ID is not valid.
 				// Mark the accuser as disqualified immediately,
