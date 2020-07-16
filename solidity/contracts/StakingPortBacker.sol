@@ -98,7 +98,7 @@ contract StakingPortBacker is Ownable {
     }
 
     /// @notice Lets the owner of the contract to register operator from staking
-    /// relaitonships that will be allowed to use the token supply provided by
+    /// relationships that will be allowed to use the token supply provided by
     /// this contract.
     /// @dev The reason for explicitly listing which relationships are allowed
     /// to use the supply is to avoid a situation when someone stakes on the old
@@ -109,6 +109,22 @@ contract StakingPortBacker is Ownable {
     /// by this contract.
     function allowOperator(address operator) public onlyOwner {
         allowedOperators[operator] = true;
+    }
+
+    /// @notice Lets the owner of the contract to register operators from
+    /// staking relationships that will be allowed to use the token supply
+    /// provided by this contract.
+    /// @dev The reason for explicitly listing which relationships are allowed
+    /// to use the supply is to avoid a situation when someone stakes on the old
+    /// contract later, after deploying the new staking contract version, just
+    /// to drain the supply from this contract.
+    /// @param operators Array of operator addresses from the staking
+    /// relationships on the old staking contract that will be allowed to use
+    /// the token supply provided by this contract.
+    function allowOperators(address[] memory operators) public onlyOwner {
+        for (uint i = 0; i < operators.length; i++) {
+            allowOperator(operators[i]);
+        }
     }
 
     /// @notice Copies staking relationship from the old token staking contract
