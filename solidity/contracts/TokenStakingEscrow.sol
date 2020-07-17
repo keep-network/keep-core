@@ -303,7 +303,7 @@ contract TokenStakingEscrow is Ownable {
             "Escrow not authorized"
         );
 
-        uint256 amountLeft = deposit.amount.sub(deposit.withdrawn);
+        uint256 amountLeft = availableAmount(operator);
         deposits[operator].withdrawn = deposit.withdrawn.add(amountLeft);
         TokenSender(address(keepToken)).approveAndCall(
             receivingEscrow,
