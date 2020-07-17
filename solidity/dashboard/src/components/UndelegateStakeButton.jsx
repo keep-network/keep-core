@@ -2,6 +2,8 @@ import React, { useContext } from "react"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { SubmitButton } from "./Button"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
+import { contracts } from "../contracts"
 
 const confirmationModalOptions = {
   title: "You’re about to undelegate.",
@@ -38,9 +40,29 @@ const UndelegateStakeButton = (props) => {
       contract = stakingContract
     }
     try {
-      if (!isInInitializationPeriod) {
+      if (isInInitializationPeriod && isFromGrant) {
+        await openConfirmationModal({
+          title: "You’re about to cancel tokens.",
+          subtitle: (
+            <>
+              <span>Canceling will deposit delegated tokens in the</span>
+              &nbsp;
+              <span>
+                <ViewAddressInBlockExplorer
+                  address={contracts.tokenStakingEscrow.options.address}
+                  text="TokenStakingEscrow contract."
+                />
+              </span>
+              <p>You can withdraw them via Release tokens.</p>
+            </>
+          ),
+          btnText: "cancel",
+          confirmationText: "CANCEL",
+        })
+      } else {
         await openConfirmationModal(confirmationModalOptions)
       }
+
       await contract.methods[
         isInInitializationPeriod ? "cancelStake" : "undelegate"
       ](operator)

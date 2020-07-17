@@ -13,7 +13,9 @@ import {
   displayAmountWithMetricSuffix,
   displayAmount,
 } from "../utils/token.utils"
-
+import { isEmptyArray } from "../utils/array.utils"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
+import { contracts } from "../contracts"
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
     <>
@@ -83,13 +85,54 @@ export const TokenGrantUnlockingdDetails = ({
   )
   const showMessage = useShowMessage()
 
-  const releaseTokens = async (onTransactionHashCallback) => {
+  const releaseTokens = async (
+    onTransactionHashCallback,
+    openMessageInfo,
+    setFetching,
+    openConfirmationModal
+  ) => {
     try {
       const {
         isManagedGrant,
         managedGrantContractInstance,
         escrowOperatorsToWithdraw,
+        withdrawableAmountGrantOnly,
       } = selectedGrant
+      console.log("withdrawableAmountGrantOnly", escrowOperatorsToWithdraw)
+      if (!isEmptyArray(escrowOperatorsToWithdraw)) {
+        await openConfirmationModal({
+          title: "You’re about to release tokens.",
+          subtitle: (
+            <>
+              <span>You have deposited tokens in the</span>&nbsp;
+              <ViewAddressInBlockExplorer
+                text="TokenStakingEscrow contract"
+                address={contracts.tokenStakingEscrow.options.address}
+              />
+              <p>
+                To withdraw all tokens it may be necessary to confirm more than
+                one transaction
+              </p>
+            </>
+          ),
+          btnText: "release",
+          confirmationText: "RELEASE",
+        })
+      }
+
+      if (gt(withdrawableAmountGrantOnly, 0)) {
+        const contractMethod = isManagedGrant
+          ? managedGrantContractInstance.methods.withdraw()
+          : grantContract.methods.withdraw(selectedGrant.id)
+        await contractMethod
+          .send({ from: yourAddress })
+          .on("transactionHash", onTransactionHashCallback)
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content: "Tokens have been successfully released",
+        })
+      }
 
       const escrowMethodName = isManagedGrant
         ? "withdrawToManagedGrantee"
@@ -99,18 +142,6 @@ export const TokenGrantUnlockingdDetails = ({
           .send({ from: yourAddress })
           .on("transactionHash", onTransactionHashCallback)
       }
-
-      const contractMethod = isManagedGrant
-        ? managedGrantContractInstance.methods.withdraw()
-        : grantContract.methods.withdraw(selectedGrant.id)
-      await contractMethod
-        .send({ from: yourAddress })
-        .on("transactionHash", onTransactionHashCallback)
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Tokens have been successfully released",
-      })
     } catch (error) {
       showMessage({
         type: messageType.ERROR,
