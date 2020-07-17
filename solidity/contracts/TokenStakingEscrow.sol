@@ -103,6 +103,7 @@ contract TokenStakingEscrow is Ownable {
         bytes memory extraData
     ) public {
         require(IERC20(token) == keepToken, "Not a KEEP token");
+        require(msg.sender == token, "KEEP token is not the sender");
         require(extraData.length == 64, "Unexpected data length");
 
         (address operator, uint256 grantId) = abi.decode(
