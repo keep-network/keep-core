@@ -1,6 +1,7 @@
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { testValues } = require("./helpers/rewardsData.js")
 
 const KeepToken = contract.fromArtifact('KeepToken')
 
@@ -22,97 +23,16 @@ describe('Rewards', () => {
     let rewards
     let token
 
-    // defaultTimestamps[i] == 1000 + i
-    const defaultTimestamps = [
-        1000,
-        1001,
-        1002,
-        1003,
-        1004,
-        1005,
-        1006,
-        1007,
-        1008,
-        1009,
-        1010,
-        1011,
-        1012,
-        1013,
-        1014,
-        1015,
-    ]
-
-    const initiationTime = 1000
-    const termLength = 100
-    const totalRewards = 1000000
-    const minimumIntervalKeeps = 2
-
-    const rewardTimestamps = [
-        1000, 1001, 1099, // interval 0; 0..2
-        1100, 1101, 1102, 1103, // interval 1; 3..6
-        1234, // interval 2; 7
-        1300, 1301, // interval 3; 8..9
-        1500, // interval 5; 10
-        1600, 1601, // interval 6; 11..12
-    ]
-    const keepsInRewardIntervals = [
-        3, 4, 1, 2, 0, 1, 2, 0,
-    ]
-
-    const intervalWeights = [
-        // percentage of unallocated rewards, allocated : remaining
-        20, // 20:80
-        50, // 40:40
-        25, // 10:30
-        50, // 15:15
-    ]
-    const inVacuumBaseRewards = [
-        200000,
-        500000,
-        250000,
-        500000,
-        1000000,
-        1000000,
-        1000000,
-    ]
-    const inVacuumAdjustedRewards = [
-        199998,
-        500000,
-        125000,
-        500000,
-        0,
-        500000,
-        1000000,
-    ]
-    const inVacuumPerKeepRewards = [
-        66666,
-        125000,
-        125000,
-        250000,
-        0,
-        500000,
-        500000,
-    ]
-    const actualAllocations = [
-        199998, // 800002 remaining
-        400000, // 400002 remaining
-        50000,  // 350002 remaining
-        175000, // 175002 remaining
-        0,
-        87501, // 87501 remaining
-        87500, // 1 remaining
-    ]
-
     async function createKeeps(timestamps) {
         rewards = await RewardsStub.new(
-            termLength,
+            testValues.termLength,
             token.address,
-            minimumIntervalKeeps,
-            initiationTime,
-            intervalWeights,
+            testValues.minimumIntervalKeeps,
+            testValues.initiationTime,
+            testValues.intervalWeights,
             timestamps
         )
-        await fund(totalRewards)
+        await fund(testValues.totalRewards)
     }
 
     async function fund(amount) {
@@ -140,23 +60,23 @@ describe('Rewards', () => {
         it("funds the rewards correctly", async () => {
             await createKeeps([])
             let preRewards = await rewards.totalRewards()
-            expect(preRewards.toNumber()).to.equal(totalRewards)
+            expect(preRewards.toNumber()).to.equal(testValues.totalRewards)
 
-            await fund(totalRewards)
+            await fund(testValues.totalRewards)
             let postRewards = await rewards.totalRewards()
-            expect(postRewards.toNumber()).to.equal(totalRewards * 2)
+            expect(postRewards.toNumber()).to.equal(testValues.totalRewards * 2)
         })
 
         it("collects tokens sent outside `approveAndCall`", async () => {
             await createKeeps([])
-            await token.transfer(rewards.address, totalRewards, {from: funder})
+            await token.transfer(rewards.address, testValues.totalRewards, {from: funder})
 
             let preRewards = await rewards.totalRewards()
-            expect(preRewards.toNumber()).to.equal(totalRewards)
+            expect(preRewards.toNumber()).to.equal(testValues.totalRewards)
 
             await fund(0)
             let postRewards = await rewards.totalRewards()
-            expect(postRewards.toNumber()).to.equal(totalRewards * 2)
+            expect(postRewards.toNumber()).to.equal(testValues.totalRewards * 2)
         })
     })
 
@@ -275,7 +195,7 @@ describe('Rewards', () => {
         })
 
         it("returns 0 when all current keeps were created after the interval", async () => {
-            let timestamps = defaultTimestamps
+            let timestamps = testValues.defaultTimestamps
             await createKeeps(timestamps)
             let targetTimestamp = 500
             let expectedIndex = 0
@@ -285,7 +205,7 @@ describe('Rewards', () => {
         })
 
         it("returns the first index outside the interval", async () => {
-            let timestamps = defaultTimestamps
+            let timestamps = testValues.defaultTimestamps
             await createKeeps(timestamps)
             for (let i = 0; i < timestamps.length; i++) {
                 let expectedIndex = i
@@ -297,7 +217,7 @@ describe('Rewards', () => {
         })
 
         it("returns the number of keeps when all current keeps were created in the interval", async () => {
-            let timestamps = defaultTimestamps
+            let timestamps = testValues.defaultTimestamps
             await createKeeps(timestamps)
             let targetTimestamp = 2000
             let expectedIndex = 16
@@ -329,7 +249,7 @@ describe('Rewards', () => {
 
     describe("getEndpoint", async () => {
         it("returns the correct number of keeps for the interval", async () => {
-            let timestamps = defaultTimestamps
+            let timestamps = testValues.defaultTimestamps
             await createKeeps(timestamps)
             let keepCount = await rewards.getEndpoint.call(0)
             expect(keepCount.toNumber()).to.equal(timestamps.length)
@@ -345,7 +265,7 @@ describe('Rewards', () => {
         it("reverts if the interval hasn't ended", async () => {
             await createKeeps([])
             let recentTimestamp = await time.latest()
-            let targetTimestamp = recentTimestamp + termLength
+            let targetTimestamp = recentTimestamp + testValues.termLength
             let targetInterval = await rewards.intervalOf(targetTimestamp)
             await expectRevert(
                 rewards.getEndpoint(targetInterval),
@@ -356,8 +276,8 @@ describe('Rewards', () => {
 
     describe("keepsInInterval", async () => {
         it("returns the correct number of keeps for the interval", async () => {
-            let timestamps = rewardTimestamps
-            let expectedCounts = keepsInRewardIntervals
+            let timestamps = testValues.rewardTimestamps
+            let expectedCounts = testValues.keepsInRewardIntervals
             await createKeeps(timestamps)
             for (let i = 0; i < expectedCounts.length; i++) {
                 let keepCount = await rewards.keepsInInterval.call(i)
@@ -393,7 +313,7 @@ describe('Rewards', () => {
     describe("baseAllocation", async () => {
         it("returns the maximum reward of a defined interval", async () => {
             await createKeeps([])
-            let expectedAllocations = inVacuumBaseRewards
+            let expectedAllocations = testValues.inVacuumBaseRewards
             for (let i = 0; i < expectedAllocations.length; i++) {
                 let allocation = await rewards.baseAllocation(i)
                 expect(allocation.toNumber()).to.equal(expectedAllocations[i])
@@ -403,8 +323,8 @@ describe('Rewards', () => {
 
     describe("adjustedAllocation", async () => {
         it("returns the adjusted reward allocation of the interval", async () => {
-            let timestamps = rewardTimestamps
-            let expectedAllocations = inVacuumAdjustedRewards
+            let timestamps = testValues.rewardTimestamps
+            let expectedAllocations = testValues.inVacuumAdjustedRewards
             await createKeeps(timestamps)
             for (let i = 0; i < expectedAllocations.length; i++) {
                 let allocation = await rewards.adjustedAllocation.call(i)
@@ -415,8 +335,8 @@ describe('Rewards', () => {
 
     describe("rewardPerKeep", async () => {
         it("returns the per keep allocation of the interval", async () => {
-            let timestamps = rewardTimestamps
-            let expectedAllocations = inVacuumPerKeepRewards
+            let timestamps = testValues.rewardTimestamps
+            let expectedAllocations = testValues.inVacuumPerKeepRewards
             await createKeeps(timestamps)
             for (let i = 0; i < expectedAllocations.length; i++) {
                 let allocation = await rewards.rewardPerKeep.call(i)
@@ -427,8 +347,8 @@ describe('Rewards', () => {
 
     describe("allocateRewards", async () => {
         it("allocates the reward for each interval", async () => {
-            let timestamps = rewardTimestamps
-            let expectedAllocations = actualAllocations
+            let timestamps = testValues.rewardTimestamps
+            let expectedAllocations = testValues.actualAllocations
             await createKeeps(timestamps)
             for (let i = 0; i < expectedAllocations.length; i++) {
                 await rewards.allocateRewards(i)
@@ -438,8 +358,8 @@ describe('Rewards', () => {
         })
 
         it("allocates the rewards recursively", async () => {
-            let timestamps = rewardTimestamps
-            let expectedAllocations = actualAllocations
+            let timestamps = testValues.rewardTimestamps
+            let expectedAllocations = testValues.actualAllocations
             await createKeeps(timestamps)
             await rewards.allocateRewards(expectedAllocations.length - 1)
             for (let i = 0; i < expectedAllocations.length; i++) {
@@ -451,8 +371,8 @@ describe('Rewards', () => {
 
     describe("isAllocated", async () => {
         it("returns false before allocation and true after allocation", async () => {
-            let timestamps = rewardTimestamps
-            let expectedAllocations = actualAllocations
+            let timestamps = testValues.rewardTimestamps
+            let expectedAllocations = testValues.actualAllocations
             await createKeeps(timestamps)
             for (let i = 0; i < expectedAllocations.length; i++) {
                 let preAllocated = await rewards.isAllocated(i)
@@ -466,7 +386,7 @@ describe('Rewards', () => {
 
     describe("receiveReward", async () => {
         it("lets closed keeps claim the reward correctly", async () => {
-            let timestamps = rewardTimestamps
+            let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
             await rewards.setCloseTime(timestamps[0])
             await rewards.receiveReward(0, { from: aliceBeneficiary })
@@ -475,7 +395,7 @@ describe('Rewards', () => {
         })
 
         it("doesn't let keeps claim rewards again", async () => {
-            let timestamps = rewardTimestamps
+            let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
             await rewards.setCloseTime(timestamps[0])
             await rewards.receiveReward(0, { from: aliceBeneficiary })
@@ -486,7 +406,7 @@ describe('Rewards', () => {
         })
 
         it("doesn't let active keeps claim the reward", async () => {
-            await createKeeps(rewardTimestamps)
+            await createKeeps(testValues.rewardTimestamps)
             await expectRevert(
                 rewards.receiveReward(0, { from: aliceBeneficiary }),
                 "Keep is not closed"
@@ -494,7 +414,7 @@ describe('Rewards', () => {
         })
 
         it("doesn't let terminated keeps claim the reward", async () => {
-            await createKeeps(rewardTimestamps)
+            await createKeeps(testValues.rewardTimestamps)
             await rewards.terminate(0)
             await expectRevert(
                 rewards.receiveReward(0, { from: aliceBeneficiary }),
@@ -503,9 +423,9 @@ describe('Rewards', () => {
         })
 
         it("doesn't let unrecognized keeps claim the reward", async () => {
-            await createKeeps(rewardTimestamps)
+            await createKeeps(testValues.rewardTimestamps)
             await expectRevert(
-                rewards.receiveReward(rewardTimestamps.length),
+                rewards.receiveReward(testValues.rewardTimestamps.length),
                 "Keep not recognized by factory"
             )
         })
@@ -524,10 +444,10 @@ describe('Rewards', () => {
 
     describe("reportTermination", async () => {
         it("unallocates rewards allocated to terminated keeps", async () => {
-            let timestamps = rewardTimestamps
+            let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
 
-            await rewards.setCloseTime(rewardTimestamps[0])
+            await rewards.setCloseTime(testValues.rewardTimestamps[0])
             await rewards.receiveReward(0, { from: aliceBeneficiary }) // allocate rewards
 
             await rewards.terminate(1)
@@ -540,7 +460,7 @@ describe('Rewards', () => {
         })
 
         it("doesn't unallocate rewards twice for the same keep", async () => {
-            let timestamps = rewardTimestamps
+            let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
             await rewards.terminate(0)
             await rewards.reportTermination(0)
@@ -551,7 +471,7 @@ describe('Rewards', () => {
         })
 
         it("doesn't unallocate active keeps' rewards", async () => {
-            await createKeeps(rewardTimestamps)
+            await createKeeps(testValues.rewardTimestamps)
             await expectRevert(
                 rewards.reportTermination(0),
                 "Keep is not terminated"
@@ -559,8 +479,8 @@ describe('Rewards', () => {
         })
 
         it("doesn't unallocate closed keeps' rewards", async () => {
-            await createKeeps(rewardTimestamps)
-            await rewards.setCloseTime(rewardTimestamps[0])
+            await createKeeps(testValues.rewardTimestamps)
+            await rewards.setCloseTime(testValues.rewardTimestamps[0])
             await expectRevert(
                 rewards.reportTermination(0),
                 "Keep is not terminated"
@@ -568,9 +488,9 @@ describe('Rewards', () => {
         })
 
         it("doesn't unallocate unrecognized keeps' rewards", async () => {
-            await createKeeps(rewardTimestamps)
+            await createKeeps(testValues.rewardTimestamps)
             await expectRevert(
-                rewards.reportTermination(rewardTimestamps.length),
+                rewards.reportTermination(testValues.rewardTimestamps.length),
                 "Keep not recognized by factory"
             )
         })
