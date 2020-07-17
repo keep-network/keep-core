@@ -289,6 +289,7 @@ const useSubscribeToTokenGrantEvents = () => {
     grantWithdrawn,
     grants,
     dispatch,
+    grantDeposited,
   } = useTokensPageContext()
   const { yourAddress, tokenStakingEscrow } = useWeb3Context()
 
@@ -316,19 +317,23 @@ const useSubscribeToTokenGrantEvents = () => {
       return
     }
 
-    const grantId = await tokenStakingEscrow.methods.depositGrantId(operator)
-    grantWithdrawn(grantId, amount)
+    const grantId = await tokenStakingEscrow.methods
+      .depositGrantId(operator)
+      .call()
+    grantWithdrawn(grantId, amount, operator)
     refreshGrantTokenBalance()
     refreshKeepTokenBalance()
   }
 
   const subscribeToDepositedEvent = async (depositedEvent) => {
     const {
-      returnValues: { operator, grantId },
+      returnValues: { operator, grantId, amount },
     } = depositedEvent
 
     if (grants.find((grant) => grant.id === grantId)) {
+      dispatch({ type: REMOVE_DELEGATION, payload: operator })
       dispatch({ type: REMOVE_UNDELEGATION, payload: operator })
+      grantDeposited(grantId, operator, amount)
     }
   }
 
