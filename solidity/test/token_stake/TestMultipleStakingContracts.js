@@ -231,8 +231,8 @@ describe('TokenStake/MultipleStakingContracts', () => {
 
       const tokenOwnerBalanceBefore = await token.balanceOf(tokenOwner)
       const granteeBalanceBefore = await token.balanceOf(grantee)
-      oldTokenStaking.recoverStake(operator, {from: grantee})
-      newTokenStaking.recoverStake(operator, {from: tokenOwner})
+      await oldTokenStaking.recoverStake(operator, {from: grantee})
+      await newTokenStaking.recoverStake(operator, {from: tokenOwner})
       const tokenOwnerBalanceAfter = await token.balanceOf(tokenOwner)
       const granteeBalanceAfter = await token.balanceOf(grantee)
 
