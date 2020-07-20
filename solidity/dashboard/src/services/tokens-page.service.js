@@ -173,7 +173,7 @@ const getDelegations = async (
       } catch (error) {
         grantId = null
       }
-      if (isManagedGrant) {
+      if (isManagedGrant && grantId !== null) {
         const { grantee } = await contractService.makeCall(
           web3Context,
           TOKEN_GRANT_CONTRACT_NAME,
