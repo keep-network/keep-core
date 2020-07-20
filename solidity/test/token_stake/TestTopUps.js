@@ -266,7 +266,7 @@ describe('TokenStaking/TopUps', () => {
     })
 
     it("can be done in one step during initialization period", async () => {
-      // helf of the initialization period passed
+      // half of the initialization period passed
       await time.increase(initializationPeriod.divn(2))
 
       await initiateTopUp()
@@ -410,7 +410,7 @@ describe('TokenStaking/TopUps', () => {
     })
 
     it("can be done in one step during initialization period", async () => {
-      // helf of the initialization period passed
+      // half of the initialization period passed
       await time.increase(initializationPeriod.divn(2))
 
       await initiateTopUp()
@@ -553,7 +553,7 @@ describe('TokenStaking/TopUps', () => {
     })
 
     it("can be done in one step during initialization period", async () => {
-      // helf of the initialization period passed
+      // half of the initialization period passed
       await time.increase(initializationPeriod.divn(2))
 
       await initiateTopUp()
