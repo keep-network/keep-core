@@ -214,13 +214,6 @@ describe('TokenStaking/TopUps', () => {
       )
     }
 
-    it("can not be done during initialization period", async () => {
-      await expectRevert(
-        initiateTopUp(),
-        "Stake is initializing"
-      )
-    })
-
     it("can not be done when stake is undelegating", async () => {
       await time.increase(initializationPeriod.addn(1))
       await tokenStaking.undelegate(operatorOne, {from: tokenOwner})
@@ -270,6 +263,18 @@ describe('TokenStaking/TopUps', () => {
         ),
         "Must not be from a grant"
       )   
+    })
+
+    it("can be done in one step during initialization period", async () => {
+      // helf of the initialization period passed
+      await time.increase(initializationPeriod.divn(2))
+
+      await initiateTopUp()
+
+      const delegationInfo = await tokenStaking.getDelegationInfo(operatorOne)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
+      expect(delegationInfo.createdAt).to.eq.BN(await time.latest())
+      expect(delegationInfo.undelegatedAt).to.eq.BN(0)
     })
 
     it("does not increase stake before committed", async () => {
@@ -357,13 +362,6 @@ describe('TokenStaking/TopUps', () => {
       ) 
     }
 
-    it("can not be done during initialization period", async () => {
-      await expectRevert(
-        initiateTopUp(),
-        "Stake is initializing"
-      )
-    })
-
     it("can not be done when stake is undelegated", async () => {
       await time.increase(initializationPeriod.addn(1))
       await tokenStaking.undelegate(operatorTwo, {from: grantee})
@@ -409,6 +407,18 @@ describe('TokenStaking/TopUps', () => {
         ),
         "Must be from a grant"
       );
+    })
+
+    it("can be done in one step during initialization period", async () => {
+      // helf of the initialization period passed
+      await time.increase(initializationPeriod.divn(2))
+
+      await initiateTopUp()
+
+      const delegationInfo = await tokenStaking.getDelegationInfo(operatorTwo)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
+      expect(delegationInfo.createdAt).to.eq.BN(await time.latest())
+      expect(delegationInfo.undelegatedAt).to.eq.BN(0)
     })
 
     it("does not increase stake before committed", async () => {
@@ -495,13 +505,6 @@ describe('TokenStaking/TopUps', () => {
       ) 
     }
 
-    it("can not be done during initialization period", async () => {
-      await expectRevert(
-        initiateTopUp(),
-        "Stake is initializing"
-      )
-    })
-
     it("can not be done when stake is undelegating", async () => {
       await time.increase(initializationPeriod.addn(1))
       await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
@@ -547,6 +550,18 @@ describe('TokenStaking/TopUps', () => {
         ),
         "Must be from a grant"
       );
+    })
+
+    it("can be done in one step during initialization period", async () => {
+      // helf of the initialization period passed
+      await time.increase(initializationPeriod.divn(2))
+
+      await initiateTopUp()
+
+      const delegationInfo = await tokenStaking.getDelegationInfo(operatorThree)
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
+      expect(delegationInfo.createdAt).to.eq.BN(await time.latest())
+      expect(delegationInfo.undelegatedAt).to.eq.BN(0)
     })
 
     it("does not increase stake before committed", async () => {
