@@ -35,4 +35,12 @@ contract OperatorParamsStub {
     function publicSetUndelegationTimestamp(uint256 packed, uint256 undelegationTimestamp) public pure returns (uint256) {
         return packed.setUndelegationTimestamp(undelegationTimestamp);
     }
+
+    function publicSetAmountAndCreationTimestamp(
+        uint256 packed,
+        uint256 amount,
+        uint256 creationTimestamp
+    ) public pure returns (uint256) {
+        return packed.setAmountAndCreationTimestamp(amount, creationTimestamp);
+    }
 }
