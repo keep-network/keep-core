@@ -1,4 +1,4 @@
-import { add, sub, gte } from "../utils/arithmetics.utils"
+import { add, sub, gt } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 
@@ -168,7 +168,7 @@ const grantStaked = (grants, { grantId, amount, availableToStake }) => {
   }
   grantToUpdate.staked = add(grantToUpdate.staked, amount)
   grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-  grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0)
+  grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
   grantToUpdate.availableToStake = availableToStake
@@ -192,7 +192,7 @@ const grantWithdrawn = (
   grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
   grantToUpdate.released = add(grantToUpdate.released, amount)
   const unlocked = add(grantToUpdate.released, grantToUpdate.staked)
-  if (!gte(unlocked, grantToUpdate.amount)) {
+  if (!gt(unlocked, grantToUpdate.amount)) {
     grantToUpdate.unlocked = unlocked
   }
   grantToUpdate.availableToStake = availableToStake

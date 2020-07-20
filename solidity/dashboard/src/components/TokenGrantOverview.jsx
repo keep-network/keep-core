@@ -4,7 +4,7 @@ import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import { CircularProgressBars } from "./CircularProgressBar"
 import { Web3Context } from "./WithWeb3Context"
-import { useShowMessage, messageType } from "./Message"
+import { useShowMessage, useCloseMessage, messageType } from "./Message"
 import moment from "moment"
 import { gt } from "../utils/arithmetics.utils"
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
@@ -16,6 +16,8 @@ import {
 import { isEmptyArray } from "../utils/array.utils"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { contracts } from "../contracts"
+import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
+
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
     <>
@@ -84,6 +86,7 @@ export const TokenGrantUnlockingdDetails = ({
     Web3Context
   )
   const showMessage = useShowMessage()
+  const closeMessage = useCloseMessage()
 
   const releaseTokens = async (
     onTransactionHashCallback,
@@ -98,7 +101,6 @@ export const TokenGrantUnlockingdDetails = ({
         escrowOperatorsToWithdraw,
         withdrawableAmountGrantOnly,
       } = selectedGrant
-      console.log("withdrawableAmountGrantOnly", escrowOperatorsToWithdraw)
       if (!isEmptyArray(escrowOperatorsToWithdraw)) {
         await openConfirmationModal({
           title: "You’re about to release tokens.",
@@ -111,7 +113,7 @@ export const TokenGrantUnlockingdDetails = ({
               />
               <p>
                 To withdraw all tokens it may be necessary to confirm more than
-                one transaction
+                one transaction.
               </p>
             </>
           ),
@@ -124,9 +126,29 @@ export const TokenGrantUnlockingdDetails = ({
         const contractMethod = isManagedGrant
           ? managedGrantContractInstance.methods.withdraw()
           : grantContract.methods.withdraw(selectedGrant.id)
+        const acceptTxMsg = showMessage({
+          type: messageType.INFO,
+          sticky: true,
+          title: "Waiting for the transaction confirmation...",
+        })
+        let pendingMessage = { id: null }
         await contractMethod
           .send({ from: yourAddress })
-          .on("transactionHash", onTransactionHashCallback)
+          .on("transactionHash", (hash) => {
+            closeMessage(acceptTxMsg)
+            pendingMessage = showMessage({
+              type: messageType.PENDING_ACTION,
+              sticky: true,
+              title: "",
+              content: (
+                <TransactionIsPendingMsgContent
+                  txHash={hash}
+                  title={"Transaction is pending"}
+                />
+              ),
+            })
+          })
+        closeMessage(pendingMessage)
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",
@@ -138,9 +160,35 @@ export const TokenGrantUnlockingdDetails = ({
         ? "withdrawToManagedGrantee"
         : "withdraw"
       for (const operator of escrowOperatorsToWithdraw) {
+        const infoMessage = showMessage({
+          type: messageType.INFO,
+          sticky: true,
+          title: "Waiting for the transaction confirmation...",
+        })
+        let pendingMessage = { id: null }
         await tokenStakingEscrow.methods[escrowMethodName](operator)
           .send({ from: yourAddress })
-          .on("transactionHash", onTransactionHashCallback)
+          .on("transactionHash", (hash) => {
+            closeMessage(infoMessage)
+            pendingMessage = showMessage({
+              type: messageType.PENDING_ACTION,
+              sticky: true,
+              title: "",
+              content: (
+                <TransactionIsPendingMsgContent
+                  txHash={hash}
+                  title={"Transaction is pending"}
+                />
+              ),
+            })
+          })
+        closeMessage(pendingMessage)
+        showMessage({
+          type: messageType.SUCCESS,
+          title: "Success",
+          content:
+            "Tokens have been successfully released from a TokenStakingEscrow deposit.",
+        })
       }
     } catch (error) {
       showMessage({
@@ -201,6 +249,7 @@ export const TokenGrantUnlockingdDetails = ({
               <SubmitButton
                 className="btn btn-sm btn-secondary"
                 onSubmitAction={releaseTokens}
+                withMessageActionIsPending={false}
               >
                 release tokens
               </SubmitButton>
