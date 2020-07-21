@@ -36,12 +36,12 @@ describe("TokenStaking/StakingPortBacker", () => {
     operatorThree = accounts[8],
     operatorFour = accounts[9],
     thirdParty = accounts[10],
-    beneficiaryOne = "0xa52f52B17dcbDCFEd54C6b9eA5878920974FC69a",
-    beneficiaryTwo = "0x0A8298210F3037AF8c1526F536683D5E4AEA3803",
-    beneficiaryThree = "0xbcD762a1493b5350070E6eB93baeC06EE3D47Ea7",    
-    authorizerOne = "0x492bf3233f4ECA84A27b7a9869EBD856C7A4dDBd",
+    authorizerOne = accounts[11],
     authorizerTwo = "0x79a6a0eaA71954Bfe9F5bEE10B5AF2FbadE44994",
     authorizerThree = "0x2E9D84B5c9330903314C9312617138FA3735563a"
+    beneficiaryOne = "0xa52f52B17dcbDCFEd54C6b9eA5878920974FC69a",
+    beneficiaryTwo = "0x0A8298210F3037AF8c1526F536683D5E4AEA3803",
+    beneficiaryThree = "0xbcD762a1493b5350070E6eB93baeC06EE3D47Ea7"  
   
   const initializationPeriod = time.duration.seconds(10),
     grantStart = time.duration.seconds(0),
@@ -49,7 +49,7 @@ describe("TokenStaking/StakingPortBacker", () => {
     grantCliff = time.duration.seconds(0),
     grantRevocable = true
   
-  let token, tokenGrant
+  let token, tokenGrant, registry
     
   let oldTokenStaking
   let newTokenStaking
@@ -79,7 +79,7 @@ describe("TokenStaking/StakingPortBacker", () => {
       tokenGrant.address,
       {from: deployer}
     ) 
-    const registry = await KeepRegistry.new({from: deployer})
+    registry = await KeepRegistry.new({from: deployer})
 
     //
     // Deploy TokenStaking that will act as the previous
@@ -403,6 +403,8 @@ describe("TokenStaking/StakingPortBacker", () => {
       await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
       await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
       await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+
+      await time.increase(initializationPeriod.addn(1))
     })
 
     it("fails for unknown token", async () => {
@@ -514,6 +516,34 @@ describe("TokenStaking/StakingPortBacker", () => {
         ),
         "Not authorized to pay back"
       )
+    })
+
+    it("expects the original amount to be repaid if slashed", async () => {
+      // let's assume third party address is the operator contract
+      const operatorContract = thirdParty
+
+      await registry.approveOperatorContract(operatorContract, {from: deployer})
+      await newTokenStaking.authorizeOperatorContract(
+        operatorOne, operatorContract, {from: authorizerOne}
+      )
+      
+      const amountToSlash = 10000
+      await newTokenStaking.slash(amountToSlash, [operatorOne], {from: operatorContract})
+      const currentBalance = await newTokenStaking.balanceOf(operatorOne)
+
+      const data = web3.eth.abi.encodeParameters(["address"], [operatorOne])
+      await expectRevert(
+        token.approveAndCall(
+          stakingPortBacker.address, currentBalance, data, {from: tokenOwner}
+        ),
+        "Unexpected amount"
+      ) // reverts - tokens were slashed but we expect the original amount to
+        // be repaid;
+
+      await token.approveAndCall(
+        stakingPortBacker.address, delegatedAmount, data, {from: tokenOwner}
+      )
+      // ok, no revert - the original copied amount has been paid back
     })
   })
 
