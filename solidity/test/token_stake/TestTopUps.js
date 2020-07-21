@@ -97,7 +97,7 @@ describe('TokenStaking/TopUps', () => {
     // 
     const minimumStake = await tokenStaking.minimumStake();
     grantedAmount = minimumStake.muln(40);
-    delegatedAmount = minimumStake.muln(20);
+    delegatedAmount = minimumStake.muln(10);
 
     grantId = await grantTokens(
       tokenGrant, 
@@ -359,6 +359,45 @@ describe('TokenStaking/TopUps', () => {
         "No top up to commit"
       )
     })
+    
+    it("can be done multiple times", async () => {
+      // The first top-up.
+      // Half of the initialization period passed, top-up should  be processed
+      // immediately but also reset the initialization period.
+      await time.increase(initializationPeriod.divn(2))
+      await initiateTopUp()
+    
+      await time.increase(initializationPeriod.addn(1))
+      let currentStake = await tokenStaking.activeStake(
+        operatorOne,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(2))
+
+      // The second top-up.
+      // Initialization period passed so it has to be done in two steps.
+      await initiateTopUp()
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorOne)
+
+      currentStake = await tokenStaking.activeStake(
+        operatorOne,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(3))
+
+
+      // And yet one top-up...
+      await initiateTopUp()
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorOne)
+
+      currentStake = await tokenStaking.activeStake(
+        operatorOne,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(4))
+    })
   })
 
   describe("delegated grant top-ups", async () => {
@@ -503,6 +542,45 @@ describe('TokenStaking/TopUps', () => {
         "No top up to commit"
       )
     })
+    
+    it("can be done multiple times", async () => {
+      // The first top-up.
+      // Half of the initialization period passed, top-up should  be processed
+      // immediately but also reset the initialization period.
+      await time.increase(initializationPeriod.divn(2))
+      await initiateTopUp()
+    
+      await time.increase(initializationPeriod.addn(1))
+      let currentStake = await tokenStaking.activeStake(
+        operatorTwo,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(2))
+
+      // The second top-up.
+      // Initialization period passed so it has to be done in two steps.
+      await initiateTopUp()
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorTwo)
+
+      currentStake = await tokenStaking.activeStake(
+        operatorTwo,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(3))
+
+
+      // And yet one top-up...
+      await initiateTopUp()
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorTwo)
+
+      currentStake = await tokenStaking.activeStake(
+        operatorTwo,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(4))
+    })
   })
 
   describe("delegated managed grant top-ups", async () => {
@@ -645,6 +723,45 @@ describe('TokenStaking/TopUps', () => {
         tokenStaking.commitTopUp(operatorThree),
         "No top up to commit"
       )
+    })
+    
+    it("can be done multiple times", async () => {
+      // The first top-up.
+      // Half of the initialization period passed, top-up should  be processed
+      // immediately but also reset the initialization period.
+      await time.increase(initializationPeriod.divn(2))
+      await initiateTopUp()
+    
+      await time.increase(initializationPeriod.addn(1))
+      let currentStake = await tokenStaking.activeStake(
+        operatorThree,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(2))
+
+      // The second top-up.
+      // Initialization period passed so it has to be done in two steps.
+      await initiateTopUp()
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorThree)
+
+      currentStake = await tokenStaking.activeStake(
+        operatorThree,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(3))
+
+
+      // And yet one top-up...
+      await initiateTopUp()
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorThree)
+
+      currentStake = await tokenStaking.activeStake(
+        operatorThree,
+        operatorContract
+      )
+      expect(currentStake).to.eq.BN(delegatedAmount.muln(4))
     })
   })
 
