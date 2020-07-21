@@ -250,7 +250,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         }
 
         if (!_isInitialized(operatorParams)) {
-            // If the stake is not yet initialized, we add tokens immediatelly
+            // If the stake is not yet initialized, we add tokens immediately
             // but we also reset stake initialization time counter.
             uint256 newAmount = operatorParams.getAmount().add(_value);
             operators[_operator].packedParams = operatorParams.setAmountAndCreationTimestamp(
@@ -259,7 +259,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             );
             emit TopUpCommitted(_operator, newAmount);
         } else {
-            // If the stake is not initialized, we do NOT add tokens immediatelly.
+            // If the stake is initialized, we do NOT add tokens immediately.
             // We initiate the top-up and will add tokens to the stake only
             // after the initialization period for a top-up passes.
             topUps.initiate(_value, _operator);
