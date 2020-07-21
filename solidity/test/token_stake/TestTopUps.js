@@ -277,6 +277,19 @@ describe('TokenStaking/TopUps', () => {
       expect(delegationInfo.undelegatedAt).to.eq.BN(0)
     })
 
+    it("fails to commit when done in one step during initialization period", async () => {
+      // half of the initialization period passed
+      await time.increase(initializationPeriod.divn(2))
+
+      // We are still in the initialization period, top-up is done in one step
+      // and there is nothing to commit.
+      await initiateTopUp() 
+      await expectRevert(
+        tokenStaking.commitTopUp(operatorOne),
+        "No top up to commit"
+      )
+    })
+
     it("does not increase stake before committed", async () => {
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp()
