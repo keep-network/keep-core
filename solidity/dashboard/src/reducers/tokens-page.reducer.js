@@ -149,6 +149,7 @@ const grantWithdrawn = (grants, { grantId, amount, availableToStake }) => {
   grantToUpdate.released = add(grantToUpdate.released, amount)
   grantToUpdate.unlocked = add(grantToUpdate.released, grantToUpdate.staked)
   grantToUpdate.availableToStake = availableToStake
+  grantToUpdate.withdrawn = add(grantToUpdate.withdrawn, amount)
   grants[indexInArray] = grantToUpdate
 
   return grants

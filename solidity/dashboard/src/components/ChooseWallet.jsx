@@ -130,7 +130,7 @@ const Wallet = ({
         {renderModalContent()}
       </ModalComponent>
       <li
-        title={providerName === "COINBASE" && "Coinbase not yet supported"}
+        title={providerName === "COINBASE" ? "Coinbase not yet supported" : ""}
         className={`wallet${providerName === "COINBASE" ? " disabled" : ""}`}
         onClick={async () => {
           if (providerName === "COINBASE") {
