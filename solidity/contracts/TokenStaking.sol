@@ -66,7 +66,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     uint256 public minimumStakeScheduleStart;
     uint256 public initializationPeriod; // varies between mainnet and testnet
-    uint256 public constant undelegationPeriod = 5184000; // ~60 days
 
     ERC20Burnable internal token;
     TokenGrant internal tokenGrant;
@@ -75,6 +74,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     GrantStaking.Storage internal grantStaking;
     Locks.Storage internal locks;
     TopUps.Storage internal topUps;
+
+    uint256 internal constant twoWeeks = 1209600; // [sec]
+    uint256 internal constant twoMonths = 5184000; // [sec]
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
@@ -104,6 +106,16 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// on the amount of steps and the length of the minimum stake schedule in seconds.
     function minimumStake() public view returns (uint256) {
         return MinimumStakeSchedule.current(minimumStakeScheduleStart);
+    }
+
+    /// @notice Returns the current value of the undelegation period.
+    /// The staking contract guarantees that an undelegated operator’s stakes
+    /// will stay locked for a period of time after undelegation, and thus
+    /// available as collateral for any work the operator is engaged in.
+    /// The undelegation period is two weeks for the first two months and
+    /// two months after that.
+    function undelegationPeriod() public view returns(uint256) {
+        return block.timestamp < minimumStakeScheduleStart.add(twoMonths) ? twoWeeks : twoMonths;
     }
 
     /// @notice Receives approval of token transfer and stakes the approved
@@ -674,7 +686,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function _isUndelegatingFinished(uint256 _operatorParams)
         internal view returns (bool) {
         uint256 undelegatedAt = _operatorParams.getUndelegationTimestamp();
-        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt.add(undelegationPeriod));
+        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt.add(undelegationPeriod()));
     }
 
     /// @notice Get whether the operator's stake is released
