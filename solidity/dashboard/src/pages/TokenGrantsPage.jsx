@@ -38,7 +38,7 @@ const TokenGrantsPage = () => {
 }
 
 const renderTokenGrantOverview = (tokenGrant) => (
-  <TokenGrantOverview tokenGrant={tokenGrant} />
+  <TokenGrantOverview key={tokenGrant.id} tokenGrant={tokenGrant} />
 )
 
 const TokenGrantOverview = React.memo(({ tokenGrant }) => {
