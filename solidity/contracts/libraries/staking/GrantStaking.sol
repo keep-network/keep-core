@@ -77,7 +77,23 @@ library GrantStaking {
             abi.encodeWithSignature("getGrantStakeDetails(address)", operator)
         );
         if (success) {
-            uint256 grantId = abi.decode(data, (uint256));
+            (uint256 grantId,,address grantStakingContract) = abi.decode(
+                data, (uint256, uint256, address)
+            );
+            // Double-check if the delegation in TokenGrant has been defined
+            // for this staking contract. If not, it means it's an old
+            // delegation and the current one does not come from a grant.
+            // The scenario covered here is:
+            // - grantee delegated to operator A from a TokenGrant using another
+            //   staking contract,
+            // - someone delegates to operator A using liquid tokens and this
+            //   staking contract.
+            // Without this check, we'd consider the second delegation as coming
+            // from a grant.
+            if (address(this) != grantStakingContract) {
+                return (false, 0);
+            }
+
             setGrantForOperator(self, operator, grantId);
             return (true, grantId);
         }

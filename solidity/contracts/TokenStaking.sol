@@ -49,6 +49,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address indexed authorizer,
         uint256 value
     );
+    event StakeOwnershipTransferred(
+        address indexed operator,
+        address oldOwner,
+        address newOwner
+    );
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCommitted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -552,6 +557,17 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         token.safeTransfer(tattletale, tattletaleReward);
         token.burn(totalAmountToBurn.sub(tattletaleReward));
+    }
+
+    /// @notice Allows the current staking relationship owner to transfer the
+    /// ownership to someone else.
+    /// @param operator Address of the stake operator.
+    /// @param newOwner Address of the new staking relationship owner.
+    function transferStakeOwnership(address operator, address newOwner) public {
+        address oldOwner = operators[operator].owner;
+        require(msg.sender == oldOwner, "Not authorized");
+        operators[operator].owner = newOwner;
+        emit StakeOwnershipTransferred(operator, oldOwner, newOwner);
     }
 
     /// @notice Gets the eligible stake balance of the specified address.
