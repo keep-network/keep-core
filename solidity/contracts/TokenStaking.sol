@@ -54,7 +54,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address newOwner
     );
     event TopUpInitiated(address indexed operator, uint256 topUp);
-    event TopUpCommitted(address indexed operator, uint256 newAmount);
+    event TopUpCompleted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator);
     event TokensSlashed(address indexed operator, uint256 amount);
@@ -257,7 +257,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
                 newAmount,
                 block.timestamp
             );
-            emit TopUpCommitted(_operator, newAmount);
+            emit TopUpCompleted(_operator, newAmount);
         } else {
             // If the stake is initialized, we do NOT add tokens immediately.
             // We initiate the top-up and will add tokens to the stake only
@@ -276,7 +276,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             topUps.commit(_operator, initializationPeriod),
             _operator
         );
-        emit TopUpCommitted(_operator, newAmount);
+        emit TopUpCompleted(_operator, newAmount);
     }
 
     function addStakeAmount(
