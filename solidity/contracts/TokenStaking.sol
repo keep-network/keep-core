@@ -152,13 +152,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address operator = _extraData.toAddress(20);
         // See if there is an existing delegation for this operator...
         if (operators[operator].packedParams.getCreationTimestamp() == 0) {
-            // If there is no existing delegation, tokens are delegated using
+            // If there is no existing delegation, delegate tokens using
             // beneficiary and authorizer passed in _extraData.
             delegate(_from, _value, operator, _extraData);
         } else {
-            // If there is an existing delegation, top-up of the stake is
-            // initiated.
-            initiateTopUp(_from, _value, operator, _extraData);
+            // If there is an existing delegation, top-up the stake.
+            topUp(_from, _value, operator, _extraData);
         }
     }
 
@@ -196,7 +195,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         emit Staked(_from, _operator, beneficiary, authorizer, _value);
     }
 
-    /// @notice Initializes top-up to an existing operator. Tokens added during
+    /// @notice Performs top-up to an existing operator. Tokens added during
     /// stake initialization period are immediatelly added to the stake and
     /// stake initialization timer is reset to the current block. Tokens added
     /// in a top-up after the stake initialization period is over are not
@@ -212,7 +211,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// an existing stake.
     /// @param _operator The new operator address.
     /// @param _extraData Data for stake delegation as passed to receiveApproval
-    function initiateTopUp(
+    function topUp(
         address _from,
         uint256 _value,
         address _operator,
