@@ -9,6 +9,7 @@ import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
+import { useModal } from "../hooks/useModal"
 
 const confirmationModalOptions = {
   title: "You’re about to delegate stake.",
@@ -21,6 +22,7 @@ const confirmationModalOptions = {
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
+  const { openConfirmationModal } = useModal()
 
   const {
     keepTokenBalance,
@@ -29,11 +31,7 @@ const TokensPage = () => {
     tokensContext,
   } = useTokensPageContext()
 
-  const handleSubmit = async (
-    values,
-    onTransactionHashCallback,
-    openConfirmationModal
-  ) => {
+  const handleSubmit = async (values, onTransactionHashCallback) => {
     values.context = tokensContext
     values.selectedGrant = { ...selectedGrant }
     try {

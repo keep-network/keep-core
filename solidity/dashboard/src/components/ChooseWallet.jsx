@@ -72,7 +72,7 @@ const Wallet = ({
   description,
   modalProps,
 }) => {
-  const { ModalComponent, openModal, closeModal } = useModal()
+  const { openModal, closeModal } = useModal()
   const {
     connectAppWithWallet,
     setAccount,
@@ -89,6 +89,7 @@ const Wallet = ({
     if (!firstAccountAsSelected) {
       setAccounts(availableAccounts)
     }
+    closeModal()
   }
 
   const onSelectAccount = (account) => {
@@ -125,33 +126,31 @@ const Wallet = ({
   }
 
   return (
-    <>
-      <ModalComponent title="Connect Wallet" closeModal={customCloseModal}>
-        {renderModalContent()}
-      </ModalComponent>
-      <li
-        title={providerName === "COINBASE" ? "Coinbase not yet supported" : ""}
-        className={`wallet${providerName === "COINBASE" ? " disabled" : ""}`}
-        onClick={async () => {
-          if (providerName === "COINBASE") {
-            return
-          }
-          openModal()
-          if (providerName === "LEDGER") {
-            return
-          }
-          await onSelectProvider(providerName)
-        }}
-      >
-        {icon}
-        <div className="flex row center">
-          <h4 className="mr-1">{label}</h4>
-          <Icons.ArrowRight />
-        </div>
-        <h5 className="wallet-type">{type}</h5>
-        <div className="wallet-description">{description}</div>
-      </li>
-    </>
+    <li
+      title={providerName === "COINBASE" ? "Coinbase not yet supported" : ""}
+      className={`wallet${providerName === "COINBASE" ? " disabled" : ""}`}
+      onClick={async () => {
+        if (providerName === "COINBASE") {
+          return
+        }
+        openModal(renderModalContent(), {
+          title: "Connect Wallet",
+          closeModal: customCloseModal,
+        })
+        if (providerName === "LEDGER") {
+          return
+        }
+        await onSelectProvider(providerName)
+      }}
+    >
+      {icon}
+      <div className="flex row center">
+        <h4 className="mr-1">{label}</h4>
+        <Icons.ArrowRight />
+      </div>
+      <h5 className="wallet-type">{type}</h5>
+      <div className="wallet-description">{description}</div>
+    </li>
   )
 }
 

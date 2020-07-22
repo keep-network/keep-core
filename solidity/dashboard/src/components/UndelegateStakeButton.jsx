@@ -2,6 +2,7 @@ import React, { useContext } from "react"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { SubmitButton } from "./Button"
+import { useModal } from "../hooks/useModal"
 
 const confirmationModalOptions = {
   title: "You’re about to undelegate.",
@@ -15,13 +16,9 @@ const UndelegateStakeButton = (props) => {
   const web3Context = useContext(Web3Context)
   const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
+  const { openConfirmationModal } = useModal()
 
-  const undelegate = async (
-    onTransactionHashCallback,
-    openMessageInfo,
-    setFetching,
-    openConfirmationModal
-  ) => {
+  const undelegate = async (onTransactionHashCallback) => {
     const {
       operator,
       isInInitializationPeriod,
