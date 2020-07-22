@@ -13,21 +13,32 @@ contract BeaconBackportRewards is Rewards {
     address excessRecipient;
 
     constructor (
-        // Rewards can be allocated at `firstIntervalStart + termLength`.
-        // Exact values are arbitrary.
-        // After allocation, the contract should no longer be funded.
+        // The term length and first interval start are arbitrary,
+        // and should be set so that `firstIntervalStart + termLength`
+        // is sometime in the future.
+        // Up to that point (when interval 0 finishes)
+        // the contract can be funded freely,
+        // with tokens being allocated correctly.
+        // After that point, interval 0 may get allocated
+        // so any further funding will end up on the remaining intervals.
+        // If unallocated tokens are remaining after all intervals are allocated,
+        // a withdrawal function is provided.
         uint256 _termLength,
         address _token,
         uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
+        // Interval weights. Does not define the number of intervals supported.
         uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract,
-        // The indices of the last group eligible for rewards in each interval. Inclusive.
+        // The indices of the last group eligible for rewards in each interval.
+        // Inclusive, defines the number of intervals supported by the contract.
         uint256[] memory _lastGroupOfInterval,
         // The indices of any groups below `lastEligibleGroup`
         // that should be excluded from the rewards.
         uint256[] memory _excludedGroups,
+        // The address that receives any left-over tokens
+        // from late funding or excluded groups.
         address _excessRecipient
     ) public Rewards(
         _termLength,
@@ -78,6 +89,7 @@ contract BeaconBackportRewards is Rewards {
     }
 
     function _getCreationTime(bytes32 groupIndexBytes) internal view returns (uint256) {
+        // Assign each group to the starting timestamp of its interval
         return startOf(_assignedInterval(groupIndexBytes));
     }
 
