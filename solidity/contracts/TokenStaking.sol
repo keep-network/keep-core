@@ -51,11 +51,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     );
     event StakeOwnershipTransferred(
         address indexed operator,
-        address oldOwner,
         address newOwner
     );
     event TopUpInitiated(address indexed operator, uint256 topUp);
-    event TopUpCommitted(address indexed operator, uint256 newAmount);
+    event TopUpCompleted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event RecoveredStake(address operator);
     event TokensSlashed(address indexed operator, uint256 amount);
@@ -120,13 +119,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     /// @notice Receives approval of token transfer and stakes the approved
     /// amount or adds the approved amount to an existing delegation (a “top-up”).
-    /// In case of an existing delegation, it is required that the operator stake
-    /// passed initialization period, it is not undelegated and that the top-up is
-    /// performed from the same source of tokens as the initial delegation.
-    /// That is, if the tokens were delegated from a grant, top-up
-    /// has to be performed from the same grant. If the delegation was done
-    /// using liquid tokens, only liquid tokens from the same owner can be used
-    /// to top-up the stake.
+    /// In case of a top-up, it is expected that the operator stake is not
+    /// undelegated and that the top-up is performed from the same source of
+    /// tokens as the initial delegation. That is, if the tokens were delegated
+    /// from a grant, top-up has to be performed from the same grant. If the
+    /// delegation was done using liquid tokens, only liquid tokens from the
+    /// same owner can be used to top-up the stake.
     /// @dev Requires that the provided token contract be the same one linked to
     /// this contract.
     /// @param _from The owner of the tokens who approved them to transfer.
@@ -154,13 +152,12 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address operator = _extraData.toAddress(20);
         // See if there is an existing delegation for this operator...
         if (operators[operator].packedParams.getCreationTimestamp() == 0) {
-            // If there is no existing delegation, tokens are delegated using
+            // If there is no existing delegation, delegate tokens using
             // beneficiary and authorizer passed in _extraData.
             delegate(_from, _value, operator, _extraData);
         } else {
-            // If there is an existing delegation, top-up of the stake is
-            // initiated.
-            initiateTopUp(_from, _value, operator, _extraData);
+            // If there is an existing delegation, top-up the stake.
+            topUp(_from, _value, operator, _extraData);
         }
     }
 
@@ -198,31 +195,29 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         emit Staked(_from, _operator, beneficiary, authorizer, _value);
     }
 
-    /// @notice Initializes top-up to an existing operator. Tokens added in
-    /// a top-up are not included in the operator stake until the initialization
-    /// period for a top-up passes and top-up is committed. Operator must not
-    /// have the stake undelegated and it has to be initialized. It is expected
-    /// that the top-up is done from the same source of tokens as the initial
-    /// delegation. That is, if the tokens were delegated from a grant, top-up
-    /// has to be performed from the same grant. If the delegation was done
-    /// using liquid tokens, only liquid tokens from the same owner can be used
-    /// to top-up the stake.
+    /// @notice Performs top-up to an existing operator. Tokens added during
+    /// stake initialization period are immediatelly added to the stake and
+    /// stake initialization timer is reset to the current block. Tokens added
+    /// in a top-up after the stake initialization period is over are not
+    /// included in the operator stake until the initialization period for
+    /// a top-up passes and top-up is committed. Operator must not have the stake
+    /// undelegated. It is expected that the top-up is done from the same source
+    /// of tokens as the initial delegation. That is, if the tokens were
+    /// delegated from a grant, top-up has to be performed from the same grant.
+    /// If the delegation was done using liquid tokens, only liquid tokens from
+    /// the same owner can be used to top-up the stake.
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _value Approved amount for the transfer and top-up to
     /// an existing stake.
     /// @param _operator The new operator address.
     /// @param _extraData Data for stake delegation as passed to receiveApproval
-    function initiateTopUp(
+    function topUp(
         address _from,
         uint256 _value,
         address _operator,
         bytes memory _extraData
     ) internal {
         uint256 operatorParams = operators[_operator].packedParams;
-        require(
-            _isInitialized(operatorParams),
-            "Stake is initializing"
-        );
         require(
             !_isUndelegating(operatorParams),
             "Stake undelegated"
@@ -253,8 +248,22 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             require(operators[_operator].owner == _from, "Not the same owner");
         }
 
-        topUps.initiate(_value, _operator);
-        emit TopUpInitiated(_operator, _value);
+        if (!_isInitialized(operatorParams)) {
+            // If the stake is not yet initialized, we add tokens immediately
+            // but we also reset stake initialization time counter.
+            uint256 newAmount = operatorParams.getAmount().add(_value);
+            operators[_operator].packedParams = operatorParams.setAmountAndCreationTimestamp(
+                newAmount,
+                block.timestamp
+            );
+            emit TopUpCompleted(_operator, newAmount);
+        } else {
+            // If the stake is initialized, we do NOT add tokens immediately.
+            // We initiate the top-up and will add tokens to the stake only
+            // after the initialization period for a top-up passes.
+            topUps.initiate(_value, _operator);
+            emit TopUpInitiated(_operator, _value);
+        }
     }
 
     /// @notice Commits pending top-up for the provided operator. If the top-up
@@ -266,7 +275,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             topUps.commit(_operator, initializationPeriod),
             _operator
         );
-        emit TopUpCommitted(_operator, newAmount);
+        emit TopUpCompleted(_operator, newAmount);
     }
 
     function addStakeAmount(
@@ -343,7 +352,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             // or operator. Only owner and grantee are eligible to postpone the
             // delegation so it is enough if we exclude operator here.
             msg.sender != _operator,
-            "Operator may not postpone undelegation"
+            "Operator may not postpone"
         );
         operators[_operator].packedParams = oldParams.setUndelegationTimestamp(
             _undelegationTimestamp
@@ -576,10 +585,9 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @param operator Address of the stake operator.
     /// @param newOwner Address of the new staking relationship owner.
     function transferStakeOwnership(address operator, address newOwner) public {
-        address oldOwner = operators[operator].owner;
-        require(msg.sender == oldOwner, "Not authorized");
+        require(msg.sender == operators[operator].owner, "Not authorized");
         operators[operator].owner = newOwner;
-        emit StakeOwnershipTransferred(operator, oldOwner, newOwner);
+        emit StakeOwnershipTransferred(operator, newOwner);
     }
 
     /// @notice Gets the eligible stake balance of the specified address.

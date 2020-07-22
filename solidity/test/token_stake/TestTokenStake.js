@@ -351,7 +351,7 @@ describe('TokenStaking', function() {
 
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Operator may not postpone undelegation"
+        "Operator may not postpone"
       )
     })
   })
@@ -501,7 +501,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
         ),
-        "Operator may not postpone undelegation"
+        "Operator may not postpone"
       )
     })
   })
@@ -850,7 +850,6 @@ describe('TokenStaking', function() {
 
       await expectEvent(receipt, "StakeOwnershipTransferred", {
         operator: operatorOne,
-        oldOwner: owner,
         newOwner: thirdParty
       })
     })
