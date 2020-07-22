@@ -7,6 +7,8 @@ import { formatDate } from "../utils/general.utils"
 import moment from "moment"
 import { LoadingOverlay } from "./Loadable"
 import DataTableSkeleton from "./skeletons/DataTableSkeleton"
+import TopUpsDataTable from "./TopUpsDataTable"
+import Tile from "./Tile"
 
 const filterByOwned = (delegation) => !delegation.grantId
 const filterBySelectedGrant = (delegation, selectedGrant) =>
@@ -114,6 +116,11 @@ const DelegationOverview = () => {
         skeletonComponent={<DataTableSkeleton />}
       >
         <Undelegations undelegations={getUndelegations()} />
+      </LoadingOverlay>
+      <LoadingOverlay isFetching={false}>
+        <Tile>
+          <TopUpsDataTable topUps={[]} />
+        </Tile>
       </LoadingOverlay>
     </section>
   )
