@@ -82,4 +82,36 @@ describe('OperatorParams', () => {
         "The undelegationTimestamp should be the same");
     })
   })
+
+  describe("setAmountAndCreationTimestamp", async () => {
+    it("should set the creation timestamp", async () => {
+      const params = await opUtils.publicPack(allKeepEver, recently, 0)
+      const newParams = await opUtils.publicSetAmountAndCreationTimestamp(
+        params,
+        billion,
+        billionYearsFromNow        
+      )
+      const creationBlock = await opUtils.publicGetCreationTimestamp(newParams)
+      assert.equal(
+        creationBlock.toJSON(),
+        billionYearsFromNow.toJSON(),
+        "The creation timestamp should be the same"
+      )
+    })
+
+    it("should set the amount", async () => {
+      const params = await opUtils.publicPack(allKeepEver, recently, 0);
+      const newParams = await opUtils.publicSetAmountAndCreationTimestamp(
+        params,
+        billion,
+        billionYearsFromNow
+      )
+      const amount = await opUtils.publicGetAmount(newParams);
+      assert.equal(
+        amount.toJSON(),
+        billion.toJSON(),
+        "The amount should be the same"
+      )
+    })
+  })
 })

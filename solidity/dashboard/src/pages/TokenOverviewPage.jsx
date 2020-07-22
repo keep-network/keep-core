@@ -5,7 +5,7 @@ import Undelegations from "../components/Undelegations"
 import TokenOverview from "../components/TokenOverview"
 import { LoadingOverlay } from "../components/Loadable"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
-import { add } from "../utils/arithmetics.utils"
+import { add, sub } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 
@@ -42,9 +42,11 @@ const TokenOverviewPage = () => {
   }, [delegations, undelegations])
 
   const totalGrantedTokenBalance = useMemo(() => {
-    const grantedBalance = grants.map(({ amount }) => amount).reduce(add, "0")
-    return add(grantedBalance, totalGrantedStakedBalance)
-  }, [grants, totalGrantedStakedBalance])
+    const grantedBalance = grants
+      .map(({ amount, withdrawn }) => sub(amount, withdrawn))
+      .reduce(add, "0")
+    return grantedBalance
+  }, [grants])
 
   return (
     <PageWrapper title="Token Overview">
