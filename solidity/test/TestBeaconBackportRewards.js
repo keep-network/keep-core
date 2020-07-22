@@ -23,7 +23,8 @@ describe('BeaconBackportRewards', () => {
         operator3 = accounts[4],
         beneficiary1 = accounts[5],
         beneficiary2 = accounts[6],
-        beneficiary3 = accounts[7]
+        beneficiary3 = accounts[7],
+        excessRecipient = accounts[8]
 
     before(async () => {
         let contracts = await initContracts(
@@ -33,7 +34,7 @@ describe('BeaconBackportRewards', () => {
             contract.fromArtifact('KeepRandomBeaconOperatorBeaconRewardsStub')
         )
         const termLength = 10
-        const totalRewards = 6000
+        const totalRewards = 9000
 
         token = contracts.token
         stakingContract = contracts.stakingContract
@@ -59,14 +60,19 @@ describe('BeaconBackportRewards', () => {
 
         const initiationTime = await time.latest()
 
+        await time.increase(25)
+
         rewards = await contract.fromArtifact('BeaconBackportRewardsStub').new(
             termLength,
             token.address,
+            0,
             initiationTime,
+            [50, 100],
             operatorContract.address,
             stakingContract.address,
-            2, // groups 0, 1 and 2 eligible
-            [1]
+            [2, 3], // groups 0~2 in first interval, 3 in second
+            [1],
+            excessRecipient
         )
         await token.approveAndCall(
             rewards.address,
@@ -74,8 +80,6 @@ describe('BeaconBackportRewards', () => {
             "0x0",
             { from: owner }
         )
-
-        await time.increase(15)
 
         // make all groups expire
         let blockN = await time.latestBlock()
@@ -95,33 +99,39 @@ describe('BeaconBackportRewards', () => {
         return "0x" + ("00" * 31) + byte
     }
 
-    it("should have 2 groups", async () => {
+    it("should have 4 groups", async () => {
         let count = await rewards.getKeepCount();
-        expect(count).to.eq.BN(2);
+        expect(count).to.eq.BN(4);
     })
 
-    it("should have 2 as the last eligible group", async () => {
+    it("should have 3 as the last eligible group", async () => {
         let count = await rewards.lastEligibleGroup();
-        expect(count).to.eq.BN(2);
+        expect(count).to.eq.BN(3);
+    })
+
+    it("should have 1 as the last interval", async () => {
+        expect(await rewards.lastInterval()).to.eq.BN(1);
     })
 
     it("should exclude group 1", async () => {
         assert.isTrue(await rewards.isExcluded(1), "group 1 not excluded")
     })
 
-    it("should recognize groups 0 and 2", async () => {
+    it("should recognize groups 0~3", async () => {
         let recognized0 = await rewards.recognizedByFactory(0);
         let recognized1 = await rewards.recognizedByFactory(1);
         let recognized2 = await rewards.recognizedByFactory(2);
         let recognized3 = await rewards.recognizedByFactory(3);
+        let recognized4 = await rewards.recognizedByFactory(4);
 
         assert.isTrue(recognized0, "group 0 not recognized")
-        assert.isFalse(recognized1, "group 1 falsely recognized")
+        assert.isTrue(recognized1, "group 1 not recognized")
         assert.isTrue(recognized2, "group 2 not recognized")
-        assert.isFalse(recognized3, "group 3 falsely recognized")
+        assert.isTrue(recognized3, "group 3 not recognized")
+        assert.isFalse(recognized4, "group 4 falsely recognized")
     })
 
-    it("should have groups 0 and 2 eligible", async () => {
+    it("should have groups 0, 2 and 3 eligible", async () => {
         let eligible0 = await rewards.eligibleForReward(0);
         let eligible1 = await rewards.eligibleForReward(1);
         let eligible2 = await rewards.eligibleForReward(2);
@@ -130,32 +140,52 @@ describe('BeaconBackportRewards', () => {
         assert.isTrue(eligible0, "group 0 ineligible")
         assert.isFalse(eligible1, "group 1 eligible")
         assert.isTrue(eligible2, "group 2 ineligible")
-        assert.isFalse(eligible3, "group 3 eligible")
+        assert.isTrue(eligible3, "group 3 ineligible")
     })
 
-    it("should recognize no group as terminated", async () => {
+    it("should recognize group 1 as terminated", async () => {
         let terminated0 = await rewards.eligibleButTerminatedWithUint(0);
         let terminated1 = await rewards.eligibleButTerminatedWithUint(1);
         let terminated2 = await rewards.eligibleButTerminatedWithUint(2);
+        let terminated3 = await rewards.eligibleButTerminatedWithUint(3);
 
         assert.isFalse(terminated0, "group 0 falsely terminated")
-        assert.isFalse(terminated1, "group 1 falsely terminated")
+        assert.isTrue(terminated1, "group 1 not terminated")
         assert.isFalse(terminated2, "group 2 falsely terminated")
+        assert.isFalse(terminated3, "group 3 falsely terminated")
     })
 
-    it("should register 2 keeps in the first interval", async () => {
+    it("should register 3 groups in the first interval", async () => {
         let count = await rewards.findEndpoint(await rewards.endOf(0))
-        expect(count).to.eq.BN(2)
+        expect(count).to.eq.BN(3)
     })
 
-    it("should receive rewards for groups 0 and 2", async () => {
+    it("should register 1 group in the second interval", async () => {
+        let count = await rewards.findEndpoint(await rewards.endOf(1))
+        expect(count).to.eq.BN(4)
+    })
+
+    it("should receive rewards for groups 0, 2 and 3", async () => {
         await rewards.receiveReward(0);
 
         let balance1 = await token.balanceOf(beneficiary1);
-        expect(balance1).to.eq.BN(1000)
+        expect(balance1).to.eq.BN(500)
 
         await rewards.receiveReward(2);
         let balance2 = await token.balanceOf(beneficiary2);
-        expect(balance2).to.eq.BN(4000)
+        expect(balance2).to.eq.BN(2000)
+
+        await rewards.receiveReward(3);
+        let balance1new = await token.balanceOf(beneficiary1)
+        expect(balance1new).to.eq.BN(2500)
+    })
+
+    it("should withdraw excess rewards from terminated group 1", async () => {
+        await rewards.allocateRewards(1);
+        await rewards.reportTermination(1);
+        await rewards.withdrawExcess();
+
+        let balance = await token.balanceOf(excessRecipient);
+        expect(balance).to.eq.BN(1500)
     })
 })

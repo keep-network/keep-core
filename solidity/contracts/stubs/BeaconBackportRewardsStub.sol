@@ -6,19 +6,25 @@ contract BeaconBackportRewardsStub is BeaconBackportRewards {
     constructor (
         uint256 _termLength,
         address _token,
+        uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
+        uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract,
-        uint256 _lastEligibleGroup,
-        uint256[] memory _excludedGroups
+        uint256[] memory _lastGroupOfInterval,
+        uint256[] memory _excludedGroups,
+        address _excessRecipient
     ) public BeaconBackportRewards(
         _termLength,
         _token,
+        _minimumKeepsPerInterval,
         _firstIntervalStart,
+        _intervalWeights,
         _operatorContract,
         _stakingContract,
-        _lastEligibleGroup,
-        _excludedGroups
+        _lastGroupOfInterval,
+        _excludedGroups,
+        _excessRecipient
     ) {}
 
     function receiveReward(uint256 i) public {
