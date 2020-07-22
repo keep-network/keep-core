@@ -42,11 +42,11 @@ describe('TokenGrant/Stake', function() {
   let evilGrantId;
   let grantStart;
 
-  const grantUnlockingDuration = time.duration.days(60);
+  const grantUnlockingDuration = time.duration.days(180);
   const grantCliff = time.duration.days(10);
 
-  const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
+  const initializationPeriod = time.duration.days(10);
+  let undelegationPeriod;
 
   before(async () => {
     tokenContract = await KeepToken.new({from: accounts[0]});
@@ -57,7 +57,6 @@ describe('TokenGrant/Stake', function() {
       grantContract.address,
       registryContract.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     );
@@ -65,6 +64,8 @@ describe('TokenGrant/Stake', function() {
     stakingEscrowContract = stakingContracts.tokenStakingEscrow;
 
     await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
+
+    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     grantStart = await time.latest();
     minimumStake = await stakingContract.minimumStake()
@@ -266,7 +267,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       grantContract.cancelStake(operatorOne, {from: grantee}),
-      "Initialization period is over"
+      "Initialized stake"
     );
   })
 
@@ -281,21 +282,11 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       stakingContract.recoverStake(operatorOne),
-      "Can not recover before undelegation period is over"
+      "Still undelegating"
     )
   })
 
-  it("should not allow to delegate to the same operator twice", async () => {
-    let amountToDelegate = minimumStake.muln(5);
-    await delegate(grantee, operatorOne, amountToDelegate);
-
-    await expectRevert(
-      delegate(grantee, operatorOne, amountToDelegate, grantId),
-      "Operator already in use"
-    )
-  })
-
-  it("should not allow to delegate to the same operator even after recovering stake", async () => {
+  it("should not allow to delegate to the same operator after recovering stake", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
     let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
@@ -306,7 +297,7 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegateLiquid(grantee, operatorOne, minimumStake),
-      "Operator already in use"
+      "Stake undelegated"
     )
   })
 

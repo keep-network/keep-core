@@ -18,8 +18,8 @@ describe('TokenStaking/Lock', () => {
     operatorContract = accounts[6],
     operatorContract2 = accounts[7];
 
-  const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(10);
+  const initializationPeriod = time.duration.days(10);
+  let undelegationPeriod;
   const lockPeriod = time.duration.weeks(12);
 
   let createdAt;
@@ -34,11 +34,12 @@ describe('TokenStaking/Lock', () => {
       grant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
     stakingContract = stakingContracts.tokenStaking;
+
+    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     await registry.approveOperatorContract(operatorContract, {from: owner});
     await registry.approveOperatorContract(operatorContract2, {from: owner});
@@ -95,7 +96,7 @@ describe('TokenStaking/Lock', () => {
     it("should not permit locks on non-initialized operators", async () => {
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Stake must be active"
+        "Inactive stake"
       )
     })
 
@@ -106,7 +107,7 @@ describe('TokenStaking/Lock', () => {
       await time.increaseTo(undelegatedAt.addn(1))
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {from: operatorContract}),
-        "Operator undelegating"
+        "Undelegating stake"
       )
     })
 
@@ -165,7 +166,7 @@ describe('TokenStaking/Lock', () => {
       await undelegate(operator)
       await expectRevert(
         stakingContract.recoverStake(operator),
-        "Can not recover locked stake"
+        "Locked stake"
       )
 
       await stakingContract.unlockStake(operator, {from: operatorContract})
@@ -177,7 +178,7 @@ describe('TokenStaking/Lock', () => {
       await undelegate(operator)
       await expectRevert(
         stakingContract.recoverStake(operator),
-        "Can not recover locked stake"
+        "Locked stake"
       )
 
       await time.increase(lockPeriod)
@@ -189,7 +190,7 @@ describe('TokenStaking/Lock', () => {
       await undelegate(operator)
       await expectRevert(
         stakingContract.recoverStake(operator),
-        "Can not recover locked stake"
+        "Locked stake"
       )
 
       // disable operator contract with panic button
@@ -210,7 +211,7 @@ describe('TokenStaking/Lock', () => {
       // 5 minutes left in lock
       await expectRevert(
         stakingContract.recoverStake(operator),
-        "Can not recover locked stake"
+        "Locked stake"
       )
 
       await time.increase(time.duration.minutes(5))
@@ -328,7 +329,7 @@ describe('TokenStaking/Lock', () => {
 
       await expectRevert(
         stakingContract.recoverStake(operator),
-        "Can not recover locked stake"
+        "Locked stake"
       )
 
       await stakingContract.unlockStake(operator, {from: operatorContract2})
@@ -343,7 +344,7 @@ describe('TokenStaking/Lock', () => {
 
       await expectRevert(
         stakingContract.recoverStake(operator),
-        "Can not recover locked stake"
+        "Locked stake"
       )
 
       await registry.disableOperatorContract(operatorContract2, {from: owner});

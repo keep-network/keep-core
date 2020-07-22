@@ -1,5 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot')
 const {initTokenStaking} = require('../helpers/initContracts')
 
@@ -26,10 +26,11 @@ describe('TokenStaking', function() {
     operatorTwo = accounts[3],
     beneficiary = accounts[4],
     authorizer = accounts[5],
-    operatorContract = accounts[6];
+    operatorContract = accounts[6],
+    thirdParty = accounts[7]
 
   const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
+  let undelegationPeriod;
 
   before(async () => {
     token = await KeepToken.new({from: accounts[0]});
@@ -40,11 +41,12 @@ describe('TokenStaking', function() {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )
     stakingContract = stakingContracts.tokenStaking;
+
+    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     await registry.approveOperatorContract(operatorContract, {from: accounts[0]});
 
@@ -74,6 +76,38 @@ describe('TokenStaking', function() {
     );
   }
 
+  describe("undelegationPeriod", async () => {
+    const twoWeeks = web3.utils.toBN("1209600") // [sec]
+    const twoMonths = web3.utils.toBN("5184000") // [sec]
+    
+    it("is two weeks right after deploying the contract", async () => {
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoWeeks)
+    })
+
+    it("is two weeks one month after deploying the contract", async () => {
+      await time.increase(time.duration.days(30))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoWeeks)
+    })
+
+    it("is two weeks before two months after the deployment passes", async () => {
+      await time.increase(time.duration.days(59))
+      await time.increase(time.duration.hours(23))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoWeeks)
+    })
+
+    it("is two months after two months after the deployment passes", async () => {
+      await time.increase(time.duration.days(60))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoMonths)
+    })
+
+    it("remains as two months after two months after the deployment passes", async () => {
+      await time.increase(time.duration.days(180))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoMonths) 
+      await time.increase(time.duration.days(360))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoMonths) 
+    })
+  })
+
   describe("delegate", async () => {
     it("should update balances", async () => {
       let ownerStartBalance = await token.balanceOf.call(owner);
@@ -93,16 +127,7 @@ describe('TokenStaking', function() {
       ); 
     })
 
-    it("should not allow to delegate to the same operator twice", async () => {
-      await delegate(operatorOne, stakingAmount)
-  
-      await expectRevert(
-        delegate(operatorOne, stakingAmount),
-        "Operator already in use"
-      )
-    })
-  
-    it("should not allow to delegate to the same operator even after recovering stake", async () => {
+    it("should not allow to delegate to the same operator after recovering stake", async () => {
       let tx = await delegate(operatorOne, stakingAmount)
       let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
   
@@ -113,14 +138,14 @@ describe('TokenStaking', function() {
           
       await expectRevert(
         delegate(operatorOne, stakingAmount),
-        "Operator already in use"
+        "Stake undelegated"
       )
     })
-  
+
     it("should not allow to delegate less than the minimum stake", async () => {    
       await expectRevert(
         delegate(operatorOne, minimumStake.subn(1)),
-        "Value must be greater than the minimum stake"
+        "Less than the minimum stake"
       )
     })
   
@@ -196,7 +221,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.cancelStake(operatorOne, {from: owner}),
-        "Initialization period is over"
+        "Initialized stake"
       );
     })
 
@@ -282,7 +307,7 @@ describe('TokenStaking', function() {
       await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Cannot undelegate in initialization period"
+        "Invalid timestamp"
       )
     })
 
@@ -326,7 +351,7 @@ describe('TokenStaking', function() {
 
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Operator may not postpone undelegation"
+        "Operator may not postpone"
       )
     })
   })
@@ -403,7 +428,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.add(initializationPeriod).sub(timeRoundMargin),
           {from: operatorOne}
         ),
-        "Cannot undelegate in initialization period"
+        "Invalid timestamp"
       )
     })
 
@@ -420,7 +445,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime - 1,
           {from: operatorOne}
         ),
-        "Undelegation timestamp in the past"
+        "Invalid timestamp"
       )
     })
 
@@ -476,7 +501,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
         ),
-        "Operator may not postpone undelegation"
+        "Operator may not postpone"
       )
     })
   })
@@ -490,7 +515,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.recoverStake(operatorOne),
-        "Can not recover without first undelegating"
+        "Not undelegated"
       )
     })
 
@@ -505,7 +530,7 @@ describe('TokenStaking', function() {
   
       await expectRevert(
         stakingContract.recoverStake(operatorOne),
-        "Can not recover before undelegation period is over"
+        "Still undelegating"
       )
     })
 
@@ -788,6 +813,45 @@ describe('TokenStaking', function() {
         0,
         "There should be no active stake"
       )
+    })
+  })
+  
+  describe("transferStakeOwnership", async () => {
+    it("fails when not called by staking relationship owner", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await expectRevert(
+        stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+          {from: thirdParty}
+        ),
+        "Not authorized"
+      )
+    })
+
+    it("transfers stake relationship ownership", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+        {from: owner}
+      )
+      const newOwner = await stakingContract.ownerOf(operatorOne)
+      expect(newOwner).to.equal(thirdParty)
+    })
+
+    it("emits an event", async () => {
+      await delegate(operatorOne, stakingAmount)
+      const receipt = await stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+        {from: owner}
+      )
+
+      await expectEvent(receipt, "StakeOwnershipTransferred", {
+        operator: operatorOne,
+        newOwner: thirdParty
+      })
     })
   })
 });

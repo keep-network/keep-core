@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useCallback } from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
@@ -73,7 +73,11 @@ const Wallet = ({
   modalProps,
 }) => {
   const { ModalComponent, openModal, closeModal } = useModal()
-  const { connectAppWithWallet, setAccount } = useWeb3Context()
+  const {
+    connectAppWithWallet,
+    setAccount,
+    abortWalletConnection,
+  } = useWeb3Context()
   const [accounts, setAccounts] = useState(null)
 
   const onSelectProvider = async (providerName) => {
@@ -82,13 +86,20 @@ const Wallet = ({
       providerName,
       firstAccountAsSelected
     )
-    setAccounts(availableAccounts)
+    if (!firstAccountAsSelected) {
+      setAccounts(availableAccounts)
+    }
   }
 
   const onSelectAccount = (account) => {
     setAccount([account])
     closeModal()
   }
+
+  const customCloseModal = useCallback(() => {
+    abortWalletConnection()
+    closeModal()
+  }, [abortWalletConnection, closeModal])
 
   const renderModalContent = () => {
     switch (providerName) {
@@ -115,12 +126,16 @@ const Wallet = ({
 
   return (
     <>
-      <ModalComponent title="Connect Wallet">
+      <ModalComponent title="Connect Wallet" closeModal={customCloseModal}>
         {renderModalContent()}
       </ModalComponent>
       <li
-        className="wallet"
+        title={providerName === "COINBASE" ? "Coinbase not yet supported" : ""}
+        className={`wallet${providerName === "COINBASE" ? " disabled" : ""}`}
         onClick={async () => {
+          if (providerName === "COINBASE") {
+            return
+          }
           openModal()
           if (providerName === "LEDGER") {
             return

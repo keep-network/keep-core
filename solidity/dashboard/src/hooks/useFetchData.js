@@ -21,6 +21,7 @@ export const useFetchData = (
   const [state, dispatch] = useReducer(dataFetchReducer, {
     isFetching: true,
     isError: false,
+    error: null,
     data: initialData,
     syncState: syncState.UP_TO_DATE,
   })
@@ -39,7 +40,8 @@ export const useFetchData = (
           dispatch({ type: FETCH_REQUEST_SUCCESS, payload: data })
       })
       .catch((error) => {
-        shouldSetState && dispatch({ type: FETCH_REQUEST_FAILURE })
+        shouldSetState &&
+          dispatch({ type: FETCH_REQUEST_FAILURE, payload: error })
       })
 
     return () => {
@@ -75,6 +77,7 @@ const dataFetchReducer = (state, action) => {
         ...state,
         isFetching: true,
         isError: false,
+        error: null,
       }
     case FETCH_REQUEST_SUCCESS:
       return {
@@ -83,12 +86,14 @@ const dataFetchReducer = (state, action) => {
         isFetching: false,
         isError: false,
         data: action.payload,
+        error: null,
       }
     case FETCH_REQUEST_FAILURE:
       return {
         ...state,
         isFetching: false,
         isError: true,
+        error: action.payload,
       }
     case UPDATE_DATA:
       return {

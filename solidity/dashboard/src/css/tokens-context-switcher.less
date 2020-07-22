@@ -30,6 +30,13 @@
                 width:  24px;
             }
         }
+
+        svg.grant-context-icon, svg.owned-tokens-context-icon {
+            circle {
+                fill: transparent;
+            }
+        }
+
         &.inactive {
             position: relative;
             * {
@@ -46,6 +53,7 @@
             svg path {
                 stroke: @color-grey-40;
             }
+
             &::before {
                 content: "";
                 z-index: 3;

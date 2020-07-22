@@ -35,7 +35,6 @@ describe('RolesLookup', () => {
     nonGrantee = accounts[12]
 
   const initializationPeriod = time.duration.seconds(0),
-    undelegationPeriod = time.duration.seconds(0),
     grantUnlockingDuration = time.duration.seconds(0),
     grantStart = time.duration.seconds(0),
     grantCliff = time.duration.seconds(0),
@@ -57,7 +56,6 @@ describe('RolesLookup', () => {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     )

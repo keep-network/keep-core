@@ -32,7 +32,6 @@ describe('TokenGrant/ManagedGrantFactory', () => {
   const grantCliff = time.duration.days(10);
 
   const initializationPeriod = time.duration.minutes(10);
-  const undelegationPeriod = time.duration.minutes(30);
 
   let factory;
 
@@ -45,7 +44,6 @@ describe('TokenGrant/ManagedGrantFactory', () => {
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      undelegationPeriod,
       contract.fromArtifact('TokenStakingEscrow'),
       contract.fromArtifact('TokenStaking')
     );

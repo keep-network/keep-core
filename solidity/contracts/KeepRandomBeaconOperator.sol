@@ -82,7 +82,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /// next to the actual gas price from the transaction. We use gas price
     /// ceiling to defend against malicious miner-submitters who can manipulate
     /// transaction gas price.
-    uint256 public gasPriceCeiling = 30*1e9; // (30 Gwei = 30 * 10^9 wei)
+    uint256 public gasPriceCeiling = 60*1e9; // (60 Gwei = 60 * 10^9 wei)
 
     /// @dev Size of a group in the threshold relay.
     uint256 public groupSize = 64;

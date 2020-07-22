@@ -26,7 +26,7 @@ describe('TokenStaking/Punishment', () => {
     let largeStake, minimumStake;
 
     const initializationPeriod = time.duration.seconds(10)
-    const undelegationPeriod = time.duration.seconds(30)
+    let undelegationPeriod
 
     before(async () => {
         token = await KeepToken.new({ from: owner })
@@ -37,11 +37,12 @@ describe('TokenStaking/Punishment', () => {
             tokenGrant.address,
             registry.address,
             initializationPeriod,
-            undelegationPeriod,
             contract.fromArtifact('TokenStakingEscrow'),
             contract.fromArtifact('TokenStaking')
         )
         stakingContract = stakingContracts.tokenStaking;
+
+        undelegationPeriod = await stakingContract.undelegationPeriod()
 
         await registry.setRegistryKeeper(registryKeeper, { from: owner })
 
@@ -114,7 +115,7 @@ describe('TokenStaking/Punishment', () => {
             let amountToSlash = web3.utils.toBN(1000)
             await expectRevert(
                 stakingContract.slash(amountToSlash, [operator], { from: operatorContract }),
-                "Stake must be active"
+                "Inactive stake"
             )
         })
 
@@ -219,7 +220,7 @@ describe('TokenStaking/Punishment', () => {
                     amountToSeize, rewardMultiplier, tattletale,
                     [operator], { from: operatorContract }
                 ),
-                "Stake must be active"
+                "Inactive stake"
             )
         })
 

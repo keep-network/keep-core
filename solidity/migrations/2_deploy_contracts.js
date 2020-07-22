@@ -2,9 +2,10 @@ const KeepToken = artifacts.require("./KeepToken.sol");
 const ModUtils = artifacts.require("./utils/ModUtils.sol");
 const AltBn128 = artifacts.require("./cryptography/AltBn128.sol");
 const BLS = artifacts.require("./cryptography/BLS.sol");
-const MinimumStakeSchedule = artifacts.require("./MinimumStakeSchedule.sol");
-const GrantStaking = artifacts.require("./GrantStaking.sol");
-const Locks = artifacts.require("./Locks.sol");
+const MinimumStakeSchedule = artifacts.require("./libraries/staking/MinimumStakeSchedule.sol");
+const GrantStaking = artifacts.require("./libraries/staking/GrantStaking.sol");
+const Locks = artifacts.require("./libraries/staking/Locks.sol");
+const TopUps = artifacts.require("./libraries/staking/TopUps.sol");
 const TokenStaking = artifacts.require("./TokenStaking.sol");
 const TokenStakingEscrow = artifacts.require("./TokenStakingEscrow.sol");
 const PermissiveStakingPolicy = artifacts.require('./PermissiveStakingPolicy.sol');
@@ -23,7 +24,6 @@ const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 
 let initializationPeriod = 43200; // ~12 hours
-let undelegationPeriod = 7776000; // ~3 months
 const dkgContributionMargin = 1; // 1%
 
 module.exports = async function(deployer, network) {
@@ -45,17 +45,18 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(MinimumStakeSchedule);
   await deployer.deploy(GrantStaking);
   await deployer.deploy(Locks);
+  await deployer.deploy(TopUps);
   await deployer.link(MinimumStakeSchedule, TokenStaking);
   await deployer.link(GrantStaking, TokenStaking);
   await deployer.link(Locks, TokenStaking);
+  await deployer.link(TopUps, TokenStaking);
   await deployer.deploy(
     TokenStaking,
     KeepToken.address,
     TokenGrant.address,
     TokenStakingEscrow.address,
     KeepRegistry.address,
-    initializationPeriod,
-    undelegationPeriod
+    initializationPeriod
   );
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);

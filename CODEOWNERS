@@ -27,7 +27,7 @@
 /solidity/contracts/libraries/staking/MinimumStakeSchedule.sol @Shadowfiend @pdyraga @nkuba
 /solidity/contracts/utils/AddressArrayUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/BytesLib.sol @Shadowfiend @pdyraga
-/solidity/contracts/utils/OperatorParams.sol @Shadowfiend @pdyraga
+/solidity/contracts/utils/OperatorParams.sol @Shadowfiend @pdyraga @nkuba
 /solidity/contracts/utils/PercentUtils.sol @Shadowfiend @pdyraga
 /solidity/contracts/utils/UIntArrayUtils.sol @Shadowfiend @pdyraga
 /solidity/package.json @Shadowfiend @pdyraga
