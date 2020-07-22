@@ -5,7 +5,7 @@ import "./KeepRandomBeaconOperator.sol";
 import "./TokenStaking.sol";
 
 contract BeaconBackportRewards is Rewards {
-    uint256 lastEligibleGroup;
+    uint256 public lastEligibleGroup;
     mapping(uint256 => bool) excludedGroups;
     uint256 excludedGroupCount;
     KeepRandomBeaconOperator operatorContract;
@@ -30,7 +30,7 @@ contract BeaconBackportRewards is Rewards {
         _token,
         1, // _minimumKeepsPerInterval,
         _firstIntervalStart,
-        [] // _intervalWeights
+        new uint256[](0) // _intervalWeights
     ) {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);
