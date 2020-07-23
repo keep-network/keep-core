@@ -439,6 +439,9 @@ contract Rewards {
         uint256 keepCount = keepsInInterval(interval);
         uint256 minimumKeeps = minimumKeepsPerInterval;
         uint256 adjustmentCount = Math.max(keepCount, minimumKeeps);
+        if (adjustmentCount == 0) {
+            return 0;
+        }
         return __baseAllocation.div(adjustmentCount).mul(keepCount);
     }
 
