@@ -419,9 +419,8 @@ contract TokenStakingEscrow is Ownable {
         address operator,
         address grantManager
     ) internal {
-        uint256 amount = deposit.amount.sub(deposit.withdrawn);
-
-        deposits[operator].withdrawn = deposit.amount;
+        uint256 amount = availableAmount(operator);
+        deposits[operator].withdrawn = amount;
         keepToken.safeTransfer(grantManager, amount);
 
         emit RevokedDepositWithdrawn(operator, grantManager, amount);
