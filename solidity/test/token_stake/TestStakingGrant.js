@@ -227,6 +227,20 @@ describe('TokenStaking/StakingGrant', () => {
         deposited = await tokenStakingEscrow.depositedAmount(operatorTwo)
         expect(deposited).to.eq.BN(delegatedAmount)
       })
+
+      it('fails if already cancelled', async () => {
+        await tokenStaking.cancelStake(operatorOne, {from: grantee})
+        await expectRevert(
+          tokenStaking.cancelStake(operatorOne, {from: grantee}),
+          "Stake for the operator already deposited in the escrow"
+        )
+
+        await tokenStaking.cancelStake(operatorTwo, {from: managedGrantee})
+        await expectRevert(
+          tokenStaking.cancelStake(operatorTwo, {from: managedGrantee}),
+          "Stake for the operator already deposited in the escrow"
+        )
+      })
     })
 
     describe('undelegate', async () => {
@@ -328,6 +342,27 @@ describe('TokenStaking/StakingGrant', () => {
 
         deposited = await tokenStakingEscrow.depositedAmount(operatorTwo)
         expect(deposited).to.eq.BN(delegatedAmount)
+      })
+
+      it('fails if already recovered', async () => {
+        await time.increase(initializationPeriod.addn(1))
+
+        await tokenStaking.undelegate(operatorOne, {from: operatorOne})
+        await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+
+        await time.increase(undelegationPeriod.addn(1))
+
+        await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
+        await expectRevert(
+          tokenStaking.recoverStake(operatorOne, {from: thirdParty}),
+          "Stake for the operator already deposited in the escrow"
+        )
+
+        await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
+        await expectRevert(
+          tokenStaking.recoverStake(operatorTwo, {from: thirdParty}),
+          "Stake for the operator already deposited in the escrow"
+        )
       })
     })
 
