@@ -90,14 +90,15 @@ export const ModalContextProvider = ({ children }) => {
 
   const openConfirmationModal = useCallback(
     (options, ConfirmationModalComponent = ConfirmationModal) => {
+      const { modalOptions, ...confirmationModalOptions } = options
       const confirmationModal = (
         <ConfirmationModalComponent
           onCancel={closeModal}
           onBtnClick={onSubmitConfirmationModal}
-          {...options}
+          {...confirmationModalOptions}
         />
       )
-      openModal(confirmationModal)
+      openModal(confirmationModal, modalOptions)
 
       return new Promise((resolve, reject) => {
         awaitingPromiseRef.current = { resolve, reject }

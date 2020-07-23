@@ -24,6 +24,7 @@ const DelegationOverview = () => {
     selectedGrant,
     isFetching,
     grantsAreFetching,
+    keepTokenBalance,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -66,6 +67,14 @@ const DelegationOverview = () => {
     refreshData()
   }, [refreshGrants, refreshData])
 
+  const availableToStake = useMemo(() => {
+    if (tokensContext === "granted") {
+      return selectedGrant.availableToStake
+    }
+
+    return keepTokenBalance
+  }, [tokensContext, selectedGrant.availableToStake, keepTokenBalance])
+
   return (
     <section>
       <div className="flex wrap self-center mt-3 mb-2">
@@ -107,6 +116,7 @@ const DelegationOverview = () => {
         <DelegatedTokensTable
           delegatedTokens={getDelegations()}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
+          availableToStake={availableToStake}
         />
       </LoadingOverlay>
       <LoadingOverlay
