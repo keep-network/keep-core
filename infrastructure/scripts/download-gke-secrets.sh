@@ -17,3 +17,4 @@ kubectl get secret --no-headers
 
 kubectl get secret --no-headers | awk '{print $1}' | \
   xargs -I{} sh -c 'kubectl get secret -o yaml "$1" > "$1.yaml"' - {}
+  
