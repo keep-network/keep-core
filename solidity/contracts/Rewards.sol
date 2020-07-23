@@ -97,7 +97,7 @@ contract Rewards {
 
     // Mapping of interval to number of keeps whose rewards have been paid out,
     // or reallocated because the keep closed unhappily
-    mapping(uint256 => uint256) intervalKeepsProcessed;
+    mapping(uint256 => uint256) public intervalKeepsProcessed;
 
     constructor (
         uint256 _termLength,
