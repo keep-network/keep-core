@@ -32,7 +32,6 @@ export default React.memo(ConfirmationModal)
 const ConfirmationForm = ({
   confirmationText,
   btnText,
-  onBtnClick,
   onCancel,
   ...formikProps
 }) => {
@@ -56,7 +55,7 @@ const ConfirmationForm = ({
           className="btn btn-primary"
           type="submit"
           disabled={!(formikProps.isValid && formikProps.dirty)}
-          onClick={onBtnClick}
+          onClick={formikProps.handleSubmit}
         >
           {btnText}
         </Button>
@@ -81,5 +80,6 @@ const ConfirmationFormFormik = withFormik({
 
     return getErrorsObj(errors)
   },
+  handleSubmit: (values, { props }) => props.onBtnClick(values),
   displayName: "ConfirmationForm",
 })(ConfirmationForm)
