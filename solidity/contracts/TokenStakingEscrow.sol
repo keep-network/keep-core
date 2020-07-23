@@ -365,6 +365,11 @@ contract TokenStakingEscrow is Ownable {
             "Grant with this ID does not exist"
         );
 
+        require(
+            depositedAmount(operator) == 0,
+            "Stake for the operator already deposited in the escrow"
+        );
+
         keepToken.safeTransferFrom(from, address(this), value);
         deposits[operator] = Deposit(grantId, value, 0, 0);
 
