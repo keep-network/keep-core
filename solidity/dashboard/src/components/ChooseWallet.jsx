@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react"
+import React, { useCallback } from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
@@ -7,6 +7,8 @@ import Tile from "./Tile"
 import PageWrapper from "./PageWrapper"
 import LedgerModal from "./LedgerModal"
 import TrezorModal from "./TrezorModal"
+import { TrezorProvider } from "../connectors/trezor"
+import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
 
 const WALLETS = [
   {
@@ -22,6 +24,7 @@ const WALLETS = [
       description:
         "The MetaMask login screen will open in an external window. If it doesn’t load right away, click below to install:",
     },
+    isHardwareWallet: false,
   },
   {
     label: "Coinbase",
@@ -35,6 +38,7 @@ const WALLETS = [
       btnLink: null,
       description: "Scan QR code to connect:",
     },
+    isHardwareWallet: false,
   },
   {
     label: "Ledger",
@@ -42,6 +46,11 @@ const WALLETS = [
     providerName: "LEDGER",
     type: "hardware wallet",
     description: "Crypto wallet on a secure hardware device.",
+    isHardwareWallet: true,
+    connector: {
+      LEDGER_LIVE: new LedgerProvider(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
+      LEDGER_LEGACY: new LedgerProvider(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
+    },
   },
   {
     label: "Trezor",
@@ -49,6 +58,8 @@ const WALLETS = [
     providerName: "TREZOR",
     type: "hardware wallet",
     description: "Crypto wallet on a secure hardware device.",
+    isHardwareWallet: true,
+    connector: new TrezorProvider(),
   },
 ]
 
@@ -71,31 +82,10 @@ const Wallet = ({
   type,
   description,
   modalProps,
+  connector,
 }) => {
   const { openModal, closeModal } = useModal()
-  const {
-    connectAppWithWallet,
-    setAccount,
-    abortWalletConnection,
-  } = useWeb3Context()
-  const [accounts, setAccounts] = useState(null)
-
-  const onSelectProvider = async (providerName) => {
-    const firstAccountAsSelected = providerName === "METAMASK"
-    const availableAccounts = await connectAppWithWallet(
-      providerName,
-      firstAccountAsSelected
-    )
-    if (!firstAccountAsSelected) {
-      setAccounts(availableAccounts)
-    }
-    closeModal()
-  }
-
-  const onSelectAccount = (account) => {
-    setAccount([account])
-    closeModal()
-  }
+  const { connectAppWithWallet, abortWalletConnection } = useWeb3Context()
 
   const customCloseModal = useCallback(() => {
     abortWalletConnection()
@@ -107,14 +97,18 @@ const Wallet = ({
       case "LEDGER":
         return (
           <LedgerModal
-            onSelectProvider={onSelectProvider}
-            onSelectAccount={onSelectAccount}
-            accounts={accounts}
+            connector={connector}
+            closeModal={closeModal}
+            connectAppWithWallet={connectAppWithWallet}
           />
         )
       case "TREZOR":
         return (
-          <TrezorModal accounts={accounts} onSelectAccount={onSelectAccount} />
+          <TrezorModal
+            connector={connector}
+            closeModal={closeModal}
+            connectAppWithWallet={connectAppWithWallet}
+          />
         )
       case "METAMASK":
       case "COINBASE":
@@ -137,10 +131,10 @@ const Wallet = ({
           title: "Connect Wallet",
           closeModal: customCloseModal,
         })
-        if (providerName === "LEDGER") {
-          return
+        if (providerName === "METAMASK") {
+          connectAppWithWallet(window.ethereum, providerName)
+          closeModal()
         }
-        await onSelectProvider(providerName)
       }}
     >
       {icon}

@@ -1,7 +1,5 @@
 import React from "react"
 import Web3 from "web3"
-import { TrezorProvider } from "../connectors/trezor"
-import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext, messageType } from "./Message"
 import { getContracts } from "../contracts"
@@ -26,41 +24,16 @@ export default class Web3ContextProvider extends React.Component {
     }
   }
 
-  getWeb3 = (providerName) => {
-    switch (providerName) {
-      case "TREZOR": {
-        return new Web3(new TrezorProvider())
-      }
-      case "METAMASK": {
-        if (window.ethereum || window.web3) {
-          return new Web3(window.ethereum || window.web3.currentProvider)
-        }
-        throw new Error("No browser extention")
-      }
-      case "COINBASE": {
-        throw new Error("Coinbase wallet is not yet supported")
-      }
-      case "LEDGER_LIVE":
-      case "LEDGER_LEGACY": {
-        return new Web3(
-          new LedgerProvider(LEDGER_DERIVATION_PATHS[providerName])
-        )
-      }
-      default:
-        throw new Error("Unsupported wallet")
-    }
-  }
-
-  connectAppWithWallet = async (
-    providerName,
-    firstAccountAsSelected = false
-  ) => {
-    let web3
-    let accounts
+  connectAppWithWallet = async (connector, providerName) => {
     this.setState({ isFetching: true })
+    let web3
+    let yourAddress
+    let contracts
     try {
-      web3 = this.getWeb3(providerName)
-      accounts = await web3.currentProvider.enable()
+      const accounts = await connector.enable()
+      web3 = new Web3(connector)
+      yourAddress = accounts[0]
+      web3.eth.defaultAccount = yourAddress
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       this.context.showMessage({
@@ -69,16 +42,28 @@ export default class Web3ContextProvider extends React.Component {
       })
       return
     }
-    this.setState(
-      {
-        web3,
-        provider: providerName,
-        yourAddress: firstAccountAsSelected ? accounts[0] : null,
-        networkType: await web3.eth.net.getNetworkType(),
-      },
-      this.setData
-    )
-    return accounts
+
+    try {
+      contracts = await getContracts(web3)
+    } catch (error) {
+      this.setState({
+        isFetching: false,
+        error: "Please select correct network",
+      })
+      return
+    }
+
+    this.setState({
+      web3,
+      provider: providerName,
+      yourAddress,
+      networkType: await web3.eth.net.getNetworkType(),
+      ...contracts,
+      utils: web3.utils,
+      eth: web3.eth,
+      isFetching: false,
+      connector,
+    })
   }
 
   abortWalletConnection = () => {
@@ -97,11 +82,6 @@ export default class Web3ContextProvider extends React.Component {
     })
   }
 
-  setData = async () => {
-    this.initializeContracts()
-    this.state.web3.eth.currentProvider.on("accountsChanged", this.setAccount)
-  }
-
   connectAppWithAccount = async () => {
     const { web3 } = this.state
     this.setState({ isFetching: true })
@@ -117,25 +97,7 @@ export default class Web3ContextProvider extends React.Component {
     }
   }
 
-  initializeContracts = async () => {
-    const { web3 } = this.state
-    try {
-      const contracts = await getContracts(web3)
-      this.setState({
-        ...contracts,
-        utils: web3.utils,
-        eth: web3.eth,
-        isFetching: false,
-      })
-    } catch (error) {
-      this.setState({
-        isFetching: false,
-        error: "Please select correct network",
-      })
-    }
-  }
-
-  setAccount = ([yourAddress]) => {
+  onAccountChanged = async ([yourAddress]) => {
     if (!yourAddress) {
       this.setState({
         isFetching: false,
@@ -146,7 +108,20 @@ export default class Web3ContextProvider extends React.Component {
       })
       return
     }
-    this.setState({ yourAddress })
+    const { web3, connector } = this.state
+    web3.eth.defaultAccount = yourAddress
+    let contracts
+    try {
+      contracts = await getContracts(web3)
+      connector.defaultAccount = yourAddress
+    } catch (error) {
+      this.setState({
+        error: "Please select correct network",
+      })
+      return
+    }
+
+    this.setState({ ...contracts, yourAddress, web3 })
   }
 
   render() {
@@ -156,7 +131,6 @@ export default class Web3ContextProvider extends React.Component {
           ...this.state,
           connectAppWithAccount: this.connectAppWithAccount,
           connectAppWithWallet: this.connectAppWithWallet,
-          setAccount: this.setAccount,
           abortWalletConnection: this.abortWalletConnection,
         }}
       >

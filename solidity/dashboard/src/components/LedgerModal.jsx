@@ -1,9 +1,32 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import * as Icons from "./Icons"
 import Button from "./Button"
 import ChooseWalletAddress from "./ChooseWalletAddress"
+import { isEmptyArray } from "../utils/array.utils"
+import { useShowMessage, messageType } from "./Message"
 
-const LedgerModal = ({ onSelectProvider, accounts, onSelectAccount }) => {
+const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
+  const [accounts, setAccounts] = useState([])
+  const [ledgerVersion, setLedgerVersion] = useState("")
+  const showMessage = useShowMessage()
+
+  useEffect(() => {
+    if (ledgerVersion === "LEDGER_LIVE" || ledgerVersion === "LEDGER_LEEGACY") {
+      connector[ledgerVersion]
+        .getAccounts()
+        .then(setAccounts)
+        .catch((error) => {
+          showMessage({ type: messageType.ERROR, title: error.message })
+        })
+    }
+  }, [ledgerVersion, connector, showMessage])
+
+  const onSelectAccount = async (account) => {
+    connector[ledgerVersion].defaultAccount = account
+    await connectAppWithWallet(connector[ledgerVersion], "LEDGER")
+    closeModal()
+  }
+
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
@@ -20,19 +43,19 @@ const LedgerModal = ({ onSelectProvider, accounts, onSelectAccount }) => {
         }}
       >
         <Button
-          onClick={() => onSelectProvider("LEDGER_LIVE")}
+          onClick={() => setLedgerVersion("LEDGER_LIVE")}
           className="btn btn-primary btn-md mb-1"
         >
           ledger live
         </Button>
         <Button
-          onClick={() => onSelectProvider("LEDGER_LEGACY")}
+          onClick={() => setLedgerVersion("LEDGER_LEGACY")}
           className="btn btn-primary btn-md"
         >
           ledger legacy
         </Button>
       </div>
-      {accounts && (
+      {!isEmptyArray(accounts) && (
         <ChooseWalletAddress
           onSelectAccount={onSelectAccount}
           addresses={accounts}

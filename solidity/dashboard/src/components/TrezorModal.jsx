@@ -1,8 +1,28 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import * as Icons from "./Icons"
 import ChooseWalletAddress from "./ChooseWalletAddress"
+import { useShowMessage, messageType } from "./Message"
+import { isEmptyArray } from "../utils/array.utils"
 
-const TrezorModal = ({ accounts, onSelectAccount }) => {
+const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
+  const [accounts, setAccounts] = useState([])
+  const showMessage = useShowMessage()
+
+  useEffect(() => {
+    connector
+      .getAccounts()
+      .then(setAccounts)
+      .catch((error) => {
+        showMessage({ type: messageType.ERROR, title: error.message })
+      })
+  }, [showMessage, connector])
+
+  const onSelectAccount = async (account) => {
+    connector.defaultAccount = account
+    await connectAppWithWallet(connector, "TREZOR")
+    closeModal()
+  }
+
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
@@ -22,7 +42,7 @@ const TrezorModal = ({ accounts, onSelectAccount }) => {
       >
         go to trezor setup
       </a>
-      {accounts && (
+      {!isEmptyArray(accounts) && (
         <ChooseWalletAddress
           onSelectAccount={onSelectAccount}
           addresses={accounts}
