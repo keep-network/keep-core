@@ -24,6 +24,8 @@ export const TopUpsDataTable = ({ topUps }) => {
           title: "Commit action has failed ",
           content: error.message,
         })
+
+        throw error
       }
     },
     [showMessage]
@@ -37,9 +39,11 @@ export const TopUpsDataTable = ({ topUps }) => {
       noDataMessage="No available top-ups."
     >
       <Column
-        header="amount"
-        field="amount"
-        renderContent={({ amount }) => `${displayAmount(amount)} KEEP`}
+        header="availableTopUpAmount"
+        field="availableTopUpAmount"
+        renderContent={({ availableTopUpAmount }) =>
+          `${displayAmount(availableTopUpAmount)} KEEP`
+        }
       />
       <Column
         header="operator"
@@ -53,8 +57,8 @@ export const TopUpsDataTable = ({ topUps }) => {
         field="operatorAddress"
         renderContent={({ operatorAddress }) => (
           <SubmitButton
-            onSubmitAction={(transactionHashCallback) =>
-              onCommitTopUpBtn(operatorAddress, transactionHashCallback)
+            onSubmitAction={async (transactionHashCallback) =>
+              await onCommitTopUpBtn(operatorAddress, transactionHashCallback)
             }
             className="btn btn-primary btn-sm"
           >

@@ -25,6 +25,8 @@ const DelegationOverview = () => {
     isFetching,
     grantsAreFetching,
     keepTokenBalance,
+    availableTopUps,
+    topUpsAreFetching,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -127,9 +129,12 @@ const DelegationOverview = () => {
       >
         <Undelegations undelegations={getUndelegations()} />
       </LoadingOverlay>
-      <LoadingOverlay isFetching={false}>
+      <LoadingOverlay
+        isFetching={topUpsAreFetching}
+        skeletonComponent={<DataTableSkeleton columns={3} />}
+      >
         <Tile>
-          <TopUpsDataTable topUps={[]} />
+          <TopUpsDataTable topUps={availableTopUps} />
         </Tile>
       </LoadingOverlay>
     </section>

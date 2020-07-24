@@ -9,19 +9,24 @@ export const commitTopUp = async (operator, onTransactionHashCallback) => {
     .on("transactionHash", onTransactionHashCallback)
 }
 
-export const fetchAvailableTopUps = async (operators) => {
+export const fetchAvailableTopUps = async (_, operators) => {
   const availableTopUps = []
+
+  if (isEmptyArray(operators)) {
+    return availableTopUps
+  }
 
   const toupUpsInitiatedByOperator = (
     await contracts.stakingContract.getPastEvents("TopUpInitiated", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: [operators] },
+      filter: { operator: operators },
     })
   ).reduce(reduceByOperator, {})
+
   const toupUpsCompletedByOperator = (
     await contracts.stakingContract.getPastEvents("TopUpCompleted", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: [operators] },
+      filter: { operator: operators },
     })
   ).reduce(reduceByOperator, {})
 
@@ -33,11 +38,17 @@ export const fetchAvailableTopUps = async (operators) => {
       ? topUpCompleted.pop()
       : undefined
 
-    if (latestTopUpCompletedEvent && !isEmptyArray(topUpInitiated)) {
-      const availableTopUpAmount = topUpInitiated
-        .filter(filterByAfterLatestCompletedTopUp(latestTopUpCompletedEvent))
-        .reduce(reduceAmount, 0)
+    if (!isEmptyArray(topUpInitiated)) {
+      const availableOperatorTopUps = latestTopUpCompletedEvent
+        ? topUpInitiated.filter(
+            filterByAfterLatestCompletedTopUp(latestTopUpCompletedEvent)
+          )
+        : topUpInitiated
 
+      const availableTopUpAmount = availableOperatorTopUps.reduce(
+        reduceAmount,
+        0
+      )
       availableTopUps.push({ operatorAddress: operator, availableTopUpAmount })
     }
   }
@@ -50,7 +61,7 @@ const reduceByOperator = (result, event) => {
     returnValues: { operator },
   } = event
 
-  result[operator] = (result[operator] || []).push(event)
+  ;(result[operator] = result[operator] || []).push(event)
 
   return result
 }
