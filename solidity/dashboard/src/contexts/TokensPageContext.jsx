@@ -175,7 +175,7 @@ const TokenPageContextProvider = (props) => {
     const availableToWitdrawGrant = await contracts.grantContract.methods
       .withdrawable(grantId)
       .call()
-    console.log("asdasdas", availableToWithdrawEscrow, availableToWitdrawGrant)
+
     dispatch({
       type: GRANT_DEPOSITED,
       payload: {
