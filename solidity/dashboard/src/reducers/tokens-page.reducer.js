@@ -201,6 +201,7 @@ const grantWithdrawn = (
       ...grantToUpdate.escrowOperatorsToWithdraw,
     ].filter((escrowOperator) => !isSameEthAddress(operator, escrowOperator))
   }
+  grantToUpdate.withdrawn = add(grantToUpdate.withdrawn, amount)
   grants[indexInArray] = grantToUpdate
 
   return grants

@@ -1,5 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot')
 const {initTokenStaking} = require('../helpers/initContracts')
 
@@ -26,7 +26,8 @@ describe('TokenStaking', function() {
     operatorTwo = accounts[3],
     beneficiary = accounts[4],
     authorizer = accounts[5],
-    operatorContract = accounts[6];
+    operatorContract = accounts[6],
+    thirdParty = accounts[7]
 
   const initializationPeriod = time.duration.minutes(10);
   let undelegationPeriod;
@@ -74,6 +75,38 @@ describe('TokenStaking', function() {
       {from: owner}
     );
   }
+
+  describe("undelegationPeriod", async () => {
+    const twoWeeks = web3.utils.toBN("1209600") // [sec]
+    const twoMonths = web3.utils.toBN("5184000") // [sec]
+    
+    it("is two weeks right after deploying the contract", async () => {
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoWeeks)
+    })
+
+    it("is two weeks one month after deploying the contract", async () => {
+      await time.increase(time.duration.days(30))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoWeeks)
+    })
+
+    it("is two weeks before two months after the deployment passes", async () => {
+      await time.increase(time.duration.days(59))
+      await time.increase(time.duration.hours(23))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoWeeks)
+    })
+
+    it("is two months after two months after the deployment passes", async () => {
+      await time.increase(time.duration.days(60))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoMonths)
+    })
+
+    it("remains as two months after two months after the deployment passes", async () => {
+      await time.increase(time.duration.days(180))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoMonths) 
+      await time.increase(time.duration.days(360))
+      expect(await stakingContract.undelegationPeriod()).to.eq.BN(twoMonths) 
+    })
+  })
 
   describe("delegate", async () => {
     it("should update balances", async () => {
@@ -318,7 +351,7 @@ describe('TokenStaking', function() {
 
       await expectRevert(
         stakingContract.undelegate(operatorOne, {from: operatorOne}),
-        "Operator may not postpone undelegation"
+        "Operator may not postpone"
       )
     })
   })
@@ -468,7 +501,7 @@ describe('TokenStaking', function() {
           operatorOne, currentTime.addn(1),
           {from: operatorOne}
         ),
-        "Operator may not postpone undelegation"
+        "Operator may not postpone"
       )
     })
   })
@@ -780,6 +813,45 @@ describe('TokenStaking', function() {
         0,
         "There should be no active stake"
       )
+    })
+  })
+  
+  describe("transferStakeOwnership", async () => {
+    it("fails when not called by staking relationship owner", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await expectRevert(
+        stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+          {from: thirdParty}
+        ),
+        "Not authorized"
+      )
+    })
+
+    it("transfers stake relationship ownership", async () => {
+      await delegate(operatorOne, stakingAmount)
+      await stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+        {from: owner}
+      )
+      const newOwner = await stakingContract.ownerOf(operatorOne)
+      expect(newOwner).to.equal(thirdParty)
+    })
+
+    it("emits an event", async () => {
+      await delegate(operatorOne, stakingAmount)
+      const receipt = await stakingContract.transferStakeOwnership(
+        operatorOne,
+        thirdParty,
+        {from: owner}
+      )
+
+      await expectEvent(receipt, "StakeOwnershipTransferred", {
+        operator: operatorOne,
+        newOwner: thirdParty
+      })
     })
   })
 });

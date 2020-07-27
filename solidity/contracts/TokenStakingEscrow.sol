@@ -103,6 +103,7 @@ contract TokenStakingEscrow is Ownable {
         bytes memory extraData
     ) public {
         require(IERC20(token) == keepToken, "Not a KEEP token");
+        require(msg.sender == token, "KEEP token is not the sender");
         require(extraData.length == 64, "Unexpected data length");
 
         (address operator, uint256 grantId) = abi.decode(
@@ -302,7 +303,7 @@ contract TokenStakingEscrow is Ownable {
             "Escrow not authorized"
         );
 
-        uint256 amountLeft = deposit.amount.sub(deposit.withdrawn);
+        uint256 amountLeft = availableAmount(operator);
         deposits[operator].withdrawn = deposit.withdrawn.add(amountLeft);
         TokenSender(address(keepToken)).approveAndCall(
             receivingEscrow,
@@ -364,6 +365,11 @@ contract TokenStakingEscrow is Ownable {
             "Grant with this ID does not exist"
         );
 
+        require(
+            depositedAmount(operator) == 0,
+            "Stake for the operator already deposited in the escrow"
+        );
+
         keepToken.safeTransferFrom(from, address(this), value);
         deposits[operator] = Deposit(grantId, value, 0, 0);
 
@@ -418,9 +424,8 @@ contract TokenStakingEscrow is Ownable {
         address operator,
         address grantManager
     ) internal {
-        uint256 amount = deposit.amount.sub(deposit.withdrawn);
-
-        deposits[operator].withdrawn = deposit.amount;
+        uint256 amount = availableAmount(operator);
+        deposits[operator].withdrawn = amount;
         keepToken.safeTransfer(grantManager, amount);
 
         emit RevokedDepositWithdrawn(operator, grantManager, amount);

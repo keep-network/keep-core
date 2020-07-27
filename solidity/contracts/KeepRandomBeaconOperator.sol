@@ -82,7 +82,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     /// next to the actual gas price from the transaction. We use gas price
     /// ceiling to defend against malicious miner-submitters who can manipulate
     /// transaction gas price.
-    uint256 public gasPriceCeiling = 30*1e9; // (30 Gwei = 30 * 10^9 wei)
+    uint256 public gasPriceCeiling = 60*1e9; // (60 Gwei = 60 * 10^9 wei)
 
     /// @dev Size of a group in the threshold relay.
     uint256 public groupSize = 64;
@@ -703,8 +703,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         return groups.groups.length;
     }
 
-    function getGroupRegistrationBlockHeight(uint256 groupIndex) public view returns (uint256) {
-        return groups.getGroupRegistrationBlockHeight(groupIndex);
+    function getGroupRegistrationTime(uint256 groupIndex) public view returns (uint256) {
+        return groups.getGroupRegistrationTime(groupIndex);
     }
 
     function isGroupTerminated(uint256 groupIndex) public view returns (bool) {

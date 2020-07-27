@@ -27,8 +27,9 @@ library Groups {
 
     struct Group {
         bytes groupPubKey;
-        uint64 registrationBlockHeight;
+        uint256 registrationBlockHeight;
         bool terminated;
+        uint248 registrationTime;
     }
 
     struct Storage {
@@ -66,9 +67,9 @@ library Groups {
     function addGroup(
         Storage storage self,
         bytes memory groupPubKey
-    ) internal {
+    ) public {
         self.groupIndices[groupPubKey] = (self.groups.length ^ GROUP_INDEX_FLAG);
-        self.groups.push(Group(groupPubKey, uint64(block.number), false));
+        self.groups.push(Group(groupPubKey, block.number, false, uint248(block.timestamp)));
     }
 
     /// @notice Sets addresses of members for the group with the given public key
@@ -140,7 +141,7 @@ library Groups {
     function terminateGroup(
         Storage storage self,
         uint256 groupIndex
-    ) internal {
+    ) public {
         require(
             !isGroupTerminated(self, groupIndex),
             "Group has been already terminated"
@@ -357,11 +358,11 @@ library Groups {
         return self.groupMembers[groupPubKey];
     }
 
-    function getGroupRegistrationBlockHeight(
+    function getGroupRegistrationTime(
         Storage storage self,
         uint256 groupIndex
     ) public view returns (uint256) {
-        return uint256(self.groups[groupIndex].registrationBlockHeight);
+        return uint256(self.groups[groupIndex].registrationTime);
     }
 
     /// @notice Reports unauthorized signing for the provided group. Must provide

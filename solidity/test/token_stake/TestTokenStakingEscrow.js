@@ -3,8 +3,10 @@ const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot');
 
 const {grantTokens, grantTokensToManagedGrant} = require('../helpers/grantTokens');
+const {initTokenStaking} = require('../helpers/initContracts')
 
 const KeepToken = contract.fromArtifact('KeepToken')
+const KeepRegistry = contract.fromArtifact('KeepRegistry')
 const TokenGrant = contract.fromArtifact('TokenGrant')
 const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
 const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory')
@@ -24,8 +26,10 @@ describe('TokenStakingEscrow', () => {
     grantee = accounts[2],
     operator = accounts[3],
     operator2 = accounts[4],
-    thirdParty = accounts[5],
-    tokenStaking = accounts[6]
+    authorizer = accounts[5],
+    beneficiary = accounts[6],
+    thirdParty = accounts[7],
+    tokenStaking = accounts[8]
 
   let grantedAmount, grantStart, grantUnlockingDuration,
   grantId, managedGrantId, managedGrant
@@ -34,8 +38,9 @@ describe('TokenStakingEscrow', () => {
 
   before(async () => {
     token = await KeepToken.new({from: deployer})
-    await token.transfer(tokenStaking, 100000, {from: deployer})
-    await token.transfer(grantManager, 100000, {from: deployer})
+    const amount = web3.utils.toWei("1000000") // 1M KEEP tokens
+    await token.transfer(tokenStaking, amount, {from: deployer})
+    await token.transfer(grantManager, amount, {from: deployer})
 
     tokenGrant = await TokenGrant.new(token.address, {from: deployer})
     permissivePolicy = await PermissiveStakingPolicy.new()
@@ -107,6 +112,20 @@ describe('TokenStakingEscrow', () => {
             escrow.address, grantedAmount, data, {from: tokenStaking}
         ),
         "Not a KEEP token"
+      )
+    })
+
+    it('reverts when it is not KEEP token calling', async () => {
+      const data = web3.eth.abi.encodeParameters(
+        ['address', 'uint256'], [operator, grantId]
+      )
+
+      await expectRevert(
+        escrow.receiveApproval(
+          tokenStaking, grantedAmount, 
+          token.address, data, {from: thirdParty}
+        ),
+        "KEEP token is not the sender"
       )
     })
 
@@ -457,7 +476,7 @@ describe('TokenStakingEscrow', () => {
   })
 
   describe('withdrawRevoked', async () => {
-    const depositedAmount = 10000
+    const depositedAmount = web3.utils.toWei("300000") // 300k KEEP tokens
     beforeEach(async () => {
       const data = web3.eth.abi.encodeParameters(
         ['address', 'uint256'], [operator, grantId]
@@ -500,7 +519,7 @@ describe('TokenStakingEscrow', () => {
 
     it('withdraws part of deposited amount if something has been withdrawn before', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
-      await escrow.withdraw(operator, {from: operator}) // (1000 / 30) * 15 = 5000
+      await escrow.withdraw(operator, {from: operator}) // (300k / 30) * 15 = 150k KEEP
       await tokenGrant.revoke(grantId, {from: grantManager})
 
       const balanceBefore = await token.balanceOf(grantManager)
@@ -508,7 +527,7 @@ describe('TokenStakingEscrow', () => {
       const balanceAfter = await token.balanceOf(grantManager)
 
       const diff = balanceAfter.sub(balanceBefore)
-      expect(diff).to.eq.BN(5000) // 10000 - 5000 = 5000
+      expect(diff).to.eq.BN(web3.utils.toWei("150000")) // 300k - 150k = 150k KEEP
     })
 
     it('withdraws entire deposited amount if nothing has been withdrawn before', async () => {
@@ -557,6 +576,43 @@ describe('TokenStakingEscrow', () => {
         amount: web3.utils.toBN(depositedAmount)
       })
     })
+
+    it('respects redelegated tokens', async () => {
+      // We need a real TokenStaking contract to be able to redelegate
+      // tokens in test.
+      const registry = await KeepRegistry.new({from: deployer})
+      const initializationPeriod = time.duration.hours(6)
+      const stakingContracts = await initTokenStaking(
+        token.address,
+        tokenGrant.address,
+        registry.address,
+        initializationPeriod,
+        contract.fromArtifact('TokenStakingEscrow'),
+        contract.fromArtifact('TokenStaking')
+      )
+      const realTokenStaking = stakingContracts.tokenStaking;
+      await escrow.transferOwnership(realTokenStaking.address, {from: tokenStaking})
+
+      const data = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operator2.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+      const expectedLeft = web3.utils.toBN('123114')
+      const redelegated = web3.utils.toBN(depositedAmount).sub(expectedLeft)
+      await escrow.redelegate(operator, redelegated, data, {from: grantee})
+
+      await tokenGrant.revoke(grantId, {from: grantManager})
+
+      const balanceBefore = await token.balanceOf(grantManager)
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      const balanceAfter = await token.balanceOf(grantManager)
+
+      expect(balanceAfter.sub(balanceBefore)).to.eq.BN(expectedLeft)
+      expect(await escrow.availableAmount(operator)).to.eq.BN(0)
+      expect(await escrow.withdrawable(operator)).to.eq.BN(0) 
+      expect(await escrow.depositWithdrawnAmount(operator)).to.eq.BN(expectedLeft)
+    })
   })
   
   describe('depositWithdrawnAmount', async () => {
@@ -597,7 +653,7 @@ describe('TokenStakingEscrow', () => {
   })
 
   describe('migrate', async () => {
-    const depositedAmount = 3000
+    const depositedAmount = web3.utils.toWei("300000")// 300k KEEP tokens
     let anotherEscrow
 
     beforeEach(async () => {
@@ -665,16 +721,51 @@ describe('TokenStakingEscrow', () => {
       expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(depositedAmount)
     })
 
-    it('move the rest of tokens to another escrow', async () => {
+    it('respects withdrawn tokens', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
-      await escrow.withdraw(operator, {from: grantee}) // (3000 / 30) * 15 = 1500
+      await escrow.withdraw(operator, {from: grantee}) // (300k / 30) * 15 = 150k KEEP
       
       await time.increaseTo(grantStart.add(grantUnlockingDuration))
 
       await escrow.migrate(operator, anotherEscrow.address, {from: grantee})
 
       expect(await escrow.withdrawable(operator)).to.eq.BN(0)
-      expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(1500) // 3000 - 1500
+      expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(
+        web3.utils.toWei("150000") // 300k - 150k KEEP
+      )
+    })
+
+    it('respects redelegated tokens', async () => {
+      // We need a real TokenStaking contract to be able to redelegate
+      // tokens in test.
+      const registry = await KeepRegistry.new({from: deployer})
+      const initializationPeriod = time.duration.hours(6)
+      const stakingContracts = await initTokenStaking(
+        token.address,
+        tokenGrant.address,
+        registry.address,
+        initializationPeriod,
+        contract.fromArtifact('TokenStakingEscrow'),
+        contract.fromArtifact('TokenStaking')
+      )
+      const realTokenStaking = stakingContracts.tokenStaking;
+      await escrow.transferOwnership(realTokenStaking.address, {from: tokenStaking})
+
+      const data = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operator2.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+      const expectedLeft = web3.utils.toBN('123114')
+      const redelegated = web3.utils.toBN(depositedAmount).sub(expectedLeft)
+      await escrow.redelegate(operator, redelegated, data, {from: grantee})
+
+      await escrow.migrate(operator, anotherEscrow.address, {from: grantee})
+
+      expect(await escrow.availableAmount(operator)).to.eq.BN(0)
+      expect(await escrow.withdrawable(operator)).to.eq.BN(0) 
+      expect(await escrow.depositWithdrawnAmount(operator)).to.eq.BN(expectedLeft)
+      expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(expectedLeft)
     })
   })
 })

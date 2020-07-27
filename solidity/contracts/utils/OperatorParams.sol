@@ -36,19 +36,17 @@ library OperatorParams {
         // We shouldn't actually ever need this.
         require(
             amount <= AMOUNT_MAX,
-            "amount uint128 overflow"
+            "uint128 overflow"
         );
         // Bitwise OR the timestamps together.
         // The resulting number is equal or greater than either,
         // and tells if we have a bit set outside the 64 available bits.
         require(
             (createdAt | undelegatedAt) <= TIMESTAMP_MAX,
-            "timestamp uint64 overflow"
+            "uint64 overflow"
         );
-        uint256 a = amount << AMOUNT_SHIFT;
-        uint256 c = createdAt << CREATION_SHIFT;
-        uint256 u = undelegatedAt;
-        return (a | c | u);
+
+        return (amount << AMOUNT_SHIFT | createdAt << CREATION_SHIFT | undelegatedAt);
     }
 
     function unpack(uint256 packedParams) internal pure returns (
@@ -106,6 +104,18 @@ library OperatorParams {
             getAmount(packedParams),
             getCreationTimestamp(packedParams),
             undelegationTimestamp
+        );
+    }
+
+    function setAmountAndCreationTimestamp(
+        uint256 packedParams,
+        uint256 amount,
+        uint256 creationTimestamp
+    ) internal pure returns (uint256) {
+        return pack(
+            amount,
+            creationTimestamp,
+            getUndelegationTimestamp(packedParams)
         );
     }
 }

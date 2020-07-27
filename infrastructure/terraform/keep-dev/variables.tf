@@ -56,7 +56,7 @@ variable "editor_iam_role" {
 }
 
 variable "editor_iam_members" {
-  default = ["user:jakub.nowakowski@thesis.co", "user:nicholas.evans@thesis.co", "user:nik.grinkevich@thesis.co", "user:piotr.dyraga@thesis.co", "user:rafal.czajkowski@thesis.co"]
+  default = ["user:jakub.nowakowski@thesis.co", "user:nicholas.evans@thesis.co", "user:nik.grinkevich@thesis.co", "user:piotr.dyraga@thesis.co", "user:rafal.czajkowski@thesis.co", "user:dymitr.paremski@thesis.co"]
 }
 
 # module IAM members: storage.objectViewer

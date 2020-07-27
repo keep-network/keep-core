@@ -1,7 +1,7 @@
 // Function deps
-const url = require('url')
-const Web3 = require('web3')
-const HDWalletProvider = require('@truffle/hdwallet-provider')
+const url = require("url")
+const Web3 = require("web3")
+const HDWalletProvider = require("@truffle/hdwallet-provider")
 
 // Ethereum host info
 const ethereumHost = process.env.ETHEREUM_HOST
@@ -12,19 +12,19 @@ const keepContractOwnerAddress = process.env.KEEP_CONTRACT_OWNER_ADDRESS
 const keepContractOwnerPrivateKey = process.env.KEEP_CONTRACT_OWNER_PRIVATE_KEY
 const keepContractOwnerProvider = new HDWalletProvider(
   `${keepContractOwnerPrivateKey}`,
-  `${ethereumHost}`,
+  `${ethereumHost}`
 )
 
 // Contract artifacts
-const tokenGrantJson = require('@keep-network/keep-core/artifacts/TokenGrant.json')
-const keepTokenJson = require('@keep-network/keep-core/artifacts/KeepToken.json')
-const permissiveStakingPolicyJson = require('@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json')
+const tokenGrantJson = require("@keep-network/keep-core/artifacts/TokenGrant.json")
+const keepTokenJson = require("@keep-network/keep-core/artifacts/KeepToken.json")
+const permissiveStakingPolicyJson = require("@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json")
 
 // We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 // 25 and 50 blocks respectively at default.  The result of this on small private testnets
 // is long wait times for scripts to execute.
 const web3Options = {
-  defaultBlock: 'latest',
+  defaultBlock: "latest",
   defaultGas: 4712388,
   transactionBlockTimeout: 25,
   transactionConfirmationBlocks: 3,
@@ -47,27 +47,32 @@ const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
 keepToken.options.handleRevert = true
 
 // PermissiveStakingPolicy
-const permissiveStakingPolicyAddress = permissiveStakingPolicyJson.networks[ethereumNetworkId].address
+const permissiveStakingPolicyAddress =
+  permissiveStakingPolicyJson.networks[ethereumNetworkId].address
 
 const ethAccountRegExp = /^(0x)?[0-9a-f]{40}$/i
 const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
 
 exports.issueGrant = async (request, response) => {
-  response.type('text/plain')
+  response.type("text/plain")
   try {
     const requestUrl = url.parse(request.url, true)
     const account = requestUrl.query.account
 
     if (!account) {
       console.error("Unspecified account.")
-      return response.status(400).send(
-        "No account address set, please set an account with ?account=<address>\n"
-      )
+      return response
+        .status(400)
+        .send(
+          "No account address set, please set an account with ?account=<address>\n"
+        )
     } else if (!ethAccountRegExp.test(account)) {
       console.error("Bad account address [", account, "].")
-      return response.status(400).send(
-        "Improperly formatted account address, please correct and try again.\n"
-      )
+      return response
+        .status(400)
+        .send(
+          "Improperly formatted account address, please correct and try again.\n"
+        )
     } else {
       const granteeAccount = account
       const start = web3.utils.toBN(Math.floor(Date.now() / 1000))
@@ -75,49 +80,73 @@ exports.issueGrant = async (request, response) => {
       const unlockingDuration = cliff
       const revocable = true
       const tokens = web3.utils.toBN(300000)
-      console.log(`Fetching existing balance for account [${granteeAccount}]...`)
+      console.log(
+        `Fetching existing balance for account [${granteeAccount}]...`
+      )
       const grantBalanceString = await tokenGrant.methods
         .balanceOf(granteeAccount)
         .call()
       const grantBalance = web3.utils.toBN(grantBalanceString)
-      console.log(`Existing balance for account [${granteeAccount}] is [${grantBalance}].`)
+      console.log(
+        `Existing balance for account [${granteeAccount}] is [${grantBalance}].`
+      )
       const grantAmount = tokens.mul(tokenDecimalMultiplier)
 
       if (grantBalance.gte(grantAmount)) {
         console.warn(
-          `[${granteeAccount}] requested grant while at limit. Balance: [${grantBalance}].`,
+          `[${granteeAccount}] requested grant while at limit. Balance: [${grantBalance}].`
         )
         return response.status(400).send(`
           Token grant failed: your account has the maximum testnet KEEP allowed.\n
           You can manage your token grants at: https://dashboard.test.keep.network\n
-          If you have questions, you can find us on Discord: https://discord.gg/jqxBU4m\n`
-        )
+          If you have questions, you can find us on Discord: https://discord.gg/jqxBU4m\n`)
       } else {
         console.log(
-          `Submitting grant for [${grantAmount}] to [${granteeAccount}]...`,
+          `Submitting grant for [${grantAmount}] to [${granteeAccount}]...`
         )
-        const grantData =
-          web3.eth.abi.encodeParameters(
-            ["address", "address", "uint256", "uint256", "uint256", "bool", "address"],
-            [keepContractOwnerAddress, granteeAccount, unlockingDuration, start, cliff, revocable, permissiveStakingPolicyAddress]
-          )
+        const grantData = web3.eth.abi.encodeParameters(
+          [
+            "address",
+            "address",
+            "uint256",
+            "uint256",
+            "uint256",
+            "bool",
+            "address",
+          ],
+          [
+            keepContractOwnerAddress,
+            granteeAccount,
+            unlockingDuration,
+            start,
+            cliff,
+            revocable,
+            permissiveStakingPolicyAddress,
+          ]
+        )
+
+        const nonce = await web3.eth.getTransactionCount(
+          keepContractOwnerAddress,
+          "pending"
+        )
 
         console.log("Test submission...")
         // Try calling; if this throws, we'll have a proper error message thanks
         // to handleRevert above.
         await keepToken.methods
           .approveAndCall(tokenGrantAddress, grantAmount, grantData)
-          .call({ from: keepContractOwnerAddress })
+          .call({ from: keepContractOwnerAddress, nonce: nonce })
 
         console.log("Submitting transaction...")
         // If the call didn't revert, try submitting the transaction proper.
         keepToken.methods
           .approveAndCall(tokenGrantAddress, grantAmount, grantData)
-          .send({ from: keepContractOwnerAddress })
-          .on('transactionHash', (hash) => {
+          .send({ from: keepContractOwnerAddress, nonce: nonce })
+          .on("transactionHash", (hash) => {
             console.log(
               `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
-              `with hash [${hash}].`,
+                `with hash [${hash}].`,
+              `with nonce [${nonce}]`
             )
             response.send(`
               Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
@@ -126,12 +155,43 @@ exports.issueGrant = async (request, response) => {
               You can find us on Discord at: https://discord.gg/jqxBU4m .\n
             `)
           })
-          .on('error', (error) => {
-            console.error(
-              `Error with account grant transaction: [${error}]; URL was [${request.url}].`
-            )
-            if (!response.headersSent) {
-              response.status(500).send(`
+          .on("error", (error) => {
+            if (error == "Error: nonce too low") {
+              const noncePlusOne = nonce + 1
+              console.error(
+                `Error with account grant transaction, Nonce too low: At [${nonce}], retry at [${noncePlusOne}]; URL was [${request.url}].`
+              )
+              console.log("Resubmitting transaction with higher nonce...")
+              keepToken.methods
+                .approveAndCall(tokenGrantAddress, grantAmount, grantData)
+                .send({ from: keepContractOwnerAddress, nonce: noncePlusOne })
+                .on("transactionHash", (hash) => {
+                  console.log(
+                    `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
+                      `with hash [${hash}].`,
+                    `with nonce [${noncePlusOne}]`
+                  )
+                  response.send(`
+                    Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
+                    You can follow the transaction at https://ropsten.etherscan.io/tx/${hash}\n
+                    You can manage your token grants at: https://dashboard.test.keep.network .\n
+                    You can find us on Discord at: https://discord.gg/jqxBU4m .\n
+                  `)
+                })
+                .on("error", (error) => {
+                  console.error(
+                    `Error while requesting account grant: [${error}]; URL was [${request.url}].`
+                  )
+                  return response.status(500).send(`
+                      Token grant failed, try again.\n
+                      If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
+                  `)
+                })
+            } else {
+              console.error(
+                `Error while requesting account grant: [${error}]; URL was [${request.url}].`
+              )
+              return response.status(500).send(`
                   Token grant failed, try again.\n
                   If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
               `)
