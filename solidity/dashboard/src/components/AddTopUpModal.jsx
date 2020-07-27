@@ -6,22 +6,18 @@ const AddTopUpModal = ({
   authorizerAddress,
   beneficiary,
   operatorAddress,
-  onCancel,
-  submitBtnText,
-  availableAmount,
+  ...formProps
 }) => {
   return (
     <>
-      <h3>Enter an amount of KEEP to add to this existing delegation.</h3>
-      <p className="text-big text-grey-70">Delegation Details</p>
+      <h3 className="mb-1">
+        Enter an amount of KEEP to add to this existing delegation.
+      </h3>
+      <span className="text-big text-grey-70">Delegation Details</span>
       <DelegationAddress address={authorizerAddress} label="authorizer" />
       <DelegationAddress address={operatorAddress} label="operator" />
       <DelegationAddress address={beneficiary} label="beneficiary" />
-      <AmountForm
-        onCancel={onCancel}
-        submitBtnText={submitBtnText}
-        availableAmount={availableAmount}
-      />
+      <AmountForm {...formProps} />
     </>
   )
 }

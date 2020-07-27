@@ -31,6 +31,7 @@ const DelegatedTokensTable = ({
             modalOptions: { title: "Add KEEP" },
             submitBtnText: "add keep",
             availableAmount: availableToStake,
+            currentAmount: delegationData.amount,
             ...delegationData,
           },
           AddTopUpModal
