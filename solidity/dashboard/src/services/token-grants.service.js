@@ -103,17 +103,13 @@ const getGrantDetails = async (
     "unlockedAmount",
     grantId
   )
-  let withdrawableAmountGrantOnly = "0"
-  try {
-    withdrawableAmountGrantOnly = await contractService.makeCall(
-      web3Context,
-      TOKEN_GRANT_CONTRACT_NAME,
-      "withdrawable",
-      grantId
-    )
-  } catch (error) {
-    withdrawableAmountGrantOnly = "0"
-  }
+  const withdrawableAmountGrantOnly = await contractService.makeCall(
+    web3Context,
+    TOKEN_GRANT_CONTRACT_NAME,
+    "withdrawable",
+    grantId
+  )
+
   const readyToRelease = add(
     withdrawableAmountGrantOnly,
     escrowWithdrawableAmount
