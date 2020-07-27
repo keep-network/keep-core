@@ -8,29 +8,57 @@ import {
   normalizeAmount,
   formatAmount as formatFormAmount,
 } from "../forms/form.utils.js"
+import * as Icons from "./Icons"
+import Tag from "./Tag"
+import ProgressBar from "./ProgressBar"
+import { colors } from "../constants/colors"
+import { displayAmount } from "../utils/token.utils"
 
-const AmountForm = ({ onCancel, submitBtnText, ...formikProps }) => {
+const AmountForm = ({
+  onCancel,
+  submitBtnText,
+  availableAmount,
+  ...formikProps
+}) => {
   return (
-    <form onSubmit={formikProps.handleSubmit}>
-      <FormInput
-        name="amount"
-        type="text"
-        label="Amount"
-        placeholder="0"
-        normalize={normalizeAmount}
-        format={formatFormAmount}
-      />
-      <Button
-        className="btn btn-primary"
-        type="submit"
-        disabled={!(formikProps.isValid && formikProps.dirty)}
-      >
-        {submitBtnText}
-      </Button>
-      <span onClick={onCancel} className="ml-1 text-link">
-        Cancel
-      </span>
-    </form>
+    <>
+      <div className="flex row center">
+        <Tag text="Current" IconComponent={Icons.KeepToken} />
+        <h3 className="balance">10000 KEEP</h3>
+      </div>
+      <div className="flex row center mt-1">
+        <Tag text="New" IconComponent={Icons.KeepToken} />
+        <h3 className="balance">15000 KEEP</h3>
+      </div>
+
+      <form onSubmit={formikProps.handleSubmit}>
+        <FormInput
+          name="amount"
+          type="text"
+          label="Amount"
+          placeholder="0"
+          normalize={normalizeAmount}
+          format={formatFormAmount}
+        />
+        <ProgressBar
+          total={availableAmount}
+          items={[{ value: formikProps.values.amount, color: colors.primary }]}
+        />
+        <div className="text-caption text-grey-50">
+          {displayAmount(availableAmount)} KEEP available
+        </div>
+        <Button
+          className="btn btn-primary"
+          type="submit"
+          disabled={!(formikProps.isValid && formikProps.dirty)}
+        >
+          {submitBtnText}
+        </Button>
+        <span onClick={onCancel} className="ml-1 text-link">
+          Cancel
+        </span>
+      </form>
+    </>
   )
 }
 
