@@ -35,11 +35,11 @@ export const TopUpsDataTable = ({ topUps }) => {
     <DataTable
       data={topUps}
       itemFieldId="operatorAddress"
-      title="Available top-ups"
+      title="Available Top-ups"
       noDataMessage="No available top-ups."
     >
       <Column
-        header="availableTopUpAmount"
+        header="available top-up amount"
         field="availableTopUpAmount"
         renderContent={({ availableTopUpAmount }) =>
           `${displayAmount(availableTopUpAmount)} KEEP`
@@ -60,7 +60,7 @@ export const TopUpsDataTable = ({ topUps }) => {
             onSubmitAction={async (transactionHashCallback) =>
               await onCommitTopUpBtn(operatorAddress, transactionHashCallback)
             }
-            className="btn btn-primary btn-sm"
+            className="btn btn-secondary btn-sm"
           >
             commit top-up
           </SubmitButton>

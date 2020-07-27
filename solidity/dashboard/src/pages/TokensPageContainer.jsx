@@ -324,21 +324,22 @@ const useSubscribeToTokenGrantEvents = () => {
 }
 
 const useSubscribeToTopUpsEvents = () => {
-  const { dispatch, delegations } = useTokensPageContext()
+  const {
+    dispatch,
+    delegations,
+    refreshKeepTokenBalance,
+  } = useTokensPageContext()
 
   const subscribeToTopUpInitiated = (event) => {
     const {
-      returnValues: { operator, topUp },
+      returnValues: { operator },
     } = event
     const delegation = delegations.find(({ operatorAddress }) =>
       isSameEthAddress(operatorAddress, operator)
     )
-    dispatch({ type: TOP_UP_INITIATED, payload: event.returnValues })
     if (delegation && !delegation.isFromGrant) {
-      dispatch({
-        type: UPDATE_OWNED_DELEGATED_TOKENS_BALANCE,
-        payload: { operation: sub, value: topUp },
-      })
+      dispatch({ type: TOP_UP_INITIATED, payload: event.returnValues })
+      refreshKeepTokenBalance()
     }
   }
 

@@ -11,8 +11,8 @@ import { SubmitButton } from "./Button"
 import { useShowMessage, messageType } from "./Message"
 import { useWeb3Context } from "./WithWeb3Context"
 import { tokensPageService } from "../services/tokens-page.service"
-import AmountForm from "./AmountForm"
 import { useModal } from "../hooks/useModal"
+import AddTopUpModal from "./AddTopUpModal"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -28,11 +28,12 @@ const DelegatedTokensTable = ({
       try {
         const { amount } = await openConfirmationModal(
           {
-            modalOptions: { title: "Initialize top-up" },
-            submitBtnText: "Top-up",
+            modalOptions: { title: "Add KEEP" },
+            submitBtnText: "add keep",
             availableAmount: availableToStake,
+            ...delegationData,
           },
-          AmountForm
+          AddTopUpModal
         )
         delegationData.beneficiaryAddress = delegationData.beneficiary
         delegationData.stakeTokens = amount
@@ -152,7 +153,7 @@ const DelegatedTokensTable = ({
                     onTopUpBtn(delegation, transactionHashCallback)
                   }
                 >
-                  top-up
+                  add keep
                 </SubmitButton>
               </div>
             </>

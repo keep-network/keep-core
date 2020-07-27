@@ -114,7 +114,10 @@ const tokensPageReducer = (state, action) => {
           ({ operatorAddress }) =>
             !isSameEthAddress(operatorAddress, action.payload.operator)
         ),
-        delegations: updateDelegationAmount(state.delegations, action.payload),
+        delegations: updateDelegationAmount(
+          [...state.delegations],
+          action.payload
+        ),
       }
     default:
       return state
@@ -177,14 +180,14 @@ const grantWithdrawn = (grants, { grantId, amount, availableToStake }) => {
 
 const topUpInitiated = (topUps, { operator, topUp }) => {
   const { indexInArray, obj: topUpToUpdate } = findIndexAndObject(
-    "id",
+    "operatorAddress",
     operator,
     topUps,
     compareEthAddresses
   )
   if (indexInArray === null) {
     return [
-      { operatorAddress: operator, availableTopUpAmount: topUps },
+      { operatorAddress: operator, availableTopUpAmount: topUp },
       ...topUps,
     ]
   }

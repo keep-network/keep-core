@@ -3,7 +3,7 @@ import Undelegations from "../components/Undelegations"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
-import { formatDate } from "../utils/general.utils"
+import { formatDate, isSameEthAddress } from "../utils/general.utils"
 import moment from "moment"
 import { LoadingOverlay } from "./Loadable"
 import DataTableSkeleton from "./skeletons/DataTableSkeleton"
@@ -49,20 +49,20 @@ const DelegationOverview = () => {
     )
   }, [undelegations, selectedGrant])
 
-  const getDelegations = () => {
+  const getDelegations = useCallback(() => {
     if (tokensContext === "granted") {
       return grantDelegations
     }
     return ownedDelegations
-  }
+  }, [tokensContext, grantDelegations, ownedDelegations])
 
-  const getUndelegations = () => {
+  const getUndelegations = useCallback(() => {
     if (tokensContext === "granted") {
       return grantUndelegations
     }
 
     return ownedUndelegations
-  }
+  }, [tokensContext, grantUndelegations, ownedUndelegations])
 
   const cancelStakeSuccessCallback = useCallback(() => {
     refreshGrants()
@@ -76,6 +76,14 @@ const DelegationOverview = () => {
 
     return keepTokenBalance
   }, [tokensContext, selectedGrant.availableToStake, keepTokenBalance])
+
+  const filteredTopUps = useMemo(() => {
+    return availableTopUps.filter(({ operatorAddress: lookupOperator }) =>
+      getDelegations().some(({ operatorAddress }) =>
+        isSameEthAddress(lookupOperator, operatorAddress)
+      )
+    )
+  }, [availableTopUps, getDelegations])
 
   return (
     <section>
@@ -134,7 +142,7 @@ const DelegationOverview = () => {
         skeletonComponent={<DataTableSkeleton columns={3} />}
       >
         <Tile>
-          <TopUpsDataTable topUps={availableTopUps} />
+          <TopUpsDataTable topUps={filteredTopUps} />
         </Tile>
       </LoadingOverlay>
     </section>

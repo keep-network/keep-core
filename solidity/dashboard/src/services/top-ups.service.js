@@ -23,7 +23,7 @@ export const fetchAvailableTopUps = async (_, operators) => {
     })
   ).reduce(reduceByOperator, {})
 
-  const toupUpsCompletedByOperator = (
+  const topUpsCompletedByOperator = (
     await contracts.stakingContract.getPastEvents("TopUpCompleted", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: operators },
@@ -32,10 +32,10 @@ export const fetchAvailableTopUps = async (_, operators) => {
 
   for (const operator of operators) {
     const topUpInitiated = toupUpsInitiatedByOperator[operator]
-    const topUpCompleted = toupUpsCompletedByOperator[operator]
+    const topUpCompleted = topUpsCompletedByOperator[operator]
 
     const latestTopUpCompletedEvent = !isEmptyArray(topUpCompleted)
-      ? topUpCompleted.pop()
+      ? [...topUpCompleted].pop()
       : undefined
 
     if (!isEmptyArray(topUpInitiated)) {
@@ -44,12 +44,15 @@ export const fetchAvailableTopUps = async (_, operators) => {
             filterByAfterLatestCompletedTopUp(latestTopUpCompletedEvent)
           )
         : topUpInitiated
-
       const availableTopUpAmount = availableOperatorTopUps.reduce(
         reduceAmount,
         0
       )
-      availableTopUps.push({ operatorAddress: operator, availableTopUpAmount })
+      if (availableTopUpAmount > 0)
+        availableTopUps.push({
+          operatorAddress: operator,
+          availableTopUpAmount,
+        })
     }
   }
 
