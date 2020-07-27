@@ -156,7 +156,7 @@ export const TokenGrantUnlockingdDetails = ({
         })
       }
 
-      const escrowMethodName = isManagedGrant
+      const escrowWithdraw = isManagedGrant
         ? "withdrawToManagedGrantee"
         : "withdraw"
       for (const operator of escrowOperatorsToWithdraw) {
@@ -166,7 +166,7 @@ export const TokenGrantUnlockingdDetails = ({
           title: "Waiting for the transaction confirmation...",
         })
         let pendingMessage = { id: null }
-        await tokenStakingEscrow.methods[escrowMethodName](operator)
+        await tokenStakingEscrow.methods[escrowWithdraw](operator)
           .send({ from: yourAddress })
           .on("transactionHash", (hash) => {
             closeMessage(infoMessage)
