@@ -69,7 +69,7 @@ const fetchSlashedTokens = async (web3Context) => {
       blockNumber,
       returnValues: { groupIndex },
     } = punishmentEvents[i]
-    let punishmentData = {}
+    let punishmentData
     if (slashedTokensGroupedByTxtHash.hasOwnProperty(transactionHash)) {
       const { amount } = slashedTokensGroupedByTxtHash[transactionHash]
       punishmentData = { amount, type: "SLASHED", event }
@@ -78,8 +78,7 @@ const fetchSlashedTokens = async (web3Context) => {
       punishmentData = { amount, type: "SEIZED", event }
     }
 
-    if (!punishmentData.hasOwnProperty("amount")) continue
-    if (lte(punishmentData.amount, 0)) continue
+    if (!punishmentData || lte(punishmentData.amount, 0)) continue
 
     punishmentData.date = moment.unix(
       (await eth.getBlock(blockNumber)).timestamp
