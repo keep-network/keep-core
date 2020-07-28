@@ -112,7 +112,10 @@ const groupByTransactionHash = (events) => {
         amount: add(returnValues.amount, prevData.amount),
       }
     } else {
-      groupedByTransactionHash[transactionHash] = { ...returnValues }
+      groupedByTransactionHash[transactionHash] = {
+        ...returnValues,
+        amount: returnValues.amount,
+      }
     }
   })
 
