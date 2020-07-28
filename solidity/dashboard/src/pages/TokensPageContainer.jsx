@@ -337,8 +337,10 @@ const useSubscribeToTopUpsEvents = () => {
     const delegation = delegations.find(({ operatorAddress }) =>
       isSameEthAddress(operatorAddress, operator)
     )
-    if (delegation && !delegation.isFromGrant) {
+    if (delegation) {
       dispatch({ type: TOP_UP_INITIATED, payload: event.returnValues })
+    }
+    if (!delegation.isFromGrant) {
       refreshKeepTokenBalance()
     }
   }

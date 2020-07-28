@@ -126,10 +126,11 @@ const DelegatedTokensTable = ({
           )}
         />
         <Column
+          headerStyle={{ width: "25%" }}
           header=""
           field=""
           renderContent={(delegation) => (
-            <>
+            <div className="flex row center space-evenly">
               <div>
                 <UndelegateStakeButton
                   isInInitializationPeriod={delegation.isInInitializationPeriod}
@@ -147,7 +148,7 @@ const DelegatedTokensTable = ({
                   }
                 />
               </div>
-              <div className="mt-1">
+              <div>
                 <SubmitButton
                   className="btn btn-secondary btn-sm"
                   onSubmitAction={(transactionHashCallback) =>
@@ -157,7 +158,7 @@ const DelegatedTokensTable = ({
                   add keep
                 </SubmitButton>
               </div>
-            </>
+            </div>
           )}
         />
       </DataTable>
