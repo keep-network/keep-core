@@ -192,7 +192,7 @@ const findGrantAndUpdate = (grants, payload, updateGrantCallback) => {
     grantId,
     grants
   )
-  if (!indexInArray) {
+  if (indexInArray === null) {
     return grants
   }
 
