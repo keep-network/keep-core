@@ -244,7 +244,7 @@ describe('TokenStaking/StakingGrant', () => {
     })
 
     describe('undelegate', async () => {
-      before(async () => {
+      beforeEach(async () => {
         await time.increase(initializationPeriod.addn(1))
       })
 
@@ -379,11 +379,11 @@ describe('TokenStaking/StakingGrant', () => {
       ])
 
       beforeEach(async () => {
+        await tokenStaking.cancelStake(operatorOne, {from: operatorOne})
+
         await time.increase(initializationPeriod.addn(1))
-        await tokenStaking.undelegate(operatorOne, {from: operatorOne})
         await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
         await time.increase(undelegationPeriod.addn(1))
-        await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
         await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
       })
       
@@ -475,6 +475,38 @@ describe('TokenStaking/StakingGrant', () => {
             operatorOne, delegatedAmount, data3, {from: grantee}
           ),
           "Grant revoked"
+        )
+      })
+
+      it("fails when trying to redelegate to operator with cancelled stake", async () => {
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorOne,
+            delegatedAmount,
+            Buffer.concat([
+              Buffer.from(beneficiary.substr(2), 'hex'),
+              Buffer.from(operatorOne.substr(2), 'hex'),
+              Buffer.from(authorizer.substr(2), 'hex')
+            ]),
+            {from: grantee}
+          ),
+          "Redelegating to previously used operator is not allowed"
+        )
+      })
+
+      it('fails when trying to redelegate to operator with undelegated stake', async () => {
+        await expectRevert(
+          tokenStakingEscrow.redelegate(
+            operatorTwo,
+            delegatedAmount,
+            Buffer.concat([
+              Buffer.from(beneficiary.substr(2), 'hex'),
+              Buffer.from(operatorTwo.substr(2), 'hex'),
+              Buffer.from(authorizer.substr(2), 'hex')
+            ]),
+            {from: managedGrantee}
+          ),
+          "Redelegating to previously used operator is not allowed"
         )
       })
 

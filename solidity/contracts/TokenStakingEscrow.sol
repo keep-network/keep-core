@@ -19,6 +19,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./libraries/grant/UnlockingSchedule.sol";
+import "./utils/BytesLib.sol";
 import "./KeepToken.sol";
 import "./utils/BytesLib.sol";
 import "./TokenGrant.sol";
@@ -148,6 +149,12 @@ contract TokenStakingEscrow is Ownable {
         require(
             availableAmount(previousOperator) >= amount,
             "Insufficient balance"
+        );
+
+        address newOperator = extraData.toAddress(20);
+        require(
+            previousOperator != newOperator,
+            "Redelegating to previously used operator is not allowed"
         );
 
         deposits[previousOperator].redelegated = deposit.redelegated.add(amount);
