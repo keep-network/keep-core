@@ -17,7 +17,6 @@ const DelegationOverview = () => {
     undelegations,
     delegations,
     refreshData,
-    refreshGrants,
     tokensContext,
     selectedGrant,
     isFetching,
@@ -60,9 +59,8 @@ const DelegationOverview = () => {
   }
 
   const cancelStakeSuccessCallback = useCallback(() => {
-    refreshGrants()
     refreshData()
-  }, [refreshGrants, refreshData])
+  }, [refreshData])
 
   return (
     <section>

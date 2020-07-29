@@ -2,6 +2,8 @@ import React, { useContext, useCallback, useMemo } from "react"
 import { SubmitButton } from "./Button"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
+import { contracts } from "../contracts"
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   const web3Context = useContext(Web3Context)
@@ -25,8 +27,33 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   ])
 
   const recoverStake = useCallback(
-    async (onTransactionHashCallback) => {
+    async (
+      onTransactionHashCallback,
+      openMessageInfo,
+      setFetching,
+      openConfirmationModal
+    ) => {
       try {
+        if (isFromGrant) {
+          await openConfirmationModal({
+            title: "You’re about to recover tokens.",
+            subtitle: (
+              <>
+                <span>Recovering will deposit delegated tokens in the</span>
+                &nbsp;
+                <span>
+                  <ViewAddressInBlockExplorer
+                    address={contracts.tokenStakingEscrow.options.address}
+                    text="TokenStakingEscrow contract."
+                  />
+                </span>
+                <p>You can withdraw them via Release tokens.</p>
+              </>
+            ),
+            btnText: "recover",
+            confirmationText: "RECOVER",
+          })
+        }
         await contract.methods
           .recoverStake(operatorAddress)
           .send({ from: yourAddress })
@@ -45,7 +72,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
         throw error
       }
     },
-    [operatorAddress, yourAddress, contract.methods, showMessage]
+    [operatorAddress, yourAddress, contract.methods, showMessage, isFromGrant]
   )
 
   return (
