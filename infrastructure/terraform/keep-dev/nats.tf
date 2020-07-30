@@ -1,5 +1,5 @@
 resource "google_compute_address" "cloud_nat" {
-  name         = "demo-dev-cloud-nat-external-ip"
+  name         = "keep-dev-cloud-nat-external-ip"
   project      = "${module.project.project_id}"
   region       = "${var.region_data["region"]}"
   address_type = "EXTERNAL"
@@ -7,14 +7,14 @@ resource "google_compute_address" "cloud_nat" {
 }
 
 resource "google_compute_router" "cloud_nat" {
-  name    = "demo-dev-cloud-nat-router"
+  name    = "keep-dev-cloud-nat-router"
   project = "${module.project.project_id}"
   region  = "${var.region_data["region"]}"
   network = "${module.vpc.vpc_network_name}"
 }
 
 resource "google_compute_router_nat" "cloud_nat" {
-  name                               = "demo-dev-cloud-nat"
+  name                               = "keep-dev-cloud-nat"
   project                            = "${module.project.project_id}"
   region                             = "${var.region_data["region"]}"
   router                             = "${google_compute_router.cloud_nat.name}"
