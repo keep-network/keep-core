@@ -246,7 +246,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         if (!_isInitialized(operatorParams)) {
             // If the stake is not yet initialized, we add tokens immediately
             // but we also reset stake initialization time counter.
-            operators[_operator].packedParams = topUps.executeInOneStep(
+            operators[_operator].packedParams = topUps.instantComplete(
                 _value, _operator, operatorParams, escrow
             );
         } else {

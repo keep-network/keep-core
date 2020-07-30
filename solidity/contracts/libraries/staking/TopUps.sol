@@ -40,7 +40,7 @@ library TopUps {
     /// @param escrow Reference to TokenStakingEscrow contract.
     /// @return New value of parameters. It should be updated for the operator
     /// in the staking contract.
-    function executeInOneStep(
+    function instantComplete(
         Storage storage self,
         uint256 value,
         address operator,
