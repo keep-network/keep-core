@@ -12,6 +12,7 @@ import DelegationOverview from "../components/DelegationOverview"
 import { useModal } from "../hooks/useModal"
 
 const confirmationModalOptions = {
+  modalOptions: { title: "Initiate Delegation" },
   title: "You’re about to delegate stake.",
   subtitle:
     "You’re delegating KEEP tokens. You will be able to cancel the delegation for up to 1 week. After that time, you can undelegate your stake.",

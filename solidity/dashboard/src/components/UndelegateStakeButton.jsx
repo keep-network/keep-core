@@ -5,8 +5,10 @@ import { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { contracts } from "../contracts"
+import { withConfirmationModal } from "./ConfirmationModal"
 
 const confirmationModalOptions = {
+  modalOptions: { title: "Are you sure?" },
   title: "You’re about to undelegate.",
   subtitle:
     "Undelegating will return all of your tokens to their owner. There is an undelegation period of 1 week until the tokens will be completely undelegated.",
@@ -38,24 +40,15 @@ const UndelegateStakeButton = (props) => {
     }
     try {
       if (isInInitializationPeriod && isFromGrant) {
-        await openConfirmationModal({
-          title: "You’re about to cancel tokens.",
-          subtitle: (
-            <>
-              <span>Canceling will deposit delegated tokens in the</span>
-              &nbsp;
-              <span>
-                <ViewAddressInBlockExplorer
-                  address={contracts.tokenStakingEscrow.options.address}
-                  text="TokenStakingEscrow contract."
-                />
-              </span>
-              <p>You can withdraw them via Release tokens.</p>
-            </>
-          ),
-          btnText: "cancel",
-          confirmationText: "CANCEL",
-        })
+        await openConfirmationModal(
+          {
+            modalOptions: { title: "Are you sure?" },
+            title: "You’re about to cancel tokens.",
+            btnText: "cancel",
+            confirmationText: "CANCEL",
+          },
+          withConfirmationModal(ConfirmCancelingFromGrant)
+        )
       } else {
         await openConfirmationModal(confirmationModalOptions)
       }
@@ -105,3 +98,19 @@ UndelegateStakeButton.defaultProps = {
 }
 
 export default UndelegateStakeButton
+
+const ConfirmCancelingFromGrant = () => {
+  return (
+    <>
+      <span>Canceling will deposit delegated tokens in the</span>
+      &nbsp;
+      <span>
+        <ViewAddressInBlockExplorer
+          address={contracts.tokenStakingEscrow.options.address}
+          text="TokenStakingEscrow contract."
+        />
+      </span>
+      <p>You can withdraw them via Release tokens.</p>
+    </>
+  )
+}

@@ -5,6 +5,7 @@ import { SubmitButton } from "./Button"
 import { useShowMessage, messageType } from "./Message"
 import { commitTopUp } from "../services/top-ups.service"
 import { displayAmount } from "../utils/token.utils"
+import moment from "moment"
 
 export const TopUpsDataTable = ({ topUps }) => {
   const showMessage = useShowMessage()
@@ -55,12 +56,13 @@ export const TopUpsDataTable = ({ topUps }) => {
       <Column
         header=""
         field="operatorAddress"
-        renderContent={({ operatorAddress }) => (
+        renderContent={({ operatorAddress, createdAt }) => (
           <SubmitButton
             onSubmitAction={async (transactionHashCallback) =>
               await onCommitTopUpBtn(operatorAddress, transactionHashCallback)
             }
             className="btn btn-secondary btn-sm"
+            disabled={moment.unix(createdAt).isBefore(moment.now())}
           >
             commit top-up
           </SubmitButton>

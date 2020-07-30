@@ -29,6 +29,27 @@ const ConfirmationModal = ({
 
 export default React.memo(ConfirmationModal)
 
+export const withConfirmationModal = (WrappedComponent) => ({
+  title,
+  subtitle,
+  confirmationText,
+  btnText,
+  onBtnClick,
+  onCancel,
+  ...restProps
+}) => {
+  return (
+    <ConfirmationModal
+      title={title}
+      btnText={btnText}
+      confirmationText={confirmationText}
+      onCancel={onCancel}
+      onBtnClick={onBtnClick}
+      subtitle={<WrappedComponent {...restProps} />}
+    />
+  )
+}
+
 const ConfirmationForm = ({
   confirmationText,
   btnText,
