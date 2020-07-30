@@ -658,7 +658,7 @@ describe('TokenStaking/StakingGrant', () => {
       })
 
       it('lands back in the escrow when undelegated and recovered', async () => {
-        const redelegatedAmount = delegatedAmount
+        const redelegatedAmount = delegatedAmount.subn(10)
         await tokenStakingEscrow.redelegate(
           operatorOne, redelegatedAmount, data3, {from: grantee}
         )
@@ -684,7 +684,7 @@ describe('TokenStaking/StakingGrant', () => {
       })
 
       it('lands back in the escrow when cancelled', async () => {
-        const redelegatedAmount = delegatedAmount
+        const redelegatedAmount = delegatedAmount.subn(10)
         await tokenStakingEscrow.redelegate(
           operatorOne, redelegatedAmount, data3, {from: grantee}
         )
