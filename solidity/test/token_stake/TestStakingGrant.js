@@ -1,5 +1,5 @@
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot')
 const {initTokenStaking} = require('../helpers/initContracts')
 
@@ -655,6 +655,20 @@ describe('TokenStaking/StakingGrant', () => {
           tokenStaking.undelegate(operatorThree, {from: operatorOne}),
           "Not authorized"
         )
+      })
+
+      it('emits an event', async () => {
+        const redelegatedAmount = delegatedAmount
+        const receipt = await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+        
+        await expectEvent(receipt, 'DepositRedelegated', {
+          previousOperator: operatorOne,
+          newOperator: operatorThree,
+          grantId: grantId.toString(),
+          amount: redelegatedAmount.toString()
+        })
       })
     })
 })
