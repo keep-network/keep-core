@@ -262,21 +262,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// @param _operator The operator with a pending top-up that is getting
     /// committed.
     function commitTopUp(address _operator) public {
-        uint256 newAmount = addStakeAmount(
-            topUps.commit(_operator, initializationPeriod),
-            _operator
+        operators[_operator].packedParams = topUps.commit(
+            _operator,
+            operators[_operator].packedParams,
+            initializationPeriod
         );
-        emit TopUpCompleted(_operator, newAmount);
-    }
-
-    function addStakeAmount(
-        uint256 _topUp,
-        address _operator
-    ) internal returns (uint256) {
-        uint256 oldParams = operators[_operator].packedParams;
-        uint256 newAmount = oldParams.getAmount().add(_topUp);
-        operators[_operator].packedParams = oldParams.setAmount(newAmount);
-        return newAmount;
     }
 
     /// @notice Cancels stake of tokens within the operator initialization period
@@ -372,12 +362,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
         uint256 amount = operatorParams.getAmount();
 
-        // If there is a pending top-up, force-commit it before returning
-        // tokens.
-        uint256 topUp = topUps.forceCommit(_operator);
-        if (topUp > 0) {
-            amount = addStakeAmount(topUp, _operator);
-        }
+        // If there is a pending top-up, force-commit it before returning tokens.
+        amount = amount.add(topUps.cancel(_operator));
 
         operators[_operator].packedParams = operatorParams.setAmount(0);
         transferOrDeposit(operators[_operator].owner, _operator, amount);

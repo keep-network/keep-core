@@ -45,7 +45,7 @@ library TopUps {
         address operator,
         uint256 operatorParams,
         TokenStakingEscrow escrow
-    ) public returns (uint256) {
+    ) public returns (uint256 newParams) {
         // Stake is not yet initialized so we don't need to check if the
         // operator is not undelegating - initializing and undelegating at the
         // same time is not possible. We do however, need to check whether the
@@ -55,13 +55,12 @@ library TopUps {
         require(!escrow.hasDeposit(operator), "Stake canceled");
 
         uint256 newAmount = operatorParams.getAmount().add(value);
-        uint256 newParams = operatorParams.setAmountAndCreationTimestamp(
+        newParams = operatorParams.setAmountAndCreationTimestamp(
             newAmount,
             block.timestamp
         );
 
         emit TopUpCompleted(operator, newAmount);
-        return newParams;
     }
 
     /// @notice Initiates top-up of the given value for tokens delegated to
@@ -95,8 +94,9 @@ library TopUps {
     function commit(
         Storage storage self,
         address operator,
+        uint256 operatorParams,
         uint256 initializationPeriod
-    ) public returns (uint256) {
+    ) public returns (uint256 newParams) {
         TopUp memory topUp = self.topUps[operator];
         require(topUp.amount > 0, "No top up to commit");
         require(
@@ -104,16 +104,19 @@ library TopUps {
             "Stake is initializing"
         );
 
+        uint256 newAmount = operatorParams.getAmount().add(topUp.amount);
+        newParams = operatorParams.setAmount(newAmount);
+
         delete self.topUps[operator];
-        return topUp.amount;
+        emit TopUpCompleted(operator, newAmount);
     }
 
-    /// @notice Force-commits existing top-up without taking into account
-    /// stake initialization period. If there is no pending top-up for the
-    /// operator, function does nothing. This function should be used when
-    /// the stake is recovered to return tokens from a pending top-up.
+    /// @notice Cancels pending, initiating top-up. If there is no initiating
+    /// top-up for the operator, function does nothing. This function should be
+    /// used when the stake is recovered to return tokens from a pending,
+    /// initiating top-up.
     /// @param operator Operator The operator from which the stake is recovered.
-    function forceCommit(
+    function cancel(
         Storage storage self,
         address operator
     ) public returns (uint256) {
