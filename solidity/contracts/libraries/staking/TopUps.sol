@@ -53,7 +53,10 @@ library TopUps {
         // operator has not canceled its previous stake for that operator,
         // depositing the stake it in the escrow. We do not want to allow
         // resurrecting operators with cancelled stake by top-ups.
-        require(!escrow.hasDeposit(operator), "Stake canceled");
+        require(
+            !escrow.hasDeposit(operator),
+            "Stake for the operator already deposited in the escrow"
+        );
 
         uint256 newAmount = operatorParams.getAmount().add(value);
         newParams = operatorParams.setAmountAndCreationTimestamp(
@@ -88,7 +91,10 @@ library TopUps {
         require(!isUndelegating(operatorParams), "Stake undelegated");
         // We also need to check if the stake for the operator is not already
         // in the escrow because it's been previously cancelled.
-        require(!escrow.hasDeposit(operator), "Stake canceled");
+        require(
+            !escrow.hasDeposit(operator),
+            "Stake for the operator already deposited in the escrow"
+        );
 
         TopUp memory awaiting = self.topUps[operator];
         self.topUps[operator] = TopUp(awaiting.amount.add(value), now);

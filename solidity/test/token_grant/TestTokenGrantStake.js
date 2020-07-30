@@ -140,18 +140,6 @@ describe('TokenGrant/Stake', function() {
     )
   }
 
-  async function delegateLiquid(owner, operator, amount) {
-    return await delegateStake(
-      tokenContract,
-      stakingContract,
-      owner,
-      operator,
-      beneficiary,
-      authorizer,
-      amount
-    )
-  }
-
   async function delegateRevocable(grantee, operator, amount) {
     return await delegateStakeFromGrant(
       grantContract,
@@ -306,14 +294,14 @@ describe('TokenGrant/Stake', function() {
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
-      "Stake canceled"
+      "Stake for the operator already deposited in the escrow"
     )
 
     await time.increase(initializationPeriod.addn(1))
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
-      "Stake canceled"
+      "Stake for the operator already deposited in the escrow"
     )
   })
 
