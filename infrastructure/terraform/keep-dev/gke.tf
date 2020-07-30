@@ -61,7 +61,6 @@ module "gke_cluster" {
     oauth_scopes = "${var.gke_node_pool["oauth_scopes"]}"
     auto_repair  = "${var.gke_node_pool["auto_repair"]}"
     auto_upgrade = "${var.gke_node_pool["auto_upgrade"]}"
-    tags         = "${module.nat_gateway_zone_a.routing_tag_regional}"
   }
 
   labels = "${local.labels}"
