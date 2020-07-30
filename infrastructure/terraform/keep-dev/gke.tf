@@ -45,7 +45,6 @@ module "gke_cluster" {
 
   gke_cluster {
     name                                = "${var.gke_cluster["name"]}"
-    private_cluster                     = "${var.gke_cluster["private_cluster"]}"
     master_ipv4_cidr_block              = "${var.gke_cluster["master_ipv4_cidr_block"]}"
     daily_maintenance_window_start_time = "${var.gke_cluster["daily_maintenance_window_start_time"]}"
     network_policy_enabled              = "${var.gke_cluster["network_policy_enabled"]}"
