@@ -20,6 +20,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./libraries/grant/UnlockingSchedule.sol";
 import "./KeepToken.sol";
+import "./utils/BytesLib.sol";
 import "./TokenGrant.sol";
 import "./ManagedGrant.sol";
 import "./TokenSender.sol";
@@ -37,10 +38,17 @@ contract TokenStakingEscrow is Ownable {
 
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+    using BytesLib for bytes;
     using UnlockingSchedule for uint256;
 
     event Deposited(
         address indexed operator,
+        uint256 indexed grantId,
+        uint256 amount
+    );
+    event DepositRedelegated(
+        address indexed previousOperator,
+        address indexed newOperator,
         uint256 indexed grantId,
         uint256 amount
     );
@@ -134,6 +142,7 @@ contract TokenStakingEscrow is Ownable {
         Deposit memory deposit = deposits[previousOperator];
 
         uint256 grantId = deposit.grantId;
+        address newOperator = extraData.toAddress(20);
         require(isGrantee(msg.sender, grantId), "Not authorized");
         require(getAmountRevoked(grantId) == 0, "Grant revoked");
         require(
@@ -147,6 +156,13 @@ contract TokenStakingEscrow is Ownable {
             owner(), // TokenStaking contract associated with the escrow
             amount,
             abi.encodePacked(extraData, grantId)
+        );
+
+        emit DepositRedelegated(
+            previousOperator,
+            newOperator,
+            grantId,
+            amount
         );
     }
 
