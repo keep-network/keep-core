@@ -1,3 +1,16 @@
+data "google_client_config" "default" {}
+
+# Configure the Google Cloud provider
+provider "google" {
+  version = "<= 2.20.3"
+  region  = "${var.region_data["region"]}"
+}
+
+provider "google-beta" {
+  version = "<= 2.20.3"
+  region  = "${var.region_data["region"]}"
+}
+
 /* Set your locals.
  * Terraform doesn't allow for string interpolation in variable maps.
  * We cheat it by defining a local. A local instance variable mapping
@@ -103,47 +116,6 @@ module "nat_gateway_zone_c" {
   instance_labels = "${local.labels}"
 }
 
-# create gke cluster
-module "gke_cluster" {
-  source           = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_gke"
-  project          = "${module.project.project_id}"
-  region           = "${var.region_data["region"]}"
-  vpc_network_name = "${module.vpc.vpc_network_name}"
-
-  gke_subnet {
-    name                             = "${local.gke_subnet_name}"
-    primary_ip_cidr_range            = "${var.gke_subnet["primary_ip_cidr_range"]}"
-    services_secondary_range_name    = "${var.gke_subnet["services_secondary_range_name"]}"
-    services_secondary_ip_cidr_range = "${var.gke_subnet["services_secondary_ip_cidr_range"]}"
-    cluster_secondary_range_name     = "${var.gke_subnet["cluster_secondary_range_name"]}"
-    cluster_secondary_ip_cidr_range  = "${var.gke_subnet["cluster_secondary_ip_cidr_range"]}"
-  }
-
-  gke_cluster {
-    name                                = "${var.gke_cluster["name"]}"
-    private_cluster                     = "${var.gke_cluster["private_cluster"]}"
-    master_ipv4_cidr_block              = "${var.gke_cluster["master_ipv4_cidr_block"]}"
-    daily_maintenance_window_start_time = "${var.gke_cluster["daily_maintenance_window_start_time"]}"
-    network_policy_enabled              = "${var.gke_cluster["network_policy_enabled"]}"
-    network_policy_provider             = "${var.gke_cluster["network_policy_provider"]}"
-    logging_service                     = "${var.gke_cluster["logging_service"]}"
-  }
-
-  gke_node_pool {
-    name         = "${var.gke_node_pool["name"]}"
-    node_count   = "${var.gke_node_pool["node_count"]}"
-    machine_type = "${var.gke_node_pool["machine_type"]}"
-    disk_type    = "${var.gke_node_pool["disk_type"]}"
-    disk_size_gb = "${var.gke_node_pool["disk_size_gb"]}"
-    oauth_scopes = "${var.gke_node_pool["oauth_scopes"]}"
-    auto_repair  = "${var.gke_node_pool["auto_repair"]}"
-    auto_upgrade = "${var.gke_node_pool["auto_upgrade"]}"
-    tags         = "${module.nat_gateway_zone_a.routing_tag_regional}"
-  }
-
-  labels = "${local.labels}"
-}
-
 resource "google_compute_address" "eth_tx_ropsten_loadbalancer_ip" {
   name         = "${var.eth_tx_ropsten_loadbalancer_name}"
   project      = "${module.project.project_id}"
@@ -158,82 +130,6 @@ resource "google_compute_address" "eth_miner_ropsten_loadbalancer_ip" {
   region       = "${var.region_data["region"]}"
   address_type = "${upper(var.eth_miner_ropsten_loadbalancer_address_type)}"
   labels       = "${local.labels}"
-}
-
-/* Using this module will create a data read and an update for the
- * prometheus-to-sd resource on each Terraform planand apply run.  These
- * updates will do nothing and are an artifact of the depends_on in the
- * modules data resource. Terraform team is aware and have a proposed fix
- * in the works.
-*/
-module "gke_cluster_metrics" {
-  source    = "git@github.com:thesis/infrastructure.git//terraform/modules/gke_metrics"
-  namespace = "${var.gke_metrics_namespace}"
-
-  kube_state_metrics {
-    version = "${var.kube_state_metrics["version"]}"
-  }
-
-  prometheus_to_sd {
-    version = "${var.prometheus_to_sd["version"]}"
-  }
-}
-
-module "openvpn" {
-  source = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_openvpn"
-
-  openvpn {
-    name    = "${var.openvpn["name"]}"
-    version = "${var.openvpn["version"]}"
-  }
-
-  openvpn_parameters {
-    route_all_traffic_through_vpn = "${var.openvpn_parameters["route_all_traffic_through_vpn"]}"
-    gke_master_ipv4_cidr_address  = "${var.openvpn_parameters["gke_master_ipv4_cidr_address"]}"
-  }
-}
-
-module "pull_deployment_infrastructure" {
-  source                                   = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_pull_deploy"
-  project                                  = "${module.project.project_id}"
-  create_ci_publish_to_gcr_service_account = "${var.create_ci_publish_to_gcr_service_account}"
-
-  keel {
-    name      = "${var.keel["name"]}"
-    namespace = "${var.keel["namespace"]}"
-    version   = "${var.keel["version"]}"
-  }
-
-  keel_parameters {
-    helm_provider_enabled = "${var.keel_parameters["helm_provider_enabled"]}"
-    rbac_install_enabled  = "${var.keel_parameters["rbac_install_enabled"]}"
-    gcr_enabled           = "${var.keel_parameters["gcr_enabled"]}"
-  }
-}
-
-module "push_deployment_infrastructure" {
-  source                 = "git@github.com:thesis/infrastructure.git//terraform/modules/gcp_push_deploy"
-  project                = "${module.project.project_id}"
-  region                 = "${var.region_data["region"]}"
-  vpc_network_name       = "${module.vpc.vpc_network_name}"
-  vpc_public_subnet_name = "${module.vpc.vpc_public_subnet_name}"
-  vpc_gke_subnet_name    = "${module.gke_cluster.vpc_gke_subnet_name}"
-
-  jumphost {
-    name = "${var.jumphost["name"]}"
-    zone = "${var.region_data["zone_a"]}"
-    tags = "${var.jumphost["tags"]}"
-  }
-
-  utility_box {
-    name         = "${var.utility_box["name"]}"
-    machine_type = "${var.utility_box["machine_type"]}"
-    tools        = "${var.utility_box["tools"]}"
-    zone         = "${var.region_data["zone_a"]}"
-    tags         = "${module.nat_gateway_zone_a.routing_tag_regional},${var.utility_box["tags"]}"
-  }
-
-  labels = "${local.labels}"
 }
 
 resource "google_storage_bucket" "keep_dev_contract_data" {
