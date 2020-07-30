@@ -293,11 +293,27 @@ describe('TokenGrant/Stake', function() {
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
     await time.increaseTo(createdAt.add(grantUnlockingDuration))
     await grantContract.recoverStake(operatorOne, {from: grantee});
-    await stakingEscrowContract.withdraw(operatorOne, {from: grantee});
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
       "Stake undelegated"
+    )
+  })
+
+  it("should not allow to delegate to the same operator after cancelling stake", async () => {
+    await delegate(grantee, operatorOne, minimumStake)
+    await grantContract.cancelStake(operatorOne, {from: grantee});
+
+    await expectRevert(
+      delegate(grantee, operatorOne, minimumStake),
+      "Stake canceled"
+    )
+
+    await time.increase(initializationPeriod.addn(1))
+
+    await expectRevert(
+      delegate(grantee, operatorOne, minimumStake),
+      "Stake canceled"
     )
   })
 

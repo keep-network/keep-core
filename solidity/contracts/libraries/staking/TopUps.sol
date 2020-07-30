@@ -37,6 +37,7 @@ library TopUps {
     /// the tokens should be added to.
     /// @param operatorParams Parameters of that operator, as stored in the
     /// staking contract.
+    /// @param escrow Reference to TokenStakingEscrow contract.
     /// @return New value of parameters. It should be updated for the operator
     /// in the staking contract.
     function executeInOneStep(
@@ -72,15 +73,22 @@ library TopUps {
     /// @param value Top-up value, the number of tokens added to the stake.
     /// @param operator Operator The operator with existing delegation to which
     /// the tokens should be added to.
+    /// @param operatorParams Parameters of that operator, as stored in the
+    /// staking contract.
+    /// @param escrow Reference to TokenStakingEscrow contract.
     function initiate(
         Storage storage self,
         uint256 value,
         address operator,
-        uint256 operatorParams
+        uint256 operatorParams,
+        TokenStakingEscrow escrow
     ) public {
-        // Stake is initialized, the operator is still active so we just need
+        // Stake is initialized, the operator is still active so we need
         // to check if it's not undelegating.
         require(!isUndelegating(operatorParams), "Stake undelegated");
+        // We also need to check if the stake for the operator is not already
+        // in the escrow because it's been previously cancelled.
+        require(!escrow.hasDeposit(operator), "Stake canceled");
 
         TopUp memory awaiting = self.topUps[operator];
         self.topUps[operator] = TopUp(awaiting.amount.add(value), now);

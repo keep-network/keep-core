@@ -253,7 +253,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             // If the stake is initialized, we do NOT add tokens immediately.
             // We initiate the top-up and will add tokens to the stake only
             // after the initialization period for a top-up passes.
-            topUps.initiate(_value, _operator, operatorParams);
+            topUps.initiate(_value, _operator, operatorParams, escrow);
         }
     }
 
