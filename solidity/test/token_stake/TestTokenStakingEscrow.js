@@ -476,7 +476,7 @@ describe('TokenStakingEscrow', () => {
   })
 
   describe('withdrawRevoked', async () => {
-    const depositedAmount = 10000
+    const depositedAmount = web3.utils.toWei("300000") // 300k KEEP tokens
     beforeEach(async () => {
       const data = web3.eth.abi.encodeParameters(
         ['address', 'uint256'], [operator, grantId]
@@ -519,7 +519,7 @@ describe('TokenStakingEscrow', () => {
 
     it('withdraws part of deposited amount if something has been withdrawn before', async () => {
       await time.increaseTo(grantStart.add(time.duration.days(15)))
-      await escrow.withdraw(operator, {from: operator}) // (1000 / 30) * 15 = 5000
+      await escrow.withdraw(operator, {from: operator}) // (300k / 30) * 15 = 150k KEEP
       await tokenGrant.revoke(grantId, {from: grantManager})
 
       const balanceBefore = await token.balanceOf(grantManager)
@@ -527,7 +527,7 @@ describe('TokenStakingEscrow', () => {
       const balanceAfter = await token.balanceOf(grantManager)
 
       const diff = balanceAfter.sub(balanceBefore)
-      expect(diff).to.eq.BN(5000) // 10000 - 5000 = 5000
+      expect(diff).to.eq.BN(web3.utils.toWei("150000")) // 300k - 150k = 150k KEEP
     })
 
     it('withdraws entire deposited amount if nothing has been withdrawn before', async () => {
@@ -575,6 +575,43 @@ describe('TokenStakingEscrow', () => {
         grantManager: grantManager,
         amount: web3.utils.toBN(depositedAmount)
       })
+    })
+
+    it('respects redelegated tokens', async () => {
+      // We need a real TokenStaking contract to be able to redelegate
+      // tokens in test.
+      const registry = await KeepRegistry.new({from: deployer})
+      const initializationPeriod = time.duration.hours(6)
+      const stakingContracts = await initTokenStaking(
+        token.address,
+        tokenGrant.address,
+        registry.address,
+        initializationPeriod,
+        contract.fromArtifact('TokenStakingEscrow'),
+        contract.fromArtifact('TokenStaking')
+      )
+      const realTokenStaking = stakingContracts.tokenStaking;
+      await escrow.transferOwnership(realTokenStaking.address, {from: tokenStaking})
+
+      const data = Buffer.concat([
+        Buffer.from(beneficiary.substr(2), 'hex'),
+        Buffer.from(operator2.substr(2), 'hex'),
+        Buffer.from(authorizer.substr(2), 'hex')
+      ])
+      const expectedLeft = web3.utils.toBN('123114')
+      const redelegated = web3.utils.toBN(depositedAmount).sub(expectedLeft)
+      await escrow.redelegate(operator, redelegated, data, {from: grantee})
+
+      await tokenGrant.revoke(grantId, {from: grantManager})
+
+      const balanceBefore = await token.balanceOf(grantManager)
+      await escrow.withdrawRevoked(operator, {from: grantManager})
+      const balanceAfter = await token.balanceOf(grantManager)
+
+      expect(balanceAfter.sub(balanceBefore)).to.eq.BN(expectedLeft)
+      expect(await escrow.availableAmount(operator)).to.eq.BN(0)
+      expect(await escrow.withdrawable(operator)).to.eq.BN(0) 
+      expect(await escrow.depositWithdrawnAmount(operator)).to.eq.BN(expectedLeft)
     })
   })
   
@@ -725,7 +762,9 @@ describe('TokenStakingEscrow', () => {
 
       await escrow.migrate(operator, anotherEscrow.address, {from: grantee})
 
-      expect(await escrow.withdrawable(operator)).to.eq.BN(0)
+      expect(await escrow.availableAmount(operator)).to.eq.BN(0)
+      expect(await escrow.withdrawable(operator)).to.eq.BN(0) 
+      expect(await escrow.depositWithdrawnAmount(operator)).to.eq.BN(expectedLeft)
       expect(await anotherEscrow.depositedAmount(operator)).to.eq.BN(expectedLeft)
     })
   })

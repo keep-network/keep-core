@@ -1,4 +1,4 @@
-import { add, sub, gte } from "../utils/arithmetics.utils"
+import { add, sub, gt } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 
@@ -19,6 +19,7 @@ export const SET_SELECTED_GRANT = "SET_SELECTED_GRANT"
 export const SET_TOKENS_CONTEXT = "SET_TOKENS_CONTEXT"
 export const TOP_UP_INITIATED = "TOP_UP_INITIATED"
 export const TOP_UP_COMPLETED = "TOP_UP_COMPLETED"
+export const GRANT_DEPOSITED = "UPDATE_GRANT_DATA"
 
 const tokensPageReducer = (state, action) => {
   switch (action.type) {
@@ -82,12 +83,20 @@ const tokensPageReducer = (state, action) => {
     case GRANT_STAKED:
       return {
         ...state,
-        grants: grantStaked([...state.grants], action.payload),
+        grants: findGrantAndUpdate(
+          [...state.grants],
+          action.payload,
+          grantStaked
+        ),
       }
     case GRANT_WITHDRAWN:
       return {
         ...state,
-        grants: grantWithdrawn([...state.grants], action.payload),
+        grants: findGrantAndUpdate(
+          [...state.grants],
+          action.payload,
+          grantWithdrawn
+        ),
       }
     case SET_SELECTED_GRANT:
       return {
@@ -119,6 +128,15 @@ const tokensPageReducer = (state, action) => {
           action.payload
         ),
       }
+    case GRANT_DEPOSITED:
+      return {
+        ...state,
+        grants: findGrantAndUpdate(
+          [...state.grants],
+          action.payload,
+          grantDeposited
+        ),
+      }
     default:
       return state
   }
@@ -139,27 +157,57 @@ const removeFromDelegationOrUndelegation = (array, id) => {
   return array
 }
 
-const grantStaked = (grants, { grantId, amount, availableToStake }) => {
-  const { indexInArray, obj: grantToUpdate } = findIndexAndObject(
-    "id",
-    grantId,
-    grants
+const grantDeposited = (
+  grantToUpdate,
+  { amount, availableToWithdrawEscrow, availableToWitdrawGrant, operator }
+) => {
+  grantToUpdate.staked = sub(grantToUpdate.staked, amount)
+  grantToUpdate.withdrawableAmountGrantOnly = availableToWitdrawGrant
+  grantToUpdate.readyToRelease = add(
+    grantToUpdate.readyToRelease,
+    availableToWithdrawEscrow
   )
-  if (indexInArray === null) {
-    return grants
-  }
+  grantToUpdate.escrowOperatorsToWithdraw = [
+    ...grantToUpdate.escrowOperatorsToWithdraw,
+    operator,
+  ]
+
+  return grantToUpdate
+}
+
+const grantStaked = (grantToUpdate, { amount, availableToStake }) => {
   grantToUpdate.staked = add(grantToUpdate.staked, amount)
   grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-  grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0)
+  grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
   grantToUpdate.availableToStake = availableToStake
-  grants[indexInArray] = grantToUpdate
 
-  return grants
+  return grantToUpdate
 }
 
-const grantWithdrawn = (grants, { grantId, amount, availableToStake }) => {
+const grantWithdrawn = (
+  grantToUpdate,
+  { amount, availableToStake, operator }
+) => {
+  grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
+  grantToUpdate.released = add(grantToUpdate.released, amount)
+  const unlocked = add(grantToUpdate.released, grantToUpdate.staked)
+  if (!gt(unlocked, grantToUpdate.amount)) {
+    grantToUpdate.unlocked = unlocked
+  }
+  grantToUpdate.availableToStake = availableToStake
+  if (operator) {
+    grantToUpdate.escrowOperatorsToWithdraw = [
+      ...grantToUpdate.escrowOperatorsToWithdraw,
+    ].filter((escrowOperator) => !isSameEthAddress(operator, escrowOperator))
+  }
+
+  return grantToUpdate
+}
+
+const findGrantAndUpdate = (grants, payload, updateGrantCallback) => {
+  const { grantId } = payload
   const { indexInArray, obj: grantToUpdate } = findIndexAndObject(
     "id",
     grantId,
@@ -168,12 +216,8 @@ const grantWithdrawn = (grants, { grantId, amount, availableToStake }) => {
   if (indexInArray === null) {
     return grants
   }
-  grantToUpdate.readyToRelease = "0"
-  grantToUpdate.released = add(grantToUpdate.released, amount)
-  grantToUpdate.unlocked = add(grantToUpdate.released, grantToUpdate.staked)
-  grantToUpdate.availableToStake = availableToStake
-  grantToUpdate.withdrawn = add(grantToUpdate.withdrawn, amount)
-  grants[indexInArray] = grantToUpdate
+
+  grants[indexInArray] = updateGrantCallback(grantToUpdate, payload)
 
   return grants
 }

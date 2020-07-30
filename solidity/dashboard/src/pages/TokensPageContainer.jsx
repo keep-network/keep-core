@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react"
-import { Web3Context } from "../components/WithWeb3Context"
+import { Web3Context, useWeb3Context } from "../components/WithWeb3Context"
 import TokensPage from "./TokensPage"
 import TokenGrantsPage from "./TokenGrantsPage"
 import TokensPageContextProvider, {
@@ -22,6 +22,7 @@ import {
 import {
   TOKEN_STAKING_CONTRACT_NAME,
   TOKEN_GRANT_CONTRACT_NAME,
+  TOKEN_STAKING_ESCROW_CONTRACT_NAME,
 } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
@@ -226,7 +227,6 @@ const useSubscribeToRecoveredStakeEvent = async () => {
     refreshKeepTokenBalance,
     dispatch,
     undelegations,
-    refreshGrants,
   } = useTokensPageContext()
 
   const subscribeToEventCallback = async (event) => {
@@ -253,8 +253,6 @@ const useSubscribeToRecoveredStakeEvent = async () => {
         type: UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
         payload: { operation: sub, value: recoveredUndelegation.amount },
       })
-    } else {
-      refreshGrants()
     }
   }
 
@@ -293,7 +291,11 @@ const useSubscribeToTokenGrantEvents = () => {
     refreshKeepTokenBalance,
     grantStaked,
     grantWithdrawn,
+    grants,
+    dispatch,
+    grantDeposited,
   } = useTokensPageContext()
+  const { yourAddress, tokenStakingEscrow } = useWeb3Context()
 
   const subscribeToStakedEventCallback = (stakedEvent) => {
     const {
@@ -311,6 +313,34 @@ const useSubscribeToTokenGrantEvents = () => {
     refreshKeepTokenBalance()
   }
 
+  const subscribeToDepositWithdrawn = async (depositWithdrawnEvent) => {
+    const {
+      returnValues: { grantee, operator, amount },
+    } = depositWithdrawnEvent
+    if (!isSameEthAddress(grantee, yourAddress)) {
+      return
+    }
+
+    const grantId = await tokenStakingEscrow.methods
+      .depositGrantId(operator)
+      .call()
+    grantWithdrawn(grantId, amount, operator)
+    refreshGrantTokenBalance()
+    refreshKeepTokenBalance()
+  }
+
+  const subscribeToDepositedEvent = async (depositedEvent) => {
+    const {
+      returnValues: { operator, grantId, amount },
+    } = depositedEvent
+
+    if (grants.find((grant) => grant.id === grantId)) {
+      dispatch({ type: REMOVE_DELEGATION, payload: operator })
+      dispatch({ type: REMOVE_UNDELEGATION, payload: operator })
+      grantDeposited(grantId, operator, amount)
+    }
+  }
+
   useSubscribeToContractEvent(
     TOKEN_GRANT_CONTRACT_NAME,
     "TokenGrantStaked",
@@ -320,6 +350,17 @@ const useSubscribeToTokenGrantEvents = () => {
     TOKEN_GRANT_CONTRACT_NAME,
     "TokenGrantWithdrawn",
     subscribeToWithdrawanEventCallback
+  )
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+    "DepositWithdrawn",
+    subscribeToDepositWithdrawn
+  )
+
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+    "Deposited",
+    subscribeToDepositedEvent
   )
 }
 

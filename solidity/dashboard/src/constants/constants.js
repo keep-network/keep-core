@@ -11,6 +11,7 @@ export const BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME =
 export const KEEP_BONDING_CONTRACT_NAME = "keepBondingContract"
 export const TBTC_TOKEN_CONTRACT_NAME = "tbtcTokenContract"
 export const TBTC_SYSTEM_CONTRACT_NAME = "tbtcSystemContract"
+export const TOKEN_STAKING_ESCROW_CONTRACT_NAME = "tokenStakingEscrow"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"

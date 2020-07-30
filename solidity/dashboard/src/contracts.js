@@ -14,6 +14,7 @@ import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantF
 import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
+import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -26,6 +27,7 @@ import {
   KEEP_BONDING_CONTRACT_NAME,
   TBTC_TOKEN_CONTRACT_NAME,
   TBTC_SYSTEM_CONTRACT_NAME,
+  TOKEN_STAKING_ESCROW_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -39,6 +41,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [KEEP_BONDING_CONTRACT_NAME]: 0,
   [TBTC_TOKEN_CONTRACT_NAME]: 0,
   [TBTC_SYSTEM_CONTRACT_NAME]: 0,
+  [TOKEN_STAKING_ESCROW_CONTRACT_NAME]: 0,
 }
 
 export async function getKeepToken(web3) {
@@ -107,7 +110,15 @@ async function contractDeployedAtBlock(web3, contract) {
   return transaction.blockNumber.toString()
 }
 
-export let contracts
+async function getTokenStakingEscrowContract(web3) {
+  return getContract(
+    web3,
+    TokenStakingEscrow,
+    TOKEN_STAKING_ESCROW_CONTRACT_NAME
+  )
+}
+
+export let contracts = {}
 
 export async function getContracts(web3) {
   const web3Contracts = await Promise.all([
@@ -122,6 +133,7 @@ export async function getContracts(web3) {
     getKeepBondingContract(web3),
     getTBTCTokenContract(web3),
     getTBTCSystemContract(web3),
+    getTokenStakingEscrowContract(web3),
   ])
 
   contracts = {
@@ -136,6 +148,7 @@ export async function getContracts(web3) {
     keepBondingContract: web3Contracts[8],
     tbtcTokenContract: web3Contracts[9],
     tbtcSystemContract: web3Contracts[10],
+    tokenStakingEscrow: web3Contracts[11],
   }
 
   return contracts

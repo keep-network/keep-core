@@ -19,7 +19,6 @@ const DelegationOverview = () => {
     undelegations,
     delegations,
     refreshData,
-    refreshGrants,
     tokensContext,
     selectedGrant,
     isFetching,
@@ -67,9 +66,8 @@ const DelegationOverview = () => {
   }, [tokensContext, grantUndelegations, ownedUndelegations])
 
   const cancelStakeSuccessCallback = useCallback(() => {
-    refreshGrants()
     refreshData()
-  }, [refreshGrants, refreshData])
+  }, [refreshData])
 
   const filteredTopUps = useMemo(() => {
     return availableTopUps.filter(({ operatorAddress: lookupOperator }) =>
