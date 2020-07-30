@@ -76,14 +76,14 @@ const reduceAmount = (result, { returnValues: { topUp } }) => {
 const filterByAfterLatestCompletedTopUp = (latestTopUpCompletedEvent) => (
   initiatedEvent
 ) => {
-  const isAfterLatestCompleteedTopUpBlock =
+  const isAfterLatestCompletedTopUpBlock =
     initiatedEvent.blockNumber > latestTopUpCompletedEvent.blockNumber
   const isAfterLatestCompletedTopUpTransactionInBlock =
     latestTopUpCompletedEvent.blockNumber === initiatedEvent.blockNumber &&
     initiatedEvent.transactionIndex > latestTopUpCompletedEvent.transactionIndex
 
   return (
-    isAfterLatestCompleteedTopUpBlock ||
+    isAfterLatestCompletedTopUpBlock ||
     isAfterLatestCompletedTopUpTransactionInBlock
   )
 }
