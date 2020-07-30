@@ -217,12 +217,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         bytes memory _extraData
     ) internal {
-        uint256 operatorParams = operators[_operator].packedParams;
-        require(
-            !_isUndelegating(operatorParams),
-            "Stake undelegated"
-        );
-
         // Top-up comes from a grant if it's been initiated from TokenGrantStake
         // contract or if it's been initiated from TokenStakingEscrow by
         // redelegation.
@@ -248,21 +242,18 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             require(operators[_operator].owner == _from, "Not the same owner");
         }
 
+        uint256 operatorParams = operators[_operator].packedParams;
         if (!_isInitialized(operatorParams)) {
             // If the stake is not yet initialized, we add tokens immediately
             // but we also reset stake initialization time counter.
-            uint256 newAmount = operatorParams.getAmount().add(_value);
-            operators[_operator].packedParams = operatorParams.setAmountAndCreationTimestamp(
-                newAmount,
-                block.timestamp
+            operators[_operator].packedParams = topUps.executeInOneStep(
+                _value, _operator, operatorParams, escrow
             );
-            emit TopUpCompleted(_operator, newAmount);
         } else {
             // If the stake is initialized, we do NOT add tokens immediately.
             // We initiate the top-up and will add tokens to the stake only
             // after the initialization period for a top-up passes.
-            topUps.initiate(_value, _operator);
-            emit TopUpInitiated(_operator, _value);
+            topUps.initiate(_value, _operator, operatorParams);
         }
     }
 

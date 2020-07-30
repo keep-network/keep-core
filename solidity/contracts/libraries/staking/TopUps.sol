@@ -2,6 +2,10 @@ pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+import "../../TokenStakingEscrow.sol";
+import "../../utils/OperatorParams.sol";
+
+
 /// @notice TokenStaking contract library allowing to perform two-step stake
 /// top-ups for existing delegations.
 /// Top-up is a two-step process: it is initiated with a declared top-up value
@@ -9,6 +13,10 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 /// committed.
 library TopUps {
     using SafeMath for uint256;
+    using OperatorParams for uint256;
+
+    event TopUpInitiated(address indexed operator, uint256 topUp);
+    event TopUpCompleted(address indexed operator, uint256 newAmount);
 
     struct TopUp {
         uint256 amount;
@@ -20,20 +28,64 @@ library TopUps {
         mapping(address => TopUp) topUps;
     }
 
+    /// @notice Performs top-up in one step when stake is not yet initialized by
+    /// adding the top-up amount to the stake and resetting stake initialization
+    /// time counter.
+    /// @dev This function should be called only for not yet initialized stake.
+    /// @param value Top-up value, the number of tokens added to the stake.
+    /// @param operator Operator The operator with existing delegation to which
+    /// the tokens should be added to.
+    /// @param operatorParams Parameters of that operator, as stored in the
+    /// staking contract.
+    /// @return New value of parameters. It should be updated for the operator
+    /// in the staking contract.
+    function executeInOneStep(
+        Storage storage self,
+        uint256 value,
+        address operator,
+        uint256 operatorParams,
+        TokenStakingEscrow escrow
+    ) public returns (uint256) {
+        // Stake is not yet initialized so we don't need to check if the
+        // operator is not undelegating - initializing and undelegating at the
+        // same time is not possible. We do however, need to check whether the
+        // operator has not canceled its previous stake for that operator,
+        // depositing the stake it in the escrow. We do not want to allow
+        // resurrecting operators with cancelled stake by top-ups.
+        require(!escrow.hasDeposit(operator), "Stake canceled");
+
+        uint256 newAmount = operatorParams.getAmount().add(value);
+        uint256 newParams = operatorParams.setAmountAndCreationTimestamp(
+            newAmount,
+            block.timestamp
+        );
+
+        emit TopUpCompleted(operator, newAmount);
+        return newParams;
+    }
+
     /// @notice Initiates top-up of the given value for tokens delegated to
     /// the provided operator. If there is an existing top-up still
     /// initializing, top-up values are summed up and initialization period
     /// is set to the current block timestamp.
+    /// @dev This function should be called only for active operators with
+    /// initialized stake.
     /// @param value Top-up value, the number of tokens added to the stake.
     /// @param operator Operator The operator with existing delegation to which
     /// the tokens should be added to.
     function initiate(
         Storage storage self,
         uint256 value,
-        address operator
+        address operator,
+        uint256 operatorParams
     ) public {
+        // Stake is initialized, the operator is still active so we just need
+        // to check if it's not undelegating.
+        require(!isUndelegating(operatorParams), "Stake undelegated");
+
         TopUp memory awaiting = self.topUps[operator];
         self.topUps[operator] = TopUp(awaiting.amount.add(value), now);
+        emit TopUpInitiated(operator, value);
     }
 
     /// @notice Commits the top-up if it passed the initialization period.
@@ -72,5 +124,16 @@ library TopUps {
 
         delete self.topUps[operator];
         return topUp.amount;
+    }
+
+    /// @notice Returns true if the given operatorParams indicate that the
+    /// operator is undelegating its stake or that it completed stake
+    /// undelegation.
+    /// @param operatorParams Parameters of the operator, as stored in the
+    /// staking contract.
+    function isUndelegating(uint256 operatorParams)
+        internal view returns (bool) {
+        uint256 undelegatedAt = operatorParams.getUndelegationTimestamp();
+        return (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
     }
 }

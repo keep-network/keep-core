@@ -287,7 +287,7 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should not allow to delegate to the same operator after recovering stake", async () => {
-    let tx = await delegate(grantee, operatorOne, grantAmount)
+    let tx = await delegate(grantee, operatorOne, minimumStake)
     let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
@@ -296,7 +296,7 @@ describe('TokenGrant/Stake', function() {
     await stakingEscrowContract.withdraw(operatorOne, {from: grantee});
 
     await expectRevert(
-      delegateLiquid(grantee, operatorOne, minimumStake),
+      delegate(grantee, operatorOne, minimumStake),
       "Stake undelegated"
     )
   })
