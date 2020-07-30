@@ -92,13 +92,17 @@ const AmountFormWithFormik = withFormik({
   mapPropsToValues: () => ({
     amount: "",
   }),
-  validate: ({ amount }, { availableAmount }) => {
+  validate: ({ amount }, { availableAmount, minimumAmount }) => {
     const errors = {}
 
     if (lte(amount || 0, 0)) {
       errors.amount = "Insufficient funds"
     } else {
-      errors.amount = validateAmountInRange(amount, availableAmount)
+      errors.amount = validateAmountInRange(
+        amount,
+        availableAmount,
+        minimumAmount
+      )
     }
 
     return getErrorsObj(errors)

@@ -27,6 +27,8 @@ const DelegationOverview = () => {
     keepTokenBalance,
     availableTopUps,
     topUpsAreFetching,
+    minimumStake,
+    grants,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -68,14 +70,6 @@ const DelegationOverview = () => {
     refreshGrants()
     refreshData()
   }, [refreshGrants, refreshData])
-
-  const availableToStake = useMemo(() => {
-    if (tokensContext === "granted") {
-      return selectedGrant.availableToStake
-    }
-
-    return keepTokenBalance
-  }, [tokensContext, selectedGrant.availableToStake, keepTokenBalance])
 
   const filteredTopUps = useMemo(() => {
     return availableTopUps.filter(({ operatorAddress: lookupOperator }) =>
@@ -126,7 +120,9 @@ const DelegationOverview = () => {
         <DelegatedTokensTable
           delegatedTokens={getDelegations()}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
-          availableToStake={availableToStake}
+          keepTokenBalance={keepTokenBalance}
+          minimumStake={minimumStake}
+          grants={grants}
         />
       </LoadingOverlay>
       <LoadingOverlay

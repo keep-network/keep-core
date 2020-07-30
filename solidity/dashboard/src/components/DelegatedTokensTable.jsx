@@ -17,56 +17,67 @@ import AddTopUpModal from "./AddTopUpModal"
 const DelegatedTokensTable = ({
   delegatedTokens,
   cancelStakeSuccessCallback,
-  availableToStake,
+  keepTokenBalance,
+  minimumStake,
+  grants,
 }) => {
   const showMessage = useShowMessage()
   const web3Context = useWeb3Context()
   const { openConfirmationModal } = useModal()
 
-  const onTopUpBtn = useCallback(
-    async (delegationData, transactionHashCallback) => {
-      try {
-        const { amount } = await openConfirmationModal(
-          {
-            modalOptions: { title: "Add KEEP" },
-            submitBtnText: "add keep",
-            availableAmount: availableToStake,
-            currentAmount: delegationData.amount,
-            ...delegationData,
-          },
-          AddTopUpModal
-        )
-        delegationData.beneficiaryAddress = delegationData.beneficiary
-        delegationData.stakeTokens = amount
-        delegationData.selectedGrant = {
-          id: delegationData.grantId,
-          isManagedGrant: delegationData.isManagedGrant,
-          managedGrantContractInstance:
-            delegationData.managedGrantContractInstance,
-        }
-        delegationData.context = delegationData.isFromGrant
-          ? "granted"
-          : "owned"
-        await tokensPageService.delegateStake(
-          web3Context,
-          delegationData,
-          transactionHashCallback
-        )
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Top up committed successfully",
-        })
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Commit action has failed ",
-          content: error.message,
-        })
-      }
+  const getAvailableToStakeFromGrant = useCallback(
+    (grantId) => {
+      const grant = grants.find(({ id }) => id === grantId)
+
+      return grant ? grant.availableToStake : 0
     },
-    [showMessage, openConfirmationModal, availableToStake, web3Context]
+    [grants]
   )
+
+  const onTopUpBtn = async (delegationData, transactionHashCallback) => {
+    try {
+      const availableAmount = delegationData.isFromGrant
+        ? getAvailableToStakeFromGrant(delegationData.grantId)
+        : keepTokenBalance
+      const { amount } = await openConfirmationModal(
+        {
+          modalOptions: { title: "Add KEEP" },
+          submitBtnText: "add keep",
+          availableAmount,
+          currentAmount: delegationData.amount,
+          minimumAmount: minimumStake,
+          ...delegationData,
+        },
+        AddTopUpModal
+      )
+      delegationData.beneficiaryAddress = delegationData.beneficiary
+      delegationData.stakeTokens = amount
+      delegationData.selectedGrant = {
+        id: delegationData.grantId,
+        isManagedGrant: delegationData.isManagedGrant,
+        managedGrantContractInstance:
+          delegationData.managedGrantContractInstance,
+      }
+      delegationData.context = delegationData.isFromGrant ? "granted" : "owned"
+      await tokensPageService.delegateStake(
+        web3Context,
+        delegationData,
+        transactionHashCallback
+      )
+      showMessage({
+        type: messageType.SUCCESS,
+        title: "Success",
+        content: "Top up committed successfully",
+      })
+    } catch (error) {
+      showMessage({
+        type: messageType.ERROR,
+        title: "Commit action has failed ",
+        content: error.message,
+      })
+    }
+  }
+
   return (
     <Tile>
       <DataTable
