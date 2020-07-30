@@ -26,10 +26,11 @@ describe('TokenStakingEscrow', () => {
     grantee = accounts[2],
     operator = accounts[3],
     operator2 = accounts[4],
-    authorizer = accounts[5],
-    beneficiary = accounts[6],
-    thirdParty = accounts[7],
-    tokenStaking = accounts[8]
+    operator3 = accounts[5],
+    authorizer = accounts[6],
+    beneficiary = accounts[7],
+    thirdParty = accounts[8],
+    tokenStaking = accounts[9]
 
   let grantedAmount, grantStart, grantUnlockingDuration,
   grantId, managedGrantId, managedGrant
@@ -753,7 +754,7 @@ describe('TokenStakingEscrow', () => {
 
       const data = Buffer.concat([
         Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operator2.substr(2), 'hex'),
+        Buffer.from(operator3.substr(2), 'hex'),
         Buffer.from(authorizer.substr(2), 'hex')
       ])
       const expectedLeft = web3.utils.toBN('123114')

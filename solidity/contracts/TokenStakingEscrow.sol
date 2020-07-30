@@ -19,6 +19,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 import "./libraries/grant/UnlockingSchedule.sol";
+import "./utils/BytesLib.sol";
 import "./KeepToken.sol";
 import "./utils/BytesLib.sol";
 import "./TokenGrant.sol";
@@ -122,8 +123,8 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Redelegates deposit or part of the deposit to another operator.
     /// Uses the same staking contract as the original delegation.
-    /// @param previousOperator Operator from which tokens were undelegated
-    /// and deposited in the escrow.
+    /// @param previousOperator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     /// @dev Only grantee is allowed to call this function. For managed grant,
     /// caller has to be the managed grantee.
     /// @param amount Amount of tokens to delegate.
@@ -149,6 +150,10 @@ contract TokenStakingEscrow is Ownable {
             availableAmount(previousOperator) >= amount,
             "Insufficient balance"
         );
+        require(
+            !hasDeposit(newOperator),
+            "Redelegating to previously used operator is not allowed"
+        );
 
         deposits[previousOperator].redelegated = deposit.redelegated.add(amount);
 
@@ -166,12 +171,20 @@ contract TokenStakingEscrow is Ownable {
         );
     }
 
+    /// @notice Returns true if there is a deposit for the given operator in
+    /// the escrow. Otherwise, returns false.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
+    function hasDeposit(address operator) public view returns (bool) {
+        return depositedAmount(operator) > 0;
+    }
+
     /// @notice Returns the currently available amount deposited in the escrow
     /// that may or may not be currently withdrawable. The available amount
     /// is the amount initially deposited minus the amount withdrawn and
     /// redelegated so far from that deposit.
-    /// @param operator Address of the operator from which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function availableAmount(address operator) public view returns (uint256) {
         Deposit memory deposit = deposits[operator];
         return deposit.amount.sub(deposit.withdrawn).sub(deposit.redelegated);
@@ -179,24 +192,24 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Returns the total amount deposited in the escrow after
     /// undelegating it from the provided operator.
-    /// @param operator Address of the operator from which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function depositedAmount(address operator) public view returns (uint256) {
         return deposits[operator].amount;
     }
 
     /// @notice Returns grant ID for the amount deposited in the escrow after
     /// undelegating it from the provided operator.
-    /// @param operator Address of the operator from which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function depositGrantId(address operator) public view returns (uint256) {
         return deposits[operator].grantId;
     }
 
     /// @notice Returns the amount withdrawn so far from the value deposited
     /// in the escrow contract after undelegating it from the provided operator.
-    /// @param operator Address of the operator from which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function depositWithdrawnAmount(address operator) public view returns (uint256) {
         return deposits[operator].withdrawn;
     }
@@ -204,8 +217,8 @@ contract TokenStakingEscrow is Ownable {
     /// @notice Returns the total amount redelegated so far from the value
     /// deposited in the escrow contract after undelegating it from the provided
     /// operator.
-    /// @param operator Address of the operator from which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function depositRedelegatedAmount(address operator) public view returns (uint256) {
         return deposits[operator].redelegated;
     }
@@ -215,8 +228,8 @@ contract TokenStakingEscrow is Ownable {
     /// Tokens are unlocked based on their grant unlocking schedule.
     /// Function returns 0 for non-existing deposits and revoked grants if they
     /// have been revoked before they fully unlocked.
-    /// @param operator Address of the operator for which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function withdrawable(address operator) public view returns (uint256) {
         Deposit memory deposit = deposits[operator];
 
@@ -257,8 +270,8 @@ contract TokenStakingEscrow is Ownable {
     /// operator can call this function. Important: this function can not be
     /// called for a `ManagedGrant` grantee. This may lead to locking tokens.
     /// For `ManagedGrant`, please use `withdrawToManagedGrantee` instead.
-    /// @param operator Address of the operator for which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function withdraw(address operator) public {
         Deposit memory deposit = deposits[operator];
         address grantee = getGrantee(deposit.grantId);
@@ -284,8 +297,8 @@ contract TokenStakingEscrow is Ownable {
     /// operator can call this function. This function works only for
     /// `ManagedGrant` grantees. For a standard grant, please use `withdraw`
     /// instead.
-    /// @param operator Address of the operator for which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function withdrawToManagedGrantee(address operator) public {
         Deposit memory deposit = deposits[operator];
         address managedGrant = getGrantee(deposit.grantId);
@@ -301,8 +314,8 @@ contract TokenStakingEscrow is Ownable {
 
     /// @notice Migrates all available tokens to another authorized escrow.
     /// Can be requested only by grantee.
-    /// @param operator Address of the operator for which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     /// @param receivingEscrow Escrow to which tokens should be migrated.
     /// @dev The receiving escrow needs to accept deposits from this escrow, at
     /// least for the period of migration.
@@ -331,8 +344,8 @@ contract TokenStakingEscrow is Ownable {
     /// @notice Withdraws the entire amount that is still deposited in the
     /// escrow in case the grant has been revoked. Anyone can call this function
     /// and the entire amount is transferred back to the grant manager.
-    /// @param operator Address of the operator for which undelegated tokens
-    /// were deposited.
+    /// @param operator Address of the operator from the undelegated/canceled
+    /// delegation from which tokens were deposited.
     function withdrawRevoked(address operator) public {
         Deposit memory deposit = deposits[operator];
 
@@ -382,7 +395,7 @@ contract TokenStakingEscrow is Ownable {
         );
 
         require(
-            depositedAmount(operator) == 0,
+            !hasDeposit(operator),
             "Stake for the operator already deposited in the escrow"
         );
 
