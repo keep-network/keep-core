@@ -43,7 +43,6 @@ export const useFetchData = (
           dispatch({ type: FETCH_REQUEST_SUCCESS, payload: data })
       })
       .catch((error) => {
-        console.log("error", error)
         shouldSetState &&
           dispatch({ type: FETCH_REQUEST_FAILURE, payload: error })
       })
