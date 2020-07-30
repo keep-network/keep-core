@@ -656,5 +656,53 @@ describe('TokenStaking/StakingGrant', () => {
           "Not authorized"
         )
       })
+
+      it('lands back in the escrow when undelegated and recovered', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+
+        await time.increase(initializationPeriod.addn(1))
+        await tokenStaking.undelegate(operatorThree, {from: operatorThree})
+
+        await time.increase(undelegationPeriod.addn(1))
+        await tokenStaking.recoverStake(operatorThree)
+
+        expect(
+          await tokenStakingEscrow.depositedAmount(operatorThree)
+        ).to.eq.BN(redelegatedAmount)
+        expect(
+          await tokenStakingEscrow.depositGrantId(operatorThree)
+        ).to.eq.BN(grantId)
+        expect(
+          await tokenStakingEscrow.depositWithdrawnAmount(operatorThree)
+        ).to.eq.BN(0)
+        expect(
+          await tokenStakingEscrow.depositRedelegatedAmount(operatorThree)
+        ).to.eq.BN(0)
+      })
+
+      it('lands back in the escrow when cancelled', async () => {
+        const redelegatedAmount = delegatedAmount
+        await tokenStakingEscrow.redelegate(
+          operatorOne, redelegatedAmount, data3, {from: grantee}
+        )
+
+        await tokenStaking.cancelStake(operatorThree, {from: operatorThree})
+
+        expect(
+          await tokenStakingEscrow.depositedAmount(operatorThree)
+        ).to.eq.BN(redelegatedAmount)
+        expect(
+          await tokenStakingEscrow.depositGrantId(operatorThree)
+        ).to.eq.BN(grantId)
+        expect(
+          await tokenStakingEscrow.depositWithdrawnAmount(operatorThree)
+        ).to.eq.BN(0)
+        expect(
+          await tokenStakingEscrow.depositRedelegatedAmount(operatorThree)
+        ).to.eq.BN(0)
+      })
     })
 })
