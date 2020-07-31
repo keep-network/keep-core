@@ -1,6 +1,5 @@
-import React, { useContext, useCallback, useMemo } from "react"
+import React, { useCallback } from "react"
 import { SubmitButton } from "./Button"
-import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { contracts } from "../contracts"
@@ -8,27 +7,9 @@ import { useModal } from "../hooks/useModal"
 import { withConfirmationModal } from "./ConfirmationModal"
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
-  const web3Context = useContext(Web3Context)
-  const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
-  const { isFromGrant, isManagedGrant, managedGrantContractInstance } = props
+  const { isFromGrant } = props
   const { openConfirmationModal } = useModal()
-
-  const contract = useMemo(() => {
-    if (isManagedGrant) {
-      return managedGrantContractInstance
-    } else if (isFromGrant) {
-      return grantContract
-    } else {
-      return stakingContract
-    }
-  }, [
-    grantContract,
-    isFromGrant,
-    isManagedGrant,
-    managedGrantContractInstance,
-    stakingContract,
-  ])
 
   const recoverStake = useCallback(
     async (onTransactionHashCallback) => {
@@ -45,9 +26,9 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
             withConfirmationModal(ConfirmRecoveringModal)
           )
         }
-        await contract.methods
+        await contracts.stakingContract.methods
           .recoverStake(operatorAddress)
-          .send({ from: yourAddress })
+          .send()
           .on("transactionHash", onTransactionHashCallback)
         showMessage({
           type: messageType.SUCCESS,
@@ -63,14 +44,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
         throw error
       }
     },
-    [
-      operatorAddress,
-      yourAddress,
-      contract.methods,
-      showMessage,
-      isFromGrant,
-      openConfirmationModal,
-    ]
+    [operatorAddress, showMessage, isFromGrant, openConfirmationModal]
   )
 
   return (

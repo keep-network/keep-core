@@ -18,26 +18,13 @@ const confirmationModalOptions = {
 
 const UndelegateStakeButton = (props) => {
   const web3Context = useContext(Web3Context)
-  const { yourAddress, grantContract, stakingContract } = web3Context
+  const { yourAddress, stakingContract } = web3Context
   const showMessage = useShowMessage()
   const { openConfirmationModal } = useModal()
 
   const undelegate = async (onTransactionHashCallback) => {
-    const {
-      operator,
-      isInInitializationPeriod,
-      isFromGrant,
-      isManagedGrant,
-      managedGrantContractInstance,
-    } = props
-    let contract
-    if (isManagedGrant) {
-      contract = managedGrantContractInstance
-    } else if (isFromGrant) {
-      contract = grantContract
-    } else {
-      contract = stakingContract
-    }
+    const { operator, isInInitializationPeriod, isFromGrant } = props
+
     try {
       if (isInInitializationPeriod && isFromGrant) {
         await openConfirmationModal(
@@ -53,7 +40,7 @@ const UndelegateStakeButton = (props) => {
         await openConfirmationModal(confirmationModalOptions)
       }
 
-      await contract.methods[
+      await stakingContract.methods[
         isInInitializationPeriod ? "cancelStake" : "undelegate"
       ](operator)
         .send({ from: yourAddress })
