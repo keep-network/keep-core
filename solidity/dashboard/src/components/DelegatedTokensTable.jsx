@@ -75,6 +75,7 @@ const DelegatedTokensTable = ({
         title: "Commit action has failed ",
         content: error.message,
       })
+      throw error
     }
   }
 
