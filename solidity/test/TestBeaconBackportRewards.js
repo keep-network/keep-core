@@ -1,7 +1,7 @@
 const { initContracts } = require('./helpers/initContracts')
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
-const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { time } = require("@openzeppelin/test-helpers")
 const crypto = require("crypto")
 const stakeDelegate = require('./helpers/stakeDelegate')
 
@@ -17,7 +17,6 @@ describe('BeaconBackportRewards', () => {
         groupSize, minimumStake,
         group0, group1, group2, group3,
         owner = accounts[0],
-        requestor = accounts[1],
         operator1 = accounts[2],
         operator2 = accounts[3],
         operator3 = accounts[4],
@@ -95,10 +94,6 @@ describe('BeaconBackportRewards', () => {
         await restoreSnapshot()
     })
 
-    function bytes32(byte) {
-        return "0x" + ("00" * 31) + byte
-    }
-
     it("should have 4 groups", async () => {
         let count = await rewards.getKeepCount();
         expect(count).to.eq.BN(4);
@@ -166,18 +161,27 @@ describe('BeaconBackportRewards', () => {
     })
 
     it("should receive rewards for groups 0, 2 and 3", async () => {
+        // 4500 allocated to the first interval:
+        //   1500 allocated to group 0
+        //   1500 not allocated to group 1 because it's terminated
+        //   1500 allocated to group 2
+        // 4500 allocated to the second interval:
+        //   4500 allocated to group 3
+
+        // 1500 allocated to group 0
         await rewards.receiveReward(0);
+        expect(await token.balanceOf(beneficiary1)).to.eq.BN(500)
+        expect(await token.balanceOf(beneficiary2)).to.eq.BN(1000)
 
-        let balance1 = await token.balanceOf(beneficiary1);
-        expect(balance1).to.eq.BN(500)
-
+        // 1500 allocated to group 2
         await rewards.receiveReward(2);
-        let balance2 = await token.balanceOf(beneficiary2);
-        expect(balance2).to.eq.BN(2000)
+        expect(await token.balanceOf(beneficiary1)).to.eq.BN(1000) // 500+500
+        expect(await token.balanceOf(beneficiary2)).to.eq.BN(2000) // 1000+1000
 
+        // 4500 allocated to group 3
         await rewards.receiveReward(3);
-        let balance1new = await token.balanceOf(beneficiary1)
-        expect(balance1new).to.eq.BN(2500)
+        expect(await token.balanceOf(beneficiary1)).to.eq.BN(2500) // 1000+1500
+        expect(await token.balanceOf(beneficiary2)).to.eq.BN(5000) // 2000+3000
     })
 
     it("should withdraw excess rewards from terminated group 1", async () => {
