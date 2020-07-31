@@ -7,7 +7,7 @@ import { commitTopUp } from "../services/top-ups.service"
 import { displayAmount } from "../utils/token.utils"
 import moment from "moment"
 
-export const TopUpsDataTable = ({ topUps }) => {
+export const TopUpsDataTable = ({ topUps, initializationPeriod }) => {
   const showMessage = useShowMessage()
 
   const onCommitTopUpBtn = useCallback(
@@ -62,7 +62,7 @@ export const TopUpsDataTable = ({ topUps }) => {
               await onCommitTopUpBtn(operatorAddress, transactionHashCallback)
             }
             className="btn btn-secondary btn-sm"
-            disabled={moment.unix(createdAt).isBefore(moment.now())}
+            disabled={!moment.unix(createdAt).isBefore(moment.now())}
           >
             commit top-up
           </SubmitButton>

@@ -28,6 +28,7 @@ const DelegationOverview = () => {
     topUpsAreFetching,
     minimumStake,
     grants,
+    initializationPeriod,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -136,7 +137,10 @@ const DelegationOverview = () => {
         skeletonComponent={<DataTableSkeleton columns={3} />}
       >
         <Tile>
-          <TopUpsDataTable topUps={filteredTopUps} />
+          <TopUpsDataTable
+            topUps={filteredTopUps}
+            initializationPeriod={initializationPeriod}
+          />
         </Tile>
       </LoadingOverlay>
     </section>

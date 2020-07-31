@@ -1,6 +1,7 @@
 import { contracts, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
+import moment from "moment"
 
 export const commitTopUp = async (operator, onTransactionHashCallback) => {
   await contracts.stakingContract.methods
@@ -48,17 +49,19 @@ export const fetchAvailableTopUps = async (web3Context, operators) => {
         reduceAmount,
         0
       )
-      const createdAt = (
-        await web3Context.eth.getBlock(
-          topUpsInitiated[topUpsInitiated.length - 1].blockNumber
-        )
-      ).timestamp
-      if (availableTopUpAmount > 0)
+      if (availableTopUpAmount > 0) {
+        const createdAt = (
+          await web3Context.eth.getBlock(
+            topUpsInitiated[topUpsInitiated.length - 1].blockNumber
+          )
+        ).timestamp
+
         availableTopUps.push({
           operatorAddress: operator,
           availableTopUpAmount,
           createdAt,
         })
+      }
     }
   }
 
