@@ -53,7 +53,7 @@ import "openzeppelin-solidity/contracts/math/Math.sol";
 /// Reporting a terminated keep returns its allocated reward
 /// to the pool of unallocated rewards.
 ///
-/// A concrete implementation of the abstract rewards contract
+/// @dev A concrete implementation of the abstract rewards contract
 /// must specify functions for accessing information about keeps
 /// and paying out rewards.
 /// For the purpose of rewards,
@@ -426,10 +426,10 @@ contract Rewards {
     /// If the number of keeps in an interval meets the quota,
     /// but the base allocation isn't divisible by the number of keeps,
     /// the remainder will remain unallocated.
-    /// @param interval The next interval to be allocated.
     /// Allocations for an already allocated interval,
     /// or when all prior intervals haven't been allocated yet,
     /// will produce incorrect results.
+    /// @param interval The next interval to be allocated.
     /// @return The amount of tokens to allocate as rewards for the interval.
     function _adjustedAllocation(uint256 interval) internal returns (uint256) {
         uint256 __baseAllocation = _baseAllocation(interval);
@@ -442,6 +442,7 @@ contract Rewards {
         if (adjustmentCount == 0) {
             return 0;
         }
+        // Rewards divide equally among keeps
         return __baseAllocation.div(adjustmentCount).mul(keepCount);
     }
 
@@ -469,7 +470,6 @@ contract Rewards {
             allocateRewards(interval.sub(1));
         }
         uint256 totalAllocation = _adjustedAllocation(interval);
-        // Calculate like this so rewards divide equally among keeps
         unallocatedRewards = unallocatedRewards.sub(totalAllocation);
         intervalAllocations.push(totalAllocation);
     }
@@ -519,9 +519,8 @@ contract Rewards {
         uint256 allocation = intervalAllocations[interval];
         uint256 _keepsInInterval = keepsInInterval(interval);
         uint256 perKeepReward = allocation.div(_keepsInInterval);
-        uint256 processedKeeps = intervalKeepsProcessed[interval];
         claimed[keepIdentifier] = true;
-        intervalKeepsProcessed[interval] = processedKeeps.add(1);
+        intervalKeepsProcessed[interval] = intervalKeepsProcessed[interval].add(1);
 
         if (eligible) {
             paidOutRewards = paidOutRewards.add(perKeepReward);
