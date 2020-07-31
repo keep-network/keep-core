@@ -1,6 +1,7 @@
 import { add, sub, gt } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { isSameEthAddress } from "../utils/general.utils"
+import moment from "moment"
 
 export const REFRESH_KEEP_TOKEN_BALANCE = "REFRESH_KEEP_TOKEN_BALANCE"
 export const REFRESH_GRANT_TOKEN_BALANCE = "REFRESH_GRANT_TOKEN_BALANCE"
@@ -123,10 +124,7 @@ const tokensPageReducer = (state, action) => {
           ({ operatorAddress }) =>
             !isSameEthAddress(operatorAddress, action.payload.operator)
         ),
-        delegations: updateDelegationAmount(
-          [...state.delegations],
-          action.payload
-        ),
+        delegations: topUpCompleted([...state.delegations], action.payload),
       }
     case GRANT_DEPOSITED:
       return {
@@ -231,7 +229,11 @@ const topUpInitiated = (topUps, { operator, topUp }) => {
   )
   if (indexInArray === null) {
     return [
-      { operatorAddress: operator, availableTopUpAmount: topUp },
+      {
+        operatorAddress: operator,
+        availableTopUpAmount: topUp,
+        createdAt: moment.unix(),
+      },
       ...topUps,
     ]
   }
@@ -240,12 +242,13 @@ const topUpInitiated = (topUps, { operator, topUp }) => {
     topUpToUpdate.availableTopUpAmount,
     topUp
   )
+  topUpToUpdate.createdAt = moment.unix()
   topUps[indexInArray] = topUpToUpdate
 
   return topUps
 }
 
-const updateDelegationAmount = (delegations, { operator, newAmount }) => {
+const topUpCompleted = (delegations, { operator, newAmount }) => {
   const { indexInArray, obj: delegationsToUpdate } = findIndexAndObject(
     "operatorAddress",
     operator,

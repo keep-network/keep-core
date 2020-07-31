@@ -381,7 +381,7 @@ const useSubscribeToTopUpsEvents = () => {
     if (delegation) {
       dispatch({ type: TOP_UP_INITIATED, payload: event.returnValues })
     }
-    if (!delegation.isFromGrant) {
+    if (delegation && !delegation.isFromGrant) {
       refreshKeepTokenBalance()
     }
   }

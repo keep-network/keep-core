@@ -9,7 +9,7 @@ export const commitTopUp = async (operator, onTransactionHashCallback) => {
     .on("transactionHash", onTransactionHashCallback)
 }
 
-export const fetchAvailableTopUps = async (_, operators) => {
+export const fetchAvailableTopUps = async (web3Context, operators) => {
   const availableTopUps = []
 
   if (isEmptyArray(operators)) {
@@ -31,27 +31,33 @@ export const fetchAvailableTopUps = async (_, operators) => {
   ).reduce(reduceByOperator, {})
 
   for (const operator of operators) {
-    const topUpInitiated = toupUpsInitiatedByOperator[operator]
-    const topUpCompleted = topUpsCompletedByOperator[operator]
+    const topUpsInitiated = toupUpsInitiatedByOperator[operator]
+    const topUpsCompleted = topUpsCompletedByOperator[operator]
 
-    const latestTopUpCompletedEvent = !isEmptyArray(topUpCompleted)
-      ? [...topUpCompleted].pop()
+    const latestTopUpCompletedEvent = !isEmptyArray(topUpsCompleted)
+      ? [...topUpsCompleted].pop()
       : undefined
 
-    if (!isEmptyArray(topUpInitiated)) {
+    if (!isEmptyArray(topUpsInitiated)) {
       const availableOperatorTopUps = latestTopUpCompletedEvent
-        ? topUpInitiated.filter(
+        ? topUpsInitiated.filter(
             filterByAfterLatestCompletedTopUp(latestTopUpCompletedEvent)
           )
-        : topUpInitiated
+        : topUpsInitiated
       const availableTopUpAmount = availableOperatorTopUps.reduce(
         reduceAmount,
         0
       )
+      const createdAt = (
+        await web3Context.eth.getBlock(
+          topUpsInitiated[topUpsInitiated.length - 1].blockNumber
+        )
+      ).timestamp
       if (availableTopUpAmount > 0)
         availableTopUps.push({
           operatorAddress: operator,
           availableTopUpAmount,
+          createdAt,
         })
     }
   }
