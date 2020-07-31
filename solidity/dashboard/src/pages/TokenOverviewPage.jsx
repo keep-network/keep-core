@@ -43,7 +43,7 @@ const TokenOverviewPage = () => {
 
   const totalGrantedTokenBalance = useMemo(() => {
     const grantedBalance = grants
-      .map(({ amount, withdrawn }) => sub(amount, withdrawn))
+      .map(({ amount, released }) => sub(amount, released))
       .reduce(add, "0")
     return grantedBalance
   }, [grants])
