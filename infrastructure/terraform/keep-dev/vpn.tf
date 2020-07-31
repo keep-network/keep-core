@@ -1,13 +1,18 @@
-module "openvpn" {
-  source = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_openvpn"
+resource "helm_release" "openvpn" {
+  name      = "${var.openvpn["name"]}"
+  namespace = "${var.openvpn["namespace"]}"
+  chart     = "${var.openvpn["helm_chart"]}"
+  version   = "${var.openvpn["helm_chart_version"]}"
+  keyring   = ""
 
-  openvpn {
-    name    = "${var.openvpn["name"]}"
-    version = "${var.openvpn["version"]}"
+  set {
+    name  = "openvpn.redirectGateway"
+    value = "${var.openvpn["route_all_traffic_through_vpn"]}"
   }
 
-  openvpn_parameters {
-    route_all_traffic_through_vpn = "${var.openvpn_parameters["route_all_traffic_through_vpn"]}"
-    gke_master_ipv4_cidr_address  = "${var.openvpn_parameters["gke_master_ipv4_cidr_address"]}"
+  # Netmask is not configurable because GKE requires /28 for master subnet range.
+  set {
+    name  = "openvpn.serverConf"
+    value = "push \"route ${var.openvpn["gke_master_cidr"]} 255.255.255.240\""
   }
 }

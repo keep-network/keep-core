@@ -1,30 +1,20 @@
 provider "kubernetes" {
-  version                = "<= 1.5.0"
+  version                = "= 1.11.1"
   load_config_file       = false
   host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
   token                  = "${data.google_client_config.default.access_token}"
   cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
 }
 
-module "helm_provider_helper" {
-  source                = "git@github.com:thesis/infrastructure.git//terraform/modules/helm_tiller_helper"
-  tiller_namespace_name = "${var.tiller_namespace_name}"
-}
-
 provider "helm" {
-  version = "<= 0.10.2"
+  version                = "= 1.1.1"
+  repository_config_path = "./config-files/helm-repositories.yaml"
 
   kubernetes {
     host                   = "https://${var.gke_cluster["master_private_endpoint"]}"
     token                  = "${data.google_client_config.default.access_token}"
     cluster_ca_certificate = "${base64decode(module.gke_cluster.cluster_ca_certificate)}"
   }
-
-  tiller_image    = "gcr.io/kubernetes-helm/tiller:v2.14.2"
-  service_account = "${module.helm_provider_helper.tiller_service_account}"
-  override        = ["spec.template.spec.automountserviceaccounttoken=true"]
-  namespace       = "${module.helm_provider_helper.tiller_namespace}"
-  install_tiller  = true
 }
 
 # create gke cluster
@@ -50,6 +40,7 @@ module "gke_cluster" {
     network_policy_enabled              = "${var.gke_cluster["network_policy_enabled"]}"
     network_policy_provider             = "${var.gke_cluster["network_policy_provider"]}"
     logging_service                     = "${var.gke_cluster["logging_service"]}"
+    monitoring_service                  = "${var.gke_cluster["monitoring_service"]}"
   }
 
   gke_node_pool {

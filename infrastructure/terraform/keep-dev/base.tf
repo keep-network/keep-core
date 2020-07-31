@@ -65,6 +65,7 @@ module "vpc" {
 }
 
 resource "google_compute_address" "eth_tx_ropsten_loadbalancer_ip" {
+  provider     = "google-beta"
   name         = "${var.eth_tx_ropsten_loadbalancer_name}"
   project      = "${module.project.project_id}"
   region       = "${var.region_data["region"]}"
@@ -73,6 +74,7 @@ resource "google_compute_address" "eth_tx_ropsten_loadbalancer_ip" {
 }
 
 resource "google_compute_address" "eth_miner_ropsten_loadbalancer_ip" {
+  provider     = "google-beta"
   name         = "${var.eth_miner_ropsten_loadbalancer_name}"
   project      = "${module.project.project_id}"
   region       = "${var.region_data["region"]}"
@@ -107,3 +109,9 @@ resource "google_project_iam_member" "ci_get_bucket_object_service_account" {
   role    = "roles/storage.objectViewer"
   member  = "${local.service_account_prefix}:${google_service_account.ci_get_bucket_object_service_account.email}"
 }
+
+# resource "kubernetes_namespace" "tbtc" {
+#   metadata {
+#     name = "tbtc"
+#   }
+# }
