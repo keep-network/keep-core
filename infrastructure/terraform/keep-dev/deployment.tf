@@ -15,6 +15,7 @@ module "push_deployment_infrastructure" {
   utility_box {
     name         = "${var.utility_box["name"]}"
     machine_type = "${var.utility_box["machine_type"]}"
+    machine_image = "${var.utility_box["machine_image"]}"
     tools        = "${var.utility_box["tools"]}"
     zone         = "${var.region_data["zone_a"]}"
     tags         = "${var.utility_box["tags"]}"

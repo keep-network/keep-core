@@ -131,7 +131,7 @@ variable "gke_cluster" {
     network_policy_enabled              = false
     network_policy_provider             = "PROVIDER_UNSPECIFIED"
     logging_service                     = "logging.googleapis.com/kubernetes"
-    monitoring_service                  = "monitoring.googleapis.com/kubernetes"    
+    monitoring_service                  = "monitoring.googleapis.com/kubernetes"
   }
 }
 
@@ -211,9 +211,10 @@ variable "jumphost" {
 
 variable "utility_box" {
   default {
-    name         = "keep-dev-utility-box"
-    tags         = "gke-subnet"
-    machine_type = "g1-small"
-    tools        = "kubectl, helm, jq, nodejs, geth"
+    name          = "keep-dev-utility-box"
+    tags          = "gke-subnet"
+    machine_type  = "g1-small"
+    machine_image = "ubuntu-os-cloud/ubuntu-1804-lts"
+    tools         = "kubectl, helm, jq, nodejs, geth"
   }
 }
