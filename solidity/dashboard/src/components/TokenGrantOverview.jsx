@@ -15,7 +15,7 @@ import {
 } from "../utils/token.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
-import { contracts } from "../contracts"
+import { ContractsLoaded } from "../contracts"
 import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
@@ -102,6 +102,7 @@ export const TokenGrantUnlockingdDetails = ({
         withdrawableAmountGrantOnly,
       } = selectedGrant
       if (!isEmptyArray(escrowOperatorsToWithdraw)) {
+        const { tokenStakingEscrow } = await ContractsLoaded
         await openConfirmationModal({
           title: "You’re about to release tokens.",
           subtitle: (
@@ -109,7 +110,7 @@ export const TokenGrantUnlockingdDetails = ({
               <span>You have deposited tokens in the</span>&nbsp;
               <ViewAddressInBlockExplorer
                 text="TokenStakingEscrow contract"
-                address={contracts.tokenStakingEscrow.options.address}
+                address={tokenStakingEscrow.options.address}
               />
               <p>
                 To withdraw all tokens it may be necessary to confirm more than

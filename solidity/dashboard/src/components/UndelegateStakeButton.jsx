@@ -3,7 +3,7 @@ import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { SubmitButton } from "./Button"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
-import { contracts } from "../contracts"
+import { ContractsLoaded } from "../contracts"
 
 const confirmationModalOptions = {
   title: "You’re about to undelegate.",
@@ -41,6 +41,7 @@ const UndelegateStakeButton = (props) => {
     }
     try {
       if (isInInitializationPeriod && isFromGrant) {
+        const { tokenStakingEscrow } = await ContractsLoaded
         await openConfirmationModal({
           title: "You’re about to cancel tokens.",
           subtitle: (
@@ -49,7 +50,7 @@ const UndelegateStakeButton = (props) => {
               &nbsp;
               <span>
                 <ViewAddressInBlockExplorer
-                  address={contracts.tokenStakingEscrow.options.address}
+                  address={tokenStakingEscrow.options.address}
                   text="TokenStakingEscrow contract."
                 />
               </span>

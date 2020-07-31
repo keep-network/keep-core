@@ -3,7 +3,7 @@ import { SubmitButton } from "./Button"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
-import { contracts } from "../contracts"
+import { ContractsLoaded } from "../contracts"
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
   const web3Context = useContext(Web3Context)
@@ -35,6 +35,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
     ) => {
       try {
         if (isFromGrant) {
+          const { tokenStakingEscrow } = await ContractsLoaded
           await openConfirmationModal({
             title: "You’re about to recover tokens.",
             subtitle: (
@@ -43,7 +44,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
                 &nbsp;
                 <span>
                   <ViewAddressInBlockExplorer
-                    address={contracts.tokenStakingEscrow.options.address}
+                    address={tokenStakingEscrow.options.address}
                     text="TokenStakingEscrow contract."
                   />
                 </span>

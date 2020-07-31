@@ -22,7 +22,7 @@ import { isEmptyObj } from "../utils/general.utils"
 import { findIndexAndObject } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
 import { usePrevious } from "../hooks/usePrevious"
-import { contracts } from "../contracts"
+import { ContractsLoaded } from "../contracts"
 
 const tokensPageServiceInitialData = {
   delegations: [],
@@ -169,10 +169,11 @@ const TokenPageContextProvider = (props) => {
   )
 
   const grantDeposited = useCallback(async (grantId, operator, amount) => {
-    const availableToWithdrawEscrow = await contracts.tokenStakingEscrow.methods
+    const { tokenStakingEscrow, grantContract } = await ContractsLoaded
+    const availableToWithdrawEscrow = await tokenStakingEscrow.methods
       .withdrawable(operator)
       .call()
-    const availableToWitdrawGrant = await contracts.grantContract.methods
+    const availableToWitdrawGrant = await grantContract.methods
       .withdrawable(grantId)
       .call()
 
