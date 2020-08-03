@@ -132,7 +132,7 @@ const Wallet = ({
           closeModal: customCloseModal,
         })
         if (providerName === "METAMASK") {
-          connectAppWithWallet(window.ethereum, providerName)
+          await connectAppWithWallet(window.ethereum, providerName)
           closeModal()
         }
       }}
