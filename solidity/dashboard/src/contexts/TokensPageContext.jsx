@@ -70,9 +70,11 @@ const TokenPageContextProvider = (props) => {
 
   useEffect(() => {
     setOperatorsForTopUp([
-      data.delegations.map(({ operatorAddress }) => operatorAddress),
+      [...data.undelegations, ...data.delegations].map(
+        ({ operatorAddress }) => operatorAddress
+      ),
     ])
-  }, [setOperatorsForTopUp, data.delegations])
+  }, [setOperatorsForTopUp, data.delegations, data.undelegations])
 
   const [state, dispatch] = useReducer(tokensPageReducer, {
     grants: [],

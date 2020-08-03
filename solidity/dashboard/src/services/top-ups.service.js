@@ -1,7 +1,6 @@
 import { contracts, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
-import moment from "moment"
 
 export const commitTopUp = async (operator, onTransactionHashCallback) => {
   await contracts.stakingContract.methods

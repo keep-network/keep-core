@@ -11,7 +11,7 @@ import TopUpsDataTable from "./TopUpsDataTable"
 import Tile from "./Tile"
 
 const filterByOwned = (delegation) => !delegation.grantId
-const filterBySelectedGrant = (delegation, selectedGrant) =>
+const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
 
 const DelegationOverview = () => {
@@ -40,15 +40,11 @@ const DelegationOverview = () => {
   }, [undelegations])
 
   const grantDelegations = useMemo(() => {
-    return delegations.filter((delegation) =>
-      filterBySelectedGrant(delegation, selectedGrant)
-    )
+    return delegations.filter(filterBySelectedGrant(selectedGrant))
   }, [delegations, selectedGrant])
 
   const grantUndelegations = useMemo(() => {
-    return undelegations.filter((undelegation) =>
-      filterBySelectedGrant(undelegation, selectedGrant)
-    )
+    return undelegations.filter(filterBySelectedGrant(selectedGrant))
   }, [undelegations, selectedGrant])
 
   const getDelegations = useCallback(() => {
@@ -71,12 +67,24 @@ const DelegationOverview = () => {
   }, [refreshData])
 
   const filteredTopUps = useMemo(() => {
-    return availableTopUps.filter(({ operatorAddress: lookupOperator }) =>
-      getDelegations().some(({ operatorAddress }) =>
+    const topUps = []
+    for (const topUp of availableTopUps) {
+      const { operatorAddress: lookupOperator } = topUp
+      const isUndelegation = getUndelegations().some(({ operatorAddress }) =>
         isSameEthAddress(lookupOperator, operatorAddress)
       )
-    )
-  }, [availableTopUps, getDelegations])
+
+      const isDelegation = getDelegations().some(({ operatorAddress }) =>
+        isSameEthAddress(lookupOperator, operatorAddress)
+      )
+
+      if (isDelegation || isUndelegation) {
+        topUp.isInUndelegation = isUndelegation
+        topUps.push(topUp)
+      }
+    }
+    return topUps
+  }, [availableTopUps, getDelegations, getUndelegations])
 
   return (
     <section>
