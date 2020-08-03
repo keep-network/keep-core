@@ -16,6 +16,8 @@ import {
   UPDATE_OWNED_UNDELEGATIONS_TOKEN_BALANCE,
   REMOVE_UNDELEGATION,
   SET_TOKENS_CONTEXT,
+  TOP_UP_INITIATED,
+  TOP_UP_COMPLETED,
 } from "../reducers/tokens-page.reducer.js"
 import {
   TOKEN_STAKING_CONTRACT_NAME,
@@ -33,6 +35,8 @@ const TokensPageContainer = () => {
   useSubscribeToUndelegatedEvent()
   useSubscribeToRecoveredStakeEvent()
   useSubscribeToTokenGrantEvents()
+  useSubscribeToTopUpsEvents()
+
   const { hash } = useLocation()
   const { dispatch } = useTokensPageContext()
 
@@ -357,6 +361,44 @@ const useSubscribeToTokenGrantEvents = () => {
     TOKEN_STAKING_ESCROW_CONTRACT_NAME,
     "Deposited",
     subscribeToDepositedEvent
+  )
+}
+
+const useSubscribeToTopUpsEvents = () => {
+  const {
+    dispatch,
+    delegations,
+    refreshKeepTokenBalance,
+  } = useTokensPageContext()
+
+  const subscribeToTopUpInitiated = (event) => {
+    const {
+      returnValues: { operator },
+    } = event
+    const delegation = delegations.find(({ operatorAddress }) =>
+      isSameEthAddress(operatorAddress, operator)
+    )
+    if (delegation) {
+      dispatch({ type: TOP_UP_INITIATED, payload: event.returnValues })
+    }
+    if (delegation && !delegation.isFromGrant) {
+      refreshKeepTokenBalance()
+    }
+  }
+
+  const subscribeToTopUpCompleted = (event) => {
+    dispatch({ type: TOP_UP_COMPLETED, payload: event.returnValues })
+  }
+
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_CONTRACT_NAME,
+    "TopUpInitiated",
+    subscribeToTopUpInitiated
+  )
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_CONTRACT_NAME,
+    "TopUpCompleted",
+    subscribeToTopUpCompleted
   )
 }
 

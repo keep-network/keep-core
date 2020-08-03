@@ -9,8 +9,10 @@ import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
+import { useModal } from "../hooks/useModal"
 
 const confirmationModalOptions = {
+  modalOptions: { title: "Initiate Delegation" },
   title: "You’re about to delegate stake.",
   subtitle:
     "You’re delegating KEEP tokens. You will be able to cancel the delegation for up to 1 week. After that time, you can undelegate your stake.",
@@ -21,6 +23,7 @@ const confirmationModalOptions = {
 const TokensPage = () => {
   const web3Context = useContext(Web3Context)
   const showMessage = useShowMessage()
+  const { openConfirmationModal } = useModal()
 
   const {
     keepTokenBalance,
@@ -29,11 +32,7 @@ const TokensPage = () => {
     tokensContext,
   } = useTokensPageContext()
 
-  const handleSubmit = async (
-    values,
-    onTransactionHashCallback,
-    openConfirmationModal
-  ) => {
+  const handleSubmit = async (values, onTransactionHashCallback) => {
     values.context = tokensContext
     values.selectedGrant = { ...selectedGrant }
     try {

@@ -163,7 +163,16 @@ async function getContract(web3, contract, contractName) {
     web3,
     contract
   )
-  return new web3.eth.Contract(contract.abi, address)
+
+  return createWeb3ContractInstance(web3, contract.abi, address)
+}
+
+const createWeb3ContractInstance = (web3, abi, address) => {
+  const contract = new web3.eth.Contract(abi, address)
+  contract.options.from = web3.eth.defaultAccount
+  contract.options.handleRevert = true
+
+  return contract
 }
 
 export function isCodeValid(code) {
@@ -192,15 +201,15 @@ export function getGuaranteedMinimumStakingPolicyContractAddress() {
 }
 
 export function createManagedGrantContractInstance(web3, address) {
-  return new web3.eth.Contract(ManagedGrant.abi, address)
+  return createWeb3ContractInstance(web3, ManagedGrant.abi, address)
 }
 
 export function createDepositContractInstance(web3, address) {
-  return new web3.eth.Contract(Deposit.abi, address)
+  return createWeb3ContractInstance(web3, Deposit.abi, address)
 }
 
 export function createBondedECDSAKeepContractInstance(web3, address) {
-  return new web3.eth.Contract(BondedECDSAKeep.abi, address)
+  return createWeb3ContractInstance(web3, BondedECDSAKeep.abi, address)
 }
 
 export function getKeepRandomBeaconOperatorAddress() {

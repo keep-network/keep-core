@@ -4,8 +4,6 @@ import { ClockIndicator } from "./Loadable"
 import { messageType, MessagesContext } from "./Message"
 import * as Icons from "./Icons"
 import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
-import ConfirmationModal from "./ConfirmationModal"
-import { useModal } from "../hooks/useModal"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -102,34 +100,6 @@ export const SubmitButton = ({
   const [isFetching, setIsFetching] = useState(false)
   const { showMessage, closeMessage } = useContext(MessagesContext)
   const [showSuccessBtn, setShowSuccessBtn] = useState(false)
-  const { ModalComponent, openModal, closeModal } = useModal()
-  const [confirmationModalState, setConfirmationModalState] = useState(null)
-
-  const awaitingPromiseRef = useRef()
-
-  const openConfirmationModal = (options) => {
-    setConfirmationModalState(options)
-    openModal()
-    return new Promise((resolve, reject) => {
-      awaitingPromiseRef.current = { resolve, reject }
-    })
-  }
-
-  const onCancelConfrimationModal = () => {
-    if (awaitingPromiseRef.current) {
-      awaitingPromiseRef.current.reject()
-    }
-    closeModal()
-    setConfirmationModalState(null)
-  }
-
-  const onSubmitConfirmationModal = () => {
-    if (awaitingPromiseRef.current) {
-      awaitingPromiseRef.current.resolve()
-    }
-    closeModal()
-    setConfirmationModalState(null)
-  }
 
   useEffect(() => {
     if (showSuccessBtn) {
@@ -185,8 +155,7 @@ export const SubmitButton = ({
       await onSubmitAction(
         onTransactionHashCallback,
         openMessageInfo,
-        setFetching,
-        openConfirmationModal
+        setFetching
       )
       setIsFetching(false)
       setShowSuccessBtn(true)
@@ -200,16 +169,6 @@ export const SubmitButton = ({
 
   return (
     <>
-      <ModalComponent
-        title={confirmationModalTitle}
-        closeModal={onCancelConfrimationModal}
-      >
-        <ConfirmationModal
-          onCancel={onCancelConfrimationModal}
-          onBtnClick={onSubmitConfirmationModal}
-          {...confirmationModalState}
-        />
-      </ModalComponent>
       <Button
         {...props}
         className={`${props.className} ${showSuccessBtn && `btn btn-success`}`}

@@ -12,7 +12,7 @@ const calculateWidth = (value, total) => {
   return valueInBn.multipliedBy(100).div(totalInBn).toFixed(2).toString()
 }
 
-const ProgressBar = ({ total, items, height, withLegend }) => {
+const ProgressBar = ({ total, items, height, withLegend, styles }) => {
   const bars = useMemo(() => {
     return items
       .map((item) => ({ ...item, width: calculateWidth(item.value, total) }))
@@ -29,7 +29,10 @@ const ProgressBar = ({ total, items, height, withLegend }) => {
 
   return (
     <React.Fragment>
-      <div className="progress-bar-wrapper" style={{ height: `${height}px` }}>
+      <div
+        className="progress-bar-wrapper"
+        style={{ height: `${height}px`, ...styles }}
+      >
         {bars}
       </div>
       {withLegend && items.map(renderProgressBarLegendItem)}
@@ -67,6 +70,7 @@ const ProgressBarItem = React.memo(({ width, color, wrapperHeight, index }) => (
 
 ProgressBar.defaultProps = {
   height: "10",
+  styles: {},
 }
 
 export default React.memo(ProgressBar)
