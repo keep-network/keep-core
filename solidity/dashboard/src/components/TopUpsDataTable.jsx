@@ -17,12 +17,12 @@ export const TopUpsDataTable = ({ topUps, initializationPeriod }) => {
         showMessage({
           type: messageType.SUCCESS,
           title: "Success",
-          content: "Top up committed successfully",
+          content: "KEEP added successfully",
         })
       } catch (error) {
         showMessage({
           type: messageType.ERROR,
-          title: "Commit action has failed ",
+          title: "Add KEEP action has failed ",
           content: error.message,
         })
 
@@ -63,7 +63,11 @@ export const TopUpsDataTable = ({ topUps, initializationPeriod }) => {
             }
             className="btn btn-secondary btn-sm"
             disabled={
-              isInUndelegation || !moment.unix(createdAt).isBefore(moment.now())
+              isInUndelegation ||
+              !moment
+                .unix(createdAt)
+                .add(initializationPeriod, "seconds")
+                .isBefore(moment.now())
             }
           >
             commit top-up
