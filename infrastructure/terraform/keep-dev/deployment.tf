@@ -23,3 +23,20 @@ module "push_deployment_infrastructure" {
 
   labels = "${local.labels}"
 }
+
+resource "random_id" "ci_publish_to_gcr" {
+  byte_length = 2
+}
+
+# Service Account CI uses to publish images to GCR
+resource "google_service_account" "ci_publish_to_gcr_service_account" {
+  project      = "${module.project.project_id}"
+  account_id   = "ci-publish-to-gcr-${random_id.ci_publish_to_gcr.hex}"
+  display_name = "ci-publish-to-gcr"
+}
+
+resource "google_project_iam_member" "ci_publish_to_gcr_service_account" {
+  project = "${module.project.project_id}"
+  role    = "roles/storage.admin"
+  member  = "${local.service_account_prefix}:${google_service_account.ci_publish_to_gcr_service_account.email}"
+}
