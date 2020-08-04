@@ -49,7 +49,11 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
   }, [getGrantStakedAmount, tokenGrant.id])
 
   return (
-    <section key={tokenGrant.id} className="tile token-grant-overview">
+    <section
+      key={tokenGrant.id}
+      className="tile token-grant-overview"
+      style={{ marginBottom: "1.2rem" }}
+    >
       <div className="grant-amount">
         <TokenGrantDetails title="Grant Amount" selectedGrant={tokenGrant} />
       </div>

@@ -1,6 +1,7 @@
 import { add, sub, gt } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { isSameEthAddress } from "../utils/general.utils"
+import moment from "moment"
 
 export const REFRESH_KEEP_TOKEN_BALANCE = "REFRESH_KEEP_TOKEN_BALANCE"
 export const REFRESH_GRANT_TOKEN_BALANCE = "REFRESH_GRANT_TOKEN_BALANCE"
@@ -17,6 +18,8 @@ export const GRANT_WITHDRAWN = "GRANT_WITHDRAWN"
 export const SET_STATE = "SET_STATE"
 export const SET_SELECTED_GRANT = "SET_SELECTED_GRANT"
 export const SET_TOKENS_CONTEXT = "SET_TOKENS_CONTEXT"
+export const TOP_UP_INITIATED = "TOP_UP_INITIATED"
+export const TOP_UP_COMPLETED = "TOP_UP_COMPLETED"
 export const GRANT_DEPOSITED = "UPDATE_GRANT_DATA"
 
 const tokensPageReducer = (state, action) => {
@@ -106,6 +109,23 @@ const tokensPageReducer = (state, action) => {
         ...state,
         tokensContext: action.payload,
       }
+    case TOP_UP_INITIATED:
+      return {
+        ...state,
+        availableTopUps: topUpInitiated(
+          [...state.availableTopUps],
+          action.payload
+        ),
+      }
+    case TOP_UP_COMPLETED:
+      return {
+        ...state,
+        availableTopUps: state.availableTopUps.filter(
+          ({ operatorAddress }) =>
+            !isSameEthAddress(operatorAddress, action.payload.operator)
+        ),
+        delegations: topUpCompleted([...state.delegations], action.payload),
+      }
     case GRANT_DEPOSITED:
       return {
         ...state,
@@ -116,7 +136,7 @@ const tokensPageReducer = (state, action) => {
         ),
       }
     default:
-      return { ...state }
+      return state
   }
 }
 
@@ -198,6 +218,50 @@ const findGrantAndUpdate = (grants, payload, updateGrantCallback) => {
   grants[indexInArray] = updateGrantCallback(grantToUpdate, payload)
 
   return grants
+}
+
+const topUpInitiated = (topUps, { operator, topUp }) => {
+  const { indexInArray, obj: topUpToUpdate } = findIndexAndObject(
+    "operatorAddress",
+    operator,
+    topUps,
+    compareEthAddresses
+  )
+  if (indexInArray === null) {
+    return [
+      {
+        operatorAddress: operator,
+        availableTopUpAmount: topUp,
+        createdAt: moment.unix(),
+      },
+      ...topUps,
+    ]
+  }
+
+  topUpToUpdate.availableTopUpAmount = add(
+    topUpToUpdate.availableTopUpAmount,
+    topUp
+  )
+  topUpToUpdate.createdAt = moment.unix()
+  topUps[indexInArray] = topUpToUpdate
+
+  return topUps
+}
+
+const topUpCompleted = (delegations, { operator, newAmount }) => {
+  const { indexInArray, obj: delegationsToUpdate } = findIndexAndObject(
+    "operatorAddress",
+    operator,
+    delegations,
+    compareEthAddresses
+  )
+  if (indexInArray === null) {
+    return delegations
+  }
+
+  delegations[indexInArray] = { ...delegationsToUpdate, amount: newAmount }
+
+  return delegations
 }
 
 export default tokensPageReducer

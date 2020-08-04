@@ -1,63 +1,35 @@
-import React, { useContext, useCallback, useMemo } from "react"
+import React, { useCallback } from "react"
 import { SubmitButton } from "./Button"
-import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { ContractsLoaded } from "../contracts"
+import { useModal } from "../hooks/useModal"
+import { withConfirmationModal } from "./ConfirmationModal"
 
 const RecoverStakeButton = ({ operatorAddress, ...props }) => {
-  const web3Context = useContext(Web3Context)
-  const { yourAddress, grantContract, stakingContract } = web3Context
   const showMessage = useShowMessage()
-  const { isFromGrant, isManagedGrant, managedGrantContractInstance } = props
-  const contract = useMemo(() => {
-    if (isManagedGrant) {
-      return managedGrantContractInstance
-    } else if (isFromGrant) {
-      return grantContract
-    } else {
-      return stakingContract
-    }
-  }, [
-    grantContract,
-    isFromGrant,
-    isManagedGrant,
-    managedGrantContractInstance,
-    stakingContract,
-  ])
+  const { isFromGrant } = props
+  const { openConfirmationModal } = useModal()
 
   const recoverStake = useCallback(
-    async (
-      onTransactionHashCallback,
-      openMessageInfo,
-      setFetching,
-      openConfirmationModal
-    ) => {
+    async (onTransactionHashCallback) => {
+      const { tokenStakingEscrow, stakingContract } = await ContractsLoaded
       try {
         if (isFromGrant) {
-          const { tokenStakingEscrow } = await ContractsLoaded
-          await openConfirmationModal({
-            title: "You’re about to recover tokens.",
-            subtitle: (
-              <>
-                <span>Recovering will deposit delegated tokens in the</span>
-                &nbsp;
-                <span>
-                  <ViewAddressInBlockExplorer
-                    address={tokenStakingEscrow.options.address}
-                    text="TokenStakingEscrow contract."
-                  />
-                </span>
-                <p>You can withdraw them via Release tokens.</p>
-              </>
-            ),
-            btnText: "recover",
-            confirmationText: "RECOVER",
-          })
+          await openConfirmationModal(
+            {
+              modalOptions: { title: "Are you sure?" },
+              title: "You’re about to recover tokens.",
+              address: tokenStakingEscrow.options.address,
+              btnText: "recover",
+              confirmationText: "RECOVER",
+            },
+            withConfirmationModal(ConfirmRecoveringModal)
+          )
         }
-        await contract.methods
+        await stakingContract.methods
           .recoverStake(operatorAddress)
-          .send({ from: yourAddress })
+          .send()
           .on("transactionHash", onTransactionHashCallback)
         showMessage({
           type: messageType.SUCCESS,
@@ -73,7 +45,7 @@ const RecoverStakeButton = ({ operatorAddress, ...props }) => {
         throw error
       }
     },
-    [operatorAddress, yourAddress, contract.methods, showMessage, isFromGrant]
+    [operatorAddress, showMessage, isFromGrant, openConfirmationModal]
   )
 
   return (
@@ -96,3 +68,19 @@ RecoverStakeButton.defaultProps = {
 }
 
 export default React.memo(RecoverStakeButton)
+
+const ConfirmRecoveringModal = ({ address }) => {
+  return (
+    <>
+      <span>Recovering will deposit delegated tokens in the</span>
+      &nbsp;
+      <span>
+        <ViewAddressInBlockExplorer
+          address={address}
+          text="TokenStakingEscrow contract."
+        />
+      </span>
+      <p>You can withdraw them via Release tokens.</p>
+    </>
+  )
+}
