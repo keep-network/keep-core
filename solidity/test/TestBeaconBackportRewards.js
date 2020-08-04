@@ -32,7 +32,7 @@ describe('BeaconBackportRewards', () => {
             contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
             contract.fromArtifact('KeepRandomBeaconOperatorBeaconRewardsStub')
         )
-        const termLength = 10
+        const termLength = 100
         const totalRewards = 9000
 
         token = contracts.token
@@ -59,12 +59,10 @@ describe('BeaconBackportRewards', () => {
 
         const initiationTime = await time.latest()
 
-        await time.increase(25)
+        await time.increase(250)
 
         rewards = await contract.fromArtifact('BeaconBackportRewardsStub').new(
-            termLength,
             token.address,
-            0,
             initiationTime,
             [50, 100],
             operatorContract.address,

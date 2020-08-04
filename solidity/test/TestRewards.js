@@ -25,7 +25,6 @@ describe('Rewards', () => {
 
     async function createKeeps(timestamps) {
         rewards = await RewardsStub.new(
-            testValues.termLength,
             token.address,
             testValues.minimumIntervalKeeps,
             testValues.initiationTime,

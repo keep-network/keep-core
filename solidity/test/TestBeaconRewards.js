@@ -25,6 +25,9 @@ describe('BeaconRewards', () => {
         beneficiary2 = accounts[6],
         beneficiary3 = accounts[7]
 
+    const termLength = 100
+    const totalRewards = 6000
+
     before(async () => {
         let contracts = await initContracts(
             contract.fromArtifact('TokenStaking'),
@@ -32,9 +35,6 @@ describe('BeaconRewards', () => {
             contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
             contract.fromArtifact('KeepRandomBeaconOperatorBeaconRewardsStub')
         )
-        const termLength = 10
-        const totalRewards = 6000
-        const minimumIntervalKeeps = 2
 
         token = contracts.token
         stakingContract = contracts.stakingContract
@@ -45,9 +45,7 @@ describe('BeaconRewards', () => {
         const intervalWeights = [100]
 
         rewards = await contract.fromArtifact('BeaconRewardsStub').new(
-            termLength,
             token.address,
-            minimumIntervalKeeps,
             initiationTime,
             intervalWeights,
             operatorContract.address,
@@ -152,7 +150,7 @@ describe('BeaconRewards', () => {
 
     it("should reallocate rewards from group 1 to group 2", async () => {
         await rewards.reportTermination(1);
-        await time.increase(10);
+        await time.increase(termLength);
         await rewards.receiveReward(2);
 
         let balance1 = await token.balanceOf(beneficiary1);

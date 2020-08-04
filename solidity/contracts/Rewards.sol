@@ -75,12 +75,9 @@ contract Rewards {
     uint256 public paidOutRewards;
 
     // Length of one interval in seconds (timestamp diff).
-    uint256 public termLength;
+    uint256 public constant termLength = 100; // TODO define
     // Timestamp of first interval beginning.
     uint256 public firstIntervalStart;
-
-    // Minimum number of keep submissions for each interval.
-    uint256 public minimumKeepsPerInterval;
 
     // Array representing the percentage of unallocated rewards
     // available for each reward interval.
@@ -100,18 +97,20 @@ contract Rewards {
     mapping(uint256 => uint256) public intervalKeepsProcessed;
 
     constructor (
-        uint256 _termLength,
         address _token,
-        uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights
     ) public {
         token = IERC20(_token);
-        termLength = _termLength;
         firstIntervalStart = _firstIntervalStart;
-        minimumKeepsPerInterval = _minimumKeepsPerInterval;
         intervalWeights = _intervalWeights;
     }
+
+    /// @notice Minimum number of keep submissions for each interval.
+    /// @dev Define an appropriate value in the concrete contract.
+    /// @return The number of keeps required in an interval
+    /// for the full reward to be allocated to the interval.
+    function minimumKeepsPerInterval() public view returns (uint256);
 
     /// @notice Funds the rewards contract.
     /// @dev Adds the received amount of tokens
@@ -437,7 +436,7 @@ contract Rewards {
             return 0;
         }
         uint256 keepCount = keepsInInterval(interval);
-        uint256 minimumKeeps = minimumKeepsPerInterval;
+        uint256 minimumKeeps = minimumKeepsPerInterval();
         uint256 adjustmentCount = Math.max(keepCount, minimumKeeps);
         if (adjustmentCount == 0) {
             return 0;

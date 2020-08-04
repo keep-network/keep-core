@@ -6,22 +6,25 @@ contract RewardsStub is Rewards {
     uint256[] creationTimes;
     uint256 closedTime;
     mapping(uint256 => bool) terminated;
+    uint256 minKeeps;
 
     constructor (
-        uint256 _termLength,
         address _token,
         uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights,
         uint256[] memory _creationTimes
     ) public Rewards(
-        _termLength,
         _token,
-        _minimumKeepsPerInterval,
         _firstIntervalStart,
         _intervalWeights
     ) {
+        minKeeps = _minimumKeepsPerInterval;
         creationTimes = _creationTimes;
+    }
+
+    function minimumKeepsPerInterval() public view returns (uint256) {
+        return minKeeps;
     }
 
     function receiveReward(uint256 i) public {

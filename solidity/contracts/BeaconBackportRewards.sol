@@ -11,6 +11,7 @@ contract BeaconBackportRewards is Rewards {
     KeepRandomBeaconOperator operatorContract;
     TokenStaking tokenStaking;
     address excessRecipient;
+    uint256 constant _minimumKeepsPerInterval = 1; // TODO define
 
     constructor (
         // The term length and first interval start are arbitrary,
@@ -23,9 +24,7 @@ contract BeaconBackportRewards is Rewards {
         // so any further funding will end up on the remaining intervals.
         // If unallocated tokens are remaining after all intervals are allocated,
         // a withdrawal function is provided.
-        uint256 _termLength,
         address _token,
-        uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         // Interval weights. Does not define the number of intervals supported.
         uint256[] memory _intervalWeights,
@@ -41,9 +40,7 @@ contract BeaconBackportRewards is Rewards {
         // from late funding or excluded groups.
         address _excessRecipient
     ) public Rewards(
-        _termLength,
         _token,
-        _minimumKeepsPerInterval,
         _firstIntervalStart,
         _intervalWeights
     ) {
@@ -54,6 +51,10 @@ contract BeaconBackportRewards is Rewards {
             excludedGroups[_excludedGroups[i]] = true;
         }
         excessRecipient = _excessRecipient;
+    }
+
+    function minimumKeepsPerInterval() public view returns (uint256) {
+        return _minimumKeepsPerInterval;
     }
 
     function lastEligibleGroup() public view returns (uint256) {

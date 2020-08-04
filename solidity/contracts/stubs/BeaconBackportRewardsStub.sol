@@ -4,9 +4,7 @@ import "../BeaconBackportRewards.sol";
 
 contract BeaconBackportRewardsStub is BeaconBackportRewards {
     constructor (
-        uint256 _termLength,
         address _token,
-        uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights,
         address _operatorContract,
@@ -15,9 +13,7 @@ contract BeaconBackportRewardsStub is BeaconBackportRewards {
         uint256[] memory _excludedGroups,
         address _excessRecipient
     ) public BeaconBackportRewards(
-        _termLength,
         _token,
-        _minimumKeepsPerInterval,
         _firstIntervalStart,
         _intervalWeights,
         _operatorContract,

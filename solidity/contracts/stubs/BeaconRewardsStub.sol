@@ -4,17 +4,13 @@ import "../BeaconRewards.sol";
 
 contract BeaconRewardsStub is BeaconRewards {
     constructor (
-        uint256 _termLength,
         address _token,
-        uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract
     ) public BeaconRewards(
-        _termLength,
         _token,
-        _minimumKeepsPerInterval,
         _firstIntervalStart,
         _intervalWeights,
         _operatorContract,
