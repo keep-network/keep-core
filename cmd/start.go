@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
@@ -157,6 +159,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeDiagnostics(ctx, config, netProvider, stakeMonitor)
 
 	select {
 	case <-ctx.Done():
@@ -231,5 +234,51 @@ func initializeMetrics(
 	metrics.ExposeLibP2PInfo(
 		registry,
 		netProvider,
+	)
+}
+
+func initializeDiagnostics(
+	ctx context.Context,
+	config *config.Config,
+	netProvider net.Provider,
+	stakeMonitor chain.StakeMonitor,
+) {
+	registry, isConfigured := diagnostics.Initialize(
+		config.Diagnostics.Port,
+	)
+	if !isConfigured {
+		logger.Infof("diagnostics are not configured")
+		return
+	}
+
+	registry.RegisterSource("peers", func() string {
+		connectedPeers := netProvider.ConnectionManager().ConnectedPeers()
+
+		peersList := make([]map[string]interface{}, len(connectedPeers))
+		for i := 0; i < len(connectedPeers); i++ {
+			peerAddress, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
+			if err == nil {
+				hasMinimumStake := false
+				hasMinimumStake, _ = stakeMonitor.HasMinimumStake(peerAddress.X.String())
+
+				peersList[i] = map[string]interface{}{
+					"PeerId":          connectedPeers[i],
+					"PeerAddress":     peerAddress.X.String(),
+					"HasMinimumStake": hasMinimumStake}
+			}
+		}
+
+		bytes, err := json.Marshal(peersList)
+		if err != nil {
+			return ""
+		}
+
+		logger.Debug("peers list: ", string(bytes))
+		return string(bytes)
+	})
+
+	logger.Infof(
+		"enabled diagnostics on port [%v]",
+		config.Diagnostics.Port,
 	)
 }
