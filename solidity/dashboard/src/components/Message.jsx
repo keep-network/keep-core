@@ -1,6 +1,8 @@
 import React, { useContext, useEffect } from "react"
 import { CSSTransition, TransitionGroup } from "react-transition-group"
 import Banner, { BANNER_TYPE } from "./Banner"
+import { showMessage, closeMessage } from "../actions/messages"
+import { connect } from "react-redux"
 
 export const MessagesContext = React.createContext({})
 
@@ -11,28 +13,15 @@ export const messageType = {
   INFO: BANNER_TYPE.DISABLED,
 }
 
-let messageId = 1
 const messageTransitionTimeoutInMs = 500
 
-export class Messages extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { messages: [] }
-  }
-
-  showMessage = (value) => {
-    value.id = messageId++
-    this.setState({
-      messages: this.state.messages ? [...this.state.messages, value] : [value],
-    })
-    return value
+class MessagesComponent extends React.Component {
+  showMessage = (options) => {
+    this.props.showMessage(options)
   }
 
   onMessageClose = (message) => {
-    const updatedMessages = this.state.messages.filter(
-      (m) => m.id !== message.id
-    )
-    this.setState({ messages: updatedMessages })
+    this.props.closeMessage(message.id)
   }
 
   render() {
@@ -45,7 +34,7 @@ export class Messages extends React.Component {
       >
         <div className="messages-container">
           <TransitionGroup>
-            {this.state.messages.map((message) => (
+            {this.props.messages.map((message) => (
               <CSSTransition
                 timeout={messageTransitionTimeoutInMs}
                 key={message.id}
@@ -65,6 +54,20 @@ export class Messages extends React.Component {
     )
   }
 }
+
+const mapStateToProps = (state) => {
+  return { messages: state.messages.messages }
+}
+
+const mapDispatchToProps = {
+  showMessage,
+  closeMessage,
+}
+
+export const Messages = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(MessagesComponent)
 
 const closeMessageTimeoutInMs = 3250
 
