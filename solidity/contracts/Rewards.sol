@@ -101,6 +101,8 @@ contract Rewards {
     // or reallocated because the keep closed unhappily
     mapping(uint256 => uint256) public intervalKeepsProcessed;
 
+    event RewardReceived(bytes32 keep, uint256 amount);
+
     constructor (
         address _token,
         uint256 _firstIntervalStart,
@@ -529,6 +531,7 @@ contract Rewards {
         if (eligible) {
             paidOutRewards = paidOutRewards.add(perKeepReward);
             _distributeReward(keepIdentifier, perKeepReward);
+            emit RewardReceived(keepIdentifier, perKeepReward);
         } else {
             // Return the reward to the unallocated pool
             unallocatedRewards = unallocatedRewards.add(perKeepReward);
