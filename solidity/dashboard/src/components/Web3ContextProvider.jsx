@@ -4,7 +4,7 @@ import { TrezorProvider } from "../connectors/trezor"
 import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext, messageType } from "./Message"
-import { getContracts, ContractsDeferred, Web3Deferred } from "../contracts"
+import { getContracts, Web3Deferred } from "../contracts"
 
 export default class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -122,7 +122,6 @@ export default class Web3ContextProvider extends React.Component {
     const { web3 } = this.state
     try {
       const contracts = await getContracts(web3)
-      ContractsDeferred.resolve(contracts)
       this.setState({
         ...contracts,
         utils: web3.utils,

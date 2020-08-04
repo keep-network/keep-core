@@ -50,21 +50,32 @@ const contracts = [
     KeepRandomBeaconOperator,
   ],
   [
-    { contracName: TOKEN_STAKING_CONTRACT_NAME, withDeployBlock: true },
+    { contractName: TOKEN_STAKING_CONTRACT_NAME, withDeployBlock: true },
     TokenStaking,
   ],
-  [KEEP_OPERATOR_STATISTICS_CONTRACT_NAME, KeepRandomBeaconOperatorStatistics],
   [
-    { contracName: MANAGED_GRANT_FACTORY_CONTRACT_NAME, withDeployBlock: true },
+    {
+      contractName: KEEP_OPERATOR_STATISTICS_CONTRACT_NAME,
+    },
+    KeepRandomBeaconOperatorStatistics,
+  ],
+  [
+    {
+      contractName: MANAGED_GRANT_FACTORY_CONTRACT_NAME,
+      withDeployBlock: true,
+    },
     ManagedGrantFactory,
   ],
   [
-    { contracName: KEEP_BONDING_CONTRACT_NAME, withDeployBlock: true },
+    { contractName: KEEP_BONDING_CONTRACT_NAME, withDeployBlock: true },
     KeepBonding,
   ],
-  [{ contracName: TBTC_TOKEN_CONTRACT_NAME, withDeployBlock: true }, TBTCToken],
   [
-    { contracName: TBTC_SYSTEM_CONTRACT_NAME, withDeployBlock: true },
+    { contractName: TBTC_TOKEN_CONTRACT_NAME, withDeployBlock: true },
+    TBTCToken,
+  ],
+  [
+    { contractName: TBTC_SYSTEM_CONTRACT_NAME, withDeployBlock: true },
     TBTCSystem,
   ],
   [
@@ -121,6 +132,7 @@ export async function getContracts(web3) {
     )
   }
 
+  ContractsDeferred.resolve(web3Contracts)
   return web3Contracts
 }
 
