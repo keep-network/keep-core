@@ -77,6 +77,11 @@ contract Rewards {
     // Length of one interval in seconds (timestamp diff).
     uint256 public constant termLength = 100; // TODO define
     // Timestamp of first interval beginning.
+    // Interval 0 covers everything before `firstIntervalStart`
+    // and the first `termLength` after `firstIntervalStart`.
+    // This value should be set
+    // so that `firstIntervalStart + termLength` is in the future
+    // so the contract can be funded before intervals can be allocated.
     uint256 public firstIntervalStart;
 
     // Array representing the percentage of unallocated rewards
