@@ -97,13 +97,13 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
 	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(waitForStakeFlag))
+		err = waitForStake(stakeMonitor, ethereumKey.Address.Hex(), c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		config.Ethereum.Account.Address,
+		ethereumKey.Address.Hex(),
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake [%v]", err)
@@ -147,7 +147,7 @@ func Start(c *cli.Context) error {
 
 	err = beacon.Initialize(
 		ctx,
-		config.Ethereum.Account.Address,
+		ethereumKey.Address.Hex(),
 		chainProvider,
 		netProvider,
 		persistence,
@@ -156,7 +156,7 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, stakeMonitor)
+	initializeMetrics(ctx, config, ethereumKey.Address.Hex(), netProvider, stakeMonitor)
 
 	select {
 	case <-ctx.Done():
@@ -188,6 +188,7 @@ func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) 
 func initializeMetrics(
 	ctx context.Context,
 	config *config.Config,
+	ethereumAddress string,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
 ) {
@@ -223,7 +224,7 @@ func initializeMetrics(
 		ctx,
 		registry,
 		stakeMonitor,
-		config.Ethereum.Account.Address,
+		ethereumAddress,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
 
