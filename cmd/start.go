@@ -70,14 +70,16 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
-	// FIXME This needs to happen inside the `pkg/chain/ethereum` scope,
-	// FIXME probably.
-	operatorPrivateKey, operatorPublicKey, err := loadStaticKey(
+	ethereumKey, err := ethutil.DecryptKeyFile(
 		config.Ethereum.Account.KeyFile,
 		config.Ethereum.Account.KeyFilePassword,
 	)
 	if err != nil {
-		return fmt.Errorf("error loading static peer's key [%v]", err)
+		return fmt.Errorf(
+			"failed to read key file [%s]: [%v]",
+			config.Ethereum.Account.KeyFile,
+			err,
+		)
 	}
 
 	chainProvider, err := ethereum.Connect(config.Ethereum)
@@ -116,8 +118,9 @@ func Start(c *cli.Context) error {
 	}
 
 	ctx := context.Background()
+
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operatorPrivateKey, operatorPublicKey,
+		operator.EthereumKeyToOperatorKey(ethereumKey),
 	)
 	netProvider, err := libp2p.Connect(
 		ctx,
@@ -163,25 +166,6 @@ func Start(c *cli.Context) error {
 
 		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
-}
-
-func loadStaticKey(
-	keyFile string,
-	keyFilePassword string,
-) (*operator.PrivateKey, *operator.PublicKey, error) {
-	ethereumKey, err := ethutil.DecryptKeyFile(
-		keyFile,
-		keyFilePassword,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to read KeyFile: %s [%v]", keyFile, err,
-		)
-	}
-
-	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
-
-	return privateKey, publicKey, nil
 }
 
 func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
