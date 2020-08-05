@@ -91,24 +91,19 @@ jobs:
           paths:
             - docker-images
   migrate_contracts:
-    executor: docker-thesis-buildpack
+    executor: docker-node
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
       - run:
-          name: Set Gcloud Auth
-          command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-      - run:
           name: Migrate Contracts
           command: |
-            export BUILD_TAG=$CIRCLE_SHA1
-            export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            export CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY
             mkdir -p /tmp/keep-client/contracts
-            solidity/scripts/circleci-migrate-contracts.sh
+            cd ./solidity
+            npm ci
+            ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
+            cp ./build/contracts/* /tmp/keep-client/contracts
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
