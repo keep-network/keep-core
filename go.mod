@@ -17,7 +17,7 @@ require (
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec
 	github.com/keep-network/keep-common v1.1.1-0.20200703125023-d9872a19ebd1
 	github.com/libp2p/go-addr-util v0.0.2
-	github.com/libp2p/go-libp2p v0.10.2
+	github.com/libp2p/go-libp2p v0.10.3
 	github.com/libp2p/go-libp2p-connmgr v0.2.4
 	github.com/libp2p/go-libp2p-core v0.6.1
 	github.com/libp2p/go-libp2p-kad-dht v0.8.3
