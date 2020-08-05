@@ -439,6 +439,16 @@ describe('Rewards', () => {
                 "Interval hasn't ended yet"
             )
         })
+
+        it("emits an event", async () => {
+            let timestamps = testValues.rewardTimestamps
+            await createKeeps(timestamps)
+            await rewards.setCloseTime(timestamps[0])
+            await rewards.receiveReward(0, { from: aliceBeneficiary })
+            assert.equal((await rewards.getPastEvents())[0].event,
+                'RewardReceived', "Should emit event"
+            );
+        })
     })
 
     describe("reportTermination", async () => {
