@@ -16,6 +16,8 @@ var authorizer = contractOwnerAddress
 
 var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
 
+const operatorKeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE_PATH;
+
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
 25 and 50 blocks respectively at default.  The result of this on small private testnets
@@ -65,8 +67,8 @@ async function provisionKeepClient() {
   try {
     // Account that we fund ether from.  Contract owner should always have ether.
     let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-    // Operator account, should be set in Kube config
-    let operatorAddress = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
+    console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`)
+    const operatorAddress = readAddressFromKeyFile(operatorKeyFile)
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await fundOperator(operatorAddress, purse, '10');
@@ -153,6 +155,12 @@ async function authorizeOperatorContract(operatorAddress, authorizer) {
   console.log(`Authorized!`);
 };
 
+function readAddressFromKeyFile(keyFilePath) {
+  const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
+
+  return web3.utils.toHex(keyFile.address)
+}
+
 async function fundOperator(operatorAddress, purse, etherToTransfer) {
 
   let funded = await isFunded(operatorAddress);
@@ -168,14 +176,15 @@ async function fundOperator(operatorAddress, purse, etherToTransfer) {
   }
 };
 
-async function createKeepClientConfig(operatorAddress) {
+async function createKeepClientConfig() {
 
     let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-client-config-template.toml', 'utf8'));
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
     parsedConfigFile.ethereum.URLRPC = ethRPCUrl;
-    parsedConfigFile.ethereum.account.Address = operatorAddress;
-    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE_PATH;
+
+    parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile;
+
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
