@@ -95,11 +95,9 @@ contract BeaconBackportRewards is Rewards {
     }
 
     function _isClosed(bytes32 groupIndexBytes) internal view returns (bool) {
-        if (_isTerminated(groupIndexBytes)) { return false; }
-        bytes memory groupPubkey = operatorContract.getGroupPublicKey(
-            uint256(groupIndexBytes)
-        );
-        return operatorContract.isStaleGroup(groupPubkey);
+        // All non-excluded groups within the eligible range
+        // are considered closed
+        return !_isTerminated(groupIndexBytes);
     }
 
     function _isTerminated(bytes32 groupIndexBytes) internal view returns (bool) {
