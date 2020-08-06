@@ -143,7 +143,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         bytes memory _extraData
     ) public {
         require(ERC20Burnable(_token) == token, "Unrecognized token");
-        require(_value >= minimumStake(), "Less than the minimum stake");
         require(_extraData.length >= 60, "Corrupted delegation data");
 
         // Transfer tokens to this contract.
@@ -173,6 +172,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         bytes memory _extraData
     ) internal {
+        require(_value >= minimumStake(), "Less than the minimum stake");
+        
         address payable beneficiary = address(uint160(_extraData.toAddress(0)));
         address authorizer = _extraData.toAddress(40);
 

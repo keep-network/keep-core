@@ -57,6 +57,7 @@ library TopUps {
             !escrow.hasDeposit(operator),
             "Stake for the operator already deposited in the escrow"
         );
+        require(value > 0, "Top-up value must be greater than zero");
 
         uint256 newAmount = operatorParams.getAmount().add(value);
         newParams = operatorParams.setAmountAndCreationTimestamp(
@@ -95,6 +96,7 @@ library TopUps {
             !escrow.hasDeposit(operator),
             "Stake for the operator already deposited in the escrow"
         );
+        require(value > 0, "Top-up value must be greater than zero");
 
         TopUp memory awaiting = self.topUps[operator];
         self.topUps[operator] = TopUp(awaiting.amount.add(value), now);
