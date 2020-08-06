@@ -3,7 +3,7 @@ export const REMOVE_MESSAGE = "REMOVE_MESSAGE"
 export const CLOSE_MEESSAGE = "CLOSE_MEESSAGE"
 export const SHOW_MESSAGE = "SHOW_MESSAGE"
 
-let messageId = 0
+let messageId = 1
 
 export class Message {
   static create(options) {
@@ -30,7 +30,14 @@ export class Message {
 export const showMessage = (options) => {
   return {
     type: SHOW_MESSAGE,
-    payload: { ...options },
+    payload: Message.create(options),
+  }
+}
+
+export const showCreatedMessage = (message) => {
+  return {
+    type: SHOW_MESSAGE,
+    payload: message,
   }
 }
 
