@@ -400,7 +400,7 @@ describe('TokenStaking/TopUps', () => {
     })
 
     it("can be done with less than the minimum stake", async () => {
-      const topUpAmount = 9
+      const topUpAmount = (await tokenStaking.minimumStake()).subn(1)
 
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(topUpAmount)
@@ -411,7 +411,7 @@ describe('TokenStaking/TopUps', () => {
         operatorOne,
         operatorContract
       )
-      expect(currentStake).to.eq.BN(delegatedAmount.addn(topUpAmount))
+      expect(currentStake).to.eq.BN(delegatedAmount.add(topUpAmount))
     })
   })
 
@@ -598,7 +598,7 @@ describe('TokenStaking/TopUps', () => {
     })
 
     it("can be done with less than the minimum stake", async () => {
-      const topUpAmount = 7
+      const topUpAmount = (await tokenStaking.minimumStake()).subn(1)
 
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(topUpAmount)
@@ -609,7 +609,7 @@ describe('TokenStaking/TopUps', () => {
         operatorTwo,
         operatorContract
       )
-      expect(currentStake).to.eq.BN(delegatedAmount.addn(topUpAmount))
+      expect(currentStake).to.eq.BN(delegatedAmount.add(topUpAmount))
     })
   })
 
@@ -795,7 +795,7 @@ describe('TokenStaking/TopUps', () => {
     })
 
     it("can be done with less than the minimum stake", async () => {
-      const topUpAmount = 11
+      const topUpAmount = (await tokenStaking.minimumStake()).subn(1)
 
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(topUpAmount)
@@ -806,7 +806,7 @@ describe('TokenStaking/TopUps', () => {
         operatorThree,
         operatorContract
       )
-      expect(currentStake).to.eq.BN(delegatedAmount.addn(topUpAmount))
+      expect(currentStake).to.eq.BN(delegatedAmount.add(topUpAmount))
     })
   })
 
@@ -906,7 +906,7 @@ describe('TokenStaking/TopUps', () => {
       let delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
 
-      const topUpAmount = 91
+      const topUpAmount = (await tokenStaking.minimumStake()).subn(1)
       const data = Buffer.concat([
         Buffer.from(beneficiary.substr(2), 'hex'),
         Buffer.from(operatorFour.substr(2), 'hex'),
@@ -920,7 +920,7 @@ describe('TokenStaking/TopUps', () => {
       await tokenStaking.commitTopUp(operatorFour, {from: grantee})
         
       delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
-      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.addn(topUpAmount))
+      expect(delegationInfo.amount).to.eq.BN(delegatedAmount.add(topUpAmount))
     })
   })
 }) 
