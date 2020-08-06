@@ -75,7 +75,7 @@ async function provisionKeepClient() {
     const operatorAddress = readAddressFromKeyFile(operatorKeyFile)
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-    await fundOperator(operatorAddress, purse, '10');
+    await fundOperator(operatorAddress, '10');
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
@@ -165,7 +165,7 @@ function readAddressFromKeyFile(keyFilePath) {
   return web3.utils.toHex(keyFile.address)
 }
 
-async function fundOperator(operatorAddress, purse, etherToTransfer) {
+async function fundOperator(operatorAddress, etherToTransfer) {
 
   let funded = await isFunded(operatorAddress);
   let transferAmount = web3.utils.toWei(etherToTransfer, 'ether');
