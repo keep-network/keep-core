@@ -290,6 +290,21 @@ describe('TokenStaking/TopUps', () => {
       )
     })
 
+    it("fails for a zero-value top-up when doing in one step", async () => {
+      await expectRevert(
+        initiateTopUp(0),
+        "Top-up value must be greater than zero"
+      )
+    })
+
+    it("fails for a zero-value top-up when doing in two steps", async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await expectRevert(
+        initiateTopUp(0),
+        "Top-up value must be greater than zero"
+      )
+    })
+
     it("does not increase stake before committed", async () => {
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(delegatedAmount)
@@ -488,6 +503,21 @@ describe('TokenStaking/TopUps', () => {
       expect(delegationInfo.undelegatedAt).to.eq.BN(0)
     })
 
+    it("fails for a zero-value top-up when doing in one step", async () => {
+      await expectRevert(
+        initiateTopUp(0),
+        "Top-up value must be greater than zero"
+      )
+    })
+
+    it("fails for a zero-value top-up when doing in two steps", async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await expectRevert(
+        initiateTopUp(0),
+        "Top-up value must be greater than zero"
+      )
+    })
+
     it("does not increase stake before committed", async () => {
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(delegatedAmount)
@@ -683,6 +713,21 @@ describe('TokenStaking/TopUps', () => {
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
       expect(delegationInfo.createdAt).to.eq.BN(await time.latest())
       expect(delegationInfo.undelegatedAt).to.eq.BN(0)
+    })
+
+    it("fails for a zero-value top-up when doing in one step", async () => {
+      await expectRevert(
+        initiateTopUp(0),
+        "Top-up value must be greater than zero"
+      )
+    })
+
+    it("fails for a zero-value top-up when doing in two steps", async () => {
+      await time.increase(initializationPeriod.addn(1))
+      await expectRevert(
+        initiateTopUp(0),
+        "Top-up value must be greater than zero"
+      )
     })
 
     it("does not increase stake before committed", async () => {
