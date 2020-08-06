@@ -56,7 +56,7 @@ class MessagesComponent extends React.Component {
 }
 
 const mapStateToProps = (state) => {
-  return { messages: state.messages.messages }
+  return { messages: state.messages }
 }
 
 const mapDispatchToProps = {

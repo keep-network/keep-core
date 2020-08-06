@@ -4,12 +4,10 @@ import {
   CLOSE_MEESSAGE,
   REMOVE_MESSAGE,
   ADD_MESSAGE,
-  Message,
 } from "../actions/messages"
 
 function* addMessage(action) {
-  const message = Message.create(action.payload)
-  yield put({ type: ADD_MESSAGE, payload: message })
+  yield put({ type: ADD_MESSAGE, payload: action.payload })
 }
 
 function* removeMessage(action) {
