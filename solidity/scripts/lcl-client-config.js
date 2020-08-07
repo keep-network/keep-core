@@ -43,9 +43,14 @@ module.exports = async function () {
             let formattedConfigFile = tomlify.toToml(fileContent, {
                 space: 2,
                 replace: (key, value) => {
-                    // Find keys that match exactly `Port` or ends with `MetricsTick`.
-                    return key.match(/(^Port|MetricsTick)$/) ? value.toFixed(0) : false;
-                  },
+                    // Find keys that match exactly `Port`, `MiningCheckInterval`
+                    // `MaxGasPrice` or ends with `MetricsTick`.
+                    return key.match(
+                        /(^Port|^MiningCheckInterval|^MaxGasPrice|MetricsTick)$/
+                      )
+                        ? value.toFixed(0)
+                        : false
+                    },
             });
 
             fs.writeFileSync(configFilePath, formattedConfigFile, (err) => {
