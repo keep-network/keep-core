@@ -22,6 +22,7 @@ import { isEmptyObj } from "../utils/general.utils"
 import { findIndexAndObject } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
 import { usePrevious } from "../hooks/usePrevious"
+import { fetchAvailableTopUps } from "../services/top-ups.service"
 import { contracts } from "../contracts"
 
 const tokensPageServiceInitialData = {
@@ -60,6 +61,21 @@ const TokenPageContextProvider = (props) => {
     refreshGrants,
   ] = useFetchData(tokenGrantsService.fetchGrants, [])
 
+  const [
+    { data: availableTopUps, isFetching: topUpsAreFetching },
+    ,
+    ,
+    setOperatorsForTopUp,
+  ] = useFetchData(fetchAvailableTopUps, [])
+
+  useEffect(() => {
+    setOperatorsForTopUp([
+      [...data.undelegations, ...data.delegations].map(
+        ({ operatorAddress }) => operatorAddress
+      ),
+    ])
+  }, [setOperatorsForTopUp, data.delegations, data.undelegations])
+
   const [state, dispatch] = useReducer(tokensPageReducer, {
     grants: [],
     delegations: [],
@@ -74,6 +90,8 @@ const TokenPageContextProvider = (props) => {
     grantsAreFetching: true,
     tokensContext: "granted",
     selectedGrant: {},
+    availableTopUps: [],
+    topUpsAreFetching: false,
     getGrantStakedAmount: () => {},
   })
   const previousSelectedGrant = usePrevious(state.selectedGrant)
@@ -99,6 +117,13 @@ const TokenPageContextProvider = (props) => {
       dispatch({ type: SET_SELECTED_GRANT, payload: updatedGrant })
     }
   }, [grants, grantsAreFetching, state.selectedGrant])
+
+  useEffect(() => {
+    dispatch({
+      type: SET_STATE,
+      payload: { availableTopUps, topUpsAreFetching },
+    })
+  }, [availableTopUps, topUpsAreFetching])
 
   useEffect(() => {
     if (isEmptyObj(previousSelectedGrant) && state.grants.length > 0) {

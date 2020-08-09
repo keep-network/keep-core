@@ -2,10 +2,13 @@ import React, { useContext } from "react"
 import { Web3Context } from "./WithWeb3Context"
 import { useShowMessage, messageType } from "./Message"
 import { SubmitButton } from "./Button"
+import { useModal } from "../hooks/useModal"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { contracts } from "../contracts"
+import { withConfirmationModal } from "./ConfirmationModal"
 
 const confirmationModalOptions = {
+  modalOptions: { title: "Are you sure?" },
   title: "You’re about to undelegate.",
   subtitle:
     "Undelegating will return all of your tokens to their owner. There is an undelegation period of 1 week until the tokens will be completely undelegated.",
@@ -15,55 +18,29 @@ const confirmationModalOptions = {
 
 const UndelegateStakeButton = (props) => {
   const web3Context = useContext(Web3Context)
-  const { yourAddress, grantContract, stakingContract } = web3Context
+  const { yourAddress, stakingContract } = web3Context
   const showMessage = useShowMessage()
+  const { openConfirmationModal } = useModal()
 
-  const undelegate = async (
-    onTransactionHashCallback,
-    openMessageInfo,
-    setFetching,
-    openConfirmationModal
-  ) => {
-    const {
-      operator,
-      isInInitializationPeriod,
-      isFromGrant,
-      isManagedGrant,
-      managedGrantContractInstance,
-    } = props
-    let contract
-    if (isManagedGrant) {
-      contract = managedGrantContractInstance
-    } else if (isFromGrant) {
-      contract = grantContract
-    } else {
-      contract = stakingContract
-    }
+  const undelegate = async (onTransactionHashCallback) => {
+    const { operator, isInInitializationPeriod, isFromGrant } = props
+
     try {
       if (isInInitializationPeriod && isFromGrant) {
-        await openConfirmationModal({
-          title: "You’re about to cancel tokens.",
-          subtitle: (
-            <>
-              <span>Canceling will deposit delegated tokens in the</span>
-              &nbsp;
-              <span>
-                <ViewAddressInBlockExplorer
-                  address={contracts.tokenStakingEscrow.options.address}
-                  text="TokenStakingEscrow contract."
-                />
-              </span>
-              <p>You can withdraw them via Release tokens.</p>
-            </>
-          ),
-          btnText: "cancel",
-          confirmationText: "CANCEL",
-        })
+        await openConfirmationModal(
+          {
+            modalOptions: { title: "Are you sure?" },
+            title: "You’re about to cancel tokens.",
+            btnText: "cancel",
+            confirmationText: "CANCEL",
+          },
+          withConfirmationModal(ConfirmCancelingFromGrant)
+        )
       } else {
         await openConfirmationModal(confirmationModalOptions)
       }
 
-      await contract.methods[
+      await stakingContract.methods[
         isInInitializationPeriod ? "cancelStake" : "undelegate"
       ](operator)
         .send({ from: yourAddress })
@@ -108,3 +85,19 @@ UndelegateStakeButton.defaultProps = {
 }
 
 export default UndelegateStakeButton
+
+const ConfirmCancelingFromGrant = () => {
+  return (
+    <>
+      <span>Canceling will deposit delegated tokens in the</span>
+      &nbsp;
+      <span>
+        <ViewAddressInBlockExplorer
+          address={contracts.tokenStakingEscrow.options.address}
+          text="TokenStakingEscrow contract."
+        />
+      </span>
+      <p>You can withdraw them via Release tokens.</p>
+    </>
+  )
+}

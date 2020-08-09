@@ -34,16 +34,10 @@ func TestReadConfig(t *testing.T) {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.URLRPC },
 			expectedValue: "http://192.168.0.158:8545",
 		},
-		"Ethereum.Account.Address": {
-			readValueFunc: func(c *Config) interface{} {
-				return c.Ethereum.Account.Address
-			},
-			expectedValue: "0xc2a56884538778bacd91aa5bf343bf882c5fb18b",
-		},
 		"Ethereum.ContractAddresses": {
 			readValueFunc: func(c *Config) interface{} { return c.Ethereum.ContractAddresses },
 			expectedValue: map[string]string{
-				"KeepRandomBeaconOperator":  "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
+				"KeepRandomBeaconOperator": "0xcf64c2a367341170cb4e09cf8c0ed137d8473ceb",
 			},
 		},
 		"Storage.DataDir": {

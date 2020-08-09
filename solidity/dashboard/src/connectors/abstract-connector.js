@@ -7,6 +7,7 @@ const DEFAULT_NUM_ADDRESSES_TO_FETCH = 15
 
 export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
   provider
+  defaultAccount = ""
 
   constructor(provider) {
     super()
@@ -21,7 +22,7 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
   enable = async () => {
     this.start()
 
-    return await this.getAccounts()
+    return await this.getAccount()
   }
 
   getAccounts = async () => {
@@ -34,5 +35,9 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
 
   getProvider = () => {
     return this.provider
+  }
+
+  getAccount = async () => {
+    return [this.defaultAccount]
   }
 }

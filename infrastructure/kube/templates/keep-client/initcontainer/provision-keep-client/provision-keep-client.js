@@ -131,7 +131,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   ]).toString('hex');
 
   await keepTokenContract.methods.approveAndCall(
-    tokenStakingContract.address,
+    tokenStakingContract.options.address,
     formatAmount(4000000, 18),
     delegation).send({from: contractOwnerAddress})
 

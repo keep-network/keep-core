@@ -17,6 +17,8 @@ import { isEmptyArray } from "../utils/array.utils"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { contracts } from "../contracts"
 import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
+import { useModal } from "../hooks/useModal"
+import { withConfirmationModal } from "./ConfirmationModal"
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
@@ -87,13 +89,9 @@ export const TokenGrantUnlockingdDetails = ({
   )
   const showMessage = useShowMessage()
   const closeMessage = useCloseMessage()
+  const { openConfirmationModal } = useModal()
 
-  const releaseTokens = async (
-    onTransactionHashCallback,
-    openMessageInfo,
-    setFetching,
-    openConfirmationModal
-  ) => {
+  const releaseTokens = async (onTransactionHashCallback) => {
     try {
       const {
         isManagedGrant,
@@ -102,24 +100,16 @@ export const TokenGrantUnlockingdDetails = ({
         withdrawableAmountGrantOnly,
       } = selectedGrant
       if (!isEmptyArray(escrowOperatorsToWithdraw)) {
-        await openConfirmationModal({
-          title: "You’re about to release tokens.",
-          subtitle: (
-            <>
-              <span>You have deposited tokens in the</span>&nbsp;
-              <ViewAddressInBlockExplorer
-                text="TokenStakingEscrow contract"
-                address={contracts.tokenStakingEscrow.options.address}
-              />
-              <p>
-                To withdraw all tokens it may be necessary to confirm more than
-                one transaction.
-              </p>
-            </>
-          ),
-          btnText: "release",
-          confirmationText: "RELEASE",
-        })
+        await openConfirmationModal(
+          {
+            modalOptions: { title: "Are you sure?" },
+            title: "You’re about to release tokens.",
+            escrowAddress: contracts.tokenStakingEscrow.options.address,
+            btnText: "release",
+            confirmationText: "RELEASE",
+          },
+          withConfirmationModal(ConfirmWithdrawModal)
+        )
       }
 
       if (gt(withdrawableAmountGrantOnly, 0)) {
@@ -290,3 +280,19 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
 }
 
 export default TokenGrantOverview
+
+const ConfirmWithdrawModal = ({ escrowAddress }) => {
+  return (
+    <>
+      <span>You have deposited tokens in the</span>&nbsp;
+      <ViewAddressInBlockExplorer
+        text="TokenStakingEscrow contract"
+        address={escrowAddress}
+      />
+      <p>
+        To withdraw all tokens it may be necessary to confirm more than one
+        transaction.
+      </p>
+    </>
+  )
+}

@@ -3,13 +3,15 @@ import Undelegations from "../components/Undelegations"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
-import { formatDate } from "../utils/general.utils"
+import { formatDate, isSameEthAddress } from "../utils/general.utils"
 import moment from "moment"
 import { LoadingOverlay } from "./Loadable"
 import DataTableSkeleton from "./skeletons/DataTableSkeleton"
+import TopUpsDataTable from "./TopUpsDataTable"
+import Tile from "./Tile"
 
 const filterByOwned = (delegation) => !delegation.grantId
-const filterBySelectedGrant = (delegation, selectedGrant) =>
+const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
 
 const DelegationOverview = () => {
@@ -21,6 +23,12 @@ const DelegationOverview = () => {
     selectedGrant,
     isFetching,
     grantsAreFetching,
+    keepTokenBalance,
+    availableTopUps,
+    topUpsAreFetching,
+    minimumStake,
+    grants,
+    initializationPeriod,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -32,35 +40,51 @@ const DelegationOverview = () => {
   }, [undelegations])
 
   const grantDelegations = useMemo(() => {
-    return delegations.filter((delegation) =>
-      filterBySelectedGrant(delegation, selectedGrant)
-    )
+    return delegations.filter(filterBySelectedGrant(selectedGrant))
   }, [delegations, selectedGrant])
 
   const grantUndelegations = useMemo(() => {
-    return undelegations.filter((undelegation) =>
-      filterBySelectedGrant(undelegation, selectedGrant)
-    )
+    return undelegations.filter(filterBySelectedGrant(selectedGrant))
   }, [undelegations, selectedGrant])
 
-  const getDelegations = () => {
+  const getDelegations = useCallback(() => {
     if (tokensContext === "granted") {
       return grantDelegations
     }
     return ownedDelegations
-  }
+  }, [tokensContext, grantDelegations, ownedDelegations])
 
-  const getUndelegations = () => {
+  const getUndelegations = useCallback(() => {
     if (tokensContext === "granted") {
       return grantUndelegations
     }
 
     return ownedUndelegations
-  }
+  }, [tokensContext, grantUndelegations, ownedUndelegations])
 
   const cancelStakeSuccessCallback = useCallback(() => {
     refreshData()
   }, [refreshData])
+
+  const filteredTopUps = useMemo(() => {
+    const topUps = []
+    for (const topUp of availableTopUps) {
+      const { operatorAddress: lookupOperator } = topUp
+      const isUndelegation = getUndelegations().some(({ operatorAddress }) =>
+        isSameEthAddress(lookupOperator, operatorAddress)
+      )
+
+      const isDelegation = getDelegations().some(({ operatorAddress }) =>
+        isSameEthAddress(lookupOperator, operatorAddress)
+      )
+
+      if (isDelegation || isUndelegation) {
+        topUp.isInUndelegation = isUndelegation
+        topUps.push(topUp)
+      }
+    }
+    return topUps
+  }, [availableTopUps, getDelegations, getUndelegations])
 
   return (
     <section>
@@ -103,6 +127,9 @@ const DelegationOverview = () => {
         <DelegatedTokensTable
           delegatedTokens={getDelegations()}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
+          keepTokenBalance={keepTokenBalance}
+          minimumStake={minimumStake}
+          grants={grants}
         />
       </LoadingOverlay>
       <LoadingOverlay
@@ -112,6 +139,17 @@ const DelegationOverview = () => {
         skeletonComponent={<DataTableSkeleton />}
       >
         <Undelegations undelegations={getUndelegations()} />
+      </LoadingOverlay>
+      <LoadingOverlay
+        isFetching={topUpsAreFetching}
+        skeletonComponent={<DataTableSkeleton columns={3} />}
+      >
+        <Tile>
+          <TopUpsDataTable
+            topUps={filteredTopUps}
+            initializationPeriod={initializationPeriod}
+          />
+        </Tile>
       </LoadingOverlay>
     </section>
   )
