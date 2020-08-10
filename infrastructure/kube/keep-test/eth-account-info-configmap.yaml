@@ -4,46 +4,36 @@ metadata:
   name: eth-account-info
   namespace: default
 data:
-  relay-requester-address: "0xcd5524a79afd81f1a25c1298d41a8e9271a759e5"
+  relay-requester-address: '0xcd5524a79afd81f1a25c1298d41a8e9271a759e5'
   relay-requester-keyfile: |
     {"address":"cd5524a79afd81f1a25c1298d41a8e9271a759e5","crypto":{"cipher":"aes-128-ctr","ciphertext":"8218af1cb5da7eccd70ac1b7eae3a21df2130bf76e34ce146efe33e68c3f0984","cipherparams":{"iv":"bafa5af5602116398d8dc3c394b8460d"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"2cf504c3b85067d793c1e278dc51cf66d162fb485904b3c1536b5b30e9e73580"},"mac":"9e414c00af2dbf82c6cd2ab05f71b7525cae0b76a463cd0f82b0d8d6404c726d"},"id":"e4cb5dc2-82db-4577-b7ca-b196ab1d2264","version":3}
 
-  account-0-address: "0x0ec14bc7cca82c942cf276f6bbd0413216ddb2be"
   account-0-keyfile: |
     {"address":"0ec14bc7cca82c942cf276f6bbd0413216ddb2be","crypto":{"cipher":"aes-128-ctr","ciphertext":"d1e1885d30a2c25a54664487db4d69da496951733de6ceb4d5f565fe62eaba79","cipherparams":{"iv":"8cacad8a1b79982f568948b7f97b3dd3"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"00bfb9f49e54e6dba5b1b0c5b09904998fcfa10d0381b90bf26d45904a4e2636"},"mac":"9038c2a02d7837e448088fb19fc76e9d6c5063e8f1cb0addb40dc9df061b4928"},"id":"afb99070-073f-4dc6-b0d7-92b41fcf0afb","version":3}
 
-  account-1-address: "0xcab2a402bac470686d14956fb310d51bbef9fa31"
   account-1-keyfile: |
     {"address":"cab2a402bac470686d14956fb310d51bbef9fa31","crypto":{"cipher":"aes-128-ctr","ciphertext":"50193ab419aa322ceb556d4c073d1727763e5d873cce4e0735e6690194432665","cipherparams":{"iv":"6f869f3bd192d80981435016cc19afff"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"b72fe3dfd4d7419baa4d9a8ed7e27bf509fb9e1557a5d73c9c4879bf3a19abe9"},"mac":"5d3093a7b0160a8c2187efd4ab7ec168226e561ff7a0d714886c5dff28c405e7"},"id":"d43da5de-511f-4a1d-8ba8-0e0c24bf33e6","version":3}
 
-  account-2-address: "0xac049223397e2f25ea9fe56d5ee0896f6d8e8cb7"
   account-2-keyfile: |
     {"address":"ac049223397e2f25ea9fe56d5ee0896f6d8e8cb7","crypto":{"cipher":"aes-128-ctr","ciphertext":"42f6463f021f631ffbaf04989c107d784f0e1ba3a3b469073af4cc928d90bd5b","cipherparams":{"iv":"a533352b5ceb005cd730153f26e2f710"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"5716b94200ea2500fd257d28c1fd58e92ea991a4642813c91f66ae81fbc088bd"},"mac":"09b1e0857562a20ef0d25f41687095cdf246295a9dba82fee7e46756b0437bdc"},"id":"3819c68b-bc9d-4f54-867a-1ea7955c3cff","version":3}
 
-  account-3-address: "0x3ff855895ef4ac833c32ab6a0d6c7fbfa137e26e"
   account-3-keyfile: |
     {"address":"3ff855895ef4ac833c32ab6a0d6c7fbfa137e26e","crypto":{"cipher":"aes-128-ctr","ciphertext":"3cb866a0a1c0db6ca8accfc3c3036d9ee93b5dbca98f89dcf8f293e8b0134146","cipherparams":{"iv":"50e06549568b995a76190673e1643635"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"ee2164b8525571024704eaa976c3ac80fb41b74bcaa7d7788f7ac94dd1b6878b"},"mac":"408bf7c097e905019e25b4c82b4c988b03a607469f77bdbe0e9ca6d870fa9055"},"id":"93a1dc32-f80a-400a-99be-c478f72a6630","version":3}
 
-  account-4-address: "0x0954efefeb970d317a51736201b4eb2de75ff5de"
   account-4-keyfile: |
     {"address":"0954efefeb970d317a51736201b4eb2de75ff5de","crypto":{"cipher":"aes-128-ctr","ciphertext":"ad2d8baa3626a7ffd0040a09dbbe73e179aa125e1677987524e1c5593f03c645","cipherparams":{"iv":"856e9d869aaa40e994bda72f969505ac"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"a83d0582c376744e44cb982a90a5512a6570e046ea7ee0fd571e2fbda0cb762b"},"mac":"83ea2018f56bdd4967e8bd32c60cc7b3021bab59c72e4292c2e0ff20fc3b37e6"},"id":"666be636-2a15-4563-b78f-1ab704ec606c","version":3}
 
-  account-5-address: "0xd12a53056b74d96f89910ad3485da69a662f7930"
   account-5-keyfile: |
     {"address":"d12a53056b74d96f89910ad3485da69a662f7930","crypto":{"cipher":"aes-128-ctr","ciphertext":"02569d09ce9bd7371844dc60117bfd3ce97829a28d4c812cd7b30187047abd39","cipherparams":{"iv":"58b6a3e2cbc560323bebb81ebff1ca2c"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"8c28d3ece5b9e268ef73a148158dfe89f963ecf96e76fae41bda3ed2917b1331"},"mac":"9a9e29ebfd8712d70791df38b14e9de7aecdffdb858405f961966d65de843012"},"id":"0fdef51c-dd68-40e0-80d1-c038e800e511","version":3}
 
-  account-6-address: "0x677753a3cb8f3575be626f6a1f26e5c027c0af29"
   account-6-keyfile: |
     {"address":"677753a3cb8f3575be626f6a1f26e5c027c0af29","crypto":{"cipher":"aes-128-ctr","ciphertext":"cca77c25f7ea03abc65f154ef56bc712f4f3c4e21734e3ffc979615bc3d4b430","cipherparams":{"iv":"a94134c6c64db813aedb193d8d27c08e"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"9f9722abaf81affdbe6dc1573e97305a234cf4f3cba7dde985f45acff7a5b4f0"},"mac":"472e17c5d4660f669a09d724dbe0dbafb1cb8dc272e422e31654a300d2fc89ac"},"id":"66f810fc-7e95-4f1d-a490-792e0b8452ec","version":3}
 
-  account-7-address: "0x1aa7a9de6bd5a5802a98be50ff12f5a024a5abe0"
   account-7-keyfile: |
     {"address":"1aa7a9de6bd5a5802a98be50ff12f5a024a5abe0","crypto":{"cipher":"aes-128-ctr","ciphertext":"86279536ed5efaeb02b3a689cab7f7bb1a1d0554a36097164e499792d5d2b1fb","cipherparams":{"iv":"ee76fa919405a1fcd22311c181da4f70"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"3791fe112eab42db3721293556ca8a70431143462bedf0a320019c1626ac4a89"},"mac":"489181ff7b99ff1f1e40feef41f7099f4390da1064c4377e2e0946d705696f80"},"id":"0ae13709-5f10-4f42-a474-903353474732","version":3}
 
-  account-8-address: "0x76bc6bad38728329fe1c0e57d2555726f26a0399"
   account-8-keyfile: |
     {"address":"76bc6bad38728329fe1c0e57d2555726f26a0399","crypto":{"cipher":"aes-128-ctr","ciphertext":"40b3d9aae76bad5d8c61651adbad20c8b39a86e465e3e49b228ede63a615f549","cipherparams":{"iv":"10e8d87e8a6740fb1424fce23cee9fd7"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"db64fc334131708c0501b0fa5c90a41f10a47c1fb485e1b1c9cf3c625ade0781"},"mac":"19261b5cb3c73747a50884f4987a3ce31373af19e5970b19ea5da0ae17cbc8d1"},"id":"ff1f7c67-520a-45d5-90e4-f99d9303f327","version":3}
 
-  account-9-address: "0x5cd847903bb7f29de77eecc135628ca5b104a355"
   account-9-keyfile: |
     {"address":"5cd847903bb7f29de77eecc135628ca5b104a355","crypto":{"cipher":"aes-128-ctr","ciphertext":"306a0fa382c0f7a27dced0ca467a9664638a87ac1757f25819f4c7da45a9542b","cipherparams":{"iv":"606ff921f2474b0fcf53bdb3a2de5e14"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"85fa0683ece0df0e763956816220287b7d902b51157b74f2e05ea342d5a44ff7"},"mac":"c53de6511e7baccbbf0e99ab68743d09008c90af6ffd4a8087ea350e44640935"},"id":"821565f0-f8d0-4508-8409-89b0a19c9bfa","version":3}
