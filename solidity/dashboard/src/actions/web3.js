@@ -128,3 +128,15 @@ export const deauthorizeSortitionPoolContract = (data, meta) => {
     meta,
   }
 }
+
+export const recoverStake = (operator, meta) => {
+  return {
+    type: WEB3_SEND_TRANSACTION,
+    payload: {
+      contractName: TOKEN_STAKING_CONTRACT_NAME,
+      methodName: "recoverStake",
+      args: [operator],
+    },
+    meta,
+  }
+}
