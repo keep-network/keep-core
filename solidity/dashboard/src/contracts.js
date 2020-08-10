@@ -26,6 +26,7 @@ import {
   TBTC_TOKEN_CONTRACT_NAME,
   TBTC_SYSTEM_CONTRACT_NAME,
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+  BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -82,6 +83,10 @@ const contracts = [
     { contractName: TOKEN_STAKING_ESCROW_CONTRACT_NAME, withDeployBlock: true },
     TokenStakingEscrow,
   ],
+  [
+    { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
+    BondedECDSAKeepFactory,
+  ],
 ]
 
 export async function getKeepTokenContractDeployerAddress(web3) {
@@ -117,7 +122,7 @@ export function Deferred() {
 export const ContractsDeferred = new Deferred()
 export const Web3Deferred = new Deferred()
 
-export const Web3Loadeed = Web3Deferred.promise
+export const Web3Loaded = Web3Deferred.promise
 export const ContractsLoaded = ContractsDeferred.promise
 
 export async function getContracts(web3) {

@@ -96,13 +96,14 @@ export function* sendTransaction(action) {
 
 export function* watchSendTransactionRequest() {
   yield takeEvery("web3/send_transaction", function* (action) {
-    const { contractName, methodName, args } = action.payload
+    const { contractName, methodName, args, options } = action.payload
     const contracts = yield getContractsContext()
 
     const sendTransactionPayload = {
       contract: contracts[contractName],
       methodName,
       args,
+      options,
     }
 
     yield call(submitButtonHelper, sendTransaction, {

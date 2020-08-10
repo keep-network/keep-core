@@ -1,6 +1,6 @@
 import {
   ContractsLoaded,
-  Web3Loadeed,
+  Web3Loaded,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
@@ -16,7 +16,7 @@ export const commitTopUp = async (operator, onTransactionHashCallback) => {
 }
 
 export const fetchAvailableTopUps = async (_, operators) => {
-  const web3Context = await Web3Loadeed
+  const web3Context = await Web3Loaded
   const { stakingContract } = await ContractsLoaded
 
   const availableTopUps = []

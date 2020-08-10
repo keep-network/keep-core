@@ -11,6 +11,7 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   getBondedECDSAKeepFactoryAddress,
   getTBTCSystemAddress,
+  ContractsLoaded,
 } from "../contracts"
 import web3Utils from "web3-utils"
 import { getOperatorsOfAuthorizer } from "./token-staking.service"
@@ -226,13 +227,12 @@ const fetchBondingData = async (web3Context) => {
   return bondingData
 }
 
-const fetchSortitionPoolForTbtc = async (web3Context) => {
-  return contractService.makeCall(
-    web3Context,
-    BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
-    "getSortitionPool",
-    tBTCSystemAddress
-  )
+const fetchSortitionPoolForTbtc = async () => {
+  const { bondedEcdsaKeepFactoryContract } = await ContractsLoaded
+
+  return await bondedEcdsaKeepFactoryContract.methods
+    .getSortitionPool(tBTCSystemAddress)
+    .call()
 }
 
 const fetchDelegationInfo = async (web3Context, operatorAddress) => {
@@ -417,4 +417,5 @@ export const tbtcAuthorizationService = {
   depositEthForOperator,
   withdrawUnbondedEth,
   deauthorizeTBTCSystem,
+  fetchSortitionPoolForTbtc,
 }
