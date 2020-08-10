@@ -9,12 +9,20 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 library MinimumStakeSchedule {
     using SafeMath for uint256;
 
+    // Apr-28-2020 02:52:46 AM UTC when KEEP token has been deployed
+    // TX:  0xea22d72bc7de4c82798df7194734024a1f2fd57b173d0e065864ff4e9d3dc014
+    uint256 public constant scheduleStart = 1588042366;
+    
     // 2 years in seconds (seconds per day * days in a year * years)
     uint256 public constant schedule = 86400 * 365 * 2;
     uint256 public constant steps = 10;
     uint256 public constant base = 10000 * 1e18;
 
-    function current(uint256 scheduleStart) public view returns (uint256) {
+    function current() public view returns (uint256) {
+        return current(scheduleStart);
+    }
+
+    function current(uint256 scheduleStart) internal view returns (uint256) {
         if (now < scheduleStart.add(schedule)) {
             uint256 currentStep = steps.mul(now.sub(scheduleStart)).div(schedule);
             return base.mul(steps.sub(currentStep));
