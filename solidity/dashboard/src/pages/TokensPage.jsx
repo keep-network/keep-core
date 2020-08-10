@@ -1,15 +1,15 @@
-import React, { useContext } from "react"
+import React from "react"
 import DelegateStakeForm from "../components/DelegateStakeForm"
 import TokensOverview from "../components/TokensOverview"
-import { tokensPageService } from "../services/tokens-page.service"
-import { Web3Context } from "../components/WithWeb3Context"
-import { useShowMessage, messageType } from "../components/Message"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
 import { useModal } from "../hooks/useModal"
+import { connect } from "react-redux"
+import { ContractsLoaded } from "../contracts"
+import { fromTokenUnit } from "../utils/token.utils"
 
 const confirmationModalOptions = {
   modalOptions: { title: "Initiate Delegation" },
@@ -20,9 +20,7 @@ const confirmationModalOptions = {
   confirmationText: "DELEGATE",
 }
 
-const TokensPage = () => {
-  const web3Context = useContext(Web3Context)
-  const showMessage = useShowMessage()
+const TokensPage = ({ delegateStake }) => {
   const { openConfirmationModal } = useModal()
 
   const {
@@ -32,29 +30,30 @@ const TokensPage = () => {
     tokensContext,
   } = useTokensPageContext()
 
-  const handleSubmit = async (values, onTransactionHashCallback) => {
-    values.context = tokensContext
-    values.selectedGrant = { ...selectedGrant }
-    try {
-      await openConfirmationModal(confirmationModalOptions)
-      await tokensPageService.delegateStake(
-        web3Context,
-        values,
-        onTransactionHashCallback
-      )
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Staking delegate transaction has been successfully completed",
-      })
-    } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Staking delegate action has failed ",
-        content: error.message,
-      })
-      throw error
-    }
+  const handleSubmit = async (values, meta) => {
+    const { stakingContract } = await ContractsLoaded
+    const amount = fromTokenUnit(values.stakeTokens)
+
+    const stakingContractAddress = stakingContract.options.address
+    const delegationData =
+      "0x" +
+      Buffer.concat([
+        Buffer.from(values.beneficiaryAddress.substr(2), "hex"),
+        Buffer.from(values.operatorAddress.substr(2), "hex"),
+        Buffer.from(values.authorizerAddress.substr(2), "hex"),
+      ]).toString("hex")
+
+    await openConfirmationModal(confirmationModalOptions)
+    delegateStake(
+      {
+        amount,
+        stakingContractAddress,
+        delegationData,
+        grantId: selectedGrant.id,
+        ...selectedGrant,
+      },
+      meta
+    )
   }
 
   const getAvailableToStakeAmount = () => {
@@ -96,4 +95,13 @@ const TokensPage = () => {
   )
 }
 
-export default React.memo(TokensPage)
+const mapDispatchToProps = (dispatch) => ({
+  delegateStake: (values, meta) =>
+    dispatch({
+      type: "staking/delegate_request",
+      payload: values,
+      meta,
+    }),
+})
+
+export default connect(null, mapDispatchToProps)(TokensPage)
