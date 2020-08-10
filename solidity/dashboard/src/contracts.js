@@ -98,7 +98,7 @@ async function contractDeployedAtBlock(web3, contract) {
   return transaction.blockNumber.toString()
 }
 
-function Deferred() {
+export function Deferred() {
   let resolve
   let reject
 

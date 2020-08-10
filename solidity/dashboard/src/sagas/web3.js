@@ -1,5 +1,6 @@
 import { eventChannel, END, buffers } from "redux-saga"
-import { take, put } from "redux-saga/effects"
+import { take, takeEvery, put, call } from "redux-saga/effects"
+import { getContractsContext, submitButtonHelper } from "./utils"
 import {
   Message,
   showCreatedMessage,
@@ -28,7 +29,7 @@ function createTransactionEventChannel(contract, method, args, options) {
         emit(
           showCreatedMessage({
             id: txHash,
-            title: `Pending tx`,
+            title: "Pending tx",
             content: txHash,
             sticky: true,
             type: messageType.PENDING_ACTION,
@@ -91,4 +92,22 @@ export function* sendTransaction(action) {
   } finally {
     transactionEventChannel.close()
   }
+}
+
+export function* watchSendTransactionRequest() {
+  yield takeEvery("web3/send_transaction", function* (action) {
+    const { contractName, methodName, args } = action.payload
+    const contracts = yield getContractsContext()
+
+    const sendTransactionPayload = {
+      contract: contracts[contractName],
+      methodName,
+      args,
+    }
+
+    yield call(submitButtonHelper, sendTransaction, {
+      payload: sendTransactionPayload,
+      meta: action.meta,
+    })
+  })
 }

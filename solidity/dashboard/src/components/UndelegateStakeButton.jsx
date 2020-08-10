@@ -1,11 +1,11 @@
-import React, { useContext } from "react"
-import { Web3Context } from "./WithWeb3Context"
-import { useShowMessage, messageType } from "./Message"
+import React from "react"
 import { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { ContractsLoaded } from "../contracts"
 import { withConfirmationModal } from "./ConfirmationModal"
+import { cancelStake, undelegateStake } from "../actions/web3"
+import { connect } from "react-redux"
 
 const confirmationModalOptions = {
   modalOptions: { title: "Are you sure?" },
@@ -17,50 +17,37 @@ const confirmationModalOptions = {
 }
 
 const UndelegateStakeButton = (props) => {
-  const web3Context = useContext(Web3Context)
-  const { yourAddress, stakingContract } = web3Context
-  const showMessage = useShowMessage()
   const { openConfirmationModal } = useModal()
 
-  const undelegate = async (onTransactionHashCallback) => {
-    const { operator, isInInitializationPeriod, isFromGrant } = props
+  const undelegate = async (awaitingPromise) => {
+    const {
+      operator,
+      isInInitializationPeriod,
+      isFromGrant,
+      cancelStake,
+      undelegateStake,
+    } = props
 
-    try {
-      if (isInInitializationPeriod && isFromGrant) {
-        const { tokenStakingEscrow } = await ContractsLoaded
-        await openConfirmationModal(
-          {
-            modalOptions: { title: "Are you sure?" },
-            title: "You’re about to cancel tokens.",
-            btnText: "cancel",
-            confirmationText: "CANCEL",
-            tokenStakingEscrowAddress: tokenStakingEscrow.options.address,
-          },
-          withConfirmationModal(ConfirmCancelingFromGrant)
-        )
-      } else {
-        await openConfirmationModal(confirmationModalOptions)
-      }
+    if (isInInitializationPeriod && isFromGrant) {
+      const { tokenStakingEscrow } = await ContractsLoaded
+      await openConfirmationModal(
+        {
+          modalOptions: { title: "Are you sure?" },
+          title: "You’re about to cancel tokens.",
+          btnText: "cancel",
+          confirmationText: "CANCEL",
+          tokenStakingEscrowAddress: tokenStakingEscrow.options.address,
+        },
+        withConfirmationModal(ConfirmCancelingFromGrant)
+      )
+    } else {
+      await openConfirmationModal(confirmationModalOptions)
+    }
 
-      await stakingContract.methods[
-        isInInitializationPeriod ? "cancelStake" : "undelegate"
-      ](operator)
-        .send({ from: yourAddress })
-        .on("transactionHash", onTransactionHashCallback)
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Undelegate transaction successfully completed",
-      })
-    } catch (error) {
-      if (!error.type || error.type !== "canceled") {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Undelegate action has failed ",
-          content: error.message,
-        })
-      }
-      throw error
+    if (isInInitializationPeriod) {
+      cancelStake(operator, awaitingPromise)
+    } else {
+      undelegateStake(operator, awaitingPromise)
     }
   }
 
@@ -86,7 +73,12 @@ UndelegateStakeButton.defaultProps = {
   disabled: false,
 }
 
-export default UndelegateStakeButton
+const mapDispatchToProps = {
+  cancelStake,
+  undelegateStake,
+}
+
+export default connect(null, mapDispatchToProps)(UndelegateStakeButton)
 
 const ConfirmCancelingFromGrant = ({ tokenStakingEscrowAddress }) => {
   return (
