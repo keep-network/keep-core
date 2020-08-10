@@ -5,12 +5,12 @@ import {
 import { contractService } from "./contracts.service"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
-import web3Utils from "web3-utils"
 import {
   getGuaranteedMinimumStakingPolicyContractAddress,
   getPermissiveStakingPolicyContractAddress,
   createManagedGrantContractInstance,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
+  Web3Loaded,
 } from "../contracts"
 import BigNumber from "bignumber.js"
 import {
@@ -135,10 +135,9 @@ const getGrantDetails = async (
   }
 }
 
-const createGrant = async (web3Context, data, onTransationHashCallback) => {
-  const { yourAddress, token, grantContract } = web3Context
-  const tokenGrantContractAddress = grantContract.options.address
-  const { grantee, amount, duration, start, cliff, revocable } = data
+const getCreateTokenGrantExtraData = async (data) => {
+  const web3Context = await Web3Loaded
+  const { grantee, duration, start, cliff, revocable } = data
 
   /**
    * Extra data contains the following values:
@@ -156,7 +155,7 @@ const createGrant = async (web3Context, data, onTransationHashCallback) => {
   const extraData = web3Context.eth.abi.encodeParameters(
     ["address", "address", "uint256", "uint256", "uint256", "bool", "address"],
     [
-      yourAddress,
+      web3Context.eth.defaultAccount,
       grantee,
       duration,
       start,
@@ -166,15 +165,7 @@ const createGrant = async (web3Context, data, onTransationHashCallback) => {
     ]
   )
 
-  const formattedAmount = web3Utils
-    .toBN(amount)
-    .mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
-    .toString()
-
-  await token.methods
-    .approveAndCall(tokenGrantContractAddress, formattedAmount, extraData)
-    .send({ from: yourAddress })
-    .on("transactionHash", onTransationHashCallback)
+  return extraData
 }
 
 const fetchManagedGrants = async (web3Context) => {
@@ -263,7 +254,7 @@ const fetchGrantById = async (web3Context, grantId) => {
 
 export const tokenGrantsService = {
   fetchGrants,
-  createGrant,
+  getCreateTokenGrantExtraData,
   fetchManagedGrants,
   stake,
   getOperatorsFromManagedGrants,
