@@ -44,6 +44,7 @@ function createTransactionEventChannel(contract, method, args, options) {
           id = txHashCache
         }
         emit(closeMessage(infoMessage.id))
+        emit(closeMessage(id))
         emit(
           showMessage({
             title: "success",
