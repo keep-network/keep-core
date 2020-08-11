@@ -11,6 +11,7 @@ import {
   createManagedGrantContractInstance,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   Web3Loaded,
+  ContractsLoaded,
 } from "../contracts"
 import BigNumber from "bignumber.js"
 import {
@@ -168,8 +169,10 @@ const getCreateTokenGrantExtraData = async (data) => {
   return extraData
 }
 
-const fetchManagedGrants = async (web3Context) => {
-  const { managedGrantFactoryContract, yourAddress, web3 } = web3Context
+const fetchManagedGrants = async () => {
+  const web3 = await Web3Loaded
+  const yourAddress = web3.eth.defaultAccount
+  const { managedGrantFactoryContract } = await ContractsLoaded
 
   const managedGrantCreatedEvents = await managedGrantFactoryContract.getPastEvents(
     "ManagedGrantCreated",
