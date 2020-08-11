@@ -38,7 +38,7 @@ describe('TokenStaking/Punishment', () => {
             registry.address,
             initializationPeriod,
             contract.fromArtifact('TokenStakingEscrow'),
-            contract.fromArtifact('TokenStaking')
+            contract.fromArtifact('TokenStakingStub')
         )
         stakingContract = stakingContracts.tokenStaking;
 
