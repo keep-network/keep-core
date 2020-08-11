@@ -16,7 +16,7 @@ const ConfirmationModal = ({
   return (
     <>
       <h4 className="mb-1">{title}</h4>
-      <p className="text-big text-grey-60 mb-3">{subtitle}</p>
+      <div className="text-big text-grey-60 mb-3">{subtitle}</div>
       <ConfirmationFormFormik
         confirmationText={confirmationText}
         btnText={btnText}
