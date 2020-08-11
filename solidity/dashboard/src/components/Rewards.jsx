@@ -7,7 +7,6 @@ import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
-import { useShowMessage, messageType } from "./Message"
 import { useWeb3Context } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
@@ -27,6 +26,8 @@ import {
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import Skeleton from "./skeletons/Skeleton"
+import { withdrawGroupMemberRewards } from "../actions/web3"
+import { connect } from "react-redux"
 
 const previewDataCount = 10
 const initialRewardsData = [[], "0"]
@@ -36,9 +37,8 @@ const rewardsStatusFilterOptions = [
   { status: REWARD_STATUS.WITHDRAWN },
 ]
 
-export const Rewards = React.memo(() => {
+const RewardsComponent = ({ withdrawRewardAction }) => {
   const web3Context = useWeb3Context()
-  const showMessage = useShowMessage()
 
   const { yourAddress, keepRandomBeaconOperatorContract } = web3Context
   // fetch rewards
@@ -131,28 +131,10 @@ export const Rewards = React.memo(() => {
   const withdrawReward = async (
     operatorAddress,
     groupIndex,
-    onTransactionHashCallback
+    awaitingPromise
   ) => {
-    try {
-      updateRewardStatus(PENDING_STATUS, groupIndex, operatorAddress)
-      await rewardsService.withdrawRewardFromGroup(
-        web3Context,
-        { operatorAddress, groupIndex },
-        onTransactionHashCallback
-      )
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Withdrawal successfully completed",
-      })
-    } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Withdrawal action has failed ",
-        content: error.message,
-      })
-      throw error
-    }
+    updateRewardStatus(PENDING_STATUS, groupIndex, operatorAddress)
+    withdrawRewardAction(operatorAddress, groupIndex, awaitingPromise)
   }
 
   const updateRewardStatus = (status, groupIndex, operator) => {
@@ -314,11 +296,11 @@ export const Rewards = React.memo(() => {
                     className="btn btn-secondary btn-sm"
                     pendingMessageTitle="Pending rewards withdrawal"
                     disabled={status !== REWARD_STATUS.AVAILABLE}
-                    onSubmitAction={(onTransactionHashCallback) =>
-                      withdrawReward(
+                    onSubmitAction={async (awaitingPromise) =>
+                      await withdrawReward(
                         operatorAddress,
                         groupIndex,
-                        onTransactionHashCallback
+                        awaitingPromise
                       )
                     }
                   >
@@ -342,8 +324,14 @@ export const Rewards = React.memo(() => {
       </LoadingOverlay>
     </>
   )
-})
+}
 
 const isSameRewardRecord = (reward, groupIndex, operator) =>
   reward.groupIndex === groupIndex &&
   isSameEthAddress(operator, reward.operatorAddress)
+
+const mapDispatchToProps = {
+  withdrawRewardAction: withdrawGroupMemberRewards,
+}
+
+export const Rewards = connect(null, mapDispatchToProps)(RewardsComponent)

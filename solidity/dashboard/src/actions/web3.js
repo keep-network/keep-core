@@ -160,3 +160,19 @@ export const commitTopUp = (operator, meta) => {
     meta,
   }
 }
+
+export const withdrawGroupMemberRewards = (
+  operatorAddress,
+  groupIndex,
+  meta
+) => {
+  return {
+    type: WEB3_SEND_TRANSACTION,
+    payload: {
+      contractName: OPERATOR_CONTRACT_NAME,
+      methodName: "withdrawGroupMemberRewards",
+      args: [operatorAddress, groupIndex],
+    },
+    meta,
+  }
+}
