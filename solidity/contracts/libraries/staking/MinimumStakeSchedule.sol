@@ -4,8 +4,9 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 /// @notice MinimumStakeSchedule defines the minimum stake parametrization and
 /// schedule. It starts with a minimum stake of 100k KEEP. Over the following
-/// 2 years, the minimum stake is lowered periodically using a uniform stepwise
-/// function, eventually ending at 10k.
+/// 2 years, starting from the moment KEEP token has been deployed, the minimum
+/// stake is lowered periodically using a uniform stepwise function, eventually
+/// ending at 10k.
 library MinimumStakeSchedule {
     using SafeMath for uint256;
 
@@ -18,6 +19,9 @@ library MinimumStakeSchedule {
     uint256 public constant steps = 10;
     uint256 public constant base = 10000 * 1e18;
 
+    /// @notice Returns the current value of the minimum stake. The minimum
+    /// stake is lowered periodically over the course of 2 years since the time
+    /// KEEP token has been deployed and eventually ends at 10k KEEP.
     function current() public view returns (uint256) {
         return current(scheduleStart);
     }
