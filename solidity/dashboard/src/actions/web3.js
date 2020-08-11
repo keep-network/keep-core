@@ -24,7 +24,7 @@ export const cancelStake = (operator, meta) => {
     type: WEB3_SEND_TRANSACTION,
     payload: {
       contractName: TOKEN_STAKING_CONTRACT_NAME,
-      methodName: "cancel",
+      methodName: "cancelStake",
       args: [operator],
     },
     meta,
