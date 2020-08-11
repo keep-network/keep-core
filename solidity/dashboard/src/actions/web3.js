@@ -148,3 +148,15 @@ export const releaseTokens = (data, meta) => {
     meta,
   }
 }
+
+export const commitTopUp = (operator, meta) => {
+  return {
+    type: WEB3_SEND_TRANSACTION,
+    payload: {
+      contractName: TOKEN_STAKING_CONTRACT_NAME,
+      methodName: "commitTopUp",
+      args: [operator],
+    },
+    meta,
+  }
+}

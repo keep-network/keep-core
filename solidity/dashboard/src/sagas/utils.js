@@ -19,6 +19,7 @@ export function* submitButtonHelper(saga, action) {
     yield call(saga, action)
     yield call(resolve, "success")
   } catch (error) {
+    console.error(error)
     yield call(reject, error)
   }
 }

@@ -8,8 +8,6 @@ import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
 import { useModal } from "../hooks/useModal"
 import { connect } from "react-redux"
-import { ContractsLoaded } from "../contracts"
-import { fromTokenUnit } from "../utils/token.utils"
 
 const confirmationModalOptions = {
   modalOptions: { title: "Initiate Delegation" },
@@ -31,26 +29,13 @@ const TokensPage = ({ delegateStake }) => {
   } = useTokensPageContext()
 
   const handleSubmit = async (values, meta) => {
-    const { stakingContract } = await ContractsLoaded
-    const amount = fromTokenUnit(values.stakeTokens)
-
-    const stakingContractAddress = stakingContract.options.address
-    const delegationData =
-      "0x" +
-      Buffer.concat([
-        Buffer.from(values.beneficiaryAddress.substr(2), "hex"),
-        Buffer.from(values.operatorAddress.substr(2), "hex"),
-        Buffer.from(values.authorizerAddress.substr(2), "hex"),
-      ]).toString("hex")
-
     await openConfirmationModal(confirmationModalOptions)
     delegateStake(
       {
-        amount,
-        stakingContractAddress,
-        delegationData,
-        grantId: selectedGrant.id,
+        ...values,
         ...selectedGrant,
+        grantId: selectedGrant.id,
+        amount: values.stakeTokens,
       },
       meta
     )

@@ -3,6 +3,7 @@ import { getContractsContext, submitButtonHelper } from "./utils"
 import { sendTransaction } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
+import { fromTokenUnit } from "../utils/token.utils"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -12,17 +13,41 @@ export function* watchDelegateStakeRequest() {
   yield takeEvery("staking/delegate_request", delegateStake)
 }
 
-function* resolveStake(data) {
-  const { token } = yield getContractsContext()
-  const { stakingContractAddress, delegationData, amount, grantId } = data
+function* resolveStake(action) {
+  const { token, stakingContract } = yield getContractsContext()
+  const {
+    amount,
+    grantId,
+    beneficiaryAddress,
+    operatorAddress,
+    authorizerAddress,
+  } = action.payload
+
+  const tokenAmount = fromTokenUnit(amount).toString()
+  const stakingContractAddress = stakingContract.options.address
+  const delegationData =
+    "0x" +
+    Buffer.concat([
+      Buffer.from(beneficiaryAddress.substr(2), "hex"),
+      Buffer.from(operatorAddress.substr(2), "hex"),
+      Buffer.from(authorizerAddress.substr(2), "hex"),
+    ]).toString("hex")
+
+  const data = {
+    ...action.payload,
+    delegationData,
+    stakingContractAddress,
+    amount: tokenAmount,
+  }
+
   if (grantId) {
     yield call(stakeFromGrant, data)
   } else {
     yield call(sendTransaction, {
       payload: {
         contract: token,
-        method: "approveAndCall",
-        args: [stakingContractAddress, amount, delegationData],
+        methodName: "approveAndCall",
+        args: [stakingContractAddress, tokenAmount, delegationData],
       },
     })
   }
