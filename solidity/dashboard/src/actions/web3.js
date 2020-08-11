@@ -140,3 +140,11 @@ export const recoverStake = (operator, meta) => {
     meta,
   }
 }
+
+export const releaseTokens = (data, meta) => {
+  return {
+    type: "token-grant/release_tokens",
+    payload: data,
+    meta,
+  }
+}

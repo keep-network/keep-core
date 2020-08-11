@@ -1,10 +1,8 @@
-import React, { useContext } from "react"
+import React from "react"
 import { formatDate } from "../utils/general.utils"
 import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import { CircularProgressBars } from "./CircularProgressBar"
-import { Web3Context } from "./WithWeb3Context"
-import { useShowMessage, useCloseMessage, messageType } from "./Message"
 import moment from "moment"
 import { gt } from "../utils/arithmetics.utils"
 import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
@@ -16,9 +14,10 @@ import {
 import { isEmptyArray } from "../utils/array.utils"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { ContractsLoaded } from "../contracts"
-import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
 import { useModal } from "../hooks/useModal"
 import { withConfirmationModal } from "./ConfirmationModal"
+import { connect } from "react-redux"
+import { releaseTokens } from "../actions/web3"
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
@@ -80,115 +79,33 @@ export const TokenGrantDetails = ({
   )
 }
 
-export const TokenGrantUnlockingdDetails = ({
+export default TokenGrantOverview
+
+const TokenGrantUnlockingdDetailsComponent = ({
   selectedGrant,
   hideReleaseTokensBtn = false,
+  releaseTokens,
 }) => {
-  const { yourAddress, grantContract, tokenStakingEscrow } = useContext(
-    Web3Context
-  )
-  const showMessage = useShowMessage()
-  const closeMessage = useCloseMessage()
   const { openConfirmationModal } = useModal()
 
-  const releaseTokens = async () => {
-    try {
-      const {
-        isManagedGrant,
-        managedGrantContractInstance,
-        escrowOperatorsToWithdraw,
-        withdrawableAmountGrantOnly,
-      } = selectedGrant
-      if (!isEmptyArray(escrowOperatorsToWithdraw)) {
-        const { tokenStakingEscrow } = await ContractsLoaded
-        await openConfirmationModal(
-          {
-            modalOptions: { title: "Are you sure?" },
-            title: "You’re about to release tokens.",
-            escrowAddress: tokenStakingEscrow.options.address,
-            btnText: "release",
-            confirmationText: "RELEASE",
-          },
-          withConfirmationModal(ConfirmWithdrawModal)
-        )
-      }
+  const onReleaseTokens = async (awaitingPromise) => {
+    const { escrowOperatorsToWithdraw } = selectedGrant
 
-      if (gt(withdrawableAmountGrantOnly, 0)) {
-        const contractMethod = isManagedGrant
-          ? managedGrantContractInstance.methods.withdraw()
-          : grantContract.methods.withdraw(selectedGrant.id)
-        const acceptTxMsg = showMessage({
-          type: messageType.INFO,
-          sticky: true,
-          title: "Waiting for the transaction confirmation...",
-        })
-        let pendingMessage = { id: null }
-        await contractMethod
-          .send({ from: yourAddress })
-          .on("transactionHash", (hash) => {
-            closeMessage(acceptTxMsg)
-            pendingMessage = showMessage({
-              type: messageType.PENDING_ACTION,
-              sticky: true,
-              title: "",
-              content: (
-                <TransactionIsPendingMsgContent
-                  txHash={hash}
-                  title={"Transaction is pending"}
-                />
-              ),
-            })
-          })
-        closeMessage(pendingMessage)
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Tokens have been successfully released",
-        })
-      }
-
-      const escrowWithdraw = isManagedGrant
-        ? "withdrawToManagedGrantee"
-        : "withdraw"
-      for (const operator of escrowOperatorsToWithdraw) {
-        const infoMessage = showMessage({
-          type: messageType.INFO,
-          sticky: true,
-          title: "Waiting for the transaction confirmation...",
-        })
-        let pendingMessage = { id: null }
-        await tokenStakingEscrow.methods[escrowWithdraw](operator)
-          .send({ from: yourAddress })
-          .on("transactionHash", (hash) => {
-            closeMessage(infoMessage)
-            pendingMessage = showMessage({
-              type: messageType.PENDING_ACTION,
-              sticky: true,
-              title: "",
-              content: (
-                <TransactionIsPendingMsgContent
-                  txHash={hash}
-                  title={"Transaction is pending"}
-                />
-              ),
-            })
-          })
-        closeMessage(pendingMessage)
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content:
-            "Tokens have been successfully released from a TokenStakingEscrow deposit.",
-        })
-      }
-    } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Error",
-        content: error.message,
-      })
-      throw error
+    if (!isEmptyArray(escrowOperatorsToWithdraw)) {
+      const { tokenStakingEscrow } = await ContractsLoaded
+      await openConfirmationModal(
+        {
+          modalOptions: { title: "Are you sure?" },
+          title: "You’re about to release tokens.",
+          escrowAddress: tokenStakingEscrow.options.address,
+          btnText: "release",
+          confirmationText: "RELEASE",
+        },
+        withConfirmationModal(ConfirmWithdrawModal)
+      )
     }
+
+    releaseTokens(selectedGrant, awaitingPromise)
   }
 
   return (
@@ -239,7 +156,7 @@ export const TokenGrantUnlockingdDetails = ({
             {!hideReleaseTokensBtn && (
               <SubmitButton
                 className="btn btn-sm btn-secondary"
-                onSubmitAction={releaseTokens}
+                onSubmitAction={onReleaseTokens}
                 withMessageActionIsPending={false}
               >
                 release tokens
@@ -251,6 +168,15 @@ export const TokenGrantUnlockingdDetails = ({
     </>
   )
 }
+
+const mapDispatchToProps = {
+  releaseTokens,
+}
+
+export const TokenGrantUnlockingdDetails = connect(
+  null,
+  mapDispatchToProps
+)(TokenGrantUnlockingdDetailsComponent)
 
 export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
   return (
@@ -279,8 +205,6 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
     </>
   )
 }
-
-export default TokenGrantOverview
 
 const ConfirmWithdrawModal = ({ escrowAddress }) => {
   return (
