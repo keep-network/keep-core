@@ -26,7 +26,6 @@ const DelegationOverview = () => {
     keepTokenBalance,
     availableTopUps,
     topUpsAreFetching,
-    minimumStake,
     grants,
     initializationPeriod,
   } = useTokensPageContext()
@@ -128,7 +127,6 @@ const DelegationOverview = () => {
           delegatedTokens={getDelegations()}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
           keepTokenBalance={keepTokenBalance}
-          minimumStake={minimumStake}
           grants={grants}
         />
       </LoadingOverlay>
