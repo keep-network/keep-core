@@ -30,11 +30,14 @@ const TokensPage = ({ delegateStake }) => {
 
   const handleSubmit = async (values, meta) => {
     await openConfirmationModal(confirmationModalOptions)
+    const grantData =
+      tokensContext === "owned"
+        ? {}
+        : { ...selectedGrant, grantId: selectedGrant.id }
     delegateStake(
       {
         ...values,
-        ...selectedGrant,
-        grantId: selectedGrant.id,
+        ...grantData,
         amount: values.stakeTokens,
       },
       meta
