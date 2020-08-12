@@ -22,3 +22,11 @@ export const fetchDepositWithdrawnAmount = async (operatorAddress) => {
     .depositWithdrawnAmount(operatorAddress)
     .call()
 }
+
+export const fetchDepositAvailableAmount = async (operatorAddress) => {
+  const { tokenStakingEscrow } = await ContractsLoaded
+
+  return await tokenStakingEscrow.methods
+    .availableAmount(operatorAddress)
+    .call()
+}

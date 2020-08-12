@@ -18,6 +18,7 @@ import {
   fetchEscrowDepositsByGrantId,
   fetchWithdrawableAmountForDeposit,
   fetchDepositWithdrawnAmount,
+  fetchDepositAvailableAmount,
 } from "./token-staking-escrow.service"
 
 const fetchGrants = async (web3Context) => {
@@ -64,6 +65,7 @@ const getGrantDetails = async (
   const escrowOperatorsToWithdraw = []
   let escrowWithdrawableAmount = 0
   let escrowWithdrawTotalAmount = 0
+  let escrowAvailableTotalAmount = 0
 
   for (const event of escrowDepositsEvents) {
     const {
@@ -71,8 +73,13 @@ const getGrantDetails = async (
     } = event
     const withdrawable = await fetchWithdrawableAmountForDeposit(operator)
     const withdraw = await fetchDepositWithdrawnAmount(operator)
+    const availableAmount = await fetchDepositAvailableAmount(operator)
 
     escrowWithdrawTotalAmount = add(escrowWithdrawTotalAmount, withdraw)
+    escrowAvailableTotalAmount = add(
+      escrowAvailableTotalAmount,
+      availableAmount
+    )
 
     if (gt(withdrawable, 0)) {
       escrowOperatorsToWithdraw.push(operator)
@@ -128,7 +135,7 @@ const getGrantDetails = async (
     unlocked,
     released,
     readyToRelease,
-    availableToStake,
+    availableToStake: add(availableToStake, escrowAvailableTotalAmount),
     escrowOperatorsToWithdraw,
     withdrawableAmountGrantOnly,
     ...unlockingSchedule,
