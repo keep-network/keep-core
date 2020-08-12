@@ -29,10 +29,10 @@ function createTransactionEventChannel(contract, method, args, options) {
         emit(
           showCreatedMessage({
             id: txHash,
-            title: "Pending tx",
             content: txHash,
             sticky: true,
             type: messageType.PENDING_ACTION,
+            withTransactionHash: true,
           })
         )
       })
@@ -47,10 +47,11 @@ function createTransactionEventChannel(contract, method, args, options) {
         emit(closeMessage(id))
         emit(
           showMessage({
-            title: "success",
+            title: "Success!",
             content: id,
             sticky: true,
             type: messageType.SUCCESS,
+            withTransactionHash: true,
           })
         )
         emit(END)

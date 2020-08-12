@@ -90,6 +90,7 @@ const Message = ({ message, onMessageClose }) => {
       withIcon
       withCloseIcon
       onCloseIcon={() => onMessageClose(message)}
+      withTransactionHash={message.withTransactionHash}
     />
   )
 }
