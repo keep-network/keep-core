@@ -27,8 +27,13 @@ import {
 import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
 import moment from "moment"
-import { createManagedGrantContractInstance, isCodeValid } from "../contracts"
+import {
+  createManagedGrantContractInstance,
+  isCodeValid,
+  ContractsLoaded,
+} from "../contracts"
 import TokenOverviewPage from "./TokenOverviewPage"
+import { getEventFromTransactionHash } from "../utils/ethereum.utils"
 
 const TokensPageContainer = () => {
   useSubscribeToStakedEvent()
@@ -36,6 +41,7 @@ const TokensPageContainer = () => {
   useSubscribeToRecoveredStakeEvent()
   useSubscribeToTokenGrantEvents()
   useSubscribeToTopUpsEvents()
+  useSubscribeToDepositRedelegatedEvents()
 
   const { hash } = useLocation()
   const { dispatch } = useTokensPageContext()
@@ -399,6 +405,62 @@ const useSubscribeToTopUpsEvents = () => {
     TOKEN_STAKING_CONTRACT_NAME,
     "TopUpCompleted",
     subscribeToTopUpCompleted
+  )
+}
+
+const useSubscribeToDepositRedelegatedEvents = () => {
+  const {
+    grants,
+    grantStaked,
+    dispatch,
+    initializationPeriod,
+  } = useTokensPageContext()
+
+  const subscribeToDepositRedelegated = async (event) => {
+    const { stakingContract } = await ContractsLoaded
+    const {
+      transactionHash,
+      returnValues: { grantId },
+    } = event
+
+    const grant = grants.find((grant) => grant.id === grantId)
+    if (!grant) {
+      return
+    }
+
+    const stakedEvent = await getEventFromTransactionHash(
+      stakingContract,
+      "Staked",
+      transactionHash
+    )
+
+    if (stakedEvent) {
+      const createdAt = moment().unix()
+      const delegation = {
+        createdAt,
+        operatorAddress: stakedEvent.operator,
+        authorizerAddress: stakedEvent.authorizer,
+        beneficiary: stakedEvent.beneficiary,
+        amount: stakedEvent.value,
+        isInInitializationPeriod: true,
+        initializationOverAt: moment
+          .unix(createdAt)
+          .add(initializationPeriod, "seconds"),
+        grantId,
+        isFromGrant: true,
+        isManagedGrant: grant.isManagedGrant,
+        managedGrantContractInstance: grant.managedGrantContractInstance,
+      }
+
+      grantStaked(grantId, stakedEvent.value, stakedEvent.operator)
+      dispatch({ type: ADD_DELEGATION, payload: delegation })
+    }
+  }
+
+  useSubscribeToContractEvent(
+    TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+    "DepositRedelegated",
+    subscribeToDepositRedelegated
   )
 }
 

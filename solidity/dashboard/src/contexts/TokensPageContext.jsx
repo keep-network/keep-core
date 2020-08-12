@@ -24,6 +24,7 @@ import { add } from "../utils/arithmetics.utils"
 import { usePrevious } from "../hooks/usePrevious"
 import { ContractsLoaded } from "../contracts"
 import { fetchAvailableTopUps } from "../services/top-ups.service"
+import { fetchDepositAvailableAmount } from "../services/token-staking-escrow.service"
 
 const tokensPageServiceInitialData = {
   delegations: [],
@@ -152,15 +153,25 @@ const TokenPageContextProvider = (props) => {
   }, [web3Context, dispatch])
 
   const grantStaked = useCallback(
-    async (grantId, amount) => {
+    async (grantId, amount, operator = null) => {
       const { grantContract } = web3Context
 
       const availableToStake = await grantContract.methods
         .availableToStake(grantId)
         .call()
+      let escrowAvailableTotalAmount = 0
+
+      if (operator) {
+        escrowAvailableTotalAmount = fetchDepositAvailableAmount(operator)
+      }
+
       dispatch({
         type: GRANT_STAKED,
-        payload: { grantId, amount, availableToStake },
+        payload: {
+          grantId,
+          amount,
+          availableToStake: add(availableToStake, escrowAvailableTotalAmount),
+        },
       })
     },
     [web3Context, dispatch]

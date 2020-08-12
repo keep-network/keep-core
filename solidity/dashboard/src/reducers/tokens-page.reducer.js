@@ -169,6 +169,7 @@ const grantDeposited = (
     ...grantToUpdate.escrowOperatorsToWithdraw,
     operator,
   ]
+  grantToUpdate.availableToStake = add(grantToUpdate.availableToStake, amount)
 
   return grantToUpdate
 }
