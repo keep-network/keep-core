@@ -15,16 +15,17 @@ const StepNav = ({ steps, activeStep = 0 }) => {
       return
     }
 
+    const stepElement = stepNavElement.current.getElementsByClassName(
+      "step-nav__step"
+    )[activeStep - 1]
+
     const stepOffsetHeight =
       activeStep === numberOfSteps.current
         ? "100%"
-        : `${
-            stepNavElement.current
-              .getElementsByClassName("step-nav__step")
-              [activeStep - 1].getBoundingClientRect().y
-          }px`
+        : `${stepElement.getBoundingClientRect().y}px`
 
     stepActiveIndicatorElement.current.style.height = stepOffsetHeight
+    stepElement.className = "step-nav__step active"
   }, [activeStep])
 
   const stepsComponents = useMemo(() => {
