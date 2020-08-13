@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import StepNav from "../components/StepNav"
+import { CopyStakeStepO, CopyStakeStep1 } from "../components/copy-stake-steps"
 
 const copyStakeSteps = ["stake", "review", "complete"]
 
@@ -16,7 +17,10 @@ const CopyStakePage = () => {
           <StepNav steps={copyStakeSteps} activeStep={step} />
         </div>
       </nav>
-      <main className="copy-stake__content"></main>
+      <main className="copy-stake__content">
+        {/* <CopyStakeStepO /> */}
+        <CopyStakeStep1 />
+      </main>
     </div>
   )
 }
