@@ -1,0 +1,33 @@
+.copy-stake {
+
+    &__layout {
+        display: grid;
+        grid-template-columns: 200px auto;
+        grid-template-rows: 100vh auto;
+        grid-template-areas: "nav content" 
+    }
+
+    &__nav {
+        grid-area: nav;
+        background-color: @white;
+    }
+
+    &__content {
+        grid-area: content;
+        background-color: @color-grey-20;
+        overflow: auto;
+    }
+    
+    &__nav__indicator {
+        height: 100%;
+        margin-top: 2.5rem;
+        margin-left: 2rem;
+
+        .progress-bar {
+            bottom: none;
+            top: 0;
+        }
+    }
+}
+
+  

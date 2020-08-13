@@ -6,7 +6,8 @@ import Routing from "./components/Routing"
 import ContractsDataContextProvider from "./components/ContractsDataContextProvider"
 import { Messages } from "./components/Message"
 import { SideMenu, SideMenuProvider } from "./components/SideMenu"
-import { BrowserRouter as Router } from "react-router-dom"
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom"
+import CopyStakePage from "./pages/CopyStakePage"
 import { ModalContextProvider } from "./components/Modal"
 
 const App = () => (
@@ -16,16 +17,23 @@ const App = () => (
         <ContractsDataContextProvider>
           <SideMenuProvider>
             <Router>
-              <main>
-                <Header />
-                <aside>
-                  <SideMenu />
-                </aside>
-                <div className="content">
-                  <Routing />
-                </div>
-                <Footer />
-              </main>
+              <Switch>
+                <Route exact path="/copy-stake">
+                  <CopyStakePage />
+                </Route>
+                <Route path="/">
+                  <main>
+                    <Header />
+                    <aside>
+                      <SideMenu />
+                    </aside>
+                    <div className="content">
+                      <Routing />
+                    </div>
+                    <Footer />
+                  </main>
+                </Route>
+              </Switch>
             </Router>
           </SideMenuProvider>
         </ContractsDataContextProvider>
