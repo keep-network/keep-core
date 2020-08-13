@@ -20,7 +20,6 @@ const AmountForm = ({
   submitBtnText,
   availableAmount,
   currentAmount,
-  minimumAmount,
   ...formikProps
 }) => {
   const { amount: formAmount } = formikProps.values || 0
@@ -71,8 +70,7 @@ const AmountForm = ({
           ]}
         />
         <div className="text-caption text-grey-50">
-          {displayAmount(availableAmount)} KEEP available. Minimum stake is
-          &nbsp;{displayAmount(minimumAmount)} KEEP
+          {displayAmount(availableAmount)} KEEP available.
         </div>
         <div className="flex row center"></div>
         <Button
