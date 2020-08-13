@@ -251,7 +251,6 @@ contract StakingPortBacker is Ownable {
     /// @param operator The operator address.
     function recoverStake(address operator) public {
         newStakingContract.recoverStake(operator);
-        delete copiedStakes[operator];
     }
 
     /// @notice Allows the contract owner to withdraw tokens from the balance
