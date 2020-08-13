@@ -18,7 +18,6 @@ const DelegatedTokensTable = ({
   delegatedTokens,
   cancelStakeSuccessCallback,
   keepTokenBalance,
-  minimumStake,
   grants,
 }) => {
   const showMessage = useShowMessage()
@@ -45,7 +44,7 @@ const DelegatedTokensTable = ({
           submitBtnText: "add keep",
           availableAmount,
           currentAmount: delegationData.amount,
-          minimumAmount: minimumStake,
+          minimumAmount: 1,
           ...delegationData,
         },
         AddTopUpModal
