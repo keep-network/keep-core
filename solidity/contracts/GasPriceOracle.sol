@@ -34,7 +34,7 @@ contract GasPriceOracle is Ownable {
 
     event GasPriceUpdated(uint256 newValue);
 
-    uint256 public constant governanceDelay = 6 hours; 
+    uint256 public constant governanceDelay = 1 hours; 
 
     uint256 public gasPrice;
 

@@ -53,7 +53,7 @@ describe("GasPriceOracle", () => {
 
         it("does not allow to finalize change before governance delay", async () => {
             await oracle.beginGasPriceUpdate(123, {from: owner})
-            await time.increase(time.duration.minutes(359)) // 5 hours and 59 minutes
+            await time.increase(time.duration.minutes(59))
             await expectRevert(
                 oracle.finalizeGasPriceUpdate(),
                 "Governance delay has not elapsed"
@@ -63,7 +63,7 @@ describe("GasPriceOracle", () => {
         it("updates value when finalizing the change", async () => {
             const newValue = 9129111
             await oracle.beginGasPriceUpdate(newValue, {from: owner})
-            await time.increase(time.duration.minutes(361)) // 6 hours and 1 minute
+            await time.increase(time.duration.minutes(61))
             await oracle.finalizeGasPriceUpdate()
 
             expect(await oracle.gasPrice()).to.eq.BN(newValue)
@@ -72,7 +72,7 @@ describe("GasPriceOracle", () => {
         it("does not allow to finalize the change twice", async () => {
             const newValue = 1111
             await oracle.beginGasPriceUpdate(newValue, {from: owner})
-            await time.increase(time.duration.minutes(361)) // 6 hours and 1 minute
+            await time.increase(time.duration.minutes(61))
             await oracle.finalizeGasPriceUpdate()   
             await expectRevert(
                 oracle.finalizeGasPriceUpdate(),
@@ -83,7 +83,7 @@ describe("GasPriceOracle", () => {
         it("emits an event when finalizing the change", async () => {
             const newValue = web3.utils.toBN(55555)
             await oracle.beginGasPriceUpdate(newValue, {from: owner})
-            await time.increase(time.duration.minutes(361)) // 6 hours and 1 minute
+            await time.increase(time.duration.minutes(61))
             const receipt = await oracle.finalizeGasPriceUpdate()
             await expectEvent(receipt, "GasPriceUpdated", {
                 newValue: newValue
@@ -96,7 +96,7 @@ describe("GasPriceOracle", () => {
 
             const newValue = 545666
             await oracle.beginGasPriceUpdate(newValue, {from: owner})
-            await time.increase(time.duration.minutes(361)) // 6 hours and 1 minute
+            await time.increase(time.duration.minutes(61))
             await oracle.finalizeGasPriceUpdate()   
 
             expect(await consumer.gasPrice()).to.eq.BN(newValue)
@@ -115,7 +115,7 @@ describe("GasPriceOracle", () => {
 
             const newValue = 156444
             await oracle.beginGasPriceUpdate(newValue, {from: owner})
-            await time.increase(time.duration.minutes(361)) // 6 hours and 1 minute
+            await time.increase(time.duration.minutes(61))
             await oracle.finalizeGasPriceUpdate()   
 
             expect(await consumer1.gasPrice()).to.eq.BN(newValue)
