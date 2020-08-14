@@ -21,7 +21,9 @@ const options = [
 const CopyStakeStep1 = () => {
   return (
     <>
-      <h2>Choose how to move your current stake to an upgraded delegation.</h2>
+      <h2 className="text-center">
+        Choose how to move your current stake to an upgraded delegation.
+      </h2>
       <ul className="mt-2">
         {options.map((option) => (
           <Option key={option.id} {...option} />

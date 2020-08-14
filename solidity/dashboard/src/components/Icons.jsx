@@ -26,6 +26,7 @@ import { ReactComponent as DelegationDiagram } from "../static/svg/delegation-di
 import { ReactComponent as Diamond } from "../static/svg/diamond.svg"
 import { ReactComponent as ETH } from "../static/svg/eth.svg"
 import { ReactComponent as KeepLoadingIndicator } from "../static/svg/keep-loading-indicator.svg"
+import { ReactComponent as KEEPTower } from "../static/svg/keep-tower.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -498,4 +499,5 @@ export {
   Diamond,
   ETH,
   KeepLoadingIndicator,
+  KEEPTower,
 }
