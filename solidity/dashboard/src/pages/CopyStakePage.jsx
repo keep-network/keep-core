@@ -1,6 +1,11 @@
 import React, { useState } from "react"
 import StepNav from "../components/StepNav"
-import { CopyStakeStepO, CopyStakeStep1 } from "../components/copy-stake-steps"
+import {
+  CopyStakeStepO,
+  CopyStakeStep1,
+  CopyStakeStep2,
+  CopyStakeStep3,
+} from "../components/copy-stake-steps"
 
 const copyStakeSteps = ["stake", "review", "complete"]
 
@@ -17,9 +22,18 @@ const CopyStakePage = () => {
           <StepNav steps={copyStakeSteps} activeStep={step} />
         </div>
       </nav>
-      <main className="copy-stake__content">
-        {/* <CopyStakeStepO /> */}
-        <CopyStakeStep1 />
+      <main className="copy-stake__content-wrapper">
+        <div className="copy-stake__content">
+          {/* <CopyStakeStepO /> */}
+          {/* <CopyStakeStep1 /> */}
+          {/* <CopyStakeStep2
+            amount={"10000000000000000000000000"}
+            beneficiary={"0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca"}
+            authorizerAddress={"0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca"}
+            operatorAddress={"0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca"}
+          /> */}
+          {/* <CopyStakeStep3 /> */}
+        </div>
       </main>
     </div>
   )

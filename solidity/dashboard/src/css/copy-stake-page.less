@@ -2,9 +2,12 @@
 
     &__layout {
         display: grid;
+        height: 100vh;
+        width: 100vw;
         grid-template-columns: 200px auto;
-        grid-template-rows: 100vh auto;
-        grid-template-areas: "nav content" 
+        grid-template-rows: auto;
+        grid-template-areas: "nav content";
+        overflow: hidden;
     }
 
     &__nav {
@@ -12,21 +15,20 @@
         background-color: @white;
     }
 
-    &__content {
+    &__content-wrapper {
         grid-area: content;
-        display: flex;
-        align-items: center;
-        margin-top: 5.5rem;
-        margin-right: auto;
-        margin-left:  auto;
-
-        // TODO 
-        max-width: 960px;
-        padding-right: 10px;
-        padding-left:  10px;
-
+        padding-top: 5.5rem;
         background-color: @color-grey-20;
-        overflow: auto;
+        overflow: scroll;
+    }
+
+    &__content{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 10px;
     }
     
     &__nav__indicator {
