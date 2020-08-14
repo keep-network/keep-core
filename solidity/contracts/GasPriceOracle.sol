@@ -23,6 +23,8 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 /// price change is finalized by calling their refreshGasPrice function. Each
 /// consumer may decide to pull the new value from the oracle immediatelly or
 /// at the moment right for the consumer.
+/// Consumers must be trusted contracts whose refreshGasPrice must always
+/// succeed and never consume excessive gas.
 interface GasPriceOracleConsumer {
     function refreshGasPrice() external;
 }
