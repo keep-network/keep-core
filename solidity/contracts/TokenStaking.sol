@@ -51,7 +51,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     );
     event StakeOwnershipTransferred(
         address indexed operator,
-        address newOwner
+        address indexed newOwner
     );
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCompleted(address indexed operator, uint256 newAmount);
