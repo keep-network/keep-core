@@ -565,6 +565,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function transferStakeOwnership(address operator, address newOwner) public {
         require(msg.sender == operators[operator].owner, "Not authorized");
         operators[operator].owner = newOwner;
+        ownerOperators[newOwner].push(operator);
         emit StakeOwnershipTransferred(operator, newOwner);
     }
 
