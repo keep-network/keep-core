@@ -154,14 +154,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
-    modifier onlyServiceContractUpgrader() {
-        require(
-            registry.serviceContractUpgraderFor(address(this)) == msg.sender,
-            "Not authorized"
-        );
-        _;
-    }
-
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
@@ -218,14 +210,13 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /// @notice Adds service contract
     /// @param serviceContract Address of the service contract.
-    function addServiceContract(address serviceContract) public onlyServiceContractUpgrader {
-        serviceContracts.push(serviceContract);
-    }
+    function addServiceContract(address serviceContract) public {
+        require(
+            registry.serviceContractUpgraderFor(address(this)) == msg.sender,
+            "Not authorized"
+        );
 
-    /// @notice Removes service contract
-    /// @param serviceContract Address of the service contract.
-    function removeServiceContract(address serviceContract) public onlyServiceContractUpgrader {
-        serviceContracts.removeAddress(serviceContract);
+        serviceContracts.push(serviceContract);
     }
 
     /// @notice Triggers the selection process of a new candidate group.
