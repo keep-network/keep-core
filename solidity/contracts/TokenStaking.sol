@@ -125,6 +125,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// from a grant, top-up has to be performed from the same grant. If the
     /// delegation was done using liquid tokens, only liquid tokens from the
     /// same owner can be used to top-up the stake.
+    /// Top-up can not be cancelled so it is important to be careful with the
+    /// amount of KEEP added to the stake.
     /// @dev Requires that the provided token contract be the same one linked to
     /// this contract.
     /// @param _from The owner of the tokens who approved them to transfer.
@@ -207,6 +209,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// delegated from a grant, top-up has to be performed from the same grant.
     /// If the delegation was done using liquid tokens, only liquid tokens from
     /// the same owner can be used to top-up the stake.
+    /// Top-up can not be cancelled so it is important to be careful with the
+    /// amount of KEEP added to the stake.
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _value Approved amount for the transfer and top-up to
     /// an existing stake.

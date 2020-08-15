@@ -384,6 +384,38 @@ describe("TokenStaking/StakingPortBacker", () => {
       )
     })
 
+    it("allows to copy stake only one time even if it's been recovered", async () => {
+      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
+      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+
+      await time.increase(time.duration.days(91))
+
+      await stakingPortBacker.undelegate(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.undelegate(operatorTwo, {from: grantee})
+      await stakingPortBacker.undelegate(operatorThree, {from: managedGrantee})
+
+      const undelegationPeriod = await newTokenStaking.undelegationPeriod()
+      await time.increase(undelegationPeriod.addn(1))
+
+      await stakingPortBacker.recoverStake(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.recoverStake(operatorTwo, {from: grantee})
+      await stakingPortBacker.recoverStake(operatorThree, {from: managedGrantee})
+
+      await expectRevert(
+        stakingPortBacker.copyStake(operatorOne, {from: tokenOwner}),
+        "Stake already copied"
+      )
+      await expectRevert(
+        stakingPortBacker.copyStake(operatorTwo, {from: grantee}),
+        "Stake already copied"
+      )
+      await expectRevert(
+        stakingPortBacker.copyStake(operatorThree, {from: managedGrantee}),
+        "Stake already copied"
+      )
+    })
+
     it("emits an event", async () => {
       let receipt = await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
       await expectEvent(receipt, "StakeCopied", {
