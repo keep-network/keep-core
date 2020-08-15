@@ -113,7 +113,7 @@ const getDepositState = async (web3Context, depositContractAddress) => {
     .currentState()
     .call()
   const depStateObj = DEPOSIT_STATES.find(
-    (obj) => obj.depositStatusId == depStateCode
+    (obj) => obj.depositStatusId.toString() === depStateCode.toString()
   )
   return depStateObj
 }
@@ -122,13 +122,13 @@ const isEventAlignedToDeposit = (tbtcSystemContractEvent, evDepStatus) => {
   const contract = TBTCSystem
   let isAligned = false
   switch (evDepStatus.name) {
-    case DEPOSIT_STATES.find((dso) => dso.depositStatusId == 5).name: // AWAITING_WITHDRAWAL_SIGNATURE
-      if (tbtcSystemContractEvent.event == contract.abi[20].name)
+    case DEPOSIT_STATES.find((dso) => dso.depositStatusId === 5).name: // AWAITING_WITHDRAWAL_SIGNATURE
+      if (tbtcSystemContractEvent.event === contract.abi[20].name)
         // RedemptionRequested
         isAligned = true
       break
-    case DEPOSIT_STATES.find((dso) => dso.depositStatusId == 6).name: // AWAITING_WITHDRAWAL_PROOF
-      if (tbtcSystemContractEvent.event == contract.abi[12].name)
+    case DEPOSIT_STATES.find((dso) => dso.depositStatusId === 6).name: // AWAITING_WITHDRAWAL_PROOF
+      if (tbtcSystemContractEvent.event === contract.abi[12].name)
         // GotRedemptionSignature
         isAligned = true
       break
