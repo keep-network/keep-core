@@ -5,6 +5,7 @@ import Loadable from "./Loadable"
 import { NotFound404 } from "./NotFound404"
 import withWeb3Context from "./WithWeb3Context"
 import OperatorPage from "../pages/OperatorPage"
+import LiquidationsPage from "../pages/LiquidationsPage"
 import RewardsPageContainer from "../pages/RewardsPageContainer"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 import TokenGrantsPage from "../pages/TokenGrantsPage"
@@ -36,6 +37,7 @@ class Routing extends React.Component {
       <Switch>
         <Route path="/tokens" component={TokensPageContainer} />
         <Route exact path="/operations" component={OperatorPage} />
+        <Route exact path="/liquidations" component={LiquidationsPage} />
         <Route path="/rewards" component={RewardsPageContainer} />
         <Route exact path="/token-grants" component={TokenGrantsPage} />
         <Route path="/applications" component={ApplicationsPageContainer} />

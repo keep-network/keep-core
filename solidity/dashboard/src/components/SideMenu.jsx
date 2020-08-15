@@ -54,6 +54,12 @@ export const SideMenu = (props) => {
           icon={<Icons.Operations />}
         />
         <NavLink
+          exact
+          to="/liquidations"
+          label="liquidations"
+          icon={<Icons.Rewards />}
+        />
+        <NavLink
           to="/rewards"
           label="rewards"
           icon={<Icons.Rewards />}
