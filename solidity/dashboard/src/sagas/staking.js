@@ -116,7 +116,7 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
           payload: {
             contract: tokenStakingEscrow,
             methodName: "redelegate",
-            args: [operator, availableAmount, extraData],
+            args: [operator, amountToRedelegate, extraData],
           },
         })
 
