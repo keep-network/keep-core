@@ -99,11 +99,15 @@ jobs:
       - run:
           name: Migrate Contracts
           command: |
+            export BUILD_TAG=$CIRCLE_SHA1
             mkdir -p /tmp/keep-client/contracts
             cd ./solidity
             npm ci
             ./node_modules/.bin/truffle migrate --reset --network $TRUFFLE_NETWORK
             cp ./build/contracts/* /tmp/keep-client/contracts
+            tenderly login --authentication-method token --token $TENDERLY_TOKEN
+            tenderly push --networks $ETH_NETWORK_ID --tag keep-core \
+              --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG || echo "tendery push failed :("
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
