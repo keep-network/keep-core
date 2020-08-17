@@ -881,9 +881,9 @@ describe('TokenStaking', function() {
         {from: owner}
       )
 
-      await expectEvent(receipt, "StakeDelegated", {
-        owner: thirdParty,
-        operator: operatorOne
+      await expectEvent(receipt, "StakeOwnershipTransferred", {
+        operator: operatorOne,
+        newOwner: thirdParty
       })
     })
   })

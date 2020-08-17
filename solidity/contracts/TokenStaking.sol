@@ -52,6 +52,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address indexed authorizer,
         uint256 value
     );
+    event StakeOwnershipTransferred(
+        address indexed operator,
+        address indexed newOwner
+    );
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCompleted(address indexed operator, uint256 newAmount);
     event Undelegated(address indexed operator, uint256 undelegatedAt);
@@ -564,7 +568,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     function transferStakeOwnership(address operator, address newOwner) public {
         require(msg.sender == operators[operator].owner, "Not authorized");
         operators[operator].owner = newOwner;
-        emit StakeDelegated(newOwner, operator);
+        emit StakeOwnershipTransferred(operator, newOwner);
     }
 
     /// @notice Gets the eligible stake balance of the specified address.
