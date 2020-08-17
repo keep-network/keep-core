@@ -162,7 +162,7 @@ const TokenPageContextProvider = (props) => {
       let escrowAvailableTotalAmount = 0
 
       if (operator) {
-        escrowAvailableTotalAmount = fetchDepositAvailableAmount(operator)
+        escrowAvailableTotalAmount = await fetchDepositAvailableAmount(operator)
       }
 
       dispatch({
