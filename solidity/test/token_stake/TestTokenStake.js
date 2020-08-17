@@ -870,9 +870,7 @@ describe('TokenStaking', function() {
         {from: owner}
       )
       const newOwner = await stakingContract.ownerOf(operatorOne)
-      const operatorsOf = await stakingContract.operatorsOf(newOwner)
       expect(newOwner).to.equal(thirdParty)
-      expect(operatorsOf).contains(operatorOne)
     })
 
     it("emits an event", async () => {
@@ -883,9 +881,9 @@ describe('TokenStaking', function() {
         {from: owner}
       )
 
-      await expectEvent(receipt, "StakeOwnershipTransferred", {
-        operator: operatorOne,
-        newOwner: thirdParty
+      await expectEvent(receipt, "StakeDelegated", {
+        owner: thirdParty,
+        operator: operatorOne
       })
     })
   })
