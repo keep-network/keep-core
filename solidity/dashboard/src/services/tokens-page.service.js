@@ -13,6 +13,7 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
 import { ContractsLoaded, Web3Loaded } from "../contracts"
+import { isEmptyArray } from "../utils/array.utils"
 
 export const fetchTokensPageData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -247,12 +248,15 @@ const getAllGranteeOperators = async (
     return reducer
   }, {})
 
-  const newOperatorsStakeDetails = (
-    await stakingContract.getPastEvents("Staked", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: Object.keys(newOperatorToGrantId) },
-    })
-  ).reduce(toOperator, {})
+  let newOperatorsStakeDetails = {}
+  if (!isEmptyArray(Object.keys(newOperatorToGrantId))) {
+    newOperatorsStakeDetails = (
+      await stakingContract.getPastEvents("Staked", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: Object.keys(newOperatorToGrantId) },
+      })
+    ).reduce(toOperator, {})
+  }
 
   const oldOperators = escrowRedelegation
     .filter((_) => {
@@ -260,8 +264,8 @@ const getAllGranteeOperators = async (
     })
     .map((_) => _.returnValues.previousOperator)
 
-  const activeOperators = granteeOperators.filter((operator) =>
-    oldOperators.some((oldOperator) => oldOperator !== operator)
+  const activeOperators = granteeOperators.filter(
+    (operator) => !oldOperators.includes(operator)
   )
 
   const operatorsDetailsMap = (
