@@ -122,6 +122,22 @@ describe("GasPriceOracle", () => {
             expect(await consumer2.gasPrice()).to.eq.BN(0)
             expect(await consumer3.gasPrice()).to.eq.BN(newValue)
         })
+
+        it("lets to overwrite the pending update", async () => {
+            await oracle.beginGasPriceUpdate(55555, {from: owner})
+            await time.increase(time.duration.minutes(59))
+
+            const overwritten = 66666
+            await oracle.beginGasPriceUpdate(overwritten, {from: owner})
+            
+            expect(await oracle.newGasPrice()).to.eq.BN(overwritten)
+            expect(await oracle.gasPriceChangeInitiated()).to.eq.BN(await time.latest())     
+            
+            await time.increase(time.duration.minutes(61))
+            await oracle.finalizeGasPriceUpdate()   
+
+            expect(await oracle.gasPrice()).to.eq.BN(overwritten)
+        })
     })
 
     describe("when managing consumer contracts", async () => {
