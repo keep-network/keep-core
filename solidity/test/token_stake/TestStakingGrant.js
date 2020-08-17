@@ -69,7 +69,7 @@ describe('TokenStaking/StakingGrant', () => {
         registry.address,
         initializationPeriod,
         contract.fromArtifact('TokenStakingEscrow'),
-        contract.fromArtifact('TokenStaking')
+        contract.fromArtifact('TokenStakingStub')
       )
       tokenStaking = stakingContracts.tokenStaking;
       tokenStakingEscrow = stakingContracts.tokenStakingEscrow;

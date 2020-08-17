@@ -86,12 +86,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: eth-network-ropsten
-                key: rpc-url
+                key: keep-client-rpc-url
           - name: ETH_WS_URL
             valueFrom:
               secretKeyRef:
                 name: eth-network-ropsten
-                key: ws-url
+                key: keep-client-ws-url
           - name: ETH_NETWORK_ID
             valueFrom:
               configMapKeyRef:

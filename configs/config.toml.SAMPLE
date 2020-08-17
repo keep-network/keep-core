@@ -19,10 +19,9 @@
 	# allowed gas price is reached, no further resubmission attempts are
 	# performed.
 	#
-	# MaxGasPrice = 50000000000 # 50 gwei (default value)
+	# MaxGasPrice = 70000000000 # 70 gwei (default value)
 
 [ethereum.account]
-	Address            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 [ethereum.ContractAddresses]

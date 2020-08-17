@@ -33,7 +33,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
   before(async () => {
 
     let contracts = await initContracts(
-      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('TokenStakingStub'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
       contract.fromArtifact('KeepRandomBeaconOperatorSlashingStub')
@@ -56,7 +56,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
     await stakingContract.authorizeOperatorContract(operator2, operatorContract.address, { from: authorizer })
     await stakingContract.authorizeOperatorContract(operator3, operatorContract.address, { from: authorizer })
 
-    scheduleStart = await stakingContract.minimumStakeScheduleStart()
+    scheduleStart = await stakingContract.deployedAt()
 
     time.increase((await stakingContract.initializationPeriod()).addn(1))
 
@@ -84,7 +84,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
         tattletaleSignature,
         { from: tattletale }
       )
-  
+
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
         "49900000000000000000000000" // 50000000000000000000000000 - 100000000000000000000000
       )
@@ -209,15 +209,14 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       await time.increaseTo(scheduleStart.addn(86400 * 89))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
-      // minimum stake = 90000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
-        "49999100000000000000000000" // 50000000000000000000000000 - 1% * 90000000000000000000000 
+        "49999000000000000000000000" // 50000000000000000000000000 - 1% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator2)).to.eq.BN(
-        "499100000000000000000000"  // 500000000000000000000000 - 1% * 90000000000000000000000 
+        "499000000000000000000000"  // 500000000000000000000000 - 1% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator3)).to.eq.BN(
-        "99100000000000000000000"  // 100000000000000000000000 - 1% * 90000000000000000000000
+        "99000000000000000000000"  // 100000000000000000000000 - 1% * 100000000000000000000000
       )
     })
 
@@ -230,9 +229,9 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment
       // for the first three months:
       //
-      // minimum stake = 90000000000000000000000
-      // 3 * 90000000000000000000000 * 1% * 5% * 31% = 41850000000000000000
-      expect(await token.balanceOf(tattletale)).to.eq.BN("41850000000000000000")
+      // minimum stake = 100000000000000000000000
+      // 3 * 100000000000000000000000 * 1% * 5% * 31% = 46500000000000000000
+      expect(await token.balanceOf(tattletale)).to.eq.BN("46500000000000000000")
     })
 
     it("seizes 50% of minimum stake from operators after the first 3 months", async () => {
@@ -240,15 +239,14 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       await time.increaseTo(scheduleStart.addn(86400 * 90))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
-      // minimum stake = 90000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
-        "49955000000000000000000000" // 50000000000000000000000000 - 50% * 90000000000000000000000 
+        "49950000000000000000000000" // 50000000000000000000000000 - 50% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator2)).to.eq.BN(
-        "455000000000000000000000"  // 500000000000000000000000 - 50% * 90000000000000000000000 
+        "450000000000000000000000"  // 500000000000000000000000 - 50% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator3)).to.eq.BN(
-        "55000000000000000000000"  // 100000000000000000000000 - 50% * 90000000000000000000000
+        "50000000000000000000000"  // 100000000000000000000000 - 50% * 100000000000000000000000
       )
     })
 
@@ -261,9 +259,9 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       // And "all of the seized tokens" are 3 * minimum stake with 50% adjustment
       // after the first 3 months end
       //
-      // minimum stake = 90000000000000000000000
-      // 3 * 90000000000000000000000 * 50% * 5% * 31% = 2092500000000000000000
-      expect(await token.balanceOf(tattletale)).to.eq.BN("2092500000000000000000")
+      // minimum stake = 100000000000000000000000
+      // 3 * 100000000000000000000000 * 50% * 5% * 31% = 2325000000000000000000
+      expect(await token.balanceOf(tattletale)).to.eq.BN("2325000000000000000000")
     })
     
     it("seizes 50% of minimum stake from operators before the first 6 months end", async () => {
@@ -271,15 +269,15 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       await time.increaseTo(scheduleStart.addn(86400 * 179))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
-      // minimum stake = 80000000000000000000000
+      // minimum stake = 100000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
-        "49960000000000000000000000" // 50000000000000000000000000 - 50% * 80000000000000000000000 
+        "49950000000000000000000000" // 50000000000000000000000000 - 50% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator2)).to.eq.BN(
-        "460000000000000000000000"  // 500000000000000000000000 - 50% * 80000000000000000000000 
+        "450000000000000000000000"  // 500000000000000000000000 - 50% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator3)).to.eq.BN(
-        "60000000000000000000000"  // 100000000000000000000000 - 50% * 80000000000000000000000
+        "50000000000000000000000"  // 100000000000000000000000 - 50% * 100000000000000000000000
       )
     })
 
@@ -292,9 +290,9 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment
       // for the first three months:
       //
-      // minimum stake = 80000000000000000000000
-      // 3 * 80000000000000000000000 * 50% * 5% * 31% = 1860000000000000000000
-      expect(await token.balanceOf(tattletale)).to.eq.BN("1860000000000000000000")
+      // minimum stake = 100000000000000000000000
+      // 3 * 100000000000000000000000 * 50% * 5% * 31% = 2325000000000000000000
+      expect(await token.balanceOf(tattletale)).to.eq.BN("2325000000000000000000")
     })
 
     it("seizes 100% of minimum stake from operators after the first 6 months end", async () => {
@@ -302,15 +300,15 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       await time.increaseTo(scheduleStart.addn(86400 * 180))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
-      // minimum stake = 80000000000000000000000
+      // minimum stake = 100000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
-        "49920000000000000000000000" // 50000000000000000000000000 - 100% * 80000000000000000000000 
+        "49900000000000000000000000" // 50000000000000000000000000 - 100% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator2)).to.eq.BN(
-        "420000000000000000000000"  // 500000000000000000000000 - 100% * 80000000000000000000000 
+        "400000000000000000000000"  // 500000000000000000000000 - 100% * 100000000000000000000000 
       )
       expect(await stakingContract.balanceOf(operator3)).to.eq.BN(
-        "20000000000000000000000"  // 100000000000000000000000 - 100% * 80000000000000000000000
+        "0"  // 100000000000000000000000 - 100% * 100000000000000000000000
       )
     })
 
@@ -323,9 +321,9 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment
       // for the first three months:
       //
-      // minimum stake = 80000000000000000000000
-      // 3 * 80000000000000000000000 * 100% * 5% * 31% = 3720000000000000000000
-      expect(await token.balanceOf(tattletale)).to.eq.BN("3720000000000000000000")
+      // minimum stake = 100000000000000000000000
+      // 3 * 100000000000000000000000 * 100% * 5% * 31% = 4650000000000000000000
+      expect(await token.balanceOf(tattletale)).to.eq.BN("4650000000000000000000")
     })
   })
 })

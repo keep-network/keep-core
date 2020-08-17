@@ -11,10 +11,18 @@ const ethWSUrl = process.env.ETH_WS_URL
 const ethNetworkId = process.env.ETH_NETWORK_ID;
 
 // Contract owner info
-var contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-var authorizer = contractOwnerAddress
+const contractOwnerAddress = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
+const authorizer = contractOwnerAddress
+const purse = contractOwnerAddress;
 
-var contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
+const contractOwnerProvider = new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, ethRPCUrl);
+
+const operatorKeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE_PATH;
+
+// LibP2P network info
+const libp2pPeers = [process.env.KEEP_CLIENT_PEERS]
+const libp2pPort = Number(process.env.KEEP_CLIENT_PORT)
+const libp2pAnnouncedAddresses = [process.env.KEEP_CLIENT_ANNOUNCED_ADDRESSES]
 
 /*
 We override transactionConfirmationBlocks and transactionBlockTimeout because they're
@@ -63,13 +71,11 @@ const keepRandomBeaconOperatorContractAddress = keepRandomBeaconOperatorParsed.n
 async function provisionKeepClient() {
 
   try {
-    // Account that we fund ether from.  Contract owner should always have ether.
-    let purse = process.env.CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS;
-    // Operator account, should be set in Kube config
-    let operatorAddress = process.env.KEEP_CLIENT_ETH_ACCOUNT_ADDRESS;
+    console.log(`\n<<<<<<<<<<<< Read operator address from key file >>>>>>>>>>>>`)
+    const operatorAddress = readAddressFromKeyFile(operatorKeyFile)
 
     console.log(`\n<<<<<<<<<<<< Funding Operator Account ${operatorAddress} >>>>>>>>>>>>`);
-    await fundOperator(operatorAddress, purse, '10');
+    await fundOperator(operatorAddress, '10');
 
     console.log(`\n<<<<<<<<<<<< Staking Operator Account ${operatorAddress} >>>>>>>>>>>>`);
     await stakeOperator(operatorAddress, contractOwnerAddress, authorizer);
@@ -131,7 +137,7 @@ async function stakeOperator(operatorAddress, contractOwnerAddress, authorizer) 
   ]).toString('hex');
 
   await keepTokenContract.methods.approveAndCall(
-    tokenStakingContract.address,
+    tokenStakingContract.options.address,
     formatAmount(4000000, 18),
     delegation).send({from: contractOwnerAddress})
 
@@ -153,7 +159,13 @@ async function authorizeOperatorContract(operatorAddress, authorizer) {
   console.log(`Authorized!`);
 };
 
-async function fundOperator(operatorAddress, purse, etherToTransfer) {
+function readAddressFromKeyFile(keyFilePath) {
+  const keyFile = JSON.parse(fs.readFileSync(keyFilePath, 'utf8'))
+
+  return web3.utils.toHex(keyFile.address)
+}
+
+async function fundOperator(operatorAddress, etherToTransfer) {
 
   let funded = await isFunded(operatorAddress);
   let transferAmount = web3.utils.toWei(etherToTransfer, 'ether');
@@ -168,20 +180,23 @@ async function fundOperator(operatorAddress, purse, etherToTransfer) {
   }
 };
 
-async function createKeepClientConfig(operatorAddress) {
+async function createKeepClientConfig() {
 
     let parsedConfigFile = toml.parse(fs.readFileSync('/tmp/keep-client-config-template.toml', 'utf8'));
 
     parsedConfigFile.ethereum.URL = ethWSUrl;
     parsedConfigFile.ethereum.URLRPC = ethRPCUrl;
-    parsedConfigFile.ethereum.account.Address = operatorAddress;
-    parsedConfigFile.ethereum.account.KeyFile = process.env.KEEP_CLIENT_ETH_KEYFILE_PATH;
+
+    parsedConfigFile.ethereum.account.KeyFile = operatorKeyFile;
+
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconOperator = keepRandomBeaconOperatorContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.KeepRandomBeaconService = keepRandomBeaconServiceContractAddress;
     parsedConfigFile.ethereum.ContractAddresses.TokenStaking = tokenStakingContractAddress;
-    parsedConfigFile.LibP2P.Peers = [ process.env.KEEP_CLIENT_PEERS ];
-    parsedConfigFile.LibP2P.Port = Number(process.env.KEEP_CLIENT_PORT);
-    parsedConfigFile.LibP2P.AnnouncedAddresses = [ process.env.KEEP_CLIENT_ANNOUNCED_ADDRESSES ];
+
+    parsedConfigFile.LibP2P.Peers = libp2pPeers
+    parsedConfigFile.LibP2P.Port = libp2pPort
+    parsedConfigFile.LibP2P.AnnouncedAddresses = libp2pAnnouncedAddresses
+
     parsedConfigFile.Storage.DataDir = process.env.KEEP_CLIENT_DATA_DIR;
 
     /*
@@ -190,6 +205,7 @@ async function createKeepClientConfig(operatorAddress) {
     Here we format the default rendering to write the config file with Seed/Port values as needed.
     */
     let formattedConfigFile = tomlify.toToml(parsedConfigFile, {
+      space: 2,
       replace: (key, value) => { return (key == 'Port') ? value.toFixed(0) : false }
     });
     fs.writeFileSync('/mnt/keep-client/config/keep-client-config.toml', formattedConfigFile)

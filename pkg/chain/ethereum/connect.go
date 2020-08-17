@@ -30,7 +30,7 @@ var (
 	// gas price can not be higher than the max gas price value. If the maximum
 	// allowed gas price is reached, no further resubmission attempts are
 	// performed. This value can be overwritten in the configuration file.
-	DefaultMaxGasPrice = big.NewInt(50000000000) // 50 Gwei
+	DefaultMaxGasPrice = big.NewInt(70000000000) // 70 Gwei
 )
 
 type ethereumChain struct {

@@ -331,6 +331,7 @@ func Connect(
 		dhtopts.RoutingTableRefreshPeriod(
 			connectOptions.RoutingTableRefreshPeriod,
 		),
+		dhtopts.Mode(dht.ModeServer),
 	)
 	if err != nil {
 		return nil, err

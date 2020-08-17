@@ -419,12 +419,12 @@ library Groups {
     ) public view returns (uint256) {
         uint256 minimumStake = self.stakingContract.minimumStake();
 
-        uint256 minimumStakeScheduleStart = self.stakingContract.minimumStakeScheduleStart();
+        uint256 stakingContractDeployedAt = self.stakingContract.deployedAt();
         /* solium-disable-next-line security/no-block-members */
-        if (now < minimumStakeScheduleStart + THREE_MONTHS) {
+        if (now < stakingContractDeployedAt + THREE_MONTHS) {
             return minimumStake.percent(1);
         /* solium-disable-next-line security/no-block-members */
-        } else if (now < minimumStakeScheduleStart + SIX_MONTHS) {
+        } else if (now < stakingContractDeployedAt + SIX_MONTHS) {
             return minimumStake.percent(50);
         } else {
             return minimumStake;
