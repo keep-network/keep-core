@@ -14,7 +14,7 @@ const assert = chai.assert
 
 describe("GasPriceOracle", () => {
 
-    const owner = accounts[0]
+    const owner = accounts[1]
     const thirdParty = accounts[2]
 
     let oracle
