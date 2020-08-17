@@ -77,6 +77,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     uint256 internal constant twoWeeks = 1209600; // [sec]
     uint256 internal constant twoMonths = 5184000; // [sec]
 
+    // 2020-04-28; the date of deploying KEEP token.
+    // TX:  0xea22d72bc7de4c82798df7194734024a1f2fd57b173d0e065864ff4e9d3dc014
+    uint256 internal constant minimumStakeScheduleStart = 1588042366;
+
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
     /// @param _tokenGrant KEEP token grant contract.
@@ -104,7 +108,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// Initial minimum stake is higher than the final and lowered periodically based
     /// on the amount of steps and the length of the minimum stake schedule in seconds.
     function minimumStake() public view returns (uint256) {
-        return MinimumStakeSchedule.current();
+        return MinimumStakeSchedule.current(minimumStakeScheduleStart);
     }
 
     /// @notice Returns the current value of the undelegation period.
