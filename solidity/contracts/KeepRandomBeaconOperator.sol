@@ -171,11 +171,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
         address _keepRegistry,
         address _gasPriceOracle
     ) public {
-        registry = KeepRegistry(_keepRegistry);
-
         serviceContracts.push(_serviceContract);
-        stakingContract = TokenStaking(_tokenStaking);
 
+        stakingContract = TokenStaking(_tokenStaking);
+        registry = KeepRegistry(_keepRegistry);
         gasPriceOracle = GasPriceOracle(_gasPriceOracle);
 
         groups.stakingContract = stakingContract;
