@@ -134,7 +134,6 @@ const TBTCApplicationPage = ({
       const { operatorAddress, contractName } = data
       if (contractName === "TBTCSystem") {
         const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
-        console.log("sortitionPoolAddress", sortitionPoolAddress)
 
         authorizeSortitionPoolContract(
           {
