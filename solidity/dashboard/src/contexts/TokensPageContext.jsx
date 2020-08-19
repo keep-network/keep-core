@@ -19,12 +19,10 @@ import tokensPageReducer, {
   GRANT_DEPOSITED,
 } from "../reducers/tokens-page.reducer"
 import { isEmptyObj } from "../utils/general.utils"
-import { findIndexAndObject } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
 import { usePrevious } from "../hooks/usePrevious"
 import { ContractsLoaded } from "../contracts"
 import { fetchAvailableTopUps } from "../services/top-ups.service"
-import { fetchDepositAvailableAmount } from "../services/token-staking-escrow.service"
 
 const tokensPageServiceInitialData = {
   delegations: [],
@@ -109,15 +107,7 @@ const TokenPageContextProvider = (props) => {
       type: SET_STATE,
       payload: { grants, grantsAreFetching },
     })
-    if (!isEmptyObj(state.selectedGrant)) {
-      const { obj: updatedGrant } = findIndexAndObject(
-        "id",
-        state.selectedGrant.id,
-        grants
-      )
-      dispatch({ type: SET_SELECTED_GRANT, payload: updatedGrant })
-    }
-  }, [grants, grantsAreFetching, state.selectedGrant])
+  }, [grants, grantsAreFetching])
 
   useEffect(() => {
     dispatch({
@@ -153,28 +143,16 @@ const TokenPageContextProvider = (props) => {
   }, [web3Context, dispatch])
 
   const grantStaked = useCallback(
-    async (grantId, amount, operator = null) => {
-      const { grantContract } = web3Context
-
-      const availableToStake = await grantContract.methods
-        .availableToStake(grantId)
-        .call()
-      let escrowAvailableTotalAmount = 0
-
-      if (operator) {
-        escrowAvailableTotalAmount = await fetchDepositAvailableAmount(operator)
-      }
-
+    async (grantId, amount) => {
       dispatch({
         type: GRANT_STAKED,
         payload: {
           grantId,
           amount,
-          availableToStake: add(availableToStake, escrowAvailableTotalAmount),
         },
       })
     },
-    [web3Context, dispatch]
+    [dispatch]
   )
 
   const grantWithdrawn = useCallback(
@@ -205,10 +183,7 @@ const TokenPageContextProvider = (props) => {
   )
 
   const grantDeposited = useCallback(async (grantId, operator, amount) => {
-    const { tokenStakingEscrow, grantContract } = await ContractsLoaded
-    const availableToWithdrawEscrow = await tokenStakingEscrow.methods
-      .withdrawable(operator)
-      .call()
+    const { grantContract } = await ContractsLoaded
     const availableToWitdrawGrant = await grantContract.methods
       .withdrawable(grantId)
       .call()
@@ -217,7 +192,6 @@ const TokenPageContextProvider = (props) => {
       type: GRANT_DEPOSITED,
       payload: {
         grantId,
-        availableToWithdrawEscrow,
         availableToWitdrawGrant,
         amount,
         operator,

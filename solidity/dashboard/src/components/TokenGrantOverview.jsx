@@ -175,7 +175,9 @@ const mapDispatchToProps = {
 
 export const TokenGrantUnlockingdDetails = connect(
   null,
-  mapDispatchToProps
+  mapDispatchToProps,
+  null,
+  { pure: false }
 )(TokenGrantUnlockingdDetailsComponent)
 
 export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {

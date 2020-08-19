@@ -1,11 +1,7 @@
 import { Web3Loaded } from "../contracts"
 import { isSameEthAddress } from "./general.utils"
 
-export const getEventFromTransactionHash = async (
-  web3Contract,
-  eventName,
-  txHash
-) => {
+export const getEventFromLogs = async (logs, web3Contract, eventName) => {
   const web3 = await Web3Loaded
 
   const eventInterface = web3Contract.options.jsonInterface.find(
@@ -14,9 +10,7 @@ export const getEventFromTransactionHash = async (
 
   const eventSignature = eventInterface.signature
 
-  const receipt = await web3.eth.getTransactionReceipt(txHash)
-
-  const log = receipt.logs.find(
+  const log = logs.find(
     (log) =>
       isSameEthAddress(web3Contract.options.address, log.address) &&
       log.topics[0] === eventSignature
@@ -26,5 +20,26 @@ export const getEventFromTransactionHash = async (
     return
   }
 
-  return web3.eth.abi.decodeLog(eventInterface.inputs, log.data, log.topics)
+  return web3.eth.abi.decodeLog(
+    eventInterface.inputs,
+    log.data,
+    log.topics.slice(1)
+  )
+}
+
+export const getEventsFromTransaction = async (contractToEventName, txHash) => {
+  const web3 = await Web3Loaded
+
+  const receipt = await web3.eth.getTransactionReceipt(txHash)
+
+  const events = {}
+
+  for (const [contract, eventName] of contractToEventName) {
+    const eventData = await getEventFromLogs(receipt.logs, contract, eventName)
+    if (eventData) {
+      events[eventName] = eventData
+    }
+  }
+
+  return events
 }
