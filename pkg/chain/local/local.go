@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/big"
-	"math/rand"
+	"math/rand" // #nosec
 	"sort"
 	"sync"
 

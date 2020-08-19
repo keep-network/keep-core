@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
+const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD" // #nosec
 
 // Config is the top level config structure.
 type Config struct {

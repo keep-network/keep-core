@@ -17,4 +17,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: securego/gosec@master
         with:
-          args: ./...
+          args: |
+            -exclude-dir=pkg/gen
+            -exclude-dir=pkg/chain/gen
+            -exclude-dir=pkg/net/gen
+            ./...
