@@ -169,7 +169,7 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		relayEntryPromise.Fail(fmt.Errorf("cannot read current block"))
+		_ = relayEntryPromise.Fail(fmt.Errorf("cannot read current block"))
 		return relayEntryPromise
 	}
 
@@ -185,7 +185,7 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 	}
 	c.handlerMutex.Unlock()
 
-	relayEntryPromise.Fulfill(entry)
+	_ = relayEntryPromise.Fulfill(entry)
 
 	c.lastSubmittedRelayEntry = newEntry
 
@@ -336,7 +336,7 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	defer c.handlerMutex.Unlock()
 
 	bc, _ := BlockCounter()
-	bc.WaitForBlockHeight(c.simulatedHeight)
+	_ = bc.WaitForBlockHeight(c.simulatedHeight)
 	currentBlock, err := bc.CurrentBlock()
 
 	if err != nil {
@@ -377,7 +377,7 @@ func (c *localChain) SubmitDKGResult(
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	if len(signatures) < c.relayConfig.HonestThreshold {
-		dkgResultPublicationPromise.Fail(fmt.Errorf(
+		_ = dkgResultPublicationPromise.Fail(fmt.Errorf(
 			"failed to submit result with [%v] signatures for honest threshold [%v]",
 			len(signatures),
 			c.relayConfig.HonestThreshold,
@@ -387,7 +387,7 @@ func (c *localChain) SubmitDKGResult(
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
+		_ = dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
 		return dkgResultPublicationPromise
 	}
 

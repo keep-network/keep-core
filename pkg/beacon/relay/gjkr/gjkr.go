@@ -19,27 +19,75 @@ var logger = log.Logger("keep-gjkr")
 // message unmarshallers.
 // The channel needs to be fully initialized before Execute is called.
 func RegisterUnmarshallers(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	err := channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &EphemeralPublicKeyMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	if err != nil {
+		logger.Errorf(
+			"could not register EphemeralPublicKeyMessage unmarshaller: [%v]",
+			err,
+		)
+	}
+
+	err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &MemberCommitmentsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	if err != nil {
+		logger.Errorf(
+			"could not register MemberCommitmentsMessage unmarshaller: [%v]",
+			err,
+		)
+	}
+
+	err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &PeerSharesMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	if err != nil {
+		logger.Errorf(
+			"could not register PeerSharesMessage unmarshaller: [%v]",
+			err,
+		)
+	}
+
+	err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &SecretSharesAccusationsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	if err != nil {
+		logger.Errorf(
+			"could not register SecretSharesAccusationsMessage unmarshaller: [%v]",
+			err,
+		)
+	}
+
+	err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &MemberPublicKeySharePointsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	if err != nil {
+		logger.Errorf(
+			"could not register MemberPublicKeySharePointsMessage unmarshaller: [%v]",
+			err,
+		)
+	}
+
+	err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &PointsAccusationsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	if err != nil {
+		logger.Errorf(
+			"could not register PointsAccusationsMessage unmarshaller: [%v]",
+			err,
+		)
+	}
+
+	err = channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &MisbehavedEphemeralKeysMessage{}
 	})
+	if err != nil {
+		logger.Errorf(
+			"could not register MisbehavedEphemeralKeysMessage unmarshaller: [%v]",
+			err,
+		)
+	}
 }
 
 // Execute runs the GJKR distributed key generation  protocol, given a

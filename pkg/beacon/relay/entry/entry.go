@@ -23,8 +23,15 @@ var logger = log.Logger("keep-entry")
 // required protocol message unmarshallers.
 // The channel has to be initialized before the SignAndSubmit is called.
 func RegisterUnmarshallers(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(
-		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
+	err := channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		return &SignatureShareMessage{}
+	})
+	if err != nil {
+		logger.Errorf(
+			"could not register SignatureShareMessage unmarshaller: [%v]",
+			err,
+		)
+	}
 }
 
 // SignAndSubmit triggers the threshold signature process for the

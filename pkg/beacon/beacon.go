@@ -77,7 +77,7 @@ func Initialize(
 
 	node.ResumeSigningIfEligible(relayChain, signing)
 
-	relayChain.OnRelayEntryRequested(func(request *event.Request) {
+	_, err = relayChain.OnRelayEntryRequested(func(request *event.Request) {
 		onConfirmed := func() {
 			if node.IsInGroup(request.GroupPublicKey) {
 				go func() {
@@ -132,8 +132,11 @@ func Initialize(
 			currentRelayRequestConfirmationDelay,
 		)
 	})
+	if err != nil {
+		return err
+	}
 
-	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
+	_, err = relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
 		onGroupSelected := func(group *groupselection.Result) {
 			for index, staker := range group.SelectedStakers {
 				logger.Infof(
@@ -182,8 +185,11 @@ func Initialize(
 			}
 		}()
 	})
+	if err != nil {
+		return err
+	}
 
-	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	_, err = relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
@@ -191,6 +197,9 @@ func Initialize(
 		)
 		go groupRegistry.UnregisterStaleGroups()
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

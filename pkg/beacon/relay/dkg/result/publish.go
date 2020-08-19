@@ -16,9 +16,15 @@ import (
 // required protocol message unmarshallers.
 // The channel needs to be fully initialized before Publish is called.
 func RegisterUnmarshallers(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	err := channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
 		return &DKGResultHashSignatureMessage{}
 	})
+	if err != nil {
+		logger.Errorf(
+			"could not register DKGResultHashSignatureMessage unmarshaller: [%v]",
+			err,
+		)
+	}
 }
 
 // Publish executes Phase 13 and 14 of DKG as a state machine. First, the
