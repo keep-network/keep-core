@@ -58,3 +58,6 @@
     # Port = 8080
     # NetworkMetricsTick = 60
     # EthereumMetricsTick = 600
+
+# [Diagnostics]
+    # Port = 8081

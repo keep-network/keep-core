@@ -159,7 +159,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
-	initializeDiagnostics(ctx, config, netProvider, stakeMonitor)
+	initializeDiagnostics(ctx, config, netProvider)
 
 	select {
 	case <-ctx.Done():
@@ -241,7 +241,6 @@ func initializeDiagnostics(
 	ctx context.Context,
 	config *config.Config,
 	netProvider net.Provider,
-	stakeMonitor chain.StakeMonitor,
 ) {
 	registry, isConfigured := diagnostics.Initialize(
 		config.Diagnostics.Port,
@@ -251,20 +250,25 @@ func initializeDiagnostics(
 		return
 	}
 
-	registry.RegisterSource("peers", func() string {
+	logger.Infof(
+		"enabled diagnostics on port [%v]",
+		config.Diagnostics.Port,
+	)
+
+	registry.RegisterSource("connected_peers", func() string {
 		connectedPeers := netProvider.ConnectionManager().ConnectedPeers()
 
 		peersList := make([]map[string]interface{}, len(connectedPeers))
 		for i := 0; i < len(connectedPeers); i++ {
-			peerAddress, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
-			if err == nil {
-				hasMinimumStake := false
-				hasMinimumStake, _ = stakeMonitor.HasMinimumStake(peerAddress.X.String())
+			peerPublicKey, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
+			if err != nil {
+				logger.Error("Error on getting peer public key: [%v]", err)
+				continue
+			}
 
-				peersList[i] = map[string]interface{}{
-					"PeerId":          connectedPeers[i],
-					"PeerAddress":     peerAddress.X.String(),
-					"HasMinimumStake": hasMinimumStake}
+			peersList[i] = map[string]interface{}{
+				"PeerId":        connectedPeers[i],
+				"PeerPublicKey": key.NetworkPubKeyToEthAddress(peerPublicKey),
 			}
 		}
 
@@ -273,12 +277,6 @@ func initializeDiagnostics(
 			return ""
 		}
 
-		logger.Debug("peers list: ", string(bytes))
 		return string(bytes)
 	})
-
-	logger.Infof(
-		"enabled diagnostics on port [%v]",
-		config.Diagnostics.Port,
-	)
 }
