@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -255,28 +254,5 @@ func initializeDiagnostics(
 		config.Diagnostics.Port,
 	)
 
-	registry.RegisterSource("connected_peers", func() string {
-		connectedPeers := netProvider.ConnectionManager().ConnectedPeers()
-
-		peersList := make([]map[string]interface{}, len(connectedPeers))
-		for i := 0; i < len(connectedPeers); i++ {
-			peerPublicKey, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
-			if err != nil {
-				logger.Error("Error on getting peer public key: [%v]", err)
-				continue
-			}
-
-			peersList[i] = map[string]interface{}{
-				"PeerId":        connectedPeers[i],
-				"PeerPublicKey": key.NetworkPubKeyToEthAddress(peerPublicKey),
-			}
-		}
-
-		bytes, err := json.Marshal(peersList)
-		if err != nil {
-			return ""
-		}
-
-		return string(bytes)
-	})
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 }
