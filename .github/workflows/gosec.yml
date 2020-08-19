@@ -1,4 +1,4 @@
-name: Run Gosec
+name: Gosec
 
 on:
   push:
@@ -9,14 +9,12 @@ on:
       - master
 
 jobs:
-  tests:
+  scan:
     runs-on: ubuntu-latest
     env:
       GO111MODULE: on
     steps:
-      - name: Checkout Source
-        uses: actions/checkout@v2
-      - name: Run Gosec Security Scanner
-        uses: securego/gosec@master
+      - uses: actions/checkout@v2
+      - uses: securego/gosec@master
         with:
           args: ./...
