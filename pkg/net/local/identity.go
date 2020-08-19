@@ -21,7 +21,7 @@ func (li localIdentifier) String() string {
 func randomLocalIdentifier() localIdentifier {
 	runes := make([]rune, 32)
 	for i := range runes {
-		runes[i] = letterRunes[rand.Intn(len(letterRunes))]
+		runes[i] = letterRunes[rand.Intn(len(letterRunes))] // #nosec
 	}
 
 	return localIdentifier(runes)
