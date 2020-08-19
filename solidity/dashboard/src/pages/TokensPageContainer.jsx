@@ -140,71 +140,29 @@ const useSubscribeToStakedEvent = async () => {
 }
 
 const useSubscribeToUndelegatedEvent = () => {
-  const web3Context = useContext(Web3Context)
-  const { grantContract, stakingContract, web3, yourAddress } = web3Context
-
   const { undelegationPeriod, dispatch, delegations } = useTokensPageContext()
 
   const subscribeToEventCallback = async (event) => {
     const {
       returnValues: { operator, undelegatedAt },
     } = event
+
+    // Find the existing delegation by operatorAddress in the app context.
     const delegation = delegations.find(({ operatorAddress }) =>
       isSameEthAddress(operatorAddress, operator)
     )
-    let undelegation = {}
-    if (delegation) {
-      undelegation = {
-        ...delegation,
-        undelegatedAt: moment.unix(undelegatedAt),
-        undelegationCompleteAt: moment
-          .unix(undelegatedAt)
-          .add(undelegationPeriod, "seconds"),
-        canRecoverStake: false,
-      }
-    } else {
-      const grantStakeDetails = await getGrantDetails(operator, grantContract)
-      const owner = await stakingContract.methods.ownerOf(operator).call()
-      const isFromGrant = grantStakeDetails !== null
-      const { grantee } = isFromGrant
-        ? await grantContract.methods.getGrant(grantStakeDetails.grantId).call()
-        : {}
-      let isManagedGrant
-      let managedGrantContractInstance
-      if (
-        isFromGrant &&
-        (await isGranteeInManagedGrant(web3Context, grantee))
-      ) {
-        isManagedGrant = true
-        managedGrantContractInstance = createManagedGrantContractInstance(
-          web3,
-          grantee
-        )
-      } else if (!isAddressedToCurrentAccount(owner, yourAddress, grantee)) {
-        return
-      }
-      const { amount } = await stakingContract.methods
-        .getDelegationInfo(operator)
-        .call()
-      undelegation = {
-        operatorAddress: operator,
-        authorizerAddress: await stakingContract.methods
-          .authorizerOf(operator)
-          .call(),
-        beneficiary: await stakingContract.methods
-          .beneficiaryOf(operator)
-          .call(),
-        amount,
-        undelegatedAt: moment.unix(undelegatedAt),
-        undelegationCompleteAt: moment
-          .unix(undelegatedAt)
-          .add(undelegationPeriod, "seconds"),
-        canRecoverStake: false,
-        isFromGrant,
-        grantId: isFromGrant ? grantStakeDetails.grantId : null,
-        isManagedGrant,
-        managedGrantContractInstance,
-      }
+
+    if (!delegation) {
+      return
+    }
+    // If the delegation exists, we create a undelegation based on the existing delegation.
+    const undelegation = {
+      ...delegation,
+      undelegatedAt: moment.unix(undelegatedAt),
+      undelegationCompleteAt: moment
+        .unix(undelegatedAt)
+        .add(undelegationPeriod, "seconds"),
+      canRecoverStake: false,
     }
 
     if (!undelegation.isFromGrant) {
@@ -221,6 +179,7 @@ const useSubscribeToUndelegatedEvent = () => {
     dispatch({ type: REMOVE_DELEGATION, payload: operator })
     dispatch({ type: ADD_UNDELEGATION, payload: undelegation })
   }
+
   useSubscribeToContractEvent(
     TOKEN_STAKING_CONTRACT_NAME,
     "Undelegated",
