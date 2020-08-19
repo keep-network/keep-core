@@ -42,8 +42,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using Locks for Locks.Storage;
     using TopUps for TopUps.Storage;
 
-    event Staked(
-        address owner,
+    event StakeDelegated(
+        address indexed owner,
+        address indexed operator
+    );
+    event OperatorStaked(
         address indexed operator,
         address indexed beneficiary,
         address indexed authorizer,
@@ -51,7 +54,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     );
     event StakeOwnershipTransferred(
         address indexed operator,
-        address newOwner
+        address indexed newOwner
     );
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCompleted(address indexed operator, uint256 newAmount);
@@ -189,7 +192,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             beneficiary,
             authorizer
         );
-        ownerOperators[_from].push(_operator);
 
         grantStaking.tryCapturingDelegationData(
             tokenGrant,
@@ -199,7 +201,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             _extraData
         );
 
-        emit Staked(_from, _operator, beneficiary, authorizer, _value);
+        emit StakeDelegated(_from, _operator);
+        emit OperatorStaked(_operator, beneficiary, authorizer, _value);
     }
 
     /// @notice Performs top-up to an existing operator. Tokens added during
