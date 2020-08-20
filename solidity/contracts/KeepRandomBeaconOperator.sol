@@ -18,6 +18,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/utils/ReentrancyGuard.sol";
 import "./TokenStaking.sol";
 import "./KeepRegistry.sol";
+import "./GasPriceOracle.sol";
 import "./cryptography/BLS.sol";
 import "./utils/AddressArrayUtils.sol";
 import "./utils/PercentUtils.sol";
@@ -39,7 +40,7 @@ interface ServiceContract {
 /// Handles group creation and expiration, BLS signature verification and incentives.
 /// The contract is not upgradeable. New functionality can be implemented by deploying
 /// new versions following Keep client update and re-authorization by the stakers.
-contract KeepRandomBeaconOperator is ReentrancyGuard {
+contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
     using SafeMath for uint256;
     using PercentUtils for uint256;
     using AddressArrayUtils for address[];
@@ -74,6 +75,8 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
     KeepRegistry internal registry;
 
     TokenStaking internal stakingContract;
+
+    GasPriceOracle internal gasPriceOracle;
 
     /// @dev Each signing group member reward expressed in wei.
     uint256 public groupMemberBaseReward = 1000000*1e9; // 1M Gwei
@@ -154,14 +157,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         startGroupSelection(_genesisGroupSeed, msg.value);
     }
 
-    modifier onlyServiceContractUpgrader() {
-        require(
-            registry.serviceContractUpgraderFor(address(this)) == msg.sender,
-            "Not authorized"
-        );
-        _;
-    }
-
     modifier onlyServiceContract() {
         require(
             serviceContracts.contains(msg.sender),
@@ -172,15 +167,17 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     constructor(
         address _serviceContract,
-        address _stakingContract,
-        address _registryContract
+        address _tokenStaking,
+        address _keepRegistry,
+        address _gasPriceOracle
     ) public {
-        registry = KeepRegistry(_registryContract);
-
         serviceContracts.push(_serviceContract);
-        stakingContract = TokenStaking(_stakingContract);
 
-        groups.stakingContract = TokenStaking(_stakingContract);
+        stakingContract = TokenStaking(_tokenStaking);
+        registry = KeepRegistry(_keepRegistry);
+        gasPriceOracle = GasPriceOracle(_gasPriceOracle);
+
+        groups.stakingContract = stakingContract;
         groups.groupActiveTime = 86400 * 14 / 15; // 14 days equivalent in 15s blocks
         groups.relayEntryTimeout = relayEntryTimeout;
 
@@ -218,14 +215,18 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
 
     /// @notice Adds service contract
     /// @param serviceContract Address of the service contract.
-    function addServiceContract(address serviceContract) public onlyServiceContractUpgrader {
+    function addServiceContract(address serviceContract) public {
+        require(
+            registry.serviceContractUpgraderFor(address(this)) == msg.sender,
+            "Not authorized"
+        );
+
         serviceContracts.push(serviceContract);
     }
 
-    /// @notice Removes service contract
-    /// @param serviceContract Address of the service contract.
-    function removeServiceContract(address serviceContract) public onlyServiceContractUpgrader {
-        serviceContracts.removeAddress(serviceContract);
+    /// @notice Pulls the most recent gas price from gas price oracle.
+    function refreshGasPrice() public {
+        gasPriceCeiling = gasPriceOracle.gasPrice();
     }
 
     /// @notice Triggers the selection process of a new candidate group.
@@ -721,8 +722,11 @@ contract KeepRandomBeaconOperator is ReentrancyGuard {
         uint256 groupIndex,
         bytes memory signedMsgSender
     ) public {
-        uint256 minimumStake = stakingContract.minimumStake();
-        groups.reportUnauthorizedSigning(groupIndex, signedMsgSender, minimumStake);
+        groups.reportUnauthorizedSigning(
+            groupIndex,
+            signedMsgSender,
+            stakingContract.minimumStake()
+        );
         emit UnauthorizedSigningReported(groupIndex);
     }
 }

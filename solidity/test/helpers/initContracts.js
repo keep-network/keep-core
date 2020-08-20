@@ -7,6 +7,7 @@ const Groups = contract.fromArtifact('Groups');
 const DKGResultVerification = contract.fromArtifact("DKGResultVerification");
 const DelayFactor = contract.fromArtifact("DelayFactor");
 const Reimbursements = contract.fromArtifact("Reimbursements");
+const GasPriceOracle = contract.fromArtifact("GasPriceOracle");
 const KeepRegistry = contract.fromArtifact("KeepRegistry");
 const KeepToken = contract.fromArtifact('KeepToken');
 const TokenGrant = contract.fromArtifact('TokenGrant');
@@ -100,8 +101,9 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
           registry.address,
       ).encodeABI();
 
-  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address, initialize, {from: accounts[0]});
+  const gasPriceOracle = await GasPriceOracle.new({from: accounts[0]})
 
+  serviceContractProxy = await KeepRandomBeaconService.new(serviceContractImplV1.address, initialize, {from: accounts[0]});
   serviceContract = await KeepRandomBeaconServiceImplV1.at(serviceContractProxy.address);
   // Initialize Keep Random Beacon operator contract
   const bls = await BLS.new({from: accounts[0]});
@@ -113,7 +115,6 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
   const groups = await Groups.new({from: accounts[0]});
   const delayFactor = await DelayFactor.new({from: accounts[0]});
   const dkgResultVerification = await DKGResultVerification.new({from: accounts[0]});
-
   const reimbursements = await Reimbursements.new({from: accounts[0]});
 
   await KeepRandomBeaconOperator.link("DelayFactor", delayFactor.address);
@@ -125,8 +126,10 @@ async function initContracts(TokenStaking, KeepRandomBeaconService,
     serviceContractProxy.address,
     stakingContract.address,
     registry.address,
+    gasPriceOracle.address,
     {from: accounts[0]}
   );
+  await gasPriceOracle.addConsumerContract(operatorContract.address, {from: accounts[0]});
 
   await registry.approveOperatorContract(operatorContract.address, {from: accounts[0]});
 
