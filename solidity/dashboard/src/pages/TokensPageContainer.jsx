@@ -116,7 +116,7 @@ const useSubscribeToStakedEvent = () => {
     ) {
       // If the `TokenGrantStaked` or `DepositRedelegated` event exists, it means that a delegation is from grant.
       const { grantId } =
-        emittedEvents.TokenGrantStaked || emittedEvents.DepositReedelegated
+        emittedEvents.TokenGrantStaked || emittedEvents.DepositRedelegated
       delegation.grantId = grantId
       delegation.isFromGrant = true
       const { grantee } = await grantContract.methods.getGrant(grantId).call()
@@ -337,11 +337,14 @@ const useSubscribeToTopUpsEvents = () => {
       transactionHash,
       returnValues: { operator },
     } = event
-    const { tokenStakingEscrow } = await ContractsLoaded
+    const { tokenStakingEscrow, grantContract } = await ContractsLoaded
 
     // Other events may also be emitted with the `TopUpInitiated` event.
-    const eventsToCheck = [[tokenStakingEscrow, "DepositRedelegated"]]
-    const emmittedEvents = await getEventsFromTransaction(
+    const eventsToCheck = [
+      [grantContract, "TokenGrantStaked"],
+      [tokenStakingEscrow, "DepositRedelegated"],
+    ]
+    const emittedEvents = await getEventsFromTransaction(
       eventsToCheck,
       transactionHash
     )
@@ -357,27 +360,31 @@ const useSubscribeToTopUpsEvents = () => {
         refreshKeepTokenBalance()
       }
 
-      if (emmittedEvents.DepositRedelegated) {
-        const { grantId, amount } = emmittedEvents.DepositRedelegated
+      if (emittedEvents.DepositRedelegated || emittedEvents.TokenGrantStaked) {
+        const { grantId, amount } =
+          emittedEvents.DepositRedelegated || emittedEvents.TokenGrantStaked
         grantStaked(grantId, amount)
       }
     }
   }
 
   const subscribeToTopUpCompleted = async (event) => {
-    const { tokenStakingEscrow } = await ContractsLoaded
+    const { tokenStakingEscrow, grantContract } = await ContractsLoaded
 
     // Other events may also be emitted with the `TopUpCompleted` event.
-    const eventsToCheck = [[tokenStakingEscrow, "DepositRedelegated"]]
-    const emmittedEvents = await getEventsFromTransaction(
+    const eventsToCheck = [
+      [grantContract, "TokenGrantStaked"],
+      [tokenStakingEscrow, "DepositRedelegated"],
+    ]
+    const emittedEvents = await getEventsFromTransaction(
       eventsToCheck,
       event.transactionHash
     )
 
     dispatch({ type: TOP_UP_COMPLETED, payload: event.returnValues })
 
-    if (emmittedEvents.DepositRedelegated) {
-      const { grantId, amount } = emmittedEvents.DepositRedelegated
+    if (emittedEvents.DepositRedelegated || emittedEvents.TokenGrantStaked) {
+      const { grantId, amount } = emittedEvents.DepositRedelegated
       grantStaked(grantId, amount)
     }
   }
