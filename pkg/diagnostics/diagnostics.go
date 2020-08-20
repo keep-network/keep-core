@@ -56,3 +56,30 @@ func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, net
 		return string(bytes)
 	})
 }
+
+// Registers diagnostics source providing information about node
+func RegisterNodeInfoSource(registry *diagnostics.DiagnosticsRegistry, netProvider net.Provider) {
+	registry.RegisterSource("node_info", func() string {
+		connectionManager := netProvider.ConnectionManager()
+
+		nodeId := netProvider.ID().String()
+		nodePublicKey, err := connectionManager.GetPeerPublicKey(nodeId)
+		if err != nil {
+			logger.Error("error on getting peer public key: [%v]", err)
+			return ""
+		}
+
+		nodeInfo := map[string]interface{}{
+			"NodeId":        nodeId,
+			"NodePublicKey": key.NetworkPubKeyToEthAddress(nodePublicKey),
+		}
+
+		bytes, err := json.Marshal(nodeInfo)
+		if err != nil {
+			logger.Error("error on serializing node info to JSON: [%v]", err)
+			return ""
+		}
+
+		return string(bytes)
+	})
+}

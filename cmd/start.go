@@ -255,4 +255,5 @@ func initializeDiagnostics(
 	)
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
+	diagnostics.RegisterNodeInfoSource(registry, netProvider)
 }
