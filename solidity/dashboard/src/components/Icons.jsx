@@ -27,6 +27,9 @@ import { ReactComponent as Diamond } from "../static/svg/diamond.svg"
 import { ReactComponent as ETH } from "../static/svg/eth.svg"
 import { ReactComponent as KeepLoadingIndicator } from "../static/svg/keep-loading-indicator.svg"
 import { ReactComponent as KEEPTower } from "../static/svg/keep-tower.svg"
+import { ReactComponent as CarDashboardSpeed } from "../static/svg/car-dashboard-speed.svg"
+import { ReactComponent as Fees } from "../static/svg/fees.svg"
+import { ReactComponent as UserFriendly } from "../static/svg/user-friendly.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -500,4 +503,7 @@ export {
   ETH,
   KeepLoadingIndicator,
   KEEPTower,
+  CarDashboardSpeed,
+  UserFriendly,
+  Fees,
 }

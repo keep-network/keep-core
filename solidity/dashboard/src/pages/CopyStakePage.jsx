@@ -7,7 +7,7 @@ import {
   CopyStakeStep3,
 } from "../components/copy-stake-steps"
 
-const copyStakeSteps = ["stake", "review", "complete"]
+const copyStakeSteps = ["balance", "upgrade", "review", "complete"]
 
 const CopyStakePage = () => {
   const [step, setStep] = useState(0)
