@@ -119,11 +119,23 @@ export function Deferred() {
   }
 }
 
-export const ContractsDeferred = new Deferred()
-export const Web3Deferred = new Deferred()
+let ContractsDeferred = new Deferred()
+let Web3Deferred = new Deferred()
 
-export const Web3Loaded = Web3Deferred.promise
-export const ContractsLoaded = ContractsDeferred.promise
+export let Web3Loaded = Web3Deferred.promise
+export let ContractsLoaded = ContractsDeferred.promise
+
+export const resolveWeb3Deferred = (web3) => {
+  Web3Deferred = new Deferred()
+  Web3Deferred.resolve(web3)
+  Web3Loaded = Web3Deferred.promise
+}
+
+export const resovleContractsDeferred = (contracts) => {
+  ContractsDeferred = new Deferred()
+  ContractsDeferred.resolve(contracts)
+  ContractsLoaded = ContractsDeferred.promise
+}
 
 export async function getContracts(web3) {
   const web3Contracts = {}
@@ -137,7 +149,7 @@ export async function getContracts(web3) {
     )
   }
 
-  ContractsDeferred.resolve(web3Contracts)
+  resovleContractsDeferred(web3Contracts)
   return web3Contracts
 }
 

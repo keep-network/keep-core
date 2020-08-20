@@ -1,15 +1,12 @@
-import { getContext, call } from "redux-saga/effects"
+import { call } from "redux-saga/effects"
+import { Web3Loaded, ContractsLoaded } from "../contracts"
 
 export function* getWeb3Context() {
-  const web3Context = yield getContext("web3")
-
-  return yield web3Context
+  return yield Web3Loaded
 }
 
 export function* getContractsContext() {
-  const contractsContext = yield getContext("contracts")
-
-  return yield contractsContext
+  return yield ContractsLoaded
 }
 
 export function* submitButtonHelper(saga, action) {

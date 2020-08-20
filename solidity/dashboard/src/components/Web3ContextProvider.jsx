@@ -2,7 +2,7 @@ import React from "react"
 import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext, messageType } from "./Message"
-import { getContracts, Web3Deferred } from "../contracts"
+import { getContracts, resolveWeb3Deferred } from "../contracts"
 
 export default class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -36,7 +36,7 @@ export default class Web3ContextProvider extends React.Component {
       web3 = new Web3(connector)
       web3.eth.defaultAccount = yourAddress
 
-      Web3Deferred.resolve(web3)
+      resolveWeb3Deferred(web3)
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       this.context.showMessage({
