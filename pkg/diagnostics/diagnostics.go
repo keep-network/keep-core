@@ -26,21 +26,23 @@ func Initialize(
 	return registry, true
 }
 
+// Registers diagnostics source providing information about connected peers
 func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, netProvider net.Provider) {
-
 	registry.RegisterSource("connected_peers", func() string {
-		connectedPeers := netProvider.ConnectionManager().ConnectedPeers()
+		connectionManager := netProvider.ConnectionManager()
+		connectedPeers := connectionManager.ConnectedPeers()
 
 		peersList := make([]map[string]interface{}, len(connectedPeers))
 		for i := 0; i < len(connectedPeers); i++ {
-			peerPublicKey, err := netProvider.ConnectionManager().GetPeerPublicKey(connectedPeers[i])
+			peer := connectedPeers[i]
+			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
 			if err != nil {
 				logger.Error("Error on getting peer public key: [%v]", err)
 				continue
 			}
 
 			peersList[i] = map[string]interface{}{
-				"PeerId":        connectedPeers[i],
+				"PeerId":        peer,
 				"PeerPublicKey": key.NetworkPubKeyToEthAddress(peerPublicKey),
 			}
 		}
