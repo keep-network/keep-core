@@ -83,6 +83,15 @@ func connectWithClient(
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		client = ethutil.WrapRateLimiting(
+			client,
+			&ethutil.RateLimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		).(*ethclient.Client)
+	}
 
 	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
