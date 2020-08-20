@@ -37,7 +37,7 @@ func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, net
 			peer := connectedPeers[i]
 			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
 			if err != nil {
-				logger.Error("Error on getting peer public key: [%v]", err)
+				logger.Error("error on getting peer public key: [%v]", err)
 				continue
 			}
 
@@ -49,7 +49,7 @@ func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, net
 
 		bytes, err := json.Marshal(peersList)
 		if err != nil {
-			logger.Error("Error on serializing peers list to JSON: [%v]", err)
+			logger.Error("error on serializing peers list to JSON: [%v]", err)
 			return ""
 		}
 
