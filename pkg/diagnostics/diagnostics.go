@@ -42,8 +42,8 @@ func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, net
 			}
 
 			peersList[i] = map[string]interface{}{
-				"PeerId":        peer,
-				"PeerPublicKey": key.NetworkPubKeyToEthAddress(peerPublicKey),
+				"PeerId":      peer,
+				"PeerAddress": key.NetworkPubKeyToEthAddress(peerPublicKey),
 			}
 		}
 
@@ -70,8 +70,8 @@ func RegisterNodeInfoSource(registry *diagnostics.DiagnosticsRegistry, netProvid
 		}
 
 		nodeInfo := map[string]interface{}{
-			"NodeId":        nodeId,
-			"NodePublicKey": key.NetworkPubKeyToEthAddress(nodePublicKey),
+			"NodeId":      nodeId,
+			"NodeAddress": key.NetworkPubKeyToEthAddress(nodePublicKey),
 		}
 
 		bytes, err := json.Marshal(nodeInfo)
