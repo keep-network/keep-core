@@ -1,24 +1,73 @@
 import React from "react"
-import * as Icons from "../Icons"
+import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 
-const CopyStakeStep3 = () => {
+const styles = {
+  title: {
+    marginBottom: "2.5rem",
+  },
+  subtitle: {
+    textAlign: "justify",
+    marginBottom: "2.5rem",
+  },
+  addressWrapper: {
+    marginBottom: "0.5rem",
+  },
+}
+
+const subtitle = {
+  COPY_STAKE_FLOW:
+    "This stake balance will be copied to a newly upgraded delegation. Your current stake will start the undelegation process from the old stakingcontract.",
+  WAIT_FLOW:
+    "The total balance of the following stake will start the undelegation process from the old staking contract.",
+}
+
+const CopyStakeStep2 = ({
+  delegation,
+  strategy,
+  incrementStep,
+  decrementStep,
+}) => {
   return (
     <>
-      <Icons.KEEPTower />
-      <h2 className="mb-2 mt-2">
-        Your stake balance is successfully copied and redelegated.
-      </h2>
-      <section className="tile">
-        <h4 className="text-grey-40">
-          Once your former stake fully undelegates, you’ll need to initiate the
-          recovery process in the dashboard. You’ll see a notification in the
-          dashboard when it’s time to do this.
-        </h4>
+      <h2 style={styles.title}>Review your stake details below.</h2>
+      <h3 className="text-grey-70" style={styles.subtitle}>
+        {subtitle[strategy]}
+      </h3>
+      <section className="tile" style={{ width: "100%" }}>
+        <h3>
+          Stake balance to{" "}
+          {strategy === "COPY_STAKE_FLOW" ? "Copy" : "Undelegate"}
+        </h3>
+        <TokenAmount
+          amount={delegation.amount}
+          currencySymbol="KEEP"
+          wrapperClassName="mb-1"
+        />
+        <Address address={delegation.authorizerAddress} label="authorizer" />
+        <Address address={delegation.operatorAddress} label="operator" />
+        <Address address={delegation.beneficiary} label="beneficiary" />
       </section>
-      <Button className="btn btn-primary btn-lg">cancel</Button>
+      <div className="flex row space-between self-end">
+        <Button
+          onClick={decrementStep}
+          className="btn btn-transparent btn-lg mr-2"
+        >
+          back
+        </Button>
+        <Button onClick={incrementStep} className="btn btn-primary btn-lg">
+          confrim upgrade
+        </Button>
+      </div>
     </>
   )
 }
 
-export default CopyStakeStep3
+const Address = ({ label, address }) => (
+  <div className="flex row center" style={styles.addressWrapper}>
+    <h5 className="text-grey-70 flex-1">{label}</h5>
+    <div className="text-big text-grey-50">{address}</div>
+  </div>
+)
+
+export default CopyStakeStep2
