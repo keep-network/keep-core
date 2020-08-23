@@ -21,25 +21,78 @@ const getPastRedemptionRequestedEvents = async (web3Context) => {
     }
   )
   const augmentedRedemRequestEvents = await Promise.all(
-    pastRedemptionRequestedEvents.map(async (event) => {
+    pastRedemptionRequestedEvents.map(augmentEventDepositInfo(web3Context))
+  )
+  return augmentedRedemRequestEvents
+}
+
+const getPastRedemptionSignatureEvents = async (web3Context) => {
+  const pastEvents = await contractService.getPastEvents(
+    web3Context,
+    TBTC_SYSTEM_CONTRACT_NAME,
+    "GotRedemptionSignature",
+    {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_SYSTEM_CONTRACT_NAME],
+      // filter: { attr : paramVal },
+    }
+  )
+  const tBtcSystemEventsWithDepositInfo = await Promise.all(
+    pastEvents.map(augmentEventDepositInfo(web3Context)),
+    pastEvents.map(augmentEventPatchReturnValueWithUtxoVal(web3Context))
+  )
+  return tBtcSystemEventsWithDepositInfo
+}
+
+const getPastCourtesyCalledEvents = async (web3Context) => {
+  const pastEvents = await contractService.getPastEvents(
+    web3Context,
+    TBTC_SYSTEM_CONTRACT_NAME,
+    "CourtesyCalled",
+    {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_SYSTEM_CONTRACT_NAME],
+      // filter: { attr : paramVal },
+    }
+  )
+  const tBtcSystemEventsWithDepositInfo = await Promise.all(
+    pastEvents.map(augmentEventDepositInfo(web3Context))
+  )
+  return tBtcSystemEventsWithDepositInfo
+}
+
+const augmentEventDepositInfo = (web3Context) => {
+  return async (w3event) => {
       let evDepStatus = null
       try {
         evDepStatus = await getDepositState(
           web3Context,
-          event.returnValues._depositContractAddress
+        w3event.returnValues._depositContractAddress
         )
       } catch (error) {
-        console.log(error)
+      console.error(error)
         throw error
       }
-      event.depositStatusObj = evDepStatus
-      event.isAlignedToDeposit = isEventAlignedToDeposit(event, evDepStatus)
-      event.timestamp = await eventTimestamp(web3Context, event)
+    w3event.depositStatusObj = evDepStatus
+    w3event.isAlignedToDeposit = isEventAlignedToDeposit(w3event, evDepStatus)
+    w3event.timestamp = await eventTimestamp(web3Context, w3event)
 
-      return event
-    })
+    return w3event
+  }
+}
+const augmentEventPatchReturnValueWithUtxoVal = (web3Context) => {
+  return async (w3event) => {
+    let evDepSizeSatoshis = null
+    try {
+      evDepSizeSatoshis = await getDepositSizeSatoshis(
+        web3Context,
+        w3event.returnValues._depositContractAddress
   )
-  return augmentedRedemRequestEvents
+    } catch (error) {
+      console.error(error)
+      throw error
+    }
+    w3event.returnValues._utxoValue = evDepSizeSatoshis
+    return w3event
+  }
 }
 
 const depositNotifySignatureTimeout = async (
@@ -118,6 +171,17 @@ const getDepositState = async (web3Context, depositContractAddress) => {
   return depStateObj
 }
 
+const getDepositSizeSatoshis = async (web3Context, depositContractAddress) => {
+  const depositContractInstance = createDepositContractInstance(
+    web3Context,
+    depositContractAddress
+  )
+  const depositUtxoValue = await depositContractInstance.methods
+    .utxoValue()
+    .call()
+  return depositUtxoValue
+}
+
 const isEventAlignedToDeposit = (tbtcSystemContractEvent, evDepStatus) => {
   const contract = TBTCSystem
   let isAligned = false
@@ -140,6 +204,8 @@ const isEventAlignedToDeposit = (tbtcSystemContractEvent, evDepStatus) => {
 
 export const liquidationService = {
   getPastRedemptionRequestedEvents,
+  getPastRedemptionSignatureEvents,
+  getPastCourtesyCalledEvents,
   depositNotifySignatureTimeout,
   depositNotifyRedemptionProofTimedOut,
 }

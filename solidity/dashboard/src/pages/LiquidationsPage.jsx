@@ -15,15 +15,32 @@ import "react-vertical-timeline-component/style.min.css"
 import * as Icons from "../components/Icons"
 
 const LiquidationsPage = (props) => {
-  const [redemptionRequestedEvents, setData, refreshData] = useFetchData(
+  const [redemptionRequestedEvents, setRedemptionReqEvData, refreshRedemptionReqEvData] = useFetchData(
     liquidationService.getPastRedemptionRequestedEvents,
     {}
   )
-  let { isFetching, data } = redemptionRequestedEvents
+  let { isFetching: isRedemptionReqEvFetching, data: redemptionRequestEvData } = redemptionRequestedEvents
 
-  if (data && data.length >= 0) {
-    data = data.filter((ev) => ev.isAlignedToDeposit)
-    data = data.sort((a, b) => b.timestamp - a.timestamp)
+  const [redemptionSignatureEvents, setRedemptionSigEvData, refreshRedemptionSigEvData] = useFetchData(
+    liquidationService.getPastRedemptionSignatureEvents,
+    {}
+  )
+  let { isFetching: isRedemptionSigEvFetching, data: redemptionSignatureEvData } = redemptionSignatureEvents
+
+  // eslint-disable-next-line
+  const [courtesyCalledEvents, setCourtesyCallEvData, refreshCourtesyCalledEvData] = useFetchData(
+    liquidationService.getPastCourtesyCalledEvents,
+    {}
+  )
+  let { isFetching: isCourtesyCallEvFetching, data: courtesyCalledEvData } = courtesyCalledEvents
+  let allEventData = []
+  let anyPastEventCallFetching = isRedemptionReqEvFetching || isRedemptionSigEvFetching || isCourtesyCallEvFetching
+
+  if (!anyPastEventCallFetching) {
+    allEventData = [...redemptionRequestEvData.filter((ev) => ev.isAlignedToDeposit),
+      ...redemptionSignatureEvData.filter((ev) => ev.isAlignedToDeposit),
+      ...courtesyCalledEvData.filter((ev) => ev.isAlignedToDeposit)]
+      allEventData = allEventData.sort((a, b) => b.timestamp - a.timestamp)
   }
 
   // control number of events displayed for "load older" feature. Initially 10
@@ -35,23 +52,44 @@ const LiquidationsPage = (props) => {
 
   const redemptionRequestsUpdated = useCallback(
     (latestEvent) => {
-      setData([latestEvent, ...redemptionRequestedEvents.data])
+      setRedemptionReqEvData([latestEvent, ...redemptionRequestedEvents.data])
     },
-    [redemptionRequestedEvents, setData]
+    [redemptionRequestedEvents, setRedemptionReqEvData]
   )
-
   const subscribeToRedemptionRequestedCallback = (event) => {
     redemptionRequestsUpdated(event)
   }
-
   useSubscribeToContractEvent(
     TBTC_SYSTEM_CONTRACT_NAME,
     "RedemptionRequested",
     subscribeToRedemptionRequestedCallback
   )
 
+  const redemptionSignaturesUpdated = useCallback(
+    (latestEvent) => {
+      setRedemptionSigEvData([latestEvent, ...redemptionSignatureEvents.data])
+    },
+    [redemptionSignatureEvents, setRedemptionSigEvData]
+  )
+  const subscribeToRedemptionSignatureCallback = (event) => {
+    redemptionSignaturesUpdated(event)
+  }
+  useSubscribeToContractEvent(
+    TBTC_SYSTEM_CONTRACT_NAME,
+    "GotRedemptionSignature",
+    subscribeToRedemptionSignatureCallback
+  )
+
+  // TODO: Include useSubscribeToContractEvent for CourtesyCalled. 
+
+  const refreshAllPastEvData = () => {
+    refreshRedemptionReqEvData()
+    refreshRedemptionSigEvData()
+    refreshCourtesyCalledEvData()
+  }
+
   const getLatestEvents = () => {
-    const evList = data.sort((a, b) => b.timestamp - a.timestamp)
+    const evList = allEventData.sort((a, b) => b.timestamp - a.timestamp)
     const componentList = []
     for (
       let index = 0;
@@ -60,7 +98,7 @@ const LiquidationsPage = (props) => {
     ) {
       const element = (
         <LiquidationEventTimelineElement
-          isLoading={isFetching}
+          isLoading={anyPastEventCallFetching}
           key={evList[index].transactionHash}
           event={evList[index]}
         />
@@ -73,20 +111,20 @@ const LiquidationsPage = (props) => {
   return (
     <PageWrapper title="Liquidations">
       <LoadingOverlay
-        isFetching={isFetching}
+        isFetching={anyPastEventCallFetching}
         skeletonComponent={<DelegatedTokensSkeleton />}
       ></LoadingOverlay>
       <VerticalTimeline>
         <VerticalTimelineElement
           iconOnClick={() => {
-            refreshData()
+            refreshAllPastEvData()
           }}
           iconClassName="vertical-timeline-element-icon--button"
           icon={<Icons.Load />}
           iconStyle={{ background: "rgb(33, 150, 243)", color: "#fff" }}
           date="load newer"
         />
-        {isFetching ? null : getLatestEvents()}
+        {anyPastEventCallFetching ? null : getLatestEvents()}
         <VerticalTimelineElement
           iconOnClick={() => {
             increaseEventHorizon()
