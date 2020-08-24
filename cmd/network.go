@@ -116,16 +116,12 @@ func pingRequest(c *cli.Context) error {
 	// PingMessage and PongMessage conform to the net.Message interface
 	// (Type, Unmarshal, Marshal); ensure our network knows how to serialize
 	// them when sending over the wire
-	if err := broadcastChannel.RegisterUnmarshaler(
+	broadcastChannel.SetUnmarshaler(
 		func() net.TaggedUnmarshaler { return &PingMessage{} },
-	); err != nil {
-		return err
-	}
-	if err := broadcastChannel.RegisterUnmarshaler(
+	)
+	broadcastChannel.SetUnmarshaler(
 		func() net.TaggedUnmarshaler { return &PongMessage{} },
-	); err != nil {
-		return err
-	}
+	)
 
 	var (
 		pingChan = make(chan net.Message)

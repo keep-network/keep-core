@@ -368,6 +368,6 @@ func (stg *stubGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress,
 
 func (stg *stubGroupInterface) OnGroupSelectionStarted(
 	func(groupSelectionStart *event.GroupSelectionStart),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	panic("not implemented")
 }

@@ -45,7 +45,7 @@ func TestExecute(t *testing.T) {
 		cancel()
 	}(blockCounter)
 
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TestMessage{}
 	})
 

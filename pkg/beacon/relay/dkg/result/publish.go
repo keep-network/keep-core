@@ -16,7 +16,7 @@ import (
 // required protocol message unmarshallers.
 // The channel needs to be fully initialized before Publish is called.
 func RegisterUnmarshallers(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &DKGResultHashSignatureMessage{}
 	})
 }
