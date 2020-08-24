@@ -27,7 +27,10 @@ func Initialize(
 }
 
 // Registers diagnostics source providing information about connected peers
-func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, netProvider net.Provider) {
+func RegisterConnectedPeersSource(
+	registry *diagnostics.DiagnosticsRegistry,
+	netProvider net.Provider,
+) {
 	registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
 		connectedPeers := connectionManager.ConnectedPeers()
@@ -42,8 +45,8 @@ func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, net
 			}
 
 			peersList[i] = map[string]interface{}{
-				"PeerId":      peer,
-				"PeerAddress": key.NetworkPubKeyToEthAddress(peerPublicKey),
+				"network_id":       peer,
+				"ethereum_address": key.NetworkPubKeyToEthAddress(peerPublicKey),
 			}
 		}
 
@@ -57,26 +60,29 @@ func RegisterConnectedPeersSource(registry *diagnostics.DiagnosticsRegistry, net
 	})
 }
 
-// Registers diagnostics source providing information about node
-func RegisterNodeInfoSource(registry *diagnostics.DiagnosticsRegistry, netProvider net.Provider) {
-	registry.RegisterSource("node_info", func() string {
+// Registers diagnostics source providing information about the client.
+func RegisterClientInfoSource(
+	registry *diagnostics.DiagnosticsRegistry,
+	netProvider net.Provider,
+) {
+	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
 
-		nodeId := netProvider.ID().String()
-		nodePublicKey, err := connectionManager.GetPeerPublicKey(nodeId)
+		clientId := netProvider.ID().String()
+		clientPublicKey, err := connectionManager.GetPeerPublicKey(clientId)
 		if err != nil {
-			logger.Error("error on getting peer public key: [%v]", err)
+			logger.Error("error on getting client public key: [%v]", err)
 			return ""
 		}
 
-		nodeInfo := map[string]interface{}{
-			"NodeId":      nodeId,
-			"NodeAddress": key.NetworkPubKeyToEthAddress(nodePublicKey),
+		clientInfo := map[string]interface{}{
+			"network_id":       clientId,
+			"ethereum_address": key.NetworkPubKeyToEthAddress(clientPublicKey),
 		}
 
-		bytes, err := json.Marshal(nodeInfo)
+		bytes, err := json.Marshal(clientInfo)
 		if err != nil {
-			logger.Error("error on serializing node info to JSON: [%v]", err)
+			logger.Error("error on serializing client info to JSON: [%v]", err)
 			return ""
 		}
 
