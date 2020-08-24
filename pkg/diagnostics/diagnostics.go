@@ -24,7 +24,8 @@ func Initialize(port int) (*diagnostics.DiagnosticsRegistry, bool) {
 	return registry, true
 }
 
-// Registers diagnostics source providing information about connected peers
+// RegisterConnectedPeersSource registers the diagnostics source providing
+// information about connected peers.
 func RegisterConnectedPeersSource(
 	registry *diagnostics.DiagnosticsRegistry,
 	netProvider net.Provider,
@@ -58,7 +59,8 @@ func RegisterConnectedPeersSource(
 	})
 }
 
-// Registers diagnostics source providing information about the client.
+// RegisterClientInfoSource registers the diagnostics source providing
+// information about the client itself.
 func RegisterClientInfoSource(
 	registry *diagnostics.DiagnosticsRegistry,
 	netProvider net.Provider,
@@ -66,15 +68,15 @@ func RegisterClientInfoSource(
 	registry.RegisterSource("client_info", func() string {
 		connectionManager := netProvider.ConnectionManager()
 
-		clientId := netProvider.ID().String()
-		clientPublicKey, err := connectionManager.GetPeerPublicKey(clientId)
+		clientID := netProvider.ID().String()
+		clientPublicKey, err := connectionManager.GetPeerPublicKey(clientID)
 		if err != nil {
 			logger.Error("error on getting client public key: [%v]", err)
 			return ""
 		}
 
 		clientInfo := map[string]interface{}{
-			"network_id":       clientId,
+			"network_id":       clientID,
 			"ethereum_address": key.NetworkPubKeyToEthAddress(clientPublicKey),
 		}
 
