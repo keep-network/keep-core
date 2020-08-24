@@ -14,7 +14,10 @@ import {
   ContractsLoaded,
 } from "../contracts"
 import web3Utils from "web3-utils"
-import { getOperatorsOfAuthorizer } from "./token-staking.service"
+import {
+  getOperatorsOfAuthorizer,
+  getOperatorsOfOwner,
+} from "./token-staking.service"
 
 const bondedECDSAKeepFactoryAddress = getBondedECDSAKeepFactoryAddress()
 const tBTCSystemAddress = getTBTCSystemAddress()
@@ -336,13 +339,9 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     })
   }
 
-  // operators of owner
-  const operatorsOfOwner = await contractService.makeCall(
-    web3Context,
-    TOKEN_STAKING_CONTRACT_NAME,
-    "operatorsOf",
-    yourAddress // as owner
-  )
+  // operators of owner (yourAddress as owner)
+  const operatorsOfOwner = await getOperatorsOfOwner(yourAddress)
+
   for (let i = 0; i < operatorsOfOwner.length; i++) {
     operators.set(web3Utils.toChecksumAddress(operatorsOfOwner[i]), {
       managedGrantInfo: {},

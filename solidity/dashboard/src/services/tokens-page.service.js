@@ -14,6 +14,7 @@ import {
 } from "../contracts"
 import { ContractsLoaded, Web3Loaded } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
+import { getOperatorsOfOwner } from "./token-staking.service"
 
 export const fetchTokensPageData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -204,13 +205,11 @@ const getOwnedDelegations = async (
   const { stakingContract } = await ContractsLoaded
 
   // Get operators
-  const operators = await stakingContract.methods
-    .operatorsOf(yourAddress)
-    .call()
+  const operators = await getOperatorsOfOwner(yourAddress)
 
-  // Scan `Staked` event by operator(indexed param) to get authorizer and beneeficiary.
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
   const operatorToDetails = (
-    await stakingContract.getPastEvents("Staked", {
+    await stakingContract.getPastEvents("OperatorStaked", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: operators },
     })
@@ -251,7 +250,7 @@ const getAllGranteeOperators = async (
   let newOperatorsStakeDetails = {}
   if (!isEmptyArray(Object.keys(newOperatorToGrantId))) {
     newOperatorsStakeDetails = (
-      await stakingContract.getPastEvents("Staked", {
+      await stakingContract.getPastEvents("OperatorStaked", {
         fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
         filter: { operator: Object.keys(newOperatorToGrantId) },
       })
@@ -269,7 +268,7 @@ const getAllGranteeOperators = async (
   )
 
   const operatorsDetailsMap = (
-    await stakingContract.getPastEvents("Staked", {
+    await stakingContract.getPastEvents("OperatorStaked", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: activeOperators },
     })

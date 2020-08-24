@@ -80,11 +80,30 @@ const useSubscribeToStakedEvent = () => {
   const subscribeToEventCallback = async (event) => {
     const web3 = await Web3Loaded
     const yourAddress = web3.eth.defaultAccount
-    const { grantContract, tokenStakingEscrow } = await ContractsLoaded
+    const {
+      grantContract,
+      tokenStakingEscrow,
+      stakingContract,
+    } = await ContractsLoaded
     const {
       transactionHash,
-      returnValues: { owner, operator, authorizer, beneficiary, value },
+      returnValues: { owner, operator },
     } = event
+
+    // Other events may also be emitted with the `StakeDelegated` event.
+    const eventsToCheck = [
+      [stakingContract, "OperatorStaked"],
+      [grantContract, "TokenGrantStaked"],
+      [tokenStakingEscrow, "DepositRedelegated"],
+    ]
+
+    const emittedEvents = await getEventsFromTransaction(
+      eventsToCheck,
+      transactionHash
+    )
+    let isAddressedToCurrentAccount = isSameEthAddress(owner, yourAddress)
+    // The `OperatorStaked` is always emitted with the `StakeDelegated` event.
+    const { authorizer, beneficiary, value } = emittedEvents.OperatorStaked
 
     const delegation = {
       createdAt: moment().unix(),
@@ -97,18 +116,6 @@ const useSubscribeToStakedEvent = () => {
         .unix(moment().unix())
         .add(initializationPeriod, "seconds"),
     }
-
-    // Other events may also be emitted with the `Staked` event.
-    const eventsToCheck = [
-      [grantContract, "TokenGrantStaked"],
-      [tokenStakingEscrow, "DepositRedelegated"],
-    ]
-
-    const emittedEvents = await getEventsFromTransaction(
-      eventsToCheck,
-      transactionHash
-    )
-    let isAddressedToCurrentAccount = isSameEthAddress(owner, yourAddress)
 
     if (
       (emittedEvents.TokenGrantStaked || emittedEvents.DepositRedelegated) &&
@@ -165,7 +172,7 @@ const useSubscribeToStakedEvent = () => {
   }
   useSubscribeToContractEvent(
     TOKEN_STAKING_CONTRACT_NAME,
-    "Staked",
+    "StakeDelegated",
     subscribeToEventCallback
   )
 }
