@@ -198,7 +198,7 @@ func (c *localChain) OnRelayEntrySubmitted(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 	c.relayEntryHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -219,7 +219,7 @@ func (c *localChain) OnRelayEntryRequested(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 	c.relayRequestHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -236,7 +236,7 @@ func (c *localChain) OnGroupSelectionStarted(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 	c.groupSelectionStartedHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -253,7 +253,7 @@ func (c *localChain) OnGroupRegistered(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 
 	c.groupRegisteredHandlers[handlerID] = handler
 
@@ -439,7 +439,7 @@ func (c *localChain) OnDKGResultSubmitted(
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
-	handlerID := rand.Int() // #nosec
+	handlerID := generateHandlerID()
 	c.resultSubmissionHandlers[handlerID] = handler
 
 	return subscription.NewEventSubscription(func() {
@@ -500,4 +500,8 @@ func (c *localChain) CalculateDKGResultHash(
 	)
 
 	return dkgResultHash, nil
+}
+
+func generateHandlerID() int {
+	return rand.Int() // #nosec
 }
