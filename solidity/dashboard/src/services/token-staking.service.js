@@ -192,7 +192,7 @@ export const getOperatorsOfBeneficiary = async (web3Context, beneficiary) => {
 export const getOperatorsOfOwner = async (owner) => {
   const { stakingContract } = await ContractsLoaded
 
-  const owerDelegations = await stakingContract.getPastEvents(
+  const ownerDelegations = await stakingContract.getPastEvents(
     "StakeDelegated",
     {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
@@ -210,7 +210,7 @@ export const getOperatorsOfOwner = async (owner) => {
 
   const operators = Array.from(
     new Set(
-      [...owerDelegations, ...transferEventsByOwner].map(
+      [...ownerDelegations, ...transferEventsByOwner].map(
         (_) => _.returnValues.operator
       )
     )
@@ -231,12 +231,9 @@ export const getOperatorsOfOwner = async (owner) => {
     }
 
     const transferEventsByOperator = transferEventsByOperators[operator]
-    const latestTransfer =
-      transferEventsByOperator[transferEventsByOperator.length - 1]
-    if (
-      latestTransfer &&
-      isSameEthAddress(latestTransfer.returnValues.newOwner, owner)
-    ) {
+    const latestTransfer = transferEventsByOperator[transferEventsByOperator.length - 1]
+    
+    if (latestTransfer && isSameEthAddress(latestTransfer.returnValues.newOwner, owner)) {
       return true
     }
 
