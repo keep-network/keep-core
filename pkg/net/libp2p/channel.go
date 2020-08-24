@@ -325,7 +325,14 @@ func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 	c.pubsubMutex.Lock()
 	defer c.pubsubMutex.Unlock()
 
-	_ = c.pubsub.UnregisterTopicValidator(c.name)
+	err := c.pubsub.UnregisterTopicValidator(c.name)
+	if err != nil {
+		logger.Errorf(
+			"could not unregister topic validator for channel [%v]: [%v]",
+			c.name,
+			err,
+		)
+	}
 
 	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
 }
