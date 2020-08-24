@@ -118,10 +118,13 @@ func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTi
 		return iValue.Cmp(jValue) == -1
 	})
 
-	_ = promise.Fulfill(&event.GroupTicketSubmission{
+	err := promise.Fulfill(&event.GroupTicketSubmission{
 		TicketValue: new(big.Int).SetBytes(ticket.Value[:]),
 		BlockNumber: c.simulatedHeight,
 	})
+	if err != nil {
+		logger.Errorf("failed to fulfill promise: [%v]", err)
+	}
 
 	return promise
 }
@@ -169,7 +172,13 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		_ = relayEntryPromise.Fail(fmt.Errorf("cannot read current block"))
+		failErr := relayEntryPromise.Fail(
+			fmt.Errorf("cannot read current block: [%v]", err),
+		)
+		if failErr != nil {
+			logger.Errorf("failed to fail promise: [%v]", failErr)
+		}
+
 		return relayEntryPromise
 	}
 
@@ -185,7 +194,10 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 	}
 	c.handlerMutex.Unlock()
 
-	_ = relayEntryPromise.Fulfill(entry)
+	err = relayEntryPromise.Fulfill(entry)
+	if err != nil {
+		logger.Errorf("failed to fulfill promise: [%v]", err)
+	}
 
 	c.lastSubmittedRelayEntry = newEntry
 
@@ -336,7 +348,12 @@ func (c *localChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	defer c.handlerMutex.Unlock()
 
 	bc, _ := BlockCounter()
-	_ = bc.WaitForBlockHeight(c.simulatedHeight)
+
+	err := bc.WaitForBlockHeight(c.simulatedHeight)
+	if err != nil {
+		logger.Errorf("could not wait for block height: [%v]", err)
+	}
+
 	currentBlock, err := bc.CurrentBlock()
 
 	if err != nil {
@@ -377,17 +394,27 @@ func (c *localChain) SubmitDKGResult(
 	dkgResultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
 	if len(signatures) < c.relayConfig.HonestThreshold {
-		_ = dkgResultPublicationPromise.Fail(fmt.Errorf(
+		err := dkgResultPublicationPromise.Fail(fmt.Errorf(
 			"failed to submit result with [%v] signatures for honest threshold [%v]",
 			len(signatures),
 			c.relayConfig.HonestThreshold,
 		))
+		if err != nil {
+			logger.Errorf("failed to fail promise: [%v]", err)
+		}
+
 		return dkgResultPublicationPromise
 	}
 
 	currentBlock, err := c.blockCounter.CurrentBlock()
 	if err != nil {
-		_ = dkgResultPublicationPromise.Fail(fmt.Errorf("cannot read current block"))
+		failErr := dkgResultPublicationPromise.Fail(
+			fmt.Errorf("cannot read current block: [%v]", err),
+		)
+		if failErr != nil {
+			logger.Errorf("failed to fail promise: [%v]", failErr)
+		}
+
 		return dkgResultPublicationPromise
 	}
 
@@ -427,7 +454,7 @@ func (c *localChain) SubmitDKGResult(
 
 	err = dkgResultPublicationPromise.Fulfill(dkgResultPublicationEvent)
 	if err != nil {
-		logger.Errorf("failed to fulfill promise: [%v].", err)
+		logger.Errorf("failed to fulfill promise: [%v]", err)
 	}
 
 	return dkgResultPublicationPromise
