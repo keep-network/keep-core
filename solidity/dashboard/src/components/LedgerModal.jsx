@@ -11,7 +11,7 @@ const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
   const showMessage = useShowMessage()
 
   useEffect(() => {
-    if (ledgerVersion === "LEDGER_LIVE" || ledgerVersion === "LEDGER_LEEGACY") {
+    if (ledgerVersion === "LEDGER_LIVE" || ledgerVersion === "LEDGER_LEGACY") {
       connector[ledgerVersion]
         .getAccounts()
         .then(setAccounts)
