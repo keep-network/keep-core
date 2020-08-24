@@ -107,14 +107,11 @@ func executeSigning(
 	}
 
 	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	_, err = chain.ThresholdRelay().OnRelayEntrySubmitted(
+	_ = chain.ThresholdRelay().OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},
 	)
-	if err != nil {
-		return nil, err
-	}
 
 	var signerFailuresMutex sync.Mutex
 	var signerFailures []error

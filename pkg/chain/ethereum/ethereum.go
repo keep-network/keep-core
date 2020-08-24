@@ -195,16 +195,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 	generatedEntry := make(chan *event.EntrySubmitted)
 
-	subscription, err := ec.OnRelayEntrySubmitted(
+	subscription := ec.OnRelayEntrySubmitted(
 		func(onChainEvent *event.EntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
-	if err != nil {
-		close(generatedEntry)
-		failPromise(err)
-		return relayEntryPromise
-	}
 
 	go func() {
 		for {
@@ -255,8 +250,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 func (ec *ethereumChain) OnRelayEntrySubmitted(
 	handle func(entry *event.EntrySubmitted),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
 		func(blockNumber uint64) {
 			handle(&event.EntrySubmitted{
 				BlockNumber: blockNumber,
@@ -269,6 +264,12 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 			)
 		},
 	)
+
+	if err != nil {
+		logger.Errorf("could not watch RelayEntrySubmitted event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
@@ -382,8 +383,8 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
 			memberIndex *big.Int,
 			groupPublicKey []byte,
@@ -404,6 +405,11 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) ReportRelayEntryTimeout() error {
@@ -456,16 +462,11 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 	publishedResult := make(chan *event.DKGResultSubmission)
 
-	subscription, err := ec.OnDKGResultSubmitted(
+	subscription := ec.OnDKGResultSubmitted(
 		func(onChainEvent *event.DKGResultSubmission) {
 			publishedResult <- onChainEvent
 		},
 	)
-	if err != nil {
-		close(publishedResult)
-		failPromise(err)
-		return resultPublicationPromise
-	}
 
 	go func() {
 		for {

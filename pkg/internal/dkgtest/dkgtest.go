@@ -116,7 +116,7 @@ func executeDKG(
 	}
 
 	resultSubmissionChan := make(chan *event.DKGResultSubmission)
-	_, _ = chain.ThresholdRelay().OnDKGResultSubmitted(
+	_ = chain.ThresholdRelay().OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			resultSubmissionChan <- event
 		},

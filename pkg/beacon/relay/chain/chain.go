@@ -30,7 +30,7 @@ type RelayEntryInterface interface {
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
@@ -113,7 +113,7 @@ type DistributedKeyGenerationInterface interface {
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// IsGroupRegistered checks if group with the given public key is registered
 	// on-chain.
 	IsGroupRegistered(groupPublicKey []byte) (bool, error)

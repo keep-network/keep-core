@@ -230,7 +230,7 @@ func (mrc *mockRelayChain) SubmitRelayEntry(
 
 func (mrc *mockRelayChain) OnRelayEntrySubmitted(
 	func(entry *event.EntrySubmitted),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	panic("not implemented")
 }
 

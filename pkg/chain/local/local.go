@@ -194,7 +194,7 @@ func (c *localChain) SubmitRelayEntry(newEntry []byte) *async.EventEntrySubmitte
 
 func (c *localChain) OnRelayEntrySubmitted(
 	handler func(entry *event.EntrySubmitted),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -206,7 +206,7 @@ func (c *localChain) OnRelayEntrySubmitted(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.relayEntryHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (c *localChain) GetLastRelayEntry() []byte {
@@ -435,7 +435,7 @@ func (c *localChain) SubmitDKGResult(
 
 func (c *localChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -447,7 +447,7 @@ func (c *localChain) OnDKGResultSubmitted(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.resultSubmissionHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (c *localChain) GetLastDKGResult() (

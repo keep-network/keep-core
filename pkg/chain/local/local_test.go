@@ -142,14 +142,11 @@ func TestLocalOnEntrySubmitted(t *testing.T) {
 
 	eventFired := make(chan *event.EntrySubmitted)
 
-	subscription, err := chainHandle.OnRelayEntrySubmitted(
+	subscription := chainHandle.OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted) {
 			eventFired <- entry
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	defer subscription.Unsubscribe()
 
@@ -171,14 +168,11 @@ func TestLocalOnEntrySubmittedUnsubscribed(t *testing.T) {
 
 	eventFired := make(chan *event.EntrySubmitted)
 
-	subscription, err := chainHandle.OnRelayEntrySubmitted(
+	subscription := chainHandle.OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted) {
 			eventFired <- entry
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	subscription.Unsubscribe()
 
@@ -282,14 +276,11 @@ func TestLocalOnDKGResultSubmitted(t *testing.T) {
 
 	eventFired := make(chan *event.DKGResultSubmission)
 
-	subscription, err := chainHandle.OnDKGResultSubmitted(
+	subscription := chainHandle.OnDKGResultSubmitted(
 		func(request *event.DKGResultSubmission) {
 			eventFired <- request
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	defer subscription.Unsubscribe()
 
@@ -332,14 +323,11 @@ func TestLocalOnDKGResultSubmittedUnsubscribed(t *testing.T) {
 
 	eventFired := make(chan *event.DKGResultSubmission)
 
-	subscription, err := chainHandle.OnDKGResultSubmitted(
+	subscription := chainHandle.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			eventFired <- event
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	subscription.Unsubscribe()
 

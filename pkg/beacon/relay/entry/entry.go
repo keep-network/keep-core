@@ -44,14 +44,11 @@ func SignAndSubmit(
 	defer cancelCtx()
 
 	relayEntrySubmittedChannel := make(chan uint64)
-	subscription, err := relayChain.OnRelayEntrySubmitted(
+	subscription := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			relayEntrySubmittedChannel <- event.BlockNumber
 		},
 	)
-	if err != nil {
-		return err
-	}
 	defer subscription.Unsubscribe()
 
 	chainConfig, err := relayChain.GetConfig()
