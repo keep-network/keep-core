@@ -54,10 +54,17 @@
 [Storage]
   DataDir = "/my/secure/location"
 
+# Uncomment to enable the metrics module which collects and exposes information
+# useful for external monitoring tools. The port on which the `/metrics`
+# endpoint will be available and the frequency with which the metrics will be
+# collected can be customized using the below parameters.
 # [Metrics]
     # Port = 8080
     # NetworkMetricsTick = 60
     # EthereumMetricsTick = 600
 
+# Uncomment to enable the diagnostics module which exposes information
+# useful for debugging. The port on which the `/diagnostics` endpoint
+# will be available can be customized.
 # [Diagnostics]
     # Port = 8081
