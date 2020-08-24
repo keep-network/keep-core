@@ -503,5 +503,7 @@ func (c *localChain) CalculateDKGResultHash(
 }
 
 func generateHandlerID() int {
-	return rand.Int() // #nosec
+	// #nosec G404 (insecure random number source (rand))
+	// Local chain implementation doesn't require secure randomness.
+	return rand.Int()
 }

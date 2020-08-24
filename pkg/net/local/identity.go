@@ -21,7 +21,9 @@ func (li localIdentifier) String() string {
 func randomLocalIdentifier() localIdentifier {
 	runes := make([]rune, 32)
 	for i := range runes {
-		runes[i] = letterRunes[rand.Intn(len(letterRunes))] // #nosec
+		// #nosec G404 (insecure random number source (rand))
+		// Local network identity doesn't require secure randomness.
+		runes[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 
 	return localIdentifier(runes)
