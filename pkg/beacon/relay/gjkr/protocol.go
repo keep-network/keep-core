@@ -83,7 +83,7 @@ func (sm *SymmetricKeyGeneratingMember) GenerateSymmetricKeys(
 		err := sm.evidenceLog.PutEphemeralMessage(ephemeralPubKeyMessage)
 		if err != nil {
 			logger.Errorf(
-				"could not put ephemeral message to the evidence log: [%v]",
+				"could not put ephemeral key message to the evidence log: [%v]",
 				err,
 			)
 		}
