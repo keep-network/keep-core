@@ -231,9 +231,12 @@ export const getOperatorsOfOwner = async (owner) => {
     }
 
     const transferEventsByOperator = transferEventsByOperators[operator]
-    const latestTransfer = transferEventsByOperator[transferEventsByOperator.length - 1]
-    
-    if (latestTransfer && isSameEthAddress(latestTransfer.returnValues.newOwner, owner)) {
+    const latestTransfer =
+      transferEventsByOperator[transferEventsByOperator.length - 1]
+    if (
+      latestTransfer &&
+      isSameEthAddress(latestTransfer.returnValues.newOwner, owner)
+    ) {
       return true
     }
 
