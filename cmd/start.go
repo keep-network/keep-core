@@ -229,11 +229,6 @@ func initializeMetrics(
 		ethereumAddress,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
-
-	metrics.ExposeLibP2PInfo(
-		registry,
-		netProvider,
-	)
 }
 
 func initializeDiagnostics(
