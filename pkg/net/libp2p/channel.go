@@ -140,14 +140,13 @@ func (c *channel) removeHandler(handler *messageHandler) {
 	}
 }
 
-func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
+func (c *channel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
 	tpe := unmarshaler().Type()
 
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
 	c.unmarshalersByType[tpe] = unmarshaler
-	return nil
 }
 
 func (c *channel) messageProto(

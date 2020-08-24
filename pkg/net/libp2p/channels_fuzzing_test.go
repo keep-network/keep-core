@@ -130,12 +130,9 @@ func TestFuzzBroadcastChannelRoundtrip(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		err = testChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+		testChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 			return &fuzzingMessage{}
 		})
-		if err != nil {
-			t.Fatal(err)
-		}
 
 		for i := 0; i < 100; i++ {
 			var message fuzzingMessage
