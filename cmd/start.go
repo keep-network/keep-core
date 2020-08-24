@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
@@ -157,6 +158,7 @@ func Start(c *cli.Context) error {
 	}
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeDiagnostics(ctx, config, netProvider)
 
 	select {
 	case <-ctx.Done():
@@ -227,9 +229,26 @@ func initializeMetrics(
 		ethereumAddress,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
+}
 
-	metrics.ExposeLibP2PInfo(
-		registry,
-		netProvider,
+func initializeDiagnostics(
+	ctx context.Context,
+	config *config.Config,
+	netProvider net.Provider,
+) {
+	registry, isConfigured := diagnostics.Initialize(
+		config.Diagnostics.Port,
 	)
+	if !isConfigured {
+		logger.Infof("diagnostics are not configured")
+		return
+	}
+
+	logger.Infof(
+		"enabled diagnostics on port [%v]",
+		config.Diagnostics.Port,
+	)
+
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
+	diagnostics.RegisterClientInfoSource(registry, netProvider)
 }
