@@ -11,7 +11,7 @@ import (
 
 var logger = log.Logger("keep-diagnostics")
 
-// Initialize set up the diagnostics registry and enables diagnostics server.
+// Initialize sets up the diagnostics registry and enables diagnostics server.
 func Initialize(port int) (*diagnostics.DiagnosticsRegistry, bool) {
 	if port == 0 {
 		return nil, false
