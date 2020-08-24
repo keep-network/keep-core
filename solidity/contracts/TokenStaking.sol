@@ -42,8 +42,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using Locks for Locks.Storage;
     using TopUps for TopUps.Storage;
 
-    event Staked(
-        address owner,
+    event StakeDelegated(
+        address indexed owner,
+        address indexed operator
+    );
+    event OperatorStaked(
         address indexed operator,
         address indexed beneficiary,
         address indexed authorizer,
@@ -51,7 +54,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     );
     event StakeOwnershipTransferred(
         address indexed operator,
-        address newOwner
+        address indexed newOwner
     );
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCompleted(address indexed operator, uint256 newAmount);
@@ -76,6 +79,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     uint256 internal constant twoWeeks = 1209600; // [sec]
     uint256 internal constant twoMonths = 5184000; // [sec]
+
+    // 2020-04-28; the date of deploying KEEP token.
+    // TX:  0xea22d72bc7de4c82798df7194734024a1f2fd57b173d0e065864ff4e9d3dc014
+    uint256 internal constant minimumStakeScheduleStart = 1588042366;
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
@@ -104,7 +111,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// Initial minimum stake is higher than the final and lowered periodically based
     /// on the amount of steps and the length of the minimum stake schedule in seconds.
     function minimumStake() public view returns (uint256) {
-        return MinimumStakeSchedule.current();
+        return MinimumStakeSchedule.current(minimumStakeScheduleStart);
     }
 
     /// @notice Returns the current value of the undelegation period.
@@ -185,7 +192,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             beneficiary,
             authorizer
         );
-        ownerOperators[_from].push(_operator);
 
         grantStaking.tryCapturingDelegationData(
             tokenGrant,
@@ -195,7 +201,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             _extraData
         );
 
-        emit Staked(_from, _operator, beneficiary, authorizer, _value);
+        emit StakeDelegated(_from, _operator);
+        emit OperatorStaked(_operator, beneficiary, authorizer, _value);
     }
 
     /// @notice Performs top-up to an existing operator. Tokens added during

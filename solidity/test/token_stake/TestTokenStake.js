@@ -177,6 +177,27 @@ describe('TokenStaking', function() {
         "Staking amount should be added to the operator balance"
       );
     })
+
+    it("should emit OperatorStaked event", async () => {
+      await delegate(operatorOne, stakingAmount)
+      
+      const operatorStakedEvents = await stakingContract.getPastEvents("OperatorStaked")
+      expect(operatorStakedEvents.length).to.equal(1)
+      const operatorStakedEvent = operatorStakedEvents[0]
+      expect(operatorStakedEvent.args['operator']).to.equal(operatorOne)
+      expect(operatorStakedEvent.args['beneficiary']).to.equal(beneficiary)
+      expect(operatorStakedEvent.args['authorizer']).to.equal(authorizer)
+    })
+
+    it("should emit StakeDelegated event", async () => {
+      await delegate(operatorOne, stakingAmount)
+
+      const stakeDelegatedEvents = await stakingContract.getPastEvents("StakeDelegated")
+      expect(stakeDelegatedEvents.length).to.equal(1)
+      const stakeDelegatedEvent = stakeDelegatedEvents[0]
+      expect(stakeDelegatedEvent.args['owner']).to.equal(owner)
+      expect(stakeDelegatedEvent.args['operator']).to.equal(operatorOne)
+    })
   })
 
   describe("cancelStake", async () => {
