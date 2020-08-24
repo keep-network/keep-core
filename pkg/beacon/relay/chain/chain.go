@@ -35,7 +35,7 @@ type RelayEntryInterface interface {
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
 		func(request *event.Request),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
@@ -57,7 +57,7 @@ type GroupSelectionInterface interface {
 	// group selection started and the contract is ready to accept tickets.
 	OnGroupSelectionStarted(
 		func(groupSelectionStarted *event.GroupSelectionStart),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// SubmitTicket submits a ticket corresponding to the virtual staker to
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
@@ -77,7 +77,7 @@ type GroupRegistrationInterface interface {
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(
 		func(groupRegistration *event.GroupRegistration),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// Checks if a group with the given public key is considered as
 	// stale on-chain. Group is considered as stale if it is expired and when
 	// its expiration time and potentially executed operation timeout are both

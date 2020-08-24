@@ -273,8 +273,8 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
 			previousEntry []byte,
 			groupPublicKey []byte,
@@ -293,12 +293,17 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch RelayEntryRequested event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnGroupSelectionStarted(
 	handle func(groupSelectionStart *event.GroupSelectionStart),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
 			blockNumber uint64,
@@ -315,12 +320,17 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch GroupSelectionStarted event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
 			memberIndex *big.Int,
 			groupPublicKey []byte,
@@ -336,6 +346,11 @@ func (ec *ethereumChain) OnGroupRegistered(
 			return fmt.Errorf("entry of group key failed with: [%v]", err)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {

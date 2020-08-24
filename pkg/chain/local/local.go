@@ -215,7 +215,7 @@ func (c *localChain) GetLastRelayEntry() []byte {
 
 func (c *localChain) OnRelayEntryRequested(
 	handler func(request *event.Request),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -227,12 +227,12 @@ func (c *localChain) OnRelayEntryRequested(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.relayRequestHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (c *localChain) OnGroupSelectionStarted(
 	handler func(entry *event.GroupSelectionStart),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -244,12 +244,12 @@ func (c *localChain) OnGroupSelectionStarted(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.groupSelectionStartedHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (c *localChain) OnGroupRegistered(
 	handler func(groupRegistration *event.GroupRegistration),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	c.handlerMutex.Lock()
 	defer c.handlerMutex.Unlock()
 
@@ -262,7 +262,7 @@ func (c *localChain) OnGroupRegistered(
 		defer c.handlerMutex.Unlock()
 
 		delete(c.groupRegisteredHandlers, handlerID)
-	}), nil
+	})
 }
 
 func (c *localChain) ThresholdRelay() relaychain.Interface {

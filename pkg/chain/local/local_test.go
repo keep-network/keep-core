@@ -200,14 +200,11 @@ func TestLocalOnGroupRegistered(t *testing.T) {
 
 	eventFired := make(chan *event.GroupRegistration)
 
-	subscription, err := chainHandle.OnGroupRegistered(
+	subscription := chainHandle.OnGroupRegistered(
 		func(entry *event.GroupRegistration) {
 			eventFired <- entry
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	defer subscription.Unsubscribe()
 
@@ -249,14 +246,11 @@ func TestLocalOnGroupRegisteredUnsubscribed(t *testing.T) {
 
 	eventFired := make(chan *event.GroupRegistration)
 
-	subscription, err := chainHandle.OnGroupRegistered(
+	subscription := chainHandle.OnGroupRegistered(
 		func(entry *event.GroupRegistration) {
 			eventFired <- entry
 		},
 	)
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	subscription.Unsubscribe()
 
