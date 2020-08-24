@@ -182,7 +182,7 @@ func addClientWrappers(
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
 		logger.Infof(
-			"enabled ethereum rate limiter; "+
+			"enabled ethereum client request rate limiter; "+
 				"rps limit [%v]; "+
 				"concurrency limit [%v]",
 			config.RequestsPerSecondLimit,
