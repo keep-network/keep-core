@@ -83,16 +83,6 @@ func connectWithClient(
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
-	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
-		client = ethutil.WrapRateLimiting(
-			client,
-			&ethutil.RateLimiterConfig{
-				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
-				ConcurrencyLimit:       config.ConcurrencyLimit,
-			},
-		).(*ethclient.Client)
-	}
-
 	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -103,7 +93,7 @@ func connectWithClient(
 
 	pv := &ethereumChain{
 		config:           config,
-		client:           ethutil.WrapCallLogging(logger, client),
+		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
 		transactionMutex: &sync.Mutex{},
@@ -182,6 +172,33 @@ func connectWithClient(
 	pv.stakingContract = stakingContract
 
 	return pv, nil
+}
+
+func addClientWrappers(
+	config ethereum.Config,
+	backend bind.ContractBackend,
+) bind.ContractBackend {
+	loggingBackend := ethutil.WrapCallLogging(logger, backend)
+
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		logger.Infof(
+			"enabled ethereum rate limiter; "+
+				"rps limit [%v]; "+
+				"concurrency limit [%v]",
+			config.RequestsPerSecondLimit,
+			config.ConcurrencyLimit,
+		)
+
+		return ethutil.WrapRateLimiting(
+			loggingBackend,
+			&ethutil.RateLimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		)
+	}
+
+	return loggingBackend
 }
 
 // ConnectUtility makes the network connection to the Ethereum network and
