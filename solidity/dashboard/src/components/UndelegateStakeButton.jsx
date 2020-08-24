@@ -6,14 +6,23 @@ import { ContractsLoaded } from "../contracts"
 import { withConfirmationModal } from "./ConfirmationModal"
 import { cancelStake, undelegateStake } from "../actions/web3"
 import { connect } from "react-redux"
+import moment from "moment"
 
-const confirmationModalOptions = {
+const confirmationModalOptions = (undelegationPeriod) => ({
   modalOptions: { title: "Are you sure?" },
   title: "You’re about to undelegate.",
-  subtitle:
-    "Undelegating will return all of your tokens to their owner. There is an undelegation period of 1 week until the tokens will be completely undelegated.",
+  subtitle: `Undelegating will return all of your tokens to their owner. There is an undelegation period of ${moment()
+    .add(undelegationPeriod, "seconds")
+    .fromNow(true)} until the tokens will be completely undelegated.`,
   btnText: "undelegate",
   confirmationText: "UNDELEGATE",
+})
+
+const confirmCancelModalOptions = {
+  modalOptions: { title: "Are you sure?" },
+  title: "You’re about to cancel tokens.",
+  btnText: "cancel",
+  confirmationText: "CANCEL",
 }
 
 const UndelegateStakeButton = (props) => {
@@ -26,22 +35,20 @@ const UndelegateStakeButton = (props) => {
       isFromGrant,
       cancelStake,
       undelegateStake,
+      undelegationPeriod,
     } = props
 
     if (isInInitializationPeriod && isFromGrant) {
       const { tokenStakingEscrow } = await ContractsLoaded
       await openConfirmationModal(
         {
-          modalOptions: { title: "Are you sure?" },
-          title: "You’re about to cancel tokens.",
-          btnText: "cancel",
-          confirmationText: "CANCEL",
+          ...confirmCancelModalOptions,
           tokenStakingEscrowAddress: tokenStakingEscrow.options.address,
         },
         withConfirmationModal(ConfirmCancelingFromGrant)
       )
-    } else {
-      await openConfirmationModal(confirmationModalOptions)
+    } else if (!isInInitializationPeriod) {
+      await openConfirmationModal(confirmationModalOptions(undelegationPeriod))
     }
 
     if (isInInitializationPeriod) {

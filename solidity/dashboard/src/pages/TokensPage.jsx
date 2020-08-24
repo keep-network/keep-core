@@ -8,15 +8,17 @@ import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
 import { useModal } from "../hooks/useModal"
 import { connect } from "react-redux"
+import moment from "moment"
 
-const confirmationModalOptions = {
+const confirmationModalOptions = (initializationPeriod) => ({
   modalOptions: { title: "Initiate Delegation" },
   title: "You’re about to delegate stake.",
-  subtitle:
-    "You’re delegating KEEP tokens. You will be able to cancel the delegation for up to 1 week. After that time, you can undelegate your stake.",
+  subtitle: `You’re delegating KEEP tokens. You will be able to cancel the delegation for up to ${moment()
+    .add(initializationPeriod, "seconds")
+    .fromNow(true)}. After that time, you can undelegate your stake.`,
   btnText: "delegate",
   confirmationText: "DELEGATE",
-}
+})
 
 const TokensPage = ({ delegateStake }) => {
   const { openConfirmationModal } = useModal()
@@ -26,10 +28,11 @@ const TokensPage = ({ delegateStake }) => {
     minimumStake,
     selectedGrant,
     tokensContext,
+    initializationPeriod,
   } = useTokensPageContext()
 
   const handleSubmit = async (values, meta) => {
-    await openConfirmationModal(confirmationModalOptions)
+    await openConfirmationModal(confirmationModalOptions(initializationPeriod))
     const grantData =
       tokensContext === "owned"
         ? {}
