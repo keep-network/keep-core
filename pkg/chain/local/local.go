@@ -16,7 +16,6 @@ import (
 	crand "crypto/rand"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -55,7 +54,7 @@ type localGroup struct {
 }
 
 type localChain struct {
-	relayConfig *relayconfig.Chain
+	relayConfig *relaychain.Config
 
 	groups []localGroup
 
@@ -81,6 +80,8 @@ type localChain struct {
 	relayEntryTimeoutReports      []uint64
 
 	operatorKey *ecdsa.PrivateKey
+
+	minimumStake *big.Int
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -99,8 +100,8 @@ func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return c.operatorKey, &c.operatorKey.PublicKey
 }
 
-func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
-	return c.relayConfig, nil
+func (c *localChain) GetConfig() *relaychain.Config {
+	return c.relayConfig
 }
 
 func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTicketSubmissionPromise {
@@ -315,12 +316,11 @@ func ConnectWithKey(
 	resultPublicationBlockStep := uint64(3)
 
 	return &localChain{
-		relayConfig: &relayconfig.Chain{
+		relayConfig: &relaychain.Config{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
 			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: resultPublicationBlockStep,
-			MinimumStake:               minimumStake,
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
@@ -332,6 +332,7 @@ func ConnectWithKey(
 		tickets:                  make([]*relaychain.Ticket, 0),
 		groups:                   []localGroup{group},
 		operatorKey:              operatorKey,
+		minimumStake:             minimumStake,
 	}
 }
 
@@ -515,6 +516,10 @@ func (c *localChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
 	return c.relayEntryTimeoutReports
+}
+
+func (c *localChain) MinimumStake() (*big.Int, error) {
+	return c.minimumStake, nil
 }
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.

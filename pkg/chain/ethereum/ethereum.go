@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -30,52 +29,12 @@ func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
-func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
+func (ec *ethereumChain) GetConfig() *relaychain.Config {
+	return ec.chainConfig
+}
 
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
-
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	minimumStake, err := ec.stakingContract.MinimumStake()
-	if err != nil {
-		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
-	}
-
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
-
-	return &relayconfig.Chain{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		MinimumStake:               minimumStake,
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
-	}, nil
+func (ec *ethereumChain) MinimumStake() (*big.Int, error) {
+	return ec.stakingContract.MinimumStake()
 }
 
 // HasMinimumStake returns true if the specified address is staked.  False will
