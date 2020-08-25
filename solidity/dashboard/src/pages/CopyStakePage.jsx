@@ -1,4 +1,4 @@
-import React, { useCallback, useReducer, useMemo, useContext } from "react"
+import React from "react"
 import StepNav from "../components/StepNav"
 import {
   CopyStakeStepO,
@@ -7,45 +7,32 @@ import {
   CopyStakeStep3,
   CopyStakeStep4,
 } from "../components/copy-stake-steps"
-import copyStakeReducer, {
-  copyStakeInitialData,
+import {
   INCREMENT_STEP,
   DECREMENT_STEP,
   SET_STRATEGY,
   SET_DELEGATION,
-} from "../reducers/copy-stake"
+  FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
+} from "../actions"
+import { connect } from "react-redux"
 
 const copyStakeSteps = ["balance", "upgrade", "review", "complete"]
 
-const CopyStakePage = () => {
-  const { fetchDelegations, state, dispatch } = useCopyStakeContext()
-
-  const incrementStep = useCallback(() => {
-    dispatch({ type: INCREMENT_STEP })
-  }, [dispatch])
-
-  const decrementStep = useCallback(() => {
-    dispatch({ type: DECREMENT_STEP })
-  }, [dispatch])
-
-  const setStrategy = useCallback(
-    (strategy) => {
-      dispatch({ type: SET_STRATEGY, payload: strategy })
-    },
-    [dispatch]
-  )
-
-  const setDelegation = useCallback(
-    (delegation) => {
-      dispatch({ type: SET_DELEGATION, payload: delegation })
-    },
-    [dispatch]
-  )
-
+const CopyStakePage = ({
+  incrementStep,
+  decrementStep,
+  setStrategy,
+  setDelegation,
+  selectedDelegation,
+  step,
+  selectedStrategy,
+  fetchOldDelegations,
+  oldDelegations,
+  oldDelegationsFetching,
+}) => {
   const renderContent = () => {
     const defaultProps = { incrementStep, decrementStep }
-    console.log("statee", state.step)
-    switch (state.step) {
+    switch (step) {
       case 0:
       default:
         return <CopyStakeStepO {...defaultProps} />
@@ -53,22 +40,11 @@ const CopyStakePage = () => {
         return (
           <CopyStakeStep1
             {...defaultProps}
-            delegations={[
-              {
-                operatorAddress: "0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca",
-                authorizerAddress: "0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca",
-                beneficiary: "0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca",
-                amount: "100000000000000000000000",
-              },
-              {
-                operatorAddress: "0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca",
-                authorizerAddress: "0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca",
-                beneficiary: "0x6a0502bcaC31A40C3519920F6FC8E492DCEf87ca",
-                amount: "100000000000000000000000",
-              },
-            ]}
-            selectedDelegation={state.selectedDelegation}
+            delegations={oldDelegations}
+            isFetching={oldDelegationsFetching}
+            selectedDelegation={selectedDelegation}
             onSelectDelegation={setDelegation}
+            fetchDelegations={fetchOldDelegations}
           />
         )
       case 2:
@@ -76,15 +52,15 @@ const CopyStakePage = () => {
           <CopyStakeStep2
             {...defaultProps}
             setStrategy={setStrategy}
-            selectedStrategy={state.selectedStrategy}
+            selectedStrategy={selectedStrategy}
           />
         )
       case 3:
         return (
           <CopyStakeStep3
             {...defaultProps}
-            strategy={state.selectedStrategy}
-            delegation={state.selectedDelegation || {}}
+            strategy={selectedStrategy}
+            delegation={selectedDelegation || {}}
           />
         )
       case 4:
@@ -96,7 +72,7 @@ const CopyStakePage = () => {
     <div className="copy-stake__layout">
       <nav className="copy-stake__nav">
         <div className="copy-stake__nav__indicator">
-          <StepNav steps={copyStakeSteps} activeStep={state.step} />
+          <StepNav steps={copyStakeSteps} activeStep={step} />
         </div>
       </nav>
       <main className="copy-stake__content-wrapper">
@@ -106,29 +82,21 @@ const CopyStakePage = () => {
   )
 }
 
-const CopyStakeProvider = (props) => {
-  const [state, dispatch] = useReducer(copyStakeReducer, copyStakeInitialData)
-
-  const contextValue = useMemo(() => {
-    return { state, dispatch }
-  }, [state, dispatch])
-
-  const fetchOldDelegations = () => {}
-
-  return (
-    <CopyStakeContext.Provider value={{ ...contextValue, fetchOldDelegations }}>
-      <CopyStakePage />
-    </CopyStakeContext.Provider>
-  )
+const mapStateToProps = ({ copyStake }) => {
+  return copyStake
 }
 
-const CopyStakeContext = React.createContext({
-  dispatch: () => {},
-  ...copyStakeInitialData,
-})
-
-const useCopyStakeContext = () => {
-  return useContext(CopyStakeContext)
+const mapDispatchToProps = (dispatch) => {
+  return {
+    incrementStep: () => dispatch({ type: INCREMENT_STEP }),
+    decrementStep: () => dispatch({ type: DECREMENT_STEP }),
+    setStrategy: (strategy) =>
+      dispatch({ type: SET_STRATEGY, payload: strategy }),
+    setDelegation: (delegation) =>
+      dispatch({ type: SET_DELEGATION, payload: delegation }),
+    fetchOldDelegations: () =>
+      dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
+  }
 }
 
-export default CopyStakeProvider
+export default connect(mapStateToProps, mapDispatchToProps)(CopyStakePage)

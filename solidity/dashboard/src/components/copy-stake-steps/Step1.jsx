@@ -1,6 +1,7 @@
-import React from "react"
+import React, { useEffect } from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
+import { KeepLoadingIndicator } from "../Loadable"
 
 const styles = {
   title: {
@@ -19,7 +20,20 @@ const styles = {
   },
 }
 
-const CopyStakeStep1 = ({ delegations, decrementStep, incrementStep }) => {
+const CopyStakeStep1 = ({
+  fetchDelegations,
+  isFetching,
+  delegations,
+  decrementStep,
+  incrementStep,
+  onSelectDelegation,
+  selectedDelegation,
+}) => {
+  useEffect(() => {
+    fetchDelegations()
+  }, [fetchDelegations])
+
+  console.log("selected delegation", selectedDelegation)
   return (
     <>
       <h2 style={styles.title}>Stake balances to be upgraded.</h2>
@@ -28,9 +42,22 @@ const CopyStakeStep1 = ({ delegations, decrementStep, incrementStep }) => {
         multiple stake delegations.
       </h3>
       <ul style={styles.delegationsList}>
-        {delegations.map((delegation) => (
-          <DelegationItem key={delegation.operatorAddress} {...delegation} />
-        ))}
+        {isFetching ? (
+          <KeepLoadingIndicator />
+        ) : (
+          delegations.map((delegation) => (
+            <DelegationItem
+              key={delegation.operatorAddress}
+              delegation={delegation}
+              onSelect={onSelectDelegation}
+              isSelected={
+                selectedDelegation &&
+                selectedDelegation.operatorAddress ===
+                  delegation.operatorAddress
+              }
+            />
+          ))
+        )}
       </ul>
       <div className="flex row space-between self-end">
         <Button
@@ -39,7 +66,11 @@ const CopyStakeStep1 = ({ delegations, decrementStep, incrementStep }) => {
         >
           back
         </Button>
-        <Button className="btn btn-primary btn-lg" onClick={incrementStep}>
+        <Button
+          disabled={!selectedDelegation}
+          className="btn btn-primary btn-lg"
+          onClick={incrementStep}
+        >
           continue
         </Button>
       </div>
@@ -47,26 +78,40 @@ const CopyStakeStep1 = ({ delegations, decrementStep, incrementStep }) => {
   )
 }
 
-const DelegationItem = ({
-  amount,
-  authorizerAddress,
-  operatorAddress,
-  beneficiary,
-}) => {
+const DelegationItem = ({ delegation, onSelect }) => {
+  const {
+    amount,
+    authorizerAddress,
+    operatorAddress,
+    beneficiary,
+    isSelected,
+  } = delegation
+
   return (
-    <li className="tile flex row" style={styles.delegationItem}>
-      <div>checkbox here</div>
-      <TokenAmount
-        amount={amount}
-        currencySymbol={"KEEP"}
-        wrapperClassName="mb-1"
-        amountClassName="text-primary h3"
+    <li className="tile" style={styles.delegationItem}>
+      <input
+        type="radio"
+        name="option"
+        value={delegation}
+        id={`option-${operatorAddress}`}
+        checked={isSelected}
+        onChange={() => onSelect(delegation)}
       />
-      <div style={{ marginLeft: "auto" }}>
-        <Address address={authorizerAddress} label="authorizer" />
-        <Address address={operatorAddress} label="operator" />
-        <Address address={beneficiary} label="beneficiary" />
-      </div>
+      <label htmlFor={`option-${operatorAddress}`} style={{ width: "100%" }}>
+        <div className="flex row">
+          <TokenAmount
+            amount={amount}
+            currencySymbol="KEEP"
+            wrapperClassName="self-start"
+            amountClassName="text-primary h3"
+          />
+          <div style={{ marginLeft: "auto" }}>
+            <Address address={authorizerAddress} label="authorizer" />
+            <Address address={operatorAddress} label="operator" />
+            <Address address={beneficiary} label="beneficiary" />
+          </div>
+        </div>
+      </label>
     </li>
   )
 }
