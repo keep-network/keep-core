@@ -53,13 +53,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
-	config, err := chainRelay.GetConfig()
-	if err != nil {
-		return fmt.Errorf(
-			"could not fetch chain's config: [%v]",
-			err,
-		)
-	}
+	config := chainRelay.GetConfig()
 
 	// Chain rejects the result if it has less than 25% safety margin.
 	// If there are not enough signatures to preserve the margin, it does not

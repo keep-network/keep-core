@@ -30,46 +30,8 @@ func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
-func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
-
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
-
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
-
-	return &relayconfig.Chain{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
-	}, nil
+func (ec *ethereumChain) GetConfig() *relayconfig.Chain {
+	return ec.chainConfig
 }
 
 func (ec *ethereumChain) MinimumStake() (*big.Int, error) {

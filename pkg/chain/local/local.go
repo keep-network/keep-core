@@ -101,8 +101,8 @@ func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return c.operatorKey, &c.operatorKey.PublicKey
 }
 
-func (c *localChain) GetConfig() (*relayconfig.Chain, error) {
-	return c.relayConfig, nil
+func (c *localChain) GetConfig() *relayconfig.Chain {
+	return c.relayConfig
 }
 
 func (c *localChain) SubmitTicket(ticket *relaychain.Ticket) *async.EventGroupTicketSubmissionPromise {
