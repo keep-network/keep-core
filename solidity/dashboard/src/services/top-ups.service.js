@@ -1,15 +1,24 @@
-import { contracts, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import {
+  ContractsLoaded,
+  Web3Loaded,
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
+} from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
 
 export const commitTopUp = async (operator, onTransactionHashCallback) => {
-  await contracts.stakingContract.methods
+  const { stakingContract } = await ContractsLoaded
+
+  await stakingContract.methods
     .commitTopUp(operator)
     .send()
     .on("transactionHash", onTransactionHashCallback)
 }
 
-export const fetchAvailableTopUps = async (web3Context, operators) => {
+export const fetchAvailableTopUps = async (_, operators) => {
+  const web3Context = await Web3Loaded
+  const { stakingContract } = await ContractsLoaded
+
   const availableTopUps = []
 
   if (isEmptyArray(operators)) {
@@ -17,14 +26,14 @@ export const fetchAvailableTopUps = async (web3Context, operators) => {
   }
 
   const toupUpsInitiatedByOperator = (
-    await contracts.stakingContract.getPastEvents("TopUpInitiated", {
+    await stakingContract.getPastEvents("TopUpInitiated", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: operators },
     })
   ).reduce(reduceByOperator, {})
 
   const topUpsCompletedByOperator = (
-    await contracts.stakingContract.getPastEvents("TopUpCompleted", {
+    await stakingContract.getPastEvents("TopUpCompleted", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: operators },
     })

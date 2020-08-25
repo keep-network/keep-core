@@ -8,20 +8,18 @@ import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import { SubmitButton } from "./Button"
-import { useShowMessage, messageType } from "./Message"
-import { useWeb3Context } from "./WithWeb3Context"
-import { tokensPageService } from "../services/tokens-page.service"
 import { useModal } from "../hooks/useModal"
 import AddTopUpModal from "./AddTopUpModal"
+import { connect } from "react-redux"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
   cancelStakeSuccessCallback,
   keepTokenBalance,
   grants,
+  addKeep,
+  undelegationPeriod,
 }) => {
-  const showMessage = useShowMessage()
-  const web3Context = useWeb3Context()
   const { openConfirmationModal } = useModal()
 
   const getAvailableToStakeFromGrant = useCallback(
@@ -33,49 +31,29 @@ const DelegatedTokensTable = ({
     [grants]
   )
 
-  const onTopUpBtn = async (delegationData, transactionHashCallback) => {
-    try {
-      const availableAmount = delegationData.isFromGrant
-        ? getAvailableToStakeFromGrant(delegationData.grantId)
-        : keepTokenBalance
-      const { amount } = await openConfirmationModal(
-        {
-          modalOptions: { title: "Add KEEP" },
-          submitBtnText: "add keep",
-          availableAmount,
-          currentAmount: delegationData.amount,
-          minimumAmount: 1,
-          ...delegationData,
-        },
-        AddTopUpModal
-      )
-      delegationData.beneficiaryAddress = delegationData.beneficiary
-      delegationData.stakeTokens = amount
-      delegationData.selectedGrant = {
-        id: delegationData.grantId,
-        isManagedGrant: delegationData.isManagedGrant,
-        managedGrantContractInstance:
-          delegationData.managedGrantContractInstance,
-      }
-      delegationData.context = delegationData.isFromGrant ? "granted" : "owned"
-      await tokensPageService.delegateStake(
-        web3Context,
-        delegationData,
-        transactionHashCallback
-      )
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Top up committed successfully",
-      })
-    } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Commit action has failed ",
-        content: error.message,
-      })
-      throw error
-    }
+  const onTopUpBtn = async (delegationData, awaitingPromise) => {
+    const availableAmount = delegationData.isFromGrant
+      ? getAvailableToStakeFromGrant(delegationData.grantId)
+      : keepTokenBalance
+    const { amount } = await openConfirmationModal(
+      {
+        modalOptions: { title: "Add KEEP" },
+        submitBtnText: "add keep",
+        availableAmount,
+        currentAmount: delegationData.amount,
+        minimumAmount: 1,
+        ...delegationData,
+      },
+      AddTopUpModal
+    )
+    addKeep(
+      {
+        ...delegationData,
+        amount,
+        beneficiaryAddress: delegationData.beneficiary,
+      },
+      awaitingPromise
+    )
   }
 
   return (
@@ -157,13 +135,14 @@ const DelegatedTokensTable = ({
                       ? cancelStakeSuccessCallback
                       : () => {}
                   }
+                  undelegationPeriod={undelegationPeriod}
                 />
               </div>
               <div>
                 <SubmitButton
                   className="btn btn-secondary btn-sm"
-                  onSubmitAction={(transactionHashCallback) =>
-                    onTopUpBtn(delegation, transactionHashCallback)
+                  onSubmitAction={(awaitingPromise) =>
+                    onTopUpBtn(delegation, awaitingPromise)
                   }
                 >
                   add keep
@@ -181,4 +160,13 @@ DelegatedTokensTable.defaultProps = {
   title: "Delegations",
 }
 
-export default DelegatedTokensTable
+const mapDispatchToProps = (dispatch) => ({
+  addKeep: (values, meta) =>
+    dispatch({
+      type: "staking/delegate_request",
+      payload: values,
+      meta,
+    }),
+})
+
+export default connect(null, mapDispatchToProps)(DelegatedTokensTable)
