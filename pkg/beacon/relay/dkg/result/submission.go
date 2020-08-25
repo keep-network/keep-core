@@ -75,18 +75,11 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	onSubmittedResultChan := make(chan uint64)
 
-	subscription, err := chainRelay.OnDKGResultSubmitted(
+	subscription := chainRelay.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
-	if err != nil {
-		close(onSubmittedResultChan)
-		return fmt.Errorf(
-			"could not watch for DKG result publications: [%v]",
-			err,
-		)
-	}
 
 	returnWithError := func(err error) error {
 		subscription.Unsubscribe()

@@ -389,9 +389,9 @@ const useSubscribeToTopUpsEvents = () => {
     )
 
     dispatch({ type: TOP_UP_COMPLETED, payload: event.returnValues })
-
     if (emittedEvents.DepositRedelegated || emittedEvents.TokenGrantStaked) {
-      const { grantId, amount } = emittedEvents.DepositRedelegated
+      const { grantId, amount } =
+        emittedEvents.DepositRedelegated || emittedEvents.TokenGrantStaked
       grantStaked(grantId, amount)
     }
   }

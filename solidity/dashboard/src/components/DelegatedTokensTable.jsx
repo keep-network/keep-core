@@ -18,6 +18,7 @@ const DelegatedTokensTable = ({
   keepTokenBalance,
   grants,
   addKeep,
+  undelegationPeriod,
 }) => {
   const { openConfirmationModal } = useModal()
 
@@ -134,6 +135,7 @@ const DelegatedTokensTable = ({
                       ? cancelStakeSuccessCallback
                       : () => {}
                   }
+                  undelegationPeriod={undelegationPeriod}
                 />
               </div>
               <div>

@@ -12,14 +12,18 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// #nosec G101 (look for hardcoded credentials)
+// This line doesn't contain any credentials.
+// It's just the name of the environment variable.
 const passwordEnvVariable = "KEEP_ETHEREUM_PASSWORD"
 
 // Config is the top level config structure.
 type Config struct {
-	Ethereum ethereum.Config
-	LibP2P   libp2p.Config
-	Storage  Storage
-	Metrics  Metrics
+	Ethereum    ethereum.Config
+	LibP2P      libp2p.Config
+	Storage     Storage
+	Metrics     Metrics
+	Diagnostics Diagnostics
 }
 
 // Storage stores meta-info about keeping data on disk
@@ -32,6 +36,11 @@ type Metrics struct {
 	Port                int
 	NetworkMetricsTick  int
 	EthereumMetricsTick int
+}
+
+// Diagnostics stores diagnostics-related configuration.
+type Diagnostics struct {
+	Port int
 }
 
 var (

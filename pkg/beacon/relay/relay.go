@@ -54,16 +54,11 @@ func (n *Node) MonitorRelayEntry(
 
 	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription, err := relayChain.OnRelayEntrySubmitted(
+	subscription := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
 	)
-	if err != nil {
-		close(onEntrySubmittedChannel)
-		logger.Errorf("could not watch for a signature submission: [%v]", err)
-		return
-	}
 
 	for {
 		select {

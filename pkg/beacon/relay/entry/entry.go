@@ -23,8 +23,9 @@ var logger = log.Logger("keep-entry")
 // required protocol message unmarshallers.
 // The channel has to be initialized before the SignAndSubmit is called.
 func RegisterUnmarshallers(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(
-		func() net.TaggedUnmarshaler { return &SignatureShareMessage{} })
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
+		return &SignatureShareMessage{}
+	})
 }
 
 // SignAndSubmit triggers the threshold signature process for the
@@ -43,14 +44,11 @@ func SignAndSubmit(
 	defer cancelCtx()
 
 	relayEntrySubmittedChannel := make(chan uint64)
-	subscription, err := relayChain.OnRelayEntrySubmitted(
+	subscription := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			relayEntrySubmittedChannel <- event.BlockNumber
 		},
 	)
-	if err != nil {
-		return err
-	}
 	defer subscription.Unsubscribe()
 
 	chainConfig, err := relayChain.GetConfig()

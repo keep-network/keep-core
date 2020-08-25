@@ -107,7 +107,7 @@ func executeSigning(
 	}
 
 	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	chain.ThresholdRelay().OnRelayEntrySubmitted(
+	_ = chain.ThresholdRelay().OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},
