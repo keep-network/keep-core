@@ -74,11 +74,16 @@ func CandidateToNewGroup(
 		return err
 	}
 
+	minimumStake, err := relayChain.MinimumStake()
+	if err != nil {
+		return err
+	}
+
 	tickets, err := generateTickets(
 		newEntry.Bytes(),
 		staker.Address(),
 		availableStake,
-		chainConfig.MinimumStake,
+		minimumStake,
 	)
 	if err != nil {
 		return err

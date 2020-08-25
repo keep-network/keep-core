@@ -81,6 +81,8 @@ type localChain struct {
 	relayEntryTimeoutReports      []uint64
 
 	operatorKey *ecdsa.PrivateKey
+
+	minimumStake *big.Int
 }
 
 func (c *localChain) BlockCounter() (chain.BlockCounter, error) {
@@ -320,7 +322,6 @@ func ConnectWithKey(
 			HonestThreshold:            honestThreshold,
 			TicketSubmissionTimeout:    6,
 			ResultPublicationBlockStep: resultPublicationBlockStep,
-			MinimumStake:               minimumStake,
 			RelayEntryTimeout:          resultPublicationBlockStep * uint64(groupSize),
 		},
 		relayEntryHandlers:       make(map[int]func(request *event.EntrySubmitted)),
@@ -332,6 +333,7 @@ func ConnectWithKey(
 		tickets:                  make([]*relaychain.Ticket, 0),
 		groups:                   []localGroup{group},
 		operatorKey:              operatorKey,
+		minimumStake:             minimumStake,
 	}
 }
 
@@ -515,6 +517,10 @@ func (c *localChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 
 func (c *localChain) GetRelayEntryTimeoutReports() []uint64 {
 	return c.relayEntryTimeoutReports
+}
+
+func (c *localChain) MinimumStake() (*big.Int, error) {
+	return c.minimumStake, nil
 }
 
 // CalculateDKGResultHash calculates a 256-bit hash of the DKG result.

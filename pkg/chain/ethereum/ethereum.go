@@ -58,11 +58,6 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		)
 	}
 
-	minimumStake, err := ec.stakingContract.MinimumStake()
-	if err != nil {
-		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
-	}
-
 	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
 	if err != nil {
 		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
@@ -73,9 +68,12 @@ func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
 		HonestThreshold:            int(threshold.Int64()),
 		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
 		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		MinimumStake:               minimumStake,
 		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil
+}
+
+func (ec *ethereumChain) MinimumStake() (*big.Int, error) {
+	return ec.stakingContract.MinimumStake()
 }
 
 // HasMinimumStake returns true if the specified address is staked.  False will

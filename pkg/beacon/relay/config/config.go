@@ -1,7 +1,5 @@
 package config
 
-import "math/big"
-
 // Chain contains the config data needed for the relay to operate.
 type Chain struct {
 	// GroupSize is the size of a group in the threshold relay.
@@ -20,9 +18,6 @@ type Chain struct {
 	// where T_dkg is time for phases 1-12 to complete and T_step is the result
 	// publication block step.
 	ResultPublicationBlockStep uint64
-	// MinimumStake is an on-chain value representing the minimum necessary
-	// amount a client must lock up to submit a single ticket
-	MinimumStake *big.Int
 	// RelayEntryTimeout is a timeout in blocks on-chain for a relay
 	// entry to be published by the selected group. Blocks are
 	// counted from the moment relay request occur.
