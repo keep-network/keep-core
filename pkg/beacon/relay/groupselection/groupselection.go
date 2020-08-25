@@ -11,7 +11,6 @@ import (
 	"github.com/ipfs/go-log"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/chain"
 )
 
@@ -63,7 +62,7 @@ type Result struct {
 func CandidateToNewGroup(
 	relayChain relaychain.Interface,
 	blockCounter chain.BlockCounter,
-	chainConfig *config.Chain,
+	chainConfig *relaychain.Config,
 	staker chain.Staker,
 	newEntry *big.Int,
 	startBlockHeight uint64,
@@ -139,7 +138,7 @@ func submitTickets(
 	tickets []*ticket,
 	relayChain relaychain.GroupSelectionInterface,
 	blockCounter chain.BlockCounter,
-	chainConfig *config.Chain,
+	chainConfig *relaychain.Config,
 	startBlockHeight uint64,
 ) error {
 	rounds, err := calculateRoundsCount(chainConfig.TicketSubmissionTimeout)

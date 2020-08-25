@@ -16,7 +16,6 @@ import (
 	crand "crypto/rand"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -55,7 +54,7 @@ type localGroup struct {
 }
 
 type localChain struct {
-	relayConfig *relayconfig.Chain
+	relayConfig *relaychain.Config
 
 	groups []localGroup
 
@@ -101,7 +100,7 @@ func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return c.operatorKey, &c.operatorKey.PublicKey
 }
 
-func (c *localChain) GetConfig() *relayconfig.Chain {
+func (c *localChain) GetConfig() *relaychain.Config {
 	return c.relayConfig
 }
 
@@ -317,7 +316,7 @@ func ConnectWithKey(
 	resultPublicationBlockStep := uint64(3)
 
 	return &localChain{
-		relayConfig: &relayconfig.Chain{
+		relayConfig: &relaychain.Config{
 			GroupSize:                  groupSize,
 			HonestThreshold:            honestThreshold,
 			TicketSubmissionTimeout:    6,

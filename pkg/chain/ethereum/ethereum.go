@@ -12,7 +12,6 @@ import (
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -30,7 +29,7 @@ func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
-func (ec *ethereumChain) GetConfig() *relayconfig.Chain {
+func (ec *ethereumChain) GetConfig() *relaychain.Config {
 	return ec.chainConfig
 }
 

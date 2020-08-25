@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -44,7 +44,7 @@ type ethereumChain struct {
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
 	blockCounter                     *blockcounter.EthereumBlockCounter
-	chainConfig                      *config.Chain
+	chainConfig                      *relaychain.Config
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -278,7 +278,7 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	return ec.blockCounter, nil
 }
 
-func fetchChainConfig(ec *ethereumChain) (*config.Chain, error) {
+func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
@@ -311,7 +311,7 @@ func fetchChainConfig(ec *ethereumChain) (*config.Chain, error) {
 		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
 	}
 
-	return &config.Chain{
+	return &relaychain.Config{
 		GroupSize:                  int(groupSize.Int64()),
 		HonestThreshold:            int(threshold.Int64()),
 		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
