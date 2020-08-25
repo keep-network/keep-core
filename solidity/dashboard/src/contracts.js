@@ -14,6 +14,8 @@ import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
+import OldTokenStaking from "./old-contracts-artifacts/TokenStaking.json"
+
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -87,6 +89,7 @@ const contracts = [
     { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
     BondedECDSAKeepFactory,
   ],
+  [{ contractName: "oldTokenStakingContract" }, OldTokenStaking],
 ]
 
 export async function getKeepTokenContractDeployerAddress(web3) {

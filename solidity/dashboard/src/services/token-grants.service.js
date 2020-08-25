@@ -236,9 +236,9 @@ export const stake = async (
   }
 }
 
-const getOperatorsFromManagedGrants = async (web3Context) => {
-  const { grantContract } = web3Context
-  const manageGrants = await fetchManagedGrants(web3Context)
+const getOperatorsFromManagedGrants = async () => {
+  const { grantContract } = await ContractsLoaded
+  const manageGrants = await fetchManagedGrants()
   const operators = new Set()
 
   for (const managedGrant of manageGrants) {
