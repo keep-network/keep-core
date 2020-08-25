@@ -100,10 +100,7 @@ func executeDKG(
 	network interception.Network,
 	selectedStakers []relaychain.StakerAddress,
 ) (*Result, error) {
-	relayConfig, err := chain.ThresholdRelay().GetConfig()
-	if err != nil {
-		return nil, err
-	}
+	relayConfig := chain.ThresholdRelay().GetConfig()
 
 	blockCounter, err := chain.BlockCounter()
 	if err != nil {
@@ -116,7 +113,7 @@ func executeDKG(
 	}
 
 	resultSubmissionChan := make(chan *event.DKGResultSubmission)
-	chain.ThresholdRelay().OnDKGResultSubmitted(
+	_ = chain.ThresholdRelay().OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			resultSubmissionChan <- event
 		},

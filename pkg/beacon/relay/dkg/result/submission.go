@@ -53,13 +53,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 	blockCounter chain.BlockCounter,
 	startBlockHeight uint64,
 ) error {
-	config, err := chainRelay.GetConfig()
-	if err != nil {
-		return fmt.Errorf(
-			"could not fetch chain's config: [%v]",
-			err,
-		)
-	}
+	config := chainRelay.GetConfig()
 
 	// Chain rejects the result if it has less than 25% safety margin.
 	// If there are not enough signatures to preserve the margin, it does not
@@ -75,18 +69,11 @@ func (sm *SubmittingMember) SubmitDKGResult(
 
 	onSubmittedResultChan := make(chan uint64)
 
-	subscription, err := chainRelay.OnDKGResultSubmitted(
+	subscription := chainRelay.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
-	if err != nil {
-		close(onSubmittedResultChan)
-		return fmt.Errorf(
-			"could not watch for DKG result publications: [%v]",
-			err,
-		)
-	}
 
 	returnWithError := func(err error) error {
 		subscription.Unsubscribe()
