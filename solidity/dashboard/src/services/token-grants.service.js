@@ -61,6 +61,22 @@ const getGrantDetails = async (
   isManagedGrant = false
 ) => {
   const { yourAddress } = web3Context
+
+  // At first lets check if the provided address is a grantee in the provided grant,
+  // to avoid unnecessary calls to the infura node.
+  const grantDetails = await contractService.makeCall(
+    web3Context,
+    TOKEN_GRANT_CONTRACT_NAME,
+    "getGrant",
+    grantId
+  )
+
+  if (!isManagedGrant && !isSameEthAddress(yourAddress, grantDetails.grantee)) {
+    throw new Error(
+      `${yourAddress} does not match a grantee address for the grantId ${grantId}`
+    )
+  }
+
   const escrowDepositsEvents = await fetchEscrowDepositsByGrantId(grantId)
   const escrowOperatorsToWithdraw = []
   let escrowWithdrawableAmount = 0
@@ -87,17 +103,6 @@ const getGrantDetails = async (
     }
   }
 
-  const grantDetails = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "getGrant",
-    grantId
-  )
-  if (!isManagedGrant && !isSameEthAddress(yourAddress, grantDetails.grantee)) {
-    throw new Error(
-      `${yourAddress} does not match a grantee address for the grantId ${grantId}`
-    )
-  }
   const unlockingSchedule = await contractService.makeCall(
     web3Context,
     TOKEN_GRANT_CONTRACT_NAME,
