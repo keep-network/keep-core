@@ -6,6 +6,8 @@ import (
 	"sync"
 	"time"
 
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -42,6 +44,7 @@ type ethereumChain struct {
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
 	blockCounter                     *blockcounter.EthereumBlockCounter
+	chainConfig                      *relaychain.Config
 
 	// transactionMutex allows interested parties to forcibly serialize
 	// transaction submission.
@@ -172,6 +175,12 @@ func connectWithClient(
 	}
 	pv.stakingContract = stakingContract
 
+	chainConfig, err := fetchChainConfig(pv)
+	if err != nil {
+		return nil, fmt.Errorf("could not fetch chain config: [%v]", err)
+	}
+	pv.chainConfig = chainConfig
+
 	return pv, nil
 }
 
@@ -267,4 +276,46 @@ func addressForContract(config ethereum.Config, contractName string) (*common.Ad
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
 func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	return ec.blockCounter, nil
+}
+
+func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
+	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
+	if err != nil {
+		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
+	}
+
+	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
+	if err != nil {
+		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
+	}
+
+	ticketSubmissionTimeout, err :=
+		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling TicketSubmissionTimeout: [%v]",
+			err,
+		)
+	}
+
+	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error calling ResultPublicationBlockStep: [%v]",
+			err,
+		)
+	}
+
+	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
+	if err != nil {
+		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
+	}
+
+	return &relaychain.Config{
+		GroupSize:                  int(groupSize.Int64()),
+		HonestThreshold:            int(threshold.Int64()),
+		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
+		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
+		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
+	}, nil
 }

@@ -51,10 +51,7 @@ func SignAndSubmit(
 	)
 	defer subscription.Unsubscribe()
 
-	chainConfig, err := relayChain.GetConfig()
-	if err != nil {
-		return err
-	}
+	chainConfig := relayChain.GetConfig()
 
 	relayEntryTimeoutChannel, err := blockCounter.BlockHeightWaiter(
 		startBlockHeight + chainConfig.RelayEntryTimeout,

@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain/local"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -59,7 +58,7 @@ func TestSubmitTickets(t *testing.T) {
 
 	for testName, test := range tests {
 		t.Run(testName, func(t *testing.T) {
-			chainConfig := &config.Chain{
+			chainConfig := &chain.Config{
 				GroupSize:               test.groupSize,
 				TicketSubmissionTimeout: 24,
 			}
