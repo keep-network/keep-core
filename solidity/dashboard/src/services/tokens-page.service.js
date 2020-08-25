@@ -14,6 +14,8 @@ import {
 } from "../contracts"
 import { ContractsLoaded, Web3Loaded } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
+import { getOperatorsOfOwner } from "./token-staking.service"
+import { isSameEthAddress } from "../utils/general.utils"
 
 export const fetchTokensPageData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -137,13 +139,14 @@ const getDelegations = async (
       } catch (error) {
         grantId = null
       }
-      if (isManagedGrant && grantId) {
-        const { grantee } = await grantContract.methods.getGrant(grantId).call()
-        managedGrantContractInstance = createManagedGrantContractInstance(
-          web3,
-          grantee
-        )
-      }
+    }
+
+    if (isManagedGrant && grantId) {
+      const { grantee } = await grantContract.methods.getGrant(grantId).call()
+      managedGrantContractInstance = createManagedGrantContractInstance(
+        web3,
+        grantee
+      )
     }
 
     const operatorData = {
@@ -204,13 +207,11 @@ const getOwnedDelegations = async (
   const { stakingContract } = await ContractsLoaded
 
   // Get operators
-  const operators = await stakingContract.methods
-    .operatorsOf(yourAddress)
-    .call()
+  const operators = await getOperatorsOfOwner(yourAddress)
 
-  // Scan `Staked` event by operator(indexed param) to get authorizer and beneeficiary.
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
   const operatorToDetails = (
-    await stakingContract.getPastEvents("Staked", {
+    await stakingContract.getPastEvents("OperatorStaked", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: operators },
     })
@@ -251,7 +252,7 @@ const getAllGranteeOperators = async (
   let newOperatorsStakeDetails = {}
   if (!isEmptyArray(Object.keys(newOperatorToGrantId))) {
     newOperatorsStakeDetails = (
-      await stakingContract.getPastEvents("Staked", {
+      await stakingContract.getPastEvents("OperatorStaked", {
         fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
         filter: { operator: Object.keys(newOperatorToGrantId) },
       })
@@ -269,7 +270,7 @@ const getAllGranteeOperators = async (
   )
 
   const operatorsDetailsMap = (
-    await stakingContract.getPastEvents("Staked", {
+    await stakingContract.getPastEvents("OperatorStaked", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
       filter: { operator: activeOperators },
     })
@@ -337,9 +338,21 @@ const getGranteeDelegations = async (
   const yourAddress = web3.eth.defaultAccount
   const { grantContract } = await ContractsLoaded
 
+  // `getGrants` function returns grants for a grant manager or grantee.
+  // So it's possible that the provided address is a grantee in grant A and a grant manager in grant B.
+  // In that case a `getGrants` function returns [A, B].
   const grantIds = new Set(
     await grantContract.methods.getGrants(yourAddress).call()
   )
+
+  // Filter out grants. We just want grants from the grantee's perspective
+  const granteeGrants = []
+  for (const grantId of grantIds) {
+    const { grantee } = await grantContract.methods.getGrant(grantId)
+    if (isSameEthAddress(grantee, yourAddress)) {
+      granteeGrants.push(grantId)
+    }
+  }
 
   const granteeOperators = new Set(
     await grantContract.methods.getGranteeOperators(yourAddress).call()
@@ -347,7 +360,7 @@ const getGranteeDelegations = async (
 
   const allOperators = await getAllGranteeOperators(
     Array.from(granteeOperators),
-    Array.from(grantIds),
+    granteeGrants,
     false
   )
 
