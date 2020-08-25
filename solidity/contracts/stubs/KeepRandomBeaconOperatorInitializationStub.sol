@@ -11,11 +11,13 @@ contract KeepRandomBeaconOperatorInitializationStub is KeepRandomBeaconOperator 
     constructor(
         address _serviceContract,
         address _stakingContract,
-        address _registryContract
+        address _registryContract,
+        address _gasPriceOracle
     ) KeepRandomBeaconOperator(
         _serviceContract,
         _stakingContract,
-        _registryContract
+        _registryContract,
+        _gasPriceOracle
     ) public {
     }
 

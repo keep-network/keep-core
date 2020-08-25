@@ -195,16 +195,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 	generatedEntry := make(chan *event.EntrySubmitted)
 
-	subscription, err := ec.OnRelayEntrySubmitted(
+	subscription := ec.OnRelayEntrySubmitted(
 		func(onChainEvent *event.EntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
-	if err != nil {
-		close(generatedEntry)
-		failPromise(err)
-		return relayEntryPromise
-	}
 
 	go func() {
 		for {
@@ -255,8 +250,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 func (ec *ethereumChain) OnRelayEntrySubmitted(
 	handle func(entry *event.EntrySubmitted),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
 		func(blockNumber uint64) {
 			handle(&event.EntrySubmitted{
 				BlockNumber: blockNumber,
@@ -269,12 +264,18 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 			)
 		},
 	)
+
+	if err != nil {
+		logger.Errorf("could not watch RelayEntrySubmitted event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
 			previousEntry []byte,
 			groupPublicKey []byte,
@@ -293,12 +294,17 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch RelayEntryRequested event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnGroupSelectionStarted(
 	handle func(groupSelectionStart *event.GroupSelectionStart),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
 			blockNumber uint64,
@@ -315,12 +321,17 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch GroupSelectionStarted event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
 			memberIndex *big.Int,
 			groupPublicKey []byte,
@@ -336,6 +347,11 @@ func (ec *ethereumChain) OnGroupRegistered(
 			return fmt.Errorf("entry of group key failed with: [%v]", err)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
@@ -367,8 +383,8 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
 			memberIndex *big.Int,
 			groupPublicKey []byte,
@@ -389,6 +405,11 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) ReportRelayEntryTimeout() error {
@@ -441,16 +462,11 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 	publishedResult := make(chan *event.DKGResultSubmission)
 
-	subscription, err := ec.OnDKGResultSubmitted(
+	subscription := ec.OnDKGResultSubmitted(
 		func(onChainEvent *event.DKGResultSubmission) {
 			publishedResult <- onChainEvent
 		},
 	)
-	if err != nil {
-		close(publishedResult)
-		failPromise(err)
-		return resultPublicationPromise
-	}
 
 	go func() {
 		for {

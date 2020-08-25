@@ -241,7 +241,8 @@ func initTestChannel(channelName string) (*key.NetworkPublic, net.BroadcastChann
 	if err != nil {
 		return nil, nil, err
 	}
-	localChannel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	localChannel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &mockNetMessage{}
 	})
 

@@ -32,12 +32,20 @@ func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedP
 	callbackGas := big.NewInt(0) // no callback
 	payment, err := euc.keepRandomBeaconServiceContract.EntryFeeEstimate(callbackGas)
 	if err != nil {
-		promise.Fail(err)
+		failErr := promise.Fail(err)
+		if failErr != nil {
+			logger.Errorf("could not fail the promise: [%v]", failErr)
+		}
+
 		return promise
 	}
 
 	onWatchError := func(err error) error {
-		promise.Fail(err)
+		failErr := promise.Fail(err)
+		if failErr != nil {
+			logger.Errorf("could not fail the promise: [%v]", failErr)
+		}
+
 		return err
 	}
 
@@ -52,12 +60,15 @@ func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedP
 				requestId,
 				blockNumber,
 			)
-			euc.keepRandomBeaconServiceContract.WatchRelayEntryGenerated(
+			_, _ = euc.keepRandomBeaconServiceContract.WatchRelayEntryGenerated(
 				func(_, entry *big.Int, blockNumber uint64) {
-					promise.Fulfill(&event.EntryGenerated{
+					fulfillErr := promise.Fulfill(&event.EntryGenerated{
 						Value:       entry,
 						BlockNumber: blockNumber,
 					})
+					if fulfillErr != nil {
+						logger.Errorf("could not fulfill the promise: [%v]", fulfillErr)
+					}
 				},
 				onWatchError,
 			)
@@ -67,7 +78,11 @@ func (euc *ethereumUtilityChain) RequestRelayEntry() *async.EventEntryGeneratedP
 
 	_, err = euc.keepRandomBeaconServiceContract.RequestRelayEntry(payment)
 	if err != nil {
-		promise.Fail(err)
+		failErr := promise.Fail(err)
+		if failErr != nil {
+			logger.Errorf("could not fail the promise: [%v]", failErr)
+		}
+
 		return promise
 	}
 

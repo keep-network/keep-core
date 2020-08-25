@@ -143,16 +143,13 @@ func (lc *localChannel) removeHandler(handler *messageHandler) {
 	}
 }
 
-func (lc *localChannel) RegisterUnmarshaler(
-	unmarshaler func() net.TaggedUnmarshaler,
-) (err error) {
+func (lc *localChannel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
 	tpe := unmarshaler().Type()
 
 	lc.unmarshalersMutex.Lock()
 	defer lc.unmarshalersMutex.Unlock()
 
 	lc.unmarshalersByType[tpe] = unmarshaler
-	return nil
 }
 
 func (lc *localChannel) SetFilter(filter net.BroadcastChannelFilter) error {

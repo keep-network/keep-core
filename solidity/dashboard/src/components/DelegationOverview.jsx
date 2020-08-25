@@ -26,9 +26,9 @@ const DelegationOverview = () => {
     keepTokenBalance,
     availableTopUps,
     topUpsAreFetching,
-    minimumStake,
     grants,
     initializationPeriod,
+    undelegationPeriod,
   } = useTokensPageContext()
 
   const ownedDelegations = useMemo(() => {
@@ -128,8 +128,8 @@ const DelegationOverview = () => {
           delegatedTokens={getDelegations()}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
           keepTokenBalance={keepTokenBalance}
-          minimumStake={minimumStake}
           grants={grants}
+          undelegationPeriod={undelegationPeriod}
         />
       </LoadingOverlay>
       <LoadingOverlay

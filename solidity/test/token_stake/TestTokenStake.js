@@ -177,6 +177,27 @@ describe('TokenStaking', function() {
         "Staking amount should be added to the operator balance"
       );
     })
+
+    it("should emit OperatorStaked event", async () => {
+      await delegate(operatorOne, stakingAmount)
+      
+      const operatorStakedEvents = await stakingContract.getPastEvents("OperatorStaked")
+      expect(operatorStakedEvents.length).to.equal(1)
+      const operatorStakedEvent = operatorStakedEvents[0]
+      expect(operatorStakedEvent.args['operator']).to.equal(operatorOne)
+      expect(operatorStakedEvent.args['beneficiary']).to.equal(beneficiary)
+      expect(operatorStakedEvent.args['authorizer']).to.equal(authorizer)
+    })
+
+    it("should emit StakeDelegated event", async () => {
+      await delegate(operatorOne, stakingAmount)
+
+      const stakeDelegatedEvents = await stakingContract.getPastEvents("StakeDelegated")
+      expect(stakeDelegatedEvents.length).to.equal(1)
+      const stakeDelegatedEvent = stakeDelegatedEvents[0]
+      expect(stakeDelegatedEvent.args['owner']).to.equal(owner)
+      expect(stakeDelegatedEvent.args['operator']).to.equal(operatorOne)
+    })
   })
 
   describe("cancelStake", async () => {
@@ -587,6 +608,39 @@ describe('TokenStaking', function() {
         undelegationBlock.timestamp,
         "Unexpected undelegation time"
       )
+    })
+
+    it("should withdraw no more tokens when called twice", async () => {
+      const tx = await delegate(operatorOne, stakingAmount)      
+      await delegate(operatorTwo, stakingAmount)
+      // staking contract should now have 2 stakingAmount of KEEP
+
+      const createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+  
+      await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
+  
+      await stakingContract.undelegate(operatorOne, {from: owner});
+      await time.increase(undelegationPeriod.addn(1));
+
+      // recover stake and capture owner and staking contract KEEP balances
+      await stakingContract.recoverStake(operatorOne);
+      const contractBalanceAfter = await token.balanceOf(stakingContract.address)
+      const ownerBalanceAfter = await token.balanceOf(owner)
+
+      // recover stake one more time and see that:
+      // - owner KEEP balance hasn't changed
+      // - staking contract KEEP balance hasn't changed
+      await stakingContract.recoverStake(operatorOne);
+          
+      await stakingContract.recoverStake(operatorOne);
+      expect(await token.balanceOf.call(owner)).to.eq.BN(
+        ownerBalanceAfter,
+        "Owner should receive no more tokens"
+      );
+      expect(await token.balanceOf.call(stakingContract.address)).to.eq.BN(
+        contractBalanceAfter,
+        "Staking contract should send no more tokens"
+      );
     })
   })
 

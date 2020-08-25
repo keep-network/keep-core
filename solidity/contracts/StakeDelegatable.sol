@@ -21,8 +21,6 @@ import "./utils/OperatorParams.sol";
 contract StakeDelegatable {
     using OperatorParams for uint256;
 
-    mapping(address => address[]) internal ownerOperators;
-
     mapping(address => Operator) internal operators;
 
     struct Operator {
@@ -30,12 +28,6 @@ contract StakeDelegatable {
         address owner;
         address payable beneficiary;
         address authorizer;
-    }
-
-    /// @notice Gets the list of operators of the specified address.
-    /// @return An array of addresses.
-    function operatorsOf(address _address) public view returns (address[] memory) {
-        return ownerOperators[_address];
     }
 
     /// @notice Gets the stake balance of the specified address.

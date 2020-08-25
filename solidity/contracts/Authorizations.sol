@@ -42,6 +42,8 @@ interface AuthorityDelegator {
 /// listed there as authorized. This interface is a verifier that support verification
 /// of contract authorization in case of authority delegation from the source contract.
 interface AuthorityVerifier {
+    /// @notice Returns true if the given operator contract has been approved
+    /// for use. The function never reverts.
     function isApprovedOperatorContract(address _operatorContract)
         external
         view
@@ -110,9 +112,8 @@ contract Authorizations is AuthorityVerifier {
 
     /// @notice Grant the sender the same authority as `delegatedAuthoritySource`
     /// @dev If `delegatedAuthoritySource` is an approved operator contract
-    /// and recognizes the claimant,
-    /// this relationship will be recorded in `delegatedAuthority`.
-    /// Later, the claimant can slash, seize, place locks etc.
+    /// and recognizes the claimant, this relationship will be recorded in
+    /// `delegatedAuthority`. Later, the claimant can slash, seize, place locks etc.
     /// on operators that have authorized the `delegatedAuthoritySource`.
     /// If the `delegatedAuthoritySource` is disabled with the panic button,
     /// any recipients of delegated authority from it will also be disabled.

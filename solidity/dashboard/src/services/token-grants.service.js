@@ -5,18 +5,20 @@ import {
 import { contractService } from "./contracts.service"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
-import web3Utils from "web3-utils"
 import {
   getGuaranteedMinimumStakingPolicyContractAddress,
   getPermissiveStakingPolicyContractAddress,
   createManagedGrantContractInstance,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
+  Web3Loaded,
+  ContractsLoaded,
 } from "../contracts"
 import BigNumber from "bignumber.js"
 import {
   fetchEscrowDepositsByGrantId,
   fetchWithdrawableAmountForDeposit,
   fetchDepositWithdrawnAmount,
+  fetchDepositAvailableAmount,
 } from "./token-staking-escrow.service"
 
 const fetchGrants = async (web3Context) => {
@@ -63,6 +65,7 @@ const getGrantDetails = async (
   const escrowOperatorsToWithdraw = []
   let escrowWithdrawableAmount = 0
   let escrowWithdrawTotalAmount = 0
+  let escrowAvailableTotalAmount = 0
 
   for (const event of escrowDepositsEvents) {
     const {
@@ -70,8 +73,13 @@ const getGrantDetails = async (
     } = event
     const withdrawable = await fetchWithdrawableAmountForDeposit(operator)
     const withdraw = await fetchDepositWithdrawnAmount(operator)
+    const availableAmount = await fetchDepositAvailableAmount(operator)
 
     escrowWithdrawTotalAmount = add(escrowWithdrawTotalAmount, withdraw)
+    escrowAvailableTotalAmount = add(
+      escrowAvailableTotalAmount,
+      availableAmount
+    )
 
     if (gt(withdrawable, 0)) {
       escrowOperatorsToWithdraw.push(operator)
@@ -127,7 +135,7 @@ const getGrantDetails = async (
     unlocked,
     released,
     readyToRelease,
-    availableToStake,
+    availableToStake: add(availableToStake, escrowAvailableTotalAmount),
     escrowOperatorsToWithdraw,
     withdrawableAmountGrantOnly,
     ...unlockingSchedule,
@@ -135,10 +143,9 @@ const getGrantDetails = async (
   }
 }
 
-const createGrant = async (web3Context, data, onTransationHashCallback) => {
-  const { yourAddress, token, grantContract } = web3Context
-  const tokenGrantContractAddress = grantContract.options.address
-  const { grantee, amount, duration, start, cliff, revocable } = data
+const getCreateTokenGrantExtraData = async (data) => {
+  const web3Context = await Web3Loaded
+  const { grantee, duration, start, cliff, revocable } = data
 
   /**
    * Extra data contains the following values:
@@ -156,7 +163,7 @@ const createGrant = async (web3Context, data, onTransationHashCallback) => {
   const extraData = web3Context.eth.abi.encodeParameters(
     ["address", "address", "uint256", "uint256", "uint256", "bool", "address"],
     [
-      yourAddress,
+      web3Context.eth.defaultAccount,
       grantee,
       duration,
       start,
@@ -166,19 +173,13 @@ const createGrant = async (web3Context, data, onTransationHashCallback) => {
     ]
   )
 
-  const formattedAmount = web3Utils
-    .toBN(amount)
-    .mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
-    .toString()
-
-  await token.methods
-    .approveAndCall(tokenGrantContractAddress, formattedAmount, extraData)
-    .send({ from: yourAddress })
-    .on("transactionHash", onTransationHashCallback)
+  return extraData
 }
 
-const fetchManagedGrants = async (web3Context) => {
-  const { managedGrantFactoryContract, yourAddress, web3 } = web3Context
+const fetchManagedGrants = async () => {
+  const web3 = await Web3Loaded
+  const yourAddress = web3.eth.defaultAccount
+  const { managedGrantFactoryContract } = await ContractsLoaded
 
   const managedGrantCreatedEvents = await managedGrantFactoryContract.getPastEvents(
     "ManagedGrantCreated",
@@ -263,7 +264,7 @@ const fetchGrantById = async (web3Context, grantId) => {
 
 export const tokenGrantsService = {
   fetchGrants,
-  createGrant,
+  getCreateTokenGrantExtraData,
   fetchManagedGrants,
   stake,
   getOperatorsFromManagedGrants,
