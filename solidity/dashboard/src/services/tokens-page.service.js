@@ -139,13 +139,14 @@ const getDelegations = async (
       } catch (error) {
         grantId = null
       }
-      if (isManagedGrant && grantId) {
-        const { grantee } = await grantContract.methods.getGrant(grantId).call()
-        managedGrantContractInstance = createManagedGrantContractInstance(
-          web3,
-          grantee
-        )
-      }
+    }
+
+    if (isManagedGrant && grantId) {
+      const { grantee } = await grantContract.methods.getGrant(grantId).call()
+      managedGrantContractInstance = createManagedGrantContractInstance(
+        web3,
+        grantee
+      )
     }
 
     const operatorData = {
