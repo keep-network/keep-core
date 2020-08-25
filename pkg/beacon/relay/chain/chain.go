@@ -130,9 +130,10 @@ type Interface interface {
 	// GetKeys returns the key pair used to attest for messages being sent to
 	// the chain.
 	GetKeys() (*operator.PrivateKey, *operator.PublicKey)
-	// MinimumStake return the current on-chain value representing the minimum
-	// necessary amount a client must lock up to submit a single ticket. This
-	// value can change over time according to the minimum stake schedule.
+	// MinimumStake returns the current on-chain value representing the minimum
+	// necessary amount of KEEP a client must lock up to participate in the
+	// threshold relay. This value can change over time according to the minimum
+	// stake schedule.
 	MinimumStake() (*big.Int, error)
 
 	GroupInterface
