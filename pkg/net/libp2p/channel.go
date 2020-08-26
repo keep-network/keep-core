@@ -327,7 +327,9 @@ func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 
 	err := c.pubsub.UnregisterTopicValidator(c.name)
 	if err != nil {
-		logger.Errorf(
+		// That error can occur when the filter is set for the first time
+		// and no prior filter exists.
+		logger.Debugf(
 			"could not unregister topic validator for channel [%v]: [%v]",
 			c.name,
 			err,

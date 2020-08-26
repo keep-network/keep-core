@@ -305,6 +305,8 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 }
 
 func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
+	logger.Infof("fetching relay chain config")
+
 	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
