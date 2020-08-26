@@ -33,13 +33,11 @@ const CopyStakeStep1 = ({
     fetchDelegations()
   }, [fetchDelegations])
 
-  console.log("selected delegation", selectedDelegation)
   return (
     <>
       <h2 style={styles.title}>Stake balances to be upgraded.</h2>
       <h3 className="text-grey-70" style={styles.tileTitle}>
-        Choose the stake delegations to be upgraded. You can select one or
-        multiple stake delegations.
+        Choose the stake delegation to be upgraded.
       </h3>
       <ul style={styles.delegationsList}>
         {isFetching ? (
