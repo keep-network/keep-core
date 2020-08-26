@@ -51,9 +51,9 @@ module.exports = async function () {
                         // so we can run the following match check.
                         typeof key === "string" &&
                         // Find keys that match exactly `Port`, `MiningCheckInterval`,
-                        // `MaxGasPrice` or end with `MetricsTick`.
+                        // `MaxGasPrice` or end with `MetricsTick` or `Limit`.
                         key.match(
-                          /(^Port|^MiningCheckInterval|^MaxGasPrice|MetricsTick)$/
+                          /(^Port|^MiningCheckInterval|^MaxGasPrice|MetricsTick|Limit)$/
                         )
                           ? value.toFixed(0) // convert float to integer
                           : false // do nothing
