@@ -2,7 +2,7 @@ import React from "react"
 import * as Icons from "../Icons"
 import Button from "../Button"
 
-const CopyStakeStep4 = () => {
+const CopyStakeStep4 = ({ onClose }) => {
   return (
     <>
       <Icons.KEEPTower />
@@ -16,7 +16,9 @@ const CopyStakeStep4 = () => {
           dashboard when it’s time to do this.
         </h4>
       </section>
-      <Button className="btn btn-primary btn-lg">cancel</Button>
+      <Button className="btn btn-primary btn-lg" onClick={onClose}>
+        close
+      </Button>
     </>
   )
 }
