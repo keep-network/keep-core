@@ -6,7 +6,7 @@ import {
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_FAILURE,
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_SUCCESS,
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
-  RESET_STEP,
+  RESET_COPY_STAKE_FLOW,
 } from "../actions"
 
 export const copyStakeInitialData = {
@@ -58,10 +58,12 @@ const copyStakeReducer = (state = copyStakeInitialData, action) => {
         selectedDelegation: action.payload,
       }
     }
-    case RESET_STEP: {
+    case RESET_COPY_STAKE_FLOW: {
       return {
         ...state,
         step: 0,
+        selectedDelegation: null,
+        selectedStrategy: null,
       }
     }
     default:
