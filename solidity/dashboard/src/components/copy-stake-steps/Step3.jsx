@@ -22,22 +22,71 @@ const subtitle = {
     "The total balance of the following stake will start the undelegation process from the old staking contract.",
 }
 
-const CopyStakeStep2 = ({
+const CopyStakeStep3 = ({
   delegation,
   strategy,
   incrementStep,
   decrementStep,
 }) => {
+  const getSubtitle = () => {
+    if (strategy === "WAIT_FLOW") {
+      if (
+        delegation &&
+        delegation.isUndelegation &&
+        !delegation.canRecoverStake
+      ) {
+        return `Your delegation has been already undelegated. You can recover stake after
+          ${delegation.undelegationCompleteAt.fromNow(true)}`
+      } else if (delegation && delegation.canRecoverStake) {
+        return `Your delegation has been already undelegated. Hit confirm recover to transfer back.`
+      } else {
+        return subtitle[strategy]
+      }
+    } else if (strategy === "COPY_STAKE_FLOW") {
+      return subtitle[strategy]
+    }
+  }
+
+  const getSubmitBtnText = () => {
+    if (
+      strategy === "WAIT_FLOW" &&
+      delegation &&
+      (delegation.canRecoverStake || delegation.isUndelegation)
+    ) {
+      return "confirm recover"
+    } else if (
+      strategy === "WAIT_FLOW" &&
+      delegation &&
+      !delegation.isUndelegation
+    ) {
+      return "confirm undelegation"
+    } else {
+      return "confirm upgrade"
+    }
+  }
+
+  const isBtnDisabled = () => {
+    if (
+      strategy === "WAIT_FLOW" &&
+      delegation.isUndelegation &&
+      !delegation.canRecoverStake
+    ) {
+      return true
+    }
+
+    return false
+  }
+
   return (
     <>
       <h2 style={styles.title}>Review your stake details below.</h2>
       <h3 className="text-grey-70" style={styles.subtitle}>
-        {subtitle[strategy]}
+        {getSubtitle()}
       </h3>
       <section className="tile" style={{ width: "100%" }}>
         <h3>
-          Stake balance to{" "}
-          {strategy === "COPY_STAKE_FLOW" ? "Copy" : "Undelegate"}
+          Stake balance to
+          {strategy === "COPY_STAKE_FLOW" ? " Copy" : " Undelegate"}
         </h3>
         <TokenAmount
           amount={delegation.amount}
@@ -55,8 +104,12 @@ const CopyStakeStep2 = ({
         >
           back
         </Button>
-        <Button onClick={incrementStep} className="btn btn-primary btn-lg">
-          confrim upgrade
+        <Button
+          disabled={isBtnDisabled()}
+          onClick={incrementStep}
+          className="btn btn-primary btn-lg"
+        >
+          {getSubmitBtnText()}
         </Button>
       </div>
     </>
@@ -70,4 +123,4 @@ const Address = ({ label, address }) => (
   </div>
 )
 
-export default CopyStakeStep2
+export default CopyStakeStep3
