@@ -13,6 +13,7 @@ import {
   SET_STRATEGY,
   SET_DELEGATION,
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
+  RESET_STEP,
 } from "../actions"
 import { connect } from "react-redux"
 import { useModal } from "../hooks/useModal"
@@ -31,12 +32,30 @@ const CopyStakePage = ({
   fetchOldDelegations,
   oldDelegations,
   oldDelegationsFetching,
+  resetSteps,
+  ...restProps
 }) => {
   const { closeModal } = useModal()
 
   const onClose = () => {
     closeModal()
     resetSteps()
+  }
+
+  const onSubmit = () => {
+    if (
+      selectedStrategy === "WAIT_FLOW" &&
+      selectedDelegation.canRecoverStake
+    ) {
+      restProps.recoverOldStake(selectedDelegation)
+    } else if (
+      selectedStrategy === "WAIT_FLOW" &&
+      !selectedDelegation.isUndelegation
+    ) {
+      restProps.undelegateOldStake(selectedDelegation)
+    } else if (selectedStrategy === "COPY_STAKE_FLOW") {
+      restProps.copyStake(selectedDelegation)
+    }
   }
 
   const renderContent = () => {
@@ -68,12 +87,13 @@ const CopyStakePage = ({
         return (
           <CopyStakeStep3
             {...defaultProps}
+            incrementStep={onSubmit}
             strategy={selectedStrategy}
             delegation={selectedDelegation || {}}
           />
         )
       case 4:
-        return <CopyStakeStep4 />
+        return <CopyStakeStep4 onClose={onClose} />
     }
   }
 
@@ -109,6 +129,13 @@ const mapDispatchToProps = (dispatch) => {
       dispatch({ type: SET_DELEGATION, payload: delegation }),
     fetchOldDelegations: () =>
       dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
+    undelegateOldStake: (delegation) =>
+      dispatch({ type: "copy-stake/undelegate_request", payload: delegation }),
+    recoverOldStake: (delegation) =>
+      dispatch({ type: "copy-stake/recover_request", payload: delegation }),
+    resetSteps: () => dispatch({ type: RESET_STEP }),
+    copyStake: (delegation) =>
+      dispatch({ type: "copy-stake/copy-stake_request", payload: delegation }),
   }
 }
 

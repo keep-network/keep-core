@@ -95,10 +95,7 @@ const getDelegations = async (
       .call()
 
     let grantId
-    let managedGrantContractInstance = createManagedGrantContractInstance(
-      web3,
-      operatorAddress
-    )
+    let managedGrantContractInstance
     if (isFromGrant && !grantId) {
       try {
         const grantStakeDetails = await grantContract.methods
