@@ -20,7 +20,7 @@ const TokenOverviewPage = () => {
     refreshGrants,
     refreshData,
     isFetching,
-    minimumStake,
+    undelegationPeriod,
   } = useTokensPageContext()
   const cancelStakeSuccessCallback = useCallback(() => {
     refreshGrants()
@@ -66,8 +66,8 @@ const TokenOverviewPage = () => {
           delegatedTokens={delegations}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
           keepTokenBalance={keepTokenBalance}
-          minimumStake={minimumStake}
           grants={grants}
+          undelegationPeriod={undelegationPeriod}
         />
       </LoadingOverlay>
       {!isEmptyArray(undelegations) && (

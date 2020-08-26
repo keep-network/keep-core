@@ -106,11 +106,6 @@ spec:
               secretKeyRef:
                 name: eth-network-internal
                 key: contract-owner-eth-account-private-key
-          - name: KEEP_CLIENT_ETH_ACCOUNT_ADDRESS
-            valueFrom:
-              configMapKeyRef:
-                name: eth-account-info
-                key: account-2-address
           - name: KEEP_CLIENT_ETH_KEYFILE_PATH
             value: /mnt/keep-client/keyfile/account-2-keyfile
           - name: KEEP_CLIENT_PEERS

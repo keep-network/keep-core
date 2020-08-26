@@ -3,7 +3,6 @@ package chain
 import (
 	"math/big"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
@@ -30,12 +29,12 @@ type RelayEntryInterface interface {
 	// notification of a new, valid relay entry is seen.
 	OnRelayEntrySubmitted(
 		func(entry *event.EntrySubmitted),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// OnRelayEntryRequested is a callback that is invoked when an on-chain
 	// notification of a new, valid relay request is seen.
 	OnRelayEntryRequested(
 		func(request *event.Request),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// ReportRelayEntryTimeout notifies the chain when a selected group which was
 	// supposed to submit a relay entry, did not deliver it within a specified
 	// time frame (relayEntryTimeout) counted in blocks.
@@ -57,7 +56,7 @@ type GroupSelectionInterface interface {
 	// group selection started and the contract is ready to accept tickets.
 	OnGroupSelectionStarted(
 		func(groupSelectionStarted *event.GroupSelectionStart),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// SubmitTicket submits a ticket corresponding to the virtual staker to
 	// the chain, and returns a promise to track the submission. The promise
 	// is fulfilled with the entry as seen on-chain, or failed if there is an
@@ -77,7 +76,7 @@ type GroupRegistrationInterface interface {
 	// notification of a new, valid group being registered is seen.
 	OnGroupRegistered(
 		func(groupRegistration *event.GroupRegistration),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// Checks if a group with the given public key is considered as
 	// stale on-chain. Group is considered as stale if it is expired and when
 	// its expiration time and potentially executed operation timeout are both
@@ -113,7 +112,7 @@ type DistributedKeyGenerationInterface interface {
 	// notification of a new, valid submitted result is seen.
 	OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission),
-	) (subscription.EventSubscription, error)
+	) subscription.EventSubscription
 	// IsGroupRegistered checks if group with the given public key is registered
 	// on-chain.
 	IsGroupRegistered(groupPublicKey []byte) (bool, error)
@@ -126,12 +125,48 @@ type DistributedKeyGenerationInterface interface {
 // the anchoring blockchain on.
 type Interface interface {
 	// GetConfig returns the expected configuration of the threshold relay.
-	GetConfig() (*config.Chain, error)
+	GetConfig() *Config
 	// GetKeys returns the key pair used to attest for messages being sent to
 	// the chain.
 	GetKeys() (*operator.PrivateKey, *operator.PublicKey)
+	// MinimumStake returns the current on-chain value representing the minimum
+	// necessary amount of KEEP a client must lock up to participate in the
+	// threshold relay. This value can change over time according to the minimum
+	// stake schedule.
+	MinimumStake() (*big.Int, error)
 
 	GroupInterface
 	RelayEntryInterface
 	DistributedKeyGenerationInterface
+}
+
+// Config contains the config data needed for the relay to operate.
+type Config struct {
+	// GroupSize is the size of a group in the threshold relay.
+	GroupSize int
+	// HonestThreshold is the minimum number of active participants behaving
+	// according to the protocol needed to generate a new relay entry.
+	HonestThreshold int
+	// TicketSubmissionTimeout is the duration (in blocks) the staker has to
+	// submit any tickets to candidate to a new group.
+	TicketSubmissionTimeout uint64
+	// ResultPublicationBlockStep is the duration (in blocks) that has to pass
+	// before group member with the given index is eligible to submit the
+	// result.
+	// Nth player becomes eligible to submit the result after
+	// T_dkg + (N-1) * T_step
+	// where T_dkg is time for phases 1-12 to complete and T_step is the result
+	// publication block step.
+	ResultPublicationBlockStep uint64
+	// RelayEntryTimeout is a timeout in blocks on-chain for a relay
+	// entry to be published by the selected group. Blocks are
+	// counted from the moment relay request occur.
+	RelayEntryTimeout uint64
+}
+
+// DishonestThreshold is the maximum number of misbehaving participants for
+// which it is still possible to generate a new relay entry.
+// Misbehaviour is any misconduct to the protocol, including inactivity.
+func (c *Config) DishonestThreshold() int {
+	return c.GroupSize - c.HonestThreshold
 }

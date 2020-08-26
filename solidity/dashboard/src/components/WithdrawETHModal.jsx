@@ -3,46 +3,47 @@ import { getErrorsObj } from "../forms/common-validators"
 import { withFormik } from "formik"
 import web3Utils from "web3-utils"
 import { useWeb3Context } from "./WithWeb3Context"
-import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
-import { useShowMessage, messageType } from "./Message"
 import * as Icons from "./Icons"
 import AvailableEthAmount from "./AvailableEthAmount"
 import AvailableETHForm from "./AvailableETHForm"
+import {
+  withdrawUnbondedEth,
+  withdrawUnbondedEthAsManagedGrantee,
+} from "../actions/web3"
+import { connect } from "react-redux"
 
 const WithdrawETHModal = ({
   operatorAddress,
   availableETH,
   closeModal,
   managedGrantAddress,
+  withdrawUnbondedEth,
+  withdrawUnbondedEthAsManagedGrantee,
 }) => {
-  const web3Context = useWeb3Context()
-  const { web3 } = web3Context
-  const showMessage = useShowMessage()
+  const { web3 } = useWeb3Context()
 
   const onSubmit = useCallback(
-    async (formValues, onTransactionHashCallback) => {
+    async (formValues, awaitingPromise) => {
       const { ethAmount } = formValues
-      try {
-        await tbtcAuthorizationService.withdrawUnbondedEth(
-          web3Context,
-          { operatorAddress, ethAmount, managedGrantAddress },
-          onTransactionHashCallback
+      const weiToWithdraw = web3Utils.toWei(ethAmount.toString(), "ether")
+
+      if (managedGrantAddress) {
+        withdrawUnbondedEthAsManagedGrantee(
+          weiToWithdraw,
+          operatorAddress,
+          managedGrantAddress,
+          awaitingPromise
         )
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Withdrawal of ETH successfully completed",
-        })
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Withdrawal of ETH has failed ",
-          content: error.message,
-        })
-        throw error
+      } else {
+        withdrawUnbondedEth(weiToWithdraw, operatorAddress, awaitingPromise)
       }
     },
-    [operatorAddress, showMessage, managedGrantAddress, web3Context]
+    [
+      operatorAddress,
+      managedGrantAddress,
+      withdrawUnbondedEth,
+      withdrawUnbondedEthAsManagedGrantee,
+    ]
   )
 
   return (
@@ -68,7 +69,12 @@ const WithdrawETHModal = ({
   )
 }
 
-export default React.memo(WithdrawETHModal)
+const mapDispatchToProps = {
+  withdrawUnbondedEth,
+  withdrawUnbondedEthAsManagedGrantee,
+}
+
+export default React.memo(connect(null, mapDispatchToProps)(WithdrawETHModal))
 
 const WithdrawETHFormik = withFormik({
   validateOnChange: false,

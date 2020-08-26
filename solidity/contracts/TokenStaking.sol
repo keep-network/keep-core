@@ -42,8 +42,11 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     using Locks for Locks.Storage;
     using TopUps for TopUps.Storage;
 
-    event Staked(
-        address owner,
+    event StakeDelegated(
+        address indexed owner,
+        address indexed operator
+    );
+    event OperatorStaked(
         address indexed operator,
         address indexed beneficiary,
         address indexed authorizer,
@@ -51,7 +54,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     );
     event StakeOwnershipTransferred(
         address indexed operator,
-        address newOwner
+        address indexed newOwner
     );
     event TopUpInitiated(address indexed operator, uint256 topUp);
     event TopUpCompleted(address indexed operator, uint256 newAmount);
@@ -63,7 +66,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
-    uint256 public minimumStakeScheduleStart;
+    uint256 public deployedAt;
     uint256 public initializationPeriod; // varies between mainnet and testnet
 
     ERC20Burnable internal token;
@@ -76,6 +79,10 @@ contract TokenStaking is Authorizations, StakeDelegatable {
 
     uint256 internal constant twoWeeks = 1209600; // [sec]
     uint256 internal constant twoMonths = 5184000; // [sec]
+
+    // 2020-04-28; the date of deploying KEEP token.
+    // TX:  0xea22d72bc7de4c82798df7194734024a1f2fd57b173d0e065864ff4e9d3dc014
+    uint256 internal constant minimumStakeScheduleStart = 1588042366;
 
     /// @notice Creates a token staking contract for a provided Standard ERC20Burnable token.
     /// @param _token KEEP token contract.
@@ -96,7 +103,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         escrow = _escrow;
         registry = _registry;
         initializationPeriod = _initializationPeriod;
-        minimumStakeScheduleStart = block.timestamp;
+        deployedAt = block.timestamp;
     }
 
     /// @notice Returns minimum amount of KEEP that allows sMPC cluster client to
@@ -114,7 +121,7 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// The undelegation period is two weeks for the first two months and
     /// two months after that.
     function undelegationPeriod() public view returns(uint256) {
-        return block.timestamp < minimumStakeScheduleStart.add(twoMonths) ? twoWeeks : twoMonths;
+        return block.timestamp < deployedAt.add(twoMonths) ? twoWeeks : twoMonths;
     }
 
     /// @notice Receives approval of token transfer and stakes the approved
@@ -125,6 +132,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// from a grant, top-up has to be performed from the same grant. If the
     /// delegation was done using liquid tokens, only liquid tokens from the
     /// same owner can be used to top-up the stake.
+    /// Top-up can not be cancelled so it is important to be careful with the
+    /// amount of KEEP added to the stake.
     /// @dev Requires that the provided token contract be the same one linked to
     /// this contract.
     /// @param _from The owner of the tokens who approved them to transfer.
@@ -143,7 +152,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         bytes memory _extraData
     ) public {
         require(ERC20Burnable(_token) == token, "Unrecognized token");
-        require(_value >= minimumStake(), "Less than the minimum stake");
         require(_extraData.length >= 60, "Corrupted delegation data");
 
         // Transfer tokens to this contract.
@@ -173,6 +181,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
         address _operator,
         bytes memory _extraData
     ) internal {
+        require(_value >= minimumStake(), "Less than the minimum stake");
+        
         address payable beneficiary = address(uint160(_extraData.toAddress(0)));
         address authorizer = _extraData.toAddress(40);
 
@@ -182,7 +192,6 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             beneficiary,
             authorizer
         );
-        ownerOperators[_from].push(_operator);
 
         grantStaking.tryCapturingDelegationData(
             tokenGrant,
@@ -192,7 +201,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
             _extraData
         );
 
-        emit Staked(_from, _operator, beneficiary, authorizer, _value);
+        emit StakeDelegated(_from, _operator);
+        emit OperatorStaked(_operator, beneficiary, authorizer, _value);
     }
 
     /// @notice Performs top-up to an existing operator. Tokens added during
@@ -206,6 +216,8 @@ contract TokenStaking is Authorizations, StakeDelegatable {
     /// delegated from a grant, top-up has to be performed from the same grant.
     /// If the delegation was done using liquid tokens, only liquid tokens from
     /// the same owner can be used to top-up the stake.
+    /// Top-up can not be cancelled so it is important to be careful with the
+    /// amount of KEEP added to the stake.
     /// @param _from The owner of the tokens who approved them to transfer.
     /// @param _value Approved amount for the transfer and top-up to
     /// an existing stake.

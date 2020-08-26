@@ -20,10 +20,7 @@ func TestSubmitDKGResult(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	config, err := chainHandle.ThresholdRelay().GetConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
+	config := chainHandle.ThresholdRelay().GetConfig()
 
 	result := &relayChain.DKGResult{
 		GroupPublicKey: []byte{123, 45},
@@ -169,10 +166,7 @@ func TestConcurrentPublishResult(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			config, err := chainHandle.ThresholdRelay().GetConfig()
-			if err != nil {
-				t.Fatal(err)
-			}
+			config := chainHandle.ThresholdRelay().GetConfig()
 
 			tStep := config.ResultPublicationBlockStep
 
