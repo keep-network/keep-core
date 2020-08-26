@@ -22,7 +22,12 @@ const options = [
   },
 ]
 
-const CopyStakeStep2 = ({ incrementStep, selectedStrategy, setStrategy }) => {
+const CopyStakeStep2 = ({
+  incrementStep,
+  decrementStep,
+  selectedStrategy,
+  setStrategy,
+}) => {
   const onSetStrategy = (event) => {
     setStrategy(event.target.value)
   }
@@ -42,13 +47,21 @@ const CopyStakeStep2 = ({ incrementStep, selectedStrategy, setStrategy }) => {
           />
         ))}
       </ul>
-      <Button
-        className="btn btn-primary btn-lg"
-        onClick={incrementStep}
-        disabled={!selectedStrategy}
-      >
-        review stake
-      </Button>
+      <div className="flex row space-between self-end">
+        <Button
+          className="btn btn-transparent btn-lg mr-2"
+          onClick={decrementStep}
+        >
+          back
+        </Button>
+        <Button
+          className="btn btn-primary btn-lg"
+          onClick={incrementStep}
+          disabled={!selectedStrategy}
+        >
+          review stake
+        </Button>
+      </div>
     </>
   )
 }
