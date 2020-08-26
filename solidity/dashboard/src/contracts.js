@@ -15,6 +15,7 @@ import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import OldTokenStaking from "./old-contracts-artifacts/TokenStaking.json"
+import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -29,6 +30,8 @@ import {
   TBTC_SYSTEM_CONTRACT_NAME,
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
+  STAKING_PORT_BACKER_CONTRACT_NAME,
+  OLD_TOKEN_STAKING_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -43,6 +46,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [TBTC_TOKEN_CONTRACT_NAME]: 0,
   [TBTC_SYSTEM_CONTRACT_NAME]: 0,
   [TOKEN_STAKING_ESCROW_CONTRACT_NAME]: 0,
+  [STAKING_PORT_BACKER_CONTRACT_NAME]: 0,
 }
 
 const contracts = [
@@ -89,7 +93,11 @@ const contracts = [
     { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
     BondedECDSAKeepFactory,
   ],
-  [{ contractName: "oldTokenStakingContract" }, OldTokenStaking],
+  [{ contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }, OldTokenStaking],
+  [
+    { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
+    StakingPortBacker,
+  ],
 ]
 
 export async function getKeepTokenContractDeployerAddress(web3) {
