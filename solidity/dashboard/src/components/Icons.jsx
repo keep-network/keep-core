@@ -30,6 +30,7 @@ import { ReactComponent as KEEPTower } from "../static/svg/keep-tower.svg"
 import { ReactComponent as CarDashboardSpeed } from "../static/svg/car-dashboard-speed.svg"
 import { ReactComponent as Fees } from "../static/svg/fees.svg"
 import { ReactComponent as UserFriendly } from "../static/svg/user-friendly.svg"
+import { ReactComponent as Alert } from "../static/svg/alert.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -506,4 +507,5 @@ export {
   CarDashboardSpeed,
   UserFriendly,
   Fees,
+  Alert,
 }

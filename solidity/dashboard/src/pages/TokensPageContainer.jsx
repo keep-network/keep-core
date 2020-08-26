@@ -33,6 +33,10 @@ import {
 } from "../contracts"
 import TokenOverviewPage from "./TokenOverviewPage"
 import { getEventsFromTransaction } from "../utils/ethereum.utils"
+import Banner, { BANNER_TYPE } from "../components/Banner"
+import Button from "../components/Button"
+import { useModal } from "../hooks/useModal"
+import CopyStakePage from "./CopyStakePage"
 
 const TokensPageContainer = () => {
   useSubscribeToStakedEvent()
@@ -51,13 +55,31 @@ const TokensPageContainer = () => {
     }
   }, [hash, dispatch])
 
+  const { openModal } = useModal()
+
   return (
-    <Switch>
-      <Route exact path="/tokens/overview" component={TokenOverviewPage} />
-      <Route exact path="/tokens/delegate" component={TokensPage} />
-      <Route exact path="/tokens/grants" component={TokenGrantsPage} />
-      <Redirect to="/tokens/overview" />
-    </Switch>
+    <>
+      <Banner
+        type={BANNER_TYPE.NOTIFICATION}
+        withIcon
+        title="New upgrade available for your stake delegations!"
+        titleClassName="h4"
+        subtitle="Upgrade now to keep earning rewards on your stake."
+      >
+        <Button
+          className="btn btn-tertiary btn-sm ml-a"
+          onClick={() => openModal(<CopyStakePage />, { isFullScreen: true })}
+        >
+          upgrade my stake
+        </Button>
+      </Banner>
+      <Switch>
+        <Route exact path="/tokens/overview" component={TokenOverviewPage} />
+        <Route exact path="/tokens/delegate" component={TokensPage} />
+        <Route exact path="/tokens/grants" component={TokenGrantsPage} />
+        <Redirect to="/tokens/overview" />
+      </Switch>
+    </>
   )
 }
 
