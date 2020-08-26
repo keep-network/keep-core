@@ -15,6 +15,8 @@ import {
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
 } from "../actions"
 import { connect } from "react-redux"
+import { useModal } from "../hooks/useModal"
+import * as Icons from "../components/Icons"
 
 const copyStakeSteps = ["balance", "upgrade", "review", "complete"]
 
@@ -30,6 +32,13 @@ const CopyStakePage = ({
   oldDelegations,
   oldDelegationsFetching,
 }) => {
+  const { closeModal } = useModal()
+
+  const onClose = () => {
+    closeModal()
+    resetSteps()
+  }
+
   const renderContent = () => {
     const defaultProps = { incrementStep, decrementStep }
     switch (step) {
@@ -76,6 +85,10 @@ const CopyStakePage = ({
         </div>
       </nav>
       <main className="copy-stake__content-wrapper">
+        <div className="copy-stake__close" onClick={onClose}>
+          <Icons.Cross className="mr-1" width={16} height={16} />
+          <h5>close</h5>
+        </div>
         <div className="copy-stake__content">{renderContent()}</div>
       </main>
     </div>
