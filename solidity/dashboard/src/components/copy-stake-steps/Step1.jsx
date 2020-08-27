@@ -39,11 +39,13 @@ const CopyStakeStep1 = ({
       <h3 className="text-grey-70" style={styles.tileTitle}>
         Choose the stake delegation to be upgraded.
       </h3>
-      <ul style={styles.delegationsList}>
-        {isFetching ? (
-          <KeepLoadingIndicator />
-        ) : (
-          delegations.map((delegation) => (
+      {isFetching ? (
+        <div className="flex flex-1 center">
+          <KeepLoadingIndicator width={300} height={300} />
+        </div>
+      ) : (
+        <ul style={styles.delegationsList}>
+          {delegations.map((delegation) => (
             <DelegationItem
               key={delegation.operatorAddress}
               delegation={delegation}
@@ -54,9 +56,9 @@ const CopyStakeStep1 = ({
                   delegation.operatorAddress
               }
             />
-          ))
-        )}
-      </ul>
+          ))}
+        </ul>
+      )}
       <div className="flex row space-between self-end">
         <Button
           className="btn btn-transparent btn-lg mr-2"

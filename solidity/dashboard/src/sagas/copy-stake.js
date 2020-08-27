@@ -1,4 +1,4 @@
-import { takeLatest, call, put } from "redux-saga/effects"
+import { takeLatest, call, put, delay } from "redux-saga/effects"
 import {
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_SUCCESS,
@@ -15,6 +15,7 @@ import { messageType } from "../components/Message"
 
 function* fetchOldStakingDelegations() {
   try {
+    yield delay(500)
     const { undelegationPeriod, intializationPeriod, delegations } = yield call(
       fetchOldDelegations
     )

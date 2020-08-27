@@ -80,7 +80,7 @@ const CopyStakeStep3 = ({
   }
 
   return isProcessing ? (
-    <KeepLoadingIndicator />
+    <KeepLoadingIndicator width={300} height={300} />
   ) : (
     <>
       <h2 style={styles.title}>Review your stake details below.</h2>
