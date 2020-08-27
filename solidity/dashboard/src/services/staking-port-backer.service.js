@@ -52,20 +52,38 @@ export const fetchOldDelegations = async () => {
     await tokenGrantsService.getOperatorsFromManagedGrants()
   ).filter(filterOutByOperator(copiedStakesOperator))
 
+  // We want to skip delegations that were undelegated after `StakingPortBacker` deploy.
+  const operatorsToSkip = (
+    await oldTokenStakingContract.getPastEvents("Undelegated", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      filter: { operator: [] },
+    })
+  ).map((_) => _.returnValues.operator)
+
+  const filteredOwnedOperators = Array.from(operatorsAddressesSet).filter(
+    filterOutByOperator(operatorsToSkip)
+  )
+  const filteredGranteeOperators = Array.from(granteeOperatorsSet).filter(
+    filterOutByOperator(operatorsToSkip)
+  )
+  const filteredManagedGrantOperators = managedGrantOperators.filter(
+    filterOutByOperator(operatorsToSkip)
+  )
+
   const ownedDelegations = await getDelegations(
-    operatorsAddressesSet,
+    filteredOwnedOperators,
     initializationPeriod,
     undelegationPeriod
   )
 
   const granteeDelegations = await getDelegations(
-    granteeOperatorsSet,
+    filteredGranteeOperators,
     initializationPeriod,
     undelegationPeriod,
     true
   )
   const managedGrantsDelegations = await getDelegations(
-    managedGrantOperators,
+    filteredManagedGrantOperators,
     initializationPeriod,
     undelegationPeriod,
     true,
