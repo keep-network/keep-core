@@ -80,7 +80,7 @@ const Undelegations = ({ undelegations, title }) => {
           header=""
           field=""
           renderContent={(undelegation) =>
-            !undelegation.isCopiedStake ? (
+            undelegation.isCopiedStake ? (
               <StatusBadge
                 status={BADGE_STATUS.COMPLETE}
                 className="self-start"
