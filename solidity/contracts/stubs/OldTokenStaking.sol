@@ -3,9 +3,7 @@ pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "../utils/OperatorParams.sol";
 
-/// Staking contract stub for testing purposes that mimics the behavior of:
-/// - v1.0.1 TokenStaking (Mainnet)
-/// - 1.3.0-rc.0 TokenStaking (Ropsten)
+/// Staking contract stub for testing purposes of copy stake flow.
 contract OldTokenStaking {
     using OperatorParams for uint256;
 
