@@ -11,6 +11,7 @@ import {
   ContractsLoaded,
 } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
+import { isEmptyArray } from "../utils/array.utils"
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress, grantContract, eth, web3 } = web3Context
@@ -189,14 +190,17 @@ export const getOperatorsOfBeneficiary = async (web3Context, beneficiary) => {
   ).map((_) => _.returnValues.operator)
 }
 
-export const getOperatorsOfOwner = async (owner) => {
+export const getOperatorsOfOwner = async (owner, operatorsFilterParam = []) => {
   const { stakingContract } = await ContractsLoaded
+  const filterParam = isEmptyArray(operatorsFilterParam)
+    ? {}
+    : { operator: operatorsFilterParam }
 
   const ownerDelegations = await stakingContract.getPastEvents(
     "StakeDelegated",
     {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { owner },
+      filter: { owner, ...filterParam },
     }
   )
 
@@ -204,7 +208,7 @@ export const getOperatorsOfOwner = async (owner) => {
     "StakeOwnershipTransferred",
     {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { newOwner: owner },
+      filter: { newOwner: owner, ...filterParam },
     }
   )
 

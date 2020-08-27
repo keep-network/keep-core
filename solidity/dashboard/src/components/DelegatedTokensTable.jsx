@@ -118,38 +118,48 @@ const DelegatedTokensTable = ({
           headerStyle={{ width: "25%" }}
           header=""
           field=""
-          renderContent={(delegation) => (
-            <div className="flex row center space-evenly">
-              <div>
-                <UndelegateStakeButton
-                  isInInitializationPeriod={delegation.isInInitializationPeriod}
-                  isFromGrant={delegation.isFromGrant}
-                  btnClassName="btn btn-sm btn-secondary"
-                  operator={delegation.operatorAddress}
-                  isManagedGrant={delegation.isManagedGrant}
-                  managedGrantContractInstance={
-                    delegation.managedGrantContractInstance
-                  }
-                  successCallback={
-                    delegation.isInInitializationPeriod
-                      ? cancelStakeSuccessCallback
-                      : () => {}
-                  }
-                  undelegationPeriod={undelegationPeriod}
-                />
+          renderContent={(delegation) =>
+            delegation.isCopiedStake ? (
+              <StatusBadge
+                status={BADGE_STATUS.COMPLETE}
+                className="self-start"
+                text="stake copied"
+              />
+            ) : (
+              <div className="flex row center space-evenly">
+                <div>
+                  <UndelegateStakeButton
+                    isInInitializationPeriod={
+                      delegation.isInInitializationPeriod
+                    }
+                    isFromGrant={delegation.isFromGrant}
+                    btnClassName="btn btn-sm btn-secondary"
+                    operator={delegation.operatorAddress}
+                    isManagedGrant={delegation.isManagedGrant}
+                    managedGrantContractInstance={
+                      delegation.managedGrantContractInstance
+                    }
+                    successCallback={
+                      delegation.isInInitializationPeriod
+                        ? cancelStakeSuccessCallback
+                        : () => {}
+                    }
+                    undelegationPeriod={undelegationPeriod}
+                  />
+                </div>
+                <div>
+                  <SubmitButton
+                    className="btn btn-secondary btn-sm"
+                    onSubmitAction={(awaitingPromise) =>
+                      onTopUpBtn(delegation, awaitingPromise)
+                    }
+                  >
+                    add keep
+                  </SubmitButton>
+                </div>
               </div>
-              <div>
-                <SubmitButton
-                  className="btn btn-secondary btn-sm"
-                  onSubmitAction={(awaitingPromise) =>
-                    onTopUpBtn(delegation, awaitingPromise)
-                  }
-                >
-                  add keep
-                </SubmitButton>
-              </div>
-            </div>
-          )}
+            )
+          }
         />
       </DataTable>
     </Tile>
