@@ -1,21 +1,38 @@
 import web3Utils from "web3-utils"
 import { sub, gt } from "../utils/arithmetics.utils"
 import moment from "moment"
-import { tokenGrantsService } from "../services/token-grants.service"
+import { tokenGrantsService } from "./token-grants.service"
 import {
   createManagedGrantContractInstance,
   Web3Loaded,
   ContractsLoaded,
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
 
-export const fetchOldDelegations = async (web3Context) => {
+const filterOutByOperator = (toFilterOut) => (operator) =>
+  !toFilterOut.includes(operator)
+
+export const fetchOldDelegations = async () => {
   const web3 = await Web3Loaded
   const yourAddress = web3.eth.defaultAccount
-  const { oldTokenStakingContract, grantContract } = await ContractsLoaded
+  const {
+    oldTokenStakingContract,
+    grantContract,
+    stakingPortBackerContract,
+  } = await ContractsLoaded
 
-  const operatorsAddresses = await oldTokenStakingContract.methods
-    .operatorsOf(yourAddress)
-    .call()
+  // We want to skip the already copied stakes. To get copied stakes we should scan
+  // the `StakedCopied` event from the `StakingPortBacker` contract.
+  const copiedStakesOperator = (
+    await stakingPortBackerContract.getPastEvents("StakeCopied", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      filter: { owner: yourAddress },
+    })
+  ).map((_) => _.returnValues.operator)
+
+  const operatorsAddresses = (
+    await oldTokenStakingContract.methods.operatorsOf(yourAddress).call()
+  ).filter(filterOutByOperator(copiedStakesOperator))
 
   const undelegationPeriod = await oldTokenStakingContract.methods
     .undelegationPeriod()
@@ -26,12 +43,14 @@ export const fetchOldDelegations = async (web3Context) => {
     .call()
 
   const operatorsAddressesSet = new Set(operatorsAddresses)
-  const granteeOperators = await grantContract.methods
-    .getGranteeOperators(yourAddress)
-    .call()
+  const granteeOperators = (
+    await grantContract.methods.getGranteeOperators(yourAddress).call()
+  ).filter(filterOutByOperator(copiedStakesOperator))
 
   const granteeOperatorsSet = new Set(granteeOperators)
-  const managedGrantOperators = await tokenGrantsService.getOperatorsFromManagedGrants()
+  const managedGrantOperators = (
+    await tokenGrantsService.getOperatorsFromManagedGrants()
+  ).filter(filterOutByOperator(copiedStakesOperator))
 
   const ownedDelegations = await getDelegations(
     operatorsAddressesSet,

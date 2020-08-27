@@ -250,7 +250,7 @@ const getOperatorsFromManagedGrants = async () => {
     grenteeOperators.forEach(operators.add, operators)
   }
 
-  return operators
+  return Array.from(operators)
 }
 
 const fetchGrantById = async (web3Context, grantId) => {

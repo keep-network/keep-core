@@ -5,7 +5,7 @@ import {
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_FAILURE,
   INCREMENT_STEP,
 } from "../actions"
-import { fetchOldDelegations } from "../services/old-staking.service"
+import { fetchOldDelegations } from "../services/staking-port-backer.service"
 import { getContractsContext } from "./utils"
 import { sendTransaction } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
