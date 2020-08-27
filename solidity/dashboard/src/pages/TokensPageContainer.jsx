@@ -106,6 +106,7 @@ const useSubscribeToStakedEvent = () => {
       grantContract,
       tokenStakingEscrow,
       stakingContract,
+      stakingPortBackerContract,
     } = await ContractsLoaded
     const {
       transactionHash,
@@ -117,6 +118,7 @@ const useSubscribeToStakedEvent = () => {
       [stakingContract, "OperatorStaked"],
       [grantContract, "TokenGrantStaked"],
       [tokenStakingEscrow, "DepositRedelegated"],
+      [stakingPortBackerContract, "StakeCopied"],
     ]
 
     const emittedEvents = await getEventsFromTransaction(
@@ -137,6 +139,25 @@ const useSubscribeToStakedEvent = () => {
       initializationOverAt: moment
         .unix(moment().unix())
         .add(initializationPeriod, "seconds"),
+    }
+    if (emittedEvents.StakeCopied) {
+      const { owner } = emittedEvents.StakeCopied
+      delegation.isCopiedStake = true
+      isAddressedToCurrentAccount = isSameEthAddress(owner, yourAddress)
+
+      // Check if the copied delegation is from grant.
+      if (isAddressedToCurrentAccount) {
+        try {
+          const { grantId } = await grantContract.methods
+            .getGrantStakeDetails(operator)
+            .call()
+
+          delegation.isFromGrant = true
+          delegation.grantId = grantId
+        } catch (error) {
+          delegation.isFromGrant = false
+        }
+      }
     }
 
     if (
