@@ -7,6 +7,10 @@ if [[ -z $GOOGLE_PROJECT_NAME || -z $BUILD_TAG || -z $TRUFFLE_NETWORK || -z $TEN
   exit 1
 fi
 
+echo "<<<<<<START Tenderly Intallation START<<<<<<"
+curl https://raw.githubusercontent.com/Tenderly/tenderly-cli/master/scripts/install-linux.sh | sh
+echo "<<<<<<FINISH Tenderly Installation FINISH<<<<<<"
+
 mkdir -p /tmp/keep-client/contracts
 cd ./solidity
 npm ci
