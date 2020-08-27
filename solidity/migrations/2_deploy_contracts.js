@@ -23,6 +23,7 @@ const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.so
 const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 const GasPriceOracle = artifacts.require("./GasPriceOracle.sol");
+const StakingPortBacker = artifacts.require("./StakingPortBacker.sol");
 
 let initializationPeriod = 43200; // ~12 hours
 const dkgContributionMargin = 1; // 1%
@@ -59,6 +60,33 @@ module.exports = async function(deployer, network) {
     KeepRegistry.address,
     initializationPeriod
   );
+
+  let oldStakingContractAddress;
+  if (network === 'ropsten') {
+    // 1.3.0-rc.0 TokenStaking contract address
+    oldStakingContractAddress = '0x8117632eC1D514550b3880Bc68F9AC1A76c9C67B';
+  } else if (network === 'mainnet') {
+    // v1.0.1 TokenStaking contract address
+    oldStakingContractAddress = '0x6D1140a8c8e6Fac242652F0a5A8171b898c67600';
+  } else {
+    const OldTokenStaking = artifacts.require("./stubs/OldTokenStaking.sol");
+    await deployer.link(MinimumStakeSchedule, OldTokenStaking);
+    await deployer.link(GrantStaking, OldTokenStaking);
+    await deployer.link(Locks, OldTokenStaking);
+    await deployer.link(TopUps, OldTokenStaking);
+    await deployer.deploy(OldTokenStaking);
+    oldStakingContractAddress = OldTokenStaking.address;
+  }
+
+  console.log(`Deploying StakingPortBacker using old TokenStaking[${oldStakingContractAddress}]`);
+  await deployer.deploy(
+    StakingPortBacker,
+    KeepToken.address,
+    TokenGrant.address,
+    oldStakingContractAddress,
+    TokenStaking.address
+  );
+
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);
   await deployer.deploy(
