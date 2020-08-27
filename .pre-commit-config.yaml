@@ -9,6 +9,8 @@ repos:
    rev: 63e729f
    hooks:
     - id: check-added-large-files
+    - id: pretty-format-json
+      args: ['--autofix']
  - repo: local
    hooks:
     - id: solium
