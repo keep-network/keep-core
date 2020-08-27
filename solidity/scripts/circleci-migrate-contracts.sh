@@ -8,7 +8,7 @@ if [[ -z $GOOGLE_PROJECT_NAME || -z $BUILD_TAG || -z $TRUFFLE_NETWORK || -z $TEN
 fi
 
 echo "<<<<<<START Tenderly Intallation START<<<<<<"
-curl https://raw.githubusercontent.com/Tenderly/tenderly-cli/master/scripts/install-linux.sh | sh
+curl https://raw.githubusercontent.com/Tenderly/tenderly-cli/master/scripts/install-linux.sh | sudo sh
 echo "<<<<<<FINISH Tenderly Installation FINISH<<<<<<"
 
 mkdir -p /tmp/keep-client/contracts
