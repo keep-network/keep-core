@@ -93,7 +93,14 @@ const CopyStakePage = ({
           />
         )
       case 4:
-        return <CopyStakeStep4 onClose={onClose} />
+        return (
+          <CopyStakeStep4
+            onClose={onClose}
+            strategy={selectedStrategy}
+            undelegationPeriod={restProps.oldUndelegationPeriod}
+            selectedDelegation={selectedDelegation}
+          />
+        )
     }
   }
 

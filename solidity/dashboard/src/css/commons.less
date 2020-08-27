@@ -211,3 +211,15 @@ svg.eth-icon {
     }
   }
 }
+
+ul {
+  &.list__colored-bullets--grey-60 {
+    list-style: none;
+
+    li::before {
+      content: "\2022";
+      color: @color-grey-60;
+      margin-right: 1rem;
+    }
+  }
+}

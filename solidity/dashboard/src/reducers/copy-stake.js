@@ -17,6 +17,8 @@ export const copyStakeInitialData = {
   // Copy stake to the new `TokenStaking` contract or only undelegate/recover delegation from an old `TokenStaking`
   selectedStrategy: null,
   selectedDelegation: null,
+  oldUndelegationPeriod: 0,
+  oldInitializationPeriod: 0,
 }
 
 const copyStakeReducer = (state = copyStakeInitialData, action) => {
