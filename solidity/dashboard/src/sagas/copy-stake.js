@@ -47,6 +47,7 @@ function* copyStake(action) {
     }
     // next call copy stake from staking port backer contract
     yield call(safeCopyStake, operatorAddress)
+    yield put({ type: "copy-stake/copy-stake_success" })
   } catch (error) {
     yield put(
       showMessage({
@@ -132,6 +133,7 @@ function* undelegateFromOldContract(action, withIncrementStep = true) {
     if (withIncrementStep) {
       yield put({ type: INCREMENT_STEP })
     }
+    yield put({ type: "copy-stake/undelegation_success" })
   } catch (error) {
     yield put({ type: "copy-stake/undelegation_failure", payload: error })
   }
@@ -165,6 +167,7 @@ function* recoverFromOldStakingContract(action) {
         args: [operatorAddress],
       },
     })
+    yield put({ type: "copy-stake/recover_success" })
     yield put({ type: INCREMENT_STEP })
   } catch (error) {
     yield put({ type: "copy-stake/recover_failure", payload: error })

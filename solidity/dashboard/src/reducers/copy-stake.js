@@ -19,6 +19,7 @@ export const copyStakeInitialData = {
   selectedDelegation: null,
   oldUndelegationPeriod: 0,
   oldInitializationPeriod: 0,
+  isProcessing: false,
 }
 
 const copyStakeReducer = (state = copyStakeInitialData, action) => {
@@ -68,6 +69,29 @@ const copyStakeReducer = (state = copyStakeInitialData, action) => {
         selectedStrategy: null,
       }
     }
+    case "copy-stake/copy-stake_request":
+    case "copy-stake/undelegate_request":
+    case "copy-stake/recover_request": {
+      return {
+        ...state,
+        isProcessing: true,
+      }
+    }
+    case "copy-stake/copy-stake_success":
+    case "copy-stake/recover_success":
+    case "copy-stake/undelegation_success":
+      return {
+        ...state,
+        isProcessing: false,
+      }
+    case "copy-stake/copy-stake_failure":
+    case "copy-stake/recover_failure":
+    case "copy-stake/undelegation_failure":
+      return {
+        ...state,
+        isProcessing: false,
+        error: action.payload,
+      }
     default:
       return state
   }

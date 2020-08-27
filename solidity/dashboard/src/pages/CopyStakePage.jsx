@@ -90,6 +90,7 @@ const CopyStakePage = ({
             incrementStep={onSubmit}
             strategy={selectedStrategy}
             delegation={selectedDelegation || {}}
+            isProcessing={restProps.isProcessing}
           />
         )
       case 4:

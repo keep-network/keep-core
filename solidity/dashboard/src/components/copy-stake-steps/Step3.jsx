@@ -1,6 +1,7 @@
 import React from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
+import { KeepLoadingIndicator } from "../Icons"
 
 const styles = {
   title: {
@@ -27,6 +28,7 @@ const CopyStakeStep3 = ({
   strategy,
   incrementStep,
   decrementStep,
+  isProcessing,
 }) => {
   const getSubtitle = () => {
     if (strategy === "WAIT_FLOW") {
@@ -77,7 +79,9 @@ const CopyStakeStep3 = ({
     return false
   }
 
-  return (
+  return isProcessing ? (
+    <KeepLoadingIndicator />
+  ) : (
     <>
       <h2 style={styles.title}>Review your stake details below.</h2>
       <h3 className="text-grey-70" style={styles.subtitle}>
