@@ -39,7 +39,6 @@ export const fetchTokensPageData = async () => {
     tokenStakingBalance,
     pendingUndelegationBalance,
   ] = await getOwnedDelegations(initializationPeriod, undelegationPeriod)
-  console.log("woned delegations", ownedDelegations)
 
   const [
     granteeDelegations,
