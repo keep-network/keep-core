@@ -18,7 +18,7 @@ const styles = {
 
 const subtitle = {
   COPY_STAKE_FLOW:
-    "This stake balance will be copied to a newly upgraded delegation. Your current stake will start the undelegation process from the old stakingcontract.",
+    "This stake balance will be copied to a newly upgraded delegation. Your current stake will start the undelegation process from the old staking contract.",
   WAIT_FLOW:
     "The total balance of the following stake will start the undelegation process from the old staking contract.",
 }

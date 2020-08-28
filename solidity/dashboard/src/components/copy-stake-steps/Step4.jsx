@@ -23,7 +23,7 @@ const content = {
   COPY_STAKE_FLOW: {
     title: "Success! Your stake balance copied and redelegated.",
     subtitles: [
-      "Your former stake will be available in undelegationCompletedAt",
+      "Your former stake will be available in undelegationCompletedAt .",
       "You’ll need to initiate the recovery process in the dashboard. ",
       "You’ll see a notification in the dashboard when it’s time to do this.",
     ],
