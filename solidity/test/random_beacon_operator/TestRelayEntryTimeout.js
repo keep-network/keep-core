@@ -34,7 +34,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
   
     //
     // register 'serviceContract' account as a new service contract so that
-    // we can hit the operator contract from this account for tests' simplicity
+    // we can hit the operator contract from this account for tests' simplicity.
     //
     await contracts.registry.setServiceContractUpgrader(
       operatorContract.address,
@@ -44,7 +44,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
     await operatorContract.addServiceContract(
       serviceContract,
       {from: serviceContractUpgrader}
-    )  
+    )
 
     //
     // stake 3 operators, authorize operator contract for all of them,
@@ -129,6 +129,44 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       expect(await operatorContract.isEntryInProgress()).to.be.false;
       const events = await operatorContract.getPastEvents("RelayEntryRequested")
       expect(events).to.be.empty
+    })
+  })
+
+  describe("beacon genesis", async () => {
+    // There is only one active group in the system and that group did not
+    // produce relay entry on time. Relay entry timeout is reported but since
+    // there is no other group in the system, we do not retry with another
+    // group. Entry is not marked as timed out to not block the beacon.
+    // With no groups, anyone can genesis again.
+    it("should be possible when entry timeout has been reported for the last active group", async () => {
+      // we need to register a real service contract as the most recent one
+      // so that genesis does not revert; genesis interacts with the most
+      // recent service contract, so we can't have there just an account
+      // address
+      const KeepRandomBeaconService = contract.fromArtifact('KeepRandomBeaconServiceImplV1')
+      const realServiceContract = await KeepRandomBeaconService.new({from: deployer})
+      await operatorContract.addServiceContract(
+        realServiceContract.address,
+        {from: serviceContractUpgrader}
+      )
+
+      const timeout = await operatorContract.relayEntryTimeout()      
+
+      await requestRelayEntry()
+      await time.advanceBlockTo((await time.latestBlock()).add(timeout))
+      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+
+      await time.advanceBlockTo((await time.latestBlock()).add(timeout))
+      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      // there should be no more groups at this point
+      
+      const groupCount = await operatorContract.numberOfGroups()
+      expect(groupCount).to.eq.BN(0)
+     
+      const dkgGasEstimate = await operatorContract.dkgGasEstimate();
+      const gasPriceCeiling = await operatorContract.gasPriceCeiling();
+      await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceCeiling), from: thirdParty});
+      // ok, no revert
     })
   })
 

@@ -168,24 +168,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       )
     })
 
-    // There is only one active group in the system and that group did not
-    // produce relay entry on time. Relay entry timeout is reported but since
-    // there is no other group in the system, we do not retry with another
-    // group. Entry is not marked as timed out to not block the beacon.
-    // With no groups, anyone can genesis again.
-    it("allows to genesis if reported for the last active group", async () => {
-      await time.advanceBlockTo(relayRequestStartBlock.addn(10))
-      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
-      const groupCount = await operatorContract.numberOfGroups()
-      expect(groupCount).to.eq.BN(0)
-      // no more groups
-
-      const dkgGasEstimate = await operatorContract.dkgGasEstimate();
-      const gasPriceCeiling = await operatorContract.gasPriceCeiling();
-      await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceCeiling), from: tattletale});
-      // ok, no revert
-    })
 
     it("does not revert in the first block relay entry timed out", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
