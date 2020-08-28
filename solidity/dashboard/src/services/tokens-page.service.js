@@ -57,7 +57,7 @@ export const fetchTokensPageData = async () => {
 
   const [copiedDelegations, copiedUndelegations] = await getCopiedDelegations(
     yourAddress,
-    [...granteeGrantsIds, managedGrantsIds],
+    [...granteeGrantsIds, ...managedGrantsIds],
     initializationPeriod,
     undelegationPeriod
   )
@@ -400,7 +400,7 @@ export const getCopiedDelegations = async (
   const tokenGrantStakingEvents = await grantContract.getPastEvents(
     "TokenGrantStaked",
     {
-      from: CONTRACT_DEPLOY_BLOCK_NUMBER.grantContract,
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.grantContract,
       filter: { grantId: grantIds },
     }
   )
