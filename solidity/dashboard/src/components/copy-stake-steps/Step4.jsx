@@ -49,9 +49,9 @@ const CopyStakeStep4 = ({
   const getUndelegationCompleteAt = () => {
     if (selectedDelegation && selectedDelegation.undelegationCompleteAt) {
       return selectedDelegation.undelegationCompleteAt.fromNow(true)
-    } else {
-      return moment().add(undelegationPeriod, "seconds").fromNow(true)
     }
+
+    return moment().add(undelegationPeriod, "seconds").fromNow(true)
   }
 
   const getContent = () => {

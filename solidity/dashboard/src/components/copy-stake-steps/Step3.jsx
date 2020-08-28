@@ -62,9 +62,9 @@ const CopyStakeStep3 = ({
       !delegation.isUndelegation
     ) {
       return "confirm undelegation"
-    } else {
-      return "confirm upgrade"
     }
+
+    return "confirm upgrade"
   }
 
   const isBtnDisabled = () => {
