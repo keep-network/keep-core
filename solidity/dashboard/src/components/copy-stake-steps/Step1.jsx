@@ -2,6 +2,7 @@ import React, { useEffect } from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 import { KeepLoadingIndicator } from "../Loadable"
+import { colors } from "../../constants/colors"
 
 const styles = {
   title: {
@@ -17,6 +18,10 @@ const styles = {
   delegationsList: { width: "100%" },
   delegationItem: {
     borderRadius: "10px",
+  },
+  selectedDelegationItem: {
+    borderRadius: "10px",
+    border: `1px solid ${colors.secondary}`,
   },
 }
 
@@ -50,10 +55,8 @@ const CopyStakeStep1 = ({
               key={delegation.operatorAddress}
               delegation={delegation}
               onSelect={onSelectDelegation}
-              isSelected={
-                selectedDelegation &&
-                selectedDelegation.operatorAddress ===
-                  delegation.operatorAddress
+              selectedOperatorAddress={
+                selectedDelegation ? selectedDelegation.operatorAddress : null
               }
             />
           ))}
@@ -78,21 +81,19 @@ const CopyStakeStep1 = ({
   )
 }
 
-const DelegationItem = ({ delegation, onSelect }) => {
-  const {
-    amount,
-    authorizerAddress,
-    operatorAddress,
-    beneficiary,
-    isSelected,
-  } = delegation
+const DelegationItem = ({ delegation, onSelect, selectedOperatorAddress }) => {
+  const { amount, authorizerAddress, operatorAddress, beneficiary } = delegation
+  const isSelected = operatorAddress === selectedOperatorAddress
 
   return (
-    <li className="tile" style={styles.delegationItem}>
+    <li
+      className="tile"
+      style={isSelected ? styles.selectedDelegationItem : styles.delegationItem}
+    >
       <input
         type="radio"
         name="option"
-        value={delegation}
+        value={operatorAddress}
         id={`option-${operatorAddress}`}
         checked={isSelected}
         onChange={() => onSelect(delegation)}

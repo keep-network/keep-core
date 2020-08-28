@@ -1,6 +1,7 @@
 import React from "react"
 import Button from "../Button"
 import Badge from "../Badge"
+import { colors } from "../../constants/colors"
 
 const options = [
   {
@@ -75,6 +76,10 @@ const styles = {
     marginTop: "-1.5rem",
     marginRight: "-2rem",
   },
+  selectedOption: {
+    borderRadius: "10px",
+    border: `1px solid ${colors.secondary}`,
+  },
 }
 
 const Option = ({
@@ -87,7 +92,10 @@ const Option = ({
   recomended,
 }) => {
   return (
-    <li className="tile" style={styles.optionTile}>
+    <li
+      className="tile"
+      style={isSelected ? styles.selectedOption : styles.optionTile}
+    >
       {recomended && (
         <div className="flex flex-1">
           <Badge text="recomended" style={styles.recomendeLabel} />
