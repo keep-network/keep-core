@@ -114,6 +114,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       
       expect(await operatorContract.isEntryInProgress()).to.be.true;
       await expectEvent(receipt, "RelayEntryRequested") 
+      await expectRevert(requestRelayEntry(), "Beacon is busy")
     })
 
     it("should not be retried when there are no more active groups", async () => {
