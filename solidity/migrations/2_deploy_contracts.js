@@ -32,7 +32,7 @@ module.exports = async function(deployer, network) {
 
   // Set the stake initialization period to 1 block for local development and testnet.
   if (network === 'local' || network === 'ropsten' || network === 'keep_dev') {
-    initializationPeriod = 120;
+    initializationPeriod = 1;
   }
 
   await deployer.deploy(ModUtils);
@@ -107,27 +107,6 @@ module.exports = async function(deployer, network) {
   await deployer.deploy(Reimbursements);
   await deployer.link(Reimbursements, KeepRandomBeaconOperator);
   await deployer.link(BLS, KeepRandomBeaconOperator);
-
-  if(network === 'local') {
-    const initializationPeriod = 120;
-    const undelegationPeriod = 120
-    
-    // Let's deploy the old `TokenStaking` contract and deploy `StakingPortBacker`
-    await deployer.deploy(
-      OldTokenStaking,
-      KeepToken.address,
-      KeepRegistry.address,
-      initializationPeriod,
-      undelegationPeriod
-    );
-    await deployer.deploy(
-      StakingPortBacker,
-      KeepToken.address,
-      TokenGrant.address,
-      OldTokenStaking.address,
-      TokenStaking.address
-    )
-  }
 
   const keepRandomBeaconServiceImplV1 = await deployer.deploy(KeepRandomBeaconServiceImplV1);
 
