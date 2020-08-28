@@ -44,7 +44,7 @@ function* copyStake(action) {
   try {
     // at first call undelegation from old staking contract
     if (!isUndelegation) {
-      yield call(undelegateFromOldContract, action, false)
+      yield call(undelegateFromOldContract, action)
     }
     // next call copy stake from staking port backer contract
     yield call(safeCopyStake, operatorAddress)
@@ -103,7 +103,7 @@ export function* watchCopyStakeRequest() {
   yield takeLatest("copy-stake/copy-stake_request", copyStake)
 }
 
-function* undelegateFromOldContract(action, withIncrementStep = true) {
+function* undelegateFromOldContract(action) {
   const delegation = action.payload
   const {
     operatorAddress,
@@ -123,18 +123,20 @@ function* undelegateFromOldContract(action, withIncrementStep = true) {
     contractInstance = oldTokenStakingContract
   }
 
+  yield call(sendTransaction, {
+    payload: {
+      contract: contractInstance,
+      methodName: "undelegate",
+      args: [operatorAddress],
+    },
+  })
+}
+
+function* undelegateFromOldContractWorker(action) {
   try {
-    yield call(sendTransaction, {
-      payload: {
-        contract: contractInstance,
-        methodName: "undelegate",
-        args: [operatorAddress],
-      },
-    })
-    if (withIncrementStep) {
-      yield put({ type: INCREMENT_STEP })
-    }
+    yield call(undelegateFromOldContract, action)
     yield put({ type: "copy-stake/undelegation_success" })
+    yield put({ type: INCREMENT_STEP })
   } catch (error) {
     yield put({ type: "copy-stake/undelegation_failure", payload: error })
   }
@@ -176,7 +178,10 @@ function* recoverFromOldStakingContract(action) {
 }
 
 export function* watchUndelegateOldStakeRequest() {
-  yield takeLatest("copy-stake/undelegate_request", undelegateFromOldContract)
+  yield takeLatest(
+    "copy-stake/undelegate_request",
+    undelegateFromOldContractWorker
+  )
 }
 
 export function* watchRecovereOldStakeRequest() {
