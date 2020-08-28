@@ -177,12 +177,12 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
-      let groupCount = await operatorContract.numberOfGroups()
+      const groupCount = await operatorContract.numberOfGroups()
       expect(groupCount).to.eq.BN(0)
       // no more groups
 
-      let dkgGasEstimate = await operatorContract.dkgGasEstimate();
-      let gasPriceCeiling = await operatorContract.gasPriceCeiling();
+      const dkgGasEstimate = await operatorContract.dkgGasEstimate();
+      const gasPriceCeiling = await operatorContract.gasPriceCeiling();
       await operatorContract.genesis({value: dkgGasEstimate.mul(gasPriceCeiling), from: tattletale});
       // ok, no revert
     })

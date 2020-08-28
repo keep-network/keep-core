@@ -85,7 +85,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
 
   describe("request for a new relay entry", async () => {
     it("should be accepted when no other request is in progress", async () => {
-      let receipt = await requestRelayEntry()
+      const receipt = await requestRelayEntry()
       await expectEvent(receipt, 'RelayEntryRequested') 
     })
 
@@ -110,7 +110,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       const timeout = await operatorContract.relayEntryTimeout()      
       await requestRelayEntry()
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
-      let receipt = await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      const receipt = await operatorContract.reportRelayEntryTimeout({from: thirdParty})
       await expectEvent(receipt, 'RelayEntryRequested') 
     })
   })
