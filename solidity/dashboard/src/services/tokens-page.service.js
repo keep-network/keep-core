@@ -7,7 +7,6 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
 import { ContractsLoaded, Web3Loaded } from "../contracts"
-import { isEmptyArray } from "../utils/array.utils"
 import { getOperatorsOfOwner } from "./token-staking.service"
 import { isSameEthAddress } from "../utils/general.utils"
 
@@ -220,7 +219,11 @@ const getAllGranteeOperators = async (
   grantIds,
   isManagedGrant = false
 ) => {
-  const { stakingContract, tokenStakingEscrow } = await ContractsLoaded
+  const {
+    stakingContract,
+    tokenStakingEscrow,
+    stakingPortBackerContract,
+  } = await ContractsLoaded
 
   const escrowRedelegation = await tokenStakingEscrow.getPastEvents(
     "DepositRedelegated",
@@ -240,24 +243,23 @@ const getAllGranteeOperators = async (
     return reducer
   }, {})
 
-  let newOperatorsStakeDetails = {}
-  if (!isEmptyArray(Object.keys(newOperatorToGrantId))) {
-    newOperatorsStakeDetails = (
-      await stakingContract.getPastEvents("OperatorStaked", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-        filter: { operator: Object.keys(newOperatorToGrantId) },
-      })
-    ).reduce(toOperator, {})
-  }
+  const newOperators = escrowRedelegation.map((_) => _.returnValues.newOperator)
+  const obsoleteOperators = escrowRedelegation.map(
+    (_) => _.returnValues.previousOperator
+  )
 
-  const oldOperators = escrowRedelegation
-    .filter((_) => {
-      return newOperatorsStakeDetails.hasOwnProperty(_.returnValues.newOperator)
-    })
-    .map((_) => _.returnValues.previousOperator)
+  let activeOperators = granteeOperators
+    .filter((operator) => !obsoleteOperators.includes(operator))
+    .concat(newOperators)
 
-  const activeOperators = granteeOperators.filter(
-    (operator) => !oldOperators.includes(operator)
+  const operatorsOfPortBacker = await getOperatorsOfOwner(
+    stakingPortBackerContract.options.address,
+    activeOperators
+  )
+
+  // We want to skip copied delegations
+  activeOperators = activeOperators.filter(
+    (operator) => !operatorsOfPortBacker.includes(operator)
   )
 
   const operatorsDetailsMap = (
@@ -267,24 +269,19 @@ const getAllGranteeOperators = async (
     })
   ).reduce(toOperator, {})
 
-  const allOperatorsDetails = {
-    ...operatorsDetailsMap,
-    ...newOperatorsStakeDetails,
-  }
-
-  for (const operator of Object.keys(allOperatorsDetails)) {
+  for (const operator of Object.keys(operatorsDetailsMap)) {
     const grantId = newOperatorToGrantId.hasOwnProperty(operator)
       ? newOperatorToGrantId[operator]
       : null
-    allOperatorsDetails[operator] = {
-      ...allOperatorsDetails[operator],
+    operatorsDetailsMap[operator] = {
+      ...operatorsDetailsMap[operator],
       isFromGrant: true,
       isManagedGrant,
       grantId,
     }
   }
 
-  return allOperatorsDetails
+  return operatorsDetailsMap
 }
 
 const getManagedGranteeDelegations = async (
