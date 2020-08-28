@@ -6,6 +6,11 @@ const blsData = require("../helpers/data.js")
 const stakeDelegate = require('../helpers/stakeDelegate')
 const {initContracts} = require('../helpers/initContracts')
 
+const BN = web3.utils.BN
+const chai = require('chai')
+chai.use(require('bn-chai')(BN))
+const expect = chai.expect
+
 describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
   const deployer = accounts[0],
     serviceContractUpgrader = accounts[1]
@@ -86,19 +91,19 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
   describe("request for a new relay entry", async () => {
     it("should be accepted when no other request is in progress", async () => {
       const receipt = await requestRelayEntry()
-      await expectEvent(receipt, 'RelayEntryRequested') 
+      await expectEvent(receipt, "RelayEntryRequested")
     })
 
     it("should be rejected when another request is in progress", async () => {
       await requestRelayEntry()
-      await expectRevert(requestRelayEntry(), "Beacon is busy");
+      await expectRevert(requestRelayEntry(), "Beacon is busy")
     })
 
     it("should be rejected when another request is in progress even if it timed out", async () => {
       const timeout = await operatorContract.relayEntryTimeout()      
       await requestRelayEntry()
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))    
-      await expectRevert(requestRelayEntry(), "Beacon is busy");
+      await expectRevert(requestRelayEntry(), "Beacon is busy")
     })
 
     it("should be retried when another request timed out and it's been reported", async () => {
@@ -106,7 +111,24 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       await requestRelayEntry()
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
       const receipt = await operatorContract.reportRelayEntryTimeout({from: thirdParty})
-      await expectEvent(receipt, 'RelayEntryRequested') 
+      
+      expect(await operatorContract.isEntryInProgress()).to.be.true;
+      await expectEvent(receipt, "RelayEntryRequested") 
+    })
+
+    it("should not be retried when there are no more active groups", async () => {
+      const timeout = await operatorContract.relayEntryTimeout()      
+
+      await requestRelayEntry()
+      await time.advanceBlockTo((await time.latestBlock()).add(timeout))
+      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+
+      await time.advanceBlockTo((await time.latestBlock()).add(timeout))
+      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+
+      expect(await operatorContract.isEntryInProgress()).to.be.false;
+      const events = await operatorContract.getPastEvents("RelayEntryRequested")
+      expect(events).to.be.empty
     })
   })
 
