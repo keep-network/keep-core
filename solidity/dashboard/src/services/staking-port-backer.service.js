@@ -56,7 +56,13 @@ export const fetchOldDelegations = async () => {
   const operatorsToSkip = (
     await oldTokenStakingContract.getPastEvents("Undelegated", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
-      filter: { operator: [] },
+      filter: {
+        operator: [
+          ...operatorsAddressesSet,
+          ...granteeOperatorsSet,
+          ...managedGrantOperators,
+        ],
+      },
     })
   ).map((_) => _.returnValues.operator)
 
@@ -82,6 +88,7 @@ export const fetchOldDelegations = async () => {
     undelegationPeriod,
     true
   )
+
   const managedGrantsDelegations = await getDelegations(
     filteredManagedGrantOperators,
     initializationPeriod,
