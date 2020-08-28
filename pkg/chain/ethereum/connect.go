@@ -86,7 +86,6 @@ func connectWithClient(
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
-
 	blockCounter, err := blockcounter.CreateBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -97,7 +96,7 @@ func connectWithClient(
 
 	pv := &ethereumChain{
 		config:           config,
-		client:           ethutil.WrapCallLogging(logger, client),
+		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
 		transactionMutex: &sync.Mutex{},
@@ -182,6 +181,33 @@ func connectWithClient(
 	pv.chainConfig = chainConfig
 
 	return pv, nil
+}
+
+func addClientWrappers(
+	config ethereum.Config,
+	backend bind.ContractBackend,
+) bind.ContractBackend {
+	loggingBackend := ethutil.WrapCallLogging(logger, backend)
+
+	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
+		logger.Infof(
+			"enabled ethereum client request rate limiter; "+
+				"rps limit [%v]; "+
+				"concurrency limit [%v]",
+			config.RequestsPerSecondLimit,
+			config.ConcurrencyLimit,
+		)
+
+		return ethutil.WrapRateLimiting(
+			loggingBackend,
+			&ethutil.RateLimiterConfig{
+				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
+				ConcurrencyLimit:       config.ConcurrencyLimit,
+			},
+		)
+	}
+
+	return loggingBackend
 }
 
 // ConnectUtility makes the network connection to the Ethereum network and
@@ -279,6 +305,8 @@ func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 }
 
 func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
+	logger.Infof("fetching relay chain config")
+
 	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
 	if err != nil {
 		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
