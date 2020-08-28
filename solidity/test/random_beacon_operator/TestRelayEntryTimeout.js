@@ -94,11 +94,6 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function() {
       await expectRevert(requestRelayEntry(), "Beacon is busy");
     })
 
-    it("should be rejected when another request is in progress", async () => {
-      await requestRelayEntry()
-      await expectRevert(requestRelayEntry(), "Beacon is busy");
-    })
-
     it("should be rejected when another request is in progress even if it timed out", async () => {
       const timeout = await operatorContract.relayEntryTimeout()      
       await requestRelayEntry()
