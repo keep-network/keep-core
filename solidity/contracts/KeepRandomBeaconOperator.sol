@@ -416,7 +416,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
         uint256 entryVerificationAndProfitFee,
         uint256 callbackFee
     ) internal {
-        require(!isEntryInProgress() || hasEntryTimedOut(), "Beacon is busy");
+        require(!isEntryInProgress(), "Beacon is busy");
 
         uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
 
@@ -578,6 +578,7 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
     function reportRelayEntryTimeout() public {
         require(hasEntryTimedOut(), "Entry did not time out");
         groups.reportRelayEntryTimeout(currentRequestGroupIndex, groupSize);
+        currentRequestStartBlock = 0;
 
         // We could terminate the last active group. If that's the case,
         // do not try to execute signing again because there is no group
