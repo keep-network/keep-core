@@ -159,7 +159,7 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
     // there is no other group in the system, we do not retry with another
     // group. reportRelayEntryTimeout reverts so that the last group may not
     // be slashed more than one time.
-    it("reverts when reported for the last active group", async () => {
+    it("reverts when already reported for the last active group", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
       await expectRevert(
