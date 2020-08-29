@@ -33,22 +33,22 @@ const web3Options = {
   transactionBlockTimeout: 25,
   transactionConfirmationBlocks: 3,
   transactionPollingTimeout: 480,
+  handleRevert: true,
 }
 
 // Setup web3 provider.  We use the keepContractOwner since it needs to sign the approveAndCall transaction.
-const web3 = new Web3(keepContractOwnerProvider, null, web3Options)
+const web3 = new Web3(keepContractOwnerProvider)
+web3.options = web3Options
 
 // TokenGrant
 const tokenGrantAbi = tokenGrantJson.abi
 const tokenGrantAddress = tokenGrantJson.networks[ethereumNetworkId].address
 const tokenGrant = new web3.eth.Contract(tokenGrantAbi, tokenGrantAddress)
-tokenGrant.options.handleRevert = true
 
 // KeepToken
 const keepTokenAbi = keepTokenJson.abi
 const keepTokenAddress = keepTokenJson.networks[ethereumNetworkId].address
 const keepToken = new web3.eth.Contract(keepTokenAbi, keepTokenAddress)
-keepToken.options.handleRevert = true
 
 // PermissiveStakingPolicy
 const permissiveStakingPolicyAddress =
