@@ -57,11 +57,53 @@ const permissiveStakingPolicyAddress =
 const ethAccountRegExp = /^(0x)?[0-9a-f]{40}$/i
 const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
 
+const baseGrantAmount = web3.utils.toBN(300e3) // 300k tokens
+const grantAmount = baseGrantAmount.mul(tokenDecimalMultiplier) // to 18-decimal precision
+const ERRORS = {
+  "max-keep": {
+    status: 400,
+    message: `
+      Token grant failed: your account has the maximum testnet KEEP allowed.\n
+      You can manage your token grants at: https://dashboard.test.keep.network\n
+      If you have questions, you can find us on Discord: https://discord.gg/jqxBU4m\n
+    `,
+  },
+  "unexpected-revert": {
+    status: 500,
+    message: `
+      Unexpected revert during token grant creation:\n
+      {reason}
+    `,
+  },
+  "unexpected-error": {
+    status: 500,
+    message: `
+      Token grant failed, consider trying again.\n
+      If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
+    `,
+  },
+}
+const SUCCESSES = {
+  created: `
+      Created token grant with {grantAmount} KEEP for account: {granteeAccount}\n
+      You can follow the transaction at https://ropsten.etherscan.io/tx/{transactionHash}\n
+      You can manage your token grants at: https://dashboard.test.keep.network .\n
+      You can find us on Discord at: https://discord.gg/jqxBU4m .\n
+  `,
+}
+
+const SECOND = 1
+const SECONDS = SECOND
+const MINUTE = 60 * SECONDS
+const MINUTES = MINUTE
+const HOUR = 60 * MINUTES
+const HOURS = HOUR
+
 exports.issueGrant = async (request, response) => {
   response.type("text/plain")
   try {
     const requestUrl = url.parse(request.url, true)
-    const account = requestUrl.query.account
+    const account = /** @type {string} */ (requestUrl.query.account)
 
     if (!account) {
       console.error("Unspecified account.")
@@ -78,138 +120,169 @@ exports.issueGrant = async (request, response) => {
           "Improperly formatted account address, please correct and try again.\n"
         )
     } else {
-      const granteeAccount = account
-      const start = web3.utils.toBN(Math.floor(Date.now() / 1000))
-      const cliff = web3.utils.toBN(172800)
-      const unlockingDuration = cliff
-      const revocable = true
-      const tokens = web3.utils.toBN(300000)
-      console.log(
-        `Fetching existing balance for account [${granteeAccount}]...`
-      )
-      const grantBalanceString = await tokenGrant.methods
-        .balanceOf(granteeAccount)
-        .call()
-      const grantBalance = web3.utils.toBN(grantBalanceString)
-      console.log(
-        `Existing balance for account [${granteeAccount}] is [${grantBalance}].`
-      )
-      const grantAmount = tokens.mul(tokenDecimalMultiplier)
-
-      if (grantBalance.gte(grantAmount)) {
-        console.warn(
-          `[${granteeAccount}] requested grant while at limit. Balance: [${grantBalance}].`
+      try {
+        const content = await issueGrant(account, grantAmount)
+        response.send(
+          SUCCESSES[content.code].replace(
+            /{(.*?)}/g,
+            (_, property) => content && content[property]
+          )
         )
-        return response.status(400).send(`
-          Token grant failed: your account has the maximum testnet KEEP allowed.\n
-          You can manage your token grants at: https://dashboard.test.keep.network\n
-          If you have questions, you can find us on Discord: https://discord.gg/jqxBU4m\n`)
-      } else {
-        console.log(
-          `Submitting grant for [${grantAmount}] to [${granteeAccount}]...`
-        )
-        const grantData = web3.eth.abi.encodeParameters(
-          [
-            "address",
-            "address",
-            "uint256",
-            "uint256",
-            "uint256",
-            "bool",
-            "address",
-          ],
-          [
-            keepContractOwnerAddress,
-            granteeAccount,
-            unlockingDuration,
-            start,
-            cliff,
-            revocable,
-            permissiveStakingPolicyAddress,
-          ]
-        )
-
-        const nonce = await web3.eth.getTransactionCount(
-          keepContractOwnerAddress,
-          "pending"
-        )
-
-        console.log("Test submission...")
-        // Try calling; if this throws, we'll have a proper error message thanks
-        // to handleRevert above.
-        await keepToken.methods
-          .approveAndCall(tokenGrantAddress, grantAmount, grantData)
-          .call({ from: keepContractOwnerAddress, nonce: nonce })
-
-        console.log("Submitting transaction...")
-        // If the call didn't revert, try submitting the transaction proper.
-        keepToken.methods
-          .approveAndCall(tokenGrantAddress, grantAmount, grantData)
-          .send({ from: keepContractOwnerAddress, nonce: nonce })
-          .on("transactionHash", (hash) => {
-            console.log(
-              `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
-                `with hash [${hash}].`,
-              `with nonce [${nonce}]`
+      } catch (e) {
+        if (e.payload && e.payload.code && ERRORS[e.payload.code]) {
+          const { code, content } = e.payload
+          const { status, message } = ERRORS[code] || {}
+          console.error("Caught error issuing grant: ", e, "url: ", request.url)
+          response
+            .status(status)
+            .send(
+              (message || `unknown error with code ${code}`).replace(
+                /{(.*?)}/g,
+                (_, property) => content && content[property]
+              )
             )
-            response.send(`
-              Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
-              You can follow the transaction at https://ropsten.etherscan.io/tx/${hash}\n
-              You can manage your token grants at: https://dashboard.test.keep.network .\n
-              You can find us on Discord at: https://discord.gg/jqxBU4m .\n
-            `)
-          })
-          .on("error", (error) => {
-            if (error == "Error: nonce too low") {
-              const noncePlusOne = nonce + 1
-              console.error(
-                `Error with account grant transaction, Nonce too low: At [${nonce}], retry at [${noncePlusOne}]; URL was [${request.url}].`
-              )
-              console.log("Resubmitting transaction with higher nonce...")
-              keepToken.methods
-                .approveAndCall(tokenGrantAddress, grantAmount, grantData)
-                .send({ from: keepContractOwnerAddress, nonce: noncePlusOne })
-                .on("transactionHash", (hash) => {
-                  console.log(
-                    `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
-                      `with hash [${hash}].`,
-                    `with nonce [${noncePlusOne}]`
-                  )
-                  response.send(`
-                    Created token grant with ${grantAmount} KEEP for account: ${granteeAccount}\n
-                    You can follow the transaction at https://ropsten.etherscan.io/tx/${hash}\n
-                    You can manage your token grants at: https://dashboard.test.keep.network .\n
-                    You can find us on Discord at: https://discord.gg/jqxBU4m .\n
-                  `)
-                })
-                .on("error", (error) => {
-                  console.error(
-                    `Error while requesting account grant: [${error}]; URL was [${request.url}].`
-                  )
-                  return response.status(500).send(`
-                      Token grant failed, try again.\n
-                      If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
-                  `)
-                })
-            } else {
-              console.error(
-                `Error while requesting account grant: [${error}]; URL was [${request.url}].`
-              )
-              return response.status(500).send(`
-                  Token grant failed, try again.\n
-                  If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
-              `)
-            }
-          })
+        } else {
+          throw e
+        }
       }
     }
-  } catch (error) {
-    console.error(
-      `Error while requesting account grant: [${error}]; URL was [${request.url}].`
+  } catch (e) {
+    const { status, message } = ERRORS["unexpected-error"]
+    console.error("Caught unexpected error: ", e, "url: ", request.url)
+    response.status(status).send(message)
+  }
+}
+
+/**
+ * @param {string} granteeAccount The account to issue the grant to, if the
+ *        account currently has < the grant amount granted.
+ * @param {BN} grantAmount The amount to grant.
+ * @param {number} [currentNonce] The nonce to start with; if left off, resolved
+ *        by calling `getTransactionCount` for the grant creator account.
+ * @param {number} [gasPrice] If set, the gas price to use.
+ */
+async function issueGrant(granteeAccount, grantAmount, currentNonce, gasPrice) {
+  console.log(`Fetching existing balance for account [${granteeAccount}]...`)
+  const existingBalance = await existingGrantBalance(granteeAccount)
+  console.log(
+    `Existing balance for account [${granteeAccount}] is [${existingBalance}].`
+  )
+
+  if (existingBalance.gte(grantAmount)) {
+    console.warn(
+      `[${granteeAccount}] requested grant while at limit. Balance: [${existingBalance}].`
     )
-    return response.status(500).send(`
-        Token grant failed, try again.\n
-        If problems persist find us on Discord: https://discord.gg/jqxBU4m .\n
-    `)
+
+    throw new PayloadError({ code: "max-keep" })
+  } else {
+    // Date.now is ms from epoch, start is seconds from epoch.
+    const start = web3.utils.toBN(Math.floor(Date.now() / 1000))
+    const cliff = web3.utils.toBN(48 * HOURS)
+    // Unlock = cliff means everything unlocks at once.
+    const unlockingDuration = cliff
+    const revocable = true
+
+    console.log(
+      `Submitting grant for [${grantAmount}] to [${granteeAccount}]...`
+    )
+    const grantData = web3.eth.abi.encodeParameters(
+      [
+        "address",
+        "address",
+        "uint256",
+        "uint256",
+        "uint256",
+        "bool",
+        "address",
+      ],
+      [
+        keepContractOwnerAddress,
+        granteeAccount,
+        unlockingDuration,
+        start,
+        cliff,
+        revocable,
+        permissiveStakingPolicyAddress,
+      ]
+    )
+
+    const nonce =
+      currentNonce ||
+      (await web3.eth.getTransactionCount(keepContractOwnerAddress, "pending"))
+
+    console.log(
+      `Test submission for account ${granteeAccount} with nonce ${nonce}...`
+    )
+    // Try calling; if this throws, we'll have a proper error message thanks
+    // to handleRevert above.
+    try {
+      await keepToken.methods
+        .approveAndCall(tokenGrantAddress, grantAmount, grantData)
+        .call({ from: keepContractOwnerAddress, nonce: nonce })
+    } catch (e) {
+      e.reason = e.reason || e.message
+      throw new PayloadError({ code: "unexpected-revert", content: e })
+    }
+
+    return new Promise((resolve, reject) => {
+      // If the call didn't revert, try submitting the transaction proper.
+      console.log(
+        `Submitting transaction for account ${granteeAccount} with nonce ${nonce}...`
+      )
+      keepToken.methods
+        .approveAndCall(tokenGrantAddress, grantAmount, grantData)
+        .send({ from: keepContractOwnerAddress, nonce: nonce })
+        .on("transactionHash", (hash) => {
+          console.log(
+            `Submitted grant for [${grantAmount}] to [${granteeAccount}] ` +
+              `with hash [${hash}]`,
+            `and nonce [${nonce}]`
+          )
+
+          resolve({
+            code: "created",
+            transactionHash: hash,
+            granteeAccount,
+            grantAmount,
+          })
+        })
+        .on("error", (error) => {
+          if (
+            // Confirmed transaction with this nonce, so bump it.
+            error == "Error: nonce too low" ||
+            // Pending transaction with this nonce, so bump it and queue up.
+            error == "Error: replacement transaction underpriced"
+          ) {
+            console.error(
+              `Error with account grant transaction for ${granteeAccount}, ` +
+                `nonce too low at [${nonce}], retry at [${nonce + 1}].`
+            )
+            console.log("Retrying transaction with higher nonce...")
+            resolve(issueGrant(granteeAccount, grantAmount, nonce + 1))
+          } else {
+            reject(
+              new PayloadError({ code: "unexpected-error", content: error })
+            )
+          }
+        })
+    })
+  }
+}
+
+/**
+ * @param {string} account The account whose grant balance to check.
+ */
+async function existingGrantBalance(account) {
+  const grantBalanceString = await tokenGrant.methods
+    .balanceOf(account)
+    .call({}, "pending")
+
+  return web3.utils.toBN(grantBalanceString)
+}
+
+class PayloadError extends Error {
+  constructor(payload) {
+    super(`Error with payload: ${JSON.stringify(payload)}`)
+    this.payload = payload
   }
 }
