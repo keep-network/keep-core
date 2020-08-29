@@ -1,7 +1,11 @@
 // Function deps
 const url = require("url")
-const Web3 = require("web3")
+const Web3 = /** @type {import('web3').default} */ (
+  /** @type {unknown } */ (require("web3"))
+)
 const HDWalletProvider = require("@truffle/hdwallet-provider")
+
+/** @typedef { import('bn.js') } BN */
 
 // Ethereum host info
 const ethereumHost = process.env.ETHEREUM_HOST
