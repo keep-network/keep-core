@@ -3,7 +3,7 @@
   "dependencies": {
     "@keep-network/keep-core": ">1.2.4-rc <1.2.4",
     "@truffle/hdwallet-provider": "^1.0.38",
-    "web3": "1.2.9"
+    "web3": "1.2.11"
   },
   "devDependencies": {
     "@google-cloud/functions-framework": "^1.6.0",
