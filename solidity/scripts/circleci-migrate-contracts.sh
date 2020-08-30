@@ -21,7 +21,7 @@ cp ./build/contracts/* /tmp/keep-client/contracts
 echo ">>>>>>FINISH Contract Migration FINISH>>>>>>"
 
 echo "<<<<<<START Tenderly Push START<<<<<<"
-tenderly login --authentication-method token --token $TENDERLY_TOKEN
+tenderly login --authentication-method access-key --access-key $TENDERLY_TOKEN
 tenderly push --networks $ETH_NETWORK_ID --tag keep-core \ 
   --tag $GOOGLE_PROJECT_NAME --tag $BUILD_TAG || echo "tendery push failed :("
 echo "<<<<<<FINISH Tenderly Push FINISH<<<<<<"
