@@ -2,7 +2,7 @@
   "main": "issue-grant.js",
   "dependencies": {
     "@keep-network/keep-core": ">1.2.4-rc <1.2.4",
-    "@truffle/hdwallet-provider": "^1.0.38",
+    "@truffle/hdwallet-provider": "^1.0.43",
     "web3": "1.2.11"
   },
   "devDependencies": {
