@@ -216,10 +216,15 @@ ul {
   &.list__colored-bullets--grey-60 {
     list-style: none;
 
+    li {
+      padding-left: 1em;
+      text-indent: -1em;
+    }
+
     li::before {
       content: "\2022";
       color: @color-grey-60;
-      margin-right: 1rem;
+      padding-right: 1rem;
     }
   }
 }
