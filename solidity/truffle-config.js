@@ -30,7 +30,6 @@ module.exports = {
         return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, process.env.ETH_HOSTNAME)
       },
       gas: 8000000,
-      gasPrice: 500000000000, // 500Gwei
       network_id: 3,
       skipDryRun: true
     }
