@@ -18,6 +18,73 @@ function getAccounts() {
   });
 };
 
+const getDelegationExtraData = (account) => {
+  return '0x' + Buffer.concat([
+    Buffer.from(account.substr(2), 'hex'),
+    Buffer.from(account.substr(2), 'hex'),
+    Buffer.from(account.substr(2), 'hex')
+  ]).toString('hex');
+}
+
+function GrantStakingStrategy(grantId, from) {
+  return {
+    stake: async (stakingContractAddress, amount, delegation, operator) => {
+      const grantContract = await TokenGrant.deployed();
+
+      await grantContract.stake(
+        grantId,
+        stakingContractAddress,
+        amount,
+        delegation,
+        { from }
+      ).catch((err) => {
+        console.log(`could not stake KEEP tokens from a grant for ${operator}: ${err}`);
+      });
+
+      console.log(`successfully staked KEEP tokens from a grant (${grantId.toString()}) for ${operator}`)
+    }
+  }
+}
+
+function ManagedGrantStakingStrategy(managedGrantAddress, from) {
+  return {
+    stake: async (stakingContractAddress, amount, delegation, operator) => {
+      const managedGrantContract = await ManagedGrant.at(managedGrantAddress);
+      await managedGrantContract.stake(
+        stakingContractAddress,
+        amount,
+        delegation,
+        { from }
+      ).catch((err) => {
+        console.log(`could not stake KEEP tokens from a managed grant for ${operator}: ${err}`);
+      });
+
+      console.log(`successfully staked KEEP tokens from a managed grant (${(await managedGrantContract.grantId()).toString()}) for ${operator}`)
+    }
+  }
+}
+
+function OwnedTokensStakingStrategy(from) {
+  return {
+    stake: async (stakingContractAddress, amount, delegation, operator) => {
+      const token = await KeepToken.deployed();
+      const staked = await token.approveAndCall(
+        stakingContractAddress,
+        amount,
+        delegation,
+        { from }
+      ).catch((err) => {
+        console.log(`could not stake KEEP tokens for ${operator}: ${err}`);
+      });
+
+      if (staked) {
+        console.log(`successfully staked KEEP tokens for account ${operator}`)
+      }
+
+    }
+  }
+}
+
 module.exports = async function () {
   try {
     const accounts = await getAccounts();
@@ -29,33 +96,21 @@ module.exports = async function () {
     const managedGrantFactoryContract = await ManagedGrantFactory.deployed();
 
     let owner = accounts[0];
+
+    const stakingManager = async (numberOfAccounts, accountsOffset = 0, stakingStrategy) => {
+      for(let i = accountsOffset; i < numberOfAccounts + accountsOffset; i++) {
+        const delegation = getDelegationExtraData(accounts[i])
+        const operator = accounts[i]
+        const amount = formatAmount(200000, 18)
     
-    for (let i = 5; i < 10; i++) {
-      let operator = accounts[i]
-      let beneficiary = accounts[i]
-      let authorizer = accounts[i]
-
-      let delegation = '0x' + Buffer.concat([
-        Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operator.substr(2), 'hex'),
-        Buffer.from(authorizer.substr(2), 'hex')
-      ]).toString('hex');
-
-      staked = await token.approveAndCall(
-        tokenStaking.address,
-        formatAmount(20000000, 18),
-        delegation,
-        { from: owner }
-      ).catch((err) => {
-        console.log(`could not stake KEEP tokens for ${operator}: ${err}`);
-      });
-
-      if (staked) {
+        await stakingStrategy.stake(tokenStaking.address, amount, delegation, operator)
+    
         await stakingPortBackerContract.allowOperator(operator, { from: owner })
           .catch(err => console.log(`could not allowOperator for ${operator}`, err));
-        console.log(`successfully staked KEEP tokens for account ${operator}`)
       }
     }
+
+    await stakingManager(5, 5, new OwnedTokensStakingStrategy(owner))
 
     const allTokens = await token.balanceOf(owner)
     await token.transfer(stakingPortBackerContract.address, allTokens.divn(2), {from: owner})
@@ -97,60 +152,16 @@ module.exports = async function () {
     const tokenGrantCreatedEvent = (await grantContract.getPastEvents())[0]
     const grantId = tokenGrantCreatedEvent.args['id']
     // Stake from a default grant
-    for(let i = 10; i < 15; i++) {
-      let operator = accounts[i]
-      let beneficiary = accounts[i]
-      let authorizer = accounts[i]
-
-      let delegation = '0x' + Buffer.concat([
-        Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operator.substr(2), 'hex'),
-        Buffer.from(authorizer.substr(2), 'hex')
-      ]).toString('hex');
-
-      staked = await grantContract.stake(
-        grantId,
-        tokenStaking.address,
-        formatAmount(100000, 18),
-        delegation,
-        { from: grantee }
-      ).catch((err) => {
-        console.log(`could not stake KEEP tokens from a grant for ${operator}: ${err}`);
-      });
-
-      await stakingPortBackerContract.allowOperator(operator, { from: owner })
-        .catch(err => console.log(`could not allowOperator for ${operator}`, err));
-      console.log(`successfully staked KEEP tokens from grant for account ${operator}`)
-    }
+    await stakingManager(5, 10, new GrantStakingStrategy(grantId, grantee))
 
     // Create managed grant
     await token.approveAndCall(managedGrantFactoryContract.address, formatAmount(12300000, 18), managedGrantExtraData, { from: owner })
     // Get the address of managed grant contract from an event.
     const managedGrant1Event = (await managedGrantFactoryContract.getPastEvents())[0]
     const managedGrant1Address = managedGrant1Event.args['grantAddress'];
-    const managedGrant1 = await ManagedGrant.at(managedGrant1Address);
 
     // delegate stake from a managed grant
-    for(let i = 15; i < 20; i++) {
-      let operator = accounts[i]
-      let beneficiary = accounts[i]
-      let authorizer = accounts[i]
-
-      let delegation = '0x' + Buffer.concat([
-        Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operator.substr(2), 'hex'),
-        Buffer.from(authorizer.substr(2), 'hex')
-      ]).toString('hex');
-
-      staked = await managedGrant1.stake(tokenStaking.address, formatAmount(100000, 18), delegation, { from: grantee }).catch((err) => {
-        console.log(`could not stake KEEP tokens from a managed grant for ${operator}: ${err}`);
-      });
-
-     
-      await stakingPortBackerContract.allowOperator(operator, { from: owner })
-        .catch(err => console.log(`could not allowOperator for ${operator}`, err));
-      console.log(`successfully staked KEEP tokens from manage grant for account ${operator}`)
-    }
+    await stakingManager(5, 15, new ManagedGrantStakingStrategy(managedGrant1Address, grantee))
   } catch (err) {
     console.error('unexpected error:', err)
     process.exit(1)
