@@ -1,15 +1,24 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "../utils/OperatorParams.sol";
+import "../utils/BytesLib.sol";
+
 
 /// Staking contract stub for testing purposes that mimics the behavior of:
 /// - v1.0.1 TokenStaking (Mainnet)
 /// - 1.3.0-rc.0 TokenStaking (Ropsten)
 contract OldTokenStaking {
     using OperatorParams for uint256;
+    using BytesLib for bytes;
+    ERC20Burnable public token;
+    using SafeERC20 for ERC20Burnable;
+
 
     event Undelegated(address indexed operator, uint256 undelegatedAt);
+    event Staked(address indexed from, uint256 value);
+
 
     mapping(address => address[]) public ownerOperators;
     mapping(address => Operator) public operators;
@@ -19,6 +28,13 @@ contract OldTokenStaking {
         address owner;
         address payable beneficiary;
         address authorizer;
+    }
+
+    constructor(
+        address _tokenAddress
+    ) public {
+        require(_tokenAddress != address(0x0), "Token address can't be zero.");
+        token = ERC20Burnable(_tokenAddress);
     }
 
     function operatorsOf(address _address) public view returns (address[] memory) {
@@ -50,6 +66,14 @@ contract OldTokenStaking {
         return 5184000; // two months
     }
 
+    function initializationPeriod() public view returns(uint256) {
+        return 120;
+    }
+
+    function minimumStake() public view returns (uint256) {
+       return 10000 * 1e18;
+    }
+
     function undelegate(address _operator) public {
         uint256 oldParams = operators[_operator].packedParams;
         operators[_operator].packedParams = oldParams.setUndelegationTimestamp(
@@ -72,5 +96,29 @@ contract OldTokenStaking {
             _authorizer
         );
         ownerOperators[_owner].push(_operator);
+    }
+
+    function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
+        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
+        require(_extraData.length == 60, "Stake delegation data must be provided.");
+
+        address payable beneficiary = address(uint160(_extraData.toAddress(0)));
+        address operator = _extraData.toAddress(20);
+        require(operators[operator].owner == address(0), "Operator address is already in use.");
+        address authorizer = _extraData.toAddress(40);
+
+        // Transfer tokens to this contract.
+        token.safeTransferFrom(_from, address(this), _value);
+
+        operators[operator] = Operator(
+            OperatorParams.pack(_value, block.timestamp, 0),
+            _from,
+            beneficiary,
+            authorizer
+        );
+        ownerOperators[_from].push(operator);
+
+        emit Staked(operator, _value);
     }
 }

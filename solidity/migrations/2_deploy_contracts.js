@@ -74,7 +74,7 @@ module.exports = async function(deployer, network) {
     await deployer.link(GrantStaking, OldTokenStaking);
     await deployer.link(Locks, OldTokenStaking);
     await deployer.link(TopUps, OldTokenStaking);
-    await deployer.deploy(OldTokenStaking);
+    await deployer.deploy(OldTokenStaking, KeepToken.address);
     oldStakingContractAddress = OldTokenStaking.address;
   }
 
