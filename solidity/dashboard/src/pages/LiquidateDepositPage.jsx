@@ -23,7 +23,7 @@ import { useModal } from "../hooks/useModal"
 import { useFetchData } from "../hooks/useFetchData"
 import {
   satsToTBtcViaWeitoshi,
-  displayAmount,
+  fromTokenUnit,
 } from "../utils/token.utils"
 import { colors } from "../constants/colors"
 
@@ -48,6 +48,7 @@ const LiquidateDepositPage = (props) => {
   // const { depositAddress } = props
   const web3Context = useWeb3Context()
   const { depositAddress } = useParams()
+  const { openConfirmationModal } = useModal()
 
   const [lastRefreshedMoment, setLastRefreshedMoment] = useState(moment())
 
@@ -189,30 +190,31 @@ const LiquidateDepositPage = (props) => {
     }
   }
 
-  //   const handleSubmit = async (values, onTransactionHashCallback) => {
-//     values.context = tokensContext
-//     values.selectedGrant = { ...selectedGrant }
-//     try {
-//       await openConfirmationModal(confirmationModalOptions)
-//       await tokensPageService.delegateStake(
-//         web3Context,
-//         values,
-//         onTransactionHashCallback
-//       )
-//       showMessage({
-//         type: messageType.SUCCESS,
-//         title: "Success",
-//         content: "Staking delegate transaction has been successfully completed",
-//       })
-//     } catch (error) {
-//       showMessage({
-//         type: messageType.ERROR,
-//         title: "Staking delegate action has failed ",
-//         content: error.message,
-//       })
-//       throw error
-//     }
-//   }
+    const handleSubmit = async (onTransactionHashCallback) => {
+    try {
+      await openConfirmationModal(confirmationModalOptions)
+      const depositSizeWeitoshi = fromTokenUnit(depositSizeSatoshis, 10)
+      await liquidationService.purchaseDepositAtAuction(
+        web3Context,
+        depositAddress,
+        depositSizeWeitoshi,
+        onTransactionHashCallback
+      )
+      showMessage({
+        type: messageType.SUCCESS,
+        title: "Success",
+        content: "Staking delegate transaction has been successfully completed",
+      })
+    } catch (error) {
+      console.error(error)
+      showMessage({
+        type: messageType.ERROR,
+        title: "Staking delegate action has failed ",
+        content: error.message,
+      })
+      throw error
+    }
+  }
 
 
   //TODO: Fix first section. Conditional should be at a higher level and check if it is a deposit.
@@ -254,7 +256,7 @@ const LiquidateDepositPage = (props) => {
           depositSizeSatoshis={depositSizeSatoshis}
           refreshData={refreshData}
           getPercentageOnOffer={getPercentageOnOffer}
-          onLiquidateFromSummaryBtn={onLiquidateFromSummaryBtn}
+          onLiquidateFromSummaryBtn={handleSubmit}
         >
         </DepositAuctionOverview>
       </>
@@ -341,12 +343,14 @@ const LiquidateDepositPage = (props) => {
 }
 
 const confirmationModalOptions = {
-  modalOptions: { title: "Initiate Delegation" },
-  title: "You’re about to delegate stake.",
+  modalOptions: { title: "Purchase ETH Bond" },
+  title: "You’re about to purchase ETH with tBTC.",
   subtitle:
-    "You’re delegating KEEP tokens. You will be able to cancel the delegation for up to 1 week. After that time, you can undelegate your stake.",
-  btnText: "delegate",
-  confirmationText: "DELEGATE",
+    `This transaction will spend 1 tBTC to obtain 56.699999999919 ETH (or more, depending on the block it goes through).
+     It can fail if deposit state changes before this transaction gets accepted. 
+     Transaction can also fail with error 'Not enough TBTC to cover outstanding debt' if you don’t have enough tBTC`,
+  btnText: "Purchase ETH",
+  confirmationText: "Y",
 }
 
 

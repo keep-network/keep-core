@@ -45,14 +45,12 @@ export const DepositAuctionOverview = (props) => {
     auctionValueBN,
     bondAmountWei,
     depositSizeSatoshis
-
   } = props
   // functions
   const {
     refreshData,
     getPercentageOnOffer,
-    onLiquidateFromSummaryBtn,
-
+    onLiquidateFromSummaryBtn
   } = props
   const web3Context = useWeb3Context()
 
@@ -126,7 +124,7 @@ export const DepositAuctionOverview = (props) => {
                   <SubmitButton
                     className="btn btn-primary btn-sm"
                     onSubmitAction={(transactionHashCallback) =>
-                      onLiquidateFromSummaryBtn(null, transactionHashCallback)
+                      onLiquidateFromSummaryBtn(transactionHashCallback)
                     }
                   >
                     Purchase ETH
