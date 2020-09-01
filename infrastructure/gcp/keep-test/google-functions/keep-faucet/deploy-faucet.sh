@@ -1,3 +1,4 @@
+#!/bin/bash
 gcloud functions deploy keep-faucet-ropsten \
   --trigger-http \
   --runtime nodejs10 \
