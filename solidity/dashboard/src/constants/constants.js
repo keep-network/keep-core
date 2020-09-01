@@ -12,6 +12,7 @@ export const KEEP_BONDING_CONTRACT_NAME = "keepBondingContract"
 export const TBTC_TOKEN_CONTRACT_NAME = "tbtcTokenContract"
 export const TBTC_SYSTEM_CONTRACT_NAME = "tbtcSystemContract"
 export const TOKEN_STAKING_ESCROW_CONTRACT_NAME = "tokenStakingEscrow"
+export const TBTC_CONSTANTS_CONTRACT_NAME = "tbtcConstantsContract"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"

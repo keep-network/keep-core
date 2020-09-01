@@ -4,6 +4,7 @@ import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
 import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import BondedECDSAKeepFactory from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import TBTCSystem from "@keep-network/tbtc/artifacts/TBTCSystem.json"
+import TBTCConstants from "@keep-network/tbtc/artifacts/TBTCConstants.json"
 import KeepBonding from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
 import KeepRegistry from "@keep-network/keep-core/artifacts/KeepRegistry.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
@@ -28,6 +29,7 @@ import {
   TBTC_TOKEN_CONTRACT_NAME,
   TBTC_SYSTEM_CONTRACT_NAME,
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+  TBTC_CONSTANTS_CONTRACT_NAME
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -42,6 +44,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [TBTC_TOKEN_CONTRACT_NAME]: 0,
   [TBTC_SYSTEM_CONTRACT_NAME]: 0,
   [TOKEN_STAKING_ESCROW_CONTRACT_NAME]: 0,
+  [TBTC_CONSTANTS_CONTRACT_NAME]: 0,
 }
 
 export async function getKeepToken(web3) {
@@ -96,6 +99,10 @@ export async function getTBTCSystemContract(web3) {
   return getContract(web3, TBTCSystem, TBTC_SYSTEM_CONTRACT_NAME)
 }
 
+export async function getTBTCConstantsContract(web3) {
+  return getContract(web3, TBTCConstants, TBTC_CONSTANTS_CONTRACT_NAME)
+}
+
 export async function getKeepTokenContractDeployerAddress(web3) {
   const deployTransactionHash = getTransactionHashOfContractDeploy(KeepToken)
   const transaction = await web3.eth.getTransaction(deployTransactionHash)
@@ -134,6 +141,7 @@ export async function getContracts(web3) {
     getTBTCTokenContract(web3),
     getTBTCSystemContract(web3),
     getTokenStakingEscrowContract(web3),
+    getTBTCConstantsContract(web3)
   ])
 
   contracts = {
@@ -149,6 +157,7 @@ export async function getContracts(web3) {
     tbtcTokenContract: web3Contracts[9],
     tbtcSystemContract: web3Contracts[10],
     tokenStakingEscrow: web3Contracts[11],
+    tbtcConstantsContract: web3Contracts[12],
   }
 
   return contracts
