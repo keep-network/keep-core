@@ -11,6 +11,7 @@ import {
   ContractsLoaded,
 } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
+import { isEmptyArray } from "../utils/array.utils"
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress, grantContract, eth, web3 } = web3Context
@@ -221,12 +222,15 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
 
   // Fetch `StakeOwnershipTransferred` by operator field. We need to check more recent event
   // to make sure the delegation ownership has not been transferred.
-  const transferEventsByOperators = (
-    await stakingContract.getPastEvents("StakeOwnershipTransferred", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: operators },
-    })
-  ).reduce(reduceByOperator, {})
+  let transferEventsByOperators = {}
+  if (!isEmptyArray(operators)) {
+    transferEventsByOperators = (
+      await stakingContract.getPastEvents("StakeOwnershipTransferred", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: operators },
+      })
+    ).reduce(reduceByOperator, {})
+  }
 
   return operators.filter((operator) => {
     if (!transferEventsByOperators.hasOwnProperty(operator)) {
