@@ -1,4 +1,5 @@
 import React, { useContext, useCallback } from "react"
+import { Link } from "react-router-dom"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
 import { Web3Context } from "./WithWeb3Context"
@@ -142,6 +143,10 @@ export const LiquidationEventTimelineElement = ({ event, isLoading }) => {
       >
         Liquidate
       </SubmitButton>
+      {/* <Link to={`/liquidations/${returnValues._depositContractAddress}`} className="btn btn-secondary mt-2"> */}
+      <Link to={`/liquidations/${returnValues._depositContractAddress}`} className="btn btn-secondary btn-sm">
+        View Liquidation
+      </Link>
     </VerticalTimelineElement>
   )
 
