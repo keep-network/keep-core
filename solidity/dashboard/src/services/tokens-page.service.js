@@ -210,12 +210,15 @@ const getOwnedDelegations = async (
   const operators = await getOperatorsOfOwner(yourAddress)
 
   // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
-  const operatorToDetails = (
-    await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: operators },
-    })
-  ).reduce(toOperator, {})
+  let operatorToDetails = {}
+  if (!isEmptyArray(operators)) {
+    operatorToDetails = (
+      await stakingContract.getPastEvents("OperatorStaked", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: operators },
+      })
+    ).reduce(toOperator, {})
+  }
 
   return await getDelegations(
     operatorToDetails,
@@ -231,15 +234,18 @@ const getAllGranteeOperators = async (
 ) => {
   const { stakingContract, tokenStakingEscrow } = await ContractsLoaded
 
-  const escrowRedelegation = await tokenStakingEscrow.getPastEvents(
-    "DepositRedelegated",
-    {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
-      filter: {
-        grantId: grantIds,
-      },
-    }
-  )
+  let escrowRedelegation = []
+  if (!isEmptyArray(grantIds)) {
+    escrowRedelegation = await tokenStakingEscrow.getPastEvents(
+      "DepositRedelegated",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+        filter: {
+          grantId: grantIds,
+        },
+      }
+    )
+  }
 
   const newOperatorToGrantId = escrowRedelegation.reduce((reducer, event) => {
     const {
@@ -269,12 +275,16 @@ const getAllGranteeOperators = async (
     (operator) => !oldOperators.includes(operator)
   )
 
-  const operatorsDetailsMap = (
-    await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: activeOperators },
-    })
-  ).reduce(toOperator, {})
+  let operatorsDetailsMap = {}
+  if (!isEmptyArray(activeOperators)) {
+    operatorsDetailsMap = (operatorsDetailsMap = await stakingContract.getPastEvents(
+      "OperatorStaked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: activeOperators },
+      }
+    )).reduce(toOperator, {})
+  }
 
   const allOperatorsDetails = {
     ...operatorsDetailsMap,
