@@ -9,12 +9,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	relayconfig "github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
-	"github.com/keep-network/keep-core/pkg/chain/gen/options"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -31,52 +29,12 @@ func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
-func (ec *ethereumChain) GetConfig() (*relayconfig.Chain, error) {
-	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupSize: [%v]", err)
-	}
+func (ec *ethereumChain) GetConfig() *relaychain.Config {
+	return ec.chainConfig
+}
 
-	threshold, err := ec.keepRandomBeaconOperatorContract.GroupThreshold()
-	if err != nil {
-		return nil, fmt.Errorf("error calling GroupThreshold: [%v]", err)
-	}
-
-	ticketSubmissionTimeout, err :=
-		ec.keepRandomBeaconOperatorContract.TicketSubmissionTimeout()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling TicketSubmissionTimeout: [%v]",
-			err,
-		)
-	}
-
-	resultPublicationBlockStep, err := ec.keepRandomBeaconOperatorContract.ResultPublicationBlockStep()
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error calling ResultPublicationBlockStep: [%v]",
-			err,
-		)
-	}
-
-	minimumStake, err := ec.keepRandomBeaconOperatorContract.MinimumStake()
-	if err != nil {
-		return nil, fmt.Errorf("error calling MinimumStake: [%v]", err)
-	}
-
-	relayEntryTimeout, err := ec.keepRandomBeaconOperatorContract.RelayEntryTimeout()
-	if err != nil {
-		return nil, fmt.Errorf("error calling RelayEntryTimeout: [%v]", err)
-	}
-
-	return &relayconfig.Chain{
-		GroupSize:                  int(groupSize.Int64()),
-		HonestThreshold:            int(threshold.Int64()),
-		TicketSubmissionTimeout:    ticketSubmissionTimeout.Uint64(),
-		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
-		MinimumStake:               minimumStake,
-		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
-	}, nil
+func (ec *ethereumChain) MinimumStake() (*big.Int, error) {
+	return ec.stakingContract.MinimumStake()
 }
 
 // HasMinimumStake returns true if the specified address is staked.  False will
@@ -104,7 +62,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 
 	_, err := ec.keepRandomBeaconOperatorContract.SubmitTicket(
 		ticketBytes,
-		options.TransactionOptions{
+		ethutil.TransactionOptions{
 			GasLimit: 250000,
 		},
 	)
@@ -119,7 +77,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 
 func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
 	ticketBytes := []uint8{}
-	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Value.Bytes(), 32)[:8]...)
+	ticketBytes = append(ticketBytes, ticket.Value[:]...)
 	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
 	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
 
@@ -129,8 +87,8 @@ func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
 	return ticketFixedArray
 }
 
-func (ec *ethereumChain) GetSubmittedTicketsCount() (*big.Int, error) {
-	return ec.keepRandomBeaconOperatorContract.SubmittedTicketsCount()
+func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
+	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
 }
 
 func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {
@@ -158,27 +116,22 @@ func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error
 	// retry calling for selected participants up to 4 times.
 	// Synchronization issue can occur on any setup where we have more than one
 	// Ethereum clients behind a load balancer.
-	if err := ec.withRetry(fetchParticipants); err != nil {
-		return nil, err
-	}
-
-	return stakerAddresses, nil
-}
-
-func (ec *ethereumChain) withRetry(fn func() error) error {
-	const numberOfRetries = 4
-	const delay = 250 * time.Millisecond
+	const numberOfRetries = 10
+	const delay = time.Second
 
 	for i := 1; ; i++ {
-		err := fn()
+		err := fetchParticipants()
 		if err != nil {
-			logger.Errorf("Error occurred [%v]; on [%v] retry", err, i)
 			if i == numberOfRetries {
-				return err
+				return nil, err
 			}
 			time.Sleep(delay)
+			logger.Infof(
+				"Retrying getting selected participants; attempt [%v]",
+				i,
+			)
 		} else {
-			return nil
+			return stakerAddresses, nil
 		}
 	}
 }
@@ -201,16 +154,11 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 	generatedEntry := make(chan *event.EntrySubmitted)
 
-	subscription, err := ec.OnRelayEntrySubmitted(
+	subscription := ec.OnRelayEntrySubmitted(
 		func(onChainEvent *event.EntrySubmitted) {
 			generatedEntry <- onChainEvent
 		},
 	)
-	if err != nil {
-		close(generatedEntry)
-		failPromise(err)
-		return relayEntryPromise
-	}
 
 	go func() {
 		for {
@@ -238,7 +186,18 @@ func (ec *ethereumChain) SubmitRelayEntry(
 		}
 	}()
 
-	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(entry)
+	gasEstimate, err := ec.keepRandomBeaconOperatorContract.RelayEntryGasEstimate(entry)
+	if err != nil {
+		logger.Errorf("failed to estimate gas [%v]", err)
+	}
+
+	gasEstimateWithMargin := float64(gasEstimate) * float64(1.2) // 20% more than original
+	_, err = ec.keepRandomBeaconOperatorContract.RelayEntry(
+		entry,
+		ethutil.TransactionOptions{
+			GasLimit: uint64(gasEstimateWithMargin),
+		},
+	)
 	if err != nil {
 		subscription.Unsubscribe()
 		close(generatedEntry)
@@ -250,8 +209,8 @@ func (ec *ethereumChain) SubmitRelayEntry(
 
 func (ec *ethereumChain) OnRelayEntrySubmitted(
 	handle func(entry *event.EntrySubmitted),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
 		func(blockNumber uint64) {
 			handle(&event.EntrySubmitted{
 				BlockNumber: blockNumber,
@@ -264,12 +223,18 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 			)
 		},
 	)
+
+	if err != nil {
+		logger.Errorf("could not watch RelayEntrySubmitted event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
 		func(
 			previousEntry []byte,
 			groupPublicKey []byte,
@@ -288,12 +253,17 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch RelayEntryRequested event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnGroupSelectionStarted(
 	handle func(groupSelectionStart *event.GroupSelectionStart),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
 		func(
 			newEntry *big.Int,
 			blockNumber uint64,
@@ -310,14 +280,21 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch GroupSelectionStarted event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
 		func(
+			memberIndex *big.Int,
 			groupPublicKey []byte,
+			misbehaved []byte,
 			blockNumber uint64,
 		) {
 			handle(&event.GroupRegistration{
@@ -329,6 +306,11 @@ func (ec *ethereumChain) OnGroupRegistered(
 			return fmt.Errorf("entry of group key failed with: [%v]", err)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
@@ -360,11 +342,18 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
-) (subscription.EventSubscription, error) {
-	return ec.keepRandomBeaconOperatorContract.WatchDkgResultPublishedEvent(
-		func(groupPubKey []byte, blockNumber uint64) {
+) subscription.EventSubscription {
+	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
+		func(
+			memberIndex *big.Int,
+			groupPublicKey []byte,
+			misbehaved []byte,
+			blockNumber uint64,
+		) {
 			handler(&event.DKGResultSubmission{
-				GroupPublicKey: groupPubKey,
+				MemberIndex:    uint32(memberIndex.Uint64()),
+				GroupPublicKey: groupPublicKey,
+				Misbehaved:     misbehaved,
 				BlockNumber:    blockNumber,
 			})
 		},
@@ -375,6 +364,11 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 			)
 		},
 	)
+	if err != nil {
+		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	}
+
+	return subscription
 }
 
 func (ec *ethereumChain) ReportRelayEntryTimeout() error {
@@ -386,10 +380,31 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
+func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
+	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
+}
+
+func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestStartBlock()
+}
+
+func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
+	return ec.keepRandomBeaconOperatorContract.CurrentRequestPreviousEntry()
+}
+
+func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+	currentRequestGroupIndex, err := ec.keepRandomBeaconOperatorContract.CurrentRequestGroupIndex()
+	if err != nil {
+		return nil, err
+	}
+
+	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
+}
+
 func (ec *ethereumChain) SubmitDKGResult(
-	participantIndex group.MemberIndex,
+	participantIndex chain.GroupMemberIndex,
 	result *relaychain.DKGResult,
-	signatures map[group.MemberIndex][]byte,
+	signatures map[chain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -406,16 +421,11 @@ func (ec *ethereumChain) SubmitDKGResult(
 
 	publishedResult := make(chan *event.DKGResultSubmission)
 
-	subscription, err := ec.OnDKGResultSubmitted(
+	subscription := ec.OnDKGResultSubmitted(
 		func(onChainEvent *event.DKGResultSubmission) {
 			publishedResult <- onChainEvent
 		},
 	)
-	if err != nil {
-		close(publishedResult)
-		failPromise(err)
-		return resultPublicationPromise
-	}
 
 	go func() {
 		for {
@@ -452,10 +462,9 @@ func (ec *ethereumChain) SubmitDKGResult(
 	}
 
 	if _, err = ec.keepRandomBeaconOperatorContract.SubmitDkgResult(
-		participantIndex.Int(),
+		big.NewInt(int64(participantIndex)),
 		result.GroupPublicKey,
-		result.Disqualified,
-		result.Inactive,
+		result.Misbehaved,
 		signaturesOnChainFormat,
 		membersIndicesOnChainFormat,
 	); err != nil {
@@ -472,7 +481,7 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[group.MemberIndex][]byte,
+	signatures map[chain.GroupMemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
@@ -486,7 +495,7 @@ func convertSignaturesToChainFormat(
 				SignatureSize,
 			)
 		}
-		membersIndices = append(membersIndices, memberIndex.Int())
+		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
 		signaturesSlice = append(signaturesSlice, signature...)
 	}
 
@@ -504,7 +513,7 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 ) (relaychain.DKGResultHash, error) {
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
-	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Disqualified, dkgResult.Inactive)
+	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
 	return relaychain.DKGResultHashFromBytes(hash)
 }

@@ -38,9 +38,15 @@ type BlockCounter interface {
 // StakeMonitor is an interface that provides ability to check and monitor
 // the stake for the provided address.
 type StakeMonitor interface {
-	// HasMinimumStake checks if the provided address staked enough to become
-	// a network operator. The minimum stake is an on-chain parameter.
+	// HasMinimumStake checks if the specified account has enough active stake
+	// to become network operator and that the operator contract the client is
+	// working with has been authorized for potential slashing.
+	//
+	// Having the required minimum of active stake makes the operator eligible
+	// to join the network. If the active stake is not currently undelegating,
+	// operator is also eligible for work selection.
 	HasMinimumStake(address string) (bool, error)
+
 	// StakerFor returns a Staker for the given address.
 	StakerFor(address string) (Staker, error)
 }
@@ -72,9 +78,13 @@ type Signing interface {
 		publicKey []byte,
 	) (bool, error)
 
-	// PubkeyToAddress converts operator's public key to an address associated
-	// with the chain.
+	// PublicKeyToAddress converts operator's public key to an address
+	// associated with the chain.
 	PublicKeyToAddress(publicKey ecdsa.PublicKey) []byte
+
+	// PublicKeyToAddress converts operator's public key bytes to an address
+	// associated with the chain.
+	PublicKeyBytesToAddress(publicKey []byte) []byte
 }
 
 // Handle represents a handle to a blockchain that provides access to the core

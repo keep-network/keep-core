@@ -1,0 +1,70 @@
+.tokens-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+
+#delegate-stake-section {
+    width: 100%;
+    align-self: flex-start;
+}
+
+#tokens-overview {
+    width: 100%;
+    align-self: flex-start;
+}
+
+#token-overview-balance {
+    display: flex;
+    flex-direction: column; 
+}
+
+@media screen and (min-width: 800px) {
+    #token-overview-balance {
+        flex-direction: row;
+        justify-content: space-evenly
+    } 
+}
+
+@media screen and (min-width: 950px) {
+    .tokens-wrapper {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #tokens-overview {
+        width: 40%
+    }
+
+    #delegate-stake-section {
+        width: 58%;
+    }
+}
+
+@media screen and (min-width: 1250px) {
+    .tokens-wrapper {
+        flex-direction: column;
+    }
+
+    #tokens-overview {
+        width: 100%;
+    }
+
+    #delegate-stake-section {
+        width: 100%;
+    }
+}
+
+@media screen and (min-width: 1550px) {
+    .tokens-wrapper {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #tokens-overview {
+        width: 40%;
+    }
+
+    #delegate-stake-section {
+        width: 58%;
+    }
+}

@@ -110,14 +110,10 @@ type localStaker struct {
 	stake   *big.Int
 }
 
-func (ls *localStaker) ID() relaychain.StakerAddress {
+func (ls *localStaker) Address() relaychain.StakerAddress {
 	return []byte(ls.address)
 }
 
 func (ls *localStaker) Stake() (*big.Int, error) {
 	return ls.stake, nil
-}
-
-func (ls *localStaker) OnStakeChanged(func(newStake *big.Int)) {
-	// Do nothing for now.
 }

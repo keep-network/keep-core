@@ -36,8 +36,7 @@ func TestExecute_HappyPath(t *testing.T) {
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize)
 	dkgtest.AssertMemberFailuresCount(t, result, 0)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertNoMisbehavingMembers(t, result)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 }
 
@@ -67,8 +66,7 @@ func TestExecute_IA_member1_phase1(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
@@ -106,8 +104,7 @@ func TestExecute_IA_members12_phase3(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6, 7}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1), group.MemberIndex(2))
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1), group.MemberIndex(2))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6, 7}...)
 }
@@ -138,8 +135,7 @@ func TestExecute_IA_member1_phase4(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3}...)
 }
@@ -170,8 +166,7 @@ func TestExecute_IA_member1_phase7(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
@@ -202,8 +197,7 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
@@ -211,7 +205,7 @@ func TestExecute_IA_member1_phase8(t *testing.T) {
 func TestExecute_IA_members35_phase10(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -232,13 +226,12 @@ func TestExecute_IA_members35_phase10(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 4}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 4, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertNoDisqualifiedMembers(t, result)
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(3), group.MemberIndex(5))
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(3), group.MemberIndex(5))
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4, 6}...)
 }
 
 // Phase 2 test case - a member sends an invalid ephemeral public key message.
@@ -271,8 +264,7 @@ func TestExecute_DQ_member1_invalidMessage_phase2(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(1))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
@@ -307,8 +299,7 @@ func TestExecute_DQ_member5_invalidCommitmentsMessage_phase4(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(5))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 }
@@ -343,8 +334,7 @@ func TestExecute_DQ_member4_invalidSharesMessage_phase4(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(4))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
 }
@@ -387,8 +377,7 @@ func TestExecute_DQ_member3_revealsWrongPrivateKey_phase5(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(3))
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(3))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 4, 5}...)
 }
@@ -430,8 +419,7 @@ func TestExecute_DQ_member2_cannotDecryptTheirShares_phase5(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(2))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3}...)
 }
@@ -470,8 +458,7 @@ func TestExecute_DQ_member5_inconsistentShares_phase5(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(5))
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(5))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 4}...)
 }
@@ -525,8 +512,7 @@ func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(4))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
 }
@@ -537,7 +523,7 @@ func TestExecute_DQ_member4_falseAccusation_phase5(t *testing.T) {
 func TestExecute_DQ_member2_accusesInactiveMember_phase5(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -583,13 +569,12 @@ func TestExecute_DQ_member2_accusesInactiveMember_phase5(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{1, 2}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 }
 
 // Phase 8 test case - a member sends an invalid member public key share points
@@ -622,8 +607,7 @@ func TestExecute_DQ_member2_invalidMessage_phase8(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
-	dkgtest.AssertInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(2))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
 }
@@ -676,8 +660,7 @@ func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 6, 7}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{2, 5}...)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{2, 5}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 6, 7}...)
 }
@@ -689,7 +672,7 @@ func TestExecute_DQ_members25_revealWrongPrivateKey_phase9(t *testing.T) {
 func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -721,13 +704,12 @@ func TestExecute_DQ_members14_invalidPublicKeyShare_phase9(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{1, 4}...)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{1, 4}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 5, 6}...)
 }
 
 // Phase 9 test case - a member misbehaved by performing a false accusation
@@ -778,8 +760,7 @@ func TestExecute_DQ_member4_falseAccusation_phase9(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(4))
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(4))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 5}...)
 }
@@ -790,7 +771,7 @@ func TestExecute_DQ_member4_falseAccusation_phase9(t *testing.T) {
 func TestExecute_DQ_member2_accusesInactiveMember_phase9(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -835,13 +816,12 @@ func TestExecute_DQ_member2_accusesInactiveMember_phase9(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{1, 2}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 }
 
 // Phase 9 test case - a member misbehaved by sending shares which
@@ -852,7 +832,7 @@ func TestExecute_DQ_member2_accusesInactiveMember_phase9(t *testing.T) {
 func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -903,13 +883,12 @@ func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{1, 2}...)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{1, 2}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 }
 
 // Phase 11 test case - a member misbehaved by not revealing its private key
@@ -920,21 +899,17 @@ func TestExecute_DQ_members12_cannotDecryptTheirShares_phase9(t *testing.T) {
 func TestExecute_DQ_member2_notRevealsDisqualifiedQualMemberKey_phase11(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
 	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
-		// Member 1 misbehaves by sending an accusation with wrong private key.
+		// Member 1 misbehaves by sending an invalid public key share points message.
 		// As result, they should be disqualified by other members.
-		accusationsMessage, ok := msg.(*gjkr.PointsAccusationsMessage)
-		if ok && accusationsMessage.SenderID() == group.MemberIndex(1) {
-			randomKeyPair, _ := ephemeral.GenerateKeyPair()
-			accusationsMessage.SetAccusedMemberKey(
-				group.MemberIndex(2),
-				randomKeyPair.PrivateKey,
-			)
-			return accusationsMessage
+		publicKeyShareMessage, ok := msg.(*gjkr.MemberPublicKeySharePointsMessage)
+		if ok && publicKeyShareMessage.SenderID() == group.MemberIndex(1) {
+			publicKeyShareMessage.RemovePublicKeyShare(2)
+			return publicKeyShareMessage
 		}
 
 		// Member 2 does not reveal private key generated for the sake
@@ -957,13 +932,12 @@ func TestExecute_DQ_member2_notRevealsDisqualifiedQualMemberKey_phase11(t *testi
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{1, 2}...)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{1, 2}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 }
 
 // Phase 11 test case - a member misbehaved by revealing key of an operating
@@ -1003,8 +977,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 3, 4, 5}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 1)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(2))
 	dkgtest.AssertValidGroupPublicKey(t, result)
 	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 3, 4, 5}...)
 }
@@ -1016,7 +989,7 @@ func TestExecute_DQ_member2_revealedKeyOfOperatingMember_phase11(t *testing.T) {
 func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -1057,13 +1030,12 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 3, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{4, 5}...)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{4, 5}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 3, 6}...)
 }
 
 // Phase 11 test case - a member misbehaved by revealing private key generated for
@@ -1073,7 +1045,7 @@ func TestExecute_DQ_member5_revealsWrongPrivateKey_phase11(t *testing.T) {
 func TestExecute_DQ_member2_revealsInactiveNonQualMemberKey_phase11(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -1118,13 +1090,12 @@ func TestExecute_DQ_member2_revealsInactiveNonQualMemberKey_phase11(t *testing.T
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, group.MemberIndex(2))
-	dkgtest.AssertInactiveMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{1, 2}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{3, 4, 5, 6}...)
 }
 
 // Phase 11 test case - a member misbehaved by sending shares which
@@ -1138,7 +1109,7 @@ func TestExecute_DQ_member2_revealsInactiveNonQualMemberKey_phase11(t *testing.T
 func TestExecute_DQ_member3_revealsDisqualifiedNonQualMemberKey_phase11(t *testing.T) {
 	t.Parallel()
 
-	groupSize := 5
+	groupSize := 6
 	honestThreshold := 3
 	seed := dkgtest.RandomSeed(t)
 
@@ -1199,13 +1170,45 @@ func TestExecute_DQ_member3_revealsDisqualifiedNonQualMemberKey_phase11(t *testi
 
 	dkgtest.AssertDkgResultPublished(t, result)
 	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-2)
-	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 5}...)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{1, 2, 5, 6}...)
 	dkgtest.AssertMemberFailuresCount(t, result, 2)
 	dkgtest.AssertSamePublicKey(t, result)
-	dkgtest.AssertDisqualifiedMembers(t, result, []group.MemberIndex{3, 4}...)
-	dkgtest.AssertNoInactiveMembers(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, []group.MemberIndex{3, 4}...)
 	dkgtest.AssertValidGroupPublicKey(t, result)
-	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 5}...)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{1, 2, 5, 6}...)
+}
+
+func TestExecute_InvalidMemberIndex(t *testing.T) {
+	t.Parallel()
+
+	groupSize := 5
+	honestThreshold := 3
+	seed := dkgtest.RandomSeed(t)
+
+	interceptor := func(msg net.TaggedMarshaler) net.TaggedMarshaler {
+		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
+		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
+			// Set an non-existing sender id.
+			publicKeyMessage.SetSenderId(group.MemberIndex(groupSize + 1))
+			return publicKeyMessage
+		}
+
+		return msg
+	}
+
+	result, err := dkgtest.RunTest(groupSize, honestThreshold, seed, interceptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	dkgtest.AssertDkgResultPublished(t, result)
+	dkgtest.AssertSuccessfulSignersCount(t, result, groupSize-1)
+	dkgtest.AssertSuccessfulSigners(t, result, []group.MemberIndex{2, 3, 4, 5}...)
+	dkgtest.AssertMemberFailuresCount(t, result, 1)
+	dkgtest.AssertSamePublicKey(t, result)
+	dkgtest.AssertMisbehavingMembers(t, result, group.MemberIndex(1))
+	dkgtest.AssertValidGroupPublicKey(t, result)
+	dkgtest.AssertResultSupportingMembers(t, result, []group.MemberIndex{2, 3, 4, 5}...)
 }
 
 // manInTheMiddle is a helper tool allowing to easily intercept communication

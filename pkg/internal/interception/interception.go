@@ -15,7 +15,7 @@ type Rules = func(msg net.TaggedMarshaler) net.TaggedMarshaler
 // intercepting network messages and modifying/dropping them based on rules
 // passed to the network.
 type Network interface {
-	ChannelFor(name string) (net.BroadcastChannel, error)
+	BroadcastChannelFor(name string) (net.BroadcastChannel, error)
 }
 
 // NewNetwork creates a new instance of Network interface implementation with
@@ -35,8 +35,8 @@ type network struct {
 	rules    Rules
 }
 
-func (n *network) ChannelFor(name string) (net.BroadcastChannel, error) {
-	delegate, err := n.provider.ChannelFor(name)
+func (n *network) BroadcastChannelFor(name string) (net.BroadcastChannel, error) {
+	delegate, err := n.provider.BroadcastChannelFor(name)
 	if err != nil {
 		return nil, err
 	}
@@ -70,10 +70,8 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	c.delegate.Recv(ctx, handler)
 }
 
-func (c *channel) RegisterUnmarshaler(
-	unmarshaler func() net.TaggedUnmarshaler,
-) error {
-	return c.delegate.RegisterUnmarshaler(unmarshaler)
+func (c *channel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
+	c.delegate.SetUnmarshaler(unmarshaler)
 }
 
 func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {

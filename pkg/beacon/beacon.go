@@ -3,11 +3,14 @@ package beacon
 import (
 	"context"
 	"encoding/hex"
+	"sync"
+	"time"
 
 	"github.com/ipfs/go-log"
 
 	"github.com/keep-network/keep-common/pkg/persistence"
 	"github.com/keep-network/keep-core/pkg/beacon/relay"
+	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
@@ -29,10 +32,7 @@ func Initialize(
 	persistence persistence.Handle,
 ) error {
 	relayChain := chainHandle.ThresholdRelay()
-	chainConfig, err := relayChain.GetConfig()
-	if err != nil {
-		return err
-	}
+	chainConfig := relayChain.GetConfig()
 
 	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
@@ -62,39 +62,75 @@ func Initialize(
 		groupRegistry,
 	)
 
-	relayChain.OnRelayEntryRequested(func(request *event.Request) {
-		logger.Infof(
-			"new relay entry requested at block [%v] from group [0x%x] using "+
-				"previous entry [0x%x]",
-			request.BlockNumber,
-			request.GroupPublicKey,
-			request.PreviousEntry,
-		)
+	pendingGroupSelections := &event.GroupSelectionTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
 
-		if node.IsInGroup(request.GroupPublicKey) {
-			go node.GenerateRelayEntry(
-				request.PreviousEntry,
+	pendingRelayRequests := &event.RelayRequestTrack{
+		Data:  make(map[string]bool),
+		Mutex: &sync.Mutex{},
+	}
+
+	node.ResumeSigningIfEligible(relayChain, signing)
+
+	_ = relayChain.OnRelayEntryRequested(func(request *event.Request) {
+		onConfirmed := func() {
+			if node.IsInGroup(request.GroupPublicKey) {
+				go func() {
+					previousEntry := hex.EncodeToString(request.PreviousEntry[:])
+
+					if ok := pendingRelayRequests.Add(previousEntry); !ok {
+						logger.Errorf(
+							"relay entry requested event with previous entry "+
+								"[0x%x] has been registered already",
+							request.PreviousEntry,
+						)
+						return
+					}
+
+					defer pendingRelayRequests.Remove(previousEntry)
+
+					logger.Infof(
+						"new relay entry requested at block [%v] from group "+
+							"[0x%x] using previous entry [0x%x]",
+						request.BlockNumber,
+						request.GroupPublicKey,
+						request.PreviousEntry,
+					)
+
+					node.GenerateRelayEntry(
+						request.PreviousEntry,
+						relayChain,
+						signing,
+						request.GroupPublicKey,
+						request.BlockNumber,
+					)
+				}()
+			} else {
+				go node.ForwardSignatureShares(request.GroupPublicKey)
+			}
+
+			go node.MonitorRelayEntry(
 				relayChain,
-				signing,
-				request.GroupPublicKey,
 				request.BlockNumber,
+				chainConfig,
 			)
 		}
 
-		go node.MonitorRelayEntry(
-			relayChain,
+		currentRelayRequestConfirmationRetries := 30
+		currentRelayRequestConfirmationDelay := time.Second
+
+		confirmCurrentRelayRequest(
 			request.BlockNumber,
-			chainConfig,
+			relayChain,
+			onConfirmed,
+			currentRelayRequestConfirmationRetries,
+			currentRelayRequestConfirmationDelay,
 		)
 	})
 
-	relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
-		logger.Infof(
-			"group selection started with seed [0x%v] at block [%v]",
-			event.NewEntry.Text(16),
-			event.BlockNumber,
-		)
-
+	_ = relayChain.OnGroupSelectionStarted(func(event *event.GroupSelectionStart) {
 		onGroupSelected := func(group *groupselection.Result) {
 			for index, staker := range group.SelectedStakers {
 				logger.Infof(
@@ -111,7 +147,24 @@ func Initialize(
 			)
 		}
 
+		newEntry := event.NewEntry.Text(16)
 		go func() {
+			if ok := pendingGroupSelections.Add(newEntry); !ok {
+				logger.Errorf(
+					"group selection event with seed [0x%x] has been registered already",
+					event.NewEntry,
+				)
+				return
+			}
+
+			defer pendingGroupSelections.Remove(newEntry)
+
+			logger.Infof(
+				"group selection started with seed [0x%x] at block [%v]",
+				event.NewEntry,
+				event.BlockNumber,
+			)
+
 			err := groupselection.CandidateToNewGroup(
 				relayChain,
 				blockCounter,
@@ -127,7 +180,7 @@ func Initialize(
 		}()
 	})
 
-	relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
+	_ = relayChain.OnGroupRegistered(func(registration *event.GroupRegistration) {
 		logger.Infof(
 			"new group with public key [0x%x] registered on-chain at block [%v]",
 			registration.GroupPublicKey,
@@ -137,4 +190,85 @@ func Initialize(
 	})
 
 	return nil
+}
+
+// Before we start relay entry signing process we need to confirm the current
+// relay request start block on the chain. This is to avoid having the client
+// participating in an old relay request signing that has already completed
+// with the rest of the signing group member clients and the result has been
+// already published to the chain.
+//
+// Such situation may happen when the current client received multiple blocks
+// at once after a longer delay and in those blocks to relay request events
+// to the same signing group were emitted.
+//
+// The confirmation mechanism has built-in retries. We can retry in case of an
+// error but also when the expected request start block does not match the one
+// currently registered on the chain. Such situation may happen for Infura-like
+// setup when two or more chain clients are behind a load balancer and they do
+// not have their state in sync yet.
+func confirmCurrentRelayRequest(
+	expectedRequestStartBlock uint64,
+	chain relaychain.RelayEntryInterface,
+	onConfirmed func(),
+	maxRetries int,
+	delay time.Duration,
+) {
+	for i := 1; ; i++ {
+		currentRequestStartBlockBigInt, err := chain.CurrentRequestStartBlock()
+		if err != nil {
+			if i == maxRetries {
+				logger.Errorf(
+					"could not check current request start block: [%v]; "+
+						"giving up after [%v] retries",
+					err,
+					maxRetries,
+				)
+				return
+			}
+
+			logger.Warningf(
+				"could not check current request start block: [%v]; "+
+					"will retry after [%v]",
+				err,
+				delay,
+			)
+			time.Sleep(delay)
+			continue
+		}
+
+		currentRequestStartBlock := currentRequestStartBlockBigInt.Uint64()
+
+		if currentRequestStartBlock == expectedRequestStartBlock {
+			onConfirmed()
+			return
+		} else if currentRequestStartBlock > expectedRequestStartBlock {
+			logger.Infof(
+				"the currently pending relay request started at block [%v]; "+
+					"skipping the execution of the old relay request from block [%v]",
+				currentRequestStartBlock,
+				expectedRequestStartBlock,
+			)
+			return
+		} else if i == maxRetries {
+			logger.Errorf(
+				"could not confirm the expected relay request starting block; "+
+					"the most recent one obtained from chain is [%v] and the "+
+					"expected one is [%v]; giving up after [%v] retries",
+				currentRequestStartBlock,
+				expectedRequestStartBlock,
+				maxRetries,
+			)
+			return
+		} else {
+			logger.Infof(
+				"received unexpected pending relay request start block [%v] "+
+					"while the expected was [%v]; will retry after [%v]",
+				currentRequestStartBlock,
+				expectedRequestStartBlock,
+				delay,
+			)
+			time.Sleep(delay)
+		}
+	}
 }

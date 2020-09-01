@@ -1,0 +1,65 @@
+#modal-root {
+    .modal {
+      &-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        overflow: auto;
+        background-color: fade(@color-black, 70%);
+        z-index: 1000;
+      }
+
+      &-title {
+        display: flex;
+        align-items: center;
+        padding: 1rem 2rem;
+        background-color: @color-grey-10;
+        
+        h4 {
+          font-style: normal;
+          font-weight: normal;
+          font-size: 1.3rem;
+          line-height: 145%;
+          font-feature-settings: 'tnum' on, 'lnum' on;
+          color: @color-grey-70;  
+        }
+      }
+  
+      &-wrapper {
+        display: flex;
+        flex-direction: column;
+        margin: auto;
+        width: 95%;
+        max-height: 95%;
+        overflow-x: scroll;
+        border-radius: 0;
+        background-color: @white;
+
+        @media screen and (min-width: 600px) {
+            width: 85%;
+        }
+
+        @media screen and (min-width: 750px) {
+            width: 65%;
+        }
+
+        @media screen and (min-width: 1000px) {
+            width: 30%;
+        }
+      }
+      &-close {
+        &:hover {
+          cursor: pointer;
+        }
+        margin-left: auto;
+      }
+
+      &-content {
+        padding: 2rem;
+      }
+    }
+  }

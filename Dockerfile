@@ -1,9 +1,4 @@
-FROM golang:1.13.6-alpine3.10 AS runtime
-
-ENV APP_NAME=keep-client \
-	BIN_PATH=/usr/local/bin
-
-FROM runtime AS gobuild
+FROM golang:1.13.6-alpine3.10 AS gobuild
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
@@ -27,7 +22,7 @@ RUN apk add --update --no-cache \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
-COPY --from=ethereum/solc:0.5.10 /usr/bin/solc /usr/bin/solc
+COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
 RUN go get gotest.tools/gotestsum
 
@@ -47,15 +42,10 @@ RUN go mod download
 
 # Install code generators.
 RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
-# go-ethereum in version 1.9.7 is still on govendor and some vendor.json
-# dependencies are not properly resolved by go modules. We use 'go get' as
-# a temporary workaround and hope to switch back to 'go install' once 
-# go-ethereum migrates to go modules in 1.9.8.
-# RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.7/cmd/abigen && go install .
-RUN go get github.com/ethereum/go-ethereum/cmd/abigen@v1.9.7
+RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
 
-COPY ./contracts/solidity $APP_DIR/contracts/solidity
-RUN cd $APP_DIR/contracts/solidity && npm install
+COPY ./solidity $APP_DIR/solidity
+RUN cd $APP_DIR/solidity && npm install
 
 COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
 COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
@@ -63,7 +53,9 @@ COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
 COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
 COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
 COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
-RUN go generate ./.../gen 
+# Need this to resolve imports in generated Ethereum commands.
+COPY ./config $APP_DIR/config
+RUN go generate ./.../gen
 
 COPY ./ $APP_DIR/
 RUN go generate ./pkg/gen
@@ -71,7 +63,10 @@ RUN go generate ./pkg/gen
 RUN GOOS=linux go build -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
-FROM runtime
+FROM alpine:3.10
+
+ENV APP_NAME=keep-client \
+	BIN_PATH=/usr/local/bin
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 

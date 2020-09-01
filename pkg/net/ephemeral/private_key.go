@@ -29,7 +29,7 @@ func GenerateKeyPair() (*KeyPair, error) {
 	ecdsaKey, err := btcec.NewPrivateKey(curve())
 	if err != nil {
 		return nil, fmt.Errorf(
-			"could not generate new ephemeral keypair [%v]",
+			"could not generate new ephemeral keypair: [%v]",
 			err,
 		)
 	}
@@ -58,7 +58,7 @@ func UnmarshalPrivateKey(bytes []byte) *PrivateKey {
 func UnmarshalPublicKey(bytes []byte) (*PublicKey, error) {
 	pubKey, err := btcec.ParsePubKey(bytes, curve())
 	if err != nil {
-		return nil, fmt.Errorf("could not parse ephemeral public key [%v]", err)
+		return nil, fmt.Errorf("could not parse ephemeral public key: [%v]", err)
 	}
 
 	return (*PublicKey)(pubKey), nil

@@ -2,12 +2,12 @@ package relay
 
 import (
 	"github.com/ipfs/go-log"
+	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -15,13 +15,15 @@ import (
 
 var logger = log.Logger("keep-relay")
 
+const maxGroupSize = 255
+
 // NewNode returns an empty Node with no group, zero group count, and a nil last
 // seen entry, tied to the given net.Provider.
 func NewNode(
 	staker chain.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-	chainConfig *config.Chain,
+	chainConfig *relayChain.Config,
 	groupRegistry *registry.Groups,
 ) Node {
 	return Node{
@@ -40,7 +42,7 @@ func NewNode(
 func (n *Node) MonitorRelayEntry(
 	relayChain relayChain.Interface,
 	relayRequestBlockNumber uint64,
-	chainConfig *config.Chain,
+	chainConfig *relayChain.Config,
 ) {
 	logger.Infof("monitoring chain for a new relay entry")
 
@@ -51,16 +53,11 @@ func (n *Node) MonitorRelayEntry(
 
 	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription, err := relayChain.OnRelayEntrySubmitted(
+	subscription := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
 	)
-	if err != nil {
-		close(onEntrySubmittedChannel)
-		logger.Errorf("could not watch for a signature submission: [%v]", err)
-		return
-	}
 
 	for {
 		select {
@@ -106,7 +103,7 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	channel, err := n.netProvider.ChannelFor(memberships[0].ChannelName)
+	channel, err := n.netProvider.BroadcastChannelFor(memberships[0].ChannelName)
 	if err != nil {
 		logger.Errorf("could not create broadcast channel: [%v]", err)
 		return
@@ -120,9 +117,12 @@ func (n *Node) GenerateRelayEntry(
 		return
 	}
 
-	err = channel.SetFilter(
-		createGroupMemberFilter(groupMembers, signing),
+	membershipValidator := group.NewStakersMembershipValidator(
+		groupMembers,
+		signing,
 	)
+
+	err = channel.SetFilter(membershipValidator.IsInGroup)
 	if err != nil {
 		logger.Errorf(
 			"could not set filter for channel [%v]: [%v]",

@@ -19,9 +19,12 @@ type TransportIdentifier interface {
 // layer. It also carries an unmarshaled payload.
 type Message interface {
 	TransportSenderID() TransportIdentifier
-	Payload() interface{}
-	Type() string
 	SenderPublicKey() []byte
+
+	Payload() interface{}
+
+	Type() string
+	Seqno() uint64
 }
 
 // TaggedMarshaler is an interface that includes the proto.Marshaler interface,
@@ -38,17 +41,30 @@ type TaggedMarshaler interface {
 // of provider this is, the list of IP addresses on which it can listen, and
 // known peers from peer discovery mechanims.
 type Provider interface {
+	// ID returns provider identifier.
 	ID() TransportIdentifier
-
-	ChannelFor(name string) (BroadcastChannel, error)
+	// Type gives an information about provider type.
 	Type() string
-	AddrStrings() []string
 
-	// All known peers from the underlying PeerStore. This may include
-	// peers we're not directly connected to.
-	Peers() []string
+	// UnicastChannelWith provides a unicast channel instance with given peer.
+	UnicastChannelWith(peerID TransportIdentifier) (UnicastChannel, error)
+	// OnUnicastChannelOpened allows to register a channel handler which will
+	// be invoked when a new unicast channel will be opened.
+	OnUnicastChannelOpened(handler func(channel UnicastChannel))
 
+	// BroadcastChannelFor provides a broadcast channel instance for given
+	// channel name.
+	BroadcastChannelFor(name string) (BroadcastChannel, error)
+
+	// ConnectionManager returns the connection manager used by the provider.
 	ConnectionManager() ConnectionManager
+
+	// CreateTransportIdentifier creates a transport identifier based on the
+	// provided public key.
+	CreateTransportIdentifier(publicKey ecdsa.PublicKey) (TransportIdentifier, error)
+
+	// BroadcastChannelForwarderFor creates a message relay for given channel name.
+	BroadcastChannelForwarderFor(name string)
 }
 
 // ConnectionManager is an interface which exposes peers a client is connected
@@ -58,6 +74,11 @@ type ConnectionManager interface {
 	ConnectedPeers() []string
 	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
 	DisconnectPeer(connectedPeer string)
+
+	// AddrStrings returns all listen addresses of the provider.
+	AddrStrings() []string
+
+	IsConnected(address string) bool
 }
 
 // TaggedUnmarshaler is an interface that includes the proto.Unmarshaler
@@ -69,11 +90,34 @@ type TaggedUnmarshaler interface {
 	Type() string
 }
 
-// BroadcastChannelFilter represents a filter which determine if the incoming
-// message should be processed by the receivers. It takes the message author's
-// public key as its argument and returns true if the message should be
-// processed or false otherwise.
-type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+// UnicastChannel represents a bidirectional communication channel between two
+// network peers.
+//
+// Every implementation must fulfill the following guarantees:
+// 1. If the channel was opened without errors, the communication is possible.
+// 2. Communication is performed through a direct connection.
+// 3. If a message was sent with no errors, it was received by the remote peer
+// 	  on the network level. Though, it does not guarantee that the remote peer
+// 	  handled that message.
+type UnicastChannel interface {
+	// Send function publishes a message m to the channel. Message m needs to
+	// conform to the marshalling interface.
+	Send(m TaggedMarshaler) error
+	// Recv installs a message handler that will receive messages from the
+	// channel for the entire lifetime of the provided context.
+	// When the context is done, handler is automatically unregistered and
+	// receives no more messages.
+	Recv(ctx context.Context, handler func(m Message))
+	// SetUnmarshaler set an unmarshaler that will unmarshal a given
+	// type to a concrete object that can be passed to and understood by any
+	// registered message handling functions. The unmarshaler should be a
+	// function that returns a fresh object of type proto.TaggedUnmarshaler,
+	// ready to read in the bytes for an object marked as tpe.
+	//
+	// The string type associated with the unmarshaler is the result of calling
+	// Type() on a raw unmarshaler.
+	SetUnmarshaler(unmarshaler func() TaggedUnmarshaler)
+}
 
 // BroadcastChannel represents a named pubsub channel. It allows group members
 // to broadcast and receive messages. BroadcastChannel implements strategy
@@ -82,18 +126,17 @@ type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
 type BroadcastChannel interface {
 	// Name returns the name of this broadcast channel.
 	Name() string
-	// Given a message m that can marshal itself to protobuf, broadcast m to
-	// members of the Group through the BroadcastChannel. Message will be
-	// periodically retransmitted by the channel for the lifetime of the
-	// provided context.
+	// Send function publishes a message m to the channel. Message m needs to
+	// conform to the marshalling interface. Message will be periodically
+	// retransmitted by the channel for the lifetime of the provided context.
 	Send(ctx context.Context, m TaggedMarshaler) error
 	// Recv installs a message handler that will receive messages from the
-	// broadcast channel for the entire lifetime of the provided context.
+	// channel for the entire lifetime of the provided context.
 	// When the context is done, handler is automatically unregistered and
-	// receives no more messages. Already received message retransmissions
-	// are filtered out before calling the handler.
+	// receives no more messages. Already received message retransmissions are
+	// filtered out before calling the handler.
 	Recv(ctx context.Context, handler func(m Message))
-	// RegisterUnmarshaler registers an unmarshaler that will unmarshal a given
+	// SetUnmarshaler set an unmarshaler that will unmarshal a given
 	// type to a concrete object that can be passed to and understood by any
 	// registered message handling functions. The unmarshaler should be a
 	// function that returns a fresh object of type proto.TaggedUnmarshaler,
@@ -101,9 +144,27 @@ type BroadcastChannel interface {
 	//
 	// The string type associated with the unmarshaler is the result of calling
 	// Type() on a raw unmarshaler.
-	RegisterUnmarshaler(unmarshaler func() TaggedUnmarshaler) error
+	SetUnmarshaler(unmarshaler func() TaggedUnmarshaler)
 	// SetFilter registers a broadcast channel filter which will be used
 	// to determine if given broadcast channel message should be processed
 	// by the receivers.
 	SetFilter(filter BroadcastChannelFilter) error
+}
+
+// BroadcastChannelFilter represents a filter which determine if the incoming
+// message should be processed by the receivers. It takes the message author's
+// public key as its argument and returns true if the message should be
+// processed or false otherwise.
+type BroadcastChannelFilter func(*ecdsa.PublicKey) bool
+
+// Firewall represents a set of rules the remote peer has to conform to so that
+// a connection with that peer can be approved.
+type Firewall interface {
+
+	// Validate takes the remote peer public key and executes all the checks
+	// needed to decide whether the connection with the remote peer can be
+	// approved.
+	// If expectations are not met, this function should return an error
+	// describing what is wrong.
+	Validate(remotePeerPublicKey *ecdsa.PublicKey) error
 }

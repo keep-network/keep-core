@@ -3,6 +3,7 @@ package libp2p
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -14,8 +15,8 @@ import (
 const (
 	libp2pMessageSigning              = true
 	libp2pStrictSignatureVerification = true
-	libp2pPeerOutboundQueueSize       = 128
-	libp2pValidationQueueSize         = 128
+	libp2pPeerOutboundQueueSize       = 256
+	libp2pValidationQueueSize         = 4096
 )
 
 type channelManager struct {
@@ -30,6 +31,9 @@ type channelManager struct {
 	pubsub *pubsub.PubSub
 
 	retransmissionTicker *retransmission.Ticker
+
+	forwarderSubscriptionsMutex sync.Mutex
+	forwarderSubscriptions      map[string]*pubsub.Subscription
 }
 
 func newChannelManager(
@@ -51,12 +55,13 @@ func newChannelManager(
 		return nil, err
 	}
 	return &channelManager{
-		channels:             make(map[string]*channel),
-		pubsub:               floodsub,
-		peerStore:            p2phost.Peerstore(),
-		identity:             identity,
-		ctx:                  ctx,
-		retransmissionTicker: retransmissionTicker,
+		channels:               make(map[string]*channel),
+		pubsub:                 floodsub,
+		peerStore:              p2phost.Peerstore(),
+		identity:               identity,
+		ctx:                    ctx,
+		retransmissionTicker:   retransmissionTicker,
+		forwarderSubscriptions: make(map[string]*pubsub.Subscription),
 	}, nil
 }
 
@@ -72,15 +77,21 @@ func (cm *channelManager) getChannel(name string) (*channel, error) {
 	cm.channelsMutex.Unlock()
 
 	if !exists {
+		// Ensure we update our cache of known channels
+		cm.channelsMutex.Lock()
+		defer cm.channelsMutex.Unlock()
+
+		channel, exists = cm.channels[name]
+		if exists {
+			return channel, nil
+		}
+
 		channel, err = cm.newChannel(name)
 		if err != nil {
 			return nil, err
 		}
 
-		// Ensure we update our cache of known channels
-		cm.channelsMutex.Lock()
 		cm.channels[name] = channel
-		cm.channelsMutex.Unlock()
 	}
 
 	return channel, nil
@@ -98,6 +109,7 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 		peerStore:            cm.peerStore,
 		pubsub:               cm.pubsub,
 		subscription:         sub,
+		incomingMessageQueue: make(chan *pubsub.Message, incomingMessageThrottle),
 		messageHandlers:      make([]*messageHandler, 0),
 		unmarshalersByType:   make(map[string]func() net.TaggedUnmarshaler),
 		retransmissionTicker: cm.retransmissionTicker,
@@ -106,4 +118,54 @@ func (cm *channelManager) newChannel(name string) (*channel, error) {
 	go channel.handleMessages(cm.ctx)
 
 	return channel, nil
+}
+
+func (cm *channelManager) newForwarder(name string, ttl time.Duration) error {
+	cm.forwarderSubscriptionsMutex.Lock()
+	defer cm.forwarderSubscriptionsMutex.Unlock()
+
+	if _, ok := cm.forwarderSubscriptions[name]; !ok {
+		forwarderSubscription, err := cm.pubsub.Subscribe(name)
+		if err != nil {
+			return err
+		}
+
+		go func() {
+			ctx, cancelCtx := context.WithTimeout(cm.ctx, ttl)
+			defer cancelCtx()
+
+			for {
+				select {
+				case <-ctx.Done():
+					cm.shutdownForwarder(name)
+					return
+				default:
+					// Just pull the message from subscription to unblock
+					// the channel and avoid warnings from libp2p. We
+					// are not interested with their content.
+					_, _ = forwarderSubscription.Next(ctx)
+				}
+			}
+		}()
+
+		cm.forwarderSubscriptions[name] = forwarderSubscription
+	}
+
+	return nil
+}
+
+func (cm *channelManager) shutdownForwarder(name string) {
+	cm.forwarderSubscriptionsMutex.Lock()
+	defer cm.forwarderSubscriptionsMutex.Unlock()
+
+	logger.Infof("shutting down message forwarder for channel: [%v]", name)
+
+	forwarderSubscription, ok := cm.forwarderSubscriptions[name]
+
+	if !ok {
+		return
+	}
+
+	forwarderSubscription.Cancel()
+	delete(cm.forwarderSubscriptions, name)
 }

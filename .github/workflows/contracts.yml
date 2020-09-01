@@ -1,0 +1,72 @@
+name: Solidity
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "solidity/contracts/**"
+      - "solidity/package.json"
+      - "solidity/package-lock.json"
+      - ".github/workflows/contracts.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: Cache node modules
+        uses: actions/cache@v1
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies
+        working-directory: ./solidity
+        run: |
+          npm ci
+      - name: Run tests
+        working-directory: ./solidity
+        run: |
+          npm run test
+          exit 0
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+      - name: Cache node modules
+        uses: actions/cache@v1
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install dependencies
+        working-directory: ./solidity
+        run: npm ci
+      - name: Lint
+        working-directory: ./solidity
+        run: npm run lint

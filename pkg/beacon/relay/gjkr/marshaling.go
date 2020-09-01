@@ -9,6 +9,18 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
+// MemberIndex is represented as uint8 in gjkr. Protobuf does not have uint8
+// type so we are using uint32. When unmarshalling message, we need to make
+// sure we do not overflow.
+const maxMemberIndex = 255
+
+func validateMemberIndex(protoIndex uint32) error {
+	if protoIndex > maxMemberIndex {
+		return fmt.Errorf("Invalid member index value: [%v]", protoIndex)
+	}
+	return nil
+}
+
 // Type returns a string describing an EphemeralPublicKeyMessage type for
 // marshaling purposes.
 func (epkm *EphemeralPublicKeyMessage) Type() string {
@@ -18,9 +30,14 @@ func (epkm *EphemeralPublicKeyMessage) Type() string {
 // Marshal converts this EphemeralPublicKeyMessage to a byte array suitable for
 // network communication.
 func (epkm *EphemeralPublicKeyMessage) Marshal() ([]byte, error) {
+	ephemeralPublicKeys, err := marshalPublicKeyMap(epkm.ephemeralPublicKeys)
+	if err != nil {
+		return nil, err
+	}
+
 	return (&pb.EphemeralPublicKey{
 		SenderID:            uint32(epkm.senderID),
-		EphemeralPublicKeys: marshalPublicKeyMap(epkm.ephemeralPublicKeys),
+		EphemeralPublicKeys: ephemeralPublicKeys,
 	}).Marshal()
 }
 
@@ -32,6 +49,9 @@ func (epkm *EphemeralPublicKeyMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	epkm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	ephemeralPublicKeys, err := unmarshalPublicKeyMap(pbMsg.EphemeralPublicKeys)
@@ -72,6 +92,9 @@ func (mcm *MemberCommitmentsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	mcm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	var commitments []*bn256.G1
@@ -102,6 +125,10 @@ func (psm *PeerSharesMessage) Type() string {
 func (psm *PeerSharesMessage) Marshal() ([]byte, error) {
 	pbShares := make(map[uint32]*pb.PeerShares_Shares)
 	for memberID, shares := range psm.shares {
+		if shares == nil {
+			return nil, fmt.Errorf("nil shares for member [%v]", memberID)
+		}
+
 		pbShares[uint32(memberID)] = &pb.PeerShares_Shares{
 			EncryptedShareS: shares.encryptedShareS,
 			EncryptedShareT: shares.encryptedShareT,
@@ -121,10 +148,21 @@ func (psm *PeerSharesMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	psm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	shares := make(map[group.MemberIndex]*peerShares)
 	for memberID, pbShares := range pbMsg.Shares {
+		if err := validateMemberIndex(memberID); err != nil {
+			return err
+		}
+
+		if pbShares == nil {
+			return fmt.Errorf("nil shares from member [%v]", memberID)
+		}
+
 		shares[group.MemberIndex(memberID)] = &peerShares{
 			encryptedShareS: pbShares.EncryptedShareS,
 			encryptedShareT: pbShares.EncryptedShareT,
@@ -145,9 +183,14 @@ func (ssam *SecretSharesAccusationsMessage) Type() string {
 // Marshal converts this SecretSharesAccusationsMessage to a byte array
 // suitable for network communication.
 func (ssam *SecretSharesAccusationsMessage) Marshal() ([]byte, error) {
+	accusedMembersKeys, err := marshalPrivateKeyMap(ssam.accusedMembersKeys)
+	if err != nil {
+		return nil, err
+	}
+
 	return (&pb.SecretSharesAccusations{
 		SenderID:           uint32(ssam.senderID),
-		AccusedMembersKeys: marshalPrivateKeyMap(ssam.accusedMembersKeys),
+		AccusedMembersKeys: accusedMembersKeys,
 	}).Marshal()
 }
 
@@ -159,6 +202,9 @@ func (ssam *SecretSharesAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	ssam.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
@@ -181,7 +227,11 @@ func (mpspm *MemberPublicKeySharePointsMessage) Type() string {
 // suitable for network communication.
 func (mpspm *MemberPublicKeySharePointsMessage) Marshal() ([]byte, error) {
 	keySharePoints := make([][]byte, 0, len(mpspm.publicKeySharePoints))
-	for _, keySharePoint := range mpspm.publicKeySharePoints {
+	for i, keySharePoint := range mpspm.publicKeySharePoints {
+		if keySharePoint == nil {
+			return nil, fmt.Errorf("nil key share point at index [%v]", i)
+		}
+
 		keySharePoints = append(keySharePoints, keySharePoint.Marshal())
 	}
 
@@ -199,6 +249,9 @@ func (mpspm *MemberPublicKeySharePointsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	mpspm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	var keySharePoints []*bn256.G2
@@ -227,9 +280,14 @@ func (pam *PointsAccusationsMessage) Type() string {
 // Marshal converts this PointsAccusationsMessage to a byte array suitable
 // for network communication.
 func (pam *PointsAccusationsMessage) Marshal() ([]byte, error) {
+	accusedMembersKeys, err := marshalPrivateKeyMap(pam.accusedMembersKeys)
+	if err != nil {
+		return nil, err
+	}
+
 	return (&pb.PointsAccusations{
 		SenderID:           uint32(pam.senderID),
-		AccusedMembersKeys: marshalPrivateKeyMap(pam.accusedMembersKeys),
+		AccusedMembersKeys: accusedMembersKeys,
 	}).Marshal()
 }
 
@@ -241,6 +299,9 @@ func (pam *PointsAccusationsMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	pam.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	accusedMembersKeys, err := unmarshalPrivateKeyMap(pbMsg.AccusedMembersKeys)
@@ -262,9 +323,14 @@ func (mekm *MisbehavedEphemeralKeysMessage) Type() string {
 // Marshal converts this MisbehavedEphemeralKeysMessage to a byte array
 // suitable for network communication.
 func (mekm *MisbehavedEphemeralKeysMessage) Marshal() ([]byte, error) {
+	privateKeys, err := marshalPrivateKeyMap(mekm.privateKeys)
+	if err != nil {
+		return nil, err
+	}
+
 	return (&pb.MisbehavedEphemeralKeys{
 		SenderID:    uint32(mekm.senderID),
-		PrivateKeys: marshalPrivateKeyMap(mekm.privateKeys),
+		PrivateKeys: privateKeys,
 	}).Marshal()
 }
 
@@ -276,6 +342,9 @@ func (mekm *MisbehavedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 		return err
 	}
 
+	if err := validateMemberIndex(pbMsg.SenderID); err != nil {
+		return err
+	}
 	mekm.senderID = group.MemberIndex(pbMsg.SenderID)
 
 	privateKeys, err := unmarshalPrivateKeyMap(pbMsg.PrivateKeys)
@@ -290,12 +359,16 @@ func (mekm *MisbehavedEphemeralKeysMessage) Unmarshal(bytes []byte) error {
 
 func marshalPublicKeyMap(
 	publicKeys map[group.MemberIndex]*ephemeral.PublicKey,
-) map[uint32][]byte {
+) (map[uint32][]byte, error) {
 	marshalled := make(map[uint32][]byte, len(publicKeys))
 	for id, publicKey := range publicKeys {
+		if publicKey == nil {
+			return nil, fmt.Errorf("nil public key for member [%v]", id)
+		}
+
 		marshalled[uint32(id)] = publicKey.Marshal()
 	}
-	return marshalled
+	return marshalled, nil
 }
 
 func unmarshalPublicKeyMap(
@@ -303,6 +376,10 @@ func unmarshalPublicKeyMap(
 ) (map[group.MemberIndex]*ephemeral.PublicKey, error) {
 	var unmarshalled = make(map[group.MemberIndex]*ephemeral.PublicKey, len(publicKeys))
 	for memberID, publicKeyBytes := range publicKeys {
+		if err := validateMemberIndex(memberID); err != nil {
+			return nil, err
+		}
+
 		publicKey, err := ephemeral.UnmarshalPublicKey(publicKeyBytes)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal public key [%v]", err)
@@ -317,12 +394,16 @@ func unmarshalPublicKeyMap(
 
 func marshalPrivateKeyMap(
 	privateKeys map[group.MemberIndex]*ephemeral.PrivateKey,
-) map[uint32][]byte {
+) (map[uint32][]byte, error) {
 	marshalled := make(map[uint32][]byte, len(privateKeys))
 	for id, privateKey := range privateKeys {
+		if privateKey == nil {
+			return nil, fmt.Errorf("nil private key for member [%v]", id)
+		}
+
 		marshalled[uint32(id)] = privateKey.Marshal()
 	}
-	return marshalled
+	return marshalled, nil
 }
 
 func unmarshalPrivateKeyMap(
@@ -330,6 +411,16 @@ func unmarshalPrivateKeyMap(
 ) (map[group.MemberIndex]*ephemeral.PrivateKey, error) {
 	var unmarshalled = make(map[group.MemberIndex]*ephemeral.PrivateKey, len(privateKeys))
 	for memberID, privateKeyBytes := range privateKeys {
+		if err := validateMemberIndex(memberID); err != nil {
+			return nil, err
+		}
+
+		if len(privateKeyBytes) == 0 {
+			return nil, fmt.Errorf(
+				"private key bytes slice is empty for member [%v]", memberID,
+			)
+		}
+
 		unmarshalled[group.MemberIndex(memberID)] = ephemeral.UnmarshalPrivateKey(privateKeyBytes)
 	}
 

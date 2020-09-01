@@ -36,10 +36,10 @@ function create_deployment_bundles() {
     tar -zcvf $PARTICIPANT_PATH/$DATE-keep-client-deployment-bundle.tar.gz \
       -C $BASEDIR/../../../docs/ keep-client-quickstart.adoc \
       -C ../infrastructure/eth-networks/keep-test/ropsten changelog.adoc \
-         ./eth-account-password.txt  \
          ./keep-client-snapshot.tar \
       -C ./participants/$participant config \
-         ./persistence
+         ./persistence \
+         ./.secrets/eth-account-password.txt
      echo "==============================\n"
    done
 }

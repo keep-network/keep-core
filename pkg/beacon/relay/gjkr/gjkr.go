@@ -19,25 +19,31 @@ var logger = log.Logger("keep-gjkr")
 // message unmarshallers.
 // The channel needs to be fully initialized before Execute is called.
 func RegisterUnmarshallers(channel net.BroadcastChannel) {
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &EphemeralPublicKeyMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &MemberCommitmentsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &PeerSharesMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &SecretSharesAccusationsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &MemberPublicKeySharePointsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &PointsAccusationsMessage{}
 	})
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &MisbehavedEphemeralKeysMessage{}
 	})
 }
@@ -56,6 +62,7 @@ func Execute(
 	channel net.BroadcastChannel,
 	dishonestThreshold int,
 	seed *big.Int,
+	membershipValidator group.MembershipValidator,
 	startBlockHeight uint64,
 ) (*Result, uint64, error) {
 	logger.Debugf("[member:%v] initializing member", memberIndex)
@@ -64,15 +71,16 @@ func Execute(
 		memberIndex,
 		groupSize,
 		dishonestThreshold,
+		membershipValidator,
 		seed,
 	)
 	if err != nil {
 		return nil, 0, fmt.Errorf("cannot create a new member: [%v]", err)
 	}
 
-	initialState := &joinState{
+	initialState := &ephemeralKeyPairGenerationState{
 		channel: channel,
-		member:  member,
+		member:  member.InitializeEphemeralKeysGeneration(),
 	}
 
 	stateMachine := state.NewMachine(channel, blockCounter, initialState)

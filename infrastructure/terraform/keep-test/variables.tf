@@ -129,9 +129,9 @@ variable "gke_node_pool" {
   description = "A node pool for the gke cluster."
 
   default {
-    name         = "default-node-pool"
+    name         = "default"
     node_count   = "1"
-    machine_type = "n1-standard-2"
+    machine_type = "n1-standard-4"
     disk_type    = "pd-ssd"
     disk_size_gb = 100
     auto_repair  = "true"
@@ -224,4 +224,10 @@ variable "utility_box" {
     machine_type = "g1-small"
     tools        = "kubectl, helm, jq, npm, geth"
   }
+}
+
+## global
+variable "keep_contract_data_bucket_name" {
+  description = "The name for the bucket that we publish compiled contract data to after CI driven migration."
+  default     = "keep-test-contract-data"
 }

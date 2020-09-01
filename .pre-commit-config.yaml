@@ -17,7 +17,13 @@ repos:
       entry: solium
       files: '\.sol$'
       args:
-      - --dir=contracts/solidity/contracts/
-      - --config=contracts/solidity/.soliumrc.json
+      - --dir=solidity/contracts/
+      - --config=solidity/.soliumrc.json
       additional_dependencies:
       - ethlint@1.2.3
+    - id: lint-js
+      name: 'lint js'
+      entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
+      files: '\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"

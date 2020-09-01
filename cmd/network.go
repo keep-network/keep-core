@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
-	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
@@ -70,17 +70,8 @@ func pingRequest(c *cli.Context) error {
 		privKey      *key.NetworkPrivate
 	)
 
-	bootstrapPeerPrivKey, bootstrapPeerPubKey := getBootstrapPeerNetworkKey()
-	standardPeerPrivKey, standardPeerPubKey := getStandardPeerNetworkKey()
-
-	stakeMonitor := local.NewStakeMonitor(big.NewInt(200))
-
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
-		bootstrapPeerPubKey,
-	))
-	stakeMonitor.StakeTokens(key.NetworkPubKeyToEthAddress(
-		standardPeerPubKey,
-	))
+	bootstrapPeerPrivKey, _ := getBootstrapPeerNetworkKey()
+	standardPeerPrivKey, _ := getStandardPeerNetworkKey()
 
 	if isBootstrapNode {
 		privKey = bootstrapPeerPrivKey
@@ -92,7 +83,8 @@ func pingRequest(c *cli.Context) error {
 		ctx,
 		libp2pConfig,
 		privKey,
-		stakeMonitor,
+		libp2p.ProtocolBeacon,
+		firewall.Disabled,
 		retransmission.NewTimeTicker(ctx, 50*time.Millisecond),
 	)
 	if err != nil {
@@ -101,7 +93,7 @@ func pingRequest(c *cli.Context) error {
 
 	if isBootstrapNode {
 		var bootstrapAddr string
-		for _, addr := range netProvider.AddrStrings() {
+		for _, addr := range netProvider.ConnectionManager().AddrStrings() {
 			if strings.Contains(addr, "ip4") && !strings.Contains(addr, "127.0.0.1") {
 				bootstrapAddr = addr
 				break
@@ -116,7 +108,7 @@ func pingRequest(c *cli.Context) error {
 	}
 
 	// When we call ChannelFor, we create a coordination point for peers
-	broadcastChannel, err := netProvider.ChannelFor(ping)
+	broadcastChannel, err := netProvider.BroadcastChannelFor(ping)
 	if err != nil {
 		return err
 	}
@@ -124,16 +116,12 @@ func pingRequest(c *cli.Context) error {
 	// PingMessage and PongMessage conform to the net.Message interface
 	// (Type, Unmarshal, Marshal); ensure our network knows how to serialize
 	// them when sending over the wire
-	if err := broadcastChannel.RegisterUnmarshaler(
+	broadcastChannel.SetUnmarshaler(
 		func() net.TaggedUnmarshaler { return &PingMessage{} },
-	); err != nil {
-		return err
-	}
-	if err := broadcastChannel.RegisterUnmarshaler(
+	)
+	broadcastChannel.SetUnmarshaler(
 		func() net.TaggedUnmarshaler { return &PongMessage{} },
-	); err != nil {
-		return err
-	}
+	)
 
 	var (
 		pingChan = make(chan net.Message)
@@ -157,7 +145,7 @@ func pingRequest(c *cli.Context) error {
 	// Give ourselves a moment to form a mesh with the other peer
 	for {
 		time.Sleep(3 * time.Second)
-		peers := netProvider.Peers()
+		peers := netProvider.ConnectionManager().ConnectedPeers()
 		if len(peers) < 1 {
 			fmt.Println("waiting for peer...")
 			continue

@@ -4,12 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/keep-network/keep-core/pkg/chain/local"
+	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
@@ -29,7 +28,8 @@ func TestProviderReturnsType(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(),
 		privKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		ProtocolBeacon,
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
@@ -59,14 +59,15 @@ func TestProviderReturnsChannel(t *testing.T) {
 		ctx,
 		generateDeterministicNetworkConfig(),
 		privKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		ProtocolBeacon,
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err = provider.ChannelFor(testName); err != nil {
+	if _, err = provider.BroadcastChannelFor(testName); err != nil {
 		t.Fatalf("expected: test to fail with [%v]\nactual:   failed with [%v]",
 			nil,
 			err,
@@ -98,22 +99,21 @@ func TestSendReceive(t *testing.T) {
 		ctx,
 		config,
 		privKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		ProtocolBeacon,
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
 		t.Fatal(err)
 	}
-	broadcastChannel, err := provider.ChannelFor(name)
+	broadcastChannel, err := provider.BroadcastChannelFor(name)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler(
+	broadcastChannel.SetUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		t.Fatal(err)
-	}
+	)
 
 	if err := broadcastChannel.Send(
 		ctx,
@@ -173,7 +173,8 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		ctx,
 		config,
 		privateKey,
-		local.NewStakeMonitor(big.NewInt(200)),
+		ProtocolBeacon,
+		firewall.Disabled,
 		idleTicker(),
 	)
 	if err != nil {
@@ -184,7 +185,7 @@ func TestProviderSetAnnouncedAddresses(t *testing.T) {
 		fmt.Sprintf("/dns4/address.com/tcp/3919/ipfs/%v", provider.ID()),
 		fmt.Sprintf("/ip4/100.20.50.30/tcp/3919/ipfs/%v", provider.ID()),
 	}
-	providerAddresses := provider.AddrStrings()
+	providerAddresses := provider.ConnectionManager().AddrStrings()
 	if strings.Join(expectedAddresses, " ") != strings.Join(providerAddresses, " ") {
 		t.Fatalf(
 			"expected: provider addresses [%v]\nactual: provider addresses [%v]",

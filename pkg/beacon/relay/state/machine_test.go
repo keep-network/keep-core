@@ -23,7 +23,7 @@ func TestExecute(t *testing.T) {
 	localChain := chainLocal.Connect(10, 5, big.NewInt(200))
 	blockCounter, _ = localChain.BlockCounter()
 	provider := netLocal.Connect()
-	channel, err := provider.ChannelFor("transitions_test")
+	channel, err := provider.BroadcastChannelFor("transitions_test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestExecute(t *testing.T) {
 		cancel()
 	}(blockCounter)
 
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &TestMessage{}
 	})
 

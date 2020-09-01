@@ -19,23 +19,6 @@ orbs:
   gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
-  test_solidity:
-    executor: docker-node
-    steps:
-      - checkout
-      - run: sudo npm install -g ganache-cli@6.4.2
-      - run:
-          name: Set up test and test result environment
-          command: |
-            cd contracts/solidity
-            npm install
-      - run:
-          name: Running testrpc
-          command: ganache-cli
-          background: true
-      - run: cd contracts/solidity && npm run test
-      - store_test_results:
-          path: /tmp/test-results
   generate_docs_solidity:
     executor: docker-node
     steps:
@@ -43,7 +26,7 @@ jobs:
       - run:
           name: Generate solidity docs
           command: |
-            cd contracts/solidity && npm install
+            cd solidity && npm install
             node_modules/.bin/truffle compile
             mkdir -p output
             node scripts/generate-api-docs.js > output/index.adoc
@@ -98,43 +81,33 @@ jobs:
             cp /tmp/keep-client/contracts/* infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             cd infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
             docker build \
-              --build-arg ETH_HOSTNAME=$ETH_HOSTNAME \
-              --build-arg ETH_WS_PORT=$ETH_WS_PORT \
-              --build-arg ETH_RPC_PORT=$ETH_RPC_PORT \
-              --build-arg ETH_NETWORK_ID=$ETH_NETWORK_ID \
-              --build-arg CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS=$CONTRACT_OWNER_ETH_ACCOUNT_ADDRESS \
-              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer .
+              -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client .
       - run:
-          name: Save keep-client-initcontainer image
+          name: Save initcontainer-provision-keep-client image
           command: |
-            docker save -o /tmp/keep-client/docker-images/keep-client-initcontainer.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client-initcontainer
+            docker save -o /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/initcontainer-provision-keep-client
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
             - docker-images
   migrate_contracts:
-    executor: docker-thesis-buildpack
+    executor: docker-node
     steps:
       - setup_remote_docker:
           docker_layer_caching: true
       - checkout
       - run:
-          name: Set Gcloud Auth
-          command: |
-            echo $GCLOUD_SERVICE_KEY_JUMPHOST_SSH > ~/gcloud-service-key.json
-            gcloud auth activate-service-account --key-file ~/gcloud-service-key.json
-      - run:
           name: Migrate Contracts
+          no_output_timeout: 30m
           command: |
             export BUILD_TAG=$CIRCLE_SHA1
             export TRUFFLE_NETWORK=$TRUFFLE_NETWORK
-            mkdir -p /tmp/keep-client/contracts
-            contracts/solidity/scripts/circleci-migrate-contracts.sh
+            solidity/scripts/circleci-migrate-contracts.sh
       - persist_to_workspace:
           root: /tmp/keep-client
           paths:
             - contracts
-  publish_docker_images:
+  publish_keep_client:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
@@ -143,7 +116,6 @@ jobs:
           name: Load Docker images
           command: |
             docker load -i /tmp/keep-client/docker-images/keep-client.tar
-            docker load -i /tmp/keep-client/docker-images/keep-client-initcontainer.tar
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -152,12 +124,26 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-client-initcontainer
+          image: keep-client
           tag: latest
+  publish_initcontainer_provision_keep_client:
+    executor: gcp-gcr/default
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - run:
+          name: Load Docker images
+          command: |
+            docker load -i /tmp/keep-client/docker-images/initcontainer-provision-keep-client.tar
+      - gcp-gcr/gcr-auth:
+          google-project-id: GOOGLE_PROJECT_ID
+          google-compute-zone: GOOGLE_COMPUTE_ZONE_A
+          # This param doesn't actually set anything, leaving here as a reminder to check when they fix it.
+          gcloud-service-key: GCLOUD_SERVICE_KEY
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-client
+          image: initcontainer-provision-keep-client
           tag: latest
   publish_contract_data:
     executor: gcp-cli/default
@@ -174,9 +160,64 @@ jobs:
           name: Upload contract data
           command: |
             cd /tmp/keep-client/contracts
-            gsutil -m cp * gs://keep-dev-contract-data/keep-core
+            gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/keep-core
 
-  build_staking_dapp:
+  publish_npm_package:
+    executor: docker-node
+    steps:
+      - attach_workspace:
+          at: /tmp/keep-client
+      - checkout
+      - run:
+          name: Bump and publish npm package
+          working_directory: ~/project/solidity
+          command: |
+            set -x
+            mkdir -p artifacts
+            cp -r /tmp/keep-client/contracts/* artifacts/
+            name=$(jq --raw-output .name package.json)
+            version=$(jq --raw-output .version package.json)
+            preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
+
+            # Find the latest published package version matching this preid.
+            # Note that in jq, we wrap the result in an array and then flatten;
+            # this is because npm show json contains a single string if there
+            # is only one matching version, or an array if there are multiple,
+            # and we want to look at an array always.
+            latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
+            latest_version=${latest_version:-$version}
+            if [ -z $latest_version ]; then
+              echo "Latest version calculation failed. Resolved info:"
+              echo "$name@$version ; preid $preid"
+              exit 1
+            fi
+
+            # Update package.json with the latest published package version matching this
+            # preid to prepare for bumping.
+            echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
+
+            # Bump without doing any git work. Versioning is a build-time action for us.
+            # Consider including commit id? Would be +<commit id>.
+            npm version prerelease --preid=$preid --no-git-tag-version
+
+            # Fix resolved dependency versions.
+            npm update
+
+            # Publish to npm.
+            echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
+            npm publish --access=public
+
+  trigger_downstream_builds:
+    executor: docker-node
+    steps:
+      - run:
+          name: "Rebuild downstream same-branch build(s)"
+          command: |
+            # CIRCLE_BRANCH || CIRCLE_TAG?
+            # curl CIRCLE_API_BUILD/keep-tecdsa?branch=${CIRCLE_BRANCH}
+            echo "Eventually trigger downstream for $CIRCLE_BRANCH"
+
+  build_token_dashboard_dapp:
     executor: docker-node
     steps:
       - attach_workspace:
@@ -185,38 +226,38 @@ jobs:
           docker_layer_caching: true
       - checkout
       - run:
-          name: Copy contract artifacts
-          working_directory: ~/project/contracts/solidity/dashboard
+          name: Resolve latest contracts
+          working_directory: ~/project/solidity/dashboard
           command: |
-            ./scripts/copy-contracts.sh /tmp/keep-client/contracts
+            npm upgrade @keep-network/keep-core
       - run:
           name: Run Docker build
-          working_directory: ~/project/contracts/solidity/dashboard
+          working_directory: ~/project/solidity/dashboard
           command: |
-            docker build --tag keep-staking-dapp .
+            docker build --tag keep-dapp-token-dashboard .
       - run:
-          name: Save keep-staking-dapp image
-          working_directory: ~/project/contracts/solidity/dashboard
+          name: Save keep-dapp-token-dashboard image
+          working_directory: ~/project/solidity/dashboard
           command: |
-            mkdir -p /tmp/keep-staking-dapp/docker-images/
-            docker save -o /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar keep-staking-dapp
+            mkdir -p /tmp/keep-dapp-token-dashboard/docker-images/
+            docker save -o /tmp/keep-dapp-token-dashboard/docker-images/keep-dapp-token-dashboard.tar keep-dapp-token-dashboard
       - persist_to_workspace:
-          root: /tmp/keep-staking-dapp
+          root: /tmp/keep-dapp-token-dashboard
           paths:
             - docker-images
-  publish_staking_dapp:
+  publish_token_dashboard_dapp:
     executor: gcp-gcr/default
     steps:
       - attach_workspace:
-          at: /tmp/keep-staking-dapp
+          at: /tmp/keep-dapp-token-dashboard
       - run:
-          name: Load keep-staking-dapp image
+          name: Load keep-dapp-token-dashboard image
           command: |
-            docker load -i /tmp/keep-staking-dapp/docker-images/keep-staking-dapp.tar
+            docker load -i /tmp/keep-dapp-token-dashboard/docker-images/keep-dapp-token-dashboard.tar
       - run:
           name: Tag Docker image
           command: |
-            docker tag keep-staking-dapp $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-staking-dapp
+            docker tag keep-dapp-token-dashboard $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-dapp-token-dashboard
       - gcp-gcr/gcr-auth:
           google-project-id: GOOGLE_PROJECT_ID
           google-compute-zone: GOOGLE_COMPUTE_ZONE_A
@@ -225,7 +266,7 @@ jobs:
       - gcp-gcr/push-image:
           google-project-id: GOOGLE_PROJECT_ID
           registry-url: $GCR_REGISTRY_URL
-          image: keep-staking-dapp
+          image: keep-dapp-token-dashboard
           tag: latest
 
   generate_docs_tex:
@@ -287,55 +328,146 @@ jobs:
 
 workflows:
   version: 2
-  solidity:
-    jobs:
-      - test_solidity
-  build_test_migrate_publish:
+  build-and-test:
     jobs:
       - build_client_and_test_go:
+          filters:
+            branches:
+              ignore: master
           context: keep-dev
-      - build_initcontainer:
+      - build_token_dashboard_dapp:
+          filters:
+            branches:
+              ignore: master
+  build-test-publish-keep-dev:
+    jobs:
+      - build_client_and_test_go:
           filters:
             branches:
               only: master
           context: keep-dev
-          requires:
-            - migrate_contracts
-            - build_client_and_test_go
-      - migrate_contracts:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - build_client_and_test_go
-      - publish_docker_images:
-          filters:
-            branches:
-              only: master
-          context: keep-dev
-          requires:
-            - build_client_and_test_go
-            - build_initcontainer
-            - migrate_contracts
-      - publish_contract_data:
+      - publish_keep_client:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
             - build_client_and_test_go
-            - migrate_contracts
-      - build_staking_dapp:
-          requires:
-            - migrate_contracts
-      - publish_staking_dapp:
+      - build_token_dashboard_dapp:
+          filters:
+            branches:
+              only: master
+      - publish_token_dashboard_dapp:
           filters:
             branches:
               only: master
           context: keep-dev
           requires:
-            - build_staking_dapp
+            - build_token_dashboard_dapp
+  build-test-migrate-publish-keep-test:
+      jobs:
+        - keep_test_approval:
+            type: approval
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+        - build_client_and_test_go:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - keep_test_approval
+        - build_initcontainer:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - migrate_contracts
+              - build_client_and_test_go
+        - migrate_contracts:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - build_client_and_test_go
+        - publish_keep_client:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - build_client_and_test_go
+              - build_initcontainer
+              - migrate_contracts
+        - publish_initcontainer_provision_keep_client:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - build_client_and_test_go
+              - build_initcontainer
+              - migrate_contracts
+        - publish_contract_data:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - build_client_and_test_go
+              - migrate_contracts
+        - publish_npm_package:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - migrate_contracts
+        - trigger_downstream_builds:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - publish_npm_package
+        - build_token_dashboard_dapp:
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - publish_npm_package
+        - publish_token_dashboard_dapp:
+            context: keep-test
+            filters:
+              tags:
+                only: /^v.*/
+              branches:
+                only: /releases\/.*/
+            requires:
+              - build_token_dashboard_dapp
   docs:
     jobs:
       - generate_docs_tex

@@ -23,25 +23,31 @@ var (
 
 	persistenceMock = &persistenceHandleMock{}
 
+	groupPublicKeyShares = make(map[group.MemberIndex]*bn256.G2)
+
 	signer1 = dkg.NewThresholdSigner(
 		group.MemberIndex(1),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
 		big.NewInt(1),
+		groupPublicKeyShares,
 	)
 	signer2 = dkg.NewThresholdSigner(
 		group.MemberIndex(2),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
 		big.NewInt(2),
+		groupPublicKeyShares,
 	)
 	signer3 = dkg.NewThresholdSigner(
 		group.MemberIndex(3),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
 		big.NewInt(3),
+		groupPublicKeyShares,
 	)
 	signer4 = dkg.NewThresholdSigner(
 		group.MemberIndex(3),
 		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
 		big.NewInt(2),
+		groupPublicKeyShares,
 	)
 )
 
@@ -135,7 +141,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 		t.Fatalf("Group2 was expected to be unregistered, but is still present")
 	}
 	if len(persistenceMock.archivedGroups) != 1 ||
-		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytes()) {
+		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytesCompressed()) {
 		t.Fatalf("Group2 was expected to be archived")
 	}
 
@@ -156,7 +162,7 @@ func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 
 func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	func(groupRegistration *event.GroupRegistration),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	panic("not implemented")
 }
 

@@ -99,7 +99,7 @@ func executeSigning(
 	if err != nil {
 		return nil, err
 	}
-	broadcastChannel, err := network.ChannelFor(
+	broadcastChannel, err := network.BroadcastChannelFor(
 		fmt.Sprintf("entry-test-%v", randomSelector),
 	)
 	if err != nil {
@@ -107,7 +107,7 @@ func executeSigning(
 	}
 
 	entrySubmissionChan := make(chan *event.EntrySubmitted)
-	chain.ThresholdRelay().OnRelayEntrySubmitted(
+	_ = chain.ThresholdRelay().OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			entrySubmissionChan <- event
 		},

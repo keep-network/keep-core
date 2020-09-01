@@ -56,7 +56,7 @@ variable "editor_iam_role" {
 }
 
 variable "editor_iam_members" {
-  default = ["user:jakub.nowakowski@thesis.co", "user:nicholas.evans@thesis.co", "user:nik.grinkevich@thesis.co", "user:piotr.dyraga@thesis.co", "user:rafal.czajkowski@thesis.co"]
+  default = ["user:jakub.nowakowski@thesis.co", "user:nicholas.evans@thesis.co", "user:nik.grinkevich@thesis.co", "user:piotr.dyraga@thesis.co", "user:rafal.czajkowski@thesis.co", "user:dymitr.paremski@thesis.co"]
 }
 
 # module IAM members: storage.objectViewer
@@ -145,7 +145,7 @@ variable "gke_node_pool" {
   default {
     name         = "default-node-pool"
     node_count   = "1"
-    machine_type = "n1-standard-2"
+    machine_type = "n1-standard-4"
     disk_type    = "pd-ssd"
     disk_size_gb = 100
     auto_repair  = "true"
@@ -258,6 +258,6 @@ variable "utility_box" {
     name         = "keep-dev-utility-box"
     tags         = "gke-subnet"
     machine_type = "g1-small"
-    tools        = "kubectl, helm, jq, npm, geth"
+    tools        = "kubectl, helm, jq, nodejs, geth"
   }
 }

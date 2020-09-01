@@ -32,22 +32,23 @@ gen_contract_go: $(contract_files)
 abi/%.abi: ${solidity_dir}/contracts/%.sol
 	solc solidity-bytes-utils/=${solidity_dir}/node_modules/solidity-bytes-utils/ \
 		 openzeppelin-solidity/=${solidity_dir}/node_modules/openzeppelin-solidity/ \
+		 @openzeppelin/=${solidity_dir}/node_modules/@openzeppelin/ \
 		 --allow-paths ${solidity_dir} \
 		 --overwrite \
 		 --abi \
 		 -o abi $<
 
 abi/%.go: abi/%.abi
-	abigen --abi $< --pkg abi --type $* --out $@
+	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
 
-contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.tmpl *.go
-	go run ./ $< contract/$*.go cmd/$*.go
+contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
 
-contract/%Operator.go cmd/%Operator.go: abi/%Operator.abi abi/%Operator.go *.tmpl *.go
-	go run ./ $< contract/$*Operator.go cmd/$*Operator.go
+contract/%Operator.go cmd/%Operator.go: abi/%Operator.abi abi/%Operator.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*Operator.go cmd/$*Operator.go
 
-contract/TokenStaking.go cmd/TokenStaking.go: abi/TokenStaking.abi abi/TokenStaking.go *.tmpl *.go
-	go run ./ $< contract/TokenStaking.go cmd/TokenStaking.go
+contract/TokenStaking.go cmd/TokenStaking.go: abi/TokenStaking.abi abi/TokenStaking.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TokenStaking.go cmd/TokenStaking.go
 
-contract/TokenGrant.go cmd/TokenGrant.go: abi/TokenGrant.abi abi/TokenGrant.go *.tmpl *.go
-	go run ./ $< contract/TokenGrant.go cmd/TokenGrant.go
+contract/TokenGrant.go cmd/TokenGrant.go: abi/TokenGrant.abi abi/TokenGrant.go *.go
+	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TokenGrant.go cmd/TokenGrant.go

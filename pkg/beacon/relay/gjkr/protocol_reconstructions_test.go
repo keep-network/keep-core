@@ -31,6 +31,10 @@ func TestRevealMisbehavedMembersKeys(t *testing.T) {
 	// Simulate a case where member is disqualified in Phase 5.
 	delete(firstMember.receivedQualifiedSharesS, disqualifiedNotSharingMember)
 
+	// Simulate a case where members are disqualified in Phase 8.
+	delete(firstMember.receivedValidPeerPublicKeySharePoints, disqualifiedSharingMember1)
+	delete(firstMember.receivedValidPeerPublicKeySharePoints, disqualifiedSharingMember2)
+
 	expectedDisqualifiedKeys := map[group.MemberIndex]*ephemeral.PrivateKey{
 		disqualifiedSharingMember1: firstMember.ephemeralKeyPairs[disqualifiedSharingMember1].PrivateKey,
 		disqualifiedSharingMember2: firstMember.ephemeralKeyPairs[disqualifiedSharingMember2].PrivateKey,
@@ -160,6 +164,7 @@ func generateMisbehavedEphemeralKeysMessages(
 	for _, otherMember := range otherMembers {
 		for _, disqualifiedMember := range disqualifiedMembers {
 			otherMember.group.MarkMemberAsDisqualified(disqualifiedMember.ID)
+			delete(otherMember.receivedValidPeerPublicKeySharePoints, disqualifiedMember.ID)
 		}
 		misbehavedEphemeralKeysMessage, err := otherMember.RevealMisbehavedMembersKeys()
 		if err != nil {
@@ -317,61 +322,6 @@ func TestCalculateReconstructedIndividualPublicKeys(t *testing.T) {
 				)
 			}
 		}
-	}
-}
-
-func TestCombineGroupPublicKey(t *testing.T) {
-	dishonestThreshold := 1
-	groupSize := 3
-
-	expectedGroupPublicKey := new(bn256.G2).ScalarBaseMult(
-		big.NewInt(243), // 10 + 20 + 30 + 91 + 92
-	)
-	members, err := initializeCombiningMembersGroup(dishonestThreshold, groupSize)
-	if err != nil {
-		t.Fatal(err)
-	}
-	member := members[0]
-
-	// Member's public coefficients. Zeroth coefficient is member's individual
-	// public key.
-	member.publicKeySharePoints = []*bn256.G2{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(10)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(11)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(12)),
-	}
-
-	// Public coefficients received from peer members. Each peer member's zeroth
-	// coefficient is their individual public key.
-	member.receivedValidPeerPublicKeySharePoints[2] = []*bn256.G2{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(20)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(21)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(22)),
-	}
-	member.receivedValidPeerPublicKeySharePoints[3] = []*bn256.G2{
-		new(bn256.G2).ScalarBaseMult(big.NewInt(30)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(31)),
-		new(bn256.G2).ScalarBaseMult(big.NewInt(32)),
-	}
-
-	// Reconstructed individual public keys for disqualified members.
-	member.reconstructedIndividualPublicKeys[4] = new(bn256.G2).ScalarBaseMult(
-		big.NewInt(91),
-	)
-	member.reconstructedIndividualPublicKeys[5] = new(bn256.G2).ScalarBaseMult(
-		big.NewInt(92),
-	)
-
-	// Combine individual public keys of group members to get group public key.
-	member.CombineGroupPublicKey()
-
-	if member.groupPublicKey.String() != expectedGroupPublicKey.String() {
-		t.Fatalf(
-			"incorrect group public key for member %d\nexpected: %v\nactual:   %v\n",
-			member.ID,
-			expectedGroupPublicKey,
-			member.groupPublicKey,
-		)
 	}
 }
 
@@ -540,24 +490,4 @@ func disqualifyMembers(
 	}
 
 	return allDisqualifiedShares
-}
-
-func initializeCombiningMembersGroup(
-	dishonestThreshold,
-	groupSize int,
-) ([]*CombiningMember, error) {
-	reconstructingMembers, err := initializeReconstructingMembersGroup(
-		dishonestThreshold,
-		groupSize,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("group initialization failed [%s]", err)
-	}
-
-	var combiningMembers []*CombiningMember
-	for _, rm := range reconstructingMembers {
-		combiningMembers = append(combiningMembers, rm.InitializeCombining())
-	}
-
-	return combiningMembers, nil
 }

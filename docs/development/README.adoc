@@ -16,20 +16,10 @@ Currently the easiest way to build is using the `Dockerfile` at the root of the
 repository. A simple `docker build` should get you a functioning container.
 
 If you want to build natively, there are a few prereqs you'll need to go through.
-First, you'll need to clone `keep-network/bn` from GitHub.
-
-To successfully build `bn`, you'll need to have `libgmp` (with
-headers) and `openssl` (also with headers) installed, as well as the LLVM
-developer tools. On macOS, you can `brew install gmp openssl llvm` to install
-all of these. Note that `llvm` requires some additional `env` variables work that
-the formula will explain when you install it.
-
-Then you will need to build and install `bn`. Change directory to `bn` and
-run `make install`.
-
-Lastly, you'll need the https://developers.google.com/protocol-buffers/docs/downloads[protobuf compiler].
-You'll also need to install the `protoc-gen-gogoslick` toolchain, which you can
-install using `go get`:
+In particular, you'll need the
+https://developers.google.com/protocol-buffers/docs/downloads[protobuf
+compiler].  You'll also need to install the `protoc-gen-gogoslick` toolchain,
+which you can install using `go get`:
 
 ```
 go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
@@ -37,6 +27,48 @@ go get -u github.com/gogo/protobuf/protoc-gen-gogoslick
 
 Run `+go generate ./.../+` from `keep-core` and if everything is fine, start the
 Keep client with `go run main.go`.
+
+== <<local-keep-network.adoc,Setting up local Keep network>>
+
+For development purposes, it is convenient to set up local Ethereum client with
+a group of connected peers. A note-taken walkthrough covers the entire process
+including setting up local Ethereum client, deploying Keep contracts and
+configuring Keep peers.
+
+== Quick installation
+
+To quickly install and start a client use the following scripts.
+
+=== Install script
+
+The `+install.sh+` script will:
+
+* migrate contracts
+* update client config files
+* build client
+
+The script will ask you for the password to previously created ethereum
+accounts.
+
+To start the installation execute:
+
+....
+./scripts/install.sh
+....
+
+=== Starting a client
+
+To start a client execute:
+
+....
+./scripts/start.sh
+....
+
+The `+start.sh+` script will ask you to:
+
+* provide ethereum password
+* provide path to `keep-core` config files directory
+* select a config `.toml` file for your client
 
 == Development Guidelines
 
@@ -64,28 +96,11 @@ are identical to their TikZ sources, with a `.png` suffix instead of
 `.tikz`). These URLs are for the `master` version of the repo; non-`master`
 branches are instead published to `+https://docs.keep.network/<branch name>/+`.
 
-== link:getting-started-ethereum.adoc[Getting started with `geth` on the test network]
-
-A note-taken walkthrough of how to start from not having anything connected to
-Ethereum to developing the basics of a smart contract that can emit events and
-deploying it on the Rinkeby test network. Covers running `geth`, getting it
-hooked into the Rinkeby testnet, getting some eth from the faucet, and
-interacting with the JSON-RPC API. Also covers some basic solidity, compiling
-it, and using JSON-RPC to install a contract and call it. Relatively low-level,
-to provide some familiarity with how Ethereum works under the covers.
-
-== <<local-keep-network.adoc,Setting up local Keep network>>
-
-For development purposes, it is convenient to set up local Ethereum client with 
-a group of connected peers. A note-taken walkthrough covers the entire process 
-including setting up local Ethereum client, deploying Keep contracts and 
-configuring Keep peers. 
-
 == Common problems
 
 - Please avoid using `~` when defining `$GOBIN` location and use `$HOME` instead.
-  We've been observing https://github.com/google/protobuf/issues/3355[some issues] 
-  with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN` 
+  We've been observing https://github.com/google/protobuf/issues/3355[some issues]
+  with locating `protoc-gen-gogoslick` when running `go generate` and `$GOBIN`
   contained `~`.
 
 - For Mojave, if you have a problem with missing include or missing library and
@@ -102,7 +117,7 @@ You can also use a demo script to help you deploy contracts to your local testne
 and to have demo balances (token, staking and token grants) allocated between first
 two accounts.
 
-Go to `contracts/solidity` directory and run:
+Go to `solidity` directory and run:
 
 ```
 npm install

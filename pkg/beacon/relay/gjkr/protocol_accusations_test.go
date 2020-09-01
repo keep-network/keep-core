@@ -191,6 +191,7 @@ func TestResolveSecretSharesAccusations(t *testing.T) {
 			if test.modifyAccusedPrivateKey != nil {
 				accusedMembersKeys[test.accusedID] = test.modifyAccusedPrivateKey(accusedMembersKeys[test.accusedID])
 			}
+
 			var messages []*SecretSharesAccusationsMessage
 			messages = append(messages, &SecretSharesAccusationsMessage{
 				senderID:           test.accuserID,
@@ -391,6 +392,126 @@ func TestResolvePublicKeySharePointsAccusationsMessages(t *testing.T) {
 			result := justifyingMember.group.DisqualifiedMemberIDs()
 			if !reflect.DeepEqual(result, test.expectedResult) {
 				t.Fatalf("\nexpected: %d\nactual:   %d\n", test.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestResolveSecretSharesAccusationsIncorrectAccussedMemberId(t *testing.T) {
+	dishonestThreshold := 2
+	groupSize := 5
+
+	currentMemberID := group.MemberIndex(3)
+
+	var tests = map[string]struct {
+		accuserID            group.MemberIndex
+		accusedID            group.MemberIndex
+		expectedDisqualified []group.MemberIndex
+	}{
+		"group member index greater than the group size": {
+			accuserID:            1,
+			accusedID:            6,
+			expectedDisqualified: []group.MemberIndex{1},
+		},
+		"group member index 0": {
+			accuserID:            2,
+			accusedID:            0,
+			expectedDisqualified: []group.MemberIndex{2},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			members, err := initializeSharesJustifyingMemberGroup(
+				dishonestThreshold,
+				groupSize,
+			)
+			if err != nil {
+				t.Fatalf("group initialization failed [%s]", err)
+			}
+
+			messages := [1]*SecretSharesAccusationsMessage{
+				{
+					senderID: test.accuserID,
+					accusedMembersKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
+						test.accusedID: {},
+					},
+				},
+			}
+
+			justifyingMember := findSharesJustifyingMemberByID(members, currentMemberID)
+			err = justifyingMember.ResolveSecretSharesAccusationsMessages(messages[:])
+			if err != nil {
+				t.Fatalf("resolving of secret shares accusation messages failed [%s]", err)
+			}
+
+			actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
+			if !reflect.DeepEqual(actualDisqualified, test.expectedDisqualified) {
+				t.Fatalf(
+					"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
+					test.expectedDisqualified,
+					actualDisqualified,
+				)
+			}
+		})
+	}
+}
+
+func TestResolvePublicKeySharePointsAccusationsIncorrectAccusedMemberId(t *testing.T) {
+	dishonestThreshold := 2
+	groupSize := 5
+
+	currentMemberID := group.MemberIndex(3)
+
+	var tests = map[string]struct {
+		accuserID            group.MemberIndex
+		accusedID            group.MemberIndex
+		expectedDisqualified []group.MemberIndex
+	}{
+		"group member index greater than the group size": {
+			accuserID:            1,
+			accusedID:            6,
+			expectedDisqualified: []group.MemberIndex{1},
+		},
+		"group member index 0": {
+			accuserID:            2,
+			accusedID:            0,
+			expectedDisqualified: []group.MemberIndex{2},
+		},
+	}
+
+	for testName, test := range tests {
+		t.Run(testName, func(t *testing.T) {
+			members, err := initializePointsJustifyingMemberGroup(
+				dishonestThreshold,
+				groupSize,
+			)
+			if err != nil {
+				t.Fatalf("group initialization failed [%s]", err)
+			}
+
+			messages := [1]*PointsAccusationsMessage{
+				{
+					senderID: test.accuserID,
+					accusedMembersKeys: map[group.MemberIndex]*ephemeral.PrivateKey{
+						test.accusedID: {},
+					},
+				},
+			}
+
+			justifyingMember := findCoefficientsJustifyingMemberByID(members, currentMemberID)
+			err = justifyingMember.ResolvePublicKeySharePointsAccusationsMessages(messages[:])
+			if err != nil {
+				t.Fatalf("resolving of public key share points accusation messages failed [%s]", err)
+			}
+
+			actualDisqualified := justifyingMember.group.DisqualifiedMemberIDs()
+			if !reflect.DeepEqual(actualDisqualified, test.expectedDisqualified) {
+				t.Fatalf(
+					"unexpected members disqualified\nexpected: %d\nactual:   %d\n",
+					test.expectedDisqualified,
+					actualDisqualified,
+				)
 			}
 		})
 	}

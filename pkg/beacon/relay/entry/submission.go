@@ -26,32 +26,10 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	newEntry []byte,
 	groupPublicKey []byte,
 	startBlockHeight uint64,
+	relayEntrySubmittedChannel <-chan uint64,
+	relayEntryTimeoutChannel <-chan uint64,
 ) error {
-	config, err := res.chain.GetConfig()
-	if err != nil {
-		return fmt.Errorf(
-			"could not fetch chain's config: [%v]",
-			err,
-		)
-	}
-
-	onSubmittedResultChan := make(chan uint64)
-
-	subscription, err := res.chain.OnRelayEntrySubmitted(
-		func(event *event.EntrySubmitted) {
-			onSubmittedResultChan <- event.BlockNumber
-		},
-	)
-	if err != nil {
-		close(onSubmittedResultChan)
-		return fmt.Errorf("could not watch for relay entry submissions: [%v]", err)
-	}
-
-	returnWithError := func(err error) error {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return err
-	}
+	config := res.chain.GetConfig()
 
 	// TODO: we should eventually check if entry has been already submitted
 	// but we may skip this check for V1.
@@ -62,9 +40,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf("wait for eligibility failure: [%v]", err),
-		)
+		return fmt.Errorf("wait for eligibility failure: [%v]", err)
 	}
 
 	for {
@@ -73,9 +49,6 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 			// Member becomes eligible to submit the result.
 			errorChannel := make(chan error)
 			defer close(errorChannel)
-
-			subscription.Unsubscribe()
-			close(onSubmittedResultChan)
 
 			logger.Infof(
 				"[member:%v] submitting relay entry [0x%x] on behalf of group "+
@@ -90,21 +63,56 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 				func(entry *event.EntrySubmitted, err error) {
 					if err == nil {
 						logger.Infof(
-							"[member:%v] successfully submitted relay entry at block: [%v]",
+							"[member:%v] successfully submitted "+
+								"relay entry at block: [%v]",
 							res.index,
 							entry.BlockNumber,
 						)
 					}
 					errorChannel <- err
 				})
-			return <-errorChannel
-		case blockNumber := <-onSubmittedResultChan:
+
+			entryErr := <-errorChannel
+
+			if entryErr != nil {
+				isEntryInProgress, err := res.chain.IsEntryInProgress()
+				if err != nil {
+					logger.Errorf(
+						"[member:%v] could not check entry status after "+
+							"relay entry submission error: [%v]; "+
+							"original error will be returned",
+						res.index,
+						err,
+					)
+					return entryErr
+				}
+
+				// Check if we failed because someone else submitted in the
+				// meantime or because something wrong happened with
+				// our transaction.
+				if !isEntryInProgress {
+					logger.Infof(
+						"[member:%v] relay entry already submitted",
+						res.index,
+					)
+					return nil
+				}
+			}
+
+			return entryErr
+		case blockNumber := <-relayEntrySubmittedChannel:
 			logger.Infof(
-				"[member:%v] leaving; relay entry submitted by other member at block [%v]",
+				"[member:%v] leaving submitter; "+
+					"relay entry submitted by other member at block [%v]",
 				res.index,
 				blockNumber,
 			)
-			return returnWithError(nil)
+			return nil
+		case blockNumber := <-relayEntryTimeoutChannel:
+			return fmt.Errorf(
+				"relay entry timed out at block [%v]",
+				blockNumber,
+			)
 		}
 	}
 }

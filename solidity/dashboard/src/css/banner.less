@@ -1,0 +1,59 @@
+
+.banner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid @success-color;
+    .box-shadow(1px 1px 2px rgba(10, 8, 6, 0.25));
+
+    &-success {
+        color: @success-color;
+        border-color: @success-color;
+        background-color: @success-bg-color;
+    }
+
+    &-error {
+        color: @error-color;
+        border-color: @error-color;
+        background-color: @error-bg-color;
+    }
+
+    &-pending {
+        color: @color-grey-70;
+        border-color: @pending-color;
+        background-color: @pending-bg-color;
+    }
+
+    &-disabled {
+        color: @color-grey-50;
+        border-color: @color-grey-50;
+        background-color: @color-grey-10;
+    }
+
+    &-title {
+        font-size: 0.875rem;
+        line-height: 157%;
+        font-weight: 500;
+    }
+
+    &-subtitle {
+        font-size: 0.75rem;
+        line-height: 183%;
+        font-weight: normal;
+        color: @color-grey-70;
+    }
+
+    &-icon {
+        margin-right: 1rem;
+        align-self: flex-start;
+    }
+
+    &-close-icon {
+        align-self: flex-start;
+        &:hover {
+            cursor: pointer;
+        }
+        margin-left: .5rem;
+    }
+}
