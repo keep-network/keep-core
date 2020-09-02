@@ -8,6 +8,7 @@ import {
   ContractsLoaded,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
+import { isEmptyArray } from "../utils/array.utils"
 
 const filterOutByOperator = (toFilterOut) => (operator) =>
   !toFilterOut.includes(operator)
@@ -53,18 +54,25 @@ export const fetchOldDelegations = async () => {
   ).filter(filterOutByOperator(copiedStakesOperator))
 
   // We want to skip delegations that were undelegated after `StakingPortBacker` deploy.
-  const operatorsToSkip = (
-    await oldTokenStakingContract.getPastEvents("Undelegated", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
-      filter: {
-        operator: [
-          ...operatorsAddressesSet,
-          ...granteeOperatorsSet,
-          ...managedGrantOperators,
-        ],
-      },
-    })
-  ).map((_) => _.returnValues.operator)
+  let operatorsToSkip = []
+  if (
+    operatorsAddressesSet.size > 0 ||
+    granteeOperatorsSet.size > 0 ||
+    !isEmptyArray(managedGrantOperators)
+  ) {
+    operatorsToSkip = (
+      await oldTokenStakingContract.getPastEvents("Undelegated", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+        filter: {
+          operator: [
+            ...operatorsAddressesSet,
+            ...granteeOperatorsSet,
+            ...managedGrantOperators,
+          ],
+        },
+      })
+    ).map((_) => _.returnValues.operator)
+  }
 
   const filteredOwnedOperators = Array.from(operatorsAddressesSet).filter(
     filterOutByOperator(operatorsToSkip)

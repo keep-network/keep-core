@@ -200,16 +200,18 @@ const getOwnedDelegations = async (
   // Get operators
   const operators = await getOperatorsOfOwner(yourAddress)
 
-  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
-  let operatorToDetails = {}
-  if (!isEmptyArray(operators)) {
-    operatorToDetails = (
-      await stakingContract.getPastEvents("OperatorStaked", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-        filter: { operator: operators },
-      })
-    ).reduce(toOperator, {})
+  // No delegations
+  if (isEmptyArray(operators)) {
+    return await getDelegations({}, initializationPeriod, undelegationPeriod)
   }
+
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
+  const operatorToDetails = (
+    await stakingContract.getPastEvents("OperatorStaked", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      filter: { operator: operators },
+    })
+  ).reduce(toOperator, {})
 
   return await getDelegations(
     operatorToDetails,
@@ -259,10 +261,12 @@ const getAllGranteeOperators = async (
     .filter((operator) => !obsoleteOperators.includes(operator))
     .concat(newOperators)
 
-  const operatorsOfPortBacker = await getOperatorsOfOwner(
-    stakingPortBackerContract.options.address,
-    activeOperators
-  )
+  const operatorsOfPortBacker = isEmptyArray(activeOperators)
+    ? []
+    : await getOperatorsOfOwner(
+        stakingPortBackerContract.options.address,
+        activeOperators
+      )
 
   // We want to skip copied delegations
   activeOperators = activeOperators.filter(
@@ -386,23 +390,37 @@ export const getCopiedDelegations = async (
     stakingContract,
   } = await ContractsLoaded
 
-  const copiedEvents = await stakingPortBackerContract.getPastEvents(
-    "StakeCopied",
-    {
+  const operatorsToCheck = (
+    await stakingPortBackerContract.getPastEvents("StakeCopied", {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
       filter: { owner: ownerOrGrantee },
-    }
-  )
+    })
+  ).map((_) => _.returnValues.operator)
 
-  const operatorsToCheck = copiedEvents.map(
-    (event) => event.returnValues.operator
-  )
+  // No delegations
+  if (isEmptyArray(operatorsToCheck)) {
+    return await getDelegations({}, initializationPeriod, undelegationPeriod)
+  }
 
   // We only want operators for whom the delegation has not been paid back.
   const operatorsOfPortBacker = await getOperatorsOfOwner(
     stakingPortBackerContract.options.address,
     operatorsToCheck
   )
+
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
+  const operatorToDetails = (isEmptyArray(operatorsOfPortBacker)
+    ? []
+    : await stakingContract.getPastEvents("OperatorStaked", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: operatorsOfPortBacker },
+      })
+  ).reduce((reducer, _) => {
+    reducer[_.returnValues.operator] = _.returnValues
+    reducer[_.returnValues.operator].isCopiedStake = true
+
+    return reducer
+  }, {})
 
   // Get operators from delegations created from a grant.
   let tokenGrantStakingEvents = []
@@ -415,19 +433,6 @@ export const getCopiedDelegations = async (
       }
     )
   }
-
-  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
-  const operatorToDetails = (
-    await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { operator: operatorsOfPortBacker },
-    })
-  ).reduce((reducer, _) => {
-    reducer[_.returnValues.operator] = _.returnValues
-    reducer[_.returnValues.operator].isCopiedStake = true
-
-    return reducer
-  }, {})
 
   for (const grantStakedEvent of tokenGrantStakingEvents) {
     const operator = grantStakedEvent.returnValues.operator
