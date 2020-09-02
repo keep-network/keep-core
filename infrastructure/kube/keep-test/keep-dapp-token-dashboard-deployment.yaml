@@ -23,5 +23,6 @@ spec:
       containers:
       - name: keep-dapp-token-dashboard
         image: gcr.io/keep-test-f3e0/keep-dapp-token-dashboard
+        imagePullPolicy: Always
         ports:
           - containerPort: 80
