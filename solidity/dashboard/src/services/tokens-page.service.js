@@ -349,7 +349,7 @@ const getGranteeDelegations = async (
   // Filter out grants. We just want grants from the grantee's perspective
   const granteeGrants = []
   for (const grantId of grantIds) {
-    const { grantee } = await grantContract.methods.getGrant(grantId)
+    const { grantee } = await grantContract.methods.getGrant(grantId).call()
     if (isSameEthAddress(grantee, yourAddress)) {
       granteeGrants.push(grantId)
     }
