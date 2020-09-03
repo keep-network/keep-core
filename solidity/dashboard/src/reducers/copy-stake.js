@@ -18,7 +18,6 @@ export const copyStakeInitialData = {
   selectedStrategy: null,
   selectedDelegation: null,
   oldUndelegationPeriod: 0,
-  oldInitializationPeriod: 0,
   isProcessing: false,
 }
 
@@ -40,7 +39,6 @@ const copyStakeReducer = (state = copyStakeInitialData, action) => {
       return {
         ...state,
         oldDelegations: action.payload.delegations,
-        oldInitializationPeriod: action.payload.initializationPeriod,
         oldUndelegationPeriod: action.payload.undelegationPeriod,
         oldDelegationsFetching: false,
       }

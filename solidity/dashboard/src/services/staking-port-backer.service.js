@@ -39,10 +39,6 @@ export const fetchOldDelegations = async () => {
     .undelegationPeriod()
     .call()
 
-  const initializationPeriod = await oldTokenStakingContract.methods
-    .initializationPeriod()
-    .call()
-
   const operatorsAddressesSet = new Set(operatorsAddresses)
   const granteeOperators = (
     await grantContract.methods.getGranteeOperators(yourAddress).call()
@@ -86,20 +82,17 @@ export const fetchOldDelegations = async () => {
 
   const ownedDelegations = await getDelegations(
     filteredOwnedOperators,
-    initializationPeriod,
     undelegationPeriod
   )
 
   const granteeDelegations = await getDelegations(
     filteredGranteeOperators,
-    initializationPeriod,
     undelegationPeriod,
     true
   )
 
   const managedGrantsDelegations = await getDelegations(
     filteredManagedGrantOperators,
-    initializationPeriod,
     undelegationPeriod,
     true,
     true
@@ -113,14 +106,12 @@ export const fetchOldDelegations = async () => {
 
   return {
     delegations,
-    initializationPeriod,
     undelegationPeriod,
   }
 }
 
 const getDelegations = async (
   operators,
-  initializationPeriod,
   undelegationPeriod,
   isFromGrant,
   isManagedGrant
@@ -182,13 +173,6 @@ const getDelegations = async (
     const balance = web3Utils.toBN(amount)
 
     if (!balance.isZero() && operatorData.undelegatedAt === "0") {
-      const initializationOverAt = moment
-        .unix(createdAt)
-        .add(initializationPeriod, "seconds")
-      operatorData.isInInitializationPeriod = moment().isSameOrBefore(
-        initializationOverAt
-      )
-      operatorData.initializationOverAt = initializationOverAt
       operatorData.isUndelegation = false
       delegations.push(operatorData)
     }
