@@ -30,7 +30,7 @@ repos:
     - id: lint-dashboard-js
       name: 'lint dashboard js'
       entry: /usr/bin/env bash -c "cd solidity/dashboard && npm run js:lint"
-      files: 'solidity\/.*\/\.js$'
+      files: 'solidity\/dashboard\/.*\/\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
     - id: lint-faucet-js
