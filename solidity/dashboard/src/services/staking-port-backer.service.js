@@ -34,17 +34,17 @@ export const fetchOldDelegations = async () => {
   const operatorsAddresses = (
     await oldTokenStakingContract.methods.operatorsOf(yourAddress).call()
   ).filter(filterOutByOperator(copiedStakesOperator))
+  const operatorsAddressesSet = new Set(operatorsAddresses)
 
   const undelegationPeriod = await oldTokenStakingContract.methods
     .undelegationPeriod()
     .call()
 
-  const operatorsAddressesSet = new Set(operatorsAddresses)
   const granteeOperators = (
     await grantContract.methods.getGranteeOperators(yourAddress).call()
   ).filter(filterOutByOperator(copiedStakesOperator))
-
   const granteeOperatorsSet = new Set(granteeOperators)
+
   const managedGrantOperators = (
     await tokenGrantsService.getOperatorsFromManagedGrants()
   ).filter(filterOutByOperator(copiedStakesOperator))
@@ -137,9 +137,9 @@ const getDelegations = async (
       .authorizerOf(operatorAddress)
       .call()
 
-    let grantId
-    let managedGrantContractInstance
-    if (isFromGrant && !grantId) {
+    let grantId = null
+    let managedGrantContractInstance = null
+    if (isFromGrant) {
       try {
         const grantStakeDetails = await grantContract.methods
           .getGrantStakeDetails(operatorAddress)
