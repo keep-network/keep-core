@@ -8,7 +8,7 @@ const content = {
     title:
       "Success! The undelegation process for your stake balance has started.",
     subtitles: [
-      "Your tokens are available in undelegationCompletedAt",
+      "Your tokens will be available in undelegationCompletedAt",
       "Once available, hit recover to transfer to your balance.",
       "In the meantime, continue staking unstaked tokens. Any new stakes will now use the upgraded staking contract.",
     ],
@@ -23,8 +23,8 @@ const content = {
   COPY_STAKE_FLOW: {
     title: "Success! Your stake balance copied and redelegated.",
     subtitles: [
-      "Your former stake will be available in undelegationCompletedAt .",
-      "You’ll need to initiate the recovery process in the dashboard. ",
+      "Your former stake will be available in undelegationCompletedAt.",
+      "You’ll need to initiate the recovery process in the dashboard.",
       "You’ll see a notification in the dashboard when it’s time to do this.",
     ],
   },

@@ -87,7 +87,7 @@ function* safeCopyStake(operator) {
     yield put(
       showCreatedMessage({
         id: txHash,
-        title: "Your delegation has been alredy copied.",
+        title: "Your delegation has been already copied.",
         content: txHash,
         type: messageType.SUCCESS,
         sticky: true,

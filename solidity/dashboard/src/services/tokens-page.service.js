@@ -408,7 +408,7 @@ export const getCopiedDelegations = async (
     operatorsToCheck
   )
 
-  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneficiary.
   const operatorToDetails = (isEmptyArray(operatorsOfPortBacker)
     ? []
     : await stakingContract.getPastEvents("OperatorStaked", {
@@ -422,8 +422,7 @@ export const getCopiedDelegations = async (
     return reducer
   }, {})
 
-  // Get operators from delegations created from a grant.
-  let tokenGrantStakingEvents = []
+  // Fill operator's grant details for delegations created from a grant.
   if (!isEmptyArray(grantIds)) {
     tokenGrantStakingEvents = await grantContract.getPastEvents(
       "TokenGrantStaked",
