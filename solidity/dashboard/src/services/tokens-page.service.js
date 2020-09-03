@@ -424,21 +424,21 @@ export const getCopiedDelegations = async (
 
   // Fill operator's grant details for delegations created from a grant.
   if (!isEmptyArray(grantIds)) {
-    tokenGrantStakingEvents = await grantContract.getPastEvents(
+    const tokenGrantStakingEvents = await grantContract.getPastEvents(
       "TokenGrantStaked",
       {
         fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.grantContract,
         filter: { grantId: grantIds },
       }
     )
-  }
 
-  for (const grantStakedEvent of tokenGrantStakingEvents) {
-    const operator = grantStakedEvent.returnValues.operator
-    const grantId = grantStakedEvent.returnValues.grantId
-    if (operatorToDetails.hasOwnProperty(operator)) {
-      operatorToDetails[operator].grantId = grantId
-      operatorToDetails[operator].isFromGrant = true
+    for (const grantStakedEvent of tokenGrantStakingEvents) {
+      const operator = grantStakedEvent.returnValues.operator
+      const grantId = grantStakedEvent.returnValues.grantId
+      if (operatorToDetails.hasOwnProperty(operator)) {
+        operatorToDetails[operator].grantId = grantId
+        operatorToDetails[operator].isFromGrant = true
+      }
     }
   }
 
