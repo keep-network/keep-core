@@ -143,9 +143,11 @@ contract StakingPortBacker is Ownable {
         require(allowedOperators[operator], "Operator not allowed");
 
         // Get the delegation data from the old TokenStaking contract.
-        (address owner, bytes memory delegationData) = getDelegation(operator);
+        (address delegationOwner, bytes memory delegationData) = getDelegation(
+            operator
+        );
 
-        if (owner != msg.sender) {
+        if (delegationOwner != msg.sender) {
             // Sender is not the owner of the relationship, but it is possible
             // it is grantee or managed grantee. We can't rely on
             // TokenGrant.granteesToOperators because we need to ensure the
@@ -262,10 +264,10 @@ contract StakingPortBacker is Ownable {
     }
 
     function getDelegation(address operator) internal view returns (
-        address owner,
+        address delegationOwner,
         bytes memory delegationData
     ) {
-        owner = oldStakingContract.ownerOf(operator);
+        delegationOwner = oldStakingContract.ownerOf(operator);
         address beneficiary = oldStakingContract.beneficiaryOf(operator);
         address authorizer = oldStakingContract.authorizerOf(operator);
         delegationData = abi.encodePacked(beneficiary, operator, authorizer);

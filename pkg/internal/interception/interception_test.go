@@ -107,7 +107,7 @@ func testMessageRoundtrip(
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 
-	channel.RegisterUnmarshaler(func() net.TaggedUnmarshaler {
+	channel.SetUnmarshaler(func() net.TaggedUnmarshaler {
 		return &testMessage{}
 	})
 

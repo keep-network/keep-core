@@ -40,6 +40,19 @@ spec:
         id: '4'
         network: ropsten
     spec:
+      volumes:
+      - name: keep-client-config
+        persistentVolumeClaim:
+          claimName: keep-client-config
+      - name: keep-client-data
+        persistentVolumeClaim:
+          claimName: keep-client-data
+      - name: eth-account-keyfile
+        configMap:
+          name: eth-account-info
+          items:
+            - key: account-4-keyfile
+              path: account-4-keyfile
       containers:
       - name: keep-client-4
         image: gcr.io/keep-test-f3e0/keep-client
@@ -64,19 +77,6 @@ spec:
           - name: eth-account-keyfile
             mountPath: /mnt/keep-client/keyfile
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
-      volumes:
-      - name: keep-client-config
-        persistentVolumeClaim:
-          claimName: keep-client-config
-      - name: keep-client-data
-        persistentVolumeClaim:
-          claimName: keep-client-data
-      - name: eth-account-keyfile
-        configMap:
-          name: eth-account-info
-          items:
-            - key: account-4-keyfile
-              path: account-4-keyfile
       initContainers:
       - name: initcontainer-provision-keep-client
         image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-client
@@ -120,4 +120,6 @@ spec:
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config
+          - name: eth-account-keyfile
+            mountPath: /mnt/keep-client/keyfile
         command: ["node", "/tmp/provision-keep-client.js"]
