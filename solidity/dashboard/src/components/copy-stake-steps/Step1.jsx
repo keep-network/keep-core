@@ -82,7 +82,12 @@ const CopyStakeStep1 = ({
 }
 
 const DelegationItem = ({ delegation, onSelect, selectedOperatorAddress }) => {
-  const { amount, authorizerAddress, operatorAddress, beneficiary } = delegation
+  const {
+    amount,
+    authorizerAddress,
+    operatorAddress,
+    beneficiaryAddress,
+  } = delegation
   const isSelected = operatorAddress === selectedOperatorAddress
 
   return (
@@ -109,7 +114,7 @@ const DelegationItem = ({ delegation, onSelect, selectedOperatorAddress }) => {
           <div style={{ marginLeft: "auto" }}>
             <Address address={authorizerAddress} label="authorizer" />
             <Address address={operatorAddress} label="operator" />
-            <Address address={beneficiary} label="beneficiary" />
+            <Address address={beneficiaryAddress} label="beneficiary" />
           </div>
         </div>
       </label>

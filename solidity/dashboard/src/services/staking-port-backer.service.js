@@ -130,7 +130,7 @@ const getDelegations = async (
       .getDelegationInfo(operatorAddress)
       .call()
 
-    const beneficiary = await oldTokenStakingContract.methods
+    const beneficiaryAddress = await oldTokenStakingContract.methods
       .beneficiaryOf(operatorAddress)
       .call()
     const authorizerAddress = await oldTokenStakingContract.methods
@@ -161,7 +161,7 @@ const getDelegations = async (
     const operatorData = {
       undelegatedAt,
       amount,
-      beneficiary,
+      beneficiaryAddress,
       operatorAddress,
       createdAt,
       authorizerAddress,

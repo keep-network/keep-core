@@ -99,7 +99,7 @@ const CopyStakeStep3 = ({
         />
         <Address address={delegation.authorizerAddress} label="authorizer" />
         <Address address={delegation.operatorAddress} label="operator" />
-        <Address address={delegation.beneficiary} label="beneficiary" />
+        <Address address={delegation.beneficiaryAddress} label="beneficiary" />
       </section>
       <div className="flex row space-between self-end">
         <Button
