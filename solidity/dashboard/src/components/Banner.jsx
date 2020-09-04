@@ -19,6 +19,10 @@ export const BANNER_TYPE = {
     iconComponent: <Icons.Cross color={colors.error} height={12} width={12} />,
   },
   DISABLED: { className: "disabled", iconComponent: null },
+  NOTIFICATION: {
+    className: "notification",
+    iconComponent: <Icons.Alert width={24} height={24} />,
+  },
 }
 
 const Banner = ({

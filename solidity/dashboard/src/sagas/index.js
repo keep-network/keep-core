@@ -3,6 +3,7 @@ import * as messagesSaga from "./messages"
 import * as delegateStakeSaga from "./staking"
 import * as tokenGrantSaga from "./token-grant"
 import { watchSendTransactionRequest } from "./web3"
+import * as copyStakeSaga from "./copy-stake"
 
 export default function* rootSaga() {
   yield all(
@@ -11,6 +12,7 @@ export default function* rootSaga() {
       ...Object.values(delegateStakeSaga),
       watchSendTransactionRequest,
       ...Object.values(tokenGrantSaga),
+      ...Object.values(copyStakeSaga),
     ].map(fork)
   )
 }
