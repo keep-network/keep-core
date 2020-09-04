@@ -93,76 +93,6 @@ const isTbtcSystemAuthorized = async (web3Context, operatorAddress) => {
   }
 }
 
-const authorizeBondedECDSAKeepFactory = async (
-  web3Context,
-  operatorAddress,
-  onTransactionHashCallback
-) => {
-  const { stakingContract, yourAddress } = web3Context
-  try {
-    await stakingContract.methods
-      .authorizeOperatorContract(operatorAddress, bondedECDSAKeepFactoryAddress)
-      .send({ from: yourAddress })
-      .on("transactionHash", onTransactionHashCallback)
-  } catch (error) {
-    throw error
-  }
-}
-
-const authorizeTBTCSystem = async (
-  web3Context,
-  operatorAddress,
-  onTransactionHashCallback
-) => {
-  const { keepBondingContract, yourAddress } = web3Context
-  try {
-    const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
-
-    await keepBondingContract.methods
-      .authorizeSortitionPoolContract(operatorAddress, sortitionPoolAddress)
-      .send({ from: yourAddress })
-      .on("transactionHash", onTransactionHashCallback)
-  } catch (error) {
-    throw error
-  }
-}
-
-const depositEthForOperator = async (
-  web3Context,
-  data,
-  onTransactionHashCallback
-) => {
-  const { keepBondingContract, yourAddress } = web3Context
-  const { operatorAddress, ethAmount } = data
-  const weiToAdd = web3Utils.toWei(ethAmount.toString(), "ether")
-
-  await keepBondingContract.methods
-    .deposit(operatorAddress)
-    .send({ from: yourAddress, value: weiToAdd })
-    .on("transactionHash", onTransactionHashCallback)
-}
-
-const withdrawUnbondedEth = async (
-  web3Context,
-  data,
-  onTransactionHashCallback
-) => {
-  const { keepBondingContract, yourAddress } = web3Context
-  const { operatorAddress, ethAmount, managedGrantAddress } = data
-  const weiToWithdraw = web3Utils.toWei(ethAmount.toString(), "ether")
-  const contractSendMethod = managedGrantAddress
-    ? keepBondingContract.methods.withdrawAsManagedGrantee(
-        weiToWithdraw,
-        operatorAddress,
-        managedGrantAddress
-      )
-    : keepBondingContract.methods.withdraw(weiToWithdraw, operatorAddress)
-
-  await contractSendMethod
-    .send({ from: yourAddress })
-    .on("transactionHash", onTransactionHashCallback)
-}
-
 const fetchBondingData = async (web3Context) => {
   const { yourAddress } = web3Context
   const bondingData = []
@@ -400,27 +330,8 @@ const fetchAvailableAmount = async (web3Context, operator) => {
   )
 }
 
-const deauthorizeTBTCSystem = async (
-  web3Context,
-  operatorAddress,
-  onTransactionHashCallback
-) => {
-  const { keepBondingContract, yourAddress } = web3Context
-  const poolAddress = await fetchSortitionPoolForTbtc(web3Context)
-
-  await keepBondingContract.methods
-    .deauthorizeSortitionPoolContract(operatorAddress, poolAddress)
-    .send({ from: yourAddress })
-    .on("transactionHash", onTransactionHashCallback)
-}
-
 export const tbtcAuthorizationService = {
   fetchTBTCAuthorizationData,
-  authorizeBondedECDSAKeepFactory,
-  authorizeTBTCSystem,
   fetchBondingData,
-  depositEthForOperator,
-  withdrawUnbondedEth,
-  deauthorizeTBTCSystem,
   fetchSortitionPoolForTbtc,
 }
