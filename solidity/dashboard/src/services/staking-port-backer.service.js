@@ -1,5 +1,5 @@
 import web3Utils from "web3-utils"
-import { sub, gt } from "../utils/arithmetics.utils"
+import { sub } from "../utils/arithmetics.utils"
 import moment from "moment"
 import { tokenGrantsService } from "./token-grants.service"
 import {
@@ -170,21 +170,23 @@ const getDelegations = async (
       isManagedGrant,
       managedGrantContractInstance,
     }
-    const balance = web3Utils.toBN(amount)
 
-    if (!balance.isZero() && operatorData.undelegatedAt === "0") {
-      operatorData.isUndelegating = false
-      delegations.push(operatorData)
-    }
+    const delegationAmount = web3Utils.toBN(amount)
+    // StakingPortBacker contract requires the delegation amount to be greater than zero.
+    if (delegationAmount.gt(0)) {
+      // Check if the stake is currently undelegating.
+      if (operatorData.undelegatedAt === "0") {
+        operatorData.isUndelegating = false
+      } else {
+        operatorData.undelegationCompleteAt = moment
+          .unix(undelegatedAt)
+          .add(undelegationPeriod, "seconds")
+        operatorData.canRecoverStake = operatorData.undelegationCompleteAt.isBefore(
+          moment()
+        )
+        operatorData.isUndelegating = true
+      }
 
-    if (operatorData.undelegatedAt !== "0" && gt(amount, 0)) {
-      operatorData.undelegationCompleteAt = moment
-        .unix(undelegatedAt)
-        .add(undelegationPeriod, "seconds")
-      operatorData.canRecoverStake = operatorData.undelegationCompleteAt.isBefore(
-        moment()
-      )
-      operatorData.isUndelegating = true
       delegations.push(operatorData)
     }
   }
