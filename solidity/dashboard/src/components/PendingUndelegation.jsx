@@ -39,7 +39,7 @@ const PendingUndelegation = ({ latestUnstakeEvent, data, setData }) => {
     setData({
       ...data,
       undelegationCompletedAt,
-      delegatedStatus: "UNDELEGATED",
+      delegationStatus: "UNDELEGATED",
     })
   })
 
