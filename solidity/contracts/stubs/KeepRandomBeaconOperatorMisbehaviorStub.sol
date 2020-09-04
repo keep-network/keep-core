@@ -7,11 +7,13 @@ contract KeepRandomBeaconOperatorMisbehaviorStub is KeepRandomBeaconOperator {
     constructor(
         address _serviceContract,
         address _stakingContract,
-        address _registryContract
+        address _registryContract,
+        address _gasPriceOracle
     ) KeepRandomBeaconOperator(
         _serviceContract,
         _stakingContract,
-        _registryContract
+        _registryContract,
+        _gasPriceOracle
     ) public {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;

@@ -162,7 +162,7 @@ func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
 
 func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 	func(groupRegistration *event.GroupRegistration),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	panic("not implemented")
 }
 

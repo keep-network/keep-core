@@ -8,7 +8,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/entry"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -24,7 +23,7 @@ func NewNode(
 	staker chain.Staker,
 	netProvider net.Provider,
 	blockCounter chain.BlockCounter,
-	chainConfig *config.Chain,
+	chainConfig *relayChain.Config,
 	groupRegistry *registry.Groups,
 ) Node {
 	return Node{
@@ -43,7 +42,7 @@ func NewNode(
 func (n *Node) MonitorRelayEntry(
 	relayChain relayChain.Interface,
 	relayRequestBlockNumber uint64,
-	chainConfig *config.Chain,
+	chainConfig *relayChain.Config,
 ) {
 	logger.Infof("monitoring chain for a new relay entry")
 
@@ -54,16 +53,11 @@ func (n *Node) MonitorRelayEntry(
 
 	onEntrySubmittedChannel := make(chan *event.EntrySubmitted)
 
-	subscription, err := relayChain.OnRelayEntrySubmitted(
+	subscription := relayChain.OnRelayEntrySubmitted(
 		func(event *event.EntrySubmitted) {
 			onEntrySubmittedChannel <- event
 		},
 	)
-	if err != nil {
-		close(onEntrySubmittedChannel)
-		logger.Errorf("could not watch for a signature submission: [%v]", err)
-		return
-	}
 
 	for {
 		select {

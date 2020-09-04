@@ -84,8 +84,9 @@ const tokensPageReducer = (state, action) => {
     case GRANT_STAKED:
       return {
         ...state,
-        grants: findGrantAndUpdate(
+        ...findGrantAndUpdate(
           [...state.grants],
+          { ...state.selectedGrant },
           action.payload,
           grantStaked
         ),
@@ -93,8 +94,9 @@ const tokensPageReducer = (state, action) => {
     case GRANT_WITHDRAWN:
       return {
         ...state,
-        grants: findGrantAndUpdate(
+        ...findGrantAndUpdate(
           [...state.grants],
+          { ...state.selectedGrant },
           action.payload,
           grantWithdrawn
         ),
@@ -129,8 +131,9 @@ const tokensPageReducer = (state, action) => {
     case GRANT_DEPOSITED:
       return {
         ...state,
-        grants: findGrantAndUpdate(
+        ...findGrantAndUpdate(
           [...state.grants],
+          { ...state.selectedGrant },
           action.payload,
           grantDeposited
         ),
@@ -157,29 +160,31 @@ const removeFromDelegationOrUndelegation = (array, id) => {
 
 const grantDeposited = (
   grantToUpdate,
-  { amount, availableToWithdrawEscrow, availableToWitdrawGrant, operator }
+  { amount, availableToWitdrawGrant, operator }
 ) => {
   grantToUpdate.staked = sub(grantToUpdate.staked, amount)
   grantToUpdate.withdrawableAmountGrantOnly = availableToWitdrawGrant
-  grantToUpdate.readyToRelease = add(
-    grantToUpdate.readyToRelease,
-    availableToWithdrawEscrow
-  )
+  grantToUpdate.readyToRelease = add(grantToUpdate.readyToRelease, amount)
   grantToUpdate.escrowOperatorsToWithdraw = [
     ...grantToUpdate.escrowOperatorsToWithdraw,
     operator,
   ]
+  grantToUpdate.availableToStake = add(grantToUpdate.availableToStake, amount)
 
   return grantToUpdate
 }
 
-const grantStaked = (grantToUpdate, { amount, availableToStake }) => {
-  grantToUpdate.staked = add(grantToUpdate.staked, amount)
-  grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
+const grantStaked = (grantToUpdate, { amount }) => {
+  grantToUpdate.staked = add(grantToUpdate.staked, amount).toString()
+  grantToUpdate.readyToRelease = sub(
+    grantToUpdate.readyToRelease,
+    amount
+  ).toString()
+
   grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
-  grantToUpdate.availableToStake = availableToStake
+  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
 
   return grantToUpdate
 }
@@ -204,7 +209,12 @@ const grantWithdrawn = (
   return grantToUpdate
 }
 
-const findGrantAndUpdate = (grants, payload, updateGrantCallback) => {
+const findGrantAndUpdate = (
+  grants,
+  selectedGrant,
+  payload,
+  updateGrantCallback
+) => {
   const { grantId } = payload
   const { indexInArray, obj: grantToUpdate } = findIndexAndObject(
     "id",
@@ -212,12 +222,16 @@ const findGrantAndUpdate = (grants, payload, updateGrantCallback) => {
     grants
   )
   if (indexInArray === null) {
-    return grants
+    return { grants }
+  }
+  const updatedGrant = updateGrantCallback(grantToUpdate, payload)
+  grants[indexInArray] = updatedGrant
+
+  if (selectedGrant.id === grantId) {
+    selectedGrant = updatedGrant
   }
 
-  grants[indexInArray] = updateGrantCallback(grantToUpdate, payload)
-
-  return grants
+  return { grants, selectedGrant }
 }
 
 const topUpInitiated = (topUps, { operator, topUp }) => {

@@ -93,6 +93,6 @@ func (mgi *mockGroupInterface) GetSelectedParticipants() ([]chain.StakerAddress,
 
 func (mgi *mockGroupInterface) OnGroupSelectionStarted(
 	func(groupSelectionStart *event.GroupSelectionStart),
-) (subscription.EventSubscription, error) {
+) subscription.EventSubscription {
 	panic("not implemented")
 }

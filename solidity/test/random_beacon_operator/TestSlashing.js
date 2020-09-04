@@ -157,17 +157,18 @@ describe('KeepRandomBeaconOperator/Slashing', function () {
     // There is only one active group in the system and that group did not
     // produce relay entry on time. Relay entry timeout is reported but since
     // there is no other group in the system, we do not retry with another
-    // group. This way, relay entry is timed out until someone requests for
-    // another entry and we need to make sure the group cannot be slashed more
-    // than one time.
+    // group. reportRelayEntryTimeout reverts so that the last group may not
+    // be slashed more than one time.
     it("reverts when already reported for the last active group", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await operatorContract.reportRelayEntryTimeout({ from: tattletale })
       await expectRevert(
         operatorContract.reportRelayEntryTimeout({ from: tattletale }),
-        "Group has been already terminated"
+        "Entry did not time out"
       )
     })
+
+
 
     it("does not revert in the first block relay entry timed out", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))

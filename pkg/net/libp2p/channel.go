@@ -140,14 +140,13 @@ func (c *channel) removeHandler(handler *messageHandler) {
 	}
 }
 
-func (c *channel) RegisterUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) error {
+func (c *channel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
 	tpe := unmarshaler().Type()
 
 	c.unmarshalersMutex.Lock()
 	defer c.unmarshalersMutex.Unlock()
 
 	c.unmarshalersByType[tpe] = unmarshaler
-	return nil
 }
 
 func (c *channel) messageProto(
@@ -326,7 +325,16 @@ func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {
 	c.pubsubMutex.Lock()
 	defer c.pubsubMutex.Unlock()
 
-	c.pubsub.UnregisterTopicValidator(c.name)
+	err := c.pubsub.UnregisterTopicValidator(c.name)
+	if err != nil {
+		// That error can occur when the filter is set for the first time
+		// and no prior filter exists.
+		logger.Debugf(
+			"could not unregister topic validator for channel [%v]: [%v]",
+			c.name,
+			err,
+		)
+	}
 
 	return c.pubsub.RegisterTopicValidator(c.name, createTopicValidator(filter))
 }

@@ -22,6 +22,8 @@ const DKGResultVerification = artifacts.require("./libraries/operator/DKGResultV
 const Reimbursements = artifacts.require("./libraries/operator/Reimbursements.sol");
 const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
+const GasPriceOracle = artifacts.require("./GasPriceOracle.sol");
+const StakingPortBacker = artifacts.require("./StakingPortBacker.sol");
 
 let initializationPeriod = 43200; // ~12 hours
 const dkgContributionMargin = 1; // 1%
@@ -58,6 +60,27 @@ module.exports = async function(deployer, network) {
     KeepRegistry.address,
     initializationPeriod
   );
+
+  let oldStakingContractAddress;
+  if (network === 'local' || network === 'ropsten') {
+    const OldTokenStaking = artifacts.require("./stubs/OldTokenStaking.sol");
+    await deployer.link(MinimumStakeSchedule, OldTokenStaking);
+    await deployer.link(GrantStaking, OldTokenStaking);
+    await deployer.link(Locks, OldTokenStaking);
+    await deployer.link(TopUps, OldTokenStaking);
+    await deployer.deploy(OldTokenStaking);
+    oldStakingContractAddress = OldTokenStaking.address;
+
+    console.log(`Deploying StakingPortBacker using old TokenStaking[${oldStakingContractAddress}]`);
+    await deployer.deploy(
+      StakingPortBacker,
+      KeepToken.address,
+      TokenGrant.address,
+      oldStakingContractAddress,
+      TokenStaking.address
+    );
+  }
+
   await deployer.deploy(PermissiveStakingPolicy);
   await deployer.deploy(GuaranteedMinimumStakingPolicy, TokenStaking.address);
   await deployer.deploy(
@@ -65,6 +88,7 @@ module.exports = async function(deployer, network) {
     KeepToken.address,
     TokenGrant.address
   );
+  await deployer.deploy(GasPriceOracle);
   await deployer.deploy(GroupSelection);
   await deployer.link(GroupSelection, KeepRandomBeaconOperator);
   await deployer.link(BLS, Groups);
@@ -96,7 +120,8 @@ module.exports = async function(deployer, network) {
     KeepRandomBeaconOperator, 
     KeepRandomBeaconService.address, 
     TokenStaking.address,
-    KeepRegistry.address
+    KeepRegistry.address,
+    GasPriceOracle.address
   );
 
   await deployer.deploy(

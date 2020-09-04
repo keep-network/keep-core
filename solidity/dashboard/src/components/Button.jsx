@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useRef, useContext } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { CSSTransition } from "react-transition-group"
 import { ClockIndicator } from "./Loadable"
-import { messageType, MessagesContext } from "./Message"
 import * as Icons from "./Icons"
-import TransactionIsPendingMsgContent from "./TransactionIsPendingMsgContent"
+import { Deferred } from "../contracts"
 
 const buttonContentTransitionTimeoutInMs = 500
 const minimumLoaderDurationInMs = 400
@@ -97,8 +96,7 @@ export const SubmitButton = ({
   confirmationModalTitle,
   ...props
 }) => {
-  const [isFetching, setIsFetching] = useState(false)
-  const { showMessage, closeMessage } = useContext(MessagesContext)
+  const [isSubmitting, setSubmitting] = useState(false)
   const [showSuccessBtn, setShowSuccessBtn] = useState(false)
 
   useEffect(() => {
@@ -111,60 +109,20 @@ export const SubmitButton = ({
     }
   }, [showSuccessBtn, successCallback])
 
-  let pendingMessage = {
-    type: messageType.PENDING_ACTION,
-    sticky: true,
-    title: "",
-    content: pendingMessageContent,
-  }
-  let infoMessage = {
-    type: messageType.INFO,
-    sticky: true,
-    title: "Waiting for the transaction confirmation...",
-  }
-
-  const onTransactionHashCallback = (hash) => {
-    pendingMessage = showMessage({
-      ...pendingMessage,
-      content: (
-        <TransactionIsPendingMsgContent
-          txHash={hash}
-          title={pendingMessageTitle}
-        />
-      ),
-    })
-    closeMessage(infoMessage)
-  }
-
-  const openMessageInfo = () => {
-    infoMessage = showMessage(infoMessage)
-  }
-
-  const setFetching = () => setIsFetching(true)
-
   const onButtonClick = async (event) => {
     event.preventDefault()
-    if (!triggerManuallyFetch) {
-      setIsFetching(true)
-    }
-    if (withMessageActionIsPending) {
-      infoMessage = showMessage(infoMessage)
-    }
-
+    const awaitingPromise = new Deferred()
     try {
-      await onSubmitAction(
-        onTransactionHashCallback,
-        openMessageInfo,
-        setFetching
-      )
-      setIsFetching(false)
+      setSubmitting(true)
+
+      await onSubmitAction(awaitingPromise)
+      await awaitingPromise.promise
+
+      setSubmitting(false)
       setShowSuccessBtn(true)
     } catch (error) {
-      setIsFetching(false)
+      setSubmitting(false)
     }
-
-    closeMessage(pendingMessage)
-    closeMessage(infoMessage)
   }
 
   return (
@@ -173,7 +131,7 @@ export const SubmitButton = ({
         {...props}
         className={`${props.className} ${showSuccessBtn && `btn btn-success`}`}
         onClick={onButtonClick}
-        isFetching={isFetching}
+        isFetching={isSubmitting}
         disabled={showSuccessBtn || props.disabled}
       >
         {showSuccessBtn ? (
