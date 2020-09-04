@@ -173,7 +173,7 @@ const getDelegations = async (
     const balance = web3Utils.toBN(amount)
 
     if (!balance.isZero() && operatorData.undelegatedAt === "0") {
-      operatorData.isUndelegation = false
+      operatorData.isUndelegating = false
       delegations.push(operatorData)
     }
 
@@ -184,7 +184,7 @@ const getDelegations = async (
       operatorData.canRecoverStake = operatorData.undelegationCompleteAt.isBefore(
         moment()
       )
-      operatorData.isUndelegation = true
+      operatorData.isUndelegating = true
       delegations.push(operatorData)
     }
   }

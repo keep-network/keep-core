@@ -50,7 +50,7 @@ const CopyStakePage = ({
       restProps.recoverOldStake(selectedDelegation)
     } else if (
       selectedStrategy === "WAIT_FLOW" &&
-      !selectedDelegation.isUndelegation
+      !selectedDelegation.isUndelegating
     ) {
       restProps.undelegateOldStake(selectedDelegation)
     } else if (selectedStrategy === "COPY_STAKE_FLOW") {

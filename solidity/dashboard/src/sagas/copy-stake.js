@@ -39,13 +39,13 @@ export function* watchFetchOldStakingContract() {
 }
 
 function* copyStake(action) {
-  const { operatorAddress, isUndelegation } = action.payload
+  const { operatorAddress, isUndelegating } = action.payload
 
   try {
     // At first call `copyStake` from `StakingPortBacker` contract.
     yield call(safeCopyStake, operatorAddress)
     // Next call undelegation from old staking contract.
-    if (!isUndelegation) {
+    if (!isUndelegating) {
       yield call(undelegateFromOldContract, action)
     }
     yield put({ type: "copy-stake/copy-stake_success" })

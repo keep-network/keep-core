@@ -34,7 +34,7 @@ const CopyStakeStep3 = ({
     if (strategy === "WAIT_FLOW") {
       if (
         delegation &&
-        delegation.isUndelegation &&
+        delegation.isUndelegating &&
         !delegation.canRecoverStake
       ) {
         return `Your delegation has been already undelegated. You can recover stake after
@@ -53,13 +53,13 @@ const CopyStakeStep3 = ({
     if (
       strategy === "WAIT_FLOW" &&
       delegation &&
-      (delegation.canRecoverStake || delegation.isUndelegation)
+      (delegation.canRecoverStake || delegation.isUndelegating)
     ) {
       return "confirm recover"
     } else if (
       strategy === "WAIT_FLOW" &&
       delegation &&
-      !delegation.isUndelegation
+      !delegation.isUndelegating
     ) {
       return "confirm undelegation"
     }
@@ -70,7 +70,7 @@ const CopyStakeStep3 = ({
   const isBtnDisabled = () => {
     if (
       strategy === "WAIT_FLOW" &&
-      delegation.isUndelegation &&
+      delegation.isUndelegating &&
       !delegation.canRecoverStake
     ) {
       return true
