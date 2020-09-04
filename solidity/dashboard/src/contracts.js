@@ -14,7 +14,6 @@ import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
-import OldTokenStaking from "./old-contracts-artifacts/TokenStaking.json"
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
 
 import {
@@ -93,7 +92,6 @@ const contracts = [
     { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
     BondedECDSAKeepFactory,
   ],
-  [{ contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }, OldTokenStaking],
   [
     { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
     StakingPortBacker,
@@ -159,6 +157,13 @@ export async function getContracts(web3) {
       options
     )
   }
+
+  const oldTokenStakingArtifact = await getOldTokenStakingArtifact()
+  web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME] = await getContract(
+    web3,
+    oldTokenStakingArtifact,
+    { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
+  )
 
   resovleContractsDeferred(web3Contracts)
   return web3Contracts
@@ -234,4 +239,19 @@ export function getBondedECDSAKeepFactoryAddress() {
 
 export function getTBTCSystemAddress() {
   return getContractAddress(TBTCSystem)
+}
+
+const getOldTokenStakingArtifact = async () => {
+  if (getFirstNetworkIdFromArtifact() === "1") {
+    // Mainnet network ID.
+    // Against mainnet, we want to use TokenStaking artifact
+    // from 1.1.2 version at `0x6D1140a8c8e6Fac242652F0a5A8171b898c67600` address.
+    return (await import("./old-contracts-artifacts/TokenStaking.json")).default
+  }
+
+  // For local, Ropsten and keep-dev network we want to use
+  // the mocked old `TokenStaking` contract from `@keep-network/keep-core` package.
+  return (
+    await import("@keep-network/keep-core/artifacts/OldTokenStaking.json")
+  ).default
 }
