@@ -8,7 +8,10 @@ import {
   isCodeValid,
   createManagedGrantContractInstance,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
+  ContractsLoaded,
 } from "../contracts"
+import { isSameEthAddress } from "../utils/general.utils"
+import { isEmptyArray } from "../utils/array.utils"
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress, grantContract, eth, web3 } = web3Context
@@ -154,12 +157,17 @@ const fetchPendingUndelegation = async (web3Context) => {
   }
 }
 
+export const operatorService = {
+  fetchDelegatedTokensData,
+  fetchPendingUndelegation,
+}
+
 export const getOperatorsOfAuthorizer = async (web3Context, authorizer) => {
   return (
     await contractService.getPastEvents(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
-      "Staked",
+      "OperatorStaked",
       {
         fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
         filter: { authorizer },
@@ -173,7 +181,7 @@ export const getOperatorsOfBeneficiary = async (web3Context, beneficiary) => {
     await contractService.getPastEvents(
       web3Context,
       TOKEN_STAKING_CONTRACT_NAME,
-      "Staked",
+      "OperatorStaked",
       {
         fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
         filter: { beneficiary },
@@ -182,7 +190,73 @@ export const getOperatorsOfBeneficiary = async (web3Context, beneficiary) => {
   ).map((_) => _.returnValues.operator)
 }
 
-export const operatorService = {
-  fetchDelegatedTokensData,
-  fetchPendingUndelegation,
+export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
+  const { stakingContract } = await ContractsLoaded
+  const filterParam = operatorsFilterParam
+    ? { operator: operatorsFilterParam }
+    : {}
+
+  const ownerDelegations = await stakingContract.getPastEvents(
+    "StakeDelegated",
+    {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      filter: { owner, ...filterParam },
+    }
+  )
+
+  const transferEventsByOwner = await stakingContract.getPastEvents(
+    "StakeOwnershipTransferred",
+    {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      filter: { newOwner: owner, ...filterParam },
+    }
+  )
+
+  const operators = Array.from(
+    new Set(
+      [...ownerDelegations, ...transferEventsByOwner].map(
+        (_) => _.returnValues.operator
+      )
+    )
+  )
+
+  // Fetch `StakeOwnershipTransferred` by operator field. We need to check more recent event
+  // to make sure the delegation ownership has not been transferred.
+  let transferEventsByOperators = {}
+  if (!isEmptyArray(operators)) {
+    transferEventsByOperators = (
+      await stakingContract.getPastEvents("StakeOwnershipTransferred", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: operators },
+      })
+    ).reduce(reduceByOperator, {})
+  }
+
+  return operators.filter((operator) => {
+    if (!transferEventsByOperators.hasOwnProperty(operator)) {
+      return true
+    }
+
+    const transferEventsByOperator = transferEventsByOperators[operator]
+    const latestTransfer =
+      transferEventsByOperator[transferEventsByOperator.length - 1]
+    if (
+      latestTransfer &&
+      isSameEthAddress(latestTransfer.returnValues.newOwner, owner)
+    ) {
+      return true
+    }
+
+    return false
+  })
+}
+
+const reduceByOperator = (result, event) => {
+  const {
+    returnValues: { operator },
+  } = event
+
+  ;(result[operator] = result[operator] || []).push(event)
+
+  return result
 }

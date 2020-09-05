@@ -14,6 +14,7 @@ const AuthorizeContracts = ({
   onSelectOperator,
   selectedOperator,
   filterDropdownOptions,
+  onSuccessCallback,
 }) => {
   return (
     <section className="tile">
@@ -71,6 +72,7 @@ const AuthorizeContracts = ({
               operatorAddress={operatorAddress}
               onAuthorizeBtn={onAuthorizeBtn}
               onDeauthorizeBtn={onDeauthorizeBtn}
+              onSuccessCallback={onSuccessCallback}
             />
           )}
         />
@@ -84,6 +86,7 @@ const Contracts = ({
   operatorAddress,
   onAuthorizeBtn,
   onDeauthorizeBtn,
+  onSuccessCallback,
 }) => {
   return (
     <ul className="line-separator">
@@ -94,6 +97,7 @@ const Contracts = ({
           operatorAddress={operatorAddress}
           onAuthorizeBtn={onAuthorizeBtn}
           onDeauthorizeBtn={onDeauthorizeBtn}
+          onSuccessCallback={onSuccessCallback}
         />
       ))}
     </ul>
@@ -107,25 +111,27 @@ const AuthorizeContractItem = ({
   operatorContractAddress,
   onAuthorizeBtn,
   onDeauthorizeBtn,
+  onSuccessCallback,
 }) => {
   const onAuthorize = useCallback(
-    async (transactionHashCallback) => {
-      await onAuthorizeBtn(
-        { operatorAddress, contractName },
-        transactionHashCallback
-      )
+    async (awaitingPromise) => {
+      await onAuthorizeBtn({ operatorAddress, contractName }, awaitingPromise)
     },
     [contractName, operatorAddress, onAuthorizeBtn]
   )
 
   const onDeauthorize = useCallback(
-    async (transactionHashCallback) => {
-      await onDeauthorizeBtn(
-        { operatorAddress, contractName },
-        transactionHashCallback
-      )
+    async (awaitingPromise) => {
+      await onDeauthorizeBtn({ operatorAddress, contractName }, awaitingPromise)
     },
     [contractName, operatorAddress, onDeauthorizeBtn]
+  )
+
+  const onSuccess = useCallback(
+    (isAuthorized = true) => {
+      onSuccessCallback(contractName, operatorAddress, isAuthorized)
+    },
+    [onSuccessCallback, contractName, operatorAddress]
   )
 
   return (
@@ -142,6 +148,7 @@ const AuthorizeContractItem = ({
               <SubmitButton
                 onSubmitAction={onDeauthorize}
                 className="btn btn-secondary btn-sm ml-1"
+                successCallback={() => onSuccess(false)}
               >
                 deauthorize
               </SubmitButton>
@@ -152,6 +159,7 @@ const AuthorizeContractItem = ({
             onSubmitAction={onAuthorize}
             className="btn btn-secondary btn-sm"
             style={{ marginLeft: "auto" }}
+            successCallback={onSuccess}
           >
             authorize
           </SubmitButton>

@@ -1,112 +1,78 @@
-import { contractService } from "./contracts.service"
 import web3Utils from "web3-utils"
-import {
-  TOKEN_STAKING_CONTRACT_NAME,
-  TOKEN_GRANT_CONTRACT_NAME,
-  KEEP_TOKEN_CONTRACT_NAME,
-} from "../constants/constants"
 import { sub, gt } from "../utils/arithmetics.utils"
 import moment from "moment"
 import { tokenGrantsService } from "../services/token-grants.service"
-import { createManagedGrantContractInstance } from "../contracts"
+import {
+  createManagedGrantContractInstance,
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
+} from "../contracts"
+import { ContractsLoaded, Web3Loaded } from "../contracts"
+import { isEmptyArray } from "../utils/array.utils"
+import { getOperatorsOfOwner } from "./token-staking.service"
+import { isSameEthAddress } from "../utils/general.utils"
 
-export const fetchTokensPageData = async (web3Context) => {
-  const { yourAddress } = web3Context
+export const fetchTokensPageData = async () => {
+  const web3 = await Web3Loaded
+  const yourAddress = web3.eth.defaultAccount
 
-  const [
-    keepTokenBalance,
-    grantTokenBalance,
-    minimumStake,
-    operatorsAddresses,
-    undelegationPeriod,
-    initializationPeriod,
-  ] = await Promise.all([
-    contractService.makeCall(
-      web3Context,
-      KEEP_TOKEN_CONTRACT_NAME,
-      "balanceOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_GRANT_CONTRACT_NAME,
-      "balanceOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "minimumStake"
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "operatorsOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "undelegationPeriod"
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "initializationPeriod"
-    ),
-  ])
-  const operatorsAddressesSet = new Set(operatorsAddresses)
-  const granteeOperators = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "getGranteeOperators",
-    yourAddress
-  )
-  const granteeOperatorsSet = new Set(granteeOperators)
-  const managedGrantOperators = await tokenGrantsService.getOperatorsFromManagedGrants(
-    web3Context
-  )
+  const { stakingContract, token, grantContract } = await ContractsLoaded
+
+  const keepTokenBalance = await token.methods.balanceOf(yourAddress).call()
+
+  const grantTokenBalance = await grantContract.methods
+    .balanceOf(yourAddress)
+    .call()
+
+  const minimumStake = await stakingContract.methods.minimumStake().call()
+
+  const undelegationPeriod = await stakingContract.methods
+    .undelegationPeriod()
+    .call()
+
+  const initializationPeriod = await stakingContract.methods
+    .initializationPeriod()
+    .call()
 
   const [
     ownedDelegations,
     ownedUndelegations,
     tokenStakingBalance,
     pendingUndelegationBalance,
-  ] = await getDelegations(
-    operatorsAddressesSet,
-    web3Context,
+  ] = await getOwnedDelegations(initializationPeriod, undelegationPeriod)
+
+  const [
+    granteeDelegations,
+    granteeUndelegations,
+    granteeGrantsIds,
+  ] = await getGranteeDelegations(initializationPeriod, undelegationPeriod)
+
+  const [
+    managedGrantsDelegations,
+    managedGrantsUndelegations,
+    managedGrantsIds,
+  ] = await getManagedGranteeDelegations(
     initializationPeriod,
     undelegationPeriod
   )
 
-  const [granteeDelegations, granteeUndelegations] = await getDelegations(
-    granteeOperatorsSet,
-    web3Context,
+  const [copiedDelegations, copiedUndelegations] = await getCopiedDelegations(
+    yourAddress,
+    [...granteeGrantsIds, ...managedGrantsIds],
     initializationPeriod,
-    undelegationPeriod,
-    true
-  )
-  const [
-    managedGrantsDelegations,
-    managedGrantsUndelegations,
-  ] = await getDelegations(
-    managedGrantOperators,
-    web3Context,
-    initializationPeriod,
-    undelegationPeriod,
-    true,
-    true
+    undelegationPeriod
   )
 
   const delegations = [
     ...ownedDelegations,
     ...granteeDelegations,
     ...managedGrantsDelegations,
+    ...copiedDelegations,
   ].sort((a, b) => sub(b.createdAt, a.createdAt))
   const undelegations = [
     ...ownedUndelegations,
     ...granteeUndelegations,
     ...managedGrantsUndelegations,
+    ...copiedUndelegations,
   ].sort((a, b) => sub(b.undelegatedAt, a.undelegatedAt))
 
   return {
@@ -123,65 +89,54 @@ export const fetchTokensPageData = async (web3Context) => {
 }
 
 const getDelegations = async (
-  operatorAddresses,
-  web3Context,
+  operatorToDetailsMap,
   initializationPeriod,
-  undelegationPeriod,
-  isFromGrant = false,
-  isManagedGrant = false
+  undelegationPeriod
 ) => {
-  const { web3 } = web3Context
+  const web3 = await Web3Loaded
+  const { stakingContract, grantContract } = await ContractsLoaded
+
   let tokenStakingBalance = web3Utils.toBN(0)
   let pendingUndelegationBalance = web3Utils.toBN(0)
   const delegations = []
   const undelegations = []
 
-  for (const operatorAddress of operatorAddresses) {
-    const { createdAt, undelegatedAt, amount } = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "getDelegationInfo",
-      operatorAddress
-    )
-    const beneficiary = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "beneficiaryOf",
-      operatorAddress
-    )
-    const authorizerAddress = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "authorizerOf",
-      operatorAddress
-    )
+  for (const [operatorAddress, details] of Object.entries(
+    operatorToDetailsMap
+  )) {
+    let {
+      beneficiary,
+      authorizer: authorizerAddress,
+      isFromGrant,
+      isManagedGrant,
+      grantId,
+      isCopiedStake,
+    } = details
 
-    let grantId
+    const {
+      createdAt,
+      undelegatedAt,
+      amount,
+    } = await stakingContract.methods.getDelegationInfo(operatorAddress).call()
+
     let managedGrantContractInstance
-    if (isFromGrant) {
+    if (isFromGrant && !grantId) {
       try {
-        const grantStakeDetails = await contractService.makeCall(
-          web3Context,
-          TOKEN_GRANT_CONTRACT_NAME,
-          "getGrantStakeDetails",
-          operatorAddress
-        )
+        const grantStakeDetails = await grantContract.methods
+          .getGrantStakeDetails(operatorAddress)
+          .call()
         grantId = grantStakeDetails.grantId
       } catch (error) {
         grantId = null
       }
-      if (isManagedGrant && grantId) {
-        const { grantee } = await contractService.makeCall(
-          web3Context,
-          TOKEN_GRANT_CONTRACT_NAME,
-          "getGrant",
-          grantId
-        )
-        managedGrantContractInstance = createManagedGrantContractInstance(
-          web3,
-          grantee
-        )
-      }
+    }
+
+    if (isManagedGrant && grantId) {
+      const { grantee } = await grantContract.methods.getGrant(grantId).call()
+      managedGrantContractInstance = createManagedGrantContractInstance(
+        web3,
+        grantee
+      )
     }
 
     const operatorData = {
@@ -195,6 +150,7 @@ const getDelegations = async (
       grantId,
       isManagedGrant,
       managedGrantContractInstance,
+      isCopiedStake,
     }
     const balance = web3Utils.toBN(amount)
 
@@ -233,41 +189,273 @@ const getDelegations = async (
   ]
 }
 
-const delegateStake = async (web3Context, data, onTransactionHashCallback) => {
-  const {
-    authorizerAddress,
-    beneficiaryAddress,
-    operatorAddress,
-    stakeTokens,
-    context,
-    selectedGrant,
-  } = data
-  const amount = web3Utils
-    .toBN(stakeTokens)
-    .mul(web3Utils.toBN(10).pow(web3Utils.toBN(18)))
-    .toString()
-  const delegation =
-    "0x" +
-    Buffer.concat([
-      Buffer.from(beneficiaryAddress.substr(2), "hex"),
-      Buffer.from(operatorAddress.substr(2), "hex"),
-      Buffer.from(authorizerAddress.substr(2), "hex"),
-    ]).toString("hex")
+const getOwnedDelegations = async (
+  initializationPeriod,
+  undelegationPeriod
+) => {
+  const web3 = await Web3Loaded
+  const yourAddress = web3.eth.defaultAccount
+  const { stakingContract } = await ContractsLoaded
 
-  const { token, stakingContract, yourAddress } = web3Context
+  // Get operators
+  const operators = await getOperatorsOfOwner(yourAddress)
 
-  if (context === "owned") {
-    await token.methods
-      .approveAndCall(stakingContract.options.address, amount, delegation)
-      .send({ from: yourAddress })
-      .on("transactionHash", onTransactionHashCallback)
-  } else if (context === "granted") {
-    const data = { delegation, amount, grant: { ...selectedGrant } }
-    await tokenGrantsService.stake(web3Context, data, onTransactionHashCallback)
+  // No delegations
+  if (isEmptyArray(operators)) {
+    return await getDelegations({}, initializationPeriod, undelegationPeriod)
   }
+
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
+  const operatorToDetails = (
+    await stakingContract.getPastEvents("OperatorStaked", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      filter: { operator: operators },
+    })
+  ).reduce(toOperator, {})
+
+  return await getDelegations(
+    operatorToDetails,
+    initializationPeriod,
+    undelegationPeriod
+  )
+}
+
+const getAllGranteeOperators = async (
+  granteeOperators,
+  grantIds,
+  isManagedGrant = false
+) => {
+  const {
+    stakingContract,
+    tokenStakingEscrow,
+    stakingPortBackerContract,
+  } = await ContractsLoaded
+
+  let escrowRedelegation = []
+  if (!isEmptyArray(grantIds)) {
+    escrowRedelegation = await tokenStakingEscrow.getPastEvents(
+      "DepositRedelegated",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+        filter: {
+          grantId: grantIds,
+        },
+      }
+    )
+  }
+
+  const newOperatorToGrantId = escrowRedelegation.reduce((reducer, event) => {
+    const {
+      returnValues: { newOperator, grantId },
+    } = event
+    reducer[newOperator] = grantId
+    return reducer
+  }, {})
+
+  const newOperators = escrowRedelegation.map((_) => _.returnValues.newOperator)
+  const obsoleteOperators = escrowRedelegation.map(
+    (_) => _.returnValues.previousOperator
+  )
+
+  let activeOperators = granteeOperators
+    .filter((operator) => !obsoleteOperators.includes(operator))
+    .concat(newOperators)
+
+  const operatorsOfPortBacker = isEmptyArray(activeOperators)
+    ? []
+    : await getOperatorsOfOwner(
+        stakingPortBackerContract.options.address,
+        activeOperators
+      )
+
+  // We want to skip copied delegations
+  activeOperators = activeOperators.filter(
+    (operator) => !operatorsOfPortBacker.includes(operator)
+  )
+
+  let operatorsDetailsMap = {}
+  if (!isEmptyArray(activeOperators)) {
+    operatorsDetailsMap = (operatorsDetailsMap = await stakingContract.getPastEvents(
+      "OperatorStaked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: activeOperators },
+      }
+    )).reduce(toOperator, {})
+  }
+
+  for (const operator of Object.keys(operatorsDetailsMap)) {
+    const grantId = newOperatorToGrantId.hasOwnProperty(operator)
+      ? newOperatorToGrantId[operator]
+      : null
+    operatorsDetailsMap[operator] = {
+      ...operatorsDetailsMap[operator],
+      isFromGrant: true,
+      isManagedGrant,
+      grantId,
+    }
+  }
+
+  return operatorsDetailsMap
+}
+
+const getManagedGranteeDelegations = async (
+  initializationPeriod,
+  undelegationPeriod
+) => {
+  const { grantContract } = await ContractsLoaded
+
+  const managedGrants = await tokenGrantsService.fetchManagedGrants()
+
+  const grantIds = managedGrants.map(({ grantId }) => grantId)
+
+  const operators = new Set()
+
+  for (const managedGrant of managedGrants) {
+    const { managedGrantContractInstance } = managedGrant
+    const granteeAddress = managedGrantContractInstance.options.address
+    const grenteeOperators = await grantContract.methods
+      .getGranteeOperators(granteeAddress)
+      .call()
+    grenteeOperators.forEach(operators.add, operators)
+  }
+
+  const allOperators = await getAllGranteeOperators(
+    Array.from(operators),
+    grantIds,
+    true
+  )
+
+  const [delegations, undelegations] = await getDelegations(
+    allOperators,
+    initializationPeriod,
+    undelegationPeriod
+  )
+
+  return [delegations, undelegations, grantIds]
+}
+
+const getGranteeDelegations = async (
+  initializationPeriod,
+  undelegationPeriod
+) => {
+  const web3 = await Web3Loaded
+  const yourAddress = web3.eth.defaultAccount
+  const { grantContract } = await ContractsLoaded
+
+  // `getGrants` function returns grants for a grant manager or grantee.
+  // So it's possible that the provided address is a grantee in grant A and a grant manager in grant B.
+  // In that case a `getGrants` function returns [A, B].
+  const grantIds = new Set(
+    await grantContract.methods.getGrants(yourAddress).call()
+  )
+
+  // Filter out grants. We just want grants from the grantee's perspective
+  const granteeGrants = []
+  for (const grantId of grantIds) {
+    const { grantee } = await grantContract.methods.getGrant(grantId).call()
+    if (isSameEthAddress(grantee, yourAddress)) {
+      granteeGrants.push(grantId)
+    }
+  }
+
+  const granteeOperators = new Set(
+    await grantContract.methods.getGranteeOperators(yourAddress).call()
+  )
+
+  const allOperators = await getAllGranteeOperators(
+    Array.from(granteeOperators),
+    granteeGrants,
+    false
+  )
+
+  const [delegations, undelegations] = await getDelegations(
+    allOperators,
+    initializationPeriod,
+    undelegationPeriod
+  )
+
+  return [delegations, undelegations, granteeGrants]
+}
+
+export const getCopiedDelegations = async (
+  ownerOrGrantee,
+  grantIds,
+  initializationPeriod,
+  undelegationPeriod
+) => {
+  const {
+    stakingPortBackerContract,
+    grantContract,
+    stakingContract,
+  } = await ContractsLoaded
+
+  const operatorsToCheck = (
+    await stakingPortBackerContract.getPastEvents("StakeCopied", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      filter: { owner: ownerOrGrantee },
+    })
+  ).map((_) => _.returnValues.operator)
+
+  // No delegations
+  if (isEmptyArray(operatorsToCheck)) {
+    return await getDelegations({}, initializationPeriod, undelegationPeriod)
+  }
+
+  // We only want operators for whom the delegation has not been paid back.
+  const operatorsOfPortBacker = await getOperatorsOfOwner(
+    stakingPortBackerContract.options.address,
+    operatorsToCheck
+  )
+
+  // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneficiary.
+  const operatorToDetails = (isEmptyArray(operatorsOfPortBacker)
+    ? []
+    : await stakingContract.getPastEvents("OperatorStaked", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: operatorsOfPortBacker },
+      })
+  ).reduce((reducer, _) => {
+    reducer[_.returnValues.operator] = _.returnValues
+    reducer[_.returnValues.operator].isCopiedStake = true
+
+    return reducer
+  }, {})
+
+  // Fill operator's grant details for delegations created from a grant.
+  if (!isEmptyArray(grantIds)) {
+    const tokenGrantStakingEvents = await grantContract.getPastEvents(
+      "TokenGrantStaked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.grantContract,
+        filter: { grantId: grantIds },
+      }
+    )
+
+    for (const grantStakedEvent of tokenGrantStakingEvents) {
+      const operator = grantStakedEvent.returnValues.operator
+      const grantId = grantStakedEvent.returnValues.grantId
+      if (operatorToDetails.hasOwnProperty(operator)) {
+        operatorToDetails[operator].grantId = grantId
+        operatorToDetails[operator].isFromGrant = true
+      }
+    }
+  }
+
+  const [delegations, undelegations] = await getDelegations(
+    operatorToDetails,
+    initializationPeriod,
+    undelegationPeriod
+  )
+
+  return [delegations, undelegations]
+}
+
+const toOperator = (reducer, _) => {
+  reducer[_.returnValues.operator] = _.returnValues
+  return reducer
 }
 
 export const tokensPageService = {
   fetchTokensPageData,
-  delegateStake,
 }

@@ -39,6 +39,19 @@ spec:
         type: beacon
         id: '3'
     spec:
+      volumes:
+      - name: keep-client-config
+        persistentVolumeClaim:
+          claimName: keep-client-config
+      - name: keep-client-data
+        persistentVolumeClaim:
+          claimName: keep-client-data
+      - name: eth-account-keyfile
+        configMap:
+          name: eth-account-info
+          items:
+            - key: account-3-keyfile
+              path: account-3-keyfile
       containers:
       - name: keep-client-0
         image: gcr.io/keep-dev-fe24/keep-client
@@ -63,19 +76,6 @@ spec:
           - name: eth-account-keyfile
             mountPath: /mnt/keep-client/keyfile
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
-      volumes:
-      - name: keep-client-config
-        persistentVolumeClaim:
-          claimName: keep-client-config
-      - name: keep-client-data
-        persistentVolumeClaim:
-          claimName: keep-client-data
-      - name: eth-account-keyfile
-        configMap:
-          name: eth-account-info
-          items:
-            - key: account-3-keyfile
-              path: account-3-keyfile
       initContainers:
       - name: initcontainer-provision-keep-client
         image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-client
@@ -119,4 +119,6 @@ spec:
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config
+          - name: eth-account-keyfile
+            mountPath: /mnt/keep-client/keyfile
         command: ["node", "/tmp/provision-keep-client.js"]

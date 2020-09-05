@@ -29,13 +29,7 @@ func (res *relayEntrySubmitter) submitRelayEntry(
 	relayEntrySubmittedChannel <-chan uint64,
 	relayEntryTimeoutChannel <-chan uint64,
 ) error {
-	config, err := res.chain.GetConfig()
-	if err != nil {
-		return fmt.Errorf(
-			"could not fetch chain's config: [%v]",
-			err,
-		)
-	}
+	config := res.chain.GetConfig()
 
 	// TODO: we should eventually check if entry has been already submitted
 	// but we may skip this check for V1.

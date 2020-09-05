@@ -1,8 +1,8 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: eth-miner
-  namespace: ropsten
+  name: ropsten-miner
+  namespace: default
 provisioner: kubernetes.io/gce-pd
 parameters:
   type: pd-ssd

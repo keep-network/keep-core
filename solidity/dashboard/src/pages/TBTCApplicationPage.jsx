@@ -5,8 +5,6 @@ import * as Icons from "../components/Icons"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useFetchData } from "../hooks/useFetchData"
 import { BondingSection } from "../components/BondingSection"
-import { useWeb3Context } from "../components/WithWeb3Context"
-import { useShowMessage, messageType } from "../components/Message"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { add, sub } from "../utils/arithmetics.utils"
@@ -15,11 +13,20 @@ import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
 import { LoadingOverlay } from "../components/Loadable"
 import { isSameEthAddress } from "../utils/general.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
+import {
+  authorizeSortitionPoolContract,
+  authorizeOperatorContract,
+  deauthorizeSortitionPoolContract,
+} from "../actions/web3"
+import { connect } from "react-redux"
+import { getBondedECDSAKeepFactoryAddress } from "../contracts"
 
 const initialData = []
-const TBTCApplicationPage = () => {
-  const web3Context = useWeb3Context()
-  const showMessage = useShowMessage()
+const TBTCApplicationPage = ({
+  authorizeSortitionPoolContract,
+  authorizeOperatorContract,
+  deauthorizeSortitionPoolContract,
+}) => {
   const [selectedOperator, setOperator] = useState({})
 
   // fetch data from service
@@ -123,64 +130,39 @@ const TBTCApplicationPage = () => {
   )
 
   const authorizeContract = useCallback(
-    async (data, transactionHashCallback) => {
+    async (data, awaitingPromise) => {
       const { operatorAddress, contractName } = data
-      const serviceMethod =
-        contractName === "TBTCSystem"
-          ? tbtcAuthorizationService.authorizeTBTCSystem
-          : tbtcAuthorizationService.authorizeBondedECDSAKeepFactory
-      try {
-        await serviceMethod(
-          web3Context,
-          operatorAddress,
-          transactionHashCallback
+      if (contractName === "TBTCSystem") {
+        const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
+
+        authorizeSortitionPoolContract(
+          {
+            operatorAddress,
+            sortitionPoolAddress,
+          },
+          awaitingPromise
         )
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Authorization successfully completed",
-        })
-        setTimeout(() => onSuccessCallback(contractName, operatorAddress), 5000)
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Authorization has failed",
-          content: error.message,
-        })
-        throw error
+      } else {
+        const operatorContractAddress = getBondedECDSAKeepFactoryAddress()
+        authorizeOperatorContract(
+          { operatorAddress, operatorContractAddress },
+          awaitingPromise
+        )
       }
     },
-    [showMessage, web3Context, onSuccessCallback]
+    [authorizeSortitionPoolContract, authorizeOperatorContract]
   )
 
   const deauthorizeTBTCSystem = useCallback(
-    async (data, transactionHashCallback) => {
+    async (data, awaitingPromise) => {
       const { operatorAddress } = data
-      try {
-        await tbtcAuthorizationService.deauthorizeTBTCSystem(
-          web3Context,
-          operatorAddress,
-          transactionHashCallback
-        )
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Deauthorization successfully completed",
-        })
-        setTimeout(
-          () => onSuccessCallback("TBTCSystem", operatorAddress, false),
-          5000
-        )
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Deauthorization has failed",
-          content: error.message,
-        })
-        throw error
-      }
+      const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
+      deauthorizeSortitionPoolContract(
+        { operatorAddress, sortitionPoolAddress },
+        awaitingPromise
+      )
     },
-    [showMessage, web3Context, onSuccessCallback]
+    [deauthorizeSortitionPoolContract]
   )
 
   const tbtcAuthData = useMemo(() => {
@@ -223,6 +205,7 @@ const TBTCApplicationPage = () => {
           data={tbtcAuthData}
           onAuthorizeBtn={authorizeContract}
           onDeauthorizeBtn={deauthorizeTBTCSystem}
+          onSuccessCallback={onSuccessCallback}
         />
       </LoadingOverlay>
       <LoadingOverlay
@@ -235,4 +218,10 @@ const TBTCApplicationPage = () => {
   )
 }
 
-export default TBTCApplicationPage
+const mapDispatchToProps = {
+  authorizeSortitionPoolContract,
+  authorizeOperatorContract,
+  deauthorizeSortitionPoolContract,
+}
+
+export default connect(null, mapDispatchToProps)(TBTCApplicationPage)
