@@ -7,6 +7,7 @@ import {
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
 } from "../constants/constants"
 import { add } from "../utils/arithmetics.utils"
+import { isEmptyArray } from "../utils/array.utils"
 import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   getBondedECDSAKeepFactoryAddress,
@@ -252,26 +253,31 @@ const fetchCreatedBonds = async (
   operatorAddresses,
   sortitionPoolAddress
 ) => {
-  return (
-    await contractService.getPastEvents(
-      web3Context,
-      KEEP_BONDING_CONTRACT_NAME,
-      "BondCreated",
-      {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[KEEP_BONDING_CONTRACT_NAME],
-        filter: {
-          operator: operatorAddresses,
-          sortitionPool: sortitionPoolAddress,
-        },
+  let createdBonds = []
+  if (!isEmptyArray(operatorAddresses)) {
+    createdBonds = (
+      await contractService.getPastEvents(
+        web3Context,
+        KEEP_BONDING_CONTRACT_NAME,
+        "BondCreated",
+        {
+          fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[KEEP_BONDING_CONTRACT_NAME],
+          filter: {
+            operator: operatorAddresses,
+            sortitionPool: sortitionPoolAddress,
+          },
+        }
+      )
+    ).map((_) => {
+      return {
+        operator: _.returnValues.operator,
+        holder: _.returnValues.holder,
+        referenceID: _.returnValues.referenceID,
       }
-    )
-  ).map((_) => {
-    return {
-      operator: _.returnValues.operator,
-      holder: _.returnValues.holder,
-      referenceID: _.returnValues.referenceID,
-    }
-  })
+    })
+  }
+
+  return createdBonds
 }
 
 const fetchManagedGrantAddresses = async (web3Context, lookupAddress) => {

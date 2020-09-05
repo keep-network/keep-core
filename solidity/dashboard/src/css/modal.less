@@ -39,6 +39,10 @@
         border-radius: 0;
         background-color: @white;
 
+        .modal-content {
+          padding: 2rem;
+        }
+
         @media screen and (min-width: 600px) {
             width: 85%;
         }
@@ -51,6 +55,21 @@
             width: 30%;
         }
       }
+      .modal-wrapper--full-screen {
+        display: flex;
+        flex-direction: column;
+        margin: auto;
+        width: 100%;
+        height: 100%;
+        overflow-x: scroll;
+        border-radius: 0;
+        background-color: @white;
+
+        .modal-content {
+          padding: 0;
+        }
+      }
+
       &-close {
         &:hover {
           cursor: pointer;
@@ -58,8 +77,5 @@
         margin-left: auto;
       }
 
-      &-content {
-        padding: 2rem;
-      }
     }
   }

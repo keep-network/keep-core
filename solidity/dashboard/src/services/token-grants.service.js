@@ -236,9 +236,9 @@ export const stake = async (
   }
 }
 
-const getOperatorsFromManagedGrants = async (web3Context) => {
-  const { grantContract } = web3Context
-  const manageGrants = await fetchManagedGrants(web3Context)
+const getOperatorsFromManagedGrants = async () => {
+  const { grantContract } = await ContractsLoaded
+  const manageGrants = await fetchManagedGrants()
   const operators = new Set()
 
   for (const managedGrant of manageGrants) {
@@ -250,7 +250,7 @@ const getOperatorsFromManagedGrants = async (web3Context) => {
     grenteeOperators.forEach(operators.add, operators)
   }
 
-  return operators
+  return Array.from(operators)
 }
 
 const fetchGrantById = async (web3Context, grantId) => {

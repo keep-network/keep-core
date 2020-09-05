@@ -249,9 +249,10 @@ async function issueGrant(granteeAccount, grantAmount, currentNonce, gasPrice) {
         .on("error", (error) => {
           if (
             // Confirmed transaction with this nonce, so bump it.
-            error == "Error: nonce too low" ||
+            (error.message && error.message == "nonce too low") ||
             // Pending transaction with this nonce, so bump it and queue up.
-            error == "Error: replacement transaction underpriced"
+            (error.message &&
+              error.message == "replacement transaction underpriced")
           ) {
             console.error(
               `Error with account grant transaction for ${granteeAccount}, ` +

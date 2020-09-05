@@ -190,14 +190,17 @@ export const getOperatorsOfBeneficiary = async (web3Context, beneficiary) => {
   ).map((_) => _.returnValues.operator)
 }
 
-export const getOperatorsOfOwner = async (owner) => {
+export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
   const { stakingContract } = await ContractsLoaded
+  const filterParam = operatorsFilterParam
+    ? { operator: operatorsFilterParam }
+    : {}
 
   const ownerDelegations = await stakingContract.getPastEvents(
     "StakeDelegated",
     {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { owner },
+      filter: { owner, ...filterParam },
     }
   )
 
@@ -205,7 +208,7 @@ export const getOperatorsOfOwner = async (owner) => {
     "StakeOwnershipTransferred",
     {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-      filter: { newOwner: owner },
+      filter: { newOwner: owner, ...filterParam },
     }
   )
 

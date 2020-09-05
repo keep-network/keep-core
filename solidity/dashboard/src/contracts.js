@@ -14,6 +14,8 @@ import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
 import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
+import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
+
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -27,6 +29,8 @@ import {
   TBTC_SYSTEM_CONTRACT_NAME,
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
+  STAKING_PORT_BACKER_CONTRACT_NAME,
+  OLD_TOKEN_STAKING_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -41,6 +45,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [TBTC_TOKEN_CONTRACT_NAME]: 0,
   [TBTC_SYSTEM_CONTRACT_NAME]: 0,
   [TOKEN_STAKING_ESCROW_CONTRACT_NAME]: 0,
+  [STAKING_PORT_BACKER_CONTRACT_NAME]: 0,
 }
 
 const contracts = [
@@ -86,6 +91,10 @@ const contracts = [
   [
     { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
     BondedECDSAKeepFactory,
+  ],
+  [
+    { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
+    StakingPortBacker,
   ],
 ]
 
@@ -148,6 +157,13 @@ export async function getContracts(web3) {
       options
     )
   }
+
+  const oldTokenStakingArtifact = await getOldTokenStakingArtifact()
+  web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME] = await getContract(
+    web3,
+    oldTokenStakingArtifact,
+    { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
+  )
 
   resovleContractsDeferred(web3Contracts)
   return web3Contracts
@@ -223,4 +239,19 @@ export function getBondedECDSAKeepFactoryAddress() {
 
 export function getTBTCSystemAddress() {
   return getContractAddress(TBTCSystem)
+}
+
+const getOldTokenStakingArtifact = async () => {
+  if (getFirstNetworkIdFromArtifact() === "1") {
+    // Mainnet network ID.
+    // Against mainnet, we want to use TokenStaking artifact
+    // from 1.1.2 version at `0x6D1140a8c8e6Fac242652F0a5A8171b898c67600` address.
+    return (await import("./old-contracts-artifacts/TokenStaking.json")).default
+  }
+
+  // For local, Ropsten and keep-dev network we want to use
+  // the mocked old `TokenStaking` contract from `@keep-network/keep-core` package.
+  return (
+    await import("@keep-network/keep-core/artifacts/OldTokenStaking.json")
+  ).default
 }
