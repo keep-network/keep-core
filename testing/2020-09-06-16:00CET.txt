@@ -1,0 +1,420 @@
+
+Number of groups:            59
+Relay entries requested:     999
+Relay entries submitted:     999
+Number of timed-out entries: 0
+
+Group 0x2957570c1eb070a7f7a6cdd1c024f7ef8fce360ae23463939fbcf2233c012f43261bbec5d1e29b5607ab8660e47cfee589f1e3fb2d56c4cd4aacf381e0b90d89121bd41620dc30f806a68a469af1b83e46551d3f4ed394e75d2593bc9c4aa293271ed4795da7c13eac3dbfd020c401e1320e21d33f07750cbb0d29222f1730c3:
+ - has index 0
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 2 unique members
+
+Group 0x00d93b2f22a08cfa888bc85179d8c351f7c83b330c33dccee10abcf91ed3bdab0032b7eef04ab7be770e4082e80ace38745e0c10faf71ffb3187605e52e1df7c02446a0db35633811b380579898afc408d6c2633f081d5751dc33ad8387e6d12043276ab078c0cdd6366368d625c7419b6a801522ca184d931f5d196d1d97389:
+ - has index 1
+ - has 49 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: 0x0b0c10131617181922232c2e373f40
+ - has 2 unique members
+
+Group 0x07290e1e01ab406cabc1dfbea13a41ca10377a37fb8efab7c865d63388491b900952669754e5d23218d4e2ca35fb01bb801f370466a56d578624e1a75bb1577322c1e949282df6add387d6d4659bbc028c5128702880ecc7dbf8c1a1ba8d9bb4231acc33200fda570ab2ae1290224448b59a8f194067f15ef05b5f05ecf48087:
+ - has index 2
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x2f4fa6cb86138de3492250087e845af25c3efdc49abc194d0ba5bb4c47dd927e2d3f5a4f0ec889fc59cf53ebdb23ff8a631a18d333b4a4cfe50f3279a4508937053f0d185100f242df8bc5d1e17c00838b45d43a41b4ca093502e5138c6a6c3c21cc0492f911ba97e5c2ebb080d1005b7d20673870d49e0078fe2774c848df5d:
+ - has index 3
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x2a921b072713e8bb5f67cf04a5c2139f4f67da96cd8306abf7ada9808c05a34612ce67dd55ddcda8a638f1800b3b4ea9e9dedb74283a1d9840edd98ccab543d5187e1faeffa9badfc2d97f63342a514fdda67a562de32a9cf2d4f9b2fb9920521d63fb39da747a2edd34a4daadba7d23d947dec867bc9bc1dc5194992691a06f:
+ - has index 4
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x2c81c3ffd4d0b97a27bc213ecd223a3184c189e38ba3a6458827aa1cf99eb3622883a506c43a583ec74ebe80feebac1b4aaca16ca7fffea306623b90771ec2081ae715bfa7426a179b40abbe3abc65fa5b0f546c92a4c19893c8682dfb9666f42d78989eecdc7f874faeba670fe83fdaa0d5d8cdd77e46ddef4e5388b1b43296:
+ - has index 5
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x07fd769abbe39138e6d682dc5615307d7b6909e4e57f70d42c05d0f2112563f41dd5ed02e0d5e9313fc796a2adc51ab61642b600ffe2954aafd2dd9779041ed219cccf97e6e1ae6d8314b3a6d23b1e9409e9ce19bcdef34d9ab2bacc7fe2e6021b12bbe9634e79197c1850f1a131e9f52db52939a453c4e747f81221799b113a:
+ - has index 6
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x0bf94575991c6b63ba9464b29c55a5f46871eeb73e48b04f430613afc2568a5b092a12741d458879331927cc80002f8a36b3244d7994b34548a3e1a01ee520d1187dae7db0f207f3599eaba607b591a1c00ec5d822d5ef9314086c5a71e68f392827a6235487a9907592c380240df2c0f81c68f953059bfac59c679315ab9e09:
+ - has index 7
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x2bd436dd47b80f61b9a44c0b54c344aacf489a8fd382e7a9a5c21b663874001524cf2b470fd2123a8bfc0ccb373103bb51c0eeadb7cae1cb0e5830a16ae592a00485909b859e2f5f06e5897ac6f7d63ef0d1712673fd1b9fa150b170517ceb6f230cfd349f6cea279f57029f92c993402fb2c43a33c66799647fed06b5dd08bf:
+ - has index 8
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x02044a6d29c2a7a84c071e4a786a2caeeb86ec54f0f786c481823c63954bce6d04e980312012ff22e5a26b8490695fd0b8d7a79077bbbf8c43ef95c51bf0dfb821359793f1df19a4483414fec775ea244060a6afe7b2a3144daa384af71a707001b0f8066d3ae46f5fd124e09af0a19e934fcffbd02f6ca94beadeec39ab52be:
+ - has index 9
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x25c2930f68355873a36b8183cacb0b63f7dd59ef5d8f97f08a72b24367a4bead180c8fb43bcc508f8517947c012cdb107986d82563c499d21ca65be67b643d7c00f439c10ad4572f03714b5990346d40723c6df457536aa805c99839dce8dd161bcf40f061edc9c621117a7b9ef1b1001d933fe62eb3aad52e7e4971e0007107:
+ - has index 10
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x0aa3d0e4f26b421e8f23eb6c713ff93a396037651353e4e0afeef3de82128842104a978f193f23589acb7f5dd6d825d6255b72109c1f2acaa5e1dc9d9b384a620bf1c5c7a046993ab5c3e71263bdfc9ecef0c7abcfaf62dc34a1a066e37a10df20f9799e4861ae173e3e6ed812501ef20b50bc4972e5d006f994857b8e87ab30:
+ - has index 11
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x071d5cc8beac52f390fd4a2f661a0a45ffe556bffcee6c7e4e622f0c61cabeb916aa534431fed840d7a03efb9140ad8672a14858bc25d3bab018eab253094816252029507c352719f15a0004b4f511afe34126bf21f1a454f6d7ca778ce96be52e4818bcb9ae250c4f769d5964a8d89dfc389e849e19427de81ff69fb3479825:
+ - has index 12
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x1ae5c0a7b6faebdfaf6e1ee950751d73b0a1ff8b3ae57459099e401f6bb62867120b6c8b1d1c1a9885a146494255e5ba2e89c5b3336d32ed264921e478d5dd97039c92d8ce087fbd9fcee922672fe476e26f07609debed2f38f79f315dafa75004352acd847df1fd3e111efd5ef58a74528ed041ce1da1315701cec6d46cbd38:
+ - has index 13
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 4 unique members
+
+Group 0x26859bef7c1de30a9ce0de2b4fbc24c2bb853ad869e142835fed3edeae4610c125a787611dc5f5e8cbd4e41cf04b79635e52117505d94204be4ce17ba20c61612bd3aa6f0d5bf956fc9e3423edccd2327ecd7f9747d9062420afa8a3b4bfd6070598f115b148ec61e9727dd72ff98d9c002fbbc5e41d83bbc763e9a642a364d7:
+ - has index 14
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 5 unique members
+
+Group 0x27eb7721b7d85f390bb39248963fda797ff260a1933553653d8cecf2185e60e00f404383257b1735ad1ce31f1a1960679cd093661e1f6733c84bd5e0a5c72f552e759e33f36ff0ceb4392ea2ac06eb9f73d0aa57fbe2e94244fafe6e5e92af2306615efe3c2fddf9448c14b30ffa1b33484cb4e4772e286281512b15395b556f:
+ - has index 15
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 11 unique members
+
+Group 0x14b2eba19faa171600ef9e87497d8553ea6c0efc3b2521c336cb44c3e669fb19066eac8517a28d3b773efb774e4a0f57164754980a52f46d4512cd6cfc15213d046442086908bd6b2359fbe1ec072e7284a61a68e6d166b7a2e5ae5fc2308e361e9208ca7d903b5114cdcf5629f145a42137ce0b5a1d413aeaa0c8b42f5d06c6:
+ - has index 16
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 12 unique members
+
+Group 0x1a11e0272b805b354f70c0a1f386ccad76ec9c108bd797923d5e5b302f1f7feb0f9aa860d786a416059b144580b68a775fabe3fdd856c961d31101709086de751dc370a193109383dc2fa742dfddd535e2e8d7dd99bb42963ee8b96c2d618e84080711162ff60003bb7b09e4f59cf8c0b7d09bac268213e7d208e8c3ed92cbfa:
+ - has index 17
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 14 unique members
+
+Group 0x2799e0897c22d5fcc1455c013827645e7184a7ecceae9d8c175998622fe5cc68287f778f0569f32400a940039ebdf5ec88049f2f58e6114678412ebb3ed10afb009509b463768d206eba22bd3a08fd3731ee8d8d59d078c3cdf5dfe99ee83dc31a121b02e4327a147a50191937db3cb9fa3f37f1ce149d393155fde131dd770b:
+ - has index 18
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 9 unique members
+
+Group 0x2f1f6248cd042f1b34dd891f96875a36946410fa7964868fed872a47df9450831f123777433b8b4864fff8411bb528953cc5158554921fb618866ce35fceb1c90a85fa0e80a99648b5382b7e3ade045bf80faa0a8d126ae8419d1b3f59098186280f3fca584a956869c86d07787fdf36a3847ed50ccf156a06d2b890a675ea0b:
+ - has index 19
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 13 unique members
+
+Group 0x1e7ac01e02fedbaa0d525fecdde19b974083361a61904acede8d7e0d793eff432be07357e4ae0dcfbb58b7f4c7d1250b774edc53cc01980392b9085aca3a65bd002bed58dfb959c27d7b6fabc290c96629a265c9fde53236662dced782531a8a0edc41320553704d03c42b596689924b59518d9dac94ebd98c8bc03d8978e1a4:
+ - has index 20
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 11 unique members
+
+Group 0x13026fdecff18ea899c606d98a083ec644efa3eb27f10722625acf63aaaa9b071086d8a631b1f334d94e87a09c42b2c0317d444d2746c32352b94ebf9fda6d1c0e7734647b26d605b05eff780cc4d21d10aa026378e05a599c052f64bbbb19b326db1a62ba65245ee99176c01e9567fc3db9345c5fbc1bedd861df1b13e5c3fa:
+ - has index 21
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 12 unique members
+
+Group 0x2d2c3ac9820426bbae4bde502689a09a92b9eff8df0ddcd746dd86cba1fb07f4160d5cad0c08e0569cc8144d7eb64662fce9f3d2369866c47a6b2dda2f5f058718a6490432ef7657a640e1b4e5c0ca41723543c27c0d5df187f797b5cd3ca01710d47057337e650117e9adf9a8d69f949e2beee468241a01e8c15f76480b1278:
+ - has index 22
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 11 unique members
+
+Group 0x0368796d2b30482bfdb1e2a3317fabb0dfd4e5db1d198c24dcde78ac8360dc8406b1c717ed242d537522a80338fbfd904e2051d048c651ef9e3695464d9889b11cb1c8e8e2040cedfec5b542a0800d7cfd504df69e0aeeadc8cfb42c7ecfa6982809523a8b92b2511ecb2794206de5b4ae5b32e2ddf12eedf6eb10e821795335:
+ - has index 23
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 13 unique members
+
+Group 0x0e40ad777674c88746ab73bbea5ed8961fe7e9cfc2c6bb8f9f9ce8e6f49854a0056fc384e80903e66bd604141e2960a41938da15906d5fc966347ac32e68870d2211c01160029cf10d837984b2fe2d2748c4e329eef37dae8e543f0bcdd9cdf60a7d886e60cf689d1da8dd1d08e31cb4ec13cdacdc376fa12cc983acdf79dc91:
+ - has index 24
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 12 unique members
+
+Group 0x0ea630d42f14a6d73edfae177fa1aee7ec1d60c54e208364758f68d1b81f8651263f277694e175a013d09204187a45de64d6f432898e4c517be6472dd2c9a62719940a5fb661fe66b7f2353a13bd657e13110af77d9fe644c37658540ad705800f2d272bafa910febef0804b685e10f714441d703cf275148530f3b748126353:
+ - has index 25
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 19 unique members
+
+Group 0x235604922dd81c24f4f6b7756146930d4d28cd9c91cde9d24940c21dcc9128fa0b18980fa34fb63ed9b3140a336c17cac81afa2e1b8977ba29b648ca7d44ae380654582eca0c17b1173269ec270af1b3184f3a913bb44d6adbccd38d6c1cf275248d8aa5c1f9ca12afaf9123242b38b581e18f8fa49ac60f9fdc22ab12a6e5ce:
+ - has index 26
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 23 unique members
+
+Group 0x09a5dd58b9a865326aa374b04b2dcea6e5b87c5b792bb09af2517403dd03fbb82fe69bd186845e98c03c9a79938d2b96a8c9cf26f7886b4d0c1f73554f1813db093e911d1a66d307d38b59bdb549e210b5ba6320c4f377fed05b07ba79e067ad1756fb7795e1eac0e3930ff8e1c4a3a6c4f0c8c558b323ae7b1988378c68f681:
+ - has index 27
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 20 unique members
+
+Group 0x0186b050307c9eeff1b12168590b7333069e4b51a507957a5b689830d5b1756c2ab4bc18b304b9defd4c81835c4e8605569dbb4f0c3f12a5d8b4425038fedce3254a8d989e54d63e9eae5fc9eb77034c384f50b88c57294700e3c0e14d6b9daa12550f9eca35d1cc7309553532dcacfedecad35c092d7320aceae7476b253b06:
+ - has index 28
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 20 unique members
+
+Group 0x0ffda1c37e4405e989aeb249f81aef9d402b7ba20938028a62b85e13edf6881b13c252945594a27d93fdbfb1b5fa3ee4a96b0ec56c5322227a423b73cf5a875214575e0a2035aefd296bcb3b22f383c0fafd26fb716f62e2eedef86c892929992514c36455f7b26176ded0411b30b9b4d4679e40d9e4de6c9e0499a354dc7ed5:
+ - has index 29
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 21 unique members
+
+Group 0x29519202d70dfb79f203b64bc7c475ee1980207bc83802d7b056f9b916f456b3223c3b6abd6aa3cefd748c152ddd87730584217f33c780954b73a00c16d44a680bdc8a3910b550f361891cf643aa2425346b748d2db33e0b1313f69936f63d390b625fa8aea66da10959545f1028598903101d34d5e39c38213a4a0dd2556732:
+ - has index 30
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 19 unique members
+
+Group 0x04183e4f28c8841e26ce2a6caaf6adc08d6327a33c149bea4fe5f810ddaf35cc0a0f7450adea0e4602954856a8b7d22b8084e1ea098995b04520cdba7ac355712a53699ebe86fc82d8070765f974360d81819eb1d7643db6d84b6df55399647b276c764f08f2ea333a0c17369484eb3e0ddfda07409acccc40ab956d7239d925:
+ - has index 31
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 20 unique members
+
+Group 0x249b709a7cd9b3e03d68a7b99e040a75e16b7ed2f70df952e82442782ee29bb60e57e9f751a714bb5b0d48da058ac9e400cdae33b7a7749a4ecf4810cb751b560349f30477935095f15a0466d0c0992c321a249dba8a0ae9e764066c770fa21a1f395361497bdb55399539da76ce96df9530b2ef3d40bcf75d6b0049c2175971:
+ - has index 32
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 19 unique members
+
+Group 0x1df4b0ca6c9b542bcc2673a0634b091787b3fbe20a4f3f443379abad613a9cf4109e6238d15759b5511e370ad916c4f9aa61b14726d02892c8fa16693835013c065db274fbe09f8d5a3842af82bf3539092ff257b7d27e6229633cc3d4ad4652113fa4ed5b435cb58b97447a896695ddd04d365acc1c6c46f70e69ff27a9997e:
+ - has index 33
+ - has 63 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: 0x2b
+ - has 24 unique members
+
+Group 0x2b6dbe2a3e1b12263a69d666858e531a7aeddf1b65523ffb81431be044d4e1970ab9546112ab65379f5031ddffe2fdf2c0ab20c3368d7c21e7122c3bc276b8412344ade456084ab5558408d13a7289ee0105d61e0b2cc4f2a86d85e431c361901195b516ea626f0d4d24dc410a7a624bca63e2ee4d7d6418b5e4c70c869970bb:
+ - has index 34
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 23 unique members
+
+Group 0x00cc88e2be9dd70848993e6bc53b9841fa1add09f187a8148b46ed9a85be94bc0e5444376c61e5d94900a89fff4ce77b763556cc42edb2fb233952a12f7c4d711ad22f9cb91dbcf9749da0689834a357f4fbe85c0c7f25e6e632157ba6e08aa72ef53acf21017c037df10ee5da2c1d32945124740f59969d972e4dc70631352f:
+ - has index 35
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 22 unique members
+
+Group 0x189dadb8834a7fff03e115f1689465fa52e765e4386a3e3ca622f829c32a35d52f803d55de873babf775cbd44e69b21641d0e8a54678531ff42800e6aa0e8e0122f3a90ceb5b02af691fbe253c755d00191133a45538fa487a1158b05bdd33db11755ea467a2c6109ab69987668f5c66a3317f14a48cc8c0dd797c1a722947be:
+ - has index 36
+ - has 64 members
+ - its DKG result was submitted by member 2
+ - misbehaved members bytes: null
+ - has 25 unique members
+
+Group 0x0d59df54f66544e6d86ad54f2a06378af40fbc18ff72deb83c3c11ffbd7d422c1b54f2567dc41aa9c06d2b5aa5a8b8861a638930a7c114e32af3c39ddf7f467f2c8c9d824d995cb03f22bacd460fa15adb92a85c65aeea914627f8b0bfc983360d608c6bf3bde53c472c94d51959bce3e3196a642dca22e8a14ca369cf0a27a0:
+ - has index 37
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 23 unique members
+
+Group 0x0de9a3e48af3cd84b1be6298551eeb04ff9205e50f8faa300db69229776ac940231a743c3122a40be8794efd8a56384c36966ad626473f065ed2fce68e506ee10ffccd6604d456eecb980b711a4722a185df6e0f4de201b141ce8e6398f3a1110696557127b59f71214abd87c50ee49450dd56a68382cc1c0749d769a5f63738:
+ - has index 38
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 25 unique members
+
+Group 0x191d75c22078b648f738f3957ac9c33724601cfe33ce80ce0756894957577c820d7df44faaf99f8e1c187bb37427e385181e9c35b93cc3a6cece083039e7fdc6250278a1243be86682fa27334f0797466ad32975b1ef2a14504ae7d543bcf99e2321a8ac9ceb8a1329ba5cbda8aa7e1211ea8e6763e4b072c2e91c210e49d5f5:
+ - has index 39
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 23 unique members
+
+Group 0x02e9869c81b8989aad7d5016594741bf5a3609a1e10a3de07bceac7a6fe8595a21a38d52a19de9824e9db0722c2b85adf3a99c692a140335b829f810f1e3052219acdc5b2b41f5b3958e3c1d970e8c5d3701e86a6a03bd1acf36d3f53d6e996f123a0b438ffa9e1acad47298cc52613ac061e9e0a3626fced138072606033829:
+ - has index 40
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 24 unique members
+
+Group 0x033c5dc64963a60b19cdf762b085658ef02fa6b7e8a81df051ae94ea8e63d5f915902939e5299949745d2ca290faff74d5e82908f142f15a7149bf66408674492e2c32f92ac76761b223754d0b956c026e8f28ee30217934127be31a752e41a41b5c089d96c9f15fbb41b36dfb8376132103306dce95a333db2a6e1bc794520e:
+ - has index 41
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 22 unique members
+
+Group 0x20432a37f223136e99b3afc4d6f16ea97af58620e3d64600678642ab1775cbb10e67c97424eea9332844b6f84815356ae17db1d6a1998a399d771bf2d1e496a91e7cb565c2d5d83ca062bf897ca6855277d314accb3ab7f4b8aab820bdffd4c5104ae1caf1a1184a00525ae4ef2b4b99e7130cac425782b976723e3d48fde943:
+ - has index 42
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 23 unique members
+
+Group 0x17c4a0670984ddb918260c8fdec4dd0ccc9ed8f49e55883e12a7d661f680a0ec1a6d39984354f5f3c1e8923184f11b6b9c8ccc1799405bc3692cd6be339cde711a495d0805f595c1d611e5b6baa07811ffe1d895f6da5aec624d92d55e02588c28d1849b5113988f3650579192402010fdd82340f966f3bbcfe4acf2b4154006:
+ - has index 43
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 26 unique members
+
+Group 0x132b653e21edab405fec4f97ddf2c7809c7bc0af9130a283b113f8b171c126f51f63c4812974d2845674d2157dd997dff3a0906b32dd180b0c2a4a0b4bcd87eb2a316c8e15d532af658f6dd7cc6574a8441a1e2b877c0a554c323fe11d9853dc18aa6826298f509159e2a3bcd0ae1fd1e43d31b59162d4ea01cd173531dfcafb:
+ - has index 44
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 27 unique members
+
+Group 0x1d51bbacdd0441de43c8cfa1e72f18b757c38a468f7508cc7a041cf0dfaa0f1d1d7b1015fe93736d8c682a6a392747799332917ff87a053fa811b2bb3f3cf50a094e4b2d542dc04e5ecf9393edd8eeac18d20729dcef613861a5922a36c5f7dd2a069c4ff16dcc6a959c44131d12c8a87a2ccd8e61f03bb448e21becf388a8d9:
+ - has index 45
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 25 unique members
+
+Group 0x0d0a4bdee82698dd3e0387492c51e77218f6500c84a490265c3dc102cf6f036627cc550bbed6a84ed466c79669adaefa6d212e63f6728a215733a91b83d6e42109f2763043676d81dda05312e3b604c8cb61245e94c804d79d3db41a699e25f103f159cec3ce0ce8695316ed90c2f61de5a22932d710df410775fba6642350b6:
+ - has index 46
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 26 unique members
+
+Group 0x0608a1ccbdbfac80ce31c044ab4024e4556a5c203cc7bf2f978ee5e6765a73052cdf67342c22c6a497630bc7ec94311158620f123a90e817ab488eec159048b922408b165f172e7323144cb1473b56cbf30f39aca842966103a8f6e179f30ea82f25ddc747dcf87db5e558ce30c73825c17906583cce1a388556f9651584a5e6:
+ - has index 47
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 31 unique members
+
+Group 0x0abc09f54a7b53760b6712de7ddb9611f4ae2a2ffc5809b2ed1a58e79de42c041427a4308dd991e2416a68487288e39cd446d446f183957c40b1d4be553898010df274acbaf026dbbd79f41a980adb03b711b7229ea20fe921eecbe25ee01c621792e6842fdd92adf18d515cf57d2c16b6227ccba899816d0fd61726beaa6c54:
+ - has index 48
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 25 unique members
+
+Group 0x0125e833744c0caddac6fdc8f34ff60322df27bd389407c0843d7852835de84a225da90bb70c16940e9b25a1ab3c3767720efe4bf2dab1a255fb91e110b7413b088ea08c254fc060ddb84171ed3240335c7530b42eb513da877b917e547703b80f75d1505847fed2968d875f73c2cbe2a211b25ed19b4f0960396bdb276b8837:
+ - has index 49
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 23 unique members
+
+Group 0x017abc7ef63a6e3010f21efb0d34503500a7ae91fde406711da0f5d7dee47d75255a20a49e7cba02bc6ba91f2d91ff6874dd8b930dec5a3366f95d3064a4172e15ff0999634f5b051206da3c8b30db38836a785530526e6e74c1fe79132f23ea05d171cbd26c3b604cf4bc06753a28825ad813f485a49fa1d1bfb987e94ede79:
+ - has index 50
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 26 unique members
+
+Group 0x0ae452a941f04eb0c3de94bbf0319ce73a6faa2cd71c62f95b0120ec35b0880c3024adfa7dec153846149de3f9bf621bd23dd6cf38cceed6332e4539cffaa3cd2c974e3d6ee430ee64ed4ef4bf529fc779d42bfacbae588464c5caa1cd30665c160eb8684311cff7217a499f6dd00489c1aef886f8ad990955016d6261ab405e:
+ - has index 51
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 29 unique members
+
+Group 0x2d096cc00e3566fa94c14019aeee5fe9915f32dd0578b7158ac275697bf0f76d0c5839ef317828ea378e5b8ff5950303af3807ca8b137c8f2d49115cef68ebd2002e67dc4400f50c7d6f66379303e0fb3188047536aa9131f96f1f06490f748a07f28bbdb1a19818702ca25d5af5b8f947ee813665a69c48f1b3225827ff0de3:
+ - has index 52
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 27 unique members
+
+Group 0x0c083e4f21cd07a744edf95c9fb947c83290ba8c4468845a83b93ad4849335970241116cf868441e090f9bb67c13f048368bc3a96afef45d4e610ffea91d9b892742ff7200b454ff89157f7b7ad9c1d6484d9a7b6b3e45d3609b4467732fc3fd2d1e2c84016ea78cfebe80036b93931e62a2a08eeb654cee1d677fd6cc607817:
+ - has index 53
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 30 unique members
+
+Group 0x0bca2695e770b6a354411942e78acb605fc5d4c5b3fe64f02a8f1a0ca68ff46a0137909e5adf79571f0d9553a881f291938b5cee72005dce06387a3f1ca016d428e57a02297eb656d2bd1e2f802ec70de9a7c164e0049767519f9815e6a4453d25c5e93f335c22afd2483571000482e26e35aee49d91e8fcbc61f071d83cc45a:
+ - has index 54
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 31 unique members
+
+Group 0x280646c06aa338d52ea9023de149d1fc4a5f2338ef3f69f657f2239d572a3d5913fc2777ba0828ac80c1a1259ed606ed8276ba651ffc84c87bbf73c4fa4180f91be905b1659eb0a67b23aa73e3fa21fd1b61d2b2b0d9700e3788aba4565df245137e7631fd6797ab8e34892a5401c758d1c9158ecd1fe0201d506b7a85553ab2:
+ - has index 55
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 29 unique members
+
+Group 0x10fb5a9e95eeddf308484be57105d88413a72f5cd7cfc3a6f5dda605fa378300070ba4655120cff0b078ece6c0f76b752bc45b8b1a31e6a382b17a413846fd5e14bcb1afd5e600aed9f29935a10162f50f6c309686cb8b8f05afde1d648eed2e25f95fedd250f0c1d6891887bc5a2cb3f14c164c64783b35566df69bab446877:
+ - has index 56
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 27 unique members
+
+Group 0x289155cb7237e9cbe759cf65a592df046785503ec8683757a2be784f8bed8b16025e077ca6641bd7e682745472c0009077eca9ce97332c8fbe0b4f10858ab1a028c8b21d4bb3b8f2e8629493824a7379f6e02e40fe221af029508703044900d82ff2cf56caf571cb7aed674fb50a8c0a7434ad91a512bea442f47cb3fb7c00aa:
+ - has index 57
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 25 unique members
+
+Group 0x003e1698792582877643392e8fb4f780b1747714bb9189361d31271e673a074427986e555dd166e65cda5e9b2b4e27625b04f07b80f2633d9f2327ee12e3eda930208d23500d677e66781dea4380b342ca60b491567328602565f863985688201b92e47eb8d24c6c7c751507fe25b74c02e9c7dc947a15a0e3c72e5b21299464:
+ - has index 58
+ - has 64 members
+ - its DKG result was submitted by member 1
+ - misbehaved members bytes: null
+ - has 30 unique members
+
+There are 144 unique operators in all groups
