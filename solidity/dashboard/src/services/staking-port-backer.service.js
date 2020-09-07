@@ -173,7 +173,7 @@ const getDelegations = async (
 
     const delegationAmount = web3Utils.toBN(amount)
     // StakingPortBacker contract requires the delegation amount to be greater than zero.
-    if (delegationAmount.gt(0)) {
+    if (delegationAmount.gt(web3Utils.toBN(0))) {
       // Check if the stake is currently undelegating.
       if (operatorData.undelegatedAt === "0") {
         operatorData.isUndelegating = false
