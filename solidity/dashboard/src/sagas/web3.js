@@ -74,6 +74,40 @@ function createTransactionEventChannel(contract, method, args, options) {
   }, buffers.expanding())
 }
 
+export function createSubcribeToContractEventCahnnel(contract, eventName) {
+  const contractHasEvent = contract.options.jsonInterface.find(
+    (entry) => entry.type === "event" && entry.name === eventName
+  )
+  if (!contractHasEvent) {
+    return eventChannel((emit) => {
+      emit(END)
+
+      return () => {}
+    }, buffers.expanding())
+  }
+
+  const eventEmitter = contract.events[eventName]()
+  let eventTxCache = null
+
+  return eventChannel((emit) => {
+    eventEmitter
+      .on("data", (event) => {
+        if (eventTxCache !== event.transactionHash) {
+          eventTxCache = event.transactionHash
+          emit(event)
+        }
+      })
+      .on("error", () => {
+        emit(new Error())
+        emit(END)
+      })
+
+    return () => {
+      eventEmitter.unsubscribe()
+    }
+  })
+}
+
 export function* sendTransaction(action) {
   const { contract, methodName, args, options } = action.payload
 

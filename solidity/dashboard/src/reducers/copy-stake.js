@@ -8,6 +8,7 @@ import {
   FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
   RESET_COPY_STAKE_FLOW,
 } from "../actions"
+import { isSameEthAddress } from "../utils/general.utils"
 
 export const copyStakeInitialData = {
   oldDelegations: [],
@@ -90,6 +91,15 @@ const copyStakeReducer = (state = copyStakeInitialData, action) => {
         isProcessing: false,
         error: action.payload,
       }
+    case "copy-stake/remove_old_delegation": {
+      return {
+        ...state,
+        oldDelegations: state.oldDelegations.filter(
+          (delegation) =>
+            !isSameEthAddress(delegation.operatorAddress, action.payload)
+        ),
+      }
+    }
     default:
       return state
   }
