@@ -26,9 +26,6 @@ echo "Installing solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
 cd ../solidity && npm install && cd ../scripts
 
-echo "Installing truffle..."
-npm install -g truffle
-
 if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
   echo 'WARNING: protoc-gen-gogoslick command is not available'
   echo 'WARNING: please check whether $GOPATH/bin is added to your $PATH'
