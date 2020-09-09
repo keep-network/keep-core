@@ -74,7 +74,7 @@ function createTransactionEventChannel(contract, method, args, options) {
   }, buffers.expanding())
 }
 
-export function createSubcribeToContractEventCahnnel(contract, eventName) {
+export function createSubcribeToContractEventChannel(contract, eventName) {
   const contractHasEvent = contract.options.jsonInterface.find(
     (entry) => entry.type === "event" && entry.name === eventName
   )

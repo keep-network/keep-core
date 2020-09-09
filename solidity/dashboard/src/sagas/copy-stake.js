@@ -7,7 +7,7 @@ import {
 } from "../actions"
 import { fetchOldDelegations } from "../services/staking-port-backer.service"
 import { getContractsContext } from "./utils"
-import { sendTransaction, createSubcribeToContractEventCahnnel } from "./web3"
+import { sendTransaction, createSubcribeToContractEventChannel } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { showMessage, showCreatedMessage } from "../actions/messages"
 import { isEmptyArray } from "../utils/array.utils"
@@ -206,7 +206,7 @@ function* observeEvents() {
 function* removeOldDelegationWatcher(contract, eventName) {
   // Create subscription channel.
   const contractEventCahnnel = yield call(
-    createSubcribeToContractEventCahnnel,
+    createSubcribeToContractEventChannel,
     contract,
     eventName
   )
