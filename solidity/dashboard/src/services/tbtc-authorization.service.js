@@ -336,7 +336,7 @@ const getGranteeOperators = async () => {
   const { grantContract } = await ContractsLoaded
 
   // Fetch all grantee operators. These are not all grantee operators,
-  // since `TokenGrant` contract does not know about escrow redelagtion.
+  // since `TokenGrant` contract does not know about escrow redelegtion.
   const operatorsOfGrantee = await grantContract.methods
     .getGranteeOperators(defaultAccount)
     .call()
