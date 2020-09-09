@@ -280,7 +280,10 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
       web3Utils.toChecksumAddress(copiedOperatorsFromLiquidTokens[i]),
       {
         managedGrantInfo: {},
-        isWithdrawableForOperator: true,
+        // From the `TokenStaking` contract's perspective,
+        // the `StakingPortBacker` contract is an owner of the copied delegation,
+        // so the "real" owner cannot withdraw bond.
+        isWithdrawableForOperator: false,
       }
     )
   }
