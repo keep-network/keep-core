@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React from "react"
 import TokenAmount from "../TokenAmount"
 import Button from "../Button"
 import { KeepLoadingIndicator } from "../Loadable"
@@ -26,7 +26,6 @@ const styles = {
 }
 
 const CopyStakeStep1 = ({
-  fetchDelegations,
   isFetching,
   delegations,
   decrementStep,
@@ -34,10 +33,6 @@ const CopyStakeStep1 = ({
   onSelectDelegation,
   selectedDelegation,
 }) => {
-  useEffect(() => {
-    fetchDelegations()
-  }, [fetchDelegations])
-
   return (
     <>
       <h2 style={styles.title}>Stake balances to be upgraded.</h2>

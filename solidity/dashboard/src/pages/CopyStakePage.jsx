@@ -12,7 +12,6 @@ import {
   DECREMENT_STEP,
   SET_STRATEGY,
   SET_DELEGATION,
-  FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST,
   RESET_COPY_STAKE_FLOW,
 } from "../actions"
 import { connect } from "react-redux"
@@ -72,7 +71,6 @@ const CopyStakePage = ({
             isFetching={oldDelegationsFetching}
             selectedDelegation={selectedDelegation}
             onSelectDelegation={setDelegation}
-            fetchDelegations={fetchOldDelegations}
           />
         )
       case 2:
@@ -135,8 +133,6 @@ const mapDispatchToProps = (dispatch) => {
       dispatch({ type: SET_STRATEGY, payload: strategy }),
     setDelegation: (delegation) =>
       dispatch({ type: SET_DELEGATION, payload: delegation }),
-    fetchOldDelegations: () =>
-      dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
     undelegateOldStake: (delegation) =>
       dispatch({ type: "copy-stake/undelegate_request", payload: delegation }),
     recoverOldStake: (delegation) =>

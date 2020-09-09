@@ -18,6 +18,8 @@ import {
   TOP_UP_INITIATED,
   TOP_UP_COMPLETED,
 } from "../reducers/tokens-page.reducer.js"
+import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../actions"
+import { connect } from "react-redux"
 import {
   TOKEN_STAKING_CONTRACT_NAME,
   TOKEN_GRANT_CONTRACT_NAME,
@@ -38,7 +40,7 @@ import Button from "../components/Button"
 import { useModal } from "../hooks/useModal"
 import CopyStakePage from "./CopyStakePage"
 
-const TokensPageContainer = () => {
+const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
   useSubscribeToStakedEvent()
   useSubscribeToUndelegatedEvent()
   useSubscribeToRecoveredStakeEvent()
@@ -55,24 +57,30 @@ const TokensPageContainer = () => {
     }
   }, [hash, dispatch])
 
+  useEffect(() => {
+    fetchOldDelegations()
+  }, [fetchOldDelegations])
+
   const { openModal } = useModal()
 
   return (
     <>
-      <Banner
-        type={BANNER_TYPE.NOTIFICATION}
-        withIcon
-        title="New upgrade available for your stake delegations!"
-        titleClassName="h4"
-        subtitle="Upgrade now to keep earning rewards on your stake."
-      >
-        <Button
-          className="btn btn-tertiary btn-sm ml-a"
-          onClick={() => openModal(<CopyStakePage />, { isFullScreen: true })}
+      {oldDelegations.length > 0 && (
+        <Banner
+          type={BANNER_TYPE.NOTIFICATION}
+          withIcon
+          title="New upgrade available for your stake delegations!"
+          titleClassName="h4"
+          subtitle="Upgrade now to keep earning rewards on your stake."
         >
-          upgrade my stake
-        </Button>
-      </Banner>
+          <Button
+            className="btn btn-tertiary btn-sm ml-a"
+            onClick={() => openModal(<CopyStakePage />, { isFullScreen: true })}
+          >
+            upgrade my stake
+          </Button>
+        </Banner>
+      )}
       <Switch>
         <Route exact path="/tokens/overview" component={TokenOverviewPage} />
         <Route exact path="/tokens/delegate" component={TokensPage} />
@@ -82,14 +90,6 @@ const TokensPageContainer = () => {
     </>
   )
 }
-
-const TokensPageContainerWithContext = () => (
-  <TokensPageContextProvider>
-    <TokensPageContainer />
-  </TokensPageContextProvider>
-)
-
-export default React.memo(TokensPageContainerWithContext)
 
 const useSubscribeToStakedEvent = () => {
   const {
@@ -450,3 +450,29 @@ const useSubscribeToTopUpsEvents = () => {
     subscribeToTopUpCompleted
   )
 }
+
+const mapStateToProps = ({ copyStake }) => {
+  const { oldDelegations } = copyStake
+
+  return { oldDelegations }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchOldDelegations: () =>
+      dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
+  }
+}
+
+const TokensPageContainerWithRedux = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(TokensPageContainer)
+
+const TokensPageContainerWithContext = () => (
+  <TokensPageContextProvider>
+    <TokensPageContainerWithRedux />
+  </TokensPageContextProvider>
+)
+
+export default React.memo(TokensPageContainerWithContext)
