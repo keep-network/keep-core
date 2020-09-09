@@ -1,20 +1,32 @@
-import { contracts, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { ContractsLoaded, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 
 export const fetchEscrowDepositsByGrantId = async (grantId) => {
-  return await contracts.tokenStakingEscrow.getPastEvents("Deposited", {
+  const { tokenStakingEscrow } = await ContractsLoaded
+
+  return await tokenStakingEscrow.getPastEvents("Deposited", {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
     filter: { grantId },
   })
 }
 
 export const fetchWithdrawableAmountForDeposit = async (operatorAddress) => {
-  return await contracts.tokenStakingEscrow.methods
-    .withdrawable(operatorAddress)
-    .call()
+  const { tokenStakingEscrow } = await ContractsLoaded
+
+  return await tokenStakingEscrow.methods.withdrawable(operatorAddress).call()
 }
 
 export const fetchDepositWithdrawnAmount = async (operatorAddress) => {
-  return await contracts.tokenStakingEscrow.methods
+  const { tokenStakingEscrow } = await ContractsLoaded
+
+  return await tokenStakingEscrow.methods
     .depositWithdrawnAmount(operatorAddress)
+    .call()
+}
+
+export const fetchDepositAvailableAmount = async (operatorAddress) => {
+  const { tokenStakingEscrow } = await ContractsLoaded
+
+  return await tokenStakingEscrow.methods
+    .availableAmount(operatorAddress)
     .call()
 }

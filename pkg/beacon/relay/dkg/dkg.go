@@ -166,10 +166,7 @@ func waitForDkgResultEvent(
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
 ) (*event.DKGResultSubmission, error) {
-	config, err := relayChain.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+	config := relayChain.GetConfig()
 
 	timeoutBlock := startPublicationBlockHeight +
 		dkgResult.PrePublicationBlocks() +

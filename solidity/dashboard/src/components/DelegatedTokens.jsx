@@ -73,6 +73,7 @@ const DelegatedTokens = ({ data, setData }) => {
           isManagedGrant={isManagedGrant}
           managedGrantContractInstance={managedGrantContractInstance}
           disabled={stakedBalance === "0" || !stakedBalance}
+          undelegationPeriod={undelegationPeriod}
         />
       )
     }

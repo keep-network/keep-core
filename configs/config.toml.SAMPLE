@@ -19,7 +19,24 @@
 	# allowed gas price is reached, no further resubmission attempts are
 	# performed.
 	#
-	# MaxGasPrice = 70000000000 # 70 gwei (default value)
+	# MaxGasPrice = 500000000000 # 500 Gwei (default value)
+	#
+	# Uncomment to enable Ethereum node rate limiting. Both properties can be
+	# used together or separately.
+	#
+	# RequestsPerSecondLimit sets the maximum average number of requests
+	# per second which can be executed against the Ethereum node.
+	# All types of Ethereum node requests are rate-limited,
+	# including view function calls.
+	#
+	# RequestsPerSecondLimit = 150
+	#
+	# ConcurrencyLimit sets the maximum number of concurrent requests which
+	# can be executed against the Ethereum node at the same time.
+	# This limit affects all types of Ethereum node requests,
+	# including view function calls.
+	#
+	# ConcurrencyLimit = 30
 
 [ethereum.account]
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"

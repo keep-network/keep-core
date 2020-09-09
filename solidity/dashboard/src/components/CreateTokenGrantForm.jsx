@@ -1,4 +1,4 @@
-import React, { useContext } from "react"
+import React from "react"
 import { SubmitButton } from "./Button"
 import FormInput from "./FormInput"
 import FormCheckbox from "./FormCheckbox"
@@ -11,9 +11,7 @@ import {
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import moment from "moment"
-import { Web3Context } from "./WithWeb3Context"
-import { tokenGrantsService } from "../services/token-grants.service"
-import { useShowMessage, messageType } from "./Message"
+
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
 import { fromTokenUnit, displayAmount } from "../utils/token.utils.js"
@@ -25,34 +23,12 @@ import {
 const CreateTokenGrantForm = ({
   keepBalance,
   successCallback,
+  submitAction,
   ...formikProps
 }) => {
-  const web3Context = useContext(Web3Context)
-  const showMessage = useShowMessage()
   const amount = fromTokenUnit(formikProps.values.amount)
 
-  const submit = async (values, onTransactionHashCallback) => {
-    try {
-      await tokenGrantsService.createGrant(
-        web3Context,
-        values,
-        onTransactionHashCallback
-      )
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Grant tokens transaction has been successfully completed",
-      })
-    } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Grant tokens action has failed ",
-        content: error.message,
-      })
-      throw error
-    }
-  }
-  const onSubmit = useCustomOnSubmitFormik(submit)
+  const onSubmit = useCustomOnSubmitFormik(submitAction)
 
   return (
     <form>
@@ -126,7 +102,7 @@ const connectedWithFormik = withFormik({
 
     return getErrorsObj(errors)
   },
-  displayName: "CrateGrantForm",
+  displayName: "CreateGrantForm",
 })(CreateTokenGrantForm)
 
 export default connectedWithFormik

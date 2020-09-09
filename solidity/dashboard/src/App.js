@@ -7,31 +7,35 @@ import ContractsDataContextProvider from "./components/ContractsDataContextProvi
 import { Messages } from "./components/Message"
 import { SideMenu, SideMenuProvider } from "./components/SideMenu"
 import { BrowserRouter as Router } from "react-router-dom"
+import { Provider } from "react-redux"
+import store from "./store"
 import { ModalContextProvider } from "./components/Modal"
 
 const App = () => (
-  <Messages>
-    <Web3ContextProvider>
-      <ModalContextProvider>
-        <ContractsDataContextProvider>
-          <SideMenuProvider>
-            <Router>
-              <main>
-                <Header />
-                <aside>
-                  <SideMenu />
-                </aside>
-                <div className="content">
-                  <Routing />
-                </div>
-                <Footer />
-              </main>
-            </Router>
-          </SideMenuProvider>
-        </ContractsDataContextProvider>
-      </ModalContextProvider>
-    </Web3ContextProvider>
-  </Messages>
+  <Provider store={store}>
+    <Messages>
+      <Web3ContextProvider>
+        <ModalContextProvider>
+          <ContractsDataContextProvider>
+            <SideMenuProvider>
+              <Router>
+                <main>
+                  <Header />
+                  <aside>
+                    <SideMenu />
+                  </aside>
+                  <div className="content">
+                    <Routing />
+                  </div>
+                  <Footer />
+                </main>
+              </Router>
+            </SideMenuProvider>
+          </ContractsDataContextProvider>
+        </ModalContextProvider>
+      </Web3ContextProvider>
+    </Messages>
+  </Provider>
 )
 
 export default App

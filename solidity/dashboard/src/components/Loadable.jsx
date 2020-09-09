@@ -53,6 +53,8 @@ export const LoadingOverlay = React.memo(
   }
 )
 
-export const KeepLoadingIndicator = () => <Icons.KeepLoadingIndicator />
+export const KeepLoadingIndicator = ({ width = 140, height = 140 }) => (
+  <Icons.KeepLoadingIndicator width={width} height={height} />
+)
 
 export default Loadable

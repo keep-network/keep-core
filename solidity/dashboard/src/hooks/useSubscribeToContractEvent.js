@@ -19,10 +19,17 @@ export const useSubscribeToContractEvent = (
       }
       setLatestEvent(event)
     }
-    event.current = contract.current.events[eventName](subscribeToEvent)
+
+    try {
+      event.current = contract.current.events[eventName](subscribeToEvent)
+    } catch (error) {
+      console.error(`Failed subscribing to ${eventName}`, error)
+    }
 
     return () => {
-      event.current.unsubscribe()
+      if (event.current) {
+        event.current.unsubscribe()
+      }
     }
   }, [eventName])
 

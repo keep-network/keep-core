@@ -60,7 +60,7 @@ func newAuthenticatedInboundConnection(
 		// close the conn before returning (if it hasn't already)
 		// otherwise we leak.
 		if closeErr := ac.Close(); closeErr != nil {
-			logger.Errorf("could not close the connection: [%v]", closeErr)
+			logger.Debugf("could not close the connection: [%v]", closeErr)
 		}
 
 		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
@@ -68,7 +68,7 @@ func newAuthenticatedInboundConnection(
 
 	if err := ac.checkFirewallRules(); err != nil {
 		if closeErr := ac.Close(); closeErr != nil {
-			logger.Errorf("could not close the connection: [%v]", closeErr)
+			logger.Debugf("could not close the connection: [%v]", closeErr)
 		}
 
 		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
@@ -110,7 +110,7 @@ func newAuthenticatedOutboundConnection(
 
 	if err := ac.runHandshakeAsInitiator(); err != nil {
 		if closeErr := ac.Close(); closeErr != nil {
-			logger.Errorf("could not close the connection: [%v]", closeErr)
+			logger.Debugf("could not close the connection: [%v]", closeErr)
 		}
 
 		return nil, fmt.Errorf("connection handshake failed: [%v]", err)
@@ -118,7 +118,7 @@ func newAuthenticatedOutboundConnection(
 
 	if err := ac.checkFirewallRules(); err != nil {
 		if closeErr := ac.Close(); closeErr != nil {
-			logger.Errorf("could not close the connection: [%v]", closeErr)
+			logger.Debugf("could not close the connection: [%v]", closeErr)
 		}
 
 		return nil, fmt.Errorf("connection handshake failed: [%v]", err)

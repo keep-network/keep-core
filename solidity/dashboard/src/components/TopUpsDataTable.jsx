@@ -2,34 +2,21 @@ import React, { useCallback } from "react"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
-import { useShowMessage, messageType } from "./Message"
-import { commitTopUp } from "../services/top-ups.service"
+import { commitTopUp } from "../actions/web3"
 import { displayAmount } from "../utils/token.utils"
 import moment from "moment"
+import { connect } from "react-redux"
 
-export const TopUpsDataTable = ({ topUps, initializationPeriod }) => {
-  const showMessage = useShowMessage()
-
+export const TopUpsDataTable = ({
+  topUps,
+  initializationPeriod,
+  commitTopUp,
+}) => {
   const onCommitTopUpBtn = useCallback(
-    async (operator, transactionHashCallback) => {
-      try {
-        await commitTopUp(operator, transactionHashCallback)
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "KEEP added successfully",
-        })
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Add KEEP action has failed ",
-          content: error.message,
-        })
-
-        throw error
-      }
+    async (operator, awaitingPromise) => {
+      commitTopUp(operator, awaitingPromise)
     },
-    [showMessage]
+    [commitTopUp]
   )
 
   return (
@@ -58,8 +45,8 @@ export const TopUpsDataTable = ({ topUps, initializationPeriod }) => {
         field="operatorAddress"
         renderContent={({ operatorAddress, createdAt, isInUndelegation }) => (
           <SubmitButton
-            onSubmitAction={async (transactionHashCallback) =>
-              await onCommitTopUpBtn(operatorAddress, transactionHashCallback)
+            onSubmitAction={(awaitingPromise) =>
+              onCommitTopUpBtn(operatorAddress, awaitingPromise)
             }
             className="btn btn-secondary btn-sm"
             disabled={
@@ -78,4 +65,8 @@ export const TopUpsDataTable = ({ topUps, initializationPeriod }) => {
   )
 }
 
-export default TopUpsDataTable
+const mapDispatchToProps = {
+  commitTopUp,
+}
+
+export default connect(null, mapDispatchToProps)(TopUpsDataTable)

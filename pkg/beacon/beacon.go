@@ -32,10 +32,7 @@ func Initialize(
 	persistence persistence.Handle,
 ) error {
 	relayChain := chainHandle.ThresholdRelay()
-	chainConfig, err := relayChain.GetConfig()
-	if err != nil {
-		return err
-	}
+	chainConfig := relayChain.GetConfig()
 
 	stakeMonitor, err := chainHandle.StakeMonitor()
 	if err != nil {
