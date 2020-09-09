@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "Installing coreutils requirement..."
+brew list coreutils &> /dev/null || brew install coreutils
+
 echo "Installing golang requirements..."
 brew list golang &> /dev/null || brew install golang
 
