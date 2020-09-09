@@ -27,6 +27,7 @@ import {
 } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import { sub, add } from "../utils/arithmetics.utils"
+import { isEmptyArray } from "../utils/array.utils"
 import moment from "moment"
 import {
   createManagedGrantContractInstance,
@@ -65,7 +66,7 @@ const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
 
   return (
     <>
-      {oldDelegations.length > 0 && (
+      {!isEmptyArray(oldDelegations) && (
         <Banner
           type={BANNER_TYPE.NOTIFICATION}
           withIcon
