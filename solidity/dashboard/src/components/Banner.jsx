@@ -1,6 +1,7 @@
 import React from "react"
 import * as Icons from "./Icons"
 import { colors } from "../constants/colors"
+import ViewTxMsgContent from "./ViewTxMsgContent"
 
 export const BANNER_TYPE = {
   SUCCESS: {
@@ -18,6 +19,10 @@ export const BANNER_TYPE = {
     iconComponent: <Icons.Cross color={colors.error} height={12} width={12} />,
   },
   DISABLED: { className: "disabled", iconComponent: null },
+  NOTIFICATION: {
+    className: "notification",
+    iconComponent: <Icons.Alert width={24} height={24} />,
+  },
 }
 
 const Banner = ({
@@ -30,6 +35,7 @@ const Banner = ({
   withCloseIcon,
   onCloseIcon,
   children,
+  withTransactionHash,
 }) => {
   return (
     <div className={`banner banner-${type.className}`}>
@@ -43,7 +49,15 @@ const Banner = ({
             {title}
           </div>
         )}
-        {subtitle && <div className="banner-subtitle">{subtitle}</div>}
+        {subtitle && (
+          <div className="banner-subtitle">
+            {withTransactionHash ? (
+              <ViewTxMsgContent txHash={subtitle} />
+            ) : (
+              subtitle
+            )}
+          </div>
+        )}
       </div>
       {withCloseIcon && (
         <div className="banner-close-icon" onClick={onCloseIcon}>

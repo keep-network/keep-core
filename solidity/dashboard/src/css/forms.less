@@ -2,6 +2,57 @@ input {
   font-size: 1rem;
   padding: 1rem .75rem;
   line-height: 1rem;
+
+  &[type="radio"] {
+    @radio-size: 24px;
+    visibility: hidden;
+
+    &+label {
+      position: relative;
+      cursor: pointer;
+      padding-left: calc(@radio-size + 1rem);
+      display: inline-block;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: @radio-size;
+        height: @radio-size;
+        background-color: @white;
+        border: 2px solid @color-black; 
+        border-radius: 100%;
+      }
+    }
+
+    &:checked + label::before {
+      border-color: @secondary-color;
+    }
+
+    &:checked + label::after, &:not(:checked) + label::after {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 100%;
+        transition: all .2s ease;
+      }
+
+      &:checked + label::after {
+        background-color: @secondary-color;
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      &:checked:not(:checked) + label::after {
+        background: @white;
+        transform: scale(0);
+        opacity: 0;
+      }
+    }
 }
 
 .form {

@@ -14,7 +14,6 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/group"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/config"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/dkg"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/groupselection"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/registry"
@@ -33,7 +32,7 @@ type Node struct {
 	// External interactors.
 	netProvider  net.Provider
 	blockCounter chain.BlockCounter
-	chainConfig  *config.Chain
+	chainConfig  *relaychain.Config
 
 	groupRegistry *registry.Groups
 }
