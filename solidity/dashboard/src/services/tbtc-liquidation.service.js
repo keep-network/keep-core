@@ -311,8 +311,8 @@ const getDepositAuctionOfferingSchedule = async (
   const mmtStartedLiquidation = moment.unix(startedLiquidationTimestamp)
 
   //This could go in context
-  const tBtcTokenContractInstance = await getTBTCConstantsContract(web3Context.web3)
-  const baseAuctionDurationSeconds = await tBtcTokenContractInstance.methods.getAuctionDuration().call()
+  const tBtcConstantsContract = await getTBTCConstantsContract(web3Context.web3)
+  const baseAuctionDurationSeconds = await tBtcConstantsContract.methods.getAuctionDuration().call()
 
   const depositContractInstance = createDepositContractInstance(
     web3Context.web3,
