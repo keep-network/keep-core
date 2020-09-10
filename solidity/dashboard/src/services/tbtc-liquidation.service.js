@@ -14,8 +14,8 @@ import TBTCSystem from "@keep-network/tbtc/artifacts/TBTCSystem.json"
 import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   createDepositContractInstance,
-  getTBTCTokenContract,
-  getTBTCConstantsContract
+  getTBTCConstantsContract,
+  ContractsLoaded
 } from "../contracts"
 
 const getPastRedemptionRequestedEvents = async (web3Context) => {
@@ -240,19 +240,19 @@ const purchaseDepositAtAuction = async (
   const { web3, yourAddress } = web3Context
 
   const depositContractInstance = createDepositContractInstance(
-      web3,
-      depositContractAddress
-    )
-    console.log(depositContractInstance)
+    web3,
+    depositContractAddress
+  )
+  console.log(depositContractInstance)
 
   try {
-    const tBtcTokenContractInstance = await getTBTCTokenContract(web3)
-    const allowance = await tBtcTokenContractInstance
+    const { tbtcTokenContract } = await ContractsLoaded
+    const allowance = await tbtcTokenContract
       .methods.allowance(yourAddress, depositContractAddress)
       .call()
 
     if (web3Utils.toBN(allowance).lt(auctionValueBN)) {
-      await tBtcTokenContractInstance.methods.approve(depositContractAddress, auctionValueBN)
+      await tbtcTokenContract.methods.approve(depositContractAddress, auctionValueBN)
         .send({ from: yourAddress })
     }
     //Estimate gas from tbtc.js sendSafely()
@@ -365,8 +365,8 @@ const getTBtcBalanceOf = async (
 ) => {
   const arbitrageurAddress = web3Context.yourAddress
   console.log(`arbitrageurAddress: ${arbitrageurAddress}`)
-  const tBtcTokenContractInstance = await getTBTCTokenContract(web3Context.web3)
-  const arbitrageurBalanceOf = await tBtcTokenContractInstance.methods
+  const { tbtcTokenContract } = await ContractsLoaded
+  const arbitrageurBalanceOf = await tbtcTokenContract.methods
     .balanceOf(arbitrageurAddress)
     .call()
   console.log(`arbitrageurBalanceOf: ${arbitrageurBalanceOf}`)
