@@ -33,6 +33,9 @@ module.exports = async function() {
         console.log(`Relay entries requested:     ${entryRequestedEvents.length}`)
         console.log(`Relay entries submitted:     ${entrySubmittedEvents.length}`)
         console.log(`Number of timed-out entries: ${timeoutEvents.length}`)
+        if (timeoutEvents.length > 0) {
+            console.log(`timed out entry group indices: ${timeoutEvents.map(event => event.returnValues.groupIndex)}`)
+        }
         console.log(``)
 
         const dkgSubmittedEvents = (await operator.getPastEvents(
