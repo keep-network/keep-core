@@ -3,7 +3,14 @@ import Button from "./Button"
 import { shortenAddress } from "../utils/general.utils"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 
-const ChooseWalletAddress = ({ addresses, onSelectAccount }) => {
+const ChooseWalletAddress = ({
+  addresses,
+  onSelectAccount,
+  withPagination,
+  renderPrevBtn,
+  onNext,
+  onPrev,
+}) => {
   const [selectedAccount, setAccount] = useState("")
 
   useEffect(() => {
@@ -30,6 +37,24 @@ const ChooseWalletAddress = ({ addresses, onSelectAccount }) => {
           </li>
         ))}
       </ul>
+      {withPagination && (
+        <div className="choose-wallet-address__pagination">
+          {renderPrevBtn && (
+            <span
+              onClick={onPrev}
+              className="choose-wallet-address__pagination__item"
+            >
+              prev
+            </span>
+          )}
+          <span
+            onClick={onNext}
+            className="choose-wallet-address__pagination__item"
+          >
+            next
+          </span>
+        </div>
+      )}
       <Button
         className="btn btn-primary btn-md mt-1"
         disabled={!selectedAccount}
