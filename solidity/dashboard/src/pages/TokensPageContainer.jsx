@@ -202,14 +202,16 @@ const useSubscribeToStakedEvent = () => {
       return
     }
 
-    if (!delegation.isFromGrant) {
-      refreshKeepTokenBalance()
-      dispatch({
-        type: UPDATE_OWNED_DELEGATED_TOKENS_BALANCE,
-        payload: { operation: add, value },
-      })
-    } else {
-      grantStaked(delegation.grantId, value)
+    if (!delegation.isCopiedStake) {
+      if (!delegation.isFromGrant) {
+        refreshKeepTokenBalance()
+        dispatch({
+          type: UPDATE_OWNED_DELEGATED_TOKENS_BALANCE,
+          payload: { operation: add, value },
+        })
+      } else {
+        grantStaked(delegation.grantId, value)
+      }
     }
 
     dispatch({ type: ADD_DELEGATION, payload: delegation })
