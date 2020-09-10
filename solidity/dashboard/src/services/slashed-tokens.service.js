@@ -32,7 +32,6 @@ const fetchSlashedTokens = async (web3Context) => {
     "TokensSeized",
     eventsSearchFilters
   )
-  console.log("seizedTokensEvents", seizedTokensEvents)
 
   if (isEmptyArray(slashedTokensEvents) && isEmptyArray(seizedTokensEvents)) {
     return data
@@ -80,6 +79,8 @@ const fetchSlashedTokens = async (web3Context) => {
     } else {
       continue
     }
+
+    if (punishmentData && lte(punishmentData.amount, 0)) continue
 
     punishmentData.date = moment.unix(
       (await eth.getBlock(blockNumber)).timestamp
