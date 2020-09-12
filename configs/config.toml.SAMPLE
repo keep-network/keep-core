@@ -19,7 +19,7 @@
 	# allowed gas price is reached, no further resubmission attempts are
 	# performed.
 	#
-	# MaxGasPrice = 70000000000 # 70 gwei (default value)
+	# MaxGasPrice = 500000000000 # 500 Gwei (default value)
 	#
 	# Uncomment to enable Ethereum node rate limiting. Both properties can be
 	# used together or separately.
