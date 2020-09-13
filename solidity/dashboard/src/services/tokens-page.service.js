@@ -119,7 +119,7 @@ const getDelegations = async (
       amount,
     } = await stakingContract.methods.getDelegationInfo(operatorAddress).call()
 
-    let managedGrantContractInstance
+    let managedGrantContractInstance = null
     if (isFromGrant && !grantId) {
       try {
         const grantStakeDetails = await grantContract.methods

@@ -12,6 +12,7 @@ ul.choose-wallet-address {
         }
         label, label input[type=radio] {
             cursor: pointer;
+            visibility: visible;
         }
         
         label input[type=radio] {
@@ -22,5 +23,26 @@ ul.choose-wallet-address {
             margin-left: auto;
         }
     }
-    
+}
+
+.choose-wallet-address__pagination {
+    display: flex;
+    flex: 1;
+    align-self: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 1rem;
+
+    .choose-wallet-address__pagination__item {
+        .h5();
+        .cursor-pointer();
+
+        &:last-of-type {
+            margin-left: auto;
+        }
+        
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 }

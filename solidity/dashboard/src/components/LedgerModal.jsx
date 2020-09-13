@@ -4,22 +4,40 @@ import Button from "./Button"
 import ChooseWalletAddress from "./ChooseWalletAddress"
 import { isEmptyArray } from "../utils/array.utils"
 import { useShowMessage, messageType } from "./Message"
+import { KeepLoadingIndicator } from "./Loadable"
 
 const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
   const [accounts, setAccounts] = useState([])
+
+  const [isFetching, setIsFetching] = useState(false)
+  const [accountsOffSet, setAccountsOffSet] = useState(0)
   const [ledgerVersion, setLedgerVersion] = useState("")
   const showMessage = useShowMessage()
 
   useEffect(() => {
-    if (ledgerVersion === "LEDGER_LIVE" || ledgerVersion === "LEDGER_LEEGACY") {
+    let shoudlSetState = true
+    if (ledgerVersion === "LEDGER_LIVE" || ledgerVersion === "LEDGER_LEGACY") {
+      setIsFetching(true)
       connector[ledgerVersion]
-        .getAccounts()
-        .then(setAccounts)
+        .getAccounts(5, accountsOffSet)
+        .then((accounts) => {
+          if (shoudlSetState) {
+            setAccounts(accounts)
+            setIsFetching(false)
+          }
+        })
         .catch((error) => {
+          if (shoudlSetState) {
+            setIsFetching(false)
+          }
           showMessage({ type: messageType.ERROR, title: error.message })
         })
     }
-  }, [ledgerVersion, connector, showMessage])
+
+    return () => {
+      shoudlSetState = false
+    }
+  }, [ledgerVersion, connector, showMessage, accountsOffSet])
 
   const onSelectAccount = async (account) => {
     connector[ledgerVersion].defaultAccount = account
@@ -55,11 +73,19 @@ const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
           ledger legacy
         </Button>
       </div>
-      {!isEmptyArray(accounts) && (
-        <ChooseWalletAddress
-          onSelectAccount={onSelectAccount}
-          addresses={accounts}
-        />
+      {isFetching ? (
+        <KeepLoadingIndicator />
+      ) : (
+        !isEmptyArray(accounts) && (
+          <ChooseWalletAddress
+            onSelectAccount={onSelectAccount}
+            addresses={accounts}
+            withPagination
+            renderPrevBtn={accountsOffSet > 0}
+            onNext={() => setAccountsOffSet((prevOffset) => prevOffset + 5)}
+            onPrev={() => setAccountsOffSet((prevOffset) => prevOffset - 5)}
+          />
+        )
       )}
     </div>
   )

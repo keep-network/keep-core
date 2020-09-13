@@ -7,8 +7,8 @@ import web3Utils from "web3-utils"
 import { getBufferFromHex } from "../utils/general.utils"
 
 export const LEDGER_DERIVATION_PATHS = {
-  LEDGER_LIVE: "44'/60'/0'/0",
-  LEDGER_LEGACY: `44'/60'/0'`,
+  LEDGER_LIVE: `m/44'/60'/x'/0/0`,
+  LEDGER_LEGACY: `m/44'/60'/0'/x`,
 }
 
 export class LedgerProvider extends AbstractHardwareWalletConnector {
@@ -28,6 +28,8 @@ const ledgerEthereumClientFactoryAsync = async () => {
 
 class CustomLedgerSubprovider extends LedgerSubprovider {
   chainId
+  addressToPathMap = {}
+  pathToAddressMap = {}
 
   constructor(chainId, baseDerivationPath) {
     super({
@@ -45,12 +47,9 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
     }
     txData.chainId = this.chainId
 
-    const initialDerivedKeyInfo = await this._initialDerivedKeyInfoAsync()
-    const derivedKeyInfo = this._findDerivedKeyInfoForAddress(
-      initialDerivedKeyInfo,
-      txData.from
-    )
-    const fullDerivationPath = derivedKeyInfo.derivationPath
+    const fullDerivationPath = this.addressToPathMap[
+      web3Utils.toChecksumAddress(txData.from)
+    ]
 
     try {
       this._ledgerClientIfExists = await this._createLedgerClientAsync()
@@ -91,5 +90,42 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
       await this._destroyLedgerClientAsync()
       throw error
     }
+  }
+
+  async getAccountsAsync(numberOfAccounts, accountsOffSet = 0) {
+    const addresses = []
+    for (
+      let index = accountsOffSet;
+      index < numberOfAccounts + accountsOffSet;
+      index++
+    ) {
+      const address = await this.getAddress(index)
+      addresses.push(address)
+    }
+
+    return addresses
+  }
+
+  async getAddress(index) {
+    const path = this._baseDerivationPath.replace("x", index)
+
+    let ledgerResponse
+    try {
+      this._ledgerClientIfExists = await this._createLedgerClientAsync()
+      ledgerResponse = await this._ledgerClientIfExists.getAddress(
+        path,
+        this._shouldAlwaysAskForConfirmation,
+        true
+      )
+    } finally {
+      await this._destroyLedgerClientAsync()
+    }
+
+    const address = web3Utils.toChecksumAddress(ledgerResponse.address)
+
+    this.addressToPathMap[address] = path
+    this.pathToAddressMap[path] = address
+
+    return address
   }
 }

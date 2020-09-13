@@ -11,6 +11,7 @@ import { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
 import AddTopUpModal from "./AddTopUpModal"
 import { connect } from "react-redux"
+import web3Utils from "web3-utils"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -30,6 +31,14 @@ const DelegatedTokensTable = ({
     },
     [grants]
   )
+
+  const isAddKeepBtnDisabled = (delegationData) => {
+    const availableAmount = delegationData.isFromGrant
+      ? getAvailableToStakeFromGrant(delegationData.grantId)
+      : keepTokenBalance
+
+    return web3Utils.toBN(availableAmount).lten(0)
+  }
 
   const onTopUpBtn = async (delegationData, awaitingPromise) => {
     const availableAmount = delegationData.isFromGrant
@@ -153,6 +162,7 @@ const DelegatedTokensTable = ({
                     onSubmitAction={(awaitingPromise) =>
                       onTopUpBtn(delegation, awaitingPromise)
                     }
+                    disabled={isAddKeepBtnDisabled(delegation)}
                   >
                     add keep
                   </SubmitButton>
