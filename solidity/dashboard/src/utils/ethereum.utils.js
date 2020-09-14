@@ -1,5 +1,7 @@
 import { Web3Loaded } from "../contracts"
 import { isSameEthAddress } from "./general.utils"
+import BigNumber from "bignumber.js"
+import web3Utils from "web3-utils"
 
 export const getEventFromLogs = async (logs, web3Contract, eventName) => {
   const web3 = await Web3Loaded
@@ -42,4 +44,20 @@ export const getEventsFromTransaction = async (contractToEventName, txHash) => {
   }
 
   return events
+}
+
+export function displayEthAmount(
+  amountInWei,
+  unit = "ether",
+  decimalsPlaces = 2
+) {
+  if (!amountInWei) {
+    return 0
+  }
+  const amountInEth = web3Utils.fromWei(amountInWei.toString(), unit)
+
+  return new BigNumber(amountInEth).toFormat(
+    decimalsPlaces,
+    BigNumber.ROUND_DOWN
+  )
 }

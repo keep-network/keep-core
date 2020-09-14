@@ -12,7 +12,6 @@ import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import { sub } from "../utils/arithmetics.utils"
-import web3Utils from "web3-utils"
 import Tile from "./Tile"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
@@ -28,6 +27,7 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import Skeleton from "./skeletons/Skeleton"
 import { withdrawGroupMemberRewards } from "../actions/web3"
 import { connect } from "react-redux"
+import { displayEthAmount } from "../utils/ethereum.utils"
 
 const previewDataCount = 10
 const initialRewardsData = [[], "0"]
@@ -84,7 +84,7 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
           blockNumber,
           groupPublicKey,
           transactionHash,
-          reward: web3Utils.fromWei(amount, "ether"),
+          reward: amount,
           operatorAddress: operator,
           status: REWARD_STATUS.WITHDRAWN,
           groupStatus: SIGNING_GROUP_STATUS.COMPLETED,
@@ -115,17 +115,11 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
       return
     }
 
-    const updateTotalRewardsBalance = sub(
-      web3Utils.toWei(totalRewardsBalance, "ether"),
-      amount
-    )
+    const updateTotalRewardsBalance = sub(totalRewardsBalance, amount)
     const updatedRewards = [...rewards]
     updatedRewards.splice(indexInArray, 1)
 
-    updateData([
-      updatedRewards,
-      web3Utils.fromWei(updateTotalRewardsBalance, "ether"),
-    ])
+    updateData([updatedRewards, updateTotalRewardsBalance])
   }
 
   const withdrawReward = async (
@@ -177,13 +171,25 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
           {isFetching ? (
             <Skeleton className="h1 mb-1" styles={{ width: "25%" }} />
           ) : (
-            <>
-              <h1 className="balance">
-                {totalRewardsBalance}
-                <span className="h3 mr-1">&nbsp;ETH</span>
-              </h1>
-              <SpeechBubbleTooltip text="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires." />
-            </>
+            <div className="flex row mb-1 mt-1">
+              <TokenAmount
+                currencyIcon={Icons.ETH}
+                currencyIconProps={{
+                  width: 64,
+                  height: 64,
+                  className: "eth-icon primary",
+                }}
+                displayWithMetricSuffix={false}
+                amount={totalRewardsBalance}
+                amountClassName="h1 text-primary"
+                displayAmountFunction={displayEthAmount}
+                withTooltip
+                tooltipText={`${totalRewardsBalance} wei`}
+              />
+              <div className="ml-1 self-center">
+                <SpeechBubbleTooltip text="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires." />
+              </div>
+            </div>
           )}
         </header>
         <div className="flex row wrap">
@@ -229,11 +235,9 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
                 <TokenAmount
                   currencyIcon={Icons.ETH}
                   currencyIconProps={{
-                    width: 20,
-                    height: 20,
-                    className: `eth-icon${
-                      status === REWARD_STATUS.WITHDRAWN ? " grey-40" : ""
-                    }`,
+                    width: 32,
+                    height: 32,
+                    className: "eth-icon grey-60",
                   }}
                   displayWithMetricSuffix={false}
                   amount={reward}
@@ -241,7 +245,9 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
                     status === REWARD_STATUS.WITHDRAWN ? "40" : "70"
                   }`}
                   currencySymbol="ETH"
-                  displayAmountFunction={(amount) => amount}
+                  displayAmountFunction={displayEthAmount}
+                  withTooltip
+                  tooltipText={`${reward} wei`}
                 />
               )}
             />
