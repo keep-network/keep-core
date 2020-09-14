@@ -66,6 +66,8 @@ const AddETHFormik = withFormik({
 
       if (!ethAmount) {
         errors.ethAmount = "Required"
+      } else if (ethBalance.isZero()) {
+        errors.ethAmount = "Account ETH balance should be greater than 0"
       } else if (valueInWei.gt(ethBalance)) {
         errors.ethAmount = `The value should be less than ${web3Utils.fromWei(
           ethBalance.toString(),
