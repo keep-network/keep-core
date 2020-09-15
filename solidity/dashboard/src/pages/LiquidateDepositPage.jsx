@@ -23,7 +23,7 @@ import { useModal } from "../hooks/useModal"
 import { useFetchData } from "../hooks/useFetchData"
 import {
   satsToTBtcViaWeitoshi,
-  fromTokenUnit,
+  displayAmount
 } from "../utils/token.utils"
 import { colors } from "../constants/colors"
 
@@ -142,6 +142,22 @@ const LiquidateDepositPage = (props) => {
     data: depositSizeSatoshis,
   } = stDepositSizeSatoshis
 
+  const confirmationModalOptions = useCallback(() => {
+    if (bondAmountIsFetching || depositSizeSatoshisIsFetching)
+      return {}
+    else {
+      return {
+        modalOptions: { title: "Purchase ETH Bond" },
+        title: "You’re about to purchase ETH with tBTC.",
+        subtitle:
+          `This transaction will spend ${satsToTBtcViaWeitoshi(depositSizeSatoshis).toString()} tBTC to obtain ${displayAmount(bondAmountWei, false)} ETH (or more, depending on the block it goes through).
+           It can fail if deposit state changes before this transaction gets accepted. 
+           Transaction can also fail if you don’t have enough tBTC`,
+        btnText: "Purchase ETH",
+        confirmationText: "Y",
+      }
+    }
+  }, [satsToTBtcViaWeitoshi, displayAmount, bondAmountIsFetching, depositSizeSatoshisIsFetching]) 
 
   const getPercentageOnOffer = useCallback(() => {
     const utils = web3Context.web3.utils
@@ -192,12 +208,11 @@ const LiquidateDepositPage = (props) => {
 
     const handleSubmit = async (onTransactionHashCallback) => {
     try {
-      await openConfirmationModal(confirmationModalOptions)
-      const depositSizeWeitoshi = fromTokenUnit(depositSizeSatoshis, 10)
+      await openConfirmationModal(confirmationModalOptions())
+      // const depositSizeWeitoshi = fromTokenUnit(depositSizeSatoshis, 10)
       await liquidationService.purchaseDepositAtAuction(
         web3Context,
         depositAddress,
-        depositSizeWeitoshi,
         onTransactionHashCallback
       )
       showMessage({
@@ -340,17 +355,6 @@ const LiquidateDepositPage = (props) => {
     </section>
     // </PageWrapper>
   )
-}
-
-const confirmationModalOptions = {
-  modalOptions: { title: "Purchase ETH Bond" },
-  title: "You’re about to purchase ETH with tBTC.",
-  subtitle:
-    `This transaction will spend 1 tBTC to obtain 56.699999999919 ETH (or more, depending on the block it goes through).
-     It can fail if deposit state changes before this transaction gets accepted. 
-     Transaction can also fail with error 'Not enough TBTC to cover outstanding debt' if you don’t have enough tBTC`,
-  btnText: "Purchase ETH",
-  confirmationText: "Y",
 }
 
 

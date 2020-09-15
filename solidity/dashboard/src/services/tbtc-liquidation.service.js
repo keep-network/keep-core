@@ -234,7 +234,6 @@ const getDepositCurrentAuctionValue = async (
 const purchaseDepositAtAuction = async (
   web3Context,
   depositContractAddress,
-  auctionValueBN,
   onTransactionHashCallback = () => { }) => {
 
   const { web3, yourAddress } = web3Context
@@ -250,28 +249,34 @@ const purchaseDepositAtAuction = async (
     const allowance = await tbtcTokenContract
       .methods.allowance(yourAddress, depositContractAddress)
       .call()
+    const allowanceBN = web3Utils.toBN(allowance)
+    const tBtcRequired = web3Utils.toBN(await depositContractInstance.methods.lotSizeTbtc().call())
 
-    if (web3Utils.toBN(allowance).lt(auctionValueBN)) {
-      await tbtcTokenContract.methods.approve(depositContractAddress, auctionValueBN)
+    
+    if (allowanceBN.lt(tBtcRequired)) {
+      await tbtcTokenContract.methods.approve(depositContractAddress, tBtcRequired.toString())
         .send({ from: yourAddress })
     }
     //Estimate gas from tbtc.js sendSafely()
-    // const gasEstimate = await depositContractInstance.methods.purchaseSignerBondsAtAuction().estimateGas({})
-    // disabled at the moment 
-    //TODO: Test with a tBTC balance
+    const gasEstimate = await depositContractInstance.methods.purchaseSignerBondsAtAuction().estimateGas({})
 
     await depositContractInstance.methods
       .purchaseSignerBondsAtAuction()
       .send({
         from: yourAddress,
-        // gas: gasEstimate
+        gas: gasEstimate
+      })
+    
+    await depositContractInstance.methods
+      .withdrawFunds()
+      .send({
+        from: yourAddress
       })
       .on("transactionHash", onTransactionHashCallback)
 
   } catch (error) {
     console.log(error)
   }
-
 }
 
 /**
@@ -335,7 +340,6 @@ const getDepositAuctionOfferingSchedule = async (
     releasedInTimestamp: startedLiquidationTimestamp
   }
   console.log(`offeringSchedule[0]`)
-  console.log(offeringSchedule[0])
 
   for (let index = baseAuctionPercentage.toNumber() + 1; index <= 100; index++) {
     const releaseSlotIndex = index - baseAuctionPercentage
