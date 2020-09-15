@@ -11,6 +11,7 @@ import { CircularProgressBarEth } from "./CircularProgressBar"
 import {
   satsToTBtcViaWeitoshi,
   displayAmount,
+  displayAmountHigherOrderFn
 } from "../utils/token.utils"
 import { colors } from "../constants/colors"
 
@@ -31,6 +32,8 @@ export const ArbitrageurTokenDetails = ({
         amountClassName="h1 text-grey-70"
         suffixClassName="h2"
         displayWithMetricSuffix={false}
+        // Hardcoded "4" since the smaller relevant decimal is 3 based on current lot sizes
+        displayAmountFunction={displayAmountHigherOrderFn(false,4)}
         amount={tokenValue} />
     </section>
   )
@@ -67,7 +70,7 @@ export const DepositAuctionOverview = (props) => {
         // 15000
       )
     },
-    [lastRefreshedMoment]
+    [lastRefreshedMoment, refreshData]
   )
 
   return (

@@ -16,6 +16,18 @@ export function displayAmount(amount, withCommaSeparator = true) {
   return 0
 }
 
+export function displayAmountHigherOrderFn(withCommaSeparator = true, formatDecimalPlaces = 0) {
+  return (amount) => {
+    if (amount) {
+      const readableFormat = toTokenUnit(amount)
+      return withCommaSeparator
+        ? readableFormat.toFormat(formatDecimalPlaces, BigNumber.ROUND_DOWN)
+        : readableFormat.toString()
+    }
+    return 0
+  }
+}
+
 /**
  * Convert wei amount to token units
  * @param {*} amount amount in wei
