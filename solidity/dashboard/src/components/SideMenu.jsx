@@ -63,7 +63,7 @@ export const SideMenu = (props) => {
               exact: true,
               label: "Beacon Rewards",
             },
-            // { to: "/rewards/tbtc", exact: true, label: "tBTC Rewards" },
+            { to: "/rewards/tbtc", exact: true, label: "tBTC Rewards" },
           ]}
         />
         <NavLink

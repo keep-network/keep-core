@@ -9,6 +9,7 @@ import { isEmptyArray } from "../utils/array.utils"
 import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   getBondedECDSAKeepFactoryAddress,
+  getTBTCSystemAddress,
   ContractsLoaded,
   Web3Loaded,
 } from "../contracts"
@@ -20,6 +21,7 @@ import {
 import { tokenGrantsService } from "./token-grants.service"
 
 const bondedECDSAKeepFactoryAddress = getBondedECDSAKeepFactoryAddress()
+const tBTCSystemAddress = getTBTCSystemAddress()
 
 const fetchTBTCAuthorizationData = async (web3Context) => {
   const operatorsOfAuthorizer = await getOperatorsOfAuthorizer(
@@ -42,10 +44,10 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
       bondedECDSAKeepFactoryAddress
     )
 
-    // const isTBTCSystemAuthorized = await isTbtcSystemAuthorized(
-    //   web3Context,
-    //   operatorsOfAuthorizer[i]
-    // )
+    const isTBTCSystemAuthorized = await isTbtcSystemAuthorized(
+      web3Context,
+      operatorsOfAuthorizer[i]
+    )
 
     const authorizerOperator = {
       operatorAddress: operatorsOfAuthorizer[i],
@@ -56,6 +58,11 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
           operatorContractAddress: bondedECDSAKeepFactoryAddress,
           isAuthorized: isBondedECDSAKeepFactoryAuthorized,
         },
+        {
+          contractName: "TBTCSystem",
+          operatorContractAddress: tBTCSystemAddress,
+          isAuthorized: isTBTCSystemAuthorized,
+        },
       ],
     }
 
@@ -65,26 +72,26 @@ const fetchTBTCAuthorizationData = async (web3Context) => {
   return tbtcAuthorizatioData
 }
 
-// const isTbtcSystemAuthorized = async (web3Context, operatorAddress) => {
-//   try {
-//     const sortitionPoolAddress = await contractService.makeCall(
-//       web3Context,
-//       BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
-//       "getSortitionPool",
-//       tBTCSystemAddress
-//     )
+const isTbtcSystemAuthorized = async (web3Context, operatorAddress) => {
+  try {
+    const sortitionPoolAddress = await contractService.makeCall(
+      web3Context,
+      BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
+      "getSortitionPool",
+      tBTCSystemAddress
+    )
 
-//     return await contractService.makeCall(
-//       web3Context,
-//       KEEP_BONDING_CONTRACT_NAME,
-//       "hasSecondaryAuthorization",
-//       operatorAddress,
-//       sortitionPoolAddress
-//     )
-//   } catch {
-//     return false
-//   }
-// }
+    return await contractService.makeCall(
+      web3Context,
+      KEEP_BONDING_CONTRACT_NAME,
+      "hasSecondaryAuthorization",
+      operatorAddress,
+      sortitionPoolAddress
+    )
+  } catch {
+    return false
+  }
+}
 
 const fetchBondingData = async (web3Context) => {
   const { yourAddress } = web3Context
@@ -92,32 +99,32 @@ const fetchBondingData = async (web3Context) => {
 
   try {
     const operators = await fetchOperatorsOf(web3Context, yourAddress)
-    // const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
-    // const createdBonds = await fetchCreatedBonds(
-    //   web3Context,
-    //   Array.from(operators.keys()),
-    //   sortitionPoolAddress
-    // )
+    const sortitionPoolAddress = await fetchSortitionPoolForTbtc(web3Context)
+    const createdBonds = await fetchCreatedBonds(
+      web3Context,
+      Array.from(operators.keys()),
+      sortitionPoolAddress
+    )
 
     const operatorBondingDataMap = new Map()
-    // for (let i = 0; i < createdBonds.length; i++) {
-    //   const operatorAddress = web3Utils.toChecksumAddress(
-    //     createdBonds[i].operator
-    //   )
-    //   const bondedEth = await fetchLockedBondAmount(
-    //     web3Context,
-    //     operatorAddress,
-    //     createdBonds[i].holder,
-    //     createdBonds[i].referenceID
-    //   )
+    for (let i = 0; i < createdBonds.length; i++) {
+      const operatorAddress = web3Utils.toChecksumAddress(
+        createdBonds[i].operator
+      )
+      const bondedEth = await fetchLockedBondAmount(
+        web3Context,
+        operatorAddress,
+        createdBonds[i].holder,
+        createdBonds[i].referenceID
+      )
 
-    //   const currentBond = operatorBondingDataMap.get(operatorAddress)
-    //   if (currentBond) {
-    //     operatorBondingDataMap.set(operatorAddress, add(currentBond, bondedEth))
-    //   } else {
-    //     operatorBondingDataMap.set(operatorAddress, bondedEth)
-    //   }
-    // }
+      const currentBond = operatorBondingDataMap.get(operatorAddress)
+      if (currentBond) {
+        operatorBondingDataMap.set(operatorAddress, add(currentBond, bondedEth))
+      } else {
+        operatorBondingDataMap.set(operatorAddress, bondedEth)
+      }
+    }
 
     for (const [operatorAddress, value] of operators.entries()) {
       const { isWithdrawableForOperator, managedGrantInfo } = value
@@ -154,13 +161,13 @@ const fetchBondingData = async (web3Context) => {
   return bondingData
 }
 
-// const fetchSortitionPoolForTbtc = async () => {
-//   const { bondedEcdsaKeepFactoryContract } = await ContractsLoaded
+const fetchSortitionPoolForTbtc = async () => {
+  const { bondedEcdsaKeepFactoryContract } = await ContractsLoaded
 
-//   return await bondedEcdsaKeepFactoryContract.methods
-//     .getSortitionPool(tBTCSystemAddress)
-//     .call()
-// }
+  return await bondedEcdsaKeepFactoryContract.methods
+    .getSortitionPool(tBTCSystemAddress)
+    .call()
+}
 
 const fetchDelegationInfo = async (web3Context, operatorAddress) => {
   return contractService.makeCall(
@@ -435,5 +442,5 @@ const getCopiedOperatorsFromLiquidTokens = async (
 export const tbtcAuthorizationService = {
   fetchTBTCAuthorizationData,
   fetchBondingData,
-  // fetchSortitionPoolForTbtc,
+  fetchSortitionPoolForTbtc,
 }

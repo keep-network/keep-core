@@ -3,12 +3,15 @@ import TokenStaking from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
 import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import BondedECDSAKeepFactory from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
+import TBTCSystem from "@keep-network/tbtc/artifacts/TBTCSystem.json"
 import KeepBonding from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
 import KeepRandomBeaconOperatorStatistics from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperatorStatistics.json"
 import ManagedGrant from "@keep-network/keep-core/artifacts/ManagedGrant.json"
 import ManagedGrantFactory from "@keep-network/keep-core/artifacts/ManagedGrantFactory.json"
+import TBTCToken from "@keep-network/tbtc/artifacts/TBTCToken.json"
+import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
@@ -72,6 +75,14 @@ const contracts = [
   [
     { contractName: KEEP_BONDING_CONTRACT_NAME, withDeployBlock: true },
     KeepBonding,
+  ],
+  [
+    { contractName: TBTC_TOKEN_CONTRACT_NAME, withDeployBlock: true },
+    TBTCToken,
+  ],
+  [
+    { contractName: TBTC_SYSTEM_CONTRACT_NAME, withDeployBlock: true },
+    TBTCSystem,
   ],
   [
     { contractName: TOKEN_STAKING_ESCROW_CONTRACT_NAME, withDeployBlock: true },
@@ -210,6 +221,10 @@ export function createManagedGrantContractInstance(web3, address) {
   return createWeb3ContractInstance(web3, ManagedGrant.abi, address)
 }
 
+export function createDepositContractInstance(web3, address) {
+  return createWeb3ContractInstance(web3, Deposit.abi, address)
+}
+
 export function createBondedECDSAKeepContractInstance(web3, address) {
   return createWeb3ContractInstance(web3, BondedECDSAKeep.abi, address)
 }
@@ -220,6 +235,10 @@ export function getKeepRandomBeaconOperatorAddress() {
 
 export function getBondedECDSAKeepFactoryAddress() {
   return getContractAddress(BondedECDSAKeepFactory)
+}
+
+export function getTBTCSystemAddress() {
+  return getContractAddress(TBTCSystem)
 }
 
 const getOldTokenStakingArtifact = async () => {
