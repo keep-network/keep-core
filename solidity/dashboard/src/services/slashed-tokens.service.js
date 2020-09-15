@@ -76,9 +76,11 @@ const fetchSlashedTokens = async (web3Context) => {
     } else if (seizedTokensGroupedByTxtHash.hasOwnProperty(transactionHash)) {
       const { amount } = seizedTokensGroupedByTxtHash[transactionHash]
       punishmentData = { amount, type: "SEIZED", event }
+    } else {
+      continue
     }
 
-    if (!punishmentData || lte(punishmentData.amount, 0)) continue
+    if (punishmentData && lte(punishmentData.amount, 0)) continue
 
     punishmentData.date = moment.unix(
       (await eth.getBlock(blockNumber)).timestamp

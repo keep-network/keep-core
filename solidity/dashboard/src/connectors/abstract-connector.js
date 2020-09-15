@@ -25,8 +25,14 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
     return await this.getAccount()
   }
 
-  getAccounts = async () => {
-    return await this.provider.getAccountsAsync(DEFAULT_NUM_ADDRESSES_TO_FETCH)
+  getAccounts = async (
+    numberOfAccounts = DEFAULT_NUM_ADDRESSES_TO_FETCH,
+    accountsOffSet = 0
+  ) => {
+    return await this.provider.getAccountsAsync(
+      numberOfAccounts,
+      accountsOffSet
+    )
   }
 
   setProvider = (provider) => {
