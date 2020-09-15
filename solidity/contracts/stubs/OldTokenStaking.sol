@@ -69,7 +69,7 @@ contract OldTokenStaking {
     }
 
     function minimumStake() public view returns (uint256) {
-       return 10000 * 1e18;
+        return 10000 * 1e18;
     }
 
     function undelegate(address _operator) public {
