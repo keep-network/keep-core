@@ -446,7 +446,7 @@ and authorizer. Owner may delegate owned tokens or tokens from a grant. Owner ma
 of owned tokens or just a part of tokens from a grant. Owner may delegate multiple times to different operators.
 Tokens can be delegated using Tokens page in https://dashboard.test.keep.network[KEEP token dashboard] and a certain minimum stake defined by the system is required to be provided in the delegation. The more stake is delegated, the higher chance to be selected to relay group.
 
-Delegation takes immediate effect but can be cancelled within one week without additional delay. After one week
+Delegation takes immediate effect but can be cancelled within 12 hours without additional delay. After 12 hours
 operator appointed during the delegation becomes eligible for work selection.
 
 === Authorizations
