@@ -52,7 +52,10 @@ export default class Web3ContextProvider extends React.Component {
       throw error
     }
 
-    web3.eth.currentProvider.on("accountsChanged", this.onAccountChanged)
+    if (providerName === "METAMASK") {
+      web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
+      web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
+    }
 
     this.setState({
       web3,
@@ -88,7 +91,7 @@ export default class Web3ContextProvider extends React.Component {
     await this.connectAppWithWallet(connector, provider)
   }
 
-  onAccountChanged = async ([yourAddress]) => {
+  refreshProvider = async ([yourAddress]) => {
     if (!yourAddress) {
       this.setState({
         isFetching: false,
