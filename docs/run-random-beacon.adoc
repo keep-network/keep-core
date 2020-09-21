@@ -55,19 +55,23 @@ to submit more transactions as a result.
 
 Below is the average gas cost of the most important transactions the client is submitting:
 
-[%header,cols=2*]
+[%header,cols=3*]
 |===
 |TX
 |Gas Cost
+|Reimbursed
 
 |Submit group selection ticket
 |140 000
+|No
 
 |Submit DKG result
 |1 740 000
+|Yes
 
 |Submit relay entry
 |280 000
+|Yes
 |===
 
 For example, if the operator has 10 x minimum stake, it can submit 10 tickets. If the operator has
