@@ -16,11 +16,13 @@ import tokensPageReducer, {
   GRANT_STAKED,
   GRANT_WITHDRAWN,
   SET_SELECTED_GRANT,
+  GRANT_DEPOSITED,
 } from "../reducers/tokens-page.reducer"
 import { isEmptyObj } from "../utils/general.utils"
-import { findIndexAndObject } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
 import { usePrevious } from "../hooks/usePrevious"
+import { ContractsLoaded } from "../contracts"
+import { fetchAvailableTopUps } from "../services/top-ups.service"
 
 const tokensPageServiceInitialData = {
   delegations: [],
@@ -58,6 +60,21 @@ const TokenPageContextProvider = (props) => {
     refreshGrants,
   ] = useFetchData(tokenGrantsService.fetchGrants, [])
 
+  const [
+    { data: availableTopUps, isFetching: topUpsAreFetching },
+    ,
+    ,
+    setOperatorsForTopUp,
+  ] = useFetchData(fetchAvailableTopUps, [])
+
+  useEffect(() => {
+    setOperatorsForTopUp([
+      [...data.undelegations, ...data.delegations].map(
+        ({ operatorAddress }) => operatorAddress
+      ),
+    ])
+  }, [setOperatorsForTopUp, data.delegations, data.undelegations])
+
   const [state, dispatch] = useReducer(tokensPageReducer, {
     grants: [],
     delegations: [],
@@ -72,6 +89,8 @@ const TokenPageContextProvider = (props) => {
     grantsAreFetching: true,
     tokensContext: "granted",
     selectedGrant: {},
+    availableTopUps: [],
+    topUpsAreFetching: false,
     getGrantStakedAmount: () => {},
   })
   const previousSelectedGrant = usePrevious(state.selectedGrant)
@@ -88,15 +107,14 @@ const TokenPageContextProvider = (props) => {
       type: SET_STATE,
       payload: { grants, grantsAreFetching },
     })
-    if (!isEmptyObj(state.selectedGrant)) {
-      const { obj: updatedGrant } = findIndexAndObject(
-        "id",
-        state.selectedGrant.id,
-        grants
-      )
-      dispatch({ type: SET_SELECTED_GRANT, payload: updatedGrant })
-    }
-  }, [grants, grantsAreFetching, state.selectedGrant])
+  }, [grants, grantsAreFetching])
+
+  useEffect(() => {
+    dispatch({
+      type: SET_STATE,
+      payload: { availableTopUps, topUpsAreFetching },
+    })
+  }, [availableTopUps, topUpsAreFetching])
 
   useEffect(() => {
     if (isEmptyObj(previousSelectedGrant) && state.grants.length > 0) {
@@ -126,21 +144,19 @@ const TokenPageContextProvider = (props) => {
 
   const grantStaked = useCallback(
     async (grantId, amount) => {
-      const { grantContract } = web3Context
-
-      const availableToStake = await grantContract.methods
-        .availableToStake(grantId)
-        .call()
       dispatch({
         type: GRANT_STAKED,
-        payload: { grantId, amount, availableToStake },
+        payload: {
+          grantId,
+          amount,
+        },
       })
     },
-    [web3Context, dispatch]
+    [dispatch]
   )
 
   const grantWithdrawn = useCallback(
-    async (grantId, amount) => {
+    async (grantId, amount, operator) => {
       const { grantContract } = web3Context
 
       const availableToStake = await grantContract.methods
@@ -148,7 +164,7 @@ const TokenPageContextProvider = (props) => {
         .call()
       dispatch({
         type: GRANT_WITHDRAWN,
-        payload: { grantId, amount, availableToStake },
+        payload: { grantId, amount, availableToStake, operator },
       })
     },
     [web3Context, dispatch]
@@ -158,13 +174,30 @@ const TokenPageContextProvider = (props) => {
     (grantId) => {
       if (!grantId) return 0
 
-      return state.delegations
+      return [...state.delegations, ...state.undelegations]
         .filter((delegation) => delegation.grantId === grantId)
         .map((grantDelegation) => grantDelegation.amount)
         .reduce(add, 0)
     },
-    [state.delegations]
+    [state.delegations, state.undelegations]
   )
+
+  const grantDeposited = useCallback(async (grantId, operator, amount) => {
+    const { grantContract } = await ContractsLoaded
+    const availableToWitdrawGrant = await grantContract.methods
+      .withdrawable(grantId)
+      .call()
+
+    dispatch({
+      type: GRANT_DEPOSITED,
+      payload: {
+        grantId,
+        availableToWitdrawGrant,
+        amount,
+        operator,
+      },
+    })
+  }, [])
 
   return (
     <TokensPageContext.Provider
@@ -178,6 +211,7 @@ const TokenPageContextProvider = (props) => {
         grantWithdrawn,
         grantStaked,
         getGrantStakedAmount,
+        grantDeposited,
       }}
     >
       {props.children}

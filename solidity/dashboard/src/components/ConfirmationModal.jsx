@@ -16,7 +16,7 @@ const ConfirmationModal = ({
   return (
     <>
       <h4 className="mb-1">{title}</h4>
-      <p className="text-big text-grey-60 mb-3">{subtitle}</p>
+      <div className="text-big text-grey-60 mb-3">{subtitle}</div>
       <ConfirmationFormFormik
         confirmationText={confirmationText}
         btnText={btnText}
@@ -29,10 +29,30 @@ const ConfirmationModal = ({
 
 export default React.memo(ConfirmationModal)
 
-const ConfirmationForm = ({
+export const withConfirmationModal = (WrappedComponent) => ({
+  title,
+  subtitle,
   confirmationText,
   btnText,
   onBtnClick,
+  onCancel,
+  ...restProps
+}) => {
+  return (
+    <ConfirmationModal
+      title={title}
+      btnText={btnText}
+      confirmationText={confirmationText}
+      onCancel={onCancel}
+      onBtnClick={onBtnClick}
+      subtitle={<WrappedComponent {...restProps} />}
+    />
+  )
+}
+
+const ConfirmationForm = ({
+  confirmationText,
+  btnText,
   onCancel,
   ...formikProps
 }) => {
@@ -56,7 +76,7 @@ const ConfirmationForm = ({
           className="btn btn-primary"
           type="submit"
           disabled={!(formikProps.isValid && formikProps.dirty)}
-          onClick={onBtnClick}
+          onClick={formikProps.handleSubmit}
         >
           {btnText}
         </Button>
@@ -81,5 +101,6 @@ const ConfirmationFormFormik = withFormik({
 
     return getErrorsObj(errors)
   },
+  handleSubmit: (values, { props }) => props.onBtnClick(values),
   displayName: "ConfirmationForm",
 })(ConfirmationForm)

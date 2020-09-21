@@ -19,10 +19,26 @@
 	# allowed gas price is reached, no further resubmission attempts are
 	# performed.
 	#
-	# MaxGasPrice = 50000000000 # 50 gwei (default value)
+	# MaxGasPrice = 500000000000 # 500 Gwei (default value)
+	#
+	# Uncomment to enable Ethereum node rate limiting. Both properties can be
+	# used together or separately.
+	#
+	# RequestsPerSecondLimit sets the maximum average number of requests
+	# per second which can be executed against the Ethereum node.
+	# All types of Ethereum node requests are rate-limited,
+	# including view function calls.
+	#
+	# RequestsPerSecondLimit = 150
+	#
+	# ConcurrencyLimit sets the maximum number of concurrent requests which
+	# can be executed against the Ethereum node at the same time.
+	# This limit affects all types of Ethereum node requests,
+	# including view function calls.
+	#
+	# ConcurrencyLimit = 30
 
 [ethereum.account]
-	Address            = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 [ethereum.ContractAddresses]
@@ -55,7 +71,31 @@
 [Storage]
   DataDir = "/my/secure/location"
 
+# Uncomment to enable the metrics module which collects and exposes information
+# useful for external monitoring tools usually operating on time series data.
+# All values exposed by metrics module are quantifiable or countable.
+#
+# The following metrics are available:
+# - connected peers count
+# - connected bootstraps count
+# - eth client connectivity status
+#
+# The port on which the `/metrics` endpoint will be available and the frequency
+# with which the metrics will be collected can be customized using the
+# below parameters.
 # [Metrics]
     # Port = 8080
     # NetworkMetricsTick = 60
     # EthereumMetricsTick = 600
+
+# Uncomment to enable the diagnostics module which exposes information useful
+# for debugging and diagnostic client's status.
+#
+# Diagnostics module exposes the following information:
+# - list of connected peers along with their network id and ethereum operator address
+# - information about the client's network id and ethereum operator address
+#
+# The port on which the `/diagnostics` endpoint will be available can be
+# customized below.
+# [Diagnostics]
+    # Port = 8081

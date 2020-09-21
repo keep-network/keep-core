@@ -20,6 +20,7 @@ const TokenOverviewPage = () => {
     refreshGrants,
     refreshData,
     isFetching,
+    undelegationPeriod,
   } = useTokensPageContext()
   const cancelStakeSuccessCallback = useCallback(() => {
     refreshGrants()
@@ -43,19 +44,23 @@ const TokenOverviewPage = () => {
 
   const totalGrantedTokenBalance = useMemo(() => {
     const grantedBalance = grants
-      .map(({ amount, withdrawn }) => sub(amount, withdrawn))
+      .map(({ amount, released }) => sub(amount, released))
       .reduce(add, "0")
     return grantedBalance
   }, [grants])
 
   return (
     <PageWrapper title="Token Overview">
-      <TokenOverview
-        totalKeepTokenBalance={totalKeepTokenBalance}
-        totalOwnedStakedBalance={totalOwnedStakedBalance}
-        totalGrantedTokenBalance={totalGrantedTokenBalance}
-        totalGrantedStakedBalance={totalGrantedStakedBalance}
-      />
+      <LoadingOverlay
+        isFetching={isFetching}
+        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}>
+        <TokenOverview
+          totalKeepTokenBalance={totalKeepTokenBalance}
+          totalOwnedStakedBalance={totalOwnedStakedBalance}
+          totalGrantedTokenBalance={totalGrantedTokenBalance}
+          totalGrantedStakedBalance={totalGrantedStakedBalance}
+        />
+      </LoadingOverlay>
       <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}
@@ -64,6 +69,9 @@ const TokenOverviewPage = () => {
           title="Delegation History"
           delegatedTokens={delegations}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
+          keepTokenBalance={keepTokenBalance}
+          grants={grants}
+          undelegationPeriod={undelegationPeriod}
         />
       </LoadingOverlay>
       {!isEmptyArray(undelegations) && (

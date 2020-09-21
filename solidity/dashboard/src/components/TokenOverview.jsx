@@ -49,7 +49,7 @@ const TokenOverview = ({
         style={boxWrapperStyle}
         className="flex column center space-between mt-1"
       >
-        <Icons.MoneyWalletOpen />
+        <Icons.GrantContextIcon />
         <h4 className="text-grey-70">Granted Tokens</h4>
         <TokenAmount
           currencyIconProps={{ width: 18, heigh: 18 }}
@@ -70,7 +70,7 @@ const TokenOverview = ({
         style={boxWrapperStyle}
         className="flex column center space-between mt-1"
       >
-        <Icons.GrantContextIcon />
+        <Icons.MoneyWalletOpen />
         <h4 className="text-grey-70">Owned Tokens</h4>
         <TokenAmount
           currencyIconProps={{ width: 18, heigh: 18 }}

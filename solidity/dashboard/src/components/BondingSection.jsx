@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React from "react"
 import Tile from "./Tile"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
@@ -73,31 +73,31 @@ const ActionCell = React.memo(
     managedGrantAddress,
     isWithdrawableForOperator,
   }) => {
-    const { openModal, closeModal, ModalComponent } = useModal()
-    const [action, setAction] = useState("withdraw")
-    const title = action === "add" ? "Add ETH" : "Withdraw ETH"
+    const { openModal, closeModal } = useModal()
+
     const onBtnClick = (event) => {
-      setAction(event.currentTarget.id)
-      openModal()
+      const action = event.currentTarget.id
+      const title = action === "add" ? "Add ETH" : "Withdraw ETH"
+
+      const component =
+        action === "add" ? (
+          <AddEthModal
+            operatorAddress={operatorAddress}
+            closeModal={closeModal}
+          />
+        ) : (
+          <WithdrawEthModal
+            operatorAddress={operatorAddress}
+            availableETH={availableETH}
+            closeModal={closeModal}
+            managedGrantAddress={managedGrantAddress}
+          />
+        )
+      openModal(component, { title })
     }
 
     return (
       <>
-        <ModalComponent title={title}>
-          {action === "add" ? (
-            <AddEthModal
-              operatorAddress={operatorAddress}
-              closeModal={closeModal}
-            />
-          ) : (
-            <WithdrawEthModal
-              operatorAddress={operatorAddress}
-              availableETH={availableETH}
-              closeModal={closeModal}
-              managedGrantAddress={managedGrantAddress}
-            />
-          )}
-        </ModalComponent>
         <div
           className="flex row center space-between"
           style={{ marginLeft: "auto" }}

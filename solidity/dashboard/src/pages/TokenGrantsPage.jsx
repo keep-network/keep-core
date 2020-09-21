@@ -9,19 +9,19 @@ import TokenAmount from "../components/TokenAmount"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { LoadingOverlay } from "../components/Loadable"
 import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
+import { add } from "../utils/arithmetics.utils"
 
 const TokenGrantsPage = () => {
-  const {
-    grants,
-    grantsAreFetching,
-    grantTokenBalance,
-  } = useTokensPageContext()
+  const { grants, grantsAreFetching } = useTokensPageContext()
+  const totalGrantAmount = useMemo(() => {
+    return grants.map(({ amount }) => amount).reduce(add, "0")
+  }, [grants])
 
   return (
     <PageWrapper title="Token Grants" className="">
       <TokenAmount
         wrapperClassName="mb-2"
-        amount={grantTokenBalance}
+        amount={totalGrantAmount}
         amountClassName="h2 text-grey-40"
         currencyIconProps={{ className: "keep-outline grey-40" }}
         displayWithMetricSuffix={false}
@@ -49,7 +49,11 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
   }, [getGrantStakedAmount, tokenGrant.id])
 
   return (
-    <section key={tokenGrant.id} className="tile token-grant-overview">
+    <section
+      key={tokenGrant.id}
+      className="tile token-grant-overview"
+      style={{ marginBottom: "1.2rem" }}
+    >
       <div className="grant-amount">
         <TokenGrantDetails title="Grant Amount" selectedGrant={tokenGrant} />
       </div>

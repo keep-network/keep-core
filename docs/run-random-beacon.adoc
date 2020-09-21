@@ -246,6 +246,8 @@ docker run -d \
 --volume $KEEP_CLIENT_CONFIG_DIR:/mnt/keep-client/config \
 --env KEEP_ETHEREUM_PASSWORD=$KEEP_CLIENT_ETHEREUM_PASSWORD \
 --env LOG_LEVEL=debug \
+--log-opt max-size=100m \
+--log-opt max-file=3 \
 -p 3919:3919 \
 keepnetwork/keep-client:<version> --config /mnt/keep-client/config/keep-client-config.toml start
 ----
@@ -322,12 +324,9 @@ Trust math, not hardware.
 "/ip4/54.39.179.134/tcp/3919/ipfs/16Uiu2HAkuxCuWA4zXnsj9R6A3b3a1TKUjQvBpAEaJ98KGdGue67p",
 "/dns4/bst-a01.core.keep.boar.network/tcp/3001/ipfs/16Uiu2HAkzYFHsqbwt64ZztWWK1hyeLntRNqWMYFiZjaKu1PZgikN",
 "/dns4/bst-b01.core.keep.boar.network/tcp/3001/ipfs/16Uiu2HAkxLttmh3G8LYzAy1V1g1b3kdukzYskjpvv5DihY4wvx7D",
-"/dns4/keep-boot-validator-0.prod-us-west-2.staked.cloud/tcp/3919/ipfs/16Uiu2HAmDnq9qZJH9zJJ3TR4pX1BkYHWtR2rVww24ttxQTiKhsaJ",
-"/dns4/keep-boot-validator-1.prod-us-west-2.staked.cloud/tcp/3919/ipfs/16Uiu2HAmHbbMTDDsT2f6z8zMgDtJkTUDJQSYsQYUpaJjdMjiYNEf",
-"/dns4/keep-boot-validator-2.prod-us-west-2.staked.cloud/tcp/3919/ipfs/16Uiu2HAmBXoNLLMYU9EcKYH6JN5tA498sXQHFWk4heK22RfXD7wC",
 "/dns4/4d00662f-e56d-404a-803a-cac01ada3e15.keep.bison.run/tcp/3919/ipfs/16Uiu2HAmV3HqJjcbKMxHnDxDx4m2iEYynyYdsvU3VwaeE6Zra2P9",
 "/dns4/ec1eb390-124c-4b1b-bcf7-c21709baf2b2.keep.herd.run/tcp/3919/ipfs/16Uiu2HAmVo51PqEZLADehZEbZnrp5A7qjRWFLj9E7DfwZKVhERFt",
-"/dns4/2aa9b786-7360-4c22-ae73-bd95af9c11c5.keep.bison.run/tcp/3919/ipfs/16Uiu2HAm9g3QrQzSvJ8FAhgB1PmjMNgjPd3pDaJJqsdSisGsnaFe"
+"/dns4/2aa9b786-7360-4c22-ae73-bd95af9c11c5.keep.bison.run/tcp/3919/ipfs/16Uiu2HAm9g3QrQzSvJ8FAhgB1PmjMNgjPd3pDaJJqsdSisGsnaFe",
 ```
 
 ==== Contracts
@@ -340,7 +339,7 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |TokenStaking
-|`0x6D1140a8c8e6Fac242652F0a5A8171b898c67600`
+|`0x1293a54e160d1cd7075487898d65266081a15458`
 |===
 
 [%header,cols=2*]
@@ -349,10 +348,10 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |KeepRandomBeaconService
-|`0x17056632d8db5a5c42fdE25132C59DD975a6da7F`
+|`0x50510e691c90ea098e3fdd23c311731bf394aafd`
 
 |KeepRandomBeaconOperator
-|`0x70F2202D85a4F0Cad36e978976f84E982920A624`
+|`0xdf708431162ba247ddae362d2c919e0fbafcf9de`
 |===
 
 === Testnet
@@ -405,7 +404,7 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |TokenStaking
-|`0x88B3D0Bfb8F207292Dc4Cee7C923d0E7C3078a18`
+|`0x234d2182B29c6a64ce3ab6940037b5C8FdAB608e`
 |===
 
 [%header,cols=2*]
@@ -414,10 +413,10 @@ Contract addresses needed to boot the Random Beacon client:
 |
 
 |KeepRandomBeaconService
-|`0xa5018dbeB6920A04e0CFd3D8F0F45BC851838b0D`
+|`0x6c04499B595efdc28CdbEd3f9ed2E83d7dCCC717`
 
 |KeepRandomBeaconOperator
-|`0x9233Fd6C58e37dab223EF1dFD5e33eD69FD1f93b`
+|`0xC8337a94a50d16191513dEF4D1e61A6886BF410f`
 |===
 
 == Staking
@@ -453,7 +452,7 @@ and authorizer. Owner may delegate owned tokens or tokens from a grant. Owner ma
 of owned tokens or just a part of tokens from a grant. Owner may delegate multiple times to different operators.
 Tokens can be delegated using Tokens page in https://dashboard.test.keep.network[KEEP token dashboard] and a certain minimum stake defined by the system is required to be provided in the delegation. The more stake is delegated, the higher chance to be selected to relay group.
 
-Delegation takes immediate effect but can be cancelled within one week without additional delay. After one week
+Delegation takes immediate effect but can be cancelled within 12 hours without additional delay. After 12 hours
 operator appointed during the delegation becomes eligible for work selection.
 
 === Authorizations

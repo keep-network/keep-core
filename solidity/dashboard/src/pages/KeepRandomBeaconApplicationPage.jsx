@@ -5,16 +5,15 @@ import AuthorizationHistory from "../components/AuthorizationHistory"
 import * as Icons from "../components/Icons"
 import { useFetchData } from "../hooks/useFetchData"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
-import { useShowMessage, messageType } from "../components/Message"
-import { useWeb3Context } from "../components/WithWeb3Context"
 import { LoadingOverlay } from "../components/Loadable"
 import { beaconAuthorizationService } from "../services/beacon-authorization.service"
 import { isSameEthAddress } from "../utils/general.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
+import { authorizeOperatorContract } from "../actions/web3"
+import { connect } from "react-redux"
+import { getKeepRandomBeaconOperatorAddress } from "../contracts"
 
-const KeepRandomBeaconApplicationPage = () => {
-  const web3Context = useWeb3Context()
-  const showMessage = useShowMessage()
+const KeepRandomBeaconApplicationPage = ({ authorizeOperatorContract }) => {
   const [selectedOperator, setOperator] = useState({})
 
   const [{ data, isFetching }, updateData] = useFetchData(
@@ -61,33 +60,16 @@ const KeepRandomBeaconApplicationPage = () => {
   )
 
   const authorizeContract = useCallback(
-    async (data, transactionHashCallback) => {
-      const { operatorAddress, contractName } = data
-      try {
-        await beaconAuthorizationService.authorizeKeepRandomBeaconOperatorContract(
-          web3Context,
-          operatorAddress,
-          transactionHashCallback
-        )
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Authorization transaction successfully completed",
-        })
-        setTimeout(
-          () => onAuthorizationSuccessCallback(contractName, operatorAddress),
-          5000
-        )
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Authorization action has failed ",
-          content: error.message,
-        })
-        throw error
-      }
+    async (data, awaitingPromise) => {
+      const { operatorAddress } = data
+      const operatorContractAddress = getKeepRandomBeaconOperatorAddress()
+
+      authorizeOperatorContract(
+        { operatorAddress, operatorContractAddress },
+        awaitingPromise
+      )
     },
-    [showMessage, onAuthorizationSuccessCallback, web3Context]
+    [authorizeOperatorContract]
   )
 
   const authorizeContractsData = useMemo(() => {
@@ -144,6 +126,7 @@ const KeepRandomBeaconApplicationPage = () => {
           selectedOperator={selectedOperator}
           data={authorizeContractsData}
           onAuthorizeBtn={authorizeContract}
+          onSuccessCallback={onAuthorizationSuccessCallback}
         />
       </LoadingOverlay>
       <LoadingOverlay
@@ -161,4 +144,11 @@ const toAuthHistoryData = (authData) => ({
   ...authData.contracts[0],
 })
 
-export default KeepRandomBeaconApplicationPage
+const mapDispatchToProps = {
+  authorizeOperatorContract,
+}
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(KeepRandomBeaconApplicationPage)

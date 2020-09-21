@@ -69,6 +69,9 @@ library Locks {
         emit ExpiredLockReleased(operator, operatorContract);
     }
 
+    /// @dev AuthorityVerifier is a trusted implementation and not a third-party,
+    /// external contract. AuthorityVerifier never reverts on the check and
+    /// has a reasonable gas consumption.
     function isStakeLocked(
         Storage storage self,
         address operator,

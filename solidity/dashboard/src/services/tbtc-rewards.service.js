@@ -11,6 +11,7 @@ import {
 } from "../contracts"
 import web3Utils from "web3-utils"
 import { isSameEthAddress } from "../utils/general.utils"
+import { isEmptyArray } from "../utils/array.utils"
 
 const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
   const transferEventSearchFilter = {
@@ -25,13 +26,16 @@ const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
     transferEventSearchFilter
   )
 
+  const depositCreatedFilterParam = isEmptyArray(transferEventToBeneficiary)
+    ? {}
+    : {
+        _depositContractAddress: transferEventToBeneficiary.map(
+          (_) => _.returnValues.from
+        ),
+      }
   const depositCreatedSearchFilter = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_SYSTEM_CONTRACT_NAME],
-    filter: {
-      _depositContractAddress: transferEventToBeneficiary.map(
-        (_) => _.returnValues.from
-      ),
-    },
+    filter: depositCreatedFilterParam,
   }
 
   const depositCreatedEvents = await contractService.getPastEvents(
