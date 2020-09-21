@@ -43,9 +43,16 @@ func RegisterConnectedPeersSource(
 				continue
 			}
 
+			multiaddresses, err := connectionManager.GetPeerMultiaddresses(peer)
+			if err != nil {
+				logger.Error("error on getting peer multiaddresses: [%v]", err)
+				continue
+			}
+
 			peersList[i] = map[string]interface{}{
 				"network_id":       peer,
 				"ethereum_address": key.NetworkPubKeyToEthAddress(peerPublicKey),
+				"multiaddresses":   multiaddresses,
 			}
 		}
 
