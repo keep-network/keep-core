@@ -51,12 +51,16 @@ const TokenOverviewPage = () => {
 
   return (
     <PageWrapper title="Token Overview">
-      <TokenOverview
-        totalKeepTokenBalance={totalKeepTokenBalance}
-        totalOwnedStakedBalance={totalOwnedStakedBalance}
-        totalGrantedTokenBalance={totalGrantedTokenBalance}
-        totalGrantedStakedBalance={totalGrantedStakedBalance}
-      />
+      <LoadingOverlay
+        isFetching={isFetching}
+        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}>
+        <TokenOverview
+          totalKeepTokenBalance={totalKeepTokenBalance}
+          totalOwnedStakedBalance={totalOwnedStakedBalance}
+          totalGrantedTokenBalance={totalGrantedTokenBalance}
+          totalGrantedStakedBalance={totalGrantedStakedBalance}
+        />
+      </LoadingOverlay>
       <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}
