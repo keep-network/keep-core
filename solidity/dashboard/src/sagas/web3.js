@@ -9,7 +9,12 @@ import {
 } from "../actions/messages"
 import { messageType } from "../components/Message"
 
-function createTransactionEventChannel(contract, method, args, options) {
+function createTransactionEventChannel(
+  contract,
+  method,
+  args = [],
+  options = {}
+) {
   const infoMessage = Message.create({
     title: "Waiting for the transaction confirmation...",
     type: messageType.INFO,
