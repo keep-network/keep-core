@@ -11,7 +11,7 @@ import { useWeb3Context } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
-import { sub } from "../utils/arithmetics.utils"
+import { sub, lt } from "../utils/arithmetics.utils"
 import Tile from "./Tile"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
@@ -27,7 +27,10 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import Skeleton from "./skeletons/Skeleton"
 import { withdrawGroupMemberRewards } from "../actions/web3"
 import { connect } from "react-redux"
-import { displayEthAmount } from "../utils/ethereum.utils"
+import {
+  displayEthAmount,
+  MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI,
+} from "../utils/ethereum.utils"
 
 const previewDataCount = 10
 const initialRewardsData = [[], "0"]
@@ -164,6 +167,10 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
       : rewardsToReturn.slice(0, previewDataCount)
   }, [rewards, withdrawals, showAll, rewardFilter.status])
 
+  const amountTooltipText = (amount) => {
+    return `${displayEthAmount(amount, "Gwei", null)} Gwei`
+  }
+
   return (
     <>
       <Tile title="Total Balance" titleClassName="text-grey-70 h2">
@@ -183,8 +190,11 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
                 amount={totalRewardsBalance}
                 amountClassName="h1 text-primary"
                 displayAmountFunction={displayEthAmount}
-                withTooltip
-                tooltipText={`${totalRewardsBalance} wei`}
+                withTooltip={lt(
+                  totalRewardsBalance,
+                  MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI
+                )}
+                tooltipText={amountTooltipText(totalRewardsBalance)}
               />
               <div className="ml-1 self-center">
                 <SpeechBubbleTooltip text="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires." />
@@ -246,8 +256,8 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
                   }`}
                   currencySymbol="ETH"
                   displayAmountFunction={displayEthAmount}
-                  withTooltip
-                  tooltipText={`${reward} wei`}
+                  withTooltip={lt(reward, MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI)}
+                  tooltipText={amountTooltipText(reward)}
                 />
               )}
             />
