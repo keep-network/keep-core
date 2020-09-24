@@ -9,9 +9,8 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
   let operatorContract
   let registry
   let serviceContract2 = accounts[1]
-  let serviceContract3 = accounts[2]
-  let serviceContractUpgrader = accounts[3]
-  let someoneElse = accounts[4]
+  let serviceContractUpgrader = accounts[2]
+  let someoneElse = accounts[3]
 
   let groupProfitAndEntryVerificationFee;
 
@@ -85,64 +84,6 @@ describe('KeepRandomBeaconOperator/ManageServiceContracts', () => {
         }
       )
       // ok, no revert
-    })
-  })
-
-  describe("removeServiceContract", async () => {
-    it("can be called by service contract upgrader", async () => {
-      await operatorContract.removeServiceContract(
-        serviceContract.address, 
-        {from: serviceContractUpgrader}
-      )
-      // ok, no revert
-    })
-
-    it("cannot be called by non-upgrader", async () => {
-      await expectRevert(
-        operatorContract.removeServiceContract(
-          serviceContract.address,
-          {from: someoneElse}
-        ),
-        "Not authorized"
-      )
-    })
-
-    it("removes service contract from the list", async () => {
-      await operatorContract.addServiceContract(
-        serviceContract2,
-        {from: serviceContractUpgrader}
-      )
-      await operatorContract.addServiceContract(
-        serviceContract3,
-        {from: serviceContractUpgrader}
-      )
-
-      await operatorContract.removeServiceContract(
-        serviceContract2,
-        {from: serviceContractUpgrader}
-      )
-
-      await expectRevert(
-        operatorContract.sign(
-          1, 
-          blsData.previousEntry, 
-          {
-            value: groupProfitAndEntryVerificationFee, 
-            from: serviceContract2
-          }
-        ),
-        "Caller is not a service contract"
-      )
-
-      await operatorContract.sign(
-        1, 
-        blsData.previousEntry, 
-        {
-          value: groupProfitAndEntryVerificationFee, 
-          from: serviceContract3
-        }
-      )
-      // ok, no revert - the second service contract is still there
     })
   })
 })

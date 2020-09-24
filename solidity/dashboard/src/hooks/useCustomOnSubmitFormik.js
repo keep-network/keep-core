@@ -10,12 +10,7 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
     setFormikState,
   } = useFormikContext()
 
-  const onSubmit = async (
-    onTransactionHashCallback,
-    openInfoMessage,
-    setIsFetchng,
-    openConfirmationModal
-  ) => {
+  const onSubmit = async (awaitingPromise) => {
     // Pre-submit
     const touched = {}
     Object.keys(values).forEach((name) => {
@@ -37,13 +32,8 @@ export const useCustomOnSubmitFormik = (onSubmitAction) => {
 
     // Submission
     try {
-      openInfoMessage()
-      setIsFetchng()
-      await onSubmitAction(
-        values,
-        onTransactionHashCallback,
-        openConfirmationModal
-      )
+      await onSubmitAction(values, awaitingPromise)
+      await awaitingPromise.promise
       setSubmitting(false)
       resetForm()
     } catch (error) {

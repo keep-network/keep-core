@@ -111,11 +111,9 @@ func TestSendReceive(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := broadcastChannel.RegisterUnmarshaler(
+	broadcastChannel.SetUnmarshaler(
 		func() net.TaggedUnmarshaler { return &testMessage{} },
-	); err != nil {
-		t.Fatal(err)
-	}
+	)
 
 	if err := broadcastChannel.Send(
 		ctx,

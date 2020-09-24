@@ -24,6 +24,9 @@ button, .btn {
 
   &:hover:disabled, &hover[disabled] {
     cursor: not-allowed;
+    &::after {
+      opacity: 0
+    }
   }
 }
 

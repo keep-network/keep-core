@@ -22,8 +22,20 @@ repos:
       additional_dependencies:
       - ethlint@1.2.3
     - id: lint-js
-      name: 'lint js'
+      name: 'lint solidity js'
       entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
-      files: '\.js$'
+      files: 'solidity\/.*\/\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"
+    - id: lint-dashboard-js
+      name: 'lint dashboard js'
+      entry: /usr/bin/env bash -c "cd solidity/dashboard && npm run js:lint"
+      files: 'solidity\/dashboard\/.*\/\.js$'
+      language: script
+      description: "Checks JS code according to the package's linter configuration"
+    - id: lint-faucet-js
+      name: 'lint faucet js'
+      entry: /usr/bin/env bash -c "cd infrastructure/gcp/keep-test/google-functions/keep-faucet && npm run lint:js"
+      files: 'infrastructure\/gcp\/keep-test\/google-functions\/keep-faucet\/.*\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"

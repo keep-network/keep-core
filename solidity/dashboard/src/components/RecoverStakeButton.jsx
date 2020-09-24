@@ -1,57 +1,42 @@
-import React, { useContext, useCallback, useMemo } from "react"
+import React, { useCallback } from "react"
 import { SubmitButton } from "./Button"
-import { Web3Context } from "./WithWeb3Context"
-import { useShowMessage, messageType } from "./Message"
+import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
+import { ContractsLoaded } from "../contracts"
+import { useModal } from "../hooks/useModal"
+import { withConfirmationModal } from "./ConfirmationModal"
+import { connect } from "react-redux"
+import { recoverStake } from "../actions/web3"
 
-const RecoverStakeButton = ({ operatorAddress, ...props }) => {
-  const web3Context = useContext(Web3Context)
-  const { yourAddress, grantContract, stakingContract } = web3Context
-  const showMessage = useShowMessage()
-  const { isFromGrant, isManagedGrant, managedGrantContractInstance } = props
-  const contract = useMemo(() => {
-    if (isManagedGrant) {
-      return managedGrantContractInstance
-    } else if (isFromGrant) {
-      return grantContract
-    } else {
-      return stakingContract
-    }
-  }, [
-    grantContract,
-    isFromGrant,
-    isManagedGrant,
-    managedGrantContractInstance,
-    stakingContract,
-  ])
+const RecoverStakeButton = ({ operatorAddress, recoverStake, ...props }) => {
+  const { isFromGrant } = props
+  const { openConfirmationModal } = useModal()
 
-  const recoverStake = useCallback(
-    async (onTransactionHashCallback) => {
-      try {
-        await contract.methods
-          .recoverStake(operatorAddress)
-          .send({ from: yourAddress })
-          .on("transactionHash", onTransactionHashCallback)
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Recover stake transaction successfully completed",
-        })
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Recover stake action has failed ",
-          content: error.message,
-        })
-        throw error
+  const onRecoverStake = useCallback(
+    async (awaitingPromise) => {
+      const { tokenStakingEscrow } = await ContractsLoaded
+
+      if (isFromGrant) {
+        await openConfirmationModal(
+          {
+            modalOptions: { title: "Are you sure?" },
+            title: "You’re about to recover tokens.",
+            address: tokenStakingEscrow.options.address,
+            btnText: "recover",
+            confirmationText: "RECOVER",
+          },
+          withConfirmationModal(ConfirmRecoveringModal)
+        )
       }
+
+      recoverStake(operatorAddress, awaitingPromise)
     },
-    [operatorAddress, yourAddress, contract.methods, showMessage]
+    [operatorAddress, recoverStake, isFromGrant, openConfirmationModal]
   )
 
   return (
     <SubmitButton
       className={props.btnClassName}
-      onSubmitAction={recoverStake}
+      onSubmitAction={onRecoverStake}
       pendingMessageTitle="Recover stake transaction is pending..."
       successCallback={props.successCallback}
     >
@@ -67,4 +52,26 @@ RecoverStakeButton.defaultProps = {
   isFromGrant: false,
 }
 
-export default React.memo(RecoverStakeButton)
+const mapDispatchToProps = {
+  recoverStake,
+}
+
+const ConnectedWithRedux = connect(null, mapDispatchToProps)(RecoverStakeButton)
+
+export default React.memo(ConnectedWithRedux)
+
+const ConfirmRecoveringModal = ({ address }) => {
+  return (
+    <>
+      <span>Recovering will deposit delegated tokens in the</span>
+      &nbsp;
+      <span>
+        <ViewAddressInBlockExplorer
+          address={address}
+          text="TokenStakingEscrow contract."
+        />
+      </span>
+      <p>You can withdraw them via Release tokens.</p>
+    </>
+  )
+}

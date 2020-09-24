@@ -4,14 +4,15 @@ const {initContracts} = require('../helpers/initContracts')
 const assert = require('chai').assert
 const {contract, accounts} = require("@openzeppelin/test-environment")
 const OperatorContract = contract.fromArtifact('KeepRandomBeaconOperatorStub')
-
+const GasPriceOracle = contract.fromArtifact("GasPriceOracle")
 
 describe('TestKeepRandomBeaconService/SelectOperator', function() {
 
   let registry, stakingContract, serviceContract, operatorContract, operatorContract2, operatorContract3;
 
   before(async () => {
-    let contracts = await initContracts(
+    const gasPriceOracle = await GasPriceOracle.new({from: accounts[0]})
+    const contracts = await initContracts(
       contract.fromArtifact('TokenStaking'),
       contract.fromArtifact('KeepRandomBeaconService'),
       contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
@@ -28,12 +29,14 @@ describe('TestKeepRandomBeaconService/SelectOperator', function() {
       serviceContract.address, 
       stakingContract.address, 
       registry.address,
+      gasPriceOracle.address,
       {from: accounts[0]}
     );
     operatorContract3 = await OperatorContract.new(
       serviceContract.address, 
       stakingContract.address, 
       registry.address,
+      gasPriceOracle.address,
       {from: accounts[0]}
     );
 

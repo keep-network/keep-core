@@ -40,6 +40,19 @@ spec:
         id: '4'
         network: ropsten
     spec:
+      volumes:
+      - name: keep-client-config
+        persistentVolumeClaim:
+          claimName: keep-client-config
+      - name: keep-client-data
+        persistentVolumeClaim:
+          claimName: keep-client-data
+      - name: eth-account-keyfile
+        configMap:
+          name: eth-account-info
+          items:
+            - key: account-4-keyfile
+              path: account-4-keyfile
       containers:
       - name: keep-client-4
         image: gcr.io/keep-test-f3e0/keep-client
@@ -64,19 +77,6 @@ spec:
           - name: eth-account-keyfile
             mountPath: /mnt/keep-client/keyfile
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
-      volumes:
-      - name: keep-client-config
-        persistentVolumeClaim:
-          claimName: keep-client-config
-      - name: keep-client-data
-        persistentVolumeClaim:
-          claimName: keep-client-data
-      - name: eth-account-keyfile
-        configMap:
-          name: eth-account-info
-          items:
-            - key: account-4-keyfile
-              path: account-4-keyfile
       initContainers:
       - name: initcontainer-provision-keep-client
         image: gcr.io/keep-test-f3e0/initcontainer-provision-keep-client
@@ -86,12 +86,12 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: eth-network-ropsten
-                key: rpc-url
+                key: keep-client-rpc-url
           - name: ETH_WS_URL
             valueFrom:
               secretKeyRef:
                 name: eth-network-ropsten
-                key: ws-url
+                key: keep-client-ws-url
           - name: ETH_NETWORK_ID
             valueFrom:
               configMapKeyRef:
@@ -107,11 +107,6 @@ spec:
               secretKeyRef:
                 name: eth-network-ropsten
                 key: contract-owner-eth-account-private-key
-          - name: KEEP_CLIENT_ETH_ACCOUNT_ADDRESS
-            valueFrom:
-              configMapKeyRef:
-                name: eth-account-info
-                key: account-4-address
           - name: KEEP_CLIENT_ETH_KEYFILE_PATH
             value: /mnt/keep-client/keyfile/account-4-keyfile
           - name: KEEP_CLIENT_PEERS
@@ -125,4 +120,6 @@ spec:
         volumeMounts:
           - name: keep-client-config
             mountPath: /mnt/keep-client/config
+          - name: eth-account-keyfile
+            mountPath: /mnt/keep-client/keyfile
         command: ["node", "/tmp/provision-keep-client.js"]

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
 
@@ -70,14 +71,16 @@ func Start(c *cli.Context) error {
 		config.LibP2P.Port = c.Int(portFlag)
 	}
 
-	// FIXME This needs to happen inside the `pkg/chain/ethereum` scope,
-	// FIXME probably.
-	operatorPrivateKey, operatorPublicKey, err := loadStaticKey(
+	ethereumKey, err := ethutil.DecryptKeyFile(
 		config.Ethereum.Account.KeyFile,
 		config.Ethereum.Account.KeyFilePassword,
 	)
 	if err != nil {
-		return fmt.Errorf("error loading static peer's key [%v]", err)
+		return fmt.Errorf(
+			"failed to read key file [%s]: [%v]",
+			config.Ethereum.Account.KeyFile,
+			err,
+		)
 	}
 
 	chainProvider, err := ethereum.Connect(config.Ethereum)
@@ -95,13 +98,13 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error obtaining stake monitor handle [%v]", err)
 	}
 	if c.Int(waitForStakeFlag) != 0 {
-		err = waitForStake(stakeMonitor, config.Ethereum.Account.Address, c.Int(waitForStakeFlag))
+		err = waitForStake(stakeMonitor, ethereumKey.Address.Hex(), c.Int(waitForStakeFlag))
 		if err != nil {
 			return err
 		}
 	}
 	hasMinimumStake, err := stakeMonitor.HasMinimumStake(
-		config.Ethereum.Account.Address,
+		ethereumKey.Address.Hex(),
 	)
 	if err != nil {
 		return fmt.Errorf("could not check the stake [%v]", err)
@@ -116,8 +119,9 @@ func Start(c *cli.Context) error {
 	}
 
 	ctx := context.Background()
+
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operatorPrivateKey, operatorPublicKey,
+		operator.EthereumKeyToOperatorKey(ethereumKey),
 	)
 	netProvider, err := libp2p.Connect(
 		ctx,
@@ -144,7 +148,7 @@ func Start(c *cli.Context) error {
 
 	err = beacon.Initialize(
 		ctx,
-		config.Ethereum.Account.Address,
+		ethereumKey.Address.Hex(),
 		chainProvider,
 		netProvider,
 		persistence,
@@ -153,7 +157,8 @@ func Start(c *cli.Context) error {
 		return fmt.Errorf("error initializing beacon: [%v]", err)
 	}
 
-	initializeMetrics(ctx, config, netProvider, stakeMonitor)
+	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
+	initializeDiagnostics(ctx, config, netProvider)
 
 	select {
 	case <-ctx.Done():
@@ -163,25 +168,6 @@ func Start(c *cli.Context) error {
 
 		return fmt.Errorf("uh-oh, we went boom boom for no reason")
 	}
-}
-
-func loadStaticKey(
-	keyFile string,
-	keyFilePassword string,
-) (*operator.PrivateKey, *operator.PublicKey, error) {
-	ethereumKey, err := ethutil.DecryptKeyFile(
-		keyFile,
-		keyFilePassword,
-	)
-	if err != nil {
-		return nil, nil, fmt.Errorf(
-			"failed to read KeyFile: %s [%v]", keyFile, err,
-		)
-	}
-
-	privateKey, publicKey := operator.EthereumKeyToOperatorKey(ethereumKey)
-
-	return privateKey, publicKey, nil
 }
 
 func waitForStake(stakeMonitor chain.StakeMonitor, address string, timeout int) error {
@@ -206,6 +192,7 @@ func initializeMetrics(
 	config *config.Config,
 	netProvider net.Provider,
 	stakeMonitor chain.StakeMonitor,
+	ethereumAddress string,
 ) {
 	registry, isConfigured := metrics.Initialize(
 		config.Metrics.Port,
@@ -239,12 +226,29 @@ func initializeMetrics(
 		ctx,
 		registry,
 		stakeMonitor,
-		config.Ethereum.Account.Address,
+		ethereumAddress,
 		time.Duration(config.Metrics.EthereumMetricsTick)*time.Second,
 	)
+}
 
-	metrics.ExposeLibP2PInfo(
-		registry,
-		netProvider,
+func initializeDiagnostics(
+	ctx context.Context,
+	config *config.Config,
+	netProvider net.Provider,
+) {
+	registry, isConfigured := diagnostics.Initialize(
+		config.Diagnostics.Port,
 	)
+	if !isConfigured {
+		logger.Infof("diagnostics are not configured")
+		return
+	}
+
+	logger.Infof(
+		"enabled diagnostics on port [%v]",
+		config.Diagnostics.Port,
+	)
+
+	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
+	diagnostics.RegisterClientInfoSource(registry, netProvider)
 }

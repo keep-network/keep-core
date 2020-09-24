@@ -3,39 +3,25 @@ import AvailableETHForm from "./AvailableETHForm"
 import { getErrorsObj } from "../forms/common-validators"
 import { withFormik } from "formik"
 import web3Utils from "web3-utils"
+import { depositEthForOperator } from "../actions/web3"
+import { connect } from "react-redux"
 import { useWeb3Context } from "./WithWeb3Context"
-import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
-import { useShowMessage, messageType } from "./Message"
 
-const AddEthModal = ({ operatorAddress, closeModal }) => {
-  const web3Context = useWeb3Context()
-  const { yourAddress, web3 } = web3Context
-  const showMessage = useShowMessage()
+const AddEthModal = ({
+  operatorAddress,
+  closeModal,
+  depositEthForOperator,
+}) => {
+  const { web3, yourAddress } = useWeb3Context()
 
   const onSubmit = useCallback(
-    async (formValues, onTransactionHashCallback) => {
+    async (formValues, awaitingPromise) => {
       const { ethAmount } = formValues
-      try {
-        await tbtcAuthorizationService.depositEthForOperator(
-          web3Context,
-          { operatorAddress, ethAmount },
-          onTransactionHashCallback
-        )
-        showMessage({
-          type: messageType.SUCCESS,
-          title: "Success",
-          content: "Add ETH for operator transaction successfully completed",
-        })
-      } catch (error) {
-        showMessage({
-          type: messageType.ERROR,
-          title: "Add ETH for operator action has failed ",
-          content: error.message,
-        })
-        throw error
-      }
+      const weiAmount = web3Utils.toWei(ethAmount.toString(), "ether")
+
+      depositEthForOperator(operatorAddress, weiAmount, awaitingPromise)
     },
-    [operatorAddress, showMessage, web3Context]
+    [operatorAddress, depositEthForOperator]
   )
 
   return (
@@ -56,7 +42,11 @@ const AddEthModal = ({ operatorAddress, closeModal }) => {
   )
 }
 
-export default React.memo(AddEthModal)
+const mapDispatchToProps = {
+  depositEthForOperator,
+}
+
+export default React.memo(connect(null, mapDispatchToProps)(AddEthModal))
 
 const AddETHFormik = withFormik({
   validateOnChange: false,
@@ -76,6 +66,8 @@ const AddETHFormik = withFormik({
 
       if (!ethAmount) {
         errors.ethAmount = "Required"
+      } else if (ethBalance.isZero()) {
+        errors.ethAmount = "Account ETH balance should be greater than 0"
       } else if (valueInWei.gt(ethBalance)) {
         errors.ethAmount = `The value should be less than ${web3Utils.fromWei(
           ethBalance.toString(),

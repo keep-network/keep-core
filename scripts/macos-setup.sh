@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+echo "Installing coreutils requirement..."
+brew list coreutils &> /dev/null || brew install coreutils
+
 echo "Installing golang requirements..."
 brew list golang &> /dev/null || brew install golang
 
@@ -25,9 +28,6 @@ pre-commit install --install-hooks
 echo "Installing solidity npm and requirements..."
 brew list npm &>/dev/null || brew install npm
 cd ../solidity && npm install && cd ../scripts
-
-echo "Installing truffle..."
-npm install -g truffle
 
 if ! [ -x "$(command -v protoc-gen-gogoslick)" ]; then
   echo 'WARNING: protoc-gen-gogoslick command is not available'

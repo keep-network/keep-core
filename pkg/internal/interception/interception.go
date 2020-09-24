@@ -70,10 +70,8 @@ func (c *channel) Recv(ctx context.Context, handler func(m net.Message)) {
 	c.delegate.Recv(ctx, handler)
 }
 
-func (c *channel) RegisterUnmarshaler(
-	unmarshaler func() net.TaggedUnmarshaler,
-) error {
-	return c.delegate.RegisterUnmarshaler(unmarshaler)
+func (c *channel) SetUnmarshaler(unmarshaler func() net.TaggedUnmarshaler) {
+	c.delegate.SetUnmarshaler(unmarshaler)
 }
 
 func (c *channel) SetFilter(filter net.BroadcastChannelFilter) error {

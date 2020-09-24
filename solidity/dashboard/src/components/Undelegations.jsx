@@ -80,15 +80,23 @@ const Undelegations = ({ undelegations, title }) => {
           header=""
           field=""
           renderContent={(undelegation) =>
-            undelegation.canRecoverStake && (
-              <RecoverStakeButton
-                isFromGrant={undelegation.isFromGrant}
-                isManagedGrant={undelegation.isManagedGrant}
-                managedGrantContractInstance={
-                  undelegation.managedGrantContractInstance
-                }
-                operatorAddress={undelegation.operatorAddress}
+            undelegation.isCopiedStake ? (
+              <StatusBadge
+                status={BADGE_STATUS.COMPLETE}
+                className="self-start"
+                text="stake copied"
               />
+            ) : (
+              undelegation.canRecoverStake && (
+                <RecoverStakeButton
+                  isFromGrant={undelegation.isFromGrant}
+                  isManagedGrant={undelegation.isManagedGrant}
+                  managedGrantContractInstance={
+                    undelegation.managedGrantContractInstance
+                  }
+                  operatorAddress={undelegation.operatorAddress}
+                />
+              )
             )
           }
         />

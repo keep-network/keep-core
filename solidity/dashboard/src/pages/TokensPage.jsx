@@ -1,61 +1,50 @@
-import React, { useContext } from "react"
+import React from "react"
 import DelegateStakeForm from "../components/DelegateStakeForm"
 import TokensOverview from "../components/TokensOverview"
-import { tokensPageService } from "../services/tokens-page.service"
-import { Web3Context } from "../components/WithWeb3Context"
-import { useShowMessage, messageType } from "../components/Message"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
+import { useModal } from "../hooks/useModal"
+import { connect } from "react-redux"
+import moment from "moment"
 
-const confirmationModalOptions = {
+const confirmationModalOptions = (initializationPeriod) => ({
+  modalOptions: { title: "Initiate Delegation" },
   title: "You’re about to delegate stake.",
-  subtitle:
-    "You’re delegating KEEP tokens. You will be able to cancel the delegation for up to 1 week. After that time, you can undelegate your stake.",
+  subtitle: `You’re delegating KEEP tokens. You will be able to cancel the delegation for up to ${moment()
+    .add(initializationPeriod, "seconds")
+    .fromNow(true)}. After that time, you can undelegate your stake.`,
   btnText: "delegate",
   confirmationText: "DELEGATE",
-}
+})
 
-const TokensPage = () => {
-  const web3Context = useContext(Web3Context)
-  const showMessage = useShowMessage()
+const TokensPage = ({ delegateStake }) => {
+  const { openConfirmationModal } = useModal()
 
   const {
     keepTokenBalance,
     minimumStake,
     selectedGrant,
     tokensContext,
+    initializationPeriod,
   } = useTokensPageContext()
 
-  const handleSubmit = async (
-    values,
-    onTransactionHashCallback,
-    openConfirmationModal
-  ) => {
-    values.context = tokensContext
-    values.selectedGrant = { ...selectedGrant }
-    try {
-      await openConfirmationModal(confirmationModalOptions)
-      await tokensPageService.delegateStake(
-        web3Context,
-        values,
-        onTransactionHashCallback
-      )
-      showMessage({
-        type: messageType.SUCCESS,
-        title: "Success",
-        content: "Staking delegate transaction has been successfully completed",
-      })
-    } catch (error) {
-      showMessage({
-        type: messageType.ERROR,
-        title: "Staking delegate action has failed ",
-        content: error.message,
-      })
-      throw error
-    }
+  const handleSubmit = async (values, meta) => {
+    await openConfirmationModal(confirmationModalOptions(initializationPeriod))
+    const grantData =
+      tokensContext === "owned"
+        ? {}
+        : { ...selectedGrant, grantId: selectedGrant.id }
+    delegateStake(
+      {
+        ...values,
+        ...grantData,
+        amount: values.stakeTokens,
+      },
+      meta
+    )
   }
 
   const getAvailableToStakeAmount = () => {
@@ -97,4 +86,13 @@ const TokensPage = () => {
   )
 }
 
-export default React.memo(TokensPage)
+const mapDispatchToProps = (dispatch) => ({
+  delegateStake: (values, meta) =>
+    dispatch({
+      type: "staking/delegate_request",
+      payload: values,
+      meta,
+    }),
+})
+
+export default connect(null, mapDispatchToProps)(TokensPage)

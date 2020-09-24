@@ -1,5 +1,7 @@
-import { add, sub, gte } from "../utils/arithmetics.utils"
+import { add, sub, gt } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
+import { isSameEthAddress } from "../utils/general.utils"
+import moment from "moment"
 
 export const REFRESH_KEEP_TOKEN_BALANCE = "REFRESH_KEEP_TOKEN_BALANCE"
 export const REFRESH_GRANT_TOKEN_BALANCE = "REFRESH_GRANT_TOKEN_BALANCE"
@@ -16,6 +18,9 @@ export const GRANT_WITHDRAWN = "GRANT_WITHDRAWN"
 export const SET_STATE = "SET_STATE"
 export const SET_SELECTED_GRANT = "SET_SELECTED_GRANT"
 export const SET_TOKENS_CONTEXT = "SET_TOKENS_CONTEXT"
+export const TOP_UP_INITIATED = "TOP_UP_INITIATED"
+export const TOP_UP_COMPLETED = "TOP_UP_COMPLETED"
+export const GRANT_DEPOSITED = "UPDATE_GRANT_DATA"
 
 const tokensPageReducer = (state, action) => {
   switch (action.type) {
@@ -79,12 +84,22 @@ const tokensPageReducer = (state, action) => {
     case GRANT_STAKED:
       return {
         ...state,
-        grants: grantStaked([...state.grants], action.payload),
+        ...findGrantAndUpdate(
+          [...state.grants],
+          { ...state.selectedGrant },
+          action.payload,
+          grantStaked
+        ),
       }
     case GRANT_WITHDRAWN:
       return {
         ...state,
-        grants: grantWithdrawn([...state.grants], action.payload),
+        ...findGrantAndUpdate(
+          [...state.grants],
+          { ...state.selectedGrant },
+          action.payload,
+          grantWithdrawn
+        ),
       }
     case SET_SELECTED_GRANT:
       return {
@@ -96,8 +111,35 @@ const tokensPageReducer = (state, action) => {
         ...state,
         tokensContext: action.payload,
       }
+    case TOP_UP_INITIATED:
+      return {
+        ...state,
+        availableTopUps: topUpInitiated(
+          [...state.availableTopUps],
+          action.payload
+        ),
+      }
+    case TOP_UP_COMPLETED:
+      return {
+        ...state,
+        availableTopUps: state.availableTopUps.filter(
+          ({ operatorAddress }) =>
+            !isSameEthAddress(operatorAddress, action.payload.operator)
+        ),
+        delegations: topUpCompleted([...state.delegations], action.payload),
+      }
+    case GRANT_DEPOSITED:
+      return {
+        ...state,
+        ...findGrantAndUpdate(
+          [...state.grants],
+          { ...state.selectedGrant },
+          action.payload,
+          grantDeposited
+        ),
+      }
     default:
-      return { ...state }
+      return state
   }
 }
 
@@ -116,43 +158,124 @@ const removeFromDelegationOrUndelegation = (array, id) => {
   return array
 }
 
-const grantStaked = (grants, { grantId, amount, availableToStake }) => {
-  const { indexInArray, obj: grantToUpdate } = findIndexAndObject(
-    "id",
-    grantId,
-    grants
-  )
-  if (indexInArray === null) {
-    return grants
-  }
-  grantToUpdate.staked = add(grantToUpdate.staked, amount)
-  grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
-  grantToUpdate.readyToRelease = gte(grantToUpdate.readyToRelease, 0)
-    ? grantToUpdate.readyToRelease
-    : "0"
-  grantToUpdate.availableToStake = availableToStake
-  grants[indexInArray] = grantToUpdate
+const grantDeposited = (
+  grantToUpdate,
+  { amount, availableToWitdrawGrant, operator }
+) => {
+  grantToUpdate.staked = sub(grantToUpdate.staked, amount)
+  grantToUpdate.withdrawableAmountGrantOnly = availableToWitdrawGrant
+  grantToUpdate.readyToRelease = add(grantToUpdate.readyToRelease, amount)
+  grantToUpdate.escrowOperatorsToWithdraw = [
+    ...grantToUpdate.escrowOperatorsToWithdraw,
+    operator,
+  ]
+  grantToUpdate.availableToStake = add(grantToUpdate.availableToStake, amount)
 
-  return grants
+  return grantToUpdate
 }
 
-const grantWithdrawn = (grants, { grantId, amount, availableToStake }) => {
+const grantStaked = (grantToUpdate, { amount }) => {
+  grantToUpdate.staked = add(grantToUpdate.staked, amount).toString()
+  grantToUpdate.readyToRelease = sub(
+    grantToUpdate.readyToRelease,
+    amount
+  ).toString()
+
+  grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
+    ? grantToUpdate.readyToRelease
+    : "0"
+  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
+
+  return grantToUpdate
+}
+
+const grantWithdrawn = (
+  grantToUpdate,
+  { amount, availableToStake, operator }
+) => {
+  grantToUpdate.readyToRelease = sub(grantToUpdate.readyToRelease, amount)
+  grantToUpdate.released = add(grantToUpdate.released, amount)
+  const unlocked = add(grantToUpdate.released, grantToUpdate.staked)
+  if (!gt(unlocked, grantToUpdate.amount)) {
+    grantToUpdate.unlocked = unlocked
+  }
+  grantToUpdate.availableToStake = availableToStake
+  if (operator) {
+    grantToUpdate.escrowOperatorsToWithdraw = [
+      ...grantToUpdate.escrowOperatorsToWithdraw,
+    ].filter((escrowOperator) => !isSameEthAddress(operator, escrowOperator))
+  }
+
+  return grantToUpdate
+}
+
+const findGrantAndUpdate = (
+  grants,
+  selectedGrant,
+  payload,
+  updateGrantCallback
+) => {
+  const { grantId } = payload
   const { indexInArray, obj: grantToUpdate } = findIndexAndObject(
     "id",
     grantId,
     grants
   )
   if (indexInArray === null) {
-    return grants
+    return { grants }
   }
-  grantToUpdate.readyToRelease = "0"
-  grantToUpdate.released = add(grantToUpdate.released, amount)
-  grantToUpdate.unlocked = add(grantToUpdate.released, grantToUpdate.staked)
-  grantToUpdate.availableToStake = availableToStake
-  grantToUpdate.withdrawn = add(grantToUpdate.withdrawn, amount)
-  grants[indexInArray] = grantToUpdate
+  const updatedGrant = updateGrantCallback(grantToUpdate, payload)
+  grants[indexInArray] = updatedGrant
 
-  return grants
+  if (selectedGrant.id === grantId) {
+    selectedGrant = updatedGrant
+  }
+
+  return { grants, selectedGrant }
+}
+
+const topUpInitiated = (topUps, { operator, topUp }) => {
+  const { indexInArray, obj: topUpToUpdate } = findIndexAndObject(
+    "operatorAddress",
+    operator,
+    topUps,
+    compareEthAddresses
+  )
+  if (indexInArray === null) {
+    return [
+      {
+        operatorAddress: operator,
+        availableTopUpAmount: topUp,
+        createdAt: moment.unix(),
+      },
+      ...topUps,
+    ]
+  }
+
+  topUpToUpdate.availableTopUpAmount = add(
+    topUpToUpdate.availableTopUpAmount,
+    topUp
+  )
+  topUpToUpdate.createdAt = moment.unix()
+  topUps[indexInArray] = topUpToUpdate
+
+  return topUps
+}
+
+const topUpCompleted = (delegations, { operator, newAmount }) => {
+  const { indexInArray, obj: delegationsToUpdate } = findIndexAndObject(
+    "operatorAddress",
+    operator,
+    delegations,
+    compareEthAddresses
+  )
+  if (indexInArray === null) {
+    return delegations
+  }
+
+  delegations[indexInArray] = { ...delegationsToUpdate, amount: newAmount }
+
+  return delegations
 }
 
 export default tokensPageReducer

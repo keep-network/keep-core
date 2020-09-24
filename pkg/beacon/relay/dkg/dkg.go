@@ -58,18 +58,11 @@ func ExecuteDKG(
 	startPublicationBlockHeight := gjkrEndBlockHeight
 
 	dkgResultChannel := make(chan *event.DKGResultSubmission)
-	dkgResultSubscription, err := relayChain.OnDKGResultSubmitted(
+	dkgResultSubscription := relayChain.OnDKGResultSubmitted(
 		func(event *event.DKGResultSubmission) {
 			dkgResultChannel <- event
 		},
 	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"[member:%v] could not create DKG result subscription [%v]",
-			playerIndex,
-			err,
-		)
-	}
 	defer dkgResultSubscription.Unsubscribe()
 
 	err = dkgResult.Publish(
@@ -173,10 +166,7 @@ func waitForDkgResultEvent(
 	relayChain relayChain.Interface,
 	blockCounter chain.BlockCounter,
 ) (*event.DKGResultSubmission, error) {
-	config, err := relayChain.GetConfig()
-	if err != nil {
-		return nil, err
-	}
+	config := relayChain.GetConfig()
 
 	timeoutBlock := startPublicationBlockHeight +
 		dkgResult.PrePublicationBlocks() +

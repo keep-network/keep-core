@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useRef, useState } from "react"
 import { CSSTransition, SwitchTransition } from "react-transition-group"
 import * as Icons from "./Icons"
 
@@ -20,18 +20,31 @@ ClockIndicator.defaultProps = {
 
 export const LoadingOverlay = React.memo(
   ({ isFetching, children, skeletonComponent }) => {
+    const ref = useRef(null)
+    const [fetchingDelay, setFetchingDelay] = useState(true)
+
+    // force switch between skeleton -> children when `isFetching` prop has a constant value.
+    useEffect(() => {
+      setFetchingDelay(isFetching)
+    }, [isFetching])
+
     return (
-      <div className="loading-overlay-container">
+      <div ref={ref} className="loading-overlay-container">
         <SwitchTransition mode={"out-in"}>
           <CSSTransition
-            key={isFetching}
+            key={fetchingDelay}
             addEndListener={(node, done) => {
               node.addEventListener("transitionend", done, false)
             }}
             classNames="loading-overlay"
+            onEntering={() => {
+              if (ref.current) {
+                ref.current.style.backgroundColor = "transparent"
+              }
+            }}
           >
             <div className="loading-overlay">
-              {isFetching ? skeletonComponent : children}
+              {fetchingDelay ? skeletonComponent : children}
             </div>
           </CSSTransition>
         </SwitchTransition>
@@ -40,6 +53,8 @@ export const LoadingOverlay = React.memo(
   }
 )
 
-export const KeepLoadingIndicator = () => <Icons.KeepLoadingIndicator />
+export const KeepLoadingIndicator = ({ width = 140, height = 140 }) => (
+  <Icons.KeepLoadingIndicator width={width} height={height} />
+)
 
 export default Loadable

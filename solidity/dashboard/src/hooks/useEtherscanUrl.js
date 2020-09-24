@@ -1,10 +1,8 @@
-import { useContext } from "react"
-import { Web3Context } from "../components/WithWeb3Context"
+import { getChainId } from "../connectors/utils"
 
+const chainID = getChainId()
 export const useEtherscanUrl = () => {
-  const { networkType } = useContext(Web3Context)
-
-  return networkType === "main"
+  return chainID === 1 // Mainnet network ID.
     ? "https://etherscan.io"
     : "https://ropsten.etherscan.io"
 }

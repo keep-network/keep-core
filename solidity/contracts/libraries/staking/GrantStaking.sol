@@ -50,7 +50,7 @@ library GrantStaking {
         address operator,
         bytes memory extraData
     ) public returns (bool, uint256) {
-        if (from == address(escrow)) {
+        if (from == escrow) {
             require(extraData.length == 92, "Corrupted delegation data from escrow");
             uint256 grantId = extraData.toUint(60);
             setGrantForOperator(self, operator, grantId);

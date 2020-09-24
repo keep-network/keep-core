@@ -26,6 +26,10 @@ each(@bg-colors, {
 //margins
 each(@directions-shortcuts, .(@v, @k) {
   .m@{k} {
+    &-a{
+      @cssProperty: ~'margin-@{v}';
+      @{cssProperty}: auto;
+    }
     each(@margin-and-padding-values, {
       &-@{value} {
         @cssProperty: ~'margin-@{v}';
@@ -38,6 +42,10 @@ each(@directions-shortcuts, .(@v, @k) {
 // padding
 each(@directions-shortcuts, .(@v, @k) {
   .p@{k} {
+    &-a{
+      @cssProperty: ~'padding-@{v}';
+      @{cssProperty}: auto;
+    }
     each(@margin-and-padding-values, {
       &-@{value} {
         @cssProperty: ~'padding-@{v}';
@@ -200,6 +208,23 @@ svg.eth-icon {
   &-x {
     &-scroll {
       overflow-x: scroll;
+    }
+  }
+}
+
+ul {
+  &.list__colored-bullets--grey-60 {
+    list-style: none;
+
+    li {
+      padding-left: 1em;
+      text-indent: -1em;
+    }
+
+    li::before {
+      content: "\2022";
+      color: @color-grey-60;
+      padding-right: 1rem;
     }
   }
 }
