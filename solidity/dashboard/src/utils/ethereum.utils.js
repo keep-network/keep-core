@@ -1,7 +1,7 @@
 import { Web3Loaded } from "../contracts"
 import { isSameEthAddress } from "./general.utils"
 import BigNumber from "bignumber.js"
-import web3Utils from "web3-utils"
+import web3Utils, { toBN } from "web3-utils"
 import { lt } from "./arithmetics.utils"
 
 export const getEventFromLogs = async (logs, web3Contract, eventName) => {
@@ -51,7 +51,9 @@ export const getEventsFromTransaction = async (contractToEventName, txHash) => {
 // 0.000034560123345621 ETH). So in that case we want to display `<0.0001`.
 // More info here:
 // https://github.com/keep-network/keep-core/pull/2050#issuecomment-693434991
-export const MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI = "100000000000000" // 0.0001 ETH
+export const MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI = toBN(10)
+  .pow(toBN(14))
+  .toString() // 0.0001 ETH
 
 export function displayEthAmount(
   amountInWei,
