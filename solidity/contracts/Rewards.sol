@@ -1,3 +1,17 @@
+/**
+▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓
+  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀
+  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌
+▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓
+
+                           Trust math, not hardware.
+*/
+
 pragma solidity ^0.5.17;
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
@@ -5,14 +19,12 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 
-/// @title Rewards
+/// @title KEEP Signer Subsidy Rewards
 /// @dev A contract for distributing KEEP token rewards to keeps.
-/// When a reward contract is created,
-/// the creator defines a reward schedule
+/// When a reward contract is created, the creator defines a reward schedule
 /// consisting of one or more reward intervals and their interval weights,
-/// the length of reward intervals,
-/// and the quota of how many keeps must be created in an interval
-/// for the full reward for that interval to be paid out.
+/// the length of reward intervals, and the quota of how many keeps must be
+/// created in an interval for the full reward for that interval to be paid out.
 ///
 /// The amount of KEEP to be distributed is determined by funding the contract,
 /// and additional KEEP can be added at any time.
@@ -23,41 +35,34 @@ import "openzeppelin-solidity/contracts/math/Math.sol";
 /// a keep created at the time `startOf(i)` belongs to interval `i`
 /// and one created at `endOf(i)` belongs to `i+1`.
 ///
-/// When an interval is over,
-/// it will be allocated a percentage of the remaining unallocated rewards
-/// based on its weight,
-/// and adjusted by the number of keeps created in the interval
-/// if the quota is not met.
-/// The adjustment for not meeting the keep quota is a percentage
-/// that equals the percentage of the quota that was met;
-/// if the number of keeps created is 80% of the quota
-/// then 80% of the base reward will be allocated for the interval.
+/// When an interval is over, it will be allocated a percentage of the remaining
+/// unallocated rewards based on its weight, and adjusted by the number of keeps
+/// created in the interval if the quota is not met.
+///
+/// The adjustment for not meeting the keep quota is a percentage that equals
+/// the percentage of the quota that was met; if the number of keeps created is
+/// 80% of the quota then 80% of the base reward will be allocated for the
+/// interval.
 ///
 /// Any unallocated rewards will stay in the unallocated rewards pool,
-/// to be allocated for future intervals.
-/// Intervals past the initially defined schedule have a weight of 100%,
-/// meaning that all remaining unallocated rewards
-/// will be allocated to the interval.
+/// to be allocated for future intervals. Intervals past the initially defined
+/// schedule have a weight of 100%, meaning that all remaining unallocated
+/// rewards will be allocated to the interval.
 ///
-/// Keeps of the appropriate type can receive rewards
-/// once the interval they were created in is over,
-/// and the keep has closed happily.
-/// There is no time limit to receiving rewards,
-/// nor is there need to wait for all keeps from the interval to close.
-/// Calling `receiveReward` automatically allocates the rewards
-/// for the interval the specified keep was created in
-/// and all previous intervals.
+/// Keeps of the appropriate type can receive rewards once the interval they
+/// were created in is over, and the keep has closed happily.
+/// There is no time limit to receiving rewards, nor is there need to wait for
+/// all keeps from the interval to close.
+/// Calling `receiveReward` automatically allocates the rewards for the interval
+/// the specified keep was created in and all previous intervals.
 ///
-/// If a keep is terminated,
-/// that fact can be reported to the reward contract.
-/// Reporting a terminated keep returns its allocated reward
-/// to the pool of unallocated rewards.
+/// If a keep is terminated, that fact can be reported to the reward contract.
+/// Reporting a terminated keep returns its allocated reward to the pool of
+/// unallocated rewards.
 ///
-/// @dev A concrete implementation of the abstract rewards contract
-/// must specify functions for accessing information about keeps
-/// and paying out rewards.
-/// For the purpose of rewards,
-/// Random Beacon signing groups count as "keeps"
+/// @dev A concrete implementation of the abstract rewards contract must specify
+/// functions for accessing information about keeps and paying out rewards.
+/// For the purpose of rewards, Random Beacon signing groups count as "keeps"
 /// and the beacon operator contract acts as the "factory".
 contract Rewards {
     using SafeMath for uint256;
@@ -120,12 +125,11 @@ contract Rewards {
     function minimumKeepsPerInterval() public view returns (uint256);
 
     /// @notice Funds the rewards contract.
-    /// @dev Adds the received amount of tokens
-    /// to `totalRewards` and `unallocatedRewards`.
-    /// May be called at any time, even after allocating some intervals.
-    /// Changes to `unallocatedRewards`
-    /// will take effect on subsequent interval allocations.
-    /// Intended to be used with `approveAndCall`.
+    /// @dev Adds the received amount of tokens to `totalRewards` and
+    /// `unallocatedRewards`. May be called at any time, even after allocating
+    /// some intervals.
+    /// Changes to `unallocatedRewards` will take effect on subsequent interval
+    /// allocations. Intended to be used with `approveAndCall`.
     /// If the reward contract has received tokens outside `approveAndCall`,
     /// this collects them as well.
     /// @param _from The original sender of the tokens.
@@ -168,8 +172,8 @@ contract Rewards {
         _processKeep(true, keepIdentifier);
     }
 
-    /// @notice Report that the keep was terminated,
-    /// and return its allocated rewards to the unallocated pool.
+    /// @notice Report that the keep was terminated, and return its allocated
+    /// rewards to the unallocated pool.
     /// @param keepIdentifier The terminated keep.
     function reportTermination(bytes32 keepIdentifier)
         factoryMustRecognize(keepIdentifier)
@@ -188,18 +192,16 @@ contract Rewards {
         return _recognizedByFactory(_keep) && _isClosed(_keep) && !rewardClaimed(_keep);
     }
 
-    /// @notice Checks if a keep is terminated
-    /// and thus its rewards can be returned to the unallocated pool.
+    /// @notice Checks if a keep is terminated and thus its rewards can be
+    /// returned to the unallocated pool.
     /// @param _keep The keep to check.
     /// @return True if the keep is terminated, false otherwise
     function eligibleButTerminated(bytes32 _keep) public view returns (bool) {
         return _recognizedByFactory(_keep) && _isTerminated(_keep) && !rewardClaimed(_keep);
     }
 
-    /// @notice Return the interval number
-    /// the provided timestamp falls within.
-    /// @dev If the timestamp is before `firstIntervalStart`,
-    /// the interval is 0.
+    /// @notice Return the interval number the provided timestamp falls within.
+    /// @dev If the timestamp is before `firstIntervalStart`, the interval is 0.
     /// @param timestamp The timestamp whose interval is queried.
     /// @return The interval of the timestamp.
     function intervalOf(uint256 timestamp) public view returns (uint256) {
@@ -330,11 +332,9 @@ contract Rewards {
 
     /// @notice Return the endpoint index of the interval,
     /// i.e. the number of keeps created in and before the interval.
-    /// The interval must have ended;
-    /// otherwise the endpoint might still change.
-    /// @dev Uses a locally cached result,
-    /// and stores the result if it isn't cached yet.
-    /// All keeps created before the initiation fall in interval 0.
+    /// The interval must have ended; otherwise the endpoint might still change.
+    /// @dev Uses a locally cached result, and stores the result if it isn't
+    /// cached yet. All keeps created before the initiation fall in interval 0.
     /// @param interval The number of the interval.
     /// @return endpoint The number of keeps the factory had created
     /// before the end of the interval.
@@ -420,21 +420,17 @@ contract Rewards {
     /// after adjusting for the number of keeps in the interval.
     /// @dev An interval with at least `minimumKeepsPerInterval` keeps
     /// will have the full reward allocated to it.
-    /// An interval with fewer keeps will only be allocated
-    /// a fraction of the base reward
-    /// equaling the fraction of the quota that was met.
-    /// The reward allocated for each keep in the interval
-    /// is constant regardless of the number of keeps in the interval
-    /// until the quota is met,
-    /// and further increases in the number of keeps
-    /// will lead to the same allocation being shared among more of them.
-    /// Each keep in an interval is allocated the same reward.
-    /// If the number of keeps in an interval meets the quota,
-    /// but the base allocation isn't divisible by the number of keeps,
-    /// the remainder will remain unallocated.
-    /// Allocations for an already allocated interval,
-    /// or when all prior intervals haven't been allocated yet,
-    /// will produce incorrect results.
+    /// An interval with fewer keeps will only be allocated a fraction of the
+    /// base reward equaling the fraction of the quota that was met.
+    /// The reward allocated for each keep in the interval is constant
+    /// regardless of the number of keeps in the interval until the quota is
+    /// met, and further increases in the number of keeps will lead to the same
+    /// allocation being shared among more of them. Each keep in an interval is
+    /// allocated the same reward. If the number of keeps in an interval meets
+    /// the quota, but the base allocation isn't divisible by the number of
+    /// keeps, the remainder will remain unallocated.
+    /// Allocations for an already allocated interval, or when all prior
+    /// intervals haven't been allocated yet, will produce incorrect results.
     /// @param interval The next interval to be allocated.
     /// @return The amount of tokens to allocate as rewards for the interval.
     function _adjustedAllocation(uint256 interval) internal returns (uint256) {
@@ -452,12 +448,11 @@ contract Rewards {
         return __baseAllocation.div(adjustmentCount).mul(keepCount);
     }
 
-    /// @notice Allocate rewards for unallocated intervals
-    /// up to and including the given interval.
+    /// @notice Allocate rewards for unallocated intervals up to and including
+    /// the given interval.
     /// @dev The given interval must be finished and unallocated.
-    /// To allocate rewards correctly,
-    /// any earlier intervals that are still unallocated
-    /// will be allocated before the given interval.
+    /// To allocate rewards correctly, any earlier intervals that are still
+    /// unallocated will be allocated before the given interval.
     /// With reasonable interval lengths this should not pose a problem,
     /// and if allocating a later interval results in an out-of-gas issue,
     /// forcing the allocation of an earlier interval should fix it.
@@ -506,11 +501,10 @@ contract Rewards {
         return (interval < allocatedIntervals);
     }
 
-    /// @notice Process the rewards for the given keep,
-    /// allocating finished intervals as necessary,
-    /// and then either paying out the rewards to the keep's members
-    /// or returning them to the unallocated pool,
-    /// depending on the keep's eligibility.
+    /// @notice Process the rewards for the given keep, allocating finished
+    /// intervals as necessary, and then either paying out the rewards to the
+    /// keep's members or returning them to the unallocated pool, depending on
+    /// the keep's eligibility.
     /// @param eligible Whether the keep is eligible for rewards or not.
     /// @param keepIdentifier The specified keep.
     function _processKeep(
