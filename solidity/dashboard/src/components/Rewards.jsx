@@ -168,7 +168,7 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
   }, [rewards, withdrawals, showAll, rewardFilter.status])
 
   const amountTooltipText = (amount) => {
-    return `${displayEthAmount(amount, "Gwei", null)} Gwei`
+    return `${displayEthAmount(amount, "gwei", null)} gwei`
   }
 
   return (
