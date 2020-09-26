@@ -23,6 +23,7 @@ function* releaseTokens(action) {
         payload: {
           contract: managedGrantContractInstance,
           methodName: "withdraw",
+          args: [],
         },
       })
     } else {
