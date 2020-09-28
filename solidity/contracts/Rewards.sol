@@ -91,16 +91,16 @@ contract Rewards {
 
     // Array representing the percentage of unallocated rewards
     // available for each reward interval.
-    uint256[] intervalWeights; // percent array
+    uint256[] internal intervalWeights; // percent array
     // Mapping of interval number to tokens allocated for the interval.
-    uint256[] intervalAllocations;
+    uint256[] internal intervalAllocations;
 
     // mapping of keeps to booleans.
     // True if the keep has been used to claim a reward.
-    mapping(bytes32 => bool) claimed;
+    mapping(bytes32 => bool) internal claimed;
 
     // Mapping of interval to number of keeps created in/before the interval
-    mapping(uint256 => uint256) keepsByInterval;
+    mapping(uint256 => uint256) internal keepsByInterval;
 
     // Mapping of interval to number of keeps whose rewards have been paid out,
     // or reallocated because the keep closed unhappily
