@@ -1,0 +1,97 @@
+@active-nav-item-bg-color: @color-grey-20;
+
+.side-menu, .side-menu--active {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: @header-height;
+    left: 0;
+    z-index: 12;
+    // temporary solution. Since the app layout and main header will be changed.
+    height: calc(100% - @header-height);
+    width: 0px;
+    visibility: hidden;
+    background: @side-menu-color;
+    border-right: 1px solid @color-grey-30;
+    overflow-x: hidden;
+    transition: 0.5s ease;
+
+    footer {
+        margin-top: auto;
+        padding-left: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+}
+
+.side-menu {
+    &--active {
+        width: @side-menu-width;
+        visibility: visible;
+        overflow-x: visible;
+    }
+
+    &__list {
+        list-style: none;
+        text-align: center;
+        padding: 0;
+    }
+}
+  
+.side-menu__item, .side-menu__item--active {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding-left: 1.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    text-decoration: none !important;
+    outline: none !important;
+
+    background: linear-gradient(to right, @side-menu-color 50%,  @active-nav-item-bg-color 50%,);
+    background-size: 200% 100%;
+    background-position: left bottom;
+    transition: background-position .5s ease;
+}
+  
+.side-menu__item--active, .side-menu__item:hover {
+    background-position: -100% 0;
+
+    .side-menu__item {
+        &__title {
+            color: @color-black;
+        }
+
+        &__icon {
+            svg {
+                fill: @color-black;
+            }
+        }
+    }
+}
+
+.side-menu__item {
+
+    &__icon, &__title {
+        transition: all 0.5s ease;
+    }
+
+    &__icon {
+        svg {
+            width: 10px;
+            height: 10px;
+            margin-right: 0.5rem;
+        }
+    }
+
+    &__title {
+        font-family: Work Sans;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 0.75rem;
+        line-height: 1.5rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-feature-settings: 'tnum' on, 'lnum' on, 'zero' on;
+        color: @color-grey-70;
+    }
+}
