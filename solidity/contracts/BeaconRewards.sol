@@ -19,20 +19,33 @@ import "./KeepRandomBeaconOperator.sol";
 import "./TokenStaking.sol";
 
 contract BeaconRewards is Rewards {
+
+    // 
+    // Random Beacon Rewards constants
+    // 
+    uint256 constant _minimumKeepsPerInterval = 2; // TODO define
+
+    uint256[] private beaconIntervalWeights = [
+        4, 8, 10, 12, 15, 15,
+        15, 15, 15, 15, 15, 15,
+        15, 15, 15, 15, 15, 15,
+        15, 15, 15, 15, 15, 15
+    ];
+    //
+    //
+
     KeepRandomBeaconOperator operatorContract;
     TokenStaking tokenStaking;
-    uint256 constant _minimumKeepsPerInterval = 2; // TODO define
 
     constructor (
         address _token,
         uint256 _firstIntervalStart,
-        uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract
     ) public Rewards(
         _token,
         _firstIntervalStart,
-        _intervalWeights
+        beaconIntervalWeights
     ) {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);

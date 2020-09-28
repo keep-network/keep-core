@@ -6,16 +6,18 @@ contract BeaconRewardsStub is BeaconRewards {
     constructor (
         address _token,
         uint256 _firstIntervalStart,
-        uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract
     ) public BeaconRewards(
         _token,
         _firstIntervalStart,
-        _intervalWeights,
         _operatorContract,
         _stakingContract
     ) {
+    }
+
+    function setIntervalWeights(uint256[] memory _intervalWeights) public {
+        intervalWeights = _intervalWeights;
     }
 
     function getKeepCount() public view returns (uint256) {

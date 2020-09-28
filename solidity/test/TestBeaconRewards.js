@@ -47,10 +47,10 @@ describe('BeaconRewards', () => {
         rewards = await contract.fromArtifact('BeaconRewardsStub').new(
             token.address,
             initiationTime,
-            intervalWeights,
             operatorContract.address,
             stakingContract.address
         )
+        await rewards.setIntervalWeights(intervalWeights)
         await token.approveAndCall(
             rewards.address,
             totalRewards,
