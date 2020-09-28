@@ -2,7 +2,7 @@ import { Web3Loaded } from "../contracts"
 import { isSameEthAddress } from "./general.utils"
 import BigNumber from "bignumber.js"
 import web3Utils, { toBN } from "web3-utils"
-import { lt } from "./arithmetics.utils"
+import { lt, isZero } from "./arithmetics.utils"
 
 export const getEventFromLogs = async (logs, web3Contract, eventName) => {
   const web3 = await Web3Loaded
@@ -60,8 +60,8 @@ export function displayEthAmount(
   unit = "ether",
   decimalsPlaces = 4
 ) {
-  if (!amountInWei) {
-    return 0
+  if (!amountInWei || isZero(amountInWei)) {
+    return "0"
   }
 
   if (unit === "ether" && lt(amountInWei, MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI)) {
