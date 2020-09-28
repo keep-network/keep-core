@@ -67,6 +67,10 @@ contract BeaconBackportRewards is Rewards {
         excessRecipient = _excessRecipient;
     }
 
+    function receiveReward(uint256 i) public {
+        receiveReward(bytes32(i));
+    }
+
     function minimumKeepsPerInterval() public view returns (uint256) {
         return _minimumKeepsPerInterval;
     }
