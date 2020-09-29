@@ -95,10 +95,6 @@ describe('BeaconRewards', () => {
         await restoreSnapshot()
     })
 
-    function bytes32(byte) {
-        return "0x" + ("00" * 31) + byte
-    }
-
     it("should have 3 keeps", async () => {
         let count = await rewards.getKeepCount();
         expect(count).to.eq.BN(3);
@@ -111,8 +107,8 @@ describe('BeaconRewards', () => {
         let recognized3 = await rewards.recognizedByFactory(3);
 
         assert.isTrue(recognized0, "group 0 not recognized")
-        assert.isTrue(recognized0, "group 1 not recognized")
-        assert.isTrue(recognized0, "group 2 not recognized")
+        assert.isTrue(recognized1, "group 1 not recognized")
+        assert.isTrue(recognized2, "group 2 not recognized")
         assert.isFalse(recognized3, "group 3 falsely recognized")
     })
 
