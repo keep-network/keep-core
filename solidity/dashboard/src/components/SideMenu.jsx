@@ -43,8 +43,8 @@ export const SideMenu = (props) => {
         />
         <NavLink
           exact
-          to="/glossary"
-          label="glossary"
+          to="/resources"
+          label="resources"
           icon={<Icons.Question />}
         />
         {isKeepTokenContractDeployer && (
