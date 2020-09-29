@@ -27,25 +27,25 @@ export const SideMenu = (props) => {
   return (
     <nav className={`side-menu${isOpen ? "--active " : ""}`}>
       <ul className="side-menu__list">
-        <NavLink to="/tokens" label="tokens" icon={<Icons.KeepToken />} />
+        <NavLink to="/overview" label="overview" icon={<Icons.Home />} />
+        <NavLink to="/tokens" label="tokens" icon={<Icons.FeesVector />} />
         <NavLink
           exact
           to="/operations"
           label="operations"
-          icon={<Icons.Operations />}
+          icon={<Icons.Beacon />}
         />
         <NavLink to="/rewards" label="rewards" icon={<Icons.Rewards />} />
         <NavLink
           to="/applications"
           label="applications"
-          icon={<Icons.Authorizer />}
+          icon={<Icons.Authorize />}
         />
         <NavLink
           exact
           to="/glossary"
           label="glossary"
-          icon={<Icons.Glossary />}
-          wrapperClassName="glossary-link text-label"
+          icon={<Icons.Question />}
         />
         {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
