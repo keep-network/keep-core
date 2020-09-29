@@ -1,7 +1,7 @@
 const { initContracts } = require('../helpers/initContracts')
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
-const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { time } = require("@openzeppelin/test-helpers")
 const crypto = require("crypto")
 const stakeDelegate = require('../helpers/stakeDelegate')
 
@@ -17,13 +17,12 @@ describe('BeaconRewards', () => {
         groupSize, minimumStake,
         group1, group2, group3,
         owner = accounts[0],
-        requestor = accounts[1],
-        operator1 = accounts[2],
-        operator2 = accounts[3],
-        operator3 = accounts[4],
-        beneficiary1 = accounts[5],
-        beneficiary2 = accounts[6],
-        beneficiary3 = accounts[7]
+        operator1 = accounts[1],
+        operator2 = accounts[2],
+        operator3 = accounts[3],
+        beneficiary1 = accounts[4],
+        beneficiary2 = accounts[5],
+        beneficiary3 = accounts[6]
 
     const termLength = 100
     const totalRewards = 6000

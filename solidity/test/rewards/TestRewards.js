@@ -14,10 +14,7 @@ const expect = chai.expect
 const assert = chai.assert
 
 describe('Rewards', () => {
-    const alice = accounts[0]
-    const bob = accounts[1]
-    const aliceBeneficiary = accounts[2]
-    const bobBeneficiary = accounts[3]
+    const aliceBeneficiary = accounts[1]
     const funder = accounts[9]
 
     const termLength = 100
