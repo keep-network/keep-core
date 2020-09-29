@@ -1,7 +1,7 @@
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
-const { testValues } = require("../helpers/rewardsData.js")
+const { testValues } = require("./rewardsData.js")
 
 const KeepToken = contract.fromArtifact('KeepToken')
 
