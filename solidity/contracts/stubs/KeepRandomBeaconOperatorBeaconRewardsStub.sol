@@ -15,7 +15,7 @@ contract KeepRandomBeaconOperatorBeaconRewardsStub is KeepRandomBeaconOperator {
         _registryContract,
         _gasPriceOracle
     ) public {
-        groupSize = 3;
+        // groupSize = 3;
         groups.groupActiveTime = 5;
         groups.relayEntryTimeout = 10;
     }

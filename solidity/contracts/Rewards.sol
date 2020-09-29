@@ -80,7 +80,7 @@ contract Rewards {
     uint256 public paidOutRewards;
 
     // Length of one interval in seconds (timestamp diff).
-    uint256 public constant termLength = 100; // TODO define
+    uint256 public constant termLength = 2592000; // 30 days
     // Timestamp of first interval beginning.
     // Interval 0 covers everything before `firstIntervalStart`
     // and the first `termLength` after `firstIntervalStart`.
@@ -445,7 +445,7 @@ contract Rewards {
             return 0;
         }
         // Rewards divide equally among keeps
-        return __baseAllocation.div(adjustmentCount).mul(keepCount);
+        return __baseAllocation.mul(keepCount).div(adjustmentCount);
     }
 
     /// @notice Allocate rewards for unallocated intervals up to and including

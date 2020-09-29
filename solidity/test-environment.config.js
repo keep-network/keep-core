@@ -1,5 +1,5 @@
 module.exports = {
   accounts: {
-    amount: 13, // Number of unlocked accounts
+    amount: 100, // Number of unlocked accounts
   },
 };
