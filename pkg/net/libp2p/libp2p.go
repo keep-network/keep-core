@@ -29,6 +29,7 @@ import (
 
 	bootstrap "github.com/keep-network/go-libp2p-bootstrap"
 	ma "github.com/multiformats/go-multiaddr"
+	manet "github.com/multiformats/go-multiaddr/net"
 )
 
 var logger = log.Logger("keep-net-libp2p")
@@ -167,6 +168,18 @@ func (cm *connectionManager) ConnectedPeers() []string {
 	return peers
 }
 
+func (cm *connectionManager) ConnectedPeersAddrInfo() []net.AddrInfo {
+	var peers []net.AddrInfo
+	for _, conn := range cm.Network().Conns() {
+		info := net.AddrInfo{
+			ID:   conn.RemotePeer().String(),
+			Addr: conn.RemoteMultiaddr(),
+		}
+		peers = append(peers, info)
+	}
+	return peers
+}
+
 func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error) {
 	peerID, err := peer.IDB58Decode(connectedPeer)
 	if err != nil {
@@ -211,6 +224,16 @@ func (cm *connectionManager) AddrStrings() []string {
 			multiaddrStrings,
 			multiaddressWithIdentity(multiaddr, cm.ID()),
 		)
+	}
+
+	return multiaddrStrings
+}
+
+func (cm *connectionManager) NetAddrStrings() []string {
+	multiaddrStrings := make([]string, 0, len(cm.Addrs()))
+	for _, multiaddr := range cm.Addrs() {
+		Addr, _ := manet.ToNetAddr(multiaddr)
+		multiaddrStrings = append(multiaddrStrings, Addr.String())
 	}
 
 	return multiaddrStrings

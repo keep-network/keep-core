@@ -116,6 +116,10 @@ func (lcm *localConnectionManager) ConnectedPeers() []string {
 	return connectedPeers
 }
 
+func (lcm *localConnectionManager) ConnectedPeersAddrInfo() []net.AddrInfo {
+	return make([]net.AddrInfo, 0)
+}
+
 func (lcm *localConnectionManager) GetPeerPublicKey(
 	connectedPeer string,
 ) (*key.NetworkPublic, error) {
@@ -133,6 +137,10 @@ func (lcm *localConnectionManager) DisconnectPeer(connectedPeer string) {
 }
 
 func (lcm *localConnectionManager) AddrStrings() []string {
+	return make([]string, 0)
+}
+
+func (cm *localConnectionManager) NetAddrStrings() []string {
 	return make([]string, 0)
 }
 
