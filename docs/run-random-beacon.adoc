@@ -133,7 +133,6 @@ Application configurations are stored in a `.toml` file and passed to the applic
 
 # Keep operator Ethereum account.
 [ethereum.account]
-  Address = "0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
   KeyFile = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
 
 # Keep contract addresses configuration.

@@ -5,7 +5,6 @@
   URLRPC = ""
 
   [ethereum.account]
-    Address = ""
     KeyFile = ""
 
   [ethereum.ContractAddresses]
