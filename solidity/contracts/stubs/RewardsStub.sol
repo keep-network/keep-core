@@ -6,7 +6,6 @@ contract RewardsStub is Rewards {
     uint256[] creationTimes;
     uint256 closedTime;
     mapping(uint256 => bool) terminated;
-    uint256 minKeeps;
 
     constructor (
         address _token,
@@ -17,14 +16,15 @@ contract RewardsStub is Rewards {
     ) public Rewards(
         _token,
         _firstIntervalStart,
-        _intervalWeights
+        _intervalWeights,
+        1 days, // term length
+        _minimumKeepsPerInterval
     ) {
-        minKeeps = _minimumKeepsPerInterval;
         creationTimes = _creationTimes;
     }
 
-    function minimumKeepsPerInterval() public view returns (uint256) {
-        return minKeeps;
+    function setTermLength(uint256 _termLength) public {
+        termLength = _termLength;
     }
 
     function receiveReward(uint256 i) public {

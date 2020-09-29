@@ -6,7 +6,6 @@ contract BeaconBackportRewardsStub is BeaconBackportRewards {
     constructor (
         address _token,
         uint256 _firstIntervalStart,
-        uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract,
         uint256[] memory _lastGroupOfInterval,
@@ -15,7 +14,6 @@ contract BeaconBackportRewardsStub is BeaconBackportRewards {
     ) public BeaconBackportRewards(
         _token,
         _firstIntervalStart,
-        _intervalWeights,
         _operatorContract,
         _stakingContract,
         _lastGroupOfInterval,
@@ -23,7 +21,15 @@ contract BeaconBackportRewardsStub is BeaconBackportRewards {
         _excessRecipient
     ) {}
 
-    function receiveReward(uint256 i) public {
+    function setIntervalWeights(uint256[] memory _intervalWeights) public {
+        intervalWeights = _intervalWeights;
+    }
+
+    function setTermLength(uint256 _termLength) public {
+        termLength = _termLength;
+    }
+
+    function receiveReward(uint256 i) public { //TODO: this is too useful to exist only here
         receiveReward(bytes32(i));
     }
 

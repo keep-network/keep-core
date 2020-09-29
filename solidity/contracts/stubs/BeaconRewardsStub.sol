@@ -20,6 +20,10 @@ contract BeaconRewardsStub is BeaconRewards {
         intervalWeights = _intervalWeights;
     }
 
+    function setTermLength(uint256 _termLength) public {
+        termLength = _termLength;
+    }
+
     function getKeepCount() public view returns (uint256) {
         return _getKeepCount();
     }

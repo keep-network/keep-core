@@ -50,6 +50,7 @@ describe('BeaconRewards', () => {
             operatorContract.address,
             stakingContract.address
         )
+        await rewards.setTermLength(termLength)
         await rewards.setIntervalWeights(intervalWeights)
         await token.approveAndCall(
             rewards.address,

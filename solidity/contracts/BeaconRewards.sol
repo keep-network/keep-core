@@ -23,14 +23,16 @@ contract BeaconRewards is Rewards {
     // 
     // Random Beacon Rewards constants
     // 
-    uint256 constant _minimumKeepsPerInterval = 2; // TODO define
-
-    uint256[] private beaconIntervalWeights = [
+    uint256[] internal beaconIntervalWeights = [
         4, 8, 10, 12, 15, 15,
         15, 15, 15, 15, 15, 15,
         15, 15, 15, 15, 15, 15,
         15, 15, 15, 15, 15, 15
     ];
+
+    uint256 internal constant beaconTermLength = 30 days;
+
+    uint256 internal constant minimumBeaconGroupsPerInterval = 2; // TODO define
     //
     //
 
@@ -45,14 +47,12 @@ contract BeaconRewards is Rewards {
     ) public Rewards(
         _token,
         _firstIntervalStart,
-        beaconIntervalWeights
+        beaconIntervalWeights,
+        beaconTermLength,
+        minimumBeaconGroupsPerInterval
     ) {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);
-    }
-
-    function minimumKeepsPerInterval() public view returns (uint256) {
-        return _minimumKeepsPerInterval;
     }
 
     function _getKeepCount() internal view returns (uint256) {

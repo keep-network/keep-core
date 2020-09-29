@@ -20,6 +20,8 @@ describe('Rewards', () => {
     const bobBeneficiary = accounts[3]
     const funder = accounts[9]
 
+    const termLength = 100
+
     let rewards
     let token
 
@@ -31,6 +33,7 @@ describe('Rewards', () => {
             testValues.intervalWeights,
             timestamps
         )
+        await rewards.setTermLength(termLength)
         await fund(testValues.totalRewards)
     }
 

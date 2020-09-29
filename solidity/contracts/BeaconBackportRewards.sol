@@ -19,16 +19,21 @@ import "./KeepRandomBeaconOperator.sol";
 import "./TokenStaking.sol";
 
 contract BeaconBackportRewards is Rewards {
+    uint256[] internal beaconIntervalWeights = [100];
+    uint256 internal constant beaconTermLength = 30 days;
+    uint256 internal constant minimumBeaconGroupsPerInterval = 1; // TODO define
+
     uint256[] lastGroupOfInterval;
     mapping(uint256 => bool) excludedGroups;
     uint256 excludedGroupCount;
+
     KeepRandomBeaconOperator operatorContract;
     TokenStaking tokenStaking;
+
     address excessRecipient;
-    uint256 constant _minimumKeepsPerInterval = 1; // TODO define
 
     constructor (
-        // The term length and first interval start are arbitrary,
+        // First interval start is arbitrary,
         // and should be set so that `firstIntervalStart + termLength`
         // is sometime in the future.
         // Up to that point (when interval 0 finishes)
@@ -40,8 +45,6 @@ contract BeaconBackportRewards is Rewards {
         // a withdrawal function is provided.
         address _token,
         uint256 _firstIntervalStart,
-        // Interval weights. Does not define the number of intervals supported.
-        uint256[] memory _intervalWeights,
         address _operatorContract,
         address _stakingContract,
         // The indices of the last group eligible for rewards in each interval.
@@ -56,7 +59,9 @@ contract BeaconBackportRewards is Rewards {
     ) public Rewards(
         _token,
         _firstIntervalStart,
-        _intervalWeights
+        beaconIntervalWeights,
+        beaconTermLength,
+        minimumBeaconGroupsPerInterval
     ) {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);
@@ -65,10 +70,6 @@ contract BeaconBackportRewards is Rewards {
             excludedGroups[_excludedGroups[i]] = true;
         }
         excessRecipient = _excessRecipient;
-    }
-
-    function minimumKeepsPerInterval() public view returns (uint256) {
-        return _minimumKeepsPerInterval;
     }
 
     function lastEligibleGroup() public view returns (uint256) {

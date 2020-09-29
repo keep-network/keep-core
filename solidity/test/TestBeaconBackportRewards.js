@@ -32,8 +32,7 @@ describe('BeaconBackportRewards', () => {
             contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
             contract.fromArtifact('KeepRandomBeaconOperatorBeaconRewardsStub')
         )
-        const termLength = 100
-        const totalRewards = 9000
+
 
         token = contracts.token
         stakingContract = contracts.stakingContract
@@ -57,20 +56,24 @@ describe('BeaconBackportRewards', () => {
         await operatorContract.registerNewGroup(group2, [operator1, operator2, operator2])
         await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
 
+        const termLength = 100
+        const totalRewards = 9000
         const initiationTime = await time.latest()
+        const intervalWeights = [50, 100]
 
         await time.increase(250)
 
         rewards = await contract.fromArtifact('BeaconBackportRewardsStub').new(
             token.address,
             initiationTime,
-            [50, 100],
             operatorContract.address,
             stakingContract.address,
             [2, 3], // groups 0~2 in first interval, 3 in second
             [1],
             excessRecipient
         )
+        await rewards.setIntervalWeights(intervalWeights)
+        await rewards.setTermLength(termLength)
         await token.approveAndCall(
             rewards.address,
             totalRewards,
