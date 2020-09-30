@@ -1,28 +1,35 @@
-import React, { useContext } from "react"
-import * as Icons from "./Icons"
-import { Web3Context } from "./WithWeb3Context"
-import { Web3Status } from "./Web3Status"
-import { MenuButton } from "./MenuButton"
-import AddressShortcut from "./AddressShortcut"
-import { NetworkStatus } from "./NetworkStatus"
+import React from "react"
+import { NavLink } from "react-router-dom"
 
 const Header = (props) => {
-  const { yourAddress } = useContext(Web3Context)
-
   return (
     <header className="header">
-      <a href="/" className="logo">
-        <Icons.Keep width="250px" height="80px" />
-      </a>
-      <Web3Status />
-      <div className="account-address">
-        <h5 className="text-grey-50">
-          <span>address:&nbsp;</span>
-          <AddressShortcut classNames="h5" address={yourAddress} />
-        </h5>
-        <NetworkStatus />
+      <div className="header__content">
+        <h1 className="header__title">Earnings</h1>
+        {/* TODO add a web3 status component */}
       </div>
-      <MenuButton />
+      <nav className="header__sub-nav">
+        <ul className="sub-nav__list">
+          <li className="sub-nav__item-wrapper">
+            <NavLink
+              to="/random-beacon"
+              className="sub-nav__item"
+              activeClassName="sub-nav__item--active"
+            >
+              Random Beacon
+            </NavLink>
+          </li>
+          <li className="sub-nav__item-wrapper">
+            <NavLink
+              to="/random-beacon"
+              className="sub-nav__item"
+              activeClassName="sub-nav__item--active"
+            >
+              tBtc
+            </NavLink>
+          </li>
+        </ul>
+      </nav>
     </header>
   )
 }
