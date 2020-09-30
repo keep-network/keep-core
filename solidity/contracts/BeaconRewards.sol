@@ -52,7 +52,8 @@ import "./TokenStaking.sol";
 contract BeaconRewards is Rewards {
 
 
-    /// Weights of the 24 reward intervals.
+    // Weights of the 24 reward intervals assigned over
+    // 24 * beaconTermLength days.
     uint256[] internal beaconIntervalWeights = [
         4, 8, 10, 12, 15, 15,
         15, 15, 15, 15, 15, 15,
@@ -90,7 +91,7 @@ contract BeaconRewards is Rewards {
         tokenStaking = TokenStaking(_stakingContract);
     }
 
-    /// @notice Sends the reward for a group to the group members.
+    /// @notice Sends the reward for a group to the group member beneficiaries.
     /// @param groupIndex Index of the group to receive a reward.
     function receiveReward(uint256 groupIndex) public {
         receiveReward(bytes32(groupIndex));
