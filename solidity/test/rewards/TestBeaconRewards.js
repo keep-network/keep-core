@@ -30,6 +30,8 @@ describe('BeaconRewards', () => {
     //    20,000,000 - 10% of staker rewards goes to the random beacon stakers
     const totalBeaconRewards = web3.utils.toBN(20000000).mul(tokenDecimalMultiplier)
 
+    const groupSize = 64
+
     before(async() => {
         let contracts = await initContracts(
             contract.fromArtifact('TokenStaking'),
@@ -59,9 +61,9 @@ describe('BeaconRewards', () => {
         const minimumStake = await stakingContract.minimumStake()
         operators = []
         beneficiaries = []
-        for (i = 0; i < 64; i++) {
+        for (i = 0; i < groupSize; i++) {
             const operator = accounts[i]
-            const beneficiary = accounts[64 + i]
+            const beneficiary = accounts[groupSize + i]
             const authorizer = operator
 
             operators.push(operator)
