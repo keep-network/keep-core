@@ -443,7 +443,7 @@ contract Rewards {
             return 0;
         }
         // Rewards divide equally among keeps
-        return __baseAllocation.div(adjustmentCount).mul(keepCount);
+        return __baseAllocation.mul(keepCount).div(adjustmentCount);
     }
 
     /// @notice Allocate rewards for unallocated intervals up to and including
