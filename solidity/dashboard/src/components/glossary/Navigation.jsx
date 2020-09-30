@@ -31,6 +31,7 @@ const GlossaryLink = ({ label, to }) => {
   return (
     <li>
       <Link
+        containerId="main-content-wrapper"
         className={`text-small${hash === to.hash ? " active" : ""}`}
         activeClass="active"
         to={to.hash.slice(1)}

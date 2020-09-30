@@ -22,7 +22,7 @@ const App = () => (
                   <main>
                     <Header />
                     <SideMenu />
-                    <div className="content-wrapper">
+                    <div className="content-wrapper" id="main-content-wrapper">
                       <div className="content">
                         <Routing />
                       </div>
