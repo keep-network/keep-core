@@ -20,7 +20,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 
 /// @title KEEP Signer Subsidy Rewards
-/// @dev A contract for distributing KEEP token rewards to keeps.
+/// @notice A contract for distributing KEEP token rewards to keeps.
 /// When a reward contract is created, the creator defines a reward schedule
 /// consisting of one or more reward intervals and their interval weights,
 /// the length of reward intervals, and the quota of how many keeps must be
