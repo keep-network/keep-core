@@ -1,13 +1,8 @@
 import React from "react"
 import { Rewards } from "../components/Rewards"
-import PageWrapper from "../components/PageWrapper"
 
 const RewardsPage = () => {
-  return (
-    <PageWrapper title="Random Beacon Rewards">
-      <Rewards />
-    </PageWrapper>
-  )
+  return <Rewards />
 }
 
 export default React.memo(RewardsPage)
