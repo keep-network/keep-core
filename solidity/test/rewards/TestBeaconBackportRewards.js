@@ -1,7 +1,7 @@
 const { initContracts } = require('../helpers/initContracts')
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
-const { time } = require("@openzeppelin/test-helpers")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const crypto = require("crypto")
 const stakeDelegate = require('../helpers/stakeDelegate')
 
@@ -9,23 +9,27 @@ const BN = web3.utils.BN
 const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
-const assert = chai.assert
 
 describe('BeaconBackportRewards', () => {
 
-    let token, stakingContract, operatorContract, serviceContract, rewards,
-        groupSize, minimumStake,
-        group0, group1, group2, group3,
-        owner = accounts[0],
-        operator1 = accounts[2],
-        operator2 = accounts[3],
-        operator3 = accounts[4],
-        beneficiary1 = accounts[5],
-        beneficiary2 = accounts[6],
-        beneficiary3 = accounts[7],
-        excessRecipient = accounts[8]
+    // accounts
+    const owner = accounts[0]
+    let operators
+    let beneficiaries
 
-    before(async () => {
+    // contracts
+    let rewardsContract
+    let token, stakingContract, operatorContract
+
+    // system parameters
+    const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+    // 1,000,000,000 - total KEEP supply
+    //   200,000,000 - 20% of the total supply goes to staker rewards
+    //    20,000,000 - 10% of staker rewards goes to the random beacon stakers
+    //       200,000 - 1% of staker rewards for the beacon goes to May genesis groups
+    const totalBeaconRewards = web3.utils.toBN(200000).mul(tokenDecimalMultiplier)
+
+    before(async() => {
         let contracts = await initContracts(
             contract.fromArtifact('TokenStaking'),
             contract.fromArtifact('KeepRandomBeaconService'),
@@ -33,58 +37,49 @@ describe('BeaconBackportRewards', () => {
             contract.fromArtifact('KeepRandomBeaconOperatorBeaconRewardsStub')
         )
 
-
         token = contracts.token
         stakingContract = contracts.stakingContract
         operatorContract = contracts.operatorContract
-        serviceContract = contracts.serviceContract
 
-        groupSize = await operatorContract.groupSize()
-        minimumStake = await stakingContract.minimumStake()
-
-        await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake)
-        await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake)
-        await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, minimumStake)
-
-        group0 = crypto.randomBytes(128)
-        group1 = crypto.randomBytes(128)
-        group2 = crypto.randomBytes(128)
-        group3 = crypto.randomBytes(128)
-
-        await operatorContract.registerNewGroup(group0, [operator1, operator2, operator2])
-        await operatorContract.registerNewGroup(group1, [operator1, operator2, operator2])
-        await operatorContract.registerNewGroup(group2, [operator1, operator2, operator2])
-        await operatorContract.registerNewGroup(group3, [operator1, operator2, operator2])
-
-        const termLength = 100
-        const totalRewards = 9000
-        const initiationTime = await time.latest()
-        const intervalWeights = [50, 100]
-
-        await time.increase(250)
-
-        rewards = await contract.fromArtifact('BeaconBackportRewardsStub').new(
+        rewardsContract = await contract.fromArtifact('BeaconBackportRewards').new(
             token.address,
-            initiationTime,
             operatorContract.address,
-            stakingContract.address,
-            [2, 3], // groups 0~2 in first interval, 3 in second
-            [1],
-            excessRecipient
+            stakingContract.address
         )
-        await rewards.setIntervalWeights(intervalWeights)
-        await rewards.setTermLength(termLength)
+
         await token.approveAndCall(
-            rewards.address,
-            totalRewards,
+            rewardsContract.address,
+            totalBeaconRewards,
             "0x0",
             { from: owner }
         )
 
-        // make all groups expire
-        let blockN = await time.latestBlock()
-        await time.advanceBlockTo(blockN.addn(15))
-        await operatorContract.expireOldGroups()
+        // create 64 operators and beneficiaries, delegate stake for them
+        const minimumStake = await stakingContract.minimumStake()
+        operators = []
+        beneficiaries = []
+        for (i = 0; i < 64; i++) {
+            const operator = accounts[i]
+            const beneficiary = accounts[64 + i]
+            const authorizer = operator
+
+            operators.push(operator)
+            beneficiaries.push(beneficiary)
+            await stakeDelegate(
+                stakingContract, 
+                token, 
+                owner, 
+                operator, 
+                beneficiary, 
+                authorizer, 
+                minimumStake
+            )
+        }
+
+        // 3 groups created in an interval
+        await registerNewGroup()
+        await registerNewGroup()
+        await registerNewGroup()
     })
 
     beforeEach(async () => {
@@ -95,102 +90,72 @@ describe('BeaconBackportRewards', () => {
         await restoreSnapshot()
     })
 
-    it("should have 4 groups", async () => {
-        let count = await rewards.getKeepCount();
-        expect(count).to.eq.BN(4);
+    describe("interval allocation", async() => {
+        it("should equal the full allocation", async() => {
+            const expectedAllocation = 200000
+
+            await timeJumpToEndOfInterval(0)
+            await rewardsContract.allocateRewards(0)
+
+            const allocated = await rewardsContract.getAllocatedRewards(0)                                
+            const allocatedKeep = allocated.div(tokenDecimalMultiplier)
+            
+            expect(allocatedKeep).to.eq.BN(expectedAllocation)
+        })
     })
 
-    it("should have 3 as the last eligible group", async () => {
-        let count = await rewards.lastEligibleGroup();
-        expect(count).to.eq.BN(3);
+    describe("rewards withdrawal", async () => {
+        it("should correctly distribute rewards to beneficiaries", async () => {
+            await timeJumpToEndOfInterval(0)
+
+            await rewardsContract.receiveReward(0)
+            // each beneficiary receives 200000 / 3 / 64 = 1041 KEEP
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(1041))
+         
+            await rewardsContract.receiveReward(1)
+              // each beneficiary receives 200000 / 3 / 64 = 1041 KEEP
+            // they should have 1041 + 1041 = 2082 KEEP now
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(2082))
+
+            await rewardsContract.receiveReward(2)
+            // each beneficiary receives 200000 / 3 / 64 = 1041 KEEP
+            // they should have 1041 + 1041 + 1041 = 3123 KEEP now
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(3123))
+        })
+
+        it("should fail for non-existing group", async () => {
+            await expectRevert(
+                rewardsContract.receiveReward(3),
+                "Keep not recognized by factory"
+            )
+        })
     })
 
-    it("should have 1 as the last interval", async () => {
-        expect(await rewards.lastInterval()).to.eq.BN(1);
-    })
+    async function timeJumpToEndOfInterval(intervalNumber) {
+        const endOf = await rewardsContract.endOf(intervalNumber)
+        const now = await time.latest()
 
-    it("should exclude group 1", async () => {
-        assert.isTrue(await rewards.isExcluded(1), "group 1 not excluded")
-    })
+        if (now.lt(endOf)) {
+            await time.increaseTo(endOf.addn(1))
+        }
+    }
 
-    it("should recognize groups 0~3", async () => {
-        let recognized0 = await rewards.recognizedByFactory(0);
-        let recognized1 = await rewards.recognizedByFactory(1);
-        let recognized2 = await rewards.recognizedByFactory(2);
-        let recognized3 = await rewards.recognizedByFactory(3);
-        let recognized4 = await rewards.recognizedByFactory(4);
+    async function registerNewGroup() {
+        const groupPublicKey = crypto.randomBytes(128)
+        await operatorContract.registerNewGroup(groupPublicKey, operators)
+    }
 
-        assert.isTrue(recognized0, "group 0 not recognized")
-        assert.isTrue(recognized1, "group 1 not recognized")
-        assert.isTrue(recognized2, "group 2 not recognized")
-        assert.isTrue(recognized3, "group 3 not recognized")
-        assert.isFalse(recognized4, "group 4 falsely recognized")
-    })
+    async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
+        // solidity is not very good when it comes to floating point precision,
+        // we are allowing for ~2 KEEP difference margin between expected and
+        // actual value
+        const precision = 2
 
-    it("should have groups 0, 2 and 3 eligible", async () => {
-        let eligible0 = await rewards.eligibleForReward(0);
-        let eligible1 = await rewards.eligibleForReward(1);
-        let eligible2 = await rewards.eligibleForReward(2);
-        let eligible3 = await rewards.eligibleForReward(3);
-
-        assert.isTrue(eligible0, "group 0 ineligible")
-        assert.isFalse(eligible1, "group 1 eligible")
-        assert.isTrue(eligible2, "group 2 ineligible")
-        assert.isTrue(eligible3, "group 3 ineligible")
-    })
-
-    it("should recognize group 1 as terminated", async () => {
-        let terminated0 = await rewards.eligibleButTerminatedWithUint(0);
-        let terminated1 = await rewards.eligibleButTerminatedWithUint(1);
-        let terminated2 = await rewards.eligibleButTerminatedWithUint(2);
-        let terminated3 = await rewards.eligibleButTerminatedWithUint(3);
-
-        assert.isFalse(terminated0, "group 0 falsely terminated")
-        assert.isTrue(terminated1, "group 1 not terminated")
-        assert.isFalse(terminated2, "group 2 falsely terminated")
-        assert.isFalse(terminated3, "group 3 falsely terminated")
-    })
-
-    it("should register 3 groups in the first interval", async () => {
-        let count = await rewards.findEndpoint(await rewards.endOf(0))
-        expect(count).to.eq.BN(3)
-    })
-
-    it("should register 1 group in the second interval", async () => {
-        let count = await rewards.findEndpoint(await rewards.endOf(1))
-        expect(count).to.eq.BN(4)
-    })
-
-    it("should receive rewards for groups 0, 2 and 3", async () => {
-        // 4500 allocated to the first interval:
-        //   1500 allocated to group 0
-        //   1500 not allocated to group 1 because it's terminated
-        //   1500 allocated to group 2
-        // 4500 allocated to the second interval:
-        //   4500 allocated to group 3
-
-        // 1500 allocated to group 0
-        await rewards.receiveReward(0);
-        expect(await token.balanceOf(beneficiary1)).to.eq.BN(500)
-        expect(await token.balanceOf(beneficiary2)).to.eq.BN(1000)
-
-        // 1500 allocated to group 2
-        await rewards.receiveReward(2);
-        expect(await token.balanceOf(beneficiary1)).to.eq.BN(1000) // 500+500
-        expect(await token.balanceOf(beneficiary2)).to.eq.BN(2000) // 1000+1000
-
-        // 4500 allocated to group 3
-        await rewards.receiveReward(3);
-        expect(await token.balanceOf(beneficiary1)).to.eq.BN(2500) // 1000+1500
-        expect(await token.balanceOf(beneficiary2)).to.eq.BN(5000) // 2000+3000
-    })
-
-    it("should withdraw excess rewards from terminated group 1", async () => {
-        await rewards.allocateRewards(1);
-        await rewards.reportTermination(1);
-        await rewards.withdrawExcess();
-
-        let balance = await token.balanceOf(excessRecipient);
-        expect(balance).to.eq.BN(1500)
-    })
+        for (let i = 0; i < beneficiaries.length; i++) {
+            const balance = await token.balanceOf(beneficiaries[i])
+            const balanceInKeep = balance.div(tokenDecimalMultiplier)
+            expect(balanceInKeep).to.gte.BN(expectedBalance)
+            expect(balanceInKeep).to.lte.BN(expectedBalance.addn(precision))
+        }
+    }
 })
