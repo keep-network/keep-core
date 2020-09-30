@@ -44,7 +44,8 @@ describe('BeaconBackportRewards', () => {
         rewardsContract = await contract.fromArtifact('BeaconBackportRewards').new(
             token.address,
             operatorContract.address,
-            stakingContract.address
+            stakingContract.address,
+            { from: owner }
         )
 
         await token.approveAndCall(
@@ -53,6 +54,7 @@ describe('BeaconBackportRewards', () => {
             "0x0",
             { from: owner }
         )
+        await rewardsContract.markAsFunded({from: owner})
 
         // create 64 operators and beneficiaries, delegate stake for them
         const minimumStake = await stakingContract.minimumStake()
