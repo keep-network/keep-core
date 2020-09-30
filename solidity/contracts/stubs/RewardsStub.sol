@@ -12,19 +12,16 @@ contract RewardsStub is Rewards {
         uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights,
-        uint256[] memory _creationTimes
+        uint256[] memory _creationTimes,
+        uint256 _termLength
     ) public Rewards(
         _token,
         _firstIntervalStart,
         _intervalWeights,
-        1 days, // term length
+        _termLength,
         _minimumKeepsPerInterval
     ) {
         creationTimes = _creationTimes;
-    }
-
-    function setTermLength(uint256 _termLength) public {
-        termLength = _termLength;
     }
 
     function receiveReward(uint256 i) public {

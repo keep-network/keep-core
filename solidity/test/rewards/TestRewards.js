@@ -28,9 +28,9 @@ describe('Rewards', () => {
             testValues.minimumIntervalKeeps,
             testValues.initiationTime,
             testValues.intervalWeights,
-            timestamps
+            timestamps,
+            termLength
         )
-        await rewards.setTermLength(termLength)
         await fund(testValues.totalRewards)
     }
 
