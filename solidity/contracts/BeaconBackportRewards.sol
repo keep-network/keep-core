@@ -77,8 +77,8 @@ contract BeaconBackportRewards is Rewards {
 
     /// @notice Sends the reward for a group to the group members.
     /// @param groupIndex Index of the group to receive a reward.
-    function receiveReward(uint256 i) public {
-        receiveReward(bytes32(i));
+    function receiveReward(uint256 groupIndex) public {
+        receiveReward(bytes32(groupIndex));
     }
 
     function _getKeepCount() internal view returns (uint256) {
