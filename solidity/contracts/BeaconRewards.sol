@@ -32,7 +32,7 @@ contract BeaconRewards is Rewards {
 
     uint256 internal constant beaconTermLength = 30 days;
 
-    uint256 internal constant minimumBeaconGroupsPerInterval = 2; // TODO define
+    uint256 internal constant minimumBeaconGroupsPerInterval = 2;
     //
     //
 
@@ -41,7 +41,7 @@ contract BeaconRewards is Rewards {
 
     constructor (
         address _token,
-        uint256 _firstIntervalStart,
+        uint256 _firstIntervalStart, // TODO: can we accept this parameter as the last one? should we make it a constant in this contract?
         address _operatorContract,
         address _stakingContract
     ) public Rewards(
@@ -53,6 +53,22 @@ contract BeaconRewards is Rewards {
     ) {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);
+    }
+
+    function receiveReward(uint256 i) public {
+        receiveReward(bytes32(i));
+    }
+
+    function eligibleForReward(uint256 i) public view returns (bool) {
+        return eligibleForReward(bytes32(i));
+    }
+
+    function reportTermination(uint256 i) public {
+        reportTermination(bytes32(i));
+    }
+
+    function isTerminated(uint256 i) public view returns (bool) {
+        return eligibleButTerminated(bytes32(i));
     }
 
     function _getKeepCount() internal view returns (uint256) {
