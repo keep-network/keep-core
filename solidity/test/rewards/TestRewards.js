@@ -294,10 +294,10 @@ describe('Rewards', () => {
             expect(weight3.toNumber()).to.equal(50)
         })
 
-        it("returns 100% after the defined intervals", async () => {
+        it("returns the last defined interval weight after the defined intervals", async () => {
             await createKeeps([])
             let weight4 = await rewards.getIntervalWeight(4)
-            expect(weight4.toNumber()).to.equal(100)
+            expect(weight4.toNumber()).to.equal(50)
         })
     })
 

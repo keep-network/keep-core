@@ -26,22 +26,22 @@ const testValues = {
         50, // 15:15
     ],
     inVacuumBaseRewards: [
-        200000, 500000, 250000, 500000, 1000000, 1000000, 1000000,
+        200000, 500000, 250000, 500000, 500000, 500000, 500000,
     ],
     inVacuumAdjustedRewards: [
-        200000, 500000, 125000, 500000, 0, 500000, 1000000,
+        200000, 500000, 125000, 500000, 0, 250000, 500000,
     ],
     inVacuumPerKeepRewards: [
-        66666, 125000, 125000, 250000, 0, 500000, 500000,
+        66666, 125000, 125000, 250000, 0, 250000, 250000,
     ],
     actualAllocations: [
         200000, // 800000 remaining
         400000, // 400000 remaining
         50000,  // 350000 remaining
         175000, // 175000 remaining
-        0,
-        87500, // 87500 remaining
-        87500, // 0 remaining
+        0,      // 175000 remaining
+        43750,  // 131250 remaining
+        65625,  // 65625 remaining
     ]
 }
 module.exports = { testValues }
