@@ -30,10 +30,6 @@ describe('BeaconRewards', () => {
     //    20,000,000 - 10% of staker rewards goes to the random beacon stakers
     const totalBeaconRewards = web3.utils.toBN(20000000).mul(tokenDecimalMultiplier)
 
-    // successful beacon genesis happened 2020-09-24
-    // https://etherscan.io/tx/0xe2e8ab5631473a3d7d8122ce4853c38f5cc7d3dcbfab3607f6b27a7ef3b86da2
-    const firstIntervalStart = web3.utils.toBN(1600905600) // 2020-19-24 00:00 UTC
-
     before(async() => {
         let contracts = await initContracts(
             contract.fromArtifact('TokenStaking'),
@@ -48,7 +44,6 @@ describe('BeaconRewards', () => {
 
         rewardsContract = await contract.fromArtifact('BeaconRewards').new(
             token.address,
-            firstIntervalStart,
             operatorContract.address,
             stakingContract.address
         )
