@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from "react"
-import PageWrapper from "../components/PageWrapper"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import Undelegations from "../components/Undelegations"
 import TokenOverview from "../components/TokenOverview"
@@ -50,10 +49,11 @@ const TokenOverviewPage = () => {
   }, [grants])
 
   return (
-    <PageWrapper title="Token Overview">
+    <>
       <LoadingOverlay
         isFetching={isFetching}
-        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}>
+        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}
+      >
         <TokenOverview
           totalKeepTokenBalance={totalKeepTokenBalance}
           totalOwnedStakedBalance={totalOwnedStakedBalance}
@@ -80,7 +80,7 @@ const TokenOverviewPage = () => {
           undelegations={undelegations}
         />
       )}
-    </PageWrapper>
+    </>
   )
 }
 

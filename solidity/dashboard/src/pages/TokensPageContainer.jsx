@@ -40,6 +40,13 @@ import Banner, { BANNER_TYPE } from "../components/Banner"
 import Button from "../components/Button"
 import { useModal } from "../hooks/useModal"
 import CopyStakePage from "./CopyStakePage"
+import PageWrapper from "../components/PageWrapper"
+
+const subLinks = [
+  { title: "Overview", path: "/tokens/overview" },
+  { title: "Delegate", path: "/tokens/delegate" },
+  { title: "Grants", path: "/tokens/grants" },
+]
 
 const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
   useSubscribeToStakedEvent()
@@ -65,7 +72,7 @@ const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
   const { openModal } = useModal()
 
   return (
-    <>
+    <PageWrapper title="Tokens" subLinks={subLinks}>
       {!isEmptyArray(oldDelegations) && (
         <Banner
           type={BANNER_TYPE.NOTIFICATION}
@@ -88,7 +95,7 @@ const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
         <Route exact path="/tokens/grants" component={TokenGrantsPage} />
         <Redirect to="/tokens/overview" />
       </Switch>
-    </>
+    </PageWrapper>
   )
 }
 

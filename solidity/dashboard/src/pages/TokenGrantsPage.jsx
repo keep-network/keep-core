@@ -4,7 +4,6 @@ import {
   TokenGrantStakedDetails,
   TokenGrantUnlockingdDetails,
 } from "../components/TokenGrantOverview"
-import PageWrapper from "../components/PageWrapper"
 import TokenAmount from "../components/TokenAmount"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { LoadingOverlay } from "../components/Loadable"
@@ -18,7 +17,7 @@ const TokenGrantsPage = () => {
   }, [grants])
 
   return (
-    <PageWrapper title="Token Grants" className="">
+    <>
       <TokenAmount
         wrapperClassName="mb-2"
         amount={totalGrantAmount}
@@ -33,7 +32,7 @@ const TokenGrantsPage = () => {
       >
         {grants.map(renderTokenGrantOverview)}
       </LoadingOverlay>
-    </PageWrapper>
+    </>
   )
 }
 

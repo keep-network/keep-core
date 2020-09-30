@@ -34,6 +34,10 @@ class Routing extends React.Component {
       <Loadable />
     ) : (
       <Switch>
+        <Route exact path="/overview">
+          {/* Temporary solution. We need to implement the `Overview` page as a separate page. */}
+          <Redirect to="/tokens" />
+        </Route>
         <Route path="/tokens" component={TokensPageContainer} />
         <Route exact path="/operations" component={OperatorPage} />
         <Route path="/rewards" component={RewardsPageContainer} />
