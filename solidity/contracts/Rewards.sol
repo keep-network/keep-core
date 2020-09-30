@@ -80,6 +80,7 @@ contract Rewards {
     uint256 public minimumKeepsPerInterval;
 
     // Total number of keep tokens to distribute.
+    // Includes those already paid out.
     uint256 public totalRewards;
     // Rewards that haven't been allocated to finished intervals
     uint256 public unallocatedRewards;
