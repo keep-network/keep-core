@@ -391,10 +391,10 @@ contract Rewards {
     /// @param interval The interval.
     /// @return The percentage weight of the interval.
     function getIntervalWeight(uint256 interval) public view returns (uint256) {
-        if (interval < getIntervalCount()) {
+        if (interval < intervalWeights.length) {
             return intervalWeights[interval];
         } else {
-            return 100;
+            return intervalWeights[intervalWeights.length - 1];
         }
     }
 
