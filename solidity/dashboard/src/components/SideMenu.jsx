@@ -26,6 +26,9 @@ export const SideMenu = (props) => {
 
   return (
     <nav className={`side-menu${isOpen ? "--active " : ""}`}>
+      <Link to="/">
+        <Icons.KeepDashboardLogo className="side-menu__logo" />
+      </Link>
       <ul className="side-menu__list">
         <NavLink to="/overview" label="overview" icon={<Icons.Home />} />
         <NavLink to="/tokens" label="tokens" icon={<Icons.FeesVector />} />
