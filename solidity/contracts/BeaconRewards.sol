@@ -60,7 +60,7 @@ contract BeaconRewards is Rewards {
         15, 15, 15, 15, 15, 15
     ];
 
-    // Beacon genesis date, 2020-19-24, is the first interval start.
+    // Beacon genesis date, 2020-09-24, is the first interval start.
     // https://etherscan.io/tx/0xe2e8ab5631473a3d7d8122ce4853c38f5cc7d3dcbfab3607f6b27a7ef3b86da2
     uint256 internal constant beaconFirstIntervalStart = 1600905600;
 
