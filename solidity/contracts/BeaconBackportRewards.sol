@@ -18,6 +18,16 @@ import "./Rewards.sol";
 import "./KeepRandomBeaconOperator.sol";
 import "./TokenStaking.sol";
 
+/// @title KEEP Random Beacon Signer Subsidy Rewards for the May release.
+/// @notice Contract distributing KEEP rewards to Random Beacon signers from
+/// May KeepRandomBeaconOperator contract:
+/// https://etherscan.io/address/0x70F2202D85a4F0Cad36e978976f84E982920A624
+///
+/// We use a separate contract for those rewards as the previous version of
+/// KeepRandomBeaconOperator did not have all the functions BeaconRewards uses.
+///
+/// Groups from May release of KeepRandomBeaconOperator contract can claim they
+/// rewards at any time.
 contract BeaconBackportRewards is Rewards {
 
     // Beacon genesis date, 2020-05-11, is the interval start.
@@ -64,6 +74,9 @@ contract BeaconBackportRewards is Rewards {
         tokenStaking = TokenStaking(_stakingContract);
     }
 
+
+    /// @notice Sends the reward for a group to the group members.
+    /// @param groupIndex Index of the group to receive a reward.
     function receiveReward(uint256 i) public {
         receiveReward(bytes32(i));
     }
@@ -82,7 +95,7 @@ contract BeaconBackportRewards is Rewards {
     }
 
     function _isClosed(bytes32) internal view returns (bool) {
-        // All groups within the eligible range are considered closed
+        // All groups within the eligible range are considered happily closed.
         return true;
     }
 
