@@ -7,7 +7,6 @@ import withWeb3Context from "./WithWeb3Context"
 import OperatorPage from "../pages/OperatorPage"
 import RewardsPageContainer from "../pages/RewardsPageContainer"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
-import TokenGrantsPage from "../pages/TokenGrantsPage"
 import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ChooseWallet from "./ChooseWallet"
@@ -41,7 +40,6 @@ class Routing extends React.Component {
         <Route path="/tokens" component={TokensPageContainer} />
         <Route exact path="/operations" component={OperatorPage} />
         <Route path="/rewards" component={RewardsPageContainer} />
-        <Route exact path="/token-grants" component={TokenGrantsPage} />
         <Route path="/applications" component={ApplicationsPageContainer} />
         {isKeepTokenContractDeployer && (
           <Route
