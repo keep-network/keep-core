@@ -1,7 +1,7 @@
 const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
-const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const { expectRevert, time } = require("@openzeppelin/test-helpers")
-const { testValues } = require("./helpers/rewardsData.js")
+const { testValues } = require("./rewardsData.js")
 
 const KeepToken = contract.fromArtifact('KeepToken')
 
@@ -14,11 +14,10 @@ const expect = chai.expect
 const assert = chai.assert
 
 describe('Rewards', () => {
-    const alice = accounts[0]
-    const bob = accounts[1]
-    const aliceBeneficiary = accounts[2]
-    const bobBeneficiary = accounts[3]
+    const aliceBeneficiary = accounts[1]
     const funder = accounts[9]
+
+    const termLength = 100
 
     let rewards
     let token
@@ -29,7 +28,8 @@ describe('Rewards', () => {
             testValues.minimumIntervalKeeps,
             testValues.initiationTime,
             testValues.intervalWeights,
-            timestamps
+            timestamps,
+            termLength
         )
         await fund(testValues.totalRewards)
     }

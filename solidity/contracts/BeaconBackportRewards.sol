@@ -18,110 +18,95 @@ import "./Rewards.sol";
 import "./KeepRandomBeaconOperator.sol";
 import "./TokenStaking.sol";
 
+/// @title KEEP Random Beacon Signer Subsidy Rewards for the May release.
+/// @notice Contract distributing KEEP rewards to Random Beacon signers from
+/// May KeepRandomBeaconOperator contract:
+/// https://etherscan.io/address/0x70F2202D85a4F0Cad36e978976f84E982920A624
+///
+/// We use a separate contract for those rewards as the previous version of
+/// KeepRandomBeaconOperator did not have all the functions BeaconRewards uses.
+///
+/// Groups from May release of KeepRandomBeaconOperator contract can claim their
+/// rewards at any time.
 contract BeaconBackportRewards is Rewards {
-    uint256[] lastGroupOfInterval;
-    mapping(uint256 => bool) excludedGroups;
-    uint256 excludedGroupCount;
+
+    // Beacon genesis date, 2020-05-11, is the interval start.
+    // https://etherscan.io/tx/0x5c0387a2402be57dae95d5f5c3745afb3a770462df13fceccf3967a1eecf6136
+    uint256 internal constant beaconIntervalStart = 1589155200;
+
+    // We are going to have one interval, with a weight of 100%.
+    uint256[] internal beaconIntervalWeight = [100];
+    uint256 internal constant lastInterval = 0;
+
+    // 136 days between the genesis of the old and the new random beacon
+    // contract versions:
+    // https://etherscan.io/tx/0x5c0387a2402be57dae95d5f5c3745afb3a770462df13fceccf3967a1eecf6136
+    // https://etherscan.io/tx/0xe2e8ab5631473a3d7d8122ce4853c38f5cc7d3dcbfab3607f6b27a7ef3b86da2
+    uint256 internal constant beaconTermLength = 136 days;
+
+    // There were three beacon groups created during those 135 days:
+    // 0x2e490c9c6d822341a23a2c37c203cff8530345ce59c8f3d218cd7f2a21bf5ac51c6f...827,
+    // 0x065d0e58684df0fc3fad2155e07fb1861b521679f267e440028ec1237a8be58e0e2f...49f,
+    // 0x118e601ef5f594cd29053ee47490edbaae895109704af19d57114c4a77fa73041d44...652.  
+    //
+    // We hardcode this number because the previous KeepRandomBeaconOperator
+    // contract version had no easy way to get the number of all groups created.
+    uint256 internal constant numberOfCreatedGroups = 3;
+
+    // We allocate all rewards to those groups.
+    uint256 internal constant minimumBeaconGroupsPerInterval = numberOfCreatedGroups;
+
     KeepRandomBeaconOperator operatorContract;
     TokenStaking tokenStaking;
-    address excessRecipient;
-    uint256 constant _minimumKeepsPerInterval = 1; // TODO define
 
     constructor (
-        // The term length and first interval start are arbitrary,
-        // and should be set so that `firstIntervalStart + termLength`
-        // is sometime in the future.
-        // Up to that point (when interval 0 finishes)
-        // the contract can be funded freely,
-        // with tokens being allocated correctly.
-        // After that point, interval 0 may get allocated
-        // so any further funding will end up on the remaining intervals.
-        // If unallocated tokens are remaining after all intervals are allocated,
-        // a withdrawal function is provided.
         address _token,
-        uint256 _firstIntervalStart,
-        // Interval weights. Does not define the number of intervals supported.
-        uint256[] memory _intervalWeights,
         address _operatorContract,
-        address _stakingContract,
-        // The indices of the last group eligible for rewards in each interval.
-        // Inclusive, defines the number of intervals supported by the contract.
-        uint256[] memory _lastGroupOfInterval,
-        // The indices of any groups below `lastEligibleGroup`
-        // that should be excluded from the rewards.
-        uint256[] memory _excludedGroups,
-        // The address that receives any left-over tokens
-        // from late funding or excluded groups.
-        address _excessRecipient
+        address _stakingContract
     ) public Rewards(
         _token,
-        _firstIntervalStart,
-        _intervalWeights
+        beaconIntervalStart,
+        beaconIntervalWeight,
+        beaconTermLength,
+        minimumBeaconGroupsPerInterval
     ) {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);
-        lastGroupOfInterval = _lastGroupOfInterval;
-        for (uint256 i = 0; i < _excludedGroups.length; i++) {
-            excludedGroups[_excludedGroups[i]] = true;
-        }
-        excessRecipient = _excessRecipient;
     }
 
-    function minimumKeepsPerInterval() public view returns (uint256) {
-        return _minimumKeepsPerInterval;
-    }
 
-    function lastEligibleGroup() public view returns (uint256) {
-        return lastGroupOfInterval[lastInterval()];
-    }
-
-    function lastInterval() public view returns (uint256) {
-        return lastGroupOfInterval.length.sub(1);
-    }
-
-    function withdrawExcess() mustBeFinished(lastInterval()) public {
-        if (lastInterval() >= intervalAllocations.length) {
-            allocateRewards(lastInterval());
-        }
-        token.safeTransfer(excessRecipient, unallocatedRewards);
-        unallocatedRewards = 0;
-    }
-
-    function _assignedInterval(bytes32 groupIndexBytes) internal view returns (uint256) {
-        for (uint256 interval = 0; interval < lastGroupOfInterval.length; interval++) {
-            if (lastGroupOfInterval[interval] >= uint256(groupIndexBytes)) {
-                return interval;
-            }
-        }
+    /// @notice Sends the reward for a group to the group member beneficiaries.
+    /// @param groupIndex Index of the group to receive a reward.
+    function receiveReward(uint256 groupIndex) public {
+        receiveReward(bytes32(groupIndex));
     }
 
     function _getKeepCount() internal view returns (uint256) {
-        return lastEligibleGroup().add(1);
+        return numberOfCreatedGroups;
     }
 
     function _getKeepAtIndex(uint256 i) internal view returns (bytes32) {
         return bytes32(i);
     }
 
-    function _getCreationTime(bytes32 groupIndexBytes) internal view returns (uint256) {
+    function _getCreationTime(bytes32) internal view returns (uint256) {
         // Assign each group to the starting timestamp of its interval
-        return startOf(_assignedInterval(groupIndexBytes));
+        return startOf(0);
     }
 
-    function _isClosed(bytes32 groupIndexBytes) internal view returns (bool) {
-        // All non-excluded groups within the eligible range
-        // are considered closed
-        return !_isTerminated(groupIndexBytes);
+    function _isClosed(bytes32) internal view returns (bool) {
+        // All groups within the eligible range are considered happily closed.
+        return true;
     }
 
     function _isTerminated(bytes32 groupIndexBytes) internal view returns (bool) {
-        return excludedGroups[uint256(groupIndexBytes)];
+        return false;
     }
 
     // A group is recognized if its index is at most `lastEligibleGroup`
     // and it isn't listed as excluded.
     function _recognizedByFactory(bytes32 groupIndexBytes) internal view returns (bool) {
-        return lastEligibleGroup() >= uint256(groupIndexBytes);
+        return numberOfCreatedGroups > uint256(groupIndexBytes);
     }
 
     function _distributeReward(bytes32 groupIndexBytes, uint256 _value) internal {
