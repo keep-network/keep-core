@@ -20,11 +20,11 @@ const App = () => (
               <Router>
                 <main>
                   <Header />
-                  <aside>
-                    <SideMenu />
-                  </aside>
-                  <div className="content">
-                    <Routing />
+                  <SideMenu />
+                  <div className="content-wrapper">
+                    <div className="content">
+                      <Routing />
+                    </div>
                   </div>
                 </main>
               </Router>

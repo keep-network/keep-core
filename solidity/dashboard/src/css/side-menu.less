@@ -1,14 +1,11 @@
 @active-nav-item-bg-color: @color-grey-20;
 
 .side-menu, .side-menu--active {
+    grid-area: nav;
     display: flex;
     flex-direction: column;
-    position: fixed;
-    top: @header-height;
-    left: 0;
     z-index: 12;
-    // temporary solution. Since the app layout and main header will be changed.
-    height: calc(100% - @header-height);
+    height: 100vh;
     width: 0px;
     visibility: hidden;
     background: @side-menu-color;
