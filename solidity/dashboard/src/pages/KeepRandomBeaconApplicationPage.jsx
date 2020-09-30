@@ -1,8 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react"
-import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
 import AuthorizationHistory from "../components/AuthorizationHistory"
-import * as Icons from "../components/Icons"
 import { useFetchData } from "../hooks/useFetchData"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { LoadingOverlay } from "../components/Loadable"
@@ -97,13 +95,7 @@ const KeepRandomBeaconApplicationPage = ({ authorizeOperatorContract }) => {
   }, [data, selectedOperator.operatorAddress])
 
   return (
-    <PageWrapper
-      className=""
-      title="Random Beacon"
-      nextPageLink="/rewards/random-beacon"
-      nextPageTitle="Rewards"
-      nextPageIcon={Icons.KeepBlackGreen}
-    >
+    <>
       <nav className="mb-2">
         <a
           href="https://keep.network/"
@@ -135,7 +127,7 @@ const KeepRandomBeaconApplicationPage = ({ authorizeOperatorContract }) => {
       >
         <AuthorizationHistory contracts={authorizationHistoryData} />
       </LoadingOverlay>
-    </PageWrapper>
+    </>
   )
 }
 
