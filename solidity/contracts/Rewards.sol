@@ -14,10 +14,13 @@
 
 pragma solidity ^0.5.17;
 
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
+
+import "./KeepToken.sol";
 
 /// @title KEEP Signer Subsidy Rewards
 /// @notice A contract for distributing KEEP token rewards to keeps.
@@ -64,11 +67,13 @@ import "openzeppelin-solidity/contracts/math/Math.sol";
 /// functions for accessing information about keeps and paying out rewards.
 /// For the purpose of rewards, Random Beacon signing groups count as "keeps"
 /// and the beacon operator contract acts as the "factory".
-contract Rewards {
+contract Rewards is Ownable {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20 for KeepToken;
 
-    IERC20 public token;
+    KeepToken public token;
+
+    Rewards public newRewards;
 
     // Array representing the percentage of unallocated rewards
     // available for each reward interval.
@@ -117,11 +122,15 @@ contract Rewards {
         uint256 _termLength,
         uint256 _minimumKeepsPerInterval
     ) public {
-        token = IERC20(_token);
+        token = KeepToken(_token);
         firstIntervalStart = _firstIntervalStart;
         intervalWeights = _intervalWeights;
         termLength = _termLength;
         minimumKeepsPerInterval = _minimumKeepsPerInterval;
+    }
+
+    function setNewRewards(address newRewardsAddress) public onlyOwner {
+        newRewards = Rewards(newRewardsAddress);
     }
 
     /// @notice Funds the rewards contract.
@@ -143,7 +152,7 @@ contract Rewards {
         address _token,
         bytes memory
     ) public {
-        require(IERC20(_token) == token, "Unsupported token");
+        require(KeepToken(_token) == token, "Unsupported token");
 
         token.safeTransferFrom(_from, address(this), _value);
 
@@ -469,9 +478,36 @@ contract Rewards {
         if (interval > allocatedIntervals) {
             allocateRewards(interval.sub(1));
         }
-        uint256 totalAllocation = _adjustedAllocation(interval);
-        unallocatedRewards = unallocatedRewards.sub(totalAllocation);
-        intervalAllocations.push(totalAllocation);
+        uint256 baseAllocation = _baseAllocation(interval);
+        uint256 adjustedAllocation = _adjustedAllocation(interval);
+        uint256 allocationDifference = baseAllocation.sub(adjustedAllocation);
+        intervalAllocations.push(adjustedAllocation);
+        // If a new rewards contract has been defined and the quota isn't met,
+        // send the excess to the new contract.
+        // Otherwise keep the excess unallocated.
+        if (newRewardsSpecified() && (allocationDifference > 0)) {
+            unallocatedRewards = unallocatedRewards.sub(baseAllocation);
+            sendToNewRewards(allocationDifference);
+        } else {
+            unallocatedRewards = unallocatedRewards.sub(adjustedAllocation);
+        }
+    }
+
+    function newRewardsSpecified() public view returns (bool) {
+        return address(newRewards) != address(0);
+    }
+
+    /// @notice Send the given amount to the new rewards contract;
+    /// failing that, return to unallocated rewards.
+    function sendToNewRewards(uint256 amount) internal {
+        bool transferSuccessful = token.approveAndCall(
+            address(newRewards),
+            amount,
+            bytes("")
+        );
+        if (!transferSuccessful) {
+            unallocatedRewards = unallocatedRewards.add(amount);
+        }
     }
 
     /// @notice Get the total amount of tokens
@@ -526,8 +562,14 @@ contract Rewards {
             _distributeReward(keepIdentifier, perKeepReward);
             emit RewardReceived(keepIdentifier, perKeepReward);
         } else {
-            // Return the reward to the unallocated pool
-            unallocatedRewards = unallocatedRewards.add(perKeepReward);
+            // If new rewards has been specified,
+            // try sending the reward to it.
+            // Otherwise return the reward to the unallocated pool.
+            if (newRewardsSpecified()) {
+                sendToNewRewards(perKeepReward);
+            } else {
+                unallocatedRewards = unallocatedRewards.add(perKeepReward);
+            }
         }
     }
 
