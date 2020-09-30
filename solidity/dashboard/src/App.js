@@ -1,6 +1,6 @@
 import React from "react"
 import Web3ContextProvider from "./components/Web3ContextProvider"
-import Header from "./components/Header"
+import Header, { HeaderContextProvider } from "./components/Header"
 import Routing from "./components/Routing"
 import ContractsDataContextProvider from "./components/ContractsDataContextProvider"
 import { Messages } from "./components/Message"
@@ -16,19 +16,21 @@ const App = () => (
       <Web3ContextProvider>
         <ModalContextProvider>
           <ContractsDataContextProvider>
-            <SideMenuProvider>
-              <Router>
-                <main>
-                  <Header />
-                  <SideMenu />
-                  <div className="content-wrapper">
-                    <div className="content">
-                      <Routing />
+            <HeaderContextProvider>
+              <SideMenuProvider>
+                <Router>
+                  <main>
+                    <Header />
+                    <SideMenu />
+                    <div className="content-wrapper">
+                      <div className="content">
+                        <Routing />
+                      </div>
                     </div>
-                  </div>
-                </main>
-              </Router>
-            </SideMenuProvider>
+                  </main>
+                </Router>
+              </SideMenuProvider>
+            </HeaderContextProvider>
           </ContractsDataContextProvider>
         </ModalContextProvider>
       </Web3ContextProvider>
