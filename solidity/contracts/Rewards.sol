@@ -197,7 +197,7 @@ contract Rewards {
     /// @param _keep The keep to check.
     /// @return True if the keep is terminated, false otherwise
     function eligibleButTerminated(bytes32 _keep) public view returns (bool) {
-        return _recognizedByFactory(_keep) && _isTerminated(_keep) && !rewardClaimed(_keep);
+        return _recognizedByFactory(_keep) && _isTerminated(_keep);
     }
 
     /// @notice Return the interval number the provided timestamp falls within.
