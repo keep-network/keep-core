@@ -26,7 +26,7 @@ import "./TokenStaking.sol";
 /// We use a separate contract for those rewards as the previous version of
 /// KeepRandomBeaconOperator did not have all the functions BeaconRewards uses.
 ///
-/// Groups from May release of KeepRandomBeaconOperator contract can claim they
+/// Groups from May release of KeepRandomBeaconOperator contract can claim their
 /// rewards at any time.
 contract BeaconBackportRewards is Rewards {
 
@@ -38,11 +38,11 @@ contract BeaconBackportRewards is Rewards {
     uint256[] internal beaconIntervalWeight = [100];
     uint256 internal constant lastInterval = 0;
 
-    // 135 days between the genesis of the old and the new random beacon
+    // 136 days between the genesis of the old and the new random beacon
     // contract versions:
     // https://etherscan.io/tx/0x5c0387a2402be57dae95d5f5c3745afb3a770462df13fceccf3967a1eecf6136
     // https://etherscan.io/tx/0xe2e8ab5631473a3d7d8122ce4853c38f5cc7d3dcbfab3607f6b27a7ef3b86da2
-    uint256 internal constant beaconTermLength = 135 days;
+    uint256 internal constant beaconTermLength = 136 days;
 
     // There were three beacon groups created during those 135 days:
     // 0x2e490c9c6d822341a23a2c37c203cff8530345ce59c8f3d218cd7f2a21bf5ac51c6f...827,
