@@ -618,7 +618,7 @@ contract Rewards is Ownable {
     }
 
     modifier mustBeFunded() {
-        require(funded, "Contract not yet funded");
+        require(funded, "Contract has not been funded yet");
         _;
     }
 }

@@ -107,7 +107,7 @@ describe('Rewards', () => {
         it("prevents from allocating rewards if not previously called", async () => {
             await expectRevert(
                 newRewards.allocateRewards(0),
-                "Contract not yet funded"
+                "Contract has not been funded yet"
             )
         })
     })
