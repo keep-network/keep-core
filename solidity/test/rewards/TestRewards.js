@@ -14,6 +14,7 @@ const expect = chai.expect
 const assert = chai.assert
 
 describe('Rewards', () => {
+    const owner = accounts[0]
     const aliceBeneficiary = accounts[1]
     const funder = accounts[9]
 
@@ -29,9 +30,11 @@ describe('Rewards', () => {
             testValues.initiationTime,
             testValues.intervalWeights,
             timestamps,
-            termLength
+            termLength,
+            {from: owner}
         )
         await fund(testValues.totalRewards)
+        await rewards.markAsFunded({from: owner})
     }
 
     async function fund(amount) {
@@ -76,6 +79,36 @@ describe('Rewards', () => {
             await fund(0)
             let postRewards = await rewards.totalRewards()
             expect(postRewards.toNumber()).to.equal(testValues.totalRewards * 2)
+        })
+    })
+
+    describe("markAsFunded", async () => {
+        let newRewards
+        
+        beforeEach(async() => {
+            newRewards = await RewardsStub.new(
+               token.address,
+               testValues.minimumIntervalKeeps,
+               testValues.initiationTime,
+               testValues.intervalWeights,
+               [],
+              termLength,
+              {from: owner}
+            )
+        })
+
+        it("can not be called by non-owner", async () => {
+            await expectRevert(
+                newRewards.markAsFunded({from: funder}),
+                "Ownable: caller is not the owner"
+            )
+        })
+
+        it("prevents from allocating rewards if not previously called", async () => {
+            await expectRevert(
+                newRewards.allocateRewards(0),
+                "Contract has not been funded yet"
+            )
         })
     })
 

@@ -14,6 +14,7 @@
 
 pragma solidity ^0.5.17;
 
+import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
@@ -64,7 +65,7 @@ import "openzeppelin-solidity/contracts/math/Math.sol";
 /// functions for accessing information about keeps and paying out rewards.
 /// For the purpose of rewards, Random Beacon signing groups count as "keeps"
 /// and the beacon operator contract acts as the "factory".
-contract Rewards {
+contract Rewards is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -92,9 +93,6 @@ contract Rewards {
     // Timestamp of first interval beginning.
     // Interval 0 covers everything before `firstIntervalStart`
     // and the first `termLength` after `firstIntervalStart`.
-    // This value should be set
-    // so that `firstIntervalStart + termLength` is in the future
-    // so the contract can be funded before intervals can be allocated.
     uint256 public firstIntervalStart;
     // Mapping of interval number to tokens allocated for the interval.
     uint256[] internal intervalAllocations;
@@ -107,6 +105,12 @@ contract Rewards {
     // Mapping of interval to number of keeps whose rewards have been paid out,
     // or reallocated because the keep closed unhappily
     mapping(uint256 => uint256) public intervalKeepsProcessed;
+
+    // Indicates whether the contract has been properly funded. Rewards can not
+    // be allocated before the first funding and the owner of the
+    // contract is responsible for marking it as already funded. Further funding
+    // of the contract is possible with no owner's intervention.
+    bool public funded = false;
 
     event RewardReceived(bytes32 keep, uint256 amount);
 
@@ -158,6 +162,10 @@ contract Rewards {
 
         totalRewards = totalRewards.add(addedBalance);
         unallocatedRewards = unallocatedRewards.add(addedBalance);
+    }
+
+    function markAsFunded() public onlyOwner {
+        funded = true;
     }
 
     /// @notice Sends the reward for a keep to the keep members.
@@ -458,6 +466,7 @@ contract Rewards {
     /// @param interval The interval to allocate.
     function allocateRewards(uint256 interval)
         mustBeFinished(interval)
+        mustBeFunded
         public
     {
         uint256 allocatedIntervals = intervalAllocations.length;
@@ -605,6 +614,11 @@ contract Rewards {
         require(
             _recognizedByFactory(_keep),
             "Keep not recognized by factory");
+        _;
+    }
+
+    modifier mustBeFunded() {
+        require(funded, "Contract has not been funded yet");
         _;
     }
 }
