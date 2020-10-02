@@ -11,7 +11,7 @@ const chai = require('chai')
 chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 
-describe.only("Rewards/Upgrades", () => {
+describe("Rewards/Upgrades", () => {
     const owner = accounts[0]
     const thirdParty = accounts[1]
     const beneficiary = accounts[3]
