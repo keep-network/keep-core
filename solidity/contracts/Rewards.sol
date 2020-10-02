@@ -20,6 +20,8 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 
+import "./KeepToken.sol";
+
 /// @title KEEP Signer Subsidy Rewards
 /// @notice A contract for distributing KEEP token rewards to keeps.
 /// When a reward contract is created, the creator defines a reward schedule
@@ -67,9 +69,9 @@ import "openzeppelin-solidity/contracts/math/Math.sol";
 /// and the beacon operator contract acts as the "factory".
 contract Rewards is Ownable {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20 for KeepToken;
 
-    IERC20 public token;
+    KeepToken public token;
 
     // Array representing the percentage of unallocated rewards
     // available for each reward interval.
@@ -85,10 +87,11 @@ contract Rewards is Ownable {
     uint256 public totalRewards;
     // Rewards that haven't been allocated to finished intervals
     uint256 public unallocatedRewards;
-    // Rewards that have been paid out;
+    // Rewards that have been dispensed from this contract - as a signer
+    // rewards or transferred to a new rewards contract.
     // `token.balanceOf(address(this))` should always equal
-    // `totalRewards.sub(paidOutRewards)`
-    uint256 public paidOutRewards;
+    // `totalRewards.sub(dispensedRewards)`
+    uint256 public dispensedRewards;
 
     // Timestamp of first interval beginning.
     // Interval 0 covers everything before `firstIntervalStart`
@@ -112,7 +115,15 @@ contract Rewards is Ownable {
     // of the contract is possible with no owner's intervention.
     bool public funded = false;
 
+    // Owner of the contract may initiate an upgrade to a new rewards contract
+    // but the pending and past intervals must receive their rewards before any
+    // KEEP tokens are transferred out from this contract.
+    uint256 public upgradeInitiatedTimestamp;
+    address public newRewardsContract;
+
     event RewardReceived(bytes32 keep, uint256 amount);
+    event UpgradeInitiated(address newRewardsContract);
+    event UpgradeFinalized(uint256 amountTransferred);
 
     constructor (
         address _token,
@@ -121,7 +132,7 @@ contract Rewards is Ownable {
         uint256 _termLength,
         uint256 _minimumKeepsPerInterval
     ) public {
-        token = IERC20(_token);
+        token = KeepToken(_token);
         firstIntervalStart = _firstIntervalStart;
         intervalWeights = _intervalWeights;
         termLength = _termLength;
@@ -152,7 +163,7 @@ contract Rewards is Ownable {
         token.safeTransferFrom(_from, address(this), _value);
 
         uint256 currentBalance = token.balanceOf(address(this));
-        uint256 beforeBalance = totalRewards.sub(paidOutRewards);
+        uint256 beforeBalance = totalRewards.sub(dispensedRewards);
         require(
             currentBalance >= beforeBalance,
             "Reward contract has lost tokens"
@@ -531,13 +542,61 @@ contract Rewards is Ownable {
         intervalKeepsProcessed[interval] = intervalKeepsProcessed[interval].add(1);
 
         if (eligible) {
-            paidOutRewards = paidOutRewards.add(perKeepReward);
+            dispensedRewards = dispensedRewards.add(perKeepReward);
             _distributeReward(keepIdentifier, perKeepReward);
             emit RewardReceived(keepIdentifier, perKeepReward);
         } else {
             // Return the reward to the unallocated pool
             unallocatedRewards = unallocatedRewards.add(perKeepReward);
         }
+    }
+
+    /// @notice Initiates the process of upgrading to another rewards contract.
+    /// @param _newRewardsContract The address of a new rewards contract.
+    function initiateRewardsUpgrade(address _newRewardsContract) public onlyOwner {
+        upgradeInitiatedTimestamp = block.timestamp;
+        newRewardsContract = _newRewardsContract;
+        emit UpgradeInitiated(newRewardsContract);
+    }
+
+    /// @notice Finalizes the process of upgrading to another rewards contract
+    /// by allocating all past intervals and then, transferring the
+    /// not-yet-allocated tokens to a new rewards contract.
+    /// Can be called only when the interval during which the upgrade was
+    /// initiated ended.
+    /// Before finalizing the upgrade, make sure all terminated groups are
+    /// reported.
+    function finalizeRewardsUpgrade() public onlyOwner {
+        require(upgradeInitiatedTimestamp != 0, "Upgrade not initiated");
+
+        // allocate all intervals that can be currently allocated
+        uint256 currentInterval = intervalOf(block.timestamp);
+        uint256 intervalToAllocate = 0;
+        if (currentInterval > 0) {
+            intervalToAllocate = currentInterval.sub(1);
+        }
+        
+        allocateRewards(intervalToAllocate);
+
+        // transfer the unallocated KEEP to the new rewards contract and update
+        // this contract's balances
+        uint256 amountToTransfer = unallocatedRewards;
+
+        totalRewards = totalRewards.sub(amountToTransfer);
+        unallocatedRewards = 0;
+        dispensedRewards = dispensedRewards.add(amountToTransfer);
+
+        emit UpgradeFinalized(amountToTransfer);
+
+        bool success = token.approveAndCall(
+            newRewardsContract,
+            amountToTransfer,
+            bytes("")
+        );
+        require(success, "Upgrade finalization failed");
+        
+
+        upgradeInitiatedTimestamp = 0;
     }
 
     /// @notice Get the total number of keeps ever created by the factory,
