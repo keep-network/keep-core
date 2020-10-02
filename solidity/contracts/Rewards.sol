@@ -118,8 +118,8 @@ contract Rewards is Ownable {
     // Owner of the contract may initiate an upgrade to a new rewards contract
     // but the pending and past intervals must receive their rewards before any
     // KEEP tokens are transferred out from this contract.
-    uint256 upgradeInitiatedTimestamp;
-    address newRewardsContract;
+    uint256 public upgradeInitiatedTimestamp;
+    address public newRewardsContract;
 
     event RewardReceived(bytes32 keep, uint256 amount);
     event UpgradeInitiated(address newRewardsContract);
