@@ -87,11 +87,11 @@ contract Rewards is Ownable {
     uint256 public totalRewards;
     // Rewards that haven't been allocated to finished intervals
     uint256 public unallocatedRewards;
-    // Rewards that have been paid out from this contract - as a signer
+    // Rewards that have been dispensed from this contract - as a signer
     // rewards or transferred to a new rewards contract.
     // `token.balanceOf(address(this))` should always equal
-    // `totalRewards.sub(paidOutRewards)`
-    uint256 public paidOutRewards;
+    // `totalRewards.sub(dispensedRewards)`
+    uint256 public dispensedRewards;
 
     // Timestamp of first interval beginning.
     // Interval 0 covers everything before `firstIntervalStart`
@@ -163,7 +163,7 @@ contract Rewards is Ownable {
         token.safeTransferFrom(_from, address(this), _value);
 
         uint256 currentBalance = token.balanceOf(address(this));
-        uint256 beforeBalance = totalRewards.sub(paidOutRewards);
+        uint256 beforeBalance = totalRewards.sub(dispensedRewards);
         require(
             currentBalance >= beforeBalance,
             "Reward contract has lost tokens"
@@ -542,7 +542,7 @@ contract Rewards is Ownable {
         intervalKeepsProcessed[interval] = intervalKeepsProcessed[interval].add(1);
 
         if (eligible) {
-            paidOutRewards = paidOutRewards.add(perKeepReward);
+            dispensedRewards = dispensedRewards.add(perKeepReward);
             _distributeReward(keepIdentifier, perKeepReward);
             emit RewardReceived(keepIdentifier, perKeepReward);
         } else {
@@ -584,7 +584,7 @@ contract Rewards is Ownable {
 
         totalRewards = totalRewards.sub(amountToTransfer);
         unallocatedRewards = 0;
-        paidOutRewards = paidOutRewards.add(amountToTransfer);
+        dispensedRewards = dispensedRewards.add(amountToTransfer);
 
         emit UpgradeFinalized(amountToTransfer);
 

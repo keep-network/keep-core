@@ -187,7 +187,7 @@ describe("Rewards/Upgrades", () => {
 
             const totalRewards = await rewards.totalRewards()
             const unallocatedRewards = await rewards.unallocatedRewards()
-            const paidOutRewards = await rewards.paidOutRewards()
+            const dispensedRewards = await rewards.dispensedRewards()
 
             // interval 0 allocates 50000
             // interval 1 allocates 95000
@@ -195,7 +195,7 @@ describe("Rewards/Upgrades", () => {
             expect(totalRewards).to.eq.BN(145000)
             expect(unallocatedRewards).to.eq.BN(0)
             // nothing yet withdrawn but 855000 transferred to the new contract
-            expect(paidOutRewards).to.eq.BN(855000)
+            expect(dispensedRewards).to.eq.BN(855000)
         })
 
         it("let to withdraw outstanding rewards after migration", async () => {
