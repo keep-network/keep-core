@@ -14,9 +14,9 @@ const Footer = () => {
     <footer className="footer">
       <ul className="footer__links">{links.map(renderFooterLinkItem)}</ul>
       <div className="footer__signature">
-        A Thesis* Build <br />
-        © 2020 Keep, SEZC <br />
-        All Rights Reserved.
+        <p>A Thesis* Build</p>
+        <p>&#169; 2020 Keep, SEZC</p>
+        <p>All Rights Reserved.</p>
       </div>
       <div className="footer__app-version">{`Version ${process.env.REACT_APP_VERSION}`}</div>
     </footer>
