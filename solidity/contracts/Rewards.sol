@@ -593,9 +593,8 @@ contract Rewards is Ownable {
             amountToTransfer,
             bytes("")
         );
-        if (!success) {
-            revert("Upgrade finalization failed");
-        }
+        require(success, "Upgrade finalization failed");
+        
 
         upgradeInitiatedTimestamp = 0;
     }
