@@ -84,14 +84,14 @@ describe("Rewards/Upgrades", () => {
             )            
         })
 
-        it("can not be finalized without initiating first", async () => {
+        it("cannot be finalized without initiating first", async () => {
             await expectRevert(
                 rewards.finalizeRewardsUpgrade({from: owner}),
                 "Upgrade not initiated"
             ) 
         })
 
-        it("can not be finalized before the current interval ends", async () => {
+        it("cannot be finalized before the current interval ends", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
                 {from: owner}
@@ -102,7 +102,7 @@ describe("Rewards/Upgrades", () => {
             )
         })
 
-        it("can not be finalized another time without initiating again", async () => {
+        it("cannot be finalized another time without initiating again", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
                 {from: owner}
