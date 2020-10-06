@@ -190,6 +190,11 @@ func (phm *persistenceHandleMock) Save(data []byte, directory string, name strin
 	return nil
 }
 
+func (phm *persistenceHandleMock) Snapshot(data []byte, directory string, name string) error {
+	// noop
+	return nil
+}
+
 func (phm *persistenceHandleMock) ReadAll() (<-chan persistence.DataDescriptor, <-chan error) {
 	membershipBytes1, _ := (&Membership{
 		Signer:      signer1,
