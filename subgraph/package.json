@@ -1,0 +1,16 @@
+{
+  "name": "@keep-network/keep-subgraph",
+  "version": "0.1.0",
+  "scripts": {
+    "create": "graph create keep-network/keep-graph --node https://api.thegraph.com/deploy/",
+    "create-local": "graph create keep-network/keep-graph --node http://127.0.0.1:8020",
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy keep-network/keep-graph --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-local": "graph deploy keep-network/keep-graph --ipfs http://localhost:5001 --node http://127.0.0.1:8020"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.18.0",
+    "@graphprotocol/graph-ts": "^0.18.0"
+  }
+}

@@ -1,0 +1,107 @@
+specVersion: 0.0.2
+description: The subgrph for KEEP token dashboard
+repository: https://github.com/keep-network/keep-core
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: TokenStaking
+    network: mainnet
+    source:
+      startBlock: 0
+      address: '0xAA86F757738F31F94c44035030ff793Bb03229De'
+      abi: TokenStaking
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/staking.ts
+      entities:
+        - Delegation
+      abis:
+        - name: TokenStaking
+          file: ./abis/TokenStaking.json
+      eventHandlers:
+        - event: StakeDelegated(indexed address,indexed address)
+          handler: stakeDelegated
+        - event: OperatorStaked(indexed address,indexed address,indexed address,uint256)
+          handler: operatorStaked
+        # - event: TopUpInitiated(indexed address,uint256)
+        #   handler: topUpInitiated
+        # - event: TopUpCompleted(indexed address,uint256)
+        #   handler: topUpCompleted
+        - event: TokensSlashed(indexed address,uint256)
+          handler: tokensSlashed
+        - event: TokensSeized(indexed address,uint256)
+          handler: tokensSeized
+        - event: RecoveredStake(address)
+          handler: stakeRecovered
+
+  - kind: ethereum/contract
+    name: TokenGrant
+    network: mainnet
+    source:
+      startBlock: 0
+      address: '0x4c3b139818bf7F9d3d32ff78e4c6D49E0C067b8e'
+      abi: TokenGrant
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/grants.ts
+      entities:
+        - Delegation
+        - Grant
+      abis:
+        - name: TokenGrant
+          file: ./abis/TokenGrant.json
+      eventHandlers:
+        - event: TokenGrantCreated(uint256)
+          handler: tokenGrantCreated
+        - event: TokenGrantStaked(indexed uint256,uint256,address)
+          handler: tokenGrantStaked
+        - event: TokenGrantWithdrawn(indexed uint256,uint256)
+          handler: tokenGrantWithdrawn
+
+  - kind: ethereum/contract
+    name: ManagedGrantFactory
+    network: mainnet
+    source:
+      address: "0x88793932b1E804EF0DA71AD2238819c3f461ADe9"
+      abi: ManagedGrantFactory
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/grants.ts
+      entities:
+        - Grant
+      abis:
+        - name: ManagedGrantFactory
+          file: ./abis/ManagedGrantFactory.json
+        - name: ManagedGrant
+          file: ./abis/ManagedGrant.json
+      eventHandlers:
+        - event: ManagedGrantCreated(address,indexed address)
+          handler: managedGrantCreated
+
+templates:
+  - kind: ethereum/contract
+    name: ManagedGrant
+    network: mainnet
+    source:
+      abi: ManagedGrant
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/grants.ts
+      entities:
+        - Grant
+      abis:
+        - name: ManagedGrant
+          file: ./abis/ManagedGrant.json
+      eventHandlers:
+        - event: GranteeReassignmentConfirmed(address,address)
+          handler: granteeReassignmentConfirmed
+    

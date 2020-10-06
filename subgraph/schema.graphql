@@ -1,0 +1,30 @@
+type Delegation @entity {
+  id: ID! # operator address
+  owner: String
+  authorizer: String
+  beneficiary: String
+  amount: BigInt
+  createdAt: BigInt!
+  undelegatedAt: BigInt
+  grant: Grant
+}
+
+type Grant @entity {
+  id: ID!
+  grantManager: String
+  grantee: String # the real grantee- not the `ManagedGrantContract` address
+  revokedAmount: BigInt
+  revokedAt: BigInt
+  revokedWithdrawn: BigInt
+  revocable: Boolean
+  amount: BigInt
+  duration: BigInt
+  start: BigInt
+  cliff: BigInt
+  withdrawn: BigInt
+  staked: BigInt
+  stakingPolicy: String
+  isManagedGrant: Boolean
+  managedGrantContract: String
+  delegations: [Delegation!] @derivedFrom(field: "grant")
+}
