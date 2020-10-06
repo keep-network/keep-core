@@ -10,12 +10,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// BalanceSource provides a balance info for the given address.
 type BalanceSource func(address common.Address) (*big.Int, error)
 
+// BalanceMonitor provides the possibility to monitor balances for given
+// accounts.
 type BalanceMonitor struct {
 	balanceSource BalanceSource
 }
 
+// Observe starts a process which checks the address balance with the given
+// tick and triggers an alert in case the balance falls below the
+// alert threshold value.
 func (bm *BalanceMonitor) Observe(
 	ctx context.Context,
 	address string,
@@ -31,8 +37,9 @@ func (bm *BalanceMonitor) Observe(
 
 		if balance.Cmp(alertThreshold) == -1 {
 			logger.Errorf(
-				"ethereum balance is below [%v] wei; "+
-					"please fund your operator account",
+				"ethereum balance for account [%v] is below [%v] wei; "+
+					"account should be funded",
+				address,
 				alertThreshold.Text(10),
 			)
 		}
