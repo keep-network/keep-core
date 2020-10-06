@@ -275,7 +275,7 @@ func initializeBalanceMonitoring(
 		ctx,
 		ethereumAddress,
 		new(big.Int).SetUint64(alertThreshold),
-		10*time.Second,
+		10*time.Minute,
 	)
 
 	logger.Infof(
