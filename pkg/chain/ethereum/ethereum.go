@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -516,4 +518,16 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
 	return relaychain.DKGResultHashFromBytes(hash)
+}
+
+func (ec *ethereumChain) Address() common.Address {
+	return ec.accountKey.Address
+}
+
+func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+	var result hexutil.Big
+
+	err := ec.clientRPC.Call(&result, "eth_getBalance", address)
+
+	return (*big.Int)(&result), err
 }
