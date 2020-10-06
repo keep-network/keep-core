@@ -4,7 +4,6 @@ import { colors } from "../constants/colors"
 import { ReactComponent as ArrowRight } from "../static/svg/arrow-right.svg"
 import { ReactComponent as Operations } from "../static/svg/operations.svg"
 import { ReactComponent as Rewards } from "../static/svg/rewards.svg"
-import { ReactComponent as Glossary } from "../static/svg/glossary.svg"
 import { ReactComponent as Authorizer } from "../static/svg/authorizer.svg"
 import { ReactComponent as KeepToken } from "../static/svg/tokens.svg"
 import { ReactComponent as GrantContextIcon } from "../static/svg/grant-context-icon.svg"
@@ -32,6 +31,11 @@ import { ReactComponent as Fees } from "../static/svg/fees.svg"
 import { ReactComponent as UserFriendly } from "../static/svg/user-friendly.svg"
 import { ReactComponent as Alert } from "../static/svg/alert.svg"
 import { ReactComponent as Success } from "../static/svg/success.svg"
+import { ReactComponent as Beacon } from "../static/svg/beacon.svg"
+import { ReactComponent as Authorize } from "../static/svg/authorize.svg"
+import { ReactComponent as Home } from "../static/svg/home.svg"
+import { ReactComponent as Question } from "../static/svg/question.svg"
+import { ReactComponent as FeesVector } from "../static/svg/fees-vector.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
@@ -481,7 +485,6 @@ export {
   MetaMask,
   Coinbase,
   Authorizer,
-  Glossary,
   Operations,
   KeepToken,
   Rewards,
@@ -510,4 +513,9 @@ export {
   Fees,
   Alert,
   Success,
+  Beacon,
+  Authorize,
+  Question,
+  Home,
+  FeesVector,
 }
