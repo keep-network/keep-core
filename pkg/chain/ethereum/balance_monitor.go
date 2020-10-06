@@ -19,6 +19,11 @@ type BalanceMonitor struct {
 	balanceSource BalanceSource
 }
 
+// NewBalanceMonitor creates a new instance of the balance monitor.
+func NewBalanceMonitor(balanceSource BalanceSource) *BalanceMonitor {
+	return &BalanceMonitor{balanceSource}
+}
+
 // Observe starts a process which checks the address balance with the given
 // tick and triggers an alert in case the balance falls below the
 // alert threshold value.
@@ -61,5 +66,5 @@ func (bm *BalanceMonitor) Observe(
 }
 
 func (ec *ethereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	return &BalanceMonitor{ec.WeiBalanceOf}, nil
+	return NewBalanceMonitor(ec.WeiBalanceOf), nil
 }
