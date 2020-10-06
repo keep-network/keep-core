@@ -3,6 +3,8 @@ package chain
 import (
 	"context"
 	"crypto/ecdsa"
+	"math/big"
+	"time"
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
@@ -51,6 +53,20 @@ type StakeMonitor interface {
 	StakerFor(address string) (Staker, error)
 }
 
+// StakeMonitor is an interface that provides the ability to monitor
+// the balance for the provided address.
+type BalanceMonitor interface {
+	// Observe starts a process which checks the address balance with the given
+	// tick and triggers an alert in case the balance falls below the
+	// alert threshold value.
+	Observe(
+		ctx context.Context,
+		address string,
+		alertThreshold *big.Int,
+		tick time.Duration,
+	)
+}
+
 // Signing is an interface that provides ability to sign and verify
 // signatures using operator's key associated with the chain.
 type Signing interface {
@@ -92,6 +108,7 @@ type Signing interface {
 type Handle interface {
 	BlockCounter() (BlockCounter, error)
 	StakeMonitor() (StakeMonitor, error)
+	BalanceMonitor() (BalanceMonitor, error)
 	ThresholdRelay() relaychain.Interface
 	Signing() Signing
 }

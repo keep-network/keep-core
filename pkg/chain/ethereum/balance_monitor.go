@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-core/pkg/chain"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -16,18 +18,18 @@ type BalanceMonitor struct {
 
 func (bm *BalanceMonitor) Observe(
 	ctx context.Context,
-	address common.Address,
+	address string,
 	alertThreshold *big.Int,
 	tick time.Duration,
 ) {
 	check := func() {
-		balance, err := bm.balanceSource(address)
+		balance, err := bm.balanceSource(common.HexToAddress(address))
 		if err != nil {
 			logger.Errorf("ethereum balance monitor error: [%v]", err)
 			return
 		}
 
-		if balance.Cmp(alertThreshold) < -1 {
+		if balance.Cmp(alertThreshold) == -1 {
 			logger.Errorf(
 				"ethereum balance is below [%v] wei; "+
 					"please fund your operator account",
@@ -49,4 +51,8 @@ func (bm *BalanceMonitor) Observe(
 			}
 		}
 	}()
+}
+
+func (ec *ethereumChain) BalanceMonitor() (chain.BalanceMonitor, error) {
+	return &BalanceMonitor{ec.WeiBalanceOf}, nil
 }

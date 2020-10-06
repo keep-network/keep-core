@@ -92,6 +92,10 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 	return c.stakeMonitor, nil
 }
 
+func (c *localChain) BalanceMonitor() (chain.BalanceMonitor, error) {
+	return nil, nil // not implemented.
+}
+
 func (c *localChain) Signing() chain.Signing {
 	return &localSigning{c.operatorKey}
 }

@@ -527,7 +527,7 @@ func (ec *ethereumChain) Address() common.Address {
 func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
 	var result hexutil.Big
 
-	err := ec.clientRPC.Call(&result, "eth_getBalance", address)
+	err := ec.clientRPC.Call(&result, "eth_getBalance", address, "latest")
 
 	return (*big.Int)(&result), err
 }

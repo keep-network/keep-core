@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
@@ -159,6 +160,7 @@ func Start(c *cli.Context) error {
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(ctx, config, netProvider)
+	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey.Address.Hex())
 
 	select {
 	case <-ctx.Done():
@@ -251,4 +253,35 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
+}
+
+func initializeBalanceMonitoring(
+	ctx context.Context,
+	chainProvider chain.Handle,
+	config *config.Config,
+	ethereumAddress string,
+) {
+	balanceMonitor, err := chainProvider.BalanceMonitor()
+	if err != nil {
+		logger.Errorf("error obtaining balance monitor handle [%v]", err)
+	}
+
+	alertThreshold := config.Ethereum.BalanceAlertThreshold
+	if alertThreshold == 0 {
+		alertThreshold = 500000000000000000 // 0.5 ETH by default.
+	}
+
+	balanceMonitor.Observe(
+		ctx,
+		ethereumAddress,
+		new(big.Int).SetUint64(alertThreshold),
+		10*time.Second,
+	)
+
+	logger.Infof(
+		"started balance monitoring for address [%v] "+
+			"with alerting below [%v] wei",
+		ethereumAddress,
+		alertThreshold,
+	)
 }
