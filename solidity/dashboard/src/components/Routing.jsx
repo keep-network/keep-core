@@ -60,6 +60,10 @@ class Routing extends React.Component {
     return (
       <Switch>
         <Route exact path="/resources" component={ResourcesPage} />
+        {/* In case that users will have bookmarked the old link. */}
+        <Route exact path="/glossary">
+          <Redirect to="/resources#quick-terminology" />
+        </Route>
         <Route exact path="/grant/:grantId" component={TokenGrantPreviewPage} />
         <Route path="/">{this.renderContent()}</Route>
       </Switch>
