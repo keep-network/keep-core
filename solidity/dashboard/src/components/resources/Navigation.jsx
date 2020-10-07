@@ -7,43 +7,35 @@ const Navigation = () => {
     <nav className="tile resources-nav">
       <h5 className="text-grey-50">Contents</h5>
       <ul>
-        <ResourcesLink
-          to={{ pathname: "/resources", hash: "#documentation" }}
-          label="Documentation"
-        />
-        <ResourcesLink
-          to={{ pathname: "/resources", hash: "#quick-terminology" }}
-          label="Quick Terminology"
-        />
-        <ResourcesLink
-          to={{ pathname: "/resources", hash: "#diagram" }}
-          label="Delegation Diagram"
-          offset={-800}
-        />
+        <ResourcesLink to="documentation">Documentation</ResourcesLink>
+        <ResourcesLink to="quick-terminology">Quick Terminology</ResourcesLink>
+        <ResourcesLink to="diagram" offset={-800}>
+          Diagram
+        </ResourcesLink>
       </ul>
     </nav>
   )
 }
 
-const ResourcesLink = ({ label, to, offset = -100 }) => {
+const ResourcesLink = ({ to, children, offset = -100 }) => {
   const { hash } = useLocation()
   const history = useHistory()
 
   return (
     <li>
       <Link
-        className={`text-small${
-          hash === to.hash ? " active" : ""
-        } cursor-pointer`}
+        className={`text-small${hash === to.hash ? " active" : ""}`}
         activeClass="active"
-        to={to.hash.slice(1)}
+        to={to}
         spy={true}
         smooth={true}
         offset={offset}
         duration={500}
-        onSetActive={() => history.replace(to)}
+        onSetActive={() =>
+          history.replace({ pathname: "/resources", hash: to })
+        }
       >
-        {label}
+        {children}
       </Link>
     </li>
   )
