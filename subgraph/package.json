@@ -7,6 +7,8 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "graph deploy keep-network/keep-graph --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy:ropsten": "graph deploy keep-network/keep-graph-ropsten --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy:local": "graph deploy keep-network/keep-graph --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
     "create-manifest": "node ./create-subgraph-manifest.js"
   },
   "devDependencies": {
