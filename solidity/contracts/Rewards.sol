@@ -82,16 +82,19 @@ contract Rewards is Ownable {
     // for the full reward to be allocated to the interval.
     uint256 public minimumKeepsPerInterval;
 
-    // Total number of keep tokens to distribute.
-    // Includes those already paid out.
+    // Total number of KEEP tokens to distribute by this contract.
+    // Includes those already dispensed.
     uint256 public totalRewards;
-    // Rewards that haven't been allocated to finished intervals
+    // Rewards that haven't been allocated to finished intervals.
     uint256 public unallocatedRewards;
-    // Rewards that have been dispensed from this contract - as a signer
-    // rewards or transferred to a new rewards contract.
+    // Rewards that have been dispensed from this contract as signer rewards.
     // `token.balanceOf(address(this))` should always equal
     // `totalRewards.sub(dispensedRewards)`
     uint256 public dispensedRewards;
+    // The following invariants should always hold:
+    //
+    // totalRewards.sub(dispensedRewards) == unallocatedRewards,
+    // token.balanceOf(address(this)) >= totalRewards.sub(dispensedRewards)
 
     // Timestamp of first interval beginning.
     // Interval 0 covers everything before `firstIntervalStart`
@@ -147,6 +150,8 @@ contract Rewards is Ownable {
     /// allocations. Intended to be used with `approveAndCall`.
     /// If the reward contract has received tokens outside `approveAndCall`,
     /// this collects them as well.
+    /// The following invariant should hold right after calling this function:
+    /// token.balanceOf(address(this)) == totalRewards.sub(dispensedRewards).
     /// @param _from The original sender of the tokens.
     /// Must have approved at least `_value` tokens for the rewards contract.
     /// @param _value The amount of tokens to fund.
@@ -586,7 +591,6 @@ contract Rewards is Ownable {
 
         totalRewards = totalRewards.sub(amountToTransfer);
         unallocatedRewards = 0;
-        dispensedRewards = dispensedRewards.add(amountToTransfer);
 
         emit UpgradeFinalized(amountToTransfer);
 

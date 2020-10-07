@@ -207,11 +207,10 @@ describe("Rewards/Upgrades", () => {
             // 50000 + 95000 = 145000
             expect(totalRewards).to.eq.BN(145000)
             expect(unallocatedRewards).to.eq.BN(0)
-            // nothing yet withdrawn but 855000 transferred to the new contract
-            expect(dispensedRewards).to.eq.BN(855000)
+            expect(dispensedRewards).to.eq.BN(0) // nothing yet withdrawn
         })
 
-        it("lets to withdraw outstanding rewards after migration", async () => {
+        it("lets to withdraw outstanding rewards after finalizing upgrade", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
                 {from: owner}
@@ -230,6 +229,33 @@ describe("Rewards/Upgrades", () => {
             // interval 1 allocates 95000
             // 50000 + 95000 = 145000
             expect(beneficiaryBalance).to.eq.BN(145000)
+        })
+
+        it("correctly updates reward balances when withdrawing after finalizing upgrade", async () => {
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(2 * termLength + 1)  
+            
+            await rewards.setCloseTime(timestamps[2])
+            await rewards.finalizeRewardsUpgrade({from: owner})
+
+            await rewards.receiveReward(0, { from: beneficiary })
+            await rewards.receiveReward(1, { from: beneficiary })
+            await rewards.receiveReward(2, { from: beneficiary })
+
+            const totalRewards = await rewards.totalRewards()
+            const dispensedRewards = await rewards.dispensedRewards()
+            const unallocatedRewards = await rewards.unallocatedRewards()
+
+            // interval 0 allocates 50000
+            // interval 1 allocates 95000
+            // 50000 + 95000 = 145000
+            expect(totalRewards).to.eq.BN(145000)
+            expect(dispensedRewards).to.eq.BN(145000)
+            expect(unallocatedRewards).to.eq.BN(0)
         })
     })
 })
