@@ -116,8 +116,8 @@ contract Rewards is Ownable {
     bool public funded = false;
 
     // Owner of the contract may initiate an upgrade to a new rewards contract
-    // but the pending and past intervals must receive their rewards before any
-    // KEEP tokens are transferred out from this contract.
+    // but the pending and past intervals must have their rewards allocated
+    // before any KEEP tokens are transferred out from this contract.
     uint256 public upgradeInitiatedTimestamp;
     address public newRewardsContract;
 
@@ -568,15 +568,17 @@ contract Rewards is Ownable {
     /// reported.
     function finalizeRewardsUpgrade() public onlyOwner {
         require(upgradeInitiatedTimestamp != 0, "Upgrade not initiated");
-
-        // allocate all intervals that can be currently allocated
-        uint256 currentInterval = intervalOf(block.timestamp);
-        uint256 intervalToAllocate = 0;
-        if (currentInterval > 0) {
-            intervalToAllocate = currentInterval.sub(1);
-        }
         
-        allocateRewards(intervalToAllocate);
+        uint256 currentInterval = intervalOf(block.timestamp);
+        uint256 upgradeInitiatedInterval = intervalOf(upgradeInitiatedTimestamp);
+
+        require(
+            currentInterval > upgradeInitiatedInterval,
+            "Interval at which the upgrade was initiated hasn't ended yet"
+        );
+
+        // allocate all past intervals    
+        allocateRewards(currentInterval.sub(1));
 
         // transfer the unallocated KEEP to the new rewards contract and update
         // this contract's balances

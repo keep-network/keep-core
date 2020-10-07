@@ -91,14 +91,27 @@ describe("Rewards/Upgrades", () => {
             ) 
         })
 
-        it("cannot be finalized before the current interval ends", async () => {
+        it("cannot be finalized before the initiation, zero interval ends", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
                 {from: owner}
             )
             await expectRevert(
                 rewards.finalizeRewardsUpgrade({from: owner}),
-                "Interval hasn't ended yet"
+                "Interval at which the upgrade was initiated hasn't ended yet"
+            )
+        })
+
+        it("cannot be finalized before the initiation, non-zero interval ends", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+            await expectRevert(
+                rewards.finalizeRewardsUpgrade({from: owner}),
+                "Interval at which the upgrade was initiated hasn't ended yet"
             )
         })
 
@@ -198,7 +211,7 @@ describe("Rewards/Upgrades", () => {
             expect(dispensedRewards).to.eq.BN(855000)
         })
 
-        it("let to withdraw outstanding rewards after migration", async () => {
+        it("lets to withdraw outstanding rewards after migration", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
                 {from: owner}
