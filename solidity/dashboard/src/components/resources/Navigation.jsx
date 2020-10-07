@@ -8,10 +8,8 @@ const Navigation = () => {
       <h5 className="text-grey-50">Contents</h5>
       <ul>
         <ResourcesLink to="documentation">Documentation</ResourcesLink>
+        <ResourcesLink to="diagram">Diagram</ResourcesLink>
         <ResourcesLink to="quick-terminology">Quick Terminology</ResourcesLink>
-        <ResourcesLink to="diagram" offset={-800}>
-          Diagram
-        </ResourcesLink>
       </ul>
     </nav>
   )

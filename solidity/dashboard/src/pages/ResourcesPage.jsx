@@ -11,8 +11,8 @@ const ResourcesPage = () => {
       <div className="resources-page-wrapper">
         <div>
           <DocumentationSection />
-          <TerminologyDataTable />
           <DelegationDiagram />
+          <TerminologyDataTable />
         </div>
         <Navigation />
       </div>
