@@ -6,10 +6,10 @@ schema:
 dataSources:
   - kind: ethereum/contract
     name: TokenStaking
-    network: mainnet
+    network: {{network}}
     source:
-      startBlock: 0
-      address: '0xAA86F757738F31F94c44035030ff793Bb03229De'
+      startBlock: "{{TokenStaking.startBlock}}"
+      address: "{{TokenStaking.address}}"
       abi: TokenStaking
     mapping:
       kind: ethereum/events
@@ -39,10 +39,10 @@ dataSources:
 
   - kind: ethereum/contract
     name: TokenGrant
-    network: mainnet
+    network: {{network}}
     source:
-      startBlock: 0
-      address: '0x4c3b139818bf7F9d3d32ff78e4c6D49E0C067b8e'
+      startBlock: "{{TokenGrant.startBlock}}"
+      address: "{{TokenGrant.address}}"
       abi: TokenGrant
     mapping:
       kind: ethereum/events
@@ -65,9 +65,10 @@ dataSources:
 
   - kind: ethereum/contract
     name: ManagedGrantFactory
-    network: mainnet
+    network: {{network}}
     source:
-      address: "0x88793932b1E804EF0DA71AD2238819c3f461ADe9"
+      startBlock: "{{ManagedGrantFactory.startBlock}}"
+      address: "{{ManagedGrantFactory.address}}"
       abi: ManagedGrantFactory
     mapping:
       kind: ethereum/events
@@ -88,7 +89,7 @@ dataSources:
 templates:
   - kind: ethereum/contract
     name: ManagedGrant
-    network: mainnet
+    network: {{network}}
     source:
       abi: ManagedGrant
     mapping:
@@ -104,4 +105,3 @@ templates:
       eventHandlers:
         - event: GranteeReassignmentConfirmed(address,address)
           handler: granteeReassignmentConfirmed
-    
