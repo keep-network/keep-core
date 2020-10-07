@@ -11,7 +11,7 @@ import TokenGrantsPage from "../pages/TokenGrantsPage"
 import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ChooseWallet from "./ChooseWallet"
-import GlossaryPage from "../pages/GlossaryPage"
+import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 
 class Routing extends React.Component {
@@ -59,7 +59,11 @@ class Routing extends React.Component {
   render() {
     return (
       <Switch>
-        <Route exact path="/glossary" component={GlossaryPage} />
+        <Route exact path="/resources" component={ResourcesPage} />
+        {/* In case that users will have bookmarked the old link. */}
+        <Route exact path="/glossary">
+          <Redirect to="/resources#quick-terminology" />
+        </Route>
         <Route exact path="/grant/:grantId" component={TokenGrantPreviewPage} />
         <Route path="/">{this.renderContent()}</Route>
       </Switch>
