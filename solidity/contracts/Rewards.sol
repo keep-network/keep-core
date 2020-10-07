@@ -613,15 +613,16 @@ contract Rewards is Ownable {
     /// @notice Get the identifier of the keep at the given index,
     /// when all keeps created by the factory are ordered by creation time.
     /// @param index The index of the queried keep.
-    /// @return The `bytes32` identifier of the keep at the given index
-    /// for any index lower than `_getKeepCount()`.
-    /// Revert if the given index is outside the range of created keeps.
+    /// @return The `bytes32` identifier of the keep at the given index.
+    /// @dev Implementation is not required to check if keep with the given
+    /// index exists.
     function _getKeepAtIndex(uint256 index) internal view returns (bytes32);
 
     /// @notice Get the creation time of the given keep.
     /// @param _keep The identifier of the keep.
     /// @return The creation timestamp of the keep.
-    /// Revert if the identifier is invalid.
+    /// @dev If the idenfifier is invalid or not recognized by factory, function
+    /// may revert or return 0.
     function _getCreationTime(bytes32 _keep) internal view returns (uint256);
 
     /// @notice Is the given keep closed.
