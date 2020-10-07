@@ -91,9 +91,7 @@ contract Rewards is Ownable {
     // `token.balanceOf(address(this))` should always equal
     // `totalRewards.sub(dispensedRewards)`
     uint256 public dispensedRewards;
-    // The following invariants should always hold:
-    //
-    // totalRewards.sub(dispensedRewards) == unallocatedRewards,
+    // The following invariant should always hold:
     // token.balanceOf(address(this)) >= totalRewards.sub(dispensedRewards)
 
     // Timestamp of first interval beginning.
