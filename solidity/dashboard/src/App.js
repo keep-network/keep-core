@@ -4,7 +4,7 @@ import Header, { HeaderContextProvider } from "./components/Header"
 import Routing from "./components/Routing"
 import ContractsDataContextProvider from "./components/ContractsDataContextProvider"
 import { Messages } from "./components/Message"
-import { SideMenu, SideMenuProvider } from "./components/SideMenu"
+import { SideMenu } from "./components/SideMenu"
 import { BrowserRouter as Router } from "react-router-dom"
 import { Provider } from "react-redux"
 import store from "./store"
@@ -17,19 +17,17 @@ const App = () => (
         <ModalContextProvider>
           <ContractsDataContextProvider>
             <HeaderContextProvider>
-              <SideMenuProvider>
-                <Router>
-                  <main>
-                    <Header />
-                    <SideMenu />
-                    <div className="content-wrapper" id="main-content-wrapper">
-                      <div className="content">
-                        <Routing />
-                      </div>
+              <Router>
+                <main>
+                  <Header />
+                  <SideMenu />
+                  <div className="content-wrapper" id="main-content-wrapper">
+                    <div className="content">
+                      <Routing />
                     </div>
-                  </main>
-                </Router>
-              </SideMenuProvider>
+                  </div>
+                </main>
+              </Router>
             </HeaderContextProvider>
           </ContractsDataContextProvider>
         </ModalContextProvider>

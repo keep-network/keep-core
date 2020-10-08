@@ -1,31 +1,14 @@
-import React, { useState, useContext } from "react"
+import React, { useContext } from "react"
 import { Link, useRouteMatch } from "react-router-dom"
 import { ContractsDataContext } from "./ContractsDataContextProvider"
 import Footer from "./Footer"
 import * as Icons from "./Icons"
 
-export const SideMenuContext = React.createContext({})
-
-export const SideMenuProvider = (props) => {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const toggle = () => {
-    setIsOpen(!isOpen)
-  }
-
-  return (
-    <SideMenuContext.Provider value={{ isOpen, toggle }}>
-      {props.children}
-    </SideMenuContext.Provider>
-  )
-}
-
 export const SideMenu = (props) => {
-  const { isOpen } = useContext(SideMenuContext)
   const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
 
   return (
-    <nav className={`side-menu${isOpen ? "--active " : ""}`}>
+    <nav className="side-menu--active">
       <Link to="/">
         <Icons.KeepDashboardLogo className="side-menu__logo" />
       </Link>
