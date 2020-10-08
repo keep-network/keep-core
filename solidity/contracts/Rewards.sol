@@ -614,7 +614,7 @@ contract Rewards is Ownable {
     /// when all keeps created by the factory are ordered by creation time.
     /// @param index The index of the queried keep.
     /// @return The `bytes32` identifier of the keep at the given index.
-    /// @dev Implementation is not required to check if keep with the given
+    /// @dev Implementation is not required to check if a keep with the given
     /// index exists.
     function _getKeepAtIndex(uint256 index) internal view returns (bytes32);
 
