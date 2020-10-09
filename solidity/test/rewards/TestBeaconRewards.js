@@ -28,9 +28,18 @@ describe('BeaconRewards', () => {
     // 1,000,000,000 - total KEEP supply
     //   200,000,000 - 20% of the total supply goes to staker rewards
     //    20,000,000 - 10% of staker rewards goes to the random beacon stakers
-    const totalBeaconRewards = web3.utils.toBN(20000000).mul(tokenDecimalMultiplier)
+    //    19,800,000 - 99% of staker rewards goes to the random beacon stakers 
+    //                 operating after 2020-09-24
+    const totalBeaconRewards = web3.utils.toBN(19800000).mul(tokenDecimalMultiplier)
 
     const groupSize = 64
+
+    const expectedKeepAllocations = [
+        792000, 1520640, 1748736, 1888635, 2077498, 1765874,
+        1500993, 1275844, 1084467, 921797, 783528, 665998,
+        566099, 481184, 409006, 347655, 295507, 251181,
+        213504, 181478, 154257, 131118, 111450, 94733
+    ]
 
     before(async() => {
         let contracts = await initContracts(
@@ -92,13 +101,6 @@ describe('BeaconRewards', () => {
 
     describe("interval allocations", async() => {
         it("should equal expected ones having two groups created per interval", async() => {
-            const expectedKeepAllocations = [                
-                800000,  1536000, 1766400, 1907712, 2098483, 1783710,
-                1516154, 1288730, 1095421, 931108,  791441,  672725,
-                571816,  486044,  413137,  351166,  298491,  253718,
-                215660,  183311,  155814,  132442,  112576,  95689
-            ]
-
             for (let i = 0; i < 24; i++) {
                 // 2 groups created in an interval
                 await registerNewGroup()
@@ -107,21 +109,14 @@ describe('BeaconRewards', () => {
                 await timeJumpToEndOfInterval(i)
                 await rewardsContract.allocateRewards(i)
                 
-                const allocated = await rewardsContract.getAllocatedRewards(i)                                
+                const allocated = await rewardsContract.getAllocatedRewards(i)
                 const allocatedKeep = allocated.div(tokenDecimalMultiplier)
-                
-                expect(allocatedKeep).to.eq.BN(expectedKeepAllocations[i])
+
+                assertKeepIntervalAllocations(allocatedKeep, expectedKeepAllocations[i])
             }
         })
 
         it("should equal expected ones having more than two groups created per interval", async () => {
-            const expectedKeepAllocations = [                
-                800000,  1536000, 1766400, 1907712, 2098483, 1783710,
-                1516154, 1288730, 1095421, 931108,  791441,  672725,
-                571816,  486044,  413137,  351166,  298491,  253718,
-                215660,  183311,  155814,  132442,  112576,  95689
-            ]
-
             for (let i = 0; i < 24; i++) {
                 // 5 groups created in an interval
                 for (let j = 0; j < 5; j++) {
@@ -131,19 +126,25 @@ describe('BeaconRewards', () => {
                 await timeJumpToEndOfInterval(i)
                 await rewardsContract.allocateRewards(i)
                 
-                const allocated = await rewardsContract.getAllocatedRewards(i)                                
+                const allocated = await rewardsContract.getAllocatedRewards(i)
                 const allocatedKeep = allocated.div(tokenDecimalMultiplier)
-                
-                expect(allocatedKeep).to.eq.BN(expectedKeepAllocations[i])
+
+                assertKeepIntervalAllocations(allocatedKeep, expectedKeepAllocations[i])
             }
         })
 
         it("should equal expected ones having just one group created per interval", async () => {
-            const expectedKeepAllocations = [
-                400000,  784000, 940800, 1072512, 1260201, 1165686,
-                1078259, 997390, 922586, 853392,  789387,  730183,
-                675419,  624763, 577906, 534563,  494470,  457385,
-                423081,  391350, 361999, 334849,  309735,  286505
+            // 1st interval expected allocation: 19,800,000 * 4% = 792,000
+            // 1st interval adjusted: 792,000 / 2 = 396,000
+            // Remaining pool: 19,800,000 - 396,000 = 19,404,000
+            // 2nd interval expected allocation: 19,404,000 * 8% = 1,552,320
+            // 2nd interval adjusted: 776160
+            // etc.
+            const adjustedKeepAllocations = [
+                396000, 776160, 931392, 1061787, 1247600, 1154030,
+                1067477, 987417, 913360, 844858, 781494, 722882,
+                668666, 618516, 572127, 529218, 489526, 452812,
+                418851, 387437, 358379, 331501, 306638, 283640,
             ]
 
             for (let i = 0; i < 24; i++) {
@@ -155,8 +156,8 @@ describe('BeaconRewards', () => {
 
                 const allocated = await rewardsContract.getAllocatedRewards(i)                                
                 const allocatedKeep = allocated.div(tokenDecimalMultiplier)
-                
-                expect(allocatedKeep).to.eq.BN(expectedKeepAllocations[i])
+
+                assertKeepIntervalAllocations(allocatedKeep, adjustedKeepAllocations[i])
             }
         })
     })
@@ -164,7 +165,7 @@ describe('BeaconRewards', () => {
     describe("rewards withdrawal", async () => {
         it("should be possible for stale groups", async () => {
             await registerNewGroup()
-            await expireAllGroups()     
+            await expireAllGroups()
 
             const isEligible = await rewardsContract.eligibleForReward(0)
             expect(isEligible).to.be.true
@@ -212,24 +213,24 @@ describe('BeaconRewards', () => {
             await expireAllGroups()
             await rewardsContract.receiveReward(0)
             // two groups but one of them is terminated and does not count here 
-            // each beneficiary receives 800000 / 2 / 64 = 6250 KEEP
-            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(6250))
+            // each beneficiary receives 792,000 / 2 / 64 = 6,187.5 KEEP => ~6,188
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(6188))
 
-            // the remaining 400000 stays in unallocated rewards but the fact
+            // the remaining 396,000 stays in unallocated rewards but the fact
             // it terminated needs to be reported to recalculate the unallocated
             // amount
             let unallocated = await rewardsContract.unallocatedRewards()
             let unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
-            expect(unallocatedInKeep).to.eq.BN(19200000)
+            expect(unallocatedInKeep).to.eq.BN(19008000)
 
             await rewardsContract.reportTermination(1)
             unallocated = await rewardsContract.unallocatedRewards()
             unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
-            expect(unallocatedInKeep).to.eq.BN(19600000)
+            expect(unallocatedInKeep).to.eq.BN(19404000)
         })
 
         it("should correctly distribute rewards to beneficiaries", async () => {
-            // 2 groups in the first interval, 800000 KEEP to distribute
+            // 2 groups in the first interval, 792,000 KEEP to distribute
             // between 64 beneficiaries.
             await registerNewGroup()
             await registerNewGroup()
@@ -238,14 +239,14 @@ describe('BeaconRewards', () => {
 
             await expireAllGroups()
             await rewardsContract.receiveReward(0)
-            // each beneficiary receives 800000 / 2 / 64 = 6250 KEEP
-            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(6250))
+            // each beneficiary receives 792,000 / 2 / 64 = 6,187.5 KEEP => ~6,188
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(6188))
             await rewardsContract.receiveReward(1)
-            // each beneficiary receives 800000 / 2 / 64 = 6250 KEEP
-            // they should have 6250 + 6250 = 12500 KEEP now
-            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(12500))
+            // each beneficiary receives 792,000 / 2 / 64 = 6187.5 KEEP
+            // they should have 6,187.5 + 6,187.5 = 12,375 KEEP now
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(12375))
 
-            // 1 group in the second interval, 768000 KEEP to distribute
+            // 1 group in the second interval, 760,320 KEEP to distribute
             // between 64 beneficiaries
             await registerNewGroup()
             await timeJumpToEndOfInterval(1)
@@ -253,9 +254,9 @@ describe('BeaconRewards', () => {
 
             await expireAllGroups()
             await rewardsContract.receiveReward(2)
-            // each beneficiary receives 768000 / 64 = 12000 KEEP;
-            // they should have 12250 + 12000 = 24500 KEEP now
-            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(24500))
+            // each beneficiary receives 760,320 / 64 = 11,880 KEEP
+            // they should have 12,375 + 11,880 = 23,760 KEEP now
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(24255))
         })
     })
 
@@ -282,10 +283,24 @@ describe('BeaconRewards', () => {
     }
 
     async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
+        // Solidity is not very good when it comes to floating point precision,
+        // we are allowing for ~1 KEEP difference margin between expected and
+        // actual value.
+        const precision = 1
+
         for (let i = 0; i < beneficiaries.length; i++) {
             const balance = await token.balanceOf(beneficiaries[i])
             const balanceInKeep = balance.div(tokenDecimalMultiplier)
-            expect(balanceInKeep).to.eq.BN(expectedBalance)
+
+            expect(balanceInKeep).to.gte.BN(expectedBalance.subn(precision))
+            expect(balanceInKeep).to.lte.BN(expectedBalance.addn(precision))
         }
+    }
+
+    async function assertKeepIntervalAllocations(actual, expected) {
+        const precision = 1
+    
+        expect(actual).to.gte.BN(expected - precision)
+        expect(actual).to.lte.BN(expected + precision)
     }
 })
