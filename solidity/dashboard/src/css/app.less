@@ -55,32 +55,47 @@ ul {
   padding-left: 0;
 }
 
-main {
-  height: 100vh;
-  width: 100vw;
+// TODO: apply a mobile-first approach when the mobile views are ready.
+.app-layout {
   display: grid;
-  grid-template-rows: auto 1fr;
   grid-template-columns: @side-menu-width 1fr;
-  grid-template-areas:
-    "nav header"
-    "nav content";
-  background: @background-color;
-  overflow: hidden;
-  
-  > .content-wrapper {
-    grid-area: content;
-    grid-area: content;
-    padding: 1rem;
-    padding-top: 2.5rem;
-    overflow: scroll;
 
-    > .content {
-      display: flex;
-      flex-direction: column;
-      margin: 0 auto;
-      padding: 0 10px 2rem;
+  &__left {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 12;
+    background: @side-menu-color;
+    border-right: 1px solid @color-grey-30;
+    overflow-x: hidden;
+    transition: 0.5s ease;
+
+    .app-logo {
+      margin: 1.5rem 1rem 2.75rem;
     }
-    
+
+    footer {
+      margin: auto 1.5rem 1.5rem;
+  }
+  }
+
+  &__center {
+    background-color: @color-grey-20;
+
+    .header {
+      position: sticky;
+      top: 0;
+    }
+
+    main {
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 5rem;
+      padding: 1rem;
+      padding-top: 2.5rem;
+    }
   }
 }
 
@@ -136,11 +151,20 @@ main {
      }
    }
 
-   main {
-     > .content-wrapper > .content {
-      max-width: 1400px;
-     }
-   }
+
+
+  .app-layout {
+    &__center {
+      main {
+        max-width: 1400px;
+      }
+    }
+  }
+  //  main {
+  //    > .content-wrapper > .content {
+  //     max-width: 1400px;
+  //    }
+  //  }
 }
 
 @media screen and (min-width: 1250px) {

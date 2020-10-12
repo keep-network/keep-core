@@ -1,14 +1,13 @@
-import React, { useEffect } from "react"
-import { useUpdateHeaderData } from "./Header"
+import React from "react"
+import Header from "./Header"
 
 const PageWrapper = ({ title, subLinks, children }) => {
-  const updateHeaderData = useUpdateHeaderData()
-
-  useEffect(() => {
-    updateHeaderData(title, subLinks)
-  }, [title, subLinks, updateHeaderData])
-
-  return <>{children}</>
+  return (
+    <>
+      <Header title={title} subLinks={subLinks} />
+      <main>{children}</main>
+    </>
+  )
 }
 
 export default PageWrapper

@@ -1,7 +1,6 @@
 import React, { useContext } from "react"
 import { Link, useRouteMatch } from "react-router-dom"
 import { ContractsDataContext } from "./ContractsDataContextProvider"
-import Footer from "./Footer"
 import * as Icons from "./Icons"
 
 export const SideMenu = (props) => {
@@ -9,9 +8,6 @@ export const SideMenu = (props) => {
 
   return (
     <nav className="side-menu--active">
-      <Link to="/">
-        <Icons.KeepDashboardLogo className="side-menu__logo" />
-      </Link>
       <ul className="side-menu__list">
         <NavLink to="/overview" label="overview" icon={<Icons.Home />} />
         <NavLink to="/tokens" label="tokens" icon={<Icons.FeesVector />} />
@@ -37,7 +33,6 @@ export const SideMenu = (props) => {
           <NavLink exact to="/create-token-grants" label="token grants" />
         )}
       </ul>
-      <Footer />
     </nav>
   )
 }

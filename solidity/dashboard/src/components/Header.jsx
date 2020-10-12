@@ -1,11 +1,8 @@
-import React, { useState, useCallback } from "react"
+import React from "react"
 import { NavLink } from "react-router-dom"
 import { isEmptyArray } from "../utils/array.utils"
-import { useContext } from "react"
 
-const Header = () => {
-  const { title, subLinks } = useHeaderContext()
-
+const Header = ({ title, subLinks }) => {
   return (
     <header className="header">
       <div className="header__content">
@@ -40,31 +37,4 @@ const renderSubNavItem = (item, index) => (
   <SubNavItem key={`${index}-${item.path}`} {...item} />
 )
 
-const HeaderContext = React.createContext({
-  title: "",
-  subLinks: [],
-  updateHeaderData: () => {},
-})
-
-const HeaderContextProvider = React.memo((props) => {
-  const [title, setTitle] = useState("")
-  const [subLinks, setSubLinks] = useState([])
-  const updateHeaderData = useCallback((title, subLinks) => {
-    setTitle(title)
-    setSubLinks(subLinks)
-  }, [])
-
-  return (
-    <HeaderContext.Provider value={{ title, subLinks, updateHeaderData }}>
-      {props.children}
-    </HeaderContext.Provider>
-  )
-})
-
-const useHeaderContext = () => useContext(HeaderContext)
-
-const useUpdateHeaderData = () => useHeaderContext().updateHeaderData
-
 export default Header
-
-export { HeaderContextProvider, useHeaderContext, useUpdateHeaderData }
