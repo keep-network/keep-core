@@ -102,9 +102,11 @@ describe('BeaconRewards', () => {
     describe("interval allocations", async() => {
         it("should equal expected ones having two groups created per interval", async() => {
             for (let i = 0; i < 24; i++) {
+                const startOf = await rewardsContract.startOf(i)
+
                 // 2 groups created in an interval
-                await registerNewGroup()
-                await registerNewGroup()
+                await registerNewGroup(startOf.addn(1))
+                await registerNewGroup(startOf.addn(2))
 
                 await timeJumpToEndOfInterval(i)
                 await rewardsContract.allocateRewards(i)
@@ -118,9 +120,11 @@ describe('BeaconRewards', () => {
 
         it("should equal expected ones having more than two groups created per interval", async () => {
             for (let i = 0; i < 24; i++) {
+                const startOf = await rewardsContract.startOf(i)
+
                 // 5 groups created in an interval
                 for (let j = 0; j < 5; j++) {
-                    await registerNewGroup()
+                    await registerNewGroup(startOf.addn(j+1))
                 }
 
                 await timeJumpToEndOfInterval(i)
@@ -148,8 +152,9 @@ describe('BeaconRewards', () => {
             ]
 
             for (let i = 0; i < 24; i++) {
+                const startOf = await rewardsContract.startOf(i)
                 // one group created in an interval
-                await registerNewGroup()
+                await registerNewGroup(startOf.addn(1))
 
                 await timeJumpToEndOfInterval(i)
                 await rewardsContract.allocateRewards(i)
@@ -164,7 +169,8 @@ describe('BeaconRewards', () => {
 
     describe("rewards withdrawal", async () => {
         it("should be possible for stale groups", async () => {
-            await registerNewGroup()
+            const startOf = await rewardsContract.startOf(0)
+            await registerNewGroup(startOf.addn(1))
             await expireAllGroups()
 
             const isEligible = await rewardsContract.eligibleForReward(0)
@@ -176,7 +182,8 @@ describe('BeaconRewards', () => {
         })
 
         it("should not be possible for non-stale groups", async () => {
-            await registerNewGroup()
+            const startOf = await rewardsContract.startOf(0)
+            await registerNewGroup(startOf.addn(1))
 
             const isEligible = await rewardsContract.eligibleForReward(0)
             expect(isEligible).to.be.false
@@ -189,7 +196,8 @@ describe('BeaconRewards', () => {
         })
 
         it("should not be possible for terminated groups", async () => {
-            await registerNewGroup()
+            const startOf = await rewardsContract.startOf(0)
+            await registerNewGroup(startOf.addn(1))
             await operatorContract.terminateGroup(0)
             
             const isEligible = await rewardsContract.eligibleForReward(0)
@@ -203,8 +211,9 @@ describe('BeaconRewards', () => {
         })
 
         it("should not count terminated groups when distributing rewards", async () => {
-            await registerNewGroup()
-            await registerNewGroup()
+            const startOf = await rewardsContract.startOf(0)
+            await registerNewGroup(startOf.addn(1))
+            await registerNewGroup(startOf.addn(2))
             await operatorContract.terminateGroup(1)
 
             await timeJumpToEndOfInterval(0)
@@ -230,10 +239,11 @@ describe('BeaconRewards', () => {
         })
 
         it("should correctly distribute rewards to beneficiaries", async () => {
+            let startOf = await rewardsContract.startOf(0)
             // 2 groups in the first interval, 792,000 KEEP to distribute
             // between 64 beneficiaries.
-            await registerNewGroup()
-            await registerNewGroup()
+            await registerNewGroup(startOf.addn(1))
+            await registerNewGroup(startOf.addn(2))
             await timeJumpToEndOfInterval(0)
             await rewardsContract.allocateRewards(0)
 
@@ -248,7 +258,8 @@ describe('BeaconRewards', () => {
 
             // 1 group in the second interval, 760,320 KEEP to distribute
             // between 64 beneficiaries
-            await registerNewGroup()
+            startOf = await rewardsContract.startOf(1)
+            await registerNewGroup(startOf.addn(1))
             await timeJumpToEndOfInterval(1)
             await rewardsContract.allocateRewards(1)
 
@@ -269,12 +280,12 @@ describe('BeaconRewards', () => {
         }
     }
 
-    async function registerNewGroup() {
+    async function registerNewGroup(creationTimestamp) {
         const groupPublicKey = crypto.randomBytes(128)
-        await operatorContract.registerNewGroup(groupPublicKey, operators)
+        await operatorContract.registerNewGroup(groupPublicKey, operators, creationTimestamp)
     }
 
-    async function expireAllGroups() {        
+    async function expireAllGroups() {
         const currentBlock = await time.latestBlock()
 
         const groupStalingTime = groupActiveTime + relayEntryTimeout + 1
