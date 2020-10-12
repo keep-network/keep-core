@@ -20,6 +20,8 @@ const pages = [
   ApplicationsPageContainer,
 ]
 
+const withoutWalletPages = [ResourcesPage]
+
 class Routing extends React.Component {
   renderContent() {
     const {
@@ -65,10 +67,10 @@ class Routing extends React.Component {
   render() {
     return (
       <Switch>
-        <Route exact path="/resources" component={ResourcesPage} />
+        {withoutWalletPages.map(renderPage)}
         {/* In case that users will have bookmarked the old link. */}
         <Route exact path="/glossary">
-          <Redirect to="/resources#quick-terminology" />
+          <Redirect to="/resources/quick-terminology" />
         </Route>
         <Route exact path="/grant/:grantId" component={TokenGrantPreviewPage} />
         <Route path="/">{this.renderContent()}</Route>
