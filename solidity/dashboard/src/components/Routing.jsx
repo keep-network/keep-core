@@ -13,6 +13,13 @@ import ChooseWallet from "./ChooseWallet"
 import GlossaryPage from "../pages/GlossaryPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 
+const pages = [
+  TokensPageContainer,
+  OperatorPage,
+  RewardsPageContainer,
+  ApplicationsPageContainer,
+]
+
 class Routing extends React.Component {
   renderContent() {
     const {
@@ -37,10 +44,7 @@ class Routing extends React.Component {
           {/* Temporary solution. We need to implement the `Overview` page as a separate page. */}
           <Redirect to="/tokens" />
         </Route>
-        <Route path="/tokens" component={TokensPageContainer} />
-        <Route exact path="/operations" component={OperatorPage} />
-        <Route path="/rewards" component={RewardsPageContainer} />
-        <Route path="/applications" component={ApplicationsPageContainer} />
+        {pages.map(renderPage)}
         {isKeepTokenContractDeployer && (
           <Route
             exact
@@ -67,6 +71,21 @@ class Routing extends React.Component {
       </Switch>
     )
   }
+}
+
+export const renderPage = (PageComponent, index) => {
+  return (
+    <Route
+      key={`${PageComponent.route.path}-${index}`}
+      path={PageComponent.route.path}
+      exact={PageComponent.route.exact}
+    >
+      <PageComponent
+        routes={PageComponent.route.pages}
+        title={PageComponent.route.title}
+      />
+    </Route>
+  )
 }
 
 export default withWeb3Context(withContractsDataContext(Routing))

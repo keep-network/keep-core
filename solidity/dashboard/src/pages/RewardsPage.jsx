@@ -5,4 +5,10 @@ const RewardsPage = () => {
   return <Rewards />
 }
 
-export default React.memo(RewardsPage)
+RewardsPage.route = {
+  title: "Keep Random Beacon",
+  path: "/rewards/random-beacon",
+  exact: true,
+}
+
+export default RewardsPage

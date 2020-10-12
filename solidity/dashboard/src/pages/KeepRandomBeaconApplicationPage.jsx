@@ -139,8 +139,15 @@ const toAuthHistoryData = (authData) => ({
 const mapDispatchToProps = {
   authorizeOperatorContract,
 }
-
-export default connect(
+const ConnectedKeepRandomBeaconApplicationPage = connect(
   null,
   mapDispatchToProps
 )(KeepRandomBeaconApplicationPage)
+
+ConnectedKeepRandomBeaconApplicationPage.route = {
+  title: "Keep Rando Beacon",
+  path: "/applications/random-beacon",
+  exact: true,
+}
+
+export default ConnectedKeepRandomBeaconApplicationPage

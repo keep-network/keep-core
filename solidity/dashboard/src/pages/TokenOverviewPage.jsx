@@ -84,4 +84,10 @@ const TokenOverviewPage = () => {
   )
 }
 
+TokenOverviewPage.route = {
+  title: "Overview",
+  path: "/tokens/overview",
+  exact: true,
+}
+
 export default TokenOverviewPage

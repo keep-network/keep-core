@@ -61,4 +61,10 @@ const TBTCRewardsPage = () => {
   )
 }
 
-export default React.memo(TBTCRewardsPage)
+TBTCRewardsPage.route = {
+  title: "tBTC",
+  path: "/rewards/tbtc",
+  exact: true,
+}
+
+export default TBTCRewardsPage

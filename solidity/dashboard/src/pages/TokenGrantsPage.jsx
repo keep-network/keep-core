@@ -69,4 +69,10 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
   )
 })
 
-export default React.memo(TokenGrantsPage)
+TokenGrantsPage.route = {
+  title: "Grants",
+  path: "/tokens/grants",
+  exact: true,
+}
+
+export default TokenGrantsPage

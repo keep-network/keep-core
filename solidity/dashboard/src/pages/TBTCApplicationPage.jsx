@@ -216,4 +216,15 @@ const mapDispatchToProps = {
   deauthorizeSortitionPoolContract,
 }
 
-export default connect(null, mapDispatchToProps)(TBTCApplicationPage)
+const ConnectedTBTCApplicationPage = connect(
+  null,
+  mapDispatchToProps
+)(TBTCApplicationPage)
+
+ConnectedTBTCApplicationPage.route = {
+  title: "tBTC",
+  path: "/applications/tbtc",
+  exact: true,
+}
+
+export default ConnectedTBTCApplicationPage

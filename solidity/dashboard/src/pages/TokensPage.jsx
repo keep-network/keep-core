@@ -94,4 +94,12 @@ const mapDispatchToProps = (dispatch) => ({
     }),
 })
 
-export default connect(null, mapDispatchToProps)(TokensPage)
+const ConnectedTokensPage = connect(null, mapDispatchToProps)(TokensPage)
+
+ConnectedTokensPage.route = {
+  title: "Delegate",
+  path: "/tokens/delegate",
+  exact: true,
+}
+
+export default ConnectedTokensPage

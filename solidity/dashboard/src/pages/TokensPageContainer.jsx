@@ -5,7 +5,7 @@ import TokenGrantsPage from "./TokenGrantsPage"
 import TokensPageContextProvider, {
   useTokensPageContext,
 } from "../contexts/TokensPageContext"
-import { Route, Switch, Redirect, useLocation } from "react-router-dom"
+import { useLocation } from "react-router-dom"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent.js"
 import {
   ADD_DELEGATION,
@@ -42,13 +42,12 @@ import { useModal } from "../hooks/useModal"
 import CopyStakePage from "./CopyStakePage"
 import PageWrapper from "../components/PageWrapper"
 
-const subLinks = [
-  { title: "Overview", path: "/tokens/overview" },
-  { title: "Delegate", path: "/tokens/delegate" },
-  { title: "Grants", path: "/tokens/grants" },
-]
-
-const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
+const TokensPageContainer = ({
+  title,
+  routes,
+  oldDelegations,
+  fetchOldDelegations,
+}) => {
   useSubscribeToStakedEvent()
   useSubscribeToUndelegatedEvent()
   useSubscribeToRecoveredStakeEvent()
@@ -72,7 +71,7 @@ const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
   const { openModal } = useModal()
 
   return (
-    <PageWrapper title="Tokens" subLinks={subLinks}>
+    <PageWrapper title={title} routes={routes}>
       {!isEmptyArray(oldDelegations) && (
         <Banner
           type={BANNER_TYPE.NOTIFICATION}
@@ -89,12 +88,6 @@ const TokensPageContainer = ({ oldDelegations, fetchOldDelegations }) => {
           </Button>
         </Banner>
       )}
-      <Switch>
-        <Route exact path="/tokens/overview" component={TokenOverviewPage} />
-        <Route exact path="/tokens/delegate" component={TokensPage} />
-        <Route exact path="/tokens/grants" component={TokenGrantsPage} />
-        <Redirect to="/tokens/overview" />
-      </Switch>
     </PageWrapper>
   )
 }
@@ -479,10 +472,16 @@ const TokensPageContainerWithRedux = connect(
   mapDispatchToProps
 )(TokensPageContainer)
 
-const TokensPageContainerWithContext = () => (
+const TokensPageContainerWithContext = React.memo((props) => (
   <TokensPageContextProvider>
-    <TokensPageContainerWithRedux />
+    <TokensPageContainerWithRedux {...props} />
   </TokensPageContextProvider>
-)
+))
 
-export default React.memo(TokensPageContainerWithContext)
+TokensPageContainerWithContext.route = {
+  title: "Tokens",
+  path: "/tokens",
+  pages: [TokenOverviewPage, TokensPage, TokenGrantsPage],
+}
+
+export default TokensPageContainerWithContext
