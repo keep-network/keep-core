@@ -3,10 +3,6 @@ pragma solidity 0.5.17;
 import "../KeepRandomBeaconOperator.sol";
 
 contract KeepRandomBeaconOperatorBeaconRewardsStub is KeepRandomBeaconOperator {
-    using Groups for Groups.Group;
-
-    uint256 constant GROUP_INDEX_FLAG = 1 << 255;
-
     constructor(
         address _serviceContract,
         address _stakingContract,
@@ -24,8 +20,8 @@ contract KeepRandomBeaconOperatorBeaconRewardsStub is KeepRandomBeaconOperator {
     }
 
     function registerNewGroup(bytes memory groupPublicKey, address[] memory members, uint256 creationTimestamp) public {
-        groups.groupIndices[groupPublicKey] = (groups.groups.length ^ GROUP_INDEX_FLAG);
-        groups.groups.push(Groups.Group(groupPublicKey, block.number, false, uint248(creationTimestamp)));
+        groups.addGroup(groupPublicKey);
+        groups.groups[groups.groups.length - 1].registrationTime = uint248(creationTimestamp);
     
         groups.setGroupMembers(groupPublicKey, members, hex"");
     }
