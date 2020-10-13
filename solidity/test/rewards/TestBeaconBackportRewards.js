@@ -79,9 +79,10 @@ describe('BeaconBackportRewards', () => {
         }
 
         // 3 groups created in an interval
-        await registerNewGroup()
-        await registerNewGroup()
-        await registerNewGroup()
+        const startOf = await rewardsContract.startOf(0)
+        await registerNewGroup(startOf.addn(1))
+        await registerNewGroup(startOf.addn(2))
+        await registerNewGroup(startOf.addn(3))
     })
 
     beforeEach(async () => {
@@ -142,9 +143,9 @@ describe('BeaconBackportRewards', () => {
         }
     }
 
-    async function registerNewGroup() {
+    async function registerNewGroup(creationTimestamp) {
         const groupPublicKey = crypto.randomBytes(128)
-        await operatorContract.registerNewGroup(groupPublicKey, operators)
+        await operatorContract.registerNewGroup(groupPublicKey, operators, creationTimestamp)
     }
 
     async function assertKeepBalanceOfBeneficiaries(expectedBalance) {
@@ -156,7 +157,8 @@ describe('BeaconBackportRewards', () => {
         for (let i = 0; i < beneficiaries.length; i++) {
             const balance = await token.balanceOf(beneficiaries[i])
             const balanceInKeep = balance.div(tokenDecimalMultiplier)
-            expect(balanceInKeep).to.gte.BN(expectedBalance)
+
+            expect(balanceInKeep).to.gte.BN(expectedBalance.subn(precision))
             expect(balanceInKeep).to.lte.BN(expectedBalance.addn(precision))
         }
     }
