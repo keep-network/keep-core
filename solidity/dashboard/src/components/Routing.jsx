@@ -9,7 +9,6 @@ import RewardsPageContainer from "../pages/RewardsPageContainer"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
-import ChooseWallet from "./ChooseWallet"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 
@@ -27,12 +26,8 @@ class Routing extends React.Component {
     const {
       isKeepTokenContractDeployer,
       contractsDataIsFetching,
-      web3: { error, provider, yourAddress },
+      web3: { error },
     } = this.props
-
-    if (!provider || !yourAddress) {
-      return <ChooseWallet />
-    }
 
     if (error) {
       return null
