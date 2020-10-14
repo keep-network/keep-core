@@ -1,13 +1,14 @@
 import React from "react"
 import { NavLink } from "react-router-dom"
 import { isEmptyArray } from "../utils/array.utils"
+import { Web3Status } from "./Web3Status"
 
 const Header = ({ title, subLinks }) => {
   return (
     <header className="header">
       <div className="header__content">
         <h1 className="header__title">{title}</h1>
-        {/* TODO add a web3 status component */}
+        <Web3Status />
       </div>
       {!isEmptyArray(subLinks) && (
         <nav className="header__sub-nav">
