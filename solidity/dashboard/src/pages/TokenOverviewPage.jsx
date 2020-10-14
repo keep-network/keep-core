@@ -7,6 +7,7 @@ import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
+import TokenBalancesOverviewSkeleton from "../components/skeletons/TokenBalancesOverviewSkeleton"
 
 const TokenOverviewPage = () => {
   const {
@@ -52,7 +53,7 @@ const TokenOverviewPage = () => {
     <>
       <LoadingOverlay
         isFetching={isFetching}
-        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}
+        skeletonComponent={<TokenBalancesOverviewSkeleton />}
       >
         <TokenOverview
           totalKeepTokenBalance={totalKeepTokenBalance}
