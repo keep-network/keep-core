@@ -11,6 +11,7 @@ import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
+import Header from "./Header"
 
 const pages = [
   TokensPageContainer,
@@ -26,8 +27,14 @@ class Routing extends React.Component {
     const {
       isKeepTokenContractDeployer,
       contractsDataIsFetching,
-      web3: { error },
+      web3: { error, provider, yourAddress },
     } = this.props
+
+    if (!provider || !yourAddress) {
+      // Temporary solution. We need to implement the empty states for other
+      // pages.
+      return <Header title="Choose wallet" />
+    }
 
     if (error) {
       return null
