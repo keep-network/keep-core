@@ -1,16 +1,18 @@
 import React, { useContext, useEffect } from "react"
 import { CSSTransition, TransitionGroup } from "react-transition-group"
-import Banner, { BANNER_TYPE } from "./Banner"
+import Banner from "./Banner"
 import { showMessage, closeMessage } from "../actions/messages"
 import { connect } from "react-redux"
+import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
+import * as Icons from "./Icons"
 
 export const MessagesContext = React.createContext({})
 
 export const messageType = {
-  SUCCESS: BANNER_TYPE.SUCCESS,
-  ERROR: BANNER_TYPE.ERROR,
-  PENDING_ACTION: BANNER_TYPE.PENDING,
-  INFO: BANNER_TYPE.DISABLED,
+  SUCCESS: { icon: Icons.OK },
+  ERROR: { icon: Icons.OK },
+  PENDING_ACTION: { icon: Icons.Time },
+  INFO: { icon: Icons.Question },
 }
 
 const messageTransitionTimeoutInMs = 500
@@ -83,15 +85,26 @@ const Message = ({ message, onMessageClose }) => {
   }, [message, onMessageClose])
 
   return (
-    <Banner
-      type={message.type}
-      title={message.title}
-      subtitle={message.content}
-      withIcon
-      withCloseIcon
-      onCloseIcon={() => onMessageClose(message)}
-      withTransactionHash={message.withTransactionHash}
-    />
+    <Banner>
+      <div className="flex row center">
+        <Banner.Icon icon={message.type.icon} className="mr-1" />
+        <div>
+          <Banner.Title>{message.title}</Banner.Title>
+          <Banner.Action>
+            {message.withTransactionHash ? (
+              <ViewInBlockExplorer
+                type="tx"
+                className="arrow-link"
+                id={message.id}
+              />
+            ) : (
+              message.subtitle
+            )}
+          </Banner.Action>
+        </div>
+        <Banner.CloseIcon onClick={() => onMessageClose(message)} />
+      </div>
+    </Banner>
   )
 }
 
