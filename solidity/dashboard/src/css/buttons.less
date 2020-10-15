@@ -16,11 +16,11 @@ button, .btn {
   cursor: pointer;
   transition: all ease-in-out .25s;
 
-  font-style: normal;
+  font-size: 1.25rem;
+  line-height: 1.5rem;
   font-variant: small-caps;
-  font-feature-settings: 'tnum' on, 'lnum' on;
-  letter-spacing: 0.08rem;
-  line-height: 145%;
+  font-feature-settings: 'tnum' on, 'lnum' on, 'zero' on;
+  letter-spacing: 0.05rem;
 
   &:hover:disabled, &hover[disabled] {
     cursor: not-allowed;
@@ -32,27 +32,30 @@ button, .btn {
 
 .btn {
   &-lg {
-    padding: 1rem 2.5rem !important;
-    font-size: 1.125rem !important;
+    padding: 1rem 2.25rem !important;
+    font-size: 1.25rem !important;
+    line-height: 1.5rem !important
   }
 
   &-md {
-    padding: 0.875rem 2rem !important;
+    padding: 1rem 2rem !important;
     font-size: 1.125rem !important;
   }
 
   &-sm {
-    padding: 0.325rem 0.75rem !important;
-    font-size: 0.95rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.25rem !important;
   }
 
   &-primary {
-    font-weight: bold;
-    font-size: 1.125rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
     background-color: @color-black;
     border-color: @color-black;
     color: @primary-color;
-    padding: 1rem 2.5rem;
+    padding: 1rem 2.25rem;
 
     &:hover, &:hover:enabled, &:focus {
       color: @white;
@@ -73,13 +76,14 @@ button, .btn {
 
   &-secondary, &-transparent, &-tertiary {
     font-style: normal;
-    font-weight: 500;
-    font-size: 1.125rem;
+    font-weight: 600;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
     position: relative;
     background-color: @white;
     border: 0.5px solid @color-black;
     color: @color-black;
-    padding: 0.875rem 2rem;
+    padding: 1rem 2rem;
 
     &:after {
       position: absolute;
@@ -117,9 +121,11 @@ button, .btn {
   }
 
   &-tertiary {
-    font-weight: normal;
-    font-size: 0.95rem;
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1.5rem;
     padding: 0.325rem 0.75rem;    
+    padding: 0.5rem 0.75rem;
   }
 }
 
