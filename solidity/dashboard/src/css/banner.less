@@ -1,79 +1,127 @@
 
+// .banner {
+//     display: flex;
+//     flex-direction: row;
+//     align-items: center;
+//     padding: 0.25rem 0.75rem;
+//     border: 1px solid @success-color;
+//     .box-shadow(1px 1px 2px rgba(10, 8, 6, 0.25));
+
+//     &-success {
+//         color: @success-color;
+//         border-color: @success-color;
+//         background-color: @success-bg-color;
+//     }
+
+//     &-error {
+//         color: @error-color;
+//         border-color: @error-color;
+//         background-color: @error-bg-color;
+//     }
+
+//     &-pending {
+//         color: @color-grey-70;
+//         border-color: @pending-color;
+//         background-color: @pending-bg-color;
+//     }
+
+//     &-disabled {
+//         color: @color-grey-50;
+//         border-color: @color-grey-50;
+//         background-color: @color-grey-10;
+//     }
+
+//     &-notification {
+//         color: @white;
+//         border-color: @secondary-color;
+//         background-color: @secondary-color; 
+//         padding: 0.75rem;
+
+//         .banner-title {
+//             font-size: 1rem;
+//         }
+
+//         .banner-subtitle {
+//             color: @color-grey-20;
+//         }
+
+//         .btn-tertiary {
+//             border: none;
+//             color: @secondary-color;
+//         }
+//     }
+
+//     &-title {
+//         font-size: 0.875rem;
+//         line-height: 157%;
+//         font-weight: 500;
+//     }
+
+//     &-subtitle {
+//         font-size: 0.75rem;
+//         line-height: 183%;
+//         font-weight: normal;
+//         color: @color-grey-70;
+//     }
+
+//     &-icon {
+//         margin-right: 1rem;
+//         align-self: flex-start;
+//     }
+
+//     &-close-icon {
+//         align-self: flex-start;
+//         &:hover {
+//             cursor: pointer;
+//         }
+//         margin-left: .5rem;
+//     }
+// }
+
 .banner {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    padding: 0.25rem 0.75rem;
-    border: 1px solid @success-color;
-    .box-shadow(1px 1px 2px rgba(10, 8, 6, 0.25));
+    position: relative;
+    padding: 0.75rem;
+    border-radius: 3px;
+    box-shadow: 0px 2px 10px rgba(129, 129, 129, 0.5);
+    background-color: @white;
 
-    &-success {
-        color: @success-color;
-        border-color: @success-color;
-        background-color: @success-bg-color;
+    &__title {
+        font-size: 1rem;
+        line-height: 1.5rem;
+        color: @color-black;
     }
 
-    &-error {
-        color: @error-color;
-        border-color: @error-color;
-        background-color: @error-bg-color;
-    }
-
-    &-pending {
-        color: @color-grey-70;
-        border-color: @pending-color;
-        background-color: @pending-bg-color;
-    }
-
-    &-disabled {
-        color: @color-grey-50;
-        border-color: @color-grey-50;
-        background-color: @color-grey-10;
-    }
-
-    &-notification {
-        color: @white;
-        border-color: @secondary-color;
-        background-color: @secondary-color; 
-        padding: 0.75rem;
-
-        .banner-title {
-            font-size: 1rem;
-        }
-
-        .banner-subtitle {
-            color: @color-grey-20;
-        }
-
-        .btn-tertiary {
-            border: none;
-            color: @secondary-color;
-        }
-    }
-
-    &-title {
-        font-size: 0.875rem;
-        line-height: 157%;
-        font-weight: 500;
-    }
-
-    &-subtitle {
+    &__subtitle {
         font-size: 0.75rem;
-        line-height: 183%;
-        font-weight: normal;
-        color: @color-grey-70;
+        line-height: 1rem;
+        color: @color-grey-60;
+        margin-bottom: 0.75rem;
     }
 
-    &-icon {
-        margin-right: 1rem;
-        align-self: flex-start;
-    }
+    &__action {
+        font-size: 0.75rem;
+        line-height: 1rem;
+        color: @secondary-color;
+        display: flex;
+        align-items: center;
 
-    &-close-icon {
-        align-self: flex-start;
-        &:hover {
-            cursor: pointer;
+        &__icon {
+            width: 12px;
+            height: 12px;
+            margin-right: 0.5rem ;
         }
-        margin-left: .5rem;
+    }
+
+    &__close-icon {
+        width: 8px;
+        height: 8px;
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        cursor: pointer;
+
+        path {
+            stroke: @color-black;
+        }
     }
 }

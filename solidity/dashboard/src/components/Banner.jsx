@@ -1,7 +1,6 @@
 import React from "react"
 import * as Icons from "./Icons"
 import { colors } from "../constants/colors"
-import ViewTxMsgContent from "./ViewTxMsgContent"
 
 export const BANNER_TYPE = {
   SUCCESS: {
@@ -25,57 +24,46 @@ export const BANNER_TYPE = {
   },
 }
 
-const Banner = ({
-  type,
-  title,
-  onTitleClick,
-  titleClassName,
-  subtitle,
-  withIcon,
-  withCloseIcon,
-  onCloseIcon,
-  children,
-  withTransactionHash,
-}) => {
+const Banner = ({ inline, children }) => {
+  return <div className={`banner${inline ? "--inline" : ""}`}>{children}</div>
+}
+
+Banner.Title = ({ onClick, children, className = "" }) => {
   return (
-    <div className={`banner banner-${type.className}`}>
-      {withIcon && <div className="banner-icon flex">{type.iconComponent}</div>}
-      <div className="banner-content-wrapper">
-        {title && (
-          <div
-            className={`banner-title ${titleClassName}`}
-            onClick={onTitleClick}
-          >
-            {title}
-          </div>
-        )}
-        {subtitle && (
-          <div className="banner-subtitle">
-            {withTransactionHash ? (
-              <ViewTxMsgContent txHash={subtitle} />
-            ) : (
-              subtitle
-            )}
-          </div>
-        )}
-      </div>
-      {withCloseIcon && (
-        <div className="banner-close-icon" onClick={onCloseIcon}>
-          <Icons.Cross color={colors.grey70} height={12} width={12} />
-        </div>
-      )}
+    <div className={`banner__title ${className}`} onClick={onClick}>
       {children}
     </div>
   )
 }
 
-Banner.defaultProps = {
-  onTitleClick: () => {},
-  titleClassName: "",
-  withIcon: false,
-  withCloseIcon: false,
-  onCloseIcon: () => {},
-  children: null,
+Banner.Description = ({ children, className = "" }) => {
+  return <div className={`banner__subtitle ${className}`}>{children}</div>
 }
 
-export default React.memo(Banner)
+Banner.Action = ({ children, onClick, icon, className = "" }) => {
+  return (
+    <div className={`banner__action ${className}`} onClick={onClick}>
+      {icon && <Icons.KeepOutline className="banner__action__icon" />}
+      {children}
+    </div>
+  )
+}
+
+Banner.CloseIcon = ({
+  icon: IconComponent = Icons.Cross,
+  className = "",
+  onClick,
+}) => {
+  return (
+    <IconComponent
+      className={`banner__close-icon ${className}`}
+      onClick={onClick}
+    />
+  )
+}
+
+Banner.Icon = ({ icon: IconComponent, className = "" }) => {
+  return <IconComponent className={`banner__icon ${className}`} />
+}
+
+export default Banner
