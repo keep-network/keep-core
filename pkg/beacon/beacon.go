@@ -81,7 +81,7 @@ func Initialize(
 					previousEntry := hex.EncodeToString(request.PreviousEntry[:])
 
 					if ok := pendingRelayRequests.Add(previousEntry); !ok {
-						logger.Errorf(
+						logger.Warningf(
 							"relay entry requested event with previous entry "+
 								"[0x%x] has been registered already",
 							request.PreviousEntry,
