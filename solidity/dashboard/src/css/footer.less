@@ -12,15 +12,16 @@ footer.footer {
         margin-bottom: 1rem;
         
         &__item {
+            line-height: 142%;
             a {
-                .footer-text-styles(0.75rem, @color-grey-50, 1.25rem);
+                .footer-text-styles(0.75rem, @color-grey-50, 0.75rem);
                 font-feature-settings: 'tnum' on, 'lnum' on, 'zero' on;
             }
         }
     }
 
     .footer__signature {
-        .footer-text-styles(0.5rem, @color-grey-40, 1.5rem);
+        .footer-text-styles(0.5rem, @color-grey-40, 0.75rem);
         letter-spacing: 0.05em;
         margin-bottom: 0.5rem;
 
@@ -31,6 +32,6 @@ footer.footer {
     }
 
     .footer__app-version {
-        .footer-text-styles(0.5rem, @color-grey-40, 1.5rem);
+        .footer-text-styles(0.5rem, @color-grey-40, 1rem);
     }
 }
