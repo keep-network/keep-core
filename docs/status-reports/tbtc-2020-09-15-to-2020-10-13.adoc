@@ -242,7 +242,7 @@ liquidation, covered in summary form below:
   particular issue are still under investigation---a balance check
   notification and a page for the insufficient funds issue on the maintainer
   both failed to fire. Fortunately, the team at
-  strudel.finance[https://strudel.finance] noticed this issue shortly after
+  https://strudel.finance[strudel.finance] noticed this issue shortly after
   it occurred, and started feeding the relay updates---first manually, and
   then automatically. The tBTC system (and strudel.finance’s system that also
   relies on the relay) both ran normally during this time. You can also read
