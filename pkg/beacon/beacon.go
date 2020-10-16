@@ -186,7 +186,7 @@ func Initialize(
 			registration.GroupPublicKey,
 			registration.BlockNumber,
 		)
-		go groupRegistry.UnregisterStaleGroups()
+		go groupRegistry.UnregisterStaleGroups(registration.GroupPublicKey)
 	})
 
 	return nil

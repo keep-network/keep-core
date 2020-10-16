@@ -129,7 +129,7 @@ func TestUnregisterStaleGroups(t *testing.T) {
 
 	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
 
-	gr.UnregisterStaleGroups()
+	gr.UnregisterStaleGroups(signer3.GroupPublicKeyBytes())
 
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
@@ -149,7 +149,6 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	if group3 == nil {
 		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
-
 }
 
 type mockGroupRegistrationInterface struct {
