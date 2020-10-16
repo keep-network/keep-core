@@ -2,13 +2,17 @@ import React, { useCallback } from "react"
 import * as Icons from "./Icons"
 import { useWeb3Context } from "./WithWeb3Context"
 import { useModal } from "../hooks/useModal"
-import SelectedWalletModal from "./SelectedWalletModal"
 import Tile from "./Tile"
 import PageWrapper from "./PageWrapper"
 import LedgerModal from "./LedgerModal"
 import TrezorModal from "./TrezorModal"
-import { TrezorProvider } from "../connectors/trezor"
-import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "../connectors/ledger"
+import {
+  TrezorProvider,
+  LedgerProvider,
+  LEDGER_DERIVATION_PATHS,
+  InjectedProvider,
+} from "../connectors"
+import MetaMaskModal from "./MetaMaskModal"
 
 const WALLETS = [
   {
@@ -25,6 +29,7 @@ const WALLETS = [
         "The MetaMask login screen will open in an external window. If it doesn’t load right away, click below to install:",
     },
     isHardwareWallet: false,
+    connector: InjectedProvider,
   },
   {
     label: "Coinbase",
@@ -93,29 +98,24 @@ const Wallet = ({
   }, [abortWalletConnection, closeModal])
 
   const renderModalContent = () => {
+    const defaultProps = { connector, closeModal, connectAppWithWallet }
     switch (providerName) {
       case "LEDGER":
-        return (
-          <LedgerModal
-            connector={connector}
-            closeModal={closeModal}
-            connectAppWithWallet={connectAppWithWallet}
-          />
-        )
+        return <LedgerModal {...defaultProps} />
       case "TREZOR":
+        return <TrezorModal {...defaultProps} />
+      case "METAMASK":
         return (
-          <TrezorModal
-            connector={connector}
-            closeModal={closeModal}
-            connectAppWithWallet={connectAppWithWallet}
+          <MetaMaskModal
+            {...defaultProps}
+            walletName={label}
+            providerName={providerName}
+            icon={icon}
+            {...modalProps}
           />
         )
-      case "METAMASK":
-      case "COINBASE":
       default:
-        return (
-          <SelectedWalletModal walletName={label} icon={icon} {...modalProps} />
-        )
+        return null
     }
   }
 
@@ -131,10 +131,6 @@ const Wallet = ({
           title: "Connect Wallet",
           closeModal: customCloseModal,
         })
-        if (providerName === "METAMASK") {
-          await connectAppWithWallet(window.ethereum, providerName)
-          closeModal()
-        }
       }}
     >
       {icon}

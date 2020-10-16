@@ -43,7 +43,7 @@ printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
 for CONFIG_FILE in $KEEP_CORE_CONFIG_DIR_PATH/*.toml
 do
     KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
-        truffle exec scripts/lcl-client-config.js --network local
+        npx truffle exec scripts/lcl-client-config.js --network local
 done
 
 printf "${LOG_START}Building keep-core client...${LOG_END}"
