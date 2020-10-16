@@ -95,7 +95,7 @@ the same as testnet, and operating any system comes with some risk.
 
 Two deposits,
 https://allthekeeps.com/deposit/dp-0x6b6ec592fede474e108f8fe5333d1c34cbefaf74[one
-on October 7th (0.1 BTC)] and
+on October 7th (0.01 BTC)] and
 https://allthekeeps.com/deposit/dp-0x6a3f8a78d09fc1645abd19c74d63c99d6e51fd10[one
 on September 27th (0.2 BTC)], were liquidated due to a missing state
 transition.
