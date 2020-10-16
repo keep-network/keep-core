@@ -24,8 +24,19 @@ export const BANNER_TYPE = {
   },
 }
 
-const Banner = ({ inline, children }) => {
-  return <div className={`banner${inline ? "--inline" : ""}`}>{children}</div>
+const Banner = ({ inline, className, children, ...restProps }) => {
+  return (
+    <div className={`banner${inline ? "--inline" : ""} ${className}`}>
+      {inline ? (
+        <>
+          <Banner.Icon icon={restProps.icon} />
+          <Banner.Title>{restProps.title}</Banner.Title>
+        </>
+      ) : (
+        children
+      )}
+    </div>
+  )
 }
 
 Banner.Title = ({ onClick, children, className = "" }) => {
@@ -36,8 +47,8 @@ Banner.Title = ({ onClick, children, className = "" }) => {
   )
 }
 
-Banner.Description = ({ children, className = "" }) => {
-  return <div className={`banner__subtitle ${className}`}>{children}</div>
+Banner.Description = ({ onClick, children, className = "" }) => {
+  return <div className={`banner__description ${className}`}>{children}</div>
 }
 
 Banner.Action = ({ children, onClick, icon, className = "" }) => {

@@ -1,9 +1,10 @@
 .banner {
     position: relative;
-    padding: 0.75rem;
+    padding: 0.75rem 1rem;
     border-radius: 3px;
     box-shadow: 0px 2px 10px rgba(129, 129, 129, 0.5);
     background-color: @white;
+    max-width: 350px;
 
     &__title {
         font-size: 1rem;
@@ -11,7 +12,7 @@
         color: @color-black;
     }
 
-    &__subtitle {
+    &__description {
         font-size: 0.75rem;
         line-height: 1rem;
         color: @color-grey-60;
@@ -43,5 +44,30 @@
         path {
             stroke: @color-black;
         }
+    }
+
+    &__icon {
+        width: 24px;
+        height: 24px;
+        margin-right: 0.5rem ;
+    }
+}
+
+.banner--inline {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 100px; 
+
+    .banner__icon {
+        width: 16px;
+        height: 16px;
+    }
+
+    .banner__title {
+        font-weight: 500;
+        font-size: 0.75rem;
+        line-height: 1.25rem;
+        color: @color-grey-70;
     }
 }
