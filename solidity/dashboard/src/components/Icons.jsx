@@ -37,6 +37,8 @@ import { ReactComponent as Home } from "../static/svg/home.svg"
 import { ReactComponent as Question } from "../static/svg/question.svg"
 import { ReactComponent as FeesVector } from "../static/svg/fees-vector.svg"
 import { ReactComponent as Time } from "../static/svg/time.svg"
+export { ReactComponent as Warning } from "../static/svg/warning.svg"
+export { ReactComponent as Wallet } from "../static/svg/wallet.svg"
 
 const Keep = ({ color, height, width }) => (
   <svg
