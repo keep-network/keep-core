@@ -251,6 +251,9 @@ func confirmCurrentRelayRequest(
 			)
 			return
 		} else if i == maxRetries {
+			// This scenario usually happens when an entry was submitted very
+			// fast before this node receives an event and is able to confirm a
+			// request ID.
 			if currentRequestStartBlock == 0 {
 				logger.Warningf(
 					"there is no entry in progress; "+
