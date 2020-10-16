@@ -251,14 +251,27 @@ func confirmCurrentRelayRequest(
 			)
 			return
 		} else if i == maxRetries {
-			logger.Errorf(
-				"could not confirm the expected relay request starting block; "+
-					"the most recent one obtained from chain is [%v] and the "+
-					"expected one is [%v]; giving up after [%v] retries",
-				currentRequestStartBlock,
-				expectedRequestStartBlock,
-				maxRetries,
-			)
+			// This scenario usually happens when an entry was submitted very
+			// fast before this node receives an event and is able to confirm a
+			// request ID.
+			if currentRequestStartBlock == 0 {
+				logger.Warningf(
+					"there is no entry in progress; "+
+						"current request start block is 0 "+
+						"giving up after [%v] retries",
+					currentRequestStartBlock,
+					maxRetries,
+				)
+			} else {
+				logger.Errorf(
+					"could not confirm the expected relay request starting block; "+
+						"the most recent one obtained from chain is [%v] and the "+
+						"expected one is [%v]; giving up after [%v] retries",
+					currentRequestStartBlock,
+					expectedRequestStartBlock,
+					maxRetries,
+				)
+			}
 			return
 		} else {
 			logger.Infof(
