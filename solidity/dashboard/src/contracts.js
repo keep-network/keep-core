@@ -154,6 +154,36 @@ export const resovleContractsDeferred = (contracts) => {
 }
 
 export async function getContracts(web3) {
+  // This is a workaround for `web3.eth.net.getId()`, since on local machine
+  // returns unexpected values(eg. 105) and after calling this method the web3
+  // cannot call any other function eq `getTransaction` and doesnt throw errors.
+  // This is probably problem with `WebocketProvider`, because if we replace it
+  // with `RpcSubprovider` the result will be as expected (eg. for Mainnet
+  // returns 1).
+  const netIdDeferred = new Deferred()
+  web3.currentProvider.sendAsync(
+    {
+      jsonrpc: "2.0",
+      method: "net_version",
+      params: [],
+      id: new Date().getTime(),
+    },
+    (error, response) => {
+      if (error) {
+        netIdDeferred.reject(error)
+      } else {
+        netIdDeferred.resolve(response.result)
+      }
+    }
+  )
+  const netId = await netIdDeferred.promise
+  if (netId.toString() !== getFirstNetworkIdFromArtifact()) {
+    console.error(
+      `network id: ${netId}; expected network id ${getFirstNetworkIdFromArtifact()}`
+    )
+    throw new Error("Please connect to the appropriate Ethereum network.")
+  }
+
   const web3Contracts = {}
   for (const contractData of contracts) {
     const [options, jsonArtifact] = contractData
@@ -179,9 +209,7 @@ export async function getContracts(web3) {
 const getContract = async (web3, jsonArtifact, options) => {
   const { contractName, withDeployBlock } = options
   const address = getContractAddress(jsonArtifact)
-  // const code = await web3.eth.getCode(address)
 
-  // if (!isCodeValid(code)) throw Error("No contract at address")
   if (withDeployBlock) {
     CONTRACT_DEPLOY_BLOCK_NUMBER[contractName] = await contractDeployedAtBlock(
       web3,

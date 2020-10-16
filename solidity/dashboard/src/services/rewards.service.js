@@ -88,11 +88,11 @@ const fetchAvailableRewards = async (web3Context) => {
           groupIndex: groupIndex.toString(),
           ...groupInfo,
           operatorAddress: memberAddress,
-          reward: web3Utils.fromWei(awaitingRewards, "ether"),
+          reward: awaitingRewards,
         })
       }
     }
-    return [rewards, web3Utils.fromWei(totalRewardsBalance, "ether")]
+    return [rewards, totalRewardsBalance]
   } catch (error) {
     throw error
   }
@@ -113,7 +113,7 @@ const withdrawRewardFromGroup = async (
 }
 
 const fetchWithdrawalHistory = async (web3Context) => {
-  const { keepRandomBeaconOperatorContract, yourAddress, utils } = web3Context
+  const { keepRandomBeaconOperatorContract, yourAddress } = web3Context
   const searchFilters = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
     filter: { beneficiary: yourAddress },
@@ -138,7 +138,7 @@ const fetchWithdrawalHistory = async (web3Context) => {
           return {
             blockNumber,
             groupPublicKey,
-            reward: utils.fromWei(amount, "ether"),
+            reward: amount,
             transactionHash,
             operatorAddress: operator,
             status: REWARD_STATUS.WITHDRAWN,
