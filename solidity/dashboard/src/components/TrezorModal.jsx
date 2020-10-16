@@ -1,39 +1,35 @@
-import React, { useState, useEffect } from "react"
+import React, { useCallback } from "react"
 import * as Icons from "./Icons"
-import ChooseWalletAddress from "./ChooseWalletAddress"
-import { useShowMessage, messageType } from "./Message"
-import { isEmptyArray } from "../utils/array.utils"
+import SelectedWalletModal from "./SelectedWalletModal"
 
 const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
-  const [accounts, setAccounts] = useState([])
-  const showMessage = useShowMessage()
-
-  useEffect(() => {
-    connector
-      .getAccounts()
-      .then(setAccounts)
-      .catch((error) => {
-        showMessage({ type: messageType.ERROR, title: error.message })
-      })
-  }, [showMessage, connector])
-
-  const onSelectAccount = async (account) => {
-    connector.defaultAccount = account
-    await connectAppWithWallet(connector, "TREZOR")
-    closeModal()
-  }
-
+  const fetchAccounts = useCallback(
+    async (numberOfAccounts, accountsOffset) => {
+      try {
+        const accounts = await connector.getAccounts(
+          numberOfAccounts,
+          accountsOffset
+        )
+        return accounts
+      } catch (error) {
+        throw error
+      }
+    },
+    [connector]
+  )
   return (
-    <div className="flex column center">
-      <div className="flex full-center mb-3">
-        <Icons.Ledger />
-        <h3 className="ml-1">Trezor</h3>
-      </div>
-      <Icons.TrezorDevice className="mb3" />
-      <span className="text-center">
-        Plug in your Trezor device and unlock. If the setup screen doesn’t load
-        right away, go to Trezor setup:
-      </span>
+    <SelectedWalletModal
+      icon={<Icons.Trezor />}
+      walletName="Trezor"
+      descriptionIcon={<Icons.TrezorDevice className="mb3" />}
+      description="Plug in your Trezor device and unlock. If the setup screen doesn’t
+        load right away, go to Trezor setup:"
+      providerName="TREZOR"
+      connector={connector}
+      connectAppWithWallet={connectAppWithWallet}
+      closeModal={closeModal}
+      fetchAvailableAccounts={fetchAccounts}
+    >
       <a
         href="https://trezor.io/start/</div>"
         className="btn bt-lg btn-primary mt-3 mb-2"
@@ -42,13 +38,7 @@ const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
       >
         go to trezor setup
       </a>
-      {!isEmptyArray(accounts) && (
-        <ChooseWalletAddress
-          onSelectAccount={onSelectAccount}
-          addresses={accounts}
-        />
-      )}
-    </div>
+    </SelectedWalletModal>
   )
 }
 

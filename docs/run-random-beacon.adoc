@@ -43,6 +43,50 @@ Keep Random Beacon client.
 |2 vCPU / 4 GiB RAM / 1 GiB Persistent Storage
 |===
 
+== Gas Costs
+
+Random Beacon smart contracts reimburse the operator for successfully submitting relay entry
+and DKG result but they do not reimburse for submitting a group selection ticket. Reimbursements
+are sent to the beneficiary account and can be claimed along with rewards once the group expires.
+It is expected that the operators have enough ETH on the accounts used by clients to submit the
+required transactions and that the operator account balance is monitored and refilled as needed.
+Bear in mind that the higher stake is, the operator is selected more frequently and is expected
+to submit more transactions as a result.
+
+Below is the average gas cost of the most important transactions the client is submitting:
+
+[%header,cols=3*]
+|===
+|TX
+|Gas Cost
+|Reimbursed
+
+|Submit group selection ticket
+|140 000
+|No
+
+|Submit DKG result
+|1 740 000
+|Yes
+
+|Submit relay entry
+|280 000
+|Yes
+|===
+
+For example, if the operator has 10 x minimum stake, it can submit 10 tickets. If the operator has
+been selected to the group with index 1, it is expected to submit DKG result and every relay entry
+the group will produce. Assuming the group produces 100 entries, the cost for the operator is
+`(10 * 140 000 + 1 740 000 + 100 * 280 000) * gas_price` ETH. It means that the operator needs to
+have on their account:
+
+- For the gas price of 20 Gwei, at least 0.6228 ETH. 
+- For the gas price of 100 Gwei, at least 3.114 ETH. 
+- For the gas price of 800 Gwei, at least 24.912 ETH. 
+
+It is paramount that the operator accounts have some safety margin and consider the current gas price
+and stake when funding their accounts.
+
 == Configuration
 
 === Network
@@ -389,7 +433,6 @@ up, there is no need to worry.
 [.small]
 ```
 "/dns4/bootstrap-1.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAkuTUKNh6HkfvWBEkftZbqZHPHi3Kak5ZUygAxvsdQ2UgG",
-"/dns4/bootstrap-2.core.keep.test.boar.network/tcp/3001/ipfs/16Uiu2HAmQirGruZBvtbLHr5SDebsYGcq6Djw7ijF3gnkqsdQs3wK",
 "/dns4/bootstrap-3.test.keep.network/tcp/3919/ipfs/16Uiu2HAm8KJX32kr3eYUhDuzwTucSfAfspnjnXNf9veVhB12t6Vf",
 "/dns4/bootstrap-2.test.keep.network/tcp/3919/ipfs/16Uiu2HAmNNuCp45z5bgB8KiTHv1vHTNAVbBgxxtTFGAndageo9Dp"
 ```
