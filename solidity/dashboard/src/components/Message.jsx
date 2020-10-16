@@ -9,10 +9,11 @@ import * as Icons from "./Icons"
 export const MessagesContext = React.createContext({})
 
 export const messageType = {
-  SUCCESS: { icon: Icons.OK },
-  ERROR: { icon: Icons.OK },
+  SUCCESS: { icon: Icons.Success, iconClassName: "success-icon green" },
+  ERROR: { icon: Icons.Warning },
   PENDING_ACTION: { icon: Icons.Time },
   INFO: { icon: Icons.Question },
+  WALLET: { icon: Icons.Wallet, iconClassName: "wallet-icon grey-50" },
 }
 
 const messageTransitionTimeoutInMs = 500
@@ -87,25 +88,33 @@ const Message = ({ message, onMessageClose }) => {
   return (
     <Banner>
       <div className="flex row center">
-        <Banner.Icon icon={message.type.icon} className="mr-1" />
-        <div>
+        <Banner.Icon
+          icon={message.type.icon}
+          className={`${message.type.iconClassName} mr-1`}
+        />
+        <div style={styles.messageContentWrapper}>
           <Banner.Title>{message.title}</Banner.Title>
-          <Banner.Action>
-            {message.withTransactionHash ? (
+          {message.content && (
+            <Banner.Description>{message.content}</Banner.Description>
+          )}
+          {message.withTransactionHash && (
+            <Banner.Action>
               <ViewInBlockExplorer
                 type="tx"
                 className="arrow-link"
-                id={message.id}
+                id={message.txHash}
               />
-            ) : (
-              message.subtitle
-            )}
-          </Banner.Action>
+            </Banner.Action>
+          )}
         </div>
         <Banner.CloseIcon onClick={() => onMessageClose(message)} />
       </div>
     </Banner>
   )
+}
+
+const styles = {
+  messageContentWrapper: { minWidth: 0, flex: 1 },
 }
 
 export const useShowMessage = () => {
