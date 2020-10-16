@@ -12,6 +12,8 @@ const TokenAmount = ({
   displayWithMetricSuffix,
   currencySymbol,
   displayAmountFunction,
+  withTooltip,
+  tooltipText,
 }) => {
   const { value, suffix } = displayWithMetricSuffix
     ? getNumberWithMetricSuffix(displayAmountFunction(amount, false))
@@ -19,7 +21,12 @@ const TokenAmount = ({
   const CurrencyIcon = currencyIcon
 
   return (
-    <div className={`token-amount flex row center ${wrapperClassName || ""}`}>
+    <div
+      className={`token-amount tooltip flex row center ${
+        wrapperClassName || ""
+      }`}
+    >
+      {withTooltip && <span className="tooltip-text top">{tooltipText}</span>}
       <CurrencyIcon {...currencyIconProps} />
       <span className={amountClassName} style={{ marginLeft: "10px" }}>
         {displayWithMetricSuffix ? value : displayAmountFunction(amount)}
