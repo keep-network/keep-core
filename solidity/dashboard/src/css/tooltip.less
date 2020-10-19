@@ -1,68 +1,103 @@
-@tooltip-width: 240px;
+@tooltip-max-width: 170px;
+@tooltip-arrow-size: 8px;
 
-.tooltip {
-    position: relative;
+.tooltip--simple {
+    &--top, &--bottom {
+        .tooltip__content-wrapper {
+            position: absolute;
+            background-color: @color-black;
+            max-width: @tooltip-max-width;
+            color: @white;
+            font-size: 0.75rem;
+            text-align: center;
+            border-radius: 8px;
+            padding: 0.25rem 0.5rem;
+            left: 50%;
+            transform: translateX(-50%);
 
-    &:hover {
-        cursor: pointer;
-        .tooltip-text {
-            visibility: visible;
-            opacity: 1;
+            &:after {
+                content: '';
+                height: 0;
+                width: 0;
+                position: absolute;
+                left: 50%;
+                top: -@tooltip-arrow-size;
+                border: @tooltip-arrow-size solid transparent;
+                border-bottom-color: @color-black;
+                border-top: none;
+                pointer-events: none;
+                margin-left: -@tooltip-arrow-size;
+
+            }
         }
     }
 
-    &-text {
-        position: absolute;
-        visibility: hidden;
-        width: @tooltip-width;
-        font-size: 0.7rem !important;
-        letter-spacing: normal !important;
-        font-variant: normal !important;
-        font-weight: normal !important;
-        left: -(@tooltip-width / 2);
-        padding: 1rem;
-        text-align: center;
-        color: @color-black;
-        background-color: @primary-color;
-        z-index: 20;
-        white-space: pre-wrap;
-        .box-shadow(1px 1px 4px rgba(10, 8, 6, 0.2));
-
-        &.bottom {
-            top: calc(100% + 12px);
+    &--top {
+        .tooltip__content-wrapper {
+            top: calc(-100% - @tooltip-arrow-size);
             &::after {
-                top: -6px;
-                transform: rotate(-135deg);
+                top: 100%;
+                border-bottom: none;
+                border-top: @tooltip-arrow-size solid @color-black; 
             }
         }
+    }
+}
 
-        &.top {
-            bottom: calc(100% + 12px);
-            &::after {
-                bottom: -6px;
+.tooltip {
+
+    &--bottom, &--top {
+        .tooltip {
+            &__content-wrapper {
+                position: absolute;
+                background: @white;
+                box-shadow: 0px 2px 10px rgba(129, 129, 129, 0.5);
+                border-radius: 3px;
+                padding: 1.5rem;
+                width: 250px;
+            }
+        
+            &__divider {
+                margin: 0.75rem 0;
+                padding: 0;
+                border: 1px solid @color-grey-10;
+            }
+        
+            &__header {
+                display: flex;
+                align-items: center;
+        
+                &__icon {
+                    width: 16px;
+                    height: 16px;
+                    margin-right: 0.5rem;
+                }
+        
+                &__title {
+                    font-size: 1rem;
+                    line-height: 1.5rem;
+                    color: @color-black;
+                }
+            }
+        
+            &__content {
+                font-size: 12px;
+                line-height: 1.25rem;
+                color: @color-grey-60;
             }
         }
+    }
+}
 
-        &:after {
-            content: "";
-            position: absolute;
-            background-color: @primary-color;
-            left: @tooltip-width / 2;
-            .box-shadow(2px 2px 2px 0 rgba(129, 129, 129, 0.5));
-            height: 16px;
-            width:  16px;
-            transform: rotate(45deg);
-            z-index: -1;
-        }
-
-        &.address {
-            font-size: 0.6rem !important;
-            padding: 0.25rem;
-            max-width: 120px;
-            left: -(@tooltip-width / 4);
-
-            &::after {
-                left: @tooltip-width / 4;
+.tooltip, .tooltip--simple {
+    &--top, &--bottom {
+        display: inline-block;
+        position: relative;
+        
+        .tooltip__trigger {
+            
+            &:hover {
+                cursor: pointer;
             }
         }
     }
