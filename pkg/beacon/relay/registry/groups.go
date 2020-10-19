@@ -81,7 +81,7 @@ func (g *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	return g.myGroups[groupKeyToString(groupPublicKey)]
 }
 
-// nregisterStaleGroups lookup for groups that have been marked as stale
+// unregisterStaleGroups lookup for groups that have been marked as stale
 // on-chain. A stale group is a group that has expired and a certain time passed
 // after the group expiration. This guarantees the group will not be selected to
 // a new operation and it cannot have an ongoing operation for which it could be
