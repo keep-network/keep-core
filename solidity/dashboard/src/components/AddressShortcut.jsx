@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { shortenAddress } from "../utils/general.utils"
 import copy from "copy-to-clipboard"
+import Tooltip from "./Tooltip"
 
 const AddressShortcut = ({ address, classNames }) => {
   const [copyStatus, setCopyStatus] = useState("Copy to clipboard")
@@ -12,14 +13,22 @@ const AddressShortcut = ({ address, classNames }) => {
   }
 
   return (
-    <span
-      onClick={copyToClipboard}
-      onMouseOut={() => setCopyStatus("Copy to clipboard")}
-      className={`address-shortcut tooltip address ${classNames}`}
+    <Tooltip
+      simple
+      triggerComponent={() => {
+        return (
+          <span
+            onClick={copyToClipboard}
+            onMouseOut={() => setCopyStatus("Copy to clipboard")}
+            className={`address-shortcut ${classNames}`}
+          >
+            {shortenAddress(address)}
+          </span>
+        )
+      }}
     >
-      <span className="tooltip-text address bottom">{copyStatus}</span>
-      {shortenAddress(address)}
-    </span>
+      {copyStatus}
+    </Tooltip>
   )
 }
 

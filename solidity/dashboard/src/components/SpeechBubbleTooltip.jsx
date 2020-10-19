@@ -1,5 +1,6 @@
 import React from "react"
 import * as Icons from "./Icons"
+import Tooltip from "./Tooltip"
 
 export const SpeechBubbleTooltip = ({
   text,
@@ -8,23 +9,16 @@ export const SpeechBubbleTooltip = ({
   iconBackgroundColor,
 }) => {
   return (
-    <div className="flex row">
-      <div className="tooltip">
+    <Tooltip
+      triggerComponent={() => (
         <Icons.Tooltip
           color={iconColor}
           backgroundColor={iconBackgroundColor}
         />
-        <span className="tooltip-text top">{text}</span>
-      </div>
-      {title && (
-        <span
-          style={{ marginLeft: "0.5rem" }}
-          className="text-grey-60 text-caption"
-        >
-          {title}
-        </span>
       )}
-    </div>
+      title={title}
+      content={text}
+    />
   )
 }
 

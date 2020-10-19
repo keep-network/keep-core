@@ -191,13 +191,14 @@ Cross.defaultProps = {
   color: "#6D6D6D",
 }
 
-const Tooltip = ({ backgroundColor, color }) => (
+const Tooltip = ({ backgroundColor, color, className }) => (
   <svg
     width="15"
     height="16"
     viewBox="0 0 15 16"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
   >
     <path
       fillRule="evenodd"
