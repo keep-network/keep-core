@@ -53,7 +53,8 @@ func (g *Groups) RegisterGroup(
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
-	groupPublicKey := groupKeyToString(signer.GroupPublicKeyBytes())
+	groupPublicKeyBytes := signer.GroupPublicKeyBytes()
+	groupPublicKey := groupKeyToString(groupPublicKeyBytes)
 
 	membership := &Membership{
 		Signer:      signer,
@@ -67,6 +68,8 @@ func (g *Groups) RegisterGroup(
 
 	g.myGroups[groupPublicKey] = append(g.myGroups[groupPublicKey], membership)
 
+	go g.unregisterStaleGroups(groupPublicKeyBytes)
+
 	return nil
 }
 
@@ -78,13 +81,13 @@ func (g *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 	return g.myGroups[groupKeyToString(groupPublicKey)]
 }
 
-// UnregisterStaleGroups lookup for groups that have been marked as stale
+// nregisterStaleGroups lookup for groups that have been marked as stale
 // on-chain. A stale group is a group that has expired and a certain time passed
 // after the group expiration. This guarantees the group will not be selected to
 // a new operation and it cannot have an ongoing operation for which it could be
 // selected before it expired. Such a group can be safely removed from the registry
 // and archived in the underlying storage.
-func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
+func (g *Groups) unregisterStaleGroups(latestGroupPublicKey []byte) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
