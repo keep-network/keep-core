@@ -2,6 +2,7 @@ package registry
 
 import (
 	"bytes"
+	"encoding/hex"
 	"math/big"
 	"reflect"
 	"testing"
@@ -117,72 +118,41 @@ func TestLoadGroup(t *testing.T) {
 
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
-		groupsToRemove:       [][]byte{},
-		groupsCheckedIfStale: make(map[string]bool),
+		groupsToRemove: [][]byte{},
 	}
 
 	gr := NewGroupRegistry(mockChain, persistenceMock)
 
-	groupPubKey1 := groupKeyToString(signer1.GroupPublicKeyBytes())
-	membership1 := &Membership{
-		Signer:      signer1,
-		ChannelName: channelName1,
-	}
-	gr.myGroups[groupPubKey1] = append(gr.myGroups[groupPubKey1], membership1)
-
-	groupPubKey2 := groupKeyToString(signer2.GroupPublicKeyBytes())
-	membership2 := &Membership{
-		Signer:      signer2,
-		ChannelName: channelName1,
-	}
-	gr.myGroups[groupPubKey2] = append(gr.myGroups[groupPubKey2], membership2)
-
-	groupPubKey3 := groupKeyToString(signer3.GroupPublicKeyBytes())
-	membership3 := &Membership{
-		Signer:      signer3,
-		ChannelName: channelName1,
-	}
-	gr.myGroups[groupPubKey3] = append(gr.myGroups[groupPubKey3], membership3)
+	gr.RegisterGroup(signer1, channelName1)
+	gr.RegisterGroup(signer2, channelName1)
+	gr.RegisterGroup(signer3, channelName1)
 
 	mockChain.markAsStale(signer2.GroupPublicKeyBytes())
-	gr.unregisterStaleGroups(signer3.GroupPublicKeyBytes())
+
+	gr.UnregisterStaleGroups(signer3.GroupPublicKeyBytes())
 
 	group1 := gr.GetGroup(signer1.GroupPublicKeyBytes())
 	if group1 == nil {
 		t.Fatalf("Expecting a group, but nil was returned instead")
-	}
-	group1PublicKeyString := groupKeyToString(signer1.GroupPublicKeyBytes())
-	if mockChain.groupsCheckedIfStale[group1PublicKeyString] != true {
-		t.Fatalf("IsStaleGroup() was expected to be called for group %s", group1PublicKeyString)
 	}
 
 	group2 := gr.GetGroup(signer2.GroupPublicKeyBytes())
 	if group2 != nil {
 		t.Fatalf("Group2 was expected to be unregistered, but is still present")
 	}
-	group2PublicKeyStringCompressed := groupKeyToString(signer2.GroupPublicKeyBytesCompressed())
-	group2PublicKeyString := groupKeyToString(signer2.GroupPublicKeyBytes())
 	if len(persistenceMock.archivedGroups) != 1 ||
-		persistenceMock.archivedGroups[0] != group2PublicKeyStringCompressed {
+		persistenceMock.archivedGroups[0] != hex.EncodeToString(signer2.GroupPublicKeyBytesCompressed()) {
 		t.Fatalf("Group2 was expected to be archived")
-	}
-	if mockChain.groupsCheckedIfStale[group2PublicKeyString] != true {
-		t.Fatalf("IsStaleGroup() was expected to be called for group %s", group2PublicKeyString)
 	}
 
 	group3 := gr.GetGroup(signer3.GroupPublicKeyBytes())
 	if group3 == nil {
 		t.Fatalf("Expecting a group, but nil was returned instead")
 	}
-	group3PublicKeyString := groupKeyToString(signer3.GroupPublicKeyBytes())
-	if mockChain.groupsCheckedIfStale[group3PublicKeyString] == true {
-		t.Fatalf("IsStaleGroup() was not expected to be called for group %s", group3PublicKeyString)
-	}
 }
 
 type mockGroupRegistrationInterface struct {
-	groupsToRemove       [][]byte
-	groupsCheckedIfStale map[string]bool
+	groupsToRemove [][]byte
 }
 
 func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
@@ -196,7 +166,6 @@ func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 }
 
 func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) (bool, error) {
-	mgri.groupsCheckedIfStale[groupKeyToString(groupPublicKey)] = true
 	for _, groupToRemove := range mgri.groupsToRemove {
 		if bytes.Compare(groupToRemove, groupPublicKey) == 0 {
 			return true, nil
