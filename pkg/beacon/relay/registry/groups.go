@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"sync"
@@ -83,7 +84,7 @@ func (g *Groups) GetGroup(groupPublicKey []byte) []*Membership {
 // a new operation and it cannot have an ongoing operation for which it could be
 // selected before it expired. Such a group can be safely removed from the registry
 // and archived in the underlying storage.
-func (g *Groups) UnregisterStaleGroups() {
+func (g *Groups) UnregisterStaleGroups(latestGroupPublicKey []byte) {
 	g.mutex.Lock()
 	defer g.mutex.Unlock()
 
@@ -97,41 +98,47 @@ func (g *Groups) UnregisterStaleGroups() {
 			continue
 		}
 
-		isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
-		if err != nil {
-			logger.Errorf(
-				"failed to check if stale for group with public key [%s]: [%v]",
-				publicKey,
-				err,
-			)
-			continue
-		}
-
-		if isStaleGroup {
-			if len(memberships) == 0 {
-				logger.Errorf(
-					"inconsistent state; group with public key [%s] has no members",
-					publicKey,
-				)
-				continue
-			}
-
-			compressedPublicKey := memberships[0].Signer.GroupPublicKeyBytesCompressed()
-			err = g.storage.archive(compressedPublicKey)
+		// There is no need to check if the latest added group is a stale group.
+		// It is also to avoid a scenario when there is a delay to sync with the
+		// recent state of the chain which might lead to loggin a false positive
+		// error: "Group does not exist".
+		if !bytes.Equal(latestGroupPublicKey, publicKeyBytes) {
+			isStaleGroup, err := g.relayChain.IsStaleGroup(publicKeyBytes)
 			if err != nil {
-				logger.Errorf("failed to archive group with compressed public key [%s]: [%v]",
-					hex.EncodeToString(compressedPublicKey),
+				logger.Errorf(
+					"failed to check if stale for group with public key [%s]: [%v]",
+					publicKey,
 					err,
 				)
 				continue
 			}
 
-			logger.Infof(
-				"archived group with compressed public key [%s]",
-				hex.EncodeToString(compressedPublicKey),
-			)
+			if isStaleGroup {
+				if len(memberships) == 0 {
+					logger.Errorf(
+						"inconsistent state; group with public key [%s] has no members",
+						publicKey,
+					)
+					continue
+				}
 
-			delete(g.myGroups, publicKey)
+				compressedPublicKey := memberships[0].Signer.GroupPublicKeyBytesCompressed()
+				err = g.storage.archive(compressedPublicKey)
+				if err != nil {
+					logger.Errorf("failed to archive group with compressed public key [%s]: [%v]",
+						hex.EncodeToString(compressedPublicKey),
+						err,
+					)
+					continue
+				}
+
+				logger.Infof(
+					"archived group with compressed public key [%s]",
+					hex.EncodeToString(compressedPublicKey),
+				)
+
+				delete(g.myGroups, publicKey)
+			}
 		}
 	}
 }
