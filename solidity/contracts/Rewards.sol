@@ -583,8 +583,10 @@ contract Rewards is Ownable {
             "Interval at which the upgrade was initiated hasn't ended yet"
         );
 
-        // allocate all past intervals    
-        allocateRewards(currentInterval.sub(1));
+        // ensure all past intervals are allocated
+        if (!isAllocated(currentInterval.sub(1))) {
+            allocateRewards(currentInterval.sub(1));
+        }
 
         // transfer the unallocated KEEP to the new rewards contract and update
         // this contract's balances
