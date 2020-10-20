@@ -37,13 +37,17 @@ const Tooltip = ({
     <div className={`tooltip${simple ? "--simple" : ""}--${direction}`}>
       <div
         className="tooltip__trigger"
-        onMouseLeave={hideTooltip}
         onMouseEnter={showTooltip}
+        onMouseLeave={hideTooltip}
       >
         <TriggerComponent />
       </div>
       {active && (
-        <div className="tooltip__content-wrapper">
+        <div
+          className="tooltip__content-wrapper"
+          onMouseEnter={() => setActive(true)}
+          onMouseLeave={hideTooltip}
+        >
           {children ? (
             children
           ) : (
