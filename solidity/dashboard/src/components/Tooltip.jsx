@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import * as Icons from "./Icons"
 
 const Tooltip = ({
@@ -13,6 +13,14 @@ const Tooltip = ({
 }) => {
   const timeout = useRef(null)
   const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (timeout.current) {
+        clearTimeout(timeout.current)
+      }
+    }
+  })
 
   const showTooltip = () => {
     timeout.current = setTimeout(() => {
