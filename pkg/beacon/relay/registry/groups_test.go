@@ -119,6 +119,7 @@ func TestLoadGroup(t *testing.T) {
 func TestUnregisterStaleGroups(t *testing.T) {
 	mockChain := &mockGroupRegistrationInterface{
 		groupsToRemove: [][]byte{},
+		groupsCheckedIfStale: make(map[string]bool),
 	}
 
 	gr := NewGroupRegistry(mockChain, persistenceMock)
@@ -151,8 +152,39 @@ func TestUnregisterStaleGroups(t *testing.T) {
 	}
 }
 
+func TestUnregisterStaleGroupsSkipLastGroupCheck(t *testing.T) {
+	mockChain := &mockGroupRegistrationInterface{
+		groupsToRemove:       [][]byte{},
+		groupsCheckedIfStale: make(map[string]bool),
+	}
+
+	gr := NewGroupRegistry(mockChain, persistenceMock)
+
+	gr.RegisterGroup(signer1, channelName1)
+	gr.RegisterGroup(signer2, channelName1)
+	gr.RegisterGroup(signer3, channelName1)
+
+	gr.UnregisterStaleGroups(signer3.GroupPublicKeyBytes())
+
+	group1PublicKeyString := groupKeyToString(signer1.GroupPublicKeyBytes())
+	if mockChain.groupsCheckedIfStale[group1PublicKeyString] != true {
+		t.Fatalf("IsStaleGroup() was expected to be called for the first group")
+	}
+
+	group2PublicKeyString := groupKeyToString(signer2.GroupPublicKeyBytes())
+	if mockChain.groupsCheckedIfStale[group2PublicKeyString] != true {
+		t.Fatalf("IsStaleGroup() was expected to be called for the second group")
+	}
+
+	group3PublicKeyString := groupKeyToString(signer3.GroupPublicKeyBytes())
+	if mockChain.groupsCheckedIfStale[group3PublicKeyString] != false {
+		t.Fatalf("IsStaleGroup() was expected to not be called for the third group")
+	}
+}
+
 type mockGroupRegistrationInterface struct {
-	groupsToRemove [][]byte
+	groupsToRemove       [][]byte
+	groupsCheckedIfStale map[string]bool
 }
 
 func (mgri *mockGroupRegistrationInterface) markAsStale(publicKey []byte) {
@@ -166,6 +198,7 @@ func (mgri *mockGroupRegistrationInterface) OnGroupRegistered(
 }
 
 func (mgri *mockGroupRegistrationInterface) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+	mgri.groupsCheckedIfStale[groupKeyToString(groupPublicKey)] = true
 	for _, groupToRemove := range mgri.groupsToRemove {
 		if bytes.Compare(groupToRemove, groupPublicKey) == 0 {
 			return true, nil
