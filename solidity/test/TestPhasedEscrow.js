@@ -238,15 +238,14 @@ describe("PhasedEscrow", () => {
         })
       })
 
-      it("emits a Staked event from the rewards beneficiary", async () => {
+      it("emits a RewardAdded event from the rewards beneficiary", async () => {
         const receipt = resolveAllLogs(
           (await phasedEscrow.withdraw(transferAmount, {from: owner})).receipt,
           {curveRewards}
         )
 
-        expectEvent(receipt, "Staked", {
-          user: rewardsBeneficiary.address,
-          amount: web3.utils.toBN(transferAmount),
+        expectEvent(receipt, "RewardAdded", {
+          reward: web3.utils.toBN(transferAmount),
         })
       })
     })

@@ -50,7 +50,7 @@ contract PhasedEscrow is Ownable {
 }
 
 interface ICurveRewards {
-    function stake(uint256 amount) external;
+    function notifyRewardAmount(uint256 amount) external;
 }
 
 // @title CurveRewardsEscrowBeneficiary
@@ -68,6 +68,6 @@ contract CurveRewardsEscrowBeneficiary is Ownable {
 
     function __escrowSentTokens(uint256 amount) external {
         token.approve(address(curveRewards), amount);
-        curveRewards.stake(amount);
+        curveRewards.notifyRewardAmount(amount);
     }
 }
