@@ -189,6 +189,39 @@ describe("Rewards/Upgrades", () => {
             expect(upgradeFinalizedTimestamp).not.to.eq.BN(0)
         })
 
+        it("transfers amount to a new contract upon rewards upgrade", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(termLength + 1) // interval 1 ends
+            await rewards.setCloseTime(timestamps[2])
+
+            await rewards.finalizeRewardsUpgrade({from: owner})
+            
+            const rewardsTopUp = 420000
+            await token.approveAndCall(
+                rewards.address,
+                rewardsTopUp,
+                "0x0",
+                {from: owner}
+            )
+
+            // interval 0 allocates 50,000
+            // interval 1 allocates 95,000
+            // old contract receives 420,000
+            // 1,000,000 - (50,000 + 95,000) + 420,000 = 1,275,000 should be 
+            // transferred to the new contract
+            const newContractBalance = await token.balanceOf(newRewards.address)
+            expect(newContractBalance).to.eq.BN(1275000)
+
+            const oldContractBalance = await token.balanceOf(rewards.address)
+            expect(oldContractBalance).to.eq.BN(145000)
+        })
+
         it("moves all unallocated rewards to new contract", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
