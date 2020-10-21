@@ -168,6 +168,27 @@ describe("Rewards/Upgrades", () => {
             )
         })
 
+        it("allocates interval before finalize rewards upgrade", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(termLength + 1) // interval 1 ends
+            await rewards.setCloseTime(timestamps[2])
+
+            await rewards.allocateRewards(1)
+            await rewards.finalizeRewardsUpgrade({from: owner})
+
+            const upgradeInitiatedTimestamp = await rewards.upgradeInitiatedTimestamp()
+            const upgradeFinalizedTimestamp = await rewards.upgradeFinalizedTimestamp()
+
+            expect(upgradeInitiatedTimestamp).to.eq.BN(0)
+            expect(upgradeFinalizedTimestamp).not.to.eq.BN(0)
+        })
+
         it("moves all unallocated rewards to new contract", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
