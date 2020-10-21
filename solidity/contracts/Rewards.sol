@@ -603,6 +603,7 @@ contract Rewards is Ownable {
             bytes("")
         );
         require(success, "Upgrade finalization failed");
+        
 
         upgradeInitiatedTimestamp = 0;
         upgradeFinalizedTimestamp = block.timestamp;
@@ -611,8 +612,6 @@ contract Rewards is Ownable {
     /// @notice Return the given amount to the unallocated pool.
     /// If the contract has been upgraded,
     /// the deallocated amount will be sent to the new contract.
-    /// @param amount Amount to be transferred to a new contract or added to 
-    /// unallocated pool.
     function deallocate(uint256 amount) internal {
         if (upgradeFinalizedTimestamp != 0) {
             bool success = token.approveAndCall(
