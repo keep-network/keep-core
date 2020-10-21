@@ -48,3 +48,26 @@ contract PhasedEscrow is Ownable {
         beneficiary.__escrowSentTokens(amount);
     }
 }
+
+interface ICurveRewards {
+    function stake(uint256 amount) external;
+}
+
+// @title CurveRewardsEscrowBeneficiary
+// @notice A beneficiary contract that can receive a withdrawal phase from a
+//         PhasedEscrow contract. Immediately stakes the received tokens on a
+//         designated CurveRewards contract.
+contract CurveRewardsEscrowBeneficiary is Ownable {
+    IERC20 public token;
+    ICurveRewards public curveRewards;
+
+    constructor(IERC20 _token, ICurveRewards _curveRewards) public {
+        token = _token;
+        curveRewards = _curveRewards;
+    }
+
+    function __escrowSentTokens(uint256 amount) external {
+        token.approve(address(curveRewards), amount);
+        curveRewards.stake(amount);
+    }
+}
