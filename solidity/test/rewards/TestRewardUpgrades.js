@@ -168,7 +168,7 @@ describe("Rewards/Upgrades", () => {
             )
         })
 
-        it("allocates interval before finalize rewards upgrade", async () => {
+        it("can be finalized with all previous intervals already allocated", async () => {
             await time.increase(termLength + 1) // interval 0 ends
 
             await rewards.initiateRewardsUpgrade(
