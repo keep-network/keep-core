@@ -182,6 +182,27 @@ describe("Rewards/Upgrades", () => {
             await rewards.allocateRewards(1)
             await rewards.finalizeRewardsUpgrade({from: owner})
 
+            const allocation0 = await rewards.getAllocatedRewards(0)
+            const allocation1 = await rewards.getAllocatedRewards(1)
+            
+            expect(allocation0).to.eq.BN(50000) // 5% of 1000000
+            expect(allocation1).to.eq.BN(95000) // 10% of (1000000 - 50000)
+        })
+
+        it("should correctly update timestamps", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(termLength + 1) // interval 1 ends
+            await rewards.setCloseTime(timestamps[2])
+
+            await rewards.allocateRewards(1)
+            await rewards.finalizeRewardsUpgrade({from: owner})
+
             const upgradeInitiatedTimestamp = await rewards.upgradeInitiatedTimestamp()
             const upgradeFinalizedTimestamp = await rewards.upgradeFinalizedTimestamp()
 
