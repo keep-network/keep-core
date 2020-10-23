@@ -19,8 +19,6 @@ const countProgressValue = (value, total, radius) => {
     .toString()
 }
 
-const barWidth = 10
-
 const CircularProgressBar = ({
   radius,
   value,
@@ -28,28 +26,46 @@ const CircularProgressBar = ({
   color,
   withBackgroundStroke,
   total,
+  barWidth = 10,
 }) => {
+  const normalizedRadius = useMemo(() => radius - barWidth / 2, [
+    radius,
+    barWidth,
+  ])
+
+  const circumference = useMemo(() => {
+    return countCircumference(normalizedRadius)
+  }, [normalizedRadius])
+
+  const progress = useMemo(() => {
+    return countProgressValue(value, total, normalizedRadius)
+  }, [value, total, normalizedRadius])
+
   return (
-    <svg className="circular-progress-bar" width={120} height={120}>
+    <svg
+      className="circular-progress-bar"
+      width={radius * 2}
+      height={radius * 2}
+    >
       {withBackgroundStroke && (
         <circle
           fill="none"
           className="background"
-          cx={60}
-          cy={60}
-          r={radius - barWidth / 2}
+          cx={radius}
+          cy={radius}
+          r={normalizedRadius}
           strokeWidth={barWidth}
           stroke={backgroundStroke}
         />
       )}
       <circle
         fill="none"
-        strokeDashoffset={countProgressValue(value, total, radius - 5)}
-        strokeDasharray={countCircumference(radius - 5)}
+        strokeDashoffset={progress}
+        strokeDasharray={`${circumference} ${circumference}`}
         className="value"
-        cx={60}
-        cy={60}
-        r={radius - barWidth / 2}
+        cx={radius}
+        cy={radius}
+        r={normalizedRadius}
         strokeWidth={barWidth}
         stroke={color}
         strokeLinecap="round"
