@@ -16,6 +16,7 @@
     "compile": "npm run clean && truffle compile --contracts_build_directory=./build/truffle",
     "test": "truffle compile && mocha --exit --recursive --timeout 75000",
     "test:quick": "mocha --exit --recursive --timeout 45000",
+    "test:quick:watch": "mocha --watch --exit --recursive --timeout 45000",
     "demo": "truffle migrate --reset && truffle exec ./scripts/delegate-tokens.js",
     "lint": "solium --dir ./contracts",
     "lint:js": "eslint ${npm_package_config_eslintPaths}",

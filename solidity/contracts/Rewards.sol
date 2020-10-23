@@ -612,6 +612,7 @@ contract Rewards is Ownable {
     /// @notice Return the given amount to the unallocated pool.
     /// If the contract has been upgraded,
     /// the deallocated amount will be sent to the new contract.
+    /// @param amount The amount to deallocate
     function deallocate(uint256 amount) internal {
         if (upgradeFinalizedTimestamp != 0) {
             bool success = token.approveAndCall(
