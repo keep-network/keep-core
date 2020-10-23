@@ -210,7 +210,7 @@ describe("Rewards/Upgrades", () => {
             expect(upgradeFinalizedTimestamp).not.to.eq.BN(0)
         })
 
-        it("transfers amount to a new contract upon rewards upgrade", async () => {
+        it("transfers any topped-up amount to a new contract after finalizing the upgrade", async () => {
             await time.increase(termLength + 1) // interval 0 ends
 
             await rewards.initiateRewardsUpgrade(
