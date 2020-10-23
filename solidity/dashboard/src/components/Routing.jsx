@@ -12,8 +12,10 @@ import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 import Header from "./Header"
+import TokenOverviewPage from "../pages/OverviewPage"
 
 const pages = [
+  TokenOverviewPage,
   TokensPageContainer,
   OperatorPage,
   RewardsPageContainer,

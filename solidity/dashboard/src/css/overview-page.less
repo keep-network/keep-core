@@ -1,0 +1,65 @@
+.start-staking {
+    display: flex;
+    align-items: center;
+
+    &__btn {
+        margin-right: 2rem;
+        text-align: center;
+    }
+}
+
+.balances-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto;
+    column-gap: 1rem;
+}
+
+.balance {
+    &__overview, &__granted, &__wallet {
+        .tile();
+    }
+
+    &__overview {
+        &__granted, &__wallet {
+            display: flex;
+            color: @color-grey-40;
+        }
+    }
+
+    &__divider {
+        margin: 0.625rem 0;
+        border-color: @color-grey-20;
+    }
+
+    &__wallet, &__granted {
+        &__chip {
+            width: 48px !important;
+            height: 48px !important;
+            margin-right: 1rem;
+
+            svg {
+                width: 16px !important;
+                height: 16px !important;
+            }
+        }
+    }
+    &__wallet__chip {
+        svg {
+            * {
+                fill: @color-grey-70;
+            }
+        }
+    }
+    &__granted__chip {
+        svg {
+            path {
+                stroke: @color-grey-70;
+            }
+            path:last-of-type {
+                fill: @color-grey-70;
+                stroke: none;
+            }
+        }
+    }
+}
