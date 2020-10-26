@@ -3,12 +3,12 @@ import { useWeb3Context } from "./WithWeb3Context"
 import * as Icons from "./Icons"
 
 export const NetworkStatus = () => {
-  const { networkType, provider, error, yourAddress } = useWeb3Context()
+  const { networkType, error, isConnected } = useWeb3Context()
 
   let status = "disconnected"
   if (error) {
     status = "error"
-  } else if (yourAddress && !error && provider !== null) {
+  } else if (isConnected) {
     status = "connected"
   }
 
