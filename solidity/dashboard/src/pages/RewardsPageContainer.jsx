@@ -1,16 +1,18 @@
 import React from "react"
-import { Route, Switch, Redirect } from "react-router-dom"
 import TBTCRewardsPage from "./TBTCRewardsPage"
-import ReawrdsPage from "./RewardsPage"
+import RewardsPage from "./RewardsPage"
+import PageWrapper from "../components/PageWrapper"
 
-const RewardsPageContainer = (props) => {
-  return (
-    <Switch>
-      <Route exact path="/rewards/random-beacon" component={ReawrdsPage} />
-      <Route exact path="/rewards/tbtc" component={TBTCRewardsPage} />
-      <Redirect to="/rewards/random-beacon" />
-    </Switch>
-  )
+const RewardsPageContainer = ({ title, routes }) => {
+  return <PageWrapper title={title} routes={routes} />
+}
+
+// TODO: Rename to `earings` in the followup PR, according to the Figma
+// views.
+RewardsPageContainer.route = {
+  title: "Rewards",
+  path: "/rewards",
+  pages: [RewardsPage, TBTCRewardsPage],
 }
 
 export default RewardsPageContainer

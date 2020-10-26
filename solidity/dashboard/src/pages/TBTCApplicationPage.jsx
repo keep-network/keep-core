@@ -1,7 +1,5 @@
 import React, { useCallback, useState, useMemo } from "react"
-import PageWrapper from "../components/PageWrapper"
 import AuthorizeContracts from "../components/AuthorizeContracts"
-import * as Icons from "../components/Icons"
 import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
 import { useFetchData } from "../hooks/useFetchData"
 import { BondingSection } from "../components/BondingSection"
@@ -175,13 +173,7 @@ const TBTCApplicationPage = ({
   }, [selectedOperator.operatorAddress, tbtcAuthState.data])
 
   return (
-    <PageWrapper
-      className=""
-      title="tBTC"
-      nextPageLink="/rewards/tbtc"
-      nextPageTitle="Rewards"
-      nextPageIcon={Icons.TBTC}
-    >
+    <>
       <nav className="mb-2">
         <a
           href="https://tbtc.network/"
@@ -214,7 +206,7 @@ const TBTCApplicationPage = ({
       >
         <BondingSection data={bondingState.data} />
       </LoadingOverlay>
-    </PageWrapper>
+    </>
   )
 }
 
@@ -224,4 +216,15 @@ const mapDispatchToProps = {
   deauthorizeSortitionPoolContract,
 }
 
-export default connect(null, mapDispatchToProps)(TBTCApplicationPage)
+const ConnectedTBTCApplicationPage = connect(
+  null,
+  mapDispatchToProps
+)(TBTCApplicationPage)
+
+ConnectedTBTCApplicationPage.route = {
+  title: "tBTC",
+  path: "/applications/tbtc",
+  exact: true,
+}
+
+export default ConnectedTBTCApplicationPage
