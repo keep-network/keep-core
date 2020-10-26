@@ -1,35 +1,6 @@
 @active-nav-item-bg-color: @color-grey-20;
 
-.side-menu, .side-menu--active {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: @header-height;
-    left: 0;
-    z-index: 12;
-    // temporary solution. Since the app layout and main header will be changed.
-    height: calc(100% - @header-height);
-    width: 0px;
-    visibility: hidden;
-    background: @side-menu-color;
-    border-right: 1px solid @color-grey-30;
-    overflow-x: hidden;
-    transition: 0.5s ease;
-
-    footer {
-        margin-top: auto;
-        padding-left: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-}
-
 .side-menu {
-    &--active {
-        width: @side-menu-width;
-        visibility: visible;
-        overflow-x: visible;
-    }
-
     &__list {
         list-style: none;
         text-align: center;
