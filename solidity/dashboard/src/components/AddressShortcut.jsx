@@ -1,6 +1,6 @@
 import React, { useMemo } from "react"
-import { shortenAddress } from "../utils/general.utils"
 import CopyToClipboard from "./CopyToClipboard"
+import { shortenAddress } from "../utils/general.utils"
 
 const AddressShortcut = ({ address, classNames }) => {
   const addr = useMemo(() => shortenAddress(address), [address])
@@ -10,14 +10,14 @@ const AddressShortcut = ({ address, classNames }) => {
       toCopy={address}
       render={({ reset, copyStatus, copyToClipboard }) => {
         return (
-          <span
+          <button
             onClick={copyToClipboard}
             onMouseOut={reset}
             className={`address-shortcut tooltip address ${classNames}`}
           >
             <span className="tooltip-text address bottom">{copyStatus}</span>
             {addr}
-          </span>
+          </button>
         )
       }}
     />
