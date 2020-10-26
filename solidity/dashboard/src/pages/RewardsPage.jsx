@@ -1,13 +1,14 @@
 import React from "react"
 import { Rewards } from "../components/Rewards"
-import PageWrapper from "../components/PageWrapper"
 
 const RewardsPage = () => {
-  return (
-    <PageWrapper title="Random Beacon Rewards">
-      <Rewards />
-    </PageWrapper>
-  )
+  return <Rewards />
 }
 
-export default React.memo(RewardsPage)
+RewardsPage.route = {
+  title: "Keep Random Beacon",
+  path: "/rewards/random-beacon",
+  exact: true,
+}
+
+export default RewardsPage

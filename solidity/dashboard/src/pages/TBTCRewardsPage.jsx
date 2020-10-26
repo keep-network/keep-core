@@ -1,5 +1,4 @@
 import React, { useMemo, useCallback } from "react"
-import PageWrapper from "../components/PageWrapper"
 import TBTCRewardsDataTable from "../components/TBTCRewardsDataTable"
 import { tbtcRewardsService } from "../services/tbtc-rewards.service"
 import { useWeb3Context } from "../components/WithWeb3Context"
@@ -49,19 +48,23 @@ const TBTCRewardsPage = () => {
   )
 
   return (
-    <PageWrapper title="tBTC Rewards">
-      <section className="tile">
-        <h2 className="text-grey-70">Total Amount</h2>
-        <h1 className="text-primary">
-          {totalAmount}&nbsp;<span className="h3">TBTC</span>
-        </h1>
-        <TBTCRewardsDataTable
-          rewards={data}
-          fetchOperatorByDepositId={fetchOperatorByDepositId}
-        />
-      </section>
-    </PageWrapper>
+    <section className="tile">
+      <h2 className="text-grey-70">Total Amount</h2>
+      <h1 className="text-primary">
+        {totalAmount}&nbsp;<span className="h3">TBTC</span>
+      </h1>
+      <TBTCRewardsDataTable
+        rewards={data}
+        fetchOperatorByDepositId={fetchOperatorByDepositId}
+      />
+    </section>
   )
 }
 
-export default React.memo(TBTCRewardsPage)
+TBTCRewardsPage.route = {
+  title: "tBTC",
+  path: "/rewards/tbtc",
+  exact: true,
+}
+
+export default TBTCRewardsPage

@@ -1,30 +1,41 @@
-import React, { useContext } from "react"
-import * as Icons from "./Icons"
-import { Web3Context } from "./WithWeb3Context"
+import React from "react"
+import { NavLink } from "react-router-dom"
+import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
-import { MenuButton } from "./MenuButton"
-import AddressShortcut from "./AddressShortcut"
-import { NetworkStatus } from "./NetworkStatus"
 
-const Header = (props) => {
-  const { yourAddress } = useContext(Web3Context)
-
+const Header = ({ title, subLinks }) => {
   return (
     <header className="header">
-      <a href="/" className="logo">
-        <Icons.Keep width="250px" height="80px" />
-      </a>
-      <Web3Status />
-      <div className="account-address">
-        <h5 className="text-grey-50">
-          <span>address:&nbsp;</span>
-          <AddressShortcut classNames="h5" address={yourAddress} />
-        </h5>
-        <NetworkStatus />
+      <div className="header__content">
+        <h1 className="header__title">{title}</h1>
+        <Web3Status />
       </div>
-      <MenuButton />
+      {!isEmptyArray(subLinks) && (
+        <nav className="header__sub-nav">
+          <ul className="sub-nav__list">{subLinks.map(renderSubNavItem)}</ul>
+        </nav>
+      )}
     </header>
   )
 }
+
+const SubNavItem = ({ title, path }) => {
+  return (
+    <li className="sub-nav__item-wrapper">
+      <NavLink
+        to={path}
+        className="sub-nav__item"
+        activeClassName="sub-nav__item--active"
+        exact={true}
+      >
+        {title}
+      </NavLink>
+    </li>
+  )
+}
+
+const renderSubNavItem = (item, index) => (
+  <SubNavItem key={`${index}-${item.path}`} {...item} />
+)
 
 export default Header

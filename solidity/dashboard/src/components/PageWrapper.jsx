@@ -1,39 +1,28 @@
 import React from "react"
-import { Link } from "react-router-dom"
-import * as Icons from "./Icons"
+import { Switch, Redirect } from "react-router-dom"
+import Header from "./Header"
+import { renderPage } from "./Routing"
+import { isEmptyArray } from "../utils/array.utils"
 
-const PageWrapper = ({
-  title,
-  children,
-  nextPageLink,
-  nextPageIcon,
-  nextPageTitle,
-  ...titleProps
-}) => {
-  const IconComponent = nextPageIcon
+const PageWrapper = ({ title, routes, children }) => {
+  const hasRoutes = !isEmptyArray(routes)
+
   return (
     <>
-      <header className="flex row wrap center space-between">
-        <h1 className="mb-2" {...titleProps}>
-          {title}
-        </h1>
-        {nextPageLink && nextPageTitle && (
-          <nav style={{ marginLeft: "auto" }}>
-            <Link to={nextPageLink} style={{ textDecoration: "none" }}>
-              <div className="flex center">
-                <IconComponent width={30} height={30} />
-                <span className="text-black text-link-page mr-1 ml-1">
-                  {nextPageTitle}
-                </span>
-                <Icons.ArrowRight className="arrow-right lg black self-center" />
-              </div>
-            </Link>
-          </nav>
+      <Header
+        title={title}
+        subLinks={hasRoutes ? routes.map((_) => _.route) : []}
+      />
+      <main>
+        {children}
+        {hasRoutes && (
+          <Switch>
+            {routes.map(renderPage)}
+            <Redirect to={routes[0].route.path} />
+          </Switch>
         )}
-      </header>
-      {children}
+      </main>
     </>
   )
 }
-
 export default PageWrapper

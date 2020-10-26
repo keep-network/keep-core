@@ -21,6 +21,7 @@ export default class Web3ContextProvider extends React.Component {
       utils: {},
       eth: {},
       error: "",
+      isConnected: false,
     }
   }
 
@@ -67,6 +68,7 @@ export default class Web3ContextProvider extends React.Component {
       eth: web3.eth,
       isFetching: false,
       connector,
+      isConnected: true,
     })
   }
 
@@ -83,6 +85,7 @@ export default class Web3ContextProvider extends React.Component {
       utils: {},
       eth: {},
       error: "",
+      isConnected: false,
     })
   }
 
