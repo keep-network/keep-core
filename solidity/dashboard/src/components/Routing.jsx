@@ -9,9 +9,9 @@ import RewardsPageContainer from "../pages/RewardsPageContainer"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
-import ChooseWallet from "./ChooseWallet"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
+import Header from "./Header"
 
 const pages = [
   TokensPageContainer,
@@ -31,7 +31,9 @@ class Routing extends React.Component {
     } = this.props
 
     if (!provider || !yourAddress) {
-      return <ChooseWallet />
+      // Temporary solution. We need to implement the empty states for other
+      // pages.
+      return <Header title="Choose wallet" />
     }
 
     if (error) {
