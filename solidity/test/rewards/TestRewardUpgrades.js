@@ -168,6 +168,81 @@ describe("Rewards/Upgrades", () => {
             )
         })
 
+        it("can be finalized with all previous intervals already allocated", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(termLength + 1) // interval 1 ends
+            await rewards.setCloseTime(timestamps[2])
+
+            await rewards.allocateRewards(1)
+            await rewards.finalizeRewardsUpgrade({from: owner})
+
+            const allocation0 = await rewards.getAllocatedRewards(0)
+            const allocation1 = await rewards.getAllocatedRewards(1)
+            
+            expect(allocation0).to.eq.BN(50000) // 5% of 1000000
+            expect(allocation1).to.eq.BN(95000) // 10% of (1000000 - 50000)
+        })
+
+        it("should correctly update timestamps", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(termLength + 1) // interval 1 ends
+            await rewards.setCloseTime(timestamps[2])
+
+            await rewards.allocateRewards(1)
+            await rewards.finalizeRewardsUpgrade({from: owner})
+
+            const upgradeInitiatedTimestamp = await rewards.upgradeInitiatedTimestamp()
+            const upgradeFinalizedTimestamp = await rewards.upgradeFinalizedTimestamp()
+
+            expect(upgradeInitiatedTimestamp).to.eq.BN(0)
+            expect(upgradeFinalizedTimestamp).not.to.eq.BN(0)
+        })
+
+        it("transfers any topped-up amount to a new contract after finalizing the upgrade", async () => {
+            await time.increase(termLength + 1) // interval 0 ends
+
+            await rewards.initiateRewardsUpgrade(
+                newRewards.address,
+                {from: owner}
+            )
+
+            await time.increase(termLength + 1) // interval 1 ends
+            await rewards.setCloseTime(timestamps[2])
+
+            await rewards.finalizeRewardsUpgrade({from: owner})
+            
+            const rewardsTopUp = 420000
+            await token.approveAndCall(
+                rewards.address,
+                rewardsTopUp,
+                "0x0",
+                {from: owner}
+            )
+
+            // interval 0 allocates 50,000
+            // interval 1 allocates 95,000
+            // old contract receives 420,000
+            // 1,000,000 - (50,000 + 95,000) + 420,000 = 1,275,000 should be 
+            // transferred to the new contract
+            const newContractBalance = await token.balanceOf(newRewards.address)
+            expect(newContractBalance).to.eq.BN(1275000)
+
+            const oldContractBalance = await token.balanceOf(rewards.address)
+            expect(oldContractBalance).to.eq.BN(145000)
+        })
+
         it("moves all unallocated rewards to new contract", async () => {
             await rewards.initiateRewardsUpgrade(
                 newRewards.address,
