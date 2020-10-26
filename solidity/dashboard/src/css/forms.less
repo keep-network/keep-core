@@ -1,7 +1,13 @@
 input {
   font-size: 1rem;
+  font-weight: normal;
+  line-height: 1.5rem;
   padding: 1rem .75rem;
-  line-height: 1rem;
+
+  &::placeholder {
+   color: @color-grey-30;
+
+  }
 
   &[type="radio"] {
     @radio-size: 24px;

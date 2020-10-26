@@ -1,10 +1,12 @@
+/* Black */
 @font-face {
     font-family: 'Vitesse';
-    src: url('./fonts/vitesse/VitesseSSm-Medium.otf') format("opentype");
-    font-weight: normal;
+    src: url('./fonts/vitesse/VitesseSSm-Black.otf') format("opentype");
+    font-weight: 900;
     font-style: normal;
 }
 
+/* Bold */
 @font-face {
     font-family: 'Vitesse';
     src: url('./fonts/vitesse/VitesseSSm-Bold.otf') format("opentype");
@@ -12,6 +14,7 @@
     font-style: normal;
 }
 
+/* Book */
 @font-face {
     font-family: 'Vitesse';
     src: url('./fonts/vitesse/VitesseSSm-Book.otf') format("opentype");
