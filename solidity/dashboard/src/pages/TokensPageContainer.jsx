@@ -75,7 +75,7 @@ const TokensPageContainer = ({
     <PageWrapper title={title} routes={routes}>
       {!isEmptyArray(oldDelegations) && (
         <Banner className="banner--upgrade">
-          <div className="flex row center">
+          <div className="flex row">
             <Banner.Icon icon={Icons.Alert} className="mr-1" />
             <div>
               <Banner.Title className="text-white h4">

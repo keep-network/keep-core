@@ -87,7 +87,7 @@ const Message = ({ message, onMessageClose }) => {
 
   return (
     <Banner>
-      <div className="flex row center">
+      <div className="flex row">
         <Banner.Icon
           icon={message.type.icon}
           className={`${message.type.iconClassName} mr-1`}
