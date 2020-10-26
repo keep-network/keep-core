@@ -17,11 +17,11 @@ export const NetworkStatus = () => {
       <Icons.NetworkStatusIndicator
         className={`network-status__indicator--${status}`}
       />
-      <div className={`network-status__text--${status}`}>
+      <span className={`network-status__text--${status}`}>
         {status === "disconnected" && "Network Disconnected"}
         {status === "error" && error}
         {status === "connected" && networkType}
-      </div>
+      </span>
     </div>
   )
 }
