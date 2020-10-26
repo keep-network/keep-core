@@ -2,7 +2,6 @@ import React from "react"
 import DelegateStakeForm from "../components/DelegateStakeForm"
 import TokensOverview from "../components/TokensOverview"
 import { useTokensPageContext } from "../contexts/TokensPageContext"
-import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import TokensContextSwitcher from "../components/TokensContextSwitcher"
 import DelegationOverview from "../components/DelegationOverview"
@@ -56,7 +55,7 @@ const TokensPage = ({ delegateStake }) => {
   }
 
   return (
-    <PageWrapper title="Delegate Tokens From:">
+    <>
       <TokensContextSwitcher />
       <div className="tokens-wrapper">
         <Tile
@@ -82,7 +81,7 @@ const TokensPage = ({ delegateStake }) => {
         <TokensOverview />
       </div>
       <DelegationOverview />
-    </PageWrapper>
+    </>
   )
 }
 
@@ -95,4 +94,12 @@ const mapDispatchToProps = (dispatch) => ({
     }),
 })
 
-export default connect(null, mapDispatchToProps)(TokensPage)
+const ConnectedTokensPage = connect(null, mapDispatchToProps)(TokensPage)
+
+ConnectedTokensPage.route = {
+  title: "Delegate",
+  path: "/tokens/delegate",
+  exact: true,
+}
+
+export default ConnectedTokensPage

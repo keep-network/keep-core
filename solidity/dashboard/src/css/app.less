@@ -32,6 +32,7 @@
 @import 'badge.less';
 @import 'footer.less';
 @import 'side-menu.less';
+@import 'header.less';
 
 * {
   margin: 0;
@@ -49,63 +50,52 @@ html, body, #root {
   height: 100vh;
 }
 
-#app-loader {
-  position: absolute;
-
-  &.loader--hide {
-    display: none;
-  }
-
-}
-
 ul {
   list-style: none !important;
   padding-left: 0;
 }
 
-main {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: @background-color;
-  
-  > .content {
+// TODO: apply a mobile-first approach when the mobile views are ready.
+.app-layout {
+  display: grid;
+  grid-template-columns: @side-menu-width 1fr;
+
+  &__left {
+    position: sticky;
+    top: 0;
+    height: 100vh;
     display: flex;
-    flex: 1 0 auto;
     flex-direction: column;
-    margin: calc(@header-height + 1.5rem) 1.5rem 0;
-  }
-}
+    z-index: 12;
+    background: @side-menu-color;
+    border-right: 1px solid @color-grey-30;
+    overflow-x: hidden;
+    transition: 0.5s ease;
 
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: @header-height;
-  width: 100%;
-  z-index: 10;
-  display: flex;  
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  background: @header-color;
-  padding: 0.5rem;
-  border-bottom: 1px solid @color-grey-30;
+    .app-logo {
+      margin: 1.5rem 1rem 2.75rem;
+    }
 
-  .logo {
-    height: @header-height;
+    footer {
+      margin: auto 1.5rem 1.5rem;
   }
-  
-  > .web3 {
-    display: none;
   }
 
-  > .account-address {
-    display: none;
-  }
+  &__center {
+    background-color: @color-grey-20;
 
-  > .menu-button {
-    display: block;
+    .header {
+      position: sticky;
+      top: 0;
+    }
+
+    main {
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 5rem;
+      padding: 1rem;
+      padding-top: 2.5rem;
+    }
   }
 }
 
@@ -161,11 +151,20 @@ main {
      }
    }
 
-   main {
-     > .content {
-      max-width: 1400px;
-     }
-   }
+
+
+  .app-layout {
+    &__center {
+      main {
+        max-width: 1400px;
+      }
+    }
+  }
+  //  main {
+  //    > .content-wrapper > .content {
+  //     max-width: 1400px;
+  //    }
+  //  }
 }
 
 @media screen and (min-width: 1250px) {
@@ -197,29 +196,6 @@ main {
     
     ul > .account-address, .web3 {
       visibility: hidden;
-    }
-  }
-
-  main {
-    > .content {
-      margin: calc(@header-height + 2rem) 1.5rem 0 calc(@side-menu-width + 1.5rem)
-    }
-  }
-}
-
-@media screen and (min-width: 1400px) {
-  main {
-    > .content {
-      margin: calc(@header-height + 2rem) 3rem 0 calc(@side-menu-width + 3rem);
-    }
-  }
-}
-
-@media screen and (min-width: 1600px) {
-  main {
-    > .content {
-      align-self: center;
-      width: 100%;
     }
   }
 }

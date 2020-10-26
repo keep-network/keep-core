@@ -7,12 +7,20 @@ import withWeb3Context from "./WithWeb3Context"
 import OperatorPage from "../pages/OperatorPage"
 import RewardsPageContainer from "../pages/RewardsPageContainer"
 import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
-import TokenGrantsPage from "../pages/TokenGrantsPage"
 import TokensPageContainer from "../pages/TokensPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ChooseWallet from "./ChooseWallet"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
+
+const pages = [
+  TokensPageContainer,
+  OperatorPage,
+  RewardsPageContainer,
+  ApplicationsPageContainer,
+]
+
+const withoutWalletPages = [ResourcesPage]
 
 class Routing extends React.Component {
   renderContent() {
@@ -34,11 +42,11 @@ class Routing extends React.Component {
       <Loadable />
     ) : (
       <Switch>
-        <Route path="/tokens" component={TokensPageContainer} />
-        <Route exact path="/operations" component={OperatorPage} />
-        <Route path="/rewards" component={RewardsPageContainer} />
-        <Route exact path="/token-grants" component={TokenGrantsPage} />
-        <Route path="/applications" component={ApplicationsPageContainer} />
+        <Route exact path="/overview">
+          {/* Temporary solution. We need to implement the `Overview` page as a separate page. */}
+          <Redirect to="/tokens" />
+        </Route>
+        {pages.map(renderPage)}
         {isKeepTokenContractDeployer && (
           <Route
             exact
@@ -59,16 +67,31 @@ class Routing extends React.Component {
   render() {
     return (
       <Switch>
-        <Route exact path="/resources" component={ResourcesPage} />
+        {withoutWalletPages.map(renderPage)}
         {/* In case that users will have bookmarked the old link. */}
         <Route exact path="/glossary">
-          <Redirect to="/resources#quick-terminology" />
+          <Redirect to="/resources/quick-terminology" />
         </Route>
         <Route exact path="/grant/:grantId" component={TokenGrantPreviewPage} />
         <Route path="/">{this.renderContent()}</Route>
       </Switch>
     )
   }
+}
+
+export const renderPage = (PageComponent, index) => {
+  return (
+    <Route
+      key={`${PageComponent.route.path}-${index}`}
+      path={PageComponent.route.path}
+      exact={PageComponent.route.exact}
+    >
+      <PageComponent
+        routes={PageComponent.route.pages}
+        title={PageComponent.route.title}
+      />
+    </Route>
+  )
 }
 
 export default withWeb3Context(withContractsDataContext(Routing))

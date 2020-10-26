@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo } from "react"
-import PageWrapper from "../components/PageWrapper"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import Undelegations from "../components/Undelegations"
 import TokenOverview from "../components/TokenOverview"
@@ -51,7 +50,7 @@ const TokenOverviewPage = () => {
   }, [grants])
 
   return (
-    <PageWrapper title="Token Overview">
+    <>
       <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<TokenBalancesOverviewSkeleton />}
@@ -82,8 +81,14 @@ const TokenOverviewPage = () => {
           undelegations={undelegations}
         />
       )}
-    </PageWrapper>
+    </>
   )
+}
+
+TokenOverviewPage.route = {
+  title: "Overview",
+  path: "/tokens/overview",
+  exact: true,
 }
 
 export default TokenOverviewPage
