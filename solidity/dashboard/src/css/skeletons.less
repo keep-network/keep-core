@@ -45,20 +45,6 @@
 
 }
   
-
-.skeleton {
-    padding: 0.5em;
-    background-color: #F4F4F4;
-    background-image: linear-gradient(
-      to right,
-      transparent 33%,
-      @color-grey-20 50%,
-      transparent 66%,
-    );
-    background-size: 300% 100%;
-    animation: shine 2.5s infinite;
-}
-
 @keyframes shine {
   0% {
     background-position: right;    
@@ -70,4 +56,29 @@
   border-radius: 10px;
   padding: 1.5rem;
   filter: drop-shadow(0px 4px 4px rgba(196, 196, 196, 0.3));
+}
+
+.skeleton {
+  each(@bg-colors, {
+      &--@{key} {
+          border-radius: 100px;
+          padding: 0.75em;
+          background-color: @value;
+
+          &.shining {
+            padding: 0.5em;
+            border-radius: unset;
+            
+            @shine-color: lighten(@value, 5%);
+            background-image: linear-gradient(
+              to right,
+              transparent 33%,
+              @shine-color 50%,
+              transparent 66%,
+            );
+            background-size: 300% 100%;
+            animation: shine 2.5s infinite;
+          }
+      }
+  });
 }
