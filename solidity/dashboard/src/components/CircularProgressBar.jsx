@@ -27,6 +27,7 @@ const CircularProgressBar = ({
   withBackgroundStroke,
   total,
   barWidth = 10,
+  parentSize,
 }) => {
   const normalizedRadius = useMemo(() => radius - barWidth / 2, [
     radius,
@@ -41,18 +42,20 @@ const CircularProgressBar = ({
     return countProgressValue(value, total, normalizedRadius)
   }, [value, total, normalizedRadius])
 
+  const center = parentSize ? parentSize / 2 : radius
+
   return (
     <svg
       className="circular-progress-bar"
-      width={radius * 2}
-      height={radius * 2}
+      width={parentSize || radius * 2}
+      height={parentSize || radius * 2}
     >
       {withBackgroundStroke && (
         <circle
           fill="none"
           className="background"
-          cx={radius}
-          cy={radius}
+          cx={center}
+          cy={center}
           r={normalizedRadius}
           strokeWidth={barWidth}
           stroke={backgroundStroke}
@@ -63,8 +66,8 @@ const CircularProgressBar = ({
         strokeDashoffset={progress}
         strokeDasharray={`${circumference} ${circumference}`}
         className="value"
-        cx={radius}
-        cy={radius}
+        cx={center}
+        cy={center}
         r={normalizedRadius}
         strokeWidth={barWidth}
         stroke={color}
@@ -83,20 +86,25 @@ CircularProgressBar.defaultProps = {
 }
 
 export const CircularProgressBars = React.memo(
-  ({ withLegend, total, items }) => {
+  ({ withLegend, total, items, size = 120 }) => {
     const bars = useMemo(() => {
       return items.map((item, index) => (
-        <CircularProgressBar key={index} {...item} total={total} />
+        <CircularProgressBar
+          key={index}
+          {...item}
+          total={total}
+          parentSize={size}
+        />
       ))
-    }, [total, items])
+    }, [total, items, size])
 
     return (
       <>
         <svg
           className="wrapper-circular-progress-bar"
-          width={120}
-          height={120}
-          viewBox="0 0 120 120"
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
         >
           {bars}
           <g className="keep-circle">
