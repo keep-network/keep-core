@@ -30,19 +30,24 @@ const App = () => (
 
 const AppLayout = () => {
   return (
-    <div className="app-layout">
-      <div className="app-layout__left">
-        <Link to="/" className="app-logo">
-          <Icons.KeepDashboardLogo />
-        </Link>
-        <SideMenu />
-        <Footer />
-      </div>
-      <div className="app-layout__center">
+    <>
+      <AppHeader />
+      <section className="app__content">
         <Routing />
-      </div>
-    </div>
+      </section>
+      <Footer className="app__footer" />
+    </>
   )
 }
 
+const AppHeader = () => {
+  return (
+    <header className="app__header">
+      <Link to="/" className="app-logo">
+        <Icons.KeepDashboardLogo />
+      </Link>
+      <SideMenu />
+    </header>
+  )
+}
 export default App
