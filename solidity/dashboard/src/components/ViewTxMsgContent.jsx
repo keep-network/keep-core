@@ -7,7 +7,7 @@ const TransactionIsPendingMsgContent = ({ txHash }) => {
       <span className="text-caption ml-1">Transaction hash: {txHash}</span>
       <ViewInBlockExplorer
         type="tx"
-        className="arrow-link grey text-grey-70"
+        className="text-grey-70"
         style={{ marginLeft: "auto" }}
         id={txHash}
       />

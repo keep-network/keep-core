@@ -101,26 +101,14 @@ a {
   color: @secondary-color;
   position: relative;
 
-  &.arrow-link {
-    &::after {
-      content: '';
-      position: absolute;
-      width: 1.25em;
-      height: 1.25em;
-      background-size: 1.25em 1.25em;
-      top: 50%;
-      margin-top: -0.625em;
-      right: calc(-1.25em - 2px);
-      background-image: url("../static/svg/link-arrow.svg");
-
-    }
-    
-    &.grey {
-      &::after {
-        background-image: url("../static/svg/link-arrow-grey.svg");
-      }
-    }
+  &[href^=http]:after {
+    // north east arrow
+    content: " ↗";
+    white-space: pre;
+    // Avoid `text-decoration` under `::after` content
+    display: inline-block;
   }
+  
   
   &:hover {
     text-decoration: underline;

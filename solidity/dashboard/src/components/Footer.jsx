@@ -25,7 +25,6 @@ const Footer = () => {
 
 const FooterLinkItem = ({ label, url }) => (
   <li className="footer__links__item">
-    {/* TODO add arrow link to the external link*/}
     <a href={url} rel="noopener noreferrer" target="_blank">
       {label}
     </a>
