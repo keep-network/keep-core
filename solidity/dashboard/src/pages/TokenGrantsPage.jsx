@@ -9,6 +9,7 @@ import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { LoadingOverlay } from "../components/Loadable"
 import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
 import { add } from "../utils/arithmetics.utils"
+import EmptyStateComponent from "./delegation/EmptyStatePage"
 
 const TokenGrantsPage = () => {
   const { grants, grantsAreFetching } = useTokensPageContext()
@@ -73,6 +74,8 @@ TokenGrantsPage.route = {
   title: "Grants",
   path: "/tokens/grants",
   exact: true,
+  withConnectWalletGuard: true,
+  emptyStateComponent: EmptyStateComponent,
 }
 
 export default TokenGrantsPage

@@ -15,6 +15,9 @@ export const colors = {
   bgSecondary: "#EFE8FF",
   grey10: "#F7F7F7",
   grey20: "#E6E6E6",
+  grey30: "#C4C4C4",
+  grey40: "#AAAAAA",
+  grey50: "#818181",
   grey70: "#4C4C4C",
   grey60: "#6D6D6D  ",
 }

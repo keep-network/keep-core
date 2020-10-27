@@ -34,7 +34,6 @@ import {
   ContractsLoaded,
   Web3Loaded,
 } from "../contracts"
-import TokenOverviewPage from "./TokenOverviewPage"
 import { getEventsFromTransaction } from "../utils/ethereum.utils"
 import Banner, { BANNER_TYPE } from "../components/Banner"
 import Button from "../components/Button"
@@ -481,7 +480,7 @@ const TokensPageContainerWithContext = React.memo((props) => (
 TokensPageContainerWithContext.route = {
   title: "Tokens",
   path: "/tokens",
-  pages: [TokenOverviewPage, TokensPage, TokenGrantsPage],
+  pages: [TokensPage, TokenGrantsPage],
 }
 
 export default TokensPageContainerWithContext

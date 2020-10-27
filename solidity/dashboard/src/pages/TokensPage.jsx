@@ -8,6 +8,7 @@ import DelegationOverview from "../components/DelegationOverview"
 import { useModal } from "../hooks/useModal"
 import { connect } from "react-redux"
 import moment from "moment"
+import EmptyStateComponent from "./delegation/EmptyStatePage"
 
 const confirmationModalOptions = (initializationPeriod) => ({
   modalOptions: { title: "Initiate Delegation" },
@@ -19,7 +20,7 @@ const confirmationModalOptions = (initializationPeriod) => ({
   confirmationText: "DELEGATE",
 })
 
-const TokensPage = ({ delegateStake }) => {
+const TokensPage = ({ delegateStake, restProps }) => {
   const { openConfirmationModal } = useModal()
 
   const {
@@ -100,6 +101,8 @@ ConnectedTokensPage.route = {
   title: "Delegate",
   path: "/tokens/delegate",
   exact: true,
+  withConnectWalletGuard: true,
+  emptyStateComponent: EmptyStateComponent,
 }
 
 export default ConnectedTokensPage
