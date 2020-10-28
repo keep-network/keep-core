@@ -14,6 +14,9 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
   constructor(provider) {
     super()
     this.provider = provider
+  }
+
+  enable = async () => {
     this.addProvider(this.provider)
     const cacheSubprovider = new CacheSubprovider()
     this.addProvider(cacheSubprovider) // initializes internal middleware
@@ -28,29 +31,33 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
     // HACK ALERT can use, ensuring that any downstream handlers are mutating
     // HACK ALERT a request-specific version of the value, without mangling the
     // HACK ALERT cached version.
-    const originalMiddleware = cacheSubprovider.middleware.bind(cacheSubprovider)
+    const originalMiddleware = cacheSubprovider.middleware.bind(
+      cacheSubprovider
+    )
     cacheSubprovider.middleware = (request, response, nextMiddleware, end) => {
-      originalMiddleware(request, response, (handler) => {
-        nextMiddleware((nextHandler) => {
-          handler(nextHandler)
+      originalMiddleware(
+        request,
+        response,
+        (handler) => {
+          nextMiddleware((nextHandler) => {
+            handler(nextHandler)
+            // If the handler filled in a result, make sure to clone it so the
+            // cache value is independent of downstream changes.
+            response.result = clone(response.result)
+          })
+        },
+        (error) => {
           // If the handler filled in a result, make sure to clone it so the
           // cache value is independent of downstream changes.
           response.result = clone(response.result)
-        })
-      }, (error) => {
-        // If the handler filled in a result, make sure to clone it so the
-        // cache value is independent of downstream changes.
-        response.result = clone(response.result)
-        end(error)
-      })
+          end(error)
+        }
+      )
     }
 
     this.addProvider(
-      new WebsocketSubprovider({ rpcUrl: getWsUrl(), debug: false })
+      new WebsocketSubprovider({ rpcUrl: getWsUrl(), debug: true })
     )
-  }
-
-  enable = async () => {
     this.start()
 
     return await this.getAccount()

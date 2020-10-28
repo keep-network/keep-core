@@ -17,56 +17,13 @@ body {
   font-family: 'Work Sans', sans-serif;
   font-weight: normal;
   font-size: 1rem;
+  line-height: 1.5rem;
   color: @color-black;
-  line-height: 1.44;
+  font-feature-settings: 'tnum' on, 'lnum' on, 'zero' on;
 
   @media @tablet-up {
     line-height: 1.79;
   }
-}
-
-h1, .h1 {
-  font-family: 'Vitesse', sans-serif;
-  font-style: normal;
-  font-weight: normal;
-  font-size: 2.5rem;
-  line-height: 3rem;
-  letter-spacing: -1px;
-}
-
-h2, .h2 {
-  font-family: 'Vitesse', sans-serif;
-  font-style: normal;
-  font-weight: bold;
-  font-size: 1.75rem;
-  line-height: 2.3rem;  
-}
-  
-h3, .h3 {
-  font-family: 'Work Sans', sans-serif;
-  font-size: 1.625rem;
-  font-weight: 500;
-  line-height: 120%;
-  letter-spacing: -1px;
-  font-feature-settings: 'tnum' on, 'lnum' on;
-}
-
-h4, .h4 {
-  font-style: normal;
-  font-weight: normal;
-  font-size: 1.375rem;
-  line-height: 145%;
-  font-feature-settings: 'tnum' on, 'lnum' on;
-}
-
-h5, .h5, h6, .h6 {
-  font-style: normal;
-  font-weight: 500;
-  font-size: 0.75rem;
-  line-height: 145%;
-  letter-spacing: 0.1rem;
-  text-transform: uppercase;
-  font-feature-settings: 'tnum' on, 'lnum' on;
 }
 
 h1, .h1,
@@ -78,10 +35,61 @@ h6, .h6 {
   margin: 0;
 }
 
+h1, .h1 {
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 3.25rem;
+  letter-spacing: -2px;
+}
+
+.h1--alt {
+  font-family: "Roboto Slab", sans-serif;
+  font-style: normal;
+  font-weight: 300;
+  font-size: 2.5rem;
+  line-height: 3rem;
+  letter-spacing: -2px;
+}
+
+h2, .h2 {
+  font-weight: bold;
+  font-size: 2rem;
+  line-height: 2.5rem;
+}
+
+.h2--alt {
+  font-family: "Roboto Slab";
+  font-style: normal;
+  font-weight: bold;
+  font-size: 2rem;
+  line-height: 2.5rem;
+  letter-spacing: -1px;
+}
+  
+h3, .h3 {
+  font-weight: 500;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  letter-spacing: -1px;
+}
+
+h4, .h4 {
+  font-weight: 500;
+  font-size: 1rem;
+  line-height: 1.25rem;
+}
+
+h5, .h5, h6, .h6 {
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  letter-spacing: 0.05rem;
+  text-transform: uppercase;
+}
 
 small, .small {
-  font-size: 0.875rem;
-  line-height: 1.38;
+  font-size: 0.75rem;
+  line-height: 142%;
 }
 
 p {
@@ -104,6 +112,7 @@ a {
       margin-top: -0.625em;
       right: calc(-1.25em - 2px);
       background-image: url("../static/svg/link-arrow.svg");
+
     }
     
     &.grey {
@@ -118,11 +127,19 @@ a {
   }
 }
 
-label {
-  font-size: 1rem;
+label, .text-label {
+  font-size: 0.75rem;
   font-weight: 500;
-  line-height: 145%;
-  color: @color-grey-60
+  line-height: 1.5rem;
+  letter-spacing: 0.05rem;
+  
+  color: @color-grey-60;
+  text-transform: uppercase;
+  transition: font-weight 0.3;
+
+  &:hover {
+    font-weight: 600;
+  }
 }
 
 .text {
@@ -140,28 +157,9 @@ label {
     font-weight: normal !important;
   }
 
-  &-label {
-    font-size: 0.8125rem;
-    color: @color-grey-60;
-    line-height: 15px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-feature-settings: 'tnum' on, 'lnum' on;
-  }
-
-  &-big {
-    font-weight: normal;
-    font-size: 1.125rem !important;
-    line-height: 145%;
-    color: @color-grey-60;
-    font-feature-settings: 'tnum' on, 'lnum' on;
-  }
-
-  &-samll {
-    font-size: .875rem;
-    font-weight: normal;
-    line-height: 145%;
-    font-feature-settings: 'tnum' on, 'lnum' on;
+  &-small {
+    font-size: 0.75rem;
+    line-height: 142%;
   }
 
   &-smaller {
@@ -222,20 +220,22 @@ label {
   }
 
   &-caption {
-    font-family: 'Vitesse';
-    font-style: normal;
-    font-weight: 300;
-    font-size: 0.7rem;
-    line-height: 1.375rem;
-    letter-spacing: 0.08rem;
+    font-weight: 500;
+    font-size: 0.5rem;
+    line-height: 0.75rem;
+    letter-spacing: 0.05rem;
   }
 
-  &-intstruction {
-    font-family: 'Vitesse';
-    font-style: normal;
-    font-weight: 300;
-    font-size: 0.7rem;
-    line-height: 1.375rem;
-    letter-spacing: 0.08rem;
+  &-instruction {
+    font-weight: normal;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  &-validation {
+    font-weight: 500;
+    font-size: 0.75rem;
+    line-height: 1.125rem;
+    color: @validation-color;
   }
 }

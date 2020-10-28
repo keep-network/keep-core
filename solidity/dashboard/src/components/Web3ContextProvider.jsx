@@ -1,7 +1,7 @@
 import React from "react"
 import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
-import { MessagesContext, messageType } from "./Message"
+import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
 
 export default class Web3ContextProvider extends React.Component {
@@ -21,6 +21,7 @@ export default class Web3ContextProvider extends React.Component {
       utils: {},
       eth: {},
       error: "",
+      isConnected: false,
     }
   }
 
@@ -39,11 +40,7 @@ export default class Web3ContextProvider extends React.Component {
       resolveWeb3Deferred(web3)
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
-      this.context.showMessage({
-        type: messageType.ERROR,
-        title: error.message,
-      })
-      return
+      throw error
     }
 
     try {
@@ -51,12 +48,15 @@ export default class Web3ContextProvider extends React.Component {
     } catch (error) {
       this.setState({
         isFetching: false,
-        error: "Please select correct network",
+        error: error.message,
       })
-      return
+      throw error
     }
 
-    web3.eth.currentProvider.on("accountsChanged", this.onAccountChanged)
+    if (providerName === "METAMASK") {
+      web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
+      web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
+    }
 
     this.setState({
       web3,
@@ -68,6 +68,7 @@ export default class Web3ContextProvider extends React.Component {
       eth: web3.eth,
       isFetching: false,
       connector,
+      isConnected: true,
     })
   }
 
@@ -84,6 +85,7 @@ export default class Web3ContextProvider extends React.Component {
       utils: {},
       eth: {},
       error: "",
+      isConnected: false,
     })
   }
 
@@ -92,7 +94,7 @@ export default class Web3ContextProvider extends React.Component {
     await this.connectAppWithWallet(connector, provider)
   }
 
-  onAccountChanged = async ([yourAddress]) => {
+  refreshProvider = async ([yourAddress]) => {
     if (!yourAddress) {
       this.setState({
         isFetching: false,

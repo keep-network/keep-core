@@ -17,7 +17,7 @@ import ProgressBar from "../components/ProgressBar"
 import Chip from "../components/Chip"
 import * as Icons from "../components/Icons"
 import { SpeechBubbleTooltip } from "../components/SpeechBubbleTooltip"
-import { withConnectWalletGuard } from "../components/ConnectWalletGouard"
+import TokenBalancesOverviewSkeleton from "../components/skeletons/TokenBalancesOverviewSkeleton"
 
 const OverviewPage = (props) => {
   const {
@@ -65,7 +65,7 @@ const OverviewPage = (props) => {
       <TokenOverview />
       {/* <LoadingOverlay
         isFetching={isFetching}
-        skeletonComponent={<DataTableSkeleton subtitleWidth={0} />}
+        skeletonComponent={<TokenBalancesOverviewSkeleton />}
       >
         <DelegatedTokensTable
           title="Delegation History"
