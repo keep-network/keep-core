@@ -3,9 +3,9 @@ import { NavLink } from "react-router-dom"
 import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
 
-const Header = ({ title, subLinks }) => {
+const Header = ({ title, subLinks, className = "" }) => {
   return (
-    <header className="header">
+    <header className={`header ${className}`}>
       <div className="header__content">
         <h1 className="header__title">{title}</h1>
         <Web3Status />

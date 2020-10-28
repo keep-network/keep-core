@@ -60,7 +60,7 @@ const OverviewPage = (props) => {
   }, [grants])
 
   return (
-    <PageWrapper {...props}>
+    <PageWrapper {...props} headerClassName="header--overview">
       <OverviewFirstSection />
       <TokenOverview />
       {/* <LoadingOverlay
