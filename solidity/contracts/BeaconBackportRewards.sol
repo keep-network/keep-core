@@ -36,7 +36,6 @@ contract BeaconBackportRewards is Rewards {
 
     // We are going to have one interval, with a weight of 100%.
     uint256[] internal beaconIntervalWeight = [100];
-    uint256 internal constant lastInterval = 0;
 
     // 136 days between the genesis of the old and the new random beacon
     // contract versions:
@@ -103,8 +102,6 @@ contract BeaconBackportRewards is Rewards {
         return false;
     }
 
-    // A group is recognized if its index is at most `lastEligibleGroup`
-    // and it isn't listed as excluded.
     function _recognizedByFactory(bytes32 groupIndexBytes) internal view returns (bool) {
         return numberOfCreatedGroups > uint256(groupIndexBytes);
     }

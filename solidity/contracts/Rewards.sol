@@ -82,16 +82,17 @@ contract Rewards is Ownable {
     // for the full reward to be allocated to the interval.
     uint256 public minimumKeepsPerInterval;
 
-    // Total number of keep tokens to distribute.
-    // Includes those already paid out.
+    // Total number of KEEP tokens to distribute by this contract.
+    // Includes those already dispensed.
     uint256 public totalRewards;
-    // Rewards that haven't been allocated to finished intervals
+    // Rewards that haven't been allocated to finished intervals.
     uint256 public unallocatedRewards;
-    // Rewards that have been dispensed from this contract - as a signer
-    // rewards or transferred to a new rewards contract.
+    // Rewards that have been dispensed from this contract as signer rewards.
     // `token.balanceOf(address(this))` should always equal
     // `totalRewards.sub(dispensedRewards)`
     uint256 public dispensedRewards;
+    // The following invariant should always hold:
+    // token.balanceOf(address(this)) >= totalRewards.sub(dispensedRewards)
 
     // Timestamp of first interval beginning.
     // Interval 0 covers everything before `firstIntervalStart`
@@ -116,9 +117,10 @@ contract Rewards is Ownable {
     bool public funded = false;
 
     // Owner of the contract may initiate an upgrade to a new rewards contract
-    // but the pending and past intervals must receive their rewards before any
-    // KEEP tokens are transferred out from this contract.
+    // but the pending and past intervals must have their rewards allocated
+    // before any KEEP tokens are transferred out from this contract.
     uint256 public upgradeInitiatedTimestamp;
+    uint256 public upgradeFinalizedTimestamp;
     address public newRewardsContract;
 
     event RewardReceived(bytes32 keep, uint256 amount);
@@ -143,10 +145,14 @@ contract Rewards is Ownable {
     /// @dev Adds the received amount of tokens to `totalRewards` and
     /// `unallocatedRewards`. May be called at any time, even after allocating
     /// some intervals.
+    /// If the contract has been upgraded,
+    /// the funding will be transferred to the new contract instead.
     /// Changes to `unallocatedRewards` will take effect on subsequent interval
     /// allocations. Intended to be used with `approveAndCall`.
     /// If the reward contract has received tokens outside `approveAndCall`,
     /// this collects them as well.
+    /// The following invariant should hold right after calling this function:
+    /// token.balanceOf(address(this)) == totalRewards.sub(dispensedRewards).
     /// @param _from The original sender of the tokens.
     /// Must have approved at least `_value` tokens for the rewards contract.
     /// @param _value The amount of tokens to fund.
@@ -172,7 +178,7 @@ contract Rewards is Ownable {
         uint256 addedBalance = currentBalance.sub(beforeBalance);
 
         totalRewards = totalRewards.add(addedBalance);
-        unallocatedRewards = unallocatedRewards.add(addedBalance);
+        deallocate(addedBalance);
     }
 
     function markAsFunded() public onlyOwner {
@@ -547,7 +553,7 @@ contract Rewards is Ownable {
             emit RewardReceived(keepIdentifier, perKeepReward);
         } else {
             // Return the reward to the unallocated pool
-            unallocatedRewards = unallocatedRewards.add(perKeepReward);
+            deallocate(perKeepReward);
         }
     }
 
@@ -568,15 +574,19 @@ contract Rewards is Ownable {
     /// reported.
     function finalizeRewardsUpgrade() public onlyOwner {
         require(upgradeInitiatedTimestamp != 0, "Upgrade not initiated");
-
-        // allocate all intervals that can be currently allocated
-        uint256 currentInterval = intervalOf(block.timestamp);
-        uint256 intervalToAllocate = 0;
-        if (currentInterval > 0) {
-            intervalToAllocate = currentInterval.sub(1);
-        }
         
-        allocateRewards(intervalToAllocate);
+        uint256 currentInterval = intervalOf(block.timestamp);
+        uint256 upgradeInitiatedInterval = intervalOf(upgradeInitiatedTimestamp);
+
+        require(
+            currentInterval > upgradeInitiatedInterval,
+            "Interval at which the upgrade was initiated hasn't ended yet"
+        );
+
+        // ensure all past intervals are allocated
+        if (!isAllocated(currentInterval.sub(1))) {
+            allocateRewards(currentInterval.sub(1));
+        }
 
         // transfer the unallocated KEEP to the new rewards contract and update
         // this contract's balances
@@ -584,7 +594,6 @@ contract Rewards is Ownable {
 
         totalRewards = totalRewards.sub(amountToTransfer);
         unallocatedRewards = 0;
-        dispensedRewards = dispensedRewards.add(amountToTransfer);
 
         emit UpgradeFinalized(amountToTransfer);
 
@@ -597,6 +606,26 @@ contract Rewards is Ownable {
         
 
         upgradeInitiatedTimestamp = 0;
+        upgradeFinalizedTimestamp = block.timestamp;
+    }
+
+    /// @notice Return the given amount to the unallocated pool.
+    /// If the contract has been upgraded,
+    /// the deallocated amount will be sent to the new contract.
+    /// @param amount The amount to deallocate
+    function deallocate(uint256 amount) internal {
+        if (upgradeFinalizedTimestamp != 0) {
+            bool success = token.approveAndCall(
+                newRewardsContract,
+                amount,
+                bytes("")
+            );
+            if (!success) {
+                unallocatedRewards = unallocatedRewards.add(amount);
+            }
+        } else {
+            unallocatedRewards = unallocatedRewards.add(amount);
+        }
     }
 
     /// @notice Get the total number of keeps ever created by the factory,
@@ -607,15 +636,16 @@ contract Rewards is Ownable {
     /// @notice Get the identifier of the keep at the given index,
     /// when all keeps created by the factory are ordered by creation time.
     /// @param index The index of the queried keep.
-    /// @return The `bytes32` identifier of the keep at the given index
-    /// for any index lower than `_getKeepCount()`.
-    /// Revert if the given index is outside the range of created keeps.
+    /// @return The `bytes32` identifier of the keep at the given index.
+    /// @dev Implementation is not required to check if a keep with the given
+    /// index exists.
     function _getKeepAtIndex(uint256 index) internal view returns (bytes32);
 
     /// @notice Get the creation time of the given keep.
     /// @param _keep The identifier of the keep.
     /// @return The creation timestamp of the keep.
-    /// Revert if the identifier is invalid.
+    /// @dev If the idenfifier is invalid or not recognized by factory, function
+    /// may revert or return 0.
     function _getCreationTime(bytes32 _keep) internal view returns (uint256);
 
     /// @notice Is the given keep closed.
