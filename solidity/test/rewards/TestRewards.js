@@ -13,7 +13,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 const assert = chai.assert
 
-describe.only('Rewards', () => {
+describe('Rewards', () => {
     const owner = accounts[0]
     const aliceBeneficiary = accounts[1]
     const funder = accounts[9]
