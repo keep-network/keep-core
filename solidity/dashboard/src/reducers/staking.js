@@ -8,6 +8,9 @@ const initialState = {
   initializationPeriod: "0",
   undelegationPeriod: "0",
   error: null,
+  topUps: [],
+  areTopUpsFetching: false,
+  topUpsFetchingError: null,
 }
 
 const stakingReducer = (state = initialState, action) => {
@@ -25,6 +28,24 @@ const stakingReducer = (state = initialState, action) => {
         ...state,
         isDelegationDataFetching: false,
         error: action.payload.error,
+      }
+    case "staking/fetch_top_ups_start":
+      return {
+        ...state,
+        areTopUpsFetching: true,
+        topUpsFetchingError: null,
+      }
+    case "staking/fetch_top_ups_success":
+      return {
+        ...state,
+        areTopUpsFetching: false,
+        topUps: action.payload,
+      }
+    case "staking/fetch_top_ups_failure":
+      return {
+        ...state,
+        areTopUpsFetching: false,
+        topUpsFetchingError: action.payload.error,
       }
     default:
       return state

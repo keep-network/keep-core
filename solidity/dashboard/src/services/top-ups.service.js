@@ -15,7 +15,7 @@ export const commitTopUp = async (operator, onTransactionHashCallback) => {
     .on("transactionHash", onTransactionHashCallback)
 }
 
-export const fetchAvailableTopUps = async (_, operators) => {
+export const fetchAvailableTopUps = async (operators) => {
   const web3Context = await Web3Loaded
   const { stakingContract } = await ContractsLoaded
 
