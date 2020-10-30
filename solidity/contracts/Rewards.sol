@@ -185,6 +185,17 @@ contract Rewards is Ownable {
         funded = true;
     }
 
+    /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
+    /// in one transaction to reduce total cost comparing to single calls for rewards.
+    /// It is a caller responsibility to determine the cost and consumed gas when
+    /// receiving rewards from multiple keeps.
+    /// @param keepIdentifiers An array of keep addresses.
+    function receiveRewards(bytes32[] memory keepIdentifiers) public {
+        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
+            receiveReward(keepIdentifiers[i]);
+        }
+    }
+
     /// @notice Sends the reward for a keep to the keep members.
     /// @param keepIdentifier A unique identifier for the keep,
     /// e.g. address or number converted to a `bytes32`.
@@ -195,6 +206,15 @@ contract Rewards is Ownable {
         public
     {
         _processKeep(true, keepIdentifier);
+    }
+
+    /// @notice Report about the terminated keeps in batch. All the allocated
+    /// rewards in these keeps will be returned to the unallocated pool.
+    /// @param keepIdentifiers An array of keep addresses.
+    function reportTerminations(bytes32[] memory keepIdentifiers) public {
+        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
+            reportTermination(keepIdentifiers[i]);
+        }
     }
 
     /// @notice Report that the keep was terminated, and return its allocated
