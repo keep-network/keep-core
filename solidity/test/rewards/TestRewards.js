@@ -13,7 +13,7 @@ chai.use(require('bn-chai')(BN))
 const expect = chai.expect
 const assert = chai.assert
 
-describe('Rewards', () => {
+describe.only('Rewards', () => {
     const owner = accounts[0]
     const aliceBeneficiary = accounts[1]
     const funder = accounts[9]
@@ -426,6 +426,18 @@ describe('Rewards', () => {
             expect(aliceBalance.toNumber()).to.equal(66666)
         })
 
+        it("lets closed keeps claim the rewards from multiple keeps correctly", async () => {
+            let timestamps = testValues.rewardTimestamps
+            await createKeeps(timestamps)
+            await rewards.setCloseTime(timestamps[2])
+            let rewardsReceivingKeeps = [0, 1]
+            await rewards.receiveRewards(rewardsReceivingKeeps, { from: aliceBeneficiary })
+            let aliceBalance = await token.balanceOf(aliceBeneficiary)
+            // Beneficiary will receive 200,000 / 3 = 66,666 per keep
+            // 66,666 * 2 = 133332 KEEP rewards total for being in 2 closed keeps
+            expect(aliceBalance.toNumber()).to.equal(133332)
+        })
+
         it("doesn't let keeps claim rewards again", async () => {
             let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
@@ -485,7 +497,7 @@ describe('Rewards', () => {
     })
 
     describe("reportTermination", async () => {
-        it("unallocates rewards allocated to terminated keeps", async () => {
+        it("unallocates rewards allocated to terminated keep", async () => {
             let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
 
@@ -498,6 +510,31 @@ describe('Rewards', () => {
             let postUnallocated = await rewards.unallocatedRewards()
             expect(postUnallocated.toNumber()).to.equal(
                 preUnallocated.toNumber() + 66666
+            )
+        })
+
+        it("unallocates rewards allocated to terminated keeps in batch", async () => {
+            let timestamps = testValues.rewardTimestamps
+            await createKeeps(timestamps)
+
+            await rewards.setCloseTime(testValues.rewardTimestamps[0])
+            await rewards.allocateRewards(0)
+
+            await rewards.terminate(1)
+            await rewards.terminate(2)
+
+            let preUnallocated = await rewards.unallocatedRewards()
+
+            let terminatedKeeps = [1, 2]
+            await rewards.reportMultipleTerminations(terminatedKeeps, { from: aliceBeneficiary })
+            let actual = await rewards.unallocatedRewards()
+            // 200,000 KEEP were allocated for the first interval
+            // 800,000 KEEP remaining in unallocated pool
+            // 2 out of 3 keeps were terminated
+            // 200,000 / 3 = 66,666 rewards per keep
+            // 66,666 * 2 = 133,332 returned back to unallocated pool
+            expect(actual.toNumber()).to.equal(
+                preUnallocated.toNumber() + 133332
             )
         })
 
@@ -547,5 +584,7 @@ describe('Rewards', () => {
                 "Interval hasn't ended yet"
             )
         })
+
+
     })
 })
