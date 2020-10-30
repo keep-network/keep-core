@@ -103,8 +103,14 @@ const TokensContextSwitcher = (props) => {
 const OwnedTokensLoadingComponent = () => {
   return (
     <>
-      <Skeleton className="h2 ml-1" styles={{ width: "35%" }} />
+      <Skeleton
+        shining
+        color="grey-20"
+        className="h2 ml-1"
+        styles={{ width: "35%" }}
+      />
       <TokenAmountSkeleton
+        shining
         wrapperStyles={{ width: "35%", marginLeft: "auto" }}
         textStyles={{ width: "35%" }}
       />
@@ -116,14 +122,15 @@ const GrantedTokensLoadingComponent = () => {
   return (
     <>
       <div className="flex column" style={{ width: "40%" }}>
-        <Skeleton className="h2" />
+        <Skeleton shining color="grey-20" className="h2" />
         <TokenAmountSkeleton
+          shining
           wrapperStyles={{ width: "100%", marginTop: "1rem" }}
           textStyles={{ width: "35%" }}
         />
       </div>
       <div className="grants-dropdown">
-        <Skeleton styles={{ padding: "1.5rem 4rem" }} />
+        <Skeleton shining color="grey-20" styles={{ padding: "1.5rem 4rem" }} />
       </div>
     </>
   )

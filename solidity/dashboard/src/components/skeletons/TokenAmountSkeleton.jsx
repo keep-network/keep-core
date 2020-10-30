@@ -12,8 +12,13 @@ const TokenAmountSkeleton = ({
 }) => {
   return (
     <div className={wrapperClassName} style={wrapperStyles}>
-      <CircleSkeleton width={iconWidth} height={iconHeight} />
-      <Skeleton className={textClassName} styles={textStyles} />
+      <CircleSkeleton shining width={iconWidth} height={iconHeight} />
+      <Skeleton
+        color="grey-20"
+        shining
+        className={textClassName}
+        styles={textStyles}
+      />
     </div>
   )
 }
