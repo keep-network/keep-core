@@ -9,27 +9,30 @@ import { LoadingOverlay } from "./Loadable"
 import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 import TopUpsDataTable from "./TopUpsDataTable"
 import Tile from "./Tile"
+import { useSelector } from "react-redux"
 
 const filterByOwned = (delegation) => !delegation.grantId
 const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
 
 const DelegationOverview = () => {
+  const { tokensContext, selectedGrant } = useTokensPageContext()
+
   const {
     undelegations,
     delegations,
     refreshData,
-    tokensContext,
-    selectedGrant,
-    isFetching,
-    grantsAreFetching,
+    isDelegationDataFetching,
     keepTokenBalance,
-    availableTopUps,
-    topUpsAreFetching,
-    grants,
-    initializationPeriod,
     undelegationPeriod,
-  } = useTokensPageContext()
+    initializationPeriod,
+    topUps: availableTopUps,
+    areTopUpsFetching,
+  } = useSelector((state) => state.staking)
+
+  const { grants, isFetching: areGrantsFetching } = useSelector(
+    (state) => state.tokenGrants
+  )
 
   const ownedDelegations = useMemo(() => {
     return delegations.filter(filterByOwned)
@@ -120,7 +123,9 @@ const DelegationOverview = () => {
       </div>
       <LoadingOverlay
         isFetching={
-          tokensContext === "granted" ? grantsAreFetching : isFetching
+          tokensContext === "granted"
+            ? areGrantsFetching
+            : isDelegationDataFetching
         }
         skeletonComponent={<DataTableSkeleton />}
       >
@@ -134,14 +139,16 @@ const DelegationOverview = () => {
       </LoadingOverlay>
       <LoadingOverlay
         isFetching={
-          tokensContext === "granted" ? grantsAreFetching : isFetching
+          tokensContext === "granted"
+            ? areGrantsFetching
+            : isDelegationDataFetching
         }
         skeletonComponent={<DataTableSkeleton />}
       >
         <Undelegations undelegations={getUndelegations()} />
       </LoadingOverlay>
       <LoadingOverlay
-        isFetching={topUpsAreFetching}
+        isFetching={areTopUpsFetching}
         skeletonComponent={<DataTableSkeleton columns={3} />}
       >
         <Tile>
