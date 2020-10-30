@@ -1,9 +1,10 @@
-import { takeEvery, call } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper } from "./utils"
+import { take, takeEvery, call, fork, put } from "redux-saga/effects"
+import { getContractsContext, submitButtonHelper, logError } from "./utils"
 import { sendTransaction } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
 import { fromTokenUnit } from "../utils/token.utils"
+import { tokensPageService } from "../services/tokens-page.service"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -128,4 +129,20 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
   }
 
   return amountLeft
+}
+
+export function* watchFetchDelegationRequest() {
+  // Fetch data only once and update data based on evnets.
+  yield take("staking/fetch_delegations")
+  yield fork(fetchDelegations)
+}
+
+function* fetchDelegations() {
+  try {
+    yield put({ type: "staking/fetch_delegations_start" })
+    const data = yield call(tokensPageService.fetchTokensPageData)
+    yield put({ type: "staking/fetch_delegations_success", payload: data })
+  } catch (error) {
+    yield* logError("staking/fetch_delegations_failure", error)
+  }
 }

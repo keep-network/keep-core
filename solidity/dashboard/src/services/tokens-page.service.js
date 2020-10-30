@@ -15,13 +15,9 @@ export const fetchTokensPageData = async () => {
   const web3 = await Web3Loaded
   const yourAddress = web3.eth.defaultAccount
 
-  const { stakingContract, token, grantContract } = await ContractsLoaded
+  const { stakingContract, token } = await ContractsLoaded
 
   const keepTokenBalance = await token.methods.balanceOf(yourAddress).call()
-
-  const grantTokenBalance = await grantContract.methods
-    .balanceOf(yourAddress)
-    .call()
 
   const minimumStake = await stakingContract.methods.minimumStake().call()
 
@@ -79,7 +75,6 @@ export const fetchTokensPageData = async () => {
     delegations,
     undelegations,
     keepTokenBalance,
-    grantTokenBalance,
     ownedTokensDelegationsBalance: tokenStakingBalance.toString(),
     ownedTokensUndelegationsBalance: pendingUndelegationBalance.toString(),
     minimumStake,
