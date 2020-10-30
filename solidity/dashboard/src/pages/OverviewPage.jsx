@@ -1,87 +1,108 @@
-import React, { useCallback, useMemo } from "react"
+import React, { useEffect, useCallback, useMemo } from "react"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
 import Undelegations from "../components/Undelegations"
 import TokenOverview from "../components/TokenOverview"
 import { LoadingOverlay } from "../components/Loadable"
-import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 import Tile from "../components/Tile"
-import Button from "../components/Button"
 import { Link } from "react-router-dom"
 import PageWrapper from "../components/PageWrapper"
-import TokenAmount from "../components/TokenAmount"
-import Divider from "../components/Divider"
-import ProgressBar from "../components/ProgressBar"
-import Chip from "../components/Chip"
-import * as Icons from "../components/Icons"
-import { SpeechBubbleTooltip } from "../components/SpeechBubbleTooltip"
-import TokenBalancesOverviewSkeleton from "../components/skeletons/TokenBalancesOverviewSkeleton"
+import { useSelector, useDispatch } from "react-redux"
+import { useWeb3Context } from "../components/WithWeb3Context"
 
 const OverviewPage = (props) => {
+  const { isConnected } = useWeb3Context()
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    if (isConnected) {
+      dispatch({ type: "staking/fetch_delegations" })
+      dispatch({ type: "token-grant/fetch_grants_request" })
+    }
+  }, [dispatch, isConnected])
+
+  const keepToken = useSelector((state) => state.keepTokenBalance)
   const {
     delegations,
     undelegations,
-    keepTokenBalance,
     ownedTokensDelegationsBalance,
     ownedTokensUndelegationsBalance,
-    grants,
-    refreshGrants,
-    refreshData,
-    isFetching,
+    isDelegationDataFetching,
     undelegationPeriod,
-  } = useTokensPageContext()
+  } = useSelector((state) => state.staking)
+
+  const { grants, isFetching: grantsAreFetching } = useSelector(
+    (state) => state.tokenGrants
+  )
+
   const cancelStakeSuccessCallback = useCallback(() => {
-    refreshGrants()
-    refreshData()
-  }, [refreshGrants, refreshData])
+    // TODO
+  }, [])
 
   const totalOwnedStakedBalance = useMemo(() => {
-    return add(ownedTokensDelegationsBalance, ownedTokensUndelegationsBalance)
+    return add(
+      ownedTokensDelegationsBalance,
+      ownedTokensUndelegationsBalance
+    ).toString()
   }, [ownedTokensDelegationsBalance, ownedTokensUndelegationsBalance])
 
   const totalKeepTokenBalance = useMemo(() => {
-    return add(totalOwnedStakedBalance, keepTokenBalance)
-  }, [keepTokenBalance, totalOwnedStakedBalance])
+    return add(totalOwnedStakedBalance, keepToken.value).toString()
+  }, [keepToken.value, totalOwnedStakedBalance])
 
   const totalGrantedStakedBalance = useMemo(() => {
     return [...delegations, ...undelegations]
       .filter((delegation) => delegation.isFromGrant)
       .map(({ amount }) => amount)
       .reduce(add, "0")
+      .toString()
   }, [delegations, undelegations])
 
   const totalGrantedTokenBalance = useMemo(() => {
     const grantedBalance = grants
       .map(({ amount, released }) => sub(amount, released))
       .reduce(add, "0")
+      .toString()
     return grantedBalance
   }, [grants])
 
   return (
     <PageWrapper {...props} headerClassName="header--overview">
       <OverviewFirstSection />
-      <TokenOverview />
-      {/* <LoadingOverlay
-        isFetching={isFetching}
-        skeletonComponent={<TokenBalancesOverviewSkeleton />}
-      >
-        <DelegatedTokensTable
-          title="Delegation History"
-          delegatedTokens={delegations}
-          cancelStakeSuccessCallback={cancelStakeSuccessCallback}
-          keepTokenBalance={keepTokenBalance}
-          grants={grants}
-          undelegationPeriod={undelegationPeriod}
-        />
-      </LoadingOverlay>
-      {!isEmptyArray(undelegations) && (
-        <Undelegations
-          title="Undelegation History"
-          undelegations={undelegations}
-        />
-      )} */}
+      <TokenOverview
+        totalKeepTokenBalance={totalKeepTokenBalance}
+        totalOwnedStakedBalance={totalOwnedStakedBalance}
+        totalGrantedTokenBalance={totalGrantedTokenBalance}
+        totalGrantedStakedBalance={totalGrantedStakedBalance}
+        isFetching={
+          keepToken.isFetching || grantsAreFetching || isDelegationDataFetching
+        }
+      />
+      {isConnected && (
+        <>
+          <LoadingOverlay
+            isFetching={isDelegationDataFetching}
+            skeletonComponent={<DataTableSkeleton />}
+          >
+            <DelegatedTokensTable
+              title="Delegation History"
+              delegatedTokens={delegations}
+              cancelStakeSuccessCallback={cancelStakeSuccessCallback}
+              keepTokenBalance={keepToken.value}
+              grants={grants}
+              undelegationPeriod={undelegationPeriod}
+            />
+          </LoadingOverlay>
+          {!isEmptyArray(undelegations) && (
+            <Undelegations
+              title="Undelegation History"
+              undelegations={undelegations}
+            />
+          )}
+        </>
+      )}
     </PageWrapper>
   )
 }
