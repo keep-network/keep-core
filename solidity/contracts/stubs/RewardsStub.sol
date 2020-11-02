@@ -41,11 +41,11 @@ contract RewardsStub is Rewards {
         reportTermination(bytes32(i));
     }
 
-    function reportTerminations(uint256[] memory identifieres) public {
-        uint256 len = identifieres.length;
+    function reportTerminations(uint256[] memory identifiers) public {
+        uint256 len = identifiers.length;
         bytes32[] memory bytes32identifiers = new bytes32[](len);
-        for (uint256 i = 0; i < identifieres.length; i++) {
-            bytes32identifiers[i] = bytes32(identifieres[i]);
+        for (uint256 i = 0; i < identifiers.length; i++) {
+            bytes32identifiers[i] = bytes32(identifiers[i]);
         }
         reportTerminations(bytes32identifiers);
     }
