@@ -1,3 +1,5 @@
+import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
+
 const initialState = {
   isDelegationDataFetching: false,
   delegations: [],
@@ -47,9 +49,53 @@ const stakingReducer = (state = initialState, action) => {
         areTopUpsFetching: false,
         topUpsFetchingError: action.payload.error,
       }
+    case "staking/add_delegation":
+      return {
+        ...state,
+        delegations: [action.payload, ...state.delegations],
+      }
+    case "staking/remove_delegation":
+      return {
+        ...state,
+        undelegations: removeFromDelegationOrUndelegation(
+          [...state.undelegations],
+          action.payload
+        ),
+      }
+    case "staking/update_owned_undelegations_tokens_balance":
+      return {
+        ...state,
+        ownedTokensUndelegationsBalance: action.payload.operation(
+          state.ownedTokensUndelegationsBalance,
+          action.payload.value
+        ),
+      }
+    case "staking/update_owned_delegated_tokens_balance":
+      return {
+        ...state,
+        ownedTokensDelegationsBalance: action.payload.operation(
+          state.ownedTokensDelegationsBalance,
+          action.payload.value
+        ),
+      }
     default:
       return state
   }
 }
 
 export default stakingReducer
+
+const removeFromDelegationOrUndelegation = (array, id) => {
+  const { indexInArray } = findIndexAndObject(
+    "operatorAddress",
+    id,
+    array,
+    compareEthAddresses
+  )
+  if (indexInArray === null) {
+    return array
+  }
+  array.splice(indexInArray, 1)
+
+  return array
+}
