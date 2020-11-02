@@ -576,8 +576,10 @@ describe('Rewards', () => {
     
             let preUnallocated = await rewards.unallocatedRewards()
     
-            let terminatedKeeps = [1, 2]
-            await rewards.reportMultipleTerminations(terminatedKeeps, { from: aliceBeneficiary })
+            const terminatedIdentifiers = [1, 2]
+            await rewards.methods['reportTerminations(uint256[])'](
+                terminatedIdentifiers
+            )
             let actual = await rewards.unallocatedRewards()
             // 200,000 KEEP were allocated for the first interval
             // 800,000 KEEP remaining in unallocated pool
