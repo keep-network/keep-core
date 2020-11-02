@@ -189,7 +189,7 @@ contract Rewards is Ownable {
     /// in one transaction to reduce total cost comparing to single calls for rewards.
     /// It is a caller responsibility to determine the cost and consumed gas when
     /// receiving rewards from multiple keeps.
-    /// @param keepIdentifiers An array of keep addresses.
+    /// @param keepIdentifiers An array of keep identifiers.
     function receiveRewards(bytes32[] memory keepIdentifiers) public {
         for (uint256 i = 0; i < keepIdentifiers.length; i++) {
             receiveReward(keepIdentifiers[i]);
@@ -210,7 +210,7 @@ contract Rewards is Ownable {
 
     /// @notice Report about the terminated keeps in batch. All the allocated
     /// rewards in these keeps will be returned to the unallocated pool.
-    /// @param keepIdentifiers An array of keep addresses.
+    /// @param keepIdentifiers An array of keep identifiers.
     function reportTerminations(bytes32[] memory keepIdentifiers) public {
         for (uint256 i = 0; i < keepIdentifiers.length; i++) {
             reportTermination(keepIdentifiers[i]);
