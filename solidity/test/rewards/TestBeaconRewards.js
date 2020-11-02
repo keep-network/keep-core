@@ -238,7 +238,7 @@ describe('BeaconRewards', () => {
             expect(unallocatedInKeep).to.eq.BN(19404000)
         })
 
-        it("should not count terminated groups in batch when distributing rewards", async () => {
+        it("should not count a batch of terminated groups when distributing rewards", async () => {
             const startOf = await rewardsContract.startOf(0)
             await registerNewGroup(startOf.addn(1))
             await registerNewGroup(startOf.addn(2))
@@ -259,8 +259,8 @@ describe('BeaconRewards', () => {
 
             // the remaining unallocated rewards pool has 19,008,000 KEEP
             // the remaining 528,000 stays in unallocated rewards but the fact
-            // it terminated needs to be reported to recalculate the unallocated
-            // amount
+            // two keeps were terminated needs to be reported to recalculate the 
+            // unallocated amount
             // unallocated amount: 19,008,000 + 528,000 = 19,536,000
             await rewardsContract.methods['reportTerminations(uint256[])'](
                 terminatedGroups

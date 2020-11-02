@@ -497,7 +497,7 @@ describe('Rewards', () => {
             )
             let aliceBalance = await token.balanceOf(aliceBeneficiary)
             // Beneficiary will receive 200,000 / 3 = 66,666 per keep
-            // 66,666 * 2 = 133332 KEEP rewards total for being in 2 closed keeps
+            // 66,666 * 2 = 133,332 KEEP rewards total for being in 2 closed keeps
             expect(aliceBalance.toNumber()).to.equal(133332)
         })
     })
