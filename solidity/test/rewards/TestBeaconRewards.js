@@ -238,6 +238,38 @@ describe('BeaconRewards', () => {
             expect(unallocatedInKeep).to.eq.BN(19404000)
         })
 
+        it("should not count terminated groups in batch when distributing rewards", async () => {
+            const startOf = await rewardsContract.startOf(0)
+            await registerNewGroup(startOf.addn(1))
+            await registerNewGroup(startOf.addn(2))
+            await registerNewGroup(startOf.addn(3))
+
+            const terminatedGroups = [1, 2]
+            await operatorContract.terminateGroup(terminatedGroups[0])
+            await operatorContract.terminateGroup(terminatedGroups[1])
+
+            await timeJumpToEndOfInterval(0)
+            await rewardsContract.allocateRewards(0)
+
+            await expireAllGroups()
+            await rewardsContract.receiveReward(0)
+            // three groups but two of them were terminated and do not count here 
+            // each beneficiary receives 792,000 / 3 / 64 = 4,125 KEEP
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(4125))
+
+            // the remaining unallocated rewards pool has 19,008,000 KEEP
+            // the remaining 528,000 stays in unallocated rewards but the fact
+            // it terminated needs to be reported to recalculate the unallocated
+            // amount
+            // unallocated amount: 19,008,000 + 528,000 = 19,536,000
+            await rewardsContract.methods['reportTerminations(uint256[])'](
+                terminatedGroups
+            )
+            unallocated = await rewardsContract.unallocatedRewards()
+            unallocatedInKeep = unallocated.div(tokenDecimalMultiplier)
+            expect(unallocatedInKeep).to.eq.BN(19536000)
+        })
+
         it("should correctly distribute rewards to beneficiaries", async () => {
             let startOf = await rewardsContract.startOf(0)
             // 2 groups in the first interval, 792,000 KEEP to distribute
@@ -268,6 +300,25 @@ describe('BeaconRewards', () => {
             // each beneficiary receives 760,320 / 64 = 11,880 KEEP
             // they should have 12,375 + 11,880 = 23,760 KEEP now
             await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(24255))
+        })
+
+        it("should correctly distribute rewards in batch", async () => {
+            let startOf = await rewardsContract.startOf(0)
+            // 2 groups in the first interval, 792,000 KEEP to distribute
+            // between 64 beneficiaries.
+            await registerNewGroup(startOf.addn(1))
+            await registerNewGroup(startOf.addn(2))
+
+            await timeJumpToEndOfInterval(0)
+            await rewardsContract.allocateRewards(0)
+
+            await expireAllGroups()
+            const groupsReceivingRewards = [0, 1]
+            await rewardsContract.receiveRewards(groupsReceivingRewards)
+            // each beneficiary receives 792,000 / 2 / 64 = 6187.5 KEEP
+            // each beneficiary was in 2 groups
+            // each should receive 6,187.5 * 2 = 12,375 KEEP
+            await assertKeepBalanceOfBeneficiaries(web3.utils.toBN(12375))
         })
     })
 
