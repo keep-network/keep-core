@@ -97,6 +97,20 @@ contract BeaconRewards is Rewards {
         receiveReward(bytes32(groupIndex));
     }
 
+    /// @notice Stakers can receive KEEP rewards from multiple groups of their choice
+    /// in one transaction to reduce total cost comparing to single calls for rewards.
+    /// It is a caller responsibility to determine the cost and consumed gas when
+    /// receiving rewards from multiple groups.
+    /// @param groupIndices An array of group indices.
+    function receiveRewards(uint256[] memory groupIndices) public {
+        uint256 len = groupIndices.length;
+        bytes32[] memory bytes32identifiers = new bytes32[](len);
+        for (uint256 i = 0; i < groupIndices.length; i++) {
+            bytes32identifiers[i] = bytes32(groupIndices[i]);
+        }
+        receiveRewards(bytes32identifiers);
+    }
+
     /// @notice Checks if the group is eligible to receive a reward.
     /// Group is eligible to receive a reward if it has been marked as stale
     /// and rewards has not been claimed yet.
@@ -110,6 +124,18 @@ contract BeaconRewards is Rewards {
     /// @param groupIndex Index of the terminated group.
     function reportTermination(uint256 groupIndex) public {
         reportTermination(bytes32(groupIndex));
+    }
+
+    /// @notice Report about the terminated groups in batch. All the allocated
+    /// rewards in these groups will be returned to the unallocated pool.
+    /// @param groupIndices An array of group indices.
+    function reportTerminations(uint256[] memory groupIndices) public {
+        uint256 len = groupIndices.length;
+        bytes32[] memory bytes32identifiers = new bytes32[](len);
+        for (uint256 i = 0; i < groupIndices.length; i++) {
+            bytes32identifiers[i] = bytes32(groupIndices[i]);
+        }
+        reportTerminations(bytes32identifiers);
     }
 
     /// @notice Checks if the group is terminated and thus its rewards can be
