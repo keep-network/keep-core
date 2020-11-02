@@ -490,7 +490,11 @@ describe('Rewards', () => {
             await createKeeps(timestamps)
             await rewards.setCloseTime(timestamps[2])
             let rewardsReceivingKeeps = [0, 1]
-            await rewards.receiveRewards(rewardsReceivingKeeps, { from: aliceBeneficiary })
+
+            await rewards.methods['receiveRewards(uint256[])'](
+                rewardsReceivingKeeps,
+                { from: aliceBeneficiary }
+            )
             let aliceBalance = await token.balanceOf(aliceBeneficiary)
             // Beneficiary will receive 200,000 / 3 = 66,666 per keep
             // 66,666 * 2 = 133332 KEEP rewards total for being in 2 closed keeps
