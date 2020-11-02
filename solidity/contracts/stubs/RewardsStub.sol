@@ -28,8 +28,26 @@ contract RewardsStub is Rewards {
         receiveReward(bytes32(i));
     }
 
+    function receiveRewards(uint256[] memory identifiers) public {
+        uint256 len = identifiers.length;
+        bytes32[] memory bytes32identifiers = new bytes32[](len);
+        for (uint256 i = 0; i < identifiers.length; i++) {
+            bytes32identifiers[i] = bytes32(identifiers[i]);
+        }
+        receiveRewards(bytes32identifiers);
+    }
+
     function reportTermination(uint256 i) public {
         reportTermination(bytes32(i));
+    }
+
+    function reportTerminations(uint256[] memory identifiers) public {
+        uint256 len = identifiers.length;
+        bytes32[] memory bytes32identifiers = new bytes32[](len);
+        for (uint256 i = 0; i < identifiers.length; i++) {
+            bytes32identifiers[i] = bytes32(identifiers[i]);
+        }
+        reportTerminations(bytes32identifiers);
     }
 
     function eligibleForReward(uint256 i) public view returns (bool) {

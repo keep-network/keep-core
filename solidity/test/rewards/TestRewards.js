@@ -484,8 +484,26 @@ describe('Rewards', () => {
         })
     })
 
+    describe("receiveRewards", async () => {
+        it("lets closed keeps claim the rewards from multiple keeps correctly", async () => {
+            let timestamps = testValues.rewardTimestamps
+            await createKeeps(timestamps)
+            await rewards.setCloseTime(timestamps[2])
+            let rewardsReceivingKeeps = [0, 1]
+
+            await rewards.methods['receiveRewards(uint256[])'](
+                rewardsReceivingKeeps,
+                { from: aliceBeneficiary }
+            )
+            let aliceBalance = await token.balanceOf(aliceBeneficiary)
+            // Beneficiary will receive 200,000 / 3 = 66,666 per keep
+            // 66,666 * 2 = 133,332 KEEP rewards total for being in 2 closed keeps
+            expect(aliceBalance.toNumber()).to.equal(133332)
+        })
+    })
+
     describe("reportTermination", async () => {
-        it("unallocates rewards allocated to terminated keeps", async () => {
+        it("unallocates rewards allocated to terminated keep", async () => {
             let timestamps = testValues.rewardTimestamps
             await createKeeps(timestamps)
 
@@ -548,4 +566,34 @@ describe('Rewards', () => {
             )
         })
     })
+
+    describe("reportTerminations", async () => {
+        it("unallocates rewards allocated to terminated keeps in batch", async () => {
+            let timestamps = testValues.rewardTimestamps
+            await createKeeps(timestamps)
+    
+            await rewards.setCloseTime(testValues.rewardTimestamps[0])
+            await rewards.allocateRewards(0)
+    
+            await rewards.terminate(1)
+            await rewards.terminate(2)
+    
+            let preUnallocated = await rewards.unallocatedRewards()
+    
+            const terminatedIdentifiers = [1, 2]
+            await rewards.methods['reportTerminations(uint256[])'](
+                terminatedIdentifiers
+            )
+            let actual = await rewards.unallocatedRewards()
+            // 200,000 KEEP were allocated for the first interval
+            // 800,000 KEEP remaining in unallocated pool
+            // 2 out of 3 keeps were terminated
+            // 200,000 / 3 = 66,666 rewards per keep
+            // 66,666 * 2 = 133,332 returned back to unallocated pool
+            expect(actual.toNumber()).to.equal(
+                preUnallocated.toNumber() + 133332
+            )
+        })
+    })
+    
 })
