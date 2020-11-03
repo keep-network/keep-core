@@ -9,7 +9,6 @@ import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 import TokenOverviewPage from "../pages/OverviewPage"
-import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 const pages = [
   TokenOverviewPage,
