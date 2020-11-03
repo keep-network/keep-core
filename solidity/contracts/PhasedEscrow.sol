@@ -71,3 +71,33 @@ contract CurveRewardsEscrowBeneficiary is Ownable {
         curveRewards.notifyRewardAmount(amount);
     }
 }
+
+/// @dev Interface of recipient contract for approveAndCall pattern.
+interface IStakerRewards { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
+
+contract BeaconBackportRewardsEscrowBeneficiary is Ownable {
+    IERC20 public token;
+    IStakerRewards public stakerRewards;
+
+    constructor(IERC20 _token, IStakerRewards _stakerRewards) public {
+        token = _token;
+        stakerRewards = _stakerRewards;
+    }
+
+    function __escrowSentTokens(uint256 amount) external {
+        token.approve(address(stakerRewards), amount);
+        stakerRewards.receiveApproval(msg.sender, amount, address(token), "");
+    }
+}
+
+contract BeaconRewardsEscrowBeneficiary is Ownable {
+    // TODO: implement similar to BeaconBackportRewardsEscrowBeneficiary
+}
+
+contract ECDSABackportRewardsEscrowBeneficiary is Ownable {
+    // TODO: implement similar to BeaconBackportRewardsEscrowBeneficiary
+}
+
+contract ECDSARewardsEscrowBeneficiary is Ownable {
+    // TODO: implement similar to BeaconBackportRewardsEscrowBeneficiary
+}
