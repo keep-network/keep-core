@@ -22,6 +22,14 @@ const BeaconRewardsEscrowBeneficiary = contract.fromArtifact(
 )
 const BeaconRewards = contract.fromArtifact("BeaconRewards")
 
+const TestECDSARewards = contract.fromArtifact("TestECDSARewards")
+const ECDSABackportRewardsEscrowBeneficiary = contract.fromArtifact(
+  "ECDSABackportRewardsEscrowBeneficiary"
+)
+const ECDSARewardsEscrowBeneficiary = contract.fromArtifact(
+  "ECDSARewardsEscrowBeneficiary"
+)
+
 const chai = require("chai")
 chai.use(require("bn-chai")(web3.utils.BN))
 const expect = chai.expect
@@ -311,7 +319,7 @@ describe("PhasedEscrow", () => {
       })
 
       describe("BeaconRewardsEscrowBeneficiary", () => {
-        const transferAmount = 1800000
+        const transferAmount = 19800000
 
         before(async () => {
           rewardsContract = await BeaconRewards.new(
@@ -321,6 +329,44 @@ describe("PhasedEscrow", () => {
           )
 
           rewardsBeneficiary = await BeaconRewardsEscrowBeneficiary.new(
+            token.address,
+            rewardsContract.address
+          )
+
+          await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
+            from: owner,
+          })
+        })
+
+        assertStakerRewards(baseBalance, transferAmount)
+      })
+
+      describe("ECDSABackportRewardsEscrowBeneficiary", () => {
+        const transferAmount = 1800000
+
+        before(async () => {
+          rewardsContract = await TestECDSARewards.new(token.address)
+
+          rewardsBeneficiary = await ECDSABackportRewardsEscrowBeneficiary.new(
+            token.address,
+            rewardsContract.address
+          )
+
+          await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
+            from: owner,
+          })
+        })
+
+        assertStakerRewards(baseBalance, transferAmount)
+      })
+
+      describe("ECDSARewardsEscrowBeneficiary", () => {
+        const transferAmount = 178200000
+
+        before(async () => {
+          rewardsContract = await TestECDSARewards.new(token.address)
+
+          rewardsBeneficiary = await ECDSARewardsEscrowBeneficiary.new(
             token.address,
             rewardsContract.address
           )
