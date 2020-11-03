@@ -21,11 +21,17 @@ const confirmationModalOptions = (initializationPeriod) => ({
   confirmationText: "DELEGATE",
 })
 
-const TokensPage = ({ delegateStake, fetchTopUps, fetchDelegations }) => {
+const TokensPage = ({
+  delegateStake,
+  fetchTopUps,
+  fetchDelegations,
+  fetchGrants,
+}) => {
   useEffect(() => {
     fetchDelegations()
+    fetchGrants()
     fetchTopUps()
-  }, [fetchTopUps, fetchDelegations])
+  }, [fetchTopUps, fetchDelegations, fetchGrants])
 
   const { openConfirmationModal } = useModal()
 
@@ -101,6 +107,7 @@ const mapDispatchToProps = (dispatch) => ({
   fetchTopUps: () => dispatch({ type: "staking/fetch_top_ups_request" }),
   fetchDelegations: () =>
     dispatch({ type: "staking/fetch_delegations_request" }),
+  fetchGrants: () => dispatch({ type: "token-grant/fetch_grants_request" }),
 })
 
 const ConnectedTokensPage = connect(null, mapDispatchToProps)(TokensPage)
