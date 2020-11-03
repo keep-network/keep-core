@@ -150,14 +150,21 @@ function* fetchDelegations() {
 
 export function* watchFetchTopUpsRequest() {
   // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_delegations_success")
   yield take("staking/fetch_top_ups_request")
-
   yield fork(fetchTopUps)
 }
 
 function* fetchTopUps() {
+  const getDelegationsFetchingStatus = (state) =>
+    state.staking.delegationsFetchingStatus
   try {
+    // We want to fetch top ups based on previously fetched delegations.
+    let delegationsFetchingStatus = yield select(getDelegationsFetchingStatus)
+    while (delegationsFetchingStatus !== "completed") {
+      yield take()
+      delegationsFetchingStatus = yield select(getDelegationsFetchingStatus)
+    }
+
     yield put({ type: "staking/fetch_top_ups_start" })
     const { delegations, undelegations } = yield select(
       (state) => state.staking

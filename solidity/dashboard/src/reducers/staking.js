@@ -13,6 +13,7 @@ const initialState = {
   topUps: [],
   areTopUpsFetching: false,
   topUpsFetchingError: null,
+  delegationsFetchingStatus: null,
 }
 
 const stakingReducer = (state = initialState, action) => {
@@ -22,14 +23,21 @@ const stakingReducer = (state = initialState, action) => {
         ...state,
         isDelegationDataFetching: true,
         error: null,
+        delegationsFetchingStatus: null,
       }
     case "staking/fetch_delegations_success":
-      return { ...state, isDelegationDataFetching: false, ...action.payload }
+      return {
+        ...state,
+        isDelegationDataFetching: false,
+        ...action.payload,
+        delegationsFetchingStatus: "completed",
+      }
     case "staking/fetch_delegations_failure":
       return {
         ...state,
         isDelegationDataFetching: false,
         error: action.payload.error,
+        delegationsFetchingStatus: "failure",
       }
     case "staking/fetch_top_ups_start":
       return {
