@@ -89,7 +89,7 @@ function* observeStakedEvents() {
         returnValues: { owner, operator },
       } = yield take(contractEventCahnnel)
 
-      const initializationPeriod = yield select((state) => state.staking)
+      const { initializationPeriod } = yield select((state) => state.staking)
 
       const emittedEvents = yield call(
         getEventsFromTransaction,
@@ -421,7 +421,7 @@ function* observeDepositedEvent() {
       if (grants.find((grant) => grant.id === grantId)) {
         yield put({ type: "staking/remove_delegation", payload: operator })
         yield put({ type: "staking/remove_undelegation", payload: operator })
-        // grantDeposited(grantId, operator, amount)
+
         const availableToWitdrawGrant = yield call(
           grantContract.methods.withdrawable(grantId).call
         )
