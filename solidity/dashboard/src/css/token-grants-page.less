@@ -37,3 +37,23 @@ section.token-grant-overview {
         }
     }
 }
+
+.empty-page--grants {
+    width: 100%;
+
+    .skeleton__box {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+
+        > div:nth-of-type(1) {
+            border-right: 1px solid @color-grey-20;
+            margin: -1.5rem;
+            padding: 1.5rem;
+        }
+
+        > div:nth-of-type(2) {
+            display: flex;
+            justify-content: space-evenly;
+        }
+    }
+}
