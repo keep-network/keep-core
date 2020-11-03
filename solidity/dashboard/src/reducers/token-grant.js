@@ -1,6 +1,6 @@
 import { isSameEthAddress } from "../utils/general.utils"
 import { add, sub, gt } from "../utils/arithmetics.utils"
-import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
+import { findIndexAndObject } from "../utils/array.utils"
 
 const initialState = {
   isFetching: false,
@@ -30,7 +30,26 @@ const tokenGrantsReducer = (state = initialState, action) => {
           grantStaked
         ),
       }
-
+    case "token-grant/grant_withdrawn":
+      return {
+        ...state,
+        ...findGrantAndUpdate(
+          [...state.grants],
+          { ...state.selectedGrant },
+          action.payload,
+          grantWithdrawn
+        ),
+      }
+    case "token-grant/grant_deposited":
+      return {
+        ...state,
+        ...findGrantAndUpdate(
+          [...state.grants],
+          { ...state.selectedGrant },
+          action.payload,
+          grantDeposited
+        ),
+      }
     default:
       return state
   }
@@ -63,17 +82,17 @@ const findGrantAndUpdate = (
   return { grants, selectedGrant }
 }
 
-const grantStaked = (grantToUpdate, { amount }) => {
-  grantToUpdate.staked = add(grantToUpdate.staked, amount).toString()
+const grantStaked = (grantToUpdate, { value }) => {
+  grantToUpdate.staked = add(grantToUpdate.staked, value).toString()
   grantToUpdate.readyToRelease = sub(
     grantToUpdate.readyToRelease,
-    amount
+    value
   ).toString()
 
   grantToUpdate.readyToRelease = gt(grantToUpdate.readyToRelease, 0)
     ? grantToUpdate.readyToRelease
     : "0"
-  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, amount)
+  grantToUpdate.availableToStake = sub(grantToUpdate.availableToStake, value)
 
   return grantToUpdate
 }
@@ -94,6 +113,22 @@ const grantWithdrawn = (
       ...grantToUpdate.escrowOperatorsToWithdraw,
     ].filter((escrowOperator) => !isSameEthAddress(operator, escrowOperator))
   }
+
+  return grantToUpdate
+}
+
+const grantDeposited = (
+  grantToUpdate,
+  { amount, availableToWitdrawGrant, operator }
+) => {
+  grantToUpdate.staked = sub(grantToUpdate.staked, amount)
+  grantToUpdate.withdrawableAmountGrantOnly = availableToWitdrawGrant
+  grantToUpdate.readyToRelease = add(grantToUpdate.readyToRelease, amount)
+  grantToUpdate.escrowOperatorsToWithdraw = [
+    ...grantToUpdate.escrowOperatorsToWithdraw,
+    operator,
+  ]
+  grantToUpdate.availableToStake = add(grantToUpdate.availableToStake, amount)
 
   return grantToUpdate
 }

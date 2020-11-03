@@ -312,7 +312,7 @@ function* observeRecoveredStakeEvent() {
 }
 
 export function* subscribeToTokenGrantWithdrawnEvent() {
-  yield take("staking/fetch_grants_success")
+  yield take("token-grant/fetch_grants_success")
   yield fork(observeTokenGrantWithdrawnEvent)
 }
 
@@ -353,7 +353,7 @@ export function* subscribeToDepositWithdrawEvent() {
 }
 
 function* observeDepositWithdrawnEvent() {
-  const { tokenStakingEscrow } = yield getContractsContext()
+  const { tokenStakingEscrow, grantContract } = yield getContractsContext()
   const {
     eth: { defaultAccount },
   } = yield getWeb3Context()
@@ -381,9 +381,12 @@ function* observeDepositWithdrawnEvent() {
       const grantId = yield call(
         tokenStakingEscrow.methods.depositGrantId(operator).call
       )
+      const availableToStake = yield call(
+        grantContract.methods.availableToStake(grantId).call
+      )
       yield put({
         type: "token-grant/grant_withdrawn",
-        payload: { grantId, amount, operator },
+        payload: { grantId, amount, operator, availableToStake },
       })
     } catch (error) {
       console.error(`Failed subscribing to DepositWithdrawn event`, error)
