@@ -18,7 +18,7 @@ const OverviewPage = (props) => {
 
   useEffect(() => {
     if (isConnected) {
-      dispatch({ type: "staking/fetch_delegations" })
+      dispatch({ type: "staking/fetch_delegations_request" })
       dispatch({ type: "token-grant/fetch_grants_request" })
     }
   }, [dispatch, isConnected])

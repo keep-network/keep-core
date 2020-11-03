@@ -134,7 +134,7 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
 
 export function* watchFetchDelegationRequest() {
   // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_delegations")
+  yield take("staking/fetch_delegations_request")
   yield fork(fetchDelegations)
 }
 
