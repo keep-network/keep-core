@@ -8,6 +8,9 @@ const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
 const CurveRewardsEscrowBeneficiary = contract.fromArtifact(
   "CurveRewardsEscrowBeneficiary"
 )
+const StakerRewardsBeneficiary = contract.fromArtifact(
+  "StakerRewardsBeneficiary"
+)
 
 const TestSimpleBeneficiary = contract.fromArtifact("TestSimpleBeneficiary")
 const TestCurveRewards = contract.fromArtifact("TestCurveRewards")
@@ -37,6 +40,7 @@ const expect = chai.expect
 describe("PhasedEscrow", () => {
   const owner = accounts[0]
   const updatedOwner = accounts[1]
+  const otherAccount = accounts[2]
 
   let beneficiary
   let updatedBeneficiary
@@ -367,6 +371,80 @@ describe("PhasedEscrow", () => {
     })
 
     assertRewards(baseBalance, transferAmount)
+  })
+
+  describe("CurveRewardsEscrowBeneficiary", () => {
+    describe("__escrowSentTokens", async () => {
+      const baseBalance = 100000000
+      const transferAmount = 1000
+      let rewardsContract
+      let rewardsBeneficiary
+
+      before(async () => {
+        rewardsContract = await TestCurveRewards.new(token.address)
+        rewardsBeneficiary = await CurveRewardsEscrowBeneficiary.new(
+          token.address,
+          rewardsContract.address,
+          {from: owner}
+        )
+
+        const amount = web3.utils.toBN(baseBalance)
+        await token.transfer(rewardsBeneficiary.address, amount, {from: owner})
+      })
+
+      it("can be called by the owner", async () => {
+        await rewardsBeneficiary.__escrowSentTokens(transferAmount, {
+          from: owner,
+        })
+        // ok, no revert
+      })
+
+      it("can not be called by the non-owner", async () => {
+        await expectRevert(
+          rewardsBeneficiary.__escrowSentTokens(transferAmount, {
+            from: otherAccount,
+          }),
+          "Ownable: caller is not the owner"
+        )
+      })
+    })
+  })
+
+  describe("StakerRewardsBeneficiary", () => {
+    describe("__escrowSentTokens", async () => {
+      const baseBalance = 100000000
+      const transferAmount = 1000
+      let rewardsContract
+      let rewardsBeneficiary
+
+      before(async () => {
+        rewardsContract = await TestECDSARewards.new(token.address)
+        rewardsBeneficiary = await StakerRewardsBeneficiary.new(
+          token.address,
+          rewardsContract.address,
+          {from: owner}
+        )
+
+        const amount = web3.utils.toBN(baseBalance)
+        await token.transfer(rewardsBeneficiary.address, amount, {from: owner})
+      })
+
+      it("can be called by the owner", async () => {
+        await rewardsBeneficiary.__escrowSentTokens(transferAmount, {
+          from: owner,
+        })
+        // ok, no revert
+      })
+
+      it("can not be called by the non-owner", async () => {
+        await expectRevert(
+          rewardsBeneficiary.__escrowSentTokens(transferAmount, {
+            from: otherAccount,
+          }),
+          "Ownable: caller is not the owner"
+        )
+      })
+    })
   })
 
   async function assertRewards(baseBalance, transferAmount) {
