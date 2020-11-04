@@ -28,8 +28,8 @@ contract TestCurveRewards {
     }
 }
 
-// ECDSA Reward contract mock for ecdsa staker rewards.
-contract TestECDSARewards {
+// Simple reward contract mock for testing purposes.
+contract TestSimpleStakerRewards {
     using SafeERC20 for IERC20;
 
     IERC20 public token;

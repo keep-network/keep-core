@@ -24,14 +24,7 @@ const BeaconRewardsEscrowBeneficiary = contract.fromArtifact(
   "BeaconRewardsEscrowBeneficiary"
 )
 const BeaconRewards = contract.fromArtifact("BeaconRewards")
-
-const TestECDSARewards = contract.fromArtifact("TestECDSARewards")
-const ECDSABackportRewardsEscrowBeneficiary = contract.fromArtifact(
-  "ECDSABackportRewardsEscrowBeneficiary"
-)
-const ECDSARewardsEscrowBeneficiary = contract.fromArtifact(
-  "ECDSARewardsEscrowBeneficiary"
-)
+const TestSimpleStakerRewards = contract.fromArtifact("TestSimpleStakerRewards")
 
 const chai = require("chai")
 chai.use(require("bn-chai")(web3.utils.BN))
@@ -324,54 +317,6 @@ describe("PhasedEscrow", () => {
     assertRewards(baseBalance, transferAmount)
   })
 
-  describe("when withdrawing to a ECDSABackportRewardsEscrowBeneficiary", () => {
-    const baseBalance = 200000000
-    const transferAmount = 1800000
-
-    before(async () => {
-      rewardsContract = await TestECDSARewards.new(token.address)
-
-      rewardsBeneficiary = await ECDSABackportRewardsEscrowBeneficiary.new(
-        token.address,
-        rewardsContract.address,
-        {from: owner}
-      )
-      await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {
-        from: owner,
-      })
-
-      await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-        from: owner,
-      })
-    })
-
-    assertRewards(baseBalance, transferAmount)
-  })
-
-  describe("when withdrawing to a ECDSARewardsEscrowBeneficiary", () => {
-    const baseBalance = 200000000
-    const transferAmount = 178200000
-
-    before(async () => {
-      rewardsContract = await TestECDSARewards.new(token.address)
-
-      rewardsBeneficiary = await ECDSARewardsEscrowBeneficiary.new(
-        token.address,
-        rewardsContract.address,
-        {from: owner}
-      )
-      await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {
-        from: owner,
-      })
-
-      await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-        from: owner,
-      })
-    })
-
-    assertRewards(baseBalance, transferAmount)
-  })
-
   async function assertRewards(baseBalance, transferAmount) {
     it("withdraws specified tokens from escrow", async () => {
       await phasedEscrow.withdraw(transferAmount, {from: owner})
@@ -467,7 +412,7 @@ describe("StakerRewardsBeneficiary", () => {
 
   before(async () => {
     token = await KeepToken.new({from: owner})
-    rewardsContract = await TestECDSARewards.new(token.address)
+    rewardsContract = await TestSimpleStakerRewards.new(token.address)
     rewardsBeneficiary = await StakerRewardsBeneficiary.new(
       token.address,
       rewardsContract.address,
