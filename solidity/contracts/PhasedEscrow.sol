@@ -84,8 +84,8 @@ interface IStakerRewards {
 
 /// @title StakerRewardsBeneficiary
 /// @notice An abstract beneficiary contract that can receive a withdrawal phase
-///         from a PhasedEscrow contract. Immediately stakes the received tokens
-///         on a designated rewards escrow beneficiary contract.
+///         from a PhasedEscrow contract. The received tokens are immediately 
+///         funded for a designated rewards escrow beneficiary contract.
 contract StakerRewardsBeneficiary is Ownable {
     IERC20 public token;
     IStakerRewards public stakerRewards;
@@ -97,7 +97,7 @@ contract StakerRewardsBeneficiary is Ownable {
 
     function __escrowSentTokens(uint256 amount) external onlyOwner {
         bool success = token.approve(address(stakerRewards), amount);
-        require(success, "Rewards token staking has failed");
+        require(success, "Token transfer approval failed");
         
         stakerRewards.receiveApproval(
             address(this),
@@ -109,7 +109,7 @@ contract StakerRewardsBeneficiary is Ownable {
 }
 
 /// @title BeaconBackportRewardsEscrowBeneficiary
-/// @notice Stakes the received tokens on a designated
+/// @notice Transfer the received tokens to a designated
 ///         BeaconBackportRewardsEscrowBeneficiary contract.
 contract BeaconBackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
@@ -122,7 +122,7 @@ contract BeaconBackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
 }
 
 /// @title BeaconRewardsEscrowBeneficiary
-/// @notice Stakes the received tokens on a designated
+/// @notice Transfer the received tokens to a designated
 ///         BeaconRewardsEscrowBeneficiary contract.
 contract BeaconRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
@@ -135,7 +135,7 @@ contract BeaconRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
 }
 
 /// @title ECDSABackportRewardsEscrowBeneficiary
-/// @notice Stakes the received tokens on a designated
+/// @notice Trasfer the received tokens to a designated
 ///         ECDSABackportRewardsEscrowBeneficiary contract.
 contract ECDSABackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
@@ -148,7 +148,7 @@ contract ECDSABackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
 }
 
 /// @title ECDSARewardsEscrowBeneficiary
-/// @notice Stakes the received tokens on a designated
+/// @notice Transfer the received tokens to a designated
 ///         ECDSARewardsEscrowBeneficiary contract.
 contract ECDSARewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
