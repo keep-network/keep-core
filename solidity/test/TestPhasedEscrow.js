@@ -34,12 +34,13 @@ const chai = require("chai")
 chai.use(require("bn-chai")(web3.utils.BN))
 const expect = chai.expect
 
-describe("PhasedEscrow", () => {
+describe.only("PhasedEscrow", () => {
   const owner = accounts[0]
   const updatedOwner = accounts[1]
 
   let beneficiary
   let updatedBeneficiary
+  let stakerRewardsBeneficiary
 
   let token
   let phasedEscrow
@@ -193,243 +194,259 @@ describe("PhasedEscrow", () => {
         amount: amount,
       })
     })
+  })
 
-    describe("when withdrawing to a CurveRewardsEscrowBeneficiary", () => {
-      let curveRewards
-      let rewardsBeneficiary
+  describe("when withdrawing to a CurveRewardsEscrowBeneficiary", () => {
+    let curveRewards
+    let rewardsBeneficiary
 
-      const baseBalance = 123456789
-      const transferAmount = 100
+    const baseBalance = 123456789
+    const transferAmount = 100
 
-      before(async () => {
-        curveRewards = await TestCurveRewards.new(token.address)
-        rewardsBeneficiary = await CurveRewardsEscrowBeneficiary.new(
-          token.address,
-          curveRewards.address,
-          {from: owner}
-        )
+    before(async () => {
+      curveRewards = await TestCurveRewards.new(token.address)
+      rewardsBeneficiary = await CurveRewardsEscrowBeneficiary.new(
+        token.address,
+        curveRewards.address,
+        {from: owner}
+      )
 
-        await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
-        const amount = web3.utils.toBN(baseBalance)
-        await token.transfer(phasedEscrow.address, amount, {from: owner})
-
-        await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-          from: owner,
-        })
+      await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {
+        from: owner,
       })
+      const amount = web3.utils.toBN(baseBalance)
+      await token.transfer(phasedEscrow.address, amount, {from: owner})
 
-      beforeEach(createSnapshot)
-      afterEach(restoreSnapshot)
-
-      it("withdraws specified tokens from escrow", async () => {
-        await phasedEscrow.withdraw(transferAmount, {from: owner})
-
-        expect(await token.balanceOf(phasedEscrow.address)).to.eq.BN(
-          baseBalance - transferAmount,
-          "Unexpected amount withdrawn"
-        )
-      })
-
-      it("transfers specified tokens to curve rewards contract", async () => {
-        await phasedEscrow.withdraw(transferAmount, {from: owner})
-
-        expect(await token.balanceOf(curveRewards.address)).to.eq.BN(
-          transferAmount,
-          "Unexpected amount deposited"
-        )
-      })
-
-      it("leaves no tokens in the rewards beneficiary", async () => {
-        await phasedEscrow.withdraw(100, {from: owner})
-
-        expect(await token.balanceOf(rewardsBeneficiary.address)).to.eq.BN(
-          0,
-          "Unexpected amount left in rewards beneficiary"
-        )
-      })
-
-      it("emits a TokensWithdrawn event to the rewards beneficiary", async () => {
-        const receipt = await phasedEscrow.withdraw(transferAmount, {
-          from: owner,
-        })
-
-        expectEvent(receipt, "TokensWithdrawn", {
-          beneficiary: rewardsBeneficiary.address,
-          amount: web3.utils.toBN(transferAmount),
-        })
-      })
-
-      it("emits a RewardAdded event from the rewards beneficiary", async () => {
-        const receipt = resolveAllLogs(
-          (await phasedEscrow.withdraw(transferAmount, {from: owner})).receipt,
-          {curveRewards}
-        )
-
-        expectEvent(receipt, "RewardAdded", {
-          reward: web3.utils.toBN(transferAmount),
-        })
+      await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
+        from: owner,
       })
     })
 
-    describe("when withdrawing to a StakerRewardsBeneficiary", () => {
-      const baseBalance = 200000000
-      let stakingContract
-      let operatorContract
-      let rewardsBeneficiary
-      let phasedEscrow
+    it("withdraws specified tokens from escrow", async () => {
+      await phasedEscrow.withdraw(transferAmount, {from: owner})
 
-      before(async () => {
-        const contracts = await initContracts(
-          contract.fromArtifact("TokenStaking"),
-          contract.fromArtifact("KeepRandomBeaconService"),
-          contract.fromArtifact("KeepRandomBeaconServiceImplV1"),
-          contract.fromArtifact("KeepRandomBeaconOperatorBeaconRewardsStub")
-        )
+      expect(await token.balanceOf(phasedEscrow.address)).to.eq.BN(
+        baseBalance - transferAmount,
+        "Unexpected amount withdrawn"
+      )
+    })
 
-        stakingContract = contracts.stakingContract
-        operatorContract = contracts.operatorContract
+    it("transfers specified tokens to curve rewards contract", async () => {
+      await phasedEscrow.withdraw(transferAmount, {from: owner})
 
-        phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
-        const amount = web3.utils.toBN(baseBalance)
-        await token.transfer(phasedEscrow.address, amount, {from: owner})
+      expect(await token.balanceOf(curveRewards.address)).to.eq.BN(
+        transferAmount,
+        "Unexpected amount deposited"
+      )
+    })
+
+    it("leaves no tokens in the rewards beneficiary", async () => {
+      await phasedEscrow.withdraw(100, {from: owner})
+
+      expect(await token.balanceOf(rewardsBeneficiary.address)).to.eq.BN(
+        0,
+        "Unexpected amount left in rewards beneficiary"
+      )
+    })
+
+    it("emits a TokensWithdrawn event to the rewards beneficiary", async () => {
+      const receipt = await phasedEscrow.withdraw(transferAmount, {
+        from: owner,
       })
 
-      beforeEach(createSnapshot)
-      afterEach(restoreSnapshot)
-
-      describe("BeaconBackportRewardsEscrowBeneficiary", () => {
-        const transferAmount = 200000
-
-        before(async () => {
-          rewardsContract = await BeaconBackportRewards.new(
-            token.address,
-            operatorContract.address,
-            stakingContract.address
-          )
-
-          rewardsBeneficiary = await BeaconBackportRewardsEscrowBeneficiary.new(
-            token.address,
-            rewardsContract.address,
-            {from: owner}
-          )
-          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
-
-          await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-            from: owner,
-          })
-        })
-
-        assertStakerRewards(baseBalance, transferAmount)
+      expectEvent(receipt, "TokensWithdrawn", {
+        beneficiary: rewardsBeneficiary.address,
+        amount: web3.utils.toBN(transferAmount),
       })
+    })
 
-      describe("BeaconRewardsEscrowBeneficiary", () => {
-        const transferAmount = 19800000
+    it("emits a RewardAdded event from the rewards beneficiary", async () => {
+      const receipt = resolveAllLogs(
+        (await phasedEscrow.withdraw(transferAmount, {from: owner})).receipt,
+        {curveRewards}
+      )
 
-        before(async () => {
-          rewardsContract = await BeaconRewards.new(
-            token.address,
-            operatorContract.address,
-            stakingContract.address
-          )
-
-          rewardsBeneficiary = await BeaconRewardsEscrowBeneficiary.new(
-            token.address,
-            rewardsContract.address,
-            {from: owner}
-          )
-          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
-
-          await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-            from: owner,
-          })
-        })
-
-        assertStakerRewards(baseBalance, transferAmount)
+      expectEvent(receipt, "RewardAdded", {
+        reward: web3.utils.toBN(transferAmount),
       })
-
-      describe("ECDSABackportRewardsEscrowBeneficiary", () => {
-        const transferAmount = 1800000
-
-        before(async () => {
-          rewardsContract = await TestECDSARewards.new(token.address)
-
-          rewardsBeneficiary = await ECDSABackportRewardsEscrowBeneficiary.new(
-            token.address,
-            rewardsContract.address,
-            {from: owner}
-          )
-          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
-
-          await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-            from: owner,
-          })
-        })
-
-        assertStakerRewards(baseBalance, transferAmount)
-      })
-
-      describe("ECDSARewardsEscrowBeneficiary", () => {
-        const transferAmount = 178200000
-
-        before(async () => {
-          rewardsContract = await TestECDSARewards.new(token.address)
-
-          rewardsBeneficiary = await ECDSARewardsEscrowBeneficiary.new(
-            token.address,
-            rewardsContract.address,
-            {from: owner}
-          )
-          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
-
-          await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
-            from: owner,
-          })
-        })
-
-        assertStakerRewards(baseBalance, transferAmount)
-      })
-
-      async function assertStakerRewards(baseBalance, transferAmount) {
-        it("withdraws specified tokens from escrow", async () => {
-          await phasedEscrow.withdraw(transferAmount, {from: owner})
-
-          expect(await token.balanceOf(phasedEscrow.address)).to.eq.BN(
-            baseBalance - transferAmount,
-            "Unexpected amount withdrawn"
-          )
-        })
-
-        it("transfers specified tokens to beacon backport rewards contract", async () => {
-          await phasedEscrow.withdraw(transferAmount, {from: owner})
-
-          expect(await token.balanceOf(rewardsContract.address)).to.eq.BN(
-            transferAmount,
-            "Unexpected amount deposited"
-          )
-        })
-
-        it("leaves no tokens in the rewards beneficiary", async () => {
-          await phasedEscrow.withdraw(transferAmount, {from: owner})
-
-          expect(await token.balanceOf(rewardsBeneficiary.address)).to.eq.BN(
-            0,
-            "Unexpected amount left in rewards beneficiary"
-          )
-        })
-
-        it("emits a TokensWithdrawn event to the rewards beneficiary", async () => {
-          const receipt = await phasedEscrow.withdraw(transferAmount, {
-            from: owner,
-          })
-
-          expectEvent(receipt, "TokensWithdrawn", {
-            beneficiary: rewardsBeneficiary.address,
-            amount: web3.utils.toBN(transferAmount),
-          })
-        })
-      }
     })
   })
+
+  describe("when withdrawing to a BeaconBackportRewardsEscrowBeneficiary", () => {
+    const baseBalance = 200000000
+    const transferAmount = 200000
+    let stakingContract
+    let operatorContract
+
+    before(async () => {
+      const contracts = await initContracts(
+        contract.fromArtifact("TokenStaking"),
+        contract.fromArtifact("KeepRandomBeaconService"),
+        contract.fromArtifact("KeepRandomBeaconServiceImplV1"),
+        contract.fromArtifact("KeepRandomBeaconOperatorBeaconRewardsStub")
+      )
+
+      stakingContract = contracts.stakingContract
+      operatorContract = contracts.operatorContract
+
+      phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+      const amount = web3.utils.toBN(baseBalance)
+      await token.transfer(phasedEscrow.address, amount, {from: owner})
+
+      rewardsContract = await BeaconBackportRewards.new(
+        token.address,
+        operatorContract.address,
+        stakingContract.address
+      )
+
+      stakerRewardsBeneficiary = await BeaconBackportRewardsEscrowBeneficiary.new(
+        token.address,
+        rewardsContract.address,
+        {from: owner}
+      )
+      await stakerRewardsBeneficiary.transferOwnership(phasedEscrow.address, {
+        from: owner,
+      })
+
+      await phasedEscrow.setBeneficiary(stakerRewardsBeneficiary.address, {
+        from: owner,
+      })
+    })
+
+    assertStakerRewards(baseBalance, transferAmount)
+  })
+
+  describe("when withdrawing to a BeaconRewardsEscrowBeneficiary", () => {
+    const baseBalance = 200000000
+    const transferAmount = 19800000
+    let stakingContract
+    let operatorContract
+
+    before(async () => {
+      const contracts = await initContracts(
+        contract.fromArtifact("TokenStaking"),
+        contract.fromArtifact("KeepRandomBeaconService"),
+        contract.fromArtifact("KeepRandomBeaconServiceImplV1"),
+        contract.fromArtifact("KeepRandomBeaconOperatorBeaconRewardsStub")
+      )
+
+      stakingContract = contracts.stakingContract
+      operatorContract = contracts.operatorContract
+
+      phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+      const amount = web3.utils.toBN(baseBalance)
+      await token.transfer(phasedEscrow.address, amount, {from: owner})
+
+      rewardsContract = await BeaconRewards.new(
+        token.address,
+        operatorContract.address,
+        stakingContract.address
+      )
+
+      stakerRewardsBeneficiary = await BeaconRewardsEscrowBeneficiary.new(
+        token.address,
+        rewardsContract.address,
+        {from: owner}
+      )
+      await stakerRewardsBeneficiary.transferOwnership(phasedEscrow.address, {
+        from: owner,
+      })
+
+      await phasedEscrow.setBeneficiary(stakerRewardsBeneficiary.address, {
+        from: owner,
+      })
+    })
+
+    assertStakerRewards(baseBalance, transferAmount)
+  })
+
+  describe("when withdrawing to a ECDSABackportRewardsEscrowBeneficiary", () => {
+    const baseBalance = 200000000
+    const transferAmount = 1800000
+
+    before(async () => {
+      rewardsContract = await TestECDSARewards.new(token.address)
+
+      stakerRewardsBeneficiary = await ECDSABackportRewardsEscrowBeneficiary.new(
+        token.address,
+        rewardsContract.address,
+        {from: owner}
+      )
+      await stakerRewardsBeneficiary.transferOwnership(phasedEscrow.address, {
+        from: owner,
+      })
+
+      await phasedEscrow.setBeneficiary(stakerRewardsBeneficiary.address, {
+        from: owner,
+      })
+    })
+
+    assertStakerRewards(baseBalance, transferAmount)
+  })
+
+  describe("when withdrawing to a ECDSARewardsEscrowBeneficiary", () => {
+    const baseBalance = 200000000
+    const transferAmount = 178200000
+
+    before(async () => {
+      rewardsContract = await TestECDSARewards.new(token.address)
+
+      stakerRewardsBeneficiary = await ECDSARewardsEscrowBeneficiary.new(
+        token.address,
+        rewardsContract.address,
+        {from: owner}
+      )
+      await stakerRewardsBeneficiary.transferOwnership(phasedEscrow.address, {
+        from: owner,
+      })
+
+      await phasedEscrow.setBeneficiary(stakerRewardsBeneficiary.address, {
+        from: owner,
+      })
+    })
+
+    assertStakerRewards(baseBalance, transferAmount)
+  })
+
+  async function assertStakerRewards(baseBalance, transferAmount) {
+    it("withdraws specified tokens from escrow", async () => {
+      await phasedEscrow.withdraw(transferAmount, {from: owner})
+
+      expect(await token.balanceOf(phasedEscrow.address)).to.eq.BN(
+        baseBalance - transferAmount,
+        "Unexpected amount withdrawn"
+      )
+    })
+
+    it("transfers specified tokens to beacon backport rewards contract", async () => {
+      await phasedEscrow.withdraw(transferAmount, {from: owner})
+
+      expect(await token.balanceOf(rewardsContract.address)).to.eq.BN(
+        transferAmount,
+        "Unexpected amount deposited"
+      )
+    })
+
+    it("leaves no tokens in the rewards beneficiary", async () => {
+      await phasedEscrow.withdraw(transferAmount, {from: owner})
+
+      expect(await token.balanceOf(stakerRewardsBeneficiary.address)).to.eq.BN(
+        0,
+        "Unexpected amount left in rewards beneficiary"
+      )
+    })
+
+    it("emits a TokensWithdrawn event to the rewards beneficiary", async () => {
+      const receipt = await phasedEscrow.withdraw(transferAmount, {
+        from: owner,
+      })
+
+      expectEvent(receipt, "TokensWithdrawn", {
+        beneficiary: stakerRewardsBeneficiary.address,
+        amount: web3.utils.toBN(transferAmount),
+      })
+    })
+  }
 })
 
 // FIXME Move to a shared test utils library for all Keep projects.
