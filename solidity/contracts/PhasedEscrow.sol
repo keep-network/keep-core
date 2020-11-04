@@ -66,20 +66,27 @@ contract CurveRewardsEscrowBeneficiary is Ownable {
         curveRewards = _curveRewards;
     }
 
-    function __escrowSentTokens(uint256 amount) external {
+    function __escrowSentTokens(uint256 amount) external onlyOwner {
         token.approve(address(curveRewards), amount);
         curveRewards.notifyRewardAmount(amount);
     }
 }
 
 /// @dev Interface of recipient contract for approveAndCall pattern.
-interface IStakerRewards { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
+interface IStakerRewards {
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata _extraData
+    ) external;
+}
 
-/// @title BeaconBackportRewardsEscrowBeneficiary
-/// @notice A beneficiary contract that can receive a withdrawal phase from a
-///         PhasedEscrow contract. Immediately stakes the received tokens on a
-///         designated BeaconBackportRewardsEscrowBeneficiary contract.
-contract BeaconBackportRewardsEscrowBeneficiary is Ownable {
+/// @title StakerRewardsBeneficiary
+/// @notice An abstract beneficiary contract that can receive a withdrawal phase
+///         from a PhasedEscrow contract. Immediately stakes the received tokens
+///         on a designated rewards escrow beneficiary contract.
+contract StakerRewardsBeneficiary is Ownable {
     IERC20 public token;
     IStakerRewards public stakerRewards;
 
@@ -88,65 +95,67 @@ contract BeaconBackportRewardsEscrowBeneficiary is Ownable {
         stakerRewards = _stakerRewards;
     }
 
-    function __escrowSentTokens(uint256 amount) external {
-        token.approve(address(stakerRewards), amount);
-        stakerRewards.receiveApproval(address(this), amount, address(token), "");
+    function __escrowSentTokens(uint256 amount) external onlyOwner {
+        bool success = token.approve(address(stakerRewards), amount);
+        require(success, "Rewards token staking has failed");
+        
+        stakerRewards.receiveApproval(
+            address(this),
+            amount,
+            address(token),
+            ""
+        );
+    }
+}
+
+/// @title BeaconBackportRewardsEscrowBeneficiary
+/// @notice Stakes the received tokens on a designated
+///         BeaconBackportRewardsEscrowBeneficiary contract.
+contract BeaconBackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
+    constructor(IERC20 _token, IStakerRewards _stakerRewards)
+        public
+        StakerRewardsBeneficiary(_token, _stakerRewards)
+    {
+        token = _token;
+        stakerRewards = _stakerRewards;
     }
 }
 
 /// @title BeaconRewardsEscrowBeneficiary
-/// @notice A beneficiary contract that can receive a withdrawal phase from a
-///         PhasedEscrow contract. Immediately stakes the received tokens on a
-///         designated BeaconRewardsEscrowBeneficiary contract.
-contract BeaconRewardsEscrowBeneficiary is Ownable {
-    IERC20 public token;
-    IStakerRewards public stakerRewards;
-
-    constructor(IERC20 _token, IStakerRewards _stakerRewards) public {
+/// @notice Stakes the received tokens on a designated
+///         BeaconRewardsEscrowBeneficiary contract.
+contract BeaconRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
+    constructor(IERC20 _token, IStakerRewards _stakerRewards)
+        public
+        StakerRewardsBeneficiary(_token, _stakerRewards)
+    {
         token = _token;
         stakerRewards = _stakerRewards;
-    }
-
-    function __escrowSentTokens(uint256 amount) external {
-        token.approve(address(stakerRewards), amount);
-        stakerRewards.receiveApproval(address(this), amount, address(token), "");
     }
 }
 
 /// @title ECDSABackportRewardsEscrowBeneficiary
-/// @notice A beneficiary contract that can receive a withdrawal phase from a
-///         PhasedEscrow contract. Immediately stakes the received tokens on a
-///         designated ECDSABackportRewardsEscrowBeneficiary contract.
-contract ECDSABackportRewardsEscrowBeneficiary is Ownable {
-    IERC20 public token;
-    IStakerRewards public stakerRewards;
-
-    constructor(IERC20 _token, IStakerRewards _stakerRewards) public {
+/// @notice Stakes the received tokens on a designated
+///         ECDSABackportRewardsEscrowBeneficiary contract.
+contract ECDSABackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
+    constructor(IERC20 _token, IStakerRewards _stakerRewards)
+        public
+        StakerRewardsBeneficiary(_token, _stakerRewards)
+    {
         token = _token;
         stakerRewards = _stakerRewards;
-    }
-
-    function __escrowSentTokens(uint256 amount) external {
-        token.approve(address(stakerRewards), amount);
-        stakerRewards.receiveApproval(address(this), amount, address(token), "");
     }
 }
 
 /// @title ECDSARewardsEscrowBeneficiary
-/// @notice A beneficiary contract that can receive a withdrawal phase from a
-///         PhasedEscrow contract. Immediately stakes the received tokens on a
-///         designated ECDSARewardsEscrowBeneficiary contract.
-contract ECDSARewardsEscrowBeneficiary is Ownable {
-    IERC20 public token;
-    IStakerRewards public stakerRewards;
-
-    constructor(IERC20 _token, IStakerRewards _stakerRewards) public {
+/// @notice Stakes the received tokens on a designated
+///         ECDSARewardsEscrowBeneficiary contract.
+contract ECDSARewardsEscrowBeneficiary is StakerRewardsBeneficiary {
+    constructor(IERC20 _token, IStakerRewards _stakerRewards)
+        public
+        StakerRewardsBeneficiary(_token, _stakerRewards)
+    {
         token = _token;
         stakerRewards = _stakerRewards;
-    }
-
-    function __escrowSentTokens(uint256 amount) external {
-        token.approve(address(stakerRewards), amount);
-        stakerRewards.receiveApproval(address(this), amount, address(token), "");
     }
 }
