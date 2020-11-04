@@ -38,3 +38,24 @@
         transform: translate(25%, 25%);        
     }
 }
+
+.progress-bar-legend__item {
+    display: flex;
+    align-items: center;
+
+    >.legend__item__dot {
+        .dot(10px, @primary-color)
+    }
+
+    >.legend__item__value {
+        font-size: 0.75rem;
+        line-height: 142%;
+        margin-left: 0.5rem;
+    }
+
+    >.legend__item__label {
+        font-size: 0.75rem;
+        line-height: 142%;
+        color: @color-grey-40;
+    }
+}
