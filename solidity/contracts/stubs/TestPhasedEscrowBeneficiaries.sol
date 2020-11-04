@@ -27,3 +27,23 @@ contract TestCurveRewards {
         emit RewardAdded(reward);
     }
 }
+
+// ECDSA Reward contract mock for ecdsa staker rewards.
+contract TestECDSARewards {
+    using SafeERC20 for IERC20;
+
+    IERC20 public token;
+
+    constructor(IERC20 _token) public {
+        token = _token;
+    }
+
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        token.safeTransferFrom(_from, address(this), _value);
+    }
+}
