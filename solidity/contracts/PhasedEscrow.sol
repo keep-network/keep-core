@@ -115,10 +115,7 @@ contract BeaconBackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
         public
         StakerRewardsBeneficiary(_token, _stakerRewards)
-    {
-        token = _token;
-        stakerRewards = _stakerRewards;
-    }
+    {}
 }
 
 /// @title BeaconRewardsEscrowBeneficiary
@@ -128,10 +125,7 @@ contract BeaconRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
         public
         StakerRewardsBeneficiary(_token, _stakerRewards)
-    {
-        token = _token;
-        stakerRewards = _stakerRewards;
-    }
+    {}
 }
 
 /// @title ECDSABackportRewardsEscrowBeneficiary
@@ -141,10 +135,7 @@ contract ECDSABackportRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
         public
         StakerRewardsBeneficiary(_token, _stakerRewards)
-    {
-        token = _token;
-        stakerRewards = _stakerRewards;
-    }
+    {}
 }
 
 /// @title ECDSARewardsEscrowBeneficiary
@@ -154,8 +145,5 @@ contract ECDSARewardsEscrowBeneficiary is StakerRewardsBeneficiary {
     constructor(IERC20 _token, IStakerRewards _stakerRewards)
         public
         StakerRewardsBeneficiary(_token, _stakerRewards)
-    {
-        token = _token;
-        stakerRewards = _stakerRewards;
-    }
+    {}
 }
