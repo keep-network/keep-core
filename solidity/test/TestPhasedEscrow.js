@@ -205,9 +205,11 @@ describe("PhasedEscrow", () => {
         curveRewards = await TestCurveRewards.new(token.address)
         rewardsBeneficiary = await CurveRewardsEscrowBeneficiary.new(
           token.address,
-          curveRewards.address
+          curveRewards.address,
+          {from: owner}
         )
 
+        await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
         const amount = web3.utils.toBN(baseBalance)
         await token.transfer(phasedEscrow.address, amount, {from: owner})
 
@@ -269,7 +271,7 @@ describe("PhasedEscrow", () => {
       })
     })
 
-    describe("when withdrawing to a staker rewards escrow beneficiary", () => {
+    describe("when withdrawing to a StakerRewardsBeneficiary", () => {
       const baseBalance = 200000000
       let stakingContract
       let operatorContract
@@ -307,8 +309,10 @@ describe("PhasedEscrow", () => {
 
           rewardsBeneficiary = await BeaconBackportRewardsEscrowBeneficiary.new(
             token.address,
-            rewardsContract.address
+            rewardsContract.address,
+            {from: owner}
           )
+          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
 
           await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
             from: owner,
@@ -330,8 +334,10 @@ describe("PhasedEscrow", () => {
 
           rewardsBeneficiary = await BeaconRewardsEscrowBeneficiary.new(
             token.address,
-            rewardsContract.address
+            rewardsContract.address,
+            {from: owner}
           )
+          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
 
           await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
             from: owner,
@@ -349,8 +355,10 @@ describe("PhasedEscrow", () => {
 
           rewardsBeneficiary = await ECDSABackportRewardsEscrowBeneficiary.new(
             token.address,
-            rewardsContract.address
+            rewardsContract.address,
+            {from: owner}
           )
+          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
 
           await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
             from: owner,
@@ -368,8 +376,10 @@ describe("PhasedEscrow", () => {
 
           rewardsBeneficiary = await ECDSARewardsEscrowBeneficiary.new(
             token.address,
-            rewardsContract.address
+            rewardsContract.address,
+            {from: owner}
           )
+          await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {from: owner})
 
           await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
             from: owner,
