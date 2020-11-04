@@ -379,7 +379,7 @@ describe("PhasedEscrow", () => {
       )
     })
 
-    it("transfers specified tokens to beacon backport rewards contract", async () => {
+    it("transfers specified tokens to rewards contract", async () => {
       await phasedEscrow.withdraw(transferAmount, {from: owner})
 
       expect(await token.balanceOf(rewardsContract.address)).to.eq.BN(
