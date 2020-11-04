@@ -10,7 +10,11 @@ export const SideMenu = (props) => {
     <nav className="side-menu--active">
       <ul className="side-menu__list">
         <NavLink to="/overview" label="overview" icon={<Icons.Home />} />
-        <NavLink to="/tokens" label="tokens" icon={<Icons.FeesVector />} />
+        <NavLink
+          to="/delegation"
+          label="delegation"
+          icon={<Icons.FeesVector />}
+        />
         <NavLink
           exact
           to="/operations"

@@ -1,0 +1,75 @@
+section.wallet-page__overview-layout {
+    display: grid;
+    grid-template-areas:
+        "balance"
+        "staked-tokens"
+        "stake-form";
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: 1rem;
+    margin-bottom: 5rem;
+
+    @media @tablet-up {
+        grid-template-areas:
+        "balance stake-form"
+        "staked-tokens stake-form"
+        "staked-tokens stake-form"
+        ". stake-form";
+        grid-template-columns: 1fr 4fr;
+    }
+
+    .wallet-page__overview {
+        &__balance {
+            margin-bottom: 0;
+            grid-area: balance;
+        }
+
+        &__staked-tokens {
+            grid-area: staked-tokens;
+            display: flex;
+            flex-direction: column;
+            
+             > .staked-tokens__circular-progress-bar-wrapper {
+                display: flex;
+                position: relative;
+                align-self: center;
+                
+                > .staked-tokens__circular-progress-bar__text {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+
+                    p {
+                        margin: 0
+                    }
+                }
+            }
+
+            .staked-tokens__legend {
+                margin-top: 1.25rem;
+                > .progress-bar-legend__item {
+                    margin-top: 0.5rem;
+
+                    > .legend__item__dot {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    > .legend__item__label {
+                        margin-left: auto;
+                    }
+                }
+            }
+        }
+
+        &__stake-form {
+            grid-area: stake-form;
+        }
+    }
+}
