@@ -1,5 +1,4 @@
 import React, { useEffect } from "react"
-import TokenGrantsPage from "./TokenGrantsPage"
 import TokensPageContextProvider, {
   useTokensPageContext,
 } from "../contexts/TokensPageContext"
@@ -13,7 +12,7 @@ import Button from "../components/Button"
 import { useModal } from "../hooks/useModal"
 import CopyStakePage from "./CopyStakePage"
 import PageWrapper from "../components/PageWrapper"
-import { WalletTokensPage } from "./delegation"
+import { WalletTokensPage, GrantedTokensPage } from "./delegation"
 
 const TokensPageContainer = ({
   title,
@@ -86,7 +85,7 @@ const TokensPageContainerWithContext = React.memo((props) => (
 TokensPageContainerWithContext.route = {
   title: "Tokens",
   path: "/delegation",
-  pages: [WalletTokensPage, TokenGrantsPage],
+  pages: [WalletTokensPage, GrantedTokensPage],
 }
 
 export default TokensPageContainerWithContext
