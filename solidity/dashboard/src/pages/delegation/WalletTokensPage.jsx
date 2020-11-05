@@ -6,12 +6,11 @@ import Undelegations from "../../components/Undelegations"
 import { DataTableSkeleton } from "../../components/skeletons"
 import EmptyStateComponent from "./EmptyStatePage"
 import TokenAmount from "../../components/TokenAmount"
-import CircularProgressBar from "../../components/CircularProgressBar"
 import { colors } from "../../constants/colors"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
 import { useModal } from "../../hooks/useModal"
 import moment from "moment"
-import { ProgressBarLegendItem } from "../../components/ProgressBar"
+import ProgressBar from "../../components/ProgressBar"
 
 const confirmationModalOptions = (initializationPeriod) => ({
   modalOptions: { title: "Initiate Delegation" },
@@ -62,32 +61,18 @@ const WalletTokensPage = () => {
         </section>
         <section className="tile wallet-page__overview__staked-tokens">
           <h4 className="mb-2">Tokens Staked</h4>
-          <div className="staked-tokens__circular-progress-bar-wrapper">
-            <CircularProgressBar
-              colors={colors.mint80}
-              radius={82}
-              value="20"
-              total="100"
-              barWidth={16}
-              backgroundStroke={colors.mint20}
-            />
-            <div className="staked-tokens__circular-progress-bar__text">
-              <h4>20%</h4>
-              <p className="text-small text-grey-40">Staked</p>
+          <ProgressBar
+            value={20}
+            total={100}
+            color={colors.mint80}
+            bgColor={colors.mint20}
+          >
+            <div className="circular-progress-bar-percentage-label-wrapper">
+              <ProgressBar.Circular radius={82} barWidth={16} />
+              <ProgressBar.PercentageLabel text="Staked" />
             </div>
-          </div>
-          <div className="staked-tokens__legend">
-            <ProgressBarLegendItem
-              value="200000000000000000000000"
-              label="Unstaked"
-              color={colors.mint20}
-            />
-            <ProgressBarLegendItem
-              value="100000000000000000000000"
-              label="Staked"
-              color={colors.mint80}
-            />
-          </div>
+            <ProgressBar.Legend leftValueLabel="Unstaked" valueLabel="Staked" />
+          </ProgressBar>
         </section>
         <section className="tile wallet-page__overview__stake-form">
           {/* TODO add tooltip. PR is in progress https://github.com/keep-network/keep-core/pull/2135  */}
