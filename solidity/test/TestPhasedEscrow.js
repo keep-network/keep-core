@@ -4,6 +4,7 @@ const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
 
 const KeepToken = contract.fromArtifact("KeepToken")
+const Escrow = contract.fromArtifact("Escrow")
 const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
 const CurveRewardsEscrowBeneficiary = contract.fromArtifact(
   "CurveRewardsEscrowBeneficiary"
@@ -99,6 +100,40 @@ describe("PhasedEscrow", () => {
       expectEvent(receipt, "BeneficiaryUpdated", {
         beneficiary: beneficiary.address,
       })
+    })
+  })
+
+  describe("withdrawFromEscrow", async () => {
+    const amount = web3.utils.toBN(12090) 
+    let escrow  
+
+    beforeEach(async () => {
+      escrow = await Escrow.new(token.address, {from: owner})
+      await token.transfer(escrow.address, amount, {from: owner})
+    })
+
+    it("pulls all funds from a non-phased Escrow when having no tokens", async () => {
+      const balanceBefore = await token.balanceOf(phasedEscrow.address)
+      expect(balanceBefore).to.eq.BN(0)
+
+      await escrow.setBeneficiary(phasedEscrow.address, {from: owner})
+      await phasedEscrow.withdrawFromEscrow(escrow.address)
+
+      const balanceAfter = await token.balanceOf(phasedEscrow.address)
+      expect(balanceAfter).to.eq.BN(amount)
+    })
+
+    it("pulls all funds from a non-phased Escrow when having some tokens", async () => {
+      const initialFunds = web3.utils.toBN(999)
+      await token.transfer(phasedEscrow.address, 999, {from: owner})
+      const balanceBefore = await token.balanceOf(phasedEscrow.address)
+      expect(balanceBefore).to.eq.BN(initialFunds)
+
+      await escrow.setBeneficiary(phasedEscrow.address, {from: owner})
+      await phasedEscrow.withdrawFromEscrow(escrow.address)
+
+      const balanceAfter = await token.balanceOf(phasedEscrow.address)
+      expect(balanceAfter).to.eq.BN(initialFunds.add(amount))
     })
   })
 
