@@ -125,7 +125,7 @@ describe("PhasedEscrow", () => {
 
     it("pulls all funds from a non-phased Escrow when having some tokens", async () => {
       const initialFunds = web3.utils.toBN(999)
-      await token.transfer(phasedEscrow.address, 999, {from: owner})
+      await token.transfer(phasedEscrow.address, initialFunds, {from: owner})
       const balanceBefore = await token.balanceOf(phasedEscrow.address)
       expect(balanceBefore).to.eq.BN(initialFunds)
 
