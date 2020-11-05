@@ -4,7 +4,7 @@ import { NotFound404 } from "./NotFound404"
 import { useWeb3Context } from "./WithWeb3Context"
 import OperatorPage from "../pages/OperatorPage"
 import RewardsPageContainer from "../pages/RewardsPageContainer"
-import TokensPageContainer from "../pages/TokensPageContainer"
+import DelegationPage from "../pages/delegation"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
@@ -12,7 +12,7 @@ import TokenOverviewPage from "../pages/OverviewPage"
 
 const pages = [
   TokenOverviewPage,
-  TokensPageContainer,
+  DelegationPage,
   OperatorPage,
   RewardsPageContainer,
   ApplicationsPageContainer,
