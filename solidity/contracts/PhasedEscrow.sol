@@ -4,6 +4,8 @@ import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 
+import "./Escrow.sol";
+
 interface IBeneficiaryContract {
     function __escrowSentTokens(uint256 amount) external;
 }
@@ -46,6 +48,13 @@ contract PhasedEscrow is Ownable {
         emit TokensWithdrawn(address(beneficiary), amount);
 
         beneficiary.__escrowSentTokens(amount);
+    }
+
+    /// @notice Withdraws all funds from a non-phased Escrow passed as
+    ///         a parameter. For this function to succeed, this PhasedEscrow
+    ///         has to be set as a beneficiary of the non-phased Escrow.
+    function withdrawFromEscrow(Escrow _escrow) public {
+        _escrow.withdraw();
     }
 }
 
