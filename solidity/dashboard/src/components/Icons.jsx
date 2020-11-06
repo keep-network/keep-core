@@ -44,6 +44,7 @@ import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
 export { ReactComponent as Grant } from "../static/svg/grant.svg"
 export { ReactComponent as Time } from "../static/svg/time.svg"
 export { ReactComponent as Calendar } from "../static/svg/calendar.svg"
+export { ReactComponent as Plus } from "../static/svg/plus.svg"
 
 const Badge = ({ height, width }) => (
   <svg
