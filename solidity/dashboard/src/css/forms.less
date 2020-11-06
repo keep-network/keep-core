@@ -9,6 +9,10 @@ input {
 
   }
 
+  &[type="text"] {
+    border: 1px solid @color-black;
+  }
+
   &[type="radio"] {
     @radio-size: 24px;
     visibility: hidden;
@@ -64,36 +68,51 @@ input {
 .form {
   &-input {
     margin-bottom: 1.5rem;
-  }
 
-  &-error {
-    color: @validation-color;
-    font-size: .9rem;
-    font-weight: 500;
-  }
-}
+    .input__label {
+      all: unset;
+      display: flex;
+      align-items: center;
+      font-size: 0.75rem;
+      line-height: 1rem;
 
-.inline-form {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  align-self: flex-start;
-  justify-content: center;
+      &__text {
+        font-weight: 500;
+        color: @color-grey-60
+      }
 
-  input {
-    padding-left: 1rem;
-    margin-bottom: 2rem;
-    line-height: 3.5rem;
-  }
+      &__instruction-text {
+        font-weight: normal;
+        color: @color-grey-40;
+        margin-left: 0.5rem;
+      }
+    }
 
-  @media screen and (min-width: 750px) {
-    flex-direction: row;
-    justify-content: stretch;
+    >.form-input__wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
 
-    input {
-      line-height: 2rem;
-      margin-right: 1rem;
-      margin-bottom: 0;
+      > svg {
+        margin-right: 1.5rem;
+      }
+      
+      input {
+        width: 100%;
+      }
+
+      > .form-input__addon {
+        position: absolute;
+        right: 1.5rem;
+        cursor: pointer;
+
+      }
+    }
+
+    &__error {
+      color: @validation-color;
+      font-size: .9rem;
+      font-weight: 500;
     }
   }
 }
