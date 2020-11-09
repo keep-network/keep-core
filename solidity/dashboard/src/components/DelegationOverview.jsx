@@ -50,7 +50,7 @@ const DelegationOverview = ({
   return (
     <section>
       {context === "wallet" && (
-        <h2 className="h2--alt text-grey-60">Activity</h2>
+        <h2 className="h2--alt text-grey-60 mb-2">Activity</h2>
       )}
       {context === "granted" && (
         <header className="flex row center mb-2">
