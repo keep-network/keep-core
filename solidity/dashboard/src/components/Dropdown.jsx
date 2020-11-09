@@ -1,6 +1,7 @@
-import React, { useState } from "react"
+import React, { useState, useCallback } from "react"
 import { isEmptyObj } from "../utils/general.utils"
 import * as Icons from "./Icons"
+import { useContext } from "react"
 
 const Dropdown = ({
   label,
@@ -149,3 +150,99 @@ Dropdown.defaultProps = {
 }
 
 export default React.memo(Dropdown, dropdownPropsAreEqual)
+
+const DropdownContext = React.createContext({
+  selectedItem: {},
+  onSelect: () => {},
+  comparePropertyName: null,
+})
+
+const useDropdownContext = () => {
+  const dropdownContext = useContext(DropdownContext)
+
+  if (!dropdownContext) {
+    throw new Error("DropdownContext used outside of the Dropdown component.")
+  }
+  return dropdownContext
+}
+
+const CompoundDropdown = ({
+  selectedItem,
+  onSelect,
+  comparePropertyName,
+  children,
+  className = "",
+  rounded = false,
+}) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const onTriggerDropdown = useCallback(() => {
+    setIsOpen((isOpen) => !isOpen)
+  }, [setIsOpen])
+
+  return (
+    <DropdownContext.Provider
+      value={{
+        selectedItem,
+        onSelect,
+        comparePropertyName,
+        onTriggerDropdown,
+        isOpen,
+      }}
+    >
+      <div
+        className={`dropdown${isOpen ? "--open" : "--closed"} ${
+          rounded ? "dropdown--rounded" : ""
+        } ${className}`}
+      >
+        {children}
+      </div>
+    </DropdownContext.Provider>
+  )
+}
+
+const DropdownOptions = ({ children }) => {
+  return <ul className="dropdown__options">{children}</ul>
+}
+
+const DropdownOption = ({ value, children }) => {
+  const { onSelect, selectedItem, comparePropertyName } = useDropdownContext()
+
+  const onClick = useCallback(() => {
+    onSelect(value)
+  }, [value, onSelect])
+
+  let isSelected
+  if (!comparePropertyName) {
+    isSelected = selectedItem === value
+  } else {
+    isSelected =
+      !isEmptyObj(selectedItem) &&
+      selectedItem[comparePropertyName] === value[comparePropertyName]
+  }
+
+  return (
+    <li
+      className={`dropdown__option${isSelected ? "--selected" : ""}`}
+      onClick={onClick}
+    >
+      {children}
+    </li>
+  )
+}
+
+const DropdownTrigger = ({ children }) => {
+  const { onTriggerDropdown } = useDropdownContext()
+  return (
+    <div className="dropdown__trigger" onClick={onTriggerDropdown}>
+      <div className="dropdown__trigger__content">{children}</div>
+      <div className="dropdown__trigger__arrow" />
+    </div>
+  )
+}
+
+CompoundDropdown.Trigger = DropdownTrigger
+CompoundDropdown.Options = DropdownOptions
+CompoundDropdown.Option = DropdownOption
+
+export { CompoundDropdown }

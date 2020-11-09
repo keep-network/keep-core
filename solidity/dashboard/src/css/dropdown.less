@@ -121,3 +121,132 @@
         }
     }
 }
+
+// TODO remove styles above if we successfully migrate to `CompoundDropdown` in
+// other places in the dapp.
+.dropdown {
+    &--open, &--closed {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid @color-black;
+        padding: 1rem;
+        background-color: @white;
+    }
+
+    &--rounded {
+        border-radius: 100px;
+    }
+
+    &__trigger {
+        position: relative;
+        display: flex;
+        flex-direction: row !important;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+        font-size: 1.2rem;
+        font-weight: normal;
+        color: @color-black;
+        line-height: 25px;
+        cursor: pointer;
+
+        &__arrow {
+            position: relative;
+            width: 15px;
+            height: 15px;
+
+            &:before, &:after {
+                content: "";
+                position: absolute;
+                width: 1px;
+                height: 100%;
+                transition: all 0.5s;
+                background-color: @color-grey-70;
+            }
+
+            &:before {
+                .dropdown--closed & {
+                    left: -5px;
+                    transform: rotate(-45deg);
+                }
+        
+                .dropdown--open & {
+                    left: -5px;
+                    transform: rotate(45deg);
+                }
+            }
+        
+            &:after {
+                .dropdown--closed &{
+                    left: 5px;
+                    transform: rotate(45deg);
+                }
+        
+                .dropdown--open & {
+                    left: 5px;
+                    transform: rotate(-45deg);
+                }
+            }
+        }
+    }
+
+    &--open > &__options, &--closed > &__options {
+        position: absolute;
+        background: @white;
+        list-style: none;
+        top: 100%;
+        left: -1px;
+        right: -1px;
+        border: 1px solid @color-black;
+        border-top: 0;
+        max-height: 150px;
+        padding-left: 0;
+        z-index: 2;
+        overflow-x: scroll;
+        pointer-events: none;
+        transition: all 0.5s;
+
+        > .dropdown__option, > .dropdown__option--selected {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            position: relative;
+            padding: 0 1rem 0 1rem;
+            font-size: 1rem;
+            font-weight: normal;
+            color: @color-black;
+            line-height: 25px;
+            cursor: pointer;
+            transition: all 0.5s;
+
+            &:hover {
+                cursor: pointer;
+                background-color: @color-green-bg;
+            }
+        }
+
+        > .dropdown__option--selected {
+            color: @primary-color;
+            background-color: @color-green-bg;
+        }
+    }
+
+    &__options {
+        .dropdown--open > & {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: all;
+        }
+
+        .dropdown--closed > & {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .dropdown--rounded > & {
+            margin-top: 0.5rem;
+            border: 1px solid @color-black;
+        }
+    }
+}
