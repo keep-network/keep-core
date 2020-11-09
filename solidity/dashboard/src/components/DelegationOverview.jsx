@@ -1,83 +1,41 @@
 import React, { useMemo, useCallback } from "react"
 import Undelegations from "../components/Undelegations"
 import DelegatedTokensTable from "../components/DelegatedTokensTable"
-import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
-import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { formatDate, isSameEthAddress } from "../utils/general.utils"
 import moment from "moment"
 import { LoadingOverlay } from "./Loadable"
 import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 import TopUpsDataTable from "./TopUpsDataTable"
 import Tile from "./Tile"
-import { useSelector } from "react-redux"
+import Tag from "./Tag"
+import * as Icons from "./Icons"
 
-const filterByOwned = (delegation) => !delegation.grantId
-const filterBySelectedGrant = (selectedGrant) => (delegation) =>
-  selectedGrant.id && delegation.grantId === selectedGrant.id
-
-const DelegationOverview = () => {
-  const { tokensContext, selectedGrant } = useTokensPageContext()
-
-  const {
-    undelegations,
-    delegations,
-    refreshData,
-    isDelegationDataFetching,
-    keepTokenBalance,
-    undelegationPeriod,
-    initializationPeriod,
-    topUps: availableTopUps,
-    areTopUpsFetching,
-  } = useSelector((state) => state.staking)
-
-  const { grants, isFetching: areGrantsFetching } = useSelector(
-    (state) => state.tokenGrants
-  )
-
-  const ownedDelegations = useMemo(() => {
-    return delegations.filter(filterByOwned)
-  }, [delegations])
-
-  const ownedUndelegations = useMemo(() => {
-    return undelegations.filter(filterByOwned)
-  }, [undelegations])
-
-  const grantDelegations = useMemo(() => {
-    return delegations.filter(filterBySelectedGrant(selectedGrant))
-  }, [delegations, selectedGrant])
-
-  const grantUndelegations = useMemo(() => {
-    return undelegations.filter(filterBySelectedGrant(selectedGrant))
-  }, [undelegations, selectedGrant])
-
-  const getDelegations = useCallback(() => {
-    if (tokensContext === "granted") {
-      return grantDelegations
-    }
-    return ownedDelegations
-  }, [tokensContext, grantDelegations, ownedDelegations])
-
-  const getUndelegations = useCallback(() => {
-    if (tokensContext === "granted") {
-      return grantUndelegations
-    }
-
-    return ownedUndelegations
-  }, [tokensContext, grantUndelegations, ownedUndelegations])
-
+const DelegationOverview = ({
+  delegations,
+  undelegations,
+  isFetching,
+  topUps: availableTopUps,
+  areTopUpsFetching,
+  undelegationPeriod,
+  initializationPeriod,
+  keepTokenBalance,
+  grants = [],
+  selectedGrant = null,
+  context = "wallet",
+}) => {
   const cancelStakeSuccessCallback = useCallback(() => {
-    refreshData()
-  }, [refreshData])
+    // TODO
+  }, [])
 
   const filteredTopUps = useMemo(() => {
     const topUps = []
     for (const topUp of availableTopUps) {
       const { operatorAddress: lookupOperator } = topUp
-      const isUndelegation = getUndelegations().some(({ operatorAddress }) =>
+      const isUndelegation = undelegations.some(({ operatorAddress }) =>
         isSameEthAddress(lookupOperator, operatorAddress)
       )
 
-      const isDelegation = getDelegations().some(({ operatorAddress }) =>
+      const isDelegation = delegations.some(({ operatorAddress }) =>
         isSameEthAddress(lookupOperator, operatorAddress)
       )
 
@@ -87,50 +45,34 @@ const DelegationOverview = () => {
       }
     }
     return topUps
-  }, [availableTopUps, getDelegations, getUndelegations])
+  }, [availableTopUps, delegations, undelegations])
 
   return (
     <section>
-      <div className="flex wrap self-center mt-3 mb-2">
-        <h2 className="text-grey-60">
-          {`${tokensContext === "granted" ? "Grant " : ""}Delegation Overview`}
-        </h2>
-        {tokensContext === "granted" && (
-          <>
-            <span className="flex self-center ml-2">
-              <StatusBadge
-                className="self-center"
-                status={BADGE_STATUS.DISABLED}
-                text="grant id"
-              />
-              <span className="self-center h4 text-grey-50 ml-1">
-                {selectedGrant.id}
-              </span>
+      {context === "wallet" && (
+        <h2 className="h2--alt text-grey-60">Activity</h2>
+      )}
+      {context === "granted" && (
+        <header className="flex row center mb-2">
+          <h2 className="h2--alt text-grey-60">Grant Activity</h2>
+          <div className="flex row center ml-a">
+            <Tag IconComponent={Icons.Grant} text="Grant ID" />
+            <span className="ml-1 mr-2">
+              {selectedGrant && selectedGrant.id}
             </span>
-            <span className="flex self-center ml-2">
-              <StatusBadge
-                className="self-center"
-                status={BADGE_STATUS.DISABLED}
-                text="issued"
-              />
-              <span className="h4 text-grey-50 ml-1">
-                {selectedGrant.start &&
-                  formatDate(moment.unix(selectedGrant.start))}
-              </span>
+            <Tag IconComponent={Icons.Time} text="Issued" />
+            <span className="ml-1">
+              {selectedGrant && formatDate(moment.unix(selectedGrant.start))}
             </span>
-          </>
-        )}
-      </div>
+          </div>
+        </header>
+      )}
       <LoadingOverlay
-        isFetching={
-          tokensContext === "granted"
-            ? areGrantsFetching
-            : isDelegationDataFetching
-        }
+        isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton />}
       >
         <DelegatedTokensTable
-          delegatedTokens={getDelegations()}
+          delegatedTokens={delegations}
           cancelStakeSuccessCallback={cancelStakeSuccessCallback}
           keepTokenBalance={keepTokenBalance}
           grants={grants}
@@ -138,14 +80,10 @@ const DelegationOverview = () => {
         />
       </LoadingOverlay>
       <LoadingOverlay
-        isFetching={
-          tokensContext === "granted"
-            ? areGrantsFetching
-            : isDelegationDataFetching
-        }
+        isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton />}
       >
-        <Undelegations undelegations={getUndelegations()} />
+        <Undelegations undelegations={undelegations} />
       </LoadingOverlay>
       <LoadingOverlay
         isFetching={areTopUpsFetching}
