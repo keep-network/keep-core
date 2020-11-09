@@ -22,7 +22,6 @@ import {
 
 const CreateTokenGrantForm = ({
   keepBalance,
-  successCallback,
   submitAction,
   ...formikProps
 }) => {
@@ -73,7 +72,6 @@ const CreateTokenGrantForm = ({
         onSubmitAction={onSubmit}
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
-        successCallback={successCallback}
       >
         grant tokens
       </SubmitButton>
