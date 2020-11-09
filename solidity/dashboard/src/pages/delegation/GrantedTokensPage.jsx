@@ -13,6 +13,7 @@ import DelegationOverview from "../../components/DelegationOverview"
 import { useState } from "react"
 import { isEmptyArray } from "../../utils/array.utils"
 import { isEmptyObj } from "../../utils/general.utils"
+import { add } from "../../utils/arithmetics.utils"
 import { usePrevious } from "../../hooks/usePrevious"
 import { CompoundDropdown as Dropdown } from "../../components/Dropdown"
 import * as Icons from "../../components/Icons"
@@ -62,6 +63,15 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const grantUndelegations = useMemo(() => {
     return undelegations.filter(filterBySelectedGrant(selectedGrant))
   }, [undelegations, selectedGrant])
+
+  const selectedGrantStakedAmount = useMemo(() => {
+    if (!selectedGrant.id) return 0
+
+    return [...grantDelegations, ...grantUndelegations]
+      .filter((delegation) => delegation.grantId === selectedGrant.id)
+      .map((grantDelegation) => grantDelegation.amount)
+      .reduce(add, 0)
+  }, [grantUndelegations, grantDelegations, selectedGrant.id])
 
   const onWithdrawTokens = useCallback(
     async (awaitingPromise) => {
@@ -117,14 +127,14 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
           <h4 className="mb-1">Grant Allocation</h4>
           <TokenGrantDetails
             selectedGrant={selectedGrant}
-            availableAmount={0}
+            availableAmount={selectedGrant.availableToStake}
           />
         </section>
         <section className="tile granted-page__overview__staked-tokens">
           <h4 className="mb-2">Tokens Staked</h4>
           <TokenGrantStakedDetails
             selectedGrant={selectedGrant}
-            stakedAmount={0}
+            stakedAmount={selectedGrantStakedAmount}
           />
         </section>
         <section className="tile granted-page__overview__stake-form">
