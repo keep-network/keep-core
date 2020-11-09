@@ -21,6 +21,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "openzeppelin-solidity/contracts/math/Math.sol";
 
 import "./KeepToken.sol";
+import "./libraries/BinarySearch.sol";
 
 /// @title KEEP Signer Subsidy Rewards
 /// @notice A contract for distributing KEEP token rewards to keeps.
@@ -298,81 +299,22 @@ contract Rewards is Ownable {
         return claimed[_keep];
     }
 
-    /// @notice Return the number of keeps created before `intervalEndpoint`
-    /// @dev Wraps the binary search of `_find`
-    /// with a number of checks for edge cases.
+    function _binarySearchGetValue(uint256 index) internal view returns (uint256) {
+        return _getCreationTime(_getKeepAtIndex(index));
+    }
+
     function _findEndpoint(uint256 intervalEndpoint) internal view returns (uint256) {
         require(
             intervalEndpoint <= block.timestamp,
             "interval hasn't ended yet"
         );
         uint256 keepCount = _getKeepCount();
-        // no keeps created yet -> return 0
-        if (keepCount == 0) {
-            return 0;
-        }
 
-        uint256 lb = 0; // lower bound, inclusive
-        uint256 timestampLB = _getCreationTime(_getKeepAtIndex(lb));
-        // all keeps created after the interval -> return 0
-        if (timestampLB >= intervalEndpoint) {
-            return 0;
-        }
-
-        uint256 ub = keepCount.sub(1); // upper bound, inclusive
-        uint256 timestampUB = _getCreationTime(_getKeepAtIndex(ub));
-        // all keeps created in or before the interval -> return keep count
-        if (timestampUB < intervalEndpoint) {
-            return keepCount;
-        }
-
-        // The above cases also cover the case
-        // where only 1 keep has been created;
-        // lb == ub
-        // if it was created after the interval, return 0
-        // otherwise, return 1
-
-        return _find(lb, timestampLB, ub, timestampUB, intervalEndpoint);
-    }
-
-    /// @notice Return the number of keeps created before `targetTime`,
-    /// with specified upper and lower bounds.
-    /// @dev Binary search assumes the following invariants:
-    ///   lower bound >= 0, lbTime < targetTime
-    ///   upper bound < keepCount, ubTime >= targetTime
-    /// @param _lb The lower bound of the search (inclusive)
-    /// @param _lbTime The creation time of keep number `lb`
-    /// @param _ub The upper bound of the search (inclusive)
-    /// @param _ubTime The creation time of keep number `ub`
-    /// @param targetTime The target time
-    function _find(
-        uint256 _lb,
-        uint256 _lbTime,
-        uint256 _ub,
-        uint256 _ubTime,
-        uint256 targetTime
-    ) internal view returns (uint256) {
-        uint256 lb = _lb;
-        uint256 lbTime = _lbTime;
-        uint256 ub = _ub;
-        uint256 ubTime = _ubTime;
-        uint256 len = ub.sub(lb);
-        while (len > 1) {
-            // upper bound >= lower bound + 2
-            // mid > lower bound
-            uint256 mid = lb.add(len.div(2));
-            uint256 midTime = _getCreationTime(_getKeepAtIndex(mid));
-
-            if (midTime >= targetTime) {
-                ub = mid;
-                ubTime = midTime;
-            } else {
-                lb = mid;
-                lbTime = midTime;
-            }
-            len = ub.sub(lb);
-        }
-        return ub;
+        return BinarySearch.find(
+            _binarySearchGetValue,
+            keepCount,
+            intervalEndpoint
+        );
     }
 
     /// @notice Return the endpoint index of the interval,
