@@ -166,26 +166,10 @@ export const TokenGrantWithdrawnTokensDetails = ({
       </ProgressBar>
       <SubmitButton
         className="btn btn-secondary btn-sm mt-2"
-        onClick={onWithdrawnBtn}
+        onSubmitAction={onWithdrawnBtn}
       >
         withdraw tokens
       </SubmitButton>
     </>
   )
 }
-
-// const ConfirmWithdrawModal = ({ escrowAddress }) => {
-//   return (
-//     <>
-//       <span>You have deposited tokens in the</span>&nbsp;
-//       <ViewAddressInBlockExplorer
-//         text="TokenStakingEscrow contract"
-//         address={escrowAddress}
-//       />
-//       <p>
-//         To withdraw all tokens it may be necessary to confirm more than one
-//         transaction.
-//       </p>
-//     </>
-//   )
-// }

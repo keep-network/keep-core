@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useMemo } from "react"
-import { useSelector } from "react-redux"
+import { useSelector, useDispatch } from "react-redux"
 import EmptyStateComponent from "./EmptyStatePage"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
 import {
@@ -16,6 +16,11 @@ import { isEmptyObj } from "../../utils/general.utils"
 import { usePrevious } from "../../hooks/usePrevious"
 import { CompoundDropdown as Dropdown } from "../../components/Dropdown"
 import * as Icons from "../../components/Icons"
+import { ContractsLoaded } from "../../contracts"
+import { useModal } from "../../hooks/useModal"
+import { ViewAddressInBlockExplorer } from "../../components/ViewInBlockExplorer"
+import { releaseTokens } from "../../actions/web3"
+import { withConfirmationModal } from "../../components/ConfirmationModal"
 
 const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
@@ -23,6 +28,8 @@ const filterBySelectedGrant = (selectedGrant) => (delegation) =>
 const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const [selectedGrant, setSelectedGrant] = useState({})
   const previousGrant = usePrevious(selectedGrant)
+  const dispatch = useDispatch()
+  const { openConfirmationModal } = useModal()
 
   const {
     undelegations,
@@ -42,14 +49,6 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
     if (!isEmptyArray(grants) && isEmptyObj(selectedGrant)) {
       setSelectedGrant(grants[0])
     }
-    // else if (
-    //   !isEmptyArray(grants) &&
-    //   !isEmptyObj(selectedGrant) &&
-    //   previousGrant.id === selectedGrant.id
-    // ) {
-    //   const grant = grants.some((grant) => grant.id === previousGrant.id)
-    //   setSelectedGrant(grant)
-    // }
   }, [grants, selectedGrant, previousGrant.id])
 
   const onSelectGrant = useCallback((selectedGrant) => {
@@ -64,9 +63,27 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
     return undelegations.filter(filterBySelectedGrant(selectedGrant))
   }, [undelegations, selectedGrant])
 
-  const onWithdrawTokens = useCallback(() => {
-    console.log("withdraw tokens")
-  }, [])
+  const onWithdrawTokens = useCallback(
+    async (awaitingPromise) => {
+      const { escrowOperatorsToWithdraw } = selectedGrant
+
+      if (!isEmptyArray(escrowOperatorsToWithdraw)) {
+        const { tokenStakingEscrow } = await ContractsLoaded
+        await openConfirmationModal(
+          {
+            modalOptions: { title: "Are you sure?" },
+            title: "You’re about to release tokens.",
+            escrowAddress: tokenStakingEscrow.options.address,
+            btnText: "release",
+            confirmationText: "RELEASE",
+          },
+          withConfirmationModal(ConfirmWithdrawModal)
+        )
+      }
+      dispatch(releaseTokens(selectedGrant, awaitingPromise))
+    },
+    [dispatch, openConfirmationModal, selectedGrant]
+  )
 
   const onSubmit = useCallback(
     (values, meta) => {
@@ -171,3 +188,19 @@ GrantedTokensPage.route = {
 }
 
 export { GrantedTokensPage }
+
+const ConfirmWithdrawModal = ({ escrowAddress }) => {
+  return (
+    <>
+      <span>You have deposited tokens in the</span>&nbsp;
+      <ViewAddressInBlockExplorer
+        text="TokenStakingEscrow contract"
+        address={escrowAddress}
+      />
+      <p>
+        To withdraw all tokens it may be necessary to confirm more than one
+        transaction.
+      </p>
+    </>
+  )
+}
