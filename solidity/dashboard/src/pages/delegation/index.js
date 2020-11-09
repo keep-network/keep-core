@@ -1,10 +1,6 @@
-import React, { useEffect } from "react"
-import { useLocation } from "react-router-dom"
+import React, { useEffect, useCallback } from "react"
 import { connect } from "react-redux"
-import TokensPageContextProvider, {
-  useTokensPageContext,
-} from "../../contexts/TokensPageContext"
-import { SET_TOKENS_CONTEXT } from "../../reducers/tokens-page.reducer.js"
+import moment from "moment"
 import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../../actions"
 import { isEmptyArray } from "../../utils/array.utils"
 import Banner, { BANNER_TYPE } from "../../components/Banner"
@@ -16,30 +12,62 @@ import PageWrapper from "../../components/PageWrapper"
 import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
 
-const DelegationPage = ({
-  title,
-  routes,
-  oldDelegations,
+const DelegationPage = ({ title, routes }) => {
+  return <PageWrapper title={title} routes={routes} />
+}
+
+const DelegationPageWrapperComponent = ({
   fetchOldDelegations,
+  oldDelegations,
+  fetchGrants,
+  fetchDelegations,
+  fetchTopUps,
+  delegateStake,
+  initializationPeriod,
+  children,
+  ...restProps
 }) => {
-  const { hash } = useLocation()
-  const { dispatch } = useTokensPageContext()
-
-  useEffect(() => {
-    const tokenContext = hash.substring(1)
-    if (tokenContext === "owned" || tokenContext === "granted") {
-      dispatch({ type: SET_TOKENS_CONTEXT, payload: tokenContext })
-    }
-  }, [hash, dispatch])
-
   useEffect(() => {
     fetchOldDelegations()
   }, [fetchOldDelegations])
 
-  const { openModal } = useModal()
+  useEffect(() => {
+    fetchGrants()
+  }, [fetchGrants])
+
+  useEffect(() => {
+    fetchDelegations()
+  }, [fetchDelegations])
+
+  useEffect(() => {
+    fetchTopUps()
+  }, [fetchTopUps])
+
+  const { openModal, openConfirmationModal } = useModal()
+
+  const onSubmitDelegateStakeForm = useCallback(
+    async (values, meta) => {
+      await openConfirmationModal(
+        confirmationModalOptions(initializationPeriod)
+      )
+      const grantData = values.grantData
+        ? { ...values.grantData, grantId: values.grantData.id }
+        : {}
+
+      delegateStake(
+        {
+          ...values,
+          ...grantData,
+          amount: values.stakeTokens,
+        },
+        meta
+      )
+    },
+    [delegateStake, initializationPeriod, openConfirmationModal]
+  )
 
   return (
-    <PageWrapper title={title} routes={routes}>
+    <>
       {!isEmptyArray(oldDelegations) && (
         <Banner
           type={BANNER_TYPE.NOTIFICATION}
@@ -56,38 +84,54 @@ const DelegationPage = ({
           </Button>
         </Banner>
       )}
-    </PageWrapper>
+      {restProps.render(onSubmitDelegateStakeForm)}
+    </>
   )
 }
 
-const mapStateToProps = ({ copyStake }) => {
+const mapStateToProps = ({ copyStake, staking }) => {
   const { oldDelegations } = copyStake
+  const { initializationPeriod } = staking
 
-  return { oldDelegations }
+  return { oldDelegations, initializationPeriod }
 }
 
 const mapDispatchToProps = (dispatch) => {
   return {
+    delegateStake: (values, meta) =>
+      dispatch({
+        type: "staking/delegate_request",
+        payload: values,
+        meta,
+      }),
     fetchOldDelegations: () =>
       dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
+    fetchGrants: () => dispatch({ type: "token-grant/fetch_grants_request" }),
+    fetchDelegations: () =>
+      dispatch({ type: "staking/fetch_delegations_request" }),
+    fetchTopUps: () => dispatch({ type: "staking/fetch_top_ups_request" }),
   }
 }
 
-const DelegationPageWithRedux = connect(
+const confirmationModalOptions = (initializationPeriod) => ({
+  modalOptions: { title: "Initiate Delegation" },
+  title: "You’re about to delegate stake.",
+  subtitle: `You’re delegating KEEP tokens. You will be able to cancel the delegation for up to ${moment()
+    .add(initializationPeriod, "seconds")
+    .fromNow(true)}. After that time, you can undelegate your stake.`,
+  btnText: "delegate",
+  confirmationText: "DELEGATE",
+})
+
+export const DelegationPageWrapper = connect(
   mapStateToProps,
   mapDispatchToProps
-)(DelegationPage)
+)(DelegationPageWrapperComponent)
 
-const DelegationPageWithContext = React.memo((props) => (
-  <TokensPageContextProvider>
-    <DelegationPageWithRedux {...props} />
-  </TokensPageContextProvider>
-))
-
-DelegationPageWithContext.route = {
+DelegationPage.route = {
   title: "Delegation",
   path: "/delegation",
   pages: [WalletTokensPage, GrantedTokensPage],
 }
 
-export default DelegationPageWithContext
+export default DelegationPage

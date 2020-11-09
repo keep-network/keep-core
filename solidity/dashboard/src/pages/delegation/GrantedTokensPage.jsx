@@ -1,54 +1,128 @@
-import React from "react"
-import moment from "moment"
+import React, { useEffect, useCallback, useMemo } from "react"
+import { useSelector } from "react-redux"
 import EmptyStateComponent from "./EmptyStatePage"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
-import DelegatedTokensTable from "../../components/DelegatedTokensTable"
-import Undelegations from "../../components/Undelegations"
-import { DataTableSkeleton } from "../../components/skeletons"
-import { LoadingOverlay } from "../../components/Loadable"
-import Tag from "../../components/Tag"
-import * as Icons from "../../components/Icons"
 import {
   TokenGrantDetails,
   TokenGrantStakedDetails,
   TokenGrantUnlockingdDetails,
   TokenGrantWithdrawnTokensDetails,
 } from "../../components/TokenGrantOverview"
+import { DelegationPageWrapper } from "./index"
+import DelegationOverview from "../../components/DelegationOverview"
+import { useState } from "react"
+import { isEmptyArray } from "../../utils/array.utils"
+import { isEmptyObj } from "../../utils/general.utils"
+import { usePrevious } from "../../hooks/usePrevious"
+import { CompoundDropdown as Dropdown } from "../../components/Dropdown"
+import * as Icons from "../../components/Icons"
 
-const GrantedTokensPage = () => {
-  // TODO: get grant from redux or react context
-  const selectedGrant = {
-    amount: 100,
-    unlocked: 20,
-    released: 30,
-    id: 1,
-    start: moment().unix(),
-    cliff: 1,
-    duration: 1200000,
-  }
+const filterBySelectedGrant = (selectedGrant) => (delegation) =>
+  selectedGrant.id && delegation.grantId === selectedGrant.id
+
+const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
+  const [selectedGrant, setSelectedGrant] = useState({})
+  const previousGrant = usePrevious(selectedGrant)
+
+  const {
+    undelegations,
+    delegations,
+    undelegationPeriod,
+    initializationPeriod,
+    topUps,
+    areTopUpsFetching,
+    minimumStake,
+  } = useSelector((state) => state.staking)
+
+  const { grants, isFetching: areGrantsFetching } = useSelector(
+    (state) => state.tokenGrants
+  )
+
+  useEffect(() => {
+    if (!isEmptyArray(grants) && isEmptyObj(selectedGrant)) {
+      setSelectedGrant(grants[0])
+    }
+    // else if (
+    //   !isEmptyArray(grants) &&
+    //   !isEmptyObj(selectedGrant) &&
+    //   previousGrant.id === selectedGrant.id
+    // ) {
+    //   const grant = grants.some((grant) => grant.id === previousGrant.id)
+    //   setSelectedGrant(grant)
+    // }
+  }, [grants, selectedGrant, previousGrant.id])
+
+  const onSelectGrant = useCallback((selectedGrant) => {
+    setSelectedGrant(selectedGrant)
+  }, [])
+
+  const grantDelegations = useMemo(() => {
+    return delegations.filter(filterBySelectedGrant(selectedGrant))
+  }, [delegations, selectedGrant])
+
+  const grantUndelegations = useMemo(() => {
+    return undelegations.filter(filterBySelectedGrant(selectedGrant))
+  }, [undelegations, selectedGrant])
+
+  const onWithdrawTokens = useCallback(() => {
+    console.log("withdraw tokens")
+  }, [])
+
+  const onSubmit = useCallback(
+    (values, meta) => {
+      values.grantData = selectedGrant
+      onSubmitDelegateStakeForm(values, meta)
+    },
+    [onSubmitDelegateStakeForm, selectedGrant]
+  )
 
   return (
     <>
       <section className="granted-page__overview-layout">
+        <Dropdown
+          selectedItem={selectedGrant}
+          onSelect={onSelectGrant}
+          comparePropertyName="id"
+          className="granted-page__grants-dropdown"
+          rounded
+        >
+          <Dropdown.Trigger>
+            <div className="flex row center">
+              <Icons.Grant width={14} height={14} />
+              <span className="text-instruction text-grey-60 ml-1">
+                Switch Grant
+              </span>
+            </div>
+          </Dropdown.Trigger>
+          <Dropdown.Options>{grants.map(renderGrant)}</Dropdown.Options>
+        </Dropdown>
         <section className="tile granted-page__overview__grant-details">
           <h4 className="mb-1">Grant Allocation</h4>
-          <TokenGrantDetails selectedGrant={selectedGrant} />
+          <TokenGrantDetails
+            selectedGrant={selectedGrant}
+            availableAmount={0}
+          />
         </section>
         <section className="tile granted-page__overview__staked-tokens">
           <h4 className="mb-2">Tokens Staked</h4>
           <TokenGrantStakedDetails
             selectedGrant={selectedGrant}
-            stakedAmount={80}
+            stakedAmount={0}
           />
         </section>
         <section className="tile granted-page__overview__stake-form">
-          <DelegateStakeForm />
+          <h3 className="mb-1">Stake Granted Tokens</h3>
+          <DelegateStakeForm
+            onSubmit={onSubmit}
+            minStake={minimumStake}
+            availableToStake={selectedGrant.availableToStake || 0}
+          />
         </section>
         <section className="tile granted-page__overview__withdraw-tokens">
           <h4 className="mb-2">Withdraw Unlocked Tokens</h4>
           <TokenGrantWithdrawnTokensDetails
             selectedGrant={selectedGrant}
-            onWithdrawnBtn={() => console.log("on clikc withdraw tokens")}
+            onWithdrawnBtn={onWithdrawTokens}
           />
         </section>
         <section className="tile granted-page__overview__unlocked-tokens">
@@ -56,37 +130,37 @@ const GrantedTokensPage = () => {
           <TokenGrantUnlockingdDetails selectedGrant={selectedGrant} />
         </section>
       </section>
-      <section>
-        <header className="flex row center mb-2">
-          <h2 className="h2--alt text-grey-60">Grant Activity</h2>
-          <div className="flex row center ml-a">
-            <Tag IconComponent={Icons.Grant} text="Grant ID" />
-            <span className="ml-1 mr-2">1234</span>
-            <Tag IconComponent={Icons.Time} text="Issued" />
-            <span className="ml-1">01/01/2020</span>
-          </div>
-        </header>
-        <LoadingOverlay
-          isFetching={true}
-          skeletonComponent={<DataTableSkeleton />}
-        >
-          <DelegatedTokensTable
-            delegatedTokens={[]}
-            //   cancelStakeSuccessCallback={cancelStakeSuccessCallback}
-            // keepTokenBalance={keepToken.value}
-            // undelegationPeriod={undelegationPeriod}
-          />
-        </LoadingOverlay>
-        <LoadingOverlay
-          isFetching={true}
-          skeletonComponent={<DataTableSkeleton />}
-        >
-          <Undelegations undelegations={[]} />
-        </LoadingOverlay>
-      </section>
+      <DelegationOverview
+        delegations={grantDelegations}
+        undelegations={grantUndelegations}
+        isFetching={areGrantsFetching}
+        topUps={topUps}
+        areTopUpsFetching={areTopUpsFetching}
+        undelegationPeriod={undelegationPeriod}
+        initializationPeriod={initializationPeriod}
+        selectedGrant={selectedGrant}
+        grants={grants}
+        context="granted"
+      />
     </>
   )
 }
+
+const renderGrant = (grant) => (
+  <Dropdown.Option key={grant.id} value={grant}>
+    Grant {grant.id}
+  </Dropdown.Option>
+)
+
+const renderGrantedTokensPageComponent = (onSubmitDelegateStakeForm) => (
+  <GrantedTokensPageComponent
+    onSubmitDelegateStakeForm={onSubmitDelegateStakeForm}
+  />
+)
+
+const GrantedTokensPage = () => (
+  <DelegationPageWrapper render={renderGrantedTokensPageComponent} />
+)
 
 GrantedTokensPage.route = {
   title: "Granted Tokens",

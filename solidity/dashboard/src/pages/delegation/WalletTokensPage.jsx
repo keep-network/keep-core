@@ -1,31 +1,18 @@
-import React from "react"
-import { useSelector, useDispatch } from "react-redux"
-import { LoadingOverlay } from "../../components/Loadable"
-import DelegatedTokensTable from "../../components/DelegatedTokensTable"
-import Undelegations from "../../components/Undelegations"
-import { DataTableSkeleton } from "../../components/skeletons"
+import React, { useMemo } from "react"
+import { useSelector } from "react-redux"
 import EmptyStateComponent from "./EmptyStatePage"
 import TokenAmount from "../../components/TokenAmount"
 import { colors } from "../../constants/colors"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
-import { useModal } from "../../hooks/useModal"
-import moment from "moment"
 import ProgressBar from "../../components/ProgressBar"
+import { DelegationPageWrapper } from "./index"
+import { add } from "../../utils/arithmetics.utils"
+import { displayAmountWithMetricSuffix } from "../../utils/token.utils"
+import DelegationOverview from "../../components/DelegationOverview"
 
-const confirmationModalOptions = (initializationPeriod) => ({
-  modalOptions: { title: "Initiate Delegation" },
-  title: "You’re about to delegate stake.",
-  subtitle: `You’re delegating KEEP tokens. You will be able to cancel the delegation for up to ${moment()
-    .add(initializationPeriod, "seconds")
-    .fromNow(true)}. After that time, you can undelegate your stake.`,
-  btnText: "delegate",
-  confirmationText: "DELEGATE",
-})
+const filterByOwned = (delegation) => !delegation.grantId
 
-const WalletTokensPage = () => {
-  const dispatch = useDispatch()
-  const { openConfirmationModal } = useModal()
-
+const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const {
     minimumStake,
     initializationPeriod,
@@ -33,37 +20,45 @@ const WalletTokensPage = () => {
     delegations,
     undelegations,
     isDelegationDataFetching,
+    ownedTokensDelegationsBalance,
+    ownedTokensUndelegationsBalance,
+    areTopUpsFetching,
+    topUps,
   } = useSelector((state) => state.staking)
 
   const keepToken = useSelector((state) => state.keepTokenBalance)
 
-  const handleSubmit = async (values, meta) => {
-    await openConfirmationModal(confirmationModalOptions(initializationPeriod))
-    dispatch({
-      type: "staking/delegate_request",
-      payload: {
-        ...values,
-        amount: values.stakeTokens,
-      },
-      meta,
-    })
-  }
+  const ownedDelegations = useMemo(() => {
+    return delegations.filter(filterByOwned)
+  }, [delegations])
+
+  const ownedUndelegations = useMemo(() => {
+    return undelegations.filter(filterByOwned)
+  }, [undelegations])
+
+  const totalOwnedStakedBalance = useMemo(() => {
+    return add(
+      ownedTokensDelegationsBalance,
+      ownedTokensUndelegationsBalance
+    ).toString()
+  }, [ownedTokensDelegationsBalance, ownedTokensUndelegationsBalance])
+
+  const totalBalance = useMemo(() => {
+    return add(totalOwnedStakedBalance, keepToken.value).toString()
+  }, [keepToken.value, totalOwnedStakedBalance])
 
   return (
     <>
       <section className="wallet-page__overview-layout">
         <section className="tile wallet-page__overview__balance">
           <h4 className="mb-1">Wallet Balance</h4>
-          <TokenAmount
-            amount="100000000000000000000000"
-            currencySymbol="KEEP"
-          />
+          <TokenAmount amount={keepToken.value} currencySymbol="KEEP" />
         </section>
         <section className="tile wallet-page__overview__staked-tokens">
           <h4 className="mb-2">Tokens Staked</h4>
           <ProgressBar
-            value={20}
-            total={100}
+            value={totalOwnedStakedBalance}
+            total={totalBalance}
             color={colors.mint80}
             bgColor={colors.mint20}
           >
@@ -71,42 +66,46 @@ const WalletTokensPage = () => {
               <ProgressBar.Circular radius={82} barWidth={16} />
               <ProgressBar.PercentageLabel text="Staked" />
             </div>
-            <ProgressBar.Legend leftValueLabel="Unstaked" valueLabel="Staked" />
+            <ProgressBar.Legend
+              leftValueLabel="Unstaked"
+              valueLabel="Staked"
+              displayLegendValuFn={displayAmountWithMetricSuffix}
+            />
           </ProgressBar>
         </section>
         <section className="tile wallet-page__overview__stake-form">
           {/* TODO add tooltip. PR is in progress https://github.com/keep-network/keep-core/pull/2135  */}
           <h3 className="mb-1">Stake Wallet Tokens</h3>
           <DelegateStakeForm
-            onSubmit={handleSubmit}
+            onSubmit={onSubmitDelegateStakeForm}
             minStake={minimumStake}
             availableToStake={keepToken.value}
           />
         </section>
       </section>
-      <section>
-        <h2 className="h2--alt text-grey-60 mb-2">Activity</h2>
-        <LoadingOverlay
-          isFetching={isDelegationDataFetching}
-          skeletonComponent={<DataTableSkeleton />}
-        >
-          <DelegatedTokensTable
-            delegatedTokens={delegations}
-            //   cancelStakeSuccessCallback={cancelStakeSuccessCallback}
-            keepTokenBalance={keepToken.value}
-            undelegationPeriod={undelegationPeriod}
-          />
-        </LoadingOverlay>
-        <LoadingOverlay
-          isFetching={isDelegationDataFetching}
-          skeletonComponent={<DataTableSkeleton />}
-        >
-          <Undelegations undelegations={undelegations} />
-        </LoadingOverlay>
-      </section>
+      <DelegationOverview
+        delegations={ownedDelegations}
+        undelegations={ownedUndelegations}
+        isFetching={isDelegationDataFetching}
+        topUps={topUps}
+        areTopUpsFetching={areTopUpsFetching}
+        undelegationPeriod={undelegationPeriod}
+        initializationPeriod={initializationPeriod}
+        keepTokenBalance={keepToken.value}
+      />
     </>
   )
 }
+
+const renderWalletTokensPageComponent = (onSubmitDelegateStakeForm) => (
+  <WalletTokensPageComponent
+    onSubmitDelegateStakeForm={onSubmitDelegateStakeForm}
+  />
+)
+
+const WalletTokensPage = () => (
+  <DelegationPageWrapper render={renderWalletTokensPageComponent} />
+)
 
 WalletTokensPage.route = {
   title: "Wallet Tokens",

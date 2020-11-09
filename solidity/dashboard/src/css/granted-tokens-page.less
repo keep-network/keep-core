@@ -1,6 +1,7 @@
 section.granted-page__overview-layout {
     display: grid;
-    grid-template-areas: 
+    grid-template-areas:
+        "grants-dropdown   .  ."
         "grant-details  stake-form  grant-withdraw"
         "grant-details  stake-form  grant-withdraw"
         "grant-details  stake-form  grant-unlocking"
@@ -40,5 +41,8 @@ section.granted-page__overview-layout {
             flex-direction: column;
         }
     }
+}
 
+.granted-page__grants-dropdown {
+    grid-area: grants-dropdown;
 }

@@ -11,16 +11,6 @@ import moment from "moment"
 import EmptyStateComponent from "./delegation/EmptyStatePage"
 import { useSelector } from "react-redux"
 
-const confirmationModalOptions = (initializationPeriod) => ({
-  modalOptions: { title: "Initiate Delegation" },
-  title: "You’re about to delegate stake.",
-  subtitle: `You’re delegating KEEP tokens. You will be able to cancel the delegation for up to ${moment()
-    .add(initializationPeriod, "seconds")
-    .fromNow(true)}. After that time, you can undelegate your stake.`,
-  btnText: "delegate",
-  confirmationText: "DELEGATE",
-})
-
 const TokensPage = ({
   delegateStake,
   fetchTopUps,
@@ -41,22 +31,6 @@ const TokensPage = ({
   )
 
   const keepToken = useSelector((state) => state.keepTokenBalance)
-
-  const handleSubmit = async (values, meta) => {
-    await openConfirmationModal(confirmationModalOptions(initializationPeriod))
-    const grantData =
-      tokensContext === "owned"
-        ? {}
-        : { ...selectedGrant, grantId: selectedGrant.id }
-    delegateStake(
-      {
-        ...values,
-        ...grantData,
-        amount: values.stakeTokens,
-      },
-      meta
-    )
-  }
 
   const getAvailableToStakeAmount = () => {
     if (tokensContext === "granted") {
