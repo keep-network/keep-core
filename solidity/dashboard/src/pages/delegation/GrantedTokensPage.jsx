@@ -1,4 +1,5 @@
 import React, { useEffect, useCallback, useMemo } from "react"
+import { useLocation } from "react-router-dom"
 import { useSelector } from "react-redux"
 import EmptyStateComponent from "./EmptyStatePage"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
@@ -26,6 +27,7 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const [selectedGrant, setSelectedGrant] = useState({})
   const previousGrant = usePrevious(selectedGrant)
   const releaseTokens = useReleaseTokens()
+  const { hash } = useLocation()
 
   const {
     undelegations,
@@ -43,9 +45,11 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
 
   useEffect(() => {
     if (!isEmptyArray(grants) && isEmptyObj(selectedGrant)) {
-      setSelectedGrant(grants[0])
+      const lookupGrantId = hash.substr(1)
+      const grantByHash = grants.find((grant) => grant.id === lookupGrantId)
+      setSelectedGrant(grantByHash || grants[0])
     }
-  }, [grants, selectedGrant, previousGrant.id])
+  }, [grants, selectedGrant, previousGrant.id, hash])
 
   const onSelectGrant = useCallback((selectedGrant) => {
     setSelectedGrant(selectedGrant)
