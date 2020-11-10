@@ -2,29 +2,30 @@ const {initContracts} = require("./helpers/initContracts")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
+const time = require("@openzeppelin/test-helpers/src/time")
+const crypto = require("crypto")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const Escrow = contract.fromArtifact("Escrow")
 const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
+
+const TestSimpleBeneficiary = contract.fromArtifact("TestSimpleBeneficiary")
 const CurveRewardsEscrowBeneficiary = contract.fromArtifact(
   "CurveRewardsEscrowBeneficiary"
 )
 const StakerRewardsBeneficiary = contract.fromArtifact(
   "StakerRewardsBeneficiary"
 )
-
-const TestSimpleBeneficiary = contract.fromArtifact("TestSimpleBeneficiary")
-const TestCurveRewards = contract.fromArtifact("TestCurveRewards")
-
 const BeaconBackportRewardsEscrowBeneficiary = contract.fromArtifact(
   "BeaconBackportRewardsEscrowBeneficiary"
 )
-const BeaconBackportRewards = contract.fromArtifact("BeaconBackportRewards")
-
 const BeaconRewardsEscrowBeneficiary = contract.fromArtifact(
   "BeaconRewardsEscrowBeneficiary"
 )
+
 const BeaconRewards = contract.fromArtifact("BeaconRewards")
+const BeaconBackportRewards = contract.fromArtifact("BeaconBackportRewards")
+const TestCurveRewards = contract.fromArtifact("TestCurveRewards")
 const TestSimpleStakerRewards = contract.fromArtifact("TestSimpleStakerRewards")
 
 const chai = require("chai")
@@ -55,6 +56,38 @@ describe("PhasedEscrow", () => {
 
   afterEach(async () => {
     await restoreSnapshot()
+  })
+
+  describe("receiveApproval", async () => {
+    it("fails for an unknown token", async () => {
+      // It is another KeepToken contract deployment, not the one PhasedEscrow
+      // has been created with.    
+      const unknownToken = await KeepToken.new({from: owner})
+      const amountApproved = web3.utils.toBN(9991)
+
+      await expectRevert(
+        unknownToken.approveAndCall(
+          phasedEscrow.address,
+          amountApproved,
+          "0x0",
+          {from: owner}
+        ),
+        "Unsupported token"
+      )
+    })
+
+    it("transfers all approved tokens", async () => {
+      const amountApproved = web3.utils.toBN(9993)
+      await token.approveAndCall(
+        phasedEscrow.address,
+        amountApproved,
+        "0x0",
+        {from: owner}
+      )
+
+      const actualBalance = await token.balanceOf(phasedEscrow.address)
+      expect(actualBalance).to.eq.BN(amountApproved)
+    })
   })
 
   describe("setBeneficiary", async () => {
@@ -476,6 +509,69 @@ describe("StakerRewardsBeneficiary", () => {
     })
   })
 })
+
+describe("BeaconRewards to PhasedEscrow transfer", async () => {
+  const owner = accounts[0]
+  const operators = [accounts[1], accounts[2]]
+
+  const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
+  const totalRewards = web3.utils.toBN(19800000).mul(tokenDecimalMultiplier)
+
+  before(async() => {
+    let contracts = await initContracts(
+      contract.fromArtifact('TokenStaking'),
+      contract.fromArtifact('KeepRandomBeaconService'),
+      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
+      contract.fromArtifact('KeepRandomBeaconOperatorBeaconRewardsStub')
+    )
+
+    token = contracts.token
+    stakingContract = contracts.stakingContract
+    operatorContract = contracts.operatorContract
+
+    phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+    rewardsContract = await BeaconRewards.new(
+      token.address,
+      operatorContract.address,
+      stakingContract.address,
+      {from: owner}
+    )
+
+    await token.approveAndCall(
+      rewardsContract.address,
+      totalRewards,
+      "0x0",
+      {from: owner}
+    )
+    await rewardsContract.markAsFunded({from: owner})
+  })
+
+  it("moves all unallocated tokens to escrow", async () => {
+    await rewardsContract.initiateRewardsUpgrade(
+      phasedEscrow.address,
+      {from: owner}
+    )
+
+    let now = await time.latest()
+
+    await operatorContract.registerNewGroup(
+      crypto.randomBytes(128),
+      operators,
+      now
+    )
+
+    const currentInterval = await rewardsContract.intervalOf(now)
+    const currentIntervalEnd = await rewardsContract.endOf(currentInterval)
+    await time.increaseTo(currentIntervalEnd.addn(1))
+
+    await rewardsContract.finalizeRewardsUpgrade({from: owner})
+
+    const escrowBalance = await token.balanceOf(phasedEscrow.address)
+    const allocatedRewards = await rewardsContract.totalRewards()
+    expect(escrowBalance).to.eq.BN(totalRewards.sub(allocatedRewards))
+  })
+})
+
 // FIXME Move to a shared test utils library for all Keep projects.
 /**
  * Uses the ABIs of all contracts in the `contractContainer` to resolve any
