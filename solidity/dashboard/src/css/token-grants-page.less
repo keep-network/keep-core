@@ -3,6 +3,7 @@ section.token-grant-overview {
     grid-template-columns: repeat(1, 1fr);
     grid-gap: 2rem;
     padding: 0;
+    align-items: center;
 
     .grant-amount,
     .unlocking-details,
@@ -15,19 +16,11 @@ section.token-grant-overview {
         display: flex;
     }
 
-    @media screen and (min-width: 550px) {
-        grid-template-columns: repeat(auto-fit, 33%);
-
-        .grant-amount {
-            border-right: none;
-        }
-    }
-
     @media screen and (min-width: 900px) {
         grid-template-columns: repeat(3, 1fr);
 
         .grant-amount {
-            border-right: 1px solid @color-grey-30;
+            border-right: 1px solid @color-grey-10;
         }
 
         .grant-amount,
