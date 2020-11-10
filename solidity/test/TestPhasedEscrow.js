@@ -517,6 +517,11 @@ describe("BeaconRewards to PhasedEscrow transfer", async () => {
   const tokenDecimalMultiplier = web3.utils.toBN(10).pow(web3.utils.toBN(18))
   const totalRewards = web3.utils.toBN(19800000).mul(tokenDecimalMultiplier)
 
+  let token
+  let operatorContract
+  let phasedEscrow
+  let rewardsContract
+
   before(async() => {
     let contracts = await initContracts(
       contract.fromArtifact('TokenStaking'),
@@ -526,8 +531,8 @@ describe("BeaconRewards to PhasedEscrow transfer", async () => {
     )
 
     token = contracts.token
-    stakingContract = contracts.stakingContract
     operatorContract = contracts.operatorContract
+    const stakingContract = contracts.stakingContract
 
     phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
     rewardsContract = await BeaconRewards.new(
