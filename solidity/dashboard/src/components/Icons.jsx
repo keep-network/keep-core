@@ -45,6 +45,8 @@ export { ReactComponent as Grant } from "../static/svg/grant.svg"
 export { ReactComponent as Time } from "../static/svg/time.svg"
 export { ReactComponent as Calendar } from "../static/svg/calendar.svg"
 export { ReactComponent as Plus } from "../static/svg/plus.svg"
+export { ReactComponent as StakeDrop } from "../static/svg/stakedrop.svg"
+export { ReactComponent as SwordOperations } from "../static/svg/sword-operations.svg"
 
 const Badge = ({ height, width }) => (
   <svg

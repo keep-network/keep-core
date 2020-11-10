@@ -1,5 +1,7 @@
 import React from "react"
 
-const Divider = ({ className }) => <hr className={className} />
+const Divider = ({ className, style = {} }) => (
+  <hr className={className} style={style} />
+)
 
 export default Divider
