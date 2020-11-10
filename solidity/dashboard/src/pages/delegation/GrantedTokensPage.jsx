@@ -175,7 +175,7 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
 
 const renderGrant = (grant) => (
   <Dropdown.Option key={grant.id} value={grant}>
-    Grant {grant.id}
+    Grant #{grant.id}
   </Dropdown.Option>
 )
 

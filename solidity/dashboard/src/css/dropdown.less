@@ -144,17 +144,16 @@
         flex-direction: row !important;
         align-items: center;
         justify-content: space-between;
-        padding: 0 1rem;
+        padding: 0 0.5rem;
         font-size: 1.2rem;
         font-weight: normal;
         color: @color-black;
-        line-height: 25px;
         cursor: pointer;
 
         &__arrow {
             position: relative;
-            width: 15px;
-            height: 15px;
+            width: 12px;
+            height: 12px;
 
             &:before, &:after {
                 content: "";
@@ -167,24 +166,24 @@
 
             &:before {
                 .dropdown--closed & {
-                    left: -5px;
+                    left: -4px;
                     transform: rotate(-45deg);
                 }
         
                 .dropdown--open & {
-                    left: -5px;
+                    left: -4px;
                     transform: rotate(45deg);
                 }
             }
         
             &:after {
                 .dropdown--closed &{
-                    left: 5px;
+                    left: 4px;
                     transform: rotate(45deg);
                 }
         
                 .dropdown--open & {
-                    left: 5px;
+                    left: 4px;
                     transform: rotate(-45deg);
                 }
             }
@@ -206,29 +205,34 @@
         overflow-x: scroll;
         pointer-events: none;
         transition: all 0.5s;
+        .box-shadow(0px 2px 10px rgba(129, 129, 129, 0.5));
 
         > .dropdown__option, > .dropdown__option--selected {
             display: flex;
             align-items: center;
-            height: 50px;
             position: relative;
-            padding: 0 1rem 0 1rem;
-            font-size: 1rem;
-            font-weight: normal;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            line-height: 1rem;
             color: @color-black;
-            line-height: 25px;
             cursor: pointer;
             transition: all 0.5s;
 
             &:hover {
                 cursor: pointer;
-                background-color: @color-green-bg;
+                color: @color-grey-70;
+                background-color: @color-mint-20;
             }
         }
 
         > .dropdown__option--selected {
-            color: @primary-color;
-            background-color: @color-green-bg;
+            color: @color-black;
+            background-color: @color-mint-20;
+
+            > .dropdown__option__selected-icon {
+                display: flex;
+                margin-left: auto;
+            }
         }
     }
 
@@ -247,6 +251,8 @@
         .dropdown--rounded > & {
             margin-top: 0.5rem;
             border: 1px solid @color-black;
+            border-radius: 12px;
+            padding-top: 0.5rem;
         }
     }
 }

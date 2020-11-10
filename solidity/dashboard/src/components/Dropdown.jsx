@@ -201,11 +201,20 @@ const CompoundDropdown = ({
   )
 }
 
-const DropdownOptions = ({ children }) => {
-  return <ul className="dropdown__options">{children}</ul>
+const DropdownOptions = ({
+  children,
+  selectedIcon = (
+    <Icons.Success className="success-icon--black" width={12} height={12} />
+  ),
+}) => {
+  return (
+    <ul className="dropdown__options">
+      {children.map((child) => React.cloneElement(child, { selectedIcon }))}
+    </ul>
+  )
 }
 
-const DropdownOption = ({ value, children }) => {
+const DropdownOption = ({ value, selectedIcon, children }) => {
   const { onSelect, selectedItem, comparePropertyName } = useDropdownContext()
 
   const onClick = useCallback(() => {
@@ -227,6 +236,9 @@ const DropdownOption = ({ value, children }) => {
       onClick={onClick}
     >
       {children}
+      {isSelected && selectedIcon && (
+        <div className="dropdown__option__selected-icon">{selectedIcon}</div>
+      )}
     </li>
   )
 }
