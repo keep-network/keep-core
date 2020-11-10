@@ -9,7 +9,7 @@ import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 import TokenOverviewPage from "../pages/OverviewPage"
-import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
+// import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 const pages = [
   TokenOverviewPage,
@@ -29,11 +29,11 @@ class Routing extends React.Component {
           <Redirect to="/resources/quick-terminology" />
         </Route>
         <Route exact path="/grant/:grantId" component={TokenGrantPreviewPage} />
-        <Route
+        {/* <Route
           exact
           path="/create-token-grants"
           component={CreateTokenGrantPage}
-        />
+        /> */}
         {pages.map(renderPage)}
         <Route exact path="/">
           <Redirect to="/overview" />
