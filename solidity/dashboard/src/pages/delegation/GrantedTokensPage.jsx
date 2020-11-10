@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useMemo } from "react"
-import { useSelector, useDispatch } from "react-redux"
+import { useSelector } from "react-redux"
 import EmptyStateComponent from "./EmptyStatePage"
 import DelegateStakeForm from "../../components/DelegateStakeForm"
 import {
@@ -17,11 +17,7 @@ import { add } from "../../utils/arithmetics.utils"
 import { usePrevious } from "../../hooks/usePrevious"
 import { CompoundDropdown as Dropdown } from "../../components/Dropdown"
 import * as Icons from "../../components/Icons"
-import { ContractsLoaded } from "../../contracts"
-import { useModal } from "../../hooks/useModal"
-import { ViewAddressInBlockExplorer } from "../../components/ViewInBlockExplorer"
-import { releaseTokens } from "../../actions/web3"
-import { withConfirmationModal } from "../../components/ConfirmationModal"
+import useReleaseTokens from "../../hooks/useReleaseTokens"
 
 const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
@@ -29,8 +25,7 @@ const filterBySelectedGrant = (selectedGrant) => (delegation) =>
 const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
   const [selectedGrant, setSelectedGrant] = useState({})
   const previousGrant = usePrevious(selectedGrant)
-  const dispatch = useDispatch()
-  const { openConfirmationModal } = useModal()
+  const releaseTokens = useReleaseTokens()
 
   const {
     undelegations,
@@ -75,24 +70,9 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
 
   const onWithdrawTokens = useCallback(
     async (awaitingPromise) => {
-      const { escrowOperatorsToWithdraw } = selectedGrant
-
-      if (!isEmptyArray(escrowOperatorsToWithdraw)) {
-        const { tokenStakingEscrow } = await ContractsLoaded
-        await openConfirmationModal(
-          {
-            modalOptions: { title: "Are you sure?" },
-            title: "You’re about to release tokens.",
-            escrowAddress: tokenStakingEscrow.options.address,
-            btnText: "release",
-            confirmationText: "RELEASE",
-          },
-          withConfirmationModal(ConfirmWithdrawModal)
-        )
-      }
-      dispatch(releaseTokens(selectedGrant, awaitingPromise))
+      releaseTokens(selectedGrant, awaitingPromise)
     },
-    [dispatch, openConfirmationModal, selectedGrant]
+    [releaseTokens, selectedGrant]
   )
 
   const onSubmit = useCallback(
@@ -198,19 +178,3 @@ GrantedTokensPage.route = {
 }
 
 export { GrantedTokensPage }
-
-const ConfirmWithdrawModal = ({ escrowAddress }) => {
-  return (
-    <>
-      <span>You have deposited tokens in the</span>&nbsp;
-      <ViewAddressInBlockExplorer
-        text="TokenStakingEscrow contract"
-        address={escrowAddress}
-      />
-      <p>
-        To withdraw all tokens it may be necessary to confirm more than one
-        transaction.
-      </p>
-    </>
-  )
-}
