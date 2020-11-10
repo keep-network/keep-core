@@ -2,7 +2,11 @@ import React, { useMemo } from "react"
 import { colors } from "../constants/colors"
 import * as Icons from "./Icons"
 import BigNumber from "bignumber.js"
-import { renderProgressBarLegendItem } from "./ProgressBar"
+import {
+  renderProgressBarLegendItem,
+  ProgressBarLegendContext,
+} from "./ProgressBar"
+import { displayAmountWithMetricSuffix } from "../utils/token.utils"
 
 const countCircumference = (radius) => {
   return new BigNumber(2 * Math.PI * radius)
@@ -112,7 +116,11 @@ export const CircularProgressBars = React.memo(
           </g>
         </svg>
         <div className="mb-1">
-          {withLegend && items.map(renderProgressBarLegendItem)}
+          <ProgressBarLegendContext.Provider
+            value={{ displayLegendValuFn: displayAmountWithMetricSuffix }}
+          >
+            {withLegend && items.map(renderProgressBarLegendItem)}
+          </ProgressBarLegendContext.Provider>
         </div>
       </>
     )

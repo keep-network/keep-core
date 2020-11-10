@@ -58,7 +58,7 @@ const ProgressBarInline = ({ height = 10, className = "" }) => {
 }
 
 const defaultDisplayLegendValuFn = (value) => value.toString()
-const ProgressBarLegendContext = React.createContext({
+export const ProgressBarLegendContext = React.createContext({
   displayLegendValuFn: defaultDisplayLegendValuFn,
 })
 
