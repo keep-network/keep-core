@@ -9,6 +9,7 @@ import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
+import RewardsPage from "../pages/rewards"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 const pages = [
@@ -17,9 +18,10 @@ const pages = [
   TokenGrantsPage,
   TokenGrantPreviewPage,
   OperatorPage,
-  RewardsPageContainer,
+  // RewardsPageContainer,
   ApplicationsPageContainer,
   ResourcesPage,
+  RewardsPage,
 ]
 
 class Routing extends React.Component {

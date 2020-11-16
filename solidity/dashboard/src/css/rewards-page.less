@@ -1,0 +1,33 @@
+
+.rewards__overview--random-beacon {
+    display: flex;
+    justify-content: space-between;
+
+    > .rewards__overview__period, > .rewards__overview__withdraw {
+        align-self: center;
+    }
+
+    > .rewards__overview__period {
+        .rewards-period__date {
+            color: @color-grey-60;
+        }
+
+        .rewards-period__remaining-periods {
+            display: flex;
+            align-items: center;
+            margin-top: 0.5rem;
+
+            color: @color-grey-30;
+
+            .time-icon--grey-30 {
+                margin-right: 0.5rem;
+            }
+        }
+    }
+
+    > .rewards__overview__withdraw {
+        margin: -2rem;
+        padding: 4rem;
+        border-left: 1px solid @color-grey-20;
+    }
+}
