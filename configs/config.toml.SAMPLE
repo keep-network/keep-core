@@ -39,7 +39,8 @@
 	# ConcurrencyLimit = 30
 	#
 	# BalanceAlertThreshold defines a minimum value of the operator's account
-	# balance below which an alert will be triggered.
+	# balance below which the client will start reporting errors in logs.
+	# The value should be passed in [wei].
 	#
 	# BalanceAlertThreshold = 500000000000000000 # 0.5 ETH (default value)
 

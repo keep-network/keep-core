@@ -53,7 +53,7 @@ type StakeMonitor interface {
 	StakerFor(address string) (Staker, error)
 }
 
-// StakeMonitor is an interface that provides the ability to monitor
+// BalanceMonitor is an interface that provides the ability to monitor
 // the balance for the provided address.
 type BalanceMonitor interface {
 	// Observe starts a process which checks the address balance with the given
