@@ -8,7 +8,6 @@ import (
 
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -37,7 +36,7 @@ var (
 
 type ethereumChain struct {
 	config                           ethereum.Config
-	client                           bind.ContractBackend
+	client                           ethutil.EthereumClient
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
@@ -86,22 +85,22 @@ func connectWithClient(
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
-			err,
-		)
-	}
-
 	pv := &ethereumChain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
 		transactionMutex: &sync.Mutex{},
-		blockCounter:     blockCounter,
 	}
+
+	blockCounter, err := blockcounter.CreateBlockCounter(pv.client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+	pv.blockCounter = blockCounter
 
 	if pv.accountKey == nil {
 		key, err := ethutil.DecryptKeyFile(
@@ -129,7 +128,7 @@ func connectWithClient(
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(pv.client, checkInterval, maxGasPrice)
 
 	address, err := addressForContract(config, "KeepRandomBeaconOperator")
 	if err != nil {
@@ -185,8 +184,8 @@ func connectWithClient(
 
 func addClientWrappers(
 	config ethereum.Config,
-	backend bind.ContractBackend,
-) bind.ContractBackend {
+	backend ethutil.EthereumClient,
+) ethutil.EthereumClient {
 	loggingBackend := ethutil.WrapCallLogging(logger, backend)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {

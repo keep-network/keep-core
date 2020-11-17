@@ -1,11 +1,10 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
-
-	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/ipfs/go-log"
 
@@ -525,9 +524,8 @@ func (ec *ethereumChain) Address() common.Address {
 }
 
 func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
-	var result hexutil.Big
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
 
-	err := ec.clientRPC.Call(&result, "eth_getBalance", address, "latest")
-
-	return (*big.Int)(&result), err
+	return ec.client.BalanceAt(ctx, address, nil)
 }
