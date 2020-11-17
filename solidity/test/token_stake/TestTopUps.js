@@ -35,7 +35,7 @@ describe('TokenStaking/TopUps', () => {
     operatorFour = accounts[8],
     beneficiary = accounts[9],
     authorizer = accounts[10],
-    thirdParty = accounts[11]
+    thirdParty = accounts[11],
     operatorContract = accounts[12]
 
   const initializationPeriod = time.duration.days(10),
