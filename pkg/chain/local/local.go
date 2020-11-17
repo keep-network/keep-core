@@ -93,7 +93,7 @@ func (c *localChain) StakeMonitor() (chain.StakeMonitor, error) {
 }
 
 func (c *localChain) BalanceMonitor() (chain.BalanceMonitor, error) {
-	return nil, nil // not implemented.
+	panic("not implemented")
 }
 
 func (c *localChain) Signing() chain.Signing {
