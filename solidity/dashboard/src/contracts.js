@@ -15,6 +15,7 @@ import Deposit from "@keep-network/tbtc/artifacts/Deposit.json"
 import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.json"
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
+import BeaconRewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -96,6 +97,7 @@ const contracts = [
     { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
     StakingPortBacker,
   ],
+  [{ contractName: "beaconRewardsContract" }, BeaconRewards],
 ]
 
 export async function getKeepTokenContractDeployerAddress(web3) {
