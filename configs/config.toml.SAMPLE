@@ -37,6 +37,12 @@
 	# including view function calls.
 	#
 	# ConcurrencyLimit = 30
+	#
+	# BalanceAlertThreshold defines a minimum value of the operator's account
+	# balance below which the client will start reporting errors in logs.
+	# The value should be passed in [wei].
+	#
+	# BalanceAlertThreshold = 500000000000000000 # 0.5 ETH (default value)
 
 [ethereum.account]
 	KeyFile            = "/Users/someuser/ethereum/data/keystore/UTC--2018-03-11T01-37-33.202765887Z--AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAA"
