@@ -55,7 +55,7 @@ export const SideMenu = (props) => {
           icon={<Icons.FeesVector />}
           subroutes={[
             { label: "Earnings", path: "/earnings", exact: false },
-            { label: "Reweards", path: "rewards", exact: false },
+            { label: "Reweards", path: "/rewards", exact: false },
           ]}
         />
         <NavLinkSection
