@@ -24,6 +24,7 @@ const DelayFactor = artifacts.require("./libraries/operator/DelayFactor.sol");
 const KeepRegistry = artifacts.require("./KeepRegistry.sol");
 const GasPriceOracle = artifacts.require("./GasPriceOracle.sol");
 const StakingPortBacker = artifacts.require("./StakingPortBacker.sol");
+const BeaconRewards = artifacts.require("./BeaconRewards.sol")
 
 let initializationPeriod = 43200; // ~12 hours
 const dkgContributionMargin = 1; // 1%
@@ -32,7 +33,7 @@ module.exports = async function(deployer, network) {
 
   // Set the stake initialization period to 1 block for local development and testnet.
   if (network === 'local' || network === 'ropsten' || network === 'keep_dev') {
-    initializationPeriod = 1;
+    initializationPeriod = 180;
   }
 
   await deployer.deploy(ModUtils);
@@ -128,4 +129,13 @@ module.exports = async function(deployer, network) {
     KeepRandomBeaconOperatorStatistics,
     KeepRandomBeaconOperator.address
   );
+
+  if(network === 'local') {
+    await deployer.deploy(
+        BeaconRewards,
+        KeepToken.address,
+        KeepRandomBeaconOperator.address,
+        TokenStaking.address,
+    )
+  }
 };
