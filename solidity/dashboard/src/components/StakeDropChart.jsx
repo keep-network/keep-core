@@ -8,7 +8,6 @@ import {
   Tooltip,
   ReferenceArea,
 } from "recharts"
-import moment from "moment"
 import { colors } from "../constants/colors"
 import {
   displayAmount,
@@ -16,29 +15,16 @@ import {
   fromTokenUnit,
 } from "../utils/token.utils"
 import { formatDate } from "../utils/general.utils"
+import BeaconRewardsHelper from "../utils/beaconRewardsHelper"
 
-const keepAllocationsInInterval = [
-  /* eslint-disable*/
-    792000,     1520640,    1748736,    1888635,    2077498,    1765874,
-    1500993,    1275844,    1084467,    921797,     783528,     665998,
-    566099,     481184,     409006,     347655,     295507,     251181,
-    213504,     181478,     154257,     131118,     111450,     94733
-  /* eslint-enable*/
-]
-
-// Beacon genesis date, 2020-09-24, is the first interval start.
-// https://etherscan.io/tx/0xe2e8ab5631473a3d7d8122ce4853c38f5cc7d3dcbfab3607f6b27a7ef3b86da2
-const beaconFirstIntervalStart = 1600905600
-
-// Each interval is 30 days long.
-const beaconTermLength = moment.duration(30, "days").asSeconds()
-
-const data = keepAllocationsInInterval.map((amount, index) => {
-  return {
-    interval: index,
-    amount,
+const data = BeaconRewardsHelper.keepAllocationsInInterval.map(
+  (amount, index) => {
+    return {
+      interval: index,
+      amount,
+    }
   }
-})
+)
 
 // We want to display only first and last tick.
 const xAxisTicks = [0, data.length - 1]
@@ -53,16 +39,6 @@ const styles = {
   chartWrapper: { marginTop: "1rem", position: "relative" },
 }
 
-const intervalStartOf = (interval) => {
-  return moment
-    .unix(beaconFirstIntervalStart)
-    .add(interval * beaconTermLength, "seconds")
-}
-
-const currentInterval = Math.floor(
-  (moment().unix() - beaconFirstIntervalStart) / beaconTermLength
-)
-
 const StakeDropChart = () => {
   const tooltipRef = useRef(null)
 
@@ -71,7 +47,7 @@ const StakeDropChart = () => {
 
     return () => {
       if (tooltipElement) {
-        tooltipElement.style.display = "none"
+        tooltipElement.style.opacity = "0"
       }
     }
   })
@@ -91,7 +67,7 @@ const StakeDropChart = () => {
     tooltipRef.current.style.transform = `translate(${x - 60}px, ${y}px)`
     tooltipContentEl.childNodes[0].innerHTML = `Interval ${interval + 1}`
     tooltipContentEl.childNodes[1].innerHTML = formatDate(
-      intervalStartOf(interval)
+      BeaconRewardsHelper.intervalStartOf(interval)
     )
 
     const formattedRewardAmount = displayAmount(fromTokenUnit(amount))
@@ -137,8 +113,8 @@ const StakeDropChart = () => {
           />
           <Tooltip cursor={false} wrapperStyle={{ display: "none" }} />
           <ReferenceArea
-            x1={currentInterval - 0.5}
-            x2={currentInterval + 0.5}
+            x1={BeaconRewardsHelper.currentInterval - 0.5}
+            x2={BeaconRewardsHelper.currentInterval + 0.5}
             stroke={colors.green30}
             fill={colors.green30}
             fillOpacity={1}
