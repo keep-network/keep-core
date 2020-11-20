@@ -5,6 +5,7 @@ import Skeleton from "./Skeleton"
 import SkeletonBox from "./SkeletonBox"
 import SkeletonProgressBar from "./SkeletonProgressBar"
 import TokenOverviewSkeleton from "./TokenOverviewSkeleton"
+import TokenAmountSkeleton from "./TokenAmountSkeleton"
 
 export {
   CircleSkeleton,
@@ -14,4 +15,5 @@ export {
   SkeletonBox,
   SkeletonProgressBar,
   TokenOverviewSkeleton,
+  TokenAmountSkeleton,
 }

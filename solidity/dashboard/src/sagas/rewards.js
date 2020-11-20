@@ -1,9 +1,8 @@
 import { take, call, put, fork } from "redux-saga/effects"
-import { getWeb3Context, logError } from "./utils"
+import { logError } from "./utils"
 import rewardsService from "../services/rewards.service"
 
 function* fetchBeaconDistributedRewards(address) {
-  console.log("address", address)
   try {
     yield put({ type: "rewards/beacon_fetch_distributed_rewards_start" })
     const balance = yield call(

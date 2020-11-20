@@ -34,8 +34,13 @@
 
 .rewards-overview--random-beacon {
     display: grid;
-    grid-template-columns: 1.5fr 1fr auto;
+    grid-template-columns: 1fr;
     gap: 1rem;
+
+    @media screen and (min-width: 900px) {
+        grid-template-columns: 1.5fr 1fr;
+    }
+    
 
     > section:nth-child(2), > section:nth-child(1) {
         align-self: start;
