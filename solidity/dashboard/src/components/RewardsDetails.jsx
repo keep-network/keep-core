@@ -49,7 +49,7 @@ const BeaconRewardsDetails = ({ pastRewards }) => {
       <h4 className="text-grey-70 mb-2">Beacon Rewards Details</h4>
       <ul>
         <MinKeepInInterval
-          label="Min. Keep"
+          label="Min. Keep Group"
           minKeep={BeaconRewardsHelper.minimumKeepsPerInterval}
         />
         {/* <li className="flex row center mb-1">
@@ -85,7 +85,7 @@ const ECDSARewardsDetails = ({ pastRewards }) => {
       <h4 className="text-grey-70 mb-2">tBTC Rewards Details</h4>
       <ul>
         <MinKeepInInterval
-          label="Min. Keep Group"
+          label="Min. Keep"
           minKeep={ECDSARewardsHelper.minimumKeepsPerInterval}
         />
         <li className="flex row center mb-1">
