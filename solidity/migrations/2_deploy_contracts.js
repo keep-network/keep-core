@@ -33,7 +33,7 @@ module.exports = async function(deployer, network) {
 
   // Set the stake initialization period to 1 block for local development and testnet.
   if (network === 'local' || network === 'ropsten' || network === 'keep_dev') {
-    initializationPeriod = 180;
+    initializationPeriod = 1;
   }
 
   await deployer.deploy(ModUtils);
