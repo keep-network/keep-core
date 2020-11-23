@@ -528,7 +528,11 @@ describe('TokenStakingEscrow', () => {
       const balanceAfter = await token.balanceOf(grantManager)
 
       const diff = balanceAfter.sub(balanceBefore)
-      expect(diff).to.eq.BN(web3.utils.toWei("150000")) // 300k - 150k = 150k KEEP
+      // Increasing time programatically using OZ may lead to a slight delay (split of a second)
+      // which results in a different amount of withdrawn KEEP that we expect strictly by doing
+      // math as above. Difference is less than 1 KEEP.
+      expect(diff).to.gt.BN(web3.utils.toWei("149999"))
+      expect(diff).to.lte.BN(web3.utils.toWei("150000")) 
     })
 
     it('withdraws entire deposited amount if nothing has been withdrawn before', async () => {
