@@ -98,3 +98,17 @@
         align-self: start;
     }
 }
+
+.empty-page--rewards-overview {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 1rem;
+
+    .skeleton__box {
+        &:nth-of-type(3), &:nth-of-type(2){
+            align-self: start;
+        }
+    }
+}

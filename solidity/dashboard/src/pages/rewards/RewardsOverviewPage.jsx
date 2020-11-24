@@ -9,6 +9,7 @@ import {
 import StakeDropChart from "../../components/StakeDropChart"
 import { useWeb3Context } from "../../components/WithWeb3Context"
 import { TokenAmountSkeleton } from "../../components/skeletons"
+import EmptyStatePage from "./EmptyStatePage"
 
 const RewardsOverviewPage = () => {
   const dispatch = useDispatch()
@@ -108,8 +109,6 @@ const Balance = ({
     </>
   )
 }
-
-const EmptyStatePage = () => <>connect wallet</>
 
 RewardsOverviewPage.route = {
   title: "Overview",
