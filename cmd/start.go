@@ -42,16 +42,13 @@ const (
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
    threshold relay client for the Keep random beacon.`
 
-// Constants related with balance monitoring.
-const (
-	// defaultBalanceAlertThreshold determines the alert threshold below which
-	// the alert should be triggered.
-	defaultBalanceAlertThreshold = 500000000000000000 // 0.5 ETH
-
-	// defaultBalanceMonitoringTick determines how often the monitoring
-	// check should be triggered.
-	defaultBalanceMonitoringTick = 10 * time.Minute
-)
+// Values related with balance monitoring.
+// defaultBalanceAlertThreshold determines the alert threshold below which
+// the alert should be triggered.
+var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
+// defaultBalanceMonitoringTick determines how often the monitoring
+// check should be triggered.
+const defaultBalanceMonitoringTick = 10 * time.Minute
 
 func init() {
 	StartCommand =
@@ -278,15 +275,15 @@ func initializeBalanceMonitoring(
 		return
 	}
 
-	alertThreshold := config.Ethereum.BalanceAlertThreshold
-	if alertThreshold == 0 {
-		alertThreshold = defaultBalanceAlertThreshold
+	alertThreshold := defaultBalanceAlertThreshold
+	if config.Ethereum.BalanceAlertThreshold != nil {
+		alertThreshold = config.Ethereum.BalanceAlertThreshold.Int
 	}
 
 	balanceMonitor.Observe(
 		ctx,
 		ethereumAddress,
-		new(big.Int).SetUint64(alertThreshold),
+		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
 
