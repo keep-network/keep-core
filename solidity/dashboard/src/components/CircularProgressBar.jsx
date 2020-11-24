@@ -19,8 +19,6 @@ const countProgressValue = (value, total, radius) => {
     .toString()
 }
 
-const barWidth = 10
-
 const CircularProgressBar = ({
   radius,
   value,
@@ -28,28 +26,49 @@ const CircularProgressBar = ({
   color,
   withBackgroundStroke,
   total,
+  barWidth = 10,
+  parentSize,
 }) => {
+  const normalizedRadius = useMemo(() => radius - barWidth / 2, [
+    radius,
+    barWidth,
+  ])
+
+  const circumference = useMemo(() => {
+    return countCircumference(normalizedRadius)
+  }, [normalizedRadius])
+
+  const progress = useMemo(() => {
+    return countProgressValue(value, total, normalizedRadius)
+  }, [value, total, normalizedRadius])
+
+  const center = parentSize ? parentSize / 2 : radius
+
   return (
-    <svg className="circular-progress-bar" width={120} height={120}>
+    <svg
+      className="circular-progress-bar"
+      width={parentSize || radius * 2}
+      height={parentSize || radius * 2}
+    >
       {withBackgroundStroke && (
         <circle
           fill="none"
           className="background"
-          cx={60}
-          cy={60}
-          r={radius - barWidth / 2}
+          cx={center}
+          cy={center}
+          r={normalizedRadius}
           strokeWidth={barWidth}
           stroke={backgroundStroke}
         />
       )}
       <circle
         fill="none"
-        strokeDashoffset={countProgressValue(value, total, radius - 5)}
-        strokeDasharray={countCircumference(radius - 5)}
+        strokeDashoffset={progress}
+        strokeDasharray={`${circumference} ${circumference}`}
         className="value"
-        cx={60}
-        cy={60}
-        r={radius - barWidth / 2}
+        cx={center}
+        cy={center}
+        r={normalizedRadius}
         strokeWidth={barWidth}
         stroke={color}
         strokeLinecap="round"
@@ -67,20 +86,25 @@ CircularProgressBar.defaultProps = {
 }
 
 export const CircularProgressBars = React.memo(
-  ({ withLegend, total, items }) => {
+  ({ withLegend, total, items, size = 120 }) => {
     const bars = useMemo(() => {
       return items.map((item, index) => (
-        <CircularProgressBar key={index} {...item} total={total} />
+        <CircularProgressBar
+          key={index}
+          {...item}
+          total={total}
+          parentSize={size}
+        />
       ))
-    }, [total, items])
+    }, [total, items, size])
 
     return (
       <>
         <svg
           className="wrapper-circular-progress-bar"
-          width={120}
-          height={120}
-          viewBox="0 0 120 120"
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
         >
           {bars}
           <g className="keep-circle">

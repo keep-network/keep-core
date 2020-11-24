@@ -10,17 +10,18 @@ import {
 import TokenAmount from "./TokenAmount"
 import Skeleton from "./skeletons/Skeleton"
 import TokenAmountSkeleton from "./skeletons/TokenAmountSkeleton"
+import { useSelector } from "react-redux"
 
 const TokensContextSwitcher = (props) => {
-  const {
-    dispatch,
-    selectedGrant,
-    tokensContext,
-    grants,
-    keepTokenBalance,
-    isFetching,
-    grantsAreFetching,
-  } = useTokensPageContext()
+  const { dispatch, selectedGrant, tokensContext } = useTokensPageContext()
+
+  const { isDelegationDataFetching } = useSelector((state) => state.staking)
+
+  const { grants, isFetching: grantsAreFetching } = useSelector(
+    (state) => state.tokenGrants
+  )
+
+  const keepToken = useSelector((state) => state.keepTokenBalance)
 
   const setTokensContext = useCallback(
     (contextName) => {
@@ -81,7 +82,7 @@ const TokensContextSwitcher = (props) => {
         className={`owned ${tokensContext === "owned" ? "active" : "inactive"}`}
         onClick={() => setTokensContext("owned")}
       >
-        {isFetching ? (
+        {isDelegationDataFetching ? (
           <OwnedTokensLoadingComponent />
         ) : (
           <>
@@ -89,7 +90,7 @@ const TokensContextSwitcher = (props) => {
             <h2 className="text-grey-70">Owned</h2>
 
             <TokenAmount
-              amount={keepTokenBalance}
+              amount={keepToken.value}
               amountClassName="h4 text-primary"
               suffixClassName="h5"
             />
@@ -103,8 +104,14 @@ const TokensContextSwitcher = (props) => {
 const OwnedTokensLoadingComponent = () => {
   return (
     <>
-      <Skeleton className="h2 ml-1" styles={{ width: "35%" }} />
+      <Skeleton
+        shining
+        color="grey-20"
+        className="h2 ml-1"
+        styles={{ width: "35%" }}
+      />
       <TokenAmountSkeleton
+        shining
         wrapperStyles={{ width: "35%", marginLeft: "auto" }}
         textStyles={{ width: "35%" }}
       />
@@ -116,14 +123,15 @@ const GrantedTokensLoadingComponent = () => {
   return (
     <>
       <div className="flex column" style={{ width: "40%" }}>
-        <Skeleton className="h2" />
+        <Skeleton shining color="grey-20" className="h2" />
         <TokenAmountSkeleton
+          shining
           wrapperStyles={{ width: "100%", marginTop: "1rem" }}
           textStyles={{ width: "35%" }}
         />
       </div>
       <div className="grants-dropdown">
-        <Skeleton styles={{ padding: "1.5rem 4rem" }} />
+        <Skeleton shining color="grey-20" styles={{ padding: "1.5rem 4rem" }} />
       </div>
     </>
   )

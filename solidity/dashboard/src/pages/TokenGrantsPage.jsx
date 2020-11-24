@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useEffect, useMemo } from "react"
 import {
   TokenGrantDetails,
   TokenGrantStakedDetails,
@@ -9,9 +9,17 @@ import { useTokensPageContext } from "../contexts/TokensPageContext"
 import { LoadingOverlay } from "../components/Loadable"
 import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
 import { add } from "../utils/arithmetics.utils"
+import { EmptyStatePage } from "./grants"
+import { useSelector, useDispatch } from "react-redux"
 
 const TokenGrantsPage = () => {
-  const { grants, grantsAreFetching } = useTokensPageContext()
+  const dispatch = useDispatch()
+  const { grants, isFetching } = useSelector((state) => state.tokenGrants)
+
+  useEffect(() => {
+    dispatch({ type: "token-grant/fetch_grants_request" })
+  }, [dispatch])
+
   const totalGrantAmount = useMemo(() => {
     return grants.map(({ amount }) => amount).reduce(add, "0")
   }, [grants])
@@ -27,7 +35,7 @@ const TokenGrantsPage = () => {
       />
 
       <LoadingOverlay
-        isFetching={grantsAreFetching}
+        isFetching={isFetching}
         skeletonComponent={<TokenGrantSkeletonOverview />}
       >
         {grants.map(renderTokenGrantOverview)}
@@ -73,6 +81,8 @@ TokenGrantsPage.route = {
   title: "Grants",
   path: "/tokens/grants",
   exact: true,
+  withConnectWalletGuard: true,
+  emptyStateComponent: EmptyStatePage,
 }
 
 export default TokenGrantsPage

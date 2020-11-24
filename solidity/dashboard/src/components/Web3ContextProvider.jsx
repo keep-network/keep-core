@@ -3,8 +3,9 @@ import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
+import { connect } from "react-redux"
 
-export default class Web3ContextProvider extends React.Component {
+class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
 
   constructor(props) {
@@ -57,6 +58,8 @@ export default class Web3ContextProvider extends React.Component {
       web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
       web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
     }
+
+    this.props.fetchKeepTokenBalance()
 
     this.setState({
       web3,
@@ -125,3 +128,12 @@ export default class Web3ContextProvider extends React.Component {
     )
   }
 }
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchKeepTokenBalance: () =>
+      dispatch({ type: "keep-token/balance_request" }),
+  }
+}
+
+export default connect(null, mapDispatchToProps)(Web3ContextProvider)

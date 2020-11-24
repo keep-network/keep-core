@@ -5,18 +5,27 @@ import OwnedTokensOverview from "./OwnedTokensOverview.jsx"
 import { add } from "../utils/arithmetics.utils"
 import { LoadingOverlay } from "./Loadable"
 import TokenOverviewSkeleton from "./skeletons/TokenOverviewSkeleton"
+import { useSelector } from "react-redux"
 
 const TokensOverview = (props) => {
   const {
     tokensContext,
     selectedGrant,
-    keepTokenBalance,
+    getGrantStakedAmount,
+  } = useTokensPageContext()
+
+  const {
     ownedTokensUndelegationsBalance,
     ownedTokensDelegationsBalance,
-    getGrantStakedAmount,
-    isFetching,
-    grantsAreFetching,
-  } = useTokensPageContext()
+    isDelegationDataFetching,
+  } = useSelector((state) => state.staking)
+
+  const { isFetching: areGrantsFetching } = useSelector(
+    (state) => state.tokenGrants
+  )
+  const { value: keepTokenBalance } = useSelector(
+    (state) => state.keepTokenBalance
+  )
 
   const selectedGrantStakedAmount = useMemo(() => {
     return getGrantStakedAmount(selectedGrant.id)
@@ -26,7 +35,9 @@ const TokensOverview = (props) => {
     <section id="tokens-overview" className="tile">
       <LoadingOverlay
         isFetching={
-          tokensContext === "granted" ? grantsAreFetching : isFetching
+          tokensContext === "granted"
+            ? areGrantsFetching
+            : isDelegationDataFetching
         }
         skeletonComponent={
           <TokenOverviewSkeleton items={tokensContext === "granted" ? 2 : 1} />

@@ -26,7 +26,7 @@
 /* Light */
 @font-face {
     font-family: 'Roboto Slab';
-    src: url('./fonts/roboto-slab/RobotoSlab-Black.ttf') format("truetype");
+    src: url('./fonts/roboto-slab/RobotoSlab-Light.ttf') format("truetype");
     font-weight: 300;
     font-style: normal;
 }
