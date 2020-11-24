@@ -16,7 +16,7 @@ import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
 import BeaconRewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
-// import ECDSARewards from "@keep-network/keep-ecdsa/artifacts/ECDSARewards.json"
+import ECDSARewards from "@keep-network/keep-ecdsa/artifacts/ECDSARewards.json"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -99,8 +99,7 @@ const contracts = [
     StakingPortBacker,
   ],
   [{ contractName: "beaconRewardsContract" }, BeaconRewards],
-  // TODO change to ECDSARewards contract from keep-core/keep-ecdsa
-  [{ contractName: "ECDSARewardsContract" }, BeaconRewards],
+  [{ contractName: "ECDSARewardsContract" }, ECDSARewards],
 ]
 
 export async function getKeepTokenContractDeployerAddress(web3) {

@@ -1,3 +1,5 @@
+import { sub, add } from "../utils/arithmetics.utils"
+
 const initialState = {
   // Beacon distributted rewards
   beaconRewardsFetching: false,
@@ -68,6 +70,23 @@ const rewardsReducer = (state = initialState, action) => {
         ...state,
         ecdsaAvailableRewardsFetching: false,
         ecdsaAvailableRewardsError: action.payload.error,
+      }
+    case "rewards/ecdsa_withdrawn":
+      return {
+        ...state,
+        ecdsaAvailableRewardsBalance: sub(
+          state.ecdsaAvailableRewardsBalance,
+          action.payload
+        ),
+        ecdsaDistributedBalance: add(
+          state.ecdsaDistributedBalance,
+          action.payload
+        ),
+      }
+    case "rewards/ecdsa_update_available_rewards":
+      return {
+        ...state,
+        ecdsaAvailableRewards: action.payload,
       }
     default:
       return state

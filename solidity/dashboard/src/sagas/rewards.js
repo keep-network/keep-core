@@ -78,12 +78,11 @@ export function* watchFetchECDSAAvailableRewards() {
 }
 
 function* withdrawECDSARewards(action) {
-  const {
-    payload: { availableRewards },
-  } = action
+  const { payload: availableRewards } = action
   const { ECDSARewardsContract } = yield getContractsContext()
+  const unapproved = []
 
-  for (const { operator, interval } of availableRewards) {
+  for (const { operator, interval, withdrawable } of availableRewards) {
     try {
       yield call(sendTransaction, {
         payload: {
@@ -93,9 +92,15 @@ function* withdrawECDSARewards(action) {
         },
       })
     } catch (error) {
+      unapproved.push({ operator, interval, withdrawable })
       continue
     }
   }
+
+  yield put({
+    type: "rewards/ecdsa_update_available_rewards",
+    payload: unapproved,
+  })
 }
 
 export function* watchWithdrawECDSARewards() {

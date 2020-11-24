@@ -44,6 +44,7 @@ function* observeKeepTokenTransfer() {
           payload: { value, arithmeticOpration },
         })
       }
+      yield fork(ecdsaRewardWithdrawan, { from, to, value })
     } catch (error) {
       console.error(`Failed subscribing to Transfer event`, error)
       contractEventCahnnel.close()
@@ -563,5 +564,21 @@ function* observeTopUpCompletedEvent() {
       console.error(`Failed subscribing to TopUpCompleted event`, error)
       contractEventCahnnel.close()
     }
+  }
+}
+
+function* ecdsaRewardWithdrawan(data) {
+  const { from, to, value } = data
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  const { ECDSARewardsContract } = yield getContractsContext()
+
+  if (
+    isSameEthAddress(from, ECDSARewardsContract.options.address) &&
+    isSameEthAddress(to, defaultAccount)
+  ) {
+    yield put({ type: "rewards/ecdsa_withdrawn", payload: value })
   }
 }
