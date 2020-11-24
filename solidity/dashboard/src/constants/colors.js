@@ -20,4 +20,6 @@ export const colors = {
   grey50: "#818181",
   grey70: "#4C4C4C",
   grey60: "#6D6D6D  ",
+  mint20: "#C8F4E9",
+  mint80: "#12C0A1",
 }

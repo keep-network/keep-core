@@ -22,22 +22,14 @@
         height: @icon-height !important;
     }
 
+    margin: 0 -2rem;
+
     .token-amount-wrapper {
         display: flex;
-        position: relative;
+        align-items: center;
         width: 100%;
-        background-color: @success-bg-light-color;
-        padding: @vertical-padding @horizontal-padding;
-
-        &::before {
-            content: '';
-            position: absolute;
-            width: 1px;
-            height: calc(100% - (@icon-height + @vertical-padding));
-            top: calc(@icon-height + @vertical-padding);
-            left: calc(@horizontal-padding + (@icon-width / 2));
-            .draw-dashed-vertical-line(@color-black);
-        }
+        background-color: @color-green-bg-light;
+        padding: 2.5rem 2rem;
     }
 
     .token-amount-field {
@@ -46,9 +38,18 @@
 
         .form-input {
             margin-bottom: 0.5rem;
+            > label.input__label > .input__label__instruction-text {
+                color: @validation-color;
+            }
         }
         .progress-bar-wrapper {
             margin: 0;
+        }
+
+        .token-amount__progress-bar {
+            // Icon width + margin-right(between left icon and input)
+            width: calc(100% - 32px - 1.5rem);
+            margin-left: calc(32px + 1.5rem);
         }
     }
 
@@ -103,13 +104,13 @@
 
         &::after {
             opacity: 0;
-            .draw-dashed-vertical-line(@color-black);
+            .draw-dashed-vertical-line(@color-mint-80);
         }
 
         &.touched {
             .dashed-line {
                 * {
-                    stroke: @color-black;
+                    stroke: @color-mint-80;
                 }
             }
 
@@ -126,10 +127,10 @@
             .beneficiary-form-icon {
                 circle {
                     fill: @white;
-                    stroke: @color-black !important;
+                    stroke: @color-mint-80 !important;
                 }
                 * {
-                    stroke: @color-black !important;
+                    stroke: @color-mint-80 !important;
                 }
             }
         }
@@ -140,5 +141,9 @@
             height: 100%;
             top: -50%;
         }
+    }
+
+    button[type="submit"].btn {
+        margin: 0 2rem;
     }
 }

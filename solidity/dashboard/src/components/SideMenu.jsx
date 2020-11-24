@@ -1,16 +1,17 @@
-import React, { useContext } from "react"
+import React from "react"
 import { Link, useRouteMatch } from "react-router-dom"
-import { ContractsDataContext } from "./ContractsDataContextProvider"
 import * as Icons from "./Icons"
 
 export const SideMenu = (props) => {
-  const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
-
   return (
     <nav className="side-menu--active">
       <ul className="side-menu__list">
         <NavLink to="/overview" label="overview" icon={<Icons.Home />} />
-        <NavLink to="/tokens" label="tokens" icon={<Icons.FeesVector />} />
+        <NavLink
+          to="/delegation"
+          label="delegation"
+          icon={<Icons.FeesVector />}
+        />
         <NavLink
           exact
           to="/operations"
@@ -29,9 +30,10 @@ export const SideMenu = (props) => {
           label="resources"
           icon={<Icons.Question />}
         />
-        {isKeepTokenContractDeployer && (
+        {/* TODO: display this link if a user is a keep token contract deployer. This is only used in development mode*/}
+        {/* {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
-        )}
+        )} */}
       </ul>
     </nav>
   )
