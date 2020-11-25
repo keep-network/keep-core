@@ -1,3 +1,4 @@
+import moment from "moment"
 import { MANAGED_GRANT_FACTORY_CONTRACT_NAME } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add, gt } from "../utils/arithmetics.utils"
@@ -124,6 +125,12 @@ const getGrantDetails = async (grantId, isManagedGrant = false) => {
     withdrawableAmountGrantOnly,
     ...unlockingSchedule,
     ...grantDetails,
+    cliffPeriod: moment
+      .unix(unlockingSchedule.cliff)
+      .from(moment.unix(unlockingSchedule.start), true),
+    fullyUnlockedDate: moment
+      .unix(unlockingSchedule.start)
+      .add(unlockingSchedule.duration, "seconds"),
   }
 }
 

@@ -1,10 +1,9 @@
 import React, { useMemo } from "react"
+import moment from "moment"
 import { formatDate } from "../utils/general.utils"
 import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import ProgressBar from "./ProgressBar"
-
-import moment from "moment"
 import TokenAmount from "./TokenAmount"
 import {
   displayAmount,
@@ -31,20 +30,6 @@ const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
 }
 
 export const TokenGrantDetails = ({ selectedGrant, availableAmount }) => {
-  const cliffPeriod = useMemo(() => {
-    return selectedGrant.cliff && selectedGrant.start
-      ? moment
-          .unix(selectedGrant.cliff)
-          .from(moment.unix(selectedGrant.start), true)
-      : null
-  }, [selectedGrant.cliff, selectedGrant.start])
-
-  const fullyUnlockedDate = useMemo(() => {
-    return selectedGrant.start && selectedGrant.duration
-      ? moment.unix(selectedGrant.start).add(selectedGrant.duration, "seconds")
-      : null
-  }, [selectedGrant.start, selectedGrant.duration])
-
   const totalAmount = useMemo(() => displayAmount(selectedGrant.amount), [
     selectedGrant.amount,
   ])
@@ -82,16 +67,18 @@ export const TokenGrantDetails = ({ selectedGrant, availableAmount }) => {
           <Icons.Time width={12} height={12} className="time-icon--black" />
           <span className="text-small ml-1">Fully Unlocked</span>
           <span className="text-small ml-a">
-            {fullyUnlockedDate ? formatDate(fullyUnlockedDate) : "No data"}
+            {selectedGrant.fullyUnlockedDate
+              ? formatDate(selectedGrant.fullyUnlockedDate)
+              : "No data"}
           </span>
         </div>
         {/* TODO tooltip */}
-        {cliffPeriod && (
+        {selectedGrant.cliffPeriod && (
           <div
             className="text-caption text-grey-60"
             style={{ marginTop: "0.5rem", marginLeft: "1.75rem" }}
           >
-            {cliffPeriod}&nbsp;cliff
+            {selectedGrant.cliffPeriod}&nbsp;cliff
           </div>
         )}
       </section>
