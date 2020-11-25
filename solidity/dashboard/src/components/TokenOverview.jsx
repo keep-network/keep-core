@@ -161,7 +161,7 @@ const TokenBalance = ({
         {isConnected ? inPercentage : "-"}% Staked
       </span>
       <Link
-        to={{ pathname: "/delegate", hash: type }}
+        to={`/delegation/${type}`}
         className="btn btn-secondary btn-lg mt-2"
         style={{ width: "100%" }}
       >
