@@ -120,7 +120,10 @@ const getGrantDetails = async (grantId, isManagedGrant = false) => {
     unlocked,
     released,
     readyToRelease,
-    availableToStake: add(availableToStake, escrowAvailableTotalAmount),
+    availableToStake: add(
+      availableToStake,
+      escrowAvailableTotalAmount
+    ).toString(),
     escrowOperatorsToWithdraw,
     withdrawableAmountGrantOnly,
     ...unlockingSchedule,
