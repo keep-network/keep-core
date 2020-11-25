@@ -2,7 +2,6 @@ import React from "react"
 import { Link } from "react-router-dom"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"
-import ContractsDataContextProvider from "./components/ContractsDataContextProvider"
 import { Messages } from "./components/Message"
 import { SideMenu } from "./components/SideMenu"
 import { BrowserRouter as Router } from "react-router-dom"
@@ -17,11 +16,9 @@ const App = () => (
     <Messages>
       <Web3ContextProvider>
         <ModalContextProvider>
-          <ContractsDataContextProvider>
-            <Router>
-              <AppLayout />
-            </Router>
-          </ContractsDataContextProvider>
+          <Router>
+            <AppLayout />
+          </Router>
         </ModalContextProvider>
       </Web3ContextProvider>
     </Messages>

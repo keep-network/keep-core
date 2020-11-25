@@ -41,6 +41,10 @@ import { ReactComponent as Wallet } from "../static/svg/wallet.svg"
 import { ReactComponent as MetaMask } from "../static/svg/metamask.svg"
 import { ReactComponent as Trezor } from "../static/svg/trezor.svg"
 import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
+export { ReactComponent as Grant } from "../static/svg/grant.svg"
+export { ReactComponent as Time } from "../static/svg/time.svg"
+export { ReactComponent as Calendar } from "../static/svg/calendar.svg"
+export { ReactComponent as Plus } from "../static/svg/plus.svg"
 
 const Badge = ({ height, width }) => (
   <svg
@@ -113,13 +117,14 @@ Cross.defaultProps = {
   color: "#6D6D6D",
 }
 
-const Tooltip = ({ backgroundColor, color }) => (
+const Tooltip = ({ backgroundColor, color, className }) => (
   <svg
     width="15"
     height="16"
     viewBox="0 0 15 16"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    className={className}
   >
     <path
       fillRule="evenodd"

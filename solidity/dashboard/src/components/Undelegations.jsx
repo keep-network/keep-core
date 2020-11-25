@@ -17,6 +17,7 @@ const Undelegations = ({ undelegations, title }) => {
         title="Undelegations"
         withTooltip={true}
         tooltipProps={{
+          title: "Undelegations",
           text: (
             <>
               <span className="text-bold">Recover</span>
