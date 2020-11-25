@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from "react"
+import { CSSTransition } from "react-transition-group"
+
 import * as Icons from "./Icons"
 
 const Tooltip = ({
@@ -10,6 +12,7 @@ const Tooltip = ({
   icon: IconComponent = Icons.Tooltip,
   simple = false,
   delay = 300,
+  className = "",
 }) => {
   const timeout = useRef(null)
   const [active, setActive] = useState(false)
@@ -23,18 +26,22 @@ const Tooltip = ({
   })
 
   const showTooltip = () => {
-    timeout.current = setTimeout(() => {
-      setActive(true)
-    }, delay)
+    setActive(true)
+    clearTimeout(timeout.current)
   }
 
   const hideTooltip = () => {
-    clearInterval(timeout.current)
-    setActive(false)
+    timeout.current = setTimeout(() => {
+      setActive(false)
+    }, delay)
   }
 
   return (
-    <div className={`tooltip${simple ? "--simple" : ""}--${direction}`}>
+    <div
+      className={`tooltip${
+        simple ? "--simple" : ""
+      }--${direction} ${className}`}
+    >
       <div
         className="tooltip__trigger"
         onMouseEnter={showTooltip}
@@ -42,10 +49,17 @@ const Tooltip = ({
       >
         <TriggerComponent />
       </div>
-      {active && (
+      <CSSTransition
+        in={active}
+        timeout={delay}
+        classNames="tooltip__content-wrapper"
+        unmountOnExit
+        onEnter={showTooltip}
+        onExited={hideTooltip}
+      >
         <div
           className="tooltip__content-wrapper"
-          onMouseEnter={() => setActive(true)}
+          onMouseEnter={showTooltip}
           onMouseLeave={hideTooltip}
         >
           {children ? (
@@ -58,7 +72,7 @@ const Tooltip = ({
             </>
           )}
         </div>
-      )}
+      </CSSTransition>
     </div>
   )
 }

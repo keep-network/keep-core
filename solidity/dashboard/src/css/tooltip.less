@@ -29,12 +29,28 @@
                 margin-left: -@tooltip-arrow-size;
 
             }
+
+            &-enter {
+                opacity: .01;
+                &-active {
+                    opacity: 1;
+                    transition: opacity 0.25s;
+                }
+            }
+            
+            //exit animation
+            &-exit {
+                &-active {
+                    opacity: 0;
+                    transition: opacity 0.5s;
+                }
+            }
         }
     }
 
     &--top {
         .tooltip__content-wrapper {
-            top: calc(-100% - @tooltip-arrow-size);
+            bottom: calc(100% + @tooltip-arrow-size);
             &::after {
                 top: 100%;
                 border-bottom: none;
