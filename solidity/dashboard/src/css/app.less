@@ -52,6 +52,13 @@ html {
 
 html, body, #root {
   height: 100vh;
+  width: 100vw;
+
+  display: grid;
+  grid-template-columns: @side-menu-width 1fr;
+  grid-template-areas:
+    "side-bar content"
+    "footer content";
 }
 
 ul {
@@ -60,41 +67,52 @@ ul {
 }
 
 // TODO: apply a mobile-first approach when the mobile views are ready.
-.app-layout {
-  display: grid;
-  grid-template-columns: @side-menu-width 1fr;
+#root {
+  overflow: hidden;
 
-  &__left {
-    position: sticky;
-    top: 0;
-    height: 100vh;
+  .app__header {
+    grid-area: side-bar;
     display: flex;
     flex-direction: column;
-    z-index: 12;
     background: @side-menu-color;
     border-right: 1px solid @color-grey-30;
     overflow-x: hidden;
     transition: 0.5s ease;
 
     .app-logo {
-      margin: 1.5rem 1rem 2.75rem;
+      padding: 1.5rem 1rem 2.75rem;
     }
-
-    footer {
-      margin: auto 1.5rem 1.5rem;
-  }
   }
 
-  &__center {
+  .app__content {
+    grid-area: content;
+    overflow-x: scroll;
+
     background-color: @color-grey-20;
 
-    main {
-      margin-left: auto;
-      margin-right: auto;
-      margin-bottom: 5rem;
-      padding: 1rem;
-      padding-top: 2.5rem;
-    }
+      .header {
+        position: sticky;
+        top: 0;
+      }
+
+      main {
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 5rem;
+        padding: 1rem;
+        padding-top: 2.5rem;
+      }
+  }
+
+  .app__footer {
+    grid-area: footer;
+    background: @side-menu-color;
+    border-right: 1px solid @color-grey-30;
+    padding: 1.5rem 1.5rem;
+    // Push footer content to the bottom.
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
   }
 }
 
@@ -106,7 +124,7 @@ ul {
   //   ul {
   //     margin: 0 2rem;
   //   }
-  
+
   //   .signature {
   //     margin: 0;
   //     margin-left: auto;
@@ -152,8 +170,8 @@ ul {
 
 
 
-  .app-layout {
-    &__center {
+  #root {
+    .app__content {
       main {
         max-width: 1400px;
       }
@@ -192,7 +210,7 @@ ul {
     visibility: visible;
     z-index: 10;
     overflow-x: visible;
-    
+
     ul > .account-address, .web3 {
       visibility: hidden;
     }

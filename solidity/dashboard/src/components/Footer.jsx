@@ -9,9 +9,9 @@ const links = [
   },
 ]
 
-const Footer = () => {
+const Footer = ({ className }) => {
   return (
-    <footer className="footer">
+    <footer className={`footer ${className}`}>
       <ul className="footer__links">{links.map(renderFooterLinkItem)}</ul>
       <div className="footer__signature">
         <p>A Thesis* Build</p>
