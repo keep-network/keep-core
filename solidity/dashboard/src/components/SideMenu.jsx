@@ -24,12 +24,7 @@ export const SideMenu = (props) => {
           label="applications"
           icon={<Icons.Authorize />}
         />
-        <NavLink
-          exact
-          to="/resources"
-          label="resources"
-          icon={<Icons.Question />}
-        />
+        <NavLink to="/resources" label="resources" icon={<Icons.Question />} />
         {/* TODO: display this link if a user is a keep token contract deployer. This is only used in development mode*/}
         {/* {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
