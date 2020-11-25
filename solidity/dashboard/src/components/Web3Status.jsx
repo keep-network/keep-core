@@ -1,10 +1,12 @@
 import React from "react"
+import { useSelector } from "react-redux"
 import { useWeb3Context } from "./WithWeb3Context"
 import { NetworkStatus } from "./NetworkStatus"
 import * as Icons from "./Icons"
 import { shortenAddress } from "../utils/general.utils"
 import WalletOptions from "./WalletOptions"
 import CopyToClipboard from "./CopyToClipboard"
+import { displayAmount } from "../utils/token.utils"
 
 export const Web3Status = () => {
   const { yourAddress, provider } = useWeb3Context()
@@ -35,6 +37,7 @@ export const Web3Status = () => {
 
 const WalletMenu = () => {
   const { yourAddress, disconnect } = useWeb3Context()
+  const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
   return (
     <>
       <CopyToClipboard
@@ -55,8 +58,11 @@ const WalletMenu = () => {
         }}
       />
       <hr className="wallet__menu__divider" />
-      {/* TODO: here display keep balance */}
-      <div className="wallet__menu__balance">1,000 KEEP</div>
+      <div className="wallet__menu__balance">
+        {keepTokenBalance.isFetching
+          ? "loading KEEP balance..."
+          : `${displayAmount(keepTokenBalance.value)} KEEP`}
+      </div>
       <div className="wallet__menu__disconnect" onClick={disconnect}>
         Disconnect
       </div>
