@@ -1,15 +1,10 @@
 import React, { useEffect, useState, useRef } from "react"
 import { CSSTransition } from "react-transition-group"
 
-import * as Icons from "./Icons"
-
 const Tooltip = ({
   triggerComponent: TriggerComponent,
-  title,
-  content,
   children,
   direction = "bottom",
-  icon: IconComponent = Icons.Tooltip,
   simple = false,
   delay = 300,
   className = "",
@@ -62,15 +57,7 @@ const Tooltip = ({
           onMouseEnter={showTooltip}
           onMouseLeave={hideTooltip}
         >
-          {children ? (
-            children
-          ) : (
-            <>
-              <Tooltip.Header text={title} icon={IconComponent} />
-              <Tooltip.Divider />
-              <Tooltip.Content>{content}</Tooltip.Content>
-            </>
-          )}
+          {children}
         </div>
       </CSSTransition>
     </div>
