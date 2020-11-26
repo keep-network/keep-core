@@ -93,7 +93,11 @@ const DelegationHeader = ({ type, selectedGrant }) => {
         <header className="flex row center mb-2">
           <h2 className="h2--alt text-grey-60">Grant Activity</h2>
           <div className="flex row center ml-a">
-            <Tag IconComponent={Icons.Grant} text="Grant ID" />
+            <Tag
+              IconComponent={Icons.Grant}
+              text="Grant ID"
+              className="grant-id-tag"
+            />
             <span className="ml-1 mr-2">
               {selectedGrant && selectedGrant.id}
             </span>
