@@ -9,6 +9,7 @@ import {
   displayAmount,
   displayAmountWithMetricSuffix,
 } from "../utils/token.utils"
+import { sub, gt } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
@@ -136,11 +137,16 @@ export const TokenGrantWithdrawnTokensDetails = ({
   selectedGrant,
   onWithdrawnBtn,
 }) => {
+  const withdrawable =
+    selectedGrant && selectedGrant.unlocked && selectedGrant.staked
+      ? sub(selectedGrant.unlocked, selectedGrant.staked)
+      : 0
+
   return (
     <>
       <ProgressBar
         value={selectedGrant.released || 0}
-        total={selectedGrant.amount || 0}
+        total={withdrawable || 0}
         color={colors.secondary}
         bgColor={colors.bgSecondary}
       >
@@ -154,6 +160,7 @@ export const TokenGrantWithdrawnTokensDetails = ({
       <SubmitButton
         className="btn btn-secondary btn-sm mt-2"
         onSubmitAction={onWithdrawnBtn}
+        disabled={gt(withdrawable, 0)}
       >
         withdraw tokens
       </SubmitButton>
