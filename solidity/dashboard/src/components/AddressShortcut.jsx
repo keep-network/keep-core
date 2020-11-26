@@ -13,6 +13,7 @@ const AddressShortcut = ({ address, classNames }) => {
         return (
           <Tooltip
             simple
+            delay={0}
             triggerComponent={() => {
               return (
                 <button
