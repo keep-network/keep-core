@@ -29,22 +29,6 @@
                 margin-left: -@tooltip-arrow-size;
 
             }
-
-            &-enter {
-                opacity: .01;
-                &-active {
-                    opacity: 1;
-                    transition: opacity 0.25s;
-                }
-            }
-            
-            //exit animation
-            &-exit {
-                &-active {
-                    opacity: 0;
-                    transition: opacity 0.5s;
-                }
-            }
         }
     }
 
@@ -71,6 +55,22 @@
                 border-radius: 3px;
                 padding: 1.5rem;
                 width: 250px;
+
+                &-enter {
+                    opacity: .01;
+                    &-active {
+                        opacity: 1;
+                        transition: opacity 0.25s;
+                    }
+                }
+                
+                //exit animation
+                &-exit {
+                    &-active {
+                        opacity: 0;
+                        transition: opacity 0.5s;
+                    }
+                }
             }
         
             &__divider {
@@ -116,5 +116,11 @@
                 cursor: pointer;
             }
         }
+    }
+}
+
+.tooltip--simple--bottom.token-amount-tooltip {
+    .tooltip__content-wrapper {
+        left: calc(64px + 2rem);
     }
 }
