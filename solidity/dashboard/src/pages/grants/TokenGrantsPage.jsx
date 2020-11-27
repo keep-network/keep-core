@@ -28,6 +28,7 @@ import {
 } from "../../contracts"
 import { getWsUrl } from "../../connectors/utils"
 import { Web3Context } from "../../components/WithWeb3Context"
+import { GrantedTokensPage } from "../delegation/GrantedTokensPage"
 
 const TokenGrantsPage = (props) => {
   const dispatch = useDispatch()
@@ -77,7 +78,7 @@ const TokenGrantOverview = React.memo(({ tokenGrant }) => {
           <h3 className="text-grey-70">Grant Amount</h3>
           <Link
             to={{
-              pathname: "/delegation/grant",
+              pathname: GrantedTokensPage.route.path,
               hash: `${tokenGrant.id}`,
             }}
             className="btn btn-secondary btn-sm"
