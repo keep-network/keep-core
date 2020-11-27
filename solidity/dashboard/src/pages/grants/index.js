@@ -11,7 +11,7 @@ TokenGrantsPage.route = {
 
 TokenGrantPreviewPage.route = {
   title: "Token Grants",
-  path: "/token-grants-preview/:grantId",
+  path: "/grant/:grantId",
   exact: true,
 }
 
