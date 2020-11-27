@@ -10,6 +10,7 @@ import StakeDropChart from "../../components/StakeDropChart"
 import { useWeb3Context } from "../../components/WithWeb3Context"
 import { TokenAmountSkeleton } from "../../components/skeletons"
 import EmptyStatePage from "./EmptyStatePage"
+import { gt } from "../../utils/arithmetics.utils"
 
 const RewardsOverviewPage = () => {
   const dispatch = useDispatch()
@@ -102,6 +103,7 @@ const Balance = ({
         <SubmitButton
           onSubmitAction={onWithdrawAll}
           className="btn btn-primary btn-lg mt-2"
+          disabled={!gt(rewardsBalance, 0)}
         >
           withdraw all
         </SubmitButton>
