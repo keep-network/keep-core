@@ -1,6 +1,7 @@
 package config
 
 import (
+	"math/big"
 	"os"
 	"reflect"
 	"testing"
@@ -43,6 +44,14 @@ func TestReadConfig(t *testing.T) {
 		"Storage.DataDir": {
 			readValueFunc: func(c *Config) interface{} { return c.Storage.DataDir },
 			expectedValue: "/my/secure/location",
+		},
+		"Ethereum.MaxGasPrice": {
+			readValueFunc: func(c *Config) interface{} { return c.Ethereum.MaxGasPrice.Int },
+			expectedValue: big.NewInt(140000000000),
+		},
+		"Ethereum.BalanceAlertThreshold": {
+			readValueFunc: func(c *Config) interface{} { return c.Ethereum.BalanceAlertThreshold.Int },
+			expectedValue: big.NewInt(2500000000000000000),
 		},
 	}
 

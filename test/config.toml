@@ -3,8 +3,10 @@
 # Provider Initialization Example
 
 [ethereum]
-	URL                = "ws://192.168.0.158:8546"
-	URLRPC             = "http://192.168.0.158:8545"
+	URL                     = "ws://192.168.0.158:8546"
+	URLRPC                  = "http://192.168.0.158:8545"
+	MaxGasPrice             = "140 Gwei"
+	BalanceAlertThreshold   = "2.5 ether"
 
 [ethereum.account]
 	Address            = "0xc2a56884538778bacd91aa5bf343bf882c5fb18b"

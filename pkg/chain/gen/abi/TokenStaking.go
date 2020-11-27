@@ -28,7 +28,7 @@ var (
 )
 
 // TokenStakingABI is the input ABI used to generate the binding from.
-const TokenStakingABI = "[{\"inputs\":[{\"internalType\":\"contractERC20Burnable\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"contractTokenGrant\",\"name\":\"_tokenGrant\",\"type\":\"address\"},{\"internalType\":\"contractTokenStakingEscrow\",\"name\":\"_escrow\",\"type\":\"address\"},{\"internalType\":\"contractKeepRegistry\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_initializationPeriod\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"lockCreator\",\"type\":\"address\"}],\"name\":\"ExpiredLockReleased\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"lockCreator\",\"type\":\"address\"}],\"name\":\"LockReleased\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"RecoveredStake\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"lockCreator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"StakeLocked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"StakeOwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"authorizer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"Staked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TokensSeized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TokensSlashed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newAmount\",\"type\":\"uint256\"}],\"name\":\"TopUpCompleted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"topUp\",\"type\":\"uint256\"}],\"name\":\"TopUpInitiated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"undelegatedAt\",\"type\":\"uint256\"}],\"name\":\"Undelegated\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"activeStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"authorizeOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"authorizerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"beneficiaryOf\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"cancelStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"delegatedAuthoritySource\",\"type\":\"address\"}],\"name\":\"claimDelegatedAuthority\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"commitTopUp\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"eligibleStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"getAuthoritySource\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"getDelegationInfo\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"createdAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"undelegatedAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getLocks\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"creators\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"expirations\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"staker\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"hasMinimumStake\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"initializationPeriod\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"isApprovedOperatorContract\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"isAuthorizedForOperator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isStakeLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"lockStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minimumStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minimumStakeScheduleStart\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"operatorsOf\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"recoverStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"releaseExpiredLock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToSeize\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardMultiplier\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"tattletale\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"misbehavedOperators\",\"type\":\"address[]\"}],\"name\":\"seize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToSlash\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"misbehavedOperators\",\"type\":\"address[]\"}],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferStakeOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"undelegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_undelegationTimestamp\",\"type\":\"uint256\"}],\"name\":\"undelegateAt\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"undelegationPeriod\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"unlockStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+const TokenStakingABI = "[{\"inputs\":[{\"internalType\":\"contractERC20Burnable\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"contractTokenGrant\",\"name\":\"_tokenGrant\",\"type\":\"address\"},{\"internalType\":\"contractTokenStakingEscrow\",\"name\":\"_escrow\",\"type\":\"address\"},{\"internalType\":\"contractKeepRegistry\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_initializationPeriod\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"lockCreator\",\"type\":\"address\"}],\"name\":\"ExpiredLockReleased\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"lockCreator\",\"type\":\"address\"}],\"name\":\"LockReleased\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"beneficiary\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"authorizer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"}],\"name\":\"OperatorStaked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"RecoveredStake\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"StakeDelegated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"lockCreator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"until\",\"type\":\"uint256\"}],\"name\":\"StakeLocked\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"StakeOwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TokensSeized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"TokensSlashed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"newAmount\",\"type\":\"uint256\"}],\"name\":\"TopUpCompleted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"topUp\",\"type\":\"uint256\"}],\"name\":\"TopUpInitiated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"undelegatedAt\",\"type\":\"uint256\"}],\"name\":\"Undelegated\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"activeStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"authorizeOperatorContract\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"authorizerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"beneficiaryOf\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"cancelStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"delegatedAuthoritySource\",\"type\":\"address\"}],\"name\":\"claimDelegatedAuthority\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"commitTopUp\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"deployedAt\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"eligibleStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"getAuthoritySource\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"getDelegationInfo\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"createdAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"undelegatedAt\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getLocks\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"creators\",\"type\":\"address[]\"},{\"internalType\":\"uint256[]\",\"name\":\"expirations\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"staker\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"hasMinimumStake\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"initializationPeriod\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"isApprovedOperatorContract\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_operatorContract\",\"type\":\"address\"}],\"name\":\"isAuthorizedForOperator\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"isStakeLocked\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"lockStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"minimumStake\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"_extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"recoverStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"operatorContract\",\"type\":\"address\"}],\"name\":\"releaseExpiredLock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToSeize\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"rewardMultiplier\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"tattletale\",\"type\":\"address\"},{\"internalType\":\"address[]\",\"name\":\"misbehavedOperators\",\"type\":\"address[]\"}],\"name\":\"seize\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountToSlash\",\"type\":\"uint256\"},{\"internalType\":\"address[]\",\"name\":\"misbehavedOperators\",\"type\":\"address[]\"}],\"name\":\"slash\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferStakeOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"undelegate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_undelegationTimestamp\",\"type\":\"uint256\"}],\"name\":\"undelegateAt\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"undelegationPeriod\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"unlockStake\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
 
 // TokenStaking is an auto generated Go binding around an Ethereum contract.
 type TokenStaking struct {
@@ -274,6 +274,32 @@ func (_TokenStaking *TokenStakingSession) BeneficiaryOf(_operator common.Address
 // Solidity: function beneficiaryOf(address _operator) constant returns(address)
 func (_TokenStaking *TokenStakingCallerSession) BeneficiaryOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.BeneficiaryOf(&_TokenStaking.CallOpts, _operator)
+}
+
+// DeployedAt is a free data retrieval call binding the contract method 0xeae4c19f.
+//
+// Solidity: function deployedAt() constant returns(uint256)
+func (_TokenStaking *TokenStakingCaller) DeployedAt(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _TokenStaking.contract.Call(opts, out, "deployedAt")
+	return *ret0, err
+}
+
+// DeployedAt is a free data retrieval call binding the contract method 0xeae4c19f.
+//
+// Solidity: function deployedAt() constant returns(uint256)
+func (_TokenStaking *TokenStakingSession) DeployedAt() (*big.Int, error) {
+	return _TokenStaking.Contract.DeployedAt(&_TokenStaking.CallOpts)
+}
+
+// DeployedAt is a free data retrieval call binding the contract method 0xeae4c19f.
+//
+// Solidity: function deployedAt() constant returns(uint256)
+func (_TokenStaking *TokenStakingCallerSession) DeployedAt() (*big.Int, error) {
+	return _TokenStaking.Contract.DeployedAt(&_TokenStaking.CallOpts)
 }
 
 // EligibleStake is a free data retrieval call binding the contract method 0xafff33ef.
@@ -558,58 +584,6 @@ func (_TokenStaking *TokenStakingSession) MinimumStake() (*big.Int, error) {
 // Solidity: function minimumStake() constant returns(uint256)
 func (_TokenStaking *TokenStakingCallerSession) MinimumStake() (*big.Int, error) {
 	return _TokenStaking.Contract.MinimumStake(&_TokenStaking.CallOpts)
-}
-
-// MinimumStakeScheduleStart is a free data retrieval call binding the contract method 0xcdc3e90a.
-//
-// Solidity: function minimumStakeScheduleStart() constant returns(uint256)
-func (_TokenStaking *TokenStakingCaller) MinimumStakeScheduleStart(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "minimumStakeScheduleStart")
-	return *ret0, err
-}
-
-// MinimumStakeScheduleStart is a free data retrieval call binding the contract method 0xcdc3e90a.
-//
-// Solidity: function minimumStakeScheduleStart() constant returns(uint256)
-func (_TokenStaking *TokenStakingSession) MinimumStakeScheduleStart() (*big.Int, error) {
-	return _TokenStaking.Contract.MinimumStakeScheduleStart(&_TokenStaking.CallOpts)
-}
-
-// MinimumStakeScheduleStart is a free data retrieval call binding the contract method 0xcdc3e90a.
-//
-// Solidity: function minimumStakeScheduleStart() constant returns(uint256)
-func (_TokenStaking *TokenStakingCallerSession) MinimumStakeScheduleStart() (*big.Int, error) {
-	return _TokenStaking.Contract.MinimumStakeScheduleStart(&_TokenStaking.CallOpts)
-}
-
-// OperatorsOf is a free data retrieval call binding the contract method 0xb534fbb6.
-//
-// Solidity: function operatorsOf(address _address) constant returns(address[])
-func (_TokenStaking *TokenStakingCaller) OperatorsOf(opts *bind.CallOpts, _address common.Address) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "operatorsOf", _address)
-	return *ret0, err
-}
-
-// OperatorsOf is a free data retrieval call binding the contract method 0xb534fbb6.
-//
-// Solidity: function operatorsOf(address _address) constant returns(address[])
-func (_TokenStaking *TokenStakingSession) OperatorsOf(_address common.Address) ([]common.Address, error) {
-	return _TokenStaking.Contract.OperatorsOf(&_TokenStaking.CallOpts, _address)
-}
-
-// OperatorsOf is a free data retrieval call binding the contract method 0xb534fbb6.
-//
-// Solidity: function operatorsOf(address _address) constant returns(address[])
-func (_TokenStaking *TokenStakingCallerSession) OperatorsOf(_address common.Address) ([]common.Address, error) {
-	return _TokenStaking.Contract.OperatorsOf(&_TokenStaking.CallOpts, _address)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
@@ -1246,6 +1220,168 @@ func (_TokenStaking *TokenStakingFilterer) ParseLockReleased(log types.Log) (*To
 	return event, nil
 }
 
+// TokenStakingOperatorStakedIterator is returned from FilterOperatorStaked and is used to iterate over the raw logs and unpacked data for OperatorStaked events raised by the TokenStaking contract.
+type TokenStakingOperatorStakedIterator struct {
+	Event *TokenStakingOperatorStaked // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *TokenStakingOperatorStakedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(TokenStakingOperatorStaked)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(TokenStakingOperatorStaked)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *TokenStakingOperatorStakedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *TokenStakingOperatorStakedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// TokenStakingOperatorStaked represents a OperatorStaked event raised by the TokenStaking contract.
+type TokenStakingOperatorStaked struct {
+	Operator    common.Address
+	Beneficiary common.Address
+	Authorizer  common.Address
+	Value       *big.Int
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterOperatorStaked is a free log retrieval operation binding the contract event 0x175a298cbf37645403c82164f78783abb2869a97657c362fe979817d3184cc51.
+//
+// Solidity: event OperatorStaked(address indexed operator, address indexed beneficiary, address indexed authorizer, uint256 value)
+func (_TokenStaking *TokenStakingFilterer) FilterOperatorStaked(opts *bind.FilterOpts, operator []common.Address, beneficiary []common.Address, authorizer []common.Address) (*TokenStakingOperatorStakedIterator, error) {
+
+	var operatorRule []interface{}
+	for _, operatorItem := range operator {
+		operatorRule = append(operatorRule, operatorItem)
+	}
+	var beneficiaryRule []interface{}
+	for _, beneficiaryItem := range beneficiary {
+		beneficiaryRule = append(beneficiaryRule, beneficiaryItem)
+	}
+	var authorizerRule []interface{}
+	for _, authorizerItem := range authorizer {
+		authorizerRule = append(authorizerRule, authorizerItem)
+	}
+
+	logs, sub, err := _TokenStaking.contract.FilterLogs(opts, "OperatorStaked", operatorRule, beneficiaryRule, authorizerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &TokenStakingOperatorStakedIterator{contract: _TokenStaking.contract, event: "OperatorStaked", logs: logs, sub: sub}, nil
+}
+
+// WatchOperatorStaked is a free log subscription operation binding the contract event 0x175a298cbf37645403c82164f78783abb2869a97657c362fe979817d3184cc51.
+//
+// Solidity: event OperatorStaked(address indexed operator, address indexed beneficiary, address indexed authorizer, uint256 value)
+func (_TokenStaking *TokenStakingFilterer) WatchOperatorStaked(opts *bind.WatchOpts, sink chan<- *TokenStakingOperatorStaked, operator []common.Address, beneficiary []common.Address, authorizer []common.Address) (event.Subscription, error) {
+
+	var operatorRule []interface{}
+	for _, operatorItem := range operator {
+		operatorRule = append(operatorRule, operatorItem)
+	}
+	var beneficiaryRule []interface{}
+	for _, beneficiaryItem := range beneficiary {
+		beneficiaryRule = append(beneficiaryRule, beneficiaryItem)
+	}
+	var authorizerRule []interface{}
+	for _, authorizerItem := range authorizer {
+		authorizerRule = append(authorizerRule, authorizerItem)
+	}
+
+	logs, sub, err := _TokenStaking.contract.WatchLogs(opts, "OperatorStaked", operatorRule, beneficiaryRule, authorizerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(TokenStakingOperatorStaked)
+				if err := _TokenStaking.contract.UnpackLog(event, "OperatorStaked", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseOperatorStaked is a log parse operation binding the contract event 0x175a298cbf37645403c82164f78783abb2869a97657c362fe979817d3184cc51.
+//
+// Solidity: event OperatorStaked(address indexed operator, address indexed beneficiary, address indexed authorizer, uint256 value)
+func (_TokenStaking *TokenStakingFilterer) ParseOperatorStaked(log types.Log) (*TokenStakingOperatorStaked, error) {
+	event := new(TokenStakingOperatorStaked)
+	if err := _TokenStaking.contract.UnpackLog(event, "OperatorStaked", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
 // TokenStakingRecoveredStakeIterator is returned from FilterRecoveredStake and is used to iterate over the raw logs and unpacked data for RecoveredStake events raised by the TokenStaking contract.
 type TokenStakingRecoveredStakeIterator struct {
 	Event *TokenStakingRecoveredStake // Event containing the contract specifics and raw log
@@ -1374,6 +1510,158 @@ func (_TokenStaking *TokenStakingFilterer) WatchRecoveredStake(opts *bind.WatchO
 func (_TokenStaking *TokenStakingFilterer) ParseRecoveredStake(log types.Log) (*TokenStakingRecoveredStake, error) {
 	event := new(TokenStakingRecoveredStake)
 	if err := _TokenStaking.contract.UnpackLog(event, "RecoveredStake", log); err != nil {
+		return nil, err
+	}
+	return event, nil
+}
+
+// TokenStakingStakeDelegatedIterator is returned from FilterStakeDelegated and is used to iterate over the raw logs and unpacked data for StakeDelegated events raised by the TokenStaking contract.
+type TokenStakingStakeDelegatedIterator struct {
+	Event *TokenStakingStakeDelegated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *TokenStakingStakeDelegatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(TokenStakingStakeDelegated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(TokenStakingStakeDelegated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *TokenStakingStakeDelegatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *TokenStakingStakeDelegatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// TokenStakingStakeDelegated represents a StakeDelegated event raised by the TokenStaking contract.
+type TokenStakingStakeDelegated struct {
+	Owner    common.Address
+	Operator common.Address
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterStakeDelegated is a free log retrieval operation binding the contract event 0x83455714d30de40b1396056e44480074130d2ac0a2a7bd7cb1dfcd6d619e1724.
+//
+// Solidity: event StakeDelegated(address indexed owner, address indexed operator)
+func (_TokenStaking *TokenStakingFilterer) FilterStakeDelegated(opts *bind.FilterOpts, owner []common.Address, operator []common.Address) (*TokenStakingStakeDelegatedIterator, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var operatorRule []interface{}
+	for _, operatorItem := range operator {
+		operatorRule = append(operatorRule, operatorItem)
+	}
+
+	logs, sub, err := _TokenStaking.contract.FilterLogs(opts, "StakeDelegated", ownerRule, operatorRule)
+	if err != nil {
+		return nil, err
+	}
+	return &TokenStakingStakeDelegatedIterator{contract: _TokenStaking.contract, event: "StakeDelegated", logs: logs, sub: sub}, nil
+}
+
+// WatchStakeDelegated is a free log subscription operation binding the contract event 0x83455714d30de40b1396056e44480074130d2ac0a2a7bd7cb1dfcd6d619e1724.
+//
+// Solidity: event StakeDelegated(address indexed owner, address indexed operator)
+func (_TokenStaking *TokenStakingFilterer) WatchStakeDelegated(opts *bind.WatchOpts, sink chan<- *TokenStakingStakeDelegated, owner []common.Address, operator []common.Address) (event.Subscription, error) {
+
+	var ownerRule []interface{}
+	for _, ownerItem := range owner {
+		ownerRule = append(ownerRule, ownerItem)
+	}
+	var operatorRule []interface{}
+	for _, operatorItem := range operator {
+		operatorRule = append(operatorRule, operatorItem)
+	}
+
+	logs, sub, err := _TokenStaking.contract.WatchLogs(opts, "StakeDelegated", ownerRule, operatorRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(TokenStakingStakeDelegated)
+				if err := _TokenStaking.contract.UnpackLog(event, "StakeDelegated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseStakeDelegated is a log parse operation binding the contract event 0x83455714d30de40b1396056e44480074130d2ac0a2a7bd7cb1dfcd6d619e1724.
+//
+// Solidity: event StakeDelegated(address indexed owner, address indexed operator)
+func (_TokenStaking *TokenStakingFilterer) ParseStakeDelegated(log types.Log) (*TokenStakingStakeDelegated, error) {
+	event := new(TokenStakingStakeDelegated)
+	if err := _TokenStaking.contract.UnpackLog(event, "StakeDelegated", log); err != nil {
 		return nil, err
 	}
 	return event, nil
@@ -1600,15 +1888,19 @@ type TokenStakingStakeOwnershipTransferred struct {
 
 // FilterStakeOwnershipTransferred is a free log retrieval operation binding the contract event 0x53c9cc0a3dd0a95beb5f7bf6f604aecacd38455e718ebce597fb058856166fef.
 //
-// Solidity: event StakeOwnershipTransferred(address indexed operator, address newOwner)
-func (_TokenStaking *TokenStakingFilterer) FilterStakeOwnershipTransferred(opts *bind.FilterOpts, operator []common.Address) (*TokenStakingStakeOwnershipTransferredIterator, error) {
+// Solidity: event StakeOwnershipTransferred(address indexed operator, address indexed newOwner)
+func (_TokenStaking *TokenStakingFilterer) FilterStakeOwnershipTransferred(opts *bind.FilterOpts, operator []common.Address, newOwner []common.Address) (*TokenStakingStakeOwnershipTransferredIterator, error) {
 
 	var operatorRule []interface{}
 	for _, operatorItem := range operator {
 		operatorRule = append(operatorRule, operatorItem)
 	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
 
-	logs, sub, err := _TokenStaking.contract.FilterLogs(opts, "StakeOwnershipTransferred", operatorRule)
+	logs, sub, err := _TokenStaking.contract.FilterLogs(opts, "StakeOwnershipTransferred", operatorRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1617,15 +1909,19 @@ func (_TokenStaking *TokenStakingFilterer) FilterStakeOwnershipTransferred(opts 
 
 // WatchStakeOwnershipTransferred is a free log subscription operation binding the contract event 0x53c9cc0a3dd0a95beb5f7bf6f604aecacd38455e718ebce597fb058856166fef.
 //
-// Solidity: event StakeOwnershipTransferred(address indexed operator, address newOwner)
-func (_TokenStaking *TokenStakingFilterer) WatchStakeOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *TokenStakingStakeOwnershipTransferred, operator []common.Address) (event.Subscription, error) {
+// Solidity: event StakeOwnershipTransferred(address indexed operator, address indexed newOwner)
+func (_TokenStaking *TokenStakingFilterer) WatchStakeOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *TokenStakingStakeOwnershipTransferred, operator []common.Address, newOwner []common.Address) (event.Subscription, error) {
 
 	var operatorRule []interface{}
 	for _, operatorItem := range operator {
 		operatorRule = append(operatorRule, operatorItem)
 	}
+	var newOwnerRule []interface{}
+	for _, newOwnerItem := range newOwner {
+		newOwnerRule = append(newOwnerRule, newOwnerItem)
+	}
 
-	logs, sub, err := _TokenStaking.contract.WatchLogs(opts, "StakeOwnershipTransferred", operatorRule)
+	logs, sub, err := _TokenStaking.contract.WatchLogs(opts, "StakeOwnershipTransferred", operatorRule, newOwnerRule)
 	if err != nil {
 		return nil, err
 	}
@@ -1659,173 +1955,10 @@ func (_TokenStaking *TokenStakingFilterer) WatchStakeOwnershipTransferred(opts *
 
 // ParseStakeOwnershipTransferred is a log parse operation binding the contract event 0x53c9cc0a3dd0a95beb5f7bf6f604aecacd38455e718ebce597fb058856166fef.
 //
-// Solidity: event StakeOwnershipTransferred(address indexed operator, address newOwner)
+// Solidity: event StakeOwnershipTransferred(address indexed operator, address indexed newOwner)
 func (_TokenStaking *TokenStakingFilterer) ParseStakeOwnershipTransferred(log types.Log) (*TokenStakingStakeOwnershipTransferred, error) {
 	event := new(TokenStakingStakeOwnershipTransferred)
 	if err := _TokenStaking.contract.UnpackLog(event, "StakeOwnershipTransferred", log); err != nil {
-		return nil, err
-	}
-	return event, nil
-}
-
-// TokenStakingStakedIterator is returned from FilterStaked and is used to iterate over the raw logs and unpacked data for Staked events raised by the TokenStaking contract.
-type TokenStakingStakedIterator struct {
-	Event *TokenStakingStaked // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *TokenStakingStakedIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(TokenStakingStaked)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(TokenStakingStaked)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *TokenStakingStakedIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *TokenStakingStakedIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// TokenStakingStaked represents a Staked event raised by the TokenStaking contract.
-type TokenStakingStaked struct {
-	Owner       common.Address
-	Operator    common.Address
-	Beneficiary common.Address
-	Authorizer  common.Address
-	Value       *big.Int
-	Raw         types.Log // Blockchain specific contextual infos
-}
-
-// FilterStaked is a free log retrieval operation binding the contract event 0x427fc60293495dcf555864076ec1f4acf2bf7ac2e405bc5ebcb94eea087b41c7.
-//
-// Solidity: event Staked(address owner, address indexed operator, address indexed beneficiary, address indexed authorizer, uint256 value)
-func (_TokenStaking *TokenStakingFilterer) FilterStaked(opts *bind.FilterOpts, operator []common.Address, beneficiary []common.Address, authorizer []common.Address) (*TokenStakingStakedIterator, error) {
-
-	var operatorRule []interface{}
-	for _, operatorItem := range operator {
-		operatorRule = append(operatorRule, operatorItem)
-	}
-	var beneficiaryRule []interface{}
-	for _, beneficiaryItem := range beneficiary {
-		beneficiaryRule = append(beneficiaryRule, beneficiaryItem)
-	}
-	var authorizerRule []interface{}
-	for _, authorizerItem := range authorizer {
-		authorizerRule = append(authorizerRule, authorizerItem)
-	}
-
-	logs, sub, err := _TokenStaking.contract.FilterLogs(opts, "Staked", operatorRule, beneficiaryRule, authorizerRule)
-	if err != nil {
-		return nil, err
-	}
-	return &TokenStakingStakedIterator{contract: _TokenStaking.contract, event: "Staked", logs: logs, sub: sub}, nil
-}
-
-// WatchStaked is a free log subscription operation binding the contract event 0x427fc60293495dcf555864076ec1f4acf2bf7ac2e405bc5ebcb94eea087b41c7.
-//
-// Solidity: event Staked(address owner, address indexed operator, address indexed beneficiary, address indexed authorizer, uint256 value)
-func (_TokenStaking *TokenStakingFilterer) WatchStaked(opts *bind.WatchOpts, sink chan<- *TokenStakingStaked, operator []common.Address, beneficiary []common.Address, authorizer []common.Address) (event.Subscription, error) {
-
-	var operatorRule []interface{}
-	for _, operatorItem := range operator {
-		operatorRule = append(operatorRule, operatorItem)
-	}
-	var beneficiaryRule []interface{}
-	for _, beneficiaryItem := range beneficiary {
-		beneficiaryRule = append(beneficiaryRule, beneficiaryItem)
-	}
-	var authorizerRule []interface{}
-	for _, authorizerItem := range authorizer {
-		authorizerRule = append(authorizerRule, authorizerItem)
-	}
-
-	logs, sub, err := _TokenStaking.contract.WatchLogs(opts, "Staked", operatorRule, beneficiaryRule, authorizerRule)
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(TokenStakingStaked)
-				if err := _TokenStaking.contract.UnpackLog(event, "Staked", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
-}
-
-// ParseStaked is a log parse operation binding the contract event 0x427fc60293495dcf555864076ec1f4acf2bf7ac2e405bc5ebcb94eea087b41c7.
-//
-// Solidity: event Staked(address owner, address indexed operator, address indexed beneficiary, address indexed authorizer, uint256 value)
-func (_TokenStaking *TokenStakingFilterer) ParseStaked(log types.Log) (*TokenStakingStaked, error) {
-	event := new(TokenStakingStaked)
-	if err := _TokenStaking.contract.UnpackLog(event, "Staked", log); err != nil {
 		return nil, err
 	}
 	return event, nil

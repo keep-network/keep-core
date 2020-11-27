@@ -28,7 +28,7 @@ var (
 )
 
 // StakeDelegatableABI is the input ABI used to generate the binding from.
-const StakeDelegatableABI = "[{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"authorizerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"beneficiaryOf\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"operatorsOf\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const StakeDelegatableABI = "[{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"authorizerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"beneficiaryOf\",\"outputs\":[{\"internalType\":\"addresspayable\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_operator\",\"type\":\"address\"}],\"name\":\"ownerOf\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // StakeDelegatable is an auto generated Go binding around an Ethereum contract.
 type StakeDelegatable struct {
@@ -248,32 +248,6 @@ func (_StakeDelegatable *StakeDelegatableSession) BeneficiaryOf(_operator common
 // Solidity: function beneficiaryOf(address _operator) constant returns(address)
 func (_StakeDelegatable *StakeDelegatableCallerSession) BeneficiaryOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.BeneficiaryOf(&_StakeDelegatable.CallOpts, _operator)
-}
-
-// OperatorsOf is a free data retrieval call binding the contract method 0xb534fbb6.
-//
-// Solidity: function operatorsOf(address _address) constant returns(address[])
-func (_StakeDelegatable *StakeDelegatableCaller) OperatorsOf(opts *bind.CallOpts, _address common.Address) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _StakeDelegatable.contract.Call(opts, out, "operatorsOf", _address)
-	return *ret0, err
-}
-
-// OperatorsOf is a free data retrieval call binding the contract method 0xb534fbb6.
-//
-// Solidity: function operatorsOf(address _address) constant returns(address[])
-func (_StakeDelegatable *StakeDelegatableSession) OperatorsOf(_address common.Address) ([]common.Address, error) {
-	return _StakeDelegatable.Contract.OperatorsOf(&_StakeDelegatable.CallOpts, _address)
-}
-
-// OperatorsOf is a free data retrieval call binding the contract method 0xb534fbb6.
-//
-// Solidity: function operatorsOf(address _address) constant returns(address[])
-func (_StakeDelegatable *StakeDelegatableCallerSession) OperatorsOf(_address common.Address) ([]common.Address, error) {
-	return _StakeDelegatable.Contract.OperatorsOf(&_StakeDelegatable.CallOpts, _address)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
