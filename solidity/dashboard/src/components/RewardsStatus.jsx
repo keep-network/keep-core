@@ -24,7 +24,7 @@ const RewardsStatus = ({ status, transactionHash }) => {
           <StatusBadge text={status} status={BADGE_STATUS.DISABLED} />
           <div>
             <ViewInBlockExplorer
-              className="text-smaller text-grey-50 arrow-link grey"
+              className="text-smaller text-grey-50"
               text="View transaction"
               type="tx"
               id={transactionHash}

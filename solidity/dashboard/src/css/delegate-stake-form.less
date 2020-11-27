@@ -41,6 +41,25 @@
             > label.input__label > .input__label__instruction-text {
                 color: @validation-color;
             }
+
+            .form-input__addon {
+                > .tag {
+                    .set-svg-color-in-tag(@color) {
+                        svg.plus-icon {
+                            path {
+                                stroke: none;
+                                fill: @color;
+                            }
+                        }
+                    }
+
+                    .set-svg-color-in-tag(@color-black);
+                    &:hover {
+                        .set-svg-color-in-tag(@white)
+                    }
+                    
+                }
+            }
         }
         .progress-bar-wrapper {
             margin: 0;

@@ -1,9 +1,18 @@
 import React from "react"
 
-const Tag = ({ IconComponent, text, type, size, onClick = () => {} }) => {
+const Tag = ({
+  IconComponent,
+  text,
+  type,
+  size,
+  onClick = () => {},
+  className = "",
+}) => {
   return (
     <div
-      className={`tag${type ? `--${type}` : ""} ${size ? `tag--${size}` : ""}`}
+      className={`tag${type ? `--${type}` : ""} ${
+        size ? `tag--${size}` : ""
+      } ${className}`}
       onClick={onClick}
     >
       <div className="flex row center">

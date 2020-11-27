@@ -115,7 +115,7 @@ const OverviewFirstSection = () => {
     >
       <div className="start-staking">
         <div className="start-staking__btn">
-          <Link to="/delegate" className="btn btn-primary btn-lg">
+          <Link to="/delegation" className="btn btn-primary btn-lg">
             start staking
           </Link>
         </div>

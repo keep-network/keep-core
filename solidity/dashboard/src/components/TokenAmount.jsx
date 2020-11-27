@@ -1,6 +1,7 @@
 import React from "react"
 import * as Icons from "./Icons"
 import { displayAmount, getNumberWithMetricSuffix } from "../utils/token.utils"
+import Tooltip from "./Tooltip"
 
 const TokenAmount = ({
   wrapperClassName,
@@ -20,13 +21,8 @@ const TokenAmount = ({
     : { value: "0", suffix: "" }
   const CurrencyIcon = currencyIcon
 
-  return (
-    <div
-      className={`token-amount tooltip flex row center ${
-        wrapperClassName || ""
-      }`}
-    >
-      {withTooltip && <span className="tooltip-text top">{tooltipText}</span>}
+  const TokenAmount = () => (
+    <div className={`token-amount flex row center ${wrapperClassName || ""}`}>
       <CurrencyIcon {...currencyIconProps} />
       <span className={amountClassName} style={{ marginLeft: "10px" }}>
         {displayWithMetricSuffix ? value : displayAmountFunction(amount)}
@@ -41,6 +37,18 @@ const TokenAmount = ({
         {currencySymbol && <span>&nbsp;{currencySymbol}</span>}
       </span>
     </div>
+  )
+
+  return withTooltip ? (
+    <Tooltip
+      simple
+      triggerComponent={TokenAmount}
+      className="token-amount-tooltip"
+    >
+      {tooltipText}
+    </Tooltip>
+  ) : (
+    <TokenAmount />
   )
 }
 
