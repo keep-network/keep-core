@@ -68,16 +68,14 @@ const RewardsOverviewPage = () => {
         </section>
       </section>
 
-      <section className="rewards-overview--ecdsa">
-        <section className="tile">
-          <Balance
-            title="tBTC Rewards"
-            rewardsBalance={ecdsaAvailableRewardsBalance}
-            isBalanceFetching={ecdsaAvailableRewardsFetching}
-            onWithdrawAll={onWithdrawECDSARewards}
-          />
-        </section>
-        <section className="tile">
+      <section className="tile">
+        <Balance
+          title="tBTC Rewards"
+          rewardsBalance={ecdsaAvailableRewardsBalance}
+          isBalanceFetching={ecdsaAvailableRewardsFetching}
+          onWithdrawAll={onWithdrawECDSARewards}
+        />
+        <section className="mt-1">
           <ECDSARewardsDetails pastRewards={ecdsaDistributedBalance} />
         </section>
       </section>
