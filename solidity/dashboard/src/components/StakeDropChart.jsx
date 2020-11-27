@@ -52,7 +52,7 @@ const StakeDropChart = () => {
     }
   })
 
-  const mouseEnterOnDot = (e) => {
+  const onMouseEnterDot = (e) => {
     const { interval, amount } = e.payload
 
     if (!tooltipRef.current) {
@@ -74,7 +74,7 @@ const StakeDropChart = () => {
     tooltipContentEl.childNodes[2].innerHTML = tooltipContentEl.childNodes[2].innerHTML = `${formattedRewardAmount} KEEP`
   }
 
-  const mouseLeaveOnDot = () => {
+  const onMouseLeaveDot = () => {
     if (tooltipRef.current) {
       tooltipRef.current.style.opacity = "0"
     }
@@ -83,7 +83,7 @@ const StakeDropChart = () => {
   return (
     <>
       <h4>Current Interval</h4>
-      <div className="text-caption text-grey-60">Keep per Interval</div>
+      <div className="text-caption text-grey-60">KEEP per Interval</div>
       <div style={styles.chartWrapper}>
         <LineChart width={500} height={300} data={data}>
           <CartesianGrid
@@ -126,8 +126,8 @@ const StakeDropChart = () => {
             stroke={colors.primary}
             dot={styles.dot}
             activeDot={{
-              onMouseEnter: mouseEnterOnDot,
-              onMouseLeave: mouseLeaveOnDot,
+              onMouseEnter: onMouseEnterDot,
+              onMouseLeave: onMouseLeaveDot,
               r: 6,
             }}
           />

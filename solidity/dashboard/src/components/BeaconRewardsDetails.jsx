@@ -20,7 +20,7 @@ const BeaconRewardsDetails = ({ pastRewards }) => {
       <ul>
         <li className="flex row center mb-1">
           <Icons.Beacon width={12} height={12} />
-          <span className="text-small ml-1">Min. Keep Group</span>
+          <span className="text-small ml-1">Min. Groups</span>
           <span className="text-small text-grey-60 ml-a">
             {BeaconRewardsHelper.minimumBeaconGroupsPerInterval}
           </span>
