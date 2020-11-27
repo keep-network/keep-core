@@ -85,7 +85,7 @@ const ECDSARewardsDetails = ({ pastRewards }) => {
       <h4 className="text-grey-70 mb-2">tBTC Rewards Details</h4>
       <ul>
         <MinKeepInInterval
-          label="Min. Keep"
+          label="Min. Deposits"
           minKeep={ECDSARewardsHelper.minimumKeepsPerInterval}
         />
         <li className="flex row center mb-1">
