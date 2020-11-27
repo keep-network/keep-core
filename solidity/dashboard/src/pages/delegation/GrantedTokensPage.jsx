@@ -180,7 +180,7 @@ const GrantedTokensPage = () => (
 
 GrantedTokensPage.route = {
   title: "Granted Tokens",
-  path: "/delegation/granted",
+  path: "/delegations/granted",
   exact: true,
   withConnectWalletGuard: true,
   emptyStateComponent: EmptyStateComponent,
