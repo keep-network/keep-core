@@ -63,7 +63,7 @@ const TBTCRewardsPage = () => {
 
 TBTCRewardsPage.route = {
   title: "tBTC",
-  path: "/rewards/tbtc",
+  path: "/earnings/tbtc",
   exact: true,
 }
 

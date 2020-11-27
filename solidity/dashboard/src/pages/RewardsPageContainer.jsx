@@ -7,11 +7,9 @@ const RewardsPageContainer = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
 }
 
-// TODO: Rename to `earings` in the followup PR, according to the Figma
-// views.
 RewardsPageContainer.route = {
-  title: "Rewards",
-  path: "/rewards",
+  title: "Earnings",
+  path: "/earnings",
   pages: [RewardsPage, TBTCRewardsPage],
 }
 
