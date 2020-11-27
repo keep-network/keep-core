@@ -17,7 +17,8 @@
 	# willing to pay for the transaction to be mined. The offered transaction
 	# gas price can not be higher than the max gas price value. If the maximum
 	# allowed gas price is reached, no further resubmission attempts are
-	# performed.
+	# performed. A value can be provided in `wei`, `Gwei` or `ether`, e.g.
+	# `800.5 Gwei`.
 	#
 	# MaxGasPrice = "500 Gwei" # 500 Gwei (default value)
 	#
@@ -40,7 +41,8 @@
 	#
 	# BalanceAlertThreshold defines a minimum value of the operator's account
 	# balance below which the client will start reporting errors in logs.
-	# The value should be passed in [wei].
+	# A value can be provided in `wei`, `Gwei` or `ether`, e.g. `7.5 ether`,
+	# `7500000000 Gwei`.
 	#
 	# BalanceAlertThreshold = "0.5 ether" # 0.5 ether (default value)
 
