@@ -1,6 +1,6 @@
 import React from "react"
 import { isEmptyArray } from "../utils/array.utils"
-import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
+import ResourceTooltip from "./ResourceTooltip"
 import Dropdown from "./Dropdown"
 
 export class DataTable extends React.Component {
@@ -76,7 +76,7 @@ export class DataTable extends React.Component {
               <h4 className={titleClassName} style={titleStyle}>
                 {title}
               </h4>
-              {withTooltip && <SpeechBubbleTooltip {...tooltipProps} />}
+              {withTooltip && <ResourceTooltip {...tooltipProps} />}
             </div>
             <div className="text-grey-40 text-small">{subtitle}</div>
           </div>

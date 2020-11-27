@@ -4,7 +4,7 @@ import Tooltip from "./Tooltip"
 import * as Icons from "./Icons"
 import { colors } from "../constants/colors"
 
-const ResourceTooltipContent = ({
+export const ResourceTooltipContent = ({
   title,
   content,
   redirectLink = "/resources/quick-terminology",
@@ -13,7 +13,11 @@ const ResourceTooltipContent = ({
 }) => {
   return (
     <>
-      <Tooltip.Header text={title} icon={Icons.Tooltip} />
+      <Tooltip.Header
+        text={title}
+        icon={Icons.Tooltip}
+        iconProps={{ color: colors.grey70, backgroundColor: colors.mint20 }}
+      />
       <Tooltip.Divider />
       <Tooltip.Content>{content}</Tooltip.Content>
       {withRedirectButton && (
@@ -28,10 +32,12 @@ const ResourceTooltipContent = ({
 const ResourceTooltip = ({
   iconColor = colors.grey70,
   iconBackgroundColor = colors.mint20,
+  tooltipClassName = "",
   ...restProps
 }) => {
   return (
     <Tooltip
+      className={tooltipClassName}
       triggerComponent={() => (
         <Icons.Tooltip
           color={iconColor}

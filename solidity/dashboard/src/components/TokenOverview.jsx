@@ -7,13 +7,14 @@ import { add, percentageOf } from "../utils/arithmetics.utils"
 import Divider from "./Divider"
 import ProgressBar from "./ProgressBar"
 import Chip from "./Chip"
-import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
+import ResourceTooltip from "./ResourceTooltip"
 import {
   displayAmount,
   displayAmountWithMetricSuffix,
 } from "../utils/token.utils"
 import { Skeleton } from "./skeletons"
 import { useWeb3Context } from "./WithWeb3Context"
+import resourceTooltipProps from "../constants/tooltips"
 
 const TokenOverview = ({
   totalKeepTokenBalance,
@@ -35,6 +36,7 @@ const TokenOverview = ({
         staked={totalGrantedStakedBalance}
         icon={Icons.Grant}
         isFetching={isFetching}
+        tooltipProps={resourceTooltipProps.tokenGrant}
       />
       <TokenBalance
         type="wallet"
@@ -147,7 +149,7 @@ const TokenBalance = ({
         <div className="flex-1">
           <h3 className="text-grey-70 flex row center">
             {type}&nbsp;
-            {tooltipProps && <SpeechBubbleTooltip {...tooltipProps} />}
+            {tooltipProps && <ResourceTooltip {...tooltipProps} />}
           </h3>
           {renderAmount()}
         </div>

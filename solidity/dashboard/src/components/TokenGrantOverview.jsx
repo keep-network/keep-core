@@ -11,6 +11,9 @@ import {
 } from "../utils/token.utils"
 import { sub, gt } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
+import Tooltip from "./Tooltip"
+import { ResourceTooltipContent } from "./ResourceTooltip"
+import resourceTooltipProps from "../constants/tooltips"
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
@@ -73,13 +76,15 @@ export const TokenGrantDetails = ({ selectedGrant, availableAmount }) => {
               : "No data"}
           </span>
         </div>
-        {/* TODO tooltip */}
         {selectedGrant.cliffPeriod && (
           <div
-            className="text-caption text-grey-60"
+            className="flex row text-caption text-grey-60"
             style={{ marginTop: "0.5rem", marginLeft: "1.75rem" }}
           >
-            {selectedGrant.cliffPeriod}&nbsp;cliff
+            <span>{selectedGrant.cliffPeriod}&nbsp;cliff&nbsp;</span>
+            <Tooltip triggerComponent={Icons.MoreInfo}>
+              <ResourceTooltipContent {...resourceTooltipProps.cliff} />
+            </Tooltip>
           </div>
         )}
       </section>

@@ -7,6 +7,7 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { PENDING_STATUS, COMPLETE_STATUS } from "../constants/constants"
 import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
+import resourceTooltipProps from "../constants/tooltips"
 
 const Undelegations = ({ undelegations, title }) => {
   return (
@@ -16,15 +17,7 @@ const Undelegations = ({ undelegations, title }) => {
         itemFieldId="operatorAddress"
         title="Undelegations"
         withTooltip={true}
-        tooltipProps={{
-          title: "Undelegations",
-          text: (
-            <>
-              <span className="text-bold">Recover</span>
-              &nbsp;undelegated tokens to return them to your token balance.
-            </>
-          ),
-        }}
+        tooltipProps={resourceTooltipProps.recoverTokens}
         noDataMessage="No undelegated tokens."
       >
         <Column

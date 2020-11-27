@@ -66,9 +66,14 @@ const Tooltip = ({
 
 Tooltip.Divider = () => <hr className="tooltip__divider" />
 
-Tooltip.Header = ({ icon: IconComponent, text, className = "" }) => (
+Tooltip.Header = ({
+  icon: IconComponent,
+  text,
+  className = "",
+  iconProps = {},
+}) => (
   <div className={`tooltip__header ${className}`}>
-    <IconComponent className="tooltip__header__icon" />
+    <IconComponent className="tooltip__header__icon" {...iconProps} />
     <div className="tooltip__header__title">{text}</div>
   </div>
 )

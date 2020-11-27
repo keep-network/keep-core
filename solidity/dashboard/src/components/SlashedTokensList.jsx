@@ -3,6 +3,7 @@ import { formatDate } from "../utils/general.utils"
 import { displayAmount } from "../utils/token.utils"
 import AddressShortcut from "./AddressShortcut"
 import { DataTable, Column } from "./DataTable"
+import resourceTooltipProps from "../constants/tooltips"
 
 const SlashedTokensList = ({ slashedTokens }) => {
   return (
@@ -11,15 +12,7 @@ const SlashedTokensList = ({ slashedTokens }) => {
       itemFieldId="id"
       title="Slashed Tokens"
       withTooltip
-      tooltipProps={{
-        text: (
-          <>
-            A &nbsp;<span className="text-bold">slash</span>&nbsp; is a penalty
-            for signing group misbehavior. It results in a removal of a portion
-            of your delegated KEEP tokens.
-          </>
-        ),
-      }}
+      tooltipProps={resourceTooltipProps.slashing}
       noDataMessage="No slashed tokens."
     >
       <Column

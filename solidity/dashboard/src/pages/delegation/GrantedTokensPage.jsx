@@ -10,6 +10,7 @@ import {
 } from "../../components/TokenGrantOverview"
 import { DelegationPageWrapper } from "./index"
 import DelegationOverview from "../../components/DelegationOverview"
+import ResourceTooltip from "../../components/ResourceTooltip"
 import { useState } from "react"
 import { isEmptyArray } from "../../utils/array.utils"
 import { isEmptyObj } from "../../utils/general.utils"
@@ -22,6 +23,7 @@ import { useModal } from "../../hooks/useModal"
 import { ViewAddressInBlockExplorer } from "../../components/ViewInBlockExplorer"
 import { releaseTokens } from "../../actions/web3"
 import { withConfirmationModal } from "../../components/ConfirmationModal"
+import resourceTooltipProps from "../../constants/tooltips"
 
 const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
@@ -138,7 +140,10 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
           />
         </section>
         <section className="tile granted-page__overview__stake-form">
-          <h3 className="mb-1">Stake Granted Tokens</h3>
+          <header className="flex row center mb-1">
+            <h3>Stake Granted Tokens&nbsp;</h3>
+            <ResourceTooltip {...resourceTooltipProps.delegation} />
+          </header>
           <DelegateStakeForm
             onSubmit={onSubmit}
             minStake={minimumStake}
