@@ -8,7 +8,6 @@ export const ViewInBlockExplorer = React.memo(
     return (
       <a
         href={`${etherscanDefaultUrl}/${type}/${id}${hashParam}`}
-        className="arrow-link"
         {...restProps}
         rel="noopener noreferrer"
         target="_blank"

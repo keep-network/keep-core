@@ -7,13 +7,15 @@ import { add, percentageOf } from "../utils/arithmetics.utils"
 import Divider from "./Divider"
 import ProgressBar from "./ProgressBar"
 import Chip from "./Chip"
-import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
+import ResourceTooltip from "./ResourceTooltip"
 import {
   displayAmount,
   displayAmountWithMetricSuffix,
 } from "../utils/token.utils"
 import { Skeleton } from "./skeletons"
 import { useWeb3Context } from "./WithWeb3Context"
+import resourceTooltipProps from "../constants/tooltips"
+import DelegationPage from "../pages/delegation"
 
 const TokenOverview = ({
   totalKeepTokenBalance,
@@ -35,6 +37,7 @@ const TokenOverview = ({
         staked={totalGrantedStakedBalance}
         icon={Icons.Grant}
         isFetching={isFetching}
+        tooltipProps={resourceTooltipProps.tokenGrant}
       />
       <TokenBalance
         type="wallet"
@@ -147,21 +150,27 @@ const TokenBalance = ({
         <div className="flex-1">
           <h3 className="text-grey-70 flex row center">
             {type}&nbsp;
-            {tooltipProps && <SpeechBubbleTooltip {...tooltipProps} />}
+            {tooltipProps && <ResourceTooltip {...tooltipProps} />}
           </h3>
           {renderAmount()}
         </div>
       </header>
       <ProgressBar
-        items={[{ value: staked, color: colors.primary }]}
+        value={staked}
         total={totalBalance}
-        styles={{ margin: 0 }}
-      />
+        color={colors.primary}
+        bgColor={colors.grey20}
+      >
+        <ProgressBar.Inline
+          height={8}
+          className={`balance__${type}__progressbar`}
+        />
+      </ProgressBar>
       <span className="text-small text-grey-40">
         {isConnected ? inPercentage : "-"}% Staked
       </span>
       <Link
-        to={{ pathname: "/delegate", hash: type }}
+        to={`${DelegationPage.route.path}/${type}`}
         className="btn btn-secondary btn-lg mt-2"
         style={{ width: "100%" }}
       >

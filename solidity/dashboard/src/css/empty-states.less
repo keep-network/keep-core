@@ -7,19 +7,34 @@
 }
 
 .empty-state {
-    &__title {
+    &__header {
+        display: flex;
+        align-items: center;
         margin-top: 3rem;
-        color: @color-grey-70;
+
+        &__tooltip {
+           margin-left: 0.75rem; 
+        }
     }
+   
 
     &__subtitle {
         margin-top: 1rem;
         margin-bottom: 2rem;
     }
 
-    &__title, &__subtitle {
+    &__header__title, &__subtitle {
         color: @color-grey-70;
         letter-spacing: -1px;
         text-align: center;
     }
+
+   &__wallet-options-tooltip {
+    .tooltip--simple--top& {
+        > .tooltip__content-wrapper {
+            max-width: unset;
+            width: 100%;
+        }
+    }
+   }
 }

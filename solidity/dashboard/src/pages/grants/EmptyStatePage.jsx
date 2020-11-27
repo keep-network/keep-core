@@ -7,6 +7,7 @@ import {
   Skeleton,
   SkeletonProgressBar,
 } from "../../components/skeletons"
+import resourceTooltipProps from "../../constants/tooltips"
 
 const title = "Track your token grant"
 const subtitle =
@@ -50,8 +51,10 @@ const EmptyStatePage = ({ title: pageTitle }) => {
             </div>
           </SkeletonBox>
         </EmptyState.Skeleton>
-        {/* TODO add tooltip to the title when PR with tooltip will be merged */}
-        <EmptyState.Title text={title} />
+        <EmptyState.Title
+          text={title}
+          tooltipProps={resourceTooltipProps.tokenGrant}
+        />
         <EmptyState.Subtitle text={subtitle} />
         <EmptyState.ConnectWalletBtn />
       </EmptyState>

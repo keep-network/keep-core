@@ -1,16 +1,19 @@
 import React, { useMemo } from "react"
+import moment from "moment"
 import { formatDate } from "../utils/general.utils"
 import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import ProgressBar from "./ProgressBar"
-
-import moment from "moment"
 import TokenAmount from "./TokenAmount"
 import {
   displayAmount,
   displayAmountWithMetricSuffix,
 } from "../utils/token.utils"
+import { sub, gt } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
+import Tooltip from "./Tooltip"
+import { ResourceTooltipContent } from "./ResourceTooltip"
+import resourceTooltipProps from "../constants/tooltips"
 
 const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
   return (
@@ -31,20 +34,6 @@ const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
 }
 
 export const TokenGrantDetails = ({ selectedGrant, availableAmount }) => {
-  const cliffPeriod = useMemo(() => {
-    return selectedGrant.cliff && selectedGrant.start
-      ? moment
-          .unix(selectedGrant.cliff)
-          .from(moment.unix(selectedGrant.start), true)
-      : null
-  }, [selectedGrant.cliff, selectedGrant.start])
-
-  const fullyUnlockedDate = useMemo(() => {
-    return selectedGrant.start && selectedGrant.duration
-      ? moment.unix(selectedGrant.start).add(selectedGrant.duration, "seconds")
-      : null
-  }, [selectedGrant.start, selectedGrant.duration])
-
   const totalAmount = useMemo(() => displayAmount(selectedGrant.amount), [
     selectedGrant.amount,
   ])
@@ -82,16 +71,20 @@ export const TokenGrantDetails = ({ selectedGrant, availableAmount }) => {
           <Icons.Time width={12} height={12} className="time-icon--black" />
           <span className="text-small ml-1">Fully Unlocked</span>
           <span className="text-small ml-a">
-            {fullyUnlockedDate ? formatDate(fullyUnlockedDate) : "No data"}
+            {selectedGrant.fullyUnlockedDate
+              ? formatDate(selectedGrant.fullyUnlockedDate)
+              : "No data"}
           </span>
         </div>
-        {/* TODO tooltip */}
-        {cliffPeriod && (
+        {selectedGrant.cliffPeriod && (
           <div
-            className="text-caption text-grey-60"
+            className="flex row text-caption text-grey-60"
             style={{ marginTop: "0.5rem", marginLeft: "1.75rem" }}
           >
-            {cliffPeriod}&nbsp;cliff
+            <span>{selectedGrant.cliffPeriod}&nbsp;cliff&nbsp;</span>
+            <Tooltip triggerComponent={Icons.MoreInfo}>
+              <ResourceTooltipContent {...resourceTooltipProps.cliff} />
+            </Tooltip>
           </div>
         )}
       </section>
@@ -149,11 +142,16 @@ export const TokenGrantWithdrawnTokensDetails = ({
   selectedGrant,
   onWithdrawnBtn,
 }) => {
+  const withdrawable =
+    selectedGrant && selectedGrant.unlocked && selectedGrant.staked
+      ? sub(selectedGrant.unlocked, selectedGrant.staked)
+      : 0
+
   return (
     <>
       <ProgressBar
         value={selectedGrant.released || 0}
-        total={selectedGrant.amount || 0}
+        total={withdrawable || 0}
         color={colors.secondary}
         bgColor={colors.bgSecondary}
       >
@@ -167,6 +165,7 @@ export const TokenGrantWithdrawnTokensDetails = ({
       <SubmitButton
         className="btn btn-secondary btn-sm mt-2"
         onSubmitAction={onWithdrawnBtn}
+        disabled={gt(withdrawable, 0)}
       >
         withdraw tokens
       </SubmitButton>

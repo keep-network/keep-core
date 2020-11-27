@@ -1,8 +1,16 @@
 import React from "react"
 import { Link, NavLink, useRouteMatch } from "react-router-dom"
+import OperationsPage from "../pages/OperatorPage"
+import EarningsPage from "../pages/RewardsPageContainer"
+import DelegationPage from "../pages/delegation"
+import ApplicationsPage from "../pages/ApplicationsPageContainer"
+import ResourcesPage from "../pages/ResourcesPage"
+import OverviewPage from "../pages/OverviewPage"
+import TokenGrantsPage from "../pages/grants"
+import RewardsPage from "../pages/rewards"
 import * as Icons from "./Icons"
-import { isEmptyArray } from "../utils/array.utils"
 import Divider from "./Divider"
+import { isEmptyArray } from "../utils/array.utils"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -14,59 +22,38 @@ export const SideMenu = (props) => {
       <ul className="side-menu__list">
         <li className="side-menu__route-wrapper">
           <NavLink
-            to="/overview"
+            to={OverviewPage.route.path}
             className="side-menu__route"
             activeClassName="side-menu__route--active"
           >
-            Overview
+            {OverviewPage.route.title}
           </NavLink>
           <Divider style={styles.overviewDivider} />
         </li>
         <NavLinkSection
           label="stake"
           icon={<Icons.StakeDrop />}
-          subroutes={[
-            {
-              label: "Delegation",
-              path: "/delegation",
-              exact: false,
-            },
-            {
-              label: "Token Grants",
-              path: "/token-grants",
-              exact: true,
-            },
-          ]}
+          subroutes={[DelegationPage.route, TokenGrantsPage.route]}
         />
         <NavLinkSection
           label="work"
           icon={<Icons.SwordOperations />}
-          subroutes={[
-            {
-              label: "Applications",
-              path: "/applications",
-              exact: false,
-            },
-            { label: "Operations", path: "/operations", exact: true },
-          ]}
+          subroutes={[ApplicationsPage.route, OperationsPage.route]}
         />
         <NavLinkSection
           label="earn"
           icon={<Icons.FeesVector />}
-          subroutes={[
-            { label: "Earnings", path: "/earnings", exact: false },
-            { label: "Reweards", path: "/rewards", exact: false },
-          ]}
+          subroutes={[EarningsPage.route, RewardsPage.route]}
         />
         <NavLinkSection
           label="help"
           icon={<Icons.Question />}
           subroutes={[
-            { label: "FAQ", path: "/faq", exact: "true" },
-            { label: "Resources", path: "/resources", exact: "false" },
+            // TODO uncomment when `FAQ` page will be implemented
+            // { label: "FAQ", path: "/faq", exact: "true" },
+            ResourcesPage.route,
           ]}
         />
-
         {/* TODO: display this link if a user is a keep token contract deployer. This is only used in development mode*/}
         {/* {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
@@ -79,9 +66,9 @@ export const SideMenu = (props) => {
 const NavLinkSection = ({ label, icon, subroutes = [] }) => {
   return (
     <li className="side-menu__section">
-      <div className="side-menu__section__content">
-        <div className="side-menu__section__content__icon">{icon}</div>
-        <span className="side-menu__section__content__title">{label}</span>
+      <div className="side-menu__section__header">
+        <div className="side-menu__section__header__icon">{icon}</div>
+        <span className="side-menu__section__header__title">{label}</span>
       </div>
       {!isEmptyArray(subroutes) && (
         <ul className="side-menu__section__routes">
@@ -96,7 +83,7 @@ const renderRoute = (route) => (
   <NavLinkSectionRoute key={route.path} {...route} />
 )
 
-const NavLinkSectionRoute = ({ label, path, exact }) => {
+const NavLinkSectionRoute = ({ title, path, exact }) => {
   const match = useRouteMatch({
     path,
     exact,
@@ -105,7 +92,7 @@ const NavLinkSectionRoute = ({ label, path, exact }) => {
   return (
     <li className="side-menu__route-wrapper">
       <Link to={path} className={`side-menu__route${match ? "--active" : ""}`}>
-        {label}
+        {title}
       </Link>
     </li>
   )

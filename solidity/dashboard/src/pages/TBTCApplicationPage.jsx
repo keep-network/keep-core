@@ -177,7 +177,7 @@ const TBTCApplicationPage = ({
       <nav className="mb-2">
         <a
           href="https://tbtc.network/"
-          className="arrow-link h4"
+          className="h4"
           rel="noopener noreferrer"
           target="_blank"
         >

@@ -9,6 +9,8 @@ import { DelegationPageWrapper } from "./index"
 import { add } from "../../utils/arithmetics.utils"
 import { displayAmountWithMetricSuffix } from "../../utils/token.utils"
 import DelegationOverview from "../../components/DelegationOverview"
+import ResourceTooltip from "../../components/ResourceTooltip"
+import resourceTooltipProps from "../../constants/tooltips"
 
 const filterByOwned = (delegation) => !delegation.grantId
 
@@ -74,8 +76,10 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
           </ProgressBar>
         </section>
         <section className="tile wallet-page__overview__stake-form">
-          {/* TODO add tooltip. PR is in progress https://github.com/keep-network/keep-core/pull/2135  */}
-          <h3 className="mb-1">Stake Wallet Tokens</h3>
+          <header className="flex row center mb-1">
+            <h3>Stake Wallet Tokens&nbsp;</h3>
+            <ResourceTooltip {...resourceTooltipProps.delegation} />
+          </header>
           <DelegateStakeForm
             onSubmit={onSubmitDelegateStakeForm}
             minStake={minimumStake}
@@ -109,7 +113,7 @@ const WalletTokensPage = () => (
 
 WalletTokensPage.route = {
   title: "Wallet Tokens",
-  path: "/delegation/wallet",
+  path: "/delegations/wallet",
   exact: true,
   withConnectWalletGuard: true,
   emptyStateComponent: EmptyStateComponent,

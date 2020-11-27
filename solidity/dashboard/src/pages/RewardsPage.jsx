@@ -7,7 +7,7 @@ const RewardsPage = () => {
 
 RewardsPage.route = {
   title: "Keep Random Beacon",
-  path: "/rewards/random-beacon",
+  path: "/earnings/random-beacon",
   exact: true,
 }
 

@@ -1,13 +1,31 @@
 import React from "react"
-import Button from "../Button"
+import WalletOptions from "../WalletOptions"
+import Tooltip from "../Tooltip"
+import ResourceTooltip from "../ResourceTooltip"
 
 const EmptyState = ({ children }) => {
   return <section className="empty-state__wrapper">{children}</section>
 }
 
-EmptyState.Title = ({ text, tag = "h2", classname = "" }) => {
+EmptyState.Title = ({
+  text,
+  tag = "h2",
+  wrapperClassName = "",
+  classname = "",
+  tooltipProps = null,
+}) => {
   const Tag = tag
-  return <Tag className={`empty-state__title ${classname}`}>{text}</Tag>
+  return (
+    <headr className={`empty-state__header ${wrapperClassName}`}>
+      <Tag className={`empty-state__header__title ${classname}`}>{text}</Tag>
+      {tooltipProps && (
+        <ResourceTooltip
+          tooltipClassName="empty-state__header__tooltip"
+          {...tooltipProps}
+        />
+      )}
+    </headr>
+  )
 }
 
 EmptyState.Subtitle = ({ text, tag = "h3", className = "" }) => {
@@ -20,18 +38,25 @@ EmptyState.Skeleton = ({ children, className = "" }) => {
 }
 
 EmptyState.ConnectWalletBtn = ({
-  onClick,
   text = "connect wallet",
   btnClassName = "",
 }) => {
   // TODO connect to a wallet onClick
   return (
-    <Button
-      onClick={onClick}
-      className={`btn btn-primary btn-lg empty-state__connect-wallet-btn ${btnClassName}`}
+    <Tooltip
+      direction="top"
+      simple
+      className="empty-state__wallet-options-tooltip"
+      triggerComponent={() => (
+        <span
+          className={`btn btn-primary btn-lg empty-state__connect-wallet-btn ${btnClassName}`}
+        >
+          {text}
+        </span>
+      )}
     >
-      {text}
-    </Button>
+      <WalletOptions />
+    </Tooltip>
   )
 }
 

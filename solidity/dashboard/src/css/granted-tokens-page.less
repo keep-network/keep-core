@@ -46,3 +46,19 @@ section.granted-page__overview-layout {
 .granted-page__grants-dropdown {
     grid-area: grants-dropdown;
 }
+
+.tag.grant-id-tag {
+    .set-grant-color(@color) {
+        .tag__icon {
+            svg.grant-icon {
+                .set-grant-icon-colors(@color)
+            }
+        }
+    }
+
+    .set-grant-color(@color-black);
+
+    &:hover {
+        .set-grant-color(@white);
+    }
+}
