@@ -13,6 +13,7 @@ import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ChooseWallet from "./ChooseWallet"
 import GlossaryPage from "../pages/GlossaryPage"
 import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
+import LiquidationsPageContainer from "../pages/LiquidationsPageContainer"
 
 class Routing extends React.Component {
   renderContent() {
@@ -36,6 +37,7 @@ class Routing extends React.Component {
       <Switch>
         <Route path="/tokens" component={TokensPageContainer} />
         <Route exact path="/operations" component={OperatorPage} />
+        <Route path="/liquidations" component={LiquidationsPageContainer} />
         <Route path="/rewards" component={RewardsPageContainer} />
         <Route exact path="/token-grants" component={TokenGrantsPage} />
         <Route path="/applications" component={ApplicationsPageContainer} />

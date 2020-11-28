@@ -1,0 +1,53 @@
+section.deposit-liquidation-overview {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    grid-gap: 2rem;
+    padding: 0;
+
+    .grant-amount,
+    .unlocking-details,
+    .staked-details {
+        padding: 2rem;
+    }
+
+    .unlocking-details,
+    .staked-details {
+        display: flex;
+    }
+
+    @media screen and (min-width: 550px) {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(2, 1fr);
+        grid-template-areas: "grid-el-1 grid-el-2"
+                             "grid-el-3 grid-el-3";
+        
+
+        .grant-amount {
+            border-right: none;
+        }
+
+        .staked-details {
+            grid-area: grid-el-3
+        }
+    }
+
+    @media screen and (min-width: 900px) {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: 1fr;
+        grid-template-areas: "grid-el-1 grid-el-2 grid-el-3 grid-el-3";
+
+        .grant-amount {
+            border-right: 1px solid @color-grey-30;
+        }
+
+        .grant-amount,
+        .unlocking-details,
+        .staked-details {
+            margin-top: 0;
+        }
+        
+        .staked-details {
+            grid-area: grid-el-3
+        }
+    }
+}

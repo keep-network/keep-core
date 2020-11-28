@@ -4,6 +4,7 @@ import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
 import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 import BondedECDSAKeepFactory from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeepFactory.json"
 import TBTCSystem from "@keep-network/tbtc/artifacts/TBTCSystem.json"
+import TBTCConstants from "@keep-network/tbtc/artifacts/TBTCConstants.json"
 import KeepBonding from "@keep-network/keep-ecdsa/artifacts/KeepBonding.json"
 import GuaranteedMinimumStakingPolicy from "@keep-network/keep-core/artifacts/GuaranteedMinimumStakingPolicy.json"
 import PermissiveStakingPolicy from "@keep-network/keep-core/artifacts/PermissiveStakingPolicy.json"
@@ -31,6 +32,7 @@ import {
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
   STAKING_PORT_BACKER_CONTRACT_NAME,
   OLD_TOKEN_STAKING_CONTRACT_NAME,
+  TBTC_CONSTANTS_CONTRACT_NAME
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -46,6 +48,7 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [TBTC_SYSTEM_CONTRACT_NAME]: 0,
   [TOKEN_STAKING_ESCROW_CONTRACT_NAME]: 0,
   [STAKING_PORT_BACKER_CONTRACT_NAME]: 0,
+  [TBTC_CONSTANTS_CONTRACT_NAME]: 0,
 }
 
 const contracts = [
@@ -97,6 +100,10 @@ const contracts = [
     StakingPortBacker,
   ],
 ]
+
+export async function getTBTCConstantsContract(web3) {
+  return getContract(web3, TBTCConstants, TBTC_CONSTANTS_CONTRACT_NAME)
+}
 
 export async function getKeepTokenContractDeployerAddress(web3) {
   const deployTransactionHash = getTransactionHashOfContractDeploy(KeepToken)

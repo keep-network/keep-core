@@ -95,4 +95,34 @@ export const CircularProgressBars = React.memo(
   }
 )
 
+export const CircularProgressBarEth = React.memo(
+  ({ withLegend, total, items }) => {
+    const bars = useMemo(() => {
+      return items.map((item, index) => (
+        <CircularProgressBar key={index} {...item} total={total} />
+      ))
+    }, [total, items])
+
+    return (
+      <>
+        <svg
+          className="wrapper-circular-progress-bar"
+          width={120}
+          height={120}
+          viewBox="0 0 120 120"
+        >
+          {bars}
+          <g className="keep-circle">
+            <Icons.ETH width={58}
+                    height={58} />
+          </g>
+        </svg>
+        <div className="mb-1">
+          {withLegend && items.map(renderProgressBarLegendItem)}
+        </div>
+      </>
+    )
+  }
+)
+
 export default React.memo(CircularProgressBar)

@@ -16,6 +16,18 @@ export function displayAmount(amount, withCommaSeparator = true) {
   return 0
 }
 
+export function displayAmountHigherOrderFn(withCommaSeparator = true, formatDecimalPlaces = 0) {
+  return (amount) => {
+    if (amount) {
+      const readableFormat = toTokenUnit(amount)
+      return withCommaSeparator
+        ? readableFormat.toFormat(formatDecimalPlaces, BigNumber.ROUND_DOWN)
+        : readableFormat.toString()
+    }
+    return 0
+  }
+}
+
 /**
  * Convert wei amount to token units
  * @param {*} amount amount in wei
@@ -27,6 +39,16 @@ export const toTokenUnit = (amount) => {
     return new BigNumber(0)
   }
   return new BigNumber(amount).div(new BigNumber(10).pow(new BigNumber(18)))
+}
+
+/**
+ * Convert sats amount to weitoshi, then to tBTC
+ * @param {*} amount _utxoValue: "The size of the utxo in sat."
+ *
+ * @return {BigNumber} amount in weitoshi, the 18th decimal of BTC (https://docs.keep.network/tbtc/index.html)
+ */
+export const satsToTBtcViaWeitoshi = (amount) => {
+  return toTokenUnit(fromTokenUnit(amount, 10))
 }
 
 /**
