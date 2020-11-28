@@ -75,6 +75,13 @@ When you don’t want to use the local version of `@keep-network/keep-core` anym
 
 A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed at [https://dashboard.dev.keep.network/](https://dashboard.dev.keep.network/) and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
 
+### Ropsten testnet
+
+Change:
+In `solidity/dashboard/src/connectors/utils.js`
+- getChainId() return value to 3. As indicated, private chains ia the default, so you need to change if you use a different one (Ropsten = 3).
+- getWsUrl() return value to your Infura websocket URL (strongly recommend to get an Infura account if you don't have one), or find a websocket URL that connects to Ropsten and put it here.
+
 ### MetaMask extension setup
 
 MetaMask is a web browser extension allowing to interact with Ethereum-enabled distributed applications (dApps). MetaMask is available for Chrome, Firefox, and Opera desktop browsers. To install MetaMask, please go through the extension installation process individual for your web browser used.

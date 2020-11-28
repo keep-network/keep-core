@@ -30,6 +30,16 @@ export const toTokenUnit = (amount) => {
 }
 
 /**
+ * Convert sats amount to weitoshi, then to tBTC
+ * @param {*} amount _utxoValue: "The size of the utxo in sat."
+ *
+ * @return {BigNumber} amount in weitoshi, the 18th decimal of BTC (https://docs.keep.network/tbtc/index.html)
+ */
+export const satsToTBtcViaWeitoshi = (amount) => {
+  return toTokenUnit(fromTokenUnit(amount, 10))
+}
+
+/**
  * Convert token unit amount to wei.
  * @param {*} amount amount in token units
  * @param {*} decimals decimals

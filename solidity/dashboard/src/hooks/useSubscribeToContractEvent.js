@@ -31,7 +31,7 @@ export const useSubscribeToContractEvent = (
         event.current.unsubscribe()
       }
     }
-  }, [eventName])
+  }, [eventName, contractName])
 
   useEffect(() => {
     if (previousEvent.transactionHash === latestEvent.transactionHash) {
