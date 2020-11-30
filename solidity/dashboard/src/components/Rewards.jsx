@@ -197,7 +197,7 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
                 tooltipText={amountTooltipText(totalRewardsBalance)}
               />
               <div className="ml-1 self-center">
-                <SpeechBubbleTooltip text="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires." />
+                <SpeechBubbleTooltip text="The total balance reflects the total available and accumulating rewards. Available rewards are ready to be withdrawn. Accumulating rewards become available after a signing group expires." />
               </div>
             </div>
           )}
