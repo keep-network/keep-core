@@ -130,12 +130,10 @@ module.exports = async function(deployer, network) {
     KeepRandomBeaconOperator.address
   );
 
-  if(network === 'local') {
-    await deployer.deploy(
-        BeaconRewards,
-        KeepToken.address,
-        KeepRandomBeaconOperator.address,
-        TokenStaking.address,
-    )
-  }
+  await deployer.deploy(
+    BeaconRewards,
+    KeepToken.address,
+    KeepRandomBeaconOperator.address,
+    TokenStaking.address,
+  );
 };
