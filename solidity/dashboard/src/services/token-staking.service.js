@@ -176,17 +176,14 @@ export const getOperatorsOfAuthorizer = async (web3Context, authorizer) => {
   ).map((_) => _.returnValues.operator)
 }
 
-export const getOperatorsOfBeneficiary = async (web3Context, beneficiary) => {
+export const getOperatorsOfBeneficiary = async (beneficiary) => {
+  const { stakingContract } = await ContractsLoaded
+
   return (
-    await contractService.getPastEvents(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "OperatorStaked",
-      {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
-        filter: { beneficiary },
-      }
-    )
+    await stakingContract.getPastEvents("OperatorStaked", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
+      filter: { beneficiary },
+    })
   ).map((_) => _.returnValues.operator)
 }
 

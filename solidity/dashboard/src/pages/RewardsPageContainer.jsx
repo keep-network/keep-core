@@ -1,16 +1,16 @@
 import React from "react"
-import { Route, Switch, Redirect } from "react-router-dom"
 import TBTCRewardsPage from "./TBTCRewardsPage"
-import ReawrdsPage from "./RewardsPage"
+import RewardsPage from "./RewardsPage"
+import PageWrapper from "../components/PageWrapper"
 
-const RewardsPageContainer = (props) => {
-  return (
-    <Switch>
-      <Route exact path="/rewards/random-beacon" component={ReawrdsPage} />
-      <Route exact path="/rewards/tbtc" component={TBTCRewardsPage} />
-      <Redirect to="/rewards/random-beacon" />
-    </Switch>
-  )
+const RewardsPageContainer = ({ title, routes }) => {
+  return <PageWrapper title={title} routes={routes} />
+}
+
+RewardsPageContainer.route = {
+  title: "Earnings",
+  path: "/earnings",
+  pages: [RewardsPage, TBTCRewardsPage],
 }
 
 export default RewardsPageContainer

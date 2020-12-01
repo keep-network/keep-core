@@ -1,18 +1,15 @@
-import React, { useContext } from "react"
+import React from "react"
 import CreateTokenGrantForm from "../components/CreateTokenGrantForm"
-import { ContractsDataContext } from "../components/ContractsDataContextProvider"
 import PageWrapper from "../components/PageWrapper"
 import Tile from "../components/Tile"
 import { keepTokenApproveAndCall } from "../actions/web3"
 import { ContractsLoaded } from "../contracts"
 import { tokenGrantsService } from "../services/token-grants.service"
 import { fromTokenUnit } from "../utils/token.utils"
-import { connect } from "react-redux"
+import { connect, useSelector } from "react-redux"
 
 const CreateTokenGrantPage = ({ createTokenGrant }) => {
-  const { tokenBalance, refreshKeepTokenBalance } = useContext(
-    ContractsDataContext
-  )
+  const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const submitAction = async (values, meta) => {
     const { grantContract } = await ContractsLoaded
@@ -36,8 +33,7 @@ const CreateTokenGrantPage = ({ createTokenGrant }) => {
     <PageWrapper title="Create Token Grant">
       <Tile title="Create Grant" className="rewards-history tile flex column">
         <CreateTokenGrantForm
-          keepBalance={tokenBalance}
-          successCallback={refreshKeepTokenBalance}
+          keepBalance={keepTokenBalance.value}
           submitAction={submitAction}
         />
       </Tile>

@@ -1,9 +1,11 @@
-import { takeEvery, call } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper } from "./utils"
+import { take, takeEvery, call, fork, put, select } from "redux-saga/effects"
+import { getContractsContext, submitButtonHelper, logError } from "./utils"
 import { sendTransaction } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
 import { fromTokenUnit } from "../utils/token.utils"
+import { tokensPageService } from "../services/tokens-page.service"
+import { fetchAvailableTopUps } from "../services/top-ups.service"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -128,4 +130,51 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
   }
 
   return amountLeft
+}
+
+export function* watchFetchDelegationRequest() {
+  // Fetch data only once and update data based on evnets.
+  yield take("staking/fetch_delegations_request")
+  yield fork(fetchDelegations)
+}
+
+function* fetchDelegations() {
+  try {
+    yield put({ type: "staking/fetch_delegations_start" })
+    const data = yield call(tokensPageService.fetchTokensPageData)
+    yield put({ type: "staking/fetch_delegations_success", payload: data })
+  } catch (error) {
+    yield* logError("staking/fetch_delegations_failure", error)
+  }
+}
+
+export function* watchFetchTopUpsRequest() {
+  // Fetch data only once and update data based on evnets.
+  yield take("staking/fetch_top_ups_request")
+  yield fork(fetchTopUps)
+}
+
+function* fetchTopUps() {
+  const getDelegationsFetchingStatus = (state) =>
+    state.staking.delegationsFetchingStatus
+  try {
+    // We want to fetch top ups based on previously fetched delegations.
+    let delegationsFetchingStatus = yield select(getDelegationsFetchingStatus)
+    while (delegationsFetchingStatus !== "completed") {
+      yield take()
+      delegationsFetchingStatus = yield select(getDelegationsFetchingStatus)
+    }
+
+    yield put({ type: "staking/fetch_top_ups_start" })
+    const { delegations, undelegations } = yield select(
+      (state) => state.staking
+    )
+    const operators = [...undelegations, ...delegations].map(
+      ({ operatorAddress }) => operatorAddress
+    )
+    const topUps = yield call(fetchAvailableTopUps, operators)
+    yield put({ type: "staking/fetch_top_ups_success", payload: topUps })
+  } catch (error) {
+    yield* logError("staking/fetch_top_ups_failure", error)
+  }
 }
