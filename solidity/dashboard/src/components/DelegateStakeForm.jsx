@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import BigNumber from "bignumber.js"
 import { SubmitButton } from "./Button"
 import FormInput from "./FormInput"
 import { withFormik, useFormikContext } from "formik"
@@ -113,7 +114,7 @@ const TokensAmountField = ({
   const { setFieldValue } = useFormikContext()
 
   const onAddonClick = () => {
-    setFieldValue("stakeTokens", toTokenUnit(availableToStake).toString())
+    setFieldValue("stakeTokens", toTokenUnit(availableToStake).toFixed(0, BigNumber.ROUND_DOWN))
   }
   return (
     <div className="token-amount-wrapper">
