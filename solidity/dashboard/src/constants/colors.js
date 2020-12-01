@@ -22,4 +22,5 @@ export const colors = {
   grey60: "#6D6D6D  ",
   mint20: "#C8F4E9",
   mint80: "#12C0A1",
+  green30: "#D7F6EE",
 }

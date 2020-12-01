@@ -6,6 +6,7 @@ import { watchSendTransactionRequest } from "./web3"
 import * as copyStakeSaga from "./copy-stake"
 import * as subscriptions from "./subscriptions"
 import * as keepTokenBalance from "./keep-balance"
+import * as rewards from "./rewards"
 
 export default function* rootSaga() {
   yield all(
@@ -17,6 +18,7 @@ export default function* rootSaga() {
       ...Object.values(copyStakeSaga),
       ...Object.values(subscriptions),
       ...Object.values(keepTokenBalance),
+      ...Object.values(rewards),
     ].map(fork)
   )
 }

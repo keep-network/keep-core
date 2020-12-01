@@ -7,6 +7,7 @@ import ApplicationsPage from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import OverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage from "../pages/grants"
+import RewardsPage from "../pages/rewards"
 import * as Icons from "./Icons"
 import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
@@ -42,11 +43,7 @@ export const SideMenu = (props) => {
         <NavLinkSection
           label="earn"
           icon={<Icons.FeesVector />}
-          subroutes={[
-            EarningsPage.route,
-            // TODO uncomment when `Rewards` page will be implemented
-            // { title: "Rewards", path: "/rewards", exact: false },
-          ]}
+          subroutes={[EarningsPage.route, RewardsPage.route]}
         />
         <NavLinkSection
           label="help"
