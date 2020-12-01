@@ -15,6 +15,7 @@ import {
 import { Skeleton } from "./skeletons"
 import { useWeb3Context } from "./WithWeb3Context"
 import resourceTooltipProps from "../constants/tooltips"
+import DelegationPage from "../pages/delegation"
 
 const TokenOverview = ({
   totalKeepTokenBalance,
@@ -169,7 +170,7 @@ const TokenBalance = ({
         {isConnected ? inPercentage : "-"}% Staked
       </span>
       <Link
-        to={`/delegation/${type}`}
+        to={`${DelegationPage.route.path}/${type}`}
         className="btn btn-secondary btn-lg mt-2"
         style={{ width: "100%" }}
       >

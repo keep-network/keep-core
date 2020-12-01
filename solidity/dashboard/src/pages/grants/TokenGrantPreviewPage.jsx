@@ -1,20 +1,20 @@
 import React from "react"
 import { useParams } from "react-router-dom"
-import { useFetchData } from "../hooks/useFetchData"
-import PageWrapper from "../components/PageWrapper"
-import { tokenGrantsService } from "../services/token-grants.service"
-import { LoadingOverlay } from "../components/Loadable"
-import { Web3Context } from "../components/WithWeb3Context"
+import { useFetchData } from "../../hooks/useFetchData"
+import PageWrapper from "../../components/PageWrapper"
+import { tokenGrantsService } from "../../services/token-grants.service"
+import { LoadingOverlay } from "../../components/Loadable"
+import { Web3Context } from "../../components/WithWeb3Context"
 import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
-import { getContractAddress } from "../contracts"
+import { getContractAddress } from "../../contracts"
 import Web3 from "web3"
-import { getWsUrl } from "../connectors/utils"
+import { getWsUrl } from "../../connectors/utils"
 import {
   TokenGrantDetails,
   TokenGrantStakedDetails,
   TokenGrantUnlockingdDetails,
-} from "../components/TokenGrantOverview"
-import { TokenGrantSkeletonOverview } from "../components/skeletons/TokenOverviewSkeleton"
+} from "../../components/TokenGrantOverview"
+import { TokenGrantSkeletonOverview } from "../../components/skeletons/TokenOverviewSkeleton"
 
 const TokenGrantPreview = () => {
   const { grantId } = useParams()
@@ -33,6 +33,7 @@ const TokenGrantPreview = () => {
         ) : (
           <section className="tile token-grant-overview">
             <div className="grant-amount">
+              <h3 className="text-grey-70">Grant Amount</h3>
               <TokenGrantDetails
                 title="Grant Amount"
                 selectedGrant={state.data}

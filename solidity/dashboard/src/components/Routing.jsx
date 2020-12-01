@@ -7,13 +7,15 @@ import RewardsPageContainer from "../pages/RewardsPageContainer"
 import DelegationPage from "../pages/delegation"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
-import TokenGrantPreviewPage from "../pages/TokenGrantPreviewPage"
 import TokenOverviewPage from "../pages/OverviewPage"
+import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 const pages = [
   TokenOverviewPage,
   DelegationPage,
+  TokenGrantsPage,
+  TokenGrantPreviewPage,
   OperatorPage,
   RewardsPageContainer,
   ApplicationsPageContainer,
@@ -28,7 +30,6 @@ class Routing extends React.Component {
         <Route exact path="/glossary">
           <Redirect to="/resources/quick-terminology" />
         </Route>
-        <Route exact path="/grant/:grantId" component={TokenGrantPreviewPage} />
         {/* <Route
           exact
           path="/create-token-grants"
@@ -68,13 +69,15 @@ const CustomRoute = ({
 }) => {
   const { yourAddress, provider } = useWeb3Context()
 
-  return !withConnectWalletGuard ||
-    (withConnectWalletGuard && yourAddress && provider) ? (
+  return (
     <Route path={path} exact={exact}>
-      <Component routes={Component.route.pages} {...componentProps} />
+      {!withConnectWalletGuard ||
+      (withConnectWalletGuard && yourAddress && provider) ? (
+        <Component routes={Component.route.pages} {...componentProps} />
+      ) : (
+        <EmptyStateComponent {...Component.route} />
+      )}
     </Route>
-  ) : (
-    <EmptyStateComponent />
   )
 }
 

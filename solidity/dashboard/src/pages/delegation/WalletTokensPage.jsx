@@ -113,7 +113,7 @@ const WalletTokensPage = () => (
 
 WalletTokensPage.route = {
   title: "Wallet Tokens",
-  path: "/delegation/wallet",
+  path: "/delegations/wallet",
   exact: true,
   withConnectWalletGuard: true,
   emptyStateComponent: EmptyStateComponent,
