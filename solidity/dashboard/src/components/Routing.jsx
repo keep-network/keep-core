@@ -4,6 +4,7 @@ import { NotFound404 } from "./NotFound404"
 import { useWeb3Context } from "./WithWeb3Context"
 import OperatorPage from "../pages/OperatorPage"
 import DelegationPage from "../pages/delegation"
+import EarningsPage from "../pages/RewardsPageContainer"
 import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenOverviewPage from "../pages/OverviewPage"
@@ -18,8 +19,9 @@ const pages = [
   TokenGrantPreviewPage,
   OperatorPage,
   ApplicationsPageContainer,
-  ResourcesPage,
+  EarningsPage,
   RewardsPage,
+  ResourcesPage,
 ]
 
 class Routing extends React.Component {
