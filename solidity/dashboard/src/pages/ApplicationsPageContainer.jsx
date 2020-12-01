@@ -1,26 +1,16 @@
 import React from "react"
-import { Route, Switch, Redirect } from "react-router-dom"
-import ApplicationOverviewPage from "./ApplicationOverviewPage"
 import TBTCApplicationPage from "./TBTCApplicationPage"
 import KeepRandomBeaconApplicationPage from "./KeepRandomBeaconApplicationPage"
+import PageWrapper from "../components/PageWrapper"
 
-const ApplicationsPageContainer = (props) => {
-  return (
-    <Switch>
-      <Route
-        exact
-        path="/applications/overview"
-        component={ApplicationOverviewPage}
-      />
-      <Route exact path="/applications/tbtc" component={TBTCApplicationPage} />
-      <Route
-        exact
-        path="/applications/random-beacon"
-        component={KeepRandomBeaconApplicationPage}
-      />
-      <Redirect to="/applications/overview" />
-    </Switch>
-  )
+const ApplicationsPageContainer = ({ title, routes }) => {
+  return <PageWrapper title={title} routes={routes} />
+}
+
+ApplicationsPageContainer.route = {
+  title: "Applications",
+  path: "/applications",
+  pages: [KeepRandomBeaconApplicationPage, TBTCApplicationPage],
 }
 
 export default ApplicationsPageContainer

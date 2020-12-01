@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react"
+import { connect } from "react-redux"
 import Button from "./Button"
 import { LoadingOverlay } from "./Loadable"
 import { useFetchData } from "../hooks/useFetchData"
@@ -11,7 +12,7 @@ import { useWeb3Context } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
-import { sub, lt } from "../utils/arithmetics.utils"
+import { sub, lt, gt } from "../utils/arithmetics.utils"
 import Tile from "./Tile"
 import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
@@ -22,15 +23,14 @@ import {
   REWARD_STATUS,
   SIGNING_GROUP_STATUS,
 } from "../constants/constants"
-import { SpeechBubbleTooltip } from "./SpeechBubbleTooltip"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import Skeleton from "./skeletons/Skeleton"
 import { withdrawGroupMemberRewards } from "../actions/web3"
-import { connect } from "react-redux"
 import {
   displayEthAmount,
   MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI,
 } from "../utils/ethereum.utils"
+import ResourceTooltip from "./ResourceTooltip"
 
 const previewDataCount = 10
 const initialRewardsData = [[], "0"]
@@ -186,18 +186,23 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
                   height: 64,
                   className: "eth-icon primary",
                 }}
+                currencySymbol="ETH"
                 displayWithMetricSuffix={false}
                 amount={totalRewardsBalance}
                 amountClassName="h1 text-primary"
                 displayAmountFunction={displayEthAmount}
-                withTooltip={lt(
-                  totalRewardsBalance,
-                  MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI
-                )}
+                withTooltip={
+                  lt(totalRewardsBalance, MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI) &&
+                  gt(totalRewardsBalance, 0)
+                }
                 tooltipText={amountTooltipText(totalRewardsBalance)}
               />
               <div className="ml-1 self-center">
-                <SpeechBubbleTooltip text="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires." />
+                <ResourceTooltip
+                  title="Beacon earnings"
+                  content="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires."
+                  withRedirectButton={false}
+                />
               </div>
             </div>
           )}

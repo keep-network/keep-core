@@ -1,4 +1,5 @@
 import React, { useState } from "react"
+import BigNumber from "bignumber.js"
 import { SubmitButton } from "./Button"
 import FormInput from "./FormInput"
 import { withFormik, useFormikContext } from "formik"
@@ -8,7 +9,7 @@ import {
   getErrorsObj,
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { displayAmount, fromTokenUnit } from "../utils/token.utils"
+import { displayAmount, fromTokenUnit, toTokenUnit } from "../utils/token.utils"
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
 import {
@@ -17,6 +18,7 @@ import {
 } from "../forms/form.utils.js"
 import { lte } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
+import Tag from "./Tag"
 
 const DelegateStakeForm = ({
   onSubmit,
@@ -61,13 +63,12 @@ const DelegateStakeForm = ({
         />
       </div>
       <SubmitButton
-        className="btn btn-primary"
+        className="btn btn-primary btn-lg"
         type="submit"
         onSubmitAction={onSubmitBtn}
         withMessageActionIsPending={false}
         triggerManuallyFetch={true}
         disabled={!(formikProps.isValid && formikProps.dirty)}
-        confirmationModalTitle="Initiate Delegation"
       >
         delegate stake
       </SubmitButton>
@@ -110,9 +111,13 @@ const TokensAmountField = ({
   minStake,
   stakeTokensValue,
 }) => {
+  const { setFieldValue } = useFormikContext()
+
+  const onAddonClick = () => {
+    setFieldValue("stakeTokens", toTokenUnit(availableToStake).toFixed(0, BigNumber.ROUND_DOWN))
+  }
   return (
     <div className="token-amount-wrapper">
-      <Icons.KeepGreenOutline />
       <div className="token-amount-field">
         <FormInput
           name="stakeTokens"
@@ -121,20 +126,33 @@ const TokensAmountField = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
           placeholder="0"
+          instructionText={`The minimum stake is ${displayAmount(
+            minStake
+          )} KEEP`}
+          leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
+          inputAddon={<MaxStakeAddon onClick={onAddonClick} />}
         />
         <ProgressBar
           total={availableToStake}
-          items={[{ value: stakeTokensValue, color: colors.primary }]}
-        />
-        <div className="text-caption text-grey-50">
+          value={stakeTokensValue}
+          color={colors.mint80}
+          bgColor={colors.mint20}
+        >
+          <ProgressBar.Inline
+            height={10}
+            className="token-amount__progress-bar"
+          />
+        </ProgressBar>
+        <div className="text-caption text-grey-60 text-right ml-a">
           {displayAmount(availableToStake)} KEEP available
-        </div>
-        <div className="text-caption text-grey-30">
-          Minimum stake is {displayAmount(minStake)} KEEP
         </div>
       </div>
     </div>
   )
+}
+
+const MaxStakeAddon = ({ onClick }) => {
+  return <Tag IconComponent={Icons.Plus} text="Max Stake" onClick={onClick} />
 }
 
 const connectedWithFormik = withFormik({

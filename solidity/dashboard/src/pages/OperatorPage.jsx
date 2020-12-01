@@ -10,7 +10,7 @@ import { useFetchData } from "../hooks/useFetchData"
 import { LoadingOverlay } from "../components/Loadable"
 import DelegatedTokensSkeleton from "../components/skeletons/DelegatedTokensSkeleton"
 
-const OperatorPage = (props) => {
+const OperatorPage = ({ title }) => {
   const [state, setData] = useFetchData(
     operatorService.fetchDelegatedTokensData,
     {}
@@ -23,7 +23,7 @@ const OperatorPage = (props) => {
   )
 
   return (
-    <PageWrapper title="Operations">
+    <PageWrapper title={title}>
       <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<DelegatedTokensSkeleton />}
@@ -42,6 +42,13 @@ const OperatorPage = (props) => {
       <SlashedTokens />
     </PageWrapper>
   )
+}
+
+OperatorPage.route = {
+  title: "Operations",
+  path: "/operations",
+  exact: true,
+  pages: [],
 }
 
 export default OperatorPage

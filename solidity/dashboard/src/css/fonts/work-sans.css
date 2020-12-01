@@ -1,1 +1,32 @@
-@import url('https://fonts.googleapis.com/css?family=Work+Sans:400,500,600,700,800');
+/* ExtraBold */
+@font-face {
+    font-family: 'Work Sans';
+    src: url('./fonts/work-sans/WorkSans-ExtraBold.ttf') format("truetype");
+    font-weight: 800;
+    font-style: normal;
+}
+
+/* Bold */
+@font-face {
+    font-family: 'Work Sans';
+    src: url('./fonts/work-sans/WorkSans-Bold.ttf') format("truetype");
+    font-weight: bold;
+    font-style: normal;
+}
+
+/* Medium */
+@font-face {
+    font-family: 'Work Sans';
+    src: url('./fonts/work-sans/WorkSans-Medium.ttf') format("truetype");
+    font-weight: 500;
+    font-style: normal;
+}
+
+
+/* Regular */
+@font-face {
+    font-family: 'Work Sans';
+    src: url('./fonts/work-sans/WorkSans-Regular.ttf') format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}

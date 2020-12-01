@@ -1,25 +1,36 @@
-import React, { useState } from "react"
+import React, { useMemo } from "react"
 import { shortenAddress } from "../utils/general.utils"
-import copy from "copy-to-clipboard"
+import Tooltip from "./Tooltip"
+import CopyToClipboard from "./CopyToClipboard"
 
 const AddressShortcut = ({ address, classNames }) => {
-  const [copyStatus, setCopyStatus] = useState("Copy to clipboard")
-
-  const copyToClipboard = () => {
-    copy(address)
-      ? setCopyStatus("Copied!")
-      : setCopyStatus(`Cannot copy value: ${address}!`)
-  }
+  const addr = useMemo(() => shortenAddress(address), [address])
 
   return (
-    <span
-      onClick={copyToClipboard}
-      onMouseOut={() => setCopyStatus("Copy to clipboard")}
-      className={`address-shortcut tooltip address ${classNames}`}
-    >
-      <span className="tooltip-text address bottom">{copyStatus}</span>
-      {shortenAddress(address)}
-    </span>
+    <CopyToClipboard
+      toCopy={address}
+      render={({ reset, copyStatus, copyToClipboard }) => {
+        return (
+          <Tooltip
+            simple
+            delay={0}
+            triggerComponent={() => {
+              return (
+                <button
+                  onClick={copyToClipboard}
+                  onMouseOut={reset}
+                  className={`address-shortcut ${classNames}`}
+                >
+                  {addr}
+                </button>
+              )
+            }}
+          >
+            {copyStatus}
+          </Tooltip>
+        )
+      }}
+    />
   )
 }
 

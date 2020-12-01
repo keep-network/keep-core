@@ -6,6 +6,7 @@ import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
 import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { shortenAddress } from "../utils/general.utils"
+import resourceTooltipProps from "../constants/tooltips"
 
 const AuthorizeContracts = ({
   data,
@@ -24,10 +25,7 @@ const AuthorizeContracts = ({
         title="Authorize Contracts"
         subtitle="Below are the available operator contracts to authorize."
         withTooltip
-        tooltipProps={{
-          text:
-            "By authorizing a contract, you are approving a set of terms for the governance of an operator, e.g. the rules for slashing tokens.",
-        }}
+        tooltipProps={resourceTooltipProps.authorize}
         noDataMessage="No contracts to authorize."
         withFilterDropdown
         filterDropdownProps={{

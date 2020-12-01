@@ -1,154 +1,99 @@
-import React, { useState, useContext } from "react"
-import { Link, useRouteMatch } from "react-router-dom"
-import { Web3Status } from "./Web3Status"
-import { Web3Context } from "./WithWeb3Context"
-import { ContractsDataContext } from "./ContractsDataContextProvider"
-import AddressShortcut from "./AddressShortcut"
-import { NetworkStatus } from "./NetworkStatus"
+import React from "react"
+import { Link, NavLink, useRouteMatch } from "react-router-dom"
+import OperationsPage from "../pages/OperatorPage"
+import EarningsPage from "../pages/RewardsPageContainer"
+import DelegationPage from "../pages/delegation"
+import ApplicationsPage from "../pages/ApplicationsPageContainer"
+import ResourcesPage from "../pages/ResourcesPage"
+import OverviewPage from "../pages/OverviewPage"
+import TokenGrantsPage from "../pages/grants"
+import RewardsPage from "../pages/rewards"
 import * as Icons from "./Icons"
+import Divider from "./Divider"
+import { isEmptyArray } from "../utils/array.utils"
 
-export const SideMenuContext = React.createContext({})
-
-export const SideMenuProvider = (props) => {
-  const [isOpen, setIsOpen] = useState(false)
-
-  const toggle = () => {
-    setIsOpen(!isOpen)
-  }
-
-  return (
-    <SideMenuContext.Provider value={{ isOpen, toggle }}>
-      {props.children}
-    </SideMenuContext.Provider>
-  )
+const styles = {
+  overviewDivider: { margin: "1rem 1.5rem" },
 }
 
 export const SideMenu = (props) => {
-  const { isOpen } = useContext(SideMenuContext)
-  const { yourAddress, provider } = useContext(Web3Context)
-  const { isKeepTokenContractDeployer } = useContext(ContractsDataContext)
-
-  const isDisabled = !yourAddress || !provider
-
   return (
-    <nav
-      className={`${isOpen ? "active " : ""}side-menu ${
-        isDisabled ? " disabled" : ""
-      }`}
-    >
-      <ul title={isDisabled ? "Please choose a wallet first." : ""}>
-        <NavLink
-          to="/tokens"
-          label="tokens"
-          icon={<Icons.KeepToken />}
-          sublinks={[
-            { to: "/tokens/overview", exact: true, label: "Overview" },
-            { to: "/tokens/delegate", exact: true, label: "Delegate Tokens" },
-            { to: "/tokens/grants", exact: true, label: "Token Grants" },
+    <nav className="side-menu--active">
+      <ul className="side-menu__list">
+        <li className="side-menu__route-wrapper">
+          <NavLink
+            to={OverviewPage.route.path}
+            className="side-menu__route"
+            activeClassName="side-menu__route--active"
+          >
+            {OverviewPage.route.title}
+          </NavLink>
+          <Divider style={styles.overviewDivider} />
+        </li>
+        <NavLinkSection
+          label="stake"
+          icon={<Icons.StakeDrop />}
+          subroutes={[DelegationPage.route, TokenGrantsPage.route]}
+        />
+        <NavLinkSection
+          label="work"
+          icon={<Icons.SwordOperations />}
+          subroutes={[ApplicationsPage.route, OperationsPage.route]}
+        />
+        <NavLinkSection
+          label="earn"
+          icon={<Icons.FeesVector />}
+          subroutes={[EarningsPage.route, RewardsPage.route]}
+        />
+        <NavLinkSection
+          label="help"
+          icon={<Icons.Question />}
+          subroutes={[
+            // TODO uncomment when `FAQ` page will be implemented
+            // { label: "FAQ", path: "/faq", exact: "true" },
+            ResourcesPage.route,
           ]}
         />
-        <NavLink
-          exact
-          to="/operations"
-          label="operations"
-          icon={<Icons.Operations />}
-        />
-        <NavLink
-          to="/rewards"
-          label="rewards"
-          icon={<Icons.Rewards />}
-          sublinks={[
-            {
-              to: "/rewards/random-beacon",
-              exact: true,
-              label: "Beacon Rewards",
-            },
-            { to: "/rewards/tbtc", exact: true, label: "tBTC Rewards" },
-          ]}
-        />
-        <NavLink
-          to="/applications"
-          label="applications"
-          icon={<Icons.Authorizer />}
-          sublinks={[
-            { to: "/applications/overview", exact: true, label: "Overview" },
-            {
-              to: "/applications/random-beacon",
-              exact: true,
-              label: "Random Beacon",
-            },
-            { to: "/applications/tbtc", exact: true, label: "tBTC" },
-          ]}
-        />
-        <NavLink
-          exact
-          to="/glossary"
-          label="glossary"
-          icon={<Icons.Glossary />}
-          wrapperClassName="glossary-link text-label"
-        />
-        {isKeepTokenContractDeployer && (
+        {/* TODO: display this link if a user is a keep token contract deployer. This is only used in development mode*/}
+        {/* {isKeepTokenContractDeployer && (
           <NavLink exact to="/create-token-grants" label="token grants" />
-        )}
-        <Web3Status />
-        <div className="account-address">
-          <h5 className="text-grey-50">
-            <span>address:&nbsp;</span>
-            <AddressShortcut classNames="h5" address={yourAddress} />
-          </h5>
-          <NetworkStatus />
-        </div>
+        )} */}
       </ul>
     </nav>
   )
 }
 
-const NavLink = ({
-  label,
-  to,
-  exact,
-  icon,
-  sublinks,
-  wrapperClassName,
-  activeClassName,
-  withArrowRight,
-}) => {
-  const match = useRouteMatch({
-    path: to,
-    exact,
-  })
-
+const NavLinkSection = ({ label, icon, subroutes = [] }) => {
   return (
-    <li className={`${wrapperClassName} ${match ? activeClassName : ""}`}>
-      <Link to={to}>
-        {icon}
-        <span className="ml-1">{label}</span>
-        {withArrowRight && <Icons.ArrowRight />}
-      </Link>
-      <SubNavLinks sublinks={sublinks} />
+    <li className="side-menu__section">
+      <div className="side-menu__section__header">
+        <div className="side-menu__section__header__icon">{icon}</div>
+        <span className="side-menu__section__header__title">{label}</span>
+      </div>
+      {!isEmptyArray(subroutes) && (
+        <ul className="side-menu__section__routes">
+          {subroutes.map(renderRoute)}
+        </ul>
+      )}
     </li>
   )
 }
 
-NavLink.defaultProps = {
-  wrapperClassName: "text-label",
-  activeClassName: "active-page-link",
-  withArrowRight: true,
-}
+const renderRoute = (route) => (
+  <NavLinkSectionRoute key={route.path} {...route} />
+)
 
-const SubNavLinks = ({ sublinks }) => {
-  if (!sublinks) return null
+const NavLinkSectionRoute = ({ title, path, exact }) => {
+  const match = useRouteMatch({
+    path,
+    exact,
+  })
 
   return (
-    <ul className="sublinks">
-      {sublinks.map((sublink) => (
-        <NavLink
-          key={sublink.label}
-          {...sublink}
-          wrapperClassName="sublink"
-          withArrowRight={false}
-        />
-      ))}
-    </ul>
+    <li className="side-menu__route-wrapper">
+      <Link to={path} className={`side-menu__route${match ? "--active" : ""}`}>
+        {title}
+      </Link>
+    </li>
   )
 }
