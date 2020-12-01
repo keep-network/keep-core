@@ -32,10 +32,7 @@ const fetchAvailableRewards = async (web3Context) => {
       )
     ).map((event) => event.returnValues.groupPubKey)
 
-    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(
-      web3Context,
-      yourAddress
-    )
+    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(yourAddress)
     const rewards = []
     const groups = {}
 
@@ -153,27 +150,10 @@ const fetchWithdrawalHistory = async (web3Context) => {
   }
 }
 
-const fetchtDistributedBeaconRewards = async (beneficiary) => {
-  const { token, beaconRewardsContract } = await ContractsLoaded
-
-  // Filter `Transfer` events at `KeepToken` contract by fields:
-  // * `to`- as a beneficiary address,
-  // * `from`- as a BeaconRewards contract address.
-
-  // In ^ that case we are sure that transferred KEEPs were from `BeaconRewards`.
-  return (
-    await token.getPastEvents("Transfer", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.token,
-      filter: { from: beaconRewardsContract.options.address, to: beneficiary },
-    })
-  ).reduce((reducer, event) => add(reducer, event.returnValues.value), 0)
-}
-
 const rewardsService = {
   fetchAvailableRewards,
   withdrawRewardFromGroup,
   fetchWithdrawalHistory,
-  fetchtDistributedBeaconRewards,
 }
 
 export default rewardsService

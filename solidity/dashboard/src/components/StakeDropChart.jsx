@@ -15,7 +15,7 @@ import {
   fromTokenUnit,
 } from "../utils/token.utils"
 import { formatDate } from "../utils/general.utils"
-import BeaconRewardsHelper from "../utils/beaconRewardsHelper"
+import BeaconRewardsHelper from "../utils/rewardsHelper"
 
 const data = BeaconRewardsHelper.keepAllocationsInInterval.map(
   (amount, index) => {
