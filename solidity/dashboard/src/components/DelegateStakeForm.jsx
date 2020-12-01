@@ -8,7 +8,7 @@ import {
   getErrorsObj,
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { displayAmount, fromTokenUnit } from "../utils/token.utils"
+import { displayAmount, fromTokenUnit, toTokenUnit } from "../utils/token.utils"
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
 import {
@@ -113,7 +113,7 @@ const TokensAmountField = ({
   const { setFieldValue } = useFormikContext()
 
   const onAddonClick = () => {
-    setFieldValue("stakeTokens", availableToStake)
+    setFieldValue("stakeTokens", toTokenUnit(availableToStake).toString())
   }
   return (
     <div className="token-amount-wrapper">
