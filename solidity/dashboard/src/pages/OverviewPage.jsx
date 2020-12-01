@@ -11,6 +11,7 @@ import { Link } from "react-router-dom"
 import PageWrapper from "../components/PageWrapper"
 import { useSelector, useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
+import DelegationPage from "./delegation"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -115,7 +116,10 @@ const OverviewFirstSection = () => {
     >
       <div className="start-staking">
         <div className="start-staking__btn">
-          <Link to="/delegate" className="btn btn-primary btn-lg">
+          <Link
+            to={DelegationPage.route.path}
+            className="btn btn-primary btn-lg"
+          >
             start staking
           </Link>
         </div>

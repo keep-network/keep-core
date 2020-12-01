@@ -129,7 +129,7 @@ const TokensAmountField = ({
             minStake
           )} KEEP`}
           leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
-          inputAddon={<TokenFieldAddon onClick={onAddonClick} />}
+          inputAddon={<MaxStakeAddon onClick={onAddonClick} />}
         />
         <ProgressBar
           total={availableToStake}
@@ -150,7 +150,7 @@ const TokensAmountField = ({
   )
 }
 
-const TokenFieldAddon = ({ onClick }) => {
+const MaxStakeAddon = ({ onClick }) => {
   return <Tag IconComponent={Icons.Plus} text="Max Stake" onClick={onClick} />
 }
 

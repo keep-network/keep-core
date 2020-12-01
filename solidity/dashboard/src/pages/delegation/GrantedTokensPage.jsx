@@ -11,6 +11,7 @@ import {
 } from "../../components/TokenGrantOverview"
 import { DelegationPageWrapper } from "./index"
 import DelegationOverview from "../../components/DelegationOverview"
+import ResourceTooltip from "../../components/ResourceTooltip"
 import { useState } from "react"
 import { isEmptyArray } from "../../utils/array.utils"
 import { isEmptyObj } from "../../utils/general.utils"
@@ -19,6 +20,7 @@ import { usePrevious } from "../../hooks/usePrevious"
 import { CompoundDropdown as Dropdown } from "../../components/Dropdown"
 import * as Icons from "../../components/Icons"
 import useReleaseTokens from "../../hooks/useReleaseTokens"
+import resourceTooltipProps from "../../constants/tooltips"
 
 const filterBySelectedGrant = (selectedGrant) => (delegation) =>
   selectedGrant.id && delegation.grantId === selectedGrant.id
@@ -122,7 +124,10 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
           />
         </section>
         <section className="tile granted-page__overview__stake-form">
-          <h3 className="mb-1">Stake Granted Tokens</h3>
+          <header className="flex row center mb-1">
+            <h3>Stake Granted Tokens&nbsp;</h3>
+            <ResourceTooltip {...resourceTooltipProps.delegation} />
+          </header>
           <DelegateStakeForm
             onSubmit={onSubmit}
             minStake={minimumStake}
@@ -175,7 +180,7 @@ const GrantedTokensPage = () => (
 
 GrantedTokensPage.route = {
   title: "Granted Tokens",
-  path: "/delegation/grant",
+  path: "/delegations/granted",
   exact: true,
   withConnectWalletGuard: true,
   emptyStateComponent: EmptyStateComponent,

@@ -1,6 +1,7 @@
+import moment from "moment"
 import { MANAGED_GRANT_FACTORY_CONTRACT_NAME } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
-import { add, gt } from "../utils/arithmetics.utils"
+import { add, sub, gt } from "../utils/arithmetics.utils"
 import {
   getGuaranteedMinimumStakingPolicyContractAddress,
   getPermissiveStakingPolicyContractAddress,
@@ -107,23 +108,41 @@ const getGrantDetails = async (grantId, isManagedGrant = false) => {
   const readyToRelease = add(
     withdrawableAmountGrantOnly,
     escrowWithdrawableAmount
-  )
-  const released = add(grantDetails.withdrawn, escrowWithdrawTotalAmount)
+  ).toString()
+
+  const released = add(
+    grantDetails.withdrawn,
+    escrowWithdrawTotalAmount
+  ).toString()
 
   const availableToStake = await grantContract.methods
     .availableToStake(grantId)
     .call()
+
+  // TokeGrant contract does not track canceled or recoverd tokens.
+  // Recovered/canceled tokens are transferred to `TokenStakingEscrow` contract.
+  const staked = sub(grantDetails.staked, escrowAvailableTotalAmount).toString()
 
   return {
     id: grantId,
     unlocked,
     released,
     readyToRelease,
-    availableToStake: add(availableToStake, escrowAvailableTotalAmount),
+    availableToStake: add(
+      availableToStake,
+      escrowAvailableTotalAmount
+    ).toString(),
     escrowOperatorsToWithdraw,
     withdrawableAmountGrantOnly,
     ...unlockingSchedule,
     ...grantDetails,
+    cliffPeriod: moment
+      .unix(unlockingSchedule.cliff)
+      .from(moment.unix(unlockingSchedule.start), true),
+    fullyUnlockedDate: moment
+      .unix(unlockingSchedule.start)
+      .add(unlockingSchedule.duration, "seconds"),
+    staked,
   }
 }
 

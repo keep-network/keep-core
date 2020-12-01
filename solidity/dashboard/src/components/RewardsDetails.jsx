@@ -49,7 +49,7 @@ const BeaconRewardsDetails = ({ pastRewards }) => {
       <h4 className="text-grey-70 mb-2">Rewards Details</h4>
       <ul>
         <MinKeepInInterval
-          label="Min. Keep Group"
+          label="Min. Groups"
           minKeep={BeaconRewardsHelper.minimumKeepsPerInterval}
         />
         {/* <li className="flex row center mb-1">

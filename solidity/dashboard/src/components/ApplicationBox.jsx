@@ -25,7 +25,7 @@ const ApplicationBox = ({
       <h2 className="mt-2">{name}</h2>
       <a
         href={websiteUrl}
-        className="arrow-link h4"
+        className="h4"
         rel="noopener noreferrer"
         target="_blank"
       >

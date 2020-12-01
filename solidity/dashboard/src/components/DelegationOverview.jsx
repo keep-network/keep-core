@@ -49,24 +49,7 @@ const DelegationOverview = ({
 
   return (
     <section>
-      {context === "wallet" && (
-        <h2 className="h2--alt text-grey-60 mb-2">Activity</h2>
-      )}
-      {context === "granted" && (
-        <header className="flex row center mb-2">
-          <h2 className="h2--alt text-grey-60">Grant Activity</h2>
-          <div className="flex row center ml-a">
-            <Tag IconComponent={Icons.Grant} text="Grant ID" />
-            <span className="ml-1 mr-2">
-              {selectedGrant && selectedGrant.id}
-            </span>
-            <Tag IconComponent={Icons.Time} text="Issued" />
-            <span className="ml-1">
-              {selectedGrant && formatDate(moment.unix(selectedGrant.start))}
-            </span>
-          </div>
-        </header>
-      )}
+      <DelegationHeader type={context} selectedGrant={selectedGrant} />
       <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton />}
@@ -98,6 +81,36 @@ const DelegationOverview = ({
       </LoadingOverlay>
     </section>
   )
+}
+
+const DelegationHeader = ({ type, selectedGrant }) => {
+  switch (type) {
+    case "wallet":
+    default:
+      return <h2 className="h2--alt text-grey-60 mb-2">Activity</h2>
+    case "granted":
+      return (
+        <header className="flex row center mb-2">
+          <h2 className="h2--alt text-grey-60">Grant Activity</h2>
+          <div className="flex row center ml-a">
+            <Tag
+              IconComponent={Icons.Grant}
+              text="Grant ID"
+              className="grant-id-tag"
+            />
+            <span className="ml-1 mr-2">
+              {selectedGrant && selectedGrant.id}
+            </span>
+            <Tag IconComponent={Icons.Time} text="Issued" />
+            <span className="ml-1">
+              {selectedGrant && selectedGrant.start
+                ? formatDate(moment.unix(selectedGrant.start))
+                : null}
+            </span>
+          </div>
+        </header>
+      )
+  }
 }
 
 export default DelegationOverview

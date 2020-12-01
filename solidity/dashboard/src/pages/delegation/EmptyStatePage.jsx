@@ -6,6 +6,7 @@ import {
   Skeleton,
   SkeletonProgressBar,
 } from "../../components/skeletons"
+import resourceTooltipProps from "../../constants/tooltips"
 
 const title = "Earn with your KEEP"
 const subtitle =
@@ -62,7 +63,11 @@ const EmptyStateComponent = () => {
           <Skeleton tag="h5" />
         </SkeletonBox>
       </EmptyState.Skeleton>
-      <EmptyState.Title text={title} />
+      <EmptyState.Title
+        text={title}
+        tooltipProps={resourceTooltipProps.delegation}
+      />
+
       <EmptyState.Subtitle text={subtitle} />
       <EmptyState.ConnectWalletBtn />
     </EmptyState>

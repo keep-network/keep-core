@@ -1,7 +1,7 @@
 import React from "react"
 import { useField } from "formik"
-import SpeechBubbleTooltip from "./SpeechBubbleTooltip"
-import { colors } from "../constants/colors"
+import * as Icons from "./Icons"
+import Tooltip from "./Tooltip"
 
 const iconDefaultValues = {
   width: 32,
@@ -44,13 +44,16 @@ const FormInput = ({
             {instructionText}
           </span>
         )}
-        {/* TODO change tolltip when it becomes available. PR is in progress*/}
         {tooltipText && (
-          <SpeechBubbleTooltip
-            text={tooltipText}
-            iconColor={colors.grey60}
-            iconBackgroundColor="transparent"
-          />
+          <Tooltip
+            simple
+            direction="top"
+            delay={0}
+            triggerComponent={Icons.MoreInfo}
+            className="input__label__tooltip"
+          >
+            {tooltipText}
+          </Tooltip>
         )}
       </label>
       <div className="form-input__wrapper">

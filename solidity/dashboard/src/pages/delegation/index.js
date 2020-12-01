@@ -129,8 +129,8 @@ export const DelegationPageWrapper = connect(
 )(DelegationPageWrapperComponent)
 
 DelegationPage.route = {
-  title: "Delegation",
-  path: "/delegation",
+  title: "Delegations",
+  path: "/delegations",
   pages: [WalletTokensPage, GrantedTokensPage],
 }
 
