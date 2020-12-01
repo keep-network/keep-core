@@ -6,7 +6,7 @@ import {
   BeaconRewardsDetails,
   ECDSARewardsDetails,
 } from "../../components/RewardsDetails"
-import StakeDropChart from "../../components/StakeDropChart"
+// import StakeDropChart from "../../components/StakeDropChart"
 import { useWeb3Context } from "../../components/WithWeb3Context"
 import { TokenAmountSkeleton } from "../../components/skeletons"
 import EmptyStatePage from "./EmptyStatePage"
@@ -53,29 +53,34 @@ const RewardsOverviewPage = () => {
   return (
     <>
       <section className="rewards-overview--random-beacon">
-        <section className="tile">
+        <section>
           <Balance
             title="Random Beacon Rewards"
             rewardsBalance={becaonRewardsBalance}
             isBalanceFetching={beaconRewardsFetching}
           />
-          <section className="mt-2">
-            <BeaconRewardsDetails />
-          </section>
         </section>
-        <section className="tile">
+        <section>
+          <BeaconRewardsDetails />
+        </section>
+        {/* For now, we decided to drop out the `StakeDropChart`
+            to keep consistency on the rewards overview page.
+        */}
+        {/* <section className="tile">
           <StakeDropChart />
-        </section>
+        </section> */}
       </section>
 
-      <section className="tile">
-        <Balance
-          title="tBTC Rewards"
-          rewardsBalance={ecdsaAvailableRewardsBalance}
-          isBalanceFetching={ecdsaAvailableRewardsFetching}
-          onWithdrawAll={onWithdrawECDSARewards}
-        />
-        <section className="mt-1">
+      <section className="rewards-overview--ecdsa">
+        <section>
+          <Balance
+            title="tBTC Rewards"
+            rewardsBalance={ecdsaAvailableRewardsBalance}
+            isBalanceFetching={ecdsaAvailableRewardsFetching}
+            onWithdrawAll={onWithdrawECDSARewards}
+          />
+        </section>
+        <section>
           <ECDSARewardsDetails pastRewards={ecdsaDistributedBalance} />
         </section>
       </section>
