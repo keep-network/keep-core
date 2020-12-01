@@ -16,7 +16,7 @@ EmptyState.Title = ({
 }) => {
   const Tag = tag
   return (
-    <headr className={`empty-state__header ${wrapperClassName}`}>
+    <header className={`empty-state__header ${wrapperClassName}`}>
       <Tag className={`empty-state__header__title ${classname}`}>{text}</Tag>
       {tooltipProps && (
         <ResourceTooltip
@@ -24,7 +24,7 @@ EmptyState.Title = ({
           {...tooltipProps}
         />
       )}
-    </headr>
+    </header>
   )
 }
 
