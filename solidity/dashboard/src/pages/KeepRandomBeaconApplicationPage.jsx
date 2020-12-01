@@ -145,7 +145,7 @@ const ConnectedKeepRandomBeaconApplicationPage = connect(
 )(KeepRandomBeaconApplicationPage)
 
 ConnectedKeepRandomBeaconApplicationPage.route = {
-  title: "Keep Rando Beacon",
+  title: "Keep Random Beacon",
   path: "/applications/random-beacon",
   exact: true,
 }
