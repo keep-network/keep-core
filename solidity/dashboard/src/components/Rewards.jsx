@@ -200,7 +200,7 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
               <div className="ml-1 self-center">
                 <ResourceTooltip
                   title="Beacon earnings"
-                  content="The total balance reflects the total Available and Acummulating rewards. Available rewards are ready to be withdrawn. Acummulating rewards become available after a signing group expires."
+                  content="The total balance reflects the total available and accumulating rewards. Available rewards are ready to be withdrawn. Accumulating rewards become available after a signing group expires."
                   withRedirectButton={false}
                 />
               </div>
