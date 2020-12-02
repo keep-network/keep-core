@@ -8,7 +8,6 @@ import {
 } from "../constants/constants"
 import { contractService } from "./contracts.service"
 import { getOperatorsOfBeneficiary } from "./token-staking.service"
-import { ContractsLoaded } from "../contracts"
 
 const fetchAvailableRewards = async (web3Context) => {
   const {

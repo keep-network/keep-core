@@ -8,7 +8,6 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   createDepositContractInstance,
   createBondedECDSAKeepContractInstance,
-  ContractsLoaded,
 } from "../contracts"
 import web3Utils from "web3-utils"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -100,6 +99,3 @@ export const tbtcRewardsService = {
   fetchBeneficiaryOperatorsFromDeposit,
 }
 
-export const fetchECDSAWithdrawanRewards = async (beneficiary) => {
-  const { token, ECDSARewards } = await ContractsLoaded
-}
