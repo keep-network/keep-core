@@ -56,7 +56,6 @@
                 border-radius: 3px;
                 padding: 1.5rem;
                 width: 250px;
-                z-index: 1000;
                 text-transform: none;
 
                 &-enter {
@@ -113,10 +112,14 @@
         display: inline-block;
         position: relative;
         
-        .tooltip__trigger {
-            
-            &:hover {
-                cursor: pointer;
+        .tooltip {
+            &__trigger {
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+            &__content-wrapper {
+                z-index: 1000;
             }
         }
     }
