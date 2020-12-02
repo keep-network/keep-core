@@ -1,15 +1,19 @@
 import React, { useMemo, useCallback } from "react"
-import TBTCRewardsDataTable from "../components/TBTCRewardsDataTable"
-import { LoadingOverlay } from "../components/Loadable"
-import { useWeb3Context } from "../components/WithWeb3Context"
-import { DataTableSkeleton, TokenAmountSkeleton } from "../components/skeletons"
-import TokenAmount from "../components/TokenAmount"
-import * as Icons from "../components/Icons"
-import { tbtcRewardsService } from "../services/tbtc-rewards.service"
-import { useFetchData } from "../hooks/useFetchData"
-import { add } from "../utils/arithmetics.utils"
-import { toTokenUnit } from "../utils/token.utils"
-import { findIndexAndObject } from "../utils/array.utils"
+import TBTCRewardsDataTable from "../../components/TBTCRewardsDataTable"
+import { LoadingOverlay } from "../../components/Loadable"
+import { useWeb3Context } from "../../components/WithWeb3Context"
+import {
+  DataTableSkeleton,
+  TokenAmountSkeleton,
+} from "../../components/skeletons"
+import TokenAmount from "../../components/TokenAmount"
+import * as Icons from "../../components/Icons"
+import { tbtcRewardsService } from "../../services/tbtc-rewards.service"
+import { useFetchData } from "../../hooks/useFetchData"
+import { add } from "../../utils/arithmetics.utils"
+import { toTokenUnit } from "../../utils/token.utils"
+import { findIndexAndObject } from "../../utils/array.utils"
+import EmptyStatePage from "./EmptyStatePage"
 
 const TBTCRewardsPage = () => {
   const web3Context = useWeb3Context()
@@ -89,6 +93,8 @@ TBTCRewardsPage.route = {
   title: "tBTC",
   path: "/earnings/tbtc",
   exact: true,
+  withConnectWalletGuard: true,
+  emptyStateComponent: EmptyStatePage,
 }
 
 export default TBTCRewardsPage
