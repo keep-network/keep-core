@@ -15,7 +15,7 @@ import { isEmptyArray } from "../utils/array.utils"
 
 const fetchDelegatedTokensData = async (web3Context) => {
   const { yourAddress, grantContract, eth, web3 } = web3Context
-  const [
+  let [
     stakedBalance,
     ownerAddress,
     beneficiaryAddress,
@@ -53,19 +53,19 @@ const fetchDelegatedTokensData = async (web3Context) => {
     ),
   ])
 
-  let isUndelegationFromGrant = true
+  let isDelegationFromGrant = true
   let grantStakeDetails
   try {
     grantStakeDetails = await grantContract.methods
       .getGrantStakeDetails(yourAddress)
       .call()
   } catch (error) {
-    isUndelegationFromGrant = false
+    isDelegationFromGrant = false
   }
 
   let isManagedGrant = false
   let managedGrantContractInstance
-  if (isUndelegationFromGrant) {
+  if (isDelegationFromGrant) {
     const { grantee } = await contractService.makeCall(
       web3Context,
       TOKEN_GRANT_CONTRACT_NAME,
@@ -80,6 +80,9 @@ const fetchDelegatedTokensData = async (web3Context) => {
         grantee
       )
       isManagedGrant = true
+      ownerAddress = await managedGrantContractInstance.methods.grantee().call();
+    } else {
+      ownerAddress = grantee
     }
   }
 
@@ -102,7 +105,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
     beneficiaryAddress,
     authorizerAddress,
     undelegationStatus,
-    isUndelegationFromGrant,
+    isDelegationFromGrant,
     isInInitializationPeriod,
     undelegationPeriod,
     isManagedGrant,
