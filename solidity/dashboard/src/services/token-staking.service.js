@@ -1,7 +1,6 @@
 import { contractService } from "./contracts.service"
 import {
-  TOKEN_STAKING_CONTRACT_NAME,
-  TOKEN_GRANT_CONTRACT_NAME,
+  TOKEN_STAKING_CONTRACT_NAME
 } from "../constants/constants"
 import moment from "moment"
 import {
@@ -9,69 +8,68 @@ import {
   createManagedGrantContractInstance,
   CONTRACT_DEPLOY_BLOCK_NUMBER,
   ContractsLoaded,
+  Web3Loaded,
 } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import { getEventsFromTransaction } from "../utils/ethereum.utils"
 
-const fetchDelegatedTokensData = async (web3Context) => {
-  const { yourAddress, grantContract, eth, web3 } = web3Context
-  let [
-    stakedBalance,
-    ownerAddress,
-    beneficiaryAddress,
-    authorizerAddress,
-    initializationPeriod,
-  ] = await Promise.all([
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "balanceOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "ownerOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "beneficiaryOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "authorizerOf",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "initializationPeriod"
-    ),
+const fetchDelegatedTokensData = async () => {
+  const contractsLoaded = await ContractsLoaded
+  const { grantContract, stakingContract } = contractsLoaded
+  const web3 = await Web3Loaded
+  const { eth } = web3
+  const { defaultAccount: yourAddress } = eth
+
+  let operatorStakedEvents
+  try {
+    operatorStakedEvents = await stakingContract.getPastEvents(
+      "OperatorStaked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: yourAddress },
+      }
+    )
+  } catch (err) {}
+
+  let [stakedBalance, ownerAddress, initializationPeriod] = await Promise.all([
+    stakingContract.methods.balanceOf(yourAddress).call(),
+    stakingContract.methods.ownerOf(yourAddress).call(),
+    stakingContract.methods.initializationPeriod().call(),
   ])
 
-  let isDelegationFromGrant = true
-  let grantStakeDetails
+  let transactionHash
+  let beneficiaryAddress = ownerAddress
+  let authorizerAddress = ownerAddress
+
+  if (operatorStakedEvents.length > 0) {
+    ;({
+      transactionHash,
+      returnValues: {
+        beneficiary: beneficiaryAddress,
+        authorizer: authorizerAddress,
+      },
+    } = operatorStakedEvents[0])
+  }
+
+  const eventsToCheck = [[grantContract, "TokenGrantStaked"]]
+  let events
   try {
-    grantStakeDetails = await grantContract.methods
-      .getGrantStakeDetails(yourAddress)
-      .call()
-  } catch (error) {
+    events = await getEventsFromTransaction(eventsToCheck, transactionHash)
+  } catch (err) {}
+
+  let isDelegationFromGrant = true
+  let grantId
+  if (events && events.TokenGrantStaked) {
+    grantId = events.TokenGrantStaked.grantId
+  } else {
     isDelegationFromGrant = false
   }
 
   let isManagedGrant = false
   let managedGrantContractInstance
   if (isDelegationFromGrant) {
-    const { grantee } = await contractService.makeCall(
-      web3Context,
-      TOKEN_GRANT_CONTRACT_NAME,
-      "getGrant",
-      grantStakeDetails.grantId
-    )
+    const { grantee } = await grantContract.methods.getGrant(grantId).call()
     // check if grantee is a contract
     const code = await eth.getCode(grantee)
     if (isCodeValid(code)) {
@@ -80,7 +78,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
         grantee
       )
       isManagedGrant = true
-      ownerAddress = await managedGrantContractInstance.methods.grantee().call();
+      ownerAddress = await managedGrantContractInstance.methods.grantee().call()
     } else {
       ownerAddress = grantee
     }
@@ -92,7 +90,7 @@ const fetchDelegatedTokensData = async (web3Context) => {
     undelegationPeriod,
     delegationStatus,
     undelegationCompletedAt,
-  } = await fetchPendingUndelegation(web3Context)
+  } = await fetchPendingUndelegation()
   const { createdAt } = undelegation
   const initializationOverAt = moment
     .unix(createdAt)
@@ -115,20 +113,15 @@ const fetchDelegatedTokensData = async (web3Context) => {
   }
 }
 
-const fetchPendingUndelegation = async (web3Context) => {
-  const { yourAddress } = web3Context
+const fetchPendingUndelegation = async () => {
+  const contractsLoaded = await ContractsLoaded
+  const { stakingContract } = contractsLoaded
+  const web3 = await Web3Loaded
+  const { defaultAccount: yourAddress } = web3.eth
+
   const [delegation, undelegationPeriod] = await Promise.all([
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "getDelegationInfo",
-      yourAddress
-    ),
-    contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "undelegationPeriod"
-    ),
+    stakingContract.methods.getDelegationInfo(yourAddress).call(),
+    stakingContract.methods.undelegationPeriod().call(),
   ])
 
   const { undelegatedAt, createdAt, amount } = delegation
