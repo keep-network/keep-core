@@ -5,7 +5,7 @@ import { useWeb3Context } from "./WithWeb3Context"
 import OperationsPage from "../pages/operations"
 import DelegationPage from "../pages/delegation"
 import EarningsPage from "../pages/earnings"
-import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
+import ApplicationsPage from "../pages/applications"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
@@ -18,7 +18,7 @@ const pages = [
   TokenGrantsPage,
   TokenGrantPreviewPage,
   OperationsPage,
-  ApplicationsPageContainer,
+  ApplicationsPage,
   EarningsPage,
   RewardsPage,
   ResourcesPage,
