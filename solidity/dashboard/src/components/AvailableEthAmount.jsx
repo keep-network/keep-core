@@ -1,24 +1,27 @@
 import React from "react"
 import { colors } from "../constants/colors"
 
+const styles = {
+  ethAmount: {
+    textAlign: "right",
+    padding: "0 1rem",
+    paddingLeft: "2rem",
+    borderRadius: "100px",
+    border: `1px solid ${colors.grey20}`,
+    backgroundColor: `${colors.grey10}`,
+    width: "90px",
+    overflowX: "auto",
+  },
+}
+
 const AvailableEthAmount = React.memo(({ availableETH }) => {
   return (
-    <>
-      <span
-        className="text-big text-grey-70"
-        style={{
-          textAlign: "right",
-          padding: "0.25rem 1rem",
-          paddingLeft: "2rem",
-          borderRadius: "100px",
-          border: `1px solid ${colors.grey20}`,
-          backgroundColor: `${colors.grey10}`,
-        }}
-      >
+    <div className="flex row center">
+      <span className="text-big text-grey-70" style={styles.ethAmount}>
         {availableETH}
       </span>
       <span className="text-grey-60">&nbsp;ETH</span>
-    </>
+    </div>
   )
 })
 
