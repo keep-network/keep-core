@@ -12,6 +12,7 @@ RUN apk add --update --no-cache \
 
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
+COPY .env* /app/
 
 # Install from lockfile.
 RUN npm ci
