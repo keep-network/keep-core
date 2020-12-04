@@ -2,6 +2,7 @@ import { ContractsLoaded, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { getOperatorsOfBeneficiary } from "./token-staking.service"
 import { ECDSARewardsHelper } from "../utils/rewardsHelper"
 import { add, gt } from "../utils/arithmetics.utils"
+import { isEmptyArray } from "../utils/array.utils"
 
 export const fetchtTotalDistributedRewards = async (
   beneficiary,
@@ -31,7 +32,11 @@ export const fetchECDSAAvailableRewards = async (beneficiary) => {
 
   let sum = 0
   const toWithdrawn = []
-  for (const operator of operators) {
+  if (!isEmptyArray(operators)) {
+    // If beneficiary has multiple operators, call `getWithdrawableRewards`
+    // function one time since `ECDSARewards` contract stores rewards per
+    // beneficiary not per operator.
+    const operator = operators[0]
     for (
       let interval = 0;
       interval <= ECDSARewardsHelper.currentInterval;
