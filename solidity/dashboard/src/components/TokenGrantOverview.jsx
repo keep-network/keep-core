@@ -151,7 +151,7 @@ export const TokenGrantWithdrawnTokensDetails = ({
     <>
       <ProgressBar
         value={selectedGrant.released || 0}
-        total={withdrawable || 0}
+        total={withdrawable}
         color={colors.secondary}
         bgColor={colors.bgSecondary}
       >
@@ -165,7 +165,7 @@ export const TokenGrantWithdrawnTokensDetails = ({
       <SubmitButton
         className="btn btn-secondary btn-sm mt-2"
         onSubmitAction={onWithdrawnBtn}
-        disabled={gt(withdrawable, 0)}
+        disabled={!gt(selectedGrant.readyToRelease || 0, 0)}
       >
         withdraw tokens
       </SubmitButton>
