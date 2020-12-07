@@ -151,7 +151,7 @@ export const TokenGrantWithdrawnTokensDetails = ({
     <>
       <ProgressBar
         value={selectedGrant.released || 0}
-        total={withdrawable || 0}
+        total={withdrawable}
         color={colors.secondary}
         bgColor={colors.bgSecondary}
       >
