@@ -98,19 +98,25 @@ class Web3ContextProvider extends React.Component {
   }
 
   refreshProvider = async ([yourAddress]) => {
-    if (!yourAddress) {
-      this.setState({
-        isFetching: false,
-        yourAddress: "",
-        token: { options: { address: "" } },
-        stakingContract: { options: { address: "" } },
-        grantContract: { options: { address: "" } },
-      })
-      return
-    }
+    // if (!yourAddress) {
+    //   this.setState({
+    //     isFetching: false,
+    //     yourAddress: "",
+    //     token: { options: { address: "" } },
+    //     stakingContract: { options: { address: "" } },
+    //     grantContract: { options: { address: "" } },
+    //   })
+    //   return
+    // }
+    // const { connector, provider } = this.state
+    // await this.connectAppWithWallet(connector, provider)
 
-    const { connector, provider } = this.state
-    await this.connectAppWithWallet(connector, provider)
+    // This is a temporary solution to prevent a situation when a user changed
+    // an account but data has not been updated. After migrate to redux the dapp
+    // fetches data only once and updates data based on emitted events. This
+    // solution doesn't support a case where a user changed an account. We are
+    // going to address it in a follow up work.
+    window.location.reload()
   }
 
   render() {
