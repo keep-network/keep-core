@@ -2,10 +2,10 @@ import React from "react"
 import { Route, Switch, Redirect } from "react-router-dom"
 import { NotFound404 } from "./NotFound404"
 import { useWeb3Context } from "./WithWeb3Context"
-import OperatorPage from "../pages/OperatorPage"
+import OperationsPage from "../pages/operations"
 import DelegationPage from "../pages/delegation"
-import EarningsPage from "../pages/RewardsPageContainer"
-import ApplicationsPageContainer from "../pages/ApplicationsPageContainer"
+import EarningsPage from "../pages/earnings"
+import ApplicationsPage from "../pages/applications"
 import ResourcesPage from "../pages/ResourcesPage"
 import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
@@ -17,8 +17,8 @@ const pages = [
   DelegationPage,
   TokenGrantsPage,
   TokenGrantPreviewPage,
-  OperatorPage,
-  ApplicationsPageContainer,
+  OperationsPage,
+  ApplicationsPage,
   EarningsPage,
   RewardsPage,
   ResourcesPage,

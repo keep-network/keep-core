@@ -1,7 +1,7 @@
 import React from "react"
 import TBTCApplicationPage from "./TBTCApplicationPage"
 import KeepRandomBeaconApplicationPage from "./KeepRandomBeaconApplicationPage"
-import PageWrapper from "../components/PageWrapper"
+import PageWrapper from "../../components/PageWrapper"
 
 const ApplicationsPageContainer = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
