@@ -31,10 +31,7 @@ const fetchAvailableRewards = async (web3Context) => {
       )
     ).map((event) => event.returnValues.groupPubKey)
 
-    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(
-      web3Context,
-      yourAddress
-    )
+    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(yourAddress)
     const rewards = []
     const groups = {}
 

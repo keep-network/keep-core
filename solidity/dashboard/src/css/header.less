@@ -2,6 +2,17 @@
     width: 100%;
     z-index: 10;
     background: @header-color;
+
+    &__title {
+      font-family: 'Roboto Slab';
+      font-style: normal;
+      font-weight: 300;
+      font-size: 2.5rem;
+      line-height: 3rem;
+
+      letter-spacing: -1.5px;
+      font-feature-settings: normal;
+    }
   
     &__content {
       padding: 2.5rem;
@@ -37,10 +48,11 @@
             content: "";
             position: absolute;
             width: 0;
-            height: 2px;
+            height: 4px;
+            border-radius: 10px;
             left: calc((100% - 2rem) / 2);
             bottom: 0;
-            background-color: @color-grey-60;
+            background-color: @primary-color;
             transition: all 0.3s ease;
           }
         }

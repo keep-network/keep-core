@@ -2,7 +2,6 @@ import React from "react"
 import { Link } from "react-router-dom"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"
-import ContractsDataContextProvider from "./components/ContractsDataContextProvider"
 import { Messages } from "./components/Message"
 import { SideMenu } from "./components/SideMenu"
 import { BrowserRouter as Router } from "react-router-dom"
@@ -17,11 +16,9 @@ const App = () => (
     <Messages>
       <Web3ContextProvider>
         <ModalContextProvider>
-          <ContractsDataContextProvider>
-            <Router>
-              <AppLayout />
-            </Router>
-          </ContractsDataContextProvider>
+          <Router>
+            <AppLayout />
+          </Router>
         </ModalContextProvider>
       </Web3ContextProvider>
     </Messages>
@@ -30,19 +27,24 @@ const App = () => (
 
 const AppLayout = () => {
   return (
-    <div className="app-layout">
-      <div className="app-layout__left">
-        <Link to="/" className="app-logo">
-          <Icons.KeepDashboardLogo />
-        </Link>
-        <SideMenu />
-        <Footer />
-      </div>
-      <div className="app-layout__center">
+    <>
+      <AppHeader />
+      <section className="app__content">
         <Routing />
-      </div>
-    </div>
+      </section>
+      <Footer className="app__footer" />
+    </>
   )
 }
 
+const AppHeader = () => {
+  return (
+    <header className="app__header">
+      <Link to="/" className="app-logo">
+        <Icons.KeepDashboardLogo />
+      </Link>
+      <SideMenu />
+    </header>
+  )
+}
 export default App

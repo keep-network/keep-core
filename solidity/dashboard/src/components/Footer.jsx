@@ -9,9 +9,9 @@ const links = [
   },
 ]
 
-const Footer = () => {
+const Footer = ({ className }) => {
   return (
-    <footer className="footer">
+    <footer className={`footer ${className}`}>
       <ul className="footer__links">{links.map(renderFooterLinkItem)}</ul>
       <div className="footer__signature">
         <p>A Thesis* Build</p>
@@ -25,7 +25,6 @@ const Footer = () => {
 
 const FooterLinkItem = ({ label, url }) => (
   <li className="footer__links__item">
-    {/* TODO add arrow link to the external link*/}
     <a href={url} rel="noopener noreferrer" target="_blank">
       {label}
     </a>

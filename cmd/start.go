@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
@@ -40,6 +41,14 @@ const (
 
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
    threshold relay client for the Keep random beacon.`
+
+// Values related with balance monitoring.
+// defaultBalanceAlertThreshold determines the alert threshold below which
+// the alert should be triggered.
+var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
+// defaultBalanceMonitoringTick determines how often the monitoring
+// check should be triggered.
+const defaultBalanceMonitoringTick = 10 * time.Minute
 
 func init() {
 	StartCommand =
@@ -159,6 +168,7 @@ func Start(c *cli.Context) error {
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(ctx, config, netProvider)
+	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey.Address.Hex())
 
 	select {
 	case <-ctx.Done():
@@ -251,4 +261,36 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
+}
+
+func initializeBalanceMonitoring(
+	ctx context.Context,
+	chainProvider chain.Handle,
+	config *config.Config,
+	ethereumAddress string,
+) {
+	balanceMonitor, err := chainProvider.BalanceMonitor()
+	if err != nil {
+		logger.Errorf("error obtaining balance monitor handle [%v]", err)
+		return
+	}
+
+	alertThreshold := defaultBalanceAlertThreshold
+	if config.Ethereum.BalanceAlertThreshold != nil {
+		alertThreshold = config.Ethereum.BalanceAlertThreshold.Int
+	}
+
+	balanceMonitor.Observe(
+		ctx,
+		ethereumAddress,
+		alertThreshold,
+		defaultBalanceMonitoringTick,
+	)
+
+	logger.Infof(
+		"started balance monitoring for address [%v] "+
+			"with the alert threshold set to [%v] wei",
+		ethereumAddress,
+		alertThreshold,
+	)
 }

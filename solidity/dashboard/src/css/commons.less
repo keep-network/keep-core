@@ -5,6 +5,17 @@
   border-radius: 50%;
 }
 
+.set-grant-icon-colors(@color) {
+  path {
+    stroke: @color;
+    fill: none;
+    &:last-of-type {
+      stroke: none;
+      fill: @color;
+    }
+  }
+}
+
 .box-shadow {
     .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
 }
@@ -105,6 +116,18 @@ hr {
   
   &.wrap {
     flex-wrap: wrap;
+  }
+
+  &-gap {
+    @gap: 1rem;
+    display: inline-flex;
+    flex-wrap: wrap;
+    margin: calc(-1 * @gap) 0 0 calc(-1 * @gap);
+    width: calc(100% + @gap);
+
+    > * {
+      margin: @gap 0 0 @gap;
+    }
   }
 }
 
@@ -235,6 +258,10 @@ ul {
   }
 }
 
+hr {
+  margin: 0;
+}
+
 svg.success-icon {
   &.green {
     path { 
@@ -247,6 +274,38 @@ svg.wallet-icon {
   &.grey-50 {
     path {
       fill: @color-grey-50;
+    }
+  }
+}
+
+svg.time-icon, svg.success-icon, svg.keep-outline, svg.tbtc-icon {
+  &--black {
+    path {
+      fill: @color-black;
+    }
+  }
+
+  &--grey-30 {
+    path {
+      fill: @color-grey-30;
+    }
+  }
+
+  &--grey-40 {
+    path {
+      fill: @color-grey-40;
+    }
+  }
+
+  &--mint-100 {
+    path {
+      fill: @color-mint-100;
+    }
+  }
+
+  &--mint-80 {
+    path {
+      fill: @color-mint-80;
     }
   }
 }

@@ -1,10 +1,7 @@
-import {
-  TOKEN_GRANT_CONTRACT_NAME,
-  MANAGED_GRANT_FACTORY_CONTRACT_NAME,
-} from "../constants/constants"
-import { contractService } from "./contracts.service"
+import moment from "moment"
+import { MANAGED_GRANT_FACTORY_CONTRACT_NAME } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
-import { add, gt } from "../utils/arithmetics.utils"
+import { add, sub, gt } from "../utils/arithmetics.utils"
 import {
   getGuaranteedMinimumStakingPolicyContractAddress,
   getPermissiveStakingPolicyContractAddress,
@@ -22,21 +19,22 @@ import {
 } from "./token-staking-escrow.service"
 
 const fetchGrants = async (web3Context) => {
-  const { yourAddress } = web3Context
+  const {
+    eth: { defaultAccount: yourAddress },
+  } = await Web3Loaded
+  const { grantContract } = await ContractsLoaded
+
   const grantIds = new Set(
-    await contractService.makeCall(
-      web3Context,
-      TOKEN_GRANT_CONTRACT_NAME,
-      "getGrants",
-      yourAddress
-    )
+    await grantContract.methods.getGrants(yourAddress).call()
   )
-  const managedGrants = await fetchManagedGrants(web3Context)
+
+  const managedGrants = await fetchManagedGrants()
+
   const grants = []
   for (const grantId of grantIds) {
     let grantDetails = {}
     try {
-      grantDetails = await getGrantDetails(grantId, web3Context)
+      grantDetails = await getGrantDetails(grantId)
     } catch {
       continue
     }
@@ -45,7 +43,7 @@ const fetchGrants = async (web3Context) => {
 
   for (const managedGrant of managedGrants) {
     const { grantId, managedGrantContractInstance } = managedGrant
-    const grantDetails = await getGrantDetails(grantId, web3Context, true)
+    const grantDetails = await getGrantDetails(grantId, true)
     grants.push({
       ...grantDetails,
       isManagedGrant: true,
@@ -55,21 +53,15 @@ const fetchGrants = async (web3Context) => {
   return grants
 }
 
-const getGrantDetails = async (
-  grantId,
-  web3Context,
-  isManagedGrant = false
-) => {
-  const { yourAddress } = web3Context
+const getGrantDetails = async (grantId, isManagedGrant = false) => {
+  const {
+    eth: { defaultAccount: yourAddress },
+  } = await Web3Loaded
+  const { grantContract } = await ContractsLoaded
 
   // At first lets check if the provided address is a grantee in the provided grant,
   // to avoid unnecessary calls to the infura node.
-  const grantDetails = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "getGrant",
-    grantId
-  )
+  const grantDetails = await grantContract.methods.getGrant(grantId).call()
 
   if (!isManagedGrant && !isSameEthAddress(yourAddress, grantDetails.grantee)) {
     throw new Error(
@@ -103,48 +95,54 @@ const getGrantDetails = async (
     }
   }
 
-  const unlockingSchedule = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "getGrantUnlockingSchedule",
-    grantId
-  )
+  const unlockingSchedule = await grantContract.methods
+    .getGrantUnlockingSchedule(grantId)
+    .call()
 
-  const unlocked = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "unlockedAmount",
-    grantId
-  )
-  const withdrawableAmountGrantOnly = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "withdrawable",
-    grantId
-  )
+  const unlocked = await grantContract.methods.unlockedAmount(grantId).call()
+
+  const withdrawableAmountGrantOnly = await grantContract.methods
+    .withdrawable(grantId)
+    .call()
 
   const readyToRelease = add(
     withdrawableAmountGrantOnly,
     escrowWithdrawableAmount
-  )
-  const released = add(grantDetails.withdrawn, escrowWithdrawTotalAmount)
-  const availableToStake = await contractService.makeCall(
-    web3Context,
-    TOKEN_GRANT_CONTRACT_NAME,
-    "availableToStake",
-    grantId
-  )
+  ).toString()
+
+  const released = add(
+    grantDetails.withdrawn,
+    escrowWithdrawTotalAmount
+  ).toString()
+
+  const availableToStake = await grantContract.methods
+    .availableToStake(grantId)
+    .call()
+
+  // TokeGrant contract does not track canceled or recoverd tokens.
+  // Recovered/canceled tokens are transferred to `TokenStakingEscrow` contract.
+  const staked = sub(grantDetails.staked, escrowAvailableTotalAmount).toString()
 
   return {
     id: grantId,
     unlocked,
     released,
     readyToRelease,
-    availableToStake: add(availableToStake, escrowAvailableTotalAmount),
+    availableToStake: add(
+      availableToStake,
+      escrowAvailableTotalAmount
+    ).toString(),
     escrowOperatorsToWithdraw,
     withdrawableAmountGrantOnly,
     ...unlockingSchedule,
     ...grantDetails,
+    cliffPeriod: moment
+      .unix(unlockingSchedule.cliff)
+      .from(moment.unix(unlockingSchedule.start), true),
+    fullyUnlockedDate: moment
+      .unix(unlockingSchedule.start)
+      .add(unlockingSchedule.duration, "seconds"),
+    staked,
   }
 }
 

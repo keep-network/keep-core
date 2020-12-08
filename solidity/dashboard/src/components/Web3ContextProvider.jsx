@@ -3,8 +3,9 @@ import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
+import { connect } from "react-redux"
 
-export default class Web3ContextProvider extends React.Component {
+class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
 
   constructor(props) {
@@ -58,6 +59,8 @@ export default class Web3ContextProvider extends React.Component {
       web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
     }
 
+    this.props.fetchKeepTokenBalance()
+
     this.setState({
       web3,
       provider: providerName,
@@ -95,19 +98,25 @@ export default class Web3ContextProvider extends React.Component {
   }
 
   refreshProvider = async ([yourAddress]) => {
-    if (!yourAddress) {
-      this.setState({
-        isFetching: false,
-        yourAddress: "",
-        token: { options: { address: "" } },
-        stakingContract: { options: { address: "" } },
-        grantContract: { options: { address: "" } },
-      })
-      return
-    }
+    // if (!yourAddress) {
+    //   this.setState({
+    //     isFetching: false,
+    //     yourAddress: "",
+    //     token: { options: { address: "" } },
+    //     stakingContract: { options: { address: "" } },
+    //     grantContract: { options: { address: "" } },
+    //   })
+    //   return
+    // }
+    // const { connector, provider } = this.state
+    // await this.connectAppWithWallet(connector, provider)
 
-    const { connector, provider } = this.state
-    await this.connectAppWithWallet(connector, provider)
+    // This is a temporary solution to prevent a situation when a user changed
+    // an account but data has not been updated. After migrate to redux the dapp
+    // fetches data only once and updates data based on emitted events. This
+    // solution doesn't support a case where a user changed an account. We are
+    // going to address it in a follow up work.
+    window.location.reload()
   }
 
   render() {
@@ -125,3 +134,12 @@ export default class Web3ContextProvider extends React.Component {
     )
   }
 }
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    fetchKeepTokenBalance: () =>
+      dispatch({ type: "keep-token/balance_request" }),
+  }
+}
+
+export default connect(null, mapDispatchToProps)(Web3ContextProvider)

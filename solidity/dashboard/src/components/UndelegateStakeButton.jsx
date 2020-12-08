@@ -6,17 +6,14 @@ import { ContractsLoaded } from "../contracts"
 import { withConfirmationModal } from "./ConfirmationModal"
 import { cancelStake, undelegateStake } from "../actions/web3"
 import { connect } from "react-redux"
-import moment from "moment"
 
-const confirmationModalOptions = (undelegationPeriod) => ({
+const confirmationModalOptions = {
   modalOptions: { title: "Are you sure?" },
   title: "You’re about to undelegate.",
-  subtitle: `Undelegating will return all of your tokens to their owner. There is an undelegation period of ${moment()
-    .add(undelegationPeriod, "seconds")
-    .fromNow(true)} until the tokens will be completely undelegated.`,
+  subtitle: `Undelegating will return all of your tokens to their owner. There is an undelegation period of 2 months until the tokens will be completely undelegated.`,
   btnText: "undelegate",
   confirmationText: "UNDELEGATE",
-})
+}
 
 const confirmCancelModalOptions = {
   modalOptions: { title: "Are you sure?" },
@@ -35,7 +32,6 @@ const UndelegateStakeButton = (props) => {
       isFromGrant,
       cancelStake,
       undelegateStake,
-      undelegationPeriod,
     } = props
 
     if (isInInitializationPeriod && isFromGrant) {
@@ -48,7 +44,7 @@ const UndelegateStakeButton = (props) => {
         withConfirmationModal(ConfirmCancelingFromGrant)
       )
     } else if (!isInInitializationPeriod) {
-      await openConfirmationModal(confirmationModalOptions(undelegationPeriod))
+      await openConfirmationModal(confirmationModalOptions)
     }
 
     if (isInInitializationPeriod) {

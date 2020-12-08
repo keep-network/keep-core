@@ -120,6 +120,7 @@ contract Rewards is Ownable {
     // but the pending and past intervals must have their rewards allocated
     // before any KEEP tokens are transferred out from this contract.
     uint256 public upgradeInitiatedTimestamp;
+    uint256 public upgradeFinalizedTimestamp;
     address public newRewardsContract;
 
     event RewardReceived(bytes32 keep, uint256 amount);
@@ -144,6 +145,8 @@ contract Rewards is Ownable {
     /// @dev Adds the received amount of tokens to `totalRewards` and
     /// `unallocatedRewards`. May be called at any time, even after allocating
     /// some intervals.
+    /// If the contract has been upgraded,
+    /// the funding will be transferred to the new contract instead.
     /// Changes to `unallocatedRewards` will take effect on subsequent interval
     /// allocations. Intended to be used with `approveAndCall`.
     /// If the reward contract has received tokens outside `approveAndCall`,
@@ -175,11 +178,22 @@ contract Rewards is Ownable {
         uint256 addedBalance = currentBalance.sub(beforeBalance);
 
         totalRewards = totalRewards.add(addedBalance);
-        unallocatedRewards = unallocatedRewards.add(addedBalance);
+        deallocate(addedBalance);
     }
 
     function markAsFunded() public onlyOwner {
         funded = true;
+    }
+
+    /// @notice Stakers can receive KEEP rewards from multiple keeps of their choice
+    /// in one transaction to reduce total cost comparing to single calls for rewards.
+    /// It is a caller responsibility to determine the cost and consumed gas when
+    /// receiving rewards from multiple keeps.
+    /// @param keepIdentifiers An array of keep identifiers.
+    function receiveRewards(bytes32[] memory keepIdentifiers) public {
+        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
+            receiveReward(keepIdentifiers[i]);
+        }
     }
 
     /// @notice Sends the reward for a keep to the keep members.
@@ -192,6 +206,15 @@ contract Rewards is Ownable {
         public
     {
         _processKeep(true, keepIdentifier);
+    }
+
+    /// @notice Report about the terminated keeps in batch. All the allocated
+    /// rewards in these keeps will be returned to the unallocated pool.
+    /// @param keepIdentifiers An array of keep identifiers.
+    function reportTerminations(bytes32[] memory keepIdentifiers) public {
+        for (uint256 i = 0; i < keepIdentifiers.length; i++) {
+            reportTermination(keepIdentifiers[i]);
+        }
     }
 
     /// @notice Report that the keep was terminated, and return its allocated
@@ -550,7 +573,7 @@ contract Rewards is Ownable {
             emit RewardReceived(keepIdentifier, perKeepReward);
         } else {
             // Return the reward to the unallocated pool
-            unallocatedRewards = unallocatedRewards.add(perKeepReward);
+            deallocate(perKeepReward);
         }
     }
 
@@ -580,8 +603,10 @@ contract Rewards is Ownable {
             "Interval at which the upgrade was initiated hasn't ended yet"
         );
 
-        // allocate all past intervals    
-        allocateRewards(currentInterval.sub(1));
+        // ensure all past intervals are allocated
+        if (!isAllocated(currentInterval.sub(1))) {
+            allocateRewards(currentInterval.sub(1));
+        }
 
         // transfer the unallocated KEEP to the new rewards contract and update
         // this contract's balances
@@ -601,6 +626,26 @@ contract Rewards is Ownable {
         
 
         upgradeInitiatedTimestamp = 0;
+        upgradeFinalizedTimestamp = block.timestamp;
+    }
+
+    /// @notice Return the given amount to the unallocated pool.
+    /// If the contract has been upgraded,
+    /// the deallocated amount will be sent to the new contract.
+    /// @param amount The amount to deallocate
+    function deallocate(uint256 amount) internal {
+        if (upgradeFinalizedTimestamp != 0) {
+            bool success = token.approveAndCall(
+                newRewardsContract,
+                amount,
+                bytes("")
+            );
+            if (!success) {
+                unallocatedRewards = unallocatedRewards.add(amount);
+            }
+        } else {
+            unallocatedRewards = unallocatedRewards.add(amount);
+        }
     }
 
     /// @notice Get the total number of keeps ever created by the factory,

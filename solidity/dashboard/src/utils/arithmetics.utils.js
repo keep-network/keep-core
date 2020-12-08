@@ -37,5 +37,5 @@ export const percentageOf = (value, total) => {
     return 0
   }
 
-  return web3Utils.toBN(value).mul(ONE_HUNDRED).div(total)
+  return div(web3Utils.toBN(value).mul(ONE_HUNDRED), total)
 }

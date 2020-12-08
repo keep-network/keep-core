@@ -14,6 +14,7 @@ import { connect } from "react-redux"
 
 const WithdrawETHModal = ({
   operatorAddress,
+  availableETHInWei,
   availableETH,
   closeModal,
   managedGrantAddress,
@@ -50,7 +51,10 @@ const WithdrawETHModal = ({
     <>
       <h4 style={{ marginBottom: "0.5rem" }}>Amount available to withdraw.</h4>
       <div className="mt-1">
-        <AvailableEthAmount availableETH={availableETH} />
+        <AvailableEthAmount
+          availableETHInWei={availableETHInWei}
+          availableETH={availableETH}
+        />
       </div>
       <div className="text-validation mb-1 mt-2 flex row center">
         <Icons.Diamond />

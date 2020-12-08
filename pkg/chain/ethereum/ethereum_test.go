@@ -155,6 +155,10 @@ func TestPackTicket(t *testing.T) {
 		return bigInt
 	}
 
+	toBigIntFromAddress := func(address string) *big.Int {
+		return new(big.Int).SetBytes(common.HexToAddress(address).Bytes())
+	}
+
 	var tests = map[string]struct {
 		ticketValue        [8]byte
 		stakerValue        *big.Int
@@ -184,6 +188,24 @@ func TestPackTicket(t *testing.T) {
 			stakerValue:        toBigInt("640134992772870476466797915370027482254406660188"),
 			virtualStakerIndex: toBigInt("12"),
 			expectedPacked:     "000000000000ffff7020a5556ba1ce5f92c81063a13d33512cf1305c0000000c",
+		},
+		"staker value is derived from an address without leading zeros": {
+			ticketValue:        [8]byte{255, 255, 255, 255, 255, 255, 255, 255},
+			stakerValue:        toBigIntFromAddress("0x13b6b8e2cb25f86aa9f3f4eb55ff92684c6efb2d"),
+			virtualStakerIndex: toBigInt("1"),
+			expectedPacked:     "ffffffffffffffff13b6b8e2cb25f86aa9f3f4eb55ff92684c6efb2d00000001",
+		},
+		"staker value is derived from an address with one leading zero": {
+			ticketValue:        [8]byte{255, 255, 255, 255, 255, 255, 255, 255},
+			stakerValue:        toBigIntFromAddress("0x017fe79753873f1e87085ab6972715c6c12015e6"),
+			virtualStakerIndex: toBigInt("1"),
+			expectedPacked:     "ffffffffffffffff017fe79753873f1e87085ab6972715c6c12015e600000001",
+		},
+		"staker value is derived from an address with two leading zeros": {
+			ticketValue:        [8]byte{255, 255, 255, 255, 255, 255, 255, 255},
+			stakerValue:        toBigIntFromAddress("0x00a1b551e309e0bf36388e549d075222a3197e0c"),
+			virtualStakerIndex: toBigInt("1"),
+			expectedPacked:     "ffffffffffffffff00a1b551e309e0bf36388e549d075222a3197e0c00000001",
 		},
 	}
 

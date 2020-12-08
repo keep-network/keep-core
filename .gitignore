@@ -7,10 +7,6 @@ _local/
 *.swo
 *.DS_Store
 ,*
-config.toml
-config.*.toml
-*.config.toml
-*.config.*.toml
 *.out
 *.abi
 *.account
@@ -40,6 +36,9 @@ keep_accounts
 __pycache__
 *.pyc
 
+# Configuration files
+configs
+!configs/config.toml.SAMPLE
 
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz

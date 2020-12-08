@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -78,7 +79,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
 	ticketBytes := []uint8{}
 	ticketBytes = append(ticketBytes, ticket.Value[:]...)
-	ticketBytes = append(ticketBytes, ticket.Proof.StakerValue.Bytes()[0:20]...)
+	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.StakerValue.Bytes(), 20)[0:20]...)
 	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.VirtualStakerIndex.Bytes(), 4)[0:4]...)
 
 	ticketFixedArray := [32]uint8{}
@@ -516,4 +517,15 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
 	return relaychain.DKGResultHashFromBytes(hash)
+}
+
+func (ec *ethereumChain) Address() common.Address {
+	return ec.accountKey.Address
+}
+
+func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancelCtx()
+
+	return ec.client.BalanceAt(ctx, address, nil)
 }
