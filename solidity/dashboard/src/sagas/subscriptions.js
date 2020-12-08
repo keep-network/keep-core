@@ -532,7 +532,7 @@ function* observeTopUpCompletedEvent() {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     stakingContract,
-    "TopUpCompleeted"
+    "TopUpCompleted"
   )
 
   while (true) {
