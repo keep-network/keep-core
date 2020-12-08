@@ -46,13 +46,11 @@ export const BondingSection = ({ data }) => {
         <Column
           header="available eth"
           field="availableETH"
-          renderContent={({ availableETH }) => {
-            return <AvailableEthAmount availableETH={availableETH} />
-          }}
+          renderContent={renderAvailableEthContent}
         />
         <Column
           header=""
-          headerStyle={{ textAlign: "right" }}
+          headerStyle={{ textAlign: "right", colSpan: "2" }}
           field="availableETH"
           renderContent={(item) => {
             return <ActionCell {...item} />
@@ -62,6 +60,8 @@ export const BondingSection = ({ data }) => {
     </Tile>
   )
 }
+
+const renderAvailableEthContent = (data) => <AvailableEthAmount {...data} />
 
 export default React.memo(BondingSection)
 
@@ -89,6 +89,7 @@ const ActionCell = React.memo(
           <WithdrawEthModal
             operatorAddress={operatorAddress}
             availableETH={availableETH}
+            availableETHInWei={availableETHInWei}
             closeModal={closeModal}
             managedGrantAddress={managedGrantAddress}
           />
