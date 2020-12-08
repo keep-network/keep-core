@@ -99,10 +99,7 @@ const ActionCell = React.memo(
 
     return (
       <>
-        <div
-          className="flex row center space-between"
-          style={{ marginLeft: "auto" }}
-        >
+        <div className="flex-gap">
           <Button
             id="add"
             onClick={onBtnClick}
