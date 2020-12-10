@@ -1,5 +1,5 @@
 
-.rewards__overview--random-beacon {
+.rewards__overview--tbtc {
     display: flex;
     justify-content: space-between;
 
@@ -24,11 +24,66 @@
             }
         }
     }
+}
 
-    > .rewards__overview__withdraw {
-        margin: -2rem;
-        padding: 4rem;
-        border-left: 1px solid @color-grey-20;
+.rewards-countdown {
+    text-align: center;
+    padding: 4rem;
+}
+
+.rewards-calc {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 1rem;
+
+    &__boost {
+        display: flex;
+
+        > div {
+            flex: 1;
+
+            &:first-child {
+                margin-right: 0.5rem;
+            }
+
+            &:last-child {
+                margin-left: 0.5rem;
+            }
+        }
+
+        .boost__value{
+            display: flex;
+            align-items: center;
+        }
+    }
+
+    &__eth-locked {
+        .eth-locked {
+            &__value {
+                display: flex;
+            }
+        }
+    }
+
+    &__apy {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .apy {
+            &__value {
+                color: @color-mint-100;
+                margin-top: auto;
+                margin-bottom: auto;
+            }
+        }
+    }
+}
+
+.rewards-history {
+    background-color: @white;
+    >header.table-header-wrapper {
+        display: none;
     }
 }
 
