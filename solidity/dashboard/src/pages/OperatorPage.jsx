@@ -13,7 +13,12 @@ import DelegatedTokensSkeleton from "../components/skeletons/DelegatedTokensSkel
 const OperatorPage = ({ title }) => {
   const [state, setData] = useFetchData(
     operatorService.fetchDelegatedTokensData,
-    {}
+    {
+      stakedBalance: "0",
+      ownerAddress: "0x0000000000000000000000000000000000000000",
+      beneficiaryAddress: "0x0000000000000000000000000000000000000000",
+      authorizerAddress: "0x0000000000000000000000000000000000000000",
+    }
   )
   const { isFetching, data } = state
 

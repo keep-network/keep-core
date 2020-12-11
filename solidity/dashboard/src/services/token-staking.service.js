@@ -14,62 +14,75 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import { getEventsFromTransaction } from "../utils/ethereum.utils"
 
-const fetchDelegatedTokensData = async () => {
-  const contractsLoaded = await ContractsLoaded
-  const { grantContract, stakingContract } = contractsLoaded
-  const web3 = await Web3Loaded
-  const { eth } = web3
-  const { defaultAccount: yourAddress } = eth
-
+const delegationInfoFromStakedEvents = async (address) => {
+  const { stakingContract } = await ContractsLoaded
   let operatorStakedEvents
   try {
     operatorStakedEvents = await stakingContract.getPastEvents(
       "OperatorStaked",
       {
         fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
-        filter: { operator: yourAddress },
+        filter: { operator: address },
       }
     )
   } catch (err) {}
 
-  let [stakedBalance, ownerAddress, initializationPeriod] = await Promise.all([
+  if (operatorStakedEvents.length === 0)
+    throw new Error("No OperatorStaked events found for address " + address)
+
+  const {
+    transactionHash: stakingTransactionHash,
+    returnValues: {
+      beneficiary: beneficiaryAddress,
+      authorizer: authorizerAddress,
+    },
+  } = operatorStakedEvents[0]
+
+  return {
+    stakingTransactionHash,
+    beneficiaryAddress,
+    authorizerAddress,
+  }
+}
+
+const fetchDelegatedTokensData = async () => {
+  const { grantContract, stakingContract } = await ContractsLoaded
+  const web3 = await Web3Loaded
+  const {
+    eth,
+    eth: { defaultAccount: yourAddress },
+  } = web3
+  let ownerAddress
+
+  const {
+    stakingTransactionHash,
+    beneficiaryAddress,
+    authorizerAddress,
+  } = await delegationInfoFromStakedEvents(yourAddress)
+
+  const [stakedBalance, initializationPeriod] = await Promise.all([
     stakingContract.methods.balanceOf(yourAddress).call(),
-    stakingContract.methods.ownerOf(yourAddress).call(),
     stakingContract.methods.initializationPeriod().call(),
   ])
-
-  let transactionHash
-  let beneficiaryAddress = ownerAddress
-  let authorizerAddress = ownerAddress
-
-  if (operatorStakedEvents.length > 0) {
-    ;({
-      transactionHash,
-      returnValues: {
-        beneficiary: beneficiaryAddress,
-        authorizer: authorizerAddress,
-      },
-    } = operatorStakedEvents[0])
-  }
 
   const eventsToCheck = [[grantContract, "TokenGrantStaked"]]
   let events
   try {
-    events = await getEventsFromTransaction(eventsToCheck, transactionHash)
+    events = await getEventsFromTransaction(
+      eventsToCheck,
+      stakingTransactionHash
+    )
   } catch (err) {}
 
   let isDelegationFromGrant = true
-  let grantId
-  if (events && events.TokenGrantStaked) {
-    grantId = events.TokenGrantStaked.grantId
-  } else {
-    isDelegationFromGrant = false
-  }
-
   let isManagedGrant = false
   let managedGrantContractInstance
-  if (isDelegationFromGrant) {
+  let grantId
+  if (events && events.TokenGrantStaked) {
+    isDelegationFromGrant = true
+    grantId = events.TokenGrantStaked.grantId
     const { grantee } = await grantContract.methods.getGrant(grantId).call()
+    ownerAddress = grantee
     // check if grantee is a contract
     const code = await eth.getCode(grantee)
     if (isCodeValid(code)) {
@@ -79,9 +92,9 @@ const fetchDelegatedTokensData = async () => {
       )
       isManagedGrant = true
       ownerAddress = await managedGrantContractInstance.methods.grantee().call()
-    } else {
-      ownerAddress = grantee
     }
+  } else {
+    ownerAddress = await stakingContract.methods.ownerOf(yourAddress).call()
   }
 
   const {
