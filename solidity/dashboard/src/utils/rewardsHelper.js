@@ -1,4 +1,5 @@
 import moment from "moment"
+import BigNumber from "bignumber.js"
 
 class RewardsHelper {
   firstIntervalStart = 0
@@ -52,7 +53,9 @@ class BeaconRewards extends RewardsHelper {
 }
 
 class ECDSARewards extends RewardsHelper {
-  intervals = 24
+  // TODO update the intervals based on the new rewards mechanism
+  intervals = 84
+  ethScoreThreshold = new BigNumber(3000).multipliedBy(new BigNumber(1e18)) // 3000 ETH
   constructor() {
     // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
     // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
@@ -64,6 +67,27 @@ class ECDSARewards extends RewardsHelper {
     const minimumECDSAKeepsPerInterval = 1000
 
     super(ecdsaFirstIntervalStart, termLength, minimumECDSAKeepsPerInterval)
+  }
+
+  static calculateETHScore(ethTotal) {
+    if (ethTotal.isLessThan(this.ethScoreThreshold)) {
+      return ethTotal
+    }
+
+    const sqrt = this.ethScoreThreshold.multipliedBy(ethTotal).squareRoot()
+
+    return new BigNumber(2).multipliedBy(sqrt).minus(this.ethScoreThreshold)
+  }
+
+  static calculateBoost(keepStaked, ethTotal, minimumStake) {
+    const a = keepStaked.dividedBy(minimumStake)
+    const b = ethTotal.isGreaterThan(new BigNumber(0))
+      ? keepStaked
+          .dividedBy(ethTotal.multipliedBy(new BigNumber(500)))
+          .squareRoot()
+      : new BigNumber(0)
+
+    return new BigNumber(1).plus(BigNumber.minimum(a, b))
   }
 }
 
