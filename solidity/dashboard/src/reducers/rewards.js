@@ -6,11 +6,6 @@ const initialState = {
   becaonRewardsBalance: 0,
   error: null,
 
-  // ECDSA distributed rewards
-  ecdsaDistributedRewardsFetching: false,
-  ecdsaDistributedBalance: 0,
-  ecdsaDistributedBalanceError: null,
-
   // ECDSA available rewards
   ecdsaAvailableRewardsFetching: false,
   ecdsaAvailableRewardsBalance: 0,
@@ -34,38 +29,20 @@ const rewardsReducer = (state = initialState, action) => {
         beaconRewardsFetching: false,
         error: action.payload.error,
       }
-    case "rewards/ecdsa_fetch_distributed_rewards_start":
-      return {
-        ...state,
-        ecdsaDistributedRewardsFetching: true,
-        ecdsaDistributedBalanceError: null,
-      }
-    case "rewards/ecdsa_fetch_distributed_rewards_success":
-      return {
-        ...state,
-        ecdsaDistributedRewardsFetching: false,
-        ecdsaDistributedBalance: action.payload,
-      }
-    case "rewards/ecdsa_fetch_distributed_rewards_failure":
-      return {
-        ...state,
-        ecdsaDistributedRewardsFetching: false,
-        ecdsaDistributedBalanceError: action.payload.error,
-      }
-    case "rewards/ecdsa_fetch_available_rewards_start":
+    case "rewards/ecdsa_fetch_rewards_data_start":
       return {
         ...state,
         ecdsaAvailableRewardsFetching: true,
         ecdsaAvailableRewardsError: null,
       }
-    case "rewards/ecdsa_fetch_available_rewards_success":
+    case "rewards/ecdsa_fetch_rewards_data_success":
       return {
         ...state,
         ecdsaAvailableRewardsFetching: false,
-        ecdsaAvailableRewardsBalance: action.payload.totalAvailableRewards,
-        ecdsaAvailableRewards: action.payload.toWithdrawn,
+        ecdsaAvailableRewardsBalance: action.payload.totalAvailableAmount,
+        ecdsaAvailableRewards: action.payload.availableRewards,
       }
-    case "rewards/ecdsa_fetch_available_rewards_failure":
+    case "rewards/ecdsa_fetch_rewards_data_failure":
       return {
         ...state,
         ecdsaAvailableRewardsFetching: false,
