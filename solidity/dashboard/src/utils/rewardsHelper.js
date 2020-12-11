@@ -58,8 +58,8 @@ class ECDSARewards extends RewardsHelper {
     // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
     const ecdsaFirstIntervalStart = 1600041600
 
-    // Each interval is 30 days long.
-    const termLength = moment.duration(30, "days").asSeconds()
+    // Each interval is 7 days long.
+    const termLength = moment.duration(7, "days").asSeconds()
 
     const minimumECDSAKeepsPerInterval = 1000
 
