@@ -1,8 +1,13 @@
+import web3Utils from "web3-utils"
 import { ContractsLoaded, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
-import { getOperatorsOfBeneficiary } from "./token-staking.service"
 import { ECDSARewardsHelper } from "../utils/rewardsHelper"
-import { add, gt } from "../utils/arithmetics.utils"
+import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import rewardsData from "../rewards-allocation/rewards.json"
+
+// The merkle root is as key in the `rewards.json` data. First merkle root
+// points to a first reward interval, second to a second reward interval and so on.
+const merkleRoots = Object.keys(rewardsData)
 
 export const fetchtTotalDistributedRewards = async (
   beneficiary,
@@ -25,33 +30,86 @@ export const fetchtTotalDistributedRewards = async (
   ).reduce((reducer, event) => add(reducer, event.returnValues.value), 0)
 }
 
-export const fetchECDSAAvailableRewards = async (beneficiary) => {
-  const { ECDSARewardsContract } = await ContractsLoaded
+/**
+ * @typedef {Object} Claim
+ * @property {number} index - Index of the account in the merkle tree.
+ * @property {string} amount - The amount of KEEP reward to be claimed.
+ * @property {Array<string>} proof - Array of merkle proofs.
+ * @property {string} operator - Address of the operator.
+ * @property {number} interval - Interval.
+ * @property {string} merkleRoot - Merkle root.
+ */
 
-  const operators = await getOperatorsOfBeneficiary(beneficiary)
-
-  let sum = 0
+/**
+ * Gets the available rewards based on the output from the merkle object
+ * generator (github.com/keep-network/keep-ecdsa/tree/master/staker-rewards) which
+ * is stored in `src/rewards-allocation/rewards.json` file
+ * for the given operators between the interval 0 and the
+ * current interval. Note that rewards may already be withdrawn so need to take
+ * into account `RewardsClaimed` evnets from the `ECDSARewardsDistributor`.
+ *
+ * @param {Array<string>} operators Array of operators
+ * @return {Array<Claim>} Available claims
+ */
+export const fetchECDSAAvailableRewards = async (operators) => {
   const toWithdrawn = []
-  if (!isEmptyArray(operators)) {
-    // If beneficiary has multiple operators, call `getWithdrawableRewards`
-    // function one time since `ECDSARewards` contract stores rewards per
-    // beneficiary not per operator.
-    const operator = operators[0]
-    for (
-      let interval = 0;
-      interval <= ECDSARewardsHelper.currentInterval;
-      interval++
-    ) {
-      const withdrawable = await ECDSARewardsContract.methods
-        .getWithdrawableRewards(interval, operator)
-        .call()
+  if (isEmptyArray(operators)) {
+    return toWithdrawn
+  }
 
-      if (gt(withdrawable, 0)) {
-        sum = add(sum, withdrawable)
-        toWithdrawn.push({ operator, interval, withdrawable })
+  for (
+    let interval = 0;
+    interval < ECDSARewardsHelper.currentInterval;
+    interval++
+  ) {
+    const merkleRoot = merkleRootOfInterval(interval)
+    for (const operator of operators) {
+      /**
+       * Contains all necessary information to calim rewards from
+       * `ECDSARewardsDistributor` contract.
+       * @typedef {Object} OperatorClaim
+       * @property {number} index - Index of the account in the merkle tree.
+       * @property {string} amount - The amount of KEEP reward to be claimed in hex.
+       * @property {Array<string>} proof - Array of merkle proofs.
+       */
+
+      /**
+       * @type {OperatorClaim} operatorClaim
+       */
+      const operatorClaim = rewardsData[merkleRoot].claims[operator]
+      if (operatorClaim) {
+        toWithdrawn.push({
+          ...operatorClaim,
+          operator,
+          merkleRoot,
+          interval,
+          amount: web3Utils.toBN(operatorClaim.amount).toString(),
+        })
       }
     }
   }
 
-  return { totalAvailableRewards: sum, toWithdrawn }
+  return toWithdrawn
+}
+
+const merkleRootOfInterval = (interval) => {
+  return !isEmptyArray(merkleRoots) ? merkleRoots[interval] : null
+}
+
+export const fetchECDSAClaimedRewards = async (operators) => {
+  const { ECDSARewardsDistributorContract } = await ContractsLoaded
+  if (isEmptyArray(operators)) {
+    return []
+  }
+
+  return (
+    await ECDSARewardsDistributorContract.getPastEvents("RewardsClaimed", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.ECDSARewardsDistributorContract,
+      filter: { operator: operators },
+    })
+  ).map((_) => ({
+    ..._.returnValues,
+    // TODO should be MM/DD/YYYY(start date) - MM/DD/YYYY(end date)
+    rewardsPeriod: "rewardsPeriod",
+  }))
 }
