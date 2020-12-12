@@ -49,6 +49,7 @@ upon.
 ==== Code Repositories
 
 Repositories sourced during release of the system.
+
 1. keep-common
 2. keep-core
 3. keep-ecdsa
@@ -161,7 +162,7 @@ having a more robust, less error prone, and shorter release process.
 
 To illustrate: tbtc contract initialization depends on having the keep-ecdsa
 `BondedECDSAKeepFactory` contract address for the environment being released.
-The BondedECDSAKeepFactory address is produced outside of the release context
+The `BondedECDSAKeepFactory` address is produced outside of the release context
 that tbtc has and therefore must be passed explicitly to the tbtc release
 context before tbtc contract initialization can happen. The
 `BondedECDSAKeepFactory` address fetch currently happens via a script executed
