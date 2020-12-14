@@ -8,15 +8,18 @@ import ProgressBar from "../../components/ProgressBar"
 import Timer from "../../components/Timer"
 import TBTCRewardsDataTable from "../../components/TBTCRewardsDataTable"
 import { colors } from "../../constants/colors"
+import { ECDSARewardsHelper } from "../../utils/rewardsHelper";
 
 const TBTCRewardsPage = () => {
+  const remainingTime = ECDSARewardsHelper.remainingTimeToFinishCurrentInterval()
+
   return (
     <>
       <RewardsOverview />
       <section className="tile rewards-countdown">
         <h2 className="h2--alt">
           Next rewards release:&nbsp;
-          <Timer target="06:23:59:59" />
+          <Timer {...remainingTime} />
         </h2>
       </section>
       <section className="rewards-calc">

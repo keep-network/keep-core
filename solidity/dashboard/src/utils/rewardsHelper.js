@@ -32,6 +32,26 @@ class RewardsHelper {
 
     return `${startDate} - ${endDate}`
   }
+
+  remainingTimeToFinishCurrentInterval = () => {
+    const endDate = this.intervalEndOf(this.currentInterval)
+    const currentDate = moment()
+
+    const remainingTimeMs = endDate.diff(currentDate)
+    const duration = moment.duration(remainingTimeMs)
+
+    const days = Math.floor(duration.asDays());
+    const hours = Math.floor(duration.asHours() % 24)
+    const minutes = Math.floor(duration.asMinutes() % 60)
+    const seconds = Math.floor(duration.asSeconds() % 60)
+
+    return {
+      days: days > 0 ? days : 0,
+      hours: hours > 0 ? hours : 0,
+      minutes: minutes > 0 ? minutes : 0,
+      seconds: seconds > 0 ? seconds : 0,
+    }
+  }
 }
 
 class BeaconRewards extends RewardsHelper {
