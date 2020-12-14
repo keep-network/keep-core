@@ -1,5 +1,6 @@
 import moment from "moment"
 import BigNumber from "bignumber.js"
+import { formatDate } from "../utils/general.utils"
 
 class RewardsHelper {
   firstIntervalStart = 0
@@ -19,6 +20,17 @@ class RewardsHelper {
     return moment
       .unix(this.firstIntervalStart)
       .add(interval * this.termLength, "seconds")
+  }
+
+  intervalEndOf = (interval) => {
+    return this.intervalStartOf(interval + 1)
+  }
+
+  periodOf = (interval) => {
+    const startDate = formatDate(this.intervalStartOf(interval))
+    const endDate = formatDate(this.intervalEndOf(interval))
+
+    return `${startDate} - ${endDate}`
   }
 }
 
@@ -57,9 +69,8 @@ class ECDSARewards extends RewardsHelper {
   intervals = 84
   ethScoreThreshold = new BigNumber(3000).multipliedBy(new BigNumber(1e18)) // 3000 ETH
   constructor() {
-    // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
-    // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    const ecdsaFirstIntervalStart = 1600041600
+    // 13.11.2020 interval started
+    const ecdsaFirstIntervalStart = 1605225600
 
     // Each interval is 7 days long.
     const termLength = moment.duration(7, "days").asSeconds()
@@ -69,7 +80,7 @@ class ECDSARewards extends RewardsHelper {
     super(ecdsaFirstIntervalStart, termLength, minimumECDSAKeepsPerInterval)
   }
 
-  static calculateETHScore(ethTotal) {
+  calculateETHScore(ethTotal) {
     if (ethTotal.isLessThan(this.ethScoreThreshold)) {
       return ethTotal
     }
@@ -79,7 +90,7 @@ class ECDSARewards extends RewardsHelper {
     return new BigNumber(2).multipliedBy(sqrt).minus(this.ethScoreThreshold)
   }
 
-  static calculateBoost(keepStaked, ethTotal, minimumStake) {
+  calculateBoost(keepStaked, ethTotal, minimumStake) {
     const a = keepStaked.dividedBy(minimumStake)
     const b = ethTotal.isGreaterThan(new BigNumber(0))
       ? keepStaked
