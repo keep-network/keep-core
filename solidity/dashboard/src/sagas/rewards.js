@@ -4,7 +4,6 @@ import {
   call,
   put,
   fork,
-  select,
   takeEvery,
 } from "redux-saga/effects"
 import { logError, submitButtonHelper, getContractsContext } from "./utils"
@@ -16,6 +15,7 @@ import {
 import { sendTransaction } from "./web3"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add } from "../utils/arithmetics.utils"
+import { getOperatorsOfBeneficiary } from "../services/token-staking.service"
 
 function* fetchBeaconDistributedRewards(address) {
   try {
@@ -73,17 +73,17 @@ export function* watchWithdrawECDSARewards() {
   })
 }
 
-export function* fetchECDSARewardsData() {
+function* fetchECDSARewardsData(beneficiary) {
   try {
     yield put({ type: "rewards/ecdsa_fetch_rewards_data_request" })
-    // Fetching delegations for a current loggeed account. Operators are
-    // required to fetch ecdsa available rewards for the given owner.
-    yield put({ type: "staking/fetch_delegations_request" })
-    const operators = yield call(getOperatorsFromStore)
 
-    let availableRewards = yield call(fetchECDSAAvailableRewards, operators)
-    const claimedRewards = yield call(fetchECDSAClaimedRewards, operators)
+    const opeerators = yield call(getOperatorsOfBeneficiary, beneficiary)
+    let availableRewards = yield call(fetchECDSAAvailableRewards, opeerators)
+    const claimedRewards = yield call(fetchECDSAClaimedRewards, opeerators)
 
+    // Available rewards are fetched from merkle generator's output file. This
+    // file doesn't take into account a rewards alredy claimed. So we need to
+    // filter out claimed rewards.
     availableRewards = availableRewards.filter(
       ({ operator, merkleRoot }) =>
         !claimedRewards.find(
@@ -97,27 +97,18 @@ export function* fetchECDSARewardsData() {
       (reducer, _) => add(reducer, _.amount),
       0
     )
+
     yield put({
       type: "rewards/ecdsa_fetch_rewards_data_success",
-      payload: { totalAvailableAmount, availableRewards },
+      payload: {
+        totalAvailableAmount,
+        availableRewards,
+        claimedRewards,
+      },
     })
   } catch (error) {
     yield* logError("rewards/ecdsa_fetch_rewards_data_failure", error)
   }
-}
-
-function* getOperatorsFromStore() {
-  const getDelegationsFetchingStatus = (state) =>
-    state.staking.delegationsFetchingStatus
-
-  // Waiting for delegation reqest
-  let delegationsFetchingStatus = yield select(getDelegationsFetchingStatus)
-  while (delegationsFetchingStatus !== "completed") {
-    yield take()
-    delegationsFetchingStatus = yield select(getDelegationsFetchingStatus)
-  }
-  const { delegations } = yield select((state) => state.staking)
-  return [...delegations].map(({ operatorAddress }) => operatorAddress)
 }
 
 export function* watchFetchECDSARewards() {
