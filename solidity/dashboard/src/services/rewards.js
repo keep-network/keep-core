@@ -84,6 +84,7 @@ export const fetchECDSAAvailableRewards = async (operators) => {
           merkleRoot,
           interval,
           amount: web3Utils.toBN(operatorClaim.amount).toString(),
+          rewardsPeriod: ECDSARewardsHelper.periodOf(interval),
         })
       }
     }
@@ -107,9 +108,12 @@ export const fetchECDSAClaimedRewards = async (operators) => {
       fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.ECDSARewardsDistributorContract,
       filter: { operator: operators },
     })
-  ).map((_) => ({
-    ..._.returnValues,
-    // TODO should be MM/DD/YYYY(start date) - MM/DD/YYYY(end date)
-    rewardsPeriod: "rewardsPeriod",
-  }))
+  ).map((event) => {
+    const intervalOf = merkleRoots.indexOf(event.returnValues.merkleRoot)
+
+    return {
+      ...event.returnValues,
+      rewardsPeriod: ECDSARewardsHelper.periodOf(intervalOf),
+    }
+  })
 }
