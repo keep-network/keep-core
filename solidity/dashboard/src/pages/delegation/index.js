@@ -3,11 +3,12 @@ import { connect } from "react-redux"
 import moment from "moment"
 import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../../actions"
 import { isEmptyArray } from "../../utils/array.utils"
-import Banner, { BANNER_TYPE } from "../../components/Banner"
+import Banner from "../../components/Banner"
 import Button from "../../components/Button"
 import { useModal } from "../../hooks/useModal"
 import CopyStakePage from "../CopyStakePage"
 import PageWrapper from "../../components/PageWrapper"
+import * as Icons from "../../components/Icons"
 
 import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
@@ -69,19 +70,26 @@ const DelegationPageWrapperComponent = ({
   return (
     <>
       {!isEmptyArray(oldDelegations) && (
-        <Banner
-          type={BANNER_TYPE.NOTIFICATION}
-          withIcon
-          title="New upgrade available for your stake delegations!"
-          titleClassName="h4"
-          subtitle="Upgrade now to keep earning rewards on your stake."
-        >
-          <Button
-            className="btn btn-tertiary btn-sm ml-a"
-            onClick={() => openModal(<CopyStakePage />, { isFullScreen: true })}
-          >
-            upgrade my stake
-          </Button>
+        <Banner className="banner--upgrade">
+          <div className="flex row">
+            <Banner.Icon icon={Icons.Alert} className="mr-1" />
+            <div>
+              <Banner.Title className="text-white h4">
+                New upgrade available for your stake delegations!
+              </Banner.Title>
+              <Banner.Description className="text-grey-20">
+                Upgrade now to keep earning rewards on your stake.
+              </Banner.Description>
+            </div>
+            <Button
+              className="btn btn-tertiary btn-sm ml-a"
+              onClick={() =>
+                openModal(<CopyStakePage />, { isFullScreen: true })
+              }
+            >
+              upgrade my stake
+            </Button>
+          </div>
         </Banner>
       )}
       {restProps.render(onSubmitDelegateStakeForm)}

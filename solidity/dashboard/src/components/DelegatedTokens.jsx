@@ -2,10 +2,11 @@ import React, { useContext } from "react"
 import AddressShortcut from "./AddressShortcut"
 import { Web3Context } from "./WithWeb3Context"
 import UndelegateStakeButton from "./UndelegateStakeButton"
-import Banner, { BANNER_TYPE } from "./Banner"
+import Banner from "./Banner"
 import moment from "moment"
 import TokenAmount from "./TokenAmount"
 import { formatDate } from "../utils/general.utils"
+import * as Icons from "./Icons"
 
 const DelegatedTokens = ({ data, setData }) => {
   const { yourAddress } = useContext(Web3Context)
@@ -49,14 +50,17 @@ const DelegatedTokens = ({ data, setData }) => {
           ? getUndelegationBannerTitle()
           : "Undelegation completed"
 
-      const bannerType =
-        delegationStatus === "UNDELEGATED"
-          ? BANNER_TYPE.PENDING
-          : BANNER_TYPE.SUCCESS
+      const bannerClassName =
+        delegationStatus === "UNDELEGATED" ? "bg-pending" : "bg-success"
 
       return (
         <div className="self-start">
-          <Banner type={bannerType} title={title} withIcon />
+          <Banner
+            inline
+            title={title}
+            className={bannerClassName}
+            icon={Icons.Time}
+          />
         </div>
       )
     } else {

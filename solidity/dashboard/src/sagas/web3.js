@@ -17,7 +17,7 @@ function createTransactionEventChannel(
 ) {
   const infoMessage = Message.create({
     title: "Waiting for the transaction confirmation...",
-    type: messageType.INFO,
+    type: messageType.WALLET,
     sticky: true,
   })
 
@@ -34,10 +34,11 @@ function createTransactionEventChannel(
         emit(
           showCreatedMessage({
             id: txHash,
-            content: txHash,
+            title: "Pending transaction",
             sticky: true,
             type: messageType.PENDING_ACTION,
             withTransactionHash: true,
+            txHash,
           })
         )
       })
@@ -53,10 +54,10 @@ function createTransactionEventChannel(
         emit(
           showMessage({
             title: "Success!",
-            content: id,
             sticky: true,
             type: messageType.SUCCESS,
             withTransactionHash: true,
+            txHash: id,
           })
         )
         emit(END)
