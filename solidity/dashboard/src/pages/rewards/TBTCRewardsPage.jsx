@@ -16,6 +16,7 @@ import {
 } from "../../components/skeletons"
 import { gt } from "../../utils/arithmetics.utils"
 import { LoadingOverlay } from "../../components/Loadable"
+import EmptyStatePage from "./EmptyStatePage"
 // import { colors } from "../../constants/colors"
 
 const TBTCRewardsPage = () => {
@@ -175,14 +176,12 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
 //   )
 // }
 
-const Component = () => <></>
 TBTCRewardsPage.route = {
   title: "tBTC",
   path: "/rewards/tbtc",
   exact: true,
   withConnectWalletGuard: true,
-  // TODO: empty state page component
-  emptyStateComponent: Component,
+  emptyStateComponent: EmptyStatePage,
 }
 
 export default TBTCRewardsPage
