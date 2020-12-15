@@ -1,4 +1,5 @@
-import { sub, add } from "../utils/arithmetics.utils"
+import { sub } from "../utils/arithmetics.utils"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const initialState = {
   // Beacon distributted rewards
@@ -11,6 +12,7 @@ const initialState = {
   ecdsaAvailableRewardsBalance: 0,
   ecdsaAvailableRewards: [],
   ecdsaAvailableRewardsError: null,
+  ecdsaRewardsHistory: [],
 }
 
 const rewardsReducer = (state = initialState, action) => {
@@ -41,6 +43,7 @@ const rewardsReducer = (state = initialState, action) => {
         ecdsaAvailableRewardsFetching: false,
         ecdsaAvailableRewardsBalance: action.payload.totalAvailableAmount,
         ecdsaAvailableRewards: action.payload.availableRewards,
+        ecdsaRewardsHistory: action.payload.rewardsHistory,
       }
     case "rewards/ecdsa_fetch_rewards_data_failure":
       return {
@@ -49,17 +52,7 @@ const rewardsReducer = (state = initialState, action) => {
         ecdsaAvailableRewardsError: action.payload.error,
       }
     case "rewards/ecdsa_withdrawn":
-      return {
-        ...state,
-        ecdsaAvailableRewardsBalance: sub(
-          state.ecdsaAvailableRewardsBalance,
-          action.payload
-        ),
-        ecdsaDistributedBalance: add(
-          state.ecdsaDistributedBalance,
-          action.payload
-        ),
-      }
+      return ecdsaRewardsWithdrawn({ ...state }, action.payload)
     case "rewards/ecdsa_update_available_rewards":
       return {
         ...state,
@@ -67,6 +60,42 @@ const rewardsReducer = (state = initialState, action) => {
       }
     default:
       return state
+  }
+}
+
+const ecdsaRewardsWithdrawn = (state, { merkleRoot, operator, amount }) => {
+  const isSameRewardRecord = (reward) =>
+    reward.merkleRoot === merkleRoot &&
+    isSameEthAddress(reward.operator, operator)
+
+  const reward = state.ecdsaAvailableRewards.find(isSameRewardRecord)
+
+  if (!reward) {
+    return state
+  }
+
+  const ecdsaAvailableRewardsBalance = sub(
+    state.ecdsaAvailableRewardsBalance,
+    amount
+  )
+
+  const ecdsaAvailableRewards = state.ecdsaAvailableRewards.filter(
+    (reward) => !isSameRewardRecord(reward)
+  )
+
+  const ecdsaRewardsHistory = state.ecdsaRewardsHistory.map((reward) => {
+    if (isSameRewardRecord(reward)) {
+      return { ...reward, status: "WITHDRAWN" }
+    }
+
+    return reward
+  })
+
+  return {
+    ...state,
+    ecdsaAvailableRewardsBalance,
+    ecdsaAvailableRewards,
+    ecdsaRewardsHistory,
   }
 }
 
