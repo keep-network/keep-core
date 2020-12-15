@@ -17,6 +17,12 @@ export const useWeb3Context = () => {
   return useContext(Web3Context)
 }
 
+export const useWeb3Address = () => {
+  const web3 = useContext(Web3Context)
+
+  return web3.yourAddress
+}
+
 const withWeb3Context = (Component) => {
   return (props) => (
     <Web3Context.Consumer>
