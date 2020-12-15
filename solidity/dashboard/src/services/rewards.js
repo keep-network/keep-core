@@ -57,12 +57,7 @@ export const fetchECDSAAvailableRewards = async (operators) => {
     return toWithdrawn
   }
 
-  for (
-    let interval = 0;
-    interval < ECDSARewardsHelper.currentInterval;
-    interval++
-  ) {
-    const merkleRoot = merkleRootOfInterval(interval)
+  for (const [interval, merkleRoot] of merkleRoots.entries()) {
     for (const operator of operators) {
       /**
        * Contains all necessary information to calim rewards from
@@ -91,10 +86,6 @@ export const fetchECDSAAvailableRewards = async (operators) => {
   }
 
   return toWithdrawn
-}
-
-const merkleRootOfInterval = (interval) => {
-  return !isEmptyArray(merkleRoots) ? merkleRoots[interval] : null
 }
 
 export const fetchECDSAClaimedRewards = async (operators) => {
