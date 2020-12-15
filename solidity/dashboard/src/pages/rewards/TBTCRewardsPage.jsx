@@ -13,7 +13,7 @@ import { ECDSARewardsHelper } from "../../utils/rewardsHelper";
 const TBTCRewardsPage = () => {
   const currentIntervalEndOf = ECDSARewardsHelper.intervalEndOf(
     ECDSARewardsHelper.currentInterval
-  )
+  ).unix()
 
   return (
     <>

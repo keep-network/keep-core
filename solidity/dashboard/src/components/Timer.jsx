@@ -8,6 +8,14 @@ const Timer = ({ targetInUnix }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(0)
 
   useEffect(() => {
+    const timerDuration = calculateTimerDuration()
+    setRemainingDays(timerDuration.days)
+    setRemainingHours(timerDuration.hours)
+    setRemainingMinutes(timerDuration.minutes)
+    setRemainingSeconds(timerDuration.seconds)
+  }, [targetInUnix])
+
+  useEffect(() => {
     const myInterval = setInterval(() => {
       if (remainingSeconds > 0) {
         setRemainingSeconds(remainingSeconds - 1)
@@ -42,20 +50,12 @@ const Timer = ({ targetInUnix }) => {
     }
   })
 
-  useEffect(() => {
-    const timerDuration = calculateTimerDuration()
-    setRemainingDays(timerDuration.days)
-    setRemainingHours(timerDuration.hours)
-    setRemainingMinutes(timerDuration.minutes)
-    setRemainingSeconds(timerDuration.seconds)
-  }, [targetInUnix])
-
   const zeroPad = (num, places) => String(num).padStart(places, "0")
 
   const calculateTimerDuration = () => {
     const currentDate = moment()
-
-    const remainingTimeMs = targetInUnix.diff(currentDate)
+    const target = moment(targetInUnix * 1000)
+    const remainingTimeMs = target.diff(currentDate)
     const duration = moment.duration(remainingTimeMs)
 
     const days = Math.floor(duration.asDays())
