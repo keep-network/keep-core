@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react"
+import moment from "moment";
 
-const Timer = ({ days, hours, minutes, seconds }) => {
-  const [remainingDays, setRemainingDays] = useState(days || 0)
-  const [remainingHours, setRemainingHours] = useState(hours || 0)
-  const [remainingMinutes, setRemainingMinutes] = useState(minutes || 0)
-  const [remainingSeconds, setRemainingSeconds] = useState(seconds || 0)
-
-  const zeroPad = (num, places) => String(num).padStart(places, "0")
+const Timer = ({ targetInUnix }) => {
+  const [remainingDays, setRemainingDays] = useState(0)
+  const [remainingHours, setRemainingHours] = useState(0)
+  const [remainingMinutes, setRemainingMinutes] = useState(0)
+  const [remainingSeconds, setRemainingSeconds] = useState(0)
 
   useEffect(() => {
     const myInterval = setInterval(() => {
@@ -23,11 +22,11 @@ const Timer = ({ days, hours, minutes, seconds }) => {
         } else {
           setRemainingSeconds(59)
           if (remainingMinutes > 0) {
-            setRemainingMinutes(minutes - 1)
+            setRemainingMinutes(remainingMinutes - 1)
           } else if (remainingMinutes === 0) {
             setRemainingMinutes(59)
             if (remainingHours > 0) {
-              setRemainingHours(hours - 1)
+              setRemainingHours(remainingHours - 1)
             } else if (remainingHours === 0) {
               setRemainingHours(23)
               if (remainingDays > 0) {
@@ -42,6 +41,35 @@ const Timer = ({ days, hours, minutes, seconds }) => {
       clearInterval(myInterval)
     }
   })
+
+  useEffect(() => {
+    const timerDuration = calculateTimerDuration()
+    setRemainingDays(timerDuration.days)
+    setRemainingHours(timerDuration.hours)
+    setRemainingMinutes(timerDuration.minutes)
+    setRemainingSeconds(timerDuration.seconds)
+  }, [targetInUnix])
+
+  const zeroPad = (num, places) => String(num).padStart(places, "0")
+
+  const calculateTimerDuration = () => {
+    const currentDate = moment()
+
+    const remainingTimeMs = targetInUnix.diff(currentDate)
+    const duration = moment.duration(remainingTimeMs)
+
+    const days = Math.floor(duration.asDays())
+    const hours = Math.floor(duration.asHours() % 24)
+    const minutes = Math.floor(duration.asMinutes() % 60)
+    const seconds = Math.floor(duration.asSeconds() % 60)
+
+    return {
+      days: days > 0 ? days : 0,
+      hours: hours > 0 ? hours : 0,
+      minutes: minutes > 0 ? minutes : 0,
+      seconds: seconds > 0 ? seconds : 0,
+    }
+  }
 
   return (
     <>

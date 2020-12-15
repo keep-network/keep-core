@@ -11,7 +11,9 @@ import { colors } from "../../constants/colors"
 import { ECDSARewardsHelper } from "../../utils/rewardsHelper";
 
 const TBTCRewardsPage = () => {
-  const remainingTime = ECDSARewardsHelper.remainingTimeToFinishCurrentInterval()
+  const currentIntervalEndOf = ECDSARewardsHelper.intervalEndOf(
+    ECDSARewardsHelper.currentInterval
+  )
 
   return (
     <>
@@ -19,7 +21,7 @@ const TBTCRewardsPage = () => {
       <section className="tile rewards-countdown">
         <h2 className="h2--alt">
           Next rewards release:&nbsp;
-          <Timer {...remainingTime} />
+          <Timer targetInUnix={currentIntervalEndOf} />
         </h2>
       </section>
       <section className="rewards-calc">
