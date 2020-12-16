@@ -4,6 +4,7 @@ import Chip from "./Chip"
 import AddressShortcut from "./AddressShortcut"
 import * as Icons from "./Icons"
 import { displayAmount } from "../utils/token.utils"
+import { REWARD_STATUS } from "../constants/constants"
 
 const TBTCRewardsDataTable = ({ data = [] }) => {
   return (
@@ -41,9 +42,9 @@ const AmountCell = ({ amount }) => {
 
 const renderStatus = ({ status }) => {
   switch (status) {
-    case "AVAILABLE":
+    case REWARD_STATUS.AVAILABLE:
       return <Chip text={status} />
-    case "WITHDRAWN":
+    case REWARD_STATUS.WITHDRAWN:
     default:
       return <Chip text={status} color="disabled" />
   }

@@ -9,6 +9,7 @@ import { sendTransaction } from "./web3"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add } from "../utils/arithmetics.utils"
 import { getOperatorsOfBeneficiary } from "../services/token-staking.service"
+import { REWARD_STATUS } from "../constants/constants"
 
 function* fetchBeaconDistributedRewards(address) {
   try {
@@ -94,13 +95,13 @@ function* fetchECDSARewardsData(action) {
     const rewardsHistory = availableRewards
       .map((reward) => ({
         ...reward,
-        status: "AVAILABLE",
+        status: REWARD_STATUS.AVAILABLE,
         id: `${reward.operator}-${reward.merkleRoot}`,
       }))
       .concat(
         claimedRewards.map((reward) => ({
           ...reward,
-          status: "WITHDRAWN",
+          status: REWARD_STATUS.WITHDRAWN,
           id: `${reward.operator}-${reward.merkleRoot}`,
         }))
       )
