@@ -65,8 +65,11 @@ class BeaconRewards extends RewardsHelper {
 }
 
 class ECDSARewards extends RewardsHelper {
-  // TODO update the intervals based on the new rewards mechanism
-  intervals = 84
+  // The new rewards mechanism has 88 intervals started from 13.11.2020. Each
+  // interval is 7 days long. There might be more intervals than 88 because
+  // unallocated rewards (eg. when some operrator does not meet SLA) remain in
+  // the pool and can be used for other intervals.
+  intervals = 88
   ethScoreThreshold = new BigNumber(3000).multipliedBy(new BigNumber(1e18)) // 3000 ETH
   constructor() {
     // 13.11.2020 interval started
