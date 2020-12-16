@@ -16,7 +16,7 @@ const DelegatedTokens = ({ data, setData }) => {
     ownerAddress,
     beneficiaryAddress,
     authorizerAddress,
-    isUndelegationFromGrant,
+    isDelegationFromGrant,
     isInInitializationPeriod,
     undelegationPeriod,
     isManagedGrant,
@@ -72,7 +72,7 @@ const DelegatedTokens = ({ data, setData }) => {
           successCallback={
             isInInitializationPeriod ? cancelSuccessCallback : () => {}
           }
-          isFromGrant={isUndelegationFromGrant}
+          isFromGrant={isDelegationFromGrant}
           isInInitializationPeriod={isInInitializationPeriod}
           isManagedGrant={isManagedGrant}
           managedGrantContractInstance={managedGrantContractInstance}
