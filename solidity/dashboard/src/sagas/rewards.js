@@ -55,7 +55,8 @@ function* withdrawECDSARewards(action) {
         },
       })
     } catch (error) {
-      continue
+      yield* logError("rewards/ecdsa_withdraw_failure", error)
+      throw error
     }
   }
 }
