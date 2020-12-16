@@ -96,7 +96,7 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
           <Icons.Time width="16" height="16" className="time-icon--grey-30" />
           <span>84 rewards periods remaining&nbsp;</span>
           <Tooltip simple delay={0} triggerComponent={Icons.MoreInfo}>
-            content
+            Rewards are distributed for a limited time.
           </Tooltip>
         </div>
       </div>
