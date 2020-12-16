@@ -11,6 +11,7 @@ import ResourcesPage from "../pages/ResourcesPage"
 import * as Icons from "./Icons"
 import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
+import LiquidityPage from "../pages/liquidity";
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -43,7 +44,11 @@ export const SideMenu = (props) => {
         <NavLinkSection
           label="earn"
           icon={<Icons.FeesVector />}
-          subroutes={[EarningsPage.route, RewardsPage.route]}
+          subroutes={[
+            EarningsPage.route,
+            RewardsPage.route,
+            LiquidityPage.route,
+          ]}
         />
         <NavLinkSection
           label="help"
