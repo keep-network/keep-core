@@ -1,7 +1,7 @@
 import React from "react"
 import PageWrapper from "../../components/PageWrapper"
-// import RandomBeaconRewardsPage from "./RandomBeaconRewardsPage"
-import RewardsOverviewPage from "./RewardsOverviewPage"
+import RandomBeaconRewardsPage from "./RandomBeaconRewardsPage"
+import TBTCRewardsPage from "./TBTCRewardsPage"
 
 const RewardsPage = (props) => {
   return <PageWrapper {...props} />
@@ -10,7 +10,7 @@ const RewardsPage = (props) => {
 RewardsPage.route = {
   title: "Rewards",
   path: "/rewards",
-  pages: [RewardsOverviewPage /* RandomBeaconRewardsPage*/],
+  pages: [RandomBeaconRewardsPage, TBTCRewardsPage],
 }
 
 export default RewardsPage

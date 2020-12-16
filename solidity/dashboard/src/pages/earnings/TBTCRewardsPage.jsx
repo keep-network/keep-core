@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from "react"
-import TBTCRewardsDataTable from "../../components/TBTCRewardsDataTable"
+import TBTCEarningsDataTable from "../../components/TBTCEarningsDataTable"
 import { LoadingOverlay } from "../../components/Loadable"
 import { useWeb3Context } from "../../components/WithWeb3Context"
 import {
@@ -80,7 +80,7 @@ const TBTCRewardsPage = () => {
         isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton />}
       >
-        <TBTCRewardsDataTable
+        <TBTCEarningsDataTable
           rewards={data}
           fetchOperatorByDepositId={fetchOperatorByDepositId}
         />

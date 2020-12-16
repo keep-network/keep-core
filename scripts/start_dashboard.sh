@@ -3,6 +3,9 @@ set -e
 
 # Dafault inputs.
 KEEP_ECDSA_SOL_PATH="$PWD/../keep-ecdsa/solidity"
+KEEP_ECDSA_DISTRIBUTOR_PATH="$PWD/../keep-ecdsa/staker-rewards/distributor"
+MERKLE_DISTRIBUTOR_INPUT_PATH="$KEEP_ECDSA_DISTRIBUTOR_PATH/staker-reward-allocation.json"
+MERKLE_DISTRIBUTOR_OUTPUT_PATH="$KEEP_ECDSA_DISTRIBUTOR_PATH/output-merkle-objects.json"
 
 TBTC_SOL_PATH="$PWD/../tbtc/solidity"
 TBTC_SOL_ARTIFACTS_PATH="$TBTC_SOL_PATH/build/contracts"
@@ -91,3 +94,20 @@ npm link @keep-network/tbtc
 
 # printf "${LOG_START}Starting dashboard...${LOG_END}"
 # npm start
+
+# Make sure files below exists in keep-ecdsa repository. Otherwise comment out.
+printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"
+cd $KEEP_ECDSA_SOL_PATH
+truffle exec ./scripts/generate-staker-rewards-input.js --network local
+
+printf "${LOG_START}Generating mock merkle objects${LOG_END}"
+cd $KEEP_ECDSA_DISTRIBUTOR_PATH
+npm i
+npm run generate-merkle-root -- --input="$MERKLE_DISTRIBUTOR_INPUT_PATH"
+
+printf "${LOG_START}Copying the mock merkle objects to dashboard${LOG_END}"
+cp $MERKLE_DISTRIBUTOR_OUTPUT_PATH "$DASHBOARD_DIR_PATH/src/rewards-allocation/rewards.json"
+
+printf "${LOG_START}Initializing ECDSARewardsDistributor contract${LOG_END}"
+cd $KEEP_ECDSA_SOL_PATH
+truffle exec ./scripts/initialize-ecdsa-rewards-distributor.js --network local

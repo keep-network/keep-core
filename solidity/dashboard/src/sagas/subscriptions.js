@@ -44,7 +44,6 @@ function* observeKeepTokenTransfer() {
           payload: { value, arithmeticOpration },
         })
       }
-      yield fork(ecdsaRewardWithdrawan, { from, to, value })
     } catch (error) {
       console.error(`Failed subscribing to Transfer event`, error)
       contractEventCahnnel.close()
@@ -567,18 +566,34 @@ function* observeTopUpCompletedEvent() {
   }
 }
 
-function* ecdsaRewardWithdrawan(data) {
-  const { from, to, value } = data
-  const {
-    eth: { defaultAccount },
-  } = yield getWeb3Context()
+function* observeECDSARewardsClaimedEvent(data) {
+  const { ECDSARewardsDistributorContract } = yield getContractsContext()
 
-  const { ECDSARewardsContract } = yield getContractsContext()
+  // Create subscription channel.
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    ECDSARewardsDistributorContract,
+    "RewardsClaimed"
+  )
 
-  if (
-    isSameEthAddress(from, ECDSARewardsContract.options.address) &&
-    isSameEthAddress(to, defaultAccount)
-  ) {
-    yield put({ type: "rewards/ecdsa_withdrawn", payload: value })
+  while (true) {
+    try {
+      const {
+        returnValues: { merkleRoot, index, operator, amount },
+      } = yield take(contractEventCahnnel)
+
+      yield put({
+        type: "rewards/ecdsa_withdrawn",
+        payload: { merkleRoot, index, operator, amount },
+      })
+    } catch (error) {
+      console.error(`Failed subscribing to RewardsClaimed event`, error)
+      contractEventCahnnel.close()
+    }
   }
+}
+
+export function* subsribeToECDSARewardsClaimedEvent() {
+  yield take("rewards/ecdsa_fetch_rewards_data_success")
+  yield fork(observeECDSARewardsClaimedEvent)
 }

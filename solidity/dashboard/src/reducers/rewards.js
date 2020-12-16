@@ -1,4 +1,5 @@
-import { sub, add } from "../utils/arithmetics.utils"
+import { sub } from "../utils/arithmetics.utils"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const initialState = {
   // Beacon distributted rewards
@@ -6,16 +7,12 @@ const initialState = {
   becaonRewardsBalance: 0,
   error: null,
 
-  // ECDSA distributed rewards
-  ecdsaDistributedRewardsFetching: false,
-  ecdsaDistributedBalance: 0,
-  ecdsaDistributedBalanceError: null,
-
   // ECDSA available rewards
   ecdsaAvailableRewardsFetching: false,
   ecdsaAvailableRewardsBalance: 0,
   ecdsaAvailableRewards: [],
   ecdsaAvailableRewardsError: null,
+  ecdsaRewardsHistory: [],
 }
 
 const rewardsReducer = (state = initialState, action) => {
@@ -34,55 +31,28 @@ const rewardsReducer = (state = initialState, action) => {
         beaconRewardsFetching: false,
         error: action.payload.error,
       }
-    case "rewards/ecdsa_fetch_distributed_rewards_start":
-      return {
-        ...state,
-        ecdsaDistributedRewardsFetching: true,
-        ecdsaDistributedBalanceError: null,
-      }
-    case "rewards/ecdsa_fetch_distributed_rewards_success":
-      return {
-        ...state,
-        ecdsaDistributedRewardsFetching: false,
-        ecdsaDistributedBalance: action.payload,
-      }
-    case "rewards/ecdsa_fetch_distributed_rewards_failure":
-      return {
-        ...state,
-        ecdsaDistributedRewardsFetching: false,
-        ecdsaDistributedBalanceError: action.payload.error,
-      }
-    case "rewards/ecdsa_fetch_available_rewards_start":
+    case "rewards/ecdsa_fetch_rewards_data_start":
       return {
         ...state,
         ecdsaAvailableRewardsFetching: true,
         ecdsaAvailableRewardsError: null,
       }
-    case "rewards/ecdsa_fetch_available_rewards_success":
+    case "rewards/ecdsa_fetch_rewards_data_success":
       return {
         ...state,
         ecdsaAvailableRewardsFetching: false,
-        ecdsaAvailableRewardsBalance: action.payload.totalAvailableRewards,
-        ecdsaAvailableRewards: action.payload.toWithdrawn,
+        ecdsaAvailableRewardsBalance: action.payload.totalAvailableAmount,
+        ecdsaAvailableRewards: action.payload.availableRewards,
+        ecdsaRewardsHistory: action.payload.rewardsHistory,
       }
-    case "rewards/ecdsa_fetch_available_rewards_failure":
+    case "rewards/ecdsa_fetch_rewards_data_failure":
       return {
         ...state,
         ecdsaAvailableRewardsFetching: false,
         ecdsaAvailableRewardsError: action.payload.error,
       }
     case "rewards/ecdsa_withdrawn":
-      return {
-        ...state,
-        ecdsaAvailableRewardsBalance: sub(
-          state.ecdsaAvailableRewardsBalance,
-          action.payload
-        ),
-        ecdsaDistributedBalance: add(
-          state.ecdsaDistributedBalance,
-          action.payload
-        ),
-      }
+      return ecdsaRewardsWithdrawn({ ...state }, action.payload)
     case "rewards/ecdsa_update_available_rewards":
       return {
         ...state,
@@ -90,6 +60,42 @@ const rewardsReducer = (state = initialState, action) => {
       }
     default:
       return state
+  }
+}
+
+const ecdsaRewardsWithdrawn = (state, { merkleRoot, operator, amount }) => {
+  const isSameRewardRecord = (reward) =>
+    reward.merkleRoot === merkleRoot &&
+    isSameEthAddress(reward.operator, operator)
+
+  const reward = state.ecdsaAvailableRewards.find(isSameRewardRecord)
+
+  if (!reward) {
+    return state
+  }
+
+  const ecdsaAvailableRewardsBalance = sub(
+    state.ecdsaAvailableRewardsBalance,
+    amount
+  )
+
+  const ecdsaAvailableRewards = state.ecdsaAvailableRewards.filter(
+    (reward) => !isSameRewardRecord(reward)
+  )
+
+  const ecdsaRewardsHistory = state.ecdsaRewardsHistory.map((reward) => {
+    if (isSameRewardRecord(reward)) {
+      return { ...reward, status: "WITHDRAWN" }
+    }
+
+    return reward
+  })
+
+  return {
+    ...state,
+    ecdsaAvailableRewardsBalance,
+    ecdsaAvailableRewards,
+    ecdsaRewardsHistory,
   }
 }
 
