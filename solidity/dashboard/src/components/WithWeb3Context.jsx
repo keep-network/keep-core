@@ -14,13 +14,17 @@ export const Web3Context = React.createContext({
 })
 
 export const useWeb3Context = () => {
-  return useContext(Web3Context)
+  const web3Context = useContext(Web3Context)
+
+  if (!web3Context) {
+    throw new Error("Web3Context not found")
+  }
+
+  return web3Context
 }
 
 export const useWeb3Address = () => {
-  const web3 = useContext(Web3Context)
-
-  return web3.yourAddress
+  return useWeb3Context().yourAddress
 }
 
 const withWeb3Context = (Component) => {
