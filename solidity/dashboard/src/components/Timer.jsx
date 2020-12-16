@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react"
-import moment from "moment";
+import moment from "moment"
 
 const Timer = ({ targetInUnix }) => {
   const [remainingDays, setRemainingDays] = useState(0)
@@ -8,7 +8,7 @@ const Timer = ({ targetInUnix }) => {
   const [remainingSeconds, setRemainingSeconds] = useState(0)
 
   useEffect(() => {
-    const timerDuration = calculateTimerDuration()
+    const timerDuration = calculateTimerDuration(targetInUnix)
     setRemainingDays(timerDuration.days)
     setRemainingHours(timerDuration.hours)
     setRemainingMinutes(timerDuration.minutes)
@@ -52,31 +52,31 @@ const Timer = ({ targetInUnix }) => {
 
   const zeroPad = (num, places) => String(num).padStart(places, "0")
 
-  const calculateTimerDuration = () => {
-    const currentDate = moment()
-    const target = moment(targetInUnix * 1000)
-    const remainingTimeMs = target.diff(currentDate)
-    const duration = moment.duration(remainingTimeMs)
-
-    const days = Math.floor(duration.asDays())
-    const hours = Math.floor(duration.asHours() % 24)
-    const minutes = Math.floor(duration.asMinutes() % 60)
-    const seconds = Math.floor(duration.asSeconds() % 60)
-
-    return {
-      days: days > 0 ? days : 0,
-      hours: hours > 0 ? hours : 0,
-      minutes: minutes > 0 ? minutes : 0,
-      seconds: seconds > 0 ? seconds : 0,
-    }
-  }
-
   return (
     <>
       {zeroPad(remainingDays, 2)}:{zeroPad(remainingHours, 2)}:
       {zeroPad(remainingMinutes, 2)}:{zeroPad(remainingSeconds, 2)}
     </>
   )
+}
+
+const calculateTimerDuration = (targetInUnix) => {
+  const currentDate = moment()
+  const target = moment.unix(targetInUnix)
+  const remainingTimeMs = target.diff(currentDate)
+  const duration = moment.duration(remainingTimeMs)
+
+  const days = Math.floor(duration.asDays())
+  const hours = Math.floor(duration.asHours() % 24)
+  const minutes = Math.floor(duration.asMinutes() % 60)
+  const seconds = Math.floor(duration.asSeconds() % 60)
+
+  return {
+    days: days > 0 ? days : 0,
+    hours: hours > 0 ? hours : 0,
+    minutes: minutes > 0 ? minutes : 0,
+    seconds: seconds > 0 ? seconds : 0,
+  }
 }
 
 export default Timer
