@@ -1,15 +1,19 @@
 import React, { useCallback, useMemo, useState } from "react"
-import AuthorizeContracts from "../components/AuthorizeContracts"
-import AuthorizationHistory from "../components/AuthorizationHistory"
-import { useFetchData } from "../hooks/useFetchData"
-import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
-import { LoadingOverlay } from "../components/Loadable"
-import { beaconAuthorizationService } from "../services/beacon-authorization.service"
-import { isSameEthAddress } from "../utils/general.utils"
-import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
-import { authorizeOperatorContract } from "../actions/web3"
+import AuthorizeContracts from "../../components/AuthorizeContracts"
+import AuthorizationHistory from "../../components/AuthorizationHistory"
+import { useFetchData } from "../../hooks/useFetchData"
+import {
+  findIndexAndObject,
+  compareEthAddresses,
+} from "../../utils/array.utils"
+import { LoadingOverlay } from "../../components/Loadable"
+import { beaconAuthorizationService } from "../../services/beacon-authorization.service"
+import { isSameEthAddress } from "../../utils/general.utils"
+import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
+import { authorizeOperatorContract } from "../../actions/web3"
 import { connect } from "react-redux"
-import { getKeepRandomBeaconOperatorAddress } from "../contracts"
+import { getKeepRandomBeaconOperatorAddress } from "../../contracts"
+import EmptyStatePage from "./EmptyStatePage"
 
 const KeepRandomBeaconApplicationPage = ({ authorizeOperatorContract }) => {
   const [selectedOperator, setOperator] = useState({})
@@ -148,6 +152,8 @@ ConnectedKeepRandomBeaconApplicationPage.route = {
   title: "Keep Random Beacon",
   path: "/applications/random-beacon",
   exact: true,
+  withConnectWalletGuard: true,
+  emptyStateComponent: EmptyStatePage,
 }
 
 export default ConnectedKeepRandomBeaconApplicationPage

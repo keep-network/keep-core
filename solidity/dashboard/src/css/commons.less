@@ -66,6 +66,12 @@ each(@directions-shortcuts, .(@v, @k) {
   }
 });
 
+.w{
+  &-100 {
+    width: 100%;
+  }
+}
+
 hr {
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
@@ -116,6 +122,18 @@ hr {
   
   &.wrap {
     flex-wrap: wrap;
+  }
+
+  &-gap {
+    @gap: 1rem;
+    display: inline-flex;
+    flex-wrap: wrap;
+    margin: calc(-1 * @gap) 0 0 calc(-1 * @gap);
+    width: calc(100% + @gap);
+
+    > * {
+      margin: @gap 0 0 @gap;
+    }
   }
 }
 
@@ -250,7 +268,23 @@ hr {
   margin: 0;
 }
 
-svg.time-icon, svg.success-icon, svg.keep-outline {
+svg.success-icon {
+  &.green {
+    path { 
+      fill: @success-color;
+    }
+  }
+}
+
+svg.wallet-icon {
+  &.grey-50 {
+    path {
+      fill: @color-grey-50;
+    }
+  }
+}
+
+svg.time-icon, svg.success-icon, svg.keep-outline, svg.tbtc-icon {
   &--black {
     path {
       fill: @color-black;
@@ -272,6 +306,12 @@ svg.time-icon, svg.success-icon, svg.keep-outline {
   &--mint-100 {
     path {
       fill: @color-mint-100;
+    }
+  }
+
+  &--mint-80 {
+    path {
+      fill: @color-mint-80;
     }
   }
 }

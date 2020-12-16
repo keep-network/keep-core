@@ -8,8 +8,8 @@ export const ResourceTooltipContent = ({
   title,
   content,
   redirectLink = "/resources/quick-terminology",
-  btnText = "go to resources",
-  withRedirectButton = true,
+  linkText = "Learn more in Resources",
+  withRedirectLink = true,
 }) => {
   return (
     <>
@@ -20,9 +20,9 @@ export const ResourceTooltipContent = ({
       />
       <Tooltip.Divider />
       <Tooltip.Content>{content}</Tooltip.Content>
-      {withRedirectButton && (
-        <Link to={redirectLink} className="btn btn-secondary btn-sm mt-2">
-          {btnText}
+      {withRedirectLink && (
+        <Link to={redirectLink} className="internal text-small">
+          {linkText}
         </Link>
       )}
     </>

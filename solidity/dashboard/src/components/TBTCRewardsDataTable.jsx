@@ -1,84 +1,54 @@
-import React, { useState, useCallback } from "react"
+import React from "react"
 import { DataTable, Column } from "./DataTable"
+import Chip from "./Chip"
 import AddressShortcut from "./AddressShortcut"
-import TokenAmount from "./TokenAmount"
 import * as Icons from "./Icons"
-import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
-import { toTokenUnit } from "../utils/token.utils"
+import { displayAmount } from "../utils/token.utils"
+import { REWARD_STATUS } from "../constants/constants"
 
-const TBTCRewardsDataTable = ({ rewards, fetchOperatorByDepositId }) => {
+const TBTCRewardsDataTable = ({ data = [] }) => {
   return (
-    <DataTable data={rewards} itemFieldId="depositTokenId">
-      <Column
-        header="amount"
-        field="amount"
-        renderContent={({ amount }) => (
-          <TokenAmount
-            currencyIcon={Icons.TBTC}
-            currencyIconProps={{ width: 15, height: 15 }}
-            amount={amount}
-            withMetricSuffix={false}
-            displayAmountFunction={(amount) => toTokenUnit(amount).toString()}
-            amountClassName="text-big text-grey-70 overflow-x-scroll"
-          />
-        )}
-      />
-      <Column
-        header="transaction hash"
-        field="transactionHash"
-        renderContent={({ transactionHash }) => (
-          <ViewInBlockExplorer type="tx" id={transactionHash} />
-        )}
-      />
-      <Column
-        header="deposit token id"
-        field="depositTokenId"
-        renderContent={({ depositTokenId }) => (
-          <AddressShortcut address={depositTokenId} />
-        )}
-      />
+    <DataTable data={data} itemFieldId="id" noDataMessage="No rewards history.">
+      <Column header="amount" field="amount" renderContent={AmountCell} />
+      <Column header="status" field="status" renderContent={renderStatus} />
+      <Column header="rewards period" field="rewardsPeriod" />
       <Column
         header="operator"
         field="operator"
-        renderContent={({ depositTokenId, operatorAddress }) => (
-          <OperatorCell
-            depositTokenId={depositTokenId}
-            operatorAddress={operatorAddress}
-            fetchOperatorByDepositId={fetchOperatorByDepositId}
-          />
-        )}
+        renderContent={renderOperator}
       />
     </DataTable>
   )
 }
 
-const OperatorCell = React.memo(
-  ({ depositTokenId, fetchOperatorByDepositId, operatorAddress }) => {
-    const [isFetching, setIsFetching] = useState(false)
-
-    const fetchOperatorByDeposit = useCallback(async () => {
-      setIsFetching(true)
-      await fetchOperatorByDepositId(depositTokenId)
-      setIsFetching(false)
-    }, [fetchOperatorByDepositId, depositTokenId])
-
-    if (operatorAddress) {
-      return <AddressShortcut address={operatorAddress} />
-    }
-
-    return (
-      <div className="flex row center">
-        <span className="text-fade-out">0x000</span>
-        <span
-          className="flex row center text-secondary cursor-pointer"
-          onClick={fetchOperatorByDeposit}
-        >
-          <Icons.Load style={{ marginRight: "0.5rem" }} />{" "}
-          {isFetching ? "Loading" : "Load address"}
-        </span>
+const AmountCell = ({ amount }) => {
+  return (
+    <div className="flex row center">
+      <Icons.KeepOutline
+        className="keep-outline--grey-40 mr-1"
+        width={32}
+        height={32}
+      />
+      <div>
+        <div>{displayAmount(amount)}&nbsp;KEEP</div>
+        <div className="flex row center">
+          <Icons.Rewards width={8} height={8} />
+          <span className="text-small text-grey-40">&nbsp;Reward</span>
+        </div>
       </div>
-    )
-  }
-)
+    </div>
+  )
+}
 
-export default React.memo(TBTCRewardsDataTable)
+const renderStatus = ({ status }) => {
+  switch (status) {
+    case REWARD_STATUS.AVAILABLE:
+      return <Chip text={status} />
+    case REWARD_STATUS.WITHDRAWN:
+    default:
+      return <Chip text={status} color="disabled" />
+  }
+}
+const renderOperator = ({ operator }) => <AddressShortcut address={operator} />
+
+export default TBTCRewardsDataTable

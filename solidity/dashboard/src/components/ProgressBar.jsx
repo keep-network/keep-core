@@ -1,7 +1,7 @@
 import React, { useMemo, useContext } from "react"
 import BigNumber from "bignumber.js"
 import CircularProgressBar from "./CircularProgressBar"
-import { percentageOf, sub } from "../utils/arithmetics.utils"
+import { percentageOf, sub, lt } from "../utils/arithmetics.utils"
 
 const defaultValue = 0
 const totalDefaultValue = 1
@@ -80,7 +80,10 @@ const ProgressBarLegend = ({
   displayLegendValuFn = defaultDisplayLegendValuFn,
 }) => {
   const { value, total, color, bgColor } = useProgressBarContext()
-  const leftValue = useMemo(() => sub(total, value).toString(), [value, total])
+  const leftValue = useMemo(() => {
+    const left = sub(total, value).toString()
+    return lt(left, 0) ? 0 : left
+  }, [value, total])
 
   return (
     <ProgressBarLegendContext.Provider value={{ displayLegendValuFn }}>

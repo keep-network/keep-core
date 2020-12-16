@@ -11,13 +11,13 @@ const resourceTooltipProps = {
   recoverTokens: {
     title: "Recover Tokens",
     content:
-      "Click recover to return undelegated tokens to your granted token balance.",
+      "Click recover tokens to return the undelegated tokens to your token balance.",
   },
   beaconEarnings: {
     title: "Beacon Earnings",
     content:
       "The total balance reflects the total Available and Active earnings. Available earningss are ready to be withdrawn. Active earnings become available after a signing group expires.",
-    withRedirectButton: false,
+    withRedirectLink: false,
   },
   slashing: {
     title: "Slashing",

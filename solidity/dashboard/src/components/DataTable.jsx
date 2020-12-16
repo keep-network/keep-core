@@ -46,10 +46,13 @@ export class DataTable extends React.Component {
     )
   }
   renderColumnContent = (column, item) => {
-    if (!column.props.renderContent) {
-      return item[column.props.field]
+    if (typeof column.props.renderContent === "function") {
+      return column.props.renderContent(item)
+    } else if (React.isValidElement(column.props.renderContent)) {
+      return React.cloneElement(column.props.renderContent, ...item)
     }
-    return column.props.renderContent(item)
+
+    return item[column.props.field]
   }
 
   renderHeader = ({ title, headerStyle }) => (

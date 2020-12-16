@@ -1,23 +1,27 @@
 import React, { useCallback, useState, useMemo } from "react"
-import AuthorizeContracts from "../components/AuthorizeContracts"
-import { tbtcAuthorizationService } from "../services/tbtc-authorization.service"
-import { useFetchData } from "../hooks/useFetchData"
-import { BondingSection } from "../components/BondingSection"
-import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
-import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
-import { add, sub } from "../utils/arithmetics.utils"
+import AuthorizeContracts from "../../components/AuthorizeContracts"
+import { tbtcAuthorizationService } from "../../services/tbtc-authorization.service"
+import { useFetchData } from "../../hooks/useFetchData"
+import { BondingSection } from "../../components/BondingSection"
+import { useSubscribeToContractEvent } from "../../hooks/useSubscribeToContractEvent"
+import {
+  findIndexAndObject,
+  compareEthAddresses,
+} from "../../utils/array.utils"
+import { add, sub } from "../../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
-import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
-import { LoadingOverlay } from "../components/Loadable"
-import { isSameEthAddress } from "../utils/general.utils"
-import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
+import { KEEP_BONDING_CONTRACT_NAME } from "../../constants/constants"
+import { LoadingOverlay } from "../../components/Loadable"
+import { isSameEthAddress } from "../../utils/general.utils"
+import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
 import {
   authorizeSortitionPoolContract,
   authorizeOperatorContract,
   deauthorizeSortitionPoolContract,
-} from "../actions/web3"
+} from "../../actions/web3"
 import { connect } from "react-redux"
-import { getBondedECDSAKeepFactoryAddress } from "../contracts"
+import { getBondedECDSAKeepFactoryAddress } from "../../contracts"
+import EmptyStatePage from "./EmptyStatePage"
 
 const initialData = []
 const TBTCApplicationPage = ({
@@ -225,6 +229,8 @@ ConnectedTBTCApplicationPage.route = {
   title: "tBTC",
   path: "/applications/tbtc",
   exact: true,
+  withConnectWalletGuard: true,
+  emptyStateComponent: EmptyStatePage,
 }
 
 export default ConnectedTBTCApplicationPage

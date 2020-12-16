@@ -1,4 +1,6 @@
 import moment from "moment"
+import BigNumber from "bignumber.js"
+import { formatDate } from "../utils/general.utils"
 
 class RewardsHelper {
   firstIntervalStart = 0
@@ -18,6 +20,17 @@ class RewardsHelper {
     return moment
       .unix(this.firstIntervalStart)
       .add(interval * this.termLength, "seconds")
+  }
+
+  intervalEndOf = (interval) => {
+    return this.intervalStartOf(interval + 1)
+  }
+
+  periodOf = (interval) => {
+    const startDate = formatDate(this.intervalStartOf(interval))
+    const endDate = formatDate(this.intervalEndOf(interval))
+
+    return `${startDate} - ${endDate}`
   }
 }
 
@@ -52,18 +65,43 @@ class BeaconRewards extends RewardsHelper {
 }
 
 class ECDSARewards extends RewardsHelper {
-  intervals = 24
+  // The new rewards mechanism has 88 intervals started from 13.11.2020. Each
+  // interval is 7 days long. There might be more intervals than 88 because
+  // unallocated rewards (eg. when some operrator does not meet SLA) remain in
+  // the pool and can be used for other intervals.
+  intervals = 88
+  ethScoreThreshold = new BigNumber(3000).multipliedBy(new BigNumber(1e18)) // 3000 ETH
   constructor() {
-    // BondedECDSAKeepFactory deployment date, Sep-14-2020 interval started.
-    // https://etherscan.io/address/0xA7d9E842EFB252389d613dA88EDa3731512e40bD
-    const ecdsaFirstIntervalStart = 1600041600
+    // 13.11.2020 interval started
+    const ecdsaFirstIntervalStart = 1605225600
 
-    // Each interval is 30 days long.
-    const termLength = moment.duration(30, "days").asSeconds()
+    // Each interval is 7 days long.
+    const termLength = moment.duration(7, "days").asSeconds()
 
     const minimumECDSAKeepsPerInterval = 1000
 
     super(ecdsaFirstIntervalStart, termLength, minimumECDSAKeepsPerInterval)
+  }
+
+  calculateETHScore(ethTotal) {
+    if (ethTotal.isLessThan(this.ethScoreThreshold)) {
+      return ethTotal
+    }
+
+    const sqrt = this.ethScoreThreshold.multipliedBy(ethTotal).squareRoot()
+
+    return new BigNumber(2).multipliedBy(sqrt).minus(this.ethScoreThreshold)
+  }
+
+  calculateBoost(keepStaked, ethTotal, minimumStake) {
+    const a = keepStaked.dividedBy(minimumStake)
+    const b = ethTotal.isGreaterThan(new BigNumber(0))
+      ? keepStaked
+          .dividedBy(ethTotal.multipliedBy(new BigNumber(500)))
+          .squareRoot()
+      : new BigNumber(0)
+
+    return new BigNumber(1).plus(BigNumber.minimum(a, b))
   }
 }
 

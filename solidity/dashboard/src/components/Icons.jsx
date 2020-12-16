@@ -35,14 +35,15 @@ import { ReactComponent as Authorize } from "../static/svg/authorize.svg"
 import { ReactComponent as Home } from "../static/svg/home.svg"
 import { ReactComponent as Question } from "../static/svg/question.svg"
 import { ReactComponent as FeesVector } from "../static/svg/fees-vector.svg"
+import { ReactComponent as Time } from "../static/svg/time.svg"
 import { ReactComponent as KeepDashboardLogo } from "../static/svg/token-dashboard-logo.svg"
 import { ReactComponent as NetworkStatusIndicator } from "../static/svg/network-status-indicator.svg"
-import { ReactComponent as Wallet } from "../static/svg/wallet.svg"
 import { ReactComponent as MetaMask } from "../static/svg/metamask.svg"
 import { ReactComponent as Trezor } from "../static/svg/trezor.svg"
 import { ReactComponent as Ledger } from "../static/svg/ledger.svg"
+export { ReactComponent as Warning } from "../static/svg/warning.svg"
+export { ReactComponent as Wallet } from "../static/svg/wallet.svg"
 export { ReactComponent as Grant } from "../static/svg/grant.svg"
-export { ReactComponent as Time } from "../static/svg/time.svg"
 export { ReactComponent as Calendar } from "../static/svg/calendar.svg"
 export { ReactComponent as Plus } from "../static/svg/plus.svg"
 export { ReactComponent as StakeDrop } from "../static/svg/stakedrop.svg"
@@ -364,7 +365,7 @@ export {
   Question,
   Home,
   FeesVector,
+  Time,
   KeepDashboardLogo,
   NetworkStatusIndicator,
-  Wallet,
 }
