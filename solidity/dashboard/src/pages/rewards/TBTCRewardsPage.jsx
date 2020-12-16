@@ -77,6 +77,9 @@ const TBTCRewardsPage = () => {
 }
 
 const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
+  const remainingPeriods =
+    ECDSARewardsHelper.intervals - ECDSARewardsHelper.currentInterval
+
   return (
     <section className="tile rewards__overview--tbtc">
       <div className="rewards__overview__balance">
@@ -94,7 +97,7 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
         </span>
         <div className="rewards-period__remaining-periods">
           <Icons.Time width="16" height="16" className="time-icon--grey-30" />
-          <span>84 rewards periods remaining&nbsp;</span>
+          <span>{remainingPeriods} rewards periods remaining&nbsp;</span>
           <Tooltip simple delay={0} triggerComponent={Icons.MoreInfo}>
             Rewards are distributed for a limited time.
           </Tooltip>
