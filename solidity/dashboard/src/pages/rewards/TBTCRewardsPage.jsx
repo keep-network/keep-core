@@ -105,13 +105,13 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
       </div>
       <div className="rewards__overview__withdraw">
         <SubmitButton
-          className="btn btn-primary btn-lg"
+          className="btn btn-primary btn-lg w-100"
           onSubmitAction={withdrawRewards}
           disabled={!gt(balance, 0)}
         >
           withdraw all
         </SubmitButton>
-        <div className="text-validation mt-1">
+        <div className="text-validation mt-1 text-center">
           Beneficiary account receives rewards.
         </div>
       </div>
