@@ -1,4 +1,5 @@
 import { take, takeLatest, call, put, fork } from "redux-saga/effects"
+import web3Utils from "web3-utils"
 import { logError, submitButtonHelper, getContractsContext } from "./utils"
 import {
   fetchtTotalDistributedRewards,
@@ -8,7 +9,13 @@ import {
 import { sendTransaction } from "./web3"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add } from "../utils/arithmetics.utils"
-import { getOperatorsOfBeneficiary } from "../services/token-staking.service"
+import {
+  getOperatorsOfBeneficiary,
+  getOperatorsOfOwner,
+  getOperatorsOfGrantee,
+  getOperatorsOfManagedGrantee,
+  getOperatorsOfCopiedDelegations,
+} from "../services/token-staking.service"
 import { REWARD_STATUS } from "../constants/constants"
 
 function* fetchBeaconDistributedRewards(address) {
@@ -68,12 +75,40 @@ export function* watchWithdrawECDSARewards() {
 }
 
 function* fetchECDSARewardsData(action) {
-  const beneficiary = action.payload
+  const address = action.payload
   try {
     yield put({ type: "rewards/ecdsa_fetch_rewards_data_start" })
 
-    const operators = yield call(getOperatorsOfBeneficiary, beneficiary)
-    let availableRewards = yield call(fetchECDSAAvailableRewards, operators)
+    // Beneficiary operators.
+    const beneficiaryOperators = yield call(getOperatorsOfBeneficiary, address)
+    // Owner operators.
+    const ownerOperators = yield call(getOperatorsOfOwner, address)
+    // Grantee operators.
+    const grenteeOperators = yield call(getOperatorsOfGrantee, address)
+    // Managed grantee operators.
+    const mangedGranteeOperators = yield call(
+      getOperatorsOfManagedGrantee,
+      address
+    )
+    // Get operators of copied delegations where an owner of the old delegations
+    // is `address`.
+    const copiedOperators = yield call(getOperatorsOfCopiedDelegations, address)
+    // The same address can be used as beneficiary and owner. So addresses in
+    // array may be repeated. Let's convert to a Set to make sure the given
+    // address is in array only once.
+    const operators = new Set(
+      beneficiaryOperators
+        .concat(ownerOperators)
+        .concat(grenteeOperators)
+        .concat(mangedGranteeOperators)
+        .concat(copiedOperators)
+    )
+    // Operator can also view own rewards.
+    operators.add(web3Utils.toChecksumAddress(address))
+    let availableRewards = yield call(
+      fetchECDSAAvailableRewards,
+      Array.from(operators)
+    )
     const claimedRewards = yield call(fetchECDSAClaimedRewards, operators)
 
     // Available rewards are fetched from merkle generator's output file. This
