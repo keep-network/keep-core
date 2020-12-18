@@ -36,3 +36,9 @@ export const SIGNING_GROUP_STATUS = {
   TERMINATED: "Terminated",
   ACTIVE: "Active work",
 }
+
+export const LIQUIDITY_REWARD_PAIR = {
+  KEEP_ETH: "KEEP + ETH",
+  KEEP_TBTC: "KEEP + TBTC",
+  TBTC_ETH: "TBTC + ETH",
+}
