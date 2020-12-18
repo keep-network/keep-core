@@ -2,12 +2,14 @@ const {initContracts} = require("./helpers/initContracts")
 const {accounts, contract, web3} = require("@openzeppelin/test-environment")
 const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
 const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
+const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants")
 const time = require("@openzeppelin/test-helpers/src/time")
 const crypto = require("crypto")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const Escrow = contract.fromArtifact("Escrow")
 const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
+const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
 
 const TestSimpleBeneficiary = contract.fromArtifact("TestSimpleBeneficiary")
 const CurveRewardsEscrowBeneficiary = contract.fromArtifact(
@@ -424,6 +426,151 @@ describe("PhasedEscrow", () => {
       })
     })
   }
+})
+
+describe("BatchedPhasedEscrow", () => {
+  const owner = accounts[1]
+
+  let beneficiary1, beneficiary2, beneficiary3
+
+  let token
+  let batchedPhasedEscrow
+
+  before(async () => {
+    token = await KeepToken.new({from: owner})
+    batchedPhasedEscrow = await BatchedPhasedEscrow.new(token.address, {
+      from: owner,
+    })
+    beneficiary1 = await TestSimpleBeneficiary.new()
+    beneficiary2 = await TestSimpleBeneficiary.new()
+    beneficiary3 = await TestSimpleBeneficiary.new()
+  })
+
+  beforeEach(async () => {
+    await createSnapshot()
+  })
+
+  afterEach(async () => {
+    await restoreSnapshot()
+  })
+
+  describe("batchedWithdraw", async () => {
+    it("can not be called by non-owner", async () => {
+      const beneficiaries = [beneficiary1.address]
+      const amounts = [100]
+
+      await expectRevert(
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts),
+        "Ownable: caller is not the owner"
+      )
+    })
+
+    it("can be called by owner", async () => {
+      const beneficiaries = [beneficiary1.address]
+      const amounts = [100]
+
+      await token.transfer(batchedPhasedEscrow.address, 100, {from: owner})
+      await batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
+        from: owner,
+      })
+      // ok, no reverts
+    })
+
+    it("can not be called when beneficiary with zero address is used", async () => {
+      const beneficiaries = [ZERO_ADDRESS]
+      const amounts = [100]
+
+      await expectRevert(
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
+          from: owner,
+        }),
+        "Beneficiary not assigned"
+      )
+    })
+
+    it("can not be called when parameters arrays have different length", async () => {
+      const beneficiaries = [beneficiary1.address, beneficiary2.address]
+      const amounts = [100]
+
+      await expectRevert(
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
+          from: owner,
+        }),
+        "Mismatched arrays length"
+      )
+    })
+
+    it("fails when not enough tokens in the escrow", async () => {
+      const beneficiaries = [
+        beneficiary1.address,
+        beneficiary2.address,
+        beneficiary3.address,
+      ]
+      const amounts = [100, 200, 300] // 600
+      const escrowBalance = 599 // less than required total withdrawn amount
+
+      await token.transfer(batchedPhasedEscrow.address, escrowBalance, {
+        from: owner,
+      })
+
+      await expectRevert(
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
+          from: owner,
+        }),
+        "Not enough tokens for withdrawal"
+      )
+    })
+
+    it("fails when beneficiary is not IBeneficiaryContract", async () => {
+      const beneficiaries = [
+        beneficiary1.address,
+        beneficiary2.address,
+        accounts[2],
+      ]
+      const amounts = [100, 200, 300]
+      const escrowBalance = 600
+
+      await token.transfer(batchedPhasedEscrow.address, escrowBalance, {
+        from: owner,
+      })
+
+      await expectRevert.unspecified(
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
+          from: owner,
+        })
+      )
+    })
+
+    it("withdraws specified tokens to beneficiaries", async () => {
+      const beneficiaries = [
+        beneficiary1.address,
+        beneficiary2.address,
+        beneficiary3.address,
+      ]
+      const amounts = [100, 200, 300] // 600
+      const escrowBalance = 600
+
+      await token.transfer(batchedPhasedEscrow.address, escrowBalance, {
+        from: owner,
+      })
+
+      await batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
+        from: owner,
+      })
+
+      for (let i = 0; i < beneficiaries.length; i++) {
+        expect(await token.balanceOf(beneficiaries[i])).to.eq.BN(
+          amounts[i],
+          `Unexpected amount withdrawn for beneficiary ${i}`
+        )
+      }
+
+      expect(await token.balanceOf(batchedPhasedEscrow.address)).to.eq.BN(
+        0,
+        `Unexpected escrow balance`
+      )
+    })
+  })
 })
 
 describe("CurveRewardsEscrowBeneficiary", () => {

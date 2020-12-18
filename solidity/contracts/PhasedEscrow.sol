@@ -42,7 +42,10 @@ contract PhasedEscrow is Ownable {
     /// @notice Sets the provided address as a beneficiary allowing it to
     ///         withdraw all tokens from escrow. This function can be called only
     ///         by escrow owner.
-    function setBeneficiary(IBeneficiaryContract _beneficiary) external onlyOwner {
+    function setBeneficiary(IBeneficiaryContract _beneficiary)
+        public
+        onlyOwner
+    {
         beneficiary = _beneficiary;
         emit BeneficiaryUpdated(address(beneficiary));
     }
@@ -50,7 +53,7 @@ contract PhasedEscrow is Ownable {
     /// @notice Withdraws the specified number of tokens from escrow to the
     ///         beneficiary. If the beneficiary is not set, or there are
     ///         insufficient tokens in escrow, the function fails.
-    function withdraw(uint256 amount) external onlyOwner {
+    function withdraw(uint256 amount) public onlyOwner {
         require(address(beneficiary) != address(0), "Beneficiary not assigned");
 
         uint256 balance = token.balanceOf(address(this));
@@ -67,6 +70,28 @@ contract PhasedEscrow is Ownable {
     ///         has to be set as a beneficiary of the non-phased Escrow.
     function withdrawFromEscrow(Escrow _escrow) public {
         _escrow.withdraw();
+    }
+}
+
+/// @title BatchedPhasedEscrow
+/// @notice Implementation of PhasedEscrow that allows batched withdrawals to
+/// multiple beneficiaries.
+contract BatchedPhasedEscrow is PhasedEscrow {
+    constructor(IERC20 _token) public PhasedEscrow(_token) {}
+
+    function batchedWithdraw(
+        IBeneficiaryContract[] memory beneficiaries,
+        uint256[] memory amounts
+    ) public onlyOwner {
+        require(
+            beneficiaries.length == amounts.length,
+            "Mismatched arrays length"
+        );
+
+        for (uint256 i = 0; i < beneficiaries.length; i++) {
+            setBeneficiary(beneficiaries[i]);
+            withdraw(amounts[i]);
+        }
     }
 }
 
@@ -105,7 +130,7 @@ interface IStakerRewards {
 
 /// @title StakerRewardsBeneficiary
 /// @notice An abstract beneficiary contract that can receive a withdrawal phase
-///         from a PhasedEscrow contract. The received tokens are immediately 
+///         from a PhasedEscrow contract. The received tokens are immediately
 ///         funded for a designated rewards escrow beneficiary contract.
 contract StakerRewardsBeneficiary is Ownable {
     IERC20 public token;
@@ -119,7 +144,7 @@ contract StakerRewardsBeneficiary is Ownable {
     function __escrowSentTokens(uint256 amount) external onlyOwner {
         bool success = token.approve(address(stakerRewards), amount);
         require(success, "Token transfer approval failed");
-        
+
         stakerRewards.receiveApproval(
             address(this),
             amount,
