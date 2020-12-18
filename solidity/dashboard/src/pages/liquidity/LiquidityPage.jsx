@@ -10,19 +10,22 @@ const LiquidityPage = ({ title }) => {
     <PageWrapper title={title}>
       <CardContainer className={"flex wrap"}>
         <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIR.KEEP_ETH}
+          title={LIQUIDITY_REWARD_PAIR.KEEP_ETH.label}
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.EthToken}
+          viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
         />
         <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIR.KEEP_TBTC}
+          title={LIQUIDITY_REWARD_PAIR.KEEP_TBTC.label}
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.TBTC}
+          viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
         />
         <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIR.TBTC_ETH}
+          title={LIQUIDITY_REWARD_PAIR.TBTC_ETH.label}
           MainIcon={Icons.TBTC}
           SecondaryIcon={Icons.EthToken}
+          viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
         />
       </CardContainer>
     </PageWrapper>

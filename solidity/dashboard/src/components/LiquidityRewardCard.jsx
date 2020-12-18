@@ -4,7 +4,7 @@ import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
 
-const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon }) => {
+const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon, viewPoolLink }) => {
   return (
     <Card className={"tile"}>
       <div className={"liquidity__card-title-section"}>
@@ -18,7 +18,7 @@ const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon }) => {
       <div className={"liquidity-card-subtitle-section"}>
         <span className="text-grey-40">Uniswap Pool&nbsp;</span>
         <a
-          href="https://github.com/keep-network/keep-core/blob/master/docs/glossary.adoc"
+          href={viewPoolLink}
           className="arrow-link text-small"
           style={{ marginLeft: "auto", marginRight: "2rem" }}
         >
