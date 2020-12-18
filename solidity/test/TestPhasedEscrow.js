@@ -459,6 +459,47 @@ describe("BatchedPhasedEscrow", () => {
     await restoreSnapshot()
   })
 
+  it("can be funded from PhasedEscrow contract", async () => {
+    // This test verifies if BatchedPhasedEscrow can be funded from PhasedEscrow.
+    // To perform such operation an intermediary beneficiary contract is needed
+    // that will automatically transfer funds received from PhasedEscrow to
+    // BatchedPhasedEscrow.
+    // The tokens are transferred in the following way:
+    //   PhasedEscrow -> StakerRewardsBeneficiary -> BatchedPhasedEscrow
+
+    // Deploy PhasedEscrow and do initial funding.
+    const amount = 9000
+
+    const phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+    await token.transfer(phasedEscrow.address, amount, {
+      from: owner,
+    })
+
+    // Deploy intermediary beneficiary and transfer its' ownership to PhasedEscrow.
+    const beneficiary = await StakerRewardsBeneficiary.new(
+      token.address,
+      batchedPhasedEscrow.address,
+      {from: owner}
+    )
+    await beneficiary.transferOwnership(phasedEscrow.address, {
+      from: owner,
+    })
+
+    // Withdraw funds from PhasedEscrow
+    await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+    await phasedEscrow.withdraw(amount, {from: owner})
+
+    // Verify that funds got transferred to BatchedPhasedEscrow
+    expect(await token.balanceOf(batchedPhasedEscrow.address)).to.eq.BN(
+      amount,
+      `Unexpected batched escrow balance`
+    )
+    expect(await token.balanceOf(phasedEscrow.address)).to.eq.BN(
+      0,
+      `Unexpected phased escrow balance`
+    )
+  })
+
   describe("batchedWithdraw", async () => {
     it("can not be called by non-owner", async () => {
       const beneficiaries = [beneficiary1.address]
