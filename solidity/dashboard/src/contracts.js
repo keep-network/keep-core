@@ -17,6 +17,10 @@ import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEs
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
 import BeaconRewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
 import ECDSARewardsDistributor from "@keep-network/keep-ecdsa/artifacts/ECDSARewardsDistributor.json"
+// TODO replace with dedicated contract artifact.
+import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewards.json"
+import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewards.json"
+import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewards.json"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -102,6 +106,18 @@ const contracts = [
   [
     { contractName: "ECDSARewardsDistributorContract", withDeployBlock: true },
     ECDSARewardsDistributor,
+  ],
+  [
+    { contractName: "LPRewardsKEEPETH", withDeployBlock: true },
+    LPRewardsKEEPETH,
+  ],
+  [
+    { contractName: "LPRewardsTBTCETH", withDeployBlock: true },
+    LPRewardsTBTCETH,
+  ],
+  [
+    { contractName: "LPRewardsKEEPTBTC", withDeployBlock: true },
+    LPRewardsKEEPTBTC,
   ],
 ]
 
