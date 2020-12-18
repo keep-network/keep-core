@@ -205,6 +205,11 @@ describe("PhasedEscrow", () => {
       )
     })
 
+    it("fails when beneficiary is not IBeneficiaryContract", async () => {
+      await phasedEscrow.setBeneficiary(accounts[2], {from: owner})
+      await expectRevert.unspecified(phasedEscrow.withdraw(100, {from: owner}))
+    })
+
     it("withdraws specified tokens to updated beneficiary", async () => {
       await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
       const amount = web3.utils.toBN(987654321)
