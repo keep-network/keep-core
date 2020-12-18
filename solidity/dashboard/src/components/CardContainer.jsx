@@ -1,9 +1,9 @@
 import React from "react"
 import "../css/card-container.less"
 
-const CardContainer = ({ children }) => {
+const CardContainer = ({ className, children }) => {
   return (
-    <div className={'card-container-root'}>
+    <div className={`card-container-root ${className}`}>
       {children}
     </div>
   )
