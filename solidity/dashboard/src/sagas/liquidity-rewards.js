@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js"
 import { logError } from "./utils"
 import {
   fetchLPRewardsBalance,
-  fetchUniTokenBalance,
+  fetchWrappedTokenBalance,
 } from "../services/liquidity_rewards"
 import { gt } from "../utils/arithmetics.utils"
 
@@ -16,8 +16,8 @@ function* fetchLiquidityRewardsData(payload) {
     // the `LPRewards` contract.
     const lpBalance = yield call(fetchLPRewardsBalance, address, wrappedToken)
     // Fetching balance of liquidity token for a given uniswap pair.
-    const uniswapTokenBalance = yield call(
-      fetchUniTokenBalance,
+    const wrappedTokenBalance = yield call(
+      fetchWrappedTokenBalance,
       address,
       wrappedToken
     )
@@ -42,7 +42,7 @@ function* fetchLiquidityRewardsData(payload) {
       type: `liquidity_rewards/${wrappedToken}_fetch_data_success`,
       payload: {
         lpBalance,
-        uniswapTokenBalance,
+        wrappedTokenBalance,
         reward,
         shareOfPoolInPercent,
       },

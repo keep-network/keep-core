@@ -2,7 +2,7 @@ import { ContractsLoaded } from "../contracts"
 const LPRewardsToUniswapTokenAddressCache = {}
 
 // TODO implement functions
-export const fetchUniTokenBalance = async (address, contractName) => {
+export const fetchWrappedTokenBalance = async (address, contractName) => {
   const contracts = await ContractsLoaded
   const lpRewardsContract = contracts[contractName]
   if (!LPRewardsToUniswapTokenAddress[contractName]) {

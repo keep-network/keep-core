@@ -1,7 +1,7 @@
 const wrappedTokenInitialData = {
   shareOfPoolInPercent: 0,
   reward: 0,
-  uniswapTokenBalance: 0,
+  wrappedTokenBalance: 0,
   lpBalance: 0,
   isFetching: false,
   error: null,
