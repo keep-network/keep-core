@@ -179,7 +179,7 @@ interface IStakingPoolRewards {
 /// @notice A beneficiary contract that can receive a withdrawal phase from a
 ///         PhasedEscrow contract. Immediately stakes the received tokens on a
 ///         designated IStakingPoolRewards contract.
-contract StakingPoolRewardsEscrowBeneficiary is Ownable {
+contract StakingPoolRewardsEscrowBeneficiary is Ownable, IBeneficiaryContract {
     IERC20 public token;
     IStakingPoolRewards public rewards;
 
