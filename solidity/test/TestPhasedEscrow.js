@@ -12,8 +12,8 @@ const PhasedEscrow = contract.fromArtifact("PhasedEscrow")
 const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
 
 const TestSimpleBeneficiary = contract.fromArtifact("TestSimpleBeneficiary")
-const CurveRewardsEscrowBeneficiary = contract.fromArtifact(
-  "CurveRewardsEscrowBeneficiary"
+const StakingPoolRewardsEscrowBeneficiary = contract.fromArtifact(
+  "StakingPoolRewardsEscrowBeneficiary"
 )
 const StakerRewardsBeneficiary = contract.fromArtifact(
   "StakerRewardsBeneficiary"
@@ -259,13 +259,13 @@ describe("PhasedEscrow", () => {
     })
   })
 
-  describe("when withdrawing to a CurveRewardsEscrowBeneficiary", () => {
+  describe("when withdrawing to a StakingPoolRewardsEscrowBeneficiary", () => {
     const baseBalance = 123456789
     const transferAmount = 100
 
     before(async () => {
       rewardsContract = await TestCurveRewards.new(token.address)
-      rewardsBeneficiary = await CurveRewardsEscrowBeneficiary.new(
+      rewardsBeneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
         token.address,
         rewardsContract.address,
         {from: owner}
@@ -796,7 +796,7 @@ describe("BatchedPhasedEscrow", () => {
   })
 })
 
-describe("CurveRewardsEscrowBeneficiary", () => {
+describe("StakingPoolRewardsEscrowBeneficiary", () => {
   const owner = accounts[0]
   const thirdParty = accounts[1]
 
@@ -809,7 +809,7 @@ describe("CurveRewardsEscrowBeneficiary", () => {
   before(async () => {
     token = await KeepToken.new({from: owner})
     rewardsContract = await TestCurveRewards.new(token.address)
-    rewardsBeneficiary = await CurveRewardsEscrowBeneficiary.new(
+    rewardsBeneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
       token.address,
       rewardsContract.address,
       {from: owner}

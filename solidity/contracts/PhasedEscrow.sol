@@ -167,26 +167,30 @@ contract BatchedPhasedEscrow is Ownable {
     }
 }
 
-interface ICurveRewards {
-    function notifyRewardAmount(uint256 amount) external;
+// Interface representing staking pool rewards contract such as CurveRewards
+// contract deployed for Keep (0xAF379f0228ad0d46bB7B4f38f9dc9bCC1ad0360c) or
+// LPRewards contract from keep-ecdsa repository deployed for Uniswap.
+interface IStakingPoolRewards {
+   function notifyRewardAmount(uint256 amount) external; 
 }
 
-/// @title CurveRewardsEscrowBeneficiary
+
+/// @title StakingPoolRewardsEscrowBeneficiary
 /// @notice A beneficiary contract that can receive a withdrawal phase from a
 ///         PhasedEscrow contract. Immediately stakes the received tokens on a
-///         designated CurveRewards contract.
-contract CurveRewardsEscrowBeneficiary is Ownable {
+///         designated IStakingPoolRewards contract.
+contract StakingPoolRewardsEscrowBeneficiary is Ownable {
     IERC20 public token;
-    ICurveRewards public curveRewards;
+    IStakingPoolRewards public rewards;
 
-    constructor(IERC20 _token, ICurveRewards _curveRewards) public {
+    constructor(IERC20 _token, IStakingPoolRewards _rewards) public {
         token = _token;
-        curveRewards = _curveRewards;
+        rewards = _rewards;
     }
 
     function __escrowSentTokens(uint256 amount) external onlyOwner {
-        token.approve(address(curveRewards), amount);
-        curveRewards.notifyRewardAmount(amount);
+        token.approve(address(rewards), amount);
+        rewards.notifyRewardAmount(amount);
     }
 }
 
