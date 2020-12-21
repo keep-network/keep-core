@@ -3,8 +3,17 @@ import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
+import { withdrawAllLiquidityRewards } from "../actions/web3";
+import { useDispatch } from "react-redux";
 
 const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon, viewPoolLink }) => {
+
+  const dispatch = useDispatch()
+
+  const withdrawReward = async (awaitingPromise) => {
+    dispatch(withdrawAllLiquidityRewards(awaitingPromise))
+  }
+
   return (
     <Card className={"tile"}>
       <div className={"liquidity__card-title-section"}>
@@ -53,7 +62,12 @@ const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon, viewPoolLink }) =
         </SubmitButton>
       </div>
       <div className={"liquidity__withdraw"}>
-        <SubmitButton className={"btn btn-primary btn-lg w-100 text-black"}>
+        <SubmitButton
+          className={"btn btn-primary btn-lg w-100 text-black"}
+          onSubmitAction={async (awaitingPromise) =>
+            await withdrawReward(awaitingPromise)
+          }
+        >
           withdraw all
         </SubmitButton>
       </div>

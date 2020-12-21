@@ -3,6 +3,7 @@ import {
   KEEP_BONDING_CONTRACT_NAME,
   KEEP_TOKEN_CONTRACT_NAME,
   OPERATOR_CONTRACT_NAME,
+  LP_REWARDS_KEEP_ETH,
 } from "../constants/constants"
 
 const WEB3_SEND_TRANSACTION = "web3/send_transaction"
@@ -172,6 +173,18 @@ export const withdrawGroupMemberRewards = (
       contractName: OPERATOR_CONTRACT_NAME,
       methodName: "withdrawGroupMemberRewards",
       args: [operatorAddress, groupIndex],
+    },
+    meta,
+  }
+}
+
+export const withdrawAllLiquidityRewards = (meta) => {
+  return {
+    type: WEB3_SEND_TRANSACTION,
+    payload: {
+      contractName: LP_REWARDS_KEEP_ETH,
+      methodName: "exit",
+      args: [],
     },
     meta,
   }

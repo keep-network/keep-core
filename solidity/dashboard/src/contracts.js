@@ -16,7 +16,10 @@ import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
 import BeaconRewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
-import ECDSARewardsDistributor from "@keep-network/keep-ecdsa/artifacts/ECDSARewardsDistributor.json"
+import ECDSARewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
+import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPETH.json"
+import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
+import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -99,9 +102,18 @@ const contracts = [
     StakingPortBacker,
   ],
   [{ contractName: "beaconRewardsContract" }, BeaconRewards],
+  [{ contractName: "ECDSARewardsContract" }, ECDSARewards],
   [
-    { contractName: "ECDSARewardsDistributorContract", withDeployBlock: true },
-    ECDSARewardsDistributor,
+    { contractName: "LPRewardsKEEPETH", withDeployBlock: true },
+    LPRewardsKEEPETH,
+  ],
+  [
+    { contractName: "LPRewardsTBTCETH", withDeployBlock: true },
+    LPRewardsTBTCETH,
+  ],
+  [
+    { contractName: "LPRewardsKEEPTBTC", withDeployBlock: true },
+    LPRewardsKEEPTBTC,
   ],
 ]
 
