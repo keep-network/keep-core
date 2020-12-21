@@ -5,7 +5,7 @@ import keepTokenBalance from "./keep-balance"
 import staking from "./staking"
 import tokenGrants from "./token-grant"
 import rewards from "./rewards"
-import liquidityRewards from "./liquidityRewards"
+import liquidityRewards from "./liquidity-rewards"
 
 const reducers = combineReducers({
   messages,
