@@ -96,18 +96,6 @@ contract BatchedPhasedEscrow is Ownable {
         drawee = msg.sender;
     }
 
-    /// @notice Funds the escrow by transferring all of the approved tokens
-    ///         to the escrow.
-    function receiveApproval(
-        address _from,
-        uint256 _value,
-        address _token,
-        bytes memory
-    ) public {
-        require(IERC20(_token) == token, "Unsupported token");
-        token.safeTransferFrom(_from, address(this), _value);
-    }
-
     /// @notice Approves the provided address as a beneficiary of tokens held by
     ///         the escrow. Can be called only by escrow owner.
     function approveBeneficiary(
@@ -136,6 +124,18 @@ contract BatchedPhasedEscrow is Ownable {
         require(newDrawee != address(0), "New drawee can not be zero address");
         emit DraweeRoleTransferred(drawee, newDrawee);
         drawee = newDrawee;
+    }
+
+    /// @notice Funds the escrow by transferring all of the approved tokens
+    ///         to the escrow.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        require(IERC20(_token) == token, "Unsupported token");
+        token.safeTransferFrom(_from, address(this), _value);
     }
 
     /// @notice Withdraws tokens from escrow to selected beneficiaries,
