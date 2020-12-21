@@ -70,6 +70,103 @@ contract PhasedEscrow is Ownable {
     }
 }
 
+/// @title BatchedPhasedEscrow
+/// @notice A token holder contract allowing contract owner to approve a set of
+///         beneficiaries of tokens held by the contract, to appoint a separate
+///         drawee role, and allowing that drawee to withdraw tokens to approved
+///         beneficiaries in phases.
+contract BatchedPhasedEscrow is Ownable {
+    using SafeERC20 for IERC20;
+
+    event BeneficiaryApproved(address beneficiary);
+    event TokensWithdrawn(address beneficiary, uint256 amount);
+    event DraweeRoleTransferred(address oldDrawee, address newDrawee);
+
+    IERC20 public token;
+    address public drawee;
+    mapping(address => bool) private approvedBeneficiaries;
+
+    modifier onlyDrawee() {
+        require(drawee == msg.sender, "Caller is not the drawee");
+        _;
+    }
+
+    constructor(IERC20 _token) public {
+        token = _token;
+        drawee = msg.sender;
+    }
+
+    /// @notice Funds the escrow by transferring all of the approved tokens
+    ///         to the escrow.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        require(IERC20(_token) == token, "Unsupported token");
+        token.safeTransferFrom(_from, address(this), _value);
+    }
+
+    /// @notice Approves the provided address as a beneficiary of tokens held by
+    ///         the escrow. Can be called only by escrow owner.
+    function approveBeneficiary(
+        IBeneficiaryContract _beneficiary
+    ) external onlyOwner {
+        address beneficiaryAddress = address(_beneficiary);
+        require(
+            beneficiaryAddress != address(0), 
+            "Beneficiary can not be zero address"
+        );
+        approvedBeneficiaries[beneficiaryAddress] = true;
+        emit BeneficiaryApproved(beneficiaryAddress);
+    }
+
+    /// @notice Returns `true` if the given address has been approved as a
+    ///         beneficiary of the escrow, `false` otherwise.
+    function isBeneficiaryApproved(
+        IBeneficiaryContract _beneficiary
+    ) external view returns (bool) {
+        return approvedBeneficiaries[address(_beneficiary)];
+    }
+
+    /// @notice Transfers the role of drawee to another address. Can be called
+    ///         only by the contract owner.
+    function transferDraweeRole(address newDrawee) public onlyOwner {
+        require(newDrawee != address(0), "New drawee can not be zero address");
+        emit DraweeRoleTransferred(drawee, newDrawee);
+        drawee = newDrawee;
+    }
+
+    /// @notice Withdraws tokens from escrow to selected beneficiaries,
+    ///         transferring to each beneficiary the amount of tokens specified
+    ///         as a parameter. Only beneficiaries previously approved by escrow
+    ///         owner can receive funds.
+    function batchedWithdraw(
+        IBeneficiaryContract[] memory beneficiaries,
+        uint256[] memory amounts
+    ) public onlyDrawee {
+        require(
+            beneficiaries.length == amounts.length,
+            "Mismatched arrays length"
+        );
+
+        for (uint256 i = 0; i < beneficiaries.length; i++) {
+            IBeneficiaryContract beneficiary = beneficiaries[i];
+            require(
+                approvedBeneficiaries[address(beneficiary)],
+                "Beneficiary not approved"
+            );
+            withdraw(beneficiary, amounts[i]);
+        }
+    }
+    function withdraw(IBeneficiaryContract beneficiary, uint256 amount) private  {
+        token.safeTransfer(address(beneficiary), amount);
+        emit TokensWithdrawn(address(beneficiary), amount);
+        beneficiary.__escrowSentTokens(amount);
+    }
+}
+
 interface ICurveRewards {
     function notifyRewardAmount(uint256 amount) external;
 }
