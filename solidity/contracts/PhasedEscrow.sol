@@ -132,7 +132,7 @@ contract BatchedPhasedEscrow is Ownable {
 
     /// @notice Transfers the role of drawee to another address. Can be called
     ///         only by the contract owner.
-    function transferDraweeRole(address newDrawee) public onlyOwner {
+    function setDrawee(address newDrawee) public onlyOwner {
         require(newDrawee != address(0), "New drawee can not be zero address");
         emit DraweeRoleTransferred(drawee, newDrawee);
         drawee = newDrawee;

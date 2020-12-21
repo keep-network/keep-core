@@ -636,7 +636,7 @@ describe("BatchedPhasedEscrow", () => {
     })
 
     it("can be transferred by owner", async () => {
-      await batchedPhasedEscrow.transferDraweeRole(updatedDrawee, {from: owner})
+      await batchedPhasedEscrow.setDrawee(updatedDrawee, {from: owner})
       // ok, no revert
     })
 
@@ -644,10 +644,10 @@ describe("BatchedPhasedEscrow", () => {
       await batchedPhasedEscrow.transferOwnership(updatedOwner, {from: owner})
 
       await expectRevert(
-        batchedPhasedEscrow.transferDraweeRole(updatedDrawee, {from: owner}),
+        batchedPhasedEscrow.setDrawee(updatedDrawee, {from: owner}),
         "Ownable: caller is not the owner"
       )
-      await batchedPhasedEscrow.transferDraweeRole(updatedDrawee, {
+      await batchedPhasedEscrow.setDrawee(updatedDrawee, {
         from: updatedOwner,
       })
       // ok, no revert
@@ -655,13 +655,13 @@ describe("BatchedPhasedEscrow", () => {
 
     it("can not be transferred by non-owner", async () => {
       await expectRevert(
-        batchedPhasedEscrow.transferDraweeRole(updatedDrawee, {from: drawee}),
+        batchedPhasedEscrow.setDrawee(updatedDrawee, {from: drawee}),
         "Ownable: caller is not the owner"
       )
     })
 
     it("can be transferred to another account", async () => {
-      let receipt = await batchedPhasedEscrow.transferDraweeRole(drawee, {
+      let receipt = await batchedPhasedEscrow.setDrawee(drawee, {
         from: owner,
       })
 
@@ -671,7 +671,7 @@ describe("BatchedPhasedEscrow", () => {
         newDrawee: drawee,
       })
 
-      receipt = await batchedPhasedEscrow.transferDraweeRole(updatedDrawee, {
+      receipt = await batchedPhasedEscrow.setDrawee(updatedDrawee, {
         from: owner,
       })
 
@@ -708,7 +708,7 @@ describe("BatchedPhasedEscrow", () => {
         from: owner,
       })
 
-      await batchedPhasedEscrow.transferDraweeRole(drawee, {
+      await batchedPhasedEscrow.setDrawee(drawee, {
         from: owner,
       })
 
