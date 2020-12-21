@@ -14,29 +14,37 @@ const initialState = {
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
-  const { wrappedToken, ...restPayload } = action.payload
+  if (!action.payload) {
+    return state
+  }
+
+  const { liquidityRewardPair, ...restPayload } = action.payload
+
   switch (action.type) {
-    case `liquidity_rewards/${wrappedToken}_fetch_data_start`:
+    case `liquidity_rewards/${liquidityRewardPair}_fetch_data_start`:
       return {
         ...state,
-        [wrappedToken]: { ...state[wrappedToken], isFetching: true },
+        [liquidityRewardPair]: {
+          ...state[liquidityRewardPair],
+          isFetching: true,
+        },
       }
 
-    case `liquidity_rewards/${wrappedToken}_fetch_data_success`:
+    case `liquidity_rewards/${liquidityRewardPair}_fetch_data_success`:
       return {
         ...state,
-        [wrappedToken]: {
-          ...state[wrappedToken],
+        [liquidityRewardPair]: {
+          ...state[liquidityRewardPair],
           ...restPayload,
-          isFetching: true,
+          isFetching: false,
           error: null,
         },
       }
-    case `liquidity_rewards/${wrappedToken}_fetch_data_failure`:
+    case `liquidity_rewards/${liquidityRewardPair}_fetch_data_failure`:
       return {
         ...state,
-        [wrappedToken]: {
-          ...state[wrappedToken],
+        [liquidityRewardPair]: {
+          ...state[liquidityRewardPair],
           isFetching: false,
           error: action.payload.error,
         },

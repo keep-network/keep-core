@@ -1,4 +1,6 @@
-import React from "react"
+import React, { useEffect } from "react"
+import { useSelector, useDispatch } from "react-redux"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
 import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
@@ -6,6 +8,19 @@ import { LIQUIDITY_REWARD_PAIR } from "../../constants/constants"
 import * as Icons from "../../components/Icons"
 
 const LiquidityPage = ({ title }) => {
+  const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
+    (state) => state.liquidityRewards
+  )
+  const dispatch = useDispatch()
+  const address = useWeb3Address()
+
+  useEffect(() => {
+    dispatch({
+      type: "liquidity_rewards/fetch_data_request",
+      payload: { address },
+    })
+  }, [dispatch, address])
+
   return (
     <PageWrapper title={title}>
       <CardContainer className={"flex wrap"}>
