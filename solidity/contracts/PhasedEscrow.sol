@@ -126,7 +126,7 @@ contract BatchedPhasedEscrow is Ownable {
     ///         beneficiary of the escrow, `false` otherwise.
     function isBeneficiaryApproved(
         IBeneficiaryContract _beneficiary
-    ) external view returns (bool) {
+    ) public view returns (bool) {
         return approvedBeneficiaries[address(_beneficiary)];
     }
 
@@ -154,7 +154,7 @@ contract BatchedPhasedEscrow is Ownable {
         for (uint256 i = 0; i < beneficiaries.length; i++) {
             IBeneficiaryContract beneficiary = beneficiaries[i];
             require(
-                approvedBeneficiaries[address(beneficiary)],
+                isBeneficiaryApproved(beneficiary),
                 "Beneficiary not approved"
             );
             withdraw(beneficiary, amounts[i]);
