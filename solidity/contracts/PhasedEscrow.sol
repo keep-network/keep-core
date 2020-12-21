@@ -155,7 +155,7 @@ contract BatchedPhasedEscrow is Ownable {
             IBeneficiaryContract beneficiary = beneficiaries[i];
             require(
                 isBeneficiaryApproved(beneficiary),
-                "Beneficiary not approved"
+                "Beneficiary was not approved"
             );
             withdraw(beneficiary, amounts[i]);
         }

@@ -763,7 +763,7 @@ describe("BatchedPhasedEscrow", () => {
       )
     })
 
-    it("reverts when beneficiary has not been approved", async () => {
+    it("reverts when beneficiary was not approved", async () => {
       const anotherBeneficiary = await TestSimpleBeneficiary.new({from: owner})
 
       await expectRevert(
@@ -772,7 +772,7 @@ describe("BatchedPhasedEscrow", () => {
           [100, 200], {
           from: drawee,
         }),
-        "Beneficiary not approved"
+        "Beneficiary was not approved"
       )
     })
 
