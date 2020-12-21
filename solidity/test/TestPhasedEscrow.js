@@ -776,6 +776,16 @@ describe("BatchedPhasedEscrow", () => {
       )
     })
 
+    it("reverts when there are not enough funds in the escrow", async () => {
+      await expectRevert.unspecified(
+        batchedPhasedEscrow.batchedWithdraw(
+          beneficiaries, 
+          [100, 200, 301], {
+          from: drawee,
+        })
+      )
+    })
+
     it("withdraws specified tokens to beneficiaries", async () => {
       await batchedPhasedEscrow.batchedWithdraw(beneficiaries, amounts, {
         from: drawee,
