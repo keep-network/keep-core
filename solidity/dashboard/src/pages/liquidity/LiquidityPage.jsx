@@ -11,18 +11,27 @@ const LiquidityPage = ({ title }) => {
       <CardContainer className={"flex wrap"}>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
+          liquidityPairContractName={
+            LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName
+          }
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.EthToken}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label}
+          liquidityPairContractName={
+            LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.contractName
+          }
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.TBTC}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
+          liquidityPairContractName={
+            LIQUIDITY_REWARD_PAIRS.TBTC_ETH.contractName
+          }
           MainIcon={Icons.TBTC}
           SecondaryIcon={Icons.EthToken}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}

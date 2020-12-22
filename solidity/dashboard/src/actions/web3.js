@@ -178,11 +178,14 @@ export const withdrawGroupMemberRewards = (
   }
 }
 
-export const withdrawAllLiquidityRewards = (meta) => {
+export const withdrawAllLiquidityRewards = (
+  liquidityPairContractName,
+  meta
+) => {
   return {
     type: WEB3_SEND_TRANSACTION,
     payload: {
-      contractName: LP_REWARDS_KEEP_ETH,
+      contractName: liquidityPairContractName,
       methodName: "exit",
       args: [],
     },
@@ -190,11 +193,11 @@ export const withdrawAllLiquidityRewards = (meta) => {
   }
 }
 
-export const addMoreLpTokens = (amount, meta) => {
+export const addMoreLpTokens = (amount, liquidityPairContractName, meta) => {
   return {
     type: WEB3_SEND_TRANSACTION,
     payload: {
-      contractName: LP_REWARDS_KEEP_ETH,
+      contractName: liquidityPairContractName,
       methodName: "stake",
       args: [amount],
     },

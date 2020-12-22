@@ -8,20 +8,24 @@ import { useDispatch } from "react-redux"
 
 const LiquidityRewardCard = ({
   title,
+  liquidityPairContractName,
   MainIcon,
   SecondaryIcon,
   viewPoolLink,
 }) => {
   const dispatch = useDispatch()
 
-  const addLpTokens = async (awaitingPromise) => {
-    // TODO: get the amount
-    const amount = 1
-    dispatch(addMoreLpTokens(amount, awaitingPromise))
+  // TODO: get the amount
+  const addLpTokens = async (amount, awaitingPromise) => {
+    dispatch(
+      addMoreLpTokens(amount, liquidityPairContractName, awaitingPromise)
+    )
   }
 
   const withdrawLiquidityRewards = async (awaitingPromise) => {
-    dispatch(withdrawAllLiquidityRewards(awaitingPromise))
+    dispatch(
+      withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
+    )
   }
 
   return (
@@ -70,7 +74,7 @@ const LiquidityRewardCard = ({
         <SubmitButton
           className={`btn btn-primary btn-lg w-100`}
           onSubmitAction={async (awaitingPromise) =>
-            await addLpTokens(awaitingPromise)
+            await addLpTokens(1, awaitingPromise)
           }
         >
           add more lp tokens
