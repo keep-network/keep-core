@@ -65,3 +65,27 @@
     border: 1px solid black;
   }
 }
+
+.empty-page--liquidity-page {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  justify-items: stretch;
+
+  // Display only one box on the smaller screen to avoid placing `connect wallet btn`
+  // below the view port.
+  .skeleton__box {
+    &:nth-child(2),  &:nth-child(3) {
+      display: none;
+    }
+  }
+
+  @media screen and (min-width: 900px) {
+    .skeleton__box {
+      &:nth-child(2),  &:nth-child(3) {
+        display: block;
+      }
+    }
+  }
+}
