@@ -1,5 +1,4 @@
 import { takeLatest, fork, call, put } from "redux-saga/effects"
-import BigNumber from "bignumber.js"
 import { getContractsContext, logError } from "./utils"
 import {
   fetchStakedBalance,
@@ -7,7 +6,7 @@ import {
   fetchLPRewardsTotalSupply,
   fetchRewardBalance,
 } from "../services/liquidity-rewards"
-import { gt } from "../utils/arithmetics.utils"
+import { gt, percentageOf } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 
 function* fetchAllLiquidtyRewardsData(action) {
@@ -47,10 +46,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
         LPRewardsContract
       )
       // % of total pool in the `LPRewards` contract.
-      shareOfPoolInPercent = new BigNumber(lpBalance)
-        .div(totalSupply)
-        .multipliedBy(100)
-        .toString()
+      shareOfPoolInPercent = percentageOf(lpBalance, totalSupply)
     }
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
