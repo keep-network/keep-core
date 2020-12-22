@@ -40,7 +40,7 @@ export const SIGNING_GROUP_STATUS = {
   ACTIVE: "Active work",
 }
 
-export const LIQUIDITY_REWARD_PAIR = {
+export const LIQUIDITY_REWARD_PAIRS = {
   KEEP_ETH: {
     label: "KEEP + ETH",
     viewPoolLink:
