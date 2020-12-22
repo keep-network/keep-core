@@ -115,7 +115,7 @@ const LiquidityRewardCard = ({
       <div className={"liquidity__withdraw"}>
         <SubmitButton
           className={"btn btn-primary btn-lg w-100 text-black"}
-          disabled={!gt(lpBalance, 0)}
+          disabled={!gt(rewardBalance, 0)}
           onSubmitAction={async (awaitingPromise) =>
             await withdrawLiquidityRewards(awaitingPromise)
           }
