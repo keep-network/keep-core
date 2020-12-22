@@ -78,22 +78,21 @@ const LiquidityRewardCard = ({
           )}
         </div>
       </div>
-      <div className={"liquidity__add-more-tokens"}></div>
       <SubmitButton
-        className={`btn btn-primary btn-lg w-100`}
+        className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
         disabled={!gt(wrappedTokenBalance, 0)}
       >
         add more lp tokens
       </SubmitButton>
 
-      <div className={"liquidity__withdraw"}>
-        <SubmitButton
-          className={"btn btn-primary btn-lg w-100 text-black"}
-          disabled={!gt(lpBalance, 0)}
-        >
-          withdraw all
-        </SubmitButton>
-      </div>
+      <SubmitButton
+        className={
+          "liquidity__withdraw btn btn-primary btn-lg w-100 text-black"
+        }
+        disabled={!gt(lpBalance, 0)}
+      >
+        withdraw all
+      </SubmitButton>
     </Card>
   )
 }
