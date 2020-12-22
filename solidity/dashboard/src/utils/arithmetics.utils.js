@@ -1,4 +1,5 @@
 import web3Utils from "web3-utils"
+import BigNumber from "bignumber.js"
 
 const ONE_HUNDRED = web3Utils.toBN(100)
 
@@ -37,5 +38,5 @@ export const percentageOf = (value, total) => {
     return 0
   }
 
-  return div(web3Utils.toBN(value).mul(ONE_HUNDRED), total)
+  return new BigNumber(value).div(total).multipliedBy(ONE_HUNDRED.toString())
 }
