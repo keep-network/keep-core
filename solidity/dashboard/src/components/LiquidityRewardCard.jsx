@@ -87,7 +87,7 @@ const LiquidityRewardCard = ({
 
       <SubmitButton
         className={
-          "liquidity__withdraw btn btn-primary btn-lg w-100 text-black"
+          "liquidity__withdraw btn btn-secondary btn-lg w-100"
         }
         disabled={!gt(lpBalance, 0)}
       >
