@@ -23,7 +23,7 @@ const LiquidityPage = ({ title }) => {
 
   return (
     <PageWrapper title={title}>
-      <CardContainer className={"flex wrap"}>
+      <CardContainer>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIR.KEEP_ETH.label}
           MainIcon={Icons.KeepBlackGreen}
