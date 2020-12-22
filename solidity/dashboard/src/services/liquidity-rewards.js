@@ -3,7 +3,6 @@ import { Web3Loaded, createERC20Contract } from "../contracts"
 // lp contract address -> wrapped ERC20 token as web3 contract instance
 const LPRewardsToWrappedTokenCache = {}
 
-// TODO implement functions
 export const fetchWrappedTokenBalance = async (address, LPrewardsContract) => {
   const web3 = await Web3Loaded
   const { address: lpRewardsContractAddress } = LPrewardsContract.options
