@@ -1,4 +1,5 @@
-import React from "react"
+import React, { useMemo } from "react"
+import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
@@ -22,6 +23,13 @@ const LiquidityRewardCard = ({
   lpBalance,
   isFetching,
 }) => {
+  const formattedPercentageOfTotalPool = useMemo(() => {
+    const bn = new BigNumber(percentageOfTotalPool)
+    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
+      ? "<0.01"
+      : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
+  }, [percentageOfTotalPool])
+
   return (
     <Card className={"tile"}>
       <div className={"liquidity__card-title-section"}>
@@ -51,7 +59,7 @@ const LiquidityRewardCard = ({
           ) : (
             <h2
               className={"liquidity__info-tile__title text-mint-100"}
-            >{`${percentageOfTotalPool}%`}</h2>
+            >{`${formattedPercentageOfTotalPool}%`}</h2>
           )}
           <h6>% of total pool</h6>
         </div>

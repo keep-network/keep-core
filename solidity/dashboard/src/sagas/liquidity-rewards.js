@@ -50,7 +50,6 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       shareOfPoolInPercent = new BigNumber(lpBalance)
         .div(totalSupply)
         .multipliedBy(100)
-        .decimalPlaces(2)
         .toString()
     }
     yield put({
