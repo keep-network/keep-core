@@ -29,18 +29,33 @@ const LiquidityPage = ({ title }) => {
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.EthToken}
           viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
+          percentageOfTotalPool={KEEP_ETH.shareOfPoolInPercent}
+          rewardBalance={KEEP_ETH.reward}
+          wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
+          lpBalance={KEEP_ETH.lpBalance}
+          isFetching={KEEP_ETH.isFetching}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIR.KEEP_TBTC.label}
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.TBTC}
           viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
+          percentageOfTotalPool={KEEP_TBTC.shareOfPoolInPercent}
+          rewardBalance={KEEP_TBTC.reward}
+          wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
+          lpBalance={KEEP_TBTC.lpBalance}
+          isFetching={KEEP_TBTC.isFetching}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIR.TBTC_ETH.label}
           MainIcon={Icons.TBTC}
           SecondaryIcon={Icons.EthToken}
           viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
+          percentageOfTotalPool={TBTC_ETH.shareOfPoolInPercent}
+          rewardBalance={TBTC_ETH.reward}
+          wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
+          lpBalance={TBTC_ETH.lpBalance}
+          isFetching={TBTC_ETH.isFetching}
         />
       </CardContainer>
     </PageWrapper>
