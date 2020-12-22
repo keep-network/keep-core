@@ -1,4 +1,4 @@
-const wrappedTokenInitialData = {
+const liquidityPairInitialData = {
   shareOfPoolInPercent: 0,
   reward: 0,
   wrappedTokenBalance: 0,
@@ -8,9 +8,9 @@ const wrappedTokenInitialData = {
 }
 
 const initialState = {
-  KEEP_ETH: { ...wrappedTokenInitialData },
-  TBTC_ETH: { ...wrappedTokenInitialData },
-  KEEP_TBTC: { ...wrappedTokenInitialData },
+  KEEP_ETH: { ...liquidityPairInitialData },
+  TBTC_ETH: { ...liquidityPairInitialData },
+  KEEP_TBTC: { ...liquidityPairInitialData },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
