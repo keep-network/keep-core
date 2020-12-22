@@ -1,5 +1,4 @@
 import React from "react"
-import "../css/card.less"
 
 const Card = ({ className, children }) => {
   return (

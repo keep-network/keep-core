@@ -1,5 +1,4 @@
 import React from "react"
-import "../css/card-container.less"
 
 const CardContainer = ({ className, children }) => {
   return (
