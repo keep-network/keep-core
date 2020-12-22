@@ -189,3 +189,15 @@ export const withdrawAllLiquidityRewards = (meta) => {
     meta,
   }
 }
+
+export const addMoreLpTokens = (amount, meta) => {
+  return {
+    type: WEB3_SEND_TRANSACTION,
+    payload: {
+      contractName: LP_REWARDS_KEEP_ETH,
+      methodName: "stake",
+      args: [amount],
+    },
+    meta,
+  }
+}

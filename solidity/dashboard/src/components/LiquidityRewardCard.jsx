@@ -3,14 +3,24 @@ import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
-import { withdrawAllLiquidityRewards } from "../actions/web3";
-import { useDispatch } from "react-redux";
+import { addMoreLpTokens, withdrawAllLiquidityRewards } from "../actions/web3"
+import { useDispatch } from "react-redux"
 
-const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon, viewPoolLink }) => {
-
+const LiquidityRewardCard = ({
+  title,
+  MainIcon,
+  SecondaryIcon,
+  viewPoolLink,
+}) => {
   const dispatch = useDispatch()
 
-  const withdrawReward = async (awaitingPromise) => {
+  const addLpTokens = async (awaitingPromise) => {
+    // TODO: get the amount
+    const amount = 1
+    dispatch(addMoreLpTokens(amount, awaitingPromise))
+  }
+
+  const withdrawLiquidityRewards = async (awaitingPromise) => {
     dispatch(withdrawAllLiquidityRewards(awaitingPromise))
   }
 
@@ -57,7 +67,12 @@ const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon, viewPoolLink }) =
         </div>
       </div>
       <div className={"liquidity__add-more-tokens"}>
-        <SubmitButton className={`btn btn-primary btn-lg w-100`}>
+        <SubmitButton
+          className={`btn btn-primary btn-lg w-100`}
+          onSubmitAction={async (awaitingPromise) =>
+            await addLpTokens(awaitingPromise)
+          }
+        >
           add more lp tokens
         </SubmitButton>
       </div>
@@ -65,7 +80,7 @@ const LiquidityRewardCard = ({ title, MainIcon, SecondaryIcon, viewPoolLink }) =
         <SubmitButton
           className={"btn btn-primary btn-lg w-100 text-black"}
           onSubmitAction={async (awaitingPromise) =>
-            await withdrawReward(awaitingPromise)
+            await withdrawLiquidityRewards(awaitingPromise)
           }
         >
           withdraw all
