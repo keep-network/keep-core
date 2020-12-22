@@ -1,66 +1,19 @@
-import React from "react";
-import PageWrapper from "../../components/PageWrapper";
-import EmptyState from "../../components/empty-states/EmptyState";
+import React from "react"
+import PageWrapper from "../../components/PageWrapper"
+import EmptyState from "../../components/empty-states/EmptyState"
 import { Skeleton, SkeletonBox } from "../../components/skeletons"
-import * as Icons from "../../components/Icons";
+import * as Icons from "../../components/Icons"
 
-const title = "Title"
-const subtitle = "Subtitle"
+const title = "Check your liquidity rewards balance"
+const subtitle =
+  "This page tracks your liqudity rewards. Connect a wallet to view your available rewards"
 
 const EmptyStatePage = (props) => {
   return (
     <PageWrapper {...props}>
       <EmptyState>
-        <EmptyState.Skeleton className="empty-page--operatorations">
-          <SkeletonBox>
-            <div className="flex row">
-              <div className="flex-1">
-                <Skeleton tag="h3" className="mb-2" width="75%" />
-                <div className="flex row center mb-2">
-                  <Icons.KeepCircle />
-                  <Skeleton
-                    tag="h3"
-                    color="grey-20"
-                    className="ml-1"
-                    width="50%"
-                  />
-                </div>
-                <Skeleton
-                  tag="h5"
-                  className="mb-1"
-                  color="grey-20"
-                  width="50%"
-                />
-                <Skeleton
-                  tag="h5"
-                  className="mb-1"
-                  color="grey-20"
-                  width="45%"
-                />
-                <Skeleton
-                  tag="h5"
-                  className="mb-1"
-                  color="grey-20"
-                  width="80%"
-                />
-              </div>
-              <div className="flex column flex-2">
-                <Skeleton tag="h3" className="mb-1" width="35%" />
-                <Skeleton
-                  tag="h5"
-                  color="grey-20"
-                  className="mb-2"
-                  width="75%"
-                />
-                <Skeleton
-                  tag="h1"
-                  color="grey-20"
-                  className="mt-a"
-                  width="45%"
-                />
-              </div>
-            </div>
-          </SkeletonBox>
+        <EmptyState.Skeleton className="empty-page--liquidity-page">
+          {Array.from(Array(3)).map(rednerLiquidityCardSkeleton)}
         </EmptyState.Skeleton>
         <EmptyState.Title text={title} />
         <EmptyState.Subtitle text={subtitle} />
@@ -70,4 +23,52 @@ const EmptyStatePage = (props) => {
   )
 }
 
-export default EmptyStatePage;
+const rednerLiquidityCardSkeleton = (_, index) => (
+  <LiquidityCardSkeleton key={index} />
+)
+
+const styles = {
+  liquidityInfoSkeleton: {
+    height: "75px",
+    borderRadius: "8px",
+    marginRight: "0.5rem",
+  },
+  btnSkeleton: { borderRadius: "0" },
+}
+
+const LiquidityCardSkeleton = () => (
+  <SkeletonBox>
+    <Skeleton tag="h3" className="mb-1" />
+    <Skeleton tag="h4" width="70%" color="grey-20" />
+    <div className="flex row mt-2">
+      <Skeleton
+        className="flex-1"
+        styles={styles.liquidityInfoSkeleton}
+        color="grey-10"
+      />
+      <Skeleton
+        className="flex-1 m-1"
+        styles={styles.liquidityInfoSkeleton}
+        color="grey-10"
+      />
+    </div>
+    <div className="flex row center mt-2">
+      <Icons.KeepCircle />
+      <Skeleton tag="h3" color="grey-20" className="ml-1" />
+    </div>
+    <Skeleton
+      tag="h2"
+      color="grey-20"
+      className="mt-1"
+      styles={styles.btnSkeleton}
+    />
+    <Skeleton
+      tag="h2"
+      color="grey-10"
+      className="mt-1"
+      styles={styles.btnSkeleton}
+    />
+  </SkeletonBox>
+)
+
+export default EmptyStatePage
