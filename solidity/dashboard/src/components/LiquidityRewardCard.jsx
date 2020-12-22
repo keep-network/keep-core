@@ -35,10 +35,13 @@ const LiquidityRewardCard = ({
       : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
   }, [percentageOfTotalPool])
 
-  // TODO: get the amount
-  const addLpTokens = async (amount, awaitingPromise) => {
+  const addLpTokens = async (awaitingPromise) => {
     dispatch(
-      addMoreLpTokens(amount, liquidityPairContractName, awaitingPromise)
+      addMoreLpTokens(
+        wrappedTokenBalance,
+        liquidityPairContractName,
+        awaitingPromise
+      )
     )
   }
 
@@ -103,7 +106,7 @@ const LiquidityRewardCard = ({
           className={`btn btn-primary btn-lg w-100`}
           disabled={!gt(wrappedTokenBalance, 0)}
           onSubmitAction={async (awaitingPromise) =>
-            await addLpTokens(1, awaitingPromise)
+            await addLpTokens(awaitingPromise)
           }
         >
           add more lp tokens
