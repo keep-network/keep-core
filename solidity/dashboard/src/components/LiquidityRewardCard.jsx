@@ -31,8 +31,8 @@ const LiquidityRewardCard = ({
   }, [percentageOfTotalPool])
 
   return (
-    <Card className={"tile"}>
-      <div className={"liquidity__card-title-section"}>
+    <Card className={"liquidity__card tile"}>
+      <div className={"liquidity__card-title"}>
         <DoubleIcon
           MainIcon={MainIcon}
           SecondaryIcon={SecondaryIcon}
