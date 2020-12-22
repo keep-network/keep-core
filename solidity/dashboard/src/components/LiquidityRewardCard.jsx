@@ -43,7 +43,7 @@ const LiquidityRewardCard = ({
       <div className={"liquidity-card-subtitle-section"}>
         <h4 className="text-grey-40">
           Uniswap Pool&nbsp;
-          <a href={viewPoolLink} className="arrow-link text-small">
+          <a href={viewPoolLink} className="text-small">
             View pool
           </a>
         </h4>
