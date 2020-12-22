@@ -1,8 +1,12 @@
-import React from "react"
+import React, { useMemo } from "react"
+import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
+import { displayAmount } from "../utils/token.utils"
+import { gt } from "../utils/arithmetics.utils"
+import { Skeleton } from "./skeletons"
 import { addMoreLpTokens, withdrawAllLiquidityRewards } from "../actions/web3"
 import { useDispatch } from "react-redux"
 
@@ -12,8 +16,24 @@ const LiquidityRewardCard = ({
   MainIcon,
   SecondaryIcon,
   viewPoolLink,
+  // Percentage of the deposited liquidity tokens in the `LPRewards` pool.
+  percentageOfTotalPool,
+  // Current reward balance earned in `LPRewards` contract.
+  rewardBalance,
+  // Balance of the wrapped token.
+  wrappedTokenBalance,
+  // Balance of wrapped token deposited in the `LPRewards` contract.
+  lpBalance,
+  isFetching,
 }) => {
   const dispatch = useDispatch()
+
+  const formattedPercentageOfTotalPool = useMemo(() => {
+    const bn = new BigNumber(percentageOfTotalPool)
+    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
+      ? "<0.01"
+      : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
+  }, [percentageOfTotalPool])
 
   // TODO: get the amount
   const addLpTokens = async (amount, awaitingPromise) => {
@@ -39,14 +59,12 @@ const LiquidityRewardCard = ({
         <h2 className={"h2--alt text-grey-70"}>{title}</h2>
       </div>
       <div className={"liquidity-card-subtitle-section"}>
-        <span className="text-grey-40">Uniswap Pool&nbsp;</span>
-        <a
-          href={viewPoolLink}
-          className="arrow-link text-small"
-          style={{ marginLeft: "auto", marginRight: "2rem" }}
-        >
-          View pool
-        </a>
+        <h4 className="text-grey-40">
+          Uniswap Pool&nbsp;
+          <a href={viewPoolLink} className="arrow-link text-small">
+            View pool
+          </a>
+        </h4>
       </div>
       <div className={"liquidity__info text-grey-60"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
@@ -54,7 +72,13 @@ const LiquidityRewardCard = ({
           <h6>Anual % yield</h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
-          <h2 className={"liquidity__info-tile__title text-mint-100"}>10%</h2>
+          {isFetching ? (
+            <Skeleton tag="h2" shining color="mint-20" />
+          ) : (
+            <h2
+              className={"liquidity__info-tile__title text-mint-100"}
+            >{`${formattedPercentageOfTotalPool}%`}</h2>
+          )}
           <h6>% of total pool</h6>
         </div>
       </div>
@@ -67,12 +91,17 @@ const LiquidityRewardCard = ({
             <Icons.KeepOutline />
             <span>KEEP</span>
           </h3>
-          <h3>1,000,000</h3>
+          {isFetching ? (
+            <Skeleton tag="h3" shining color="grey-20" className="ml-3" />
+          ) : (
+            <h3>{displayAmount(rewardBalance)}</h3>
+          )}
         </div>
       </div>
       <div className={"liquidity__add-more-tokens"}>
         <SubmitButton
           className={`btn btn-primary btn-lg w-100`}
+          disabled={!gt(wrappedTokenBalance, 0)}
           onSubmitAction={async (awaitingPromise) =>
             await addLpTokens(1, awaitingPromise)
           }
@@ -83,6 +112,7 @@ const LiquidityRewardCard = ({
       <div className={"liquidity__withdraw"}>
         <SubmitButton
           className={"btn btn-primary btn-lg w-100 text-black"}
+          disabled={!gt(lpBalance, 0)}
           onSubmitAction={async (awaitingPromise) =>
             await withdrawLiquidityRewards(awaitingPromise)
           }

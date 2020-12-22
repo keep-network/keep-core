@@ -14,9 +14,9 @@ export const TBTC_SYSTEM_CONTRACT_NAME = "tbtcSystemContract"
 export const TOKEN_STAKING_ESCROW_CONTRACT_NAME = "tokenStakingEscrow"
 export const OLD_TOKEN_STAKING_CONTRACT_NAME = "oldTokenStakingContract"
 export const STAKING_PORT_BACKER_CONTRACT_NAME = "stakingPortBackerContract"
-export const LP_REWARDS_KEEP_ETH = "LPRewardsKEEPETH"
-export const LP_REWARDS_TBTC_ETH = "LPRewardsTBTCETH"
-export const LP_REWARDS_KEEP_TBTC = "LPRewardsKEEPTBTC"
+export const LP_REWARDS_KEEP_ETH_CONTRACT_NAME = "LPRewardsKEEPETHContract"
+export const LP_REWARDS_TBTC_ETH_CONTRACT_NAME = "LPRewardsTBTCETHContract"
+export const LP_REWARDS_KEEP_TBTC_CONTRACT_NAME = "LPRewardsKEEPTBTCContract"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
@@ -40,23 +40,20 @@ export const SIGNING_GROUP_STATUS = {
   ACTIVE: "Active work",
 }
 
-export const LIQUIDITY_REWARD_PAIRS = {
+export const LIQUIDITY_REWARD_PAIR = {
   KEEP_ETH: {
     label: "KEEP + ETH",
     viewPoolLink:
       "https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a",
-    contractName: LP_REWARDS_KEEP_ETH,
   },
   KEEP_TBTC: {
     label: "KEEP + TBTC",
     viewPoolLink:
       "https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081",
-    contractName: LP_REWARDS_TBTC_ETH,
   },
   TBTC_ETH: {
     label: "TBTC + ETH",
     viewPoolLink:
       "https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6",
-    contractName: LP_REWARDS_KEEP_TBTC,
   },
 }

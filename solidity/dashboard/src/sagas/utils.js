@@ -21,11 +21,12 @@ export function* submitButtonHelper(saga, action) {
   }
 }
 
-export function* logError(errorActionType, error) {
+export function* logError(errorActionType, error, payload = {}) {
   const { message, reason, stack } = error
   yield put({
     type: errorActionType,
     payload: {
+      ...payload,
       error: reason ? `Error: ${reason}` : message,
     },
   })

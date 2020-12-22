@@ -3,7 +3,6 @@ import {
   KEEP_BONDING_CONTRACT_NAME,
   KEEP_TOKEN_CONTRACT_NAME,
   OPERATOR_CONTRACT_NAME,
-  LP_REWARDS_KEEP_ETH,
 } from "../constants/constants"
 
 const WEB3_SEND_TRANSACTION = "web3/send_transaction"

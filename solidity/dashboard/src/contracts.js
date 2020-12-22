@@ -16,10 +16,11 @@ import BondedECDSAKeep from "@keep-network/keep-ecdsa/artifacts/BondedECDSAKeep.
 import TokenStakingEscrow from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 import StakingPortBacker from "@keep-network/keep-core/artifacts/StakingPortBacker.json"
 import BeaconRewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
-import ECDSARewards from "@keep-network/keep-core/artifacts/BeaconRewards.json"
+import ECDSARewardsDistributor from "@keep-network/keep-ecdsa/artifacts/ECDSARewardsDistributor.json"
 import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPETH.json"
-import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
-import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
+import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
+import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
+import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -36,6 +37,9 @@ import {
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
   STAKING_PORT_BACKER_CONTRACT_NAME,
   OLD_TOKEN_STAKING_CONTRACT_NAME,
+  LP_REWARDS_KEEP_ETH_CONTRACT_NAME,
+  LP_REWARDS_TBTC_ETH_CONTRACT_NAME,
+  LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -102,17 +106,20 @@ const contracts = [
     StakingPortBacker,
   ],
   [{ contractName: "beaconRewardsContract" }, BeaconRewards],
-  [{ contractName: "ECDSARewardsContract" }, ECDSARewards],
   [
-    { contractName: "LPRewardsKEEPETH", withDeployBlock: true },
+    { contractName: "ECDSARewardsDistributorContract", withDeployBlock: true },
+    ECDSARewardsDistributor,
+  ],
+  [
+    { contractName: LP_REWARDS_KEEP_ETH_CONTRACT_NAME, withDeployBlock: true },
     LPRewardsKEEPETH,
   ],
   [
-    { contractName: "LPRewardsTBTCETH", withDeployBlock: true },
+    { contractName: LP_REWARDS_TBTC_ETH_CONTRACT_NAME, withDeployBlock: true },
     LPRewardsTBTCETH,
   ],
   [
-    { contractName: "LPRewardsKEEPTBTC", withDeployBlock: true },
+    { contractName: LP_REWARDS_KEEP_TBTC_CONTRACT_NAME, withDeployBlock: true },
     LPRewardsKEEPTBTC,
   ],
 ]
@@ -301,4 +308,8 @@ const getOldTokenStakingArtifact = async () => {
   return (
     await import("@keep-network/keep-core/artifacts/OldTokenStaking.json")
   ).default
+}
+
+export const createERC20Contract = (web3, address) => {
+  return createWeb3ContractInstance(web3, IERC20.abi, address)
 }
