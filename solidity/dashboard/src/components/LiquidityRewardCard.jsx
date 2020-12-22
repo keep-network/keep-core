@@ -40,7 +40,7 @@ const LiquidityRewardCard = ({
         />
         <h2 className={"h2--alt text-grey-70"}>{title}</h2>
       </div>
-      <h4 className="liquidity-card-subtitle text-grey-40">
+      <h4 className="liquidity__card-subtitle text-grey-40">
         Uniswap Pool&nbsp;
         <a href={viewPoolLink} className="text-small">
           View pool
