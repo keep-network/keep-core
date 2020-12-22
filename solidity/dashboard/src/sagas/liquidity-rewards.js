@@ -25,7 +25,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
   try {
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_start`,
-      payload: { liquidityRewardPair: liquidityRewardPair.name },
+      payload: { liquidityRewardPairName: liquidityRewardPair.name },
     })
     // Fetching balance of liquidity token for a given uniswap pair deposited in
     // the `LPRewards` contract.
@@ -55,7 +55,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
       payload: {
-        liquidityRewardPair: liquidityRewardPair.name,
+        liquidityRewardPairName: liquidityRewardPair.name,
         lpBalance,
         wrappedTokenBalance,
         reward,
@@ -66,7 +66,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
     yield* logError(
       `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_failure`,
       error,
-      { liquidityRewardPair: liquidityRewardPair.name }
+      { liquidityRewardPairName: liquidityRewardPair.name }
     )
   }
 }
