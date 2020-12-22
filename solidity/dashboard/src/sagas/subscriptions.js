@@ -6,6 +6,11 @@ import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { getEventsFromTransaction } from "../utils/ethereum.utils"
+import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import {
+  fetchRewardBalance,
+  fetchLPRewardsTotalSupply,
+} from "../services/liquidity-rewards"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -596,4 +601,158 @@ function* observeECDSARewardsClaimedEvent(data) {
 export function* subsribeToECDSARewardsClaimedEvent() {
   yield take("rewards/ecdsa_fetch_rewards_data_success")
   yield fork(observeECDSARewardsClaimedEvent)
+}
+
+function* observeLiquidityTokenStakedEvent(liquidityRewardPair) {
+  const contracts = yield getContractsContext()
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+  const LPRewardsContract = contracts[liquidityRewardPair.contractName]
+
+  // Create subscription channel.
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    LPRewardsContract,
+    "Staked"
+  )
+
+  while (true) {
+    try {
+      const {
+        returnValues: { user, amount },
+      } = yield take(contractEventCahnnel)
+
+      if (isSameEthAddress(defaultAccount, user)) {
+        const totalSupply = yield call(
+          fetchLPRewardsTotalSupply,
+          LPRewardsContract
+        )
+
+        const reward = yield call(
+          fetchRewardBalance,
+          defaultAccount,
+          LPRewardsContract
+        )
+
+        yield put({
+          type: `liquidity_rewards/${liquidityRewardPair.name}_staked`,
+          payload: {
+            amount,
+            totalSupply,
+            reward,
+            liquidityRewardPairName: liquidityRewardPair.name,
+          },
+        })
+      }
+    } catch (error) {
+      console.error(`Failed subscribing to Staked event`, error)
+      contractEventCahnnel.close()
+    }
+  }
+}
+
+function* observeLiquidityTokenWithdrawnEvent(liquidityRewardPair) {
+  const contracts = yield getContractsContext()
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+  const LPRewardsContract = contracts[liquidityRewardPair.contractName]
+
+  // Create subscription channel.
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    LPRewardsContract,
+    "Withdrawn"
+  )
+
+  while (true) {
+    try {
+      const {
+        returnValues: { user, amount },
+      } = yield take(contractEventCahnnel)
+
+      if (isSameEthAddress(defaultAccount, user)) {
+        const totalSupply = yield call(
+          fetchLPRewardsTotalSupply,
+          LPRewardsContract
+        )
+        const reward = yield call(
+          fetchRewardBalance,
+          defaultAccount,
+          LPRewardsContract
+        )
+
+        yield put({
+          type: `liquidity_rewards/${liquidityRewardPair.name}_withdrawn`,
+          payload: {
+            amount,
+            totalSupply,
+            reward,
+            liquidityRewardPairName: liquidityRewardPair.name,
+          },
+        })
+      }
+    } catch (error) {
+      console.error(`Failed subscribing to Withdrawn event`, error)
+      contractEventCahnnel.close()
+    }
+  }
+}
+
+function* observeLiquidityRewardPaidEvent(liquidityRewardPair) {
+  const contracts = yield getContractsContext()
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+  const LPRewardsContract = contracts[liquidityRewardPair.contractName]
+
+  // Create subscription channel.
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    LPRewardsContract,
+    "RewardPaid"
+  )
+
+  while (true) {
+    try {
+      const {
+        returnValues: { user, reward },
+      } = yield take(contractEventCahnnel)
+
+      if (isSameEthAddress(defaultAccount, user)) {
+        yield put({
+          type: `liquidity_rewards/${liquidityRewardPair.name}_reward_paid`,
+          payload: {
+            reward,
+            liquidityRewardPairName: liquidityRewardPair.name,
+          },
+        })
+      }
+    } catch (error) {
+      console.error(`Failed subscribing to RewardPaid event`, error)
+      contractEventCahnnel.close()
+    }
+  }
+}
+
+export function* subscribeToLiquidityRewardsEvents() {
+  for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+    yield fork(
+      function* (liquidityRewardPair) {
+        console.log("waiting name", liquidityRewardPair.name)
+        yield take(
+          `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
+        )
+        console.log("start subscribing name", liquidityRewardPair.name)
+        yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
+        yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
+        yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
+      },
+      {
+        name: pairName,
+        ...value,
+      }
+    )
+  }
 }
