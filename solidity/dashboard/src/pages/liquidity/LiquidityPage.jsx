@@ -34,6 +34,7 @@ const LiquidityPage = ({ title }) => {
           wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
           lpBalance={KEEP_ETH.lpBalance}
           isFetching={KEEP_ETH.isFetching}
+          wrapperClassName="keep-eth"
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIR.KEEP_TBTC.label}
@@ -45,6 +46,7 @@ const LiquidityPage = ({ title }) => {
           wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
           lpBalance={KEEP_TBTC.lpBalance}
           isFetching={KEEP_TBTC.isFetching}
+          wrapperClassName="keep-tbtc"
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIR.TBTC_ETH.label}
@@ -56,6 +58,7 @@ const LiquidityPage = ({ title }) => {
           wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
           lpBalance={TBTC_ETH.lpBalance}
           isFetching={TBTC_ETH.isFetching}
+          wrapperClassName="tbtc-eth"
         />
       </CardContainer>
     </PageWrapper>
