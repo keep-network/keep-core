@@ -48,7 +48,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
         LPRewardsContract
       )
       // % of total pool in the `LPRewards` contract.
-      shareOfPoolInPercent = percentageOf(lpBalance, totalSupply)
+      shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
     }
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
