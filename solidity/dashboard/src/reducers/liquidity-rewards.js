@@ -1,6 +1,7 @@
 import { sub, add, percentageOf } from "../utils/arithmetics.utils"
 
 const liquidityPairInitialData = {
+  apy: 0,
   shareOfPoolInPercent: 0,
   reward: 0,
   wrappedTokenBalance: 0,

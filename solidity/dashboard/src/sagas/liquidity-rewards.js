@@ -37,6 +37,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       address,
       LPRewardsContract
     )
+    const apy = 0
     let reward = 0
     let shareOfPoolInPercent = 0
     if (gt(lpBalance, 0)) {
@@ -54,6 +55,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
       payload: {
         liquidityRewardPairName: liquidityRewardPair.name,
+        apy,
         lpBalance,
         wrappedTokenBalance,
         reward,
