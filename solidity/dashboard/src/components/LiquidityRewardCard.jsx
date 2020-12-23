@@ -32,6 +32,7 @@ const LiquidityRewardCard = ({
 
   return (
     <Card className={"liquidity__card tile"}>
+      <Icons.SantaHat className="liquidity-card__santa-hat" />
       <div className={"liquidity__card-title"}>
         <DoubleIcon
           MainIcon={MainIcon}
@@ -86,9 +87,7 @@ const LiquidityRewardCard = ({
       </SubmitButton>
 
       <SubmitButton
-        className={
-          "liquidity__withdraw btn btn-secondary btn-lg w-100"
-        }
+        className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
         disabled={!gt(lpBalance, 0)}
       >
         withdraw all
