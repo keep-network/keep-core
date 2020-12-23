@@ -740,11 +740,9 @@ export function* subscribeToLiquidityRewardsEvents() {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
     yield fork(
       function* (liquidityRewardPair) {
-        console.log("waiting name", liquidityRewardPair.name)
         yield take(
           `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
         )
-        console.log("start subscribing name", liquidityRewardPair.name)
         yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
         yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
         yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
