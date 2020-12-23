@@ -186,7 +186,6 @@ export const withdrawAllLiquidityRewards = (
     payload: {
       contractName: liquidityPairContractName,
       methodName: "exit",
-      args: [],
     },
     meta,
   }
