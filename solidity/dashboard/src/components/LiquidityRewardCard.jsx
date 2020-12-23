@@ -37,7 +37,7 @@ const LiquidityRewardCard = ({
       : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
   }, [percentageOfTotalPool])
 
-  const addLpTokens = async (awaitingPromise) => {
+  const addLpTokens = (awaitingPromise) => {
     dispatch(
       addMoreLpTokens(
         wrappedTokenBalance,
@@ -48,7 +48,7 @@ const LiquidityRewardCard = ({
     )
   }
 
-  const withdrawLiquidityRewards = async (awaitingPromise) => {
+  const withdrawLiquidityRewards = (awaitingPromise) => {
     dispatch(
       withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
     )
@@ -108,9 +108,7 @@ const LiquidityRewardCard = ({
         <SubmitButton
           className={`btn btn-primary btn-lg w-100`}
           disabled={!gt(wrappedTokenBalance, 0)}
-          onSubmitAction={async (awaitingPromise) =>
-            await addLpTokens(awaitingPromise)
-          }
+          onSubmitAction={addLpTokens}
         >
           add more lp tokens
         </SubmitButton>
@@ -119,9 +117,7 @@ const LiquidityRewardCard = ({
         <SubmitButton
           className={"btn btn-primary btn-lg w-100 text-black"}
           disabled={!gt(rewardBalance, 0)}
-          onSubmitAction={async (awaitingPromise) =>
-            await withdrawLiquidityRewards(awaitingPromise)
-          }
+          onSubmitAction={withdrawLiquidityRewards}
         >
           withdraw all
         </SubmitButton>
