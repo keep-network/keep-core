@@ -9,9 +9,9 @@ const emptyPageSubtitle =
   "This page tracks your liqudity rewards. Connect a wallet to view your available rewards."
 
 const EmptyStatePage = (props) => {
-  const { title, headerTitle, ...propsWithoutTitle } = props
+  const { headerTitle, ...restProps } = props
   return (
-    <PageWrapper title={headerTitle} {...propsWithoutTitle} newPage={true}>
+    <PageWrapper {...restProps} title={headerTitle} newPage={true}>
       <EmptyState>
         <EmptyState.Skeleton className="empty-page--liquidity-page">
           {Array.from(Array(3)).map(rednerLiquidityCardSkeleton)}
