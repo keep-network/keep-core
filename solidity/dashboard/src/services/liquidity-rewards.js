@@ -1,14 +1,23 @@
+import web3Utils from "web3-utils"
 import { Web3Loaded, createERC20Contract } from "../contracts"
 
 // lp contract address -> wrapped ERC20 token as web3 contract instance
 const LPRewardsToWrappedTokenCache = {}
 
 export const fetchWrappedTokenBalance = async (address, LPrewardsContract) => {
-  const web3 = await Web3Loaded
-  const { address: lpRewardsContractAddress } = LPrewardsContract.options
+  const ERC20Contract = await getWrappedTokenConctract(LPrewardsContract)
 
-  if (!LPRewardsToWrappedTokenCache[lpRewardsContractAddress]) {
-    const wrappedTokenAddress = await LPrewardsContract.methods
+  return await ERC20Contract.methods.balanceOf(address).call()
+}
+
+export const getWrappedTokenConctract = async (LPRewardsContract) => {
+  const web3 = await Web3Loaded
+  const lpRewardsContractAddress = web3Utils.toChecksumAddress(
+    LPRewardsContract.options.address
+  )
+
+  if (!LPRewardsToWrappedTokenCache.hasOwnProperty(lpRewardsContractAddress)) {
+    const wrappedTokenAddress = await LPRewardsContract.methods
       .wrappedToken()
       .call()
     LPRewardsToWrappedTokenCache[
@@ -16,9 +25,7 @@ export const fetchWrappedTokenBalance = async (address, LPrewardsContract) => {
     ] = createERC20Contract(web3, wrappedTokenAddress)
   }
 
-  const ERC20Contract = LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
-
-  return await ERC20Contract.methods.balanceOf(address).call()
+  return LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
 }
 
 export const fetchStakedBalance = async (address, LPrewardsContract) => {
