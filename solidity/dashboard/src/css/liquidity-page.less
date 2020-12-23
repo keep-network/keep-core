@@ -1,69 +1,74 @@
-.liquidity__card-title-section {
-  display: flex;
-  align-items: center;
+.liquidity__card {
+  position:relative;
 
-  .liquidity__double-icon-container {
-    margin-right: 0.5rem
+  > .liquidity-card__santa-hat {
+    position: absolute;
+    z-index: 1;
+    right: -2.5rem;
+    top: -2rem;
   }
-}
 
-.liquidity-card-subtitle-section {
-  margin: 0.3rem 0;
-}
-
-.liquidity__info {
-  display: flex;
-  justify-content: center;
-  margin: 1.9rem 0;
-
-  .liquidity__info-tile {
-    text-align: center;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0 0.2rem;
-    height: 9rem;
-    width: 10rem;
+  .liquidity__card-title {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+
+    .liquidity__double-icon-container {
+      margin-right: 0.5rem
+    }
+  }
+
+  .liquidity__card-subtitle {
+    margin: 0.3rem 0;
+  }
+
+  .liquidity__info {
+    display: flex;
     justify-content: center;
-  }
-}
+    margin: 1.9rem 0;
 
-.liquidity__token-balance {
-  margin: 2rem 0;
-
-  .liquidity__token-balance_title {
-    display: block;
-    margin: 0.4rem 0;
-    font-weight: 500;
-  }
-
-  .liquidity__token-balance_values {
-    display: flex;
-    justify-content: space-between;
-
-    .liquidity__token-balance_values_label {
+    .liquidity__info-tile {
+      text-align: center;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0 0.2rem;
+      height: 9rem;
+      width: 10rem;
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      justify-content: center;
+    }
+  }
 
-      svg {
-        height: 1.5rem;
-        width: 1.5rem;
-        margin-right: 0.4rem;
+  .liquidity__token-balance {
+    margin: 2rem 0;
+
+    .liquidity__token-balance_title {
+      display: block;
+      margin: 0.4rem 0;
+      font-weight: 500;
+    }
+
+    .liquidity__token-balance_values {
+      display: flex;
+      justify-content: space-between;
+
+      .liquidity__token-balance_values_label {
+        display: flex;
+        align-items: center;
+
+        svg {
+          height: 1.5rem;
+          width: 1.5rem;
+          margin-right: 0.4rem;
+        }
       }
     }
   }
-}
 
-.liquidity__add-more-tokens, .liquidity__withdraw {
-  margin: 1rem 0;
-}
-
-.liquidity__withdraw {
-  .btn {
-    background-color: transparent;
-    border: 1px solid black;
+  .liquidity__add-more-tokens, .liquidity__withdraw {
+    margin: 0.5rem 0;
   }
+
 }
 
 .empty-page--liquidity-page {

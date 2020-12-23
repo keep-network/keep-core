@@ -27,7 +27,6 @@ const LiquidityRewardCard = ({
   withdrawLiquidityRewards,
 }) => {
 
-
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
@@ -36,8 +35,9 @@ const LiquidityRewardCard = ({
   }, [percentageOfTotalPool])
 
   return (
-    <Card className={"tile"}>
-      <div className={"liquidity__card-title-section"}>
+    <Card className={"liquidity__card tile"}>
+      <Icons.SantaHat className="liquidity-card__santa-hat" />
+      <div className={"liquidity__card-title"}>
         <DoubleIcon
           MainIcon={MainIcon}
           SecondaryIcon={SecondaryIcon}
@@ -45,14 +45,12 @@ const LiquidityRewardCard = ({
         />
         <h2 className={"h2--alt text-grey-70"}>{title}</h2>
       </div>
-      <div className={"liquidity-card-subtitle-section"}>
-        <h4 className="text-grey-40">
-          Uniswap Pool&nbsp;
-          <a href={viewPoolLink} className="arrow-link text-small">
-            View pool
-          </a>
-        </h4>
-      </div>
+      <h4 className="liquidity__card-subtitle text-grey-40">
+        Uniswap Pool&nbsp;
+        <a href={viewPoolLink} className="text-small">
+          View pool
+        </a>
+      </h4>
       <div className={"liquidity__info text-grey-60"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>200%</h2>
@@ -85,32 +83,29 @@ const LiquidityRewardCard = ({
           )}
         </div>
       </div>
-      <div className={"liquidity__add-more-tokens"}>
-        <SubmitButton
-          className={`btn btn-primary btn-lg w-100`}
-          disabled={!gt(wrappedTokenBalance, 0)}
-          onSubmitAction={(awaitingPromise) =>
-            addLpTokens(
-              wrappedTokenBalance,
-              liquidityPairContractName,
-              awaitingPromise
-            )
-          }
-        >
-          add more lp tokens
-        </SubmitButton>
-      </div>
-      <div className={"liquidity__withdraw"}>
-        <SubmitButton
-          className={"btn btn-primary btn-lg w-100 text-black"}
-          disabled={!gt(rewardBalance, 0)}
-          onSubmitAction={(awaitingPromise) =>
-            withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
-          }
-        >
-          withdraw all
-        </SubmitButton>
-      </div>
+      <SubmitButton
+        className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
+        disabled={!gt(wrappedTokenBalance, 0)}
+        onSubmitAction={(awaitingPromise) =>
+          addLpTokens(
+            wrappedTokenBalance,
+            liquidityPairContractName,
+            awaitingPromise
+          )
+        }
+      >
+        add more lp tokens
+      </SubmitButton>
+
+      <SubmitButton
+        className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
+        disabled={!gt(rewardBalance, 0)}
+        onSubmitAction={(awaitingPromise) =>
+          withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
+        }
+      >
+        withdraw all
+      </SubmitButton>
     </Card>
   )
 }
