@@ -111,6 +111,11 @@ const LiquidityRewardCard = ({
       >
         withdraw all
       </SubmitButton>
+      {gt(rewardBalance, 0) && (
+        <div className={"text-validation text-center"}>
+          Withdraw includes rewards and principal
+        </div>
+      )}
     </Card>
   )
 }
