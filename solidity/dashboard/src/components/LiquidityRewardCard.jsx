@@ -22,6 +22,7 @@ const LiquidityRewardCard = ({
   // Balance of wrapped token deposited in the `LPRewards` contract.
   lpBalance,
   isFetching,
+  wrapperClassName = "",
 }) => {
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
@@ -31,7 +32,7 @@ const LiquidityRewardCard = ({
   }, [percentageOfTotalPool])
 
   return (
-    <Card className={"liquidity__card tile"}>
+    <Card className={`liquidity__card tile ${wrapperClassName}`}>
       <Icons.SantaHat className="liquidity-card__santa-hat" />
       <div className={"liquidity__card-title"}>
         <DoubleIcon
