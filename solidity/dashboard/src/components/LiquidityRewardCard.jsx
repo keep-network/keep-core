@@ -30,7 +30,7 @@ const LiquidityRewardCard = ({
 }) => {
   const formattedApy = useMemo(() => {
     const bn = new BigNumber(apy)
-    if (bn.isEqualTo(0)) return <span>&#8734;</span>
+    if (bn.isEqualTo(Infinity)) return <span>&#8734;</span>
 
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
       ? "<0.01%"

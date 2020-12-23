@@ -38,9 +38,10 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       address,
       LPRewardsContract
     )
-    const apy = 0
+    let apy = 0
     // Fetching total deposited liqidity tokens in the `LPRewards` contract.
     const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
+    if (totalSupply === 0) apy = Infinity
 
     // if (gt(totalSupply, 0)) {
     //   const totalLPTokensCreatedInUniswap = yield call(
