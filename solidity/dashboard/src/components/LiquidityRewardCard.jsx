@@ -59,7 +59,7 @@ const LiquidityRewardCard = ({
       <div className={"liquidity__info text-grey-60"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>200%</h2>
-          <h6>Anual % yield</h6>
+          <h6>Annual % yield (APY)</h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
           {isFetching ? (
