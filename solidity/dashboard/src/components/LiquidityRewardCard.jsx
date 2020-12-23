@@ -9,6 +9,7 @@ import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
 import { addMoreLpTokens, withdrawAllLiquidityRewards } from "../actions/web3"
 import { useDispatch } from "react-redux"
+import { useWeb3Address } from "./WithWeb3Context"
 
 const LiquidityRewardCard = ({
   title,
@@ -27,6 +28,7 @@ const LiquidityRewardCard = ({
   isFetching,
 }) => {
   const dispatch = useDispatch()
+  const address = useWeb3Address()
 
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
@@ -39,6 +41,7 @@ const LiquidityRewardCard = ({
     dispatch(
       addMoreLpTokens(
         wrappedTokenBalance,
+        address,
         liquidityPairContractName,
         awaitingPromise
       )

@@ -1,12 +1,14 @@
-import { takeLatest, fork, call, put } from "redux-saga/effects"
-import { getContractsContext, logError } from "./utils"
+import { takeLatest, takeEvery, fork, call, put } from "redux-saga/effects"
+import { getContractsContext, submitButtonHelper, logError } from "./utils"
+import { sendTransaction } from "./web3"
 import {
   fetchStakedBalance,
   fetchWrappedTokenBalance,
   fetchLPRewardsTotalSupply,
   fetchRewardBalance,
+  getWrappedTokenConctract,
 } from "../services/liquidity-rewards"
-import { gt, percentageOf } from "../utils/arithmetics.utils"
+import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 
 function* fetchAllLiquidtyRewardsData(action) {
@@ -72,4 +74,48 @@ export function* watchFetchLiquidityRewardsData() {
     "liquidity_rewards/fetch_data_request",
     fetchAllLiquidtyRewardsData
   )
+}
+
+function* stakeTokens(action) {
+  const { contractName, address, amount } = action.payload
+
+  const contracts = yield getContractsContext()
+  const LPRewardsContract = contracts[contractName]
+  const lpRewardsContractAddress = LPRewardsContract.options.address
+
+  const WrappedTokenContract = yield call(
+    getWrappedTokenConctract,
+    LPRewardsContract
+  )
+
+  const approvedAmount = yield call(
+    WrappedTokenContract.methods.allowance(address, lpRewardsContractAddress)
+      .call
+  )
+
+  if (!eq(amount, approvedAmount)) {
+    yield call(sendTransaction, {
+      payload: {
+        contract: WrappedTokenContract,
+        methodName: "approve",
+        args: [lpRewardsContractAddress, amount],
+      },
+    })
+  }
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: LPRewardsContract,
+      methodName: "stake",
+      args: [amount],
+    },
+  })
+}
+
+function* stakeTokensWorker(action) {
+  yield call(submitButtonHelper, stakeTokens, action)
+}
+
+export function* watchStakeTokens() {
+  yield takeEvery("liquidity_rewards/stake_tokens", stakeTokensWorker)
 }

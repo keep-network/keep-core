@@ -192,13 +192,18 @@ export const withdrawAllLiquidityRewards = (
   }
 }
 
-export const addMoreLpTokens = (amount, liquidityPairContractName, meta) => {
+export const addMoreLpTokens = (
+  amount,
+  address,
+  liquidityPairContractName,
+  meta
+) => {
   return {
-    type: WEB3_SEND_TRANSACTION,
+    type: "liquidity_rewards/stake_tokens",
     payload: {
       contractName: liquidityPairContractName,
-      methodName: "stake",
-      args: [amount],
+      amount,
+      address,
     },
     meta,
   }
