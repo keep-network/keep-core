@@ -11,7 +11,7 @@ const emptyPageSubtitle =
 const EmptyStatePage = (props) => {
   const { title, headerTitle, ...propsWithoutTitle } = props
   return (
-    <PageWrapper title={headerTitle} {...propsWithoutTitle}>
+    <PageWrapper title={headerTitle} {...propsWithoutTitle} newPage={true}>
       <EmptyState>
         <EmptyState.Skeleton className="empty-page--liquidity-page">
           {Array.from(Array(3)).map(rednerLiquidityCardSkeleton)}

@@ -2,17 +2,17 @@ import React from "react"
 import { NavLink } from "react-router-dom"
 import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
+import Chip from "./Chip";
 
 const Header = ({ title, subLinks, className = "", newPage = false }) => {
+  console.log(newPage)
   return (
     <header className={`header ${className}`}>
       <div className="header__content">
         <h1 className="header__title">
           {title}{" "}
           {newPage && (
-            <span className={"header__chip chip--emphasis chip--small ml-1"}>
-              NEW
-            </span>
+            <Chip text="NEW" className={"header__chip ml-1"}/>
           )}
         </h1>
         <Web3Status />

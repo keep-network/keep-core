@@ -50,7 +50,7 @@ const LiquidityPage = ({ headerTitle }) => {
   }
 
   return (
-    <PageWrapper title={headerTitle}>
+    <PageWrapper title={headerTitle} newPage={true}>
       <CardContainer>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
