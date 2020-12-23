@@ -11,6 +11,8 @@ import ResourcesPage from "../pages/ResourcesPage"
 import * as Icons from "./Icons"
 import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
+import LiquidityPage from "../pages/liquidity"
+import Chip from "./Chip"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -43,7 +45,11 @@ export const SideMenu = (props) => {
         <NavLinkSection
           label="earn"
           icon={<Icons.FeesVector />}
-          subroutes={[EarningsPage.route, RewardsPage.route]}
+          subroutes={[
+            EarningsPage.route,
+            RewardsPage.route,
+            { ...LiquidityPage.route, withNewLabel: true },
+          ]}
         />
         <NavLinkSection
           label="help"
@@ -83,7 +89,7 @@ const renderRoute = (route) => (
   <NavLinkSectionRoute key={route.path} {...route} />
 )
 
-const NavLinkSectionRoute = ({ title, path, exact }) => {
+const NavLinkSectionRoute = ({ title, path, exact, withNewLabel }) => {
   const match = useRouteMatch({
     path,
     exact,
@@ -93,6 +99,7 @@ const NavLinkSectionRoute = ({ title, path, exact }) => {
     <li className="side-menu__route-wrapper">
       <Link to={path} className={`side-menu__route${match ? "--active" : ""}`}>
         {title}
+        {withNewLabel && <Chip text="NEW" size="tiny" className="ml-1" />}
       </Link>
     </li>
   )

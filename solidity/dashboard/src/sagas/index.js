@@ -7,6 +7,7 @@ import * as copyStakeSaga from "./copy-stake"
 import * as subscriptions from "./subscriptions"
 import * as keepTokenBalance from "./keep-balance"
 import * as rewards from "./rewards"
+import * as liquidityRewards from "./liquidity-rewards"
 
 export default function* rootSaga() {
   yield all(
@@ -19,6 +20,7 @@ export default function* rootSaga() {
       ...Object.values(subscriptions),
       ...Object.values(keepTokenBalance),
       ...Object.values(rewards),
+      ...Object.values(liquidityRewards),
     ].map(fork)
   )
 }
