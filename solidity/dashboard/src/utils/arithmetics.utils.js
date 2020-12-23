@@ -40,3 +40,7 @@ export const percentageOf = (value, total) => {
 
   return new BigNumber(value).div(total).multipliedBy(ONE_HUNDRED.toString())
 }
+
+export const eq = (a, b) => {
+  return web3Utils.toBN(a).eq(web3Utils.toBN(b))
+}
