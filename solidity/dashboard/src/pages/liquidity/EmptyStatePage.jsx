@@ -6,7 +6,7 @@ import * as Icons from "../../components/Icons"
 
 const emptyPageTitle = "Check your liquidity rewards balance"
 const emptyPageSubtitle =
-  "This page tracks your liqudity rewards. Connect a wallet to view your available rewards"
+  "This page tracks your liqudity rewards. Connect a wallet to view your available rewards."
 
 const EmptyStatePage = (props) => {
   const { title, headerTitle, ...propsWithoutTitle } = props
