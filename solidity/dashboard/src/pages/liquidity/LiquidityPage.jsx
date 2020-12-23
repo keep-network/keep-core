@@ -4,8 +4,12 @@ import { useWeb3Address } from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
 import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
-import { LIQUIDITY_REWARD_PAIR } from "../../constants/constants"
+import { LIQUIDITY_REWARD_PAIRS } from "../../constants/constants"
 import * as Icons from "../../components/Icons"
+import {
+  addMoreLpTokens,
+  withdrawAllLiquidityRewards,
+} from "../../actions/web3"
 
 const LiquidityPage = ({ title }) => {
   const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
@@ -21,41 +25,80 @@ const LiquidityPage = ({ title }) => {
     })
   }, [dispatch, address])
 
+  const addLpTokens = (
+    wrappedTokenBalance,
+    liquidityPairContractName,
+    awaitingPromise
+  ) => {
+    dispatch(
+      addMoreLpTokens(
+        wrappedTokenBalance,
+        address,
+        liquidityPairContractName,
+        awaitingPromise
+      )
+    )
+  }
+
+  const withdrawLiquidityRewards = (
+    liquidityPairContractName,
+    awaitingPromise
+  ) => {
+    dispatch(
+      withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
+    )
+  }
+
   return (
     <PageWrapper title={title}>
       <CardContainer>
         <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIR.KEEP_ETH.label}
+          title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
+          liquidityPairContractName={
+            LIQUIDITY_REWARD_PAIRS.KEEP_ETH.contractName
+          }
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.EthToken}
-          viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
+          viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
           percentageOfTotalPool={KEEP_ETH.shareOfPoolInPercent}
           rewardBalance={KEEP_ETH.reward}
           wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
           lpBalance={KEEP_ETH.lpBalance}
           isFetching={KEEP_ETH.isFetching}
+          addLpTokens={addLpTokens}
+          withdrawLiquidityRewards={withdrawLiquidityRewards}
         />
         <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIR.KEEP_TBTC.label}
+          title={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label}
+          liquidityPairContractName={
+            LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.contractName
+          }
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.TBTC}
-          viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
+          viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
           percentageOfTotalPool={KEEP_TBTC.shareOfPoolInPercent}
           rewardBalance={KEEP_TBTC.reward}
           wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
           lpBalance={KEEP_TBTC.lpBalance}
           isFetching={KEEP_TBTC.isFetching}
+          addLpTokens={addLpTokens}
+          withdrawLiquidityRewards={withdrawLiquidityRewards}
         />
         <LiquidityRewardCard
-          title={LIQUIDITY_REWARD_PAIR.TBTC_ETH.label}
+          title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
+          liquidityPairContractName={
+            LIQUIDITY_REWARD_PAIRS.TBTC_ETH.contractName
+          }
           MainIcon={Icons.TBTC}
           SecondaryIcon={Icons.EthToken}
-          viewPoolLink={LIQUIDITY_REWARD_PAIR.KEEP_ETH.viewPoolLink}
+          viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
           percentageOfTotalPool={TBTC_ETH.shareOfPoolInPercent}
           rewardBalance={TBTC_ETH.reward}
           wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
           lpBalance={TBTC_ETH.lpBalance}
           isFetching={TBTC_ETH.isFetching}
+          addLpTokens={addLpTokens}
+          withdrawLiquidityRewards={withdrawLiquidityRewards}
         />
       </CardContainer>
     </PageWrapper>

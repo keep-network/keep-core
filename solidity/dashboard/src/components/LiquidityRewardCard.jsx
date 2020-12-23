@@ -10,6 +10,7 @@ import { Skeleton } from "./skeletons"
 
 const LiquidityRewardCard = ({
   title,
+  liquidityPairContractName,
   MainIcon,
   SecondaryIcon,
   viewPoolLink,
@@ -22,7 +23,10 @@ const LiquidityRewardCard = ({
   // Balance of wrapped token deposited in the `LPRewards` contract.
   lpBalance,
   isFetching,
+  addLpTokens,
+  withdrawLiquidityRewards,
 }) => {
+
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
@@ -82,13 +86,23 @@ const LiquidityRewardCard = ({
       <SubmitButton
         className={`liquidity__add-more-tokens btn btn-primary btn-lg w-100`}
         disabled={!gt(wrappedTokenBalance, 0)}
+        onSubmitAction={(awaitingPromise) =>
+          addLpTokens(
+            wrappedTokenBalance,
+            liquidityPairContractName,
+            awaitingPromise
+          )
+        }
       >
         add more lp tokens
       </SubmitButton>
 
       <SubmitButton
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
-        disabled={!gt(lpBalance, 0)}
+        disabled={!gt(rewardBalance, 0)}
+        onSubmitAction={(awaitingPromise) =>
+          withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
+        }
       >
         withdraw all
       </SubmitButton>
