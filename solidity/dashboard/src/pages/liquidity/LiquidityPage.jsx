@@ -6,6 +6,10 @@ import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
 import { LIQUIDITY_REWARD_PAIRS } from "../../constants/constants"
 import * as Icons from "../../components/Icons"
+import {
+  addMoreLpTokens,
+  withdrawAllLiquidityRewards,
+} from "../../actions/web3"
 
 const LiquidityPage = ({ title }) => {
   const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
@@ -20,6 +24,30 @@ const LiquidityPage = ({ title }) => {
       payload: { address },
     })
   }, [dispatch, address])
+
+  const addLpTokens = (
+    wrappedTokenBalance,
+    liquidityPairContractName,
+    awaitingPromise
+  ) => {
+    dispatch(
+      addMoreLpTokens(
+        wrappedTokenBalance,
+        address,
+        liquidityPairContractName,
+        awaitingPromise
+      )
+    )
+  }
+
+  const withdrawLiquidityRewards = (
+    liquidityPairContractName,
+    awaitingPromise
+  ) => {
+    dispatch(
+      withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
+    )
+  }
 
   return (
     <PageWrapper title={title}>
@@ -37,6 +65,8 @@ const LiquidityPage = ({ title }) => {
           wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
           lpBalance={KEEP_ETH.lpBalance}
           isFetching={KEEP_ETH.isFetching}
+          addLpTokens={addLpTokens}
+          withdrawLiquidityRewards={withdrawLiquidityRewards}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label}
@@ -51,6 +81,8 @@ const LiquidityPage = ({ title }) => {
           wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
           lpBalance={KEEP_TBTC.lpBalance}
           isFetching={KEEP_TBTC.isFetching}
+          addLpTokens={addLpTokens}
+          withdrawLiquidityRewards={withdrawLiquidityRewards}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
@@ -65,6 +97,8 @@ const LiquidityPage = ({ title }) => {
           wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
           lpBalance={TBTC_ETH.lpBalance}
           isFetching={TBTC_ETH.isFetching}
+          addLpTokens={addLpTokens}
+          withdrawLiquidityRewards={withdrawLiquidityRewards}
         />
       </CardContainer>
     </PageWrapper>

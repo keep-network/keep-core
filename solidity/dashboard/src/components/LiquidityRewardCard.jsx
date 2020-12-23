@@ -7,9 +7,6 @@ import Card from "./Card"
 import { displayAmount } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
-import { addMoreLpTokens, withdrawAllLiquidityRewards } from "../actions/web3"
-import { useDispatch } from "react-redux"
-import { useWeb3Address } from "./WithWeb3Context"
 
 const LiquidityRewardCard = ({
   title,
@@ -26,9 +23,10 @@ const LiquidityRewardCard = ({
   // Balance of wrapped token deposited in the `LPRewards` contract.
   lpBalance,
   isFetching,
+  addLpTokens,
+  withdrawLiquidityRewards,
 }) => {
-  const dispatch = useDispatch()
-  const address = useWeb3Address()
+
 
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
@@ -36,23 +34,6 @@ const LiquidityRewardCard = ({
       ? "<0.01"
       : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
   }, [percentageOfTotalPool])
-
-  const addLpTokens = (awaitingPromise) => {
-    dispatch(
-      addMoreLpTokens(
-        wrappedTokenBalance,
-        address,
-        liquidityPairContractName,
-        awaitingPromise
-      )
-    )
-  }
-
-  const withdrawLiquidityRewards = (awaitingPromise) => {
-    dispatch(
-      withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
-    )
-  }
 
   return (
     <Card className={"tile"}>
@@ -108,7 +89,13 @@ const LiquidityRewardCard = ({
         <SubmitButton
           className={`btn btn-primary btn-lg w-100`}
           disabled={!gt(wrappedTokenBalance, 0)}
-          onSubmitAction={addLpTokens}
+          onSubmitAction={(awaitingPromise) =>
+            addLpTokens(
+              wrappedTokenBalance,
+              liquidityPairContractName,
+              awaitingPromise
+            )
+          }
         >
           add more lp tokens
         </SubmitButton>
@@ -117,7 +104,9 @@ const LiquidityRewardCard = ({
         <SubmitButton
           className={"btn btn-primary btn-lg w-100 text-black"}
           disabled={!gt(rewardBalance, 0)}
-          onSubmitAction={withdrawLiquidityRewards}
+          onSubmitAction={(awaitingPromise) =>
+            withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
+          }
         >
           withdraw all
         </SubmitButton>
