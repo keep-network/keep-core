@@ -6,7 +6,7 @@ import {
   fetchWrappedTokenBalance,
   fetchLPRewardsTotalSupply,
   fetchRewardBalance,
-  getWrappedTokenConctract,
+  getWrappedTokenConctract, calculateAPY, fetchTotalLPTokensCreatedInUniswap,
 } from "../services/liquidity-rewards"
 import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
@@ -28,6 +28,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_start`,
       payload: { liquidityRewardPairName: liquidityRewardPair.name },
     })
+
     // Fetching balance of liquidity token for a given uniswap pair deposited in
     // the `LPRewards` contract.
     const lpBalance = yield call(fetchStakedBalance, address, LPRewardsContract)
@@ -38,19 +39,33 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       LPRewardsContract
     )
     const apy = 0
+    // Fetching total deposited liqidity tokens in the `LPRewards` contract.
+    const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
+
+    // if (gt(totalSupply, 0)) {
+    //   const totalLPTokensCreatedInUniswap = yield call(
+    //     fetchTotalLPTokensCreatedInUniswap,
+    //     LPRewardsContract
+    //   )
+    //
+    //   apy = calculateAPY(
+    //     totalSupply,
+    //     totalLPTokensCreatedInUniswap,
+    //     liquidityRewardPair.name
+    //   )
+    // }
+
     let reward = 0
     let shareOfPoolInPercent = 0
+
     if (gt(lpBalance, 0)) {
       // Fetching available reward balance from `LPRewards` contract.
       reward = yield call(fetchRewardBalance, address, LPRewardsContract)
-      // Fetching total deposited liqidity tokens in the `LPRewards` contract.
-      const totalSupply = yield call(
-        fetchLPRewardsTotalSupply,
-        LPRewardsContract
-      )
+
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
     }
+
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
       payload: {

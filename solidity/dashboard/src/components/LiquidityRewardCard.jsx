@@ -29,9 +29,13 @@ const LiquidityRewardCard = ({
   withdrawLiquidityRewards,
 }) => {
   const formattedApy = useMemo(() => {
-    if (apy === 0) return <span>&#8734;</span>
+    const bn = new BigNumber(apy)
+    if (bn.isEqualTo(0)) return <span>&#8734;</span>
 
-    return `${apy}%`
+    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
+      ? "<0.01%"
+      : bn.multipliedBy(100).decimalPlaces(2, BigNumber.ROUND_DOWN).toString() +
+          "%"
   }, [apy])
 
   const formattedPercentageOfTotalPool = useMemo(() => {
@@ -63,10 +67,10 @@ const LiquidityRewardCard = ({
           View pool
         </a>
       </h4>
-      <div className={"liquidity__info text-grey-60"}>
+      <div className={"liquidity__info text-grey-60 mt-2"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy}
+            {formattedApy}*
           </h2>
           <h6>Annual % yield (APY)</h6>
         </div>
@@ -80,6 +84,9 @@ const LiquidityRewardCard = ({
           )}
           <h6>% of total pool</h6>
         </div>
+      </div>
+      <div className={"text-smaller text-grey-70 text-center mb-2"}>
+        * APY calculated assuming $1M pool
       </div>
       <div className={"liquidity__token-balance"}>
         <span className={"liquidity__token-balance_title text-grey-70"}>
