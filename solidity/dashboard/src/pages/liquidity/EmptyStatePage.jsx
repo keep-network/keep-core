@@ -4,19 +4,20 @@ import EmptyState from "../../components/empty-states/EmptyState"
 import { Skeleton, SkeletonBox } from "../../components/skeletons"
 import * as Icons from "../../components/Icons"
 
-const title = "Check your liquidity rewards balance"
-const subtitle =
+const emptyPageTitle = "Check your liquidity rewards balance"
+const emptyPageSubtitle =
   "This page tracks your liqudity rewards. Connect a wallet to view your available rewards"
 
 const EmptyStatePage = (props) => {
+  const { title, headerTitle, ...propsWithoutTitle } = props
   return (
-    <PageWrapper {...props}>
+    <PageWrapper title={headerTitle} {...propsWithoutTitle}>
       <EmptyState>
         <EmptyState.Skeleton className="empty-page--liquidity-page">
           {Array.from(Array(3)).map(rednerLiquidityCardSkeleton)}
         </EmptyState.Skeleton>
-        <EmptyState.Title text={title} />
-        <EmptyState.Subtitle text={subtitle} />
+        <EmptyState.Title text={emptyPageTitle} />
+        <EmptyState.Subtitle text={emptyPageSubtitle} />
         <EmptyState.ConnectWalletBtn />
       </EmptyState>
     </PageWrapper>

@@ -11,7 +11,7 @@ import {
   withdrawAllLiquidityRewards,
 } from "../../actions/web3"
 
-const LiquidityPage = ({ title }) => {
+const LiquidityPage = ({ headerTitle }) => {
   const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
     (state) => state.liquidityRewards
   )
@@ -50,7 +50,7 @@ const LiquidityPage = ({ title }) => {
   }
 
   return (
-    <PageWrapper title={title}>
+    <PageWrapper title={headerTitle}>
       <CardContainer>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
