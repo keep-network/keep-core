@@ -124,14 +124,14 @@ const LiquidityRewardCard = ({
 
       <SubmitButton
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
-        disabled={!gt(rewardBalance, 0)}
+        disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
         onSubmitAction={(awaitingPromise) =>
           withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
         }
       >
         withdraw all
       </SubmitButton>
-      {gt(rewardBalance, 0) && (
+      {(gt(rewardBalance, 0) || gt(lpBalance, 0)) && (
         <div className={"text-validation text-center"}>
           Withdraw includes rewards and principal
         </div>
