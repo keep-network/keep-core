@@ -22,6 +22,9 @@
     "lint:js": "eslint ${npm_package_config_eslintPaths}",
     "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}"
   },
+  "config": {
+    "eslintPaths": "test/ migrations/ scripts/"
+  },
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "bugs": {
