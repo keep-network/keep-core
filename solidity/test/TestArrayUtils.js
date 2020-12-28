@@ -1,8 +1,7 @@
-const { contract } = require("@openzeppelin/test-environment")
+const {contract} = require("@openzeppelin/test-environment")
 const TestArrayUtils = contract.fromArtifact("TestArrayUtils")
 
 describe("TestArrayUtils", () => {
-
   let arrayUtils
 
   before(async () => {
@@ -10,34 +9,34 @@ describe("TestArrayUtils", () => {
   })
 
   it("runCanHandleEmptyArrayTest()", async () => {
-    await arrayUtils.runCanHandleEmptyArrayTest();
+    await arrayUtils.runCanHandleEmptyArrayTest()
   })
 
   it("runCanRemoveAddressFromSingleElementArrayTest()", async () => {
-    await arrayUtils.runCanRemoveAddressFromSingleElementArrayTest();
+    await arrayUtils.runCanRemoveAddressFromSingleElementArrayTest()
   })
 
   it("runCanRemoveIdenticalAddressesTest()", async () => {
-    await arrayUtils.runCanRemoveIdenticalAddressesTest();
+    await arrayUtils.runCanRemoveIdenticalAddressesTest()
   })
 
   it("runCanRemoveAddressTest()", async () => {
-    await arrayUtils.runCanRemoveAddressTest();
+    await arrayUtils.runCanRemoveAddressTest()
   })
 
   it("runCanHandleEmptyValueArrayTest()", async () => {
-    await arrayUtils.runCanHandleEmptyValueArrayTest();
+    await arrayUtils.runCanHandleEmptyValueArrayTest()
   })
 
   it("runCanRemoveValueFromSingleElementArrayTest()", async () => {
-    await arrayUtils.runCanRemoveValueFromSingleElementArrayTest();
+    await arrayUtils.runCanRemoveValueFromSingleElementArrayTest()
   })
 
   it("runCanRemoveIdenticalValuesTest()", async () => {
-    await arrayUtils.runCanRemoveIdenticalValuesTest();
+    await arrayUtils.runCanRemoveIdenticalValuesTest()
   })
 
   it("runCanRemoveValueTest()", async () => {
-    await arrayUtils.runCanRemoveValueTest();
+    await arrayUtils.runCanRemoveValueTest()
   })
 })

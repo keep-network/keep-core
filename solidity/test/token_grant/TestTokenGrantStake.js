@@ -1,13 +1,16 @@
-const { delegateStake, delegateStakeFromGrant } = require('../helpers/delegateStake')
+const {
+  delegateStake,
+  delegateStakeFromGrant,
+} = require("../helpers/delegateStake")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require('../helpers/initContracts')
-const {grantTokens} = require('../helpers/grantTokens');
-const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const {initTokenStaking} = require("../helpers/initContracts")
+const {grantTokens} = require("../helpers/grantTokens")
+const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
 
 const BN = web3.utils.BN
-const chai = require('chai')
-chai.use(require('bn-chai')(BN))
+const chai = require("chai")
+chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
 // Depending on test network increaseTimeTo can be inconsistent and add
@@ -15,80 +18,92 @@ const expect = chai.expect
 // that test times before initialization/undelegation periods end.
 const timeRoundMargin = time.duration.minutes(1)
 
-const KeepToken = contract.fromArtifact('KeepToken');
-const TokenGrant = contract.fromArtifact('TokenGrant');
-const KeepRegistry = contract.fromArtifact("KeepRegistry");
-const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy");
-const GuaranteedMinimumStakingPolicy = contract.fromArtifact("GuaranteedMinimumStakingPolicy");
-const EvilStakingPolicy = contract.fromArtifact("EvilStakingPolicy");
+const KeepToken = contract.fromArtifact("KeepToken")
+const TokenGrant = contract.fromArtifact("TokenGrant")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy")
+const GuaranteedMinimumStakingPolicy = contract.fromArtifact(
+  "GuaranteedMinimumStakingPolicy"
+)
+const EvilStakingPolicy = contract.fromArtifact("EvilStakingPolicy")
 
-describe('TokenGrant/Stake', function() {
+describe("TokenGrant/Stake", function () {
+  let tokenContract
+  let registryContract
+  let grantContract
+  let stakingContract
+  let permissivePolicy
+  let minimumPolicy
+  let evilPolicy
+  let minimumStake
+  let grantAmount
 
-  let tokenContract, registryContract, grantContract, stakingContract,
-    permissivePolicy, minimumPolicy, evilPolicy,
-    minimumStake, grantAmount;
+  const tokenOwner = accounts[0]
+  const grantee = accounts[1]
+  const operatorOne = accounts[2]
+  const operatorTwo = accounts[3]
+  const beneficiary = accounts[4]
+  const authorizer = accounts[5]
+  const revocableGrantee = accounts[6]
+  const evilGrantee = accounts[7]
 
-  const tokenOwner = accounts[0],
-    grantee = accounts[1],
-    operatorOne = accounts[2],
-    operatorTwo = accounts[3],
-    beneficiary = accounts[4],
-    authorizer = accounts[5],
-    revocableGrantee = accounts[6],
-    evilGrantee = accounts[7];
+  let grantId
+  let revocableGrantId
+  let evilGrantId
+  let grantStart
 
-  let grantId;
-  let revocableGrantId;
-  let evilGrantId;
-  let grantStart;
+  const grantUnlockingDuration = time.duration.days(180)
+  const grantCliff = time.duration.days(10)
 
-  const grantUnlockingDuration = time.duration.days(180);
-  const grantCliff = time.duration.days(10);
-
-  const initializationPeriod = time.duration.days(10);
-  let undelegationPeriod;
+  const initializationPeriod = time.duration.days(10)
+  let undelegationPeriod
 
   before(async () => {
-    tokenContract = await KeepToken.new({from: accounts[0]});
-    grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
-    registryContract = await KeepRegistry.new({from: accounts[0]});
+    tokenContract = await KeepToken.new({from: accounts[0]})
+    grantContract = await TokenGrant.new(tokenContract.address, {
+      from: accounts[0],
+    })
+    registryContract = await KeepRegistry.new({from: accounts[0]})
     const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
       registryContract.address,
       initializationPeriod,
-      contract.fromArtifact('TokenStakingEscrow'),
-      contract.fromArtifact('TokenStaking')
-    );
-    stakingContract = stakingContracts.tokenStaking;
-    stakingEscrowContract = stakingContracts.tokenStakingEscrow;
+      contract.fromArtifact("TokenStakingEscrow"),
+      contract.fromArtifact("TokenStaking")
+    )
+    stakingContract = stakingContracts.tokenStaking
+    stakingEscrowContract = stakingContracts.tokenStakingEscrow
 
-    await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
+    await grantContract.authorizeStakingContract(stakingContract.address, {
+      from: accounts[0],
+    })
 
     undelegationPeriod = await stakingContract.undelegationPeriod()
 
-    grantStart = await time.latest();
+    grantStart = await time.latest()
     minimumStake = await stakingContract.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()
-    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(stakingContract.address);
+    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(
+      stakingContract.address
+    )
     evilPolicy = await EvilStakingPolicy.new()
-    grantAmount = minimumStake.muln(10),
-
-    // Grant tokens
-    grantId = await grantTokens(
-      grantContract,
-      tokenContract,
-      grantAmount,
-      tokenOwner,
-      grantee,
-      grantUnlockingDuration,
-      grantStart,
-      grantCliff,
-      false,
-      permissivePolicy.address,
-      {from: accounts[0]}
-    );
+    ;(grantAmount = minimumStake.muln(10)),
+      // Grant tokens
+      (grantId = await grantTokens(
+        grantContract,
+        tokenContract,
+        grantAmount,
+        tokenOwner,
+        grantee,
+        grantUnlockingDuration,
+        grantStart,
+        grantCliff,
+        false,
+        permissivePolicy.address,
+        {from: accounts[0]}
+      ))
 
     revocableGrantId = await grantTokens(
       grantContract,
@@ -102,7 +117,7 @@ describe('TokenGrant/Stake', function() {
       true,
       minimumPolicy.address,
       {from: accounts[0]}
-    );
+    )
 
     evilGrantId = await grantTokens(
       grantContract,
@@ -116,8 +131,8 @@ describe('TokenGrant/Stake', function() {
       false,
       evilPolicy.address,
       {from: accounts[0]}
-    );
-  });
+    )
+  })
 
   beforeEach(async () => {
     await createSnapshot()
@@ -167,13 +182,15 @@ describe('TokenGrant/Stake', function() {
   }
 
   it("should update balances when delegating", async () => {
-    let amountToDelegate = minimumStake.muln(5);
-    let remaining = grantAmount.sub(amountToDelegate)
+    const amountToDelegate = minimumStake.muln(5)
+    const remaining = grantAmount.sub(amountToDelegate)
 
-    await delegate(grantee, operatorOne, amountToDelegate);
+    await delegate(grantee, operatorOne, amountToDelegate)
 
-    let availableForStaking = await grantContract.availableToStake.call(grantId)
-    let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
+    const availableForStaking = await grantContract.availableToStake.call(
+      grantId
+    )
+    const operatorBalance = await stakingContract.balanceOf.call(operatorOne)
 
     expect(availableForStaking).to.eq.BN(
       remaining,
@@ -182,21 +199,27 @@ describe('TokenGrant/Stake', function() {
     expect(operatorBalance).to.eq.BN(
       amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );
+    )
   })
 
   it("should allow to delegate, undelegate, and recover grant", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
-    let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const undelegatedAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
     await time.increaseTo(undelegatedAt.add(undelegationPeriod).addn(1))
-    await grantContract.recoverStake(operatorOne);
+    await grantContract.recoverStake(operatorOne)
 
-    let availableForStaking = await stakingEscrowContract.depositedAmount(operatorOne);
-    let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
+    const availableForStaking = await stakingEscrowContract.depositedAmount(
+      operatorOne
+    )
+    const operatorBalance = await stakingContract.balanceOf.call(operatorOne)
 
     expect(availableForStaking).to.eq.BN(
       grantAmount,
@@ -205,16 +228,18 @@ describe('TokenGrant/Stake', function() {
     expect(operatorBalance).to.eq.BN(
       0,
       "Staking amount should be removed from operator balance"
-    );
+    )
   })
 
   it("should allow to cancel delegation right away", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount)
 
-    await grantContract.cancelStake(operatorOne, {from: grantee});
+    await grantContract.cancelStake(operatorOne, {from: grantee})
 
-    let availableForStaking = await stakingEscrowContract.depositedAmount.call(operatorOne)
-    let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
+    const availableForStaking = await stakingEscrowContract.depositedAmount.call(
+      operatorOne
+    )
+    const operatorBalance = await stakingContract.balanceOf.call(operatorOne)
 
     expect(availableForStaking).to.eq.BN(
       grantAmount,
@@ -223,19 +248,25 @@ describe('TokenGrant/Stake', function() {
     expect(operatorBalance).to.eq.BN(
       0,
       "Staking amount should be removed from operator balance"
-    );
+    )
   })
 
   it("should allow to cancel delegation just before initialization period is over", async () => {
-    let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const tx = await delegate(grantee, operatorOne, grantAmount)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
 
-    await time.increaseTo(createdAt.add(initializationPeriod).sub(timeRoundMargin))
+    await time.increaseTo(
+      createdAt.add(initializationPeriod).sub(timeRoundMargin)
+    )
 
-    await grantContract.cancelStake(operatorOne, {from: grantee});
+    await grantContract.cancelStake(operatorOne, {from: grantee})
 
-    let availableForStaking = await stakingEscrowContract.depositedAmount.call(operatorOne)
-    let operatorBalance = await stakingContract.balanceOf.call(operatorOne);
+    const availableForStaking = await stakingEscrowContract.depositedAmount.call(
+      operatorOne
+    )
+    const operatorBalance = await stakingContract.balanceOf.call(operatorOne)
 
     expect(availableForStaking).to.eq.BN(
       grantAmount,
@@ -244,29 +275,37 @@ describe('TokenGrant/Stake', function() {
     expect(operatorBalance).to.eq.BN(
       0,
       "Staking amount should be removed from operator balance"
-    );
+    )
   })
 
   it("should not allow to cancel delegation after initialization period is over", async () => {
-    let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const tx = await delegate(grantee, operatorOne, grantAmount)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
     await expectRevert(
       grantContract.cancelStake(operatorOne, {from: grantee}),
       "Initialized stake"
-    );
+    )
   })
 
   it("should not allow to recover stake before undelegation period is over", async () => {
     let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
-    let undelegatedAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
-    await time.increaseTo(undelegatedAt.add(undelegationPeriod).sub(timeRoundMargin));
+    const undelegatedAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
+    await time.increaseTo(
+      undelegatedAt.add(undelegationPeriod).sub(timeRoundMargin)
+    )
 
     await expectRevert(
       stakingContract.recoverStake(operatorOne),
@@ -276,11 +315,13 @@ describe('TokenGrant/Stake', function() {
 
   it("should not allow to delegate to the same operator after recovering stake", async () => {
     let tx = await delegate(grantee, operatorOne, minimumStake)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     tx = await grantContract.undelegate(operatorOne, {from: grantee})
     await time.increaseTo(createdAt.add(grantUnlockingDuration))
-    await grantContract.recoverStake(operatorOne, {from: grantee});
+    await grantContract.recoverStake(operatorOne, {from: grantee})
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
@@ -290,7 +331,7 @@ describe('TokenGrant/Stake', function() {
 
   it("should not allow to delegate to the same operator after cancelling stake", async () => {
     await delegate(grantee, operatorOne, minimumStake)
-    await grantContract.cancelStake(operatorOne, {from: grantee});
+    await grantContract.cancelStake(operatorOne, {from: grantee})
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
@@ -306,14 +347,16 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should allow to delegate to two different operators", async () => {
-    let amountToDelegate = minimumStake.muln(5);
+    const amountToDelegate = minimumStake.muln(5)
 
-    await delegate(grantee, operatorOne, amountToDelegate);
-    await delegate(grantee, operatorTwo, amountToDelegate);
+    await delegate(grantee, operatorOne, amountToDelegate)
+    await delegate(grantee, operatorTwo, amountToDelegate)
 
-    let availableForStaking = await grantContract.availableToStake.call(grantId)
-    let operatorOneBalance = await stakingContract.balanceOf.call(operatorOne);
-    let operatorTwoBalance = await stakingContract.balanceOf.call(operatorTwo);
+    const availableForStaking = await grantContract.availableToStake.call(
+      grantId
+    )
+    const operatorOneBalance = await stakingContract.balanceOf.call(operatorOne)
+    const operatorTwoBalance = await stakingContract.balanceOf.call(operatorTwo)
 
     expect(availableForStaking).to.eq.BN(
       grantAmount.sub(amountToDelegate).sub(amountToDelegate),
@@ -322,19 +365,19 @@ describe('TokenGrant/Stake', function() {
     expect(operatorOneBalance).to.eq.BN(
       amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );
+    )
     expect(operatorTwoBalance).to.eq.BN(
       amountToDelegate,
       "Staking amount should be added to the operator balance"
-    );
+    )
   })
 
   it("should not allow to delegate to not authorized staking contract", async () => {
     const delegation = Buffer.concat([
-      Buffer.from(beneficiary.substr(2), 'hex'),
-      Buffer.from(operatorOne.substr(2), 'hex'),
-      Buffer.from(authorizer.substr(2), 'hex')
-    ]);
+      Buffer.from(beneficiary.substr(2), "hex"),
+      Buffer.from(operatorOne.substr(2), "hex"),
+      Buffer.from(authorizer.substr(2), "hex"),
+    ])
 
     const notAuthorizedContract = "0x9E8E3487dCCd6a50045792fAfe8Ac71600B649a9"
 
@@ -354,28 +397,30 @@ describe('TokenGrant/Stake', function() {
     await expectRevert(
       delegate(operatorOne, operatorOne, grantAmount),
       "Only grantee of the grant can stake it."
-    );
+    )
   })
 
   it("should let operator cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount, grantId);
+    await delegate(grantee, operatorOne, grantAmount, grantId)
 
     await grantContract.cancelStake(operatorOne, {from: operatorOne})
     // ok, no exception
   })
 
   it("should not allow third party to cancel delegation", async () => {
-    await delegate(grantee, operatorOne, grantAmount);
+    await delegate(grantee, operatorOne, grantAmount)
 
     await expectRevert(
       grantContract.cancelStake(operatorOne, {from: operatorTwo}),
       "Only operator or grantee can cancel the delegation."
-    );
+    )
   })
 
   it("should let operator undelegate", async () => {
-    let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const tx = await delegate(grantee, operatorOne, grantAmount)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     await grantContract.undelegate(operatorOne, {from: operatorOne})
@@ -383,8 +428,10 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should not allow third party to undelegate", async () => {
-    let tx = await delegate(grantee, operatorOne, grantAmount)
-    let createdAt = web3.utils.toBN((await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp)
+    const tx = await delegate(grantee, operatorOne, grantAmount)
+    const createdAt = web3.utils.toBN(
+      (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
+    )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     await expectRevert(
@@ -394,7 +441,7 @@ describe('TokenGrant/Stake', function() {
   })
 
   it("should allow delegation of revocable grants", async () => {
-    await delegateRevocable(revocableGrantee, operatorTwo, minimumStake);
+    await delegateRevocable(revocableGrantee, operatorTwo, minimumStake)
     // ok, no exceptions
   })
 
@@ -402,11 +449,11 @@ describe('TokenGrant/Stake', function() {
     await expectRevert(
       delegateRevocable(revocableGrantee, operatorTwo, minimumStake.addn(1)),
       "Must have available granted amount to stake."
-    );
+    )
   })
 
   it("should allow delegation of evil grants", async () => {
-    await delegateEvil(evilGrantee, operatorTwo, grantAmount);
+    await delegateEvil(evilGrantee, operatorTwo, grantAmount)
     // ok, no exceptions
   })
 
@@ -414,6 +461,6 @@ describe('TokenGrant/Stake', function() {
     await expectRevert(
       delegateEvil(evilGrantee, operatorTwo, grantAmount.addn(1)),
       "Must have available granted amount to stake."
-    );
+    )
   })
-});
+})

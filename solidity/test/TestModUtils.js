@@ -1,8 +1,7 @@
-const { contract } = require("@openzeppelin/test-environment")
+const {contract} = require("@openzeppelin/test-environment")
 const TestModUtils = contract.fromArtifact("TestModUtils")
 
 describe("ModUtils", () => {
-
   let modUtils
 
   before(async () => {
@@ -10,38 +9,38 @@ describe("ModUtils", () => {
   })
 
   it("runModExponentTest()", async () => {
-    await modUtils.runModExponentTest();
+    await modUtils.runModExponentTest()
   })
 
   it("runLegendreRangeTest()", async () => {
-    await modUtils.runLegendreRangeTest();
+    await modUtils.runLegendreRangeTest()
   })
 
   it("runLegendreListTest()", async () => {
-    await modUtils.runLegendreListTest();
+    await modUtils.runLegendreListTest()
   })
 
   it("runModSqrtOf0Test()", async () => {
-    await modUtils.runModSqrtOf0Test();
+    await modUtils.runModSqrtOf0Test()
   })
 
   it("runModSqrtMultipleOfPTest()", async () => {
-    await modUtils.runModSqrtMultipleOfPTest();
+    await modUtils.runModSqrtMultipleOfPTest()
   })
 
   it("runModSqrtAgainstListTest()", async () => {
-    await modUtils.runModSqrtAgainstListTest();
+    await modUtils.runModSqrtAgainstListTest()
   })
 
   it("runModSqrtAgainstNonSquaresTest()", async () => {
-    await modUtils.runModSqrtAgainstNonSquaresTest();
+    await modUtils.runModSqrtAgainstNonSquaresTest()
   })
 
   it("runModSqrtALessThanPTest()", async () => {
-    await modUtils.runModSqrtALessThanPTest();
+    await modUtils.runModSqrtALessThanPTest()
   })
 
   it("runModSqrtAGreaterThanPTest()", async () => {
-    await modUtils.runModSqrtAGreaterThanPTest();
+    await modUtils.runModSqrtAGreaterThanPTest()
   })
 })

@@ -768,19 +768,19 @@ describe("BatchedPhasedEscrow", () => {
 
       await expectRevert(
         batchedPhasedEscrow.batchedWithdraw(
-          [beneficiary1.address, anotherBeneficiary.address], 
-          [100, 200], {
-          from: drawee,
-        }),
+          [beneficiary1.address, anotherBeneficiary.address],
+          [100, 200],
+          {
+            from: drawee,
+          }
+        ),
         "Beneficiary was not approved"
       )
     })
 
     it("reverts when there are not enough funds in the escrow", async () => {
       await expectRevert.unspecified(
-        batchedPhasedEscrow.batchedWithdraw(
-          beneficiaries, 
-          [100, 200, 301], {
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, [100, 200, 301], {
           from: drawee,
         })
       )
