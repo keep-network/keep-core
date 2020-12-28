@@ -67,7 +67,11 @@ const LiquidityRewardCard = ({
           View pool
         </a>
       </h4>
-      <div className={"liquidity__info text-grey-60 mt-2"}>
+      <div
+        className={`${
+          gt(lpBalance, 0) ? "liquidity__info" : "liquidity__info-locked"
+        } mt-2`}
+      >
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
             {formattedApy}*
@@ -115,7 +119,7 @@ const LiquidityRewardCard = ({
           )
         }
       >
-        add more lp tokens
+        {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
       </SubmitButton>
 
       <SubmitButton
