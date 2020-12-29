@@ -15,6 +15,7 @@ import (
 
 	crand "crypto/rand"
 
+	commonLocal "github.com/keep-network/keep-common/pkg/chain/local"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 	"github.com/keep-network/keep-core/pkg/chain"
@@ -97,7 +98,7 @@ func (c *localChain) BalanceMonitor() (chain.BalanceMonitor, error) {
 }
 
 func (c *localChain) Signing() chain.Signing {
-	return &localSigning{c.operatorKey}
+	return commonLocal.NewSigner(c.operatorKey)
 }
 
 func (c *localChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
