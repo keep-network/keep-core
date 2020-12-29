@@ -6,7 +6,6 @@ LiquidityPage.route = {
   headerTitle: "Liquidity Rewards",
   path: "/liquidity",
   exact: true,
-  withConnectWalletGuard: true,
   emptyStateComponent: EmptyStatePage,
   pages: [],
 }
