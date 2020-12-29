@@ -37,7 +37,7 @@ const LiquidityRewardCard = ({
     } else if (bn.isGreaterThan(999)) {
       return `>999%`
     }
-    return `${bn.decimalPlaces(2)}%`
+    return `${bn.decimalPlaces(2, BigNumber.ROUND_DOWN)}%`
   }, [apy])
 
   const formattedPercentageOfTotalPool = useMemo(() => {
