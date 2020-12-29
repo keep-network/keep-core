@@ -134,7 +134,10 @@ export const renderProgressBarLegendItem = (item, index) => (
 const PercentageLabel = ({ text, className = "" }) => {
   const { value, total } = useProgressBarContext()
   const percentageOfValue = useMemo(
-    () => percentageOf(value, total).toString(),
+    () =>
+      new BigNumber(percentageOf(value, total))
+        .decimalPlaces(2, BigNumber.ROUND_DOWN)
+        .toString(),
     [value, total]
   )
 
