@@ -29,13 +29,15 @@ const LiquidityRewardCard = ({
   withdrawLiquidityRewards,
 }) => {
   const formattedApy = useMemo(() => {
-    const bn = new BigNumber(apy)
-    if (bn.isEqualTo(Infinity)) return <span>&#8734;</span>
-
-    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? "<0.01%"
-      : bn.multipliedBy(100).decimalPlaces(2, BigNumber.ROUND_DOWN).toString() +
-          "%"
+    const bn = new BigNumber(apy).multipliedBy(100)
+    if (bn.isEqualTo(Infinity)) {
+      return <span>&#8734;</span>
+    } else if (bn.isLessThan(0.01) && bn.isGreaterThan(0)) {
+      return "<0.01%"
+    } else if (bn.isGreaterThan(999)) {
+      return `>999%`
+    }
+    return `${bn.decimalPlaces(2)}%`
   }, [apy])
 
   const formattedPercentageOfTotalPool = useMemo(() => {
@@ -70,7 +72,7 @@ const LiquidityRewardCard = ({
       <div className={"liquidity__info text-grey-60 mt-2"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy}*
+            {formattedApy}
           </h2>
           <h6>Annual % yield (APY)</h6>
         </div>
