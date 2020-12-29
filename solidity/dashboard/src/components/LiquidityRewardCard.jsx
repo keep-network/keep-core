@@ -87,9 +87,6 @@ const LiquidityRewardCard = ({
           <h6>% of total pool</h6>
         </div>
       </div>
-      <div className={"text-smaller text-grey-70 text-center mb-2"}>
-        * APY calculated assuming $1M pool
-      </div>
       <div className={"liquidity__token-balance"}>
         <span className={"liquidity__token-balance_title text-grey-70"}>
           Reward
