@@ -68,9 +68,7 @@ const LiquidityRewardCard = ({
         </a>
       </h4>
       <div
-        className={`${
-          gt(lpBalance, 0) ? "liquidity__info" : "liquidity__info-locked"
-        } mt-2`}
+        className={`liquidity__info${gt(lpBalance, 0) ? "" : "--locked"} mt-2`}
       >
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>

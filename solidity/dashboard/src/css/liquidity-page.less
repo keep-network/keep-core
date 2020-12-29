@@ -29,7 +29,7 @@
     margin: 0.3rem 0;
   }
 
-  .liquidity__info, .liquidity__info-locked {
+  .liquidity__info, .liquidity__info--locked {
     display: flex;
     justify-content: center;
 
@@ -46,11 +46,11 @@
     }
   }
 
-  .liquidity__info-locked {
+  .liquidity__info--locked {
     .liquidity__info-tile {
       &:extend(.bg-grey-20);
       .liquidity__info-tile__title {
-        color: #6D6D6D !important;
+        color: @color-grey-60!important;
       }
     }
   }
