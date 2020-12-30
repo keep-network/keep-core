@@ -36,7 +36,7 @@ contract GasPriceOracle is Ownable {
 
     event GasPriceUpdated(uint256 newValue);
 
-    uint256 public constant governanceDelay = 1 hours;
+    uint256 public constant governanceDelay = 1 hours; 
 
     uint256 public gasPrice;
 
@@ -71,7 +71,7 @@ contract GasPriceOracle is Ownable {
         gasPriceChangeInitiated = 0;
 
         emit GasPriceUpdated(gasPrice);
-
+        
         for (uint256 i = 0; i < consumerContracts.length; i++) {
             GasPriceOracleConsumer(consumerContracts[i]).refreshGasPrice();
         }
@@ -89,8 +89,7 @@ contract GasPriceOracle is Ownable {
     /// @param index Index of the consumer contract to be removed.
     function removeConsumerContract(uint256 index) public onlyOwner {
         require(index < consumerContracts.length, "Invalid index");
-        consumerContracts[index] = consumerContracts[consumerContracts.length -
-            1];
+        consumerContracts[index] = consumerContracts[consumerContracts.length - 1];
         consumerContracts.length--;
     }
 

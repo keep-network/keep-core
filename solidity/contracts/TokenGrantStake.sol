@@ -9,11 +9,7 @@ import "./utils/BytesLib.sol";
 
 /// @dev Interface of sender contract for approveAndCall pattern.
 interface tokenSender {
-    function approveAndCall(
-        address _spender,
-        uint256 _value,
-        bytes calldata _extraData
-    ) external;
+    function approveAndCall(address _spender, uint256 _value, bytes calldata _extraData) external;
 }
 
 contract TokenGrantStake {
@@ -34,7 +30,10 @@ contract TokenGrantStake {
         uint256 _grantId,
         address _tokenStaking
     ) public {
-        require(_tokenAddress != address(0x0), "Token address can't be zero.");
+        require(
+            _tokenAddress != address(0x0),
+            "Token address can't be zero."
+        );
         require(
             _tokenStaking != address(0x0),
             "Staking contract address can't be zero."
@@ -46,7 +45,10 @@ contract TokenGrantStake {
         tokenStaking = TokenStaking(_tokenStaking);
     }
 
-    function stake(uint256 _amount, bytes memory _extraData) public onlyGrant {
+    function stake(
+        uint256 _amount,
+        bytes memory _extraData
+    ) public onlyGrant {
         amount = _amount;
         operator = _extraData.toAddress(20);
         tokenSender(address(token)).approveAndCall(
@@ -68,17 +70,16 @@ contract TokenGrantStake {
         return address(tokenStaking);
     }
 
-    function getDetails()
-        public
-        view
-        onlyGrant
-        returns (
-            uint256 _grantId,
-            uint256 _amount,
-            address _tokenStaking
-        )
-    {
-        return (grantId, amount, address(tokenStaking));
+    function getDetails() public view onlyGrant returns (
+        uint256 _grantId,
+        uint256 _amount,
+        address _tokenStaking
+    ) {
+        return (
+            grantId,
+            amount,
+            address(tokenStaking)
+        );
     }
 
     function cancelStake() public onlyGrant returns (uint256) {
@@ -103,7 +104,10 @@ contract TokenGrantStake {
     }
 
     modifier onlyGrant {
-        require(msg.sender == tokenGrant, "For token grant contract only");
+        require(
+            msg.sender == tokenGrant,
+            "For token grant contract only"
+        );
         _;
     }
 }

@@ -14,6 +14,7 @@
 
 pragma solidity 0.5.17;
 
+
 /// @title Keep Random Beacon
 ///
 /// @notice Keep Random Beacon generates verifiable randomness that is resistant
@@ -86,6 +87,7 @@ interface IRandomBeacon {
     /// @return An uint256 representing uniquely generated relay request ID
     function requestRelayEntry() external payable returns (uint256);
 }
+
 
 /// @title Keep Random Beacon Consumer
 ///

@@ -10,6 +10,7 @@ import "./TokenStaking.sol";
 import "./TokenGrantStake.sol";
 import "./GrantStakingPolicy.sol";
 
+
 /// @title TokenGrant
 /// @notice A token grant contract for a specified standard ERC20Burnable token.
 /// Has additional functionality to stake delegate/undelegate token grants.
@@ -25,17 +26,10 @@ contract TokenGrant {
 
     event TokenGrantCreated(uint256 id);
     event TokenGrantWithdrawn(uint256 indexed grantId, uint256 amount);
-    event TokenGrantStaked(
-        uint256 indexed grantId,
-        uint256 amount,
-        address operator
-    );
+    event TokenGrantStaked(uint256 indexed grantId, uint256 amount, address operator);
     event TokenGrantRevoked(uint256 id);
 
-    event StakingContractAuthorized(
-        address indexed grantManager,
-        address stakingContract
-    );
+    event StakingContractAuthorized(address indexed grantManager, address stakingContract);
 
     struct Grant {
         address grantManager; // Token grant manager.
@@ -59,7 +53,7 @@ contract TokenGrant {
 
     // Staking contracts authorized by the given grant manager.
     // grant manager -> staking contract -> authorized?
-    mapping(address => mapping(address => bool)) internal stakingContracts;
+    mapping(address => mapping (address => bool)) internal stakingContracts;
 
     // Token grants.
     mapping(uint256 => Grant) public grants;
@@ -107,12 +101,8 @@ contract TokenGrant {
     /// @notice Gets the stake balance of the specified address.
     /// @param _address The address to query the balance of.
     /// @return An uint256 representing the amount staked by the passed address.
-    function stakeBalanceOf(address _address)
-        public
-        view
-        returns (uint256 balance)
-    {
-        for (uint256 i = 0; i < grantIndices[_address].length; i++) {
+    function stakeBalanceOf(address _address) public view returns (uint256 balance) {
+        for (uint i = 0; i < grantIndices[_address].length; i++) {
             uint256 id = grantIndices[_address][i];
             balance += grants[id].staked;
         }
@@ -131,18 +121,14 @@ contract TokenGrant {
     /// @return revoked A boolean indicating whether the grant has been revoked,
     ///                 which is to say that it is no longer unlocking.
     /// @return grantee The grantee of grant.
-    function getGrant(uint256 _id)
-        public
-        view
-        returns (
-            uint256 amount,
-            uint256 withdrawn,
-            uint256 staked,
-            uint256 revokedAmount,
-            uint256 revokedAt,
-            address grantee
-        )
-    {
+    function getGrant(uint256 _id) public view returns (
+        uint256 amount,
+        uint256 withdrawn,
+        uint256 staked,
+        uint256 revokedAmount,
+        uint256 revokedAt,
+        address grantee
+    ) {
         return (
             grants[_id].amount,
             grants[_id].withdrawn,
@@ -164,17 +150,15 @@ contract TokenGrant {
     ///               will be unlocked, and after which a linear amount based on
     ///               the time elapsed since the start will be unlocked.
     /// @return policy The address of the grant's staking policy.
-    function getGrantUnlockingSchedule(uint256 _id)
-        public
-        view
-        returns (
-            address grantManager,
-            uint256 duration,
-            uint256 start,
-            uint256 cliff,
-            address policy
-        )
-    {
+    function getGrantUnlockingSchedule(
+        uint256 _id
+    ) public view returns (
+        address grantManager,
+        uint256 duration,
+        uint256 start,
+        uint256 cliff,
+        address policy
+    ) {
         return (
             grants[_id].grantManager,
             grants[_id].duration,
@@ -187,22 +171,14 @@ contract TokenGrant {
     /// @notice Gets grant ids of the specified address.
     /// @param _granteeOrGrantManager The address to query.
     /// @return An uint256 array of grant IDs.
-    function getGrants(address _granteeOrGrantManager)
-        public
-        view
-        returns (uint256[] memory)
-    {
+    function getGrants(address _granteeOrGrantManager) public view returns (uint256[] memory) {
         return grantIndices[_granteeOrGrantManager];
     }
 
     /// @notice Gets operator addresses of the specified grantee address.
     /// @param grantee The grantee address.
     /// @return An array of all operators for a given grantee.
-    function getGranteeOperators(address grantee)
-        public
-        view
-        returns (address[] memory)
-    {
+    function getGranteeOperators(address grantee) public view returns (address[] memory) {
         return granteesToOperators[grantee];
     }
 
@@ -211,17 +187,10 @@ contract TokenGrant {
     /// @return grantId ID of the token grant.
     /// @return amount The amount of tokens the given operator delegated.
     /// @return stakingContract The address of staking contract.
-    function getGrantStakeDetails(address operator)
-        public
-        view
-        returns (
-            uint256 grantId,
-            uint256 amount,
-            address stakingContract
-        )
-    {
+    function getGrantStakeDetails(address operator) public view returns (uint256 grantId, uint256 amount, address stakingContract) {
         return grantStakes[operator].getDetails();
     }
+
 
     /// @notice Receives approval of token transfer and creates a token grant with a unlocking
     /// schedule where balance withdrawn to the grantee gradually in a linear fashion until
@@ -238,31 +207,18 @@ contract TokenGrant {
     ///               no tokens will be unlocked until the time `start + cliff`.
     /// revocable (bool) Whether the token grant is revocable or not (1 or 0).
     /// stakingPolicy (address) Address of the staking policy for the grant.
-    function receiveApproval(
-        address _from,
-        uint256 _amount,
-        address _token,
-        bytes memory _extraData
-    ) public {
-        require(
-            ERC20Burnable(_token) == token,
-            "Token contract must be the same one linked to this contract."
-        );
-        require(
-            _amount <= token.balanceOf(_from),
-            "Sender must have enough amount."
-        );
-        (
-            address _grantManager,
-            address _grantee,
-            uint256 _duration,
-            uint256 _start,
-            uint256 _cliffDuration,
-            bool _revocable,
-            address _stakingPolicy
-        ) = abi.decode(
-            _extraData,
-            (address, address, uint256, uint256, uint256, bool, address)
+    function receiveApproval(address _from, uint256 _amount, address _token, bytes memory _extraData) public {
+        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
+        require(_amount <= token.balanceOf(_from), "Sender must have enough amount.");
+        (address _grantManager,
+         address _grantee,
+         uint256 _duration,
+         uint256 _start,
+         uint256 _cliffDuration,
+         bool _revocable,
+         address _stakingPolicy) = abi.decode(
+             _extraData,
+             (address, address, uint256, uint256, uint256, bool, address)
         );
 
         require(_grantee != address(0), "Grantee address can't be zero.");
@@ -277,16 +233,13 @@ contract TokenGrant {
         grants[id] = Grant(
             _grantManager,
             _grantee,
-            0,
-            0,
-            0,
+            0, 0, 0,
             _revocable,
             _amount,
             _duration,
             _start,
             _start.add(_cliffDuration),
-            0,
-            0,
+            0, 0,
             GrantStakingPolicy(_stakingPolicy)
         );
 
@@ -308,18 +261,13 @@ contract TokenGrant {
     /// @param _id Grant ID.
     function withdraw(uint256 _id) public {
         uint256 amount = withdrawable(_id);
-        require(
-            amount > 0,
-            "Grant available to withdraw amount should be greater than zero."
-        );
+        require(amount > 0, "Grant available to withdraw amount should be greater than zero.");
 
         // Update withdrawn amount.
         grants[_id].withdrawn = grants[_id].withdrawn.add(amount);
 
         // Update grantee grants balance.
-        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(
-            amount
-        );
+        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(amount);
 
         // Transfer tokens from this contract balance to the grantee token balance.
         token.safeTransfer(grants[_id].grantee, amount);
@@ -334,17 +282,16 @@ contract TokenGrant {
     /// @param _id Grant ID.
     function unlockedAmount(uint256 _id) public view returns (uint256) {
         Grant storage grant = grants[_id];
-        return
-            (grant.revokedAt != 0)
-                ? // Grant revoked -> return what is remaining
-                grant.amount.sub(grant.revokedAmount)
-                : // Not revoked -> calculate the unlocked amount normally
-                now.getUnlockedAmount(
-                    grant.amount,
-                    grant.duration,
-                    grant.start,
-                    grant.cliff
-                );
+        return (grant.revokedAt != 0)
+            // Grant revoked -> return what is remaining
+            ? grant.amount.sub(grant.revokedAmount)
+            // Not revoked -> calculate the unlocked amount normally
+            : now.getUnlockedAmount(
+                grant.amount,
+                grant.duration,
+                grant.start,
+                grant.cliff
+            );
     }
 
     /// @notice Calculates withdrawable granted amount.
@@ -368,18 +315,9 @@ contract TokenGrant {
     /// the rest are revoked and withdrawable by token grant manager.
     /// @param _id Grant ID.
     function revoke(uint256 _id) public {
-        require(
-            grants[_id].grantManager == msg.sender,
-            "Only grant manager can revoke."
-        );
-        require(
-            grants[_id].revocable,
-            "Grant must be revocable in the first place."
-        );
-        require(
-            grants[_id].revokedAt == 0,
-            "Grant must not be already revoked."
-        );
+        require(grants[_id].grantManager == msg.sender, "Only grant manager can revoke.");
+        require(grants[_id].revocable, "Grant must be revocable in the first place.");
+        require(grants[_id].revokedAt == 0, "Grant must not be already revoked.");
 
         uint256 unlockedAmount = unlockedAmount(_id);
         uint256 revokedAmount = grants[_id].amount.sub(unlockedAmount);
@@ -387,9 +325,7 @@ contract TokenGrant {
         grants[_id].revokedAmount = revokedAmount;
 
         // Update grantee's grants balance.
-        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(
-            revokedAmount
-        );
+        balances[grants[_id].grantee] = balances[grants[_id].grantee].sub(revokedAmount);
         emit TokenGrantRevoked(_id);
     }
 
@@ -415,10 +351,8 @@ contract TokenGrant {
         uint256 totalAmount = grant.amount;
         uint256 staked = grant.staked;
         uint256 granteeWithdrawn = grant.withdrawn;
-        uint256 remainingPresentInGrant = totalAmount
-            .sub(staked)
-            .sub(revokedWithdrawn)
-            .sub(granteeWithdrawn);
+        uint256 remainingPresentInGrant =
+            totalAmount.sub(staked).sub(revokedWithdrawn).sub(granteeWithdrawn);
 
         require(remainingPresentInGrant > 0, "No revoked tokens withdrawable.");
 
@@ -440,16 +374,8 @@ contract TokenGrant {
     /// - Beneficiary address (20 bytes)
     /// - Operator address (20 bytes)
     /// - Authorizer address (20 bytes)
-    function stake(
-        uint256 _id,
-        address _stakingContract,
-        uint256 _amount,
-        bytes memory _extraData
-    ) public {
-        require(
-            grants[_id].grantee == msg.sender,
-            "Only grantee of the grant can stake it."
-        );
+    function stake(uint256 _id, address _stakingContract, uint256 _amount, bytes memory _extraData) public {
+        require(grants[_id].grantee == msg.sender, "Only grantee of the grant can stake it.");
         require(grants[_id].revokedAt == 0, "Revoked grant can not be staked");
         require(
             stakingContracts[grants[_id].grantManager][_stakingContract],
@@ -457,17 +383,11 @@ contract TokenGrant {
         );
 
         // Expecting 60 bytes _extraData for stake delegation.
-        require(
-            _extraData.length == 60,
-            "Stake delegation data must be provided."
-        );
+        require(_extraData.length == 60, "Stake delegation data must be provided.");
         address operator = _extraData.toAddress(20);
 
         // Calculate available amount. Amount of unlocked tokens minus what user already withdrawn and staked.
-        require(
-            _amount <= availableToStake(_id),
-            "Must have available granted amount to stake."
-        );
+        require(_amount <= availableToStake(_id), "Must have available granted amount to stake.");
 
         // Keep staking record.
         TokenGrantStake grantStake = new TokenGrantStake(
@@ -497,9 +417,7 @@ contract TokenGrant {
         Grant storage grant = grants[_grantId];
         // Revoked grants cannot be staked.
         // If the grant isn't revoked, the number of revoked tokens is 0.
-        if (grant.revokedAt != 0) {
-            return 0;
-        }
+        if (grant.revokedAt != 0) { return 0; }
         uint256 amount = grant.amount;
         uint256 withdrawn = grant.withdrawn;
         uint256 remaining = amount.sub(withdrawn);
@@ -558,7 +476,10 @@ contract TokenGrant {
     function cancelRevokedStake(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 grantId = grantStake.getGrantId();
-        require(grants[grantId].revokedAt != 0, "Grant must be revoked");
+        require(
+            grants[grantId].revokedAt != 0,
+            "Grant must be revoked"
+        );
         require(
             msg.sender == grants[grantId].grantManager,
             "Only grant manager can force cancellation of revoked grant stake."
@@ -576,7 +497,10 @@ contract TokenGrant {
     function undelegateRevoked(address _operator) public {
         TokenGrantStake grantStake = grantStakes[_operator];
         uint256 grantId = grantStake.getGrantId();
-        require(grants[grantId].revokedAt != 0, "Grant must be revoked");
+        require(
+            grants[grantId].revokedAt != 0,
+            "Grant must be revoked"
+        );
         require(
             msg.sender == grants[grantId].grantManager,
             "Only grant manager can force undelegation of revoked grant stake"
