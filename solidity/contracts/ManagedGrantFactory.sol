@@ -31,15 +31,9 @@ contract ManagedGrantFactory {
         address policy;
     }
 
-    event ManagedGrantCreated(
-        address grantAddress,
-        address indexed grantee
-    );
+    event ManagedGrantCreated(address grantAddress, address indexed grantee);
 
-    constructor(
-        address _tokenAddress,
-        address _tokenGrant
-    ) public {
+    constructor(address _tokenAddress, address _tokenGrant) public {
         token = KeepToken(_tokenAddress);
         tokenGrant = TokenGrant(_tokenGrant);
     }
@@ -67,14 +61,16 @@ contract ManagedGrantFactory {
         bytes memory _extraData
     ) public {
         require(KeepToken(_token) == token, "Invalid token contract");
-        (address _grantee,
-         uint256 _duration,
-         uint256 _start,
-         uint256 _cliffDuration,
-         bool _revocable,
-         address _policy) = abi.decode(
-             _extraData,
-             (address, uint256, uint256, uint256, bool, address)
+        (
+            address _grantee,
+            uint256 _duration,
+            uint256 _start,
+            uint256 _cliffDuration,
+            bool _revocable,
+            address _policy
+        ) = abi.decode(
+            _extraData,
+            (address, uint256, uint256, uint256, bool, address)
         );
         Params memory params = Params(
             _from,
@@ -125,16 +121,21 @@ contract ManagedGrantFactory {
         return _createGrant(params);
     }
 
-    function _createGrant(
-        Params memory params
-    ) internal returns (address _managedGrant) {
+    function _createGrant(Params memory params)
+        internal
+        returns (address _managedGrant)
+    {
         require(params.grantee != address(0), "Grantee address can't be zero.");
         require(
             params.cliffDuration <= params.duration,
             "Unlocking cliff duration must be less or equal total unlocking duration."
         );
 
-        token.safeTransferFrom(params.grantCreator, address(this), params.amount);
+        token.safeTransferFrom(
+            params.grantCreator,
+            address(this),
+            params.amount
+        );
 
         // Grant ID is predictable in advance
         uint256 grantId = tokenGrant.numGrants();
@@ -158,16 +159,9 @@ contract ManagedGrantFactory {
             params.policy
         );
 
-        token.approveAndCall(
-            address(tokenGrant),
-            params.amount,
-            grantData
-        );
+        token.approveAndCall(address(tokenGrant), params.amount, grantData);
 
-        emit ManagedGrantCreated(
-            _managedGrant,
-            params.grantee
-        );
+        emit ManagedGrantCreated(_managedGrant, params.grantee);
         return _managedGrant;
     }
 }

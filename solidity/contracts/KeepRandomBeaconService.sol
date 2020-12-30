@@ -26,28 +26,33 @@ contract KeepRandomBeaconService is Proxy {
     /// @dev Storage slot with the admin of the contract.
     /// This is the keccak-256 hash of "eip1967.proxy.admin" subtracted by 1.
     /// It is validated in the constructor.
-    bytes32 internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
+    bytes32
+        internal constant ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     /// @dev Storage slot with the address of the current implementation.
     /// This is the keccak-256 hash of "eip1967.proxy.implementation"
     /// subtracted by 1. It is validated in the constructor.
-    bytes32 internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
+    bytes32
+        internal constant IMPLEMENTATION_SLOT = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc;
 
     /// @dev Storage slot with the upgrade time delay. Upgrade time delay
     /// defines a period for implementation upgrade. This is the keccak-256
     /// hash of "network.keep.randombeacon.proxy.upgradeTimeDelay"
     /// subtracted by 1. It is validated in the constructor.
-    bytes32 internal constant UPGRADE_TIME_DELAY_SLOT = 0x73bbd307af06a74c12a4f925288c98f759a1ee8fee7eae47a0c215cb63ef2c6b;
+    bytes32
+        internal constant UPGRADE_TIME_DELAY_SLOT = 0x73bbd307af06a74c12a4f925288c98f759a1ee8fee7eae47a0c215cb63ef2c6b;
 
     /// @dev Storage slot with the new implementation address. This is the
     /// keccak-256 hash of "network.keep.randombeacon.proxy.upgradeImplementation"
     /// subtracted by 1. It is validated in the constructor.
-    bytes32 internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x3c3c1acab6a17c8ef7a1d07995c8ed2942488afd9e13cf89bd5c6e4828160276;
+    bytes32
+        internal constant UPGRADE_IMPLEMENTATION_SLOT = 0x3c3c1acab6a17c8ef7a1d07995c8ed2942488afd9e13cf89bd5c6e4828160276;
 
     /// @dev Storage slot with the implementation address upgrade initiation.
     /// This is the keccak-256 hash of "network.keep.randombeacon.proxy.upgradeInitiatedTimestamp"
     /// subtracted by 1. It is validated in the constructor.
-    bytes32 internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0xb49edbaf3913780c2ef1ff781deec1eb653eab7236ff107428d60052d0f0d18d;
+    bytes32
+        internal constant UPGRADE_INIT_TIMESTAMP_SLOT = 0xb49edbaf3913780c2ef1ff781deec1eb653eab7236ff107428d60052d0f0d18d;
 
     /// @notice Implementation initialization data to be used on the second step
     /// of upgrade.
@@ -62,9 +67,18 @@ contract KeepRandomBeaconService is Proxy {
     constructor(address _implementation, bytes memory _data) public {
         assertSlot(IMPLEMENTATION_SLOT, "eip1967.proxy.implementation");
         assertSlot(ADMIN_SLOT, "eip1967.proxy.admin");
-        assertSlot(UPGRADE_TIME_DELAY_SLOT, "network.keep.randombeacon.proxy.upgradeTimeDelay");
-        assertSlot(UPGRADE_IMPLEMENTATION_SLOT, "network.keep.randombeacon.proxy.upgradeImplementation");
-        assertSlot(UPGRADE_INIT_TIMESTAMP_SLOT, "network.keep.randombeacon.proxy.upgradeInitiatedTimestamp");
+        assertSlot(
+            UPGRADE_TIME_DELAY_SLOT,
+            "network.keep.randombeacon.proxy.upgradeTimeDelay"
+        );
+        assertSlot(
+            UPGRADE_IMPLEMENTATION_SLOT,
+            "network.keep.randombeacon.proxy.upgradeImplementation"
+        );
+        assertSlot(
+            UPGRADE_INIT_TIMESTAMP_SLOT,
+            "network.keep.randombeacon.proxy.upgradeInitiatedTimestamp"
+        );
 
         require(
             _implementation != address(0),
@@ -124,7 +138,7 @@ contract KeepRandomBeaconService is Proxy {
         require(
             /* solium-disable-next-line security/no-block-members */
             block.timestamp.sub(upgradeInitiatedTimestamp()) >=
-            upgradeTimeDelay(),
+                upgradeTimeDelay(),
             "Timer not elapsed"
         );
 

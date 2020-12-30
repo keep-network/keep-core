@@ -58,10 +58,7 @@ contract StakingPortBacker is Ownable {
         address indexed operator,
         uint256 value
     );
-    event StakePaidBack(
-        address indexed owner,
-        address indexed operator
-    );
+    event StakePaidBack(address indexed owner, address indexed operator);
     event TokensWithdrawn(uint256 amount);
 
     /// @notice The maximum allowed time for the token owner to repay the
@@ -122,7 +119,7 @@ contract StakingPortBacker is Ownable {
     /// relationships on the old staking contract that will be allowed to use
     /// the token supply provided by this contract.
     function allowOperators(address[] memory operators) public onlyOwner {
-        for (uint i = 0; i < operators.length; i++) {
+        for (uint256 i = 0; i < operators.length; i++) {
             allowOperator(operators[i]);
         }
     }
@@ -165,7 +162,7 @@ contract StakingPortBacker is Ownable {
             );
             require(
                 msg.sender == grantee ||
-                msg.sender.isManagedGranteeForGrant(grantId, tokenGrant),
+                    msg.sender.isManagedGranteeForGrant(grantId, tokenGrant),
                 "Not authorized"
             );
         }
@@ -263,28 +260,35 @@ contract StakingPortBacker is Ownable {
         emit TokensWithdrawn(amount);
     }
 
-    function getDelegation(address operator) internal view returns (
-        address delegationOwner,
-        bytes memory delegationData
-    ) {
+    function getDelegation(address operator)
+        internal
+        view
+        returns (address delegationOwner, bytes memory delegationData)
+    {
         delegationOwner = oldStakingContract.ownerOf(operator);
         address beneficiary = oldStakingContract.beneficiaryOf(operator);
         address authorizer = oldStakingContract.authorizerOf(operator);
         delegationData = abi.encodePacked(beneficiary, operator, authorizer);
     }
 
-    function getGrantDelegation(address operator) internal view returns(
-        uint256 grantId,
-        address stakingContract,
-        address grantee
-    ) {
+    function getGrantDelegation(address operator)
+        internal
+        view
+        returns (
+            uint256 grantId,
+            address stakingContract,
+            address grantee
+        )
+    {
         // Preliminary check for user's convenience. For non-existing delegations
         // getGrantStakeDetails reverts with no clear message.
         require(
             address(tokenGrant.grantStakes(operator)) != address(0),
             "No grant delegated for the operator"
         );
-        (grantId,,stakingContract) = tokenGrant.getGrantStakeDetails(operator);
-        (,,,,, grantee) = tokenGrant.getGrant(grantId);
+        (grantId, , stakingContract) = tokenGrant.getGrantStakeDetails(
+            operator
+        );
+        (, , , , , grantee) = tokenGrant.getGrant(grantId);
     }
 }
