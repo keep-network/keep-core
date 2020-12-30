@@ -28,7 +28,7 @@ export const getPairData = async (pairId) => {
     }`,
   })
 
-  if (response.data && response.data.errors) {
+  if (response.data?.errors) {
     const error = new Error(
       "Failed fetching data from Uniswap V2 subgraph API."
     )
