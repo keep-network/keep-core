@@ -78,7 +78,7 @@ const LiquidityRewardCard = ({
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
           {isFetching ? (
-            <Skeleton tag="h2" shining color="mint-20" />
+            <Skeleton tag="h2" shining color="color-grey-60" />
           ) : (
             <h2
               className={"liquidity__info-tile__title text-mint-100"}
