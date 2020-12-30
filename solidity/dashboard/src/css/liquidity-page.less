@@ -29,11 +29,12 @@
     margin: 0.3rem 0;
   }
 
-  .liquidity__info {
+  .liquidity__info, .liquidity__info--locked {
     display: flex;
     justify-content: center;
 
     .liquidity__info-tile {
+      transition: background-color 0.5s ease;
       text-align: center;
       border-radius: 8px;
       padding: 1rem;
@@ -43,6 +44,15 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+    }
+  }
+
+  .liquidity__info--locked {
+    .liquidity__info-tile {
+      &:extend(.bg-grey-20);
+      .liquidity__info-tile__title {
+        color: @color-grey-60!important;
+      }
     }
   }
 
