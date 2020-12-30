@@ -35,7 +35,7 @@ const LiquidityRewardCard = ({
     } else if (bn.isLessThan(0.01) && bn.isGreaterThan(0)) {
       return "<0.01%"
     } else if (bn.isGreaterThan(999)) {
-      return `>999%`
+      return ">999%"
     }
     return `${bn.decimalPlaces(2, BigNumber.ROUND_DOWN)}%`
   }, [apy])
