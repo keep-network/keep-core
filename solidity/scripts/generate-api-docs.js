@@ -23,7 +23,8 @@ jsonFiles.forEach((file) => {
   const json = JSON.parse(fs.readFileSync(file, {encoding: "utf8"}))
   let section = "== `" + json.contractName + "`\n\n"
 
-  for (const signature in json.devdoc.methods) {
+  for (let i = 0; i < json.devdoc.methods.length; i++) {
+    const signature = json.devdoc.methods[i]
     const props = json.devdoc.methods[signature]
 
     let subsection = "=== `" + signature + "`\n\n"
@@ -32,7 +33,8 @@ jsonFiles.forEach((file) => {
     }
 
     if (props.params) {
-      for (const paramName in props.params) {
+      for (let j = 0; j < props.params.length; j++) {
+        const paramName = props.params[j]
         const paramDoc = props.params[paramName]
         subsection += `\`${paramName}\`:: ` + paramDoc + "\n"
       }
