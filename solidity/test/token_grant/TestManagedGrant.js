@@ -13,9 +13,6 @@ const KeepToken = contract.fromArtifact("KeepToken")
 const TokenGrant = contract.fromArtifact("TokenGrant")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy")
-const GuaranteedMinimumStakingPolicy = contract.fromArtifact(
-  "GuaranteedMinimumStakingPolicy"
-)
 
 const ManagedGrant = contract.fromArtifact("ManagedGrant")
 
@@ -28,7 +25,6 @@ describe("TokenGrant/ManagedGrant", () => {
   let staking
   let stakingEscrow
   let permissivePolicy
-  let minimumPolicy
   let minimumStake
   let grantAmount
 
@@ -78,7 +74,6 @@ describe("TokenGrant/ManagedGrant", () => {
     minimumStake = await staking.minimumStake()
 
     permissivePolicy = await PermissiveStakingPolicy.new()
-    minimumPolicy = await GuaranteedMinimumStakingPolicy.new(staking.address)
     grantAmount = minimumStake.muln(10)
 
     grantId = await tokenGrant.numGrants()

@@ -25,7 +25,6 @@ describe("TokenGrant/ManagedGrantFactory", () => {
   let tokenGrant
   let staking
   let permissivePolicy
-  let minimumPolicy
   let minimumStake
   let grantAmount
 

@@ -4,11 +4,11 @@ const assert = require("chai").assert
 
 describe("TestToken", function () {
   let token
-  const account_one = accounts[0]
-  const account_two = accounts[1]
+  const accountOne = accounts[0]
+  const accountTwo = accounts[1]
 
   before(async () => {
-    token = await KeepToken.new({from: account_one})
+    token = await KeepToken.new({from: accountOne})
   })
 
   it("sets token details", async function () {
@@ -23,23 +23,23 @@ describe("TestToken", function () {
     const amount = web3.utils.toBN(1000000000)
 
     // Starting balances
-    const account_one_starting_balance = await token.balanceOf.call(account_one)
-    const account_two_starting_balance = await token.balanceOf.call(account_two)
+    const accountOneStartingBalance = await token.balanceOf.call(accountOne)
+    const accountTwoStartingBalance = await token.balanceOf.call(accountTwo)
 
     // Send tokens
-    await token.transfer(account_two, amount, {from: account_one})
+    await token.transfer(accountTwo, amount, {from: accountOne})
 
     // Ending balances
-    const account_one_ending_balance = await token.balanceOf.call(account_one)
-    const account_two_ending_balance = await token.balanceOf.call(account_two)
+    const accountOneEndingBalance = await token.balanceOf.call(accountOne)
+    const accountTwoEndingBalance = await token.balanceOf.call(accountTwo)
 
     assert.equal(
-      account_one_ending_balance.eq(account_one_starting_balance.sub(amount)),
+      accountOneEndingBalance.eq(accountOneStartingBalance.sub(amount)),
       true,
       "Amount wasn't correctly taken from the sender"
     )
     assert.equal(
-      account_two_ending_balance.eq(account_two_starting_balance.add(amount)),
+      accountTwoEndingBalance.eq(accountTwoStartingBalance.add(amount)),
       true,
       "Amount wasn't correctly sent to the receiver"
     )

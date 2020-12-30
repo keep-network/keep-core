@@ -30,13 +30,9 @@ const KeepRandomBeaconOperator = artifacts.require(
 )
 
 module.exports = async function () {
-  let keepToken
-  let tokenStaking
-  let keepRandomBeaconOperator
-
-  keepToken = await KeepToken.deployed()
-  tokenStaking = await TokenStaking.deployed()
-  keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed()
+  const keepToken = await KeepToken.deployed()
+  const tokenStaking = await TokenStaking.deployed()
+  const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed()
 
   const operation = process.argv[4]
   const operator = process.argv[5]

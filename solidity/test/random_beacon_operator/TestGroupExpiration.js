@@ -197,8 +197,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
   // - we start with [AAAAAAAAAAAAAAA]
   // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
   // - we check whether any of active groups is stale and assert it's not
-  it("should not mark group as stale if it is active and\
- there are other expired groups", async function () {
+  it("should not mark group as stale if it is active and there are other expired groups", async function () {
     const groupsCount = 15
     await addGroups(groupsCount)
     await expireGroup(8) // move height to expire first 9 groups (we index from 0)
@@ -218,8 +217,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
   // - we expire the first 10 groups so that we have [EEEEEEEEEEAAAAA]
   // - we mine as many blocks as needed to mark expired groups as stale
   // - we check whether any of active groups is stale and assert it's not
-  it("should not mark group as stale if it is active and\
- there are other stale groups", async function () {
+  it("should not mark group as stale if it is active and there are other stale groups", async function () {
     const groupsCount = 15
     await addGroups(groupsCount)
     await expireGroup(8) // move height to expire first 9 groups (we index from 0)
@@ -249,8 +247,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
   // - group should not be marked as stale since it is not marked as expired
   //   (no group selection was triggered); group can be stale only if it has
   //   been marked as expired
-  it("should not mark group as stale if its expiration time passed but\
- it is not marked as such", async function () {
+  it("should not mark group as stale if its expiration time passed but it is not marked as such", async function () {
     await addGroups(6)
 
     const pubKey = await groups.getGroupPublicKey(0)
@@ -272,8 +269,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
   //   and we run group selection to mark it as such; we have [EAAAAA]
   // - we check whether this group is a stale group and assert it is not since
   //   relay request timeout did not pass since the group expiration block
-  it("should not mark group as stale if it is expired but\
- can be still signing relay entry", async function () {
+  it("should not mark group as stale if it is expired but can be still signing relay entry", async function () {
     await addGroups(6)
 
     const pubKey = await groups.getGroupPublicKey(0)
@@ -292,8 +288,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
   // - we mine as many blocks as defined by relay request timeout
   // - we check whether this group is a stale group and assert it is stale since
   //   relay request timeout did pass since the group expiration block
-  it("should mark group as stale if it is expired and\
- can be no longer signing relay entry", async function () {
+  it("should mark group as stale if it is expired and can be no longer signing relay entry", async function () {
     await addGroups(6)
 
     const pubKey = await groups.getGroupPublicKey(0)
@@ -320,8 +315,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
     await expectRevert(groups.isStaleGroup(pubKey), "Group does not exist")
   })
 
-  it("should allow to add and select new group even if all other\
-groups expired", async () => {
+  it("should allow to add and select new group even if all other groups expired", async () => {
     await addGroups(5)
     const currentBlock = new BN(await web3.eth.getBlockNumber())
     await time.advanceBlockTo(currentBlock.add(groupActiveTime))

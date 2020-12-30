@@ -1,4 +1,3 @@
-const crypto = require("crypto")
 const KeepRandomBeaconServiceImplV1 = artifacts.require(
   "KeepRandomBeaconServiceImplV1.sol"
 )

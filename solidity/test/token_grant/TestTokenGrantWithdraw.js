@@ -146,7 +146,6 @@ describe("TokenGrant/Withdraw", function () {
 
   it("should not allow to withdraw delegated tokens", async () => {
     await time.increaseTo(grantStart.add(grantDuration))
-    const withdrawable = await grantContract.withdrawable(grantId)
     await delegateStakeFromGrant(
       grantContract,
       stakingContract.address,

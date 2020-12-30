@@ -72,20 +72,12 @@ async function initContracts(
   KeepRandomBeaconServiceImplV1,
   KeepRandomBeaconOperator
 ) {
-  let token
-  let registry
-  let stakingContract
-  let serviceContractImplV1
-  let serviceContractProxy
-  let serviceContract
-  let operatorContract
-
   const dkgContributionMargin = 5 // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
   const stakeInitializationPeriod = time.duration.hours(6)
 
-  token = await KeepToken.new({from: accounts[0]})
-  tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]})
-  registry = await KeepRegistry.new({from: accounts[0]})
+  const token = await KeepToken.new({from: accounts[0]})
+  const tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]})
+  const registry = await KeepRegistry.new({from: accounts[0]})
 
   // Initialize staking contract
   const stakingContracts = await initTokenStaking(
@@ -96,10 +88,10 @@ async function initContracts(
     contract.fromArtifact("TokenStakingEscrow"),
     TokenStaking
   )
-  stakingContract = stakingContracts.tokenStaking
+  const stakingContract = stakingContracts.tokenStaking
 
   // Initialize Keep Random Beacon service contract
-  serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({
+  const serviceContractImplV1 = await KeepRandomBeaconServiceImplV1.new({
     from: accounts[0],
   })
 
@@ -109,12 +101,12 @@ async function initContracts(
 
   const gasPriceOracle = await GasPriceOracle.new({from: accounts[0]})
 
-  serviceContractProxy = await KeepRandomBeaconService.new(
+  const serviceContractProxy = await KeepRandomBeaconService.new(
     serviceContractImplV1.address,
     initialize,
     {from: accounts[0]}
   )
-  serviceContract = await KeepRandomBeaconServiceImplV1.at(
+  const serviceContract = await KeepRandomBeaconServiceImplV1.at(
     serviceContractProxy.address
   )
   // Initialize Keep Random Beacon operator contract
@@ -139,7 +131,7 @@ async function initContracts(
     dkgResultVerification.address
   )
   await KeepRandomBeaconOperator.link("Reimbursements", reimbursements.address)
-  operatorContract = await KeepRandomBeaconOperator.new(
+  const operatorContract = await KeepRandomBeaconOperator.new(
     serviceContractProxy.address,
     stakingContract.address,
     registry.address,

@@ -3,7 +3,7 @@ const blsData = require("../helpers/data.js")
 const {initContracts} = require("../helpers/initContracts")
 const assert = require("chai").assert
 const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const {expectRevert} = require("@openzeppelin/test-helpers")
 
 const ServiceContractProxy = contract.fromArtifact("KeepRandomBeaconService")
 
@@ -11,9 +11,8 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
   let serviceContract
   let serviceContractProxy
   let operatorContract
-  const account_one = accounts[0]
-  const account_two = accounts[1]
-  const account_three = accounts[2]
+  const accountOne = accounts[0]
+  const accountTwo = accounts[1]
   let entryFeeEstimate
   let entryFeeBreakdown
 
@@ -58,7 +57,7 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
   it("should fail to request relay entry with not enough ether", async function () {
     await expectRevert(
       serviceContract.methods["requestRelayEntry()"]({
-        from: account_two,
+        from: accountTwo,
         value: 0,
       }),
       "Payment is less than required minimum."
@@ -66,9 +65,9 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
   })
 
   it("should be able to request relay with enough ether", async function () {
-    const initialRequesterBalance = await web3.eth.getBalance(account_two)
+    const initialRequesterBalance = await web3.eth.getBalance(accountTwo)
     await serviceContract.fundRequestSubsidyFeePool({
-      from: account_one,
+      from: accountOne,
       value: 100,
     })
     const requestorSubsidy = web3.utils.toBN(1) // 1% is returned to the requestor.
@@ -79,7 +78,7 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
     const dkgSubmitterReimbursementFee = await operatorContract.dkgSubmitterReimbursementFee()
 
     const tx = await serviceContract.methods["requestRelayEntry()"]({
-      from: account_two,
+      from: accountTwo,
       value: entryFeeEstimate,
     })
     const transactionCost = web3.utils
@@ -98,7 +97,7 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
         .sub(entryFeeEstimate)
         .sub(transactionCost)
         .add(requestorSubsidy)
-        .eq(web3.utils.toBN(await web3.eth.getBalance(account_two))),
+        .eq(web3.utils.toBN(await web3.eth.getBalance(accountTwo))),
       "Requestor should receive 1% subsidy."
     )
 
@@ -147,9 +146,9 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
   })
 
   it("should be able to request relay entry via serviceContractProxy contract with enough ether", async function () {
-    const initialRequesterBalance = await web3.eth.getBalance(account_two)
+    const initialRequesterBalance = await web3.eth.getBalance(accountTwo)
     await serviceContract.fundRequestSubsidyFeePool({
-      from: account_one,
+      from: accountOne,
       value: 100,
     })
     const requestorSubsidy = web3.utils.toBN(1) // 1% is returned to the requestor.
@@ -165,7 +164,7 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
     await web3.eth
       .sendTransaction({
         // if you see a plain 'revert' error, it's probably because of not enough gas
-        from: account_two,
+        from: accountTwo,
         value: entryFeeEstimate,
         gas: 500000,
         gasPrice: gasPrice,
@@ -188,7 +187,7 @@ describe("TestKeepRandomBeaconService/ViaProxy", function () {
         .sub(entryFeeEstimate)
         .sub(transactionCost)
         .add(requestorSubsidy)
-        .eq(web3.utils.toBN(await web3.eth.getBalance(account_two))),
+        .eq(web3.utils.toBN(await web3.eth.getBalance(accountTwo))),
       "Requestor should receive 1% subsidy."
     )
 

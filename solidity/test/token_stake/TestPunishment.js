@@ -29,7 +29,6 @@ describe("TokenStaking/Punishment", () => {
   let minimumStake
 
   const initializationPeriod = time.duration.seconds(10)
-  let undelegationPeriod
 
   before(async () => {
     token = await KeepToken.new({from: owner})
@@ -44,8 +43,6 @@ describe("TokenStaking/Punishment", () => {
       contract.fromArtifact("TokenStakingStub")
     )
     stakingContract = stakingContracts.tokenStaking
-
-    undelegationPeriod = await stakingContract.undelegationPeriod()
 
     await registry.setRegistryKeeper(registryKeeper, {from: owner})
 

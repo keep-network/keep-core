@@ -5,7 +5,6 @@ const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
 
 describe("KeepRandomBeaconOperator/ManageServiceContracts", () => {
-  let serviceContract
   let operatorContract
   let registry
   const serviceContract2 = accounts[1]
@@ -22,7 +21,6 @@ describe("KeepRandomBeaconOperator/ManageServiceContracts", () => {
       contract.fromArtifact("KeepRandomBeaconOperatorStub")
     )
 
-    serviceContract = contracts.serviceContract
     operatorContract = contracts.operatorContract
     registry = contracts.registry
 

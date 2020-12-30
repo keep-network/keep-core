@@ -20,8 +20,8 @@ describe("TokenGrant", function () {
   let unlockingDuration
   let start
   let cliff
-  const grant_manager = accounts[0]
-  const account_two = accounts[1]
+  const grantManager = accounts[0]
+  const accountTwo = accounts[1]
   const grantee = accounts[2]
 
   before(async () => {
@@ -56,18 +56,16 @@ describe("TokenGrant", function () {
     const revocable = true
 
     // Starting balances
-    const grant_manager_starting_balance = await token.balanceOf.call(
-      grant_manager
-    )
-    const account_two_starting_balance = await token.balanceOf.call(account_two)
+    const grantManagerStartingBalance = await token.balanceOf.call(grantManager)
+    const accountTwoStartingBalance = await token.balanceOf.call(accountTwo)
 
     // Grant tokens
     const id = await grantTokens(
       grantContract,
       token,
       amount,
-      grant_manager,
-      account_two,
+      grantManager,
+      accountTwo,
       unlockingDuration,
       start,
       cliff,
@@ -77,28 +75,22 @@ describe("TokenGrant", function () {
     )
 
     // Ending balances
-    const grant_manager_ending_balance = await token.balanceOf.call(
-      grant_manager
-    )
-    let account_two_ending_balance = await token.balanceOf.call(account_two)
-    let account_two_grant_balance = await grantContract.balanceOf.call(
-      account_two
-    )
+    const grantManagerEndingBalance = await token.balanceOf.call(grantManager)
+    let accountTwoEndingBalance = await token.balanceOf.call(accountTwo)
+    let accountTwoGrantBalance = await grantContract.balanceOf.call(accountTwo)
 
     assert.equal(
-      grant_manager_ending_balance.eq(
-        grant_manager_starting_balance.sub(amount)
-      ),
+      grantManagerEndingBalance.eq(grantManagerStartingBalance.sub(amount)),
       true,
       "Amount should be transfered from sender balance"
     )
     assert.equal(
-      account_two_grant_balance.eq(amount),
+      accountTwoGrantBalance.eq(amount),
       true,
       "Amount should be added to the grantee grant balance"
     )
     assert.equal(
-      account_two_ending_balance.eq(account_two_starting_balance),
+      accountTwoEndingBalance.eq(accountTwoStartingBalance),
       true,
       "Grantee main balance should stay unchanged"
     )
@@ -116,10 +108,10 @@ describe("TokenGrant", function () {
     await grantContract.withdraw(id)
 
     // should withdraw some of grant to the main balance
-    account_two_ending_balance = await token.balanceOf.call(account_two)
+    accountTwoEndingBalance = await token.balanceOf.call(accountTwo)
     assert.equal(
-      account_two_ending_balance.lte(
-        account_two_starting_balance.add(amount.div(web3.utils.toBN(2)))
+      accountTwoEndingBalance.lte(
+        accountTwoStartingBalance.add(amount.div(web3.utils.toBN(2)))
       ),
       true,
       "Should withdraw some of the grant to the main balance"
@@ -130,27 +122,25 @@ describe("TokenGrant", function () {
     await grantContract.withdraw(id)
 
     // should withdraw full grant amount to the main balance
-    account_two_ending_balance = await token.balanceOf.call(account_two)
+    accountTwoEndingBalance = await token.balanceOf.call(accountTwo)
     assert.equal(
-      account_two_ending_balance.eq(account_two_starting_balance.add(amount)),
+      accountTwoEndingBalance.eq(accountTwoStartingBalance.add(amount)),
       true,
       "Should withdraw full grant amount to the main balance"
     )
 
-    account_two_grant_balance = await grantContract.balanceOf.call(account_two)
-    assert.equal(account_two_grant_balance, 0, "Grant amount should become 0")
+    accountTwoGrantBalance = await grantContract.balanceOf.call(accountTwo)
+    assert.equal(accountTwoGrantBalance, 0, "Grant amount should become 0")
   })
 
   it("token holder should be able to grant it's tokens to a grantee.", async function () {
-    const grant_manager_starting_balance = await token.balanceOf.call(
-      grant_manager
-    )
+    const grantManagerStartingBalance = await token.balanceOf.call(grantManager)
 
     const id = await grantTokens(
       grantContract,
       token,
       amount,
-      grant_manager,
+      grantManager,
       grantee,
       unlockingDuration,
       start,
@@ -160,14 +150,10 @@ describe("TokenGrant", function () {
       {from: accounts[0]}
     )
 
-    const grant_manager_ending_balance = await token.balanceOf.call(
-      grant_manager
-    )
+    const grantManagerEndingBalance = await token.balanceOf.call(grantManager)
 
     assert.equal(
-      grant_manager_ending_balance.eq(
-        grant_manager_starting_balance.sub(amount)
-      ),
+      grantManagerEndingBalance.eq(grantManagerStartingBalance.sub(amount)),
       true,
       "Amount should be taken out from grant manager main balance."
     )
@@ -198,7 +184,7 @@ describe("TokenGrant", function () {
     const schedule = await grantContract.getGrantUnlockingSchedule(id)
     assert.equal(
       schedule[0],
-      grant_manager,
+      grantManager,
       "Grant should maintain a record of the grant manager."
     )
     assert.equal(
@@ -231,7 +217,7 @@ describe("TokenGrant", function () {
         "address",
       ],
       [
-        account_two,
+        accountTwo,
         grantee,
         unlockingDuration.toNumber(),
         start.toNumber(),
@@ -242,14 +228,14 @@ describe("TokenGrant", function () {
     )
 
     await token.approveAndCall(grantContract.address, amount, grantData, {
-      from: grant_manager,
+      from: grantManager,
     })
     const grantId = (await grantContract.getPastEvents())[0].args[0].toNumber()
 
     const schedule = await grantContract.getGrantUnlockingSchedule(grantId)
     assert.equal(
       schedule[0],
-      account_two,
+      accountTwo,
       "The grant manager should be assignable to a non-sender"
     )
   })

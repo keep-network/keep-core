@@ -1,7 +1,4 @@
-const {
-  delegateStake,
-  delegateStakeFromGrant,
-} = require("../helpers/delegateStake")
+const {delegateStakeFromGrant} = require("../helpers/delegateStake")
 const {contract, accounts, web3} = require("@openzeppelin/test-environment")
 const {expectRevert, time} = require("@openzeppelin/test-helpers")
 const {initTokenStaking} = require("../helpers/initContracts")

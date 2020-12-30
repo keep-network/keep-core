@@ -62,7 +62,6 @@ describe("KeepRandomBeaconOperator/PricingRewards", function () {
   })
 
   it("should correctly evaluate delay factor at the second submission block", async () => {
-    const startBlock = await operatorContract.currentRequestStartBlock()
     const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods["requestRelayEntry()"]({
       value: entryFeeEstimate,

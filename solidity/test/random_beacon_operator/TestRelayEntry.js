@@ -3,7 +3,7 @@ const {initContracts} = require("../helpers/initContracts")
 const assert = require("chai").assert
 const {expectRevert} = require("@openzeppelin/test-helpers")
 const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {contract, accounts} = require("@openzeppelin/test-environment")
 
 describe("KeepRandomBeaconOperator/RelayEntry", () => {
   let serviceContract
