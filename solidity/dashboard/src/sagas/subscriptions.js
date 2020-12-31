@@ -5,11 +5,13 @@ import { getContractsContext, getWeb3Context } from "./utils"
 import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
-import { getEventsFromTransaction } from "../utils/ethereum.utils"
+import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import {
   fetchRewardBalance,
   fetchLPRewardsTotalSupply,
+  calculateAPY,
+  getWrappedTokenConctract,
 } from "../services/liquidity-rewards"
 
 export function* subscribeToKeepTokenTransferEvent() {
@@ -605,9 +607,6 @@ export function* subsribeToECDSARewardsClaimedEvent() {
 
 function* observeLiquidityTokenStakedEvent(liquidityRewardPair) {
   const contracts = yield getContractsContext()
-  const {
-    eth: { defaultAccount },
-  } = yield getWeb3Context()
   const LPRewardsContract = contracts[liquidityRewardPair.contractName]
 
   // Create subscription channel.
@@ -619,32 +618,14 @@ function* observeLiquidityTokenStakedEvent(liquidityRewardPair) {
 
   while (true) {
     try {
-      const {
-        returnValues: { user, amount },
-      } = yield take(contractEventCahnnel)
+      const eventData = yield take(contractEventCahnnel)
 
-      if (isSameEthAddress(defaultAccount, user)) {
-        const totalSupply = yield call(
-          fetchLPRewardsTotalSupply,
-          LPRewardsContract
-        )
-
-        const reward = yield call(
-          fetchRewardBalance,
-          defaultAccount,
-          LPRewardsContract
-        )
-
-        yield put({
-          type: `liquidity_rewards/${liquidityRewardPair.name}_staked`,
-          payload: {
-            amount,
-            totalSupply,
-            reward,
-            liquidityRewardPairName: liquidityRewardPair.name,
-          },
-        })
-      }
+      yield* lpTokensStakedOrWithdrawn(
+        eventData.returnValues,
+        liquidityRewardPair.name,
+        LPRewardsContract,
+        `liquidity_rewards/${liquidityRewardPair.name}_staked`
+      )
     } catch (error) {
       console.error(`Failed subscribing to Staked event`, error)
       contractEventCahnnel.close()
@@ -654,9 +635,6 @@ function* observeLiquidityTokenStakedEvent(liquidityRewardPair) {
 
 function* observeLiquidityTokenWithdrawnEvent(liquidityRewardPair) {
   const contracts = yield getContractsContext()
-  const {
-    eth: { defaultAccount },
-  } = yield getWeb3Context()
   const LPRewardsContract = contracts[liquidityRewardPair.contractName]
 
   // Create subscription channel.
@@ -668,36 +646,54 @@ function* observeLiquidityTokenWithdrawnEvent(liquidityRewardPair) {
 
   while (true) {
     try {
-      const {
-        returnValues: { user, amount },
-      } = yield take(contractEventCahnnel)
-
-      if (isSameEthAddress(defaultAccount, user)) {
-        const totalSupply = yield call(
-          fetchLPRewardsTotalSupply,
-          LPRewardsContract
-        )
-        const reward = yield call(
-          fetchRewardBalance,
-          defaultAccount,
-          LPRewardsContract
-        )
-
-        yield put({
-          type: `liquidity_rewards/${liquidityRewardPair.name}_withdrawn`,
-          payload: {
-            amount,
-            totalSupply,
-            reward,
-            liquidityRewardPairName: liquidityRewardPair.name,
-          },
-        })
-      }
+      const eventData = yield take(contractEventCahnnel)
+      yield* lpTokensStakedOrWithdrawn(
+        eventData.returnValues,
+        liquidityRewardPair.name,
+        LPRewardsContract,
+        `liquidity_rewards/${liquidityRewardPair.name}_withdrawn`
+      )
     } catch (error) {
       console.error(`Failed subscribing to Withdrawn event`, error)
       contractEventCahnnel.close()
     }
   }
+}
+
+function* lpTokensStakedOrWithdrawn(
+  eventValues,
+  liquidityRewardPairName,
+  LPRewardsContract,
+  actionType
+) {
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  const { user, amount } = eventValues
+  const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
+
+  const apy = yield call(calculateAPY, totalSupply, liquidityRewardPairName)
+
+  const reward = yield call(
+    fetchRewardBalance,
+    defaultAccount,
+    LPRewardsContract
+  )
+
+  // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
+  // APY and reward value have changed.
+  yield put({
+    type: actionType,
+    payload: {
+      // Update only if this transacion relates to the current logged account.
+      amount: isSameEthAddress(defaultAccount, user) ? amount : 0,
+      totalSupply,
+      reward,
+      apy,
+      liquidityRewardPairName,
+    },
+  })
 }
 
 function* observeLiquidityRewardPaidEvent(liquidityRewardPair) {
@@ -736,6 +732,53 @@ function* observeLiquidityRewardPaidEvent(liquidityRewardPair) {
   }
 }
 
+function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
+  const contracts = yield getContractsContext()
+  const LPRewardsContract = contracts[liquidityRewardPair.contractName]
+  const WrappedTokenContract = yield call(
+    getWrappedTokenConctract,
+    LPRewardsContract
+  )
+
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    WrappedTokenContract,
+    "Transfer"
+  )
+
+  while (true) {
+    try {
+      const {
+        returnValues: { from, to },
+      } = yield take(contractEventCahnnel)
+
+      // If the `from` is a zero address it means it was a `mint` transaction.
+      // If the `to` is a zero address it means it was a `burn` transaction. For
+      // these casese we need to update APY value because the tootal pool value
+      // of the wrapped token has been increased / decresed.
+      if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
+        yield* updateAPY()
+      }
+    } catch (error) {
+      console.error(`Failed subscribing to Transfer event`, error)
+      contractEventCahnnel.close()
+    }
+  }
+}
+
+function* updateAPY(LPRewardsContract, liquidityRewardPairName) {
+  const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
+
+  const apy = yield call(calculateAPY, totalSupply, liquidityRewardPairName)
+  yield put({
+    type: `liquidity_rewards/${liquidityRewardPairName}_apy_updated`,
+    payload: {
+      apy,
+      liquidityRewardPairName,
+    },
+  })
+}
+
 export function* subscribeToLiquidityRewardsEvents() {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
     yield fork(
@@ -746,6 +789,7 @@ export function* subscribeToLiquidityRewardsEvents() {
         yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
         yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
         yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
+        yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
       },
       {
         name: pairName,

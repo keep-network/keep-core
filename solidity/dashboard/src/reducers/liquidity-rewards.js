@@ -72,6 +72,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
             restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
+          apy: restPayload.apy,
         },
       }
     }
@@ -95,6 +96,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
             restPayload.reward
           ).toString(),
           reward: restPayload.reward,
+          apy: restPayload.apy,
         },
       }
     }
@@ -104,6 +106,14 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           reward: "0",
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_apy_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          apy: restPayload.apy,
         },
       }
     default:
