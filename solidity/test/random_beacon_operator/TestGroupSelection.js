@@ -1,11 +1,11 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const assert = require("chai").assert
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const stakeDelegate = require("../helpers/stakeDelegate")
 const packTicket = require("../helpers/packTicket")
 const generateTickets = require("../helpers/generateTickets")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 
 describe("KeepRandomBeaconOperator/GroupSelection", function () {
   let operatorContract
@@ -70,17 +70,17 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
     await stakingContract.authorizeOperatorContract(
       operator1,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator2,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator3,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
 
     time.increase((await stakingContract.initializationPeriod()).addn(1))
@@ -122,7 +122,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
 
   it("should accept valid ticket with minimum virtual staker index", async () => {
     const ticket = packTicket(tickets1[0].valueHex, 1, operator1)
-    await operatorContract.submitTicket(ticket, {from: operator1})
+    await operatorContract.submitTicket(ticket, { from: operator1 })
 
     const submittedCount = (await operatorContract.submittedTickets()).length
     assert.equal(1, submittedCount, "Ticket should be accepted")
@@ -134,7 +134,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
       tickets1.length,
       operator1
     )
-    await operatorContract.submitTicket(ticket, {from: operator1})
+    await operatorContract.submitTicket(ticket, { from: operator1 })
 
     const submittedCount = (await operatorContract.submittedTickets()).length
     assert.equal(1, submittedCount, "Ticket should be accepted")
@@ -147,7 +147,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
       operator1
     )
     await expectRevert(
-      operatorContract.submitTicket(ticket, {from: operator1}),
+      operatorContract.submitTicket(ticket, { from: operator1 }),
       "Invalid ticket"
     )
   })
@@ -155,7 +155,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
   it("should reject ticket with invalid value", async () => {
     const ticket = packTicket("0x1337", 1, operator1)
     await expectRevert(
-      operatorContract.submitTicket(ticket, {from: operator1}),
+      operatorContract.submitTicket(ticket, { from: operator1 }),
       "Invalid ticket"
     )
   })
@@ -163,7 +163,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
   it("should reject ticket with not matching operator", async () => {
     const ticket = packTicket(tickets1[0].valueHex, 1, operator1)
     await expectRevert(
-      operatorContract.submitTicket(ticket, {from: operator2}),
+      operatorContract.submitTicket(ticket, { from: operator2 }),
       "Invalid ticket"
     )
   })
@@ -171,17 +171,17 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
   it("should reject ticket with not matching virtual staker index", async () => {
     const ticket = packTicket(tickets1[0].valueHex, 2, operator1)
     await expectRevert(
-      operatorContract.submitTicket(ticket, {from: operator1}),
+      operatorContract.submitTicket(ticket, { from: operator1 }),
       "Invalid ticket"
     )
   })
 
   it("should reject duplicate ticket", async () => {
     const ticket = packTicket(tickets1[0].valueHex, 1, operator1)
-    await operatorContract.submitTicket(ticket, {from: operator1})
+    await operatorContract.submitTicket(ticket, { from: operator1 })
 
     await expectRevert(
-      operatorContract.submitTicket(ticket, {from: operator1}),
+      operatorContract.submitTicket(ticket, { from: operator1 }),
       "Duplicate ticket"
     )
   })
@@ -196,7 +196,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
         tickets1[i].virtualStakerIndex,
         operator1
       )
-      await operatorContract.submitTicket(ticket, {from: operator1})
+      await operatorContract.submitTicket(ticket, { from: operator1 })
     }
 
     await time.advanceBlockTo(
@@ -213,9 +213,9 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
 
   it("should select participants by tickets in ascending order", async function () {
     let tickets = [
-      {value: tickets1[0].value, operator: operator1},
-      {value: tickets2[0].value, operator: operator2},
-      {value: tickets3[0].value, operator: operator3},
+      { value: tickets1[0].value, operator: operator1 },
+      { value: tickets2[0].value, operator: operator2 },
+      { value: tickets3[0].value, operator: operator3 },
     ]
 
     // Sort tickets in ascending order
@@ -228,21 +228,21 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
       tickets1[0].virtualStakerIndex,
       operator1
     )
-    await operatorContract.submitTicket(ticket1, {from: operator1})
+    await operatorContract.submitTicket(ticket1, { from: operator1 })
 
     const ticket2 = packTicket(
       tickets2[0].valueHex,
       tickets2[0].virtualStakerIndex,
       operator2
     )
-    await operatorContract.submitTicket(ticket2, {from: operator2})
+    await operatorContract.submitTicket(ticket2, { from: operator2 })
 
     const ticket3 = packTicket(
       tickets3[0].valueHex,
       tickets3[0].virtualStakerIndex,
       operator3
     )
-    await operatorContract.submitTicket(ticket3, {from: operator3})
+    await operatorContract.submitTicket(ticket3, { from: operator3 })
 
     await time.advanceBlockTo(
       submissionTimeout.addn(await web3.eth.getBlockNumber())
@@ -274,7 +274,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
         tickets2[10].virtualStakerIndex,
         operator2
       ),
-      {from: operator2}
+      { from: operator2 }
     )
     await operatorContract.submitTicket(
       packTicket(
@@ -282,7 +282,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
         tickets3[10].virtualStakerIndex,
         operator3
       ),
-      {from: operator3}
+      { from: operator3 }
     )
     await operatorContract.submitTicket(
       packTicket(
@@ -290,7 +290,7 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
         tickets2[11].virtualStakerIndex,
         operator2
       ),
-      {from: operator2}
+      { from: operator2 }
     )
 
     await time.advanceBlockTo(
@@ -302,9 +302,9 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
     await operatorContract.startGroupSelection(seed)
 
     let tickets = [
-      {value: tickets1[0].value, operator: operator1},
-      {value: tickets2[0].value, operator: operator2},
-      {value: tickets3[0].value, operator: operator3},
+      { value: tickets1[0].value, operator: operator1 },
+      { value: tickets2[0].value, operator: operator2 },
+      { value: tickets3[0].value, operator: operator3 },
     ]
 
     // Sort tickets in ascending order
@@ -317,21 +317,21 @@ describe("KeepRandomBeaconOperator/GroupSelection", function () {
       tickets1[0].virtualStakerIndex,
       operator1
     )
-    await operatorContract.submitTicket(ticket1, {from: operator1})
+    await operatorContract.submitTicket(ticket1, { from: operator1 })
 
     const ticket2 = packTicket(
       tickets2[0].valueHex,
       tickets2[0].virtualStakerIndex,
       operator2
     )
-    await operatorContract.submitTicket(ticket2, {from: operator2})
+    await operatorContract.submitTicket(ticket2, { from: operator2 })
 
     const ticket3 = packTicket(
       tickets3[0].valueHex,
       tickets3[0].virtualStakerIndex,
       operator3
     )
-    await operatorContract.submitTicket(ticket3, {from: operator3})
+    await operatorContract.submitTicket(ticket3, { from: operator3 })
 
     await time.advanceBlockTo(
       submissionTimeout.addn(await web3.eth.getBlockNumber())

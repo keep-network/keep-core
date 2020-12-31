@@ -1,7 +1,7 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {testValues} = require("./rewardsData.js")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { testValues } = require("./rewardsData.js")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 
@@ -31,18 +31,18 @@ describe("Rewards", () => {
       testValues.intervalWeights,
       timestamps,
       termLength,
-      {from: owner}
+      { from: owner }
     )
     await fund(testValues.totalRewards)
-    await rewards.markAsFunded({from: owner})
+    await rewards.markAsFunded({ from: owner })
   }
 
   async function fund(amount) {
-    await token.approveAndCall(rewards.address, amount, "0x0", {from: funder})
+    await token.approveAndCall(rewards.address, amount, "0x0", { from: funder })
   }
 
   before(async () => {
-    token = await KeepToken.new({from: funder})
+    token = await KeepToken.new({ from: funder })
   })
 
   beforeEach(async () => {
@@ -90,13 +90,13 @@ describe("Rewards", () => {
         testValues.intervalWeights,
         [],
         termLength,
-        {from: owner}
+        { from: owner }
       )
     })
 
     it("can not be called by non-owner", async () => {
       await expectRevert(
-        newRewards.markAsFunded({from: funder}),
+        newRewards.markAsFunded({ from: funder }),
         "Ownable: caller is not the owner"
       )
     })
@@ -418,7 +418,7 @@ describe("Rewards", () => {
       const timestamps = testValues.rewardTimestamps
       await createKeeps(timestamps)
       await rewards.setCloseTime(timestamps[0])
-      await rewards.receiveReward(0, {from: aliceBeneficiary})
+      await rewards.receiveReward(0, { from: aliceBeneficiary })
       const aliceBalance = await token.balanceOf(aliceBeneficiary)
       expect(aliceBalance.toNumber()).to.equal(66666)
     })
@@ -427,9 +427,9 @@ describe("Rewards", () => {
       const timestamps = testValues.rewardTimestamps
       await createKeeps(timestamps)
       await rewards.setCloseTime(timestamps[0])
-      await rewards.receiveReward(0, {from: aliceBeneficiary})
+      await rewards.receiveReward(0, { from: aliceBeneficiary })
       await expectRevert(
-        rewards.receiveReward(0, {from: aliceBeneficiary}),
+        rewards.receiveReward(0, { from: aliceBeneficiary }),
         "Rewards already claimed"
       )
     })
@@ -437,7 +437,7 @@ describe("Rewards", () => {
     it("doesn't let active keeps claim the reward", async () => {
       await createKeeps(testValues.rewardTimestamps)
       await expectRevert(
-        rewards.receiveReward(0, {from: aliceBeneficiary}),
+        rewards.receiveReward(0, { from: aliceBeneficiary }),
         "Keep is not closed"
       )
     })
@@ -446,7 +446,7 @@ describe("Rewards", () => {
       await createKeeps(testValues.rewardTimestamps)
       await rewards.terminate(0)
       await expectRevert(
-        rewards.receiveReward(0, {from: aliceBeneficiary}),
+        rewards.receiveReward(0, { from: aliceBeneficiary }),
         "Keep is not closed"
       )
     })
@@ -471,7 +471,7 @@ describe("Rewards", () => {
       const timestamps = testValues.rewardTimestamps
       await createKeeps(timestamps)
       await rewards.setCloseTime(timestamps[0])
-      await rewards.receiveReward(0, {from: aliceBeneficiary})
+      await rewards.receiveReward(0, { from: aliceBeneficiary })
       assert.equal(
         (await rewards.getPastEvents())[0].event,
         "RewardReceived",
@@ -489,7 +489,7 @@ describe("Rewards", () => {
 
       await rewards.methods["receiveRewards(uint256[])"](
         rewardsReceivingKeeps,
-        {from: aliceBeneficiary}
+        { from: aliceBeneficiary }
       )
       const aliceBalance = await token.balanceOf(aliceBeneficiary)
       // Beneficiary will receive 200,000 / 3 = 66,666 per keep
@@ -504,7 +504,7 @@ describe("Rewards", () => {
       await createKeeps(timestamps)
 
       await rewards.setCloseTime(testValues.rewardTimestamps[0])
-      await rewards.receiveReward(0, {from: aliceBeneficiary}) // allocate rewards
+      await rewards.receiveReward(0, { from: aliceBeneficiary }) // allocate rewards
 
       await rewards.terminate(1)
       const preUnallocated = await rewards.unallocatedRewards()

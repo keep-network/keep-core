@@ -20,7 +20,7 @@ const jsonFiles = [
 ]
 
 jsonFiles.forEach((file) => {
-  const json = JSON.parse(fs.readFileSync(file, {encoding: "utf8"}))
+  const json = JSON.parse(fs.readFileSync(file, { encoding: "utf8" }))
   let section = "== `" + json.contractName + "`\n\n"
 
   for (let i = 0; i < json.devdoc.methods.length; i++) {

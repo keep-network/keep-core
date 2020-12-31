@@ -48,7 +48,7 @@ module.exports = async function () {
       managedGrantFactoryContract.address,
       formatAmount(12300000, 18),
       managedGrantExtraData,
-      {from: owner}
+      { from: owner }
     )
     // Get the address of managed grant contract from an event.
     const managedGrant1Event = (
@@ -58,15 +58,15 @@ module.exports = async function () {
     const managedGrant1 = await ManagedGrant.at(managedGrant1Address)
 
     // Reeasign grantee
-    await managedGrant1.requestGranteeReassignment(newGrantee, {from: owner})
-    await managedGrant1.confirmGranteeReassignment(newGrantee, {from: owner})
+    await managedGrant1.requestGranteeReassignment(newGrantee, { from: owner })
+    await managedGrant1.confirmGranteeReassignment(newGrantee, { from: owner })
 
     // Create a second managed grant
     await token.approveAndCall(
       managedGrantFactoryContract.address,
       formatAmount(456000000, 18),
       managedGrantExtraData,
-      {from: owner}
+      { from: owner }
     )
   } catch (err) {
     console.error("unexpected error:", err)

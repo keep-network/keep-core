@@ -1,9 +1,9 @@
-const {delegateStakeFromGrant} = require("../helpers/delegateStake")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("../helpers/initContracts")
-const {grantTokens} = require("../helpers/grantTokens")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { delegateStakeFromGrant } = require("../helpers/delegateStake")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { grantTokens } = require("../helpers/grantTokens")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -39,11 +39,11 @@ describe("TokenGrant/Withdraw", function () {
   const initializationPeriod = time.duration.seconds(10)
 
   before(async () => {
-    tokenContract = await KeepToken.new({from: accounts[0]})
+    tokenContract = await KeepToken.new({ from: accounts[0] })
     grantContract = await TokenGrant.new(tokenContract.address, {
       from: accounts[0],
     })
-    registryContract = await KeepRegistry.new({from: accounts[0]})
+    registryContract = await KeepRegistry.new({ from: accounts[0] })
     const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
@@ -74,7 +74,7 @@ describe("TokenGrant/Withdraw", function () {
       grantCliff,
       grantRevocable,
       permissivePolicy.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
   })
 

@@ -1,8 +1,8 @@
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const assert = require("chai").assert
-const {contract, accounts} = require("@openzeppelin/test-environment")
+const { contract, accounts } = require("@openzeppelin/test-environment")
 
 describe("KeepRandomBeaconService/PricingFees", function () {
   let serviceContract
@@ -31,7 +31,7 @@ describe("KeepRandomBeaconService/PricingFees", function () {
   })
 
   it("should correctly evaluate entry verification fee", async () => {
-    await operatorContract.setGasPriceCeiling(200, {from: accounts[0]})
+    await operatorContract.setGasPriceCeiling(200, { from: accounts[0] })
     await operatorContract.setEntryVerificationGasEstimate(12)
 
     const fees = await serviceContract.entryFeeBreakdown()
@@ -42,7 +42,7 @@ describe("KeepRandomBeaconService/PricingFees", function () {
   })
 
   it("should correctly evaluate DKG contribution fee", async () => {
-    await operatorContract.setGasPriceCeiling(1234, {from: accounts[0]})
+    await operatorContract.setGasPriceCeiling(1234, { from: accounts[0] })
 
     const fees = await serviceContract.entryFeeBreakdown()
     const dkgContributionFee = fees.dkgContributionFee
@@ -52,7 +52,7 @@ describe("KeepRandomBeaconService/PricingFees", function () {
   })
 
   it("should correctly evaluate entry fee estimate", async () => {
-    await operatorContract.setGasPriceCeiling(200, {from: accounts[0]})
+    await operatorContract.setGasPriceCeiling(200, { from: accounts[0] })
     await operatorContract.setEntryVerificationGasEstimate(12)
     await operatorContract.setGroupSize(13)
     await operatorContract.setGroupMemberBaseReward(3)

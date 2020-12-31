@@ -1,7 +1,7 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
-const {time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
+const { time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
 
 const GasPriceOracle = contract.fromArtifact("GasPriceOracle")
 const GasPriceOracleConsumerStub = contract.fromArtifact(
@@ -21,7 +21,7 @@ describe("GasPriceOracle", () => {
   let oracle
 
   before(async () => {
-    oracle = await GasPriceOracle.new({from: owner})
+    oracle = await GasPriceOracle.new({ from: owner })
   })
 
   beforeEach(async () => {
@@ -35,13 +35,13 @@ describe("GasPriceOracle", () => {
   describe("when updating gas price", async () => {
     it("does not let third party to begin the process", async () => {
       await expectRevert(
-        oracle.beginGasPriceUpdate(123, {from: thirdParty}),
+        oracle.beginGasPriceUpdate(123, { from: thirdParty }),
         "caller is not the owner"
       )
     })
 
     it("lets the owner to begin the process", async () => {
-      await oracle.beginGasPriceUpdate(123, {from: owner})
+      await oracle.beginGasPriceUpdate(123, { from: owner })
       // ok, no revert
     })
 
@@ -53,7 +53,7 @@ describe("GasPriceOracle", () => {
     })
 
     it("does not allow to finalize change before governance delay", async () => {
-      await oracle.beginGasPriceUpdate(123, {from: owner})
+      await oracle.beginGasPriceUpdate(123, { from: owner })
       await time.increase(time.duration.minutes(59))
       await expectRevert(
         oracle.finalizeGasPriceUpdate(),
@@ -63,7 +63,7 @@ describe("GasPriceOracle", () => {
 
     it("updates value when finalizing the change", async () => {
       const newValue = 9129111
-      await oracle.beginGasPriceUpdate(newValue, {from: owner})
+      await oracle.beginGasPriceUpdate(newValue, { from: owner })
       await time.increase(time.duration.minutes(61))
       await oracle.finalizeGasPriceUpdate()
 
@@ -72,7 +72,7 @@ describe("GasPriceOracle", () => {
 
     it("does not allow to finalize the change twice", async () => {
       const newValue = 1111
-      await oracle.beginGasPriceUpdate(newValue, {from: owner})
+      await oracle.beginGasPriceUpdate(newValue, { from: owner })
       await time.increase(time.duration.minutes(61))
       await oracle.finalizeGasPriceUpdate()
       await expectRevert(
@@ -83,7 +83,7 @@ describe("GasPriceOracle", () => {
 
     it("emits an event when finalizing the change", async () => {
       const newValue = web3.utils.toBN(55555)
-      await oracle.beginGasPriceUpdate(newValue, {from: owner})
+      await oracle.beginGasPriceUpdate(newValue, { from: owner })
       await time.increase(time.duration.minutes(61))
       const receipt = await oracle.finalizeGasPriceUpdate()
       await expectEvent(receipt, "GasPriceUpdated", {
@@ -93,10 +93,10 @@ describe("GasPriceOracle", () => {
 
     it("notifies consumer contracts when finalizing the change", async () => {
       const consumer = await GasPriceOracleConsumerStub.new(oracle.address)
-      await oracle.addConsumerContract(consumer.address, {from: owner})
+      await oracle.addConsumerContract(consumer.address, { from: owner })
 
       const newValue = 545666
-      await oracle.beginGasPriceUpdate(newValue, {from: owner})
+      await oracle.beginGasPriceUpdate(newValue, { from: owner })
       await time.increase(time.duration.minutes(61))
       await oracle.finalizeGasPriceUpdate()
 
@@ -108,14 +108,14 @@ describe("GasPriceOracle", () => {
       const consumer2 = await GasPriceOracleConsumerStub.new(oracle.address)
       const consumer3 = await GasPriceOracleConsumerStub.new(oracle.address)
 
-      await oracle.addConsumerContract(consumer1.address, {from: owner})
-      await oracle.addConsumerContract(consumer2.address, {from: owner})
-      await oracle.addConsumerContract(consumer3.address, {from: owner})
+      await oracle.addConsumerContract(consumer1.address, { from: owner })
+      await oracle.addConsumerContract(consumer2.address, { from: owner })
+      await oracle.addConsumerContract(consumer3.address, { from: owner })
 
-      await oracle.removeConsumerContract(1, {from: owner})
+      await oracle.removeConsumerContract(1, { from: owner })
 
       const newValue = 156444
-      await oracle.beginGasPriceUpdate(newValue, {from: owner})
+      await oracle.beginGasPriceUpdate(newValue, { from: owner })
       await time.increase(time.duration.minutes(61))
       await oracle.finalizeGasPriceUpdate()
 
@@ -125,11 +125,11 @@ describe("GasPriceOracle", () => {
     })
 
     it("lets to overwrite the pending update", async () => {
-      await oracle.beginGasPriceUpdate(55555, {from: owner})
+      await oracle.beginGasPriceUpdate(55555, { from: owner })
       await time.increase(time.duration.minutes(59))
 
       const overwritten = 66666
-      await oracle.beginGasPriceUpdate(overwritten, {from: owner})
+      await oracle.beginGasPriceUpdate(overwritten, { from: owner })
 
       expect(await oracle.newGasPrice()).to.eq.BN(overwritten)
       expect(await oracle.gasPriceChangeInitiated()).to.eq.BN(
@@ -147,30 +147,30 @@ describe("GasPriceOracle", () => {
     it("does not allow third party to add new consumer contract", async () => {
       const consumer = await GasPriceOracleConsumerStub.new(oracle.address)
       await expectRevert(
-        oracle.addConsumerContract(consumer.address, {from: thirdParty}),
+        oracle.addConsumerContract(consumer.address, { from: thirdParty }),
         "Ownable: caller is not the owner."
       )
     })
 
     it("allows the owner to add new consumer contract", async () => {
       const consumer = await GasPriceOracleConsumerStub.new(oracle.address)
-      await oracle.addConsumerContract(consumer.address, {from: owner})
+      await oracle.addConsumerContract(consumer.address, { from: owner })
       // ok, no revert
     })
 
     it("does not allow third party to remove consumer contract", async () => {
       const consumer = await GasPriceOracleConsumerStub.new(oracle.address)
-      await oracle.addConsumerContract(consumer.address, {from: owner})
+      await oracle.addConsumerContract(consumer.address, { from: owner })
       await expectRevert(
-        oracle.removeConsumerContract(0, {from: thirdParty}),
+        oracle.removeConsumerContract(0, { from: thirdParty }),
         "Ownable: caller is not the owner."
       )
     })
 
     it("allows the owner to remove consumer contract", async () => {
       const consumer = await GasPriceOracleConsumerStub.new(oracle.address)
-      await oracle.addConsumerContract(consumer.address, {from: owner})
-      await oracle.removeConsumerContract(0, {from: owner})
+      await oracle.addConsumerContract(consumer.address, { from: owner })
+      await oracle.removeConsumerContract(0, { from: owner })
       // ok, no revert
     })
 
@@ -179,11 +179,11 @@ describe("GasPriceOracle", () => {
       const consumer2 = await GasPriceOracleConsumerStub.new(oracle.address)
       const consumer3 = await GasPriceOracleConsumerStub.new(oracle.address)
 
-      await oracle.addConsumerContract(consumer1.address, {from: owner})
-      await oracle.addConsumerContract(consumer2.address, {from: owner})
-      await oracle.addConsumerContract(consumer3.address, {from: owner})
+      await oracle.addConsumerContract(consumer1.address, { from: owner })
+      await oracle.addConsumerContract(consumer2.address, { from: owner })
+      await oracle.addConsumerContract(consumer3.address, { from: owner })
 
-      await oracle.removeConsumerContract(1, {from: owner})
+      await oracle.removeConsumerContract(1, { from: owner })
 
       const consumers = await oracle.getConsumerContracts()
       assert.equal(consumers.length, 2)

@@ -1,6 +1,6 @@
-const {contract, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { contract, web3 } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const BN = web3.utils.BN
 const chai = require("chai")

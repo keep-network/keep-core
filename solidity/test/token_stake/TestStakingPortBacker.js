@@ -1,7 +1,11 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("../helpers/initContracts")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const {
+  expectRevert,
+  expectEvent,
+  time,
+} = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const {
   grantTokens,
@@ -71,22 +75,22 @@ describe("TokenStaking/StakingPortBacker", () => {
     // Transfer 50% of all tokens to grant manager and 1% of tokens
     // to token owner (account delegating liquid tokens in tests).
     //
-    token = await KeepToken.new({from: deployer})
+    token = await KeepToken.new({ from: deployer })
     const allTokens = await token.balanceOf(deployer)
-    await token.transfer(grantManager, allTokens.divn(2), {from: deployer})
-    await token.transfer(tokenOwner, allTokens.divn(100), {from: deployer})
+    await token.transfer(grantManager, allTokens.divn(2), { from: deployer })
+    await token.transfer(tokenOwner, allTokens.divn(100), { from: deployer })
 
     //
     // Deploy TokenGrant, ManagedGrantFactory, KeepRegistry
     //
-    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+    tokenGrant = await TokenGrant.new(token.address, { from: deployer })
     const permissivePolicy = await PermissiveStakingPolicy.new()
     const managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      {from: deployer}
+      { from: deployer }
     )
-    registry = await KeepRegistry.new({from: deployer})
+    registry = await KeepRegistry.new({ from: deployer })
 
     //
     // Deploy TokenStaking that will act as the previous
@@ -130,9 +134,9 @@ describe("TokenStaking/StakingPortBacker", () => {
       tokenGrant.address,
       oldTokenStaking.address,
       newTokenStaking.address,
-      {from: deployer}
+      { from: deployer }
     )
-    await stakingPortBacker.transferOwnership(owner, {from: deployer})
+    await stakingPortBacker.transferOwnership(owner, { from: deployer })
 
     //
     // Create two grants: standard grant and managed grant.
@@ -223,32 +227,32 @@ describe("TokenStaking/StakingPortBacker", () => {
   describe("allowOperator", async () => {
     it("fails when not called by the owner", async () => {
       await expectRevert(
-        stakingPortBacker.allowOperator(operatorOne, {from: deployer}),
+        stakingPortBacker.allowOperator(operatorOne, { from: deployer }),
         "Ownable: caller is not the owner"
       )
       await expectRevert(
-        stakingPortBacker.allowOperator(operatorOne, {from: operatorOne}),
+        stakingPortBacker.allowOperator(operatorOne, { from: operatorOne }),
         "Ownable: caller is not the owner"
       )
       await expectRevert(
-        stakingPortBacker.allowOperator(operatorOne, {from: tokenOwner}),
+        stakingPortBacker.allowOperator(operatorOne, { from: tokenOwner }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("can be called by the owner", async () => {
-      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, { from: owner })
       // ok, no revert
     })
 
     it("lets the allowed operator copy its stake", async () => {
-      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
-      await stakingPortBacker.allowOperator(operatorTwo, {from: owner})
-      await stakingPortBacker.allowOperator(operatorThree, {from: owner})
+      await stakingPortBacker.allowOperator(operatorOne, { from: owner })
+      await stakingPortBacker.allowOperator(operatorTwo, { from: owner })
+      await stakingPortBacker.allowOperator(operatorThree, { from: owner })
 
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
       // ok, no revert
     })
   })
@@ -278,19 +282,19 @@ describe("TokenStaking/StakingPortBacker", () => {
     it("can be called by the owner", async () => {
       await stakingPortBacker.allowOperators(
         [operatorOne, operatorTwo, operatorThree],
-        {from: owner}
+        { from: owner }
       )
     })
 
     it("lets all allowed operators copy their stake", async () => {
       await stakingPortBacker.allowOperators(
         [operatorOne, operatorTwo, operatorThree],
-        {from: owner}
+        { from: owner }
       )
 
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
       // ok, no revert
     })
   })
@@ -299,12 +303,12 @@ describe("TokenStaking/StakingPortBacker", () => {
     beforeEach(async () => {
       await stakingPortBacker.allowOperators(
         [operatorOne, operatorTwo, operatorThree],
-        {from: owner}
+        { from: owner }
       )
     })
 
     it("fails when operator is not staked on the old contract", async () => {
-      await stakingPortBacker.allowOperator(operatorFour, {from: owner})
+      await stakingPortBacker.allowOperator(operatorFour, { from: owner })
       await expectRevert(
         stakingPortBacker.copyStake(operatorFour),
         "No stake on the old staking contract"
@@ -329,7 +333,7 @@ describe("TokenStaking/StakingPortBacker", () => {
     })
 
     it("copies liquid tokens stake to the new staking contract", async () => {
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
 
       expect(await newTokenStaking.beneficiaryOf(operatorOne)).to.equal(
         beneficiaryOne
@@ -346,7 +350,7 @@ describe("TokenStaking/StakingPortBacker", () => {
     })
 
     it("copies grant stake to the new staking contract", async () => {
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
 
       expect(await newTokenStaking.beneficiaryOf(operatorTwo)).to.equal(
         beneficiaryTwo
@@ -364,24 +368,24 @@ describe("TokenStaking/StakingPortBacker", () => {
 
     it("fails when there is no grant delegation for grantee and operator", async () => {
       await expectRevert(
-        stakingPortBacker.copyStake(operatorOne, {from: grantee}),
+        stakingPortBacker.copyStake(operatorOne, { from: grantee }),
         "No grant delegated for the operator"
       )
     })
 
     it("fails when not called by grant delegation owner", async () => {
       await expectRevert(
-        stakingPortBacker.copyStake(operatorTwo, {from: operatorTwo}),
+        stakingPortBacker.copyStake(operatorTwo, { from: operatorTwo }),
         "Not authorized"
       )
       await expectRevert(
-        stakingPortBacker.copyStake(operatorTwo, {from: thirdParty}),
+        stakingPortBacker.copyStake(operatorTwo, { from: thirdParty }),
         "Not authorized"
       )
     })
 
     it("copies managed grant stake to the new staking contract", async () => {
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
 
       expect(await newTokenStaking.beneficiaryOf(operatorThree)).to.equal(
         beneficiaryThree
@@ -398,54 +402,56 @@ describe("TokenStaking/StakingPortBacker", () => {
     })
 
     it("allows to copy stake only one time", async () => {
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
 
       await expectRevert(
-        stakingPortBacker.copyStake(operatorOne, {from: tokenOwner}),
+        stakingPortBacker.copyStake(operatorOne, { from: tokenOwner }),
         "Stake already copied"
       )
       await expectRevert(
-        stakingPortBacker.copyStake(operatorTwo, {from: grantee}),
+        stakingPortBacker.copyStake(operatorTwo, { from: grantee }),
         "Stake already copied"
       )
       await expectRevert(
-        stakingPortBacker.copyStake(operatorThree, {from: managedGrantee}),
+        stakingPortBacker.copyStake(operatorThree, { from: managedGrantee }),
         "Stake already copied"
       )
     })
 
     it("allows to copy stake only one time even if it's been recovered", async () => {
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
 
       await time.increase(time.duration.days(91))
 
-      await stakingPortBacker.undelegate(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.undelegate(operatorTwo, {from: grantee})
-      await stakingPortBacker.undelegate(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.undelegate(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.undelegate(operatorTwo, { from: grantee })
+      await stakingPortBacker.undelegate(operatorThree, {
+        from: managedGrantee,
+      })
 
       const undelegationPeriod = await newTokenStaking.undelegationPeriod()
       await time.increase(undelegationPeriod.addn(1))
 
-      await stakingPortBacker.recoverStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.recoverStake(operatorTwo, {from: grantee})
+      await stakingPortBacker.recoverStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.recoverStake(operatorTwo, { from: grantee })
       await stakingPortBacker.recoverStake(operatorThree, {
         from: managedGrantee,
       })
 
       await expectRevert(
-        stakingPortBacker.copyStake(operatorOne, {from: tokenOwner}),
+        stakingPortBacker.copyStake(operatorOne, { from: tokenOwner }),
         "Stake already copied"
       )
       await expectRevert(
-        stakingPortBacker.copyStake(operatorTwo, {from: grantee}),
+        stakingPortBacker.copyStake(operatorTwo, { from: grantee }),
         "Stake already copied"
       )
       await expectRevert(
-        stakingPortBacker.copyStake(operatorThree, {from: managedGrantee}),
+        stakingPortBacker.copyStake(operatorThree, { from: managedGrantee }),
         "Stake already copied"
       )
     })
@@ -466,25 +472,25 @@ describe("TokenStaking/StakingPortBacker", () => {
     beforeEach(async () => {
       await stakingPortBacker.allowOperators(
         [operatorOne, operatorTwo, operatorThree],
-        {from: owner}
+        { from: owner }
       )
 
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
 
       await time.increase(initializationPeriod.addn(1))
     })
 
     it("fails for unknown token", async () => {
-      const anotherToken = await KeepToken.new({from: deployer})
+      const anotherToken = await KeepToken.new({ from: deployer })
       const data = web3.eth.abi.encodeParameters(["address"], [operatorOne])
       await expectRevert(
         anotherToken.approveAndCall(
           stakingPortBacker.address,
           delegatedAmount,
           data,
-          {from: tokenOwner}
+          { from: tokenOwner }
         ),
         "Not a KEEP token"
       )
@@ -497,7 +503,7 @@ describe("TokenStaking/StakingPortBacker", () => {
           stakingPortBacker.address,
           delegatedAmount.subn(1),
           data,
-          {from: tokenOwner}
+          { from: tokenOwner }
         ),
         "Unexpected amount"
       )
@@ -510,7 +516,7 @@ describe("TokenStaking/StakingPortBacker", () => {
           stakingPortBacker.address,
           delegatedAmount.addn(1),
           data,
-          {from: tokenOwner}
+          { from: tokenOwner }
         ),
         "Unexpected amount"
       )
@@ -532,7 +538,7 @@ describe("TokenStaking/StakingPortBacker", () => {
           stakingPortBacker.address,
           delegatedAmount,
           web3.eth.abi.encodeParameters(["uint256", "uint256"], [1, 2]),
-          {from: tokenOwner}
+          { from: tokenOwner }
         ),
         "Corrupted input data"
       )
@@ -544,7 +550,7 @@ describe("TokenStaking/StakingPortBacker", () => {
         stakingPortBacker.address,
         delegatedAmount,
         data,
-        {from: tokenOwner}
+        { from: tokenOwner }
       )
       await expectRevert(
         token.approveAndCall(stakingPortBacker.address, delegatedAmount, data, {
@@ -560,7 +566,7 @@ describe("TokenStaking/StakingPortBacker", () => {
         stakingPortBacker.address,
         delegatedAmount,
         data,
-        {from: tokenOwner}
+        { from: tokenOwner }
       )
 
       expect(await newTokenStaking.ownerOf(operatorOne)).to.equal(tokenOwner)
@@ -568,12 +574,12 @@ describe("TokenStaking/StakingPortBacker", () => {
 
     it("changes grant staking relationship owner to grantee", async () => {
       const data = web3.eth.abi.encodeParameters(["address"], [operatorTwo])
-      await token.transfer(grantee, delegatedAmount, {from: deployer})
+      await token.transfer(grantee, delegatedAmount, { from: deployer })
       await token.approveAndCall(
         stakingPortBacker.address,
         delegatedAmount,
         data,
-        {from: grantee}
+        { from: grantee }
       )
 
       expect(await newTokenStaking.ownerOf(operatorTwo)).to.equal(grantee)
@@ -581,12 +587,12 @@ describe("TokenStaking/StakingPortBacker", () => {
 
     it("changes managed grant staking relationship owner to managed grantee", async () => {
       const data = web3.eth.abi.encodeParameters(["address"], [operatorThree])
-      await token.transfer(managedGrantee, delegatedAmount, {from: deployer})
+      await token.transfer(managedGrantee, delegatedAmount, { from: deployer })
       await token.approveAndCall(
         stakingPortBacker.address,
         delegatedAmount,
         data,
-        {from: managedGrantee}
+        { from: managedGrantee }
       )
 
       expect(await newTokenStaking.ownerOf(operatorThree)).to.equal(
@@ -614,11 +620,13 @@ describe("TokenStaking/StakingPortBacker", () => {
       // let's assume third party address is the operator contract
       const operatorContract = thirdParty
 
-      await registry.approveOperatorContract(operatorContract, {from: deployer})
+      await registry.approveOperatorContract(operatorContract, {
+        from: deployer,
+      })
       await newTokenStaking.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizerOne}
+        { from: authorizerOne }
       )
 
       const amountToSlash = 10000
@@ -640,7 +648,7 @@ describe("TokenStaking/StakingPortBacker", () => {
         stakingPortBacker.address,
         delegatedAmount,
         data,
-        {from: tokenOwner}
+        { from: tokenOwner }
       )
       // ok, no revert - the original copied amount has been paid back
     })
@@ -649,14 +657,14 @@ describe("TokenStaking/StakingPortBacker", () => {
   describe("withdraw", async () => {
     it("fails when not called by the owner", async () => {
       await expectRevert(
-        stakingPortBacker.withdraw(1000, {from: thirdParty}),
+        stakingPortBacker.withdraw(1000, { from: thirdParty }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("allows owner to withdraw tokens", async () => {
       const balanceBefore = await token.balanceOf(owner)
-      await stakingPortBacker.withdraw(9999, {from: owner})
+      await stakingPortBacker.withdraw(9999, { from: owner })
       const balanceAfter = await token.balanceOf(owner)
 
       expect(balanceAfter.sub(balanceBefore)).to.eq.BN(9999)
@@ -667,46 +675,50 @@ describe("TokenStaking/StakingPortBacker", () => {
     beforeEach(async () => {
       await stakingPortBacker.allowOperators(
         [operatorOne, operatorTwo, operatorThree],
-        {from: owner}
+        { from: owner }
       )
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.copyStake(operatorTwo, {from: grantee})
-      await stakingPortBacker.copyStake(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.copyStake(operatorTwo, { from: grantee })
+      await stakingPortBacker.copyStake(operatorThree, { from: managedGrantee })
 
       await time.increase(initializationPeriod.addn(1))
     })
 
     it("fails when not called by the relationship owner or operator", async () => {
       await expectRevert(
-        stakingPortBacker.undelegate(operatorOne, {from: owner}),
+        stakingPortBacker.undelegate(operatorOne, { from: owner }),
         "Not authorized"
       )
       await expectRevert(
-        stakingPortBacker.undelegate(operatorOne, {from: grantee}),
+        stakingPortBacker.undelegate(operatorOne, { from: grantee }),
         "Not authorized"
       )
       await expectRevert(
-        stakingPortBacker.undelegate(operatorTwo, {from: tokenOwner}),
+        stakingPortBacker.undelegate(operatorTwo, { from: tokenOwner }),
         "Not authorized"
       )
     })
 
     it("can be called by the relationship owner", async () => {
-      await stakingPortBacker.undelegate(operatorOne, {from: tokenOwner})
-      await stakingPortBacker.undelegate(operatorTwo, {from: grantee})
-      await stakingPortBacker.undelegate(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.undelegate(operatorOne, { from: tokenOwner })
+      await stakingPortBacker.undelegate(operatorTwo, { from: grantee })
+      await stakingPortBacker.undelegate(operatorThree, {
+        from: managedGrantee,
+      })
       // ok, no revert
     })
 
     it("can be called by the operator", async () => {
-      await stakingPortBacker.undelegate(operatorOne, {from: operatorOne})
-      await stakingPortBacker.undelegate(operatorTwo, {from: operatorTwo})
-      await stakingPortBacker.undelegate(operatorThree, {from: operatorThree})
+      await stakingPortBacker.undelegate(operatorOne, { from: operatorOne })
+      await stakingPortBacker.undelegate(operatorTwo, { from: operatorTwo })
+      await stakingPortBacker.undelegate(operatorThree, { from: operatorThree })
       // ok, no revert
     })
 
     it("undelegates stake from the operator", async () => {
-      await stakingPortBacker.undelegate(operatorThree, {from: managedGrantee})
+      await stakingPortBacker.undelegate(operatorThree, {
+        from: managedGrantee,
+      })
       const delegationInfo = await newTokenStaking.getDelegationInfo(
         operatorThree
       )
@@ -717,13 +729,13 @@ describe("TokenStaking/StakingPortBacker", () => {
 
   describe("forceUndelegate", async () => {
     beforeEach(async () => {
-      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.allowOperator(operatorOne, { from: owner })
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
     })
 
     it("fails when not called by the owner", async () => {
       await expectRevert(
-        stakingPortBacker.forceUndelegate(operatorOne, {from: operatorOne}),
+        stakingPortBacker.forceUndelegate(operatorOne, { from: operatorOne }),
         "Ownable: caller is not the owner"
       )
     })
@@ -731,14 +743,14 @@ describe("TokenStaking/StakingPortBacker", () => {
     it("fails when the maximum backing duration has not passed yet", async () => {
       await time.increase(time.duration.days(59))
       await expectRevert(
-        stakingPortBacker.forceUndelegate(operatorOne, {from: owner}),
+        stakingPortBacker.forceUndelegate(operatorOne, { from: owner }),
         "Maximum allowed backing duration not exceeded yet"
       )
     })
 
     it("undelegates stake from the operator", async () => {
       await time.increase(time.duration.days(91))
-      await stakingPortBacker.forceUndelegate(operatorOne, {from: owner})
+      await stakingPortBacker.forceUndelegate(operatorOne, { from: owner })
       const delegationInfo = await newTokenStaking.getDelegationInfo(
         operatorOne
       )
@@ -749,18 +761,18 @@ describe("TokenStaking/StakingPortBacker", () => {
 
   describe("recoverStake", async () => {
     beforeEach(async () => {
-      await stakingPortBacker.allowOperator(operatorOne, {from: owner})
-      await stakingPortBacker.copyStake(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.allowOperator(operatorOne, { from: owner })
+      await stakingPortBacker.copyStake(operatorOne, { from: tokenOwner })
     })
 
     it("allows to recover previously undelegated stake", async () => {
       await time.increase(time.duration.days(91))
-      await stakingPortBacker.undelegate(operatorOne, {from: tokenOwner})
+      await stakingPortBacker.undelegate(operatorOne, { from: tokenOwner })
       const undelegationPeriod = await newTokenStaking.undelegationPeriod()
       await time.increase(undelegationPeriod.addn(1))
 
       const balanceBefore = await token.balanceOf(stakingPortBacker.address)
-      await stakingPortBacker.recoverStake(operatorOne, {from: owner})
+      await stakingPortBacker.recoverStake(operatorOne, { from: owner })
       const balanceAfter = await token.balanceOf(stakingPortBacker.address)
 
       expect(balanceAfter.sub(balanceBefore)).to.eq.BN(delegatedAmount)

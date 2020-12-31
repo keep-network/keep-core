@@ -1,9 +1,13 @@
-const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const {
+  expectRevert,
+  expectEvent,
+  time,
+} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 const blsData = require("../helpers/data.js")
 const stakeDelegate = require("../helpers/stakeDelegate")
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -39,7 +43,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function () {
     await contracts.registry.setServiceContractUpgrader(
       operatorContract.address,
       serviceContractUpgrader,
-      {from: deployer}
+      { from: deployer }
     )
     await operatorContract.addServiceContract(serviceContract, {
       from: serviceContractUpgrader,
@@ -82,17 +86,17 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function () {
     await tokenStaking.authorizeOperatorContract(
       operator1,
       operatorContract.address,
-      {from: operator1}
+      { from: operator1 }
     )
     await tokenStaking.authorizeOperatorContract(
       operator2,
       operatorContract.address,
-      {from: operator2}
+      { from: operator2 }
     )
     await tokenStaking.authorizeOperatorContract(
       operator3,
       operatorContract.address,
-      {from: operator3}
+      { from: operator3 }
     )
     await time.increase((await tokenStaking.initializationPeriod()).addn(1))
 
@@ -166,10 +170,10 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function () {
 
       await requestRelayEntry()
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
-      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      await operatorContract.reportRelayEntryTimeout({ from: thirdParty })
 
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
-      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      await operatorContract.reportRelayEntryTimeout({ from: thirdParty })
 
       expect(await operatorContract.isEntryInProgress()).to.be.false
       const events = await operatorContract.getPastEvents("RelayEntryRequested")
@@ -202,10 +206,10 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function () {
 
       await requestRelayEntry()
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
-      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      await operatorContract.reportRelayEntryTimeout({ from: thirdParty })
 
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
-      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      await operatorContract.reportRelayEntryTimeout({ from: thirdParty })
       // there should be no more groups at this point
 
       const groupCount = await operatorContract.numberOfGroups()
@@ -236,7 +240,7 @@ describe("KeepRandomBeaconOperator/RelayEntryTimeout", function () {
       const timeout = await operatorContract.relayEntryTimeout()
       await requestRelayEntry()
       await time.advanceBlockTo((await time.latestBlock()).add(timeout))
-      await operatorContract.reportRelayEntryTimeout({from: thirdParty})
+      await operatorContract.reportRelayEntryTimeout({ from: thirdParty })
       // 0x111 group gets terminated and bls.groupPubKey group is now asked
       // to provide the signature
 

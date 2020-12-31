@@ -1,7 +1,11 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const {
+  expectRevert,
+  expectEvent,
+  time,
+} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const {
   grantTokens,
@@ -59,17 +63,17 @@ describe("TokenStaking/StakingGrant", () => {
   before(async () => {
     grantStart = await time.latest()
 
-    const registry = await KeepRegistry.new({from: deployer})
-    token = await KeepToken.new({from: deployer})
+    const registry = await KeepRegistry.new({ from: deployer })
+    token = await KeepToken.new({ from: deployer })
     const allTokens = await token.balanceOf(deployer)
-    await token.transfer(grantManager, allTokens, {from: deployer})
+    await token.transfer(grantManager, allTokens, { from: deployer })
 
-    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+    tokenGrant = await TokenGrant.new(token.address, { from: deployer })
     const permissivePolicy = await PermissiveStakingPolicy.new()
     const managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      {from: deployer}
+      { from: deployer }
     )
 
     const stakingContracts = await initTokenStaking(
@@ -151,84 +155,84 @@ describe("TokenStaking/StakingGrant", () => {
 
   describe("cancelStake", async () => {
     it("should let operator cancel delegation", async () => {
-      await tokenStaking.cancelStake(operatorOne, {from: operatorOne})
-      await tokenStaking.cancelStake(operatorTwo, {from: operatorTwo})
+      await tokenStaking.cancelStake(operatorOne, { from: operatorOne })
+      await tokenStaking.cancelStake(operatorTwo, { from: operatorTwo })
       // ok, no revert
     })
 
     it("should let grantee cancel delegation", async () => {
-      await tokenStaking.cancelStake(operatorOne, {from: grantee})
+      await tokenStaking.cancelStake(operatorOne, { from: grantee })
       // ok, no revert
     })
 
     it("should let managed grantee cancel delegation", async () => {
-      await tokenStaking.cancelStake(operatorTwo, {from: managedGrantee})
+      await tokenStaking.cancelStake(operatorTwo, { from: managedGrantee })
       // ok, no revert
     })
 
     it("should let grantee cancel delegation via TokenGrant", async () => {
-      await tokenGrant.cancelStake(operatorOne, {from: grantee})
+      await tokenGrant.cancelStake(operatorOne, { from: grantee })
       // ok, no revert
     })
 
     it("should let managed grantee cancel delegation via ManagedGrant", async () => {
-      await managedGrant.cancelStake(operatorTwo, {from: managedGrantee})
+      await managedGrant.cancelStake(operatorTwo, { from: managedGrantee })
       // ok, no revert
     })
 
     it("should not let operator cancel delegation for another operator", async () => {
       await expectRevert(
-        tokenStaking.cancelStake(operatorOne, {from: operatorTwo}),
+        tokenStaking.cancelStake(operatorOne, { from: operatorTwo }),
         "Not authorized"
       )
     })
 
     it("should not let grantee cancel delegation of another grantee", async () => {
       await expectRevert(
-        tokenStaking.cancelStake(operatorTwo, {from: grantee}),
+        tokenStaking.cancelStake(operatorTwo, { from: grantee }),
         "Not authorized"
       )
     })
 
     it("should not let managed grantee cancel delegation of another grantee", async () => {
       await expectRevert(
-        tokenStaking.cancelStake(operatorOne, {from: managedGrantee}),
+        tokenStaking.cancelStake(operatorOne, { from: managedGrantee }),
         "Not authorized"
       )
     })
 
     it("should not let third party cancel delegation", async () => {
       await expectRevert(
-        tokenStaking.cancelStake(operatorOne, {from: thirdParty}),
+        tokenStaking.cancelStake(operatorOne, { from: thirdParty }),
         "Not authorized"
       )
       await expectRevert(
-        tokenStaking.cancelStake(operatorTwo, {from: thirdParty}),
+        tokenStaking.cancelStake(operatorTwo, { from: thirdParty }),
         "Not authorized"
       )
     })
 
     it("should not let grant manager cancel delegation of non-revoked grant", async () => {
       await expectRevert(
-        tokenStaking.cancelStake(operatorOne, {from: grantManager}),
+        tokenStaking.cancelStake(operatorOne, { from: grantManager }),
         "Not authorized"
       )
     })
 
     it("should let grant manager cancel delegation of revoked grant", async () => {
-      await tokenGrant.revoke(grantId, {from: grantManager})
-      await tokenGrant.revoke(managedGrantId, {from: grantManager})
+      await tokenGrant.revoke(grantId, { from: grantManager })
+      await tokenGrant.revoke(managedGrantId, { from: grantManager })
 
-      await tokenStaking.cancelStake(operatorOne, {from: grantManager})
+      await tokenStaking.cancelStake(operatorOne, { from: grantManager })
       // ok, no revert
 
-      await tokenStaking.cancelStake(operatorTwo, {from: grantManager})
+      await tokenStaking.cancelStake(operatorTwo, { from: grantManager })
       // ok, no revert
     })
 
     it("transfers tokens to escrow", async () => {
-      await tokenStaking.cancelStake(operatorOne, {from: grantee})
-      await tokenStaking.cancelStake(operatorTwo, {from: managedGrantee})
+      await tokenStaking.cancelStake(operatorOne, { from: grantee })
+      await tokenStaking.cancelStake(operatorTwo, { from: managedGrantee })
 
       let deposited = await tokenStakingEscrow.depositedAmount(operatorOne)
       expect(deposited).to.eq.BN(delegatedAmount)
@@ -238,15 +242,15 @@ describe("TokenStaking/StakingGrant", () => {
     })
 
     it("fails if already cancelled", async () => {
-      await tokenStaking.cancelStake(operatorOne, {from: grantee})
+      await tokenStaking.cancelStake(operatorOne, { from: grantee })
       await expectRevert(
-        tokenStaking.cancelStake(operatorOne, {from: grantee}),
+        tokenStaking.cancelStake(operatorOne, { from: grantee }),
         "Stake for the operator already deposited in the escrow"
       )
 
-      await tokenStaking.cancelStake(operatorTwo, {from: managedGrantee})
+      await tokenStaking.cancelStake(operatorTwo, { from: managedGrantee })
       await expectRevert(
-        tokenStaking.cancelStake(operatorTwo, {from: managedGrantee}),
+        tokenStaking.cancelStake(operatorTwo, { from: managedGrantee }),
         "Stake for the operator already deposited in the escrow"
       )
     })
@@ -258,78 +262,78 @@ describe("TokenStaking/StakingGrant", () => {
     })
 
     it("should let operator undelegate", async () => {
-      await tokenStaking.undelegate(operatorOne, {from: operatorOne})
-      await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+      await tokenStaking.undelegate(operatorOne, { from: operatorOne })
+      await tokenStaking.undelegate(operatorTwo, { from: operatorTwo })
       // ok, no revert
     })
 
     it("should let grantee undelegate", async () => {
-      await tokenStaking.undelegate(operatorOne, {from: grantee})
+      await tokenStaking.undelegate(operatorOne, { from: grantee })
       // ok, no revert
     })
 
     it("should let managed grantee undelegate", async () => {
-      await tokenStaking.undelegate(operatorTwo, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorTwo, { from: managedGrantee })
       // ok, no revert
     })
 
     it("should let grantee undelegate via TokenGrant", async () => {
-      await tokenGrant.undelegate(operatorOne, {from: grantee})
+      await tokenGrant.undelegate(operatorOne, { from: grantee })
       // ok, no revert
     })
 
     it("should let managed grantee undelegate via ManagedGrant", async () => {
-      await managedGrant.undelegate(operatorTwo, {from: managedGrantee})
+      await managedGrant.undelegate(operatorTwo, { from: managedGrantee })
       // ok, no revert
     })
 
     it("should not let operator undelegate for another operator", async () => {
       await expectRevert(
-        tokenStaking.undelegate(operatorOne, {from: operatorTwo}),
+        tokenStaking.undelegate(operatorOne, { from: operatorTwo }),
         "Not authorized"
       )
     })
 
     it("should not let grantee undelegate for another grantee", async () => {
       await expectRevert(
-        tokenStaking.undelegate(operatorTwo, {from: grantee}),
+        tokenStaking.undelegate(operatorTwo, { from: grantee }),
         "Not authorized"
       )
     })
 
     it("should not let managed grantee undelegate for another grantee", async () => {
       await expectRevert(
-        tokenStaking.undelegate(operatorOne, {from: managedGrantee}),
+        tokenStaking.undelegate(operatorOne, { from: managedGrantee }),
         "Not authorized"
       )
     })
 
     it("should not let third party undelegate", async () => {
       await expectRevert(
-        tokenStaking.undelegate(operatorOne, {from: thirdParty}),
+        tokenStaking.undelegate(operatorOne, { from: thirdParty }),
         "Not authorized"
       )
       await expectRevert(
-        tokenStaking.undelegate(operatorTwo, {from: thirdParty}),
+        tokenStaking.undelegate(operatorTwo, { from: thirdParty }),
         "Not authorized"
       )
     })
 
     it("should not let grant manager undelegate non-revoked grant", async () => {
       await expectRevert(
-        tokenStaking.undelegate(operatorOne, {from: grantManager}),
+        tokenStaking.undelegate(operatorOne, { from: grantManager }),
         "Not authorized"
       )
     })
 
     it("should let grant manager undelegate revoked grant", async () => {
-      await tokenGrant.revoke(grantId, {from: grantManager})
-      await tokenGrant.revoke(managedGrantId, {from: grantManager})
+      await tokenGrant.revoke(grantId, { from: grantManager })
+      await tokenGrant.revoke(managedGrantId, { from: grantManager })
 
-      await tokenStaking.undelegate(operatorOne, {from: grantManager})
+      await tokenStaking.undelegate(operatorOne, { from: grantManager })
       // ok, no revert
 
-      await tokenStaking.undelegate(operatorTwo, {from: grantManager})
+      await tokenStaking.undelegate(operatorTwo, { from: grantManager })
       // ok, no revert
     })
   })
@@ -338,13 +342,13 @@ describe("TokenStaking/StakingGrant", () => {
     it("transfers tokens to escrow", async () => {
       await time.increase(initializationPeriod.addn(1))
 
-      await tokenStaking.undelegate(operatorOne, {from: operatorOne})
-      await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+      await tokenStaking.undelegate(operatorOne, { from: operatorOne })
+      await tokenStaking.undelegate(operatorTwo, { from: operatorTwo })
 
       await time.increase(undelegationPeriod.addn(1))
 
-      await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
-      await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
+      await tokenStaking.recoverStake(operatorOne, { from: thirdParty })
+      await tokenStaking.recoverStake(operatorTwo, { from: thirdParty })
 
       let deposited = await tokenStakingEscrow.depositedAmount(operatorOne)
       expect(deposited).to.eq.BN(delegatedAmount)
@@ -356,20 +360,20 @@ describe("TokenStaking/StakingGrant", () => {
     it("fails if already recovered", async () => {
       await time.increase(initializationPeriod.addn(1))
 
-      await tokenStaking.undelegate(operatorOne, {from: operatorOne})
-      await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+      await tokenStaking.undelegate(operatorOne, { from: operatorOne })
+      await tokenStaking.undelegate(operatorTwo, { from: operatorTwo })
 
       await time.increase(undelegationPeriod.addn(1))
 
-      await tokenStaking.recoverStake(operatorOne, {from: thirdParty})
+      await tokenStaking.recoverStake(operatorOne, { from: thirdParty })
       await expectRevert(
-        tokenStaking.recoverStake(operatorOne, {from: thirdParty}),
+        tokenStaking.recoverStake(operatorOne, { from: thirdParty }),
         "Stake for the operator already deposited in the escrow"
       )
 
-      await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
+      await tokenStaking.recoverStake(operatorTwo, { from: thirdParty })
       await expectRevert(
-        tokenStaking.recoverStake(operatorTwo, {from: thirdParty}),
+        tokenStaking.recoverStake(operatorTwo, { from: thirdParty }),
         "Stake for the operator already deposited in the escrow"
       )
     })
@@ -388,12 +392,12 @@ describe("TokenStaking/StakingGrant", () => {
     ])
 
     beforeEach(async () => {
-      await tokenStaking.cancelStake(operatorOne, {from: operatorOne})
+      await tokenStaking.cancelStake(operatorOne, { from: operatorOne })
 
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorTwo, {from: operatorTwo})
+      await tokenStaking.undelegate(operatorTwo, { from: operatorTwo })
       await time.increase(undelegationPeriod.addn(1))
-      await tokenStaking.recoverStake(operatorTwo, {from: thirdParty})
+      await tokenStaking.recoverStake(operatorTwo, { from: thirdParty })
     })
 
     it("can be done by grantee", async () => {
@@ -450,7 +454,7 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
 
       const delegationInfo = await tokenStaking.getDelegationInfo(operatorThree)
@@ -469,7 +473,7 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
       let availableAmount = await tokenStakingEscrow.availableAmount(
         operatorOne
@@ -482,7 +486,7 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data4,
-        {from: grantee}
+        { from: grantee }
       )
       availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
       expect(availableAmount).to.eq.BN(0)
@@ -491,7 +495,7 @@ describe("TokenStaking/StakingGrant", () => {
     })
 
     it("fails for revoked grant", async () => {
-      await tokenGrant.revoke(grantId, {from: grantManager})
+      await tokenGrant.revoke(grantId, { from: grantManager })
       await expectRevert(
         tokenStakingEscrow.redelegate(operatorOne, delegatedAmount, data3, {
           from: grantee,
@@ -510,7 +514,7 @@ describe("TokenStaking/StakingGrant", () => {
             Buffer.from(operatorOne.substr(2), "hex"),
             Buffer.from(authorizer.substr(2), "hex"),
           ]),
-          {from: grantee}
+          { from: grantee }
         ),
         "Redelegating to previously used operator is not allowed"
       )
@@ -526,7 +530,7 @@ describe("TokenStaking/StakingGrant", () => {
             Buffer.from(operatorTwo.substr(2), "hex"),
             Buffer.from(authorizer.substr(2), "hex"),
           ]),
-          {from: managedGrantee}
+          { from: managedGrantee }
         ),
         "Redelegating to previously used operator is not allowed"
       )
@@ -562,7 +566,7 @@ describe("TokenStaking/StakingGrant", () => {
       // 2 000 000 undelegated to escrow for 2-years grant.
       // One year passed, so 50% of tokens, 1 000 000, is withdrawable
       // from the escrow. Let's withdraw them.
-      await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+      await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
 
       // And now, let's redelegate the remaining 1 000 000 KEEP...
 
@@ -573,7 +577,7 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
 
       const availableAmount = await tokenStakingEscrow.availableAmount(
@@ -587,7 +591,7 @@ describe("TokenStaking/StakingGrant", () => {
       // 2 000 000 undelegated to escrow for 2-years grant.
       // One year passed, so 50% of tokens, 1 000 000, is withdrawable
       // from the escrow. Let's withdraw them.
-      await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+      await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
 
       // And now, let's try to redelegate 1 000 000 KEEP + 1e-18 KEEP...
 
@@ -609,7 +613,7 @@ describe("TokenStaking/StakingGrant", () => {
       // 2 000 000 undelegated to escrow for 2-years grant.
       // One year passed, so 50% of tokens, 1 000 000, is withdrawable
       // from the escrow. Let's withdraw them.
-      await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+      await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
 
       // And now, let's redelegate 1 000 000 - 1 KEEP ...
       const redelegatedAmount = web3.utils.toWei("999999")
@@ -617,7 +621,7 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
 
       let availableAmount = await tokenStakingEscrow.availableAmount(
@@ -630,7 +634,7 @@ describe("TokenStaking/StakingGrant", () => {
       await time.increaseTo(grantStart.add(time.duration.years(2)))
       const withdrawable = await tokenStakingEscrow.withdrawable(operatorOne)
       expect(withdrawable).to.eq.BN(web3.utils.toWei("1"))
-      await tokenStakingEscrow.withdraw(operatorOne, {from: grantee})
+      await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
       // ok, no revert
 
       availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
@@ -643,9 +647,9 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
-      await tokenStaking.cancelStake(operatorThree, {from: grantee})
+      await tokenStaking.cancelStake(operatorThree, { from: grantee })
       // ok, no reverts
     })
 
@@ -655,9 +659,9 @@ describe("TokenStaking/StakingGrant", () => {
         operatorTwo,
         redelegatedAmount,
         data3,
-        {from: managedGrantee}
+        { from: managedGrantee }
       )
-      await tokenStaking.cancelStake(operatorThree, {from: managedGrantee})
+      await tokenStaking.cancelStake(operatorThree, { from: managedGrantee })
       // ok, no reverts
     })
 
@@ -667,9 +671,9 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
-      await tokenStaking.cancelStake(operatorThree, {from: operatorThree})
+      await tokenStaking.cancelStake(operatorThree, { from: operatorThree })
       // ok, no reverts
     })
 
@@ -679,10 +683,10 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
       await expectRevert(
-        tokenStaking.cancelStake(operatorThree, {from: operatorOne}),
+        tokenStaking.cancelStake(operatorThree, { from: operatorOne }),
         "Not authorized"
       )
     })
@@ -693,11 +697,11 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
       await time.increase(initializationPeriod.addn(1))
 
-      await tokenStaking.undelegate(operatorThree, {from: grantee})
+      await tokenStaking.undelegate(operatorThree, { from: grantee })
       // ok, no reverts
     })
 
@@ -707,11 +711,11 @@ describe("TokenStaking/StakingGrant", () => {
         operatorTwo,
         redelegatedAmount,
         data3,
-        {from: managedGrantee}
+        { from: managedGrantee }
       )
       await time.increase(initializationPeriod.addn(1))
 
-      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorThree, { from: managedGrantee })
       // ok, no reverts
     })
 
@@ -721,11 +725,11 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
       await time.increase(initializationPeriod.addn(1))
 
-      await tokenStaking.undelegate(operatorThree, {from: operatorThree})
+      await tokenStaking.undelegate(operatorThree, { from: operatorThree })
       // ok, no reverts
     })
 
@@ -735,12 +739,12 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
       await time.increase(initializationPeriod.addn(1))
 
       await expectRevert(
-        tokenStaking.undelegate(operatorThree, {from: operatorOne}),
+        tokenStaking.undelegate(operatorThree, { from: operatorOne }),
         "Not authorized"
       )
     })
@@ -751,11 +755,11 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
 
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorThree, {from: operatorThree})
+      await tokenStaking.undelegate(operatorThree, { from: operatorThree })
 
       await time.increase(undelegationPeriod.addn(1))
       await tokenStaking.recoverStake(operatorThree)
@@ -780,10 +784,10 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
 
-      await tokenStaking.cancelStake(operatorThree, {from: operatorThree})
+      await tokenStaking.cancelStake(operatorThree, { from: operatorThree })
 
       expect(await tokenStakingEscrow.depositedAmount(operatorThree)).to.eq.BN(
         redelegatedAmount
@@ -805,7 +809,7 @@ describe("TokenStaking/StakingGrant", () => {
         operatorOne,
         redelegatedAmount,
         data3,
-        {from: grantee}
+        { from: grantee }
       )
 
       await expectEvent(receipt, "DepositRedelegated", {

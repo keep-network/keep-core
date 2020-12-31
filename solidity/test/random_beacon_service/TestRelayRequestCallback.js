@@ -1,9 +1,9 @@
 const stakeAndGenesis = require("../helpers/stakeAndGenesis")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const { initContracts } = require("../helpers/initContracts")
+const { contract, web3, accounts } = require("@openzeppelin/test-environment")
+const { expectRevert } = require("@openzeppelin/test-helpers")
 
 const CallbackContract = contract.fromArtifact("CallbackContract")
 
@@ -86,7 +86,9 @@ describe("KeepRandomBeacon/RelayRequestCallback", function () {
       value: entryFeeEstimate,
       from: customer,
     })
-    await operatorContract.relayEntry(blsData.groupSignature, {from: operator})
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      from: operator,
+    })
 
     assert.equal(
       (await serviceContract.getPastEvents())[0].args["entry"].toString(),
@@ -105,7 +107,9 @@ describe("KeepRandomBeacon/RelayRequestCallback", function () {
     const beneficiaryStartBalance = web3.utils.toBN(
       await web3.eth.getBalance(beneficiary)
     )
-    await operatorContract.relayEntry(blsData.groupSignature, {from: operator})
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      from: operator,
+    })
     const beneficiaryEndBalance = web3.utils.toBN(
       await web3.eth.getBalance(beneficiary)
     )
@@ -133,7 +137,9 @@ describe("KeepRandomBeacon/RelayRequestCallback", function () {
         from: customer,
       }
     )
-    await operatorContract.relayEntry(blsData.groupSignature, {from: operator})
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      from: operator,
+    })
 
     assert.equal(
       (await serviceContract.getPastEvents())[0].args["entry"].toString(),
@@ -374,7 +380,9 @@ describe("KeepRandomBeacon/RelayRequestCallback", function () {
       }
     )
 
-    await operatorContract.relayEntry(blsData.groupSignature, {from: operator})
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      from: operator,
+    })
 
     assert.equal(
       (await operatorContract.getPastEvents())[1].event,
@@ -600,7 +608,9 @@ describe("KeepRandomBeacon/RelayRequestCallback", function () {
       }
     )
 
-    await operatorContract.relayEntry(blsData.groupSignature, {from: operator})
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      from: operator,
+    })
 
     assert.equal(
       (await operatorContract.getPastEvents())[1].event,
@@ -876,6 +886,6 @@ describe("KeepRandomBeacon/RelayRequestCallback", function () {
   // a new group creation.
   async function fundDkgPool() {
     const groupCreationFee = await operatorContract.groupCreationFee()
-    await serviceContract.fundDkgFeePool({value: groupCreationFee})
+    await serviceContract.fundDkgFeePool({ value: groupCreationFee })
   }
 })

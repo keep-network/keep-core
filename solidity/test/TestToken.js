@@ -1,4 +1,4 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
 const KeepToken = contract.fromArtifact("KeepToken")
 const assert = require("chai").assert
 
@@ -8,7 +8,7 @@ describe("TestToken", function () {
   const accountTwo = accounts[1]
 
   before(async () => {
-    token = await KeepToken.new({from: accountOne})
+    token = await KeepToken.new({ from: accountOne })
   })
 
   it("sets token details", async function () {
@@ -27,7 +27,7 @@ describe("TestToken", function () {
     const accountTwoStartingBalance = await token.balanceOf.call(accountTwo)
 
     // Send tokens
-    await token.transfer(accountTwo, amount, {from: accountOne})
+    await token.transfer(accountTwo, amount, { from: accountOne })
 
     // Ending balances
     const accountOneEndingBalance = await token.balanceOf.call(accountOne)

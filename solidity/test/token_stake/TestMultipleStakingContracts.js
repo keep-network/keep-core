@@ -2,11 +2,11 @@ const {
   delegateStake,
   delegateStakeFromGrant,
 } = require("../helpers/delegateStake")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("../helpers/initContracts")
-const {grantTokens} = require("../helpers/grantTokens")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { grantTokens } = require("../helpers/grantTokens")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
@@ -49,16 +49,16 @@ describe("TokenStake/MultipleStakingContracts", () => {
     // Transfer 50% of all tokens to grant manager and 10% of tokens
     // to token owner (account delegating liquid tokens in tests).
     //
-    token = await KeepToken.new({from: deployer})
+    token = await KeepToken.new({ from: deployer })
     const allTokens = await token.balanceOf(deployer)
-    await token.transfer(grantManager, allTokens.divn(2), {from: deployer})
-    await token.transfer(tokenOwner, allTokens.divn(10), {from: deployer})
+    await token.transfer(grantManager, allTokens.divn(2), { from: deployer })
+    await token.transfer(tokenOwner, allTokens.divn(10), { from: deployer })
 
     //
     // Deploy TokenGrant, KeepRegistry
     //
-    const registry = await KeepRegistry.new({from: deployer})
-    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+    const registry = await KeepRegistry.new({ from: deployer })
+    tokenGrant = await TokenGrant.new(token.address, { from: deployer })
 
     //
     // Deploy two instances of TokenStaking and TokenStakingEscrow contracts.
@@ -243,16 +243,16 @@ describe("TokenStake/MultipleStakingContracts", () => {
       )
 
       await time.increase(initializationPeriod.addn(1))
-      await oldTokenStaking.undelegate(operator, {from: grantee})
-      await newTokenStaking.undelegate(operator, {from: tokenOwner})
+      await oldTokenStaking.undelegate(operator, { from: grantee })
+      await newTokenStaking.undelegate(operator, { from: tokenOwner })
 
       const undelegationPeriod = await newTokenStaking.undelegationPeriod()
       await time.increase(undelegationPeriod.addn(1))
 
       const tokenOwnerBalanceBefore = await token.balanceOf(tokenOwner)
       const granteeBalanceBefore = await token.balanceOf(grantee)
-      await oldTokenStaking.recoverStake(operator, {from: grantee})
-      await newTokenStaking.recoverStake(operator, {from: tokenOwner})
+      await oldTokenStaking.recoverStake(operator, { from: grantee })
+      await newTokenStaking.recoverStake(operator, { from: tokenOwner })
       const tokenOwnerBalanceAfter = await token.balanceOf(tokenOwner)
       const granteeBalanceAfter = await token.balanceOf(grantee)
 

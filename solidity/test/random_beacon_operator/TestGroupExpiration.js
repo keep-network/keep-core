@@ -1,7 +1,7 @@
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
+const { contract, web3, accounts } = require("@openzeppelin/test-environment")
 const assert = require("chai").assert
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const GroupsExpirationStub = contract.fromArtifact("GroupsExpirationStub")
 const Groups = contract.fromArtifact("Groups")
 const BLS = contract.fromArtifact("BLS")
@@ -18,7 +18,7 @@ describe("KeepRandomBeaconOperator/GroupExpiration", function () {
   const relayEntryTimeout = new BN(10)
 
   before(async () => {
-    const bls = await BLS.new({from: accounts[0]})
+    const bls = await BLS.new({ from: accounts[0] })
     await Groups.detectNetwork()
     await Groups.link("BLS", bls.address)
     const groupsLibrary = await Groups.new()

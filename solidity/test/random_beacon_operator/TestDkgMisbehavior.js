@@ -1,13 +1,13 @@
 const blsData = require("../helpers/data")
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
+const { contract, web3, accounts } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
 const assert = require("chai").assert
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const sign = require("../helpers/signature")
 const stakeDelegate = require("../helpers/stakeDelegate")
 const packTicket = require("../helpers/packTicket")
 const generateTickets = require("../helpers/generateTickets")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 
 describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
   let token
@@ -48,7 +48,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
       owner,
       authorizer,
       minimumStake,
-      {from: owner}
+      { from: owner }
     )
     await stakeDelegate(
       stakingContract,
@@ -58,7 +58,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
       owner,
       authorizer,
       minimumStake,
-      {from: owner}
+      { from: owner }
     )
     await stakeDelegate(
       stakingContract,
@@ -68,7 +68,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
       owner,
       authorizer,
       minimumStake,
-      {from: owner}
+      { from: owner }
     )
     await stakeDelegate(
       stakingContract,
@@ -78,7 +78,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
       owner,
       authorizer,
       minimumStake,
-      {from: owner}
+      { from: owner }
     )
     await stakeDelegate(
       stakingContract,
@@ -88,33 +88,33 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
       owner,
       authorizer,
       minimumStake,
-      {from: owner}
+      { from: owner }
     )
 
     await stakingContract.authorizeOperatorContract(
       operator1,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator2,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator3,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator4,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator5,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
 
     time.increase((await stakingContract.initializationPeriod()).addn(1))
@@ -132,7 +132,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
         tickets1[0].virtualStakerIndex,
         operator1
       ),
-      {from: operator1}
+      { from: operator1 }
     )
 
     await operatorContract.submitTicket(
@@ -141,7 +141,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
         tickets2[0].virtualStakerIndex,
         operator2
       ),
-      {from: operator2}
+      { from: operator2 }
     )
 
     await operatorContract.submitTicket(
@@ -150,7 +150,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
         tickets3[0].virtualStakerIndex,
         operator3
       ),
-      {from: operator3}
+      { from: operator3 }
     )
 
     await operatorContract.submitTicket(
@@ -159,7 +159,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
         tickets4[0].virtualStakerIndex,
         operator4
       ),
-      {from: operator4}
+      { from: operator4 }
     )
 
     await operatorContract.submitTicket(
@@ -168,7 +168,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
         tickets5[0].virtualStakerIndex,
         operator5
       ),
-      {from: operator5}
+      { from: operator5 }
     )
 
     const ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock()
@@ -208,7 +208,7 @@ describe("KeepRandomBeaconOperator/DkgMisbehavior", function () {
       misbehaved,
       signatures,
       signingMemberIndices,
-      {from: selectedParticipants[0]}
+      { from: selectedParticipants[0] }
     )
     const registeredMembers = await operatorContract.getGroupMembers(
       groupPubKey

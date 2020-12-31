@@ -67,7 +67,7 @@ module.exports = async function () {
           tokenStaking.address,
           formatAmount(20000000, 18),
           delegation,
-          {from: owner}
+          { from: owner }
         )
         .catch((err) => {
           console.log(`could not stake KEEP tokens for ${operator}: ${err}`)
@@ -76,7 +76,7 @@ module.exports = async function () {
       await tokenStaking.authorizeOperatorContract(
         operator,
         keepRandomBeaconOperator.address,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       if (staked) {
@@ -96,8 +96,12 @@ module.exports = async function () {
     await registerNewGroups(10)
 
     // terminate groups
-    await keepRandomBeaconOperator.reportUnauthorizedSigning(25, {from: owner})
-    await keepRandomBeaconOperator.reportUnauthorizedSigning(26, {from: owner})
+    await keepRandomBeaconOperator.reportUnauthorizedSigning(25, {
+      from: owner,
+    })
+    await keepRandomBeaconOperator.reportUnauthorizedSigning(26, {
+      from: owner,
+    })
 
     const numberOfGroups = await keepRandomBeaconOperator.numberOfGroups()
     const firstActiveIndex = await keepRandomBeaconOperator.getFirstActiveGroupIndex()

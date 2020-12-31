@@ -1,7 +1,7 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const TokenGrant = contract.fromArtifact("TokenGrant")
@@ -30,9 +30,9 @@ describe("TokenStaking/Lock", () => {
   let operator
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
-    grant = await TokenGrant.new(token.address, {from: owner})
-    registry = await KeepRegistry.new({from: owner})
+    token = await KeepToken.new({ from: owner })
+    grant = await TokenGrant.new(token.address, { from: owner })
+    registry = await KeepRegistry.new({ from: owner })
     const stakingContracts = await initTokenStaking(
       token.address,
       grant.address,
@@ -45,8 +45,8 @@ describe("TokenStaking/Lock", () => {
 
     undelegationPeriod = await stakingContract.undelegationPeriod()
 
-    await registry.approveOperatorContract(operatorContract, {from: owner})
-    await registry.approveOperatorContract(operatorContract2, {from: owner})
+    await registry.approveOperatorContract(operatorContract, { from: owner })
+    await registry.approveOperatorContract(operatorContract2, { from: owner })
 
     minimumStake = await stakingContract.minimumStake()
     stakingAmount = minimumStake.muln(20)
@@ -71,7 +71,7 @@ describe("TokenStaking/Lock", () => {
       stakingContract.address,
       amount,
       "0x" + data.toString("hex"),
-      {from: owner}
+      { from: owner }
     )
   }
 
@@ -82,7 +82,7 @@ describe("TokenStaking/Lock", () => {
   }
 
   async function undelegate(operator) {
-    const tx = await stakingContract.undelegate(operator, {from: operator})
+    const tx = await stakingContract.undelegate(operator, { from: operator })
     const undelegatedAt = await timestampOf(tx)
     await time.increaseTo(undelegationPeriod.add(undelegatedAt).addn(1))
   }
@@ -94,7 +94,7 @@ describe("TokenStaking/Lock", () => {
       await stakingContract.authorizeOperatorContract(
         operator,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       createdAt = await timestampOf(tx)
@@ -111,7 +111,7 @@ describe("TokenStaking/Lock", () => {
 
     it("should not permit locks on undelegating operators", async () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
-      const tx = await stakingContract.undelegate(operator, {from: operator})
+      const tx = await stakingContract.undelegate(operator, { from: operator })
       const undelegatedAt = await timestampOf(tx)
       await time.increaseTo(undelegatedAt.addn(1))
       await expectRevert(
@@ -134,7 +134,7 @@ describe("TokenStaking/Lock", () => {
 
     it("should not permit locks from disabled operator contracts", async () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
-      await registry.disableOperatorContract(operatorContract, {from: owner})
+      await registry.disableOperatorContract(operatorContract, { from: owner })
       await expectRevert(
         stakingContract.lockStake(operator, lockPeriod, {
           from: operatorContract,
@@ -146,7 +146,7 @@ describe("TokenStaking/Lock", () => {
     it("should not permit locks from unapproved operator contracts", async () => {
       await time.increaseTo(initializationPeriod.add(createdAt).addn(1))
       await expectRevert(
-        stakingContract.lockStake(operator, lockPeriod, {from: operator}),
+        stakingContract.lockStake(operator, lockPeriod, { from: operator }),
         "Operator contract unapproved"
       )
     })
@@ -171,7 +171,7 @@ describe("TokenStaking/Lock", () => {
       await stakingContract.authorizeOperatorContract(
         operator,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       createdAt = await timestampOf(tx)
@@ -185,7 +185,7 @@ describe("TokenStaking/Lock", () => {
       await undelegate(operator)
       await expectRevert(stakingContract.recoverStake(operator), "Locked stake")
 
-      await stakingContract.unlockStake(operator, {from: operatorContract})
+      await stakingContract.unlockStake(operator, { from: operatorContract })
       await stakingContract.recoverStake(operator)
       // ok, no revert
     })
@@ -195,7 +195,7 @@ describe("TokenStaking/Lock", () => {
       await expectRevert(stakingContract.recoverStake(operator), "Locked stake")
 
       await time.increase(lockPeriod)
-      await stakingContract.recoverStake(operator, {from: operator})
+      await stakingContract.recoverStake(operator, { from: operator })
       // ok, no revert
     })
 
@@ -204,9 +204,9 @@ describe("TokenStaking/Lock", () => {
       await expectRevert(stakingContract.recoverStake(operator), "Locked stake")
 
       // disable operator contract with panic button
-      await registry.disableOperatorContract(operatorContract, {from: owner})
+      await registry.disableOperatorContract(operatorContract, { from: owner })
 
-      await stakingContract.recoverStake(operator, {from: operator})
+      await stakingContract.recoverStake(operator, { from: operator })
       // ok, no revert
     })
 
@@ -214,7 +214,7 @@ describe("TokenStaking/Lock", () => {
       await stakingContract.lockStake(
         operator,
         undelegationPeriod.add(time.duration.minutes(5)),
-        {from: operatorContract}
+        { from: operatorContract }
       )
 
       await undelegate(operator)
@@ -222,7 +222,7 @@ describe("TokenStaking/Lock", () => {
       await expectRevert(stakingContract.recoverStake(operator), "Locked stake")
 
       await time.increase(time.duration.minutes(5))
-      await stakingContract.recoverStake(operator, {from: operator})
+      await stakingContract.recoverStake(operator, { from: operator })
       // ok, no revert
     })
 
@@ -259,7 +259,7 @@ describe("TokenStaking/Lock", () => {
 
     it("should not allow slashing/seizing unlocked stake after undelegation", async () => {
       await undelegate(operator)
-      await stakingContract.unlockStake(operator, {from: operatorContract})
+      await stakingContract.unlockStake(operator, { from: operatorContract })
 
       await expectRevert(
         stakingContract.slash(minimumStake, [operator], {
@@ -280,7 +280,7 @@ describe("TokenStaking/Lock", () => {
       await stakingContract.authorizeOperatorContract(
         operator,
         operatorContract2,
-        {from: authorizer}
+        { from: authorizer }
       )
       await undelegate(operator)
 
@@ -306,13 +306,13 @@ describe("TokenStaking/Lock", () => {
       await stakingContract.authorizeOperatorContract(
         operator,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       await stakingContract.authorizeOperatorContract(
         operator,
         operatorContract2,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       createdAt = await timestampOf(tx)
@@ -327,25 +327,25 @@ describe("TokenStaking/Lock", () => {
 
     it("should require all locks to be released before recovering tokens", async () => {
       await undelegate(operator)
-      await stakingContract.unlockStake(operator, {from: operatorContract})
+      await stakingContract.unlockStake(operator, { from: operatorContract })
 
       await expectRevert(stakingContract.recoverStake(operator), "Locked stake")
 
-      await stakingContract.unlockStake(operator, {from: operatorContract2})
+      await stakingContract.unlockStake(operator, { from: operatorContract2 })
 
-      await stakingContract.recoverStake(operator, {from: operator})
+      await stakingContract.recoverStake(operator, { from: operator })
       // ok, no revert
     })
 
     it("should count disabled contracts' locks as invalid", async () => {
       await undelegate(operator)
-      await stakingContract.unlockStake(operator, {from: operatorContract})
+      await stakingContract.unlockStake(operator, { from: operatorContract })
 
       await expectRevert(stakingContract.recoverStake(operator), "Locked stake")
 
-      await registry.disableOperatorContract(operatorContract2, {from: owner})
+      await registry.disableOperatorContract(operatorContract2, { from: owner })
 
-      await stakingContract.recoverStake(operator, {from: operator})
+      await stakingContract.recoverStake(operator, { from: operator })
       // ok, no revert
     })
   })

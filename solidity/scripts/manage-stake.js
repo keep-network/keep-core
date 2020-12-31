@@ -93,7 +93,7 @@ module.exports = async function () {
       await tokenStaking.authorizeOperatorContract(
         operator,
         keepRandomBeaconOperator.address,
-        {from: authorizer}
+        { from: authorizer }
       )
     } catch (err) {
       console.log(

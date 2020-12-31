@@ -1,7 +1,7 @@
-const {initContracts} = require("../helpers/initContracts")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { initContracts } = require("../helpers/initContracts")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 const crypto = require("crypto")
 const stakeDelegate = require("../helpers/stakeDelegate")
 

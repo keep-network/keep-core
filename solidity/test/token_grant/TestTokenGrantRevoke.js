@@ -1,9 +1,9 @@
-const {delegateStakeFromGrant} = require("../helpers/delegateStake")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("../helpers/initContracts")
-const {grantTokens} = require("../helpers/grantTokens")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { delegateStakeFromGrant } = require("../helpers/delegateStake")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { grantTokens } = require("../helpers/grantTokens")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -44,11 +44,11 @@ describe("TokenGrant/Revoke", function () {
   let minimumStake
 
   before(async () => {
-    tokenContract = await KeepToken.new({from: accounts[0]})
+    tokenContract = await KeepToken.new({ from: accounts[0] })
     grantContract = await TokenGrant.new(tokenContract.address, {
       from: accounts[0],
     })
-    registryContract = await KeepRegistry.new({from: accounts[0]})
+    registryContract = await KeepRegistry.new({ from: accounts[0] })
     const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
@@ -84,7 +84,7 @@ describe("TokenGrant/Revoke", function () {
       grantCliff,
       grantRevocable,
       minimumPolicy.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
   })
 
@@ -102,7 +102,7 @@ describe("TokenGrant/Revoke", function () {
     )
     await time.increaseTo(grantStart.add(time.duration.minutes(30)))
 
-    const tx = await grantContract.revoke(grantId, {from: tokenOwner})
+    const tx = await grantContract.revoke(grantId, { from: tokenOwner })
     const revokedAt = web3.utils.toBN(
       (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     )
@@ -114,7 +114,7 @@ describe("TokenGrant/Revoke", function () {
 
     const withdrawableAfter = await grantContract.withdrawable(grantId)
 
-    await grantContract.withdrawRevoked(grantId, {from: tokenOwner})
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner })
 
     const grantDetails = await grantContract.getGrant(grantId)
     const grantManagerKeepBalanceAfter = await tokenContract.balanceOf(
@@ -146,7 +146,7 @@ describe("TokenGrant/Revoke", function () {
 
   it("should not allow to revoke grant if sender is not a grant manager", async () => {
     await expectRevert(
-      grantContract.revoke(grantId, {from: grantee}),
+      grantContract.revoke(grantId, { from: grantee }),
       "Only grant manager can revoke."
     )
   })
@@ -166,16 +166,16 @@ describe("TokenGrant/Revoke", function () {
     )
 
     await expectRevert(
-      grantContract.revoke(nonRevocableGrantId, {from: tokenOwner}),
+      grantContract.revoke(nonRevocableGrantId, { from: tokenOwner }),
       "Grant must be revocable in the first place."
     )
   })
 
   it("should not allow to revoke grant multiple times", async () => {
-    await grantContract.revoke(grantId, {from: tokenOwner})
+    await grantContract.revoke(grantId, { from: tokenOwner })
 
     await expectRevert(
-      grantContract.revoke(grantId, {from: tokenOwner}),
+      grantContract.revoke(grantId, { from: tokenOwner }),
       "Grant must not be already revoked."
     )
   })
@@ -206,9 +206,9 @@ describe("TokenGrant/Revoke", function () {
       tokenOwner
     )
 
-    await grantContract.revoke(fullyUnlockedGrantId, {from: tokenOwner})
+    await grantContract.revoke(fullyUnlockedGrantId, { from: tokenOwner })
     await expectRevert(
-      grantContract.withdrawRevoked(fullyUnlockedGrantId, {from: tokenOwner}),
+      grantContract.withdrawRevoked(fullyUnlockedGrantId, { from: tokenOwner }),
       "All revoked tokens withdrawn"
     )
 
@@ -242,7 +242,7 @@ describe("TokenGrant/Revoke", function () {
       minimumStake,
       grantId
     )
-    await grantContract.revoke(grantId, {from: tokenOwner})
+    await grantContract.revoke(grantId, { from: tokenOwner })
 
     const grantDetails = await grantContract.getGrant(grantId)
     const revokedAmount = grantDetails[3]
@@ -257,7 +257,7 @@ describe("TokenGrant/Revoke", function () {
     const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
-    await grantContract.withdrawRevoked(grantId, {from: tokenOwner})
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner })
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
@@ -278,7 +278,7 @@ describe("TokenGrant/Revoke", function () {
       minimumStake,
       grantId
     )
-    await grantContract.revoke(grantId, {from: tokenOwner})
+    await grantContract.revoke(grantId, { from: tokenOwner })
 
     const grantDetails = await grantContract.getGrant(grantId)
     const revokedAmount = grantDetails[3]
@@ -293,12 +293,12 @@ describe("TokenGrant/Revoke", function () {
     const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
-    await grantContract.withdrawRevoked(grantId, {from: tokenOwner})
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner })
     const grantManagerKeepBalanceMidWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
-    await grantContract.cancelRevokedStake(operator, {from: tokenOwner})
-    await stakingEscrowContract.withdrawRevoked(operator, {from: tokenOwner})
+    await grantContract.cancelRevokedStake(operator, { from: tokenOwner })
+    await stakingEscrowContract.withdrawRevoked(operator, { from: tokenOwner })
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
@@ -324,7 +324,7 @@ describe("TokenGrant/Revoke", function () {
       minimumStake,
       grantId
     )
-    await grantContract.revoke(grantId, {from: tokenOwner})
+    await grantContract.revoke(grantId, { from: tokenOwner })
 
     const grantDetails = await grantContract.getGrant(grantId)
     const revokedAmount = grantDetails[3]
@@ -339,16 +339,16 @@ describe("TokenGrant/Revoke", function () {
     const grantManagerKeepBalanceBeforeWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
-    await grantContract.withdrawRevoked(grantId, {from: tokenOwner})
+    await grantContract.withdrawRevoked(grantId, { from: tokenOwner })
     const grantManagerKeepBalanceMidWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )
     await time.increase(initializationPeriod.add(time.duration.minutes(5)))
-    await grantContract.undelegateRevoked(operator, {from: tokenOwner})
+    await grantContract.undelegateRevoked(operator, { from: tokenOwner })
     await time.increase(undelegationPeriod.add(time.duration.minutes(5)))
-    await grantContract.recoverStake(operator, {from: tokenOwner})
+    await grantContract.recoverStake(operator, { from: tokenOwner })
 
-    await stakingEscrowContract.withdrawRevoked(operator, {from: tokenOwner})
+    await stakingEscrowContract.withdrawRevoked(operator, { from: tokenOwner })
     const grantManagerKeepBalanceAfterWithdraw = await tokenContract.balanceOf(
       tokenOwner
     )

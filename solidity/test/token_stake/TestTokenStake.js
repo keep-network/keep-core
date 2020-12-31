@@ -1,7 +1,11 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, expectEvent, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const {
+  expectRevert,
+  expectEvent,
+  time,
+} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -36,9 +40,9 @@ describe("TokenStaking", function () {
   let undelegationPeriod
 
   before(async () => {
-    token = await KeepToken.new({from: accounts[0]})
-    tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]})
-    registry = await KeepRegistry.new({from: accounts[0]})
+    token = await KeepToken.new({ from: accounts[0] })
+    tokenGrant = await TokenGrant.new(token.address, { from: accounts[0] })
+    registry = await KeepRegistry.new({ from: accounts[0] })
     const stakingContracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
@@ -78,7 +82,7 @@ describe("TokenStaking", function () {
       stakingContract.address,
       amount,
       "0x" + data.toString("hex"),
-      {from: owner}
+      { from: owner }
     )
   }
 
@@ -142,7 +146,7 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
       await time.increase(undelegationPeriod.addn(1))
       await stakingContract.recoverStake(operatorOne)
 
@@ -222,7 +226,7 @@ describe("TokenStaking", function () {
     it("should let operator cancel delegation", async () => {
       await delegate(operatorOne, stakingAmount)
 
-      await stakingContract.cancelStake(operatorOne, {from: operatorOne})
+      await stakingContract.cancelStake(operatorOne, { from: operatorOne })
       // ok, no revert
     })
 
@@ -230,7 +234,7 @@ describe("TokenStaking", function () {
       await delegate(operatorOne, stakingAmount)
 
       await expectRevert(
-        stakingContract.cancelStake(operatorOne, {from: operatorTwo}),
+        stakingContract.cancelStake(operatorOne, { from: operatorTwo }),
         "Not authorized"
       )
     })
@@ -238,7 +242,7 @@ describe("TokenStaking", function () {
     it("should allow to cancel delegation right away", async () => {
       await delegate(operatorOne, stakingAmount)
 
-      await stakingContract.cancelStake(operatorOne, {from: owner})
+      await stakingContract.cancelStake(operatorOne, { from: owner })
       // ok, no revert
     })
 
@@ -252,7 +256,7 @@ describe("TokenStaking", function () {
         createdAt.add(initializationPeriod).sub(timeRoundMargin)
       )
 
-      await stakingContract.cancelStake(operatorOne, {from: owner})
+      await stakingContract.cancelStake(operatorOne, { from: owner })
       // ok, no revert
     })
 
@@ -265,7 +269,7 @@ describe("TokenStaking", function () {
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
       await expectRevert(
-        stakingContract.cancelStake(operatorOne, {from: owner}),
+        stakingContract.cancelStake(operatorOne, { from: owner }),
         "Initialized stake"
       )
     })
@@ -275,7 +279,7 @@ describe("TokenStaking", function () {
 
       await delegate(operatorOne, stakingAmount)
 
-      await stakingContract.cancelStake(operatorOne, {from: owner})
+      await stakingContract.cancelStake(operatorOne, { from: owner })
 
       const ownerEndBalance = await token.balanceOf.call(owner)
       const operatorEndStakeBalance = await stakingContract.balanceOf.call(
@@ -299,7 +303,7 @@ describe("TokenStaking", function () {
         operatorOne
       )
 
-      await stakingContract.cancelStake(operatorOne, {from: owner})
+      await stakingContract.cancelStake(operatorOne, { from: owner })
 
       const delegationInfoAfter = await stakingContract.getDelegationInfo.call(
         operatorOne
@@ -328,7 +332,7 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      await stakingContract.undelegate(operatorOne, { from: operatorOne })
       // ok, no revert
     })
 
@@ -340,7 +344,7 @@ describe("TokenStaking", function () {
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
       await expectRevert(
-        stakingContract.undelegate(operatorOne, {from: operatorTwo}),
+        stakingContract.undelegate(operatorOne, { from: operatorTwo }),
         "Not authorized"
       )
     })
@@ -355,7 +359,7 @@ describe("TokenStaking", function () {
         )
 
         await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-        await stakingContract.undelegate(operatorOne, {from: operatorOne})
+        await stakingContract.undelegate(operatorOne, { from: operatorOne })
         // ok, no revert
       }
     )
@@ -372,7 +376,7 @@ describe("TokenStaking", function () {
           createdAt.add(initializationPeriod).sub(timeRoundMargin)
         )
         await expectRevert(
-          stakingContract.undelegate(operatorOne, {from: operatorOne}),
+          stakingContract.undelegate(operatorOne, { from: operatorOne }),
           "Invalid timestamp"
         )
       }
@@ -391,7 +395,7 @@ describe("TokenStaking", function () {
         from: operatorOne,
       })
 
-      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      await stakingContract.undelegate(operatorOne, { from: operatorOne })
       // ok, no revert
     })
 
@@ -402,9 +406,9 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      await stakingContract.undelegate(operatorOne, { from: operatorOne })
 
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
       // ok, no revert
     })
 
@@ -415,10 +419,10 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      await stakingContract.undelegate(operatorOne, { from: operatorOne })
 
       await expectRevert(
-        stakingContract.undelegate(operatorOne, {from: operatorOne}),
+        stakingContract.undelegate(operatorOne, { from: operatorOne }),
         "Operator may not postpone"
       )
     })
@@ -485,7 +489,7 @@ describe("TokenStaking", function () {
         await stakingContract.undelegateAt(
           operatorOne,
           currentTime.add(initializationPeriod).addn(1),
-          {from: operatorOne}
+          { from: operatorOne }
         )
         // ok, no revert
       }
@@ -502,7 +506,7 @@ describe("TokenStaking", function () {
           stakingContract.undelegateAt(
             operatorOne,
             currentTime.add(initializationPeriod).sub(timeRoundMargin),
-            {from: operatorOne}
+            { from: operatorOne }
           ),
           "Invalid timestamp"
         )
@@ -553,7 +557,7 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      await stakingContract.undelegate(operatorOne, { from: operatorOne })
 
       const currentTime = await time.latest()
 
@@ -570,7 +574,7 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: operatorOne})
+      await stakingContract.undelegate(operatorOne, { from: operatorOne })
 
       const currentTime = await time.latest()
 
@@ -607,7 +611,7 @@ describe("TokenStaking", function () {
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      tx = await stakingContract.undelegate(operatorOne, {from: owner})
+      tx = await stakingContract.undelegate(operatorOne, { from: owner })
       const undelegatedAt = web3.utils.toBN(
         (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
       )
@@ -631,7 +635,7 @@ describe("TokenStaking", function () {
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
       await time.increase(undelegationPeriod.addn(1))
       await stakingContract.recoverStake(operatorOne)
 
@@ -661,7 +665,7 @@ describe("TokenStaking", function () {
         operatorOne
       )
 
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
       const blockNumber = await web3.eth.getBlockNumber()
       const undelegationBlock = await web3.eth.getBlock(blockNumber)
 
@@ -697,7 +701,7 @@ describe("TokenStaking", function () {
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
       await time.increase(undelegationPeriod.addn(1))
 
       // recover stake and capture owner and staking contract KEEP balances
@@ -733,7 +737,7 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
@@ -757,7 +761,7 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       await time.increaseTo(
@@ -792,10 +796,10 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
-      await stakingContract.cancelStake(operatorOne, {from: owner})
+      await stakingContract.cancelStake(operatorOne, { from: owner })
 
       const activeStake = await stakingContract.activeStake.call(
         operatorOne,
@@ -813,11 +817,11 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
       await time.increase(undelegationPeriod.addn(1))
 
       const activeStake = await stakingContract.activeStake.call(
@@ -838,7 +842,7 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
@@ -862,7 +866,7 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
       await time.increaseTo(
         createdAt.add(initializationPeriod).sub(timeRoundMargin)
@@ -896,10 +900,10 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
-      await stakingContract.cancelStake(operatorOne, {from: owner})
+      await stakingContract.cancelStake(operatorOne, { from: owner })
 
       const eligibleStake = await stakingContract.eligibleStake.call(
         operatorOne,
@@ -917,11 +921,11 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-      await stakingContract.undelegate(operatorOne, {from: owner})
+      await stakingContract.undelegate(operatorOne, { from: owner })
 
       await time.increase(1)
 
@@ -941,7 +945,7 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       const delegationTime = time.duration.seconds(10)
@@ -980,7 +984,7 @@ describe("TokenStaking", function () {
       await stakingContract.authorizeOperatorContract(
         operatorOne,
         operatorContract,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       const delegationTime = time.duration.seconds(10)
@@ -1029,7 +1033,7 @@ describe("TokenStaking", function () {
       const receipt = await stakingContract.transferStakeOwnership(
         operatorOne,
         thirdParty,
-        {from: owner}
+        { from: owner }
       )
 
       await expectEvent(receipt, "StakeOwnershipTransferred", {

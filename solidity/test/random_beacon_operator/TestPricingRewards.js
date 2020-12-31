@@ -1,8 +1,8 @@
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
+const { initContracts } = require("../helpers/initContracts")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -108,7 +108,7 @@ describe("KeepRandomBeaconOperator/PricingRewards", function () {
     async () => {
       await operatorContract.setGroupMemberBaseReward(1410)
       await operatorContract.setEntryVerificationGasEstimate(10020)
-      await operatorContract.setGasPriceCeiling(140000, {from: accounts[0]})
+      await operatorContract.setGasPriceCeiling(140000, { from: accounts[0] })
 
       const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
       await serviceContract.methods["requestRelayEntry()"]({
@@ -140,7 +140,7 @@ describe("KeepRandomBeaconOperator/PricingRewards", function () {
     async () => {
       await operatorContract.setGroupMemberBaseReward(966)
       await operatorContract.setEntryVerificationGasEstimate(10050)
-      await operatorContract.setGasPriceCeiling(150000, {from: accounts[0]})
+      await operatorContract.setGasPriceCeiling(150000, { from: accounts[0] })
 
       const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
       await serviceContract.methods["requestRelayEntry()"]({
@@ -176,7 +176,7 @@ describe("KeepRandomBeaconOperator/PricingRewards", function () {
     async () => {
       await operatorContract.setGroupMemberBaseReward(1987000)
       await operatorContract.setEntryVerificationGasEstimate(50050)
-      await operatorContract.setGasPriceCeiling(1400000, {from: accounts[0]})
+      await operatorContract.setGasPriceCeiling(1400000, { from: accounts[0] })
 
       const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
       await serviceContract.methods["requestRelayEntry()"]({
@@ -231,7 +231,7 @@ describe("KeepRandomBeaconOperator/PricingRewards", function () {
     async () => {
       await operatorContract.setGroupMemberBaseReward(1382000000)
       await operatorContract.setEntryVerificationGasEstimate(50020)
-      await operatorContract.setGasPriceCeiling(2000000, {from: accounts[0]})
+      await operatorContract.setGasPriceCeiling(2000000, { from: accounts[0] })
 
       const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
       await serviceContract.methods["requestRelayEntry()"]({

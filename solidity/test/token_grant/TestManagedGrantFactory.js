@@ -1,7 +1,7 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -42,9 +42,9 @@ describe("TokenGrant/ManagedGrantFactory", () => {
   let factory
 
   before(async () => {
-    token = await KeepToken.new({from: grantCreator})
-    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator})
-    registry = await KeepRegistry.new({from: grantCreator})
+    token = await KeepToken.new({ from: grantCreator })
+    tokenGrant = await TokenGrant.new(token.address, { from: grantCreator })
+    registry = await KeepRegistry.new({ from: grantCreator })
     const contracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
@@ -80,7 +80,7 @@ describe("TokenGrant/ManagedGrantFactory", () => {
 
   describe("creating managed grants", async () => {
     it("works with a two-step call", async () => {
-      await token.approve(factory.address, grantAmount, {from: grantCreator})
+      await token.approve(factory.address, grantAmount, { from: grantCreator })
       grantStart = await time.latest()
       const managedGrantAddress = await factory.createManagedGrant.call(
         grantee,
@@ -90,7 +90,7 @@ describe("TokenGrant/ManagedGrantFactory", () => {
         grantCliff,
         false,
         permissivePolicy.address,
-        {from: grantCreator}
+        { from: grantCreator }
       )
       await factory.createManagedGrant(
         grantee,
@@ -100,7 +100,7 @@ describe("TokenGrant/ManagedGrantFactory", () => {
         grantCliff,
         false,
         permissivePolicy.address,
-        {from: grantCreator}
+        { from: grantCreator }
       )
       const event = (await factory.getPastEvents())[0]
       const managedGrant = await ManagedGrant.at(managedGrantAddress)
@@ -171,7 +171,9 @@ describe("TokenGrant/ManagedGrantFactory", () => {
     })
 
     it("doesn't let one grant more than they've approved on the token", async () => {
-      await token.transfer(unrelatedAddress, grantAmount, {from: grantCreator})
+      await token.transfer(unrelatedAddress, grantAmount, {
+        from: grantCreator,
+      })
       await token.approve(factory.address, grantAmount.subn(1), {
         from: unrelatedAddress,
       })
@@ -185,14 +187,16 @@ describe("TokenGrant/ManagedGrantFactory", () => {
           grantCliff,
           false,
           permissivePolicy.address,
-          {from: unrelatedAddress}
+          { from: unrelatedAddress }
         ),
         "SafeERC20: low-level call failed -- Reason given: SafeERC20: low-level call failed."
       )
     })
 
     it("doesn't let one grant more than they have on the token", async () => {
-      await token.transfer(unrelatedAddress, grantAmount, {from: grantCreator})
+      await token.transfer(unrelatedAddress, grantAmount, {
+        from: grantCreator,
+      })
       await token.approve(factory.address, grantAmount.addn(1), {
         from: unrelatedAddress,
       })
@@ -206,7 +210,7 @@ describe("TokenGrant/ManagedGrantFactory", () => {
           grantCliff,
           false,
           permissivePolicy.address,
-          {from: unrelatedAddress}
+          { from: unrelatedAddress }
         ),
         "SafeERC20: low-level call failed -- Reason given: SafeERC20: low-level call failed."
       )

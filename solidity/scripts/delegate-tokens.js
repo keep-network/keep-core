@@ -49,7 +49,7 @@ module.exports = async function () {
           tokenStaking.address,
           formatAmount(20000000, 18),
           delegation,
-          {from: owner}
+          { from: owner }
         )
         .catch((err) => {
           console.log(`could not stake KEEP tokens for ${operator}: ${err}`)
@@ -58,7 +58,7 @@ module.exports = async function () {
       await tokenStaking.authorizeOperatorContract(
         operator,
         operatorContract.address,
-        {from: authorizer}
+        { from: authorizer }
       )
 
       if (staked) {

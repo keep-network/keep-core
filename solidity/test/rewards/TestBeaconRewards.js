@@ -1,7 +1,7 @@
-const {initContracts} = require("../helpers/initContracts")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { initContracts } = require("../helpers/initContracts")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const crypto = require("crypto")
 const stakeDelegate = require("../helpers/stakeDelegate")
 
@@ -86,9 +86,9 @@ describe("BeaconRewards", () => {
       rewardsContract.address,
       totalBeaconRewards,
       "0x0",
-      {from: owner}
+      { from: owner }
     )
-    await rewardsContract.markAsFunded({from: owner})
+    await rewardsContract.markAsFunded({ from: owner })
 
     // create 64 operators and beneficiaries, delegate stake for them
     const minimumStake = await stakingContract.minimumStake()

@@ -1,8 +1,8 @@
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { initContracts } = require("../helpers/initContracts")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const stakeDelegate = require("../helpers/stakeDelegate")
 const BLS = contract.fromArtifact("BLS")
 
@@ -51,7 +51,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     registry = contracts.registry
     bls = await BLS.new()
 
-    await registry.setRegistryKeeper(registryKeeper, {from: accounts[0]})
+    await registry.setRegistryKeeper(registryKeeper, { from: accounts[0] })
     await registry.approveOperatorContract(anotherOperatorContract, {
       from: registryKeeper,
     })
@@ -86,17 +86,17 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     await stakingContract.authorizeOperatorContract(
       operator1,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator2,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
     await stakingContract.authorizeOperatorContract(
       operator3,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
 
     scheduleStart = await stakingContract.deployedAt()
@@ -132,7 +132,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
       await operatorContract.reportUnauthorizedSigning(
         groupIndex,
         tattletaleSignature,
-        {from: tattletale}
+        { from: tattletale }
       )
 
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
@@ -168,7 +168,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
         operatorContract.reportUnauthorizedSigning(
           groupIndex,
           blsData.nextGroupSignature, // Wrong signature
-          {from: tattletale}
+          { from: tattletale }
         ),
         "Invalid signature"
       )
@@ -180,14 +180,14 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
       await operatorContract.reportUnauthorizedSigning(
         groupIndex,
         tattletaleSignature,
-        {from: tattletale}
+        { from: tattletale }
       )
 
       await expectRevert(
         operatorContract.reportUnauthorizedSigning(
           groupIndex,
           tattletaleSignature,
-          {from: tattletale}
+          { from: tattletale }
         ),
         "Group has been already terminated"
       )
@@ -197,14 +197,14 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
   describe("reportRelayEntryTimeout", async () => {
     it("reverts if entry did not time out", async () => {
       await expectRevert(
-        operatorContract.reportRelayEntryTimeout({from: tattletale}),
+        operatorContract.reportRelayEntryTimeout({ from: tattletale }),
         "Entry did not time out."
       )
 
       await time.advanceBlockTo(relayRequestStartBlock.addn(9))
 
       await expectRevert(
-        operatorContract.reportRelayEntryTimeout({from: tattletale}),
+        operatorContract.reportRelayEntryTimeout({ from: tattletale }),
         "Entry did not time out."
       )
     })
@@ -216,22 +216,22 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     // be slashed more than one time.
     it("reverts when already reported for the last active group", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
       await expectRevert(
-        operatorContract.reportRelayEntryTimeout({from: tattletale}),
+        operatorContract.reportRelayEntryTimeout({ from: tattletale }),
         "Entry did not time out"
       )
     })
 
     it("does not revert in the first block relay entry timed out", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
       // ok, no reverts
     })
 
     it("seizes 1% of minimum stake from operators at the beginning", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // minimum stake = 100000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
@@ -247,7 +247,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
 
     it("rewards tattletale with 1% stake adjustment at the beginning", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%.
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment
@@ -261,7 +261,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("seizes 1% of minimum stake from operators before the first 3 months end", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 89))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
         "49999000000000000000000000" // 50000000000000000000000000 - 1% * 100000000000000000000000
@@ -277,7 +277,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("rewards tattletale with 1% stake adjustment before the first 3 months end", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 89))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%.
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment
@@ -291,7 +291,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("seizes 50% of minimum stake from operators after the first 3 months", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 90))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
         "49950000000000000000000000" // 50000000000000000000000000 - 50% * 100000000000000000000000
@@ -307,7 +307,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("rewards tattletale with 50% stake adjustment after the first 3 months", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 90))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%.
       // And "all of the seized tokens" are 3 * minimum stake with 50% adjustment
@@ -323,7 +323,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("seizes 50% of minimum stake from operators before the first 6 months end", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 179))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // minimum stake = 100000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
@@ -340,7 +340,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("rewards tattletale with 50% stake adjustment before the first 6 months end", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 179))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%.
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment
@@ -356,7 +356,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("seizes 100% of minimum stake from operators after the first 6 months end", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 180))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // minimum stake = 100000000000000000000000
       expect(await stakingContract.balanceOf(operator1)).to.eq.BN(
@@ -373,7 +373,7 @@ describe("KeepRandomBeaconOperator/Slashing", function () {
     it("rewards tattletale with 100% stake adjustment after the first 6 months end", async () => {
       await time.advanceBlockTo(relayRequestStartBlock.addn(10))
       await time.increaseTo(scheduleStart.addn(86400 * 180))
-      await operatorContract.reportRelayEntryTimeout({from: tattletale})
+      await operatorContract.reportRelayEntryTimeout({ from: tattletale })
 
       // Expecting 5% of all the seized tokens with reward adjustment of (20 / 64) = 31%.
       // And "all of the seized tokens" are 3 * minimum stake with 1% adjustment

@@ -1,6 +1,6 @@
 const blsData = require("./helpers/data.js")
-const {contract, web3} = require("@openzeppelin/test-environment")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const { contract, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert } = require("@openzeppelin/test-helpers")
 const BLS = contract.fromArtifact("BLS")
 const assert = require("chai").assert
 

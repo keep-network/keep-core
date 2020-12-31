@@ -1,7 +1,7 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("../helpers/initContracts")
-const {grantTokens} = require("../helpers/grantTokens")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { grantTokens } = require("../helpers/grantTokens")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const TokenGrant = contract.fromArtifact("TokenGrant")
@@ -25,9 +25,9 @@ describe("TokenGrant", function () {
   const grantee = accounts[2]
 
   before(async () => {
-    token = await KeepToken.new({from: accounts[0]})
-    registry = await KeepRegistry.new({from: accounts[0]})
-    grantContract = await TokenGrant.new(token.address, {from: accounts[0]})
+    token = await KeepToken.new({ from: accounts[0] })
+    registry = await KeepRegistry.new({ from: accounts[0] })
+    grantContract = await TokenGrant.new(token.address, { from: accounts[0] })
     const contracts = await initTokenStaking(
       token.address,
       grantContract.address,
@@ -71,7 +71,7 @@ describe("TokenGrant", function () {
       cliff,
       revocable,
       permissivePolicy.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
 
     // Ending balances
@@ -147,7 +147,7 @@ describe("TokenGrant", function () {
       cliff,
       true,
       permissivePolicy.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
 
     const grantManagerEndingBalance = await token.balanceOf.call(grantManager)

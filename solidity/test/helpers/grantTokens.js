@@ -1,4 +1,4 @@
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 async function grantTokens(
   grantContract,

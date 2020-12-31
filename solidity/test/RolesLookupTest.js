@@ -1,13 +1,13 @@
-const {accounts, contract} = require("@openzeppelin/test-environment")
-const {time, expectRevert} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("./helpers/initContracts")
-const {grantTokens} = require("./helpers/grantTokens")
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { time, expectRevert } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("./helpers/initContracts")
+const { grantTokens } = require("./helpers/grantTokens")
 const {
   delegateStake,
   delegateStakeFromGrant,
   delegateStakeFromManagedGrant,
 } = require("./helpers/delegateStake")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
 const assert = require("chai").assert
 
 const KeepToken = contract.fromArtifact("KeepToken")
@@ -48,9 +48,9 @@ describe("RolesLookup", () => {
   let lookup
 
   before(async () => {
-    const registry = await KeepRegistry.new({from: deployer})
-    token = await KeepToken.new({from: deployer})
-    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+    const registry = await KeepRegistry.new({ from: deployer })
+    token = await KeepToken.new({ from: deployer })
+    tokenGrant = await TokenGrant.new(token.address, { from: deployer })
     const stakingContracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
@@ -64,20 +64,20 @@ describe("RolesLookup", () => {
     managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      {from: deployer}
+      { from: deployer }
     )
 
     await tokenGrant.authorizeStakingContract(tokenStaking.address, {
       from: deployer,
     })
 
-    const lookupLib = await RolesLookup.new({from: deployer})
+    const lookupLib = await RolesLookup.new({ from: deployer })
     await RolesLookupStub.detectNetwork()
     await RolesLookupStub.link("RolesLookup", lookupLib.address)
     lookup = await RolesLookupStub.new(
       tokenStaking.address,
       tokenGrant.address,
-      {from: deployer}
+      { from: deployer }
     )
   })
 
@@ -86,7 +86,7 @@ describe("RolesLookup", () => {
       await createSnapshot()
       const amount = await tokenStaking.minimumStake()
 
-      await token.transfer(tokenOwner1, amount, {from: deployer})
+      await token.transfer(tokenOwner1, amount, { from: deployer })
       await delegateStake(
         token,
         tokenStaking,
@@ -95,10 +95,10 @@ describe("RolesLookup", () => {
         beneficiary1,
         authorizer,
         amount,
-        {from: tokenOwner1}
+        { from: tokenOwner1 }
       )
 
-      await token.transfer(tokenOwner2, amount, {from: deployer})
+      await token.transfer(tokenOwner2, amount, { from: deployer })
       await delegateStake(
         token,
         tokenStaking,
@@ -107,7 +107,7 @@ describe("RolesLookup", () => {
         beneficiary2,
         authorizer,
         amount,
-        {from: tokenOwner2}
+        { from: tokenOwner2 }
       )
     })
 
@@ -158,7 +158,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await delegateStakeFromGrant(
         tokenGrant,
@@ -182,7 +182,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await delegateStakeFromGrant(
         tokenGrant,
@@ -237,7 +237,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee1,
@@ -247,7 +247,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant1 = await ManagedGrant.at(managedGrantAddress1)
       await delegateStakeFromManagedGrant(
@@ -271,7 +271,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee2,
@@ -281,7 +281,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant2 = await ManagedGrant.at(managedGrantAddress2)
       await delegateStakeFromManagedGrant(
@@ -396,7 +396,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee1,
@@ -406,7 +406,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant1 = await ManagedGrant.at(managedGrant1Address)
       managedGrant1Id = await managedGrant1.grantId()
@@ -422,7 +422,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee2,
@@ -432,7 +432,7 @@ describe("RolesLookup", () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant2 = await ManagedGrant.at(managedGrant2Address)
       managedGrant2Id = await managedGrant2.grantId()

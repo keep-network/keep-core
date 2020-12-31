@@ -10,7 +10,7 @@ module.exports = async function () {
     const gasPrice = await contract.gasPriceCeiling()
     const dkgFee = dkgGas.mul(gasPrice)
 
-    await contract.genesis({value: dkgFee})
+    await contract.genesis({ value: dkgFee })
     console.log("Genesis successfully triggered.")
   } catch (error) {
     console.error("Could not trigger genesis", error)

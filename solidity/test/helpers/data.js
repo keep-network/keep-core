@@ -1,4 +1,4 @@
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 const blsData = {
   // data generated using master secret key 123

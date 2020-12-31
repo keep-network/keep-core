@@ -17,7 +17,7 @@ async function delegateStake(
     stakingContract.address,
     amount,
     "0x" + data.toString("hex"),
-    {from: tokenOwner}
+    { from: tokenOwner }
   )
 }
 
@@ -42,7 +42,7 @@ async function delegateStakeFromGrant(
     stakingContractAddress,
     amount,
     delegation,
-    {from: grantee}
+    { from: grantee }
   )
 }
 

@@ -1,6 +1,6 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {constants, expectRevert} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { constants, expectRevert } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const assert = require("chai").assert
 const BN = web3.utils.BN
@@ -21,10 +21,10 @@ describe("GrantStaking", () => {
   let info
 
   before(async () => {
-    const infoLib = await GrantStaking.new({from: deployer})
+    const infoLib = await GrantStaking.new({ from: deployer })
     await GrantStakingStub.detectNetwork()
     await GrantStakingStub.link("GrantStaking", infoLib.address)
-    info = await GrantStakingStub.new({from: deployer})
+    info = await GrantStakingStub.new({ from: deployer })
   })
 
   beforeEach(async () => {

@@ -3,8 +3,8 @@ const packTicket = require("./packTicket")
 const sign = require("./signature")
 const blsData = require("./data.js")
 const stakeDelegate = require("./stakeDelegate")
-const {web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
+const { web3 } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
 
 // Function stakes first three accounts provided in the array of accounts and
 // executes the entire genesis cycle registering group with bls.groupPubKey
@@ -70,17 +70,17 @@ async function stakeAndGenesis(accounts, contracts) {
   await stakingContract.authorizeOperatorContract(
     operator1,
     operatorContract.address,
-    {from: authorizer}
+    { from: authorizer }
   )
   await stakingContract.authorizeOperatorContract(
     operator2,
     operatorContract.address,
-    {from: authorizer}
+    { from: authorizer }
   )
   await stakingContract.authorizeOperatorContract(
     operator3,
     operatorContract.address,
-    {from: authorizer}
+    { from: authorizer }
   )
 
   const groupSize = await operatorContract.groupSize()
@@ -110,7 +110,7 @@ async function stakeAndGenesis(accounts, contracts) {
       tickets1[i].virtualStakerIndex,
       operator1
     )
-    await operatorContract.submitTicket(ticket, {from: operator1})
+    await operatorContract.submitTicket(ticket, { from: operator1 })
   }
 
   for (let i = 0; i < groupSize; i++) {
@@ -119,7 +119,7 @@ async function stakeAndGenesis(accounts, contracts) {
       tickets2[i].virtualStakerIndex,
       operator2
     )
-    await operatorContract.submitTicket(ticket, {from: operator2})
+    await operatorContract.submitTicket(ticket, { from: operator2 })
   }
 
   for (let i = 0; i < groupSize; i++) {
@@ -128,7 +128,7 @@ async function stakeAndGenesis(accounts, contracts) {
       tickets3[i].virtualStakerIndex,
       operator3
     )
-    await operatorContract.submitTicket(ticket, {from: operator3})
+    await operatorContract.submitTicket(ticket, { from: operator3 })
   }
 
   const ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock()
@@ -162,7 +162,7 @@ async function stakeAndGenesis(accounts, contracts) {
     misbehaved,
     signatures,
     signingMemberIndices,
-    {from: selectedParticipants[0]}
+    { from: selectedParticipants[0] }
   )
 }
 

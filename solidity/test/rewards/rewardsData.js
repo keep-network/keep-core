@@ -58,4 +58,4 @@ const testValues = {
     65625, // 65625 remaining
   ],
 }
-module.exports = {testValues}
+module.exports = { testValues }

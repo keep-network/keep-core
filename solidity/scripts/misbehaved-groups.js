@@ -40,9 +40,9 @@ module.exports = async function () {
     await keepRandomBeaconOperator.reportUnauthorizedSigning(
       0,
       Buffer.from("abc", "hex"),
-      {from: owner}
+      { from: owner }
     )
-    await keepRandomBeaconOperator.reportRelayEntryTimeout({from: owner})
+    await keepRandomBeaconOperator.reportRelayEntryTimeout({ from: owner })
   } catch (erorr) {
     console.log("Unexpected error", erorr)
     process.exit(1)

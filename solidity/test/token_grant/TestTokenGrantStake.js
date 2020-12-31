@@ -1,9 +1,9 @@
-const {delegateStakeFromGrant} = require("../helpers/delegateStake")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require("../helpers/initContracts")
-const {grantTokens} = require("../helpers/grantTokens")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
+const { delegateStakeFromGrant } = require("../helpers/delegateStake")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { grantTokens } = require("../helpers/grantTokens")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -56,11 +56,11 @@ describe("TokenGrant/Stake", function () {
   let undelegationPeriod
 
   before(async () => {
-    tokenContract = await KeepToken.new({from: accounts[0]})
+    tokenContract = await KeepToken.new({ from: accounts[0] })
     grantContract = await TokenGrant.new(tokenContract.address, {
       from: accounts[0],
     })
-    registryContract = await KeepRegistry.new({from: accounts[0]})
+    registryContract = await KeepRegistry.new({ from: accounts[0] })
     const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
@@ -99,7 +99,7 @@ describe("TokenGrant/Stake", function () {
         grantCliff,
         false,
         permissivePolicy.address,
-        {from: accounts[0]}
+        { from: accounts[0] }
       ))
 
     revocableGrantId = await grantTokens(
@@ -113,7 +113,7 @@ describe("TokenGrant/Stake", function () {
       grantCliff,
       true,
       minimumPolicy.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
 
     evilGrantId = await grantTokens(
@@ -127,7 +127,7 @@ describe("TokenGrant/Stake", function () {
       grantCliff,
       false,
       evilPolicy.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
   })
 
@@ -206,7 +206,7 @@ describe("TokenGrant/Stake", function () {
     )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    tx = await grantContract.undelegate(operatorOne, { from: grantee })
     const undelegatedAt = web3.utils.toBN(
       (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     )
@@ -231,7 +231,7 @@ describe("TokenGrant/Stake", function () {
   it("should allow to cancel delegation right away", async () => {
     await delegate(grantee, operatorOne, grantAmount)
 
-    await grantContract.cancelStake(operatorOne, {from: grantee})
+    await grantContract.cancelStake(operatorOne, { from: grantee })
 
     const availableForStaking = await stakingEscrowContract.depositedAmount.call(
       operatorOne
@@ -258,7 +258,7 @@ describe("TokenGrant/Stake", function () {
       createdAt.add(initializationPeriod).sub(timeRoundMargin)
     )
 
-    await grantContract.cancelStake(operatorOne, {from: grantee})
+    await grantContract.cancelStake(operatorOne, { from: grantee })
 
     const availableForStaking = await stakingEscrowContract.depositedAmount.call(
       operatorOne
@@ -284,7 +284,7 @@ describe("TokenGrant/Stake", function () {
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
 
     await expectRevert(
-      grantContract.cancelStake(operatorOne, {from: grantee}),
+      grantContract.cancelStake(operatorOne, { from: grantee }),
       "Initialized stake"
     )
   })
@@ -296,7 +296,7 @@ describe("TokenGrant/Stake", function () {
     )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    tx = await grantContract.undelegate(operatorOne, { from: grantee })
     const undelegatedAt = web3.utils.toBN(
       (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     )
@@ -316,9 +316,9 @@ describe("TokenGrant/Stake", function () {
       (await web3.eth.getBlock(tx.receipt.blockNumber)).timestamp
     )
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-    tx = await grantContract.undelegate(operatorOne, {from: grantee})
+    tx = await grantContract.undelegate(operatorOne, { from: grantee })
     await time.increaseTo(createdAt.add(grantUnlockingDuration))
-    await grantContract.recoverStake(operatorOne, {from: grantee})
+    await grantContract.recoverStake(operatorOne, { from: grantee })
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
@@ -328,7 +328,7 @@ describe("TokenGrant/Stake", function () {
 
   it("should not allow to delegate to the same operator after cancelling stake", async () => {
     await delegate(grantee, operatorOne, minimumStake)
-    await grantContract.cancelStake(operatorOne, {from: grantee})
+    await grantContract.cancelStake(operatorOne, { from: grantee })
 
     await expectRevert(
       delegate(grantee, operatorOne, minimumStake),
@@ -384,7 +384,7 @@ describe("TokenGrant/Stake", function () {
         notAuthorizedContract,
         grantAmount,
         delegation,
-        {from: grantee}
+        { from: grantee }
       ),
       "Provided staking contract is not authorized"
     )
@@ -400,7 +400,7 @@ describe("TokenGrant/Stake", function () {
   it("should let operator cancel delegation", async () => {
     await delegate(grantee, operatorOne, grantAmount, grantId)
 
-    await grantContract.cancelStake(operatorOne, {from: operatorOne})
+    await grantContract.cancelStake(operatorOne, { from: operatorOne })
     // ok, no exception
   })
 
@@ -408,7 +408,7 @@ describe("TokenGrant/Stake", function () {
     await delegate(grantee, operatorOne, grantAmount)
 
     await expectRevert(
-      grantContract.cancelStake(operatorOne, {from: operatorTwo}),
+      grantContract.cancelStake(operatorOne, { from: operatorTwo }),
       "Only operator or grantee can cancel the delegation."
     )
   })
@@ -420,7 +420,7 @@ describe("TokenGrant/Stake", function () {
     )
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
-    await grantContract.undelegate(operatorOne, {from: operatorOne})
+    await grantContract.undelegate(operatorOne, { from: operatorOne })
     // ok, no exceptions
   })
 
@@ -432,7 +432,7 @@ describe("TokenGrant/Stake", function () {
 
     await time.increaseTo(createdAt.add(initializationPeriod).addn(1))
     await expectRevert(
-      grantContract.undelegate(operatorOne, {from: operatorTwo}),
+      grantContract.undelegate(operatorOne, { from: operatorTwo }),
       "Only operator or grantee can undelegate"
     )
   })

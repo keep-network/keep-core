@@ -1,4 +1,4 @@
-const {contract, web3} = require("@openzeppelin/test-environment")
+const { contract, web3 } = require("@openzeppelin/test-environment")
 const assert = require("chai").assert
 const OperatorParamsStub = contract.fromArtifact("OperatorParamsStub")
 

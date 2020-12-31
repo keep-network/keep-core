@@ -1,5 +1,5 @@
-const {contract, accounts} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
+const { contract, accounts } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
 
 const BLS = contract.fromArtifact("BLS")
 const GroupSelection = contract.fromArtifact("GroupSelection")
@@ -27,25 +27,25 @@ async function initTokenStaking(
   const tokenStakingEscrow = await TokenStakingEscrow.new(
     tokenAddress,
     tokenGrantAddress,
-    {from: accounts[0]}
+    { from: accounts[0] }
   )
 
   await TokenStaking.detectNetwork()
   await TokenStaking.link(
     "MinimumStakeSchedule",
-    (await MinimumStakeSchedule.new({from: accounts[0]})).address
+    (await MinimumStakeSchedule.new({ from: accounts[0] })).address
   )
   await TokenStaking.link(
     "GrantStaking",
-    (await GrantStaking.new({from: accounts[0]})).address
+    (await GrantStaking.new({ from: accounts[0] })).address
   )
   await TokenStaking.link(
     "Locks",
-    (await Locks.new({from: accounts[0]})).address
+    (await Locks.new({ from: accounts[0] })).address
   )
   await TokenStaking.link(
     "TopUps",
-    (await TopUps.new({from: accounts[0]})).address
+    (await TopUps.new({ from: accounts[0] })).address
   )
 
   const tokenStaking = await TokenStaking.new(
@@ -54,7 +54,7 @@ async function initTokenStaking(
     tokenStakingEscrow.address,
     keepRegistryAddress,
     stakeInitializationPeriod,
-    {from: accounts[0]}
+    { from: accounts[0] }
   )
   await tokenStakingEscrow.transferOwnership(tokenStaking.address, {
     from: accounts[0],
@@ -75,9 +75,9 @@ async function initContracts(
   const dkgContributionMargin = 5 // 5% Represents DKG frequency of 1/20 (Every 20 entries trigger group selection)
   const stakeInitializationPeriod = time.duration.hours(6)
 
-  const token = await KeepToken.new({from: accounts[0]})
-  const tokenGrant = await TokenGrant.new(token.address, {from: accounts[0]})
-  const registry = await KeepRegistry.new({from: accounts[0]})
+  const token = await KeepToken.new({ from: accounts[0] })
+  const tokenGrant = await TokenGrant.new(token.address, { from: accounts[0] })
+  const registry = await KeepRegistry.new({ from: accounts[0] })
 
   // Initialize staking contract
   const stakingContracts = await initTokenStaking(
@@ -99,29 +99,29 @@ async function initContracts(
     .initialize(dkgContributionMargin, registry.address)
     .encodeABI()
 
-  const gasPriceOracle = await GasPriceOracle.new({from: accounts[0]})
+  const gasPriceOracle = await GasPriceOracle.new({ from: accounts[0] })
 
   const serviceContractProxy = await KeepRandomBeaconService.new(
     serviceContractImplV1.address,
     initialize,
-    {from: accounts[0]}
+    { from: accounts[0] }
   )
   const serviceContract = await KeepRandomBeaconServiceImplV1.at(
     serviceContractProxy.address
   )
   // Initialize Keep Random Beacon operator contract
-  const bls = await BLS.new({from: accounts[0]})
+  const bls = await BLS.new({ from: accounts[0] })
   await KeepRandomBeaconOperator.detectNetwork()
   await KeepRandomBeaconOperator.link("BLS", bls.address)
-  const groupSelection = await GroupSelection.new({from: accounts[0]})
+  const groupSelection = await GroupSelection.new({ from: accounts[0] })
   await Groups.detectNetwork()
   await Groups.link("BLS", bls.address)
-  const groups = await Groups.new({from: accounts[0]})
-  const delayFactor = await DelayFactor.new({from: accounts[0]})
+  const groups = await Groups.new({ from: accounts[0] })
+  const delayFactor = await DelayFactor.new({ from: accounts[0] })
   const dkgResultVerification = await DKGResultVerification.new({
     from: accounts[0],
   })
-  const reimbursements = await Reimbursements.new({from: accounts[0]})
+  const reimbursements = await Reimbursements.new({ from: accounts[0] })
 
   await KeepRandomBeaconOperator.link("DelayFactor", delayFactor.address)
   await KeepRandomBeaconOperator.link("GroupSelection", groupSelection.address)
@@ -136,7 +136,7 @@ async function initContracts(
     stakingContract.address,
     registry.address,
     gasPriceOracle.address,
-    {from: accounts[0]}
+    { from: accounts[0] }
   )
   await gasPriceOracle.addConsumerContract(operatorContract.address, {
     from: accounts[0],
@@ -153,7 +153,7 @@ async function initContracts(
   await registry.setOperatorContractUpgrader(
     serviceContract.address,
     operatorContractUpgrader,
-    {from: accounts[0]}
+    { from: accounts[0] }
   )
 
   await serviceContract.addOperatorContract(operatorContract.address, {

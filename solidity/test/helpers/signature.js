@@ -1,4 +1,4 @@
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 const sign = async (dataToSign, address) => {
   // go-ethereum/crypto produces signature with v={0, 1} and we need to add

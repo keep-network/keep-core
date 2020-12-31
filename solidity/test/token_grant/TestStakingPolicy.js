@@ -1,6 +1,6 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 
-const {initTokenStaking} = require("../helpers/initContracts")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy")
 const GuaranteedMinimumStakingPolicy = contract.fromArtifact(

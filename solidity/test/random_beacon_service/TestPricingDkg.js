@@ -1,9 +1,9 @@
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const stakeAndGenesis = require("../helpers/stakeAndGenesis")
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const assert = require("chai").assert
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 
 describe("KeepRandomBeaconService/PricingDkg", () => {
   let serviceContract
@@ -51,7 +51,7 @@ describe("KeepRandomBeaconService/PricingDkg", () => {
         .sub(web3.utils.toBN(contractBalance))
         .sub(web3.utils.toBN(1))
 
-      await serviceContract.fundDkgFeePool({value: insufficientPoolFunds})
+      await serviceContract.fundDkgFeePool({ value: insufficientPoolFunds })
 
       await operatorContract.relayEntry(blsData.groupSignature)
 
@@ -74,7 +74,7 @@ describe("KeepRandomBeaconService/PricingDkg", () => {
 
       const sufficientPoolFunds = web3.utils.toBN(groupCreationFee)
 
-      await serviceContract.fundDkgFeePool({value: sufficientPoolFunds})
+      await serviceContract.fundDkgFeePool({ value: sufficientPoolFunds })
 
       await operatorContract.relayEntry(blsData.groupSignature)
 
@@ -86,7 +86,7 @@ describe("KeepRandomBeaconService/PricingDkg", () => {
   )
 
   it("should not trigger group selection while one is in progress", async () => {
-    await serviceContract.fundDkgFeePool({value: 3 * groupCreationFee})
+    await serviceContract.fundDkgFeePool({ value: 3 * groupCreationFee })
 
     const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     await serviceContract.methods["requestRelayEntry()"]({

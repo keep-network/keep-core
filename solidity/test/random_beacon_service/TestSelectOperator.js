@@ -1,8 +1,8 @@
-const {expectRevert} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {initContracts} = require("../helpers/initContracts")
+const { expectRevert } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { initContracts } = require("../helpers/initContracts")
 const assert = require("chai").assert
-const {contract, accounts} = require("@openzeppelin/test-environment")
+const { contract, accounts } = require("@openzeppelin/test-environment")
 const OperatorContract = contract.fromArtifact("KeepRandomBeaconOperatorStub")
 const GasPriceOracle = contract.fromArtifact("GasPriceOracle")
 
@@ -15,7 +15,7 @@ describe("TestKeepRandomBeaconService/SelectOperator", function () {
   let operatorContract3
 
   before(async () => {
-    const gasPriceOracle = await GasPriceOracle.new({from: accounts[0]})
+    const gasPriceOracle = await GasPriceOracle.new({ from: accounts[0] })
     const contracts = await initContracts(
       contract.fromArtifact("TokenStaking"),
       contract.fromArtifact("KeepRandomBeaconService"),
@@ -34,22 +34,22 @@ describe("TestKeepRandomBeaconService/SelectOperator", function () {
       stakingContract.address,
       registry.address,
       gasPriceOracle.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
     operatorContract3 = await OperatorContract.new(
       serviceContract.address,
       stakingContract.address,
       registry.address,
       gasPriceOracle.address,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
 
-    await operatorContract.registerNewGroup("0x0", {from: accounts[0]})
-    await operatorContract2.registerNewGroup("0x0", {from: accounts[0]})
-    await operatorContract2.registerNewGroup("0x0", {from: accounts[0]})
-    await operatorContract3.registerNewGroup("0x0", {from: accounts[0]})
-    await operatorContract3.registerNewGroup("0x0", {from: accounts[0]})
-    await operatorContract3.registerNewGroup("0x0", {from: accounts[0]})
+    await operatorContract.registerNewGroup("0x0", { from: accounts[0] })
+    await operatorContract2.registerNewGroup("0x0", { from: accounts[0] })
+    await operatorContract2.registerNewGroup("0x0", { from: accounts[0] })
+    await operatorContract3.registerNewGroup("0x0", { from: accounts[0] })
+    await operatorContract3.registerNewGroup("0x0", { from: accounts[0] })
+    await operatorContract3.registerNewGroup("0x0", { from: accounts[0] })
   })
 
   beforeEach(async () => {
@@ -74,7 +74,7 @@ describe("TestKeepRandomBeaconService/SelectOperator", function () {
       from: accounts[0],
     })
     await expectRevert(
-      serviceContract.selectOperatorContract(0, {from: accounts[0]}),
+      serviceContract.selectOperatorContract(0, { from: accounts[0] }),
       "Total number of groups must be greater than zero"
     ) // Should revert since no operator contract present.
 
@@ -150,7 +150,7 @@ describe("TestKeepRandomBeaconService/SelectOperator", function () {
     })
 
     await expectRevert(
-      serviceContract.selectOperatorContract(0, {from: accounts[0]}),
+      serviceContract.selectOperatorContract(0, { from: accounts[0] }),
       "Total number of groups must be greater than zero."
     )
   })

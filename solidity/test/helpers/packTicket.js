@@ -1,4 +1,4 @@
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 function packTicket(ticketValueHex, index, operator) {
   const stakerValueBytes = web3.utils.hexToBytes(operator)

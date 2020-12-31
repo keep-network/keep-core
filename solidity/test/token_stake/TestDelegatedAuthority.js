@@ -1,7 +1,7 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -36,8 +36,8 @@ describe("TokenStaking/DelegatedAuthority", async () => {
   const recursivelyAuthorizedContract = accounts[7]
 
   before(async () => {
-    token = await KeepToken.new({from: accounts[0]})
-    grant = await TokenGrant.new(token.address, {from: accounts[0]})
+    token = await KeepToken.new({ from: accounts[0] })
+    grant = await TokenGrant.new(token.address, { from: accounts[0] })
     registry = await KeepRegistry.new()
     const stakingContracts = await initTokenStaking(
       token.address,
@@ -89,7 +89,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       stakingContract.address,
       amount,
       "0x" + data.toString("hex"),
-      {from: owner}
+      { from: owner }
     )
   }
 
@@ -101,7 +101,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     stakingContract.authorizeOperatorContract(
       operator,
       operatorContract.address,
-      {from: authorizer}
+      { from: authorizer }
     )
   }
 
@@ -113,7 +113,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     it("lets contracts claim delegated authority", async () => {
       await stakingContract.claimDelegatedAuthority(
         authorityDelegator.address,
-        {from: recognizedContract}
+        { from: recognizedContract }
       )
 
       expect(
@@ -146,7 +146,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       )
       await stakingContract.claimDelegatedAuthority(
         innerRecursiveDelegator.address,
-        {from: recursivelyAuthorizedContract}
+        { from: recursivelyAuthorizedContract }
       )
 
       expect(
@@ -159,7 +159,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
     before(async () => {
       await stakingContract.claimDelegatedAuthority(
         authorityDelegator.address,
-        {from: recognizedContract}
+        { from: recognizedContract }
       )
     })
 
@@ -167,7 +167,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
       before(async () => {
         await stakingContract.claimDelegatedAuthority(
           authorityDelegator.address,
-          {from: recognizedContract}
+          { from: recognizedContract }
         )
       })
 
@@ -197,7 +197,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
         )
         await stakingContract.claimDelegatedAuthority(
           innerRecursiveDelegator.address,
-          {from: recursivelyAuthorizedContract}
+          { from: recursivelyAuthorizedContract }
         )
         await authorize(outerRecursiveDelegator)
         expect(await hasDelegatedAuthorization(recursivelyAuthorizedContract))
@@ -211,7 +211,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           stakingContract.authorizeOperatorContract(
             operator,
             recognizedContract,
-            {from: authorizer}
+            { from: authorizer }
           ),
           "Delegated authority used"
         )
@@ -248,7 +248,7 @@ describe("TokenStaking/DelegatedAuthority", async () => {
           100,
           beneficiary,
           [operator],
-          {from: recognizedContract}
+          { from: recognizedContract }
         )
         // no error
       })

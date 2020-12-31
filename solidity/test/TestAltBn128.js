@@ -1,5 +1,5 @@
-const {expectRevert} = require("@openzeppelin/test-helpers")
-const {contract} = require("@openzeppelin/test-environment")
+const { expectRevert } = require("@openzeppelin/test-helpers")
+const { contract } = require("@openzeppelin/test-environment")
 const TestAltBn128 = contract.fromArtifact("TestAltBn128")
 
 describe("AltBn128", () => {

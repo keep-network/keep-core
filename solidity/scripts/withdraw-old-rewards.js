@@ -5,7 +5,7 @@ import Subproviders from "@0x/subproviders"
 // keep-core 1.1.2
 import KeepRandomBeaconOperatorJson from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
 
-const engine = new ProviderEngine({pollingInterval: 1000})
+const engine = new ProviderEngine({ pollingInterval: 1000 })
 
 engine.addProvider(
   // For address 0x94c0bD91530DF78ff41b9a7F9bCdd7E4730C7748.

@@ -1,6 +1,6 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const RewardsStub = contract.fromArtifact("RewardsStub")
@@ -28,7 +28,7 @@ describe("Rewards/Upgrades", () => {
   let newRewards
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
+    token = await KeepToken.new({ from: owner })
     newRewards = await NewRewardsStub.new()
 
     firstIntervalStart = await time.latest()
@@ -47,12 +47,12 @@ describe("Rewards/Upgrades", () => {
       intervalWeights,
       timestamps,
       termLength,
-      {from: owner}
+      { from: owner }
     )
     await token.approveAndCall(rewards.address, totalRewards, "0x0", {
       from: owner,
     })
-    await rewards.markAsFunded({from: owner})
+    await rewards.markAsFunded({ from: owner })
   })
 
   beforeEach(async () => {
@@ -66,30 +66,32 @@ describe("Rewards/Upgrades", () => {
   describe("upgrades", async () => {
     it("can be initiated only by contract owner", async () => {
       await expectRevert(
-        rewards.initiateRewardsUpgrade(newRewards.address, {from: thirdParty}),
+        rewards.initiateRewardsUpgrade(newRewards.address, {
+          from: thirdParty,
+        }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("can be finalized only by contract owner", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
       await expectRevert(
-        rewards.finalizeRewardsUpgrade({from: thirdParty}),
+        rewards.finalizeRewardsUpgrade({ from: thirdParty }),
         "Ownable: caller is not the owner."
       )
     })
 
     it("cannot be finalized without initiating first", async () => {
       await expectRevert(
-        rewards.finalizeRewardsUpgrade({from: owner}),
+        rewards.finalizeRewardsUpgrade({ from: owner }),
         "Upgrade not initiated"
       )
     })
 
     it("cannot be finalized before the initiation, zero interval ends", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
       await expectRevert(
-        rewards.finalizeRewardsUpgrade({from: owner}),
+        rewards.finalizeRewardsUpgrade({ from: owner }),
         "Interval at which the upgrade was initiated hasn't ended yet"
       )
     })
@@ -97,31 +99,31 @@ describe("Rewards/Upgrades", () => {
     it("cannot be finalized before the initiation, non-zero interval ends", async () => {
       await time.increase(termLength + 1) // interval 0 ends
 
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
       await expectRevert(
-        rewards.finalizeRewardsUpgrade({from: owner}),
+        rewards.finalizeRewardsUpgrade({ from: owner }),
         "Interval at which the upgrade was initiated hasn't ended yet"
       )
     })
 
     it("cannot be finalized another time without initiating again", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(termLength + 1) // interval 0 ends
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
       await expectRevert(
-        rewards.finalizeRewardsUpgrade({from: owner}),
+        rewards.finalizeRewardsUpgrade({ from: owner }),
         "Upgrade not initiated"
       )
     })
 
     it("should not change the current interval allocation", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(termLength + 1) // interval 0 ends
       await rewards.setCloseTime(timestamps[1])
 
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const allocation = await rewards.getAllocatedRewards(0)
       expect(allocation).to.eq.BN(50000) // 5% of 1 000 000
@@ -130,12 +132,12 @@ describe("Rewards/Upgrades", () => {
     it("allocates all possible intervals", async () => {
       await time.increase(termLength + 1) // interval 0 ends
 
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(termLength + 1) // interval 1 ends
       await rewards.setCloseTime(timestamps[2])
 
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const allocation0 = await rewards.getAllocatedRewards(0)
       const allocation1 = await rewards.getAllocatedRewards(1)
@@ -151,13 +153,13 @@ describe("Rewards/Upgrades", () => {
     it("can be finalized with all previous intervals already allocated", async () => {
       await time.increase(termLength + 1) // interval 0 ends
 
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(termLength + 1) // interval 1 ends
       await rewards.setCloseTime(timestamps[2])
 
       await rewards.allocateRewards(1)
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const allocation0 = await rewards.getAllocatedRewards(0)
       const allocation1 = await rewards.getAllocatedRewards(1)
@@ -169,13 +171,13 @@ describe("Rewards/Upgrades", () => {
     it("should correctly update timestamps", async () => {
       await time.increase(termLength + 1) // interval 0 ends
 
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(termLength + 1) // interval 1 ends
       await rewards.setCloseTime(timestamps[2])
 
       await rewards.allocateRewards(1)
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const upgradeInitiatedTimestamp = await rewards.upgradeInitiatedTimestamp()
       const upgradeFinalizedTimestamp = await rewards.upgradeFinalizedTimestamp()
@@ -187,12 +189,12 @@ describe("Rewards/Upgrades", () => {
     it("transfers any topped-up amount to a new contract after finalizing the upgrade", async () => {
       await time.increase(termLength + 1) // interval 0 ends
 
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(termLength + 1) // interval 1 ends
       await rewards.setCloseTime(timestamps[2])
 
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const rewardsTopUp = 420000
       await token.approveAndCall(rewards.address, rewardsTopUp, "0x0", {
@@ -212,12 +214,12 @@ describe("Rewards/Upgrades", () => {
     })
 
     it("moves all unallocated rewards to new contract", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(2 * termLength + 1)
 
       await rewards.setCloseTime(timestamps[2])
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const newContractBalance = await token.balanceOf(newRewards.address)
       // interval 0 allocates 50000
@@ -228,12 +230,12 @@ describe("Rewards/Upgrades", () => {
     })
 
     it("correctly updates reward balances", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(2 * termLength + 1)
 
       await rewards.setCloseTime(timestamps[2])
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
       const totalRewards = await rewards.totalRewards()
       const unallocatedRewards = await rewards.unallocatedRewards()
@@ -248,16 +250,16 @@ describe("Rewards/Upgrades", () => {
     })
 
     it("lets to withdraw outstanding rewards after finalizing upgrade", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(2 * termLength + 1)
 
       await rewards.setCloseTime(timestamps[2])
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
-      await rewards.receiveReward(0, {from: beneficiary})
-      await rewards.receiveReward(1, {from: beneficiary})
-      await rewards.receiveReward(2, {from: beneficiary})
+      await rewards.receiveReward(0, { from: beneficiary })
+      await rewards.receiveReward(1, { from: beneficiary })
+      await rewards.receiveReward(2, { from: beneficiary })
       const beneficiaryBalance = await token.balanceOf(beneficiary)
       // interval 0 allocates 50000
       // interval 1 allocates 95000
@@ -266,16 +268,16 @@ describe("Rewards/Upgrades", () => {
     })
 
     it("correctly updates reward balances when withdrawing after finalizing upgrade", async () => {
-      await rewards.initiateRewardsUpgrade(newRewards.address, {from: owner})
+      await rewards.initiateRewardsUpgrade(newRewards.address, { from: owner })
 
       await time.increase(2 * termLength + 1)
 
       await rewards.setCloseTime(timestamps[2])
-      await rewards.finalizeRewardsUpgrade({from: owner})
+      await rewards.finalizeRewardsUpgrade({ from: owner })
 
-      await rewards.receiveReward(0, {from: beneficiary})
-      await rewards.receiveReward(1, {from: beneficiary})
-      await rewards.receiveReward(2, {from: beneficiary})
+      await rewards.receiveReward(0, { from: beneficiary })
+      await rewards.receiveReward(1, { from: beneficiary })
+      await rewards.receiveReward(2, { from: beneficiary })
 
       const totalRewards = await rewards.totalRewards()
       const dispensedRewards = await rewards.dispensedRewards()

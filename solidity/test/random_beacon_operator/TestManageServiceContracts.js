@@ -1,7 +1,7 @@
-const {contract, accounts} = require("@openzeppelin/test-environment")
-const {expectRevert} = require("@openzeppelin/test-helpers")
-const {initContracts} = require("../helpers/initContracts")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { contract, accounts } = require("@openzeppelin/test-environment")
+const { expectRevert } = require("@openzeppelin/test-helpers")
+const { initContracts } = require("../helpers/initContracts")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
 
 describe("KeepRandomBeaconOperator/ManageServiceContracts", () => {
@@ -27,7 +27,7 @@ describe("KeepRandomBeaconOperator/ManageServiceContracts", () => {
     await registry.setServiceContractUpgrader(
       operatorContract.address,
       serviceContractUpgrader,
-      {from: accounts[0]}
+      { from: accounts[0] }
     )
 
     groupProfitFee = await operatorContract.groupProfitFee()

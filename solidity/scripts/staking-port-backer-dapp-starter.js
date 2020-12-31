@@ -39,7 +39,7 @@ function GrantStakingStrategy(grantId, from) {
       const grantContract = await TokenGrant.deployed()
 
       await grantContract
-        .stake(grantId, stakingContractAddress, amount, delegation, {from})
+        .stake(grantId, stakingContractAddress, amount, delegation, { from })
         .catch((err) => {
           console.log(
             `could not stake KEEP tokens from a grant for ${operator}: ${err}`
@@ -58,7 +58,7 @@ function ManagedGrantStakingStrategy(managedGrantAddress, from) {
     stake: async (stakingContractAddress, amount, delegation, operator) => {
       const managedGrantContract = await ManagedGrant.at(managedGrantAddress)
       await managedGrantContract
-        .stake(stakingContractAddress, amount, delegation, {from})
+        .stake(stakingContractAddress, amount, delegation, { from })
         .catch((err) => {
           console.log(
             `could not stake KEEP tokens from a managed grant for ${operator}: ${err}`
@@ -79,7 +79,7 @@ function OwnedTokensStakingStrategy(from) {
     stake: async (stakingContractAddress, amount, delegation, operator) => {
       const token = await KeepToken.deployed()
       const staked = await token
-        .approveAndCall(stakingContractAddress, amount, delegation, {from})
+        .approveAndCall(stakingContractAddress, amount, delegation, { from })
         .catch((err) => {
           console.log(`could not stake KEEP tokens for ${operator}: ${err}`)
         })
@@ -121,7 +121,7 @@ module.exports = async function () {
         )
 
         await stakingPortBackerContract
-          .allowOperator(operator, {from: owner})
+          .allowOperator(operator, { from: owner })
           .catch((err) =>
             console.log(`could not allowOperator for ${operator}`, err)
           )
@@ -165,7 +165,7 @@ module.exports = async function () {
       grantContract.address,
       formatAmount(12300000, 18),
       grantExtraData,
-      {from: owner}
+      { from: owner }
     )
     const tokenGrantCreatedEvent = (await grantContract.getPastEvents())[0]
     const grantId = tokenGrantCreatedEvent.args["id"]
@@ -177,7 +177,7 @@ module.exports = async function () {
       managedGrantFactoryContract.address,
       formatAmount(12300000, 18),
       managedGrantExtraData,
-      {from: owner}
+      { from: owner }
     )
     // Get the address of managed grant contract from an event.
     const managedGrant1Event = (

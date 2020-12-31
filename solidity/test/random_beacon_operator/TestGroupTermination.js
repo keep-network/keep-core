@@ -1,7 +1,7 @@
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const assert = require("chai").assert
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
 const GroupsTerminationStub = contract.fromArtifact("GroupsTerminationStub")
 const Groups = contract.fromArtifact("Groups")
 const BLS = contract.fromArtifact("BLS")
@@ -12,7 +12,7 @@ describe("KeepRandomBeaconOperator/GroupTermination", function () {
   const groupActiveTime = web3.utils.toBN(5)
 
   before(async () => {
-    const bls = await BLS.new({from: accounts[0]})
+    const bls = await BLS.new({ from: accounts[0] })
     await Groups.detectNetwork()
     await Groups.link("BLS", bls.address)
     const groupsLibrary = await Groups.new()

@@ -48,7 +48,7 @@ module.exports = async function (deployer, network) {
   )
   keepRandomBeaconServiceImplV1.addOperatorContract(
     keepRandomBeaconOperator.address,
-    {from: operatorContractUpgrader}
+    { from: operatorContractUpgrader }
   )
 
   await gasPriceOracle.addConsumerContract(keepRandomBeaconOperator.address)

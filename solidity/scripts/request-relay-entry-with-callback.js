@@ -19,7 +19,7 @@ module.exports = async function () {
     )
     const tx = await contractInstance.methods[
       "requestRelayEntry(address,uint256)"
-    ](process.argv[4], process.argv[5], {value: entryFeeEstimate})
+    ](process.argv[4], process.argv[5], { value: entryFeeEstimate })
     console.log(
       "Successfully requested relay entry with a callback. RequestId =",
       tx.logs[0].args.requestId.toString()

@@ -1,9 +1,9 @@
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const assert = require("chai").assert
-const {contract, web3, accounts} = require("@openzeppelin/test-environment")
-const {expectRevert} = require("@openzeppelin/test-helpers")
+const { contract, web3, accounts } = require("@openzeppelin/test-environment")
+const { expectRevert } = require("@openzeppelin/test-helpers")
 
 const ServiceContractProxy = contract.fromArtifact("KeepRandomBeaconService")
 

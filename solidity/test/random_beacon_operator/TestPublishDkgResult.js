@@ -3,11 +3,11 @@ const sign = require("../helpers/signature")
 const packTicket = require("../helpers/packTicket")
 const generateTickets = require("../helpers/generateTickets")
 const shuffleArray = require("../helpers/shuffle")
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const assert = require("chai").assert
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot.js")
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
 const stakeDelegate = require("../helpers/stakeDelegate")
 
 describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
@@ -89,17 +89,17 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
     await stakingContract.authorizeOperatorContract(
       operator1,
       operatorContract.address,
-      {from: owner}
+      { from: owner }
     )
     await stakingContract.authorizeOperatorContract(
       operator2,
       operatorContract.address,
-      {from: owner}
+      { from: owner }
     )
     await stakingContract.authorizeOperatorContract(
       operator3,
       operatorContract.address,
-      {from: owner}
+      { from: owner }
     )
 
     time.increase((await stakingContract.initializationPeriod()).addn(1))
@@ -127,7 +127,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         tickets1[i].virtualStakerIndex,
         operator1
       )
-      await operatorContract.submitTicket(ticket, {from: operator1})
+      await operatorContract.submitTicket(ticket, { from: operator1 })
     }
 
     for (let i = 0; i < groupSize; i++) {
@@ -136,7 +136,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         tickets2[i].virtualStakerIndex,
         operator2
       )
-      await operatorContract.submitTicket(ticket, {from: operator2})
+      await operatorContract.submitTicket(ticket, { from: operator2 })
     }
 
     for (let i = 0; i < groupSize; i++) {
@@ -145,7 +145,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         tickets3[i].virtualStakerIndex,
         operator3
       )
-      await operatorContract.submitTicket(ticket, {from: operator3})
+      await operatorContract.submitTicket(ticket, { from: operator3 })
     }
 
     const ticketSubmissionStartBlock = await operatorContract.getTicketSubmissionStartBlock()
@@ -188,7 +188,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
       noMisbehaved,
       signatures,
       signingMemberIndices,
-      {from: selectedParticipants[0]}
+      { from: selectedParticipants[0] }
     )
     assert.isTrue(
       await operatorContract.isGroupRegistered(groupPubKey),
@@ -223,7 +223,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
       noMisbehaved,
       signatures,
       signingMemberIndices,
-      {from: selectedParticipants[0], gasPrice: submitterCustomGasPrice}
+      { from: selectedParticipants[0], gasPrice: submitterCustomGasPrice }
     )
 
     const updatedBeneficiaryBalance = web3.utils.toBN(
@@ -303,7 +303,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
       noMisbehaved,
       unorderedSignatures,
       unorderedSigningMembersIndexes,
-      {from: selectedParticipants[0]}
+      { from: selectedParticipants[0] }
     )
     assert.isTrue(
       await operatorContract.isGroupRegistered(groupPubKey),
@@ -338,7 +338,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         signatures,
         signingMemberIndices,
-        {from: submitter2}
+        { from: submitter2 }
       ),
       "Submitter not eligible"
     )
@@ -352,7 +352,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
       noMisbehaved,
       signatures,
       signingMemberIndices,
-      {from: submitter2}
+      { from: submitter2 }
     )
     assert.isTrue(
       await operatorContract.isGroupRegistered(groupPubKey),
@@ -373,7 +373,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         signatures,
         signingMemberIndices,
-        {from: operator4}
+        { from: operator4 }
       ),
       "Unexpected submitter index"
     )
@@ -415,7 +415,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         signatures,
         signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Invalid signature"
     )
@@ -453,7 +453,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         signatures,
         signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Duplicate member index"
     )
@@ -485,7 +485,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
       noMisbehaved,
       signatures,
       signingMemberIndices,
-      {from: selectedParticipants[0]}
+      { from: selectedParticipants[0] }
     )
 
     assert.isTrue(
@@ -521,7 +521,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         signatures,
         signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Too few signatures"
     )
@@ -546,7 +546,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         s.signatures,
         s.signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Malformed group public key"
     )
@@ -566,7 +566,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         s.signatures,
         s.signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Malformed group public key"
     )
@@ -586,7 +586,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         invalidMisbehaved,
         s.signatures,
         s.signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Malformed misbehaved"
     )
@@ -604,7 +604,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
       maxMisbehaved,
       s.signatures,
       s.signingMemberIndices,
-      {from: selectedParticipants[0]}
+      { from: selectedParticipants[0] }
     )
     // ok, no exceptions
   })
@@ -626,7 +626,7 @@ describe("KeepRandomBeaconOperator/PublishDkgResult", function () {
         noMisbehaved,
         s.signatures,
         s.signingMemberIndices,
-        {from: selectedParticipants[0]}
+        { from: selectedParticipants[0] }
       ),
       "Too many signatures"
     )

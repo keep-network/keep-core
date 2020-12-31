@@ -1,4 +1,4 @@
-const {contract} = require("@openzeppelin/test-environment")
+const { contract } = require("@openzeppelin/test-environment")
 const TestArrayUtils = contract.fromArtifact("TestArrayUtils")
 
 describe("TestArrayUtils", () => {

@@ -1,9 +1,9 @@
 const stakeDelegate = require("../helpers/stakeDelegate")
 const blsData = require("../helpers/data.js")
-const {initContracts} = require("../helpers/initContracts")
+const { initContracts } = require("../helpers/initContracts")
 const assert = require("chai").assert
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
 const CallbackContract = contract.fromArtifact("CallbackContract")
 
 describe("TestKeepRandomBeaconService/Pricing", function () {
@@ -127,7 +127,7 @@ describe("TestKeepRandomBeaconService/Pricing", function () {
     const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     const tx = await serviceContract.methods[
       "requestRelayEntry(address,uint256)"
-    ](callbackContract.address, 0, {value: entryFeeEstimate, from: requestor})
+    ](callbackContract.address, 0, { value: entryFeeEstimate, from: requestor })
 
     const currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber)
     const relayEntryTimeout = await operatorContract.relayEntryTimeout()
@@ -190,7 +190,7 @@ describe("TestKeepRandomBeaconService/Pricing", function () {
     const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
     const tx = await serviceContract.methods[
       "requestRelayEntry(address,uint256)"
-    ](callbackContract.address, 0, {value: entryFeeEstimate, from: requestor})
+    ](callbackContract.address, 0, { value: entryFeeEstimate, from: requestor })
 
     const currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber)
     const relayEntryTimeout = await operatorContract.relayEntryTimeout()

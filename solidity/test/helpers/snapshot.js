@@ -1,7 +1,7 @@
 // Snapshots are a feature of some EVM implementations for improved dev UX.
 // They allow us to snapshot the entire state of the chain, and restore it at a later point.
 // https://github.com/trufflesuite/ganache-core/blob/master/README.md#custom-methods
-const {web3} = require("@openzeppelin/test-environment")
+const { web3 } = require("@openzeppelin/test-environment")
 
 const snapshotIdsStack = []
 

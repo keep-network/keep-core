@@ -1,7 +1,7 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initTokenStaking } = require("../helpers/initContracts")
 const stakeDelegate = require("../helpers/stakeDelegate")
 
 const KeepToken = contract.fromArtifact("KeepToken")
@@ -31,9 +31,9 @@ describe("TokenStaking/Punishment", () => {
   const initializationPeriod = time.duration.seconds(10)
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
-    tokenGrant = await TokenGrant.new(token.address, {from: owner})
-    registry = await KeepRegistry.new({from: owner})
+    token = await KeepToken.new({ from: owner })
+    tokenGrant = await TokenGrant.new(token.address, { from: owner })
+    registry = await KeepRegistry.new({ from: owner })
     const stakingContracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
@@ -44,7 +44,7 @@ describe("TokenStaking/Punishment", () => {
     )
     stakingContract = stakingContracts.tokenStaking
 
-    await registry.setRegistryKeeper(registryKeeper, {from: owner})
+    await registry.setRegistryKeeper(registryKeeper, { from: owner })
 
     minimumStake = await stakingContract.minimumStake()
     largeStake = minimumStake.muln(2)
@@ -66,7 +66,7 @@ describe("TokenStaking/Punishment", () => {
     await stakingContract.authorizeOperatorContract(
       operator,
       operatorContract,
-      {from: authorizer}
+      { from: authorizer }
     )
   })
 
@@ -137,7 +137,7 @@ describe("TokenStaking/Punishment", () => {
 
     it("should fail when operator stake is released", async () => {
       time.increase((await stakingContract.initializationPeriod()).addn(1))
-      await stakingContract.undelegate(operator, {from: owner})
+      await stakingContract.undelegate(operator, { from: owner })
       time.increase((await stakingContract.undelegationPeriod()).addn(1))
 
       const amountToSlash = web3.utils.toBN(100)
@@ -166,7 +166,7 @@ describe("TokenStaking/Punishment", () => {
         rewardMultiplier,
         tattletale,
         [operator],
-        {from: operatorContract}
+        { from: operatorContract }
       )
 
       const operatorBalanceAfterSeizing = await stakingContract.balanceOf(
@@ -199,7 +199,7 @@ describe("TokenStaking/Punishment", () => {
         rewardMultiplier,
         tattletale,
         [operator],
-        {from: operatorContract}
+        { from: operatorContract }
       )
 
       const operatorBalanceAfterSeizing = await stakingContract.balanceOf(
@@ -235,7 +235,7 @@ describe("TokenStaking/Punishment", () => {
         rewardMultiplier,
         tattletale,
         [operator],
-        {from: operatorContract}
+        { from: operatorContract }
       )
 
       const operatorBalanceAfterSeizing = await stakingContract.balanceOf(
@@ -258,7 +258,7 @@ describe("TokenStaking/Punishment", () => {
           rewardMultiplier,
           tattletale,
           [operator],
-          {from: operatorContract}
+          { from: operatorContract }
         ),
         "Inactive stake"
       )
@@ -266,7 +266,7 @@ describe("TokenStaking/Punishment", () => {
 
     it("should fail when operator stake is released", async () => {
       time.increase((await stakingContract.initializationPeriod()).addn(1))
-      await stakingContract.undelegate(operator, {from: owner})
+      await stakingContract.undelegate(operator, { from: owner })
       time.increase((await stakingContract.undelegationPeriod()).addn(1))
 
       const amountToSeize = web3.utils.toBN(10000)
@@ -277,7 +277,7 @@ describe("TokenStaking/Punishment", () => {
           rewardMultiplier,
           tattletale,
           [operator],
-          {from: operatorContract}
+          { from: operatorContract }
         ),
         "Stake is released"
       )

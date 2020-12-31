@@ -1,8 +1,8 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {grantTokens} = require("../helpers/grantTokens")
-const {createSnapshot, restoreSnapshot} = require("../helpers/snapshot")
-const {initTokenStaking} = require("../helpers/initContracts")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { grantTokens } = require("../helpers/grantTokens")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { initTokenStaking } = require("../helpers/initContracts")
 
 const BN = web3.utils.BN
 const chai = require("chai")
@@ -52,9 +52,9 @@ describe("TokenGrant/ManagedGrant", () => {
   let stakeFromManagedGrant
 
   before(async () => {
-    token = await KeepToken.new({from: grantCreator})
-    registry = await KeepRegistry.new({from: grantCreator})
-    tokenGrant = await TokenGrant.new(token.address, {from: grantCreator})
+    token = await KeepToken.new({ from: grantCreator })
+    registry = await KeepRegistry.new({ from: grantCreator })
+    tokenGrant = await TokenGrant.new(token.address, { from: grantCreator })
     const contracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
@@ -99,7 +99,7 @@ describe("TokenGrant/ManagedGrant", () => {
       grantCliff,
       false,
       permissivePolicy.address,
-      {from: grantCreator}
+      { from: grantCreator }
     )
 
     stakeFromManagedGrant = async (
@@ -139,14 +139,18 @@ describe("TokenGrant/ManagedGrant", () => {
 
   describe("requestGranteeReassignment", async () => {
     it("can be done by the grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       expect(await managedGrant.grantee()).to.equal(grantee)
       expect(await managedGrant.requestedNewGrantee()).to.equal(newGrantee)
     })
 
     it("cannot be done by the new grantee", async () => {
       await expectRevert(
-        managedGrant.requestGranteeReassignment(newGrantee, {from: newGrantee}),
+        managedGrant.requestGranteeReassignment(newGrantee, {
+          from: newGrantee,
+        }),
         "Only grantee may perform this action"
       )
     })
@@ -171,20 +175,22 @@ describe("TokenGrant/ManagedGrant", () => {
 
     it("rejects reassignment to the null address", async () => {
       await expectRevert(
-        managedGrant.requestGranteeReassignment(nullAddress, {from: grantee}),
+        managedGrant.requestGranteeReassignment(nullAddress, { from: grantee }),
         "Invalid new grantee address"
       )
     })
 
     it("rejects reassignment to the old grantee's address", async () => {
       await expectRevert(
-        managedGrant.requestGranteeReassignment(grantee, {from: grantee}),
+        managedGrant.requestGranteeReassignment(grantee, { from: grantee }),
         "New grantee same as current grantee"
       )
     })
 
     it("emits an event", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       expect(
         (await managedGrant.getPastEvents())[0].args["newGrantee"]
       ).to.equal(newGrantee)
@@ -193,39 +199,49 @@ describe("TokenGrant/ManagedGrant", () => {
 
   describe("cancelReassignmentRequest", async () => {
     it("can be done by the grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
-      await managedGrant.cancelReassignmentRequest({from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
+      await managedGrant.cancelReassignmentRequest({ from: grantee })
       expect(await managedGrant.grantee()).to.equal(grantee)
       expect(await managedGrant.requestedNewGrantee()).to.equal(nullAddress)
     })
 
     it("cannot be done by the new grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.cancelReassignmentRequest({from: newGrantee}),
+        managedGrant.cancelReassignmentRequest({ from: newGrantee }),
         "Only grantee may perform this action"
       )
     })
 
     it("cannot be done by the creator", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.cancelReassignmentRequest({from: grantCreator}),
+        managedGrant.cancelReassignmentRequest({ from: grantCreator }),
         "Only grantee may perform this action"
       )
     })
 
     it("cannot be done by a third party", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.cancelReassignmentRequest({from: unrelatedAddress}),
+        managedGrant.cancelReassignmentRequest({ from: unrelatedAddress }),
         "Only grantee may perform this action"
       )
     })
 
     it("emits an event", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
-      await managedGrant.cancelReassignmentRequest({from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
+      await managedGrant.cancelReassignmentRequest({ from: grantee })
       expect(
         (await managedGrant.getPastEvents())[0].args[
           "cancelledRequestedGrantee"
@@ -236,7 +252,9 @@ describe("TokenGrant/ManagedGrant", () => {
 
   describe("changeReassignmentRequest", async () => {
     it("can be done by the grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.changeReassignmentRequest(anotherGrantee, {
         from: grantee,
       })
@@ -245,7 +263,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("cannot be done by the previous new grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.changeReassignmentRequest(anotherGrantee, {
           from: newGrantee,
@@ -255,7 +275,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("cannot be done by the changed new grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.changeReassignmentRequest(anotherGrantee, {
           from: anotherGrantee,
@@ -265,7 +287,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("cannot be done by the creator", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.requestGranteeReassignment(anotherGrantee, {
           from: grantCreator,
@@ -275,7 +299,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("cannot be done by a third party", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.requestGranteeReassignment(anotherGrantee, {
           from: unrelatedAddress,
@@ -285,31 +311,39 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("rejects reassignment to the null address", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.changeReassignmentRequest(nullAddress, {from: grantee}),
+        managedGrant.changeReassignmentRequest(nullAddress, { from: grantee }),
         "Invalid new grantee address"
       )
     })
 
     it("rejects reassignment to the old grantee's address", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.changeReassignmentRequest(grantee, {from: grantee}),
+        managedGrant.changeReassignmentRequest(grantee, { from: grantee }),
         "New grantee same as current grantee"
       )
     })
 
     it("rejects reassignment to the previously requested address", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.changeReassignmentRequest(newGrantee, {from: grantee}),
+        managedGrant.changeReassignmentRequest(newGrantee, { from: grantee }),
         "Unchanged reassignment request"
       )
     })
 
     it("emits an event", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.changeReassignmentRequest(anotherGrantee, {
         from: grantee,
       })
@@ -321,7 +355,9 @@ describe("TokenGrant/ManagedGrant", () => {
 
   describe("confirmGranteeReassignment", async () => {
     it("can be done by the grant manager", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
@@ -330,23 +366,31 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("can't be done by the old grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.confirmGranteeReassignment(newGrantee, {from: grantee}),
+        managedGrant.confirmGranteeReassignment(newGrantee, { from: grantee }),
         "Only grantManager may perform this action"
       )
     })
 
     it("can't be done by the new grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.confirmGranteeReassignment(newGrantee, {from: newGrantee}),
+        managedGrant.confirmGranteeReassignment(newGrantee, {
+          from: newGrantee,
+        }),
         "Only grantManager may perform this action"
       )
     })
 
     it("can't be done by a third party", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.confirmGranteeReassignment(newGrantee, {
           from: unrelatedAddress,
@@ -356,15 +400,21 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("can't confirm the old grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.confirmGranteeReassignment(grantee, {from: grantCreator}),
+        managedGrant.confirmGranteeReassignment(grantee, {
+          from: grantCreator,
+        }),
         "Reassignment address mismatch"
       )
     })
 
     it("can't confirm the grant manager", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.confirmGranteeReassignment(grantCreator, {
           from: grantCreator,
@@ -374,7 +424,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("can't confirm a third party", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
         managedGrant.confirmGranteeReassignment(unrelatedAddress, {
           from: grantCreator,
@@ -384,7 +436,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("emits an event", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
@@ -397,14 +451,14 @@ describe("TokenGrant/ManagedGrant", () => {
   describe("withdrawal", async () => {
     it("can be done by the grantee", async () => {
       await time.increase(grantUnlockingDuration)
-      await managedGrant.withdraw({from: grantee})
+      await managedGrant.withdraw({ from: grantee })
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount)
     })
 
     it("can't be done by the grant manager", async () => {
       await time.increase(grantUnlockingDuration)
       await expectRevert(
-        managedGrant.withdraw({from: grantCreator}),
+        managedGrant.withdraw({ from: grantCreator }),
         "Only grantee may perform this action"
       )
     })
@@ -412,33 +466,37 @@ describe("TokenGrant/ManagedGrant", () => {
     it("can't be done by a third party", async () => {
       await time.increase(grantUnlockingDuration)
       await expectRevert(
-        managedGrant.withdraw({from: unrelatedAddress}),
+        managedGrant.withdraw({ from: unrelatedAddress }),
         "Only grantee may perform this action"
       )
     })
 
     it("can't withdraw when reassignment is pending", async () => {
       await time.increase(grantUnlockingDuration)
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await expectRevert(
-        managedGrant.withdraw({from: grantee}),
+        managedGrant.withdraw({ from: grantee }),
         "Can not withdraw with pending reassignment"
       )
     })
 
     it("can be withdrawn to a reassigned grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
       await time.increase(grantUnlockingDuration)
-      await managedGrant.withdraw({from: newGrantee})
+      await managedGrant.withdraw({ from: newGrantee })
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount)
     })
 
     it("emits an event", async () => {
       await time.increase(grantUnlockingDuration)
-      await managedGrant.withdraw({from: grantee})
+      await managedGrant.withdraw({ from: grantee })
       const event = (await managedGrant.getPastEvents())[0]
       expect(event.args["destination"]).to.equal(grantee)
       expect(event.args["amount"]).to.eq.BN(grantAmount)
@@ -486,7 +544,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("can be done by a reassigned grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
@@ -503,7 +563,9 @@ describe("TokenGrant/ManagedGrant", () => {
     })
 
     it("can't be done by the old grantee", async () => {
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
@@ -529,7 +591,7 @@ describe("TokenGrant/ManagedGrant", () => {
         minimumStake,
         grantee
       )
-      await managedGrant.cancelStake(operator, {from: grantee})
+      await managedGrant.cancelStake(operator, { from: grantee })
       expect(await staking.balanceOf(operator)).to.eq.BN(0)
     })
 
@@ -541,7 +603,7 @@ describe("TokenGrant/ManagedGrant", () => {
         minimumStake,
         grantee
       )
-      await managedGrant.cancelStake(operator, {from: operator})
+      await managedGrant.cancelStake(operator, { from: operator })
       expect(await staking.balanceOf(operator)).to.eq.BN(0)
     })
 
@@ -554,7 +616,7 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await expectRevert(
-        managedGrant.cancelStake(operator, {from: grantCreator}),
+        managedGrant.cancelStake(operator, { from: grantCreator }),
         "Only grantee or operator may perform this action"
       )
     })
@@ -568,7 +630,7 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await expectRevert(
-        managedGrant.cancelStake(operator, {from: unrelatedAddress}),
+        managedGrant.cancelStake(operator, { from: unrelatedAddress }),
         "Only grantee or operator may perform this action"
       )
     })
@@ -581,11 +643,13 @@ describe("TokenGrant/ManagedGrant", () => {
         minimumStake,
         grantee
       )
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
-      await managedGrant.cancelStake(operator, {from: newGrantee})
+      await managedGrant.cancelStake(operator, { from: newGrantee })
       expect(await staking.balanceOf(operator)).to.eq.BN(0)
     })
 
@@ -597,12 +661,14 @@ describe("TokenGrant/ManagedGrant", () => {
         minimumStake,
         grantee
       )
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
       await expectRevert(
-        managedGrant.cancelStake(operator, {from: grantee}),
+        managedGrant.cancelStake(operator, { from: grantee }),
         "Only grantee or operator may perform this action"
       )
     })
@@ -619,7 +685,7 @@ describe("TokenGrant/ManagedGrant", () => {
       )
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0)
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
     })
 
     it("can be done by the operator", async () => {
@@ -632,7 +698,7 @@ describe("TokenGrant/ManagedGrant", () => {
       )
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0)
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: operator})
+      await managedGrant.undelegate(operator, { from: operator })
     })
 
     it("can't be done by the grant manager", async () => {
@@ -645,7 +711,7 @@ describe("TokenGrant/ManagedGrant", () => {
       )
       await time.increase(initializationPeriod.muln(2))
       await expectRevert(
-        managedGrant.undelegate(operator, {from: grantCreator}),
+        managedGrant.undelegate(operator, { from: grantCreator }),
         "Only grantee or operator may perform this action"
       )
     })
@@ -660,7 +726,7 @@ describe("TokenGrant/ManagedGrant", () => {
       )
       await time.increase(initializationPeriod.muln(2))
       await expectRevert(
-        managedGrant.undelegate(operator, {from: unrelatedAddress}),
+        managedGrant.undelegate(operator, { from: unrelatedAddress }),
         "Only grantee or operator may perform this action"
       )
     })
@@ -675,11 +741,13 @@ describe("TokenGrant/ManagedGrant", () => {
       )
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0)
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
-      await managedGrant.undelegate(operator, {from: newGrantee})
+      await managedGrant.undelegate(operator, { from: newGrantee })
     })
 
     it("can't be done by the old grantee", async () => {
@@ -692,12 +760,14 @@ describe("TokenGrant/ManagedGrant", () => {
       )
       expect(await token.balanceOf(managedGrant.address)).to.eq.BN(0)
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
       await expectRevert(
-        managedGrant.undelegate(operator, {from: grantee}),
+        managedGrant.undelegate(operator, { from: grantee }),
         "Only grantee or operator may perform this action"
       )
     })
@@ -713,10 +783,10 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
       await time.increase(undelegationPeriod.add(grantUnlockingDuration))
-      await managedGrant.recoverStake(operator, {from: grantee})
-      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee})
+      await managedGrant.recoverStake(operator, { from: grantee })
+      await stakingEscrow.withdrawToManagedGrantee(operator, { from: grantee })
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount)
     })
 
@@ -729,10 +799,10 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
       await time.increase(undelegationPeriod.add(grantUnlockingDuration))
-      await managedGrant.recoverStake(operator, {from: operator})
-      await stakingEscrow.withdrawToManagedGrantee(operator, {from: operator})
+      await managedGrant.recoverStake(operator, { from: operator })
+      await stakingEscrow.withdrawToManagedGrantee(operator, { from: operator })
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount)
     })
 
@@ -745,10 +815,10 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
       await time.increase(undelegationPeriod.add(grantUnlockingDuration))
-      await managedGrant.recoverStake(operator, {from: grantCreator})
-      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee})
+      await managedGrant.recoverStake(operator, { from: grantCreator })
+      await stakingEscrow.withdrawToManagedGrantee(operator, { from: grantee })
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount)
     })
 
@@ -761,10 +831,10 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
       await time.increase(undelegationPeriod.add(grantUnlockingDuration))
-      await managedGrant.recoverStake(operator, {from: unrelatedAddress})
-      await stakingEscrow.withdrawToManagedGrantee(operator, {from: grantee})
+      await managedGrant.recoverStake(operator, { from: unrelatedAddress })
+      await stakingEscrow.withdrawToManagedGrantee(operator, { from: grantee })
       expect(await token.balanceOf(grantee)).to.eq.BN(grantAmount)
     })
 
@@ -777,14 +847,18 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
       await time.increase(undelegationPeriod.add(grantUnlockingDuration))
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
-      await managedGrant.recoverStake(operator, {from: newGrantee})
-      await stakingEscrow.withdrawToManagedGrantee(operator, {from: newGrantee})
+      await managedGrant.recoverStake(operator, { from: newGrantee })
+      await stakingEscrow.withdrawToManagedGrantee(operator, {
+        from: newGrantee,
+      })
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount)
     })
 
@@ -797,14 +871,18 @@ describe("TokenGrant/ManagedGrant", () => {
         grantee
       )
       await time.increase(initializationPeriod.muln(2))
-      await managedGrant.undelegate(operator, {from: grantee})
+      await managedGrant.undelegate(operator, { from: grantee })
       await time.increase(undelegationPeriod.add(grantUnlockingDuration))
-      await managedGrant.requestGranteeReassignment(newGrantee, {from: grantee})
+      await managedGrant.requestGranteeReassignment(newGrantee, {
+        from: grantee,
+      })
       await managedGrant.confirmGranteeReassignment(newGrantee, {
         from: grantCreator,
       })
-      await managedGrant.recoverStake(operator, {from: grantee})
-      await stakingEscrow.withdrawToManagedGrantee(operator, {from: newGrantee})
+      await managedGrant.recoverStake(operator, { from: grantee })
+      await stakingEscrow.withdrawToManagedGrantee(operator, {
+        from: newGrantee,
+      })
       expect(await token.balanceOf(newGrantee)).to.eq.BN(grantAmount)
     })
   })
