@@ -88,6 +88,23 @@ const LiquidityRewardCard = ({
       <div className={"text-smaller text-grey-70 text-center mb-2"}>
         * APY calculated assuming $1M pool
       </div>
+      <div className={"liquidity__new-user-info"}>
+        <Icons.Rewards className={"liquidity__rewards-icon"} />
+        <div className={"liquidity__new-user-info-text"}>
+          <h4>Start earning rewards</h4>
+          <span>
+            Get LP tokens by adding liquidity first to the&nbsp;
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={viewPoolLink}
+              className="text-small text-white text-link"
+            >
+              Uniswap pool
+            </a>
+          </span>
+        </div>
+      </div>
       <div className={"liquidity__token-balance"}>
         <span className={"liquidity__token-balance_title text-grey-70"}>
           Reward
