@@ -330,38 +330,9 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
         delete _callbacks[requestId];
     }
 
-    /// @notice Triggers the selection process of a new candidate group if the
-    /// DKG fee pool equals or exceeds DKG cost estimate.
-    /// @param entry The generated random number.
-    /// @param submitter Relay entry submitter - operator.
-    function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
-        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
-        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationFee();
-
-        if (_dkgFeePool >= groupCreationFee && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
-            OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
-            _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
-        }
-    }
-
     /// @notice Get base callback gas required for relay entry callback.
     function baseCallbackGas() public view returns(uint256) {
         return _baseCallbackGas;
-    }
-
-    /// @notice Get the minimum payment in wei for relay entry callback.
-    /// @param _callbackGas Gas required for the callback.
-    function callbackFee(
-        uint256 _callbackGas,
-        uint256 _gasPriceCeiling
-    ) internal view returns(uint256) {
-        // gas for the callback itself plus additional operational costs of
-        // executing the callback
-        uint256 callbackGas = _callbackGas == 0 ? 0 : _callbackGas.add(_baseCallbackGas);
-        // We take the gas price from the price feed to not let malicious
-        // miner-requestors manipulate the gas price when requesting relay entry
-        // and underpricing expensive callbacks.
-        return callbackGas.mul(_gasPriceCeiling);
     }
 
     /// @notice Get the entry fee estimate in wei for relay entry request.
@@ -461,5 +432,34 @@ contract KeepRandomBeaconServiceImplV1 is ReentrancyGuard, IRandomBeacon {
     /// @notice Gets version of the current implementation.
     function version() public pure returns (string memory) {
         return "V1";
+    }
+
+    /// @notice Triggers the selection process of a new candidate group if the
+    /// DKG fee pool equals or exceeds DKG cost estimate.
+    /// @param entry The generated random number.
+    /// @param submitter Relay entry submitter - operator.
+    function createGroupIfApplicable(uint256 entry, address payable submitter) internal {
+        address latestOperatorContract = _operatorContracts[_operatorContracts.length.sub(1)];
+        uint256 groupCreationFee = OperatorContract(latestOperatorContract).groupCreationFee();
+
+        if (_dkgFeePool >= groupCreationFee && OperatorContract(latestOperatorContract).isGroupSelectionPossible()) {
+            OperatorContract(latestOperatorContract).createGroup.value(groupCreationFee)(entry, submitter);
+            _dkgFeePool = _dkgFeePool.sub(groupCreationFee);
+        }
+    }
+
+    /// @notice Get the minimum payment in wei for relay entry callback.
+    /// @param _callbackGas Gas required for the callback.
+    function callbackFee(
+        uint256 _callbackGas,
+        uint256 _gasPriceCeiling
+    ) internal view returns(uint256) {
+        // gas for the callback itself plus additional operational costs of
+        // executing the callback
+        uint256 callbackGas = _callbackGas == 0 ? 0 : _callbackGas.add(_baseCallbackGas);
+        // We take the gas price from the price feed to not let malicious
+        // miner-requestors manipulate the gas price when requesting relay entry
+        // and underpricing expensive callbacks.
+        return callbackGas.mul(_gasPriceCeiling);
     }
 }

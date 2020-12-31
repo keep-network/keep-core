@@ -2,6 +2,7 @@ pragma solidity 0.5.17;
 
 // it is just a stub, not a live deployment;
 // we are fine with experimental feature
+/* solium-disable-next-line */
 pragma experimental ABIEncoderV2;
 
 import "../cryptography/AltBn128.sol";

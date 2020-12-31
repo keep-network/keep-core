@@ -50,7 +50,7 @@ contract TestModUtils {
         [int(11), int(7), int(-1)],
         [int(11), int(8), int(-1)],
         [int(11), int(9), int(1)],
-        [int(11), int(10),int( -1)],
+        [int(11), int(10),int(-1)],
         [int(13), int(0), int(0)],
         [int(13), int(1), int(1)],
         [int(13), int(2), int(-1)],

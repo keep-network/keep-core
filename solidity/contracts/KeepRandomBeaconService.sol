@@ -142,6 +142,65 @@ contract KeepRandomBeaconService is Proxy {
         emit UpgradeCompleted(newImplementation);
     }
 
+    /// @dev Gets the address of the current implementation.
+    /// @return address of the current implementation.
+    function implementation() public view returns (address) {
+        return _implementation();
+    }
+
+    /// @notice The admin slot.
+    /// @return The contract owner's address.
+    function admin() public view returns (address adm) {
+        bytes32 slot = ADMIN_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            adm := sload(slot)
+        }
+    }
+
+    /// @notice Sets the address of the proxy admin.
+    /// @dev Function can be called only by the current admin.
+    /// @param _newAdmin Address of the new proxy admin.
+    function updateAdmin(address _newAdmin) public onlyAdmin {
+        setAdmin(_newAdmin);
+    }
+
+    function upgradeTimeDelay()
+        public
+        view
+        returns (uint256 _upgradeTimeDelay)
+    {
+        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            _upgradeTimeDelay := sload(position)
+        }
+    }
+
+    function newImplementation()
+        public
+        view
+        returns (address _newImplementation)
+    {
+        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            _newImplementation := sload(position)
+        }
+    }
+
+    function upgradeInitiatedTimestamp()
+        public
+        view
+        returns (uint256 _upgradeInitiatedTimestamp)
+    {
+        bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
+        /* solium-disable-next-line */
+        assembly {
+            _upgradeInitiatedTimestamp := sload(position)
+        }
+    }
+
     /// @notice Initializes implementation contract.
     /// @dev Delegates a call to the implementation with provided data. It is
     /// expected that data contains details of function to be called.
@@ -167,12 +226,6 @@ contract KeepRandomBeaconService is Proxy {
         assert(slot == bytes32(uint256(keccak256(key)) - 1));
     }
 
-    /// @dev Gets the address of the current implementation.
-    /// @return address of the current implementation.
-    function implementation() public view returns (address) {
-        return _implementation();
-    }
-
     /// @notice Returns the current implementation. Implements function from `Proxy`
     /// contract.
     /// @return Address of the current implementation
@@ -194,35 +247,11 @@ contract KeepRandomBeaconService is Proxy {
         }
     }
 
-    function upgradeTimeDelay()
-        public
-        view
-        returns (uint256 _upgradeTimeDelay)
-    {
-        bytes32 position = UPGRADE_TIME_DELAY_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            _upgradeTimeDelay := sload(position)
-        }
-    }
-
     function setUpgradeTimeDelay(uint256 _upgradeTimeDelay) internal {
         bytes32 position = UPGRADE_TIME_DELAY_SLOT;
         /* solium-disable-next-line */
         assembly {
             sstore(position, _upgradeTimeDelay)
-        }
-    }
-
-    function newImplementation()
-        public
-        view
-        returns (address _newImplementation)
-    {
-        bytes32 position = UPGRADE_IMPLEMENTATION_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            _newImplementation := sload(position)
         }
     }
 
@@ -234,18 +263,6 @@ contract KeepRandomBeaconService is Proxy {
         }
     }
 
-    function upgradeInitiatedTimestamp()
-        public
-        view
-        returns (uint256 _upgradeInitiatedTimestamp)
-    {
-        bytes32 position = UPGRADE_INIT_TIMESTAMP_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            _upgradeInitiatedTimestamp := sload(position)
-        }
-    }
-
     function setUpgradeInitiatedTimestamp(uint256 _upgradeInitiatedTimestamp)
         internal
     {
@@ -254,23 +271,6 @@ contract KeepRandomBeaconService is Proxy {
         assembly {
             sstore(position, _upgradeInitiatedTimestamp)
         }
-    }
-
-    /// @notice The admin slot.
-    /// @return The contract owner's address.
-    function admin() public view returns (address adm) {
-        bytes32 slot = ADMIN_SLOT;
-        /* solium-disable-next-line */
-        assembly {
-            adm := sload(slot)
-        }
-    }
-
-    /// @notice Sets the address of the proxy admin.
-    /// @dev Function can be called only by the current admin.
-    /// @param _newAdmin Address of the new proxy admin.
-    function updateAdmin(address _newAdmin) public onlyAdmin {
-        setAdmin(_newAdmin);
     }
 
     /// @notice Sets the address of the proxy admin.

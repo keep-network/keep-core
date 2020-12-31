@@ -408,7 +408,7 @@ library BytesLib {
         return success;
     }
 
-    function toBytes32(bytes memory _source) pure internal returns (bytes32 result) {
+    function toBytes32(bytes memory _source) internal pure returns (bytes32 result) {
         if (_source.length == 0) {
             return 0x0;
         }
@@ -418,7 +418,7 @@ library BytesLib {
         }
     }
 
-    function keccak256Slice(bytes memory _bytes, uint _start, uint _length) pure internal returns (bytes32 result) {
+    function keccak256Slice(bytes memory _bytes, uint _start, uint _length) internal pure returns (bytes32 result) {
         uint _end = _start + _length;
         require(_end > _start && _bytes.length >= _end, "Slice out of bounds");
 

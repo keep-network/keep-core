@@ -200,10 +200,10 @@ contract Rewards is Ownable {
     /// @param keepIdentifier A unique identifier for the keep,
     /// e.g. address or number converted to a `bytes32`.
     function receiveReward(bytes32 keepIdentifier)
+        public
         factoryMustRecognize(keepIdentifier)
         rewardsNotClaimed(keepIdentifier)
         mustBeClosed(keepIdentifier)
-        public
     {
         _processKeep(true, keepIdentifier);
     }
@@ -221,10 +221,10 @@ contract Rewards is Ownable {
     /// rewards to the unallocated pool.
     /// @param keepIdentifier The terminated keep.
     function reportTermination(bytes32 keepIdentifier)
+        public
         factoryMustRecognize(keepIdentifier)
         rewardsNotClaimed(keepIdentifier)
         mustBeTerminated(keepIdentifier)
-        public
     {
         _processKeep(false, keepIdentifier);
     }
@@ -296,6 +296,138 @@ contract Rewards is Ownable {
     /// False otherwise.
     function rewardClaimed(bytes32 _keep) public view returns (bool) {
         return claimed[_keep];
+    }
+
+    /// @notice Return the number of keeps created in the specified interval.
+    /// @param interval The interval.
+    /// @return Number of keeps created in the interval.
+    function keepsInInterval(uint256 interval) public returns (uint256) {
+        return (_getEndpoint(interval).sub(_getPreviousEndpoint(interval)));
+    }
+
+    /// @notice Return the percentage of remaining unallocated rewards
+    /// that is to be allocated to the specified interval.
+    /// @param interval The interval.
+    /// @return The percentage weight of the interval.
+    function getIntervalWeight(uint256 interval) public view returns (uint256) {
+        if (interval < intervalWeights.length) {
+            return intervalWeights[interval];
+        } else {
+            return intervalWeights[intervalWeights.length - 1];
+        }
+    }
+
+    /// @notice Get the number of intervals with explicitly specified weights.
+    /// All subsequent intervals will have an implicit weight of 100.
+    /// @return The number of explicitly specified intervals.
+    function getIntervalCount() public view returns (uint256) {
+        return intervalWeights.length;
+    }
+
+    /// @notice Allocate rewards for unallocated intervals up to and including
+    /// the given interval.
+    /// @dev The given interval must be finished and unallocated.
+    /// To allocate rewards correctly, any earlier intervals that are still
+    /// unallocated will be allocated before the given interval.
+    /// With reasonable interval lengths this should not pose a problem,
+    /// and if allocating a later interval results in an out-of-gas issue,
+    /// forcing the allocation of an earlier interval should fix it.
+    /// @param interval The interval to allocate.
+    function allocateRewards(uint256 interval)
+        public
+        mustBeFinished(interval)
+        mustBeFunded
+    {
+        uint256 allocatedIntervals = intervalAllocations.length;
+        require(
+            !(interval < allocatedIntervals),
+            "Interval already allocated"
+        );
+        // Allocate previous intervals first
+        if (interval > allocatedIntervals) {
+            allocateRewards(interval.sub(1));
+        }
+        uint256 totalAllocation = _adjustedAllocation(interval);
+        unallocatedRewards = unallocatedRewards.sub(totalAllocation);
+        intervalAllocations.push(totalAllocation);
+    }
+
+    /// @notice Get the total amount of tokens
+    /// allocated for all keeps in the specified interval.
+    /// @dev This function returns correct results for any allocated interval.
+    /// Dividing the allocated rewards by the number of keeps in the interval
+    /// will give the correct reward for a keep in the interval.
+    /// However, if a keep in the interval is terminated
+    /// its reward will be returned to the pool of unallocated tokens.
+    /// This will not be reflected in the return value of this function.
+    /// @param interval A previously allocated interval.
+    /// @return The total number of tokens allocated for keeps in the interval.
+    function getAllocatedRewards(uint256 interval) public view returns (uint256) {
+        require(
+            interval < intervalAllocations.length,
+            "Interval not allocated yet"
+        );
+        return intervalAllocations[interval];
+    }
+
+    /// @notice Return whether the specified interval has been allocated.
+    /// @param interval The interval.
+    /// @return Whether the interval has been allocated yet.
+    function isAllocated(uint256 interval) public view returns (bool) {
+        uint256 allocatedIntervals = intervalAllocations.length;
+        return (interval < allocatedIntervals);
+    }
+
+    /// @notice Initiates the process of upgrading to another rewards contract.
+    /// @param _newRewardsContract The address of a new rewards contract.
+    function initiateRewardsUpgrade(address _newRewardsContract) public onlyOwner {
+        upgradeInitiatedTimestamp = block.timestamp;
+        newRewardsContract = _newRewardsContract;
+        emit UpgradeInitiated(newRewardsContract);
+    }
+
+    /// @notice Finalizes the process of upgrading to another rewards contract
+    /// by allocating all past intervals and then, transferring the
+    /// not-yet-allocated tokens to a new rewards contract.
+    /// Can be called only when the interval during which the upgrade was
+    /// initiated ended.
+    /// Before finalizing the upgrade, make sure all terminated groups are
+    /// reported.
+    function finalizeRewardsUpgrade() public onlyOwner {
+        require(upgradeInitiatedTimestamp != 0, "Upgrade not initiated");
+        
+        uint256 currentInterval = intervalOf(block.timestamp);
+        uint256 upgradeInitiatedInterval = intervalOf(upgradeInitiatedTimestamp);
+
+        require(
+            currentInterval > upgradeInitiatedInterval,
+            "Interval at which the upgrade was initiated hasn't ended yet"
+        );
+
+        // ensure all past intervals are allocated
+        if (!isAllocated(currentInterval.sub(1))) {
+            allocateRewards(currentInterval.sub(1));
+        }
+
+        // transfer the unallocated KEEP to the new rewards contract and update
+        // this contract's balances
+        uint256 amountToTransfer = unallocatedRewards;
+
+        totalRewards = totalRewards.sub(amountToTransfer);
+        unallocatedRewards = 0;
+
+        emit UpgradeFinalized(amountToTransfer);
+
+        bool success = token.approveAndCall(
+            newRewardsContract,
+            amountToTransfer,
+            bytes("")
+        );
+        require(success, "Upgrade finalization failed");
+        
+
+        upgradeInitiatedTimestamp = 0;
+        upgradeFinalizedTimestamp = block.timestamp;
     }
 
     /// @notice Return the number of keeps created before `intervalEndpoint`
@@ -384,8 +516,8 @@ contract Rewards is Ownable {
     /// @return endpoint The number of keeps the factory had created
     /// before the end of the interval.
     function _getEndpoint(uint256 interval)
-        mustBeFinished(interval)
         internal
+        mustBeFinished(interval)
         returns (uint256 endpoint)
     {
         // Get the endpoint from local cache;
@@ -422,32 +554,6 @@ contract Rewards is Ownable {
         } else {
             return _getEndpoint(interval.sub(1));
         }
-    }
-
-    /// @notice Return the number of keeps created in the specified interval.
-    /// @param interval The interval.
-    /// @return Number of keeps created in the interval.
-    function keepsInInterval(uint256 interval) public returns (uint256) {
-        return (_getEndpoint(interval).sub(_getPreviousEndpoint(interval)));
-    }
-
-    /// @notice Return the percentage of remaining unallocated rewards
-    /// that is to be allocated to the specified interval.
-    /// @param interval The interval.
-    /// @return The percentage weight of the interval.
-    function getIntervalWeight(uint256 interval) public view returns (uint256) {
-        if (interval < intervalWeights.length) {
-            return intervalWeights[interval];
-        } else {
-            return intervalWeights[intervalWeights.length - 1];
-        }
-    }
-
-    /// @notice Get the number of intervals with explicitly specified weights.
-    /// All subsequent intervals will have an implicit weight of 100.
-    /// @return The number of explicitly specified intervals.
-    function getIntervalCount() public view returns (uint256) {
-        return intervalWeights.length;
     }
 
     /// @notice Calculate the reward allocation for an interval
@@ -492,60 +598,6 @@ contract Rewards is Ownable {
         return __baseAllocation.mul(keepCount).div(adjustmentCount);
     }
 
-    /// @notice Allocate rewards for unallocated intervals up to and including
-    /// the given interval.
-    /// @dev The given interval must be finished and unallocated.
-    /// To allocate rewards correctly, any earlier intervals that are still
-    /// unallocated will be allocated before the given interval.
-    /// With reasonable interval lengths this should not pose a problem,
-    /// and if allocating a later interval results in an out-of-gas issue,
-    /// forcing the allocation of an earlier interval should fix it.
-    /// @param interval The interval to allocate.
-    function allocateRewards(uint256 interval)
-        mustBeFinished(interval)
-        mustBeFunded
-        public
-    {
-        uint256 allocatedIntervals = intervalAllocations.length;
-        require(
-            !(interval < allocatedIntervals),
-            "Interval already allocated"
-        );
-        // Allocate previous intervals first
-        if (interval > allocatedIntervals) {
-            allocateRewards(interval.sub(1));
-        }
-        uint256 totalAllocation = _adjustedAllocation(interval);
-        unallocatedRewards = unallocatedRewards.sub(totalAllocation);
-        intervalAllocations.push(totalAllocation);
-    }
-
-    /// @notice Get the total amount of tokens
-    /// allocated for all keeps in the specified interval.
-    /// @dev This function returns correct results for any allocated interval.
-    /// Dividing the allocated rewards by the number of keeps in the interval
-    /// will give the correct reward for a keep in the interval.
-    /// However, if a keep in the interval is terminated
-    /// its reward will be returned to the pool of unallocated tokens.
-    /// This will not be reflected in the return value of this function.
-    /// @param interval A previously allocated interval.
-    /// @return The total number of tokens allocated for keeps in the interval.
-    function getAllocatedRewards(uint256 interval) public view returns (uint256) {
-        require(
-            interval < intervalAllocations.length,
-            "Interval not allocated yet"
-        );
-        return intervalAllocations[interval];
-    }
-
-    /// @notice Return whether the specified interval has been allocated.
-    /// @param interval The interval.
-    /// @return Whether the interval has been allocated yet.
-    function isAllocated(uint256 interval) public view returns (bool) {
-        uint256 allocatedIntervals = intervalAllocations.length;
-        return (interval < allocatedIntervals);
-    }
-
     /// @notice Process the rewards for the given keep, allocating finished
     /// intervals as necessary, and then either paying out the rewards to the
     /// keep's members or returning them to the unallocated pool, depending on
@@ -575,58 +627,6 @@ contract Rewards is Ownable {
             // Return the reward to the unallocated pool
             deallocate(perKeepReward);
         }
-    }
-
-    /// @notice Initiates the process of upgrading to another rewards contract.
-    /// @param _newRewardsContract The address of a new rewards contract.
-    function initiateRewardsUpgrade(address _newRewardsContract) public onlyOwner {
-        upgradeInitiatedTimestamp = block.timestamp;
-        newRewardsContract = _newRewardsContract;
-        emit UpgradeInitiated(newRewardsContract);
-    }
-
-    /// @notice Finalizes the process of upgrading to another rewards contract
-    /// by allocating all past intervals and then, transferring the
-    /// not-yet-allocated tokens to a new rewards contract.
-    /// Can be called only when the interval during which the upgrade was
-    /// initiated ended.
-    /// Before finalizing the upgrade, make sure all terminated groups are
-    /// reported.
-    function finalizeRewardsUpgrade() public onlyOwner {
-        require(upgradeInitiatedTimestamp != 0, "Upgrade not initiated");
-        
-        uint256 currentInterval = intervalOf(block.timestamp);
-        uint256 upgradeInitiatedInterval = intervalOf(upgradeInitiatedTimestamp);
-
-        require(
-            currentInterval > upgradeInitiatedInterval,
-            "Interval at which the upgrade was initiated hasn't ended yet"
-        );
-
-        // ensure all past intervals are allocated
-        if (!isAllocated(currentInterval.sub(1))) {
-            allocateRewards(currentInterval.sub(1));
-        }
-
-        // transfer the unallocated KEEP to the new rewards contract and update
-        // this contract's balances
-        uint256 amountToTransfer = unallocatedRewards;
-
-        totalRewards = totalRewards.sub(amountToTransfer);
-        unallocatedRewards = 0;
-
-        emit UpgradeFinalized(amountToTransfer);
-
-        bool success = token.approveAndCall(
-            newRewardsContract,
-            amountToTransfer,
-            bytes("")
-        );
-        require(success, "Upgrade finalization failed");
-        
-
-        upgradeInitiatedTimestamp = 0;
-        upgradeFinalizedTimestamp = block.timestamp;
     }
 
     /// @notice Return the given amount to the unallocated pool.

@@ -141,30 +141,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
     uint256 internal currentRequestCallbackFee;
     address internal currentRequestServiceContract;
 
-
-    /// @notice Triggers group selection if there are no active groups.
-    function genesis() public payable {
-        // If we run into a very unlikely situation when there are no active
-        // groups on the contract because of slashing and groups terminated
-        // or because beacon has not been used for a very long time and all
-        // groups expired, we first want to make a cleanup.
-        groups.expireOldGroups();
-        require(numberOfGroups() == 0, "Groups exist");
-        // Cleanup after potential failed DKG
-        groupSelection.finish();
-        // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
-        groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
-        startGroupSelection(_genesisGroupSeed, msg.value);
-    }
-
-    modifier onlyServiceContract() {
-        require(
-            serviceContracts.contains(msg.sender),
-            "Caller is not a service contract"
-        );
-        _;
-    }
-
     constructor(
         address _serviceContract,
         address _tokenStaking,
@@ -213,6 +189,31 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
         dkgResultVerification.signatureThreshold = groupThreshold + (groupSize - groupThreshold) / 2;
     }
 
+    /// @notice Triggers group selection if there are no active groups.
+    function genesis() public payable {
+        // If we run into a very unlikely situation when there are no active
+        // groups on the contract because of slashing and groups terminated
+        // or because beacon has not been used for a very long time and all
+        // groups expired, we first want to make a cleanup.
+        groups.expireOldGroups();
+        require(numberOfGroups() == 0, "Groups exist");
+        // Cleanup after potential failed DKG
+        groupSelection.finish();
+        // Set latest added service contract as a group selection starter to receive any DKG fee surplus.
+        groupSelectionStarterContract = ServiceContract(serviceContracts[serviceContracts.length.sub(1)]);
+        startGroupSelection(_genesisGroupSeed, msg.value);
+    }
+
+    modifier onlyServiceContract() {
+        require(
+            serviceContracts.contains(msg.sender),
+            "Caller is not a service contract"
+        );
+        _;
+    }
+
+    
+
     /// @notice Adds service contract
     /// @param serviceContract Address of the service contract.
     function addServiceContract(address serviceContract) public {
@@ -242,28 +243,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
         // reimbursing a submitter that triggered group selection
         (bool success, ) = stakingContract.beneficiaryOf(submitter).call.value(groupSelectionStartFee)("");
         require(success, "Group selection reimbursement failed");
-    }
-
-    function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
-        require(
-            _payment >= gasPriceCeiling.mul(dkgGasEstimate),
-            "Insufficient DKG fee"
-        );
-
-        require(isGroupSelectionPossible(), "Group selection in progress");
-
-        // If previous group selection failed and there is reimbursement left
-        // return it to the DKG fee pool.
-        if (dkgSubmitterReimbursementFee > 0) {
-            uint256 surplus = dkgSubmitterReimbursementFee;
-            dkgSubmitterReimbursementFee = 0;
-            ServiceContract(groupSelectionStarterContract).fundDkgFeePool.value(surplus)();
-        }
-
-        groupSelection.minimumStake = stakingContract.minimumStake();
-        groupSelection.start(_newEntry);
-        emit GroupSelectionStarted(_newEntry);
-        dkgSubmitterReimbursementFee = _payment;
     }
 
     /// @notice Checks if it is possible to fire a new group selection.
@@ -353,40 +332,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
         groupSelection.finish();
     }
 
-    /// @notice Compare the reimbursement fee calculated based on the current
-    /// transaction gas price and the current price feed estimate with the DKG
-    /// reimbursement fee calculated and paid at the moment when the DKG was
-    /// requested. If there is any surplus, it will be returned to the DKG fee
-    /// pool of the service contract which triggered the DKG.
-    function reimburseDkgSubmitter() internal {
-        uint256 gasPrice = gasPriceCeiling;
-        // We need to check if tx.gasprice is non-zero as a workaround to a bug
-        // in go-ethereum:
-        // https://github.com/ethereum/go-ethereum/pull/20189
-        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {
-            gasPrice = tx.gasprice;
-        }
-
-        uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
-        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);
-
-        if (reimbursementFee < dkgSubmitterReimbursementFee) {
-            uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
-            dkgSubmitterReimbursementFee = 0;
-            // Reimburse submitter with actual DKG cost.
-            beneficiary.call.value(reimbursementFee)("");
-
-            // Return surplus to the contract that started DKG.
-            groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
-        } else {
-            // If submitter used higher gas price reimburse only
-            // dkgSubmitterReimbursementFee max.
-            reimbursementFee = dkgSubmitterReimbursementFee;
-            dkgSubmitterReimbursementFee = 0;
-            beneficiary.call.value(reimbursementFee)("");
-        }
-    }
-
     /// @notice Creates a request to generate a new relay entry, which will include
     /// a random number (by signing the previous entry's random number).
     /// @param requestId Request Id trackable by service contract
@@ -407,29 +352,6 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
             requestId, previousEntry, msg.sender,
             entryVerificationAndProfitFee, callbackFee
         );
-    }
-
-    function signRelayEntry(
-        uint256 requestId,
-        bytes memory previousEntry,
-        address serviceContract,
-        uint256 entryVerificationAndProfitFee,
-        uint256 callbackFee
-    ) internal {
-        require(!isEntryInProgress(), "Beacon is busy");
-
-        uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
-
-        currentRequestId = requestId;
-        currentRequestStartBlock = block.number;
-        currentRequestEntryVerificationAndProfitFee = entryVerificationAndProfitFee;
-        currentRequestCallbackFee = callbackFee;
-        currentRequestGroupIndex = groupIndex;
-        currentRequestPreviousEntry = previousEntry;
-        currentRequestServiceContract = serviceContract;
-
-        bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
-        emit RelayEntryRequested(previousEntry, groupPubKey);
     }
 
     /// @notice Creates a new relay entry and stores the associated data on the chain.
@@ -481,90 +403,10 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
         currentRequestStartBlock = 0;
     }
 
-    /// @notice Executes customer specified callback for the relay entry request.
-    /// @param entry The generated random number.
-    function executeCallback(uint256 entry) internal {
-        // Make sure not to spend more than what was received from the service
-        // contract for the callback
-        uint256 gasLimit = currentRequestCallbackFee.div(gasPriceCeiling);
-
-        // Make sure not to spend more than 2 million gas on a callback.
-        // This is to protect members from relay entry failure and potential
-        // slashing in case of any changes in .call() gas limit.
-        gasLimit = gasLimit > 2000000 ? 2000000 : gasLimit;
-
-        bytes memory callbackSurplusRecipientData;
-        (, callbackSurplusRecipientData) = currentRequestServiceContract.call.gas(
-            40000
-        )(abi.encodeWithSignature(
-            "callbackSurplusRecipient(uint256)",
-            currentRequestId
-        ));
-
-        uint256 gasBeforeCallback = gasleft();
-        currentRequestServiceContract.call.gas(
-            gasLimit
-        )(abi.encodeWithSignature(
-            "executeCallback(uint256,uint256)",
-            currentRequestId,
-            entry
-        ));
-
-        uint256 gasAfterCallback = gasleft();
-        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
-
-        Reimbursements.reimburseCallback(
-            stakingContract,
-            gasPriceCeiling,
-            gasLimit,
-            gasSpent,
-            currentRequestCallbackFee,
-            callbackSurplusRecipientData
-        );
-    }
-
-    /// @notice Get rewards breakdown in wei for successful entry for the
-    /// current signing request.
-    function newEntryRewardsBreakdown() internal view returns(
-        uint256 groupMemberReward,
-        uint256 submitterReward,
-        uint256 subsidy
-    ) {
-        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
-
-        uint256 delayFactor = DelayFactor.calculate(
-            currentRequestStartBlock,
-            relayEntryTimeout
-        );
-        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
-
-        // delay penalty = base reward * (1 - delay factor)
-        uint256 groupMemberDelayPenalty = groupMemberBaseReward.mul(decimals.sub(delayFactor));
-
-        // The submitter reward consists of:
-        // The callback gas expenditure (reimbursed by the service contract)
-        // The entry verification fee to cover the cost of verifying the submission,
-        // paid regardless of their gas expenditure
-        // Submitter extra reward - 5% of the delay penalties of the entire group
-        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).percent(5).div(decimals);
-        uint256 entryVerificationFee = currentRequestEntryVerificationAndProfitFee.sub(groupProfitFee());
-        submitterReward = entryVerificationFee.add(submitterExtraReward);
-
-        // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
-        subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
-    }
-
     /// @notice Returns true if generation of a new relay entry is currently in
     /// progress.
     function isEntryInProgress() public view returns (bool) {
         return currentRequestStartBlock != 0;
-    }
-
-    /// @notice Returns true if the currently ongoing new relay entry generation
-    /// operation timed out. There is a certain timeout for a new relay entry
-    /// to be produced, see `relayEntryTimeout` value.
-    function hasEntryTimedOut() internal view returns (bool) {
-        return currentRequestStartBlock != 0 && block.number > currentRequestStartBlock + relayEntryTimeout;
     }
 
     /// @notice Function used to inform about the fact the currently ongoing
@@ -729,5 +571,164 @@ contract KeepRandomBeaconOperator is ReentrancyGuard, GasPriceOracleConsumer {
             stakingContract.minimumStake()
         );
         emit UnauthorizedSigningReported(groupIndex);
+    }
+
+    function startGroupSelection(uint256 _newEntry, uint256 _payment) internal {
+        require(
+            _payment >= gasPriceCeiling.mul(dkgGasEstimate),
+            "Insufficient DKG fee"
+        );
+
+        require(isGroupSelectionPossible(), "Group selection in progress");
+
+        // If previous group selection failed and there is reimbursement left
+        // return it to the DKG fee pool.
+        if (dkgSubmitterReimbursementFee > 0) {
+            uint256 surplus = dkgSubmitterReimbursementFee;
+            dkgSubmitterReimbursementFee = 0;
+            ServiceContract(groupSelectionStarterContract).fundDkgFeePool.value(surplus)();
+        }
+
+        groupSelection.minimumStake = stakingContract.minimumStake();
+        groupSelection.start(_newEntry);
+        emit GroupSelectionStarted(_newEntry);
+        dkgSubmitterReimbursementFee = _payment;
+    }
+
+    /// @notice Compare the reimbursement fee calculated based on the current
+    /// transaction gas price and the current price feed estimate with the DKG
+    /// reimbursement fee calculated and paid at the moment when the DKG was
+    /// requested. If there is any surplus, it will be returned to the DKG fee
+    /// pool of the service contract which triggered the DKG.
+    function reimburseDkgSubmitter() internal {
+        uint256 gasPrice = gasPriceCeiling;
+        // We need to check if tx.gasprice is non-zero as a workaround to a bug
+        // in go-ethereum:
+        // https://github.com/ethereum/go-ethereum/pull/20189
+        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {
+            gasPrice = tx.gasprice;
+        }
+
+        uint256 reimbursementFee = dkgGasEstimate.mul(gasPrice);
+        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);
+
+        if (reimbursementFee < dkgSubmitterReimbursementFee) {
+            uint256 surplus = dkgSubmitterReimbursementFee.sub(reimbursementFee);
+            dkgSubmitterReimbursementFee = 0;
+            // Reimburse submitter with actual DKG cost.
+            beneficiary.call.value(reimbursementFee)("");
+
+            // Return surplus to the contract that started DKG.
+            groupSelectionStarterContract.fundDkgFeePool.value(surplus)();
+        } else {
+            // If submitter used higher gas price reimburse only
+            // dkgSubmitterReimbursementFee max.
+            reimbursementFee = dkgSubmitterReimbursementFee;
+            dkgSubmitterReimbursementFee = 0;
+            beneficiary.call.value(reimbursementFee)("");
+        }
+    }
+
+    function signRelayEntry(
+        uint256 requestId,
+        bytes memory previousEntry,
+        address serviceContract,
+        uint256 entryVerificationAndProfitFee,
+        uint256 callbackFee
+    ) internal {
+        require(!isEntryInProgress(), "Beacon is busy");
+
+        uint256 groupIndex = groups.selectGroup(uint256(keccak256(previousEntry)));
+
+        currentRequestId = requestId;
+        currentRequestStartBlock = block.number;
+        currentRequestEntryVerificationAndProfitFee = entryVerificationAndProfitFee;
+        currentRequestCallbackFee = callbackFee;
+        currentRequestGroupIndex = groupIndex;
+        currentRequestPreviousEntry = previousEntry;
+        currentRequestServiceContract = serviceContract;
+
+        bytes memory groupPubKey = groups.getGroupPublicKey(groupIndex);
+        emit RelayEntryRequested(previousEntry, groupPubKey);
+    }
+
+    /// @notice Executes customer specified callback for the relay entry request.
+    /// @param entry The generated random number.
+    function executeCallback(uint256 entry) internal {
+        // Make sure not to spend more than what was received from the service
+        // contract for the callback
+        uint256 gasLimit = currentRequestCallbackFee.div(gasPriceCeiling);
+
+        // Make sure not to spend more than 2 million gas on a callback.
+        // This is to protect members from relay entry failure and potential
+        // slashing in case of any changes in .call() gas limit.
+        gasLimit = gasLimit > 2000000 ? 2000000 : gasLimit;
+
+        bytes memory callbackSurplusRecipientData;
+        (, callbackSurplusRecipientData) = currentRequestServiceContract.call.gas(
+            40000
+        )(abi.encodeWithSignature(
+            "callbackSurplusRecipient(uint256)",
+            currentRequestId
+        ));
+
+        uint256 gasBeforeCallback = gasleft();
+        currentRequestServiceContract.call.gas(
+            gasLimit
+        )(abi.encodeWithSignature(
+            "executeCallback(uint256,uint256)",
+            currentRequestId,
+            entry
+        ));
+
+        uint256 gasAfterCallback = gasleft();
+        uint256 gasSpent = gasBeforeCallback.sub(gasAfterCallback);
+
+        Reimbursements.reimburseCallback(
+            stakingContract,
+            gasPriceCeiling,
+            gasLimit,
+            gasSpent,
+            currentRequestCallbackFee,
+            callbackSurplusRecipientData
+        );
+    }
+
+    /// @notice Get rewards breakdown in wei for successful entry for the
+    /// current signing request.
+    function newEntryRewardsBreakdown() internal view returns(
+        uint256 groupMemberReward,
+        uint256 submitterReward,
+        uint256 subsidy
+    ) {
+        uint256 decimals = 1e16; // Adding 16 decimals to perform float division.
+
+        uint256 delayFactor = DelayFactor.calculate(
+            currentRequestStartBlock,
+            relayEntryTimeout
+        );
+        groupMemberReward = groupMemberBaseReward.mul(delayFactor).div(decimals);
+
+        // delay penalty = base reward * (1 - delay factor)
+        uint256 groupMemberDelayPenalty = groupMemberBaseReward.mul(decimals.sub(delayFactor));
+
+        // The submitter reward consists of:
+        // The callback gas expenditure (reimbursed by the service contract)
+        // The entry verification fee to cover the cost of verifying the submission,
+        // paid regardless of their gas expenditure
+        // Submitter extra reward - 5% of the delay penalties of the entire group
+        uint256 submitterExtraReward = groupMemberDelayPenalty.mul(groupSize).percent(5).div(decimals);
+        uint256 entryVerificationFee = currentRequestEntryVerificationAndProfitFee.sub(groupProfitFee());
+        submitterReward = entryVerificationFee.add(submitterExtraReward);
+
+        // Rewards not paid out to the operators are paid out to requesters to subsidize new requests.
+        subsidy = groupProfitFee().sub(groupMemberReward.mul(groupSize)).sub(submitterExtraReward);
+    }
+
+    /// @notice Returns true if the currently ongoing new relay entry generation
+    /// operation timed out. There is a certain timeout for a new relay entry
+    /// to be produced, see `relayEntryTimeout` value.
+    function hasEntryTimedOut() internal view returns (bool) {
+        return currentRequestStartBlock != 0 && block.number > currentRequestStartBlock + relayEntryTimeout;
     }
 }
