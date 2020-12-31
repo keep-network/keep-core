@@ -127,7 +127,7 @@ contract Rewards is Ownable {
     event UpgradeInitiated(address newRewardsContract);
     event UpgradeFinalized(uint256 amountTransferred);
 
-    constructor (
+    constructor(
         address _token,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights,
@@ -233,8 +233,11 @@ contract Rewards is Ownable {
     /// @dev Keeps that close dishonorably or early are not eligible for rewards.
     /// @param _keep The keep to check.
     /// @return True if the keep is eligible, false otherwise
-    function eligibleForReward(bytes32 _keep) public view returns (bool){
-        return _recognizedByFactory(_keep) && _isClosed(_keep) && !rewardClaimed(_keep);
+    function eligibleForReward(bytes32 _keep) public view returns (bool) {
+        return
+            _recognizedByFactory(_keep) &&
+            _isClosed(_keep) &&
+            !rewardClaimed(_keep);
     }
 
     /// @notice Checks if a keep is terminated and thus its rewards can be
@@ -339,10 +342,7 @@ contract Rewards is Ownable {
         mustBeFunded
     {
         uint256 allocatedIntervals = intervalAllocations.length;
-        require(
-            !(interval < allocatedIntervals),
-            "Interval already allocated"
-        );
+        require(!(interval < allocatedIntervals), "Interval already allocated");
         // Allocate previous intervals first
         if (interval > allocatedIntervals) {
             allocateRewards(interval.sub(1));
@@ -362,7 +362,11 @@ contract Rewards is Ownable {
     /// This will not be reflected in the return value of this function.
     /// @param interval A previously allocated interval.
     /// @return The total number of tokens allocated for keeps in the interval.
-    function getAllocatedRewards(uint256 interval) public view returns (uint256) {
+    function getAllocatedRewards(uint256 interval)
+        public
+        view
+        returns (uint256)
+    {
         require(
             interval < intervalAllocations.length,
             "Interval not allocated yet"
@@ -380,7 +384,10 @@ contract Rewards is Ownable {
 
     /// @notice Initiates the process of upgrading to another rewards contract.
     /// @param _newRewardsContract The address of a new rewards contract.
-    function initiateRewardsUpgrade(address _newRewardsContract) public onlyOwner {
+    function initiateRewardsUpgrade(address _newRewardsContract)
+        public
+        onlyOwner
+    {
         upgradeInitiatedTimestamp = block.timestamp;
         newRewardsContract = _newRewardsContract;
         emit UpgradeInitiated(newRewardsContract);
@@ -395,9 +402,10 @@ contract Rewards is Ownable {
     /// reported.
     function finalizeRewardsUpgrade() public onlyOwner {
         require(upgradeInitiatedTimestamp != 0, "Upgrade not initiated");
-        
+
         uint256 currentInterval = intervalOf(block.timestamp);
-        uint256 upgradeInitiatedInterval = intervalOf(upgradeInitiatedTimestamp);
+        uint256 upgradeInitiatedInterval =
+            intervalOf(upgradeInitiatedTimestamp);
 
         require(
             currentInterval > upgradeInitiatedInterval,
@@ -418,13 +426,13 @@ contract Rewards is Ownable {
 
         emit UpgradeFinalized(amountToTransfer);
 
-        bool success = token.approveAndCall(
-            newRewardsContract,
-            amountToTransfer,
-            bytes("")
-        );
+        bool success =
+            token.approveAndCall(
+                newRewardsContract,
+                amountToTransfer,
+                bytes("")
+            );
         require(success, "Upgrade finalization failed");
-        
 
         upgradeInitiatedTimestamp = 0;
         upgradeFinalizedTimestamp = block.timestamp;
@@ -433,7 +441,11 @@ contract Rewards is Ownable {
     /// @notice Return the number of keeps created before `intervalEndpoint`
     /// @dev Wraps the binary search of `_find`
     /// with a number of checks for edge cases.
-    function _findEndpoint(uint256 intervalEndpoint) internal view returns (uint256) {
+    function _findEndpoint(uint256 intervalEndpoint)
+        internal
+        view
+        returns (uint256)
+    {
         require(
             intervalEndpoint <= block.timestamp,
             "interval hasn't ended yet"
@@ -604,10 +616,7 @@ contract Rewards is Ownable {
     /// the keep's eligibility.
     /// @param eligible Whether the keep is eligible for rewards or not.
     /// @param keepIdentifier The specified keep.
-    function _processKeep(
-        bool eligible,
-        bytes32 keepIdentifier
-    ) internal {
+    function _processKeep(bool eligible, bytes32 keepIdentifier) internal {
         uint256 creationTime = _getCreationTime(keepIdentifier);
         uint256 interval = intervalOf(creationTime);
         if (!isAllocated(interval)) {
@@ -617,7 +626,9 @@ contract Rewards is Ownable {
         uint256 _keepsInInterval = keepsInInterval(interval);
         uint256 perKeepReward = allocation.div(_keepsInInterval);
         claimed[keepIdentifier] = true;
-        intervalKeepsProcessed[interval] = intervalKeepsProcessed[interval].add(1);
+        intervalKeepsProcessed[interval] = intervalKeepsProcessed[interval].add(
+            1
+        );
 
         if (eligible) {
             dispensedRewards = dispensedRewards.add(perKeepReward);
@@ -635,11 +646,8 @@ contract Rewards is Ownable {
     /// @param amount The amount to deallocate
     function deallocate(uint256 amount) internal {
         if (upgradeFinalizedTimestamp != 0) {
-            bool success = token.approveAndCall(
-                newRewardsContract,
-                amount,
-                bytes("")
-            );
+            bool success =
+                token.approveAndCall(newRewardsContract, amount, bytes(""));
             if (!success) {
                 unallocatedRewards = unallocatedRewards.add(amount);
             }
@@ -692,37 +700,27 @@ contract Rewards is Ownable {
     function _distributeReward(bytes32 _keep, uint256 amount) internal;
 
     modifier rewardsNotClaimed(bytes32 _keep) {
-        require(
-            !rewardClaimed(_keep),
-            "Rewards already claimed");
+        require(!rewardClaimed(_keep), "Rewards already claimed");
         _;
     }
 
     modifier mustBeFinished(uint256 interval) {
-        require(
-            isFinished(interval),
-            "Interval hasn't ended yet");
+        require(isFinished(interval), "Interval hasn't ended yet");
         _;
     }
 
     modifier mustBeClosed(bytes32 _keep) {
-        require(
-            _isClosed(_keep),
-            "Keep is not closed");
+        require(_isClosed(_keep), "Keep is not closed");
         _;
     }
 
     modifier mustBeTerminated(bytes32 _keep) {
-        require(
-            _isTerminated(_keep),
-            "Keep is not terminated");
+        require(_isTerminated(_keep), "Keep is not terminated");
         _;
     }
 
     modifier factoryMustRecognize(bytes32 _keep) {
-        require(
-            _recognizedByFactory(_keep),
-            "Keep not recognized by factory");
+        require(_recognizedByFactory(_keep), "Keep not recognized by factory");
         _;
     }
 

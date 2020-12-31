@@ -33,7 +33,7 @@ contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
         minimumStake = TokenStaking(_stakingContract).minimumStake();
     }
 
-    function getStakeableAmount (
+    function getStakeableAmount(
         uint256 _now,
         uint256 grantedAmount,
         uint256 duration,
@@ -41,22 +41,22 @@ contract GuaranteedMinimumStakingPolicy is GrantStakingPolicy {
         uint256 cliff,
         uint256 withdrawn
     ) public view returns (uint256) {
-        uint256 unlocked = _now.getUnlockedAmount(
-            grantedAmount,
-            duration,
-            start,
-            cliff
-        );
+        uint256 unlocked =
+            _now.getUnlockedAmount(grantedAmount, duration, start, cliff);
         uint256 remainingInGrant = grantedAmount.sub(withdrawn);
         uint256 unlockedInGrant = unlocked.sub(withdrawn);
 
         // Less than minimum stake remaining
         //   -> may stake what is remaining in grant
-        if (remainingInGrant < minimumStake) { return remainingInGrant; }
+        if (remainingInGrant < minimumStake) {
+            return remainingInGrant;
+        }
         // At least minimum stake remaining in grant,
         // but unlocked amount is less than the minimum stake
         //   -> may stake the minimum stake
-        if (unlockedInGrant < minimumStake) { return minimumStake; }
+        if (unlockedInGrant < minimumStake) {
+            return minimumStake;
+        }
         // More than minimum stake unlocked in grant
         //   -> may stake the unlocked amount
         return unlockedInGrant;

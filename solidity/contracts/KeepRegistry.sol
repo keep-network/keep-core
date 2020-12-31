@@ -1,6 +1,5 @@
 pragma solidity 0.5.17;
 
-
 /// @title KeepRegistry
 /// @notice Governance owned registry of approved contracts and roles.
 contract KeepRegistry {
