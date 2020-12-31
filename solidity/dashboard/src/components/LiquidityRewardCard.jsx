@@ -127,8 +127,11 @@ const LiquidityRewardCard = ({
         </div>
       )}
       <div className={"liquidity__token-balance"}>
-        <span className={"liquidity__token-balance_title text-grey-70"}>
-          Reward
+        <h4 className={"liquidity__token-balance__title text-grey-70"}>
+          Your rewards
+        </h4>
+        <span className={"liquidity__token-balance__subtitle text-grey-40"}>
+          Rewards allocated on a weekly basis.
         </span>
         <div className={"liquidity__token-balance_values text-grey-70"}>
           <h3 className={"liquidity__token-balance_values_label"}>
