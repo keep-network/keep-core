@@ -7,6 +7,7 @@ import Card from "./Card"
 import { displayAmount } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
+import Tooltip from "./Tooltip"
 
 const LiquidityRewardCard = ({
   title,
@@ -65,14 +66,35 @@ const LiquidityRewardCard = ({
           className="text-small"
         >
           View pool
-        </a>
+        </a>&nbsp;
+        <Tooltip simple delay={0} triggerComponent={Icons.MoreInfo}>
+          LP tokens represent the amount of the money you've deposited into a
+          liquidity pool as a liquidity provider. KEEP rewards are proportional
+          to your share of the total pool.
+        </Tooltip>
       </h4>
-      <div className={"liquidity__info text-grey-60 mt-2"}>
+      <div className={"liquidity__info text-grey-60 mt-2 mb-2"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy}*
+            {formattedApy}
           </h2>
-          <h6>Annual % yield (APY)</h6>
+          <h6>
+            Estimate of pool apy&nbsp;
+            <Tooltip simple delay={0} triggerComponent={Icons.MoreInfo}>
+              Pool APY is calculated using the&nbsp;
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={
+                  "https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"
+                }
+                className="text-small text-white text-link"
+              >
+                Uniswap subgraph API
+              </a>
+              &nbsp; to fetch the the total pool value and KEEP token in USD.
+            </Tooltip>
+          </h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
           {isFetching ? (
@@ -84,9 +106,6 @@ const LiquidityRewardCard = ({
           )}
           <h6>% of total pool</h6>
         </div>
-      </div>
-      <div className={"text-smaller text-grey-70 text-center mb-2"}>
-        * APY calculated assuming $1M pool
       </div>
       {!gt(wrappedTokenBalance, 0) && (
         <div className={"liquidity__new-user-info"}>
