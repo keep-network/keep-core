@@ -11,20 +11,14 @@ repos:
     - id: check-added-large-files
  - repo: local
    hooks:
-    - id: solium
-      name: Solidity linter
-      language: node
-      entry: solium
-      files: '\.sol$'
-      args:
-      - --dir=solidity/contracts/
-      - --config=solidity/.soliumrc.json
-      additional_dependencies:
-      - ethlint@1.2.3
+    - id: lint-sol
+      name: 'lint solidity sol'
+      entry: /usr/bin/env bash -c "cd solidity && npm run lint:sol"
+      language: script
+      description: "Checks solidity code according to the package's linter configuration"
     - id: lint-js
       name: 'lint solidity js'
       entry: /usr/bin/env bash -c "cd solidity && npm run lint:js"
-      files: 'solidity\/.*\/\.js$'
       language: script
       description: "Checks JS code according to the package's linter configuration"
     - id: lint-dashboard-js
