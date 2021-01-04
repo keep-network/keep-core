@@ -6,7 +6,7 @@ repos:
     - id: go-vet
     - id: go-lint
  - repo: https://github.com/keep-network/pre-commit-hooks.git
-   rev: 63e729f
+   rev: v1.3.0
    hooks:
     - id: check-added-large-files
  - repo: local
