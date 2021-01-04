@@ -18,14 +18,22 @@ library LockUtils {
 
     /// @notice Check whether the LockSet `self` contains a lock by `creator`
     function contains(LockSet storage self, address creator)
-        internal view returns (bool) {
+        internal
+        view
+        returns (bool)
+    {
         return (self.positions[creator] != 0);
     }
 
     function getLockTime(LockSet storage self, address creator)
-        internal view returns (uint96) {
+        internal
+        view
+        returns (uint96)
+    {
         uint256 positionPlusOne = self.positions[creator];
-        if (positionPlusOne == 0) { return 0; }
+        if (positionPlusOne == 0) {
+            return 0;
+        }
         return self.locks[positionPlusOne - 1].expiresAt;
     }
 
@@ -42,7 +50,7 @@ library LockUtils {
         if (positionPlusOne == 0) {
             self.locks.push(lock);
             self.positions[_creator] = self.locks.length;
-        // Existing lock present
+            // Existing lock present
         } else {
             self.locks[positionPlusOne - 1].expiresAt = _expiresAt;
         }
@@ -50,10 +58,7 @@ library LockUtils {
 
     /// @notice Remove the lock of `creator`.
     /// If no lock present, do nothing.
-    function releaseLock(
-        LockSet storage self,
-        address _creator
-    ) internal {
+    function releaseLock(LockSet storage self, address _creator) internal {
         uint256 positionPlusOne = self.positions[_creator];
         if (positionPlusOne != 0) {
             uint256 lockCount = self.locks.length;
@@ -71,7 +76,10 @@ library LockUtils {
 
     /// @notice Return the locks of the LockSet `self`.
     function enumerate(LockSet storage self)
-        internal view returns (Lock[] memory) {
+        internal
+        view
+        returns (Lock[] memory)
+    {
         return self.locks;
     }
 }

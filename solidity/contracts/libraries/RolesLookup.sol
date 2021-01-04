@@ -64,9 +64,8 @@ library RolesLookup {
             "Not a grantee of the provided contract"
         );
 
-        address[] memory operators = tokenGrant.getGranteeOperators(
-            managedGrantContract
-        );
+        address[] memory operators =
+            tokenGrant.getGranteeOperators(managedGrantContract);
         return operators.contains(operator);
     }
 
@@ -81,10 +80,9 @@ library RolesLookup {
         uint256 grantId,
         TokenGrant tokenGrant
     ) internal returns (bool) {
-        (,,,,, address managedGrant) = tokenGrant.getGrant(grantId);
-        (, bytes memory result) = managedGrant.call(
-            abi.encodeWithSignature("grantee()")
-        );
+        (, , , , , address managedGrant) = tokenGrant.getGrant(grantId);
+        (, bytes memory result) =
+            managedGrant.call(abi.encodeWithSignature("grantee()"));
         if (result.length == 0) {
             return false;
         }

@@ -7,18 +7,20 @@ import "../KeepRandomBeaconOperator.sol";
  * @dev A simplified Random Beacon operator contract to help local development.
  */
 contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
-
     constructor(
         address _serviceContract,
         address _stakingContract,
         address _registryContract,
         address _gasPriceOracle
-    ) KeepRandomBeaconOperator(
-        _serviceContract,
-        _stakingContract,
-        _registryContract,
-        _gasPriceOracle
-    ) public {
+    )
+        public
+        KeepRandomBeaconOperator(
+            _serviceContract,
+            _stakingContract,
+            _registryContract,
+            _gasPriceOracle
+        )
+    {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;
@@ -28,7 +30,10 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         groups.addGroup(groupPublicKey);
     }
 
-    function setGroupMembers(bytes memory groupPublicKey, address[] memory members) public {
+    function setGroupMembers(
+        bytes memory groupPublicKey,
+        address[] memory members
+    ) public {
         groups.setGroupMembers(groupPublicKey, members, hex"");
     }
 
@@ -40,7 +45,11 @@ contract KeepRandomBeaconOperatorStub is KeepRandomBeaconOperator {
         return groupSelection.ticketSubmissionStartBlock;
     }
 
-    function getGroupPublicKey(uint256 groupIndex) public view returns (bytes memory) {
+    function getGroupPublicKey(uint256 groupIndex)
+        public
+        view
+        returns (bytes memory)
+    {
         return groups.groups[groupIndex].groupPubKey;
     }
 

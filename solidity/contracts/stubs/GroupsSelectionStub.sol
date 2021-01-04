@@ -14,25 +14,34 @@ contract GroupSelectionStub {
     }
 
     /**
-    * @dev Gets submitted group candidate tickets so far.
-    */
+     * @dev Gets submitted group candidate tickets so far.
+     */
     function getTickets() public view returns (uint64[] memory) {
         return groupSelection.tickets;
     }
 
     /**
-    * @dev Gets an index of the highest ticket value (tail).
-    */
+     * @dev Gets an index of the highest ticket value (tail).
+     */
     function getTail() public view returns (uint256) {
         return groupSelection.tail;
     }
 
     /**
-    * @dev Gets an index of a ticket that a higherTicketValueIndex points to.
-    * Ex. tickets[23, 5, 65]
-    * getPreviousTicketIndex(2) = 0
-    */
-    function getPreviousTicketIndex(uint256 higherTicketValueIndex) public view returns (uint256) {
-        return uint256(uint8(groupSelection.previousTicketIndices[higherTicketValueIndex]));
+     * @dev Gets an index of a ticket that a higherTicketValueIndex points to.
+     * Ex. tickets[23, 5, 65]
+     * getPreviousTicketIndex(2) = 0
+     */
+    function getPreviousTicketIndex(uint256 higherTicketValueIndex)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            uint256(
+                uint8(
+                    groupSelection.previousTicketIndices[higherTicketValueIndex]
+                )
+            );
     }
 }

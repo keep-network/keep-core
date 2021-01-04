@@ -55,7 +55,8 @@ library Reimbursements {
             // Return callback surplus to the requestor.
             // Expecting 32 bytes data containing 20 byte address
             if (callbackSurplusRecipientData.length == 32) {
-                address surplusRecipient = callbackSurplusRecipientData.toAddress(12);
+                address surplusRecipient =
+                    callbackSurplusRecipientData.toAddress(12);
                 surplusRecipient.call.gas(8000).value(callbackSurplus)("");
             }
         } else {

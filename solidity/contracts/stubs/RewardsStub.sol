@@ -7,20 +7,23 @@ contract RewardsStub is Rewards {
     uint256 closedTime;
     mapping(uint256 => bool) terminated;
 
-    constructor (
+    constructor(
         address _token,
         uint256 _minimumKeepsPerInterval,
         uint256 _firstIntervalStart,
         uint256[] memory _intervalWeights,
         uint256[] memory _creationTimes,
         uint256 _termLength
-    ) public Rewards(
-        _token,
-        _firstIntervalStart,
-        _intervalWeights,
-        _termLength,
-        _minimumKeepsPerInterval
-    ) {
+    )
+        public
+        Rewards(
+            _token,
+            _firstIntervalStart,
+            _intervalWeights,
+            _termLength,
+            _minimumKeepsPerInterval
+        )
+    {
         creationTimes = _creationTimes;
     }
 
@@ -54,11 +57,19 @@ contract RewardsStub is Rewards {
         return eligibleForReward(bytes32(i));
     }
 
-    function eligibleButTerminatedWithUint(uint256 i) public view returns (bool) {
+    function eligibleButTerminatedWithUint(uint256 i)
+        public
+        view
+        returns (bool)
+    {
         return eligibleButTerminated(bytes32(i));
     }
 
-    function findEndpoint(uint256 intervalEndpoint) public view returns (uint256) {
+    function findEndpoint(uint256 intervalEndpoint)
+        public
+        view
+        returns (uint256)
+    {
         return _findEndpoint(intervalEndpoint);
     }
 
@@ -101,7 +112,11 @@ contract RewardsStub is Rewards {
         return bytes32(i);
     }
 
-    function _getCreationTime(bytes32 groupIndexBytes) internal view returns (uint256) {
+    function _getCreationTime(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (uint256)
+    {
         return creationTimes[uint256(groupIndexBytes)];
     }
 
@@ -109,18 +124,25 @@ contract RewardsStub is Rewards {
         return _getCreationTime(groupIndexBytes) <= closedTime;
     }
 
-    function _isTerminated(bytes32 groupIndexBytes) internal view returns (bool) {
+    function _isTerminated(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (bool)
+    {
         return terminated[uint256(groupIndexBytes)];
     }
 
-    function _recognizedByFactory(bytes32 groupIndexBytes) internal view returns (bool) {
+    function _recognizedByFactory(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (bool)
+    {
         return _getKeepCount() > uint256(groupIndexBytes);
     }
 
-    function _distributeReward(bytes32 groupIndexBytes, uint256 _value) internal {
-        token.safeTransfer(
-            msg.sender,
-            _value
-        );
+    function _distributeReward(bytes32 groupIndexBytes, uint256 _value)
+        internal
+    {
+        token.safeTransfer(msg.sender, _value);
     }
 }

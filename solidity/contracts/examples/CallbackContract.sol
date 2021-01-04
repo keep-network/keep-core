@@ -7,17 +7,13 @@ import "../IRandomBeacon.sol";
  * @dev Example callback contract for Random Beacon.
  */
 contract CallbackContract is IRandomBeaconConsumer {
-
     uint256 internal _lastEntry;
 
-    function __beaconCallback(uint256 entry)
-        public
-    {
+    function __beaconCallback(uint256 entry) public {
         _lastEntry = entry;
     }
 
-    function lastEntry() public view returns (uint256)
-    {
+    function lastEntry() public view returns (uint256) {
         return _lastEntry;
     }
 }
