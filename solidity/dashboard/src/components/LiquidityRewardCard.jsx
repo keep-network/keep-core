@@ -75,25 +75,30 @@ const LiquidityRewardCard = ({
       </h4>
       <div className={"liquidity__info text-grey-60 mt-2 mb-2"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
+          <Tooltip
+            simple
+            delay={0}
+            triggerComponent={Icons.MoreInfo}
+            className={"liquidity__info-tile__tooltip"}
+          >
+            Pool APY is calculated using the&nbsp;
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={
+                "https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"
+              }
+              className="text-small text-white text-link"
+            >
+              Uniswap subgraph API
+            </a>
+            &nbsp; to fetch the the total pool value and KEEP token in USD.
+          </Tooltip>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
             {formattedApy}
           </h2>
           <h6>
-            Estimate of pool apy&nbsp;
-            <Tooltip simple delay={0} triggerComponent={Icons.MoreInfo}>
-              Pool APY is calculated using the&nbsp;
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href={
-                  "https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"
-                }
-                className="text-small text-white text-link"
-              >
-                Uniswap subgraph API
-              </a>
-              &nbsp; to fetch the the total pool value and KEEP token in USD.
-            </Tooltip>
+            Estimate of pool apy
           </h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
