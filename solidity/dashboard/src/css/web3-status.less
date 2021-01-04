@@ -20,7 +20,8 @@
         cursor: pointer;
 
         &:hover, &--open {
-            .wallet__menu {
+            .wallet__menu-container {
+                visibility: visible;
                 opacity: 1;
             }
         }
@@ -57,72 +58,75 @@ svg.wallet__icon--active {
     text-transform: none;
 }
 
-.wallet__menu {
+.wallet__menu-container {
     position: absolute;
     top: 100%;
     left: 0;
-    margin-top: 8px;
     min-width: 100%;
     max-height: 150px;
     border-radius: 8px;
-    padding: 0.5rem;
-    background: @color-black;
+    padding: 0.5rem 0;
     opacity: 0;
-
+    visibility: hidden;
     transition: all 0.5s;
     z-index: 1000;
 
-    // top right trinagle
-    ::before {
-        content: '';
-        position: absolute;
-        top: -8px;
-        right: 12px;
-        border: 8px solid transparent;
-        border-bottom-color: @color-black;
-        border-top: none;
-    }
-
-    &__copy-address {
-        border-radius: 100px;
-        background-color: @color-green-60;
-        padding: 2px 8px;
-        font-size: 8px;
-        line-height: 12px;
-        letter-spacing: 0.05em;
-        text-align: center;
-        text-transform: uppercase;
-
-        // center against parent
-        margin: 0 auto;
-    }
-
-    &__divider {
-        margin-top: 0.5rem;
-        margin-bottom: 0;
-        border-top-color: @color-grey-30;
-    }
-
-    &__balance {
-        font-size: 12px;
-        line-height: 17px;
-        font-feature-settings: "smcp", "zero";
-        color: @white;
+    .wallet__menu {
+        background: @color-black;
+        border-radius: 8px;
         padding: 0.5rem;
-    }
+        // top right trinagle
+        ::before {
+            content: '';
+            position: absolute;
+            top: 0px;
+            right: 12px;
+            border: 8px solid transparent;
+            border-bottom-color: @color-black;
+            border-top: none;
+        }
 
-    &__disconnect {
-        font-size: 0.75rem;
-        line-height: 17px;
-        font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1;
-        color: @white;
-        transition: all 0.3s;
-        padding: 0.5rem;
-        border-radius: 4px;
-    }
+        &__copy-address {
+            border-radius: 100px;
+            background-color: @color-green-60;
+            padding: 2px 8px;
+            font-size: 8px;
+            line-height: 12px;
+            letter-spacing: 0.05em;
+            text-align: center;
+            text-transform: uppercase;
 
-    &__disconnect:hover {
-        background-color: @color-green-bg;
-        color: @color-black;
+            // center against parent
+            margin: 0 auto;
+        }
+
+        &__divider {
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+            border-top-color: @color-grey-30;
+        }
+
+        &__balance {
+            font-size: 12px;
+            line-height: 17px;
+            font-feature-settings: "smcp", "zero";
+            color: @white;
+            padding: 0.5rem;
+        }
+
+        &__disconnect {
+            font-size: 0.75rem;
+            line-height: 17px;
+            font-feature-settings: 'tnum' 1, 'lnum' 1, 'zero' 1;
+            color: @white;
+            transition: all 0.3s;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+
+        &__disconnect:hover {
+            background-color: @color-green-bg;
+            color: @color-black;
+        }
     }
 }
