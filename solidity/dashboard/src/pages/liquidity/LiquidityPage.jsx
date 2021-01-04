@@ -1,6 +1,9 @@
 import React, { useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { useWeb3Address } from "../../components/WithWeb3Context"
+import {
+  useWeb3Address,
+  useWeb3Context,
+} from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
 import CardContainer from "../../components/CardContainer"
 import LiquidityRewardCard from "../../components/LiquidityRewardCard"
@@ -10,8 +13,15 @@ import {
   addMoreLpTokens,
   withdrawAllLiquidityRewards,
 } from "../../actions/web3"
+import ClosableContainer from "../../components/ClosableContainer";
+import { gt } from "../../utils/arithmetics.utils";
 
 const LiquidityPage = ({ headerTitle }) => {
+  const { yourAddress, provider } = useWeb3Context()
+  const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
+
+  const isActive = !!(yourAddress && provider)
+
   const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
     (state) => state.liquidityRewards
   )
@@ -51,6 +61,40 @@ const LiquidityPage = ({ headerTitle }) => {
 
   return (
     <PageWrapper title={headerTitle} newPage={true}>
+      <ClosableContainer
+        className={"tile liquidity-banner"}
+        hide={isActive || gt(keepTokenBalance.value, 0)}
+      >
+        <div className={"liquidity-banner__keep-logo"}>
+          <Icons.KeepGreenOutline />
+        </div>
+        <div className={"liquidity-banner__content"}>
+          <h4 className={"liquidity-banner__title"}>
+            Don&apos;t yet have KEEP tokens?
+          </h4>
+          <span className={"liquidity-banner__info text-small"}>
+            What are you waiting for? KEEP can be bought on the open market on&nbsp;
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={"https://balancer.exchange/#/swap"}
+              className="text-link"
+            >
+              Balancer
+            </a>
+            &nbsp;or&nbsp;
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={"https://app.uniswap.org/#/swap"}
+              className="text-link"
+            >
+              Uniswap
+            </a>
+          </span>
+        </div>
+      </ClosableContainer>
+
       <CardContainer>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
