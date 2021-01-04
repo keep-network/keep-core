@@ -1,10 +1,11 @@
 import React, { useMemo } from "react"
+import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
-import { displayAmount } from "../utils/token.utils"
+import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
 
@@ -31,20 +32,26 @@ const LiquidityRewardCard = ({
   const formattedApy = useMemo(() => {
     const bn = new BigNumber(apy).multipliedBy(100)
     if (bn.isEqualTo(Infinity)) {
-      return <span>&#8734;</span>
+      return { value: Infinity, prefix: "" }
     } else if (bn.isLessThan(0.01) && bn.isGreaterThan(0)) {
-      return "<0.01%"
+      return { value: 0.01, prefix: ">" }
     } else if (bn.isGreaterThan(999)) {
-      return ">999%"
+      return { value: 999, prefix: "<" }
     }
-    return `${bn.decimalPlaces(2, BigNumber.ROUND_DOWN)}%`
+    return {
+      value: bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber(),
+      prefix: "",
+    }
   }, [apy])
 
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? "<0.01"
-      : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
+      ? { value: 0.01, prefix: ">" }
+      : {
+          value: bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber(),
+          prefix: "",
+        }
   }, [percentageOfTotalPool])
 
   return (
@@ -72,7 +79,17 @@ const LiquidityRewardCard = ({
       <div className={"liquidity__info text-grey-60 mt-2"}>
         <div className={"liquidity__info-tile bg-mint-10"}>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy}
+            {formattedApy.value === Infinity ? (
+              <span>&#8734;</span>
+            ) : (
+              <CountUp
+                end={formattedApy.value}
+                // Save previously ended number to start every new animation from it.
+                preserveValue
+                decimals={2}
+                formattingFn={(value) => `${formattedApy.prefix}${value}%`}
+              />
+            )}
           </h2>
           <h6>Annual % yield (APY)</h6>
         </div>
@@ -80,9 +97,17 @@ const LiquidityRewardCard = ({
           {isFetching ? (
             <Skeleton tag="h2" shining color="mint-20" />
           ) : (
-            <h2
-              className={"liquidity__info-tile__title text-mint-100"}
-            >{`${formattedPercentageOfTotalPool}%`}</h2>
+            <h2 className={"liquidity__info-tile__title text-mint-100"}>
+              <CountUp
+                end={formattedPercentageOfTotalPool.value}
+                // Save previously ended number to start every new animation from it.
+                preserveValue
+                decimals={2}
+                formattingFn={(value) =>
+                  `${formattedPercentageOfTotalPool.prefix}${value}%`
+                }
+              />
+            </h2>
           )}
           <h6>% of total pool</h6>
         </div>
@@ -99,7 +124,12 @@ const LiquidityRewardCard = ({
           {isFetching ? (
             <Skeleton tag="h3" shining color="grey-20" className="ml-3" />
           ) : (
-            <h3>{displayAmount(rewardBalance)}</h3>
+            <h3>
+              <CountUp
+                end={toTokenUnit(rewardBalance).toNumber()}
+                preserveValue
+              />
+            </h3>
           )}
         </div>
       </div>
