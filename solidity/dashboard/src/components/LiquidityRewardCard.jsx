@@ -8,6 +8,7 @@ import { displayAmount } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
 import Tooltip from "./Tooltip"
+import Banner from "./Banner"
 
 const LiquidityRewardCard = ({
   title,
@@ -115,11 +116,16 @@ const LiquidityRewardCard = ({
         </div>
       </div>
       {!gt(wrappedTokenBalance, 0) && (
-        <div className={"liquidity__new-user-info"}>
-          <Icons.Rewards className={"liquidity__rewards-icon"} />
+        <Banner className="liquidity__new-user-info">
+          <Banner.Icon
+            icon={Icons.Rewards}
+            className={"liquidity__rewards-icon"}
+          />
           <div className={"liquidity__new-user-info-text"}>
-            <h4>Start earning rewards</h4>
-            <span>
+            <Banner.Title className={"liquidity-banner__title text-white"}>
+              Start earning rewards
+            </Banner.Title>
+            <Banner.Description className="liquidity-banner__info text-white">
               Get LP tokens by adding liquidity first to the&nbsp;
               <a
                 target="_blank"
@@ -129,9 +135,9 @@ const LiquidityRewardCard = ({
               >
                 Uniswap pool
               </a>
-            </span>
+            </Banner.Description>
           </div>
-        </div>
+        </Banner>
       )}
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
