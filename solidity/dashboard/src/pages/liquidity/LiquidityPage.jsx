@@ -17,10 +17,8 @@ import ClosableContainer from "../../components/ClosableContainer";
 import { gt } from "../../utils/arithmetics.utils";
 
 const LiquidityPage = ({ headerTitle }) => {
-  const { yourAddress, provider } = useWeb3Context()
+  const { isConnected } = useWeb3Context()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
-
-  const isActive = !!(yourAddress && provider)
 
   const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
     (state) => state.liquidityRewards
@@ -63,7 +61,7 @@ const LiquidityPage = ({ headerTitle }) => {
     <PageWrapper title={headerTitle} newPage={true}>
       <ClosableContainer
         className={"tile liquidity-banner"}
-        hide={isActive || gt(keepTokenBalance.value, 0)}
+        hide={isConnected && gt(keepTokenBalance.value, 0)}
       >
         <div className={"liquidity-banner__keep-logo"}>
           <Icons.KeepGreenOutline />
