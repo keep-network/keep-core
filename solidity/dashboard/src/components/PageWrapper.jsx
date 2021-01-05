@@ -4,7 +4,13 @@ import Header from "./Header"
 import { renderPage } from "./Routing"
 import { isEmptyArray } from "../utils/array.utils"
 
-const PageWrapper = ({ title, routes, children, headerClassName = "", newPage = false }) => {
+const PageWrapper = ({
+  title,
+  routes,
+  children,
+  headerClassName = "",
+  newPage = false,
+}) => {
   const hasRoutes = !isEmptyArray(routes)
 
   return (

@@ -76,7 +76,7 @@ export const calculateAPY = (
   const totalLPTokensCreatedInUniswapInBN = new BigNumber(
     totalLPTokensCreatedInUniswap
   )
-  //TODO : Add pairSymbol to constants (probably not be needed)
+  // TODO : Add pairSymbol to constants (probably not be needed)
   const rewardPoolPerWeekInBN = new BigNumber(
     LIQUIDITY_REWARD_PAIRS[pairSymbol].rewardPoolPerWeek
   )

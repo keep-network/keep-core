@@ -1,7 +1,5 @@
 import { contractService } from "./contracts.service"
-import {
-  TOKEN_STAKING_CONTRACT_NAME
-} from "../constants/constants"
+import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
 import moment from "moment"
 import {
   isCodeValid,

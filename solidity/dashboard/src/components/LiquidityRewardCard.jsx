@@ -74,7 +74,7 @@ const LiquidityRewardCard = ({
           triggerComponent={Icons.MoreInfo}
           className={"liquidity__card-subtitle__tooltip"}
         >
-          LP tokens represent the amount of money you've deposited into a
+          LP tokens represent the amount of money you&apos;ve deposited into a
           liquidity pool as a liquidity provider. KEEP rewards are proportional
           to your share of the total pool.
         </Tooltip>
