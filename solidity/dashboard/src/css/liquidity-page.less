@@ -1,13 +1,11 @@
 .liquidity-banner {
   margin: 0.8rem 3.2rem;
   padding: 0.8rem 0;
-  width: auto;
   min-width: 25rem;
   max-width: 100%;
   display: flex;
 
   svg.liquidity-banner__keep-logo {
-
     height: 2rem;
     width: 2rem;
     margin: 0 1rem;
@@ -83,9 +81,8 @@
         width: 12px;
         height: 12px;
         position: absolute;
-        top: 0px;
+        top: 0;
         right: 8px;
-        cursor: pointer;
 
         .tooltip__content-wrapper {
           text-align: left;
@@ -96,7 +93,7 @@
   }
 
   .liquidity__new-user-info {
-    background-color: @color-brand-violet;
+    background-color: @secondary-color;
     color: @white;
     display: flex;
     padding: 0.7rem 0.5rem;
@@ -123,26 +120,26 @@
     }
   }
 
-  .liquidity__token-balance {
+  .liquidity__reward-balance {
     margin: 2rem 0;
 
-    .liquidity__token-balance__title {
+    .liquidity__reward-balance__title {
       display: block;
       font-weight: 500;
     }
 
-    .liquidity__token-balance__subtitle {
+    .liquidity__reward-balance__subtitle {
       display: block;
       margin-bottom: 0.4rem;
       font-weight: 500;
       font-size: 0.7rem;
     }
 
-    .liquidity__token-balance_values {
+    .liquidity__reward-balance_values {
       display: flex;
       justify-content: space-between;
 
-      .liquidity__token-balance_values_label {
+      .liquidity__reward-balance_values_label {
         display: flex;
         align-items: center;
 

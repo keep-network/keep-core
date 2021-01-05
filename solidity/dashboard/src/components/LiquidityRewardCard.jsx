@@ -133,15 +133,15 @@ const LiquidityRewardCard = ({
           </div>
         </div>
       )}
-      <div className={"liquidity__token-balance"}>
-        <h4 className={"liquidity__token-balance__title text-grey-70"}>
+      <div className={"liquidity__reward-balance"}>
+        <h4 className={"liquidity__reward-balance__title text-grey-70"}>
           Your rewards
         </h4>
-        <span className={"liquidity__token-balance__subtitle text-grey-40"}>
+        <span className={"liquidity__reward-balance__subtitle text-grey-40"}>
           Rewards allocated on a weekly basis.
         </span>
-        <div className={"liquidity__token-balance_values text-grey-70"}>
-          <h3 className={"liquidity__token-balance_values_label"}>
+        <div className={"liquidity__reward-balance_values text-grey-70"}>
+          <h3 className={"liquidity__reward-balance_values_label"}>
             <Icons.KeepOutline />
             <span>KEEP</span>
           </h3>
