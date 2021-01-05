@@ -37,6 +37,14 @@ jobs:
           version=$(jq --raw-output .version package.json)
           preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
 
+          # Check resolved `preid`. Currently only `pre` value is supported,
+          # other types of releases are not handled by this job.
+          if [ "$preid" != pre ]; then
+            echo "Unsupported preid. Resolved info:"
+            echo "$name@$version ; preid $preid"
+            exit 1
+          fi
+
           # Find the latest published package version matching this preid.
           # Note that in jq, we wrap the result in an array and then flatten;
           # this is because npm show json contains a single string if there
