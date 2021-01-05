@@ -92,7 +92,7 @@ const LiquidityRewardCard = ({
               target="_blank"
               rel="noopener noreferrer"
               href={"https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"}
-              className="text-small text-white text-link"
+              className="text-white text-link"
             >
               Uniswap subgraph API
             </a>
@@ -125,7 +125,7 @@ const LiquidityRewardCard = ({
                 target="_blank"
                 rel="noopener noreferrer"
                 href={viewPoolLink}
-                className="text-small text-white text-link"
+                className="text-white text-link"
               >
                 Uniswap pool
               </a>
