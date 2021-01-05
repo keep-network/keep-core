@@ -49,7 +49,6 @@ const LiquidityRewardCard = ({
 
   return (
     <Card className={`liquidity__card tile ${wrapperClassName}`}>
-      <Icons.SantaHat className="liquidity-card__santa-hat" />
       <div className={"liquidity__card-title"}>
         <DoubleIcon
           MainIcon={MainIcon}
