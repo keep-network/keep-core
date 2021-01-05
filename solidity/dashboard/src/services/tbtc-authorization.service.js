@@ -19,6 +19,7 @@ import {
   getOperatorsOfOwner,
 } from "./token-staking.service"
 import { tokenGrantsService } from "./token-grants.service"
+import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 
 const bondedECDSAKeepFactoryAddress = getBondedECDSAKeepFactoryAddress()
 const tBTCSystemAddress = getTBTCSystemAddress()
@@ -295,7 +296,7 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     yourAddress
   )
 
-  if (ownerAddress !== "0x0000000000000000000000000000000000000000") {
+  if (ownerAddress !== ZERO_ADDRESS) {
     // yourAddress is an operator
     operators.set(web3Utils.toChecksumAddress(yourAddress), {
       managedGrantInfo: {},
