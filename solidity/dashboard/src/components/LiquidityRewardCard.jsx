@@ -34,9 +34,9 @@ const LiquidityRewardCard = ({
     if (bn.isEqualTo(Infinity)) {
       return { value: Infinity, prefix: "" }
     } else if (bn.isLessThan(0.01) && bn.isGreaterThan(0)) {
-      return { value: 0.01, prefix: ">" }
+      return { value: 0.01, prefix: "<" }
     } else if (bn.isGreaterThan(999)) {
-      return { value: 999, prefix: "<" }
+      return { value: 999, prefix: ">" }
     }
     return {
       value: bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber(),
@@ -47,7 +47,7 @@ const LiquidityRewardCard = ({
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? { value: 0.01, prefix: ">" }
+      ? { value: 0.01, prefix: "<" }
       : {
           value: bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber(),
           prefix: "",
