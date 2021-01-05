@@ -79,7 +79,11 @@ const LiquidityRewardCard = ({
           to your share of the total pool.
         </Tooltip>
       </h4>
-      <div className={"liquidity__info text-grey-60 mt-2 mb-2"}>
+      <div
+        className={`liquidity__info${
+          gt(lpBalance, 0) ? "" : "--locked"
+        } mt-2 mb-2`}
+      >
         <div className={"liquidity__info-tile bg-mint-10"}>
           <Tooltip
             simple
@@ -105,7 +109,7 @@ const LiquidityRewardCard = ({
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
           {isFetching ? (
-            <Skeleton tag="h2" shining color="mint-20" />
+            <Skeleton tag="h2" shining color="color-grey-60" />
           ) : (
             <h2
               className={"liquidity__info-tile__title text-mint-100"}
@@ -168,19 +172,19 @@ const LiquidityRewardCard = ({
           )
         }
       >
-        add more lp tokens
+        {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
       </SubmitButton>
 
       <SubmitButton
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
-        disabled={!gt(rewardBalance, 0)}
+        disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
         onSubmitAction={(awaitingPromise) =>
           withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
         }
       >
         withdraw all
       </SubmitButton>
-      {gt(rewardBalance, 0) && (
+      {(gt(rewardBalance, 0) || gt(lpBalance, 0)) && (
         <div className={"text-validation text-center"}>
           Withdraw includes rewards and principal
         </div>

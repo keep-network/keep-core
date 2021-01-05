@@ -46,11 +46,12 @@
     }
   }
 
-  .liquidity__info {
+  .liquidity__info, .liquidity__info--locked {
     display: flex;
     justify-content: center;
 
     .liquidity__info-tile {
+      transition: background-color 0.5s ease;
       text-align: center;
       border-radius: 8px;
       padding: 1rem;
@@ -101,6 +102,15 @@
       .liquidity-banner__info {
         font-weight: 400;
         margin-bottom: 0.3rem;
+      }
+    }
+  }
+
+  .liquidity__info--locked {
+    .liquidity__info-tile {
+      &:extend(.bg-grey-20);
+      .liquidity__info-tile__title {
+        color: @color-grey-60!important;
       }
     }
   }
