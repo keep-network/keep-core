@@ -87,6 +87,7 @@ const LiquidityRewardCard = ({
                 // Save previously ended number to start every new animation from it.
                 preserveValue
                 decimals={2}
+                duration={1}
                 formattingFn={(value) => `${formattedApy.prefix}${value}%`}
               />
             )}
@@ -103,6 +104,7 @@ const LiquidityRewardCard = ({
                 // Save previously ended number to start every new animation from it.
                 preserveValue
                 decimals={2}
+                duration={1}
                 formattingFn={(value) =>
                   `${formattedPercentageOfTotalPool.prefix}${value}%`
                 }
