@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useCallback } from "react"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
@@ -54,6 +54,8 @@ const LiquidityRewardCard = ({
         }
   }, [percentageOfTotalPool])
 
+  const formattingFn = useCallback((value) => `${value}%`, [])
+
   return (
     <Card className={`liquidity__card tile ${wrapperClassName}`}>
       <Icons.SantaHat className="liquidity-card__santa-hat" />
@@ -82,14 +84,17 @@ const LiquidityRewardCard = ({
             {formattedApy.value === Infinity ? (
               <span>&#8734;</span>
             ) : (
-              <CountUp
-                end={formattedApy.value}
-                // Save previously ended number to start every new animation from it.
-                preserveValue
-                decimals={2}
-                duration={1}
-                formattingFn={(value) => `${formattedApy.prefix}${value}%`}
-              />
+              <>
+                {formattedApy.prefix}
+                <CountUp
+                  end={formattedApy.value}
+                  // Save previously ended number to start every new animation from it.
+                  preserveValue
+                  decimals={2}
+                  duration={1}
+                  formattingFn={formattingFn}
+                />
+              </>
             )}
           </h2>
           <h6>Annual % yield (APY)</h6>
@@ -99,15 +104,14 @@ const LiquidityRewardCard = ({
             <Skeleton tag="h2" shining color="mint-20" />
           ) : (
             <h2 className={"liquidity__info-tile__title text-mint-100"}>
+              {formattedPercentageOfTotalPool.prefix}
               <CountUp
                 end={formattedPercentageOfTotalPool.value}
                 // Save previously ended number to start every new animation from it.
                 preserveValue
                 decimals={2}
                 duration={1}
-                formattingFn={(value) =>
-                  `${formattedPercentageOfTotalPool.prefix}${value}%`
-                }
+                formattingFn={formattingFn}
               />
             </h2>
           )}
