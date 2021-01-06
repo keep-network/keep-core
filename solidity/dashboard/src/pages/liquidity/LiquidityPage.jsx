@@ -36,10 +36,10 @@ const LiquidityPage = ({ headerTitle }) => {
   }, [dispatch, address])
 
   useEffect(() => {
-    if (isConnected && gt(keepTokenBalance.value, 0)) {
+    if (isBannerVisible && isConnected && gt(keepTokenBalance.value, 0)) {
       hideBanner()
     }
-  }, [isConnected, keepTokenBalance.value, hideBanner])
+  }, [isConnected, keepTokenBalance.value, hideBanner, isBannerVisible])
 
   const addLpTokens = (
     wrappedTokenBalance,
