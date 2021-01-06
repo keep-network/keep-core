@@ -47,6 +47,46 @@ const LiquidityRewardCard = ({
       : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
   }, [percentageOfTotalPool])
 
+  const hasWrappedTokens = useMemo(() => gt(wrappedTokenBalance, 0), [
+    wrappedTokenBalance,
+  ])
+
+  const hasDepositedWrappedTokens = useMemo(() => gt(lpBalance, 0), [lpBalance])
+
+  const renderUserInfoBanner = () => {
+    return (
+      !hasWrappedTokens && (
+        <Banner className="liquidity__new-user-info">
+          <Banner.Icon
+            icon={!hasDepositedWrappedTokens ? Icons.Rewards : Icons.Wallet}
+            className={"liquidity__rewards-icon"}
+          />
+          <div className={"liquidity__new-user-info-text"}>
+            <Banner.Title className={"liquidity-banner__title text-white"}>
+              {!hasDepositedWrappedTokens
+                ? "Start earning rewards"
+                : "No LP Tokens found in wallet"}
+            </Banner.Title>
+            <Banner.Description className="liquidity-banner__info text-white">
+              {!hasDepositedWrappedTokens
+                ? "Get LP tokens by adding liquidity first to the"
+                : "Get more by adding liquidity to the"}
+              &nbsp;
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={viewPoolLink}
+                className="text-white text-link"
+              >
+                Uniswap pool
+              </a>
+            </Banner.Description>
+          </div>
+        </Banner>
+      )
+    )
+  }
+
   return (
     <Card className={`liquidity__card tile ${wrapperClassName}`}>
       <div className={"liquidity__card-title"}>
@@ -118,30 +158,7 @@ const LiquidityRewardCard = ({
           <h6>% of total pool</h6>
         </div>
       </div>
-      {!gt(wrappedTokenBalance, 0) && (
-        <Banner className="liquidity__new-user-info">
-          <Banner.Icon
-            icon={Icons.Rewards}
-            className={"liquidity__rewards-icon"}
-          />
-          <div className={"liquidity__new-user-info-text"}>
-            <Banner.Title className={"liquidity-banner__title text-white"}>
-              Start earning rewards
-            </Banner.Title>
-            <Banner.Description className="liquidity-banner__info text-white">
-              Get LP tokens by adding liquidity first to the&nbsp;
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href={viewPoolLink}
-                className="text-white text-link"
-              >
-                Uniswap pool
-              </a>
-            </Banner.Description>
-          </div>
-        </Banner>
-      )}
+      {renderUserInfoBanner()}
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
           Your rewards
