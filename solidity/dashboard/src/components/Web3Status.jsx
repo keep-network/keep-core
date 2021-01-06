@@ -26,8 +26,10 @@ export const Web3Status = () => {
           <div className={`wallet__address${isActive ? "--active" : ""}`}>
             {isActive ? shortenAddress(yourAddress) : "connect wallet"}
           </div>
-          <div className="wallet__menu">
-            {isActive ? <WalletMenu /> : <WalletOptions />}
+          <div className="wallet__menu-container">
+            <div className="wallet__menu">
+              {isActive ? <WalletMenu /> : <WalletOptions />}
+            </div>
           </div>
         </div>
       </div>

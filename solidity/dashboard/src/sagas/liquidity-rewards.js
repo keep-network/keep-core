@@ -6,7 +6,7 @@ import {
   fetchWrappedTokenBalance,
   fetchLPRewardsTotalSupply,
   fetchRewardBalance,
-  getWrappedTokenConctract, calculateAPY, fetchTotalLPTokensCreatedInUniswap,
+  getWrappedTokenConctract,
 } from "../services/liquidity-rewards"
 import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
@@ -42,19 +42,6 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
     // Fetching total deposited liqidity tokens in the `LPRewards` contract.
     const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
     if (totalSupply === 0) apy = Infinity
-
-    // if (gt(totalSupply, 0)) {
-    //   const totalLPTokensCreatedInUniswap = yield call(
-    //     fetchTotalLPTokensCreatedInUniswap,
-    //     LPRewardsContract
-    //   )
-    //
-    //   apy = calculateAPY(
-    //     totalSupply,
-    //     totalLPTokensCreatedInUniswap,
-    //     liquidityRewardPair.name
-    //   )
-    // }
 
     let reward = 0
     let shareOfPoolInPercent = 0

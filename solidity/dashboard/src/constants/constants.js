@@ -1,5 +1,3 @@
-import {fromTokenUnit} from "../utils/token.utils";
-
 export const KEEP_TOKEN_CONTRACT_NAME = "token"
 export const TOKEN_STAKING_CONTRACT_NAME = "stakingContract"
 export const TOKEN_GRANT_CONTRACT_NAME = "grantContract"

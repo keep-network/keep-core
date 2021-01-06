@@ -114,7 +114,10 @@ const TokensAmountField = ({
   const { setFieldValue } = useFormikContext()
 
   const onAddonClick = () => {
-    setFieldValue("stakeTokens", toTokenUnit(availableToStake).toFixed(0, BigNumber.ROUND_DOWN))
+    setFieldValue(
+      "stakeTokens",
+      toTokenUnit(availableToStake).toFixed(0, BigNumber.ROUND_DOWN)
+    )
   }
   return (
     <div className="token-amount-wrapper">
