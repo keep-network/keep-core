@@ -8,6 +8,8 @@ import Card from "./Card"
 import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
+import Tooltip from "./Tooltip"
+import Banner from "./Banner"
 
 const LiquidityRewardCard = ({
   title,
@@ -56,9 +58,48 @@ const LiquidityRewardCard = ({
 
   const formattingFn = useCallback((value) => `${value}%`, [])
 
+  const hasWrappedTokens = useMemo(() => gt(wrappedTokenBalance, 0), [
+    wrappedTokenBalance,
+  ])
+
+  const hasDepositedWrappedTokens = useMemo(() => gt(lpBalance, 0), [lpBalance])
+
+  const renderUserInfoBanner = () => {
+    return (
+      !hasWrappedTokens && (
+        <Banner className="liquidity__new-user-info">
+          <Banner.Icon
+            icon={!hasDepositedWrappedTokens ? Icons.Rewards : Icons.Wallet}
+            className={"liquidity__rewards-icon"}
+          />
+          <div className={"liquidity__new-user-info-text"}>
+            <Banner.Title className={"liquidity-banner__title text-white"}>
+              {!hasDepositedWrappedTokens
+                ? "Start earning rewards"
+                : "No LP Tokens found in wallet"}
+            </Banner.Title>
+            <Banner.Description className="liquidity-banner__info text-white">
+              {!hasDepositedWrappedTokens
+                ? "Get LP tokens by adding liquidity first to the"
+                : "Get more by adding liquidity to the"}
+              &nbsp;
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={viewPoolLink}
+                className="text-white text-link"
+              >
+                Uniswap pool
+              </a>
+            </Banner.Description>
+          </div>
+        </Banner>
+      )
+    )
+  }
+
   return (
     <Card className={`liquidity__card tile ${wrapperClassName}`}>
-      <Icons.SantaHat className="liquidity-card__santa-hat" />
       <div className={"liquidity__card-title"}>
         <DoubleIcon
           MainIcon={MainIcon}
@@ -77,9 +118,41 @@ const LiquidityRewardCard = ({
         >
           View pool
         </a>
+        &nbsp;
+        <Tooltip
+          simple
+          delay={0}
+          triggerComponent={Icons.MoreInfo}
+          className={"liquidity__card-subtitle__tooltip"}
+        >
+          LP tokens represent the amount of money you&apos;ve deposited into a
+          liquidity pool as a liquidity provider. KEEP rewards are proportional
+          to your share of the total pool.
+        </Tooltip>
       </h4>
-      <div className={"liquidity__info text-grey-60 mt-2"}>
+      <div
+        className={`liquidity__info${
+          gt(lpBalance, 0) ? "" : "--locked"
+        } mt-2 mb-2`}
+      >
         <div className={"liquidity__info-tile bg-mint-10"}>
+          <Tooltip
+            simple
+            delay={0}
+            triggerComponent={Icons.MoreInfo}
+            className={"liquidity__info-tile__tooltip"}
+          >
+            Pool APY is calculated using the&nbsp;
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={"https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"}
+              className="text-white text-link"
+            >
+              Uniswap subgraph API
+            </a>
+            &nbsp;to fetch the the total pool value and KEEP token in USD.
+          </Tooltip>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
             {formattedApy.value === Infinity ? (
               <span>&#8734;</span>
@@ -97,11 +170,11 @@ const LiquidityRewardCard = ({
               </>
             )}
           </h2>
-          <h6>Annual % yield (APY)</h6>
+          <h6>Estimate of pool apy</h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
           {isFetching ? (
-            <Skeleton tag="h2" shining color="mint-20" />
+            <Skeleton tag="h2" shining color="color-grey-60" />
           ) : (
             <h2 className={"liquidity__info-tile__title text-mint-100"}>
               {formattedPercentageOfTotalPool.prefix}
@@ -118,12 +191,16 @@ const LiquidityRewardCard = ({
           <h6>% of total pool</h6>
         </div>
       </div>
-      <div className={"liquidity__token-balance"}>
-        <span className={"liquidity__token-balance_title text-grey-70"}>
-          Reward
+      {renderUserInfoBanner()}
+      <div className={"liquidity__reward-balance"}>
+        <h4 className={"liquidity__reward-balance__title text-grey-70"}>
+          Your rewards
+        </h4>
+        <span className={"liquidity__reward-balance__subtitle text-grey-40"}>
+          Rewards allocated on a weekly basis.
         </span>
-        <div className={"liquidity__token-balance_values text-grey-70"}>
-          <h3 className={"liquidity__token-balance_values_label"}>
+        <div className={"liquidity__reward-balance_values text-grey-70"}>
+          <h3 className={"liquidity__reward-balance_values_label"}>
             <Icons.KeepOutline />
             <span>KEEP</span>
           </h3>
@@ -150,19 +227,19 @@ const LiquidityRewardCard = ({
           )
         }
       >
-        add more lp tokens
+        {gt(lpBalance, 0) ? "add more lp tokens" : "deposit lp tokens"}
       </SubmitButton>
 
       <SubmitButton
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
-        disabled={!gt(rewardBalance, 0)}
+        disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
         onSubmitAction={(awaitingPromise) =>
           withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
         }
       >
         withdraw all
       </SubmitButton>
-      {gt(rewardBalance, 0) && (
+      {(gt(rewardBalance, 0) || gt(lpBalance, 0)) && (
         <div className={"text-validation text-center"}>
           Withdraw includes rewards and principal
         </div>

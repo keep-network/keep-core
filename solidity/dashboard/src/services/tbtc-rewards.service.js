@@ -98,4 +98,3 @@ export const tbtcRewardsService = {
   fetchTBTCRewards,
   fetchBeneficiaryOperatorsFromDeposit,
 }
-

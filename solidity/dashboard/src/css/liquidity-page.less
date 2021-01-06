@@ -1,13 +1,25 @@
-.liquidity__card {
-  position:relative;
+.liquidity-banner {
+  margin: 0.8rem 3.2rem;
+  min-width: 25rem;
+  max-width: 100%;
+  display: flex;
 
-  > .liquidity-card__santa-hat {
-    position: absolute;
-    z-index: 1;
-    right: -2.5rem;
-    top: -2rem;
+  svg.liquidity-banner__keep-logo {
+    height: 2rem;
+    width: 2rem;
+    margin-right: 1rem;
   }
 
+  .liquidity-banner__content {
+    .liquidity-banner__info {
+      margin: 0.3rem 0;
+    }
+  }
+}
+
+.liquidity__card {
+  align-self: flex-start;
+  
   .liquidity__card-title {
     display: flex;
     align-items: center;
@@ -27,13 +39,21 @@
 
   .liquidity__card-subtitle {
     margin: 0.3rem 0;
+
+    .liquidity__card-subtitle__tooltip {
+      .tooltip__content-wrapper {
+        text-align: left;
+        min-width: 15rem;
+      }
+    }
   }
 
-  .liquidity__info {
+  .liquidity__info, .liquidity__info--locked {
     display: flex;
     justify-content: center;
 
     .liquidity__info-tile {
+      transition: background-color 0.5s ease;
       text-align: center;
       border-radius: 8px;
       padding: 1rem;
@@ -43,23 +63,80 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+      position: relative;
+
+      .liquidity__info-tile__tooltip {
+        width: 12px;
+        height: 12px;
+        position: absolute;
+        top: 0;
+        right: 8px;
+
+        .tooltip__content-wrapper {
+          text-align: left;
+          min-width: 16rem;
+        }
+      }
     }
   }
 
-  .liquidity__token-balance {
+  .liquidity__new-user-info {
+    background-color: @secondary-color;
+    color: @white;
+    display: flex;
+    padding: 0.7rem 0.5rem;
+
+    .liquidity__rewards-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      margin: 0.2rem 0.5rem;
+      flex: 0 0 auto;
+
+      path {
+        fill: white;
+      }
+    }
+
+    .liquidity__new-user-info-text {
+      margin-left: 0.5rem;
+      font-weight: 500;
+
+      .liquidity-banner__info {
+        font-weight: 400;
+        margin-bottom: 0.3rem;
+      }
+    }
+  }
+
+  .liquidity__info--locked {
+    .liquidity__info-tile {
+      &:extend(.bg-grey-20);
+      .liquidity__info-tile__title {
+        color: @color-grey-60!important;
+      }
+    }
+  }
+
+  .liquidity__reward-balance {
     margin: 2rem 0;
 
-    .liquidity__token-balance_title {
+    .liquidity__reward-balance__title {
       display: block;
-      margin: 0.4rem 0;
       font-weight: 500;
     }
 
-    .liquidity__token-balance_values {
+    .liquidity__reward-balance__subtitle {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      font-size: 0.7rem;
+    }
+
+    .liquidity__reward-balance_values {
       display: flex;
       justify-content: space-between;
 
-      .liquidity__token-balance_values_label {
+      .liquidity__reward-balance_values_label {
         display: flex;
         align-items: center;
 

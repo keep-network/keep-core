@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
-	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
+	relayChain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
+	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/gen/async"
 	"github.com/keep-network/keep-core/pkg/operator"
 	"github.com/keep-network/keep-core/pkg/subscription"
@@ -22,7 +22,7 @@ import (
 var logger = log.Logger("keep-chain-ethereum")
 
 // ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
-func (ec *ethereumChain) ThresholdRelay() relaychain.Interface {
+func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
 	return ec
 }
 
@@ -30,7 +30,11 @@ func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return operator.EthereumKeyToOperatorKey(ec.accountKey)
 }
 
-func (ec *ethereumChain) GetConfig() *relaychain.Config {
+func (ec *ethereumChain) Signing() chain.Signing {
+	return ethutil.NewSigner(ec.accountKey.PrivateKey)
+}
+
+func (ec *ethereumChain) GetConfig() *relayChain.Config {
 	return ec.chainConfig
 }
 
@@ -45,7 +49,7 @@ func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTicketSubmissionPromise {
+func (ec *ethereumChain) SubmitTicket(ticket *relayChain.Ticket) *async.EventGroupTicketSubmissionPromise {
 	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
 
 	failPromise := func(err error) {
@@ -76,7 +80,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *chain.Ticket) *async.EventGroupTic
 	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) packTicket(ticket *relaychain.Ticket) [32]uint8 {
+func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
 	ticketBytes := []uint8{}
 	ticketBytes = append(ticketBytes, ticket.Value[:]...)
 	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.StakerValue.Bytes(), 20)[0:20]...)
@@ -92,15 +96,15 @@ func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
 	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
 }
 
-func (ec *ethereumChain) GetSelectedParticipants() ([]chain.StakerAddress, error) {
-	var stakerAddresses []chain.StakerAddress
+func (ec *ethereumChain) GetSelectedParticipants() ([]relayChain.StakerAddress, error) {
+	var stakerAddresses []relayChain.StakerAddress
 	fetchParticipants := func() error {
 		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
 		if err != nil {
 			return err
 		}
 
-		stakerAddresses = make([]chain.StakerAddress, len(participants))
+		stakerAddresses = make([]relayChain.StakerAddress, len(participants))
 		for i, participant := range participants {
 			stakerAddresses[i] = participant.Bytes()
 		}
@@ -323,7 +327,7 @@ func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 }
 
 func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
-	[]chain.StakerAddress,
+	[]relayChain.StakerAddress,
 	error,
 ) {
 	members, err := ec.keepRandomBeaconOperatorContract.GetGroupMembers(
@@ -333,7 +337,7 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 		return nil, err
 	}
 
-	stakerAddresses := make([]chain.StakerAddress, len(members))
+	stakerAddresses := make([]relayChain.StakerAddress, len(members))
 	for i, member := range members {
 		stakerAddresses[i] = member.Bytes()
 	}
@@ -403,9 +407,9 @@ func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 }
 
 func (ec *ethereumChain) SubmitDKGResult(
-	participantIndex chain.GroupMemberIndex,
-	result *relaychain.DKGResult,
-	signatures map[chain.GroupMemberIndex][]byte,
+	participantIndex relayChain.GroupMemberIndex,
+	result *relayChain.DKGResult,
+	signatures map[relayChain.GroupMemberIndex][]byte,
 ) *async.EventDKGResultSubmissionPromise {
 	resultPublicationPromise := &async.EventDKGResultSubmissionPromise{}
 
@@ -482,18 +486,18 @@ func (ec *ethereumChain) SubmitDKGResult(
 // concatenated signatures. Signatures and member indices are returned in the
 // matching order. It requires each signature to be exactly 65-byte long.
 func convertSignaturesToChainFormat(
-	signatures map[chain.GroupMemberIndex][]byte,
+	signatures map[relayChain.GroupMemberIndex][]byte,
 ) ([]*big.Int, []byte, error) {
 	var membersIndices []*big.Int
 	var signaturesSlice []byte
 
 	for memberIndex, signature := range signatures {
-		if len(signatures[memberIndex]) != SignatureSize {
+		if len(signatures[memberIndex]) != ethutil.SignatureSize {
 			return nil, nil, fmt.Errorf(
 				"invalid signature size for member [%v] got [%d]-bytes but required [%d]-bytes",
 				memberIndex,
 				len(signatures[memberIndex]),
-				SignatureSize,
+				ethutil.SignatureSize,
 			)
 		}
 		membersIndices = append(membersIndices, big.NewInt(int64(memberIndex)))
@@ -510,13 +514,13 @@ func convertSignaturesToChainFormat(
 // hash over it. This corresponds to the DKG result hash calculation on-chain.
 // Hashes calculated off-chain and on-chain must always match.
 func (ec *ethereumChain) CalculateDKGResultHash(
-	dkgResult *relaychain.DKGResult,
-) (relaychain.DKGResultHash, error) {
+	dkgResult *relayChain.DKGResult,
+) (relayChain.DKGResultHash, error) {
 
 	// Encode DKG result to the format matched with Solidity keccak256(abi.encodePacked(...))
 	hash := crypto.Keccak256(dkgResult.GroupPublicKey, dkgResult.Misbehaved)
 
-	return relaychain.DKGResultHashFromBytes(hash)
+	return relayChain.DKGResultHashFromBytes(hash)
 }
 
 func (ec *ethereumChain) Address() common.Address {
