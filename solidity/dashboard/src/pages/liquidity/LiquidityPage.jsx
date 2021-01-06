@@ -112,7 +112,7 @@ const LiquidityPage = ({ headerTitle }) => {
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.EthToken}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.viewPoolLink}
-          apy={3.65}
+          apy={KEEP_ETH.apy}
           percentageOfTotalPool={KEEP_ETH.shareOfPoolInPercent}
           rewardBalance={KEEP_ETH.reward}
           wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
@@ -130,7 +130,7 @@ const LiquidityPage = ({ headerTitle }) => {
           MainIcon={Icons.KeepBlackGreen}
           SecondaryIcon={Icons.TBTC}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.viewPoolLink}
-          apy={6.68}
+          apy={KEEP_TBTC.apy}
           percentageOfTotalPool={KEEP_TBTC.shareOfPoolInPercent}
           rewardBalance={KEEP_TBTC.reward}
           wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
@@ -148,7 +148,7 @@ const LiquidityPage = ({ headerTitle }) => {
           MainIcon={Icons.TBTC}
           SecondaryIcon={Icons.EthToken}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.viewPoolLink}
-          apy={0.67}
+          apy={TBTC_ETH.apy}
           percentageOfTotalPool={TBTC_ETH.shareOfPoolInPercent}
           rewardBalance={TBTC_ETH.reward}
           wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}

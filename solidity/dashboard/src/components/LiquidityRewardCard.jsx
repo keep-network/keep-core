@@ -1,10 +1,11 @@
-import React, { useMemo } from "react"
+import React, { useMemo, useCallback } from "react"
+import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
-import { displayAmount } from "../utils/token.utils"
+import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
 import Tooltip from "./Tooltip"
@@ -31,21 +32,34 @@ const LiquidityRewardCard = ({
   withdrawLiquidityRewards,
 }) => {
   const formattedApy = useMemo(() => {
-    const bn = new BigNumber(apy)
-    if (bn.isEqualTo(Infinity)) return <span>&#8734;</span>
+    const bn = new BigNumber(apy).multipliedBy(100)
+    if (bn.isEqualTo(Infinity)) {
+      return Infinity
+    } else if (bn.isLessThan(0.01) && bn.isGreaterThan(0)) {
+      return 0.01
+    } else if (bn.isGreaterThan(999)) {
+      return 999
+    }
 
-    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? "<0.01%"
-      : bn.multipliedBy(100).decimalPlaces(2, BigNumber.ROUND_DOWN).toString() +
-          "%"
+    return bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
   }, [apy])
 
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? "<0.01"
-      : bn.decimalPlaces(2, BigNumber.ROUND_DOWN)
+      ? 0.01
+      : bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
   }, [percentageOfTotalPool])
+
+  const formattingFn = useCallback((value) => {
+    let prefix = ""
+    if (value === 0.01) {
+      prefix = `<`
+    } else if (value >= 999) {
+      prefix = `>`
+    }
+    return `${prefix}${value}%`
+  }, [])
 
   const hasWrappedTokens = useMemo(() => gt(wrappedTokenBalance, 0), [
     wrappedTokenBalance,
@@ -143,19 +157,37 @@ const LiquidityRewardCard = ({
             &nbsp;to fetch the the total pool value and KEEP token in USD.
           </Tooltip>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy}
+            {formattedApy.value === Infinity ? (
+              <span>&#8734;</span>
+            ) : (
+              <CountUp
+                end={formattedApy}
+                // Save previously ended number to start every new animation from it.
+                preserveValue
+                decimals={2}
+                duration={1}
+                formattingFn={formattingFn}
+              />
+            )}
           </h2>
           <h6>Estimate of pool apy</h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>
           {isFetching ? (
-            <Skeleton tag="h2" shining color="color-grey-60" />
+            <Skeleton tag="h2" shining color="grey-10" />
           ) : (
-            <h2
-              className={"liquidity__info-tile__title text-mint-100"}
-            >{`${formattedPercentageOfTotalPool}%`}</h2>
+            <h2 className={"liquidity__info-tile__title text-mint-100"}>
+              <CountUp
+                end={formattedPercentageOfTotalPool}
+                // Save previously ended number to start every new animation from it.
+                preserveValue
+                decimals={2}
+                duration={1}
+                formattingFn={formattingFn}
+              />
+            </h2>
           )}
-          <h6>% of total pool</h6>
+          <h6>Your share of POOL</h6>
         </div>
       </div>
       {renderUserInfoBanner()}
@@ -174,7 +206,12 @@ const LiquidityRewardCard = ({
           {isFetching ? (
             <Skeleton tag="h3" shining color="grey-20" className="ml-3" />
           ) : (
-            <h3>{displayAmount(rewardBalance)}</h3>
+            <h3>
+              <CountUp
+                end={toTokenUnit(rewardBalance).toNumber()}
+                preserveValue
+              />
+            </h3>
           )}
         </div>
       </div>

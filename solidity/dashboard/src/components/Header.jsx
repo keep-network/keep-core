@@ -5,7 +5,6 @@ import { Web3Status } from "./Web3Status"
 import Chip from "./Chip"
 
 const Header = ({ title, subLinks, className = "", newPage = false }) => {
-  console.log(newPage)
   return (
     <header className={`header ${className}`}>
       <div className="header__content">

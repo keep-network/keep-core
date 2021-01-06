@@ -47,6 +47,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     viewPoolLink:
       "https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a",
     rewardPoolPerWeek: 150000,
+    address: "0xe6f19dab7d43317344282f803f8e8d240708174a",
   },
   KEEP_TBTC: {
     contractName: LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,
@@ -54,6 +55,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     viewPoolLink:
       "https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081",
     rewardPoolPerWeek: 200000,
+    address: "0x38c8ffee49f286f25d25bad919ff7552e5daf081",
   },
   TBTC_ETH: {
     contractName: LP_REWARDS_TBTC_ETH_CONTRACT_NAME,
@@ -61,5 +63,6 @@ export const LIQUIDITY_REWARD_PAIRS = {
     viewPoolLink:
       "https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6",
     rewardPoolPerWeek: 50000,
+    address: "0x854056fd40c1b52037166285b2e54fee774d33f6",
   },
 }

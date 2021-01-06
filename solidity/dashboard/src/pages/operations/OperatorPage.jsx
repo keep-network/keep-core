@@ -9,15 +9,16 @@ import { operatorService } from "../../services/token-staking.service"
 import { useFetchData } from "../../hooks/useFetchData"
 import { LoadingOverlay } from "../../components/Loadable"
 import DelegatedTokensSkeleton from "../../components/skeletons/DelegatedTokensSkeleton"
+import { ZERO_ADDRESS } from "../../utils/ethereum.utils"
 
 const OperatorPage = ({ title }) => {
   const [state, setData] = useFetchData(
     operatorService.fetchDelegatedTokensData,
     {
       stakedBalance: "0",
-      ownerAddress: "0x0000000000000000000000000000000000000000",
-      beneficiaryAddress: "0x0000000000000000000000000000000000000000",
-      authorizerAddress: "0x0000000000000000000000000000000000000000",
+      ownerAddress: ZERO_ADDRESS,
+      beneficiaryAddress: ZERO_ADDRESS,
+      authorizerAddress: ZERO_ADDRESS,
     }
   )
   const { isFetching, data } = state
