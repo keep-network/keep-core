@@ -1,5 +1,4 @@
-import React from "react"
-import { useEffect } from "react"
+import React, { useEffect, useCallback } from "react"
 
 export const useHideComponent = ({ hide = false }) => {
   const [isVisible, setIsVisible] = React.useState(true)
@@ -8,9 +7,9 @@ export const useHideComponent = ({ hide = false }) => {
     setIsVisible(!hide)
   }, [hide])
 
-  const hideComponent = () => {
+  const hideComponent = useCallback(() => {
     setIsVisible(false)
-  }
+  }, [])
 
   return [isVisible, hideComponent]
 }

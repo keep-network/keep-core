@@ -39,7 +39,7 @@ const LiquidityPage = ({ headerTitle }) => {
     if (isConnected && gt(keepTokenBalance.value, 0)) {
       hideBanner()
     }
-  }, [isConnected, keepTokenBalance.value])
+  }, [isConnected, keepTokenBalance.value, hideBanner])
 
   const addLpTokens = (
     wrappedTokenBalance,
