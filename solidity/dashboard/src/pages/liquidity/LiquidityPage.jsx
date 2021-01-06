@@ -2,6 +2,7 @@ import React, { useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import {
   useWeb3Address,
+  useWeb3Context,
 } from "../../components/WithWeb3Context"
 import PageWrapper from "../../components/PageWrapper"
 import CardContainer from "../../components/CardContainer"
@@ -14,9 +15,12 @@ import {
 } from "../../actions/web3"
 import Banner from "../../components/Banner"
 import { useHideComponent } from "../../hooks/useHideComponent"
+import { gt } from "../../utils/arithmetics.utils"
 
 const LiquidityPage = ({ headerTitle }) => {
   const [isBannerVisible, hideBanner] = useHideComponent(false)
+  const { isConnected } = useWeb3Context()
+  const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const { KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
     (state) => state.liquidityRewards
@@ -30,6 +34,12 @@ const LiquidityPage = ({ headerTitle }) => {
       payload: { address },
     })
   }, [dispatch, address])
+
+  useEffect(() => {
+    if (isConnected && gt(keepTokenBalance.value, 0)) {
+      hideBanner()
+    }
+  }, [isConnected, keepTokenBalance.value])
 
   const addLpTokens = (
     wrappedTokenBalance,
