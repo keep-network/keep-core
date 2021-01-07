@@ -13,6 +13,10 @@ import {
   calculateAPY,
   getWrappedTokenConctract,
 } from "../services/liquidity-rewards"
+import React from "react";
+import { showMessage } from "../actions/messages";
+import { messageType } from "../components/Message";
+import DepositLPTokensMsgContent from "../components/DepositLPTokensMsgContent";
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -740,6 +744,10 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
     LPRewardsContract
   )
 
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     WrappedTokenContract,
@@ -758,6 +766,24 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
       // of the wrapped token has been increased / decresed.
       if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
         yield* updateAPY()
+      }
+
+      // If the 'to' address is equal to the address of the connected wallet
+      // then it means that LP tokens are transferred to this address so we are
+      // displaying the proper notification
+      if (to === defaultAccount) {
+        yield put(
+          showMessage({
+            type: messageType.WALLET,
+            title: `[${liquidityRewardPair.label}] Your wallet has LP Tokens.`,
+            content: (
+              <DepositLPTokensMsgContent
+                liquidityRewardPair={liquidityRewardPair}
+              />
+            ),
+            sticky: true,
+          })
+        )
       }
     } catch (error) {
       console.error(`Failed subscribing to Transfer event`, error)
