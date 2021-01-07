@@ -54,7 +54,7 @@ func TestExecute(t *testing.T) {
 		channel:     channel,
 	}
 
-	stateMachine := NewMachine(channel, blockCounter, initialState)
+	stateMachine := NewMachine(channel, blockCounter, initialState, 20)
 
 	finalState, endBlockHeight, err := stateMachine.Execute(1)
 	if err != nil {

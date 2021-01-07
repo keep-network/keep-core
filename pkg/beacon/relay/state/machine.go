@@ -8,44 +8,48 @@ import (
 	"github.com/keep-network/keep-core/pkg/net"
 )
 
-// For the entire time of state transition (delay + initiate), messages
-// are not handled. We use a small buffer to unblock producers and let
-// them perform optional filtering/validation during that time.
-const receiveBuffer = 64
-
 // Machine is a state machine that executes over states implemented from State
 // interface.
 type Machine struct {
-	channel      net.BroadcastChannel
-	blockCounter chain.BlockCounter
-	initialState State // first state from which execution starts
+	channel            net.BroadcastChannel
+	blockCounter       chain.BlockCounter
+	initialState       State // first state from which execution starts
+	receiverBufferSize int
 }
 
-// NewMachine returns a new state machine. It requires a broadcast channel and
-// an initialization function for the channel to be able to perform interactions.
+// NewMachine returns a new state machine. It requires a broadcast channel,
+// an initialization function for the channel to be able to perform interactions
+// and the size of the receiver buffer. The recommended size of that buffer
+// should be equal to the maximum number of messages which can be delivered
+// by the broadcast channel at once.
 func NewMachine(
 	channel net.BroadcastChannel,
 	blockCounter chain.BlockCounter,
 	initialState State,
+	receiverBufferSize int,
 ) *Machine {
 	return &Machine{
-		channel:      channel,
-		blockCounter: blockCounter,
-		initialState: initialState,
+		channel:            channel,
+		blockCounter:       blockCounter,
+		initialState:       initialState,
+		receiverBufferSize: receiverBufferSize,
 	}
 }
 
 // Execute state machine starting with initial state up to finalization. It
 // requires the broadcast channel to be pre-initialized.
 func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
-	recvChan := make(chan net.Message, receiveBuffer)
-	handler := func(msg net.Message) {
-		recvChan <- msg
-	}
+	receiverCtx, cancelReceiverCtx := context.WithCancel(context.Background())
+	defer cancelReceiverCtx()
+
+	messageReceiver := runMessageReceiver(
+		receiverCtx,
+		m.channel,
+		m.receiverBufferSize,
+	)
 
 	currentState := m.initialState
-	ctx, cancelCtx := context.WithCancel(context.Background())
-	m.channel.Recv(ctx, handler)
+	stateCtx, cancelStateCtx := context.WithCancel(context.Background())
 
 	logger.Infof(
 		"[member:%v,channel:%s] waiting for block %v to start execution",
@@ -61,62 +65,65 @@ func (m *Machine) Execute(startBlockHeight uint64) (State, uint64, error) {
 	lastStateEndBlockHeight := startBlockHeight
 
 	blockWaiter, err := stateTransition(
-		ctx,
+		stateCtx,
 		currentState,
 		lastStateEndBlockHeight,
 		m.blockCounter,
 		m.channel.Name()[:5],
 	)
 	if err != nil {
-		cancelCtx()
+		cancelStateCtx()
 		return nil, 0, err
 	}
 
 	for {
-		select {
-		case msg := <-recvChan:
-			err := currentState.Receive(msg)
+		lastStateEndBlockHeight := <-blockWaiter
+		cancelStateCtx()
+
+		// Get the snapshot of all messages received so far and pass it to the
+		// state. This way each state receive everything but takes only those
+		// messages which are relevant from its perspective. This minimizes
+		// the chance of message loss during state transitions.
+		for _, message := range messageReceiver.snapshot() {
+			err := currentState.Receive(message)
 			if err != nil {
 				logger.Errorf(
-					"[member:%v,channel:%s, state: %T] failed to receive a message: [%v]",
+					"[member:%v,channel:%s,state:%T] failed to "+
+						"receive a message: [%v]",
 					currentState.MemberIndex(),
 					m.channel.Name()[:5],
 					currentState,
 					err,
 				)
 			}
+		}
 
-		case lastStateEndBlockHeight := <-blockWaiter:
-			cancelCtx()
-			nextState := currentState.Next()
-			if nextState == nil {
-				logger.Infof(
-					"[member:%v,channel:%s,state:%T] reached final state at block: [%v]",
-					currentState.MemberIndex(),
-					m.channel.Name()[:5],
-					currentState,
-					lastStateEndBlockHeight,
-				)
-				return currentState, lastStateEndBlockHeight, nil
-			}
-
-			currentState = nextState
-			ctx, cancelCtx = context.WithCancel(context.Background())
-			m.channel.Recv(ctx, handler)
-
-			blockWaiter, err = stateTransition(
-				ctx,
+		nextState := currentState.Next()
+		if nextState == nil {
+			logger.Infof(
+				"[member:%v,channel:%s,state:%T] "+
+					"reached final state at block: [%v]",
+				currentState.MemberIndex(),
+				m.channel.Name()[:5],
 				currentState,
 				lastStateEndBlockHeight,
-				m.blockCounter,
-				m.channel.Name()[:5],
 			)
-			if err != nil {
-				cancelCtx()
-				return nil, 0, err
-			}
+			return currentState, lastStateEndBlockHeight, nil
+		}
 
-			continue
+		currentState = nextState
+		stateCtx, cancelStateCtx = context.WithCancel(context.Background())
+
+		blockWaiter, err = stateTransition(
+			stateCtx,
+			currentState,
+			lastStateEndBlockHeight,
+			m.blockCounter,
+			m.channel.Name()[:5],
+		)
+		if err != nil {
+			cancelStateCtx()
+			return nil, 0, err
 		}
 	}
 }

@@ -48,7 +48,12 @@ func Publish(
 		signingStartBlockHeight: startBlockHeight,
 	}
 
-	stateMachine := state.NewMachine(channel, blockCounter, initialState)
+	stateMachine := state.NewMachine(
+		channel,
+		blockCounter,
+		initialState,
+		2*dkgGroup.GroupSize(),
+	)
 
 	lastState, _, err := stateMachine.Execute(startBlockHeight)
 	if err != nil {
