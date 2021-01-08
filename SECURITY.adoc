@@ -34,9 +34,10 @@ and include:
 - If desired, a suggestion on how to fix the issue.
 - If reporting a sensitive vulnerability in an encrypted message, please
   include a key for encrypting replies, or a secure medium to contact you.
-  Note that for simplicity, the Keep team prefers email, but can work with
-  Signal and Telegram on a case-by-case basis. Please always file an initial
-  report via email, even if follow-up is handled via a different channel.
+  Note that for various reasons, the Keep team prefers email and Keybase, but
+  can work with Signal and Telegram on a case-by-case basis. Please always file
+  an initial report via email, even if follow-up is handled via a different
+  channel.
 
 Please also note the suggestions on email structure below, and prefer to
 encrypt particularly sensitive vulnerabilities with one of the keys listed at
@@ -91,8 +92,9 @@ If desired, a suggestion on how to fix the issue.
 
 FOLLOWUP INFO (optional)
 
-If this is an encrypted message, include your PGP key for an encrypted
-reponse. Alternatively, you can include a Telegram handle or Signal number.
+If this is an encrypted message, include your PGP key for an encrypted reponse.
+Alternatively, you can include a Keybase handle,  Signal number, or a Telegram
+handle (in order of the Keep team's preference).
 ```
 
 === Email subject
@@ -145,5 +147,5 @@ Disallow P2PKH and P2SH outputs when providing funding proofs.
 FOLLOWUP INFO
 
 Please encrypt replies to PGP key https://keybase.io/shadowfiend/pgp_keys.asc,
-or reply via Signal at +1-123-456-6790.
+or reply via Keybase at https://keybase.io/shadowfiend .
 ====
