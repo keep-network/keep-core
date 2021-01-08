@@ -51,33 +51,6 @@
   .liquidity__info, .liquidity__info--locked {
     display: flex;
     justify-content: center;
-
-    .liquidity__info-tile {
-      transition: background-color 0.5s ease;
-      text-align: center;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0 0.2rem;
-      height: 9rem;
-      width: 10rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-
-      .liquidity__info-tile__tooltip {
-        width: 12px;
-        height: 12px;
-        position: absolute;
-        top: 0;
-        right: 8px;
-
-        .tooltip__content-wrapper {
-          text-align: left;
-          min-width: 16rem;
-        }
-      }
-    }
   }
 
   .liquidity__new-user-info {
@@ -153,6 +126,67 @@
     margin: 0.5rem 0;
   }
 
+}
+
+.liquidity__info-tile {
+  transition: background-color 0.5s ease;
+  text-align: center;
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0 0.2rem;
+  height: 9rem;
+  width: 10rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+
+  .liquidity__info-tile__tooltip {
+    width: 12px;
+    height: 12px;
+    position: absolute;
+    top: 0;
+    right: 8px;
+
+    .tooltip__content-wrapper {
+      text-align: left;
+      min-width: 16rem;
+    }
+  }
+}
+
+.keep-only-pool {
+  display: flex;
+
+  &__overview {
+    flex: 1 0 0;
+    display: flex;
+
+    > section:first-of-type {
+      flex: 1 1 auto;
+      margin-right: 2rem;
+    }
+
+    &__info-tiles {
+      > .liquidity__info-tile:first-of-type {
+        margin: 0;
+        margin-bottom: 1rem;
+      }
+    }
+  }
+
+  &__icon {
+    background-color: @color-grey-10;
+    // display: flex;
+    // background-image: url("/images/keep-only-pool.svg");
+    // background-repeat: no-repeat;
+    // background-size: cover;
+
+    margin-bottom: 1.2rem;
+    > svg {
+      // flex: 1;
+    }
+  }
 }
 
 .empty-page--liquidity-page {

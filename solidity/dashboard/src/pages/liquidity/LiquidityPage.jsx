@@ -16,6 +16,10 @@ import {
 import Banner from "../../components/Banner"
 import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
+import Divider from "../../components/Divider"
+import { SubmitButton } from "../../components/Button"
+import Tooltip from "../../components/Tooltip"
+import { Skeleton } from "../../components/skeletons"
 
 const LiquidityPage = ({ headerTitle }) => {
   const [isBannerVisible, hideBanner] = useHideComponent(false)
@@ -103,6 +107,70 @@ const LiquidityPage = ({ headerTitle }) => {
         </Banner>
       )}
 
+      <section className="keep-only-pool">
+        <section className="tile keep-only-pool__overview">
+          <section>
+            <h2 className="h2--alt text-grey-70">Total KEEP Locked</h2>
+            <h1 className="text-mint-100 mt-2">
+              0&nbsp;<span className="h2">KEEP</span>
+            </h1>
+            <div className="flex row space-between text-grey-40 mt-1">
+              <h4>Deposited KEEP tokens</h4>
+              <h4 className="self-end">0 KEEP</h4>
+            </div>
+            <Divider style={{ margin: "0.5rem 0" }} />
+            <div className="flex row space-between text-grey-40">
+              <h4>Rewarded KEEP tokens</h4>
+              <h4 className="self-end">0 KEEP</h4>
+            </div>
+
+            <div className="flex row space-between mt-2">
+              <SubmitButton className="btn btn-primary btn-lg">
+                deposit keep
+              </SubmitButton>
+              <SubmitButton className="btn btn-secondary btn-lg">
+                withdraw all
+              </SubmitButton>
+            </div>
+          </section>
+          <section className="keep-only-pool__overview__info-tiles">
+            <div className="liquidity__info-tile bg-mint-10 mb-1">
+              <Tooltip
+                simple
+                delay={0}
+                triggerComponent={Icons.MoreInfo}
+                className={"liquidity__info-tile__tooltip"}
+              >
+                Pool APY is calculated using the&nbsp;
+                <a
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href="https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"
+                  className="text-white text-link"
+                >
+                  Uniswap subgraph API
+                </a>
+                &nbsp;to fetch the the total pool value and KEEP token in USD.
+              </Tooltip>
+              <h2 className="liquidity__info-tile__title text-mint-100">10%</h2>
+              <h6>Estimate of pool apy</h6>
+            </div>
+            <div className="liquidity__info-tile bg-mint-10">
+              {false ? (
+                <Skeleton tag="h2" shining color="color-grey-60" />
+              ) : (
+                <h2 className={"liquidity__info-tile__title text-mint-100"}>
+                  20%
+                </h2>
+              )}
+              <h6>% of total pool</h6>
+            </div>
+          </section>
+        </section>
+        <section className="keep-only-pool__icon">
+          <Icons.KeepOnlyPool />
+        </section>
+      </section>
       <CardContainer>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
