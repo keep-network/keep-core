@@ -50,6 +50,7 @@ export { ReactComponent as StakeDrop } from "../static/svg/stakedrop.svg"
 export { ReactComponent as SwordOperations } from "../static/svg/sword-operations.svg"
 export { ReactComponent as MoreInfo } from "../static/svg/more-info.svg"
 export { ReactComponent as EthToken } from "../static/svg/eth_token.svg"
+export { ReactComponent as KeepOnlyPool } from "../static/svg/keep-only-pool.svg"
 
 const Badge = ({ height, width }) => (
   <svg
