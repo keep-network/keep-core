@@ -765,7 +765,7 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
       // these casese we need to update APY value because the tootal pool value
       // of the wrapped token has been increased / decresed.
       if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
-        yield* updateAPY()
+        yield* updateAPY(LPRewardsContract, liquidityRewardPair.name)
       }
 
       // If the 'to' address is equal to the address of the connected wallet
