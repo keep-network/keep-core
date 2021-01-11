@@ -16,6 +16,7 @@ import { Skeleton } from "./skeletons"
 import { useWeb3Context } from "./WithWeb3Context"
 import resourceTooltipProps from "../constants/tooltips"
 import DelegationPage from "../pages/delegation"
+import { formatPercentage } from "../utils/general.utils"
 
 const TokenOverview = ({
   totalKeepTokenBalance,
@@ -116,7 +117,7 @@ const TokenBalance = ({
   const { isConnected } = useWeb3Context()
 
   const inPercentage = useMemo(() => {
-    return percentageOf(staked, totalBalance).toString()
+    return formatPercentage(percentageOf(staked, totalBalance))
   }, [staked, totalBalance])
 
   const renderAmount = () => {

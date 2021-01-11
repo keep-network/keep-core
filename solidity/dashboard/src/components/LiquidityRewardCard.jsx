@@ -5,11 +5,12 @@ import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
 import Card from "./Card"
-import { toTokenUnit } from "../utils/token.utils"
-import { gt } from "../utils/arithmetics.utils"
 import { Skeleton } from "./skeletons"
 import Tooltip from "./Tooltip"
 import Banner from "./Banner"
+import { toTokenUnit } from "../utils/token.utils"
+import { gt } from "../utils/arithmetics.utils"
+import { formatPercentage } from "../utils/general.utils"
 
 const LiquidityRewardCard = ({
   title,
@@ -41,14 +42,14 @@ const LiquidityRewardCard = ({
       return 999
     }
 
-    return bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
+    return formatPercentage(bn)
   }, [apy])
 
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
     return bn.isLessThan(0.01) && bn.isGreaterThan(0)
       ? 0.01
-      : bn.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
+      : formatPercentage(bn)
   }, [percentageOfTotalPool])
 
   const formattingFn = useCallback((value) => {
