@@ -229,9 +229,10 @@ jobs:
           name: Resolve latest contracts
           working_directory: ~/project/solidity/dashboard
           command: |
-            npm update @keep-network/keep-core
-            npm update @keep-network/keep-ecdsa
-            npm update @keep-network/tbtc
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/keep-ecdsa \
+              @keep-network/tbtc
       - run:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
