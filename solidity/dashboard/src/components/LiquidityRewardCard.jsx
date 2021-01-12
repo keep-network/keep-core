@@ -158,7 +158,7 @@ const LiquidityRewardCard = ({
             &nbsp;to fetch the the total pool value and KEEP token in USD.
           </Tooltip>
           <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy.value === Infinity ? (
+            {formattedApy === Infinity ? (
               <span>&#8734;</span>
             ) : (
               <CountUp
