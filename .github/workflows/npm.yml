@@ -66,9 +66,6 @@ jobs:
           # Consider including commit id? Would be +<commit id>.
           npm version prerelease --preid=$preid --no-git-tag-version
 
-          # Fix resolved dependency versions.
-          npm update
-
       - name: Publish package
         run: npm publish --access public
         working-directory: ./solidity
