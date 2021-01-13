@@ -33,6 +33,8 @@ jobs:
       - name: Bump up version
         working-directory: ./solidity
         run: |
+          set -x
+
           name=$(jq --raw-output .name package.json)
           version=$(jq --raw-output .version package.json)
           preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
