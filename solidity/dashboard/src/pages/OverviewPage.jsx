@@ -128,25 +128,24 @@ const OverviewFirstSection = () => {
           <h4 className={"text-grey-40"}>
             Get KEEP tokens on the following exchanges:
           </h4>
+          <Icons.BalancerLogo />{" "}
           <a
             target="_blank"
             rel="noopener noreferrer"
             href={"https://balancer.exchange/#/swap"}
             className="text-black mr-2"
           >
-            <Icons.BalancerLogo /> Balancer
+            Balancer
           </a>
           &nbsp;
+          <Icons.UniswapLogo style={{ verticalAlign: "text-top" }} />{" "}
           <a
             target="_blank"
             rel="noopener noreferrer"
             href={"https://app.uniswap.org/#/swap"}
             className="text-black"
           >
-            <span>
-              <Icons.UniswapLogo style={{ verticalAlign: "text-top" }} />{" "}
-              Uniswap
-            </span>
+            Uniswap
           </a>
         </div>
       </div>
