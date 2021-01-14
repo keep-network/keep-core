@@ -21,6 +21,7 @@ import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import BigNumber from "bignumber.js"
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
+import * as Icons from "../components/Icons";
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -124,9 +125,10 @@ function* processLiquidityRewardEarnedNotification(action) {
     // than the reward amount that was last time the notification was displayed
     yield put(
       showMessage({
-        type: messageType.WALLET,
+        type: messageType.REWARD,
         title: `[${liquidityRewardPairName}] You've earned rewards!`,
         sticky: true,
+        icon: Icons.Rewards,
       })
     )
 

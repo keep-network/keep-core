@@ -14,6 +14,7 @@ export const messageType = {
   PENDING_ACTION: { icon: Icons.Time },
   INFO: { icon: Icons.Question },
   WALLET: { icon: Icons.Wallet, iconClassName: "wallet-icon grey-50" },
+  REWARD: { icon: Icons.Rewards, iconClassName: "reward-icon brand-violet" },
 }
 
 const messageTransitionTimeoutInMs = 500
