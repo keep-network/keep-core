@@ -14,11 +14,18 @@ export const getEthereumTxObj = (txData, chainId) => {
   return new EthereumTx(txData, { common })
 }
 
-// EIP-155 https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-// v = CHAIN_ID * 2 + 35 => CHAIN_ID = (v - 35) / 2
+/**
+ * This function returns the chain id from `v` param based on to the EIP-155[1]
+ * [1]: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+ * Formula: v = CHAIN_ID * 2 + 35 => CHAIN_ID = (v - 35) / 2
+ *
+ * @param {Uint8Array} vInHex v param in hex.
+ * @return {number} Chain id calculated from v param based on the EIP-155.
+ */
 export const getChainIdFromV = (vInHex) => {
-  const vIntValue = parseInt(vInHex, 16)
+  const vIntValue = parseInt(vInHex.toString("hex"), 16)
   const chainId = Math.floor((vIntValue - 35) / 2)
+
   return chainId < 0 ? 0 : chainId
 }
 
