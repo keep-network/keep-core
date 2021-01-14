@@ -44,7 +44,7 @@ const AppLayout = () => {
     if (isActive) {
       for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
         store.dispatch({
-          type: `liquidity_rewards/KEEP_ETH_notification_interval_active`,
+          type: `liquidity_rewards/${pairName}_notification_interval_active`,
           payload: { liquidityRewardPairName: pairName },
         })
       }
