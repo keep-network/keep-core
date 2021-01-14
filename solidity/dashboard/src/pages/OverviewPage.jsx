@@ -128,7 +128,8 @@ const OverviewFirstSection = () => {
           <h4 className={"text-grey-40"}>
             Get KEEP tokens on the following exchanges:
           </h4>
-          <Icons.BalancerLogo />{" "}
+          <Icons.BalancerLogo />
+          &nbsp;
           <a
             target="_blank"
             rel="noopener noreferrer"
@@ -138,7 +139,8 @@ const OverviewFirstSection = () => {
             Balancer
           </a>
           &nbsp;
-          <Icons.UniswapLogo style={{ verticalAlign: "text-top" }} />{" "}
+          <Icons.UniswapLogo style={{ verticalAlign: "text-top" }} />
+          &nbsp;
           <a
             target="_blank"
             rel="noopener noreferrer"
