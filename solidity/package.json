@@ -61,7 +61,7 @@
     "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
     "eslint": "^6.8.0",
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
-    "prettier": "^2.0.2",
+    "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.2 "
   }
 }
