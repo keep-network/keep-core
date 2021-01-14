@@ -15,13 +15,13 @@ import { LIQUIDITY_REWARD_PAIRS } from "./constants/constants"
 
 /**
  * @param {string} address - address of the current user
- * @param {boolean} showMessage - if false, then we just save last notification reward
+ * @param {boolean} displayMessage - if false, then we just save last notification reward
  */
-const liquidityRewardNotificationFunc = (address, showMessage = true) => {
+const liquidityRewardNotificationFunc = (address, displayMessage = true) => {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
     store.dispatch({
       type: `liquidity_rewards/${pairName}_liquidity_rewards_earned_notification`,
-      payload: { liquidityRewardPairName: pairName, address, showMessage },
+      payload: { liquidityRewardPairName: pairName, address, displayMessage },
     })
   }
 }

@@ -105,6 +105,7 @@ export function* watchLiquidityRewardsEarnedNotification() {
 
 function* processLiquidityRewardEarnedNotification(action) {
   const contracts = yield getContractsContext()
+  const displayMessage = action.payload.displayMessage
 
   const liquidityRewardPairName = action.payload.liquidityRewardPairName
   const liquidityRewardPair = LIQUIDITY_REWARD_PAIRS[liquidityRewardPairName]
@@ -124,7 +125,7 @@ function* processLiquidityRewardEarnedNotification(action) {
   // show the notification if the rewardBalance from LPRewardsContract is greater
   // than the reward amount that was last time the notification was displayed
   if (gt(currentReward, lastNotificationRewardAmount)) {
-    if (action.showMessage) {
+    if (displayMessage) {
       yield put(
         showMessage({
           type: messageType.REWARD,
