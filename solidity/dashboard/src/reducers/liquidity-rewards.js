@@ -146,7 +146,8 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           liquidityRewardsEarnedNotification: {
             ...state[liquidityRewardPairName]
               .liquidityRewardsEarnedNotification,
-            lastNotificationRewardAmount: restPayload.lastNotificationRewardAmount
+            lastNotificationRewardAmount:
+              restPayload.lastNotificationRewardAmount,
           },
         },
       }

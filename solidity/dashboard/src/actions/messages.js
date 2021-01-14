@@ -7,18 +7,40 @@ let messageId = 1
 
 export class Message {
   static create(options) {
-    const { title, content, type, sticky, withTransactionHash } = options
+    const {
+      title,
+      content,
+      type,
+      sticky,
+      withTransactionHash,
+      classes,
+    } = options
 
-    return new Message(title, content, type, sticky, withTransactionHash)
+    return new Message(
+      title,
+      content,
+      type,
+      sticky,
+      withTransactionHash,
+      classes
+    )
   }
 
-  constructor(title, content, type, sticky = false, withTransactionHash) {
+  constructor(
+    title,
+    content,
+    type,
+    sticky = false,
+    withTransactionHash,
+    classes
+  ) {
     this.id = messageId++
     this.title = title
     this.content = content
     this.type = type
     this.sticky = sticky
     this.withTransactionHash = withTransactionHash
+    this.classes = classes
   }
 
   id
@@ -26,6 +48,7 @@ export class Message {
   content
   type
   sticky
+  classes
 }
 
 export const showMessage = (options) => {

@@ -782,6 +782,9 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
               />
             ),
             sticky: true,
+            classes: {
+              bannerDescription: "m-0",
+            },
           })
         )
       }

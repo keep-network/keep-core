@@ -96,7 +96,9 @@ const Message = ({ message, onMessageClose }) => {
         <div style={styles.messageContentWrapper}>
           <Banner.Title>{message.title}</Banner.Title>
           {message.content && (
-            <Banner.Description>{message.content}</Banner.Description>
+            <Banner.Description className={message.classes?.bannerDescription}>
+              {message.content}
+            </Banner.Description>
           )}
           {message.withTransactionHash && (
             <Banner.Action>

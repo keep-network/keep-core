@@ -21,7 +21,8 @@ import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import BigNumber from "bignumber.js"
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
-import * as Icons from "../components/Icons";
+import React from "react"
+import ViewYourLiquidityBalance from "../components/ViewYourLiquidityBalance"
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -128,7 +129,10 @@ function* processLiquidityRewardEarnedNotification(action) {
         type: messageType.REWARD,
         title: `[${liquidityRewardPairName}] You've earned rewards!`,
         sticky: true,
-        icon: Icons.Rewards,
+        content: <ViewYourLiquidityBalance />,
+        classes: {
+          bannerDescription: "m-0",
+        },
       })
     )
 

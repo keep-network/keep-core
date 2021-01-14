@@ -1,12 +1,8 @@
 import React from "react"
 
-const DepositLPTokensMsgContent = ({ liquidityRewardPair }) => {
+const DepositLPTokensMsgContent = () => {
   return (
-    <a
-      href={liquidityRewardPair.viewPoolLink}
-      rel="noopener noreferrer"
-      target="_blank"
-    >
+    <a href={"/liquidity"}>
       Deposit them and earn rewards
     </a>
   )
