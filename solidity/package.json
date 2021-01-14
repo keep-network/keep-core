@@ -21,8 +21,8 @@
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:js": "eslint ${npm_package_config_eslintPaths}",
     "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}",
-    "lint:sol": "solium -d contracts/ && prettier --list-different contracts/ **/*.sol",
-    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write contracts/ **/*.sol"
+    "lint:sol": "solium -d contracts/ && prettier --list-different '**/*.sol'",
+    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write '**/*.sol'"
   },
   "config": {
     "eslintPaths": "test/ migrations/ scripts/"
