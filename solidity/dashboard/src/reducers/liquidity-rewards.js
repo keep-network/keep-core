@@ -10,10 +10,20 @@ const liquidityPairInitialData = {
   error: null,
 }
 
+const liquidityPairRewardNotification = {
+  liquidityRewardsEarnedNotification: {
+    isNotificationIntervalActive: false,
+    lastNotificationRewardAmount: "0",
+  },
+}
+
 const initialState = {
-  KEEP_ETH: { ...liquidityPairInitialData },
-  TBTC_ETH: { ...liquidityPairInitialData },
-  KEEP_TBTC: { ...liquidityPairInitialData },
+  KEEP_ETH: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
+  TBTC_ETH: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
+  KEEP_TBTC: {
+    ...liquidityPairInitialData,
+    ...liquidityPairRewardNotification,
+  },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
@@ -114,6 +124,30 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           apy: restPayload.apy,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_notification_interval_active`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          liquidityRewardsEarnedNotification: {
+            ...state[liquidityRewardPairName]
+              .liquidityRewardsEarnedNotification,
+            isNotificationIntervalActive: true,
+          },
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_update_last_reward_amount`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          liquidityRewardsEarnedNotification: {
+            ...state[liquidityRewardPairName]
+              .liquidityRewardsEarnedNotification,
+            lastNotificationRewardAmount: restPayload.lastNotificationRewardAmount
+          },
         },
       }
     default:
