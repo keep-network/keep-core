@@ -93,7 +93,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           lpBalance,
           shareOfPoolInPercent: percentageOf(
             lpBalance,
-            restPayload.reward
+            restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
