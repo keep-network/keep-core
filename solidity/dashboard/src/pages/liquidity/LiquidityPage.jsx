@@ -36,7 +36,13 @@ const LiquidityPage = ({ headerTitle }) => {
   }, [dispatch, address])
 
   useEffect(() => {
-    if (isBannerVisible && isConnected && gt(keepTokenBalance.value, 0)) {
+    dispatch({
+      type: "liquidity_rewards/fetch_apy_request",
+    })
+  }, [dispatch])
+
+  useEffect(() => {
+    if (isBannerVisible && isConnected && gt(keepTokenBalance.value || 0, 0)) {
       hideBanner()
     }
   }, [isConnected, keepTokenBalance.value, hideBanner, isBannerVisible])
@@ -121,6 +127,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrapperClassName="keep-eth"
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
+          isAPYFetching={KEEP_ETH.isAPYFetching}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label}
@@ -139,6 +146,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrapperClassName="keep-tbtc"
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
+          isAPYFetching={KEEP_TBTC.isAPYFetching}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
@@ -157,6 +165,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrapperClassName="tbtc-eth"
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
+          isAPYFetching={TBTC_ETH.isAPYFetching}
         />
       </CardContainer>
     </PageWrapper>

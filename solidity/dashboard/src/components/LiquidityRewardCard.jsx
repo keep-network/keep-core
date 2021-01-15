@@ -31,6 +31,7 @@ const LiquidityRewardCard = ({
   wrapperClassName = "",
   addLpTokens,
   withdrawLiquidityRewards,
+  isAPYFetching,
 }) => {
   const formattedApy = useMemo(() => {
     const bn = new BigNumber(apy).multipliedBy(100)
@@ -157,20 +158,24 @@ const LiquidityRewardCard = ({
             </a>
             &nbsp;to fetch the the total pool value and KEEP token in USD.
           </Tooltip>
-          <h2 className={"liquidity__info-tile__title text-mint-100"}>
-            {formattedApy === Infinity ? (
-              <span>&#8734;</span>
-            ) : (
-              <CountUp
-                end={formattedApy}
-                // Save previously ended number to start every new animation from it.
-                preserveValue
-                decimals={2}
-                duration={1}
-                formattingFn={formattingFn}
-              />
-            )}
-          </h2>
+          {isAPYFetching ? (
+            <Skeleton tag="h2" shining color="grey-10" />
+          ) : (
+            <h2 className={"liquidity__info-tile__title text-mint-100"}>
+              {formattedApy === Infinity ? (
+                <span>&#8734;</span>
+              ) : (
+                <CountUp
+                  end={formattedApy}
+                  // Save previously ended number to start every new animation from it.
+                  preserveValue
+                  decimals={2}
+                  duration={1}
+                  formattingFn={formattingFn}
+                />
+              )}
+            </h2>
+          )}
           <h6>Estimate of pool apy</h6>
         </div>
         <div className={"liquidity__info-tile bg-mint-10"}>

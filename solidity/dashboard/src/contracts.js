@@ -21,6 +21,7 @@ import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPET
 import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
+import Web3 from "web3"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -57,72 +58,67 @@ export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
   [STAKING_PORT_BACKER_CONTRACT_NAME]: 0,
 }
 
-const contracts = [
-  [{ contractName: KEEP_TOKEN_CONTRACT_NAME }, KeepToken],
-  [{ contractName: TOKEN_GRANT_CONTRACT_NAME }, TokenGrant],
-  [
-    { contractName: OPERATOR_CONTRACT_NAME, withDeployBlock: true },
-    KeepRandomBeaconOperator,
-  ],
-  [
-    { contractName: TOKEN_STAKING_CONTRACT_NAME, withDeployBlock: true },
-    TokenStaking,
-  ],
-  [
-    {
-      contractName: KEEP_OPERATOR_STATISTICS_CONTRACT_NAME,
-    },
-    KeepRandomBeaconOperatorStatistics,
-  ],
-  [
-    {
-      contractName: MANAGED_GRANT_FACTORY_CONTRACT_NAME,
-      withDeployBlock: true,
-    },
-    ManagedGrantFactory,
-  ],
-  [
-    { contractName: KEEP_BONDING_CONTRACT_NAME, withDeployBlock: true },
-    KeepBonding,
-  ],
-  [
-    { contractName: TBTC_TOKEN_CONTRACT_NAME, withDeployBlock: true },
-    TBTCToken,
-  ],
-  [
-    { contractName: TBTC_SYSTEM_CONTRACT_NAME, withDeployBlock: true },
-    TBTCSystem,
-  ],
-  [
-    { contractName: TOKEN_STAKING_ESCROW_CONTRACT_NAME, withDeployBlock: true },
-    TokenStakingEscrow,
-  ],
-  [
-    { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
-    BondedECDSAKeepFactory,
-  ],
-  [
-    { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
-    StakingPortBacker,
-  ],
-  [{ contractName: "beaconRewardsContract" }, BeaconRewards],
-  [
-    { contractName: "ECDSARewardsDistributorContract", withDeployBlock: true },
-    ECDSARewardsDistributor,
-  ],
-  [
-    { contractName: LP_REWARDS_KEEP_ETH_CONTRACT_NAME, withDeployBlock: true },
-    LPRewardsKEEPETH,
-  ],
-  [
-    { contractName: LP_REWARDS_TBTC_ETH_CONTRACT_NAME, withDeployBlock: true },
-    LPRewardsTBTCETH,
-  ],
-  [
-    { contractName: LP_REWARDS_KEEP_TBTC_CONTRACT_NAME, withDeployBlock: true },
-    LPRewardsKEEPTBTC,
-  ],
-]
+const contracts = {
+  [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
+  [TOKEN_GRANT_CONTRACT_NAME]: { artifact: TokenGrant },
+  [OPERATOR_CONTRACT_NAME]: {
+    artifact: KeepRandomBeaconOperator,
+    withDeployBlock: true,
+  },
+  [TOKEN_STAKING_CONTRACT_NAME]: {
+    artifact: TokenStaking,
+    withDeployBlock: true,
+  },
+  [KEEP_OPERATOR_STATISTICS_CONTRACT_NAME]: {
+    artifact: KeepRandomBeaconOperatorStatistics,
+  },
+  [MANAGED_GRANT_FACTORY_CONTRACT_NAME]: {
+    artifact: ManagedGrantFactory,
+    withDeployBlock: true,
+  },
+  [KEEP_BONDING_CONTRACT_NAME]: {
+    artifact: KeepBonding,
+    withDeployBlock: true,
+  },
+  [TBTC_TOKEN_CONTRACT_NAME]: {
+    artifact: TBTCToken,
+    withDeployBlock: true,
+  },
+  [TBTC_SYSTEM_CONTRACT_NAME]: {
+    artifact: TBTCSystem,
+    withDeployBlock: true,
+  },
+  [TOKEN_STAKING_ESCROW_CONTRACT_NAME]: {
+    artifact: TokenStakingEscrow,
+    withDeployBlock: true,
+  },
+  [BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME]: {
+    artifact: BondedECDSAKeepFactory,
+  },
+  [STAKING_PORT_BACKER_CONTRACT_NAME]: {
+    artifact: StakingPortBacker,
+    withDeployBlock: true,
+  },
+  beaconRewardsContract: {
+    artifact: BeaconRewards,
+  },
+  ECDSARewardsDistributorContract: {
+    artifact: ECDSARewardsDistributor,
+    withDeployBlock: true,
+  },
+  [LP_REWARDS_KEEP_ETH_CONTRACT_NAME]: {
+    artifact: LPRewardsKEEPETH,
+    withDeployBlock: true,
+  },
+  [LP_REWARDS_TBTC_ETH_CONTRACT_NAME]: {
+    artifact: LPRewardsTBTCETH,
+    withDeployBlock: true,
+  },
+  [LP_REWARDS_KEEP_TBTC_CONTRACT_NAME]: {
+    artifact: LPRewardsKEEPTBTC,
+    withDeployBlock: true,
+  },
+}
 
 export async function getKeepTokenContractDeployerAddress(web3) {
   const deployTransactionHash = getTransactionHashOfContractDeploy(KeepToken)
@@ -204,12 +200,11 @@ export async function getContracts(web3) {
   }
 
   const web3Contracts = {}
-  for (const contractData of contracts) {
-    const [options, jsonArtifact] = contractData
-
-    web3Contracts[options.contractName] = await getContract(
+  for (const [contractName, options] of Object.entries(contracts)) {
+    options.contractName = contractName
+    web3Contracts[contractName] = await getContract(
       web3,
-      jsonArtifact,
+      options.artifact,
       options
     )
   }
@@ -312,4 +307,13 @@ const getOldTokenStakingArtifact = async () => {
 
 export const createERC20Contract = (web3, address) => {
   return createWeb3ContractInstance(web3, IERC20.abi, address)
+}
+
+export const initializeWeb3 = (provider) => {
+  return new Web3(provider)
+}
+
+export const createLPRewardsContract = async (web3, contractName) => {
+  const { artifact } = contracts[contractName]
+  return await getContract(web3, artifact, {})
 }
