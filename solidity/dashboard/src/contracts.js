@@ -21,6 +21,7 @@ import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPET
 import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
+import Web3 from "web3"
 
 import {
   KEEP_TOKEN_CONTRACT_NAME,
@@ -306,4 +307,13 @@ const getOldTokenStakingArtifact = async () => {
 
 export const createERC20Contract = (web3, address) => {
   return createWeb3ContractInstance(web3, IERC20.abi, address)
+}
+
+export const initializeWeb3 = (provider) => {
+  return new Web3(provider)
+}
+
+export const createLPRewardsContract = async (web3, contractName) => {
+  const { artifact } = contracts[contractName]
+  return await getContract(web3, artifact, {})
 }

@@ -11,6 +11,8 @@ import {
 } from "../services/liquidity-rewards"
 import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { getWsUrl } from "../connectors/utils"
+import { initializeWeb3, createLPRewardsContract } from "../contracts"
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -124,4 +126,50 @@ function* stakeTokensWorker(action) {
 
 export function* watchStakeTokens() {
   yield takeEvery("liquidity_rewards/stake_tokens", stakeTokensWorker)
+}
+
+function* fetchAllLiquidityRewardsAPY(action) {
+  for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+    yield fork(fetchLiquidityRewardsAPY, { name: pairName, ...value })
+  }
+}
+
+function* fetchLiquidityRewardsAPY(liquidityRewardPair) {
+  try {
+    yield put({
+      type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_start`,
+      payload: { liquidityRewardPairName: liquidityRewardPair.name },
+    })
+
+    const web3 = initializeWeb3(getWsUrl())
+    const LPRewardsContract = yield call(
+      createLPRewardsContract,
+      web3,
+      liquidityRewardPair.contractName
+    )
+
+    let apy = Infinity
+    const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
+    if (gt(totalSupply, 0)) {
+      apy = yield call(calculateAPY, totalSupply, liquidityRewardPair.name)
+    }
+
+    yield put({
+      type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_success`,
+      payload: { liquidityRewardPairName: liquidityRewardPair.name, apy },
+    })
+  } catch (error) {
+    yield* logError(
+      `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_failure`,
+      error,
+      { liquidityRewardPairName: liquidityRewardPair.name }
+    )
+  }
+}
+
+export function* watchFetchLiquidityRewardsAPY() {
+  yield takeLatest(
+    "liquidity_rewards/fetch_apy_request",
+    fetchAllLiquidityRewardsAPY
+  )
 }
