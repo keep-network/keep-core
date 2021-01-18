@@ -45,7 +45,12 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
     // Fetching total deposited liqidity tokens in the `LPRewards` contract.
     const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
     if (gt(totalSupply, 0)) {
-      apy = yield call(calculateAPY, totalSupply, liquidityRewardPair.name)
+      apy = yield call(
+        calculateAPY,
+        totalSupply,
+        liquidityRewardPair.name,
+        LPRewardsContract
+      )
     }
 
     let reward = 0
@@ -151,7 +156,12 @@ function* fetchLiquidityRewardsAPY(liquidityRewardPair) {
     let apy = Infinity
     const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
     if (gt(totalSupply, 0)) {
-      apy = yield call(calculateAPY, totalSupply, liquidityRewardPair.name)
+      apy = yield call(
+        calculateAPY,
+        totalSupply,
+        liquidityRewardPair.name,
+        LPRewardsContract
+      )
     }
 
     yield put({

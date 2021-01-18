@@ -4,6 +4,7 @@ import BigNumber from "bignumber.js"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { toTokenUnit } from "../utils/token.utils"
 import { getPairData, getKeepTokenPriceInUSD } from "./uniswap-api"
+import moment from "moment"
 
 // lp contract address -> wrapped ERC20 token as web3 contract instance
 const LPRewardsToWrappedTokenCache = {}
@@ -49,13 +50,22 @@ export const fetchRewardBalance = async (address, LPrewardsContract) => {
   return await LPrewardsContract.methods.earned(address).call()
 }
 
-export const calculateAPY = async (totalSupplyOfLPRewards, pairSymbol) => {
+export const fetchRewardRate = async (LPRewardsContract) => {
+  return await LPRewardsContract.methods.rewardRate().call()
+}
+
+export const calculateAPY = async (
+  totalSupplyOfLPRewards,
+  pairSymbol,
+  LPRewardsContract
+) => {
   totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
 
   const pairData = await getPairData(LIQUIDITY_REWARD_PAIRS[pairSymbol].address)
+  const rewardRate = await fetchRewardRate(LPRewardsContract)
 
-  const rewardPoolPerWeek = new BigNumber(
-    LIQUIDITY_REWARD_PAIRS[pairSymbol].rewardPoolPerWeek
+  const rewardPoolPerWeek = toTokenUnit(rewardRate).multipliedBy(
+    moment.duration(7, "days").asSeconds()
   )
 
   const totalLPTokensInLPRewardsInUSD = totalSupplyOfLPRewards

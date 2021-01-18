@@ -673,7 +673,12 @@ function* lpTokensStakedOrWithdrawn(
   const { user, amount } = eventValues
   const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
 
-  const apy = yield call(calculateAPY, totalSupply, liquidityRewardPairName)
+  const apy = yield call(
+    calculateAPY,
+    totalSupply,
+    liquidityRewardPairName,
+    LPRewardsContract
+  )
 
   const reward = yield call(
     fetchRewardBalance,
