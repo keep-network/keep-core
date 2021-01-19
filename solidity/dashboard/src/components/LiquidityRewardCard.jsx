@@ -11,6 +11,7 @@ import Banner from "./Banner"
 import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { formatPercentage } from "../utils/general.utils"
+import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 
 const LiquidityRewardCard = ({
   title,
@@ -94,7 +95,9 @@ const LiquidityRewardCard = ({
                 href={viewPoolLink}
                 className="text-white text-link"
               >
-                Uniswap pool
+                {title === LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label
+                  ? "Saddle pool"
+                  : "Uniswap pool"}
               </a>
             </Banner.Description>
           </div>
