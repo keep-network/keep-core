@@ -46,7 +46,6 @@ export const LIQUIDITY_REWARD_PAIRS = {
     contractName: LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME,
     label: "TBTC + SADDLE",
     viewPoolLink: "https://saddle.exchange/#/deposit",
-    address: "0xe6f19dab7d43317344282f803f8e8d240708174a",
     pool: "SADDLE",
   },
   KEEP_ETH: {
