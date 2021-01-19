@@ -334,6 +334,7 @@ const Saddle = ({ className }) => {
       }}
       className={className}
       src={require("../static/svg/Saddle_logomark_blue.png")}
+      alt="Saddle Logo"
     />
   )
 }
