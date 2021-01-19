@@ -115,8 +115,8 @@ const LiquidityPage = ({ headerTitle }) => {
           liquidityPairContractName={
             LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.contractName
           }
-          MainIcon={Icons.KeepBlackGreen}
-          SecondaryIcon={Icons.EthToken}
+          MainIcon={Icons.TBTC}
+          SecondaryIcon={Icons.Saddle}
           viewPoolLink={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.viewPoolLink}
           apy={TBTC_SADDLE.apy}
           percentageOfTotalPool={TBTC_SADDLE.shareOfPoolInPercent}
