@@ -197,6 +197,26 @@ const LiquidityRewardCard = ({
         </div>
       </div>
       {renderUserInfoBanner()}
+      <div className={"lp-balance"}>
+        <h4 className={"text-grey-70 mb-1"}>Your LP Token Balance</h4>
+        <div className={"lp-balance__value-container text-grey-70"}>
+          <h3 className={"lp-balance__value-label"}>
+            <MainIcon />
+            <span>KEEP</span>
+          </h3>
+          <h3>{toTokenUnit(lpBalance).toString()}</h3>
+        </div>
+        <div className={"lp-balance__plus-separator-container text-grey-70"}>
+          <span className={"lp-balance__plus-separator"}>+</span>
+        </div>
+        <div className={"lp-balance__value-container text-grey-70"}>
+          <h3 className={"lp-balance__value-label"}>
+            <SecondaryIcon />
+            <span>ETH</span>
+          </h3>
+          <h3>0</h3>
+        </div>
+      </div>
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
           Your rewards
