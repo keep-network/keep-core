@@ -22,6 +22,7 @@ import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCET
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCSaddle.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
+import SaddleSwap from "./contracts-artifacts/SaddleSwap.json"
 import Web3 from "web3"
 
 import {
@@ -322,4 +323,12 @@ export const initializeWeb3 = (provider) => {
 export const createLPRewardsContract = async (web3, contractName) => {
   const { artifact } = contracts[contractName]
   return await getContract(web3, artifact, {})
+}
+
+export const createSaddleSwapContract = (web3) => {
+  return createWeb3ContractInstance(
+    web3,
+    SaddleSwap.abi,
+    "0x4f6A43Ad7cba042606dECaCA730d4CE0A57ac62e"
+  )
 }
