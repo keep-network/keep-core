@@ -1,5 +1,5 @@
 import web3Utils from "web3-utils"
-import { createERC20Contract } from "../contracts"
+import { createERC20Contract, createSaddleSwapContract } from "../contracts"
 import BigNumber from "bignumber.js"
 import { toTokenUnit } from "../utils/token.utils"
 import {
@@ -8,6 +8,7 @@ import {
   getBTCPriceInUSD,
 } from "./uniswap-api"
 import moment from "moment"
+import { add } from "../utils/arithmetics.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -16,9 +17,10 @@ const LPRewardsToWrappedTokenCache = {}
 const WEEKS_IN_YEAR = 52
 
 class LiquidityRewards {
-  constructor(_wrappedTokenContract, _LPRewardsContract) {
+  constructor(_wrappedTokenContract, _LPRewardsContract, _web3) {
     this.wrappedToken = _wrappedTokenContract
     this.LPRewardsContract = _LPRewardsContract
+    this.web3 = _web3
   }
 
   get wrappedTokenAddress() {
@@ -119,25 +121,41 @@ class UniswapLPRewards extends LiquidityRewards {
 }
 
 class SaddleLPRewards extends LiquidityRewards {
+  BTC_POOL_TOKENS = [
+    { name: "TBTC", decimals: 18 },
+    { name: "WBTC", decimals: 8 },
+    { name: "RENBTC", decimals: 8 },
+    { name: "SBTC", decimals: 18 },
+  ]
+
+  constructor(_wrappedTokenContract, _LPRewardsContract, _web3) {
+    super(_wrappedTokenContract, _LPRewardsContract, _web3)
+    this.swapContract = createSaddleSwapContract(this.web3)
+  }
+
+  swapContract = null
+
   calculateAPY = async (totalSupplyOfLPRewards) => {
     totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
 
-    const wrappedTokenTotalSupply = await this.wrappedTokenTotalSupply()
-    const BTCPriceInUSD = await getBTCPriceInUSD()
-
-    // TODO fetch total Bitcoins deposited in the wrapped token pool
-    const totalBitcoinDepositedInWrappedTokenPool = 0
-    const wrappedTokenPoolInUSD = BTCPriceInUSD.multipliedBy(
-      totalBitcoinDepositedInWrappedTokenPool
+    const wrappedTokenTotalSupply = toTokenUnit(
+      await this.wrappedTokenTotalSupply()
     )
 
-    const rewardPoolPerWeek = await this.rewardPoolPerWeek()
+    const BTCInPool = await this._getBTCInPool()
+    const BTCPriceInUSD = await getBTCPriceInUSD()
+
+    const wrappedTokenPoolInUSD = BTCPriceInUSD.multipliedBy(
+      toTokenUnit(BTCInPool)
+    )
+
+    const keepTokenInUSD = await getKeepTokenPriceInUSD()
+
+    const rewardPoolPerWeek = 125000 // await this.rewardPoolPerWeek()
 
     const lpRewardsPoolInUSD = totalSupplyOfLPRewards
       .multipliedBy(wrappedTokenPoolInUSD)
       .div(wrappedTokenTotalSupply)
-
-    const keepTokenInUSD = await getKeepTokenPriceInUSD()
 
     const r = this._calculateR(
       keepTokenInUSD,
@@ -146,6 +164,23 @@ class SaddleLPRewards extends LiquidityRewards {
     )
 
     return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+
+  _getBTCInPool = async () => {
+    return (
+      await Promise.all(
+        this.BTC_POOL_TOKENS.map(async (token, i) => {
+          const balance = await this._getTokenBalance(i)
+          return new BigNumber(10)
+            .pow(18 - token.decimals) // cast all to 18 decimals
+            .multipliedBy(balance)
+        })
+      )
+    ).reduce(add, 0)
+  }
+
+  _getTokenBalance = async (index) => {
+    return await this.swapContract.methods.getTokenBalance(index).call()
   }
 }
 
@@ -182,6 +217,6 @@ export class LiquidityRewardsFactory {
       LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
     const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
 
-    return new PoolStrategy(wrappedTokenContract, LPRewardsContract)
+    return new PoolStrategy(wrappedTokenContract, LPRewardsContract, web3)
   }
 }
