@@ -27,6 +27,10 @@ class LiquidityRewards {
     return this.wrappedToken.options.address
   }
 
+  get LPRewardsContractAddress() {
+    return this.LPRewardsContract.options.address
+  }
+
   wrappedTokenBalance = async (address) => {
     return await this.wrappedToken.methods.balanceOf(address).call()
   }

@@ -98,7 +98,7 @@ function* stakeTokens(action) {
   const approvedAmount = yield call(
     [LiquidityRewards, LiquidityRewards.wrappedTokenAllowance],
     address,
-    LiquidityRewards.wrappedTokenAddress
+    LiquidityRewards.LPRewardsContractAddress
   )
 
   if (!eq(amount, approvedAmount)) {
@@ -106,7 +106,7 @@ function* stakeTokens(action) {
       payload: {
         contract: LiquidityRewards.wrappedToken,
         methodName: "approve",
-        args: [LiquidityRewards.wrappedTokenAddress, amount],
+        args: [LiquidityRewards.LPRewardsContractAddress, amount],
       },
     })
   }
