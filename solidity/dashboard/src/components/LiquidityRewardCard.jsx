@@ -33,6 +33,7 @@ const LiquidityRewardCard = ({
   addLpTokens,
   withdrawLiquidityRewards,
   isAPYFetching,
+  pool,
 }) => {
   const formattedApy = useMemo(() => {
     const bn = new BigNumber(apy).multipliedBy(100)
@@ -234,6 +235,7 @@ const LiquidityRewardCard = ({
           addLpTokens(
             wrappedTokenBalance,
             liquidityPairContractName,
+            pool,
             awaitingPromise
           )
         }

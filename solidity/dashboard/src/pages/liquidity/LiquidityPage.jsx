@@ -50,6 +50,7 @@ const LiquidityPage = ({ headerTitle }) => {
   const addLpTokens = (
     wrappedTokenBalance,
     liquidityPairContractName,
+    pool,
     awaitingPromise
   ) => {
     dispatch(
@@ -57,6 +58,7 @@ const LiquidityPage = ({ headerTitle }) => {
         wrappedTokenBalance,
         address,
         liquidityPairContractName,
+        pool,
         awaitingPromise
       )
     )
@@ -128,6 +130,7 @@ const LiquidityPage = ({ headerTitle }) => {
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
           isAPYFetching={TBTC_SADDLE.isAPYFetching}
+          pool={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.pool}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.label}
@@ -147,6 +150,7 @@ const LiquidityPage = ({ headerTitle }) => {
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
           isAPYFetching={KEEP_ETH.isAPYFetching}
+          pool={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.pool}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.label}
@@ -166,6 +170,7 @@ const LiquidityPage = ({ headerTitle }) => {
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
           isAPYFetching={KEEP_TBTC.isAPYFetching}
+          pool={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.pool}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
@@ -185,6 +190,7 @@ const LiquidityPage = ({ headerTitle }) => {
           addLpTokens={addLpTokens}
           withdrawLiquidityRewards={withdrawLiquidityRewards}
           isAPYFetching={TBTC_ETH.isAPYFetching}
+          pool={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.pool}
         />
       </CardContainer>
     </PageWrapper>

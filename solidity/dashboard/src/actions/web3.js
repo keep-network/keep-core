@@ -195,6 +195,7 @@ export const addMoreLpTokens = (
   amount,
   address,
   liquidityPairContractName,
+  pool,
   meta
 ) => {
   return {
@@ -203,6 +204,7 @@ export const addMoreLpTokens = (
       contractName: liquidityPairContractName,
       amount,
       address,
+      pool,
     },
     meta,
   }
