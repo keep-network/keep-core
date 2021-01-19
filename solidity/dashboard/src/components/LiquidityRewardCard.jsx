@@ -163,7 +163,7 @@ const LiquidityRewardCard = ({
             >
               Uniswap subgraph API
             </a>
-            &nbsp;to fetch the the total pool value and KEEP token in USD.
+            &nbsp;to fetch the total pool value and KEEP token in USD.
           </Tooltip>
           {isAPYFetching ? (
             <Skeleton tag="h2" shining color="grey-10" />
