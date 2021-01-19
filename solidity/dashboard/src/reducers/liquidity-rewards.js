@@ -12,6 +12,7 @@ const liquidityPairInitialData = {
 }
 
 const initialState = {
+  TBTC_SADDLE: { ...liquidityPairInitialData },
   KEEP_ETH: { ...liquidityPairInitialData },
   TBTC_ETH: { ...liquidityPairInitialData },
   KEEP_TBTC: { ...liquidityPairInitialData },
