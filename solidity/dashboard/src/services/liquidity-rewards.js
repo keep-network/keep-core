@@ -1,91 +1,187 @@
 import web3Utils from "web3-utils"
-import { Web3Loaded, createERC20Contract } from "../contracts"
+import { createERC20Contract } from "../contracts"
 import BigNumber from "bignumber.js"
-import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { toTokenUnit } from "../utils/token.utils"
-import { getPairData, getKeepTokenPriceInUSD } from "./uniswap-api"
+import {
+  getPairData,
+  getKeepTokenPriceInUSD,
+  getBTCPriceInUSD,
+} from "./uniswap-api"
 import moment from "moment"
+/** @typedef {import("web3").default} Web3 */
+/** @typedef {LiquidityRewards} LiquidityRewards */
 
 // lp contract address -> wrapped ERC20 token as web3 contract instance
 const LPRewardsToWrappedTokenCache = {}
 const WEEKS_IN_YEAR = 52
 
-export const fetchWrappedTokenBalance = async (address, LPrewardsContract) => {
-  const ERC20Contract = await getWrappedTokenConctract(LPrewardsContract)
-
-  return await ERC20Contract.methods.balanceOf(address).call()
-}
-
-export const getWrappedTokenConctract = async (LPRewardsContract) => {
-  const web3 = await Web3Loaded
-  const lpRewardsContractAddress = web3Utils.toChecksumAddress(
-    LPRewardsContract.options.address
-  )
-
-  if (!LPRewardsToWrappedTokenCache.hasOwnProperty(lpRewardsContractAddress)) {
-    const wrappedTokenAddress = await LPRewardsContract.methods
-      .wrappedToken()
-      .call()
-    LPRewardsToWrappedTokenCache[
-      lpRewardsContractAddress
-    ] = createERC20Contract(web3, wrappedTokenAddress)
+class LiquidityRewards {
+  constructor(_wrappedTokenContract, _LPRewardsContract) {
+    this.wrappedToken = _wrappedTokenContract
+    this.LPRewardsContract = _LPRewardsContract
   }
 
-  return LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
-}
-
-export const fetchStakedBalance = async (address, LPrewardsContract) => {
-  return await LPrewardsContract.methods.balanceOf(address).call()
-}
-
-export const fetchTotalLPTokensCreatedInUniswap = async (LPrewardsContract) => {
-  const ERC20Contract = await getWrappedTokenConctract(LPrewardsContract)
-  return await ERC20Contract.methods.totalSupply().call()
-}
-
-export const fetchLPRewardsTotalSupply = async (LPrewardsContract) => {
-  return await LPrewardsContract.methods.totalSupply().call()
-}
-export const fetchRewardBalance = async (address, LPrewardsContract) => {
-  return await LPrewardsContract.methods.earned(address).call()
-}
-
-export const fetchRewardRate = async (LPRewardsContract) => {
-  return await LPRewardsContract.methods.rewardRate().call()
-}
-
-export const calculateAPY = async (
-  totalSupplyOfLPRewards,
-  pairSymbol,
-  LPRewardsContract
-) => {
-  totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
-
-  const pairData = await getPairData(LIQUIDITY_REWARD_PAIRS[pairSymbol].address)
-  const rewardRate = await fetchRewardRate(LPRewardsContract)
-
-  const rewardPoolPerWeek = toTokenUnit(rewardRate).multipliedBy(
-    moment.duration(7, "days").asSeconds()
-  )
-
-  const totalLPTokensInLPRewardsInUSD = totalSupplyOfLPRewards
-    .multipliedBy(pairData.reserveUSD)
-    .div(pairData.totalSupply)
-
-  const ethPrice = new BigNumber(pairData.reserveUSD).div(pairData.reserveETH)
-
-  let keepTokenInUSD = 0
-  if (pairData.token0.symbol === "KEEP") {
-    keepTokenInUSD = ethPrice.multipliedBy(pairData.token0.derivedETH)
-  } else if (pairData.token1.symbol === "KEEP") {
-    keepTokenInUSD = ethPrice.multipliedBy(pairData.token1.derivedETH)
-  } else {
-    keepTokenInUSD = await getKeepTokenPriceInUSD()
+  get wrappedTokenAddress() {
+    return this.wrappedToken.options.address
   }
 
-  const r = keepTokenInUSD
-    .multipliedBy(rewardPoolPerWeek)
-    .div(totalLPTokensInLPRewardsInUSD)
+  wrappedTokenBalance = async (address) => {
+    return await this.wrappedToken.methods.balanceOf(address).call()
+  }
 
-  return r.plus(1).pow(WEEKS_IN_YEAR).minus(1)
+  wrappedTokenTotalSupply = async () => {
+    return await this.wrappedToken.methods.totalSupply().call()
+  }
+
+  wrappedTokenAllowance = async (owner, spender) => {
+    return await this.wrappedToken.methods.allowance(owner, spender).call()
+  }
+
+  stakedBalance = async (address) => {
+    return await this.LPRewardsContract.methods.balanceOf(address).call()
+  }
+
+  totalSupply = async () => {
+    return await this.LPRewardsContract.methods.totalSupply().call()
+  }
+
+  rewardBalance = async (address) => {
+    return await this.LPRewardsContract.methods.earned(address).call()
+  }
+
+  rewardRate = async () => {
+    return await this.LPRewardsContract.methods.rewardRate().call()
+  }
+
+  rewardPoolPerWeek = async () => {
+    const rewardRate = await this.rewardRate()
+    return toTokenUnit(rewardRate).multipliedBy(
+      moment.duration(7, "days").asSeconds()
+    )
+  }
+
+  _calculateR = (
+    keepTokenInUSD,
+    rewardPoolPerInterval,
+    totalLPTokensInLPRewardsInUSD
+  ) => {
+    return keepTokenInUSD
+      .multipliedBy(rewardPoolPerInterval)
+      .div(totalLPTokensInLPRewardsInUSD)
+  }
+
+  /**
+   * Calculates the APY.
+   *
+   * @param {BigNumber} r Period rate.
+   * @param {number | string | BigNumber} n Number of compounding periods.
+   * @return {BigNumber} APY value.
+   */
+  _calculateAPY = (r, n = WEEKS_IN_YEAR) => {
+    return r.plus(1).pow(n).minus(1)
+  }
+
+  calculateAPY = async (totalSupplyOfLPRewards) => {
+    throw new Error("First, implement the `calculateAPY` function")
+  }
+}
+
+class UniswapLPRewards extends LiquidityRewards {
+  calculateAPY = async (totalSupplyOfLPRewards) => {
+    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+
+    const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
+    const rewardPoolPerWeek = await this.rewardPoolPerWeek()
+
+    const lpRewardsPoolInUSD = totalSupplyOfLPRewards
+      .multipliedBy(pairData.reserveUSD)
+      .div(pairData.totalSupply)
+
+    const ethPrice = new BigNumber(pairData.reserveUSD).div(pairData.reserveETH)
+
+    let keepTokenInUSD = 0
+    if (pairData.token0.symbol === "KEEP") {
+      keepTokenInUSD = ethPrice.multipliedBy(pairData.token0.derivedETH)
+    } else if (pairData.token1.symbol === "KEEP") {
+      keepTokenInUSD = ethPrice.multipliedBy(pairData.token1.derivedETH)
+    } else {
+      keepTokenInUSD = await getKeepTokenPriceInUSD()
+    }
+
+    const r = this._calculateR(
+      keepTokenInUSD,
+      rewardPoolPerWeek,
+      lpRewardsPoolInUSD
+    )
+
+    return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+}
+
+class SaddleLPRewards extends LiquidityRewards {
+  calculateAPY = async (totalSupplyOfLPRewards) => {
+    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+
+    const wrappedTokenTotalSupply = await this.wrappedTokenTotalSupply()
+    const BTCPriceInUSD = await getBTCPriceInUSD()
+
+    // TODO fetch total Bitcoins deposited in the wrapped token pool
+    const totalBitcoinDepositedInWrappedTokenPool = 0
+    const wrappedTokenPoolInUSD = BTCPriceInUSD.multipliedBy(
+      totalBitcoinDepositedInWrappedTokenPool
+    )
+
+    const rewardPoolPerWeek = await this.rewardPoolPerWeek()
+
+    const lpRewardsPoolInUSD = totalSupplyOfLPRewards
+      .multipliedBy(wrappedTokenPoolInUSD)
+      .div(wrappedTokenTotalSupply)
+
+    const keepTokenInUSD = await getKeepTokenPriceInUSD()
+
+    const r = this._calculateR(
+      keepTokenInUSD,
+      rewardPoolPerWeek,
+      lpRewardsPoolInUSD
+    )
+
+    return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+}
+
+const LiquidityRewardsPoolStrategy = {
+  UNISWAP: UniswapLPRewards,
+  SADDLE: SaddleLPRewards,
+}
+
+export class LiquidityRewardsFactory {
+  /**
+   *
+   * @param {('UNISWAP' | 'SADDLE')} pool - The supported type of pools.
+   * @param {Object} LPRewardsContract - The LPRewardsContract as web3 contract instance.
+   * @param {Web3} web3 - web3
+   * @return {LiquidityRewards} - The Liquidity Rewards Wrapper
+   */
+  static async initialize(pool, LPRewardsContract, web3) {
+    const lpRewardsContractAddress = web3Utils.toChecksumAddress(
+      LPRewardsContract.options.address
+    )
+
+    if (
+      !LPRewardsToWrappedTokenCache.hasOwnProperty(lpRewardsContractAddress)
+    ) {
+      const wrappedTokenAddress = await LPRewardsContract.methods
+        .wrappedToken()
+        .call()
+      LPRewardsToWrappedTokenCache[
+        lpRewardsContractAddress
+      ] = createERC20Contract(web3, wrappedTokenAddress)
+    }
+
+    const wrappedTokenContract =
+      LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
+    const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
+
+    return new PoolStrategy(wrappedTokenContract, LPRewardsContract)
+  }
 }
