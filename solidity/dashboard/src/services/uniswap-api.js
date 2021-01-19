@@ -39,14 +39,27 @@ export const getPairData = async (pairId) => {
   return response.data.data.pair
 }
 
+const getTokenPriceInUSD = async (address) => {
+  const pairData = await getPairData(address)
+  const ethPrice = new BigNumber(pairData.reserveUSD).div(pairData.reserveETH)
+
+  return ethPrice.multipliedBy(pairData.token0.derivedETH)
+}
+
 /**
  * Returns the current KEEP token price in USD based on the Uniswap pool.
  *
  * @return {BigNumber} KEEP token price in USD.
  */
 export const getKeepTokenPriceInUSD = async () => {
-  const pairData = await getPairData(LIQUIDITY_REWARD_PAIRS.KEEP_ETH.address)
-  const ethPrice = new BigNumber(pairData.reserveUSD).div(pairData.reserveETH)
+  return await getTokenPriceInUSD(LIQUIDITY_REWARD_PAIRS.KEEP_ETH.address)
+}
 
-  return ethPrice.multipliedBy(pairData.token0.derivedETH)
+/**
+ * Returns the current BTC price in USD based on the TBTC/ETH Uniswap pool.
+ *
+ * @return {BigNumber} BTC price in USD.
+ */
+export const getBTCPriceInUSD = async () => {
+  return await getTokenPriceInUSD(LIQUIDITY_REWARD_PAIRS.TBTC_ETH.address)
 }
