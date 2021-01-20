@@ -12,7 +12,7 @@ import { add } from "../utils/arithmetics.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
-// lp contract address -> wrapped ERC20 token as web3 contract instance
+// lp contract address -> wrapped ERC20 token as address
 const LPRewardsToWrappedTokenCache = {}
 const WEEKS_IN_YEAR = 52
 
@@ -214,11 +214,14 @@ export class LiquidityRewardsFactory {
         .call()
       LPRewardsToWrappedTokenCache[
         lpRewardsContractAddress
-      ] = createERC20Contract(web3, wrappedTokenAddress)
+      ] = wrappedTokenAddress
     }
 
-    const wrappedTokenContract =
+    const wrappedTokenContract = createERC20Contract(
+      web3,
       LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
+    )
+
     const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
 
     return new PoolStrategy(wrappedTokenContract, LPRewardsContract, web3)
