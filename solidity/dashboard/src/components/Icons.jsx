@@ -321,6 +321,24 @@ const Coinbase = () => (
   </svg>
 )
 
+const Saddle = ({ className }) => {
+  return (
+    <img
+      style={{
+        width: "auto",
+        height: "1.8rem",
+        backgroundColor: "white",
+        borderRadius: "100%",
+        border: "2px solid #3800D6",
+        padding: ".1rem .35rem",
+      }}
+      className={className}
+      src={require("../static/svg/Saddle_logomark_blue.png")}
+      alt="Saddle Logo"
+    />
+  )
+}
+
 export {
   Badge,
   Cross,
@@ -371,4 +389,5 @@ export {
   Time,
   KeepDashboardLogo,
   NetworkStatusIndicator,
+  Saddle,
 }
