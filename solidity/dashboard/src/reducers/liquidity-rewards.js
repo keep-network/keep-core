@@ -7,6 +7,10 @@ const liquidityPairInitialData = {
   reward: 0,
   wrappedTokenBalance: 0,
   lpBalance: 0,
+  lpTokenBalance: {
+    token0: 0,
+    token1: 0,
+  },
   isFetching: false,
   error: null,
 }

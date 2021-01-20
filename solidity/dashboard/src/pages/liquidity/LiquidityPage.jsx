@@ -125,6 +125,7 @@ const LiquidityPage = ({ headerTitle }) => {
           rewardBalance={TBTC_SADDLE.reward}
           wrappedTokenBalance={TBTC_SADDLE.wrappedTokenBalance}
           lpBalance={TBTC_SADDLE.lpBalance}
+          lpTokenBalance={TBTC_SADDLE.lpTokenBalance}
           isFetching={TBTC_SADDLE.isFetching}
           wrapperClassName="tbtc-saddle"
           addLpTokens={addLpTokens}
@@ -145,6 +146,7 @@ const LiquidityPage = ({ headerTitle }) => {
           rewardBalance={KEEP_ETH.reward}
           wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
           lpBalance={KEEP_ETH.lpBalance}
+          lpTokenBalance={KEEP_ETH.lpTokenBalance}
           isFetching={KEEP_ETH.isFetching}
           wrapperClassName="keep-eth"
           addLpTokens={addLpTokens}
@@ -165,6 +167,7 @@ const LiquidityPage = ({ headerTitle }) => {
           rewardBalance={KEEP_TBTC.reward}
           wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
           lpBalance={KEEP_TBTC.lpBalance}
+          lpTokenBalance={KEEP_TBTC.lpTokenBalance}
           isFetching={KEEP_TBTC.isFetching}
           wrapperClassName="keep-tbtc"
           addLpTokens={addLpTokens}
@@ -185,6 +188,7 @@ const LiquidityPage = ({ headerTitle }) => {
           rewardBalance={TBTC_ETH.reward}
           wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
           lpBalance={TBTC_ETH.lpBalance}
+          lpTokenBalance={TBTC_ETH.lpTokenBalance}
           isFetching={TBTC_ETH.isFetching}
           wrapperClassName="tbtc-eth"
           addLpTokens={addLpTokens}

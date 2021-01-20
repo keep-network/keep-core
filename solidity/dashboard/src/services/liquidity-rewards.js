@@ -8,7 +8,7 @@ import {
   getBTCPriceInUSD,
 } from "./uniswap-api"
 import moment from "moment"
-import { add } from "../utils/arithmetics.utils"
+import { add, calculatePercentage } from "../utils/arithmetics.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -90,6 +90,10 @@ class LiquidityRewards {
   calculateAPY = async (totalSupplyOfLPRewards) => {
     throw new Error("First, implement the `calculateAPY` function")
   }
+
+  calculateLPTokenBalance = async (shareOfPoolInPercent) => {
+    throw new Error("First, implement the `calculateLPTokenBalance` function")
+  }
 }
 
 class UniswapLPRewards extends LiquidityRewards {
@@ -121,6 +125,20 @@ class UniswapLPRewards extends LiquidityRewards {
     )
 
     return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+
+  calculateLPTokenBalance = async (shareOfTotalPoolInPercent) => {
+    const pairData = await getPairData(this.address)
+    return {
+      token0: calculatePercentage(
+        shareOfTotalPoolInPercent,
+        pairData.reserve0
+      ).toString(),
+      token1: calculatePercentage(
+        shareOfTotalPoolInPercent,
+        pairData.reserve1
+      ).toString(),
+    }
   }
 }
 
@@ -185,6 +203,10 @@ class SaddleLPRewards extends LiquidityRewards {
 
   _getTokenBalance = async (index) => {
     return await this.swapContract.methods.getTokenBalance(index).call()
+  }
+
+  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+    return 0
   }
 }
 

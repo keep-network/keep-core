@@ -28,6 +28,7 @@ const LiquidityRewardCard = ({
   wrappedTokenBalance,
   // Balance of wrapped token deposited in the `LPRewards` contract.
   lpBalance,
+  lpTokenBalance,
   isFetching,
   wrapperClassName = "",
   addLpTokens,
@@ -54,6 +55,25 @@ const LiquidityRewardCard = ({
       ? 0.01
       : formatPercentage(bn)
   }, [percentageOfTotalPool])
+
+  const formattedLPTokenBalance = useMemo(() => {
+    const token0BN = new BigNumber(lpTokenBalance.token0)
+    const token1BN = new BigNumber(lpTokenBalance.token1)
+
+    const token0 =
+      token0BN.isLessThan(0.01) && token0BN.isGreaterThan(0)
+        ? 0.01
+        : formatPercentage(token0BN)
+
+    const token1 =
+      token1BN.isLessThan(0.01) && token1BN.isGreaterThan(0)
+        ? 0.01
+        : formatPercentage(token1BN)
+    return {
+      token0,
+      token1,
+    }
+  }, [lpTokenBalance.token0, lpTokenBalance.token1])
 
   const formattingFn = useCallback((value) => {
     let prefix = ""
@@ -211,7 +231,7 @@ const LiquidityRewardCard = ({
             <MainIcon />
             <span>KEEP</span>
           </h3>
-          <h3>{toTokenUnit(lpBalance).toString()}</h3>
+          <h3>{formattedLPTokenBalance.token0}</h3>
         </div>
         <div className={"lp-balance__plus-separator-container text-grey-70"}>
           <span className={"lp-balance__plus-separator"}>+</span>
@@ -221,7 +241,7 @@ const LiquidityRewardCard = ({
             <SecondaryIcon />
             <span>ETH</span>
           </h3>
-          <h3>0</h3>
+          <h3>{formattedLPTokenBalance.token1}</h3>
         </div>
       </div>
       <div className={"liquidity__reward-balance"}>
