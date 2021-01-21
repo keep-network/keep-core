@@ -29,6 +29,7 @@ const LiquidityRewardCard = ({
   // Balance of wrapped token deposited in the `LPRewards` contract.
   lpBalance,
   lpTokenBalance,
+  lpTokens,
   isFetching,
   wrapperClassName = "",
   addLpTokens,
@@ -118,6 +119,44 @@ const LiquidityRewardCard = ({
           </div>
         </Banner>
       )
+    )
+  }
+
+  const renderLPBalance = () => {
+    if (lpTokens && lpTokens.length === 0) return null
+    return (
+      <div className={"lp-balance"}>
+        <h4 className={"text-grey-70 mb-1"}>Your LP Token Balance</h4>
+        {lpTokens.map((lpToken, i) => {
+          const IconComponent = Icons[lpToken.iconName]
+          return (
+            <div key={`lpToken-${i}`}>
+              <div className={"lp-balance__value-container text-grey-70"}>
+                <h3 className={"lp-balance__value-label"}>
+                  <IconComponent />
+                  <span>{lpToken.tokenName}</span>
+                </h3>
+                <h3>
+                  <CountUp
+                    end={Object.values(formattedLPTokenBalance)[i]}
+                    separator={","}
+                    preserveValue
+                  />
+                </h3>
+              </div>
+              {i !== lpTokens.length - 1 && (
+                <div
+                  className={
+                    "lp-balance__plus-separator-container text-grey-70"
+                  }
+                >
+                  <span className={"lp-balance__plus-separator"}>+</span>
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
     )
   }
 
@@ -218,38 +257,7 @@ const LiquidityRewardCard = ({
         </div>
       </div>
       {renderUserInfoBanner()}
-      <div className={"lp-balance"}>
-        <h4 className={"text-grey-70 mb-1"}>Your LP Token Balance</h4>
-        <div className={"lp-balance__value-container text-grey-70"}>
-          <h3 className={"lp-balance__value-label"}>
-            <MainIcon />
-            <span>KEEP</span>
-          </h3>
-          <h3>
-            <CountUp
-              end={formattedLPTokenBalance.token0}
-              separator={","}
-              preserveValue
-            />
-          </h3>
-        </div>
-        <div className={"lp-balance__plus-separator-container text-grey-70"}>
-          <span className={"lp-balance__plus-separator"}>+</span>
-        </div>
-        <div className={"lp-balance__value-container text-grey-70"}>
-          <h3 className={"lp-balance__value-label"}>
-            <SecondaryIcon />
-            <span>ETH</span>
-          </h3>
-          <h3>
-            <CountUp
-              end={formattedLPTokenBalance.token1}
-              separator={","}
-              preserveValue
-            />
-          </h3>
-        </div>
-      </div>
+      {renderLPBalance()}
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
           Your rewards

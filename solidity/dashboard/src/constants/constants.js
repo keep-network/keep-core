@@ -47,6 +47,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     label: "TBTC + SADDLE",
     viewPoolLink: "https://saddle.exchange/#/deposit",
     pool: "SADDLE",
+    lpTokens: [],
   },
   KEEP_ETH: {
     contractName: LP_REWARDS_KEEP_ETH_CONTRACT_NAME,
@@ -55,6 +56,16 @@ export const LIQUIDITY_REWARD_PAIRS = {
       "https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a",
     address: "0xe6f19dab7d43317344282f803f8e8d240708174a",
     pool: "UNISWAP",
+    lpTokens: [
+      {
+        tokenName: "KEEP",
+        iconName: "KeepBlackGreen",
+      },
+      {
+        tokenName: "ETH",
+        iconName: "EthToken",
+      },
+    ],
   },
   KEEP_TBTC: {
     contractName: LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,
@@ -63,6 +74,16 @@ export const LIQUIDITY_REWARD_PAIRS = {
       "https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081",
     address: "0x38c8ffee49f286f25d25bad919ff7552e5daf081",
     pool: "UNISWAP",
+    lpTokens: [
+      {
+        tokenName: "KEEP",
+        iconName: "KeepBlackGreen",
+      },
+      {
+        tokenName: "TBTC",
+        iconName: "TBTC",
+      },
+    ],
   },
   TBTC_ETH: {
     contractName: LP_REWARDS_TBTC_ETH_CONTRACT_NAME,
@@ -71,5 +92,15 @@ export const LIQUIDITY_REWARD_PAIRS = {
       "https://info.uniswap.org/pair/0x854056fd40c1b52037166285b2e54fee774d33f6",
     address: "0x854056fd40c1b52037166285b2e54fee774d33f6",
     pool: "UNISWAP",
+    lpTokens: [
+      {
+        tokenName: "TBTC",
+        iconName: "TBTC",
+      },
+      {
+        tokenName: "ETH",
+        iconName: "EthToken",
+      },
+    ],
   },
 }
