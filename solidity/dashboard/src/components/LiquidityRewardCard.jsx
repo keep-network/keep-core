@@ -60,15 +60,9 @@ const LiquidityRewardCard = ({
     const token0BN = new BigNumber(lpTokenBalance.token0)
     const token1BN = new BigNumber(lpTokenBalance.token1)
 
-    const token0 =
-      token0BN.isLessThan(0.01) && token0BN.isGreaterThan(0)
-        ? 0.01
-        : formatPercentage(token0BN)
+    const token0 = formatPercentage(token0BN, 0)
+    const token1 = formatPercentage(token1BN, 0)
 
-    const token1 =
-      token1BN.isLessThan(0.01) && token1BN.isGreaterThan(0)
-        ? 0.01
-        : formatPercentage(token1BN)
     return {
       token0,
       token1,
@@ -235,8 +229,6 @@ const LiquidityRewardCard = ({
             <CountUp
               end={formattedLPTokenBalance.token0}
               separator={","}
-              decimals={2}
-              decimal={"."}
               preserveValue
             />
           </h3>
@@ -253,8 +245,6 @@ const LiquidityRewardCard = ({
             <CountUp
               end={formattedLPTokenBalance.token1}
               separator={","}
-              decimals={2}
-              decimal={"."}
               preserveValue
             />
           </h3>
