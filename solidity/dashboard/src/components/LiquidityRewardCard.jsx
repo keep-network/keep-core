@@ -231,7 +231,15 @@ const LiquidityRewardCard = ({
             <MainIcon />
             <span>KEEP</span>
           </h3>
-          <h3>{formattedLPTokenBalance.token0}</h3>
+          <h3>
+            <CountUp
+              end={formattedLPTokenBalance.token0}
+              separator={","}
+              decimals={2}
+              decimal={"."}
+              preserveValue
+            />
+          </h3>
         </div>
         <div className={"lp-balance__plus-separator-container text-grey-70"}>
           <span className={"lp-balance__plus-separator"}>+</span>
@@ -241,7 +249,15 @@ const LiquidityRewardCard = ({
             <SecondaryIcon />
             <span>ETH</span>
           </h3>
-          <h3>{formattedLPTokenBalance.token1}</h3>
+          <h3>
+            <CountUp
+              end={formattedLPTokenBalance.token1}
+              separator={","}
+              decimals={2}
+              decimal={"."}
+              preserveValue
+            />
+          </h3>
         </div>
       </div>
       <div className={"liquidity__reward-balance"}>
@@ -262,6 +278,7 @@ const LiquidityRewardCard = ({
             <h3>
               <CountUp
                 end={toTokenUnit(rewardBalance).toNumber()}
+                separator={","}
                 preserveValue
               />
             </h3>
