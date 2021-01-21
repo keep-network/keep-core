@@ -24,9 +24,6 @@
     "lint:sol": "solium -d contracts/ && prettier --check '**/*.sol'",
     "lint:fix:sol": "solium -d contracts/ --fix && prettier --write '**/*.sol'"
   },
-  "config": {
-    "eslintPaths": "test/ migrations/ scripts/"
-  },
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
   "bugs": {
