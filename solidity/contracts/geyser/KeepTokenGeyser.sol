@@ -3,11 +3,13 @@ pragma solidity 0.5.17;
 import "./TokenGeyser.sol";
 import "../KeepToken.sol";
 
+import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
+
 // TODO: Rename to KeepVault?
 // TODO: Add docs
 contract KeepTokenGeyser is TokenGeyser {
     constructor(
-        KeepToken stakingToken,
+        IERC20 _stakingToken,
         KeepToken distributionToken,
         uint256 maxUnlockSchedules,
         uint256 startBonus_,
@@ -16,7 +18,7 @@ contract KeepTokenGeyser is TokenGeyser {
     )
         public
         TokenGeyser(
-            stakingToken,
+            _stakingToken,
             distributionToken,
             maxUnlockSchedules,
             startBonus_,
