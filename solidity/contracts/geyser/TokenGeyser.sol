@@ -48,10 +48,14 @@ contract TokenGeyser is IStaking, Ownable {
     event TokensLocked(uint256 amount, uint256 durationSec, uint256 total);
     // amount: Unlocked tokens, total: Total locked tokens
     event TokensUnlocked(uint256 amount, uint256 total);
+    event FunderRoleTransferred(address oldFunder, address newFunder);
 
     TokenPool private _stakingPool;
     TokenPool private _unlockedPool;
     TokenPool private _lockedPool;
+
+    // Address that is expected to fund the contract with tokens to distribute.
+    address public funder;
 
     //
     // Time-bonus params
@@ -143,6 +147,7 @@ contract TokenGeyser is IStaking, Ownable {
         bonusPeriodSec = bonusPeriodSec_;
         _maxUnlockSchedules = maxUnlockSchedules;
         _initialSharesPerToken = initialSharesPerToken;
+        funder = owner(); // By default owner is expected to fund the contract.
     }
 
     /**
@@ -188,16 +193,26 @@ contract TokenGeyser is IStaking, Ownable {
     }
 
     /**
-     * @dev This funcion allows the contract owner to add more locked distribution tokens, along
+     * @dev Transfers funder role to a new address.
+     * Can only be called by the owner.
+     * @param newFunder New funder address.
+     */
+    function setFunder(address newFunder) external onlyOwner {
+        require(newFunder != address(0), "New funder is the zero address");
+
+        emit FunderRoleTransferred(funder, newFunder);
+
+        funder = newFunder;
+    }
+
+    /**
+     * @dev This function allows the funder to add more locked distribution tokens, along
      *      with the associated "unlock schedule". These locked tokens immediately begin unlocking
-     *      linearly over the duraction of durationSec timeframe.
+     *      linearly over the duration of durationSec timeframe.
      * @param amount Number of distribution tokens to lock. These are transferred from the caller.
      * @param durationSec Length of time to linear unlock the tokens.
      */
-    function lockTokens(uint256 amount, uint256 durationSec)
-        external
-        onlyOwner
-    {
+    function lockTokens(uint256 amount, uint256 durationSec) public onlyFunder {
         require(
             unlockSchedules.length < _maxUnlockSchedules,
             "TokenGeyser: reached maximum unlock schedules"
@@ -638,5 +653,13 @@ contract TokenGeyser is IStaking, Ownable {
 
         schedule.unlockedShares = schedule.unlockedShares.add(sharesToUnlock);
         return sharesToUnlock;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the funder.
+     */
+    modifier onlyFunder() {
+        require(funder == _msgSender(), "Caller is not the funder");
+        _;
     }
 }
