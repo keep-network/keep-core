@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/keep-network/keep-core/contracts/solidity",
   "dependencies": {
+    "@celo/contractkit": "^1.0.1",
     "@openzeppelin/upgrades": "^2.7.2",
     "openzeppelin-solidity": "2.4.0"
   },
