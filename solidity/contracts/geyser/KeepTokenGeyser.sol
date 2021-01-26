@@ -11,7 +11,7 @@ import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 contract KeepTokenGeyser is TokenGeyser, IStakerRewards {
     event DurationSecUpdated(uint256 oldDurationSec, uint256 newDurationSec);
 
-    uint256 private durationSec;
+    uint256 public durationSec;
 
     /**
      * @param _stakingToken The token users deposit as a stake.
