@@ -2,6 +2,7 @@ import { sub, add, percentageOf } from "../utils/arithmetics.utils"
 
 const liquidityPairInitialData = {
   apy: 0,
+  isAPYFetching: false,
   shareOfPoolInPercent: 0,
   reward: 0,
   wrappedTokenBalance: 0,
@@ -18,6 +19,7 @@ const liquidityPairRewardNotification = {
 }
 
 const initialState = {
+  TBTC_SADDLE: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
   KEEP_ETH: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
   TBTC_ETH: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
   KEEP_TBTC: {
@@ -103,7 +105,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           lpBalance,
           shareOfPoolInPercent: percentageOf(
             lpBalance,
-            restPayload.reward
+            restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
@@ -124,6 +126,31 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           apy: restPayload.apy,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_start`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          isAPYFetching: true,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_success`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          isAPYFetching: false,
+          apy: restPayload.apy,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_failure`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          isAPYFetching: false,
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_notification_interval_active`:

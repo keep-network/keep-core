@@ -1,5 +1,6 @@
 import moment from "moment"
 import web3Utils from "web3-utils"
+import BigNumber from "bignumber.js"
 
 moment.updateLocale("en", {
   relativeTime: {
@@ -64,4 +65,12 @@ const toValidHex = (hex) => {
     return ""
   }
   return hex.length % 2 !== 0 ? `0${hex}` : hex
+}
+
+export const formatPercentage = (value) => {
+  if (!value) return 0
+
+  value = BigNumber.isBigNumber(value) ? value : new BigNumber(value)
+
+  return value.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
 }

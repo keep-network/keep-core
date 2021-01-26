@@ -7,40 +7,12 @@ let messageId = 1
 
 export class Message {
   static create(options) {
-    const {
-      title,
-      content,
-      type,
-      sticky,
-      withTransactionHash,
-      classes,
-    } = options
-
-    return new Message(
-      title,
-      content,
-      type,
-      sticky,
-      withTransactionHash,
-      classes
-    )
+    return new Message(options)
   }
 
-  constructor(
-    title,
-    content,
-    type,
-    sticky = false,
-    withTransactionHash,
-    classes
-  ) {
+  constructor(options) {
+    Object.assign(this, options)
     this.id = messageId++
-    this.title = title
-    this.content = content
-    this.type = type
-    this.sticky = sticky
-    this.withTransactionHash = withTransactionHash
-    this.classes = classes
   }
 
   id
