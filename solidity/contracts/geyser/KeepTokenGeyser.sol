@@ -6,7 +6,6 @@ import {IStakerRewards, StakerRewardsBeneficiary} from "../PhasedEscrow.sol";
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
-// TODO: Rename to KeepVault?
 // TODO: Add docs
 contract KeepTokenGeyser is TokenGeyser, IStakerRewards {
     event DurationSecUpdated(uint256 oldDurationSec, uint256 newDurationSec);
