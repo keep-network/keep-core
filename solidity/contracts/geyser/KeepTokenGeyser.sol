@@ -2,7 +2,7 @@ pragma solidity 0.5.17;
 
 import "./TokenGeyser.sol";
 import "../KeepToken.sol";
-import {IStakerRewards} from "../PhasedEscrow.sol";
+import {IStakerRewards, StakerRewardsBeneficiary} from "../PhasedEscrow.sol";
 
 import "openzeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 
@@ -79,4 +79,14 @@ contract KeepTokenGeyser is TokenGeyser, IStakerRewards {
     }
 
     // TODO: Add functions that may be required from the Token Dashboard perspective.
+}
+
+/// @title KeepTokenGeyserRewardsEscrowBeneficiary
+/// @notice Intermediate contract used to transfer tokens from PhasedEscrow to a
+/// designated KeepTokenGeyser contract.
+contract KeepTokenGeyserRewardsEscrowBeneficiary is StakerRewardsBeneficiary {
+    constructor(IERC20 _token, IStakerRewards _stakerRewards)
+        public
+        StakerRewardsBeneficiary(_token, _stakerRewards)
+    {}
 }
