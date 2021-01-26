@@ -5,6 +5,11 @@
 [ethereum]
 	URL                = "ws://127.0.0.1:8546"
 	URLRPC             = "http://127.0.0.1:8545"
+
+	# Connection example for Celo Alfajores network
+	# URL              = "wss://alfajores-forno.celo-testnet.org/ws"
+	# URLRPC           = "https://alfajores-forno.celo-testnet.org"
+	#
 	# Uncomment to override the defaults for transaction status monitoring.
 	#
 	# MiningCheckInterval is the interval in which transaction
