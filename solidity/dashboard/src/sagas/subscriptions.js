@@ -863,7 +863,8 @@ export function* watchLiquidityRewardNotifications() {
     eth: { defaultAccount },
   } = yield getWeb3Context()
 
-  let displayMessage = true // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
+  // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
+  let displayMessage = false
   while (true) {
     for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
       yield put({
