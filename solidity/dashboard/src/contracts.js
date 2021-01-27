@@ -145,22 +145,15 @@ export function Deferred() {
   let resolve
   let reject
 
-  let promise = new Promise((res, rej) => {
+  const promise = new Promise((res, rej) => {
     resolve = res
     reject = rej
   })
-  const forceDeferred = () => {
-    promise = new Promise((res, rej) => {
-      resolve = res
-      reject = rej
-    })
-  }
 
   return {
     promise,
     reject,
     resolve,
-    forceDeferred,
   }
 }
 
@@ -171,12 +164,10 @@ export let Web3Loaded = Web3Deferred.promise
 export let ContractsLoaded = ContractsDeferred.promise
 
 export const resolveWeb3Deferred = (web3) => {
-  Web3Deferred.forceDeferred()
   Web3Deferred.resolve(web3)
 }
 
 export const resovleContractsDeferred = (contracts) => {
-  ContractsDeferred.forceDeferred()
   ContractsDeferred.resolve(contracts)
 }
 
