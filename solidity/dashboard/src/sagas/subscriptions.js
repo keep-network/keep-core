@@ -791,6 +791,12 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
             },
           })
         )
+
+        yield* updateWrappedTokenBalance(
+          LiquidityRewards,
+          liquidityRewardPair.name,
+          defaultAccount
+        )
       }
     } catch (error) {
       console.error(`Failed subscribing to Transfer event`, error)
@@ -817,6 +823,26 @@ function* updateAPY(
     type: `liquidity_rewards/${liquidityRewardPairName}_apy_updated`,
     payload: {
       apy,
+      liquidityRewardPairName,
+    },
+  })
+}
+
+function* updateWrappedTokenBalance(
+  LiquidityRewards,
+  liquidityRewardPairName,
+  address
+) {
+  // Fetching balance of liquidity token for a given uniswap pair.
+  const wrappedTokenBalance = yield call(
+    [LiquidityRewards, LiquidityRewards.wrappedTokenBalance],
+    address
+  )
+
+  yield put({
+    type: `liquidity_rewards/${liquidityRewardPairName}_wrapped_token_balance_updated`,
+    payload: {
+      wrappedTokenBalance,
       liquidityRewardPairName,
     },
   })

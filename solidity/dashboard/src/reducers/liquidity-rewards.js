@@ -119,6 +119,14 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           apy: restPayload.apy,
         },
       }
+    case `liquidity_rewards/${liquidityRewardPairName}_wrapped_token_balance_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          wrappedTokenBalance: restPayload.wrappedTokenBalance,
+        },
+      }
     case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_start`:
       return {
         ...state,
