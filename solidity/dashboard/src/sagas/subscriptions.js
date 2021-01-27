@@ -5,7 +5,6 @@ import {
   getContractsContext,
   getWeb3Context,
   getLPRewardsWrapper,
-  getWeb3ContextFromSaga,
 } from "./utils"
 import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
@@ -862,9 +861,9 @@ export function* subscribeToLiquidityRewardsEvents() {
 export function* watchLiquidityRewardNotifications() {
   const {
     eth: { defaultAccount },
-  } = yield yield getWeb3ContextFromSaga()
+  } = yield getWeb3Context()
 
-  let displayMessage = false // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
+  let displayMessage = true // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
   while (true) {
     for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
       yield put({
