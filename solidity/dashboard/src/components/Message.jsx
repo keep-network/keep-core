@@ -5,6 +5,8 @@ import { showMessage, closeMessage } from "../actions/messages"
 import { connect } from "react-redux"
 import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
 import * as Icons from "./Icons"
+import DepositLPTokensMsgContent from "./DepositLPTokensMsgContent";
+import ViewYourLiquidityBalance from "./ViewYourLiquidityBalance";
 
 export const MessagesContext = React.createContext({})
 
@@ -14,7 +16,16 @@ export const messageType = {
   PENDING_ACTION: { icon: Icons.Time },
   INFO: { icon: Icons.Question },
   WALLET: { icon: Icons.Wallet, iconClassName: "wallet-icon grey-50" },
-  REWARD: { icon: Icons.Rewards, iconClassName: "reward-icon brand-violet" },
+  NEW_LP_TOKENS_IN_WALLET: {
+    icon: Icons.Wallet,
+    iconClassName: "wallet-icon grey-50",
+    content: <DepositLPTokensMsgContent />,
+  },
+  LIQUIDITY_REWARDS_EARNED: {
+    icon: Icons.Rewards,
+    iconClassName: "reward-icon brand-violet",
+    content: <ViewYourLiquidityBalance />,
+  },
 }
 
 const messageTransitionTimeoutInMs = 500

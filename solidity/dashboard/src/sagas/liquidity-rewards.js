@@ -134,10 +134,9 @@ function* processLiquidityRewardEarnedNotification(action) {
     if (displayMessage) {
       yield put(
         showMessage({
-          type: messageType.REWARD,
+          type: messageType.LIQUIDITY_REWARDS_EARNED,
           title: `[${liquidityRewardPairName}] You've earned rewards!`,
           sticky: true,
-          content: <ViewYourLiquidityBalance />,
           classes: {
             bannerDescription: "m-0",
           },
