@@ -17,6 +17,10 @@ const LPRewardsToWrappedTokenCache = {}
 const WEEKS_IN_YEAR = 52
 
 class LiquidityRewards {
+  static async _getWrappedTokenAddress(LPRewardsContract) {
+    return await LPRewardsContract.methods.wrappedToken().call()
+  }
+
   constructor(_wrappedTokenContract, _LPRewardsContract, _web3) {
     this.wrappedToken = _wrappedTokenContract
     this.LPRewardsContract = _LPRewardsContract
@@ -188,20 +192,65 @@ class SaddleLPRewards extends LiquidityRewards {
   }
 }
 
+class TokenGeyserLPRewards extends LiquidityRewards {
+  static async _getWrappedTokenAddress(LPRewardsContract) {
+    return await LPRewardsContract.methods.token().call()
+  }
+
+  stakedBalance = async (address) => {
+    return await this.LPRewardsContract.methods.totalStakedFor(address).call()
+  }
+
+  totalSupply = async () => {
+    return await this.LPRewardsContract.methods.totalStaked().call()
+  }
+
+  rewardBalance = async (address) => {
+    return await this.LPRewardsContract.methods.unstakeQuery(address).call()
+  }
+
+  rewardPoolPerWeek = async () => 0
+
+  calculateAPY = async (totalSupplyOfLPRewards) => {
+    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+
+    const rewardPoolPerWeek = await this.rewardPoolPerWeek()
+    const wrappedTokenTotalSupply = toTokenUnit(
+      await this.wrappedTokenTotalSupply()
+    )
+    const keepTokenInUSD = await getKeepTokenPriceInUSD()
+
+    const lpRewardsPoolInUSD = totalSupplyOfLPRewards
+      .multipliedBy(keepTokenInUSD)
+      .div(wrappedTokenTotalSupply)
+
+    const r = this._calculateR(
+      keepTokenInUSD,
+      rewardPoolPerWeek,
+      lpRewardsPoolInUSD
+    )
+
+    return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+}
+
 const LiquidityRewardsPoolStrategy = {
   UNISWAP: UniswapLPRewards,
   SADDLE: SaddleLPRewards,
+  TOKEN_GEYSER: TokenGeyserLPRewards,
 }
 
 export class LiquidityRewardsFactory {
   /**
    *
-   * @param {('UNISWAP' | 'SADDLE')} pool - The supported type of pools.
+   * @param {('UNISWAP' | 'SADDLE' | 'TOKEN_GEYSER')} pool - The supported type of pools.
    * @param {Object} LPRewardsContract - The LPRewardsContract as web3 contract instance.
    * @param {Web3} web3 - web3
    * @return {LiquidityRewards} - The Liquidity Rewards Wrapper
    */
   static async initialize(pool, LPRewardsContract, web3) {
+    const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
+
     const lpRewardsContractAddress = web3Utils.toChecksumAddress(
       LPRewardsContract.options.address
     )
@@ -209,9 +258,9 @@ export class LiquidityRewardsFactory {
     if (
       !LPRewardsToWrappedTokenCache.hasOwnProperty(lpRewardsContractAddress)
     ) {
-      const wrappedTokenAddress = await LPRewardsContract.methods
-        .wrappedToken()
-        .call()
+      const wrappedTokenAddress = await PoolStrategy._getWrappedTokenAddress(
+        LPRewardsContract
+      )
       LPRewardsToWrappedTokenCache[
         lpRewardsContractAddress
       ] = wrappedTokenAddress
@@ -221,8 +270,6 @@ export class LiquidityRewardsFactory {
       web3,
       LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
     )
-
-    const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
 
     return new PoolStrategy(wrappedTokenContract, LPRewardsContract, web3)
   }
