@@ -144,7 +144,15 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           isAPYFetching: false,
         },
       }
-    case `liquidity_rewards/${liquidityRewardPairName}_update_last_reward_amount`:
+    case `liquidity_rewards/${liquidityRewardPairName}_reward_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          reward: restPayload.reward,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`:
       return {
         ...state,
         [liquidityRewardPairName]: {

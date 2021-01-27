@@ -17,8 +17,6 @@ import { initializeWeb3, createLPRewardsContract } from "../contracts"
 import BigNumber from "bignumber.js"
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
-import React from "react"
-import ViewYourLiquidityBalance from "../components/ViewYourLiquidityBalance"
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -120,13 +118,11 @@ function* processLiquidityRewardEarnedNotification(action) {
   const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
   const { liquidityRewards } = yield select()
   const lastNotificationRewardAmount = new BigNumber(
-    liquidityRewards[
-      liquidityRewardPairName
-    ].lastNotificationRewardAmount
+    liquidityRewards[liquidityRewardPairName].lastNotificationRewardAmount
   )
   const currentReward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
-    action.payload.address,
+    action.payload.address
   )
   // show the notification if the rewardBalance from LPRewardsContract is greater
   // than the reward amount that was last time the notification was displayed
@@ -142,12 +138,20 @@ function* processLiquidityRewardEarnedNotification(action) {
           },
         })
       )
+
+      yield put({
+        type: `liquidity_rewards/${liquidityRewardPairName}_reward_updated`,
+        payload: {
+          liquidityRewardPairName,
+          reward: currentReward,
+        },
+      })
     }
   }
 
   // save last notification reward amount for future comparisons
   yield put({
-    type: `liquidity_rewards/${liquidityRewardPairName}_update_last_reward_amount`,
+    type: `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`,
     payload: {
       liquidityRewardPairName,
       lastNotificationRewardAmount: currentReward,
