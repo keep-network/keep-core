@@ -29,11 +29,13 @@ const LiquidityPage = ({ headerTitle }) => {
   const address = useWeb3Address()
 
   useEffect(() => {
-    dispatch({
-      type: "liquidity_rewards/fetch_data_request",
-      payload: { address },
-    })
-  }, [dispatch, address])
+    if (isConnected) {
+      dispatch({
+        type: "liquidity_rewards/fetch_data_request",
+        payload: { address },
+      })
+    }
+  }, [dispatch, address, isConnected])
 
   useEffect(() => {
     dispatch({
