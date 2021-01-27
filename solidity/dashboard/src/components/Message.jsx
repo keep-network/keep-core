@@ -5,8 +5,8 @@ import { showMessage, closeMessage } from "../actions/messages"
 import { connect } from "react-redux"
 import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
 import * as Icons from "./Icons"
-import DepositLPTokensMsgContent from "./DepositLPTokensMsgContent";
-import ViewYourLiquidityBalance from "./ViewYourLiquidityBalance";
+import DepositLPTokensMsgContent from "./DepositLPTokensMsgContent"
+import ViewYourLiquidityBalance from "./ViewYourLiquidityBalance"
 
 export const MessagesContext = React.createContext({})
 

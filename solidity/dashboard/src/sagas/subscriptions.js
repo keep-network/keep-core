@@ -1,11 +1,4 @@
-import {
-  fork,
-  take,
-  call,
-  put,
-  select,
-  delay,
-} from "redux-saga/effects"
+import { fork, take, call, put, select, delay } from "redux-saga/effects"
 import moment from "moment"
 import { createSubcribeToContractEventChannel } from "./web3"
 import {
@@ -20,10 +13,8 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
-import React from "react"
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
-import DepositLPTokensMsgContent from "../components/DepositLPTokensMsgContent"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -873,10 +864,9 @@ export function* watchLiquidityRewardNotifications() {
     eth: { defaultAccount },
   } = yield yield getWeb3ContextFromSaga()
 
-  let displayMessage = false
+  let displayMessage = false // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
   while (true) {
-    yield delay(420000) // every 7 minutes
-    for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+    for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
       yield put({
         type: `liquidity_rewards/${pairName}_liquidity_rewards_earned_notification`,
         payload: {
@@ -887,5 +877,6 @@ export function* watchLiquidityRewardNotifications() {
       })
     }
     displayMessage = true
+    yield delay(420000) // every 7 minutes
   }
 }

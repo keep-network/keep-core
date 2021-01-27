@@ -1,4 +1,4 @@
-import {call, getContext, put} from "redux-saga/effects"
+import { call, getContext, put } from "redux-saga/effects"
 import { Web3Loaded, ContractsLoaded } from "../contracts"
 import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */

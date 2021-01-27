@@ -100,7 +100,7 @@ export function* watchFetchLiquidityRewardsData() {
 }
 
 export function* watchLiquidityRewardsEarnedNotification() {
-  for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+  for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
     yield takeLatest(
       `liquidity_rewards/${pairName}_liquidity_rewards_earned_notification`,
       processLiquidityRewardEarnedNotification
