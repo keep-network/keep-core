@@ -1,4 +1,4 @@
-import { call, put } from "redux-saga/effects"
+import {call, getContext, put} from "redux-saga/effects"
 import { Web3Loaded, ContractsLoaded } from "../contracts"
 import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
@@ -9,6 +9,14 @@ export function* getWeb3Context() {
 
 export function* getContractsContext() {
   return yield ContractsLoaded
+}
+
+export function* getWeb3ContextFromSaga() {
+  return yield yield getContext("web3")
+}
+
+export function* getContractsContextFromSaga() {
+  return yield yield getContext("contracts")
 }
 
 export function* submitButtonHelper(saga, action) {

@@ -122,7 +122,7 @@ function* processLiquidityRewardEarnedNotification(action) {
   const lastNotificationRewardAmount = new BigNumber(
     liquidityRewards[
       liquidityRewardPairName
-    ].liquidityRewardsEarnedNotification.lastNotificationRewardAmount
+    ].lastNotificationRewardAmount
   )
   const currentReward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],

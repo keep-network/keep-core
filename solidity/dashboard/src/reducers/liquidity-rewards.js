@@ -7,25 +7,16 @@ const liquidityPairInitialData = {
   reward: 0,
   wrappedTokenBalance: 0,
   lpBalance: 0,
+  lastNotificationRewardAmount: "0",
   isFetching: false,
   error: null,
 }
 
-const liquidityPairRewardNotification = {
-  liquidityRewardsEarnedNotification: {
-    isNotificationIntervalActive: false,
-    lastNotificationRewardAmount: "0",
-  },
-}
-
 const initialState = {
-  TBTC_SADDLE: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
-  KEEP_ETH: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
-  TBTC_ETH: { ...liquidityPairInitialData, ...liquidityPairRewardNotification },
-  KEEP_TBTC: {
-    ...liquidityPairInitialData,
-    ...liquidityPairRewardNotification,
-  },
+  TBTC_SADDLE: { ...liquidityPairInitialData },
+  KEEP_ETH: { ...liquidityPairInitialData },
+  TBTC_ETH: { ...liquidityPairInitialData },
+  KEEP_TBTC: { ...liquidityPairInitialData },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
@@ -153,29 +144,13 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           isAPYFetching: false,
         },
       }
-    case `liquidity_rewards/${liquidityRewardPairName}_notification_interval_active`:
-      return {
-        ...state,
-        [liquidityRewardPairName]: {
-          ...state[liquidityRewardPairName],
-          liquidityRewardsEarnedNotification: {
-            ...state[liquidityRewardPairName]
-              .liquidityRewardsEarnedNotification,
-            isNotificationIntervalActive: true,
-          },
-        },
-      }
     case `liquidity_rewards/${liquidityRewardPairName}_update_last_reward_amount`:
       return {
         ...state,
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
-          liquidityRewardsEarnedNotification: {
-            ...state[liquidityRewardPairName]
-              .liquidityRewardsEarnedNotification,
-            lastNotificationRewardAmount:
-              restPayload.lastNotificationRewardAmount,
-          },
+          lastNotificationRewardAmount:
+            restPayload.lastNotificationRewardAmount,
         },
       }
     default:

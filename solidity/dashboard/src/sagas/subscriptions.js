@@ -1,10 +1,18 @@
-import {fork, take, call, put, select, delay} from "redux-saga/effects"
+import {
+  fork,
+  take,
+  call,
+  put,
+  select,
+  delay,
+} from "redux-saga/effects"
 import moment from "moment"
 import { createSubcribeToContractEventChannel } from "./web3"
 import {
   getContractsContext,
   getWeb3Context,
   getLPRewardsWrapper,
+  getWeb3ContextFromSaga,
 } from "./utils"
 import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
@@ -12,10 +20,10 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
-import React from "react";
-import { showMessage } from "../actions/messages";
-import { messageType } from "../components/Message";
-import DepositLPTokensMsgContent from "../components/DepositLPTokensMsgContent";
+import React from "react"
+import { showMessage } from "../actions/messages"
+import { messageType } from "../components/Message"
+import DepositLPTokensMsgContent from "../components/DepositLPTokensMsgContent"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -772,7 +780,7 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
       // If the 'to' address is equal to the address of the connected wallet
       // then it means that LP tokens are transferred to this address so we are
       // displaying the proper notification
-      if (to === defaultAccount) {
+      if (isSameEthAddress(to, defaultAccount)) {
         yield put(
           showMessage({
             type: messageType.WALLET,
@@ -836,5 +844,27 @@ export function* subscribeToLiquidityRewardsEvents() {
         ...value,
       }
     )
+  }
+}
+
+export function* watchLiquidityRewardNotifications() {
+  const {
+    eth: { defaultAccount },
+  } = yield yield getWeb3ContextFromSaga()
+
+  let displayMessage = false
+  while (true) {
+    yield delay(420000) // every 7 minutes
+    for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+      yield put({
+        type: `liquidity_rewards/${pairName}_liquidity_rewards_earned_notification`,
+        payload: {
+          liquidityRewardPairName: pairName,
+          address: defaultAccount,
+          displayMessage,
+        },
+      })
+    }
+    displayMessage = true
   }
 }
