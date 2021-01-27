@@ -1,16 +1,12 @@
 import { takeLatest, takeEvery, fork, call, put } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper, logError } from "./utils"
+import { submitButtonHelper, logError, getLPRewardsWrapper } from "./utils"
 import { sendTransaction } from "./web3"
-import {
-  fetchStakedBalance,
-  fetchWrappedTokenBalance,
-  fetchLPRewardsTotalSupply,
-  fetchRewardBalance,
-  getWrappedTokenConctract,
-  calculateAPY,
-} from "../services/liquidity-rewards"
+import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { getWsUrl } from "../connectors/utils"
+import { initializeWeb3, createLPRewardsContract } from "../contracts"
+/** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -21,9 +17,9 @@ function* fetchAllLiquidtyRewardsData(action) {
 }
 
 function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
-  const contracts = yield getContractsContext()
+  /** @type LiquidityRewards */
+  const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
 
-  const LPRewardsContract = contracts[liquidityRewardPair.contractName]
   try {
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_start`,
@@ -32,25 +28,36 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 
     // Fetching balance of liquidity token for a given uniswap pair deposited in
     // the `LPRewards` contract.
-    const lpBalance = yield call(fetchStakedBalance, address, LPRewardsContract)
+    const lpBalance = yield call(
+      [LiquidityRewards, LiquidityRewards.stakedBalance],
+      address
+    )
     // Fetching balance of liquidity token for a given uniswap pair.
     const wrappedTokenBalance = yield call(
-      fetchWrappedTokenBalance,
-      address,
-      LPRewardsContract
+      [LiquidityRewards, LiquidityRewards.wrappedTokenBalance],
+      address
     )
     let apy = Infinity
     // Fetching total deposited liqidity tokens in the `LPRewards` contract.
-    const totalSupply = yield call(fetchLPRewardsTotalSupply, LPRewardsContract)
+    const totalSupply = yield call([
+      LiquidityRewards,
+      LiquidityRewards.totalSupply,
+    ])
     if (gt(totalSupply, 0)) {
-      apy = yield call(calculateAPY, totalSupply, liquidityRewardPair.name)
+      apy = yield call(
+        [LiquidityRewards, LiquidityRewards.calculateAPY],
+        totalSupply
+      )
     }
 
     let reward = 0
     let shareOfPoolInPercent = 0
     if (gt(lpBalance, 0)) {
       // Fetching available reward balance from `LPRewards` contract.
-      reward = yield call(fetchRewardBalance, address, LPRewardsContract)
+      reward = yield call(
+        [LiquidityRewards, LiquidityRewards.rewardBalance],
+        address
+      )
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
     }
@@ -83,35 +90,30 @@ export function* watchFetchLiquidityRewardsData() {
 }
 
 function* stakeTokens(action) {
-  const { contractName, address, amount } = action.payload
+  const { contractName, address, amount, pool } = action.payload
 
-  const contracts = yield getContractsContext()
-  const LPRewardsContract = contracts[contractName]
-  const lpRewardsContractAddress = LPRewardsContract.options.address
-
-  const WrappedTokenContract = yield call(
-    getWrappedTokenConctract,
-    LPRewardsContract
-  )
+  /** @type LiquidityRewards */
+  const LiquidityRewards = yield getLPRewardsWrapper({ contractName, pool })
 
   const approvedAmount = yield call(
-    WrappedTokenContract.methods.allowance(address, lpRewardsContractAddress)
-      .call
+    [LiquidityRewards, LiquidityRewards.wrappedTokenAllowance],
+    address,
+    LiquidityRewards.LPRewardsContractAddress
   )
 
   if (!eq(amount, approvedAmount)) {
     yield call(sendTransaction, {
       payload: {
-        contract: WrappedTokenContract,
+        contract: LiquidityRewards.wrappedToken,
         methodName: "approve",
-        args: [lpRewardsContractAddress, amount],
+        args: [LiquidityRewards.LPRewardsContractAddress, amount],
       },
     })
   }
 
   yield call(sendTransaction, {
     payload: {
-      contract: LPRewardsContract,
+      contract: LiquidityRewards.LPRewardsContract,
       methodName: "stake",
       args: [amount],
     },
@@ -124,4 +126,63 @@ function* stakeTokensWorker(action) {
 
 export function* watchStakeTokens() {
   yield takeEvery("liquidity_rewards/stake_tokens", stakeTokensWorker)
+}
+
+function* fetchAllLiquidityRewardsAPY(action) {
+  for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+    yield fork(fetchLiquidityRewardsAPY, { name: pairName, ...value })
+  }
+}
+
+function* fetchLiquidityRewardsAPY(liquidityRewardPair) {
+  try {
+    yield put({
+      type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_start`,
+      payload: { liquidityRewardPairName: liquidityRewardPair.name },
+    })
+    const web3 = initializeWeb3(getWsUrl())
+    const LPRewardsContract = yield call(
+      createLPRewardsContract,
+      web3,
+      liquidityRewardPair.contractName
+    )
+
+    /** @type LiquidityRewards */
+    const LiquidityRewards = yield call(
+      [LiquidityRewardsFactory, LiquidityRewardsFactory.initialize],
+      liquidityRewardPair.pool,
+      LPRewardsContract,
+      web3
+    )
+
+    let apy = Infinity
+    const totalSupply = yield call([
+      LiquidityRewards,
+      LiquidityRewards.totalSupply,
+    ])
+    if (gt(totalSupply, 0)) {
+      apy = yield call(
+        [LiquidityRewards, LiquidityRewards.calculateAPY],
+        totalSupply
+      )
+    }
+
+    yield put({
+      type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_success`,
+      payload: { liquidityRewardPairName: liquidityRewardPair.name, apy },
+    })
+  } catch (error) {
+    yield* logError(
+      `liquidity_rewards/${liquidityRewardPair.name}_fetch_apy_failure`,
+      error,
+      { liquidityRewardPairName: liquidityRewardPair.name }
+    )
+  }
+}
+
+export function* watchFetchLiquidityRewardsAPY() {
+  yield takeLatest(
+    "liquidity_rewards/fetch_apy_request",
+    fetchAllLiquidityRewardsAPY
+  )
 }

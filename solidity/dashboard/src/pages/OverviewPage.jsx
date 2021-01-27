@@ -12,6 +12,7 @@ import PageWrapper from "../components/PageWrapper"
 import { useSelector, useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import DelegationPage from "./delegation"
+import * as Icons from "../components/Icons"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -123,14 +124,32 @@ const OverviewFirstSection = () => {
             start staking
           </Link>
         </div>
-        <a
-          href="https://discordapp.com/invite/wYezN7v"
-          className="arrow-link"
-          rel="noopener noreferrer"
-          target="_blank"
-        >
-          No KEEP tokens yet? Join our Discord
-        </a>
+        <div>
+          <h4 className={"text-grey-40"}>
+            Get KEEP tokens on the following exchanges:
+          </h4>
+          <Icons.BalancerLogo />
+          &nbsp;
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href={"https://balancer.exchange/#/swap"}
+            className="text-black mr-2"
+          >
+            Balancer
+          </a>
+          &nbsp;
+          <Icons.UniswapLogo style={{ verticalAlign: "text-top" }} />
+          &nbsp;
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href={"https://app.uniswap.org/#/swap"}
+            className="text-black"
+          >
+            Uniswap
+          </a>
+        </div>
       </div>
     </Tile>
   )

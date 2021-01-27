@@ -9,9 +9,12 @@ import (
 )
 
 // For the entire time of state transition (delay + initiate), messages
-// are not handled. We use a small buffer to unblock producers and let
+// are not handled. We use a buffer to unblock producers and let
 // them perform optional filtering/validation during that time.
-const receiveBuffer = 64
+// The size of that buffer should be equal to the biggest possible
+// message count which can be delivered by the broadcast channel
+// in the same moment.
+const receiveBuffer = 128
 
 // Machine is a state machine that executes over states implemented from State
 // interface.
