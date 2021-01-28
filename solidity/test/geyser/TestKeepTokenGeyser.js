@@ -30,20 +30,20 @@ describe("KeepTokenGeyser", async () => {
   const thirdParty = accounts[6]
 
   const maxUnlockSchedules = toBN(12) // ????
-  const startBonus = toBN(100) //toBN(20) // 20% // ????
-  const bonusPeriodSec = toBN(1) // time.duration.days(4)
+  const startBonus = toBN(30) //toBN(20) // 30% // ????
+  const bonusPeriodSec = time.duration.weeks(4)
   const initialSharesPerToken = toBN(1) // ????
-  const durationSec = time.duration.days(7)
+  const durationSec = time.duration.weeks(4)
 
   const tokenDecimalMultiplier = toBN(10e18) // 18-decimal precision
 
-  const stakerInitialBalance1 = toBN(80e3).mul(tokenDecimalMultiplier) // 80k KEEP
-  const stakeAmount1 = toBN(20e3).mul(tokenDecimalMultiplier) // 20k KEEP
+  const stakerInitialBalance1 = toBN(40e3).mul(tokenDecimalMultiplier) // 40k KEEP
+  const stakeAmount1 = toBN(16e3).mul(tokenDecimalMultiplier) // 16k KEEP
 
-  const stakeAmount2 = toBN(40e3).mul(tokenDecimalMultiplier) // 40k KEEP
-  const stakerInitialBalance2 = toBN(50e3).mul(tokenDecimalMultiplier) // 50k KEEP
+  const stakerInitialBalance2 = toBN(120e3).mul(tokenDecimalMultiplier) // 120k KEEP
+  const stakeAmount2 = toBN(112e3).mul(tokenDecimalMultiplier) // 112k KEEP
 
-  const rewardsAmount = toBN(900e3).mul(tokenDecimalMultiplier) // 900k KEEP
+  const rewardsAmount = toBN(100e3).mul(tokenDecimalMultiplier) // 100k KEEP
 
   let stakeToken
   let keepToken
@@ -205,10 +205,7 @@ describe("KeepTokenGeyser", async () => {
 
   describe("stake", async () => {
     it("should update balances", async () => {
-      await stakeToken.approve(tokenGeyser.address, stakeAmount1, {
-        from: staker1,
-      })
-      await tokenGeyser.stake(stakeAmount1, [], { from: staker1 })
+      await stake(staker1, stakeAmount1)
 
       expect(
         await stakeToken.balanceOf.call(staker1),
@@ -222,12 +219,7 @@ describe("KeepTokenGeyser", async () => {
     })
 
     it("should emit event", async () => {
-      await stakeToken.approve(tokenGeyser.address, stakeAmount1, {
-        from: staker1,
-      })
-      const receipt = await tokenGeyser.stake(stakeAmount1, [], {
-        from: staker1,
-      })
+      const receipt = await stake(staker1, stakeAmount1)
 
       expectEvent(receipt, "Staked", {
         user: staker1,
@@ -237,33 +229,26 @@ describe("KeepTokenGeyser", async () => {
     })
 
     it("allows stake top-ups", async () => {
-      await stakeToken.approve(
-        tokenGeyser.address,
-        stakeAmount1.add(stakeAmount2),
-        {
-          from: staker1,
-        }
-      )
-      await tokenGeyser.stake(stakeAmount1, [], { from: staker1 })
+      const topUpAmount = toBN(8e3).mul(tokenDecimalMultiplier) // 8k KEEP
+
+      await stake(staker1, stakeAmount1)
 
       expect(
         await tokenGeyser.totalStakedFor(staker1),
         "invalid staker's staked balance"
       ).to.eq.BN(stakeAmount1)
 
-      const receipt = await tokenGeyser.stake(stakeAmount2, [], {
-        from: staker1,
-      })
+      const receipt = await stake(staker1, topUpAmount)
 
       expect(
         await tokenGeyser.totalStakedFor(staker1),
         "invalid staker's staked balance"
-      ).to.eq.BN(stakeAmount1.add(stakeAmount2))
+      ).to.eq.BN(stakeAmount1.add(topUpAmount))
 
       expectEvent(receipt, "Staked", {
         user: staker1,
-        amount: stakeAmount2,
-        total: stakeAmount1.add(stakeAmount2),
+        amount: topUpAmount,
+        total: stakeAmount1.add(topUpAmount),
       })
     })
   })
@@ -302,88 +287,77 @@ describe("KeepTokenGeyser", async () => {
   })
 
   describe("unstake", async () => {
-    it("should calculate rewards", async () => {
-      const stakeAmount1 = toBN(20e3).mul(tokenDecimalMultiplier) // 20k KEEP
-      const stakeAmount2 = toBN(40e3).mul(tokenDecimalMultiplier) // 40k KEEP
-      const rewardsAmount = toBN(900e3).mul(tokenDecimalMultiplier) // 900k KEEP
+    it("should calculate rewards for two stakers", async () => {
+      const expectedRewards1 = toBN(125e2).mul(tokenDecimalMultiplier) // (16k / (16k + 112k)) * 100k = 12.5k KEEP
+      const expectedRewards2 = toBN(875e2).mul(tokenDecimalMultiplier) // (112k / (16k + 112k)) * 100k = 87.5k KEEP
 
-      const expectedRewards1 = toBN(300e3).mul(tokenDecimalMultiplier) // 300k KEEP
-      const expectedRewards2 = toBN(600e3).mul(tokenDecimalMultiplier) // 600k KEEP
+      await stake(staker1, stakeAmount1)
+      await stake(staker2, stakeAmount2)
 
-      await stakeTokenApprove(staker1, tokenGeyser.address, stakeAmount1)
-      await stakeTokenApprove(staker2, tokenGeyser.address, stakeAmount2)
-      await keepTokenApprove(
-        rewardDistribution,
-        tokenGeyser.address,
-        rewardsAmount
-      )
+      const lockTimestamp1 = await lockTokens(rewardsAmount, durationSec)
 
-      await tokenGeyser.stake(stakeAmount1, [], { from: staker1 })
-      await tokenGeyser.stake(stakeAmount2, [], { from: staker2 })
+      // End first interval.
+      await time.increaseTo(lockTimestamp1.add(durationSec))
 
-      const lockTokensTX = await tokenGeyser.lockTokens(
-        rewardsAmount,
-        durationSec,
-        {
-          from: rewardDistribution,
-        }
-      )
-
-      const initTimestamp = new BN(
-        (await web3.eth.getBlock(lockTokensTX.blockNumber)).timestamp
-      )
-
-      await time.increase(initTimestamp.add(durationSec))
-
-      const rewards1 = await tokenGeyser.unstakeQuery.call(stakeAmount1, {
-        from: staker1,
-      })
-      const rewards2 = await tokenGeyser.unstakeQuery.call(stakeAmount2, {
-        from: staker2,
-      })
-
-      expectCloseTo(
-        rewards1,
+      await checkRewards(
+        staker1,
+        stakeAmount1,
         expectedRewards1,
         "invalid calculated staker's 1 rewards"
       )
-      expectCloseTo(
-        rewards2,
+      await checkRewards(
+        staker2,
+        stakeAmount2,
         expectedRewards2,
         "invalid calculated staker's 2 rewards"
       )
     })
 
+    it("should calculate rewards in bonus period", async () => {
+      // Here we estimate rewards taking into account bonus period.
+      // With an assumption that bonus starts at 30% and goes to 100% over a bonus
+      // period, we will check rewards in the middle of the bonus period.
+      // In the middle of the bonus period rewards factor would be at 65%, hence
+      // this is calculation of the expected rewards:
+      //  staker 1: [(16k / (16k + 112k)) * 100k] * 50% * 65% = 4062.5k KEEP
+      //  staker 2: [(112k / (16k + 112k)) * 100k] * 50% * 65% = 28437.5k KEEP
+      const expectedRewards1 = toBN(40625).mul(tokenDecimalMultiplier).divn(10)
+      const expectedRewards2 = toBN(284375).mul(tokenDecimalMultiplier).divn(10)
+
+      await stake(staker1, stakeAmount1)
+      await stake(staker2, stakeAmount2)
+
+      const initTimestamp = await lockTokens(rewardsAmount, durationSec)
+
+      // Pass the time to the middle of the bonus period.
+      const passedPeriod = bonusPeriodSec.divn(2)
+      await time.increaseTo(initTimestamp.add(passedPeriod))
+
+      await checkRewards(
+        staker1,
+        stakeAmount1,
+        expectedRewards1,
+        `invalid calculated rewards for staker 1`
+      )
+      await checkRewards(
+        staker2,
+        stakeAmount2,
+        expectedRewards2,
+        `invalid calculated rewards for staker 2`
+      )
+    })
+
     it("should withdraw stake and rewards", async () => {
-      const rewardsAmount = toBN(900e3).mul(tokenDecimalMultiplier) // 900k KEEP
+      const expectedRewards1 = toBN(125e2).mul(tokenDecimalMultiplier) // (16k / (16k + 112k)) * 100k = 12.5k KEEP
+      const expectedRewards2 = toBN(875e2).mul(tokenDecimalMultiplier) // (112k / (16k + 112k)) * 100k = 87.5k KEEP
 
-      const expectedRewards1 = toBN(300e3).mul(tokenDecimalMultiplier) // (20k / (20k + 40k)) * 900k = 300k KEEP
-      const expectedRewards2 = toBN(600e3).mul(tokenDecimalMultiplier) // (40k / (20k + 40k)) * 900k = 600k KEEP
+      await stake(staker1, stakeAmount1)
+      await stake(staker2, stakeAmount2)
 
-      await stakeTokenApprove(staker1, tokenGeyser.address, stakeAmount1)
-      await stakeTokenApprove(staker2, tokenGeyser.address, stakeAmount2)
-      await keepTokenApprove(
-        rewardDistribution,
-        tokenGeyser.address,
-        rewardsAmount
-      )
+      const lockTimestamp1 = await lockTokens(rewardsAmount, durationSec)
 
-      await tokenGeyser.stake(stakeAmount1, [], { from: staker1 })
-      await tokenGeyser.stake(stakeAmount2, [], { from: staker2 })
-
-      const lockTokensTX = await tokenGeyser.lockTokens(
-        rewardsAmount,
-        durationSec,
-        {
-          from: rewardDistribution,
-        }
-      )
-
-      const initTimestamp = new BN(
-        (await web3.eth.getBlock(lockTokensTX.blockNumber)).timestamp
-      )
-
-      await time.increase(initTimestamp.add(durationSec))
+      // End first interval.
+      await time.increaseTo(lockTimestamp1.add(durationSec))
 
       await tokenGeyser.unstake(stakeAmount1, [], {
         from: staker1,
@@ -403,32 +377,59 @@ describe("KeepTokenGeyser", async () => {
       ).to.eq.BN(stakerInitialBalance2)
 
       // Validate stakers' distribution token balances.
-      expectCloseTo(
+      expect(
         await keepToken.balanceOf.call(staker1),
-        expectedRewards1,
         "invalid staker's 1 rewards token balance"
-      )
-      expectCloseTo(
+      ).to.eq.BN(expectedRewards1)
+      expect(
         await keepToken.balanceOf.call(staker2),
-        expectedRewards2,
         "invalid staker's 2 rewards token balance"
-      )
+      ).to.eq.BN(expectedRewards2)
     })
+
+    async function checkRewards(staker, stakeAmount, expectedRewards, message) {
+      const actualRewards = await tokenGeyser.unstakeQuery.call(stakeAmount, {
+        from: staker,
+      })
+
+      expectCloseTo(actualRewards, expectedRewards, message)
+    }
   })
 
-  async function keepTokenApprove(from, to, amount) {
-    await keepToken.approve(to, amount, { from: from })
+  async function lockTokens(amount, durationSec) {
+    await keepToken.approve(tokenGeyser.address, amount, {
+      from: rewardDistribution,
+    })
+
+    const { receipt } = await tokenGeyser.lockTokens(amount, durationSec, {
+      from: rewardDistribution,
+    })
+
+    const timestamp = toBN(
+      (await web3.eth.getBlock(receipt.blockNumber)).timestamp
+    )
+
+    return timestamp
   }
-  async function stakeTokenApprove(from, to, amount) {
-    await stakeToken.approve(to, amount, { from: from })
+
+  async function stake(staker, amount) {
+    await stakeToken.approve(tokenGeyser.address, amount, { from: staker })
+
+    return await tokenGeyser.stake(amount, [], { from: staker })
   }
 
   function expectCloseTo(actual, expected, message) {
-    const delta = tokenDecimalMultiplier
+    actualBN = toBN(actual)
+    expectedBN = toBN(expected)
 
-    if (actual.lt(expected.sub(delta)) || actual.gt(expected.add(delta))) {
+    const delta = actualBN.muln(1).divn(100) // approx. 1%
+
+    if (
+      actualBN.lt(expectedBN.sub(delta)) ||
+      actualBN.gt(expectedBN.add(delta))
+    ) {
       expect.fail(
-        `${message}\nexpected : ${expected.toString()}\nactual   : ${actual.toString()}`
+        `${message}\nexpected : ${expectedBN.toString()}\nactual   : ${actualBN.toString()}`
       )
     }
   }
