@@ -35,6 +35,18 @@ class LiquidityRewards {
     return this.LPRewardsContract.options.address
   }
 
+  get rewardClaimedEventName() {
+    return "RewardPaid"
+  }
+
+  get depositWithdrawnEventName() {
+    return "Withdrawn"
+  }
+
+  get stakedEventName() {
+    return "Staked"
+  }
+
   wrappedTokenBalance = async (address) => {
     return await this.wrappedToken.methods.balanceOf(address).call()
   }
@@ -195,6 +207,14 @@ class SaddleLPRewards extends LiquidityRewards {
 class TokenGeyserLPRewards extends LiquidityRewards {
   static async _getWrappedTokenAddress(LPRewardsContract) {
     return await LPRewardsContract.methods.token().call()
+  }
+
+  get rewardClaimedEventName() {
+    return "TokensClaimed"
+  }
+
+  get depositWithdrawnEventName() {
+    return "Unstaked"
   }
 
   stakedBalance = async (address) => {

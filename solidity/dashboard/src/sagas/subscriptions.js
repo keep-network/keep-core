@@ -612,7 +612,7 @@ function* observeLiquidityTokenStakedEvent(liquidityRewardPair) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.LPRewardsContract,
-    "Staked"
+    LiquidityRewards.stakedEventName
   )
 
   while (true) {
@@ -640,7 +640,7 @@ function* observeLiquidityTokenWithdrawnEvent(liquidityRewardPair) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.LPRewardsContract,
-    "Withdrawn"
+    LiquidityRewards.depositWithdrawnEventName
   )
 
   while (true) {
@@ -712,7 +712,7 @@ function* observeLiquidityRewardPaidEvent(liquidityRewardPair) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.LPRewardsContract,
-    "RewardPaid"
+    LiquidityRewards.rewardClaimedEventName
   )
 
   while (true) {
