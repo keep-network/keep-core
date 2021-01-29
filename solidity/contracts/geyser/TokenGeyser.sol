@@ -1,7 +1,11 @@
 /**
  This code is copied from:
  https://github.com/ampleforth/token-geyser/tree/d8352f62a0432494c39416d090e68582e13b2b22/contracts
- */
+ with some modifications:
+  - updated pragma to reflect the one used by the project,
+  - aligned functions ordering to meet project's linting requirements,
+  - defined a separate role for rewards tokens locking.
+*/
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
