@@ -13,10 +13,9 @@ contract DelegatedAuthorityStub {
         return _contract == recognizedContract;
     }
 
-    function claimAuthorityRecursively(
-        address stakingContract,
-        address source
-    ) public {
+    function claimAuthorityRecursively(address stakingContract, address source)
+        public
+    {
         TokenStaking(stakingContract).claimDelegatedAuthority(source);
     }
 }

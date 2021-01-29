@@ -1,54 +1,63 @@
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require('../helpers/initContracts')
-const {createSnapshot, restoreSnapshot} = require('../helpers/snapshot');
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
-const {grantTokens, grantTokensToManagedGrant} = require('../helpers/grantTokens');
 const {
-    delegateStake,
-    delegateStakeFromGrant,
-    delegateStakeFromManagedGrant,
-  } = require('../helpers/delegateStake')
+  grantTokens,
+  grantTokensToManagedGrant,
+} = require("../helpers/grantTokens")
+const {
+  delegateStake,
+  delegateStakeFromGrant,
+  delegateStakeFromManagedGrant,
+} = require("../helpers/delegateStake")
 
-const KeepToken = contract.fromArtifact('KeepToken')
-const KeepRegistry = contract.fromArtifact('KeepRegistry')
-const TokenGrant = contract.fromArtifact('TokenGrant')
-const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
-const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory')
-const ManagedGrant = contract.fromArtifact('ManagedGrant')
+const KeepToken = contract.fromArtifact("KeepToken")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const TokenGrant = contract.fromArtifact("TokenGrant")
+const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy")
+const ManagedGrantFactory = contract.fromArtifact("ManagedGrantFactory")
+const ManagedGrant = contract.fromArtifact("ManagedGrant")
 
 const BN = web3.utils.BN
-const chai = require('chai')
-chai.use(require('bn-chai')(BN))
+const chai = require("chai")
+chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-describe('TokenStaking/TopUps', () => {
+describe("TokenStaking/TopUps", () => {
+  const deployer = accounts[0]
+  const grantManager = accounts[1]
+  const grantee = accounts[2]
+  const managedGrantee = accounts[3]
+  const tokenOwner = accounts[4]
+  const operatorOne = accounts[5]
+  const operatorTwo = accounts[6]
+  const operatorThree = accounts[7]
+  const operatorFour = accounts[8]
+  const beneficiary = accounts[9]
+  const authorizer = accounts[10]
+  const thirdParty = accounts[11]
+  const operatorContract = accounts[12]
 
-  const deployer = accounts[0],
-    grantManager = accounts[1],
-    grantee = accounts[2],
-    managedGrantee = accounts[3],
-    tokenOwner = accounts[4],
-    operatorOne = accounts[5],
-    operatorTwo = accounts[6],
-    operatorThree = accounts[7],
-    operatorFour = accounts[8],
-    beneficiary = accounts[9],
-    authorizer = accounts[10],
-    thirdParty = accounts[11],
-    operatorContract = accounts[12]
+  const initializationPeriod = time.duration.days(10)
+  const grantStart = time.duration.seconds(0)
+  const grantUnlockingDuration = time.duration.years(100)
+  const grantCliff = time.duration.seconds(0)
+  const grantRevocable = true
 
-  const initializationPeriod = time.duration.days(10),
-    grantStart = time.duration.seconds(0),
-    grantUnlockingDuration = time.duration.years(100),
-    grantCliff = time.duration.seconds(0),
-    grantRevocable = true
+  let undelegationPeriod
 
-  let undelegationPeriod;
+  let token
+  let tokenGrant
+  let tokenStakingEscrow
+  let tokenStaking
 
-  let token, tokenGrant, tokenStakingEscrow, tokenStaking
-
-  let grantId, grant2Id, managedGrant, grantedAmount, delegatedAmount
+  let grantId
+  let grant2Id
+  let managedGrant
+  let grantedAmount
+  let delegatedAmount
 
   before(async () => {
     //
@@ -56,31 +65,31 @@ describe('TokenStaking/TopUps', () => {
     // Transfer 50% of all tokens to grant manager and 50% of tokens
     // to token owner (account delegating liquid tokens in tests).
     //
-    token = await KeepToken.new({from: deployer})
+    token = await KeepToken.new({ from: deployer })
     const allTokens = await token.balanceOf(deployer)
-    await token.transfer(grantManager, allTokens.divn(2), {from: deployer})
-    await token.transfer(tokenOwner, allTokens.divn(2), {from: deployer})
+    await token.transfer(grantManager, allTokens.divn(2), { from: deployer })
+    await token.transfer(tokenOwner, allTokens.divn(2), { from: deployer })
 
     //
     // Deploy TokenGrant, ManagedGrantFactory, KeepRegistry, TokenStaking,
-    // and TokenStakingEscrow. 
+    // and TokenStakingEscrow.
     // Authorize TokenStaking contract in TokenGrant contract.
     //
-    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+    tokenGrant = await TokenGrant.new(token.address, { from: deployer })
     const permissivePolicy = await PermissiveStakingPolicy.new()
     const managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      {from: deployer}
-    ) 
-    const registry = await KeepRegistry.new({from: deployer})
+      { from: deployer }
+    )
+    const registry = await KeepRegistry.new({ from: deployer })
     const stakingContracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      contract.fromArtifact('TokenStakingEscrow'),
-      contract.fromArtifact('TokenStaking')
+      contract.fromArtifact("TokenStakingEscrow"),
+      contract.fromArtifact("TokenStaking")
     )
     tokenStaking = stakingContracts.tokenStaking
     tokenStakingEscrow = stakingContracts.tokenStakingEscrow
@@ -93,18 +102,18 @@ describe('TokenStaking/TopUps', () => {
     //
     // Create three grants:
     // - two separate grants goes to grantee,
-    // - one grant goes to managed grantee. 
-    // 
-    const minimumStake = await tokenStaking.minimumStake();
-    grantedAmount = minimumStake.muln(40);
-    delegatedAmount = minimumStake.muln(10);
+    // - one grant goes to managed grantee.
+    //
+    const minimumStake = await tokenStaking.minimumStake()
+    grantedAmount = minimumStake.muln(40)
+    delegatedAmount = minimumStake.muln(10)
 
     grantId = await grantTokens(
-      tokenGrant, 
-      token, 
-      grantedAmount, 
-      grantManager, 
-      grantee, 
+      tokenGrant,
+      token,
+      grantedAmount,
+      grantManager,
+      grantee,
       grantUnlockingDuration,
       grantStart,
       grantCliff,
@@ -112,11 +121,11 @@ describe('TokenStaking/TopUps', () => {
       permissivePolicy.address
     )
     grant2Id = await grantTokens(
-      tokenGrant, 
-      token, 
-      grantedAmount, 
-      grantManager, 
-      grantee, 
+      tokenGrant,
+      token,
+      grantedAmount,
+      grantManager,
+      grantee,
       grantUnlockingDuration,
       grantStart,
       grantCliff,
@@ -133,7 +142,7 @@ describe('TokenStaking/TopUps', () => {
       grantStart,
       grantCliff,
       false,
-      permissivePolicy.address,
+      permissivePolicy.address
     )
     managedGrant = await ManagedGrant.at(managedGrantAddress)
 
@@ -145,8 +154,8 @@ describe('TokenStaking/TopUps', () => {
     // - operatorThree receives delegation from granted tokens of managed grantee.
     //
     await delegateStake(
-      token, 
-      tokenStaking, 
+      token,
+      tokenStaking,
       tokenOwner,
       operatorOne,
       beneficiary,
@@ -171,30 +180,27 @@ describe('TokenStaking/TopUps', () => {
       beneficiary,
       authorizer,
       delegatedAmount
-    ) 
+    )
 
     //
     // Approve operator contract in the registry, authorize operator contract
     // for all three operators.
     //
-    await registry.approveOperatorContract(
-      operatorContract,
-      {from: deployer}
-    )
+    await registry.approveOperatorContract(operatorContract, { from: deployer })
     await tokenStaking.authorizeOperatorContract(
       operatorOne,
       operatorContract,
-      {from: authorizer}
+      { from: authorizer }
     )
     await tokenStaking.authorizeOperatorContract(
       operatorTwo,
       operatorContract,
-      {from: authorizer}
+      { from: authorizer }
     )
     await tokenStaking.authorizeOperatorContract(
       operatorThree,
       operatorContract,
-      {from: authorizer}
+      { from: authorizer }
     )
   })
 
@@ -209,40 +215,44 @@ describe('TokenStaking/TopUps', () => {
   describe("delegated liquid tokens top-ups", async () => {
     async function initiateTopUp(value) {
       return delegateStake(
-        token, tokenStaking, tokenOwner, operatorOne,
-        beneficiary, authorizer, value
+        token,
+        tokenStaking,
+        tokenOwner,
+        operatorOne,
+        beneficiary,
+        authorizer,
+        value
       )
     }
 
     it("can not be done when stake is undelegating", async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorOne, {from: tokenOwner})
+      await tokenStaking.undelegate(operatorOne, { from: tokenOwner })
       time.increase(1) // we need the block timestamp to increase
-      await expectRevert(
-        initiateTopUp(delegatedAmount),
-        "Stake undelegated"
-      ) 
+      await expectRevert(initiateTopUp(delegatedAmount), "Stake undelegated")
     })
 
     it("can not be done when stake is recovered", async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorOne, {from: tokenOwner})
+      await tokenStaking.undelegate(operatorOne, { from: tokenOwner })
       await time.increase(undelegationPeriod.addn(1))
       await tokenStaking.recoverStake(operatorOne)
       time.increase(1) // we need the block timestamp to increase
-      await expectRevert(
-        initiateTopUp(delegatedAmount),
-        "Stake undelegated"
-      )
+      await expectRevert(initiateTopUp(delegatedAmount), "Stake undelegated")
     })
 
     it("can not be done by another token owner", async () => {
-      await token.transfer(thirdParty, delegatedAmount, {from: tokenOwner})
+      await token.transfer(thirdParty, delegatedAmount, { from: tokenOwner })
       await time.increase(initializationPeriod.addn(1))
       await expectRevert(
         delegateStake(
-          token, tokenStaking, thirdParty, operatorOne,
-          beneficiary, authorizer, delegatedAmount
+          token,
+          tokenStaking,
+          thirdParty,
+          operatorOne,
+          beneficiary,
+          authorizer,
+          delegatedAmount
         ),
         "Not the same owner"
       )
@@ -262,7 +272,7 @@ describe('TokenStaking/TopUps', () => {
           grantId
         ),
         "Must not be from a grant"
-      )   
+      )
     })
 
     it("can be done in one step during initialization period", async () => {
@@ -283,7 +293,7 @@ describe('TokenStaking/TopUps', () => {
 
       // We are still in the initialization period, top-up is done in one step
       // and there is nothing to commit.
-      await initiateTopUp(delegatedAmount) 
+      await initiateTopUp(delegatedAmount)
       await expectRevert(
         tokenStaking.commitTopUp(operatorOne),
         "No top up to commit"
@@ -310,7 +320,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp(delegatedAmount)
       await time.increase(initializationPeriod)
 
-      let currentStake = await tokenStaking.activeStake(
+      const currentStake = await tokenStaking.activeStake(
         operatorOne,
         operatorContract
       )
@@ -344,11 +354,11 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp(delegatedAmount)
       await time.increase(initializationPeriod.addn(1))
       await tokenStaking.commitTopUp(operatorOne)
-      await tokenStaking.undelegate(operatorOne, {from: tokenOwner})
+      await tokenStaking.undelegate(operatorOne, { from: tokenOwner })
       await time.increase(undelegationPeriod.addn(1))
 
-      const before = await token.balanceOf(tokenOwner) 
-      await tokenStaking.recoverStake(operatorOne, {from: tokenOwner})
+      const before = await token.balanceOf(tokenOwner)
+      await tokenStaking.recoverStake(operatorOne, { from: tokenOwner })
       const after = await token.balanceOf(tokenOwner)
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
@@ -357,11 +367,11 @@ describe('TokenStaking/TopUps', () => {
     it("returns uncommitted top-ups to owner after recovering stake", async () => {
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(delegatedAmount)
-      await tokenStaking.undelegate(operatorOne, {from: tokenOwner})
+      await tokenStaking.undelegate(operatorOne, { from: tokenOwner })
       await time.increase(undelegationPeriod.addn(1))
 
-      const before = await token.balanceOf(tokenOwner) 
-      await tokenStaking.recoverStake(operatorOne, {from: tokenOwner})
+      const before = await token.balanceOf(tokenOwner)
+      await tokenStaking.recoverStake(operatorOne, { from: tokenOwner })
       const after = await token.balanceOf(tokenOwner)
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
@@ -374,14 +384,14 @@ describe('TokenStaking/TopUps', () => {
         "No top up to commit"
       )
     })
-    
+
     it("can be done multiple times", async () => {
       // The first top-up.
       // Half of the initialization period passed, top-up should  be processed
       // immediately but also reset the initialization period.
       await time.increase(initializationPeriod.divn(2))
       await initiateTopUp(delegatedAmount)
-    
+
       await time.increase(initializationPeriod.addn(1))
       let currentStake = await tokenStaking.activeStake(
         operatorOne,
@@ -400,7 +410,6 @@ describe('TokenStaking/TopUps', () => {
         operatorContract
       )
       expect(currentStake).to.eq.BN(delegatedAmount.muln(3))
-
 
       // And yet one top-up...
       await initiateTopUp(delegatedAmount)
@@ -441,29 +450,23 @@ describe('TokenStaking/TopUps', () => {
         authorizer,
         value,
         grantId
-      ) 
+      )
     }
 
     it("can not be done when stake is undelegated", async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorTwo, {from: grantee})
+      await tokenStaking.undelegate(operatorTwo, { from: grantee })
       time.increase(1) // we need the block timestamp to increase
-      await expectRevert(
-        initiateTopUp(delegatedAmount),
-        "Stake undelegated"
-      )
+      await expectRevert(initiateTopUp(delegatedAmount), "Stake undelegated")
     })
 
     it("can not be done when stake is recovered", async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorTwo, {from: grantee})
+      await tokenStaking.undelegate(operatorTwo, { from: grantee })
       await time.increase(undelegationPeriod.addn(1))
       await tokenStaking.recoverStake(operatorTwo)
       time.increase(1) // we need the block timestamp to increase
-      await expectRevert(
-        initiateTopUp(delegatedAmount),
-        "Stake undelegated"
-      )
+      await expectRevert(initiateTopUp(delegatedAmount), "Stake undelegated")
     })
 
     it("can not be done from another grant", async () => {
@@ -471,24 +474,35 @@ describe('TokenStaking/TopUps', () => {
 
       await expectRevert(
         delegateStakeFromGrant(
-          tokenGrant, tokenStaking.address, grantee, operatorTwo,
-          beneficiary, authorizer, delegatedAmount, grant2Id
+          tokenGrant,
+          tokenStaking.address,
+          grantee,
+          operatorTwo,
+          beneficiary,
+          authorizer,
+          delegatedAmount,
+          grant2Id
         ),
         "Not the same grant"
-      ) 
+      )
     })
 
     it("can not be done from liquid tokens", async () => {
       await time.increase(initializationPeriod.addn(1))
 
-      await token.transfer(grantee, grantedAmount, {from: grantManager})
+      await token.transfer(grantee, grantedAmount, { from: grantManager })
       await expectRevert(
         delegateStake(
-          token, tokenStaking, grantee, operatorTwo,
-          beneficiary, authorizer, delegatedAmount
+          token,
+          tokenStaking,
+          grantee,
+          operatorTwo,
+          beneficiary,
+          authorizer,
+          delegatedAmount
         ),
         "Must be from a grant"
-      );
+      )
     })
 
     it("can be done in one step during initialization period", async () => {
@@ -523,7 +537,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp(delegatedAmount)
       await time.increase(initializationPeriod)
 
-      let currentStake = await tokenStaking.activeStake(
+      const currentStake = await tokenStaking.activeStake(
         operatorTwo,
         operatorContract
       )
@@ -557,27 +571,27 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp(delegatedAmount)
       await time.increase(initializationPeriod.addn(1))
       await tokenStaking.commitTopUp(operatorTwo)
-      await tokenStaking.undelegate(operatorTwo, {from: grantee})
+      await tokenStaking.undelegate(operatorTwo, { from: grantee })
       await time.increase(undelegationPeriod.addn(1))
 
       const before = await tokenStakingEscrow.depositedAmount(operatorTwo)
-      await tokenStaking.recoverStake(operatorTwo, {from: grantee})
+      await tokenStaking.recoverStake(operatorTwo, { from: grantee })
       const after = await tokenStakingEscrow.depositedAmount(operatorTwo)
 
-      expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))  
+      expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
     })
 
     it("returns uncommitted top-ups to escrow after recovering stake", async () => {
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(delegatedAmount)
-      await tokenStaking.undelegate(operatorTwo, {from: grantee})
+      await tokenStaking.undelegate(operatorTwo, { from: grantee })
       await time.increase(undelegationPeriod.addn(1))
 
       const before = await tokenStakingEscrow.depositedAmount(operatorTwo)
-      await tokenStaking.recoverStake(operatorTwo, {from: grantee})
+      await tokenStaking.recoverStake(operatorTwo, { from: grantee })
       const after = await tokenStakingEscrow.depositedAmount(operatorTwo)
 
-      expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))  
+      expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
     })
 
     it("fails to commit if not first initialized", async () => {
@@ -587,14 +601,14 @@ describe('TokenStaking/TopUps', () => {
         "No top up to commit"
       )
     })
-    
+
     it("can be done multiple times", async () => {
       // The first top-up.
       // Half of the initialization period passed, top-up should  be processed
       // immediately but also reset the initialization period.
       await time.increase(initializationPeriod.divn(2))
       await initiateTopUp(delegatedAmount)
-    
+
       await time.increase(initializationPeriod.addn(1))
       let currentStake = await tokenStaking.activeStake(
         operatorTwo,
@@ -613,7 +627,6 @@ describe('TokenStaking/TopUps', () => {
         operatorContract
       )
       expect(currentStake).to.eq.BN(delegatedAmount.muln(3))
-
 
       // And yet one top-up...
       await initiateTopUp(delegatedAmount)
@@ -653,29 +666,23 @@ describe('TokenStaking/TopUps', () => {
         beneficiary,
         authorizer,
         value
-      ) 
+      )
     }
 
     it("can not be done when stake is undelegating", async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorThree, { from: managedGrantee })
       time.increase(1) // we need the block timestamp to increase
-      await expectRevert(
-        initiateTopUp(delegatedAmount),
-        "Stake undelegated"
-      )
+      await expectRevert(initiateTopUp(delegatedAmount), "Stake undelegated")
     })
 
     it("can not be done when stake is recovered", async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorThree, { from: managedGrantee })
       await time.increase(undelegationPeriod.addn(1))
       await tokenStaking.recoverStake(operatorThree)
       time.increase(1) // we need the block timestamp to increase
-      await expectRevert(
-        initiateTopUp(delegatedAmount),
-        "Stake undelegated"
-      )
+      await expectRevert(initiateTopUp(delegatedAmount), "Stake undelegated")
     })
 
     it("can not be done from another grant", async () => {
@@ -683,24 +690,37 @@ describe('TokenStaking/TopUps', () => {
 
       await expectRevert(
         delegateStakeFromGrant(
-          tokenGrant, tokenStaking.address, grantee, operatorThree,
-          beneficiary, authorizer, delegatedAmount, grantId
+          tokenGrant,
+          tokenStaking.address,
+          grantee,
+          operatorThree,
+          beneficiary,
+          authorizer,
+          delegatedAmount,
+          grantId
         ),
         "Not the same grant"
-      )   
+      )
     })
 
     it("can not be done from liquid tokens", async () => {
       await time.increase(initializationPeriod.addn(1))
 
-      await token.transfer(managedGrantee, grantedAmount, {from: grantManager})
+      await token.transfer(managedGrantee, grantedAmount, {
+        from: grantManager,
+      })
       await expectRevert(
         delegateStake(
-          token, tokenStaking, managedGrantee, operatorTwo,
-          beneficiary, authorizer, delegatedAmount
+          token,
+          tokenStaking,
+          managedGrantee,
+          operatorTwo,
+          beneficiary,
+          authorizer,
+          delegatedAmount
         ),
         "Must be from a grant"
-      );
+      )
     })
 
     it("can be done in one step during initialization period", async () => {
@@ -735,7 +755,7 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp(delegatedAmount)
       await time.increase(initializationPeriod)
 
-      let currentStake = await tokenStaking.activeStake(
+      const currentStake = await tokenStaking.activeStake(
         operatorThree,
         operatorContract
       )
@@ -769,24 +789,24 @@ describe('TokenStaking/TopUps', () => {
       await initiateTopUp(delegatedAmount)
       await time.increase(initializationPeriod.addn(1))
       await tokenStaking.commitTopUp(operatorThree)
-      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorThree, { from: managedGrantee })
       await time.increase(undelegationPeriod.addn(1))
 
       const before = await tokenStakingEscrow.depositedAmount(operatorThree)
-      await tokenStaking.recoverStake(operatorThree, {from: managedGrantee})
+      await tokenStaking.recoverStake(operatorThree, { from: managedGrantee })
       const after = await tokenStakingEscrow.depositedAmount(operatorThree)
 
-      expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))  
+      expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
     })
 
     it("returns uncommitted top-ups to escrow after recovering stake", async () => {
       await time.increase(initializationPeriod.addn(1))
       await initiateTopUp(delegatedAmount)
-      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorThree, { from: managedGrantee })
       await time.increase(undelegationPeriod.addn(1))
 
       const before = await tokenStakingEscrow.depositedAmount(operatorThree)
-      await tokenStaking.recoverStake(operatorThree, {from: managedGrantee})
+      await tokenStaking.recoverStake(operatorThree, { from: managedGrantee })
       const after = await tokenStakingEscrow.depositedAmount(operatorThree)
 
       expect(after.sub(before)).to.eq.BN(delegatedAmount.muln(2))
@@ -799,14 +819,14 @@ describe('TokenStaking/TopUps', () => {
         "No top up to commit"
       )
     })
-    
+
     it("can be done multiple times", async () => {
       // The first top-up.
       // Half of the initialization period passed, top-up should  be processed
       // immediately but also reset the initialization period.
       await time.increase(initializationPeriod.divn(2))
       await initiateTopUp(delegatedAmount)
-    
+
       await time.increase(initializationPeriod.addn(1))
       let currentStake = await tokenStaking.activeStake(
         operatorThree,
@@ -825,7 +845,6 @@ describe('TokenStaking/TopUps', () => {
         operatorContract
       )
       expect(currentStake).to.eq.BN(delegatedAmount.muln(3))
-
 
       // And yet one top-up...
       await initiateTopUp(delegatedAmount)
@@ -858,8 +877,8 @@ describe('TokenStaking/TopUps', () => {
   describe("escrow redelegation top-ups", async () => {
     beforeEach(async () => {
       await time.increase(initializationPeriod.addn(1))
-      await tokenStaking.undelegate(operatorTwo, {from: grantee})
-      await tokenStaking.undelegate(operatorThree, {from: managedGrantee})
+      await tokenStaking.undelegate(operatorTwo, { from: grantee })
+      await tokenStaking.undelegate(operatorThree, { from: managedGrantee })
       await time.increase(undelegationPeriod.addn(1))
       await tokenStaking.recoverStake(operatorTwo)
       await tokenStaking.recoverStake(operatorThree)
@@ -882,20 +901,20 @@ describe('TokenStaking/TopUps', () => {
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
 
       const data = Buffer.concat([
-        Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operatorFour.substr(2), 'hex'),
-        Buffer.from(authorizer.substr(2), 'hex')
+        Buffer.from(beneficiary.substr(2), "hex"),
+        Buffer.from(operatorFour.substr(2), "hex"),
+        Buffer.from(authorizer.substr(2), "hex"),
       ])
-      await tokenStakingEscrow.redelegate(
-        operatorTwo, delegatedAmount, data, {from: grantee}
-      )
+      await tokenStakingEscrow.redelegate(operatorTwo, delegatedAmount, data, {
+        from: grantee,
+      })
 
       await time.increase(initializationPeriod.addn(1))
       delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
-  
-      await tokenStaking.commitTopUp(operatorFour, {from: grantee})
-        
+
+      await tokenStaking.commitTopUp(operatorFour, { from: grantee })
+
       delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
     })
@@ -909,27 +928,30 @@ describe('TokenStaking/TopUps', () => {
         beneficiary,
         authorizer,
         delegatedAmount
-      ) 
+      )
       await time.increase(initializationPeriod.addn(1))
 
       let delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
 
       const data = Buffer.concat([
-        Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operatorFour.substr(2), 'hex'),
-        Buffer.from(authorizer.substr(2), 'hex')
+        Buffer.from(beneficiary.substr(2), "hex"),
+        Buffer.from(operatorFour.substr(2), "hex"),
+        Buffer.from(authorizer.substr(2), "hex"),
       ])
       await tokenStakingEscrow.redelegate(
-        operatorThree, delegatedAmount, data, {from: managedGrantee}
+        operatorThree,
+        delegatedAmount,
+        data,
+        { from: managedGrantee }
       )
 
       await time.increase(initializationPeriod.addn(1))
       delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount)
-  
-      await tokenStaking.commitTopUp(operatorFour, {from: managedGrantee})
-        
+
+      await tokenStaking.commitTopUp(operatorFour, { from: managedGrantee })
+
       delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount.muln(2))
     })
@@ -953,19 +975,19 @@ describe('TokenStaking/TopUps', () => {
 
       const topUpAmount = (await tokenStaking.minimumStake()).subn(1)
       const data = Buffer.concat([
-        Buffer.from(beneficiary.substr(2), 'hex'),
-        Buffer.from(operatorFour.substr(2), 'hex'),
-        Buffer.from(authorizer.substr(2), 'hex')
+        Buffer.from(beneficiary.substr(2), "hex"),
+        Buffer.from(operatorFour.substr(2), "hex"),
+        Buffer.from(authorizer.substr(2), "hex"),
       ])
-      await tokenStakingEscrow.redelegate(
-        operatorTwo, topUpAmount, data, {from: grantee}
-      )
+      await tokenStakingEscrow.redelegate(operatorTwo, topUpAmount, data, {
+        from: grantee,
+      })
 
-      await time.increase(initializationPeriod.addn(1))  
-      await tokenStaking.commitTopUp(operatorFour, {from: grantee})
-        
+      await time.increase(initializationPeriod.addn(1))
+      await tokenStaking.commitTopUp(operatorFour, { from: grantee })
+
       delegationInfo = await tokenStaking.getDelegationInfo(operatorFour)
       expect(delegationInfo.amount).to.eq.BN(delegatedAmount.add(topUpAmount))
     })
   })
-}) 
+})

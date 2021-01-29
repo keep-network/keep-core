@@ -12,11 +12,21 @@ contract TokenStakingSlashingStub is TokenStaking {
         TokenStakingEscrow _escrow,
         KeepRegistry _registry,
         uint256 _initializationPeriod
-    ) TokenStaking(_token, _tokenGrant, _escrow, _registry, _initializationPeriod) public {
-    }
+    )
+        public
+        TokenStaking(
+            _token,
+            _tokenGrant,
+            _escrow,
+            _registry,
+            _initializationPeriod
+        )
+    {}
 
-    function slash(uint256 amountToSlash, address[] memory misbehavedOperators) public {
-        for (uint i = 0; i < misbehavedOperators.length; i++) {
+    function slash(uint256 amountToSlash, address[] memory misbehavedOperators)
+        public
+    {
+        for (uint256 i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             emit TokensSlashed(operator, 1 ether);
         }
@@ -28,7 +38,7 @@ contract TokenStakingSlashingStub is TokenStaking {
         address tattletale,
         address[] memory misbehavedOperators
     ) public {
-        for (uint i = 0; i < misbehavedOperators.length; i++) {
+        for (uint256 i = 0; i < misbehavedOperators.length; i++) {
             address operator = misbehavedOperators[i];
             emit TokensSeized(operator, 1 ether);
         }

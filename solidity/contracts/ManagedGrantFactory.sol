@@ -31,15 +31,9 @@ contract ManagedGrantFactory {
         address policy;
     }
 
-    event ManagedGrantCreated(
-        address grantAddress,
-        address indexed grantee
-    );
+    event ManagedGrantCreated(address grantAddress, address indexed grantee);
 
-    constructor(
-        address _tokenAddress,
-        address _tokenGrant
-    ) public {
+    constructor(address _tokenAddress, address _tokenGrant) public {
         token = KeepToken(_tokenAddress);
         tokenGrant = TokenGrant(_tokenGrant);
     }
@@ -67,25 +61,29 @@ contract ManagedGrantFactory {
         bytes memory _extraData
     ) public {
         require(KeepToken(_token) == token, "Invalid token contract");
-        (address _grantee,
-         uint256 _duration,
-         uint256 _start,
-         uint256 _cliffDuration,
-         bool _revocable,
-         address _policy) = abi.decode(
-             _extraData,
-             (address, uint256, uint256, uint256, bool, address)
-        );
-        Params memory params = Params(
-            _from,
-            _grantee,
-            _amount,
-            _duration,
-            _start,
-            _cliffDuration,
-            _revocable,
-            _policy
-        );
+        (
+            address _grantee,
+            uint256 _duration,
+            uint256 _start,
+            uint256 _cliffDuration,
+            bool _revocable,
+            address _policy
+        ) =
+            abi.decode(
+                _extraData,
+                (address, uint256, uint256, uint256, bool, address)
+            );
+        Params memory params =
+            Params(
+                _from,
+                _grantee,
+                _amount,
+                _duration,
+                _start,
+                _cliffDuration,
+                _revocable,
+                _policy
+            );
         _createGrant(params);
     }
 
@@ -112,62 +110,63 @@ contract ManagedGrantFactory {
         bool revocable,
         address policy
     ) public returns (address _managedGrant) {
-        Params memory params = Params(
-            msg.sender,
-            grantee,
-            amount,
-            duration,
-            start,
-            cliffDuration,
-            revocable,
-            policy
-        );
+        Params memory params =
+            Params(
+                msg.sender,
+                grantee,
+                amount,
+                duration,
+                start,
+                cliffDuration,
+                revocable,
+                policy
+            );
         return _createGrant(params);
     }
 
-    function _createGrant(
-        Params memory params
-    ) internal returns (address _managedGrant) {
+    function _createGrant(Params memory params)
+        internal
+        returns (address _managedGrant)
+    {
         require(params.grantee != address(0), "Grantee address can't be zero.");
         require(
             params.cliffDuration <= params.duration,
             "Unlocking cliff duration must be less or equal total unlocking duration."
         );
 
-        token.safeTransferFrom(params.grantCreator, address(this), params.amount);
+        token.safeTransferFrom(
+            params.grantCreator,
+            address(this),
+            params.amount
+        );
 
         // Grant ID is predictable in advance
         uint256 grantId = tokenGrant.numGrants();
 
-        ManagedGrant managedGrant = new ManagedGrant(
-            address(token),
-            address(tokenGrant),
-            params.grantCreator,
-            grantId,
-            params.grantee
-        );
+        ManagedGrant managedGrant =
+            new ManagedGrant(
+                address(token),
+                address(tokenGrant),
+                params.grantCreator,
+                grantId,
+                params.grantee
+            );
         _managedGrant = address(managedGrant);
 
-        bytes memory grantData = abi.encode(
-            params.grantCreator,
-            _managedGrant,
-            params.duration,
-            params.start,
-            params.cliffDuration,
-            params.revocable,
-            params.policy
-        );
+        bytes memory grantData =
+            abi.encode(
+                params.grantCreator,
+                _managedGrant,
+                params.duration,
+                params.start,
+                params.cliffDuration,
+                params.revocable,
+                params.policy
+            );
 
-        token.approveAndCall(
-            address(tokenGrant),
-            params.amount,
-            grantData
-        );
+        token.approveAndCall(address(tokenGrant), params.amount, grantData);
 
-        emit ManagedGrantCreated(
-            _managedGrant,
-            params.grantee
-        );
+        emit ManagedGrantCreated(_managedGrant, params.grantee);
         return _managedGrant;
     }
 }

@@ -19,7 +19,8 @@ library MinimumStakeSchedule {
     /// of the shedule start and eventually ends at 10k KEEP.
     function current(uint256 scheduleStart) internal view returns (uint256) {
         if (now < scheduleStart.add(schedule)) {
-            uint256 currentStep = steps.mul(now.sub(scheduleStart)).div(schedule);
+            uint256 currentStep =
+                steps.mul(now.sub(scheduleStart)).div(schedule);
             return base.mul(steps.sub(currentStep));
         }
         return base;

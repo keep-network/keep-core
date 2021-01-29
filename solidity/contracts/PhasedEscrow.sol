@@ -27,22 +27,13 @@ contract PhasedEscrow is Ownable {
         token = _token;
     }
 
-    /// @notice Funds the escrow by transferring all of the approved tokens
-    ///         to the escrow.
-    function receiveApproval(
-        address _from,
-        uint256 _value,
-        address _token,
-        bytes memory
-    ) public {
-        require(IERC20(_token) == token, "Unsupported token");
-        token.safeTransferFrom(_from, address(this), _value);
-    }
-
     /// @notice Sets the provided address as a beneficiary allowing it to
     ///         withdraw all tokens from escrow. This function can be called only
     ///         by escrow owner.
-    function setBeneficiary(IBeneficiaryContract _beneficiary) external onlyOwner {
+    function setBeneficiary(IBeneficiaryContract _beneficiary)
+        external
+        onlyOwner
+    {
         beneficiary = _beneficiary;
         emit BeneficiaryUpdated(address(beneficiary));
     }
@@ -60,6 +51,18 @@ contract PhasedEscrow is Ownable {
         emit TokensWithdrawn(address(beneficiary), amount);
 
         beneficiary.__escrowSentTokens(amount);
+    }
+
+    /// @notice Funds the escrow by transferring all of the approved tokens
+    ///         to the escrow.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        require(IERC20(_token) == token, "Unsupported token");
+        token.safeTransferFrom(_from, address(this), _value);
     }
 
     /// @notice Withdraws all funds from a non-phased Escrow passed as
@@ -98,12 +101,13 @@ contract BatchedPhasedEscrow is Ownable {
 
     /// @notice Approves the provided address as a beneficiary of tokens held by
     ///         the escrow. Can be called only by escrow owner.
-    function approveBeneficiary(
-        IBeneficiaryContract _beneficiary
-    ) external onlyOwner {
+    function approveBeneficiary(IBeneficiaryContract _beneficiary)
+        external
+        onlyOwner
+    {
         address beneficiaryAddress = address(_beneficiary);
         require(
-            beneficiaryAddress != address(0), 
+            beneficiaryAddress != address(0),
             "Beneficiary can not be zero address"
         );
         approvedBeneficiaries[beneficiaryAddress] = true;
@@ -112,9 +116,11 @@ contract BatchedPhasedEscrow is Ownable {
 
     /// @notice Returns `true` if the given address has been approved as a
     ///         beneficiary of the escrow, `false` otherwise.
-    function isBeneficiaryApproved(
-        IBeneficiaryContract _beneficiary
-    ) public view returns (bool) {
+    function isBeneficiaryApproved(IBeneficiaryContract _beneficiary)
+        public
+        view
+        returns (bool)
+    {
         return approvedBeneficiaries[address(_beneficiary)];
     }
 
@@ -160,7 +166,10 @@ contract BatchedPhasedEscrow is Ownable {
             withdraw(beneficiary, amounts[i]);
         }
     }
-    function withdraw(IBeneficiaryContract beneficiary, uint256 amount) private  {
+
+    function withdraw(IBeneficiaryContract beneficiary, uint256 amount)
+        private
+    {
         token.safeTransfer(address(beneficiary), amount);
         emit TokensWithdrawn(address(beneficiary), amount);
         beneficiary.__escrowSentTokens(amount);
@@ -171,9 +180,8 @@ contract BatchedPhasedEscrow is Ownable {
 // contract deployed for Keep (0xAF379f0228ad0d46bB7B4f38f9dc9bCC1ad0360c) or
 // LPRewards contract from keep-ecdsa repository deployed for Uniswap.
 interface IStakingPoolRewards {
-   function notifyRewardAmount(uint256 amount) external; 
+    function notifyRewardAmount(uint256 amount) external;
 }
-
 
 /// @title StakingPoolRewardsEscrowBeneficiary
 /// @notice A beneficiary contract that can receive a withdrawal phase from a
@@ -206,7 +214,7 @@ interface IStakerRewards {
 
 /// @title StakerRewardsBeneficiary
 /// @notice An abstract beneficiary contract that can receive a withdrawal phase
-///         from a PhasedEscrow contract. The received tokens are immediately 
+///         from a PhasedEscrow contract. The received tokens are immediately
 ///         funded for a designated rewards escrow beneficiary contract.
 contract StakerRewardsBeneficiary is Ownable {
     IERC20 public token;
@@ -220,7 +228,7 @@ contract StakerRewardsBeneficiary is Ownable {
     function __escrowSentTokens(uint256 amount) external onlyOwner {
         bool success = token.approve(address(stakerRewards), amount);
         require(success, "Token transfer approval failed");
-        
+
         stakerRewards.receiveApproval(
             address(this),
             amount,

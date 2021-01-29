@@ -13,14 +13,11 @@ library DKGResultVerification {
         // Time in blocks after which DKG result is complete and ready to be
         // published by clients.
         uint256 timeDKG;
-
         // Time in blocks after which the next group member is eligible
         // to submit DKG result.
         uint256 resultPublicationBlockStep;
-
         // Size of a group in the threshold relay.
         uint256 groupSize;
-
         // The minimum number of signatures required to support DKG result.
         // This number needs to be at least the same as the signing threshold
         // and it is recommended to make it higher than the signing threshold
@@ -62,9 +59,12 @@ library DKGResultVerification {
             "Unexpected submitter index"
         );
 
-        uint T_init = groupSelectionEndBlock + self.timeDKG;
+        uint256 T_init = groupSelectionEndBlock + self.timeDKG;
         require(
-            block.number >= (T_init + (submitterMemberIndex-1) * self.resultPublicationBlockStep),
+            block.number >=
+                (T_init +
+                    (submitterMemberIndex - 1) *
+                    self.resultPublicationBlockStep),
             "Submitter not eligible"
         );
 
@@ -78,27 +78,41 @@ library DKGResultVerification {
         uint256 signaturesCount = signatures.length / 65;
         require(signatures.length >= 65, "Too short signatures array");
         require(signatures.length % 65 == 0, "Malformed signatures array");
-        require(signaturesCount == signingMemberIndices.length, "Unexpected signatures count");
-        require(signaturesCount >= self.signatureThreshold, "Too few signatures");
+        require(
+            signaturesCount == signingMemberIndices.length,
+            "Unexpected signatures count"
+        );
+        require(
+            signaturesCount >= self.signatureThreshold,
+            "Too few signatures"
+        );
         require(signaturesCount <= self.groupSize, "Too many signatures");
 
-        bytes32 resultHash = keccak256(abi.encodePacked(groupPubKey, misbehaved));
+        bytes32 resultHash =
+            keccak256(abi.encodePacked(groupPubKey, misbehaved));
 
         bytes memory current; // Current signature to be checked.
 
         bool[] memory usedMemberIndices = new bool[](self.groupSize);
 
-        for(uint i = 0; i < signaturesCount; i++){
+        for (uint256 i = 0; i < signaturesCount; i++) {
             uint256 memberIndex = signingMemberIndices[i];
             require(memberIndex > 0, "Invalid index");
             require(memberIndex <= members.length, "Index out of range");
 
-            require(!usedMemberIndices[memberIndex - 1], "Duplicate member index");
+            require(
+                !usedMemberIndices[memberIndex - 1],
+                "Duplicate member index"
+            );
             usedMemberIndices[memberIndex - 1] = true;
 
-            current = signatures.slice(65*i, 65);
-            address recoveredAddress = resultHash.toEthSignedMessageHash().recover(current);
-            require(members[memberIndex - 1] == recoveredAddress, "Invalid signature");
+            current = signatures.slice(65 * i, 65);
+            address recoveredAddress =
+                resultHash.toEthSignedMessageHash().recover(current);
+            require(
+                members[memberIndex - 1] == recoveredAddress,
+                "Invalid signature"
+            );
         }
     }
 }

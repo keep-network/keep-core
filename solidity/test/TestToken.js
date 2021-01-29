@@ -1,41 +1,47 @@
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const KeepToken = contract.fromArtifact('KeepToken');
-var assert = require('chai').assert
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const KeepToken = contract.fromArtifact("KeepToken")
+const assert = require("chai").assert
 
-describe('TestToken', function() {
-
-  let token,
-    account_one = accounts[0],
-    account_two = accounts[1];
+describe("TestToken", function () {
+  let token
+  const accountOne = accounts[0]
+  const accountTwo = accounts[1]
 
   before(async () => {
-    token = await KeepToken.new({ from: account_one });
-  });
+    token = await KeepToken.new({ from: accountOne })
+  })
 
   it("sets token details", async function () {
-    await token.name.call();
+    await token.name.call()
 
-    assert.equal(await token.name.call(), "KEEP Token", "unexpected token name");
-    assert.equal(await token.symbol.call(), "KEEP", "unexpected token symbol");
-    assert.equal(await token.decimals.call(), 18, "unexpected decimals");
-  });
+    assert.equal(await token.name.call(), "KEEP Token", "unexpected token name")
+    assert.equal(await token.symbol.call(), "KEEP", "unexpected token symbol")
+    assert.equal(await token.decimals.call(), 18, "unexpected decimals")
+  })
 
-  it("should send tokens correctly", async function() {
-    let amount = web3.utils.toBN(1000000000);
+  it("should send tokens correctly", async function () {
+    const amount = web3.utils.toBN(1000000000)
 
     // Starting balances
-    let account_one_starting_balance = await token.balanceOf.call(account_one);
-    let account_two_starting_balance = await token.balanceOf.call(account_two);
+    const accountOneStartingBalance = await token.balanceOf.call(accountOne)
+    const accountTwoStartingBalance = await token.balanceOf.call(accountTwo)
 
     // Send tokens
-    await token.transfer(account_two, amount, {from: account_one});
+    await token.transfer(accountTwo, amount, { from: accountOne })
 
     // Ending balances
-    let account_one_ending_balance = await token.balanceOf.call(account_one);
-    let account_two_ending_balance = await token.balanceOf.call(account_two);
+    const accountOneEndingBalance = await token.balanceOf.call(accountOne)
+    const accountTwoEndingBalance = await token.balanceOf.call(accountTwo)
 
-    assert.equal(account_one_ending_balance.eq(account_one_starting_balance.sub(amount)), true, "Amount wasn't correctly taken from the sender");
-    assert.equal(account_two_ending_balance.eq(account_two_starting_balance.add(amount)), true, "Amount wasn't correctly sent to the receiver");
-
-  });
-});
+    assert.equal(
+      accountOneEndingBalance.eq(accountOneStartingBalance.sub(amount)),
+      true,
+      "Amount wasn't correctly taken from the sender"
+    )
+    assert.equal(
+      accountTwoEndingBalance.eq(accountTwoStartingBalance.add(amount)),
+      true,
+      "Amount wasn't correctly sent to the receiver"
+    )
+  })
+})
