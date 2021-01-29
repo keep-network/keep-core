@@ -24,7 +24,7 @@ import "./TokenStaking.sol";
 ///
 /// The amount of KEEP to be distributed is determined by funding the contract,
 /// and additional KEEP can be added at any time.
-/// 
+///
 /// When an interval is over, it will be allocated a percentage of the remaining
 /// unallocated rewards based on its weight, and adjusted by the number of groups
 /// created in the interval if the quota is not met.
@@ -50,15 +50,33 @@ import "./TokenStaking.sol";
 /// Reporting a terminated group returns its allocated reward to the pool of
 /// unallocated rewards.
 contract BeaconRewards is Rewards {
-
-
     // Weights of the 24 reward intervals assigned over
     // 24 * beaconTermLength days.
     uint256[] internal beaconIntervalWeights = [
-        4, 8, 10, 12, 15, 15,
-        15, 15, 15, 15, 15, 15,
-        15, 15, 15, 15, 15, 15,
-        15, 15, 15, 15, 15, 15
+        4,
+        8,
+        10,
+        12,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15,
+        15
     ];
 
     // Beacon genesis date, 2020-09-24, is the first interval start.
@@ -72,21 +90,23 @@ contract BeaconRewards is Rewards {
     // and distribute the full reward for the given interval.
     uint256 internal constant minimumBeaconGroupsPerInterval = 2;
 
-
     KeepRandomBeaconOperator operatorContract;
     TokenStaking tokenStaking;
 
-    constructor (
+    constructor(
         address _token,
         address _operatorContract,
         address _stakingContract
-    ) public Rewards(
-        _token,
-        beaconFirstIntervalStart,
-        beaconIntervalWeights,
-        beaconTermLength,
-        minimumBeaconGroupsPerInterval
-    ) {
+    )
+        public
+        Rewards(
+            _token,
+            beaconFirstIntervalStart,
+            beaconIntervalWeights,
+            beaconTermLength,
+            minimumBeaconGroupsPerInterval
+        )
+    {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
         tokenStaking = TokenStaking(_stakingContract);
     }
@@ -153,37 +173,53 @@ contract BeaconRewards is Rewards {
         return bytes32(i);
     }
 
-    function _getCreationTime(bytes32 groupIndexBytes) internal view returns (uint256) {
-        return operatorContract.getGroupRegistrationTime(uint256(groupIndexBytes));
+    function _getCreationTime(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (uint256)
+    {
+        return
+            operatorContract.getGroupRegistrationTime(uint256(groupIndexBytes));
     }
 
     function _isClosed(bytes32 groupIndexBytes) internal view returns (bool) {
-        if (_isTerminated(groupIndexBytes)) { return false; }
-        bytes memory groupPubkey = operatorContract.getGroupPublicKey(
-            uint256(groupIndexBytes)
-        );
+        if (_isTerminated(groupIndexBytes)) {
+            return false;
+        }
+        bytes memory groupPubkey =
+            operatorContract.getGroupPublicKey(uint256(groupIndexBytes));
         return operatorContract.isStaleGroup(groupPubkey);
     }
 
-    function _isTerminated(bytes32 groupIndexBytes) internal view returns (bool) {
+    function _isTerminated(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (bool)
+    {
         return operatorContract.isGroupTerminated(uint256(groupIndexBytes));
     }
 
-    function _recognizedByFactory(bytes32 groupIndexBytes) internal view returns (bool) {
+    function _recognizedByFactory(bytes32 groupIndexBytes)
+        internal
+        view
+        returns (bool)
+    {
         return _getKeepCount() > uint256(groupIndexBytes);
     }
 
-    function _distributeReward(bytes32 groupIndexBytes, uint256 _value) internal {
-        bytes memory groupPubkey = operatorContract.getGroupPublicKey(
-            uint256(groupIndexBytes)
-        );
-        address[] memory members = operatorContract.getGroupMembers(groupPubkey);
+    function _distributeReward(bytes32 groupIndexBytes, uint256 _value)
+        internal
+    {
+        bytes memory groupPubkey =
+            operatorContract.getGroupPublicKey(uint256(groupIndexBytes));
+        address[] memory members =
+            operatorContract.getGroupMembers(groupPubkey);
 
         uint256 memberCount = members.length;
         uint256 dividend = _value.div(memberCount);
 
         // Only pay other members if dividend is nonzero.
-        if(dividend > 0) {
+        if (dividend > 0) {
             for (uint256 i = 0; i < memberCount - 1; i++) {
                 token.safeTransfer(
                     tokenStaking.beneficiaryOf(members[i]),

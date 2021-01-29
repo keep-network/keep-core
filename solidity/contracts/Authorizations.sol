@@ -33,7 +33,9 @@ import "./KeepRegistry.sol";
 /// an operator contract receiving delegated authority
 /// can recognize other operator contracts as recipients of its authority.
 interface AuthorityDelegator {
-    function __isRecognized(address delegatedAuthorityRecipient) external returns (bool);
+    function __isRecognized(address delegatedAuthorityRecipient)
+        external
+        returns (bool);
 }
 
 /// @title AuthorityVerifier
@@ -52,7 +54,7 @@ interface AuthorityVerifier {
 
 contract Authorizations is AuthorityVerifier {
     // Authorized operator contracts.
-    mapping(address => mapping (address => bool)) internal authorizations;
+    mapping(address => mapping(address => bool)) internal authorizations;
 
     // Granters of delegated authority to operator contracts.
     // E.g. keep factories granting delegated authority to keeps.
@@ -85,9 +87,10 @@ contract Authorizations is AuthorityVerifier {
     /// Instead, authorize `getAuthoritySource(_operatorContract)`.
     /// @param _operator address of stake operator.
     /// @param _operatorContract address of operator contract.
-    function authorizeOperatorContract(address _operator, address _operatorContract)
-        public
-        onlyApprovedOperatorContract(_operatorContract) {
+    function authorizeOperatorContract(
+        address _operator,
+        address _operatorContract
+    ) public onlyApprovedOperatorContract(_operatorContract) {
         require(
             authorizerOf(_operator) == msg.sender,
             "Not operator authorizer"
@@ -117,11 +120,14 @@ contract Authorizations is AuthorityVerifier {
     /// on operators that have authorized the `delegatedAuthoritySource`.
     /// If the `delegatedAuthoritySource` is disabled with the panic button,
     /// any recipients of delegated authority from it will also be disabled.
-    function claimDelegatedAuthority(
-        address delegatedAuthoritySource
-    ) public onlyApprovedOperatorContract(delegatedAuthoritySource) {
+    function claimDelegatedAuthority(address delegatedAuthoritySource)
+        public
+        onlyApprovedOperatorContract(delegatedAuthoritySource)
+    {
         require(
-            AuthorityDelegator(delegatedAuthoritySource).__isRecognized(msg.sender),
+            AuthorityDelegator(delegatedAuthoritySource).__isRecognized(
+                msg.sender
+            ),
             "Unrecognized claimant"
         );
         delegatedAuthority[msg.sender] = delegatedAuthoritySource;
@@ -151,9 +157,11 @@ contract Authorizations is AuthorityVerifier {
     /// returns the contract itself.
     /// Authorize `getAuthoritySource(operatorContract)`
     /// to grant `operatorContract` the authority to penalize an operator.
-    function getAuthoritySource(
-        address operatorContract
-    ) public view returns (address) {
+    function getAuthoritySource(address operatorContract)
+        public
+        view
+        returns (address)
+    {
         address delegatedAuthoritySource = delegatedAuthority[operatorContract];
         if (delegatedAuthoritySource == address(0)) {
             return operatorContract;

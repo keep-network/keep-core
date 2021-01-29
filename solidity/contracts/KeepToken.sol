@@ -3,9 +3,15 @@ pragma solidity 0.5.17;
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol";
 import "openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol";
 
-
 /// @dev Interface of recipient contract for approveAndCall pattern.
-interface tokenRecipient { function receiveApproval(address _from, uint256 _value, address _token, bytes calldata _extraData) external; }
+interface tokenRecipient {
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes calldata _extraData
+    ) external;
+}
 
 /// @title KEEP Token
 /// @dev Standard ERC20Burnable token
@@ -26,12 +32,20 @@ contract KeepToken is ERC20Burnable, ERC20Detailed {
     /// @param _spender The address authorized to spend.
     /// @param _value The max amount they can spend.
     /// @param _extraData Extra information to send to the approved contract.
-    function approveAndCall(address _spender, uint256 _value, bytes memory _extraData) public returns (bool success) {
+    function approveAndCall(
+        address _spender,
+        uint256 _value,
+        bytes memory _extraData
+    ) public returns (bool success) {
         tokenRecipient spender = tokenRecipient(_spender);
         if (approve(_spender, _value)) {
-            spender.receiveApproval(msg.sender, _value, address(this), _extraData);
+            spender.receiveApproval(
+                msg.sender,
+                _value,
+                address(this),
+                _extraData
+            );
             return true;
         }
     }
-
 }

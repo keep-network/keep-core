@@ -2,14 +2,14 @@ pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconServiceImplV1.sol";
 
-
 /**
  * @title KeepRandomBeaconServiceUpgradeExample
  * @dev Example version of a new implementation contract to test upgradability
  * under Keep Random Beacon proxy.
  */
-contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 {
-
+contract KeepRandomBeaconServiceUpgradeExample is
+    KeepRandomBeaconServiceImplV1
+{
     uint256 internal _newVar;
 
     constructor() public {
@@ -22,10 +22,7 @@ contract KeepRandomBeaconServiceUpgradeExample is KeepRandomBeaconServiceImplV1 
      * >Functions can be overridden by another function with the same name and the
      * same number/types of inputs.
      */
-    function initialize(
-        uint256 dkgContributionMargin,
-        address registry
-    )
+    function initialize(uint256 dkgContributionMargin, address registry)
         public
     {
         require(!initialized(), "Contract is already initialized.");

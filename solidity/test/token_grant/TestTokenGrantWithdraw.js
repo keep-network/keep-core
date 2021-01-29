@@ -1,73 +1,82 @@
-const { delegateStakeFromGrant } = require('../helpers/delegateStake')
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {expectRevert, time} = require("@openzeppelin/test-helpers")
-const {initTokenStaking} = require('../helpers/initContracts')
-const {grantTokens} = require('../helpers/grantTokens');
-const { createSnapshot, restoreSnapshot } = require('../helpers/snapshot');
+const { delegateStakeFromGrant } = require("../helpers/delegateStake")
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { expectRevert, time } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("../helpers/initContracts")
+const { grantTokens } = require("../helpers/grantTokens")
+const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
 
 const BN = web3.utils.BN
-const chai = require('chai')
-chai.use(require('bn-chai')(BN))
+const chai = require("chai")
+chai.use(require("bn-chai")(BN))
 const expect = chai.expect
 
-const KeepToken = contract.fromArtifact('KeepToken');
-const TokenGrant = contract.fromArtifact('TokenGrant');
-const KeepRegistry = contract.fromArtifact("KeepRegistry");
-const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy');
+const KeepToken = contract.fromArtifact("KeepToken")
+const TokenGrant = contract.fromArtifact("TokenGrant")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy")
 
-describe('TokenGrant/Withdraw', function() {
+describe("TokenGrant/Withdraw", function () {
+  let tokenContract
+  let registryContract
+  let grantContract
+  let stakingContract
+  let permissivePolicy
 
-  let tokenContract, registryContract, grantContract, stakingContract, permissivePolicy;
+  const tokenOwner = accounts[0]
+  const grantee = accounts[1]
+  const operatorOne = accounts[2]
+  const beneficiary = accounts[4]
+  const authorizer = accounts[5]
 
-  const tokenOwner = accounts[0],
-    grantee = accounts[1],
-    operatorOne = accounts[2],
-    beneficiary = accounts[4],
-    authorizer = accounts[5];
+  let grantId
+  let grantStart
+  let grantAmount
 
-  let grantId, grantStart, grantAmount;
+  const grantRevocable = false
+  const grantDuration = time.duration.seconds(60)
+  const grantCliff = time.duration.seconds(1)
 
-  const grantRevocable = false;
-  const grantDuration = time.duration.seconds(60);
-  const grantCliff = time.duration.seconds(1);
-    
-  const initializationPeriod = time.duration.seconds(10);
+  const initializationPeriod = time.duration.seconds(10)
 
   before(async () => {
-    tokenContract = await KeepToken.new({from: accounts[0]});
-    grantContract = await TokenGrant.new(tokenContract.address, {from: accounts[0]});
-    registryContract = await KeepRegistry.new({from: accounts[0]});
+    tokenContract = await KeepToken.new({ from: accounts[0] })
+    grantContract = await TokenGrant.new(tokenContract.address, {
+      from: accounts[0],
+    })
+    registryContract = await KeepRegistry.new({ from: accounts[0] })
     const stakingContracts = await initTokenStaking(
       tokenContract.address,
       grantContract.address,
-      registryContract.address, 
+      registryContract.address,
       initializationPeriod,
-      contract.fromArtifact('TokenStakingEscrow'),
-      contract.fromArtifact('TokenStaking')
+      contract.fromArtifact("TokenStakingEscrow"),
+      contract.fromArtifact("TokenStaking")
     )
     stakingContract = stakingContracts.tokenStaking
-    await grantContract.authorizeStakingContract(stakingContract.address, {from: accounts[0]});
+    await grantContract.authorizeStakingContract(stakingContract.address, {
+      from: accounts[0],
+    })
 
-    grantAmount = (await stakingContract.minimumStake()).muln(10);
+    grantAmount = (await stakingContract.minimumStake()).muln(10)
 
     permissivePolicy = await PermissiveStakingPolicy.new()
 
-    grantStart = await time.latest();
+    grantStart = await time.latest()
 
     grantId = await grantTokens(
-      grantContract, 
+      grantContract,
       tokenContract,
       grantAmount,
-      tokenOwner, 
-      grantee, 
-      grantDuration, 
-      grantStart, 
-      grantCliff, 
+      tokenOwner,
+      grantee,
+      grantDuration,
+      grantStart,
+      grantCliff,
       grantRevocable,
       permissivePolicy.address,
-      {from: accounts[0]}
-    );
-  });
+      { from: accounts[0] }
+    )
+  })
 
   beforeEach(async () => {
     await createSnapshot()
@@ -87,16 +96,15 @@ describe('TokenGrant/Withdraw', function() {
 
     const granteeTokenBalance = await tokenContract.balanceOf(grantee)
     const grantDetails = await grantContract.getGrant(grantId)
-    
-    expect(withdrawable).to.be.gt.BN(
-      0,
-      "Should allow to withdraw more than 0"
-    )
+
+    expect(withdrawable).to.be.gt.BN(0, "Should allow to withdraw more than 0")
     expect(granteeTokenBalance).to.eq.BN(
       grantDetails.withdrawn,
       "Grantee KEEP token balance should be equal to the grant withdrawn amount"
     )
-    expect(granteeTokenGrantBalancePre.sub(granteeTokenGrantBalancePost)).to.eq.BN(
+    expect(
+      granteeTokenGrantBalancePre.sub(granteeTokenGrantBalancePost)
+    ).to.eq.BN(
       grantDetails.withdrawn,
       "Grantee token grant balance should be updated"
     )
@@ -138,16 +146,15 @@ describe('TokenGrant/Withdraw', function() {
 
   it("should not allow to withdraw delegated tokens", async () => {
     await time.increaseTo(grantStart.add(grantDuration))
-    const withdrawable = await grantContract.withdrawable(grantId)
     await delegateStakeFromGrant(
-        grantContract,
-        stakingContract.address,
-        grantee,
-        operatorOne,
-        beneficiary,
-        authorizer,
-        grantAmount,
-        grantId
+      grantContract,
+      stakingContract.address,
+      grantee,
+      operatorOne,
+      beneficiary,
+      authorizer,
+      grantAmount,
+      grantId
     )
     const withdrawableAfterStake = await grantContract.withdrawable(grantId)
 
@@ -160,4 +167,4 @@ describe('TokenGrant/Withdraw', function() {
       "The withdrawable amount should be equal to 0"
     )
   })
-});
+})

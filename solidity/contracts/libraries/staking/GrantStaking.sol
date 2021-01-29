@@ -24,7 +24,7 @@ library GrantStaking {
         /// @dev Do not read or write this mapping directly; please use
         /// `hasGrantDelegated`, `setGrantForOperator`, and `getGrantForOperator`
         /// instead.
-        mapping (address => uint256) _operatorToGrant;
+        mapping(address => uint256) _operatorToGrant;
     }
 
     /// @notice Tries to capture delegation data if the pending delegation has
@@ -51,7 +51,10 @@ library GrantStaking {
         bytes memory extraData
     ) public returns (bool, uint256) {
         if (from == escrow) {
-            require(extraData.length == 92, "Corrupted delegation data from escrow");
+            require(
+                extraData.length == 92,
+                "Corrupted delegation data from escrow"
+            );
             uint256 grantId = extraData.toUint(60);
             setGrantForOperator(self, operator, grantId);
             return (true, grantId);
@@ -73,13 +76,16 @@ library GrantStaking {
         TokenGrant tokenGrant,
         address operator
     ) internal returns (bool, uint256) {
-        (bool success, bytes memory data) = address(tokenGrant).call(
-            abi.encodeWithSignature("getGrantStakeDetails(address)", operator)
-        );
-        if (success) {
-            (uint256 grantId,,address grantStakingContract) = abi.decode(
-                data, (uint256, uint256, address)
+        (bool success, bytes memory data) =
+            address(tokenGrant).call(
+                abi.encodeWithSignature(
+                    "getGrantStakeDetails(address)",
+                    operator
+                )
             );
+        if (success) {
+            (uint256 grantId, , address grantStakingContract) =
+                abi.decode(data, (uint256, uint256, address));
             // Double-check if the delegation in TokenGrant has been defined
             // for this staking contract. If not, it means it's an old
             // delegation and the current one does not come from a grant.
@@ -105,10 +111,11 @@ library GrantStaking {
     /// from a grant. false is returned otherwise.
     /// @param operator The operator to which tokens from a grant are
     /// potentially delegated to.
-    function hasGrantDelegated(
-        Storage storage self,
-        address operator
-    ) public view returns (bool) {
+    function hasGrantDelegated(Storage storage self, address operator)
+        public
+        view
+        returns (bool)
+    {
         return self._operatorToGrant[operator] != 0;
     }
 
@@ -130,12 +137,13 @@ library GrantStaking {
     /// @dev To avoid reverting in case the grant ID for the operator does not
     /// exist, consider calling hasGrantDelegated before.
     /// @param operator The operator tokens are delegate to.
-    function getGrantForOperator(
-        Storage storage self,
-        address operator
-    ) public view returns (uint256) {
+    function getGrantForOperator(Storage storage self, address operator)
+        public
+        view
+        returns (uint256)
+    {
         uint256 grantId = self._operatorToGrant[operator];
-        require (grantId != 0, "No grant for the operator");
+        require(grantId != 0, "No grant for the operator");
         return grantId ^ GRANT_ID_FLAG;
     }
 
@@ -157,7 +165,8 @@ library GrantStaking {
         }
 
         uint256 grantId = getGrantForOperator(self, operator);
-        (,,,,uint256 revokedAt, address grantee) = tokenGrant.getGrant(grantId);
+        (, , , , uint256 revokedAt, address grantee) =
+            tokenGrant.getGrant(grantId);
 
         // Is msg.sender grantee of a standard grant?
         if (msg.sender == grantee) {
@@ -175,7 +184,8 @@ library GrantStaking {
         if (revokedAt == 0) {
             return false;
         }
-        (address grantManager,,,,) = tokenGrant.getGrantUnlockingSchedule(grantId);
+        (address grantManager, , , , ) =
+            tokenGrant.getGrantUnlockingSchedule(grantId);
         return msg.sender == grantManager;
     }
 }

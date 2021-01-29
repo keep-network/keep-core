@@ -1,14 +1,18 @@
 pragma solidity 0.5.17;
 
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
-import { AuthorityVerifier } from "../../Authorizations.sol";
+import {AuthorityVerifier} from "../../Authorizations.sol";
 import "./LockUtils.sol";
 
 library Locks {
     using SafeMath for uint256;
     using LockUtils for LockUtils.LockSet;
 
-    event StakeLocked(address indexed operator, address lockCreator, uint256 until);
+    event StakeLocked(
+        address indexed operator,
+        address lockCreator,
+        uint256 until
+    );
     event LockReleased(address indexed operator, address lockCreator);
     event ExpiredLockReleased(address indexed operator, address lockCreator);
 
@@ -34,10 +38,7 @@ library Locks {
         emit StakeLocked(operator, msg.sender, block.timestamp.add(duration));
     }
 
-    function releaseLock(
-        Storage storage self,
-        address operator
-    ) public {
+    function releaseLock(Storage storage self, address operator) public {
         self.operatorLocks[operator].releaseLock(msg.sender);
         emit LockReleased(operator, msg.sender);
     }
@@ -50,19 +51,15 @@ library Locks {
     ) public {
         LockUtils.LockSet storage locks = self.operatorLocks[operator];
 
-        require(
-            locks.contains(operatorContract),
-            "No matching lock present"
-        );
+        require(locks.contains(operatorContract), "No matching lock present");
 
         bool expired = block.timestamp >= locks.getLockTime(operatorContract);
-        bool disabled = !AuthorityVerifier(authorityVerifier)
-            .isApprovedOperatorContract(operatorContract);
+        bool disabled =
+            !AuthorityVerifier(authorityVerifier).isApprovedOperatorContract(
+                operatorContract
+            );
 
-        require(
-            expired || disabled,
-            "Lock still active and valid"
-        );
+        require(expired || disabled, "Lock still active and valid");
 
         locks.releaseLock(operatorContract);
 
@@ -79,7 +76,7 @@ library Locks {
     ) public view returns (bool) {
         LockUtils.Lock[] storage _locks = self.operatorLocks[operator].locks;
         LockUtils.Lock memory lock;
-        for (uint i = 0; i < _locks.length; i++) {
+        for (uint256 i = 0; i < _locks.length; i++) {
             lock = _locks[i];
             if (block.timestamp < lock.expiresAt) {
                 if (
@@ -104,18 +101,19 @@ library Locks {
         return block.timestamp >= locks.getLockTime(operatorContract);
     }
 
-    function getLocks(
-        Storage storage self,
-        address operator
-    ) public view returns (address[] memory creators, uint256[] memory expirations) {
+    function getLocks(Storage storage self, address operator)
+        public
+        view
+        returns (address[] memory creators, uint256[] memory expirations)
+    {
         uint256 lockCount = self.operatorLocks[operator].locks.length;
         creators = new address[](lockCount);
         expirations = new uint256[](lockCount);
         LockUtils.Lock memory lock;
-        for (uint i = 0; i < lockCount; i++) {
+        for (uint256 i = 0; i < lockCount; i++) {
             lock = self.operatorLocks[operator].locks[i];
             creators[i] = lock.creator;
             expirations[i] = lock.expiresAt;
         }
     }
-} 
+}

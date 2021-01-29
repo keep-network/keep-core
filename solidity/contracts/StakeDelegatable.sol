@@ -45,7 +45,11 @@ contract StakeDelegatable {
 
     /// @notice Gets the beneficiary for the specified operator address.
     /// @return Beneficiary address.
-    function beneficiaryOf(address _operator) public view returns (address payable) {
+    function beneficiaryOf(address _operator)
+        public
+        view
+        returns (address payable)
+    {
         return operators[_operator].beneficiary;
     }
 
