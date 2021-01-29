@@ -155,7 +155,7 @@ class SaddleLPRewards extends LiquidityRewards {
 
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
 
-    const rewardPoolPerWeek = 125000 // await this.rewardPoolPerWeek()
+    const rewardPoolPerWeek = await this.rewardPoolPerWeek()
 
     const lpRewardsPoolInUSD = totalSupplyOfLPRewards
       .multipliedBy(wrappedTokenPoolInUSD)
