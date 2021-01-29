@@ -16,7 +16,6 @@ export const APY = ({
   className = "",
 }) => {
   const formattedApy = useMemo(() => {
-    console.log("calling formatting APY to")
     const bn = new BigNumber(apy).multipliedBy(100)
     if (bn.isEqualTo(Infinity)) {
       return Infinity
