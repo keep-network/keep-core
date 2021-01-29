@@ -29,10 +29,10 @@ describe("KeepTokenGeyser", async () => {
   const beneficiary = accounts[5]
   const thirdParty = accounts[6]
 
-  const maxUnlockSchedules = toBN(12) // ????
-  const startBonus = toBN(30) //toBN(20) // 30% // ????
+  const maxUnlockSchedules = toBN(12)
+  const startBonus = toBN(30) // 30%
   const bonusPeriodSec = time.duration.weeks(4)
-  const initialSharesPerToken = toBN(1) // ????
+  const initialSharesPerToken = toBN(1)
   const durationSec = time.duration.weeks(4)
 
   const tokenDecimalMultiplier = toBN(10e18) // 18-decimal precision
