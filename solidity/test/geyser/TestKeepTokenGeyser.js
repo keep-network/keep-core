@@ -89,6 +89,8 @@ describe("KeepTokenGeyser", async () => {
   describe("lockTokens", async () => {
     describe("called via receiveApproval", async () => {
       it("should update balances", async () => {
+        const initialEscrowBalance = toBN(500e3).mul(tokenDecimalMultiplier) // 500k KEEP
+
         // Deploy Escrow.
         const escrow = await BatchedPhasedEscrow.new(keepToken.address, {
           from: contractOwner,
@@ -116,15 +118,16 @@ describe("KeepTokenGeyser", async () => {
         })
 
         // Transfer tokens to Escrow.
-        await keepToken.approveAndCall(escrow.address, rewardsAmount, [], {
-          from: contractOwner,
-        })
-
-        // Initiate withdraw.
-        const initialEscrowBalance = await keepToken.balanceOf.call(
-          escrow.address
+        await keepToken.approveAndCall(
+          escrow.address,
+          initialEscrowBalance,
+          [],
+          {
+            from: contractOwner,
+          }
         )
 
+        // Initiate withdraw.
         await escrow.batchedWithdraw(
           [escrowBeneficiary.address],
           [rewardsAmount],
