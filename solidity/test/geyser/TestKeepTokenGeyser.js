@@ -156,7 +156,8 @@ describe("KeepTokenGeyser", async () => {
             rewardDistribution,
             rewardsAmount,
             keepToken.address,
-            []
+            [],
+            { from: thirdParty }
           ),
           "Caller is not the reward distribution"
         )
@@ -187,7 +188,7 @@ describe("KeepTokenGeyser", async () => {
 
     it("reverts when called by non-owner", async () => {
       await expectRevert(
-        tokenGeyser.setDurationSec(newDurationSec),
+        tokenGeyser.setDurationSec(newDurationSec, { from: thirdParty }),
         "Ownable: caller is not the owner"
       )
     })

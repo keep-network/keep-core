@@ -17,6 +17,7 @@ const expect = chai.expect
 describe("TokenGeyser", async () => {
   const contractOwner = accounts[1]
   const rewardDistribution = accounts[2]
+  const newRewardDistribution = accounts[3]
   const thirdParty = accounts[6]
 
   const maxUnlockSchedules = toBN(12)
@@ -82,8 +83,6 @@ describe("TokenGeyser", async () => {
   })
 
   describe("setRewardDistribution", async () => {
-    const newRewardDistribution = thirdParty
-
     it("updates rewardDistribution", async () => {
       await tokenGeyser.setRewardDistribution(newRewardDistribution, {
         from: contractOwner,
@@ -96,7 +95,9 @@ describe("TokenGeyser", async () => {
 
     it("reverts when called by non-owner", async () => {
       await expectRevert(
-        tokenGeyser.setRewardDistribution(newRewardDistribution),
+        tokenGeyser.setRewardDistribution(newRewardDistribution, {
+          from: thirdParty,
+        }),
         "Ownable: caller is not the owner"
       )
     })
