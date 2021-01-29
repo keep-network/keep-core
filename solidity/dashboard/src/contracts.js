@@ -20,7 +20,9 @@ import ECDSARewardsDistributor from "@keep-network/keep-ecdsa/artifacts/ECDSARew
 import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPETH.json"
 import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
-import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCSaddle.json"
+import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
+// TODO: change import path
+import KeepOnlyPool from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "./contracts-artifacts/SaddleSwap.json"
 import Web3 from "web3"
@@ -44,6 +46,7 @@ import {
   LP_REWARDS_TBTC_ETH_CONTRACT_NAME,
   LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,
   LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME,
+  KEEP_TOKEN_GEYSER_CONTRACT_NAME,
 } from "./constants/constants"
 
 export const CONTRACT_DEPLOY_BLOCK_NUMBER = {
@@ -123,6 +126,10 @@ const contracts = {
   },
   [LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME]: {
     artifact: LPRewardsTBTCSaddle,
+    withDeployBlock: true,
+  },
+  [KEEP_TOKEN_GEYSER_CONTRACT_NAME]: {
+    artifact: KeepOnlyPool,
     withDeployBlock: true,
   },
 }

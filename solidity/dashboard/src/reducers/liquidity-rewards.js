@@ -16,6 +16,7 @@ const initialState = {
   KEEP_ETH: { ...liquidityPairInitialData },
   TBTC_ETH: { ...liquidityPairInitialData },
   KEEP_TBTC: { ...liquidityPairInitialData },
+  KEEP: { ...liquidityPairInitialData },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
