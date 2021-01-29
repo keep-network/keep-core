@@ -717,11 +717,14 @@ function* observeLiquidityRewardPaidEvent(liquidityRewardPair) {
 
   while (true) {
     try {
-      const {
-        returnValues: { user, reward },
-      } = yield take(contractEventCahnnel)
+      const { returnValues } = yield take(contractEventCahnnel)
+      // LPRewards and TokenGeyser contract have different param names in an
+      // emitted event which is triggered when the reward is claimed but param
+      // which points to claimed reward amount is at the same index- 1. So we
+      // can get claimed amount by index eg. `event.returnValues["1"]`.
+      const reward = returnValues["1"]
 
-      if (isSameEthAddress(defaultAccount, user)) {
+      if (isSameEthAddress(defaultAccount, returnValues.user)) {
         yield put({
           type: `liquidity_rewards/${liquidityRewardPair.name}_reward_paid`,
           payload: {
