@@ -74,3 +74,17 @@ export const formatPercentage = (value) => {
 
   return value.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
 }
+
+export const displayPercentageValue = (value, isFormattedValue = true) => {
+  if (!isFormattedValue) {
+    value = formatPercentage(value)
+  }
+
+  let prefix = ""
+  if (value === 0.01) {
+    prefix = `<`
+  } else if (value >= 999) {
+    prefix = `>`
+  }
+  return `${prefix}${value}%`
+}
