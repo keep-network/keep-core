@@ -81,15 +81,6 @@
     }
   }
 
-  .liquidity__info--locked {
-    .liquidity__info-tile {
-      &:extend(.bg-grey-20);
-      .liquidity__info-tile__title {
-        color: @color-grey-60!important;
-      }
-    }
-  }
-
   .liquidity__reward-balance {
     margin: 2rem 0;
 
@@ -155,8 +146,20 @@
   }
 }
 
+.liquidity__info--locked {
+  .liquidity__info-tile {
+    &:extend(.bg-grey-20);
+    .liquidity__info-tile__title {
+      color: @color-grey-60!important;
+    }
+  }
+}
+
+
+
 .keep-only-pool {
   display: flex;
+  margin: 0 3.2rem;
 
   &__overview {
     flex: 1 0 0;
@@ -177,14 +180,10 @@
 
   &__icon {
     background-color: @color-grey-10;
-    // display: flex;
-    // background-image: url("/images/keep-only-pool.svg");
-    // background-repeat: no-repeat;
-    // background-size: cover;
-
     margin-bottom: 1.2rem;
+
     > svg {
-      // flex: 1;
+      height: 100%;
     }
   }
 }
