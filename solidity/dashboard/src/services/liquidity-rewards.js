@@ -1,5 +1,9 @@
 import web3Utils from "web3-utils"
-import { createERC20Contract, createSaddleSwapContract } from "../contracts"
+import {
+  createERC20Contract,
+  createSaddleSwapContract,
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
+} from "../contracts"
 import BigNumber from "bignumber.js"
 import { toTokenUnit } from "../utils/token.utils"
 import {
@@ -43,8 +47,24 @@ class LiquidityRewards {
     return "Withdrawn"
   }
 
+  get withdrawTokensFnName() {
+    return "exit"
+  }
+
+  withdrawTokensArgs() {
+    return []
+  }
+
   get stakedEventName() {
     return "Staked"
+  }
+
+  get stakeFnName() {
+    return "stake"
+  }
+
+  stakeArgs(amount) {
+    return [amount]
   }
 
   wrappedTokenBalance = async (address) => {
@@ -215,6 +235,18 @@ class TokenGeyserLPRewards extends LiquidityRewards {
 
   get depositWithdrawnEventName() {
     return "Unstaked"
+  }
+
+  get withdrawTokensFnName() {
+    return "unstake"
+  }
+
+  withdrawTokensArgs(amount) {
+    return [amount, []]
+  }
+
+  stakeArgs(amount) {
+    return [amount, []]
   }
 
   stakedBalance = async (address) => {
