@@ -16,11 +16,11 @@ module.exports = async function () {
   console.log(`---------------------------------`)
 
   for (let i = 0; i < accounts.length; i++) {
-    let account = accounts[i]
+    const account = accounts[i]
 
     try {
       console.log(`\nUnlocking account: ${account}`)
-      await web3.eth.personal.unlockAccount(account, password, 150000);
+      await web3.eth.personal.unlockAccount(account, password, 150000)
       console.log(`Account unlocked!`)
     } catch (error) {
       console.log(`\nAccount: ${account} not unlocked!`)
@@ -29,4 +29,4 @@ module.exports = async function () {
     console.log(`\n---------------------------------`)
   }
   process.exit(0)
-};
+}

@@ -55,12 +55,14 @@ contract AdaptiveStakingPolicy is GrantStakingPolicy {
         // the grantee could instead stake 25% right away.
         bool _useCliff
     ) public {
-        minimumStake = TokenStaking(_stakingContract).minimumStake().mul(minimumMultiplier);
+        minimumStake = TokenStaking(_stakingContract).minimumStake().mul(
+            minimumMultiplier
+        );
         stakeaheadTime = _stakeaheadTime;
         useCliff = _useCliff;
     }
 
-    function getStakeableAmount (
+    function getStakeableAmount(
         uint256 _now,
         uint256 grantedAmount,
         uint256 duration,
@@ -68,22 +70,27 @@ contract AdaptiveStakingPolicy is GrantStakingPolicy {
         uint256 cliff,
         uint256 withdrawn
     ) public view returns (uint256) {
-        uint256 unlocked = _now.add(stakeaheadTime).getUnlockedAmount(
-            grantedAmount,
-            duration,
-            start,
-            (useCliff ? cliff : 0)
-        );
+        uint256 unlocked =
+            _now.add(stakeaheadTime).getUnlockedAmount(
+                grantedAmount,
+                duration,
+                start,
+                (useCliff ? cliff : 0)
+            );
         uint256 remainingInGrant = grantedAmount.sub(withdrawn);
         uint256 unlockedInGrant = unlocked.sub(withdrawn);
 
         // Less than minimum stake remaining
         //   -> may stake what is remaining in grant
-        if (remainingInGrant < minimumStake) { return remainingInGrant; }
+        if (remainingInGrant < minimumStake) {
+            return remainingInGrant;
+        }
         // At least minimum stake remaining in grant,
         // but unlocked amount is less than the minimum stake
         //   -> may stake the minimum stake
-        if (unlockedInGrant < minimumStake) { return minimumStake; }
+        if (unlockedInGrant < minimumStake) {
+            return minimumStake;
+        }
         // More than minimum stake unlocked in grant
         //   -> may stake the unlocked amount
         return unlockedInGrant;

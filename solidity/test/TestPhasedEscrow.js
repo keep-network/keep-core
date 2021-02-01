@@ -1,8 +1,8 @@
-const {initContracts} = require("./helpers/initContracts")
-const {accounts, contract, web3} = require("@openzeppelin/test-environment")
-const {createSnapshot, restoreSnapshot} = require("./helpers/snapshot.js")
-const {expectRevert, expectEvent} = require("@openzeppelin/test-helpers")
-const {ZERO_ADDRESS} = require("@openzeppelin/test-helpers/src/constants")
+const { initContracts } = require("./helpers/initContracts")
+const { accounts, contract, web3 } = require("@openzeppelin/test-environment")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot.js")
+const { expectRevert, expectEvent } = require("@openzeppelin/test-helpers")
+const { ZERO_ADDRESS } = require("@openzeppelin/test-helpers/src/constants")
 const time = require("@openzeppelin/test-helpers/src/time")
 const crypto = require("crypto")
 
@@ -46,8 +46,8 @@ describe("PhasedEscrow", () => {
   let phasedEscrow
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
-    phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+    token = await KeepToken.new({ from: owner })
+    phasedEscrow = await PhasedEscrow.new(token.address, { from: owner })
     beneficiary = await TestSimpleBeneficiary.new()
     updatedBeneficiary = await TestSimpleBeneficiary.new()
   })
@@ -64,7 +64,7 @@ describe("PhasedEscrow", () => {
     it("fails for an unknown token", async () => {
       // It is another KeepToken contract deployment, not the one PhasedEscrow
       // has been created with.
-      const unknownToken = await KeepToken.new({from: owner})
+      const unknownToken = await KeepToken.new({ from: owner })
       const amountApproved = web3.utils.toBN(9991)
 
       await expectRevert(
@@ -72,7 +72,7 @@ describe("PhasedEscrow", () => {
           phasedEscrow.address,
           amountApproved,
           "0x0",
-          {from: owner}
+          { from: owner }
         ),
         "Unsupported token"
       )
@@ -91,15 +91,15 @@ describe("PhasedEscrow", () => {
 
   describe("setBeneficiary", async () => {
     it("can be called by owner", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
       // ok, no revert
     })
 
     it("can be called by updated owner", async () => {
-      await phasedEscrow.transferOwnership(updatedOwner, {from: owner})
+      await phasedEscrow.transferOwnership(updatedOwner, { from: owner })
 
       await expectRevert(
-        phasedEscrow.setBeneficiary(beneficiary.address, {from: owner}),
+        phasedEscrow.setBeneficiary(beneficiary.address, { from: owner }),
         "Ownable: caller is not the owner"
       )
       await phasedEscrow.setBeneficiary(beneficiary.address, {
@@ -110,13 +110,15 @@ describe("PhasedEscrow", () => {
 
     it("can not be called by non-owner", async () => {
       await expectRevert(
-        phasedEscrow.setBeneficiary(beneficiary.address, {from: updatedOwner}),
+        phasedEscrow.setBeneficiary(beneficiary.address, {
+          from: updatedOwner,
+        }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("sets beneficiary", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
 
       expect(await phasedEscrow.beneficiary()).to.equal(
         beneficiary.address,
@@ -140,15 +142,15 @@ describe("PhasedEscrow", () => {
     let escrow
 
     beforeEach(async () => {
-      escrow = await Escrow.new(token.address, {from: owner})
-      await token.transfer(escrow.address, amount, {from: owner})
+      escrow = await Escrow.new(token.address, { from: owner })
+      await token.transfer(escrow.address, amount, { from: owner })
     })
 
     it("pulls all funds from a non-phased Escrow when having no tokens", async () => {
       const balanceBefore = await token.balanceOf(phasedEscrow.address)
       expect(balanceBefore).to.eq.BN(0)
 
-      await escrow.setBeneficiary(phasedEscrow.address, {from: owner})
+      await escrow.setBeneficiary(phasedEscrow.address, { from: owner })
       await phasedEscrow.withdrawFromEscrow(escrow.address)
 
       const balanceAfter = await token.balanceOf(phasedEscrow.address)
@@ -157,11 +159,11 @@ describe("PhasedEscrow", () => {
 
     it("pulls all funds from a non-phased Escrow when having some tokens", async () => {
       const initialFunds = web3.utils.toBN(999)
-      await token.transfer(phasedEscrow.address, initialFunds, {from: owner})
+      await token.transfer(phasedEscrow.address, initialFunds, { from: owner })
       const balanceBefore = await token.balanceOf(phasedEscrow.address)
       expect(balanceBefore).to.eq.BN(initialFunds)
 
-      await escrow.setBeneficiary(phasedEscrow.address, {from: owner})
+      await escrow.setBeneficiary(phasedEscrow.address, { from: owner })
       await phasedEscrow.withdrawFromEscrow(escrow.address)
 
       const balanceAfter = await token.balanceOf(phasedEscrow.address)
@@ -171,48 +173,48 @@ describe("PhasedEscrow", () => {
 
   describe("withdraw", async () => {
     it("can not be called if beneficiary wasn't set", async () => {
-      await token.transfer(phasedEscrow.address, 100, {from: owner})
+      await token.transfer(phasedEscrow.address, 100, { from: owner })
       await expectRevert(
-        phasedEscrow.withdraw(100, {from: owner}),
+        phasedEscrow.withdraw(100, { from: owner }),
         "Beneficiary not assigned"
       )
     })
 
     it("can not be called by non-owner", async () => {
-      await token.transfer(phasedEscrow.address, 100, {from: owner})
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await token.transfer(phasedEscrow.address, 100, { from: owner })
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
       await expectRevert(
-        phasedEscrow.withdraw(100, {from: beneficiary.address}),
+        phasedEscrow.withdraw(100, { from: beneficiary.address }),
         "Ownable: caller is not the owner"
       )
     })
 
     it("can be called by owner", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
-      await token.transfer(phasedEscrow.address, 100, {from: owner})
-      await phasedEscrow.withdraw(100, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
+      await token.transfer(phasedEscrow.address, 100, { from: owner })
+      await phasedEscrow.withdraw(100, { from: owner })
       // ok, no reverts
     })
 
     it("fails when escrow is empty", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
       await expectRevert(
-        phasedEscrow.withdraw(100, {from: owner}),
+        phasedEscrow.withdraw(100, { from: owner }),
         "Not enough tokens for withdrawal"
       )
     })
 
     it("withdraws specified tokens to updated beneficiary", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
       const amount = web3.utils.toBN(987654321)
-      await token.transfer(phasedEscrow.address, amount, {from: owner})
+      await token.transfer(phasedEscrow.address, amount, { from: owner })
 
-      await phasedEscrow.withdraw(100, {from: owner})
+      await phasedEscrow.withdraw(100, { from: owner })
 
       await phasedEscrow.setBeneficiary(updatedBeneficiary.address, {
         from: owner,
       })
-      await phasedEscrow.withdraw(100, {from: owner})
+      await phasedEscrow.withdraw(100, { from: owner })
 
       expect(await token.balanceOf(beneficiary.address)).to.eq.BN(
         100,
@@ -229,11 +231,11 @@ describe("PhasedEscrow", () => {
     })
 
     it("withdraws specified tokens to beneficiary", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
       const amount = web3.utils.toBN(123456789)
-      await token.transfer(phasedEscrow.address, amount, {from: owner})
+      await token.transfer(phasedEscrow.address, amount, { from: owner })
 
-      await phasedEscrow.withdraw(100, {from: owner})
+      await phasedEscrow.withdraw(100, { from: owner })
 
       expect(await token.balanceOf(beneficiary.address)).to.eq.BN(
         100,
@@ -246,11 +248,13 @@ describe("PhasedEscrow", () => {
     })
 
     it("emits an event", async () => {
-      await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
+      await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
       const amount = web3.utils.toBN(100)
-      await token.transfer(phasedEscrow.address, amount.muln(2), {from: owner})
+      await token.transfer(phasedEscrow.address, amount.muln(2), {
+        from: owner,
+      })
 
-      const receipt = await phasedEscrow.withdraw(amount, {from: owner})
+      const receipt = await phasedEscrow.withdraw(amount, { from: owner })
 
       await expectEvent(receipt, "TokensWithdrawn", {
         beneficiary: beneficiary.address,
@@ -268,14 +272,14 @@ describe("PhasedEscrow", () => {
       rewardsBeneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
         token.address,
         rewardsContract.address,
-        {from: owner}
+        { from: owner }
       )
 
       await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {
         from: owner,
       })
       const amount = web3.utils.toBN(baseBalance)
-      await token.transfer(phasedEscrow.address, amount, {from: owner})
+      await token.transfer(phasedEscrow.address, amount, { from: owner })
 
       await phasedEscrow.setBeneficiary(rewardsBeneficiary.address, {
         from: owner,
@@ -286,8 +290,8 @@ describe("PhasedEscrow", () => {
 
     it("emits a RewardAdded event from the rewards beneficiary", async () => {
       const receipt = resolveAllLogs(
-        (await phasedEscrow.withdraw(transferAmount, {from: owner})).receipt,
-        {rewardsContract}
+        (await phasedEscrow.withdraw(transferAmount, { from: owner })).receipt,
+        { rewardsContract }
       )
 
       expectEvent(receipt, "RewardAdded", {
@@ -313,9 +317,9 @@ describe("PhasedEscrow", () => {
       stakingContract = contracts.stakingContract
       operatorContract = contracts.operatorContract
 
-      phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+      phasedEscrow = await PhasedEscrow.new(token.address, { from: owner })
       const amount = web3.utils.toBN(baseBalance)
-      await token.transfer(phasedEscrow.address, amount, {from: owner})
+      await token.transfer(phasedEscrow.address, amount, { from: owner })
 
       rewardsContract = await BeaconBackportRewards.new(
         token.address,
@@ -326,7 +330,7 @@ describe("PhasedEscrow", () => {
       rewardsBeneficiary = await BeaconBackportRewardsEscrowBeneficiary.new(
         token.address,
         rewardsContract.address,
-        {from: owner}
+        { from: owner }
       )
       await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {
         from: owner,
@@ -357,9 +361,9 @@ describe("PhasedEscrow", () => {
       stakingContract = contracts.stakingContract
       operatorContract = contracts.operatorContract
 
-      phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+      phasedEscrow = await PhasedEscrow.new(token.address, { from: owner })
       const amount = web3.utils.toBN(baseBalance)
-      await token.transfer(phasedEscrow.address, amount, {from: owner})
+      await token.transfer(phasedEscrow.address, amount, { from: owner })
 
       rewardsContract = await BeaconRewards.new(
         token.address,
@@ -370,7 +374,7 @@ describe("PhasedEscrow", () => {
       rewardsBeneficiary = await BeaconRewardsEscrowBeneficiary.new(
         token.address,
         rewardsContract.address,
-        {from: owner}
+        { from: owner }
       )
       await rewardsBeneficiary.transferOwnership(phasedEscrow.address, {
         from: owner,
@@ -386,7 +390,7 @@ describe("PhasedEscrow", () => {
 
   async function assertRewards(baseBalance, transferAmount) {
     it("withdraws specified tokens from escrow", async () => {
-      await phasedEscrow.withdraw(transferAmount, {from: owner})
+      await phasedEscrow.withdraw(transferAmount, { from: owner })
 
       expect(await token.balanceOf(phasedEscrow.address)).to.eq.BN(
         baseBalance - transferAmount,
@@ -395,7 +399,7 @@ describe("PhasedEscrow", () => {
     })
 
     it("transfers specified tokens to rewards contract", async () => {
-      await phasedEscrow.withdraw(transferAmount, {from: owner})
+      await phasedEscrow.withdraw(transferAmount, { from: owner })
 
       expect(await token.balanceOf(rewardsContract.address)).to.eq.BN(
         transferAmount,
@@ -404,7 +408,7 @@ describe("PhasedEscrow", () => {
     })
 
     it("leaves no tokens in the rewards beneficiary", async () => {
-      await phasedEscrow.withdraw(transferAmount, {from: owner})
+      await phasedEscrow.withdraw(transferAmount, { from: owner })
 
       expect(await token.balanceOf(rewardsBeneficiary.address)).to.eq.BN(
         0,
@@ -439,14 +443,14 @@ describe("BatchedPhasedEscrow", () => {
   let beneficiary3
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
+    token = await KeepToken.new({ from: owner })
     batchedPhasedEscrow = await BatchedPhasedEscrow.new(token.address, {
       from: owner,
     })
 
-    beneficiary1 = await TestSimpleBeneficiary.new({from: owner})
-    beneficiary2 = await TestSimpleBeneficiary.new({from: owner})
-    beneficiary3 = await TestSimpleBeneficiary.new({from: owner})
+    beneficiary1 = await TestSimpleBeneficiary.new({ from: owner })
+    beneficiary2 = await TestSimpleBeneficiary.new({ from: owner })
+    beneficiary3 = await TestSimpleBeneficiary.new({ from: owner })
   })
 
   beforeEach(async () => {
@@ -468,7 +472,7 @@ describe("BatchedPhasedEscrow", () => {
     // Deploy PhasedEscrow and do initial funding.
     const amount = 9000
 
-    const phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+    const phasedEscrow = await PhasedEscrow.new(token.address, { from: owner })
     await token.transfer(phasedEscrow.address, amount, {
       from: owner,
     })
@@ -477,15 +481,15 @@ describe("BatchedPhasedEscrow", () => {
     const beneficiary = await StakerRewardsBeneficiary.new(
       token.address,
       batchedPhasedEscrow.address,
-      {from: owner}
+      { from: owner }
     )
     await beneficiary.transferOwnership(phasedEscrow.address, {
       from: owner,
     })
 
     // Withdraw funds from PhasedEscrow
-    await phasedEscrow.setBeneficiary(beneficiary.address, {from: owner})
-    await phasedEscrow.withdraw(amount, {from: owner})
+    await phasedEscrow.setBeneficiary(beneficiary.address, { from: owner })
+    await phasedEscrow.withdraw(amount, { from: owner })
 
     // Verify that funds got transferred to BatchedPhasedEscrow
     expect(await token.balanceOf(batchedPhasedEscrow.address)).to.eq.BN(
@@ -502,7 +506,7 @@ describe("BatchedPhasedEscrow", () => {
     it("fails for an unknown token", async () => {
       // It is another KeepToken contract deployment, not the one PhasedEscrow
       // has been created with.
-      const unknownToken = await KeepToken.new({from: owner})
+      const unknownToken = await KeepToken.new({ from: owner })
       const amountApproved = web3.utils.toBN(9991)
 
       await expectRevert(
@@ -510,7 +514,7 @@ describe("BatchedPhasedEscrow", () => {
           batchedPhasedEscrow.address,
           amountApproved,
           "0x0",
-          {from: owner}
+          { from: owner }
         ),
         "Unsupported token"
       )
@@ -522,7 +526,7 @@ describe("BatchedPhasedEscrow", () => {
         batchedPhasedEscrow.address,
         amountApproved,
         "0x0",
-        {from: owner}
+        { from: owner }
       )
 
       const actualBalance = await token.balanceOf(batchedPhasedEscrow.address)
@@ -539,7 +543,7 @@ describe("BatchedPhasedEscrow", () => {
     })
 
     it("can be done by updated owner", async () => {
-      await batchedPhasedEscrow.transferOwnership(updatedOwner, {from: owner})
+      await batchedPhasedEscrow.transferOwnership(updatedOwner, { from: owner })
 
       await expectRevert(
         batchedPhasedEscrow.approveBeneficiary(beneficiary1.address, {
@@ -564,7 +568,7 @@ describe("BatchedPhasedEscrow", () => {
 
     it("can not be done on zero address", async () => {
       await expectRevert(
-        batchedPhasedEscrow.approveBeneficiary(ZERO_ADDRESS, {from: owner}),
+        batchedPhasedEscrow.approveBeneficiary(ZERO_ADDRESS, { from: owner }),
         "Beneficiary can not be zero address"
       )
     })
@@ -636,15 +640,15 @@ describe("BatchedPhasedEscrow", () => {
     })
 
     it("can be transferred by owner", async () => {
-      await batchedPhasedEscrow.setDrawee(updatedDrawee, {from: owner})
+      await batchedPhasedEscrow.setDrawee(updatedDrawee, { from: owner })
       // ok, no revert
     })
 
     it("can be transferred by updated owner", async () => {
-      await batchedPhasedEscrow.transferOwnership(updatedOwner, {from: owner})
+      await batchedPhasedEscrow.transferOwnership(updatedOwner, { from: owner })
 
       await expectRevert(
-        batchedPhasedEscrow.setDrawee(updatedDrawee, {from: owner}),
+        batchedPhasedEscrow.setDrawee(updatedDrawee, { from: owner }),
         "Ownable: caller is not the owner"
       )
       await batchedPhasedEscrow.setDrawee(updatedDrawee, {
@@ -655,7 +659,7 @@ describe("BatchedPhasedEscrow", () => {
 
     it("can not be transferred by non-owner", async () => {
       await expectRevert(
-        batchedPhasedEscrow.setDrawee(updatedDrawee, {from: drawee}),
+        batchedPhasedEscrow.setDrawee(updatedDrawee, { from: drawee }),
         "Ownable: caller is not the owner"
       )
     })
@@ -764,23 +768,25 @@ describe("BatchedPhasedEscrow", () => {
     })
 
     it("reverts when beneficiary was not approved", async () => {
-      const anotherBeneficiary = await TestSimpleBeneficiary.new({from: owner})
+      const anotherBeneficiary = await TestSimpleBeneficiary.new({
+        from: owner,
+      })
 
       await expectRevert(
         batchedPhasedEscrow.batchedWithdraw(
-          [beneficiary1.address, anotherBeneficiary.address], 
-          [100, 200], {
-          from: drawee,
-        }),
+          [beneficiary1.address, anotherBeneficiary.address],
+          [100, 200],
+          {
+            from: drawee,
+          }
+        ),
         "Beneficiary was not approved"
       )
     })
 
     it("reverts when there are not enough funds in the escrow", async () => {
       await expectRevert.unspecified(
-        batchedPhasedEscrow.batchedWithdraw(
-          beneficiaries, 
-          [100, 200, 301], {
+        batchedPhasedEscrow.batchedWithdraw(beneficiaries, [100, 200, 301], {
           from: drawee,
         })
       )
@@ -817,16 +823,16 @@ describe("StakingPoolRewardsEscrowBeneficiary", () => {
   let rewardsBeneficiary
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
+    token = await KeepToken.new({ from: owner })
     rewardsContract = await TestCurveRewards.new(token.address)
     rewardsBeneficiary = await StakingPoolRewardsEscrowBeneficiary.new(
       token.address,
       rewardsContract.address,
-      {from: owner}
+      { from: owner }
     )
 
     const amount = web3.utils.toBN(transferAmount)
-    await token.transfer(rewardsBeneficiary.address, amount, {from: owner})
+    await token.transfer(rewardsBeneficiary.address, amount, { from: owner })
   })
 
   describe("__escrowSentTokens", async () => {
@@ -859,16 +865,16 @@ describe("StakerRewardsBeneficiary", () => {
   let rewardsBeneficiary
 
   before(async () => {
-    token = await KeepToken.new({from: owner})
+    token = await KeepToken.new({ from: owner })
     rewardsContract = await TestSimpleStakerRewards.new(token.address)
     rewardsBeneficiary = await StakerRewardsBeneficiary.new(
       token.address,
       rewardsContract.address,
-      {from: owner}
+      { from: owner }
     )
 
     const amount = web3.utils.toBN(transferAmount)
-    await token.transfer(rewardsBeneficiary.address, amount, {from: owner})
+    await token.transfer(rewardsBeneficiary.address, amount, { from: owner })
   })
 
   describe("__escrowSentTokens", async () => {
@@ -914,18 +920,18 @@ describe("BeaconRewards to PhasedEscrow transfer", async () => {
     operatorContract = contracts.operatorContract
     const stakingContract = contracts.stakingContract
 
-    phasedEscrow = await PhasedEscrow.new(token.address, {from: owner})
+    phasedEscrow = await PhasedEscrow.new(token.address, { from: owner })
     rewardsContract = await BeaconRewards.new(
       token.address,
       operatorContract.address,
       stakingContract.address,
-      {from: owner}
+      { from: owner }
     )
 
     await token.approveAndCall(rewardsContract.address, totalRewards, "0x0", {
       from: owner,
     })
-    await rewardsContract.markAsFunded({from: owner})
+    await rewardsContract.markAsFunded({ from: owner })
   })
 
   it("moves all unallocated tokens to escrow", async () => {
@@ -945,7 +951,7 @@ describe("BeaconRewards to PhasedEscrow transfer", async () => {
     const currentIntervalEnd = await rewardsContract.endOf(currentInterval)
     await time.increaseTo(currentIntervalEnd.addn(1))
 
-    await rewardsContract.finalizeRewardsUpgrade({from: owner})
+    await rewardsContract.finalizeRewardsUpgrade({ from: owner })
 
     const escrowBalance = await token.balanceOf(phasedEscrow.address)
     const allocatedRewards = await rewardsContract.totalRewards()
@@ -975,8 +981,8 @@ function resolveAllLogs(receipt, contractContainer) {
     .map(([, value]) => value)
     .filter((_) => _.contract && _.address)
 
-  const {resolved: resolvedLogs} = contracts.reduce(
-    ({raw, resolved}, contract) => {
+  const { resolved: resolvedLogs } = contracts.reduce(
+    ({ raw, resolved }, contract) => {
       const events = contract.contract._jsonInterface.filter(
         (_) => _.type === "event"
       )
@@ -1001,7 +1007,7 @@ function resolveAllLogs(receipt, contractContainer) {
         resolved: resolved.concat(decoded),
       }
     },
-    {raw: receipt.rawLogs, resolved: []}
+    { raw: receipt.rawLogs, resolved: [] }
   )
 
   return Object.assign({}, receipt, {

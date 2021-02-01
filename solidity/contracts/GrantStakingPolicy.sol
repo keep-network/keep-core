@@ -10,5 +10,6 @@ contract GrantStakingPolicy {
         uint256 duration,
         uint256 start,
         uint256 cliff,
-        uint256 withdrawn) public view returns (uint256);
+        uint256 withdrawn
+    ) public view returns (uint256);
 }

@@ -20,24 +20,14 @@ contract ManagedGrant {
     address public grantee;
     address public requestedNewGrantee;
 
-    event GranteeReassignmentRequested(
-        address newGrantee
-    );
-    event GranteeReassignmentConfirmed(
-        address oldGrantee,
-        address newGrantee
-    );
-    event GranteeReassignmentCancelled(
-        address cancelledRequestedGrantee
-    );
+    event GranteeReassignmentRequested(address newGrantee);
+    event GranteeReassignmentConfirmed(address oldGrantee, address newGrantee);
+    event GranteeReassignmentCancelled(address cancelledRequestedGrantee);
     event GranteeReassignmentChanged(
         address previouslyRequestedGrantee,
         address newRequestedGrantee
     );
-    event TokensWithdrawn(
-        address destination,
-        uint256 amount
-    );
+    event TokensWithdrawn(address destination, uint256 amount);
 
     constructor(
         address _tokenAddress,
@@ -91,7 +81,10 @@ contract ManagedGrant {
             "Unchanged reassignment request"
         );
         _setRequestedNewGrantee(_newGrantee);
-        emit GranteeReassignmentChanged(previouslyRequestedGrantee, _newGrantee);
+        emit GranteeReassignmentChanged(
+            previouslyRequestedGrantee,
+            _newGrantee
+        );
     }
 
     /// @notice Confirm a grantee reassignment request and set the new grantee as the grantee.
@@ -164,10 +157,7 @@ contract ManagedGrant {
     }
 
     modifier withRequestedReassignment {
-        require(
-            requestedNewGrantee != address(0),
-            "No reassignment requested"
-        );
+        require(requestedNewGrantee != address(0), "No reassignment requested");
         _;
     }
 
@@ -180,10 +170,7 @@ contract ManagedGrant {
     }
 
     modifier onlyGrantee {
-        require(
-            msg.sender == grantee,
-            "Only grantee may perform this action"
-        );
+        require(msg.sender == grantee, "Only grantee may perform this action");
         _;
     }
 

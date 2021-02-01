@@ -1,108 +1,169 @@
-const stakeDelegate = require('../helpers/stakeDelegate')
+const stakeDelegate = require("../helpers/stakeDelegate")
 const blsData = require("../helpers/data.js")
-const {initContracts} = require('../helpers/initContracts')
-const assert = require('chai').assert
-const {contract, accounts, web3} = require("@openzeppelin/test-environment")
-const {time} = require("@openzeppelin/test-helpers")
-const CallbackContract = contract.fromArtifact('CallbackContract')
+const { initContracts } = require("../helpers/initContracts")
+const assert = require("chai").assert
+const { contract, accounts, web3 } = require("@openzeppelin/test-environment")
+const { time } = require("@openzeppelin/test-helpers")
+const CallbackContract = contract.fromArtifact("CallbackContract")
 
-describe('TestKeepRandomBeaconService/Pricing', function() {
-
-  let token, stakingContract, operatorContract, serviceContract, callbackContract, entryFee, groupSize, group,
-    owner = accounts[0],
-    requestor = accounts[1],
-    operator1 = accounts[2],
-    operator2 = accounts[3],
-    operator3 = accounts[4],
-    beneficiary1 = accounts[5],
-    beneficiary2 = accounts[6],
-    beneficiary3 = accounts[7];
+describe("TestKeepRandomBeaconService/Pricing", function () {
+  let token
+  let stakingContract
+  let operatorContract
+  let serviceContract
+  let callbackContract
+  let entryFee
+  let groupSize
+  let group
+  const owner = accounts[0]
+  const requestor = accounts[1]
+  const operator1 = accounts[2]
+  const operator2 = accounts[3]
+  const operator3 = accounts[4]
+  const beneficiary1 = accounts[5]
+  const beneficiary2 = accounts[6]
+  const beneficiary3 = accounts[7]
 
   beforeEach(async () => {
-    let contracts = await initContracts(
-      contract.fromArtifact('TokenStaking'),
-      contract.fromArtifact('KeepRandomBeaconService'),
-      contract.fromArtifact('KeepRandomBeaconServiceImplV1'),
-      contract.fromArtifact('KeepRandomBeaconOperatorServicePricingStub')
-    );
+    const contracts = await initContracts(
+      contract.fromArtifact("TokenStaking"),
+      contract.fromArtifact("KeepRandomBeaconService"),
+      contract.fromArtifact("KeepRandomBeaconServiceImplV1"),
+      contract.fromArtifact("KeepRandomBeaconOperatorServicePricingStub")
+    )
 
-    token = contracts.token;
-    stakingContract = contracts.stakingContract;
-    operatorContract = contracts.operatorContract;
-    serviceContract = contracts.serviceContract;
-    callbackContract = await CallbackContract.new();
+    token = contracts.token
+    stakingContract = contracts.stakingContract
+    operatorContract = contracts.operatorContract
+    serviceContract = contracts.serviceContract
+    callbackContract = await CallbackContract.new()
 
     // Using stub method to add first group to help testing.
-    await operatorContract.registerNewGroup(blsData.groupPubKey);
+    await operatorContract.registerNewGroup(blsData.groupPubKey)
 
-    groupSize = web3.utils.toBN(3);
-    group = await operatorContract.getGroupPublicKey(0);
-    await operatorContract.setGroupMembers(group, [operator1, operator2, operator3])
-    let minimumStake = await stakingContract.minimumStake()
+    groupSize = web3.utils.toBN(3)
+    group = await operatorContract.getGroupPublicKey(0)
+    await operatorContract.setGroupMembers(group, [
+      operator1,
+      operator2,
+      operator3,
+    ])
+    const minimumStake = await stakingContract.minimumStake()
 
-    await stakeDelegate(stakingContract, token, owner, operator1, beneficiary1, operator1, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator2, beneficiary2, operator2, minimumStake);
-    await stakeDelegate(stakingContract, token, owner, operator3, beneficiary3, operator3, minimumStake);
+    await stakeDelegate(
+      stakingContract,
+      token,
+      owner,
+      operator1,
+      beneficiary1,
+      operator1,
+      minimumStake
+    )
+    await stakeDelegate(
+      stakingContract,
+      token,
+      owner,
+      operator2,
+      beneficiary2,
+      operator2,
+      minimumStake
+    )
+    await stakeDelegate(
+      stakingContract,
+      token,
+      owner,
+      operator3,
+      beneficiary3,
+      operator3,
+      minimumStake
+    )
 
     entryFee = await serviceContract.entryFeeBreakdown()
-  });
-
-  it("should successfully refund callback surplus for a lower submission gas price", async () => {
-    let gasPriceCeiling = web3.utils.toBN(web3.utils.toWei('20', 'gwei'))
-    await operatorContract.setGasPriceCeiling(gasPriceCeiling)
-
-    let callbackGas = web3.utils.toBN(await callbackContract.__beaconCallback.estimateGas(blsData.groupSignature))
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
-    
-    await serviceContract.methods['requestRelayEntry(address,uint256)'](
-      callbackContract.address,
-      callbackGas,
-      {value: entryFeeEstimate, from: requestor}
-    );
-
-    let submissionGasPrice = web3.utils.toBN(web3.utils.toWei('5', 'gwei'))
-    let gasPriceDiff = gasPriceCeiling.sub(submissionGasPrice)
-
-    let requestorBalance = await web3.eth.getBalance(requestor);
-    await operatorContract.relayEntry(blsData.groupSignature, {gasPrice: submissionGasPrice})
-    let updatedRequestorBalance = await web3.eth.getBalance(requestor)
-
-    let refund = web3.utils.toBN(updatedRequestorBalance).sub(web3.utils.toBN(requestorBalance))
-
-    let baseCallbackGas = await serviceContract.baseCallbackGas()
-    let expectedSurplus = (callbackGas.add(baseCallbackGas)).mul(gasPriceDiff)
-    
-    assert.isTrue(expectedSurplus.eq(refund), "Callback gas surplus should be refunded to the requestor.");
   })
 
-  it("should send group reward to each operator.", async function() {
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(address,uint256)'](
+  it("should successfully refund callback surplus for a lower submission gas price", async () => {
+    const gasPriceCeiling = web3.utils.toBN(web3.utils.toWei("20", "gwei"))
+    await operatorContract.setGasPriceCeiling(gasPriceCeiling)
+
+    const callbackGas = web3.utils.toBN(
+      await callbackContract.__beaconCallback.estimateGas(
+        blsData.groupSignature
+      )
+    )
+    const entryFeeEstimate = await serviceContract.entryFeeEstimate(callbackGas)
+
+    await serviceContract.methods["requestRelayEntry(address,uint256)"](
       callbackContract.address,
-      0,
-      {value: entryFeeEstimate, from: requestor}
-    );
+      callbackGas,
+      {
+        value: entryFeeEstimate,
+        from: requestor,
+      }
+    )
 
-    let currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
-    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout);
-    let entryReceivedBlock = currentRequestStartBlock.addn(1);
-    let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
-    let submissionWindow = deadlineBlock.sub(entryReceivedBlock);
-    let decimalPoints = web3.utils.toBN(1e16);
-    let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
-    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
-    let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
+    const submissionGasPrice = web3.utils.toBN(web3.utils.toWei("5", "gwei"))
+    const gasPriceDiff = gasPriceCeiling.sub(submissionGasPrice)
 
-    await operatorContract.relayEntry(blsData.groupSignature);
+    const requestorBalance = await web3.eth.getBalance(requestor)
+    await operatorContract.relayEntry(blsData.groupSignature, {
+      gasPrice: submissionGasPrice,
+    })
+    const updatedRequestorBalance = await web3.eth.getBalance(requestor)
 
-    assert.isTrue(delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))), "Delay factor expected to be 1 * 1e16 ^ 2.");
+    const refund = web3.utils
+      .toBN(updatedRequestorBalance)
+      .sub(web3.utils.toBN(requestorBalance))
 
-    let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
-    assert.isTrue(web3.utils.toBN(groupMemberRewards).eq(web3.utils.toBN(expectedGroupMemberReward)), "Unexpected group member reward.");
-  });
+    const baseCallbackGas = await serviceContract.baseCallbackGas()
+    const expectedSurplus = callbackGas.add(baseCallbackGas).mul(gasPriceDiff)
 
-  it("should send part of the group reward to request subsidy pool based on the submission block.", async function() {
+    assert.isTrue(
+      expectedSurplus.eq(refund),
+      "Callback gas surplus should be refunded to the requestor."
+    )
+  })
+
+  it("should send group reward to each operator.", async function () {
+    const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    const tx = await serviceContract.methods[
+      "requestRelayEntry(address,uint256)"
+    ](callbackContract.address, 0, { value: entryFeeEstimate, from: requestor })
+
+    const currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber)
+    const relayEntryTimeout = await operatorContract.relayEntryTimeout()
+    const deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout)
+    const entryReceivedBlock = currentRequestStartBlock.addn(1)
+    const remainingBlocks = deadlineBlock.sub(entryReceivedBlock)
+    const submissionWindow = deadlineBlock.sub(entryReceivedBlock)
+    const decimalPoints = web3.utils.toBN(1e16)
+    const delayFactor = remainingBlocks
+      .mul(decimalPoints)
+      .div(submissionWindow)
+      .pow(web3.utils.toBN(2))
+    const memberBaseReward = entryFee.groupProfitFee.div(groupSize)
+    const expectedGroupMemberReward = memberBaseReward
+      .mul(delayFactor)
+      .div(decimalPoints.pow(web3.utils.toBN(2)))
+
+    await operatorContract.relayEntry(blsData.groupSignature)
+
+    assert.isTrue(
+      delayFactor.eq(web3.utils.toBN(1e16).pow(web3.utils.toBN(2))),
+      "Delay factor expected to be 1 * 1e16 ^ 2."
+    )
+
+    const groupMemberRewards = await operatorContract.getGroupMemberRewards(
+      group
+    )
+    assert.isTrue(
+      web3.utils
+        .toBN(groupMemberRewards)
+        .eq(web3.utils.toBN(expectedGroupMemberReward)),
+      "Unexpected group member reward."
+    )
+  })
+
+  it("should send part of the group reward to request subsidy pool based on the submission block.", async function () {
     // Example rewards breakdown:
     // entryVerificationGasEstimate: 1240000
     // groupCreationGasEstimate: 2260000
@@ -125,39 +186,71 @@ describe('TestKeepRandomBeaconService/Pricing', function() {
     // submitterExtraReward: 842592592592592 * 5 * 5 / 100 = 210648148148148 wei
     // submitterReward: 37200000000000000 + 210648148148148 = 37410648148148148 wei
     // subsidy = 5250000000000000 - 207407407407407 * 5 - 210648148148148 = 4002314814814817 wei
-  
-    let entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
-    let tx = await serviceContract.methods['requestRelayEntry(address,uint256)'](
-      callbackContract.address,
-      0,
-      {value: entryFeeEstimate, from: requestor}
-    );
 
-    let currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber);
-    let relayEntryTimeout = await operatorContract.relayEntryTimeout();
-    let deadlineBlock = currentRequestStartBlock.add(relayEntryTimeout).addn(1);
-    let submissionStartBlock = currentRequestStartBlock.addn(1);
-    let decimalPoints = web3.utils.toBN(1e16);
+    const entryFeeEstimate = await serviceContract.entryFeeEstimate(0)
+    const tx = await serviceContract.methods[
+      "requestRelayEntry(address,uint256)"
+    ](callbackContract.address, 0, { value: entryFeeEstimate, from: requestor })
 
-    await time.advanceBlockTo(web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1));
+    const currentRequestStartBlock = web3.utils.toBN(tx.receipt.blockNumber)
+    const relayEntryTimeout = await operatorContract.relayEntryTimeout()
+    const deadlineBlock = currentRequestStartBlock
+      .add(relayEntryTimeout)
+      .addn(1)
+    const submissionStartBlock = currentRequestStartBlock.addn(1)
+    const decimalPoints = web3.utils.toBN(1e16)
 
-    let entryReceivedBlock = web3.utils.toBN(await web3.eth.getBlockNumber()).add(web3.utils.toBN(1)); // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
-    let remainingBlocks = deadlineBlock.sub(entryReceivedBlock);
-    let submissionWindow = deadlineBlock.sub(submissionStartBlock);
-    let delayFactor = (remainingBlocks.mul(decimalPoints).div(submissionWindow)).pow(web3.utils.toBN(2));
+    await time.advanceBlockTo(
+      web3.utils.toBN(await web3.eth.getBlockNumber()).addn(1)
+    )
 
-    let memberBaseReward = entryFee.groupProfitFee.div(groupSize)
-    let expectedGroupMemberReward = memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2)));
-    let expectedDelayPenalty = memberBaseReward.sub(memberBaseReward.mul(delayFactor).div(decimalPoints.pow(web3.utils.toBN(2))));
-    let expectedSubmitterExtraReward = expectedDelayPenalty.mul(groupSize).muln(5).div(web3.utils.toBN(100));
-    let requestSubsidy = entryFee.groupProfitFee.sub(expectedGroupMemberReward.mul(groupSize)).sub(expectedSubmitterExtraReward);
+    const entryReceivedBlock = web3.utils
+      .toBN(await web3.eth.getBlockNumber())
+      .add(web3.utils.toBN(1)) // web3.eth.getBlockNumber is 1 block behind solidity 'block.number'.
+    const remainingBlocks = deadlineBlock.sub(entryReceivedBlock)
+    const submissionWindow = deadlineBlock.sub(submissionStartBlock)
+    const delayFactor = remainingBlocks
+      .mul(decimalPoints)
+      .div(submissionWindow)
+      .pow(web3.utils.toBN(2))
 
-    let serviceContractBalance = web3.utils.toBN(await web3.eth.getBalance(serviceContract.address));
+    const memberBaseReward = entryFee.groupProfitFee.div(groupSize)
+    const expectedGroupMemberReward = memberBaseReward
+      .mul(delayFactor)
+      .div(decimalPoints.pow(web3.utils.toBN(2)))
+    const expectedDelayPenalty = memberBaseReward.sub(
+      memberBaseReward
+        .mul(delayFactor)
+        .div(decimalPoints.pow(web3.utils.toBN(2)))
+    )
+    const expectedSubmitterExtraReward = expectedDelayPenalty
+      .mul(groupSize)
+      .muln(5)
+      .div(web3.utils.toBN(100))
+    const requestSubsidy = entryFee.groupProfitFee
+      .sub(expectedGroupMemberReward.mul(groupSize))
+      .sub(expectedSubmitterExtraReward)
 
-    await operatorContract.relayEntry(blsData.groupSignature);
+    const serviceContractBalance = web3.utils.toBN(
+      await web3.eth.getBalance(serviceContract.address)
+    )
 
-    let groupMemberRewards = await operatorContract.getGroupMemberRewards(group);
-    assert.isTrue(groupMemberRewards.eq(expectedGroupMemberReward), "Unexpected group member reward.");
-    assert.isTrue(serviceContractBalance.add(requestSubsidy).eq(web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))), "Service contract should receive request subsidy.");
-  });
-});
+    await operatorContract.relayEntry(blsData.groupSignature)
+
+    const groupMemberRewards = await operatorContract.getGroupMemberRewards(
+      group
+    )
+    assert.isTrue(
+      groupMemberRewards.eq(expectedGroupMemberReward),
+      "Unexpected group member reward."
+    )
+    assert.isTrue(
+      serviceContractBalance
+        .add(requestSubsidy)
+        .eq(
+          web3.utils.toBN(await web3.eth.getBalance(serviceContract.address))
+        ),
+      "Service contract should receive request subsidy."
+    )
+  })
+})
