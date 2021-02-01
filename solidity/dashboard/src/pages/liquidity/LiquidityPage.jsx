@@ -28,6 +28,8 @@ const LiquidityPage = ({ headerTitle }) => {
     (state) => state.liquidityRewards
   )
 
+  console.log("KEEP", KEEP)
+
   const dispatch = useDispatch()
   const address = useWeb3Address()
 
@@ -69,10 +71,17 @@ const LiquidityPage = ({ headerTitle }) => {
 
   const withdrawLiquidityRewards = (
     liquidityPairContractName,
+    amount,
+    pool,
     awaitingPromise
   ) => {
     dispatch(
-      withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
+      withdrawAllLiquidityRewards(
+        liquidityPairContractName,
+        amount,
+        pool,
+        awaitingPromise
+      )
     )
   }
 
@@ -120,6 +129,8 @@ const LiquidityPage = ({ headerTitle }) => {
         rewardBalance={KEEP.reward}
         addLpTokens={addLpTokens}
         withdrawLiquidityRewards={withdrawLiquidityRewards}
+        liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP.contractName}
+        pool={LIQUIDITY_REWARD_PAIRS.KEEP.pool}
       />
       <CardContainer>
         <LiquidityRewardCard

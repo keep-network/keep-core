@@ -24,6 +24,7 @@ const KeepOnlyPool = ({
   addLpTokens,
   withdrawLiquidityRewards,
   liquidityContractName,
+  pool,
 }) => {
   return (
     <section className="keep-only-pool">
@@ -69,7 +70,7 @@ const KeepOnlyPool = ({
                 addLpTokens(
                   wrappedTokenBalance,
                   liquidityContractName,
-                  "KEEP",
+                  pool,
                   awaitingPromise
                 )
               }
@@ -80,7 +81,12 @@ const KeepOnlyPool = ({
               className="liquidity__withdraw btn btn-secondary btn-lg"
               disabled={!gt(rewardBalance || 0, 0) && !gt(lpBalance || 0, 0)}
               onSubmitAction={(awaitingPromise) =>
-                withdrawLiquidityRewards(liquidityContractName, awaitingPromise)
+                withdrawLiquidityRewards(
+                  liquidityContractName,
+                  lpBalance,
+                  pool,
+                  awaitingPromise
+                )
               }
             >
               withdraw all

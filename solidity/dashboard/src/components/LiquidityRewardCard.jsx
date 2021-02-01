@@ -178,7 +178,12 @@ const LiquidityRewardCard = ({
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
         disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
         onSubmitAction={(awaitingPromise) =>
-          withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
+          withdrawLiquidityRewards(
+            liquidityPairContractName,
+            lpBalance,
+            pool,
+            awaitingPromise
+          )
         }
       >
         withdraw all
