@@ -1,6 +1,5 @@
 node_modules/
 ./solidity/truffle.js
-build/
 vendor/
 _local/
 *.swp

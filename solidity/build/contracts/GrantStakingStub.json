@@ -1,0 +1,1353 @@
+{
+  "contractName": "GrantStakingStub",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "hasGrantDelegated",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "grantId",
+          "type": "uint256"
+        }
+      ],
+      "name": "setGrantForOperator",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "getGrantForOperator",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"getGrantForOperator\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"hasGrantDelegated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"}],\"name\":\"setGrantForOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/stubs/GrantStakingStub.sol\":\"GrantStakingStub\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/Authorizations.sol\":{\"keccak256\":\"0xd49b3840507c924cc37ac2da48bf1549013a79d84daf2cb106b4d4b9c6096e7a\",\"urls\":[\"bzz-raw://2b740d974564d027f9df04253f71ce2314839a682beac926b778e0f7ea59fbb5\",\"dweb:/ipfs/QmamRuiYLpt2fCUPrQypkvrf7BrCsdV12QgaSHQYPsJHT2\"]},\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/home/bless/keep-core/solidity/contracts/KeepRegistry.sol\":{\"keccak256\":\"0x723cf0ade28c4158935e6c22f1da1ee98252ad1bc1cac30fe8fa462fe36ea886\",\"urls\":[\"bzz-raw://6244a0370c42ae7bac430e646694d64b80397e02209ae9ec1e01776e6b5a49fc\",\"dweb:/ipfs/QmcygjqGFv81ZpyKTUwdMRt1VdnM9H6pGUuKAP5YLmL5U8\"]},\"/home/bless/keep-core/solidity/contracts/KeepToken.sol\":{\"keccak256\":\"0x50defd2a00e356ed8eaf9aba405719f567c2da0164db5cdeadd68d155f6ded3b\",\"urls\":[\"bzz-raw://dbc8fb24f311c2dc95a26b1a1dfc9c7d93c634d32ef623fc23f799da5988fafb\",\"dweb:/ipfs/QmShZ3FtP2WUC9r1rbka8BWSf6oFkBbuxgxiDqhpwxo6zZ\"]},\"/home/bless/keep-core/solidity/contracts/ManagedGrant.sol\":{\"keccak256\":\"0x47f1cccc9f9c095b34ca514ae25cc467bbced15251b06f39896e0237e7fdec7c\",\"urls\":[\"bzz-raw://cad43bec15804ff17bd40fdee3598676f716b60204da9be163f15f45135ad250\",\"dweb:/ipfs/QmYHYEfR2UPZJZpsDhN2o1iD7drVSz8oqbYQFVT4G2oKqr\"]},\"/home/bless/keep-core/solidity/contracts/StakeDelegatable.sol\":{\"keccak256\":\"0xa1d81d17bc9f6bcc5878fb9b8acfdf7797c1561bf35111bac6bdbc3bba2c62aa\",\"urls\":[\"bzz-raw://deca3e5444cd9a5546818854009f9ac8c8e58479609de1a128ca73863f10ae7a\",\"dweb:/ipfs/QmcWYJkcHxsmCEhxRz6W5gSBgH597VYZgEaog9pzoLyZtt\"]},\"/home/bless/keep-core/solidity/contracts/TokenGrant.sol\":{\"keccak256\":\"0xad97f1a667f3be66dc6904fb7925e940ca57e4c88d38ae960672d95d7911bf6f\",\"urls\":[\"bzz-raw://f3f6b377ddcc2ad2b47811f115c20bdf6a6a208066afaebe027ac4eb165ca231\",\"dweb:/ipfs/QmXNSkqCDoBS1KGQbQ3PqXr1iMPgkPNWLcEKiBrV8u5LeW\"]},\"/home/bless/keep-core/solidity/contracts/TokenGrantStake.sol\":{\"keccak256\":\"0x014bbb7f336388024480415391cad745ec52cd255cd2740c890948246ab4d524\",\"urls\":[\"bzz-raw://745d488e7271fe9c71879c09fd09eb96b2193346adfddbb59638b80610707be3\",\"dweb:/ipfs/QmR3DyUzhTjE971QovXxMchRkUD3eHUj5S73Eahrf2Wyw8\"]},\"/home/bless/keep-core/solidity/contracts/TokenSender.sol\":{\"keccak256\":\"0xe50a3a7d2f30e8801d8b608c462f65c868e17ff8b2f0db3448876adf0f288117\",\"urls\":[\"bzz-raw://f040546b183d26a9e26adfc01a6425eb6bce1cec1ab5b142aa360c8096ede385\",\"dweb:/ipfs/QmdRa8huRUmsTTvwnWPBF7V2gTQAGsGn3VFUeBfbisBszw\"]},\"/home/bless/keep-core/solidity/contracts/TokenStaking.sol\":{\"keccak256\":\"0x957a8b500117fd8c74466e9c2cfd13e295e5cd66107bda1e5fdea1871248d0e8\",\"urls\":[\"bzz-raw://c6cca24bbf724e77009cb683d1715b8ffb1faa7ad2089156d6fc8d600a397fd4\",\"dweb:/ipfs/QmeVnKTgFhfVSfEgCcoFD86MfGUB9FTD8cbi5SxX2Vmy67\"]},\"/home/bless/keep-core/solidity/contracts/TokenStakingEscrow.sol\":{\"keccak256\":\"0x152a565d564bee09ea3f0f363c912fe3361966bf8d60f14ebcb8bf593d3b140e\",\"urls\":[\"bzz-raw://78ffe4daadcfeacc49c45c4e9879f62c2df3bdd00587b033492ee901537976f1\",\"dweb:/ipfs/QmPwmSu4XF7KpHnC6bqBTkrkjA6CUnC8h5PML9DqkAzLW8\"]},\"/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol\":{\"keccak256\":\"0x4622ccfb359f6478d3e87fb99f755dcebde1b5040662f3572ab8c8d50d2f8bc0\",\"urls\":[\"bzz-raw://cee3570c755b0a30412af08ce4663f85078b10a0eccf6808bec125897c7ead8e\",\"dweb:/ipfs/Qmc9EAjLfBYXfhtd24uNFzu1XKrPaqS5ismF4ZGsPyiBuU\"]},\"/home/bless/keep-core/solidity/contracts/libraries/grant/UnlockingSchedule.sol\":{\"keccak256\":\"0x26f8fe158e3f661bc54fc42a50a1686ef92dd18316a03592bafa2db6a2af9c3f\",\"urls\":[\"bzz-raw://718b4a48d7a50c151328cd15e91e9b9b4cba0db7f7b6b06533709614f9811a55\",\"dweb:/ipfs/QmYyTN6cLZiWumwE6jt2yDHNtc6DMCXaEntgKAN3zqp8yX\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/GrantStaking.sol\":{\"keccak256\":\"0x96253ba2eb78b83a04dd48f0a7ff6083ca72d6e4a27dec0888959c1b3b0be9aa\",\"urls\":[\"bzz-raw://a2ad3ddeba9de2f24b1c1c0339baf52a0b0446248ddfc0554d8fb71ce2057c0f\",\"dweb:/ipfs/QmdYxpcxm8TG7i3qYswudhxvff8hnARSR1GsVcY2fjUpzh\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/LockUtils.sol\":{\"keccak256\":\"0x0fbd9a4d82cf8803f00cb59cca9580d379c8d98a759b8a6d74f75f01c19fc635\",\"urls\":[\"bzz-raw://f2df931f0a11d4f63aa1f6193419606711a24ce7381dd15db52419c783dc7952\",\"dweb:/ipfs/QmRMGWSbfYPaxppBb7w2cQHpAwDc4T9MBmpZqU396i8hKK\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/Locks.sol\":{\"keccak256\":\"0xf45306074f9e893646c21e53954891e29c8011887545d8bbbcab7ef74558b18a\",\"urls\":[\"bzz-raw://971d3c54afde9050e455e79ec42b28d86a101bec8afab30e22b1fa4bfc110cc4\",\"dweb:/ipfs/QmfGTvrbc8dJXaxsxAmZM6oU8AvP5V6C2PQ5JF3gCJC81m\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":{\"keccak256\":\"0x31a399a918eba21f0002019a70b1b68c9610a5a4977fcd874b86d4965eb974c3\",\"urls\":[\"bzz-raw://acbe55a89d5e6f7b6d4add0764e7b47acbdc31afc0d5b1f211b45546d3a5cd6c\",\"dweb:/ipfs/QmcXSUaLV7d117ZvyMnRB3MVXVEGy62ccB5u6d8h1Sm792\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/TopUps.sol\":{\"keccak256\":\"0xe3a3c8d5e542f4f8ac8fdab92de57081257e1c07288e0e592cfc27551085e07f\",\"urls\":[\"bzz-raw://4cffa006da7f76868bcca1d107be436f3cd83339ff76df79c3e92a029e7ad66a\",\"dweb:/ipfs/QmZ5AArQ3gKBeXqGwGnSH45BQZQpGvjuQ4LnNaarrLrdy5\"]},\"/home/bless/keep-core/solidity/contracts/stubs/GrantStakingStub.sol\":{\"keccak256\":\"0x82467fa7d6bc80125b67ea92cb1de6e0709d8806ebd721acd230bfcbe584bf9f\",\"urls\":[\"bzz-raw://b0bcaed6c39a1d5fe2600a875f6c365d421ce925a3b14badff740838948706e1\",\"dweb:/ipfs/QmVubCLAHKCQy6iDehecTHqfgXFQEFDYhZjeuPjJmaMDMk\"]},\"/home/bless/keep-core/solidity/contracts/utils/AddressArrayUtils.sol\":{\"keccak256\":\"0xfb546b43ffd00d565d8440b6d221f5f046222e95469e33044665a56e79fcde48\",\"urls\":[\"bzz-raw://1f947ef8956e26d564cffd73a4f0dcdb02db1d7a46774d4e8876328116f6b663\",\"dweb:/ipfs/QmYUpg3JhhkogsY5nnjyMg6TEwoqRzTkJAWdhQGSbYqMH3\"]},\"/home/bless/keep-core/solidity/contracts/utils/BytesLib.sol\":{\"keccak256\":\"0xf5c726e1c77dea37b9ea1edd9bc7b4eebfafe33ce766a2607eb37d7144e4d68c\",\"urls\":[\"bzz-raw://32f61bad1923d749aff36ad9f62929e603ed27832348ba58d44d01561339d761\",\"dweb:/ipfs/QmWvfwapwUr9SnnEWXdmpo4r2TtVPFJFSUBXKJQpLZkYp1\"]},\"/home/bless/keep-core/solidity/contracts/utils/OperatorParams.sol\":{\"keccak256\":\"0xc13cbf7a6ad4740a8ad6373229b20b66eb4cc3d7aa9870161765ab8197513ab7\",\"urls\":[\"bzz-raw://e8343bc058fcee610863777792a25608549d80e126a05d076481dedb48587565\",\"dweb:/ipfs/QmR8ztc4StcK4yw7QmXj2b9TtS3Qs1BERrqDLtPZmUiffS\"]},\"/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol\":{\"keccak256\":\"0x696b15997a739e6c47c5bc29e1f9023998bb188405221a6b337377bca4ab3f68\",\"urls\":[\"bzz-raw://e93e2287fe6b6e1c5cc45ebc92b9d682e19a5b1302e00cb037391da753282bbf\",\"dweb:/ipfs/QmRXmEopRWNaL7mvY5nTyNNob3EPHF67R6Nxhm3F4VsDoo\"]},\"openzeppelin-solidity/contracts/GSN/Context.sol\":{\"keccak256\":\"0x90a3995645af7562d84b9d69363ffa5ae7217714ab61e951bf7bc450f40e4061\",\"urls\":[\"bzz-raw://216ef9d6b614db4eb46970b4e84903f2534a45572dd30a79f0041f1a5830f436\",\"dweb:/ipfs/QmNPrJ4MWKUAWzKXpUqeyKRUfosaoANZAqXgvepdrCwZAG\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0xecd8ab29d9a5771c3964d0cd1788c4a5098a0081b20fb275da850a22b1c59806\",\"urls\":[\"bzz-raw://696a75bc2c55407ce8251ccc7d19ecb1b7b2be1796a160a6524312babcc7e3d4\",\"dweb:/ipfs/QmQViKEp3y99h9uhRssE29TmjBKRnFMaoz3eJZ4eggggg2\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0x65a4078c03875c25413a068ce9cfdd7e68a90f8786612d1189c89341e6e3b802\",\"urls\":[\"bzz-raw://45c0d95495b944fbb1aa09d900b0ab530903a432125ab8fddfa05064a7988991\",\"dweb:/ipfs/Qma2VeknkKA1THeubGzshWFk44BktXkXP1UKp9Un2uDSsu\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0x9b94356691f3cbf90a5d83ae3fdf6a5a662bb004d2bd8b034160d60221807e64\",\"urls\":[\"bzz-raw://14a9d33db455302b8bb9fdb28998efefbe5a1cb41b29e31391609f646b2ab351\",\"dweb:/ipfs/Qmd4wFr6GEMZnnxgXeq3gmp7cs8tqDuHp3TVNhCbjnux2V\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol\":{\"keccak256\":\"0x4a3a810b7ebe742e897e1fd428b3eeed2196d3acea58eaf9c566ed10d545d2ed\",\"urls\":[\"bzz-raw://28d03f328e19e4099d5013de0649afaeaabac1a614e130767ab1cb4aca9775b6\",\"dweb:/ipfs/Qmb9iW7yNuYehB2NfhRMs9TakqbLVQhBhmGMkaDZ5g1Eb4\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0xe5bb0f57cff3e299f360052ba50f1ea0fff046df2be070b6943e0e3c3fdad8a9\",\"urls\":[\"bzz-raw://59fd025151435da35faa8093a5c7a17de02de9d08ad27275c5cdf05050820d91\",\"dweb:/ipfs/QmQMvwEcPhoRXzbXyrdoeRtvLoifUW9Qh7Luho7bmUPRkc\"]},\"openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol\":{\"keccak256\":\"0x6f2c9955d65c522b80f4b8792f076512d2df947d2112cbc4d98a4781ed42ede2\",\"urls\":[\"bzz-raw://7d8ec81683520c06baeef3f7e06cd82bd6fd5fa611f26857f475f6c829540aff\",\"dweb:/ipfs/QmTDkFzKnrpiV1UKnSoiZAHPuguWzokrr4pFbSPvyaSo56\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x70df50e240407aa50915ad14f61b1a901fa335b37de20955b99ed647be756af0\",\"urls\":[\"bzz-raw://9404711f3206610c08ea97fa52c7b6b4d2e9d536e96fc4b7210aa7e24f796c36\",\"dweb:/ipfs/QmZDzpVzjoap13SuPEq5pVCrmdjoKVZnTsQPLKXAbynTTW\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506103b9806100206000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c8063555d2a6614610046578063559f3b1d1461009457806362bbabed146100f0575b600080fd5b6100926004803603604081101561005c57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505050610148565b005b6100d6600480360360208110156100aa57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101f2565b604051808215151515815260200191505060405180910390f35b6101326004803603602081101561010657600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506102bb565b6040518082815260200191505060405180910390f35b600073__GrantStaking__________________________633cdd1d12909184846040518463ffffffff1660e01b8152600401808481526020018373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060006040518083038186803b1580156101d657600080fd5b505af41580156101ea573d6000803e3d6000fd5b505050505050565b60008073__GrantStaking__________________________63ae4ae2db9091846040518363ffffffff1660e01b8152600401808381526020018273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019250505060206040518083038186803b15801561027957600080fd5b505af415801561028d573d6000803e3d6000fd5b505050506040513d60208110156102a357600080fd5b81019080805190602001909291905050509050919050565b60008073__GrantStaking__________________________63548756ca9091846040518363ffffffff1660e01b8152600401808381526020018273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019250505060206040518083038186803b15801561034257600080fd5b505af4158015610356573d6000803e3d6000fd5b505050506040513d602081101561036c57600080fd5b8101908080519060200190929190505050905091905056fea265627a7a723158202b0dd0e973feaaa5cbdef39941c80397c8698a0227c06c5b1329593153de21dc64736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100415760003560e01c8063555d2a6614610046578063559f3b1d1461009457806362bbabed146100f0575b600080fd5b6100926004803603604081101561005c57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190505050610148565b005b6100d6600480360360208110156100aa57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506101f2565b604051808215151515815260200191505060405180910390f35b6101326004803603602081101561010657600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506102bb565b6040518082815260200191505060405180910390f35b600073__GrantStaking__________________________633cdd1d12909184846040518463ffffffff1660e01b8152600401808481526020018373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060006040518083038186803b1580156101d657600080fd5b505af41580156101ea573d6000803e3d6000fd5b505050505050565b60008073__GrantStaking__________________________63ae4ae2db9091846040518363ffffffff1660e01b8152600401808381526020018273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019250505060206040518083038186803b15801561027957600080fd5b505af415801561028d573d6000803e3d6000fd5b505050506040513d60208110156102a357600080fd5b81019080805190602001909291905050509050919050565b60008073__GrantStaking__________________________63548756ca9091846040518363ffffffff1660e01b8152600401808381526020018273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019250505060206040518083038186803b15801561034257600080fd5b505af4158015610356573d6000803e3d6000fd5b505050506040513d602081101561036c57600080fd5b8101908080519060200190929190505050905091905056fea265627a7a723158202b0dd0e973feaaa5cbdef39941c80397c8698a0227c06c5b1329593153de21dc64736f6c63430005110032",
+  "sourceMap": "74:553:47:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;74:553:47;;;;;;;",
+  "deployedSourceMap": "74:553:47:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;74:553:47;;;;;;;;;;;;;;;;;;;;;;;;;;;;;337:139;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;337:139:47;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;195:136;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;195:136:47;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;482:143;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;482:143:47;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;337:139;418:12;:32;;;;451:8;461:7;418:51;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;418:51:47;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;418:51:47;;;;337:139;;:::o;195:136::-;261:4;284:12;:30;;;;315:8;284:40;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;284:40:47;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;284:40:47;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;284:40:47;;;;;;;;;;;;;;;;277:47;;195:136;;;:::o;482:143::-;550:7;576:12;:32;;;;609:8;576:42;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;576:42:47;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;576:42:47;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;576:42:47;;;;;;;;;;;;;;;;569:49;;482:143;;;:::o",
+  "source": "pragma solidity 0.5.17;\n\nimport \"../libraries/staking/GrantStaking.sol\";\n\ncontract GrantStakingStub {\n    using GrantStaking for GrantStaking.Storage;\n    GrantStaking.Storage grantStaking;\n\n    function hasGrantDelegated(address operator) public view returns (bool) {\n        return grantStaking.hasGrantDelegated(operator);\n    }\n\n    function setGrantForOperator(address operator, uint256 grantId) public {\n        grantStaking.setGrantForOperator(operator, grantId);\n    }\n\n    function getGrantForOperator(address operator) public view returns (uint256) {\n        return grantStaking.getGrantForOperator(operator);\n    }\n}",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/stubs/GrantStakingStub.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/GrantStakingStub.sol",
+    "exportedSymbols": {
+      "GrantStakingStub": [
+        17657
+      ]
+    },
+    "id": 17658,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 17609,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:47"
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/GrantStaking.sol",
+        "file": "../libraries/staking/GrantStaking.sol",
+        "id": 17610,
+        "nodeType": "ImportDirective",
+        "scope": 17658,
+        "sourceUnit": 16381,
+        "src": "25:47:47",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 17657,
+        "linearizedBaseContracts": [
+          17657
+        ],
+        "name": "GrantStakingStub",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 17613,
+            "libraryName": {
+              "contractScope": null,
+              "id": 17611,
+              "name": "GrantStaking",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16380,
+              "src": "112:12:47",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_GrantStaking_$16380",
+                "typeString": "library GrantStaking"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "106:44:47",
+            "typeName": {
+              "contractScope": null,
+              "id": 17612,
+              "name": "GrantStaking.Storage",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16112,
+              "src": "129:20:47",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_Storage_$16112_storage_ptr",
+                "typeString": "struct GrantStaking.Storage"
+              }
+            }
+          },
+          {
+            "constant": false,
+            "id": 17615,
+            "name": "grantStaking",
+            "nodeType": "VariableDeclaration",
+            "scope": 17657,
+            "src": "155:33:47",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_struct$_Storage_$16112_storage",
+              "typeString": "struct GrantStaking.Storage"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 17614,
+              "name": "GrantStaking.Storage",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16112,
+              "src": "155:20:47",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_Storage_$16112_storage_ptr",
+                "typeString": "struct GrantStaking.Storage"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 17627,
+              "nodeType": "Block",
+              "src": "267:64:47",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 17624,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17617,
+                        "src": "315:8:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 17622,
+                        "name": "grantStaking",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17615,
+                        "src": "284:12:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Storage_$16112_storage",
+                          "typeString": "struct GrantStaking.Storage storage ref"
+                        }
+                      },
+                      "id": 17623,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "hasGrantDelegated",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 16256,
+                      "src": "284:30:47",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_delegatecall_view$_t_struct$_Storage_$16112_storage_ptr_$_t_address_$returns$_t_bool_$bound_to$_t_struct$_Storage_$16112_storage_ptr_$",
+                        "typeString": "function (struct GrantStaking.Storage storage pointer,address) view returns (bool)"
+                      }
+                    },
+                    "id": 17625,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "284:40:47",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 17621,
+                  "id": 17626,
+                  "nodeType": "Return",
+                  "src": "277:47:47"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 17628,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "hasGrantDelegated",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 17618,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 17617,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17628,
+                  "src": "222:16:47",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 17616,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "222:7:47",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "221:18:47"
+            },
+            "returnParameters": {
+              "id": 17621,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 17620,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17628,
+                  "src": "261:4:47",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 17619,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "261:4:47",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "260:6:47"
+            },
+            "scope": 17657,
+            "src": "195:136:47",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 17642,
+              "nodeType": "Block",
+              "src": "408:68:47",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 17638,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17630,
+                        "src": "451:8:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "id": 17639,
+                        "name": "grantId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17632,
+                        "src": "461:7:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 17635,
+                        "name": "grantStaking",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17615,
+                        "src": "418:12:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Storage_$16112_storage",
+                          "typeString": "struct GrantStaking.Storage storage ref"
+                        }
+                      },
+                      "id": 17637,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "setGrantForOperator",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 16276,
+                      "src": "418:32:47",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_delegatecall_nonpayable$_t_struct$_Storage_$16112_storage_ptr_$_t_address_$_t_uint256_$returns$__$bound_to$_t_struct$_Storage_$16112_storage_ptr_$",
+                        "typeString": "function (struct GrantStaking.Storage storage pointer,address,uint256)"
+                      }
+                    },
+                    "id": 17640,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "418:51:47",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 17641,
+                  "nodeType": "ExpressionStatement",
+                  "src": "418:51:47"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 17643,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setGrantForOperator",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 17633,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 17630,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17643,
+                  "src": "366:16:47",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 17629,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "366:7:47",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 17632,
+                  "name": "grantId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17643,
+                  "src": "384:15:47",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 17631,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "384:7:47",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "365:35:47"
+            },
+            "returnParameters": {
+              "id": 17634,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "408:0:47"
+            },
+            "scope": 17657,
+            "src": "337:139:47",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 17655,
+              "nodeType": "Block",
+              "src": "559:66:47",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 17652,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17645,
+                        "src": "609:8:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 17650,
+                        "name": "grantStaking",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 17615,
+                        "src": "576:12:47",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Storage_$16112_storage",
+                          "typeString": "struct GrantStaking.Storage storage ref"
+                        }
+                      },
+                      "id": 17651,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "getGrantForOperator",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 16304,
+                      "src": "576:32:47",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_delegatecall_view$_t_struct$_Storage_$16112_storage_ptr_$_t_address_$returns$_t_uint256_$bound_to$_t_struct$_Storage_$16112_storage_ptr_$",
+                        "typeString": "function (struct GrantStaking.Storage storage pointer,address) view returns (uint256)"
+                      }
+                    },
+                    "id": 17653,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "576:42:47",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 17649,
+                  "id": 17654,
+                  "nodeType": "Return",
+                  "src": "569:49:47"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 17656,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getGrantForOperator",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 17646,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 17645,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17656,
+                  "src": "511:16:47",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 17644,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "511:7:47",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "510:18:47"
+            },
+            "returnParameters": {
+              "id": 17649,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 17648,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17656,
+                  "src": "550:7:47",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 17647,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "550:7:47",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "549:9:47"
+            },
+            "scope": 17657,
+            "src": "482:143:47",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 17658,
+        "src": "74:553:47"
+      }
+    ],
+    "src": "0:627:47"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/GrantStakingStub.sol",
+      "exportedSymbols": {
+        "GrantStakingStub": [
+          17657
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 17609,
+        "name": "PragmaDirective",
+        "src": "0:23:47"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 16381,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/GrantStaking.sol",
+          "file": "../libraries/staking/GrantStaking.sol",
+          "scope": 17658,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 17610,
+        "name": "ImportDirective",
+        "src": "25:47:47"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            17657
+          ],
+          "name": "GrantStakingStub",
+          "scope": 17658
+        },
+        "children": [
+          {
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "GrantStaking",
+                  "referencedDeclaration": 16380,
+                  "type": "library GrantStaking"
+                },
+                "id": 17611,
+                "name": "UserDefinedTypeName",
+                "src": "112:12:47"
+              },
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "GrantStaking.Storage",
+                  "referencedDeclaration": 16112,
+                  "type": "struct GrantStaking.Storage"
+                },
+                "id": 17612,
+                "name": "UserDefinedTypeName",
+                "src": "129:20:47"
+              }
+            ],
+            "id": 17613,
+            "name": "UsingForDirective",
+            "src": "106:44:47"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "grantStaking",
+              "scope": 17657,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "struct GrantStaking.Storage",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "GrantStaking.Storage",
+                  "referencedDeclaration": 16112,
+                  "type": "struct GrantStaking.Storage"
+                },
+                "id": 17614,
+                "name": "UserDefinedTypeName",
+                "src": "155:20:47"
+              }
+            ],
+            "id": 17615,
+            "name": "VariableDeclaration",
+            "src": "155:33:47"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "hasGrantDelegated",
+              "scope": 17657,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 17628,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 17616,
+                        "name": "ElementaryTypeName",
+                        "src": "222:7:47"
+                      }
+                    ],
+                    "id": 17617,
+                    "name": "VariableDeclaration",
+                    "src": "222:16:47"
+                  }
+                ],
+                "id": 17618,
+                "name": "ParameterList",
+                "src": "221:18:47"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 17628,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 17619,
+                        "name": "ElementaryTypeName",
+                        "src": "261:4:47"
+                      }
+                    ],
+                    "id": 17620,
+                    "name": "VariableDeclaration",
+                    "src": "261:4:47"
+                  }
+                ],
+                "id": 17621,
+                "name": "ParameterList",
+                "src": "260:6:47"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 17621
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "bool",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "hasGrantDelegated",
+                              "referencedDeclaration": 16256,
+                              "type": "function (struct GrantStaking.Storage storage pointer,address) view returns (bool)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 17615,
+                                  "type": "struct GrantStaking.Storage storage ref",
+                                  "value": "grantStaking"
+                                },
+                                "id": 17622,
+                                "name": "Identifier",
+                                "src": "284:12:47"
+                              }
+                            ],
+                            "id": 17623,
+                            "name": "MemberAccess",
+                            "src": "284:30:47"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17617,
+                              "type": "address",
+                              "value": "operator"
+                            },
+                            "id": 17624,
+                            "name": "Identifier",
+                            "src": "315:8:47"
+                          }
+                        ],
+                        "id": 17625,
+                        "name": "FunctionCall",
+                        "src": "284:40:47"
+                      }
+                    ],
+                    "id": 17626,
+                    "name": "Return",
+                    "src": "277:47:47"
+                  }
+                ],
+                "id": 17627,
+                "name": "Block",
+                "src": "267:64:47"
+              }
+            ],
+            "id": 17628,
+            "name": "FunctionDefinition",
+            "src": "195:136:47"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "setGrantForOperator",
+              "scope": 17657,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 17643,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 17629,
+                        "name": "ElementaryTypeName",
+                        "src": "366:7:47"
+                      }
+                    ],
+                    "id": 17630,
+                    "name": "VariableDeclaration",
+                    "src": "366:16:47"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "grantId",
+                      "scope": 17643,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 17631,
+                        "name": "ElementaryTypeName",
+                        "src": "384:7:47"
+                      }
+                    ],
+                    "id": 17632,
+                    "name": "VariableDeclaration",
+                    "src": "384:15:47"
+                  }
+                ],
+                "id": 17633,
+                "name": "ParameterList",
+                "src": "365:35:47"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 17634,
+                "name": "ParameterList",
+                "src": "408:0:47"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                },
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "setGrantForOperator",
+                              "referencedDeclaration": 16276,
+                              "type": "function (struct GrantStaking.Storage storage pointer,address,uint256)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 17615,
+                                  "type": "struct GrantStaking.Storage storage ref",
+                                  "value": "grantStaking"
+                                },
+                                "id": 17635,
+                                "name": "Identifier",
+                                "src": "418:12:47"
+                              }
+                            ],
+                            "id": 17637,
+                            "name": "MemberAccess",
+                            "src": "418:32:47"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17630,
+                              "type": "address",
+                              "value": "operator"
+                            },
+                            "id": 17638,
+                            "name": "Identifier",
+                            "src": "451:8:47"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17632,
+                              "type": "uint256",
+                              "value": "grantId"
+                            },
+                            "id": 17639,
+                            "name": "Identifier",
+                            "src": "461:7:47"
+                          }
+                        ],
+                        "id": 17640,
+                        "name": "FunctionCall",
+                        "src": "418:51:47"
+                      }
+                    ],
+                    "id": 17641,
+                    "name": "ExpressionStatement",
+                    "src": "418:51:47"
+                  }
+                ],
+                "id": 17642,
+                "name": "Block",
+                "src": "408:68:47"
+              }
+            ],
+            "id": 17643,
+            "name": "FunctionDefinition",
+            "src": "337:139:47"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "getGrantForOperator",
+              "scope": 17657,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 17656,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 17644,
+                        "name": "ElementaryTypeName",
+                        "src": "511:7:47"
+                      }
+                    ],
+                    "id": 17645,
+                    "name": "VariableDeclaration",
+                    "src": "511:16:47"
+                  }
+                ],
+                "id": 17646,
+                "name": "ParameterList",
+                "src": "510:18:47"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 17656,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 17647,
+                        "name": "ElementaryTypeName",
+                        "src": "550:7:47"
+                      }
+                    ],
+                    "id": 17648,
+                    "name": "VariableDeclaration",
+                    "src": "550:7:47"
+                  }
+                ],
+                "id": 17649,
+                "name": "ParameterList",
+                "src": "549:9:47"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 17649
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "uint256",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "getGrantForOperator",
+                              "referencedDeclaration": 16304,
+                              "type": "function (struct GrantStaking.Storage storage pointer,address) view returns (uint256)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 17615,
+                                  "type": "struct GrantStaking.Storage storage ref",
+                                  "value": "grantStaking"
+                                },
+                                "id": 17650,
+                                "name": "Identifier",
+                                "src": "576:12:47"
+                              }
+                            ],
+                            "id": 17651,
+                            "name": "MemberAccess",
+                            "src": "576:32:47"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17645,
+                              "type": "address",
+                              "value": "operator"
+                            },
+                            "id": 17652,
+                            "name": "Identifier",
+                            "src": "609:8:47"
+                          }
+                        ],
+                        "id": 17653,
+                        "name": "FunctionCall",
+                        "src": "576:42:47"
+                      }
+                    ],
+                    "id": 17654,
+                    "name": "Return",
+                    "src": "569:49:47"
+                  }
+                ],
+                "id": 17655,
+                "name": "Block",
+                "src": "559:66:47"
+              }
+            ],
+            "id": 17656,
+            "name": "FunctionDefinition",
+            "src": "482:143:47"
+          }
+        ],
+        "id": 17657,
+        "name": "ContractDefinition",
+        "src": "74:553:47"
+      }
+    ],
+    "id": 17658,
+    "name": "SourceUnit",
+    "src": "0:627:47"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:02.121Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}

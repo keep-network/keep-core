@@ -1,0 +1,1046 @@
+{
+  "contractName": "IRandomBeacon",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "entry",
+          "type": "uint256"
+        }
+      ],
+      "name": "RelayEntryGenerated",
+      "type": "event"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "callbackGas",
+          "type": "uint256"
+        }
+      ],
+      "name": "entryFeeEstimate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "requestRelayEntry",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": true,
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "callbackContract",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "callbackGas",
+          "type": "uint256"
+        }
+      ],
+      "name": "requestRelayEntry",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": true,
+      "stateMutability": "payable",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"RelayEntryGenerated\",\"type\":\"event\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"entryFeeEstimate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"callbackContract\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"callbackGas\",\"type\":\"uint256\"}],\"name\":\"requestRelayEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{\"entryFeeEstimate(uint256)\":{\"params\":{\"callbackGas\":\"Gas required for the callback.\"}},\"requestRelayEntry()\":{\"details\":\"Beacon does not support concurrent relay requests. No new requests should be made while the beacon is already processing another request. Requests made while the beacon is busy will be rejected and the transaction reverted. \",\"return\":\"An uint256 representing uniquely generated relay request ID\"},\"requestRelayEntry(address,uint256)\":{\"details\":\"Beacon does not support concurrent relay requests. No new requests should be made while the beacon is already processing another request. Requests made while the beacon is busy will be rejected and the transaction reverted. \",\"params\":{\"callbackContract\":\"Callback contract address. Callback is called once a new relay entry has been generated. Must declare public `__beaconCallback(uint256)` function. It is recommended to implement `IRandomBeaconConsumer` interface to ensure the correct callback function signature.\",\"callbackGas\":\"Gas required for the callback. The customer needs to ensure they provide a sufficient callback gas to cover the gas fee of executing the callback. Any surplus is returned to the customer. If the callback gas amount turns to be not enough to execute the callback, callback execution is skipped.\"},\"return\":\"An uint256 representing uniquely generated relay request ID\"}},\"title\":\"Keep Random Beacon \"},\"userdoc\":{\"methods\":{\"entryFeeEstimate(uint256)\":{\"notice\":\"Provides the customer with an estimated entry fee in wei to use in the request. The fee estimate is only valid for the transaction it is called in, so the customer must make the request immediately after obtaining the estimate. Insufficient payment will lead to the request being rejected and the transaction reverted.     /// The customer may decide to provide more ether for an entry fee than estimated by this function. This is especially helpful when callback gas cost fluctuates. Any surplus between the passed fee and the actual cost of producing an entry and executing a callback is returned back to the customer.\"},\"requestRelayEntry()\":{\"notice\":\"Submits a request to generate a new relay entry. Emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event for the generated entry. \"},\"requestRelayEntry(address,uint256)\":{\"notice\":\"Submits a request to generate a new relay entry. Executes callback on the provided callback contract with the generated entry and emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event. Callback contract has to declare public `__beaconCallback(uint256)` function that is going to be executed with the result, once ready. It is recommended to implement `IRandomBeaconConsumer` interface to ensure the correct callback function signature. \"}},\"notice\":\"Keep Random Beacon generates verifiable randomness that is resistant to bad actors both in the relay network and on the anchoring blockchain.\"}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol\":\"IRandomBeacon\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol\":{\"keccak256\":\"0x7582dc270725d9d15dbc2e13b263fa2f2c3164d9c2ac4a452b2a891a8285262a\",\"urls\":[\"bzz-raw://25cfc654326961065b23bd76da82b9c86354b30bf0b37d16c4734bdc3033b84d\",\"dweb:/ipfs/QmYvebB1arUVwod3speEHWZx6qZNaPuB94XhSFR6hPw8a6\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "/**\n▓▓▌ ▓▓ ▐▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▄\n▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▌▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n  ▓▓▓▓▓▓    ▓▓▓▓▓▓▓▀    ▐▓▓▓▓▓▓    ▐▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓\n  ▓▓▓▓▓▓▄▄▓▓▓▓▓▓▓▀      ▐▓▓▓▓▓▓▄▄▄▄         ▓▓▓▓▓▓▄▄▄▄         ▐▓▓▓▓▓▌   ▐▓▓▓▓▓▓\n  ▓▓▓▓▓▓▓▓▓▓▓▓▓▀        ▐▓▓▓▓▓▓▓▓▓▓         ▓▓▓▓▓▓▓▓▓▓▌        ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\n  ▓▓▓▓▓▓▀▀▓▓▓▓▓▓▄       ▐▓▓▓▓▓▓▀▀▀▀         ▓▓▓▓▓▓▀▀▀▀         ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀\n  ▓▓▓▓▓▓   ▀▓▓▓▓▓▓▄     ▐▓▓▓▓▓▓     ▓▓▓▓▓   ▓▓▓▓▓▓     ▓▓▓▓▓   ▐▓▓▓▓▓▌\n▓▓▓▓▓▓▓▓▓▓ █▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓\n▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓ ▐▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓ ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓  ▓▓▓▓▓▓▓▓▓▓\n\n                           Trust math, not hardware.\n*/\n\npragma solidity 0.5.17;\n\n\n/// @title Keep Random Beacon\n///\n/// @notice Keep Random Beacon generates verifiable randomness that is resistant\n/// to bad actors both in the relay network and on the anchoring blockchain.\ninterface IRandomBeacon {\n    /// @notice Event emitted for each new relay entry generated. It contains\n    /// request ID allowing to associate the generated relay entry with relay\n    /// request created previously with `requestRelayEntry` function. Event is\n    /// emitted no matter if callback was executed or not.\n    ///\n    /// @param requestId Relay request ID for which entry was generated.\n    /// @param entry Generated relay entry.\n    event RelayEntryGenerated(uint256 requestId, uint256 entry);\n\n    /// @notice Provides the customer with an estimated entry fee in wei to use\n    /// in the request. The fee estimate is only valid for the transaction it is\n    /// called in, so the customer must make the request immediately after\n    /// obtaining the estimate. Insufficient payment will lead to the request\n    /// being rejected and the transaction reverted.\n    ///\n    /// The customer may decide to provide more ether for an entry fee than\n    /// estimated by this function. This is especially helpful when callback gas\n    /// cost fluctuates. Any surplus between the passed fee and the actual cost\n    /// of producing an entry and executing a callback is returned back to the\n    /// customer.\n    /// @param callbackGas Gas required for the callback.\n    function entryFeeEstimate(uint256 callbackGas)\n        external\n        view\n        returns (uint256);\n\n    /// @notice Submits a request to generate a new relay entry. Executes\n    /// callback on the provided callback contract with the generated entry and\n    /// emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event.\n    /// Callback contract has to declare public `__beaconCallback(uint256)`\n    /// function that is going to be executed with the result, once ready.\n    /// It is recommended to implement `IRandomBeaconConsumer` interface to\n    /// ensure the correct callback function signature.\n    ///\n    /// @dev Beacon does not support concurrent relay requests. No new requests\n    /// should be made while the beacon is already processing another request.\n    /// Requests made while the beacon is busy will be rejected and the\n    /// transaction reverted.\n    ///\n    /// @param callbackContract Callback contract address. Callback is called\n    /// once a new relay entry has been generated. Must declare public\n    /// `__beaconCallback(uint256)` function. It is recommended to implement\n    /// `IRandomBeaconConsumer` interface to ensure the correct callback function\n    /// signature.\n    /// @param callbackGas Gas required for the callback.\n    /// The customer needs to ensure they provide a sufficient callback gas\n    /// to cover the gas fee of executing the callback. Any surplus is returned\n    /// to the customer. If the callback gas amount turns to be not enough to\n    /// execute the callback, callback execution is skipped.\n    /// @return An uint256 representing uniquely generated relay request ID\n    function requestRelayEntry(address callbackContract, uint256 callbackGas)\n        external\n        payable\n        returns (uint256);\n\n    /// @notice Submits a request to generate a new relay entry. Emits\n    /// `RelayEntryGenerated(uint256 requestId, uint256 entry)` event for the\n    /// generated entry.\n    ///\n    /// @dev Beacon does not support concurrent relay requests. No new requests\n    /// should be made while the beacon is already processing another request.\n    /// Requests made while the beacon is busy will be rejected and the\n    /// transaction reverted.\n    ///\n    /// @return An uint256 representing uniquely generated relay request ID\n    function requestRelayEntry() external payable returns (uint256);\n}\n\n\n/// @title Keep Random Beacon Consumer\n///\n/// @notice Receives Keep Random Beacon relay entries with `__beaconCallback`\n/// function. Contract implementing this interface does not have to be the one\n/// requesting relay entry but it is the one receiving the requested relay entry\n/// once it is produced.\n///\n/// @dev Use this interface to indicate the contract receives relay entries from\n/// the beacon and to ensure the correctness of callback function signature.\ninterface IRandomBeaconConsumer {\n    /// @notice Receives relay entry produced by Keep Random Beacon. This function\n    /// should be called only by Keep Random Beacon.\n    ///\n    /// @param relayEntry Relay entry (random number) produced by Keep Random\n    /// Beacon.\n    function __beaconCallback(uint256 relayEntry) external;\n}\n",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+    "exportedSymbols": {
+      "IRandomBeacon": [
+        1357
+      ],
+      "IRandomBeaconConsumer": [
+        1363
+      ]
+    },
+    "id": 1364,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1329,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "1837:23:8"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": "@title Keep Random Beacon\n\n/// @notice Keep Random Beacon generates verifiable randomness that is resistant\n to bad actors both in the relay network and on the anchoring blockchain.",
+        "fullyImplemented": false,
+        "id": 1357,
+        "linearizedBaseContracts": [
+          1357
+        ],
+        "name": "IRandomBeacon",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "anonymous": false,
+            "documentation": "@notice Event emitted for each new relay entry generated. It contains\n request ID allowing to associate the generated relay entry with relay\n request created previously with `requestRelayEntry` function. Event is\n emitted no matter if callback was executed or not.\n\n    /// @param requestId Relay request ID for which entry was generated.\n @param entry Generated relay entry.",
+            "id": 1335,
+            "name": "RelayEntryGenerated",
+            "nodeType": "EventDefinition",
+            "parameters": {
+              "id": 1334,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1331,
+                  "indexed": false,
+                  "name": "requestId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1335,
+                  "src": "2530:17:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1330,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2530:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1333,
+                  "indexed": false,
+                  "name": "entry",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1335,
+                  "src": "2549:13:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1332,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2549:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2529:34:8"
+            },
+            "src": "2504:60:8"
+          },
+          {
+            "body": null,
+            "documentation": "@notice Provides the customer with an estimated entry fee in wei to use\n in the request. The fee estimate is only valid for the transaction it is\n called in, so the customer must make the request immediately after\n obtaining the estimate. Insufficient payment will lead to the request\n being rejected and the transaction reverted.\n\n    /// The customer may decide to provide more ether for an entry fee than\n estimated by this function. This is especially helpful when callback gas\n cost fluctuates. Any surplus between the passed fee and the actual cost\n of producing an entry and executing a callback is returned back to the\n customer.\n @param callbackGas Gas required for the callback.",
+            "id": 1342,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "entryFeeEstimate",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1338,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1337,
+                  "name": "callbackGas",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1342,
+                  "src": "3363:19:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1336,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3363:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3362:21:8"
+            },
+            "returnParameters": {
+              "id": 1341,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1340,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1342,
+                  "src": "3431:7:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1339,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3431:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3430:9:8"
+            },
+            "scope": 1357,
+            "src": "3337:103:8",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": "@notice Submits a request to generate a new relay entry. Executes\n callback on the provided callback contract with the generated entry and\n emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event.\n Callback contract has to declare public `__beaconCallback(uint256)`\n function that is going to be executed with the result, once ready.\n It is recommended to implement `IRandomBeaconConsumer` interface to\n ensure the correct callback function signature.\n\n    /// @dev Beacon does not support concurrent relay requests. No new requests\n should be made while the beacon is already processing another request.\n Requests made while the beacon is busy will be rejected and the\n transaction reverted.\n\n    /// @param callbackContract Callback contract address. Callback is called\n once a new relay entry has been generated. Must declare public\n `__beaconCallback(uint256)` function. It is recommended to implement\n `IRandomBeaconConsumer` interface to ensure the correct callback function\n signature.\n @param callbackGas Gas required for the callback.\n The customer needs to ensure they provide a sufficient callback gas\n to cover the gas fee of executing the callback. Any surplus is returned\n to the customer. If the callback gas amount turns to be not enough to\n execute the callback, callback execution is skipped.\n @return An uint256 representing uniquely generated relay request ID",
+            "id": 1351,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "requestRelayEntry",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1347,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1344,
+                  "name": "callbackContract",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1351,
+                  "src": "5020:24:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 1343,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5020:7:8",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1346,
+                  "name": "callbackGas",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1351,
+                  "src": "5046:19:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1345,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5046:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5019:47:8"
+            },
+            "returnParameters": {
+              "id": 1350,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1349,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1351,
+                  "src": "5117:7:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1348,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5117:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5116:9:8"
+            },
+            "scope": 1357,
+            "src": "4993:133:8",
+            "stateMutability": "payable",
+            "superFunction": null,
+            "visibility": "external"
+          },
+          {
+            "body": null,
+            "documentation": "@notice Submits a request to generate a new relay entry. Emits\n `RelayEntryGenerated(uint256 requestId, uint256 entry)` event for the\n generated entry.\n\n    /// @dev Beacon does not support concurrent relay requests. No new requests\n should be made while the beacon is already processing another request.\n Requests made while the beacon is busy will be rejected and the\n transaction reverted.\n\n    /// @return An uint256 representing uniquely generated relay request ID",
+            "id": 1356,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "requestRelayEntry",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1352,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "5685:2:8"
+            },
+            "returnParameters": {
+              "id": 1355,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1354,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1356,
+                  "src": "5714:7:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1353,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "5714:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "5713:9:8"
+            },
+            "scope": 1357,
+            "src": "5659:64:8",
+            "stateMutability": "payable",
+            "superFunction": null,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1364,
+        "src": "2055:3670:8"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "documentation": "@title Keep Random Beacon Consumer\n\n/// @notice Receives Keep Random Beacon relay entries with `__beaconCallback`\n function. Contract implementing this interface does not have to be the one\n requesting relay entry but it is the one receiving the requested relay entry\n once it is produced.\n\n/// @dev Use this interface to indicate the contract receives relay entries from\n the beacon and to ensure the correctness of callback function signature.",
+        "fullyImplemented": false,
+        "id": 1363,
+        "linearizedBaseContracts": [
+          1363
+        ],
+        "name": "IRandomBeaconConsumer",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": "@notice Receives relay entry produced by Keep Random Beacon. This function\n should be called only by Keep Random Beacon.\n\n    /// @param relayEntry Relay entry (random number) produced by Keep Random\n Beacon.",
+            "id": 1362,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "__beaconCallback",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1360,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1359,
+                  "name": "relayEntry",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1362,
+                  "src": "6498:18:8",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1358,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "6498:7:8",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "6497:20:8"
+            },
+            "returnParameters": {
+              "id": 1361,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "6526:0:8"
+            },
+            "scope": 1363,
+            "src": "6472:55:8",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "external"
+          }
+        ],
+        "scope": 1364,
+        "src": "6196:333:8"
+      }
+    ],
+    "src": "1837:4693:8"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+      "exportedSymbols": {
+        "IRandomBeacon": [
+          1357
+        ],
+        "IRandomBeaconConsumer": [
+          1363
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 1329,
+        "name": "PragmaDirective",
+        "src": "1837:23:8"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "interface",
+          "documentation": "@title Keep Random Beacon\n\n/// @notice Keep Random Beacon generates verifiable randomness that is resistant\n to bad actors both in the relay network and on the anchoring blockchain.",
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            1357
+          ],
+          "name": "IRandomBeacon",
+          "scope": 1364
+        },
+        "children": [
+          {
+            "attributes": {
+              "anonymous": false,
+              "documentation": "@notice Event emitted for each new relay entry generated. It contains\n request ID allowing to associate the generated relay entry with relay\n request created previously with `requestRelayEntry` function. Event is\n emitted no matter if callback was executed or not.\n\n    /// @param requestId Relay request ID for which entry was generated.\n @param entry Generated relay entry.",
+              "name": "RelayEntryGenerated"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": false,
+                      "name": "requestId",
+                      "scope": 1335,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1330,
+                        "name": "ElementaryTypeName",
+                        "src": "2530:7:8"
+                      }
+                    ],
+                    "id": 1331,
+                    "name": "VariableDeclaration",
+                    "src": "2530:17:8"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "indexed": false,
+                      "name": "entry",
+                      "scope": 1335,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1332,
+                        "name": "ElementaryTypeName",
+                        "src": "2549:7:8"
+                      }
+                    ],
+                    "id": 1333,
+                    "name": "VariableDeclaration",
+                    "src": "2549:13:8"
+                  }
+                ],
+                "id": 1334,
+                "name": "ParameterList",
+                "src": "2529:34:8"
+              }
+            ],
+            "id": 1335,
+            "name": "EventDefinition",
+            "src": "2504:60:8"
+          },
+          {
+            "attributes": {
+              "body": null,
+              "documentation": "@notice Provides the customer with an estimated entry fee in wei to use\n in the request. The fee estimate is only valid for the transaction it is\n called in, so the customer must make the request immediately after\n obtaining the estimate. Insufficient payment will lead to the request\n being rejected and the transaction reverted.\n\n    /// The customer may decide to provide more ether for an entry fee than\n estimated by this function. This is especially helpful when callback gas\n cost fluctuates. Any surplus between the passed fee and the actual cost\n of producing an entry and executing a callback is returned back to the\n customer.\n @param callbackGas Gas required for the callback.",
+              "implemented": false,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "entryFeeEstimate",
+              "scope": 1357,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "callbackGas",
+                      "scope": 1342,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1336,
+                        "name": "ElementaryTypeName",
+                        "src": "3363:7:8"
+                      }
+                    ],
+                    "id": 1337,
+                    "name": "VariableDeclaration",
+                    "src": "3363:19:8"
+                  }
+                ],
+                "id": 1338,
+                "name": "ParameterList",
+                "src": "3362:21:8"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 1342,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1339,
+                        "name": "ElementaryTypeName",
+                        "src": "3431:7:8"
+                      }
+                    ],
+                    "id": 1340,
+                    "name": "VariableDeclaration",
+                    "src": "3431:7:8"
+                  }
+                ],
+                "id": 1341,
+                "name": "ParameterList",
+                "src": "3430:9:8"
+              }
+            ],
+            "id": 1342,
+            "name": "FunctionDefinition",
+            "src": "3337:103:8"
+          },
+          {
+            "attributes": {
+              "body": null,
+              "documentation": "@notice Submits a request to generate a new relay entry. Executes\n callback on the provided callback contract with the generated entry and\n emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event.\n Callback contract has to declare public `__beaconCallback(uint256)`\n function that is going to be executed with the result, once ready.\n It is recommended to implement `IRandomBeaconConsumer` interface to\n ensure the correct callback function signature.\n\n    /// @dev Beacon does not support concurrent relay requests. No new requests\n should be made while the beacon is already processing another request.\n Requests made while the beacon is busy will be rejected and the\n transaction reverted.\n\n    /// @param callbackContract Callback contract address. Callback is called\n once a new relay entry has been generated. Must declare public\n `__beaconCallback(uint256)` function. It is recommended to implement\n `IRandomBeaconConsumer` interface to ensure the correct callback function\n signature.\n @param callbackGas Gas required for the callback.\n The customer needs to ensure they provide a sufficient callback gas\n to cover the gas fee of executing the callback. Any surplus is returned\n to the customer. If the callback gas amount turns to be not enough to\n execute the callback, callback execution is skipped.\n @return An uint256 representing uniquely generated relay request ID",
+              "implemented": false,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "requestRelayEntry",
+              "scope": 1357,
+              "stateMutability": "payable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "callbackContract",
+                      "scope": 1351,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 1343,
+                        "name": "ElementaryTypeName",
+                        "src": "5020:7:8"
+                      }
+                    ],
+                    "id": 1344,
+                    "name": "VariableDeclaration",
+                    "src": "5020:24:8"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "callbackGas",
+                      "scope": 1351,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1345,
+                        "name": "ElementaryTypeName",
+                        "src": "5046:7:8"
+                      }
+                    ],
+                    "id": 1346,
+                    "name": "VariableDeclaration",
+                    "src": "5046:19:8"
+                  }
+                ],
+                "id": 1347,
+                "name": "ParameterList",
+                "src": "5019:47:8"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 1351,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1348,
+                        "name": "ElementaryTypeName",
+                        "src": "5117:7:8"
+                      }
+                    ],
+                    "id": 1349,
+                    "name": "VariableDeclaration",
+                    "src": "5117:7:8"
+                  }
+                ],
+                "id": 1350,
+                "name": "ParameterList",
+                "src": "5116:9:8"
+              }
+            ],
+            "id": 1351,
+            "name": "FunctionDefinition",
+            "src": "4993:133:8"
+          },
+          {
+            "attributes": {
+              "body": null,
+              "documentation": "@notice Submits a request to generate a new relay entry. Emits\n `RelayEntryGenerated(uint256 requestId, uint256 entry)` event for the\n generated entry.\n\n    /// @dev Beacon does not support concurrent relay requests. No new requests\n should be made while the beacon is already processing another request.\n Requests made while the beacon is busy will be rejected and the\n transaction reverted.\n\n    /// @return An uint256 representing uniquely generated relay request ID",
+              "implemented": false,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "requestRelayEntry",
+              "scope": 1357,
+              "stateMutability": "payable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1352,
+                "name": "ParameterList",
+                "src": "5685:2:8"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 1356,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1353,
+                        "name": "ElementaryTypeName",
+                        "src": "5714:7:8"
+                      }
+                    ],
+                    "id": 1354,
+                    "name": "VariableDeclaration",
+                    "src": "5714:7:8"
+                  }
+                ],
+                "id": 1355,
+                "name": "ParameterList",
+                "src": "5713:9:8"
+              }
+            ],
+            "id": 1356,
+            "name": "FunctionDefinition",
+            "src": "5659:64:8"
+          }
+        ],
+        "id": 1357,
+        "name": "ContractDefinition",
+        "src": "2055:3670:8"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "interface",
+          "documentation": "@title Keep Random Beacon Consumer\n\n/// @notice Receives Keep Random Beacon relay entries with `__beaconCallback`\n function. Contract implementing this interface does not have to be the one\n requesting relay entry but it is the one receiving the requested relay entry\n once it is produced.\n\n/// @dev Use this interface to indicate the contract receives relay entries from\n the beacon and to ensure the correctness of callback function signature.",
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            1363
+          ],
+          "name": "IRandomBeaconConsumer",
+          "scope": 1364
+        },
+        "children": [
+          {
+            "attributes": {
+              "body": null,
+              "documentation": "@notice Receives relay entry produced by Keep Random Beacon. This function\n should be called only by Keep Random Beacon.\n\n    /// @param relayEntry Relay entry (random number) produced by Keep Random\n Beacon.",
+              "implemented": false,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "__beaconCallback",
+              "scope": 1363,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "relayEntry",
+                      "scope": 1362,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1358,
+                        "name": "ElementaryTypeName",
+                        "src": "6498:7:8"
+                      }
+                    ],
+                    "id": 1359,
+                    "name": "VariableDeclaration",
+                    "src": "6498:18:8"
+                  }
+                ],
+                "id": 1360,
+                "name": "ParameterList",
+                "src": "6497:20:8"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1361,
+                "name": "ParameterList",
+                "src": "6526:0:8"
+              }
+            ],
+            "id": 1362,
+            "name": "FunctionDefinition",
+            "src": "6472:55:8"
+          }
+        ],
+        "id": 1363,
+        "name": "ContractDefinition",
+        "src": "6196:333:8"
+      }
+    ],
+    "id": 1364,
+    "name": "SourceUnit",
+    "src": "1837:4693:8"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:01.826Z",
+  "devdoc": {
+    "methods": {
+      "entryFeeEstimate(uint256)": {
+        "params": {
+          "callbackGas": "Gas required for the callback."
+        }
+      },
+      "requestRelayEntry()": {
+        "details": "Beacon does not support concurrent relay requests. No new requests should be made while the beacon is already processing another request. Requests made while the beacon is busy will be rejected and the transaction reverted. ",
+        "return": "An uint256 representing uniquely generated relay request ID"
+      },
+      "requestRelayEntry(address,uint256)": {
+        "details": "Beacon does not support concurrent relay requests. No new requests should be made while the beacon is already processing another request. Requests made while the beacon is busy will be rejected and the transaction reverted. ",
+        "params": {
+          "callbackContract": "Callback contract address. Callback is called once a new relay entry has been generated. Must declare public `__beaconCallback(uint256)` function. It is recommended to implement `IRandomBeaconConsumer` interface to ensure the correct callback function signature.",
+          "callbackGas": "Gas required for the callback. The customer needs to ensure they provide a sufficient callback gas to cover the gas fee of executing the callback. Any surplus is returned to the customer. If the callback gas amount turns to be not enough to execute the callback, callback execution is skipped."
+        },
+        "return": "An uint256 representing uniquely generated relay request ID"
+      }
+    },
+    "title": "Keep Random Beacon "
+  },
+  "userdoc": {
+    "methods": {
+      "entryFeeEstimate(uint256)": {
+        "notice": "Provides the customer with an estimated entry fee in wei to use in the request. The fee estimate is only valid for the transaction it is called in, so the customer must make the request immediately after obtaining the estimate. Insufficient payment will lead to the request being rejected and the transaction reverted.     /// The customer may decide to provide more ether for an entry fee than estimated by this function. This is especially helpful when callback gas cost fluctuates. Any surplus between the passed fee and the actual cost of producing an entry and executing a callback is returned back to the customer."
+      },
+      "requestRelayEntry()": {
+        "notice": "Submits a request to generate a new relay entry. Emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event for the generated entry. "
+      },
+      "requestRelayEntry(address,uint256)": {
+        "notice": "Submits a request to generate a new relay entry. Executes callback on the provided callback contract with the generated entry and emits `RelayEntryGenerated(uint256 requestId, uint256 entry)` event. Callback contract has to declare public `__beaconCallback(uint256)` function that is going to be executed with the result, once ready. It is recommended to implement `IRandomBeaconConsumer` interface to ensure the correct callback function signature. "
+      }
+    },
+    "notice": "Keep Random Beacon generates verifiable randomness that is resistant to bad actors both in the relay network and on the anchoring blockchain."
+  }
+}

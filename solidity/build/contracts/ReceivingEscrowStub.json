@@ -1,0 +1,1985 @@
+{
+  "contractName": "ReceivingEscrowStub",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "received",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "grantId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "token",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "extraData",
+          "type": "bytes"
+        }
+      ],
+      "name": "receiveApproval",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "depositedAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "operator",
+          "type": "address"
+        }
+      ],
+      "name": "depositGrantId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"depositGrantId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"depositedAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"from\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"extraData\",\"type\":\"bytes\"}],\"name\":\"receiveApproval\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"received\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"grantId\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Stub used in TokenStakingEscrow to test migration of tokens between escrows.\",\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/stubs/ReceivingEscrowStub.sol\":\"ReceivingEscrowStub\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/stubs/ReceivingEscrowStub.sol\":{\"keccak256\":\"0xb7a2c590d27da51d6ea1fb085bfee55d6129fff5f25e4adac1fc540816680ce4\",\"urls\":[\"bzz-raw://998ca0fba4a17957c23133f952e598c86a231518254b9a38e3227d4f180d0c91\",\"dweb:/ipfs/QmdXawBVMKuB7M6kT8VccV5K2tJ8ZytK74gbsibvvHaYLV\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506103fd806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80634a4643f7146100515780637589d761146100a95780638f4ffcb114610101578063df0cb93414610206575b600080fd5b6100936004803603602081101561006757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610265565b6040518082815260200191505060405180910390f35b6100eb600480360360208110156100bf57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506102b0565b6040518082815260200191505060405180910390f35b6102046004803603608081101561011757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019064010000000081111561017e57600080fd5b82018360208201111561019057600080fd5b803590602001918460018302840111640100000000831117156101b257600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506102fb565b005b6102486004803603602081101561021c57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506103a4565b604051808381526020018281526020019250505060405180910390f35b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600101549050919050565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600001549050919050565b60008082806020019051604081101561031357600080fd5b810190808051906020019092919080519060200190929190505050915091506040518060400160405280828152602001868152506000808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000820151816000015560208201518160010155905050505050505050565b6000602052806000526040600020600091509050806000015490806001015490508256fea265627a7a72315820f1faf20aad68a6f16e4d7c8c80a8f27663537aa4067689284b05279d1458b04964736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c80634a4643f7146100515780637589d761146100a95780638f4ffcb114610101578063df0cb93414610206575b600080fd5b6100936004803603602081101561006757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610265565b6040518082815260200191505060405180910390f35b6100eb600480360360208110156100bf57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506102b0565b6040518082815260200191505060405180910390f35b6102046004803603608081101561011757600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff1690602001909291908035906020019064010000000081111561017e57600080fd5b82018360208201111561019057600080fd5b803590602001918460018302840111640100000000831117156101b257600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f8201169050808301925050505050505091929192905050506102fb565b005b6102486004803603602081101561021c57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506103a4565b604051808381526020018281526020019250505060405180910390f35b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600101549050919050565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600001549050919050565b60008082806020019051604081101561031357600080fd5b810190808051906020019092919080519060200190929190505050915091506040518060400160405280828152602001868152506000808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000820151816000015560208201518160010155905050505050505050565b6000602052806000526040600020600091509050806000015490806001015490508256fea265627a7a72315820f1faf20aad68a6f16e4d7c8c80a8f27663537aa4067689284b05279d1458b04964736f6c63430005110032",
+  "sourceMap": "115:735:69:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;115:735:69;;;;;;;",
+  "deployedSourceMap": "115:735:69:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;115:735:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;598:122;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;598:122:69;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;726;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;726:122:69;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;281:311;;;;;;13:3:-1;8;5:12;2:2;;;30:1;27;20:12;2:2;281:311:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;281:311:69;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;281:311:69;;;;;;100:9:-1;95:1;81:12;77:20;67:8;63:35;60:50;39:11;25:12;22:29;11:107;8:2;;;131:1;128;121:12;8:2;281:311:69;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;281:311:69;;;;;;;;;;;;;;;:::i;:::-;;229:45;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;229:45:69;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;598:122;662:7;688:8;:18;697:8;688:18;;;;;;;;;;;;;;;:25;;;681:32;;598:122;;;:::o;726:::-;789:7;815:8;:18;824:8;815:18;;;;;;;;;;;;;;;:26;;;808:33;;726:122;;;:::o;281:311::-;430:16;448:15;491:9;467:63;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;467:63:69;;;;;;;;;;;;;;;;;;;;;;;;;429:101;;;;561:24;;;;;;;;570:7;561:24;;;;579:5;561:24;;;540:8;:18;549:8;540:18;;;;;;;;;;;;;;;:45;;;;;;;;;;;;;;;;;;;281:311;;;;;;:::o;229:45::-;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o",
+  "source": "pragma solidity 0.5.17;\n\n/// @dev Stub used in TokenStakingEscrow to test migration of tokens between\n/// escrows.\ncontract ReceivingEscrowStub {\n\n    struct Received {\n        uint256 grantId;\n        uint256 amount;\n    }\n\n    mapping (address => Received) public received;\n\n    function receiveApproval(\n        address from,\n        uint256 value,\n        address token,\n        bytes memory extraData\n    ) public {\n        (address operator, uint256 grantId) = abi.decode(\n            extraData, (address, uint256)\n        );\n        received[operator] = Received(grantId, value);\n    }\n\n    function depositedAmount(address operator) public view returns (uint256) {\n        return received[operator].amount;\n    }\n\n    function depositGrantId(address operator) public view returns (uint256) {\n        return received[operator].grantId;\n    }\n}",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/stubs/ReceivingEscrowStub.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/ReceivingEscrowStub.sol",
+    "exportedSymbols": {
+      "ReceivingEscrowStub": [
+        19837
+      ]
+    },
+    "id": 19838,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 19768,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:69"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": "@dev Stub used in TokenStakingEscrow to test migration of tokens between\n escrows.",
+        "fullyImplemented": true,
+        "id": 19837,
+        "linearizedBaseContracts": [
+          19837
+        ],
+        "name": "ReceivingEscrowStub",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "canonicalName": "ReceivingEscrowStub.Received",
+            "id": 19773,
+            "members": [
+              {
+                "constant": false,
+                "id": 19770,
+                "name": "grantId",
+                "nodeType": "VariableDeclaration",
+                "scope": 19773,
+                "src": "177:15:69",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 19769,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "177:7:69",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              },
+              {
+                "constant": false,
+                "id": 19772,
+                "name": "amount",
+                "nodeType": "VariableDeclaration",
+                "scope": 19773,
+                "src": "202:14:69",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_uint256",
+                  "typeString": "uint256"
+                },
+                "typeName": {
+                  "id": 19771,
+                  "name": "uint256",
+                  "nodeType": "ElementaryTypeName",
+                  "src": "202:7:69",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  }
+                },
+                "value": null,
+                "visibility": "internal"
+              }
+            ],
+            "name": "Received",
+            "nodeType": "StructDefinition",
+            "scope": 19837,
+            "src": "151:72:69",
+            "visibility": "public"
+          },
+          {
+            "constant": false,
+            "id": 19777,
+            "name": "received",
+            "nodeType": "VariableDeclaration",
+            "scope": 19837,
+            "src": "229:45:69",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Received_$19773_storage_$",
+              "typeString": "mapping(address => struct ReceivingEscrowStub.Received)"
+            },
+            "typeName": {
+              "id": 19776,
+              "keyType": {
+                "id": 19774,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "238:7:69",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "nodeType": "Mapping",
+              "src": "229:29:69",
+              "typeDescriptions": {
+                "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Received_$19773_storage_$",
+                "typeString": "mapping(address => struct ReceivingEscrowStub.Received)"
+              },
+              "valueType": {
+                "contractScope": null,
+                "id": 19775,
+                "name": "Received",
+                "nodeType": "UserDefinedTypeName",
+                "referencedDeclaration": 19773,
+                "src": "249:8:69",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_struct$_Received_$19773_storage_ptr",
+                  "typeString": "struct ReceivingEscrowStub.Received"
+                }
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19809,
+              "nodeType": "Block",
+              "src": "419:173:69",
+              "statements": [
+                {
+                  "assignments": [
+                    19789,
+                    19791
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 19789,
+                      "name": "operator",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 19809,
+                      "src": "430:16:69",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      },
+                      "typeName": {
+                        "id": 19788,
+                        "name": "address",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "430:7:69",
+                        "stateMutability": "nonpayable",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    {
+                      "constant": false,
+                      "id": 19791,
+                      "name": "grantId",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 19809,
+                      "src": "448:15:69",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 19790,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "448:7:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 19799,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 19794,
+                        "name": "extraData",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19785,
+                        "src": "491:9:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "components": [
+                          {
+                            "argumentTypes": null,
+                            "id": 19795,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "lValueRequested": false,
+                            "nodeType": "ElementaryTypeNameExpression",
+                            "src": "503:7:69",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_type$_t_address_$",
+                              "typeString": "type(address)"
+                            },
+                            "typeName": "address"
+                          },
+                          {
+                            "argumentTypes": null,
+                            "id": 19796,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "lValueRequested": false,
+                            "nodeType": "ElementaryTypeNameExpression",
+                            "src": "512:7:69",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_type$_t_uint256_$",
+                              "typeString": "type(uint256)"
+                            },
+                            "typeName": "uint256"
+                          }
+                        ],
+                        "id": 19797,
+                        "isConstant": false,
+                        "isInlineArray": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "TupleExpression",
+                        "src": "502:18:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_tuple$_t_type$_t_address_$_$_t_type$_t_uint256_$_$",
+                          "typeString": "tuple(type(address),type(uint256))"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        },
+                        {
+                          "typeIdentifier": "t_tuple$_t_type$_t_address_$_$_t_type$_t_uint256_$_$",
+                          "typeString": "tuple(type(address),type(uint256))"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 19792,
+                        "name": "abi",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 25984,
+                        "src": "467:3:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_abi",
+                          "typeString": "abi"
+                        }
+                      },
+                      "id": 19793,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberName": "decode",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": null,
+                      "src": "467:10:69",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_abidecode_pure$__$returns$__$",
+                        "typeString": "function () pure"
+                      }
+                    },
+                    "id": 19798,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "467:63:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$_t_address_payable_$_t_uint256_$",
+                      "typeString": "tuple(address payable,uint256)"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "429:101:69"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 19807,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "baseExpression": {
+                        "argumentTypes": null,
+                        "id": 19800,
+                        "name": "received",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19777,
+                        "src": "540:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Received_$19773_storage_$",
+                          "typeString": "mapping(address => struct ReceivingEscrowStub.Received storage ref)"
+                        }
+                      },
+                      "id": 19802,
+                      "indexExpression": {
+                        "argumentTypes": null,
+                        "id": 19801,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19789,
+                        "src": "549:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "540:18:69",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Received_$19773_storage",
+                        "typeString": "struct ReceivingEscrowStub.Received storage ref"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "id": 19804,
+                          "name": "grantId",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19791,
+                          "src": "570:7:69",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        {
+                          "argumentTypes": null,
+                          "id": 19805,
+                          "name": "value",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19781,
+                          "src": "579:5:69",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        ],
+                        "id": 19803,
+                        "name": "Received",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19773,
+                        "src": "561:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_struct$_Received_$19773_storage_ptr_$",
+                          "typeString": "type(struct ReceivingEscrowStub.Received storage pointer)"
+                        }
+                      },
+                      "id": 19806,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "structConstructorCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "561:24:69",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Received_$19773_memory",
+                        "typeString": "struct ReceivingEscrowStub.Received memory"
+                      }
+                    },
+                    "src": "540:45:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Received_$19773_storage",
+                      "typeString": "struct ReceivingEscrowStub.Received storage ref"
+                    }
+                  },
+                  "id": 19808,
+                  "nodeType": "ExpressionStatement",
+                  "src": "540:45:69"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19810,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "receiveApproval",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19786,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19779,
+                  "name": "from",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19810,
+                  "src": "315:12:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19778,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "315:7:69",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19781,
+                  "name": "value",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19810,
+                  "src": "337:13:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 19780,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "337:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19783,
+                  "name": "token",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19810,
+                  "src": "360:13:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19782,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "360:7:69",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19785,
+                  "name": "extraData",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19810,
+                  "src": "383:22:69",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 19784,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "383:5:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "305:106:69"
+            },
+            "returnParameters": {
+              "id": 19787,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "419:0:69"
+            },
+            "scope": 19837,
+            "src": "281:311:69",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19822,
+              "nodeType": "Block",
+              "src": "671:49:69",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "expression": {
+                      "argumentTypes": null,
+                      "baseExpression": {
+                        "argumentTypes": null,
+                        "id": 19817,
+                        "name": "received",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19777,
+                        "src": "688:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Received_$19773_storage_$",
+                          "typeString": "mapping(address => struct ReceivingEscrowStub.Received storage ref)"
+                        }
+                      },
+                      "id": 19819,
+                      "indexExpression": {
+                        "argumentTypes": null,
+                        "id": 19818,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19812,
+                        "src": "697:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "688:18:69",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Received_$19773_storage",
+                        "typeString": "struct ReceivingEscrowStub.Received storage ref"
+                      }
+                    },
+                    "id": 19820,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "amount",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 19772,
+                    "src": "688:25:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 19816,
+                  "id": 19821,
+                  "nodeType": "Return",
+                  "src": "681:32:69"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19823,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "depositedAmount",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19813,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19812,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19823,
+                  "src": "623:16:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19811,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "623:7:69",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "622:18:69"
+            },
+            "returnParameters": {
+              "id": 19816,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19815,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19823,
+                  "src": "662:7:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 19814,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "662:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "661:9:69"
+            },
+            "scope": 19837,
+            "src": "598:122:69",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19835,
+              "nodeType": "Block",
+              "src": "798:50:69",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "expression": {
+                      "argumentTypes": null,
+                      "baseExpression": {
+                        "argumentTypes": null,
+                        "id": 19830,
+                        "name": "received",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19777,
+                        "src": "815:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Received_$19773_storage_$",
+                          "typeString": "mapping(address => struct ReceivingEscrowStub.Received storage ref)"
+                        }
+                      },
+                      "id": 19832,
+                      "indexExpression": {
+                        "argumentTypes": null,
+                        "id": 19831,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19825,
+                        "src": "824:8:69",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "815:18:69",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Received_$19773_storage",
+                        "typeString": "struct ReceivingEscrowStub.Received storage ref"
+                      }
+                    },
+                    "id": 19833,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberName": "grantId",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 19770,
+                    "src": "815:26:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 19829,
+                  "id": 19834,
+                  "nodeType": "Return",
+                  "src": "808:33:69"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19836,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "depositGrantId",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19826,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19825,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19836,
+                  "src": "750:16:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19824,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "750:7:69",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "749:18:69"
+            },
+            "returnParameters": {
+              "id": 19829,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19828,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19836,
+                  "src": "789:7:69",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 19827,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "789:7:69",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "788:9:69"
+            },
+            "scope": 19837,
+            "src": "726:122:69",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 19838,
+        "src": "115:735:69"
+      }
+    ],
+    "src": "0:850:69"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/ReceivingEscrowStub.sol",
+      "exportedSymbols": {
+        "ReceivingEscrowStub": [
+          19837
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 19768,
+        "name": "PragmaDirective",
+        "src": "0:23:69"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": "@dev Stub used in TokenStakingEscrow to test migration of tokens between\n escrows.",
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            19837
+          ],
+          "name": "ReceivingEscrowStub",
+          "scope": 19838
+        },
+        "children": [
+          {
+            "attributes": {
+              "canonicalName": "ReceivingEscrowStub.Received",
+              "name": "Received",
+              "scope": 19837,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "grantId",
+                  "scope": 19773,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint256",
+                      "type": "uint256"
+                    },
+                    "id": 19769,
+                    "name": "ElementaryTypeName",
+                    "src": "177:7:69"
+                  }
+                ],
+                "id": 19770,
+                "name": "VariableDeclaration",
+                "src": "177:15:69"
+              },
+              {
+                "attributes": {
+                  "constant": false,
+                  "name": "amount",
+                  "scope": 19773,
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "type": "uint256",
+                  "value": null,
+                  "visibility": "internal"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "uint256",
+                      "type": "uint256"
+                    },
+                    "id": 19771,
+                    "name": "ElementaryTypeName",
+                    "src": "202:7:69"
+                  }
+                ],
+                "id": 19772,
+                "name": "VariableDeclaration",
+                "src": "202:14:69"
+              }
+            ],
+            "id": 19773,
+            "name": "StructDefinition",
+            "src": "151:72:69"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "received",
+              "scope": 19837,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "mapping(address => struct ReceivingEscrowStub.Received)",
+              "value": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "type": "mapping(address => struct ReceivingEscrowStub.Received)"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "type": "address"
+                    },
+                    "id": 19774,
+                    "name": "ElementaryTypeName",
+                    "src": "238:7:69"
+                  },
+                  {
+                    "attributes": {
+                      "contractScope": null,
+                      "name": "Received",
+                      "referencedDeclaration": 19773,
+                      "type": "struct ReceivingEscrowStub.Received"
+                    },
+                    "id": 19775,
+                    "name": "UserDefinedTypeName",
+                    "src": "249:8:69"
+                  }
+                ],
+                "id": 19776,
+                "name": "Mapping",
+                "src": "229:29:69"
+              }
+            ],
+            "id": 19777,
+            "name": "VariableDeclaration",
+            "src": "229:45:69"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "receiveApproval",
+              "scope": 19837,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "from",
+                      "scope": 19810,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19778,
+                        "name": "ElementaryTypeName",
+                        "src": "315:7:69"
+                      }
+                    ],
+                    "id": 19779,
+                    "name": "VariableDeclaration",
+                    "src": "315:12:69"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "value",
+                      "scope": 19810,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 19780,
+                        "name": "ElementaryTypeName",
+                        "src": "337:7:69"
+                      }
+                    ],
+                    "id": 19781,
+                    "name": "VariableDeclaration",
+                    "src": "337:13:69"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "token",
+                      "scope": 19810,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19782,
+                        "name": "ElementaryTypeName",
+                        "src": "360:7:69"
+                      }
+                    ],
+                    "id": 19783,
+                    "name": "VariableDeclaration",
+                    "src": "360:13:69"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "extraData",
+                      "scope": 19810,
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "type": "bytes",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes",
+                          "type": "bytes"
+                        },
+                        "id": 19784,
+                        "name": "ElementaryTypeName",
+                        "src": "383:5:69"
+                      }
+                    ],
+                    "id": 19785,
+                    "name": "VariableDeclaration",
+                    "src": "383:22:69"
+                  }
+                ],
+                "id": 19786,
+                "name": "ParameterList",
+                "src": "305:106:69"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 19787,
+                "name": "ParameterList",
+                "src": "419:0:69"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        19789,
+                        19791
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "operator",
+                          "scope": 19809,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "address",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "address",
+                              "stateMutability": "nonpayable",
+                              "type": "address"
+                            },
+                            "id": 19788,
+                            "name": "ElementaryTypeName",
+                            "src": "430:7:69"
+                          }
+                        ],
+                        "id": 19789,
+                        "name": "VariableDeclaration",
+                        "src": "430:16:69"
+                      },
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "grantId",
+                          "scope": 19809,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "uint256",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "uint256",
+                              "type": "uint256"
+                            },
+                            "id": 19790,
+                            "name": "ElementaryTypeName",
+                            "src": "448:7:69"
+                          }
+                        ],
+                        "id": 19791,
+                        "name": "VariableDeclaration",
+                        "src": "448:15:69"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple(address payable,uint256)",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bytes_memory_ptr",
+                                  "typeString": "bytes memory"
+                                },
+                                {
+                                  "typeIdentifier": "t_tuple$_t_type$_t_address_$_$_t_type$_t_uint256_$_$",
+                                  "typeString": "tuple(type(address),type(uint256))"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "member_name": "decode",
+                              "referencedDeclaration": null,
+                              "type": "function () pure"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 25984,
+                                  "type": "abi",
+                                  "value": "abi"
+                                },
+                                "id": 19792,
+                                "name": "Identifier",
+                                "src": "467:3:69"
+                              }
+                            ],
+                            "id": 19793,
+                            "name": "MemberAccess",
+                            "src": "467:10:69"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 19785,
+                              "type": "bytes memory",
+                              "value": "extraData"
+                            },
+                            "id": 19794,
+                            "name": "Identifier",
+                            "src": "491:9:69"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isInlineArray": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "type": "tuple(type(address),type(uint256))"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "type": "type(address)",
+                                  "value": "address"
+                                },
+                                "id": 19795,
+                                "name": "ElementaryTypeNameExpression",
+                                "src": "503:7:69"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "type": "type(uint256)",
+                                  "value": "uint256"
+                                },
+                                "id": 19796,
+                                "name": "ElementaryTypeNameExpression",
+                                "src": "512:7:69"
+                              }
+                            ],
+                            "id": 19797,
+                            "name": "TupleExpression",
+                            "src": "502:18:69"
+                          }
+                        ],
+                        "id": 19798,
+                        "name": "FunctionCall",
+                        "src": "467:63:69"
+                      }
+                    ],
+                    "id": 19799,
+                    "name": "VariableDeclarationStatement",
+                    "src": "429:101:69"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "struct ReceivingEscrowStub.Received storage ref"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": true,
+                              "type": "struct ReceivingEscrowStub.Received storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19777,
+                                  "type": "mapping(address => struct ReceivingEscrowStub.Received storage ref)",
+                                  "value": "received"
+                                },
+                                "id": 19800,
+                                "name": "Identifier",
+                                "src": "540:8:69"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19789,
+                                  "type": "address",
+                                  "value": "operator"
+                                },
+                                "id": 19801,
+                                "name": "Identifier",
+                                "src": "549:8:69"
+                              }
+                            ],
+                            "id": 19802,
+                            "name": "IndexAccess",
+                            "src": "540:18:69"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": true,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "struct ReceivingEscrowStub.Received memory",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    },
+                                    {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  ],
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19773,
+                                  "type": "type(struct ReceivingEscrowStub.Received storage pointer)",
+                                  "value": "Received"
+                                },
+                                "id": 19803,
+                                "name": "Identifier",
+                                "src": "561:8:69"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19791,
+                                  "type": "uint256",
+                                  "value": "grantId"
+                                },
+                                "id": 19804,
+                                "name": "Identifier",
+                                "src": "570:7:69"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19781,
+                                  "type": "uint256",
+                                  "value": "value"
+                                },
+                                "id": 19805,
+                                "name": "Identifier",
+                                "src": "579:5:69"
+                              }
+                            ],
+                            "id": 19806,
+                            "name": "FunctionCall",
+                            "src": "561:24:69"
+                          }
+                        ],
+                        "id": 19807,
+                        "name": "Assignment",
+                        "src": "540:45:69"
+                      }
+                    ],
+                    "id": 19808,
+                    "name": "ExpressionStatement",
+                    "src": "540:45:69"
+                  }
+                ],
+                "id": 19809,
+                "name": "Block",
+                "src": "419:173:69"
+              }
+            ],
+            "id": 19810,
+            "name": "FunctionDefinition",
+            "src": "281:311:69"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "depositedAmount",
+              "scope": 19837,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 19823,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19811,
+                        "name": "ElementaryTypeName",
+                        "src": "623:7:69"
+                      }
+                    ],
+                    "id": 19812,
+                    "name": "VariableDeclaration",
+                    "src": "623:16:69"
+                  }
+                ],
+                "id": 19813,
+                "name": "ParameterList",
+                "src": "622:18:69"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 19823,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 19814,
+                        "name": "ElementaryTypeName",
+                        "src": "662:7:69"
+                      }
+                    ],
+                    "id": 19815,
+                    "name": "VariableDeclaration",
+                    "src": "662:7:69"
+                  }
+                ],
+                "id": 19816,
+                "name": "ParameterList",
+                "src": "661:9:69"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 19816
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "member_name": "amount",
+                          "referencedDeclaration": 19772,
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "type": "struct ReceivingEscrowStub.Received storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19777,
+                                  "type": "mapping(address => struct ReceivingEscrowStub.Received storage ref)",
+                                  "value": "received"
+                                },
+                                "id": 19817,
+                                "name": "Identifier",
+                                "src": "688:8:69"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19812,
+                                  "type": "address",
+                                  "value": "operator"
+                                },
+                                "id": 19818,
+                                "name": "Identifier",
+                                "src": "697:8:69"
+                              }
+                            ],
+                            "id": 19819,
+                            "name": "IndexAccess",
+                            "src": "688:18:69"
+                          }
+                        ],
+                        "id": 19820,
+                        "name": "MemberAccess",
+                        "src": "688:25:69"
+                      }
+                    ],
+                    "id": 19821,
+                    "name": "Return",
+                    "src": "681:32:69"
+                  }
+                ],
+                "id": 19822,
+                "name": "Block",
+                "src": "671:49:69"
+              }
+            ],
+            "id": 19823,
+            "name": "FunctionDefinition",
+            "src": "598:122:69"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "depositGrantId",
+              "scope": 19837,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 19836,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19824,
+                        "name": "ElementaryTypeName",
+                        "src": "750:7:69"
+                      }
+                    ],
+                    "id": 19825,
+                    "name": "VariableDeclaration",
+                    "src": "750:16:69"
+                  }
+                ],
+                "id": 19826,
+                "name": "ParameterList",
+                "src": "749:18:69"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 19836,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 19827,
+                        "name": "ElementaryTypeName",
+                        "src": "789:7:69"
+                      }
+                    ],
+                    "id": 19828,
+                    "name": "VariableDeclaration",
+                    "src": "789:7:69"
+                  }
+                ],
+                "id": 19829,
+                "name": "ParameterList",
+                "src": "788:9:69"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 19829
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "member_name": "grantId",
+                          "referencedDeclaration": 19770,
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "type": "struct ReceivingEscrowStub.Received storage ref"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19777,
+                                  "type": "mapping(address => struct ReceivingEscrowStub.Received storage ref)",
+                                  "value": "received"
+                                },
+                                "id": 19830,
+                                "name": "Identifier",
+                                "src": "815:8:69"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19825,
+                                  "type": "address",
+                                  "value": "operator"
+                                },
+                                "id": 19831,
+                                "name": "Identifier",
+                                "src": "824:8:69"
+                              }
+                            ],
+                            "id": 19832,
+                            "name": "IndexAccess",
+                            "src": "815:18:69"
+                          }
+                        ],
+                        "id": 19833,
+                        "name": "MemberAccess",
+                        "src": "815:26:69"
+                      }
+                    ],
+                    "id": 19834,
+                    "name": "Return",
+                    "src": "808:33:69"
+                  }
+                ],
+                "id": 19835,
+                "name": "Block",
+                "src": "798:50:69"
+              }
+            ],
+            "id": 19836,
+            "name": "FunctionDefinition",
+            "src": "726:122:69"
+          }
+        ],
+        "id": 19837,
+        "name": "ContractDefinition",
+        "src": "115:735:69"
+      }
+    ],
+    "id": 19838,
+    "name": "SourceUnit",
+    "src": "0:850:69"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:02.174Z",
+  "devdoc": {
+    "details": "Stub used in TokenStakingEscrow to test migration of tokens between escrows.",
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}

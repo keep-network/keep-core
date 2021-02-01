@@ -1,0 +1,814 @@
+{
+  "contractName": "GasPriceOracleConsumerStub",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract GasPriceOracle",
+          "name": "_gasPriceOracle",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "gasPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "refreshGasPrice",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"contract GasPriceOracle\",\"name\":\"_gasPriceOracle\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"constant\":true,\"inputs\":[],\"name\":\"gasPrice\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"refreshGasPrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/stubs/GasPriceOracleConsumerStub.sol\":\"GasPriceOracleConsumerStub\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/GasPriceOracle.sol\":{\"keccak256\":\"0x52b2bde320e275d7fcec69299fd694139dd3dc7ed153ef566deeb17f105998b8\",\"urls\":[\"bzz-raw://99cdd9a44f12e22237d6cb07979b9a5e6a01019b6860165087d9de1d195c10b6\",\"dweb:/ipfs/QmNgAsr8pnJ3KV14FmiDNtKGwAcGGQrwZhemMJv5pS6r78\"]},\"/home/bless/keep-core/solidity/contracts/stubs/GasPriceOracleConsumerStub.sol\":{\"keccak256\":\"0x5c96346f42e9fe13fca196c809f6466cf60dcaeead917d2d9722b01dceb55c0f\",\"urls\":[\"bzz-raw://e4f2656323843b84970234891ef6f8dd49a99aecb38dcff5496f05acffb722df\",\"dweb:/ipfs/QmZA1QA6MdidjWyW9Cnb6Jd39WYyGr7o3H1WogUYW5Pd72\"]},\"openzeppelin-solidity/contracts/GSN/Context.sol\":{\"keccak256\":\"0x90a3995645af7562d84b9d69363ffa5ae7217714ab61e951bf7bc450f40e4061\",\"urls\":[\"bzz-raw://216ef9d6b614db4eb46970b4e84903f2534a45572dd30a79f0041f1a5830f436\",\"dweb:/ipfs/QmNPrJ4MWKUAWzKXpUqeyKRUfosaoANZAqXgvepdrCwZAG\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0xecd8ab29d9a5771c3964d0cd1788c4a5098a0081b20fb275da850a22b1c59806\",\"urls\":[\"bzz-raw://696a75bc2c55407ce8251ccc7d19ecb1b7b2be1796a160a6524312babcc7e3d4\",\"dweb:/ipfs/QmQViKEp3y99h9uhRssE29TmjBKRnFMaoz3eJZ4eggggg2\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516101dc3803806101dc8339818101604052602081101561003357600080fd5b8101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050610148806100946000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c8063c45751cd1461003b578063fe173b9714610045575b600080fd5b610043610063565b005b61004d61010d565b6040518082815260200191505060405180910390f35b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663fe173b976040518163ffffffff1660e01b815260040160206040518083038186803b1580156100ca57600080fd5b505afa1580156100de573d6000803e3d6000fd5b505050506040513d60208110156100f457600080fd5b8101908080519060200190929190505050600181905550565b6001548156fea265627a7a72315820421e48a3b1cded456bdbe95acf76fb5febe5cb3834112023b2d979faf69e32f864736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100365760003560e01c8063c45751cd1461003b578063fe173b9714610045575b600080fd5b610043610063565b005b61004d61010d565b6040518082815260200191505060405180910390f35b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663fe173b976040518163ffffffff1660e01b815260040160206040518083038186803b1580156100ca57600080fd5b505afa1580156100de573d6000803e3d6000fd5b505050506040513d60208110156100f457600080fd5b8101908080519060200190929190505050600181905550565b6001548156fea265627a7a72315820421e48a3b1cded456bdbe95acf76fb5febe5cb3834112023b2d979faf69e32f864736f6c63430005110032",
+  "sourceMap": "58:329:46:-;;;192:100;8:9:-1;5:2;;;30:1;27;20:12;5:2;192:100:46;;;;;;;;;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;192:100:46;;;;;;;;;;;;;;;;270:15;253:14;;:32;;;;;;;;;;;;;;;;;;192:100;58:329;;;;;;",
+  "deployedSourceMap": "58:329:46:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;58:329:46;;;;;;;;;;;;;;;;;;;;;;;;298:87;;;:::i;:::-;;162:23;;;:::i;:::-;;;;;;;;;;;;;;;;;;;298:87;353:14;;;;;;;;;;;:23;;;:25;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;353:25:46;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;353:25:46;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;353:25:46;;;;;;;;;;;;;;;;342:8;:36;;;;298:87::o;162:23::-;;;;:::o",
+  "source": "pragma solidity 0.5.17;\n\nimport \"../GasPriceOracle.sol\";\n\ncontract GasPriceOracleConsumerStub is GasPriceOracleConsumer {\n    GasPriceOracle gasPriceOracle;\n\n    uint256 public gasPrice;\n\n    constructor(GasPriceOracle _gasPriceOracle) public {\n        gasPriceOracle = _gasPriceOracle;\n    }\n\n    function refreshGasPrice() public {\n        gasPrice = gasPriceOracle.gasPrice();\n    }\n}",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/stubs/GasPriceOracleConsumerStub.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/GasPriceOracleConsumerStub.sol",
+    "exportedSymbols": {
+      "GasPriceOracleConsumerStub": [
+        17607
+      ]
+    },
+    "id": 17608,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 17579,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:46"
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/GasPriceOracle.sol",
+        "file": "../GasPriceOracle.sol",
+        "id": 17580,
+        "nodeType": "ImportDirective",
+        "scope": 17608,
+        "sourceUnit": 1219,
+        "src": "25:31:46",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 17581,
+              "name": "GasPriceOracleConsumer",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1059,
+              "src": "97:22:46",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_GasPriceOracleConsumer_$1059",
+                "typeString": "contract GasPriceOracleConsumer"
+              }
+            },
+            "id": 17582,
+            "nodeType": "InheritanceSpecifier",
+            "src": "97:22:46"
+          }
+        ],
+        "contractDependencies": [
+          1059
+        ],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 17607,
+        "linearizedBaseContracts": [
+          17607,
+          1059
+        ],
+        "name": "GasPriceOracleConsumerStub",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "constant": false,
+            "id": 17584,
+            "name": "gasPriceOracle",
+            "nodeType": "VariableDeclaration",
+            "scope": 17607,
+            "src": "126:29:46",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+              "typeString": "contract GasPriceOracle"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 17583,
+              "name": "GasPriceOracle",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1218,
+              "src": "126:14:46",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                "typeString": "contract GasPriceOracle"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "constant": false,
+            "id": 17586,
+            "name": "gasPrice",
+            "nodeType": "VariableDeclaration",
+            "scope": 17607,
+            "src": "162:23:46",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 17585,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "162:7:46",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 17595,
+              "nodeType": "Block",
+              "src": "243:49:46",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 17593,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 17591,
+                      "name": "gasPriceOracle",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 17584,
+                      "src": "253:14:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                        "typeString": "contract GasPriceOracle"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 17592,
+                      "name": "_gasPriceOracle",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 17588,
+                      "src": "270:15:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                        "typeString": "contract GasPriceOracle"
+                      }
+                    },
+                    "src": "253:32:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                      "typeString": "contract GasPriceOracle"
+                    }
+                  },
+                  "id": 17594,
+                  "nodeType": "ExpressionStatement",
+                  "src": "253:32:46"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 17596,
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 17589,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 17588,
+                  "name": "_gasPriceOracle",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 17596,
+                  "src": "204:30:46",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                    "typeString": "contract GasPriceOracle"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 17587,
+                    "name": "GasPriceOracle",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 1218,
+                    "src": "204:14:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                      "typeString": "contract GasPriceOracle"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "203:32:46"
+            },
+            "returnParameters": {
+              "id": 17590,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "243:0:46"
+            },
+            "scope": 17607,
+            "src": "192:100:46",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 17605,
+              "nodeType": "Block",
+              "src": "332:53:46",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 17603,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 17599,
+                      "name": "gasPrice",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 17586,
+                      "src": "342:8:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "arguments": [],
+                      "expression": {
+                        "argumentTypes": [],
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 17600,
+                          "name": "gasPriceOracle",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 17584,
+                          "src": "353:14:46",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_contract$_GasPriceOracle_$1218",
+                            "typeString": "contract GasPriceOracle"
+                          }
+                        },
+                        "id": 17601,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "gasPrice",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 1073,
+                        "src": "353:23:46",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
+                          "typeString": "function () view external returns (uint256)"
+                        }
+                      },
+                      "id": 17602,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "353:25:46",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "342:36:46",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 17604,
+                  "nodeType": "ExpressionStatement",
+                  "src": "342:36:46"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 17606,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "refreshGasPrice",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 17597,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "322:2:46"
+            },
+            "returnParameters": {
+              "id": 17598,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "332:0:46"
+            },
+            "scope": 17607,
+            "src": "298:87:46",
+            "stateMutability": "nonpayable",
+            "superFunction": 1058,
+            "visibility": "public"
+          }
+        ],
+        "scope": 17608,
+        "src": "58:329:46"
+      }
+    ],
+    "src": "0:387:46"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/GasPriceOracleConsumerStub.sol",
+      "exportedSymbols": {
+        "GasPriceOracleConsumerStub": [
+          17607
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 17579,
+        "name": "PragmaDirective",
+        "src": "0:23:46"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 1219,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/GasPriceOracle.sol",
+          "file": "../GasPriceOracle.sol",
+          "scope": 17608,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 17580,
+        "name": "ImportDirective",
+        "src": "25:31:46"
+      },
+      {
+        "attributes": {
+          "contractDependencies": [
+            1059
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            17607,
+            1059
+          ],
+          "name": "GasPriceOracleConsumerStub",
+          "scope": 17608
+        },
+        "children": [
+          {
+            "attributes": {
+              "arguments": null
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "GasPriceOracleConsumer",
+                  "referencedDeclaration": 1059,
+                  "type": "contract GasPriceOracleConsumer"
+                },
+                "id": 17581,
+                "name": "UserDefinedTypeName",
+                "src": "97:22:46"
+              }
+            ],
+            "id": 17582,
+            "name": "InheritanceSpecifier",
+            "src": "97:22:46"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "gasPriceOracle",
+              "scope": 17607,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "contract GasPriceOracle",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "GasPriceOracle",
+                  "referencedDeclaration": 1218,
+                  "type": "contract GasPriceOracle"
+                },
+                "id": 17583,
+                "name": "UserDefinedTypeName",
+                "src": "126:14:46"
+              }
+            ],
+            "id": 17584,
+            "name": "VariableDeclaration",
+            "src": "126:29:46"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "gasPrice",
+              "scope": 17607,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "uint256",
+              "value": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "uint256",
+                  "type": "uint256"
+                },
+                "id": 17585,
+                "name": "ElementaryTypeName",
+                "src": "162:7:46"
+              }
+            ],
+            "id": 17586,
+            "name": "VariableDeclaration",
+            "src": "162:23:46"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": true,
+              "kind": "constructor",
+              "modifiers": [
+                null
+              ],
+              "name": "",
+              "scope": 17607,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "_gasPriceOracle",
+                      "scope": 17596,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "contract GasPriceOracle",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "contractScope": null,
+                          "name": "GasPriceOracle",
+                          "referencedDeclaration": 1218,
+                          "type": "contract GasPriceOracle"
+                        },
+                        "id": 17587,
+                        "name": "UserDefinedTypeName",
+                        "src": "204:14:46"
+                      }
+                    ],
+                    "id": 17588,
+                    "name": "VariableDeclaration",
+                    "src": "204:30:46"
+                  }
+                ],
+                "id": 17589,
+                "name": "ParameterList",
+                "src": "203:32:46"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 17590,
+                "name": "ParameterList",
+                "src": "243:0:46"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "contract GasPriceOracle"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17584,
+                              "type": "contract GasPriceOracle",
+                              "value": "gasPriceOracle"
+                            },
+                            "id": 17591,
+                            "name": "Identifier",
+                            "src": "253:14:46"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17588,
+                              "type": "contract GasPriceOracle",
+                              "value": "_gasPriceOracle"
+                            },
+                            "id": 17592,
+                            "name": "Identifier",
+                            "src": "270:15:46"
+                          }
+                        ],
+                        "id": 17593,
+                        "name": "Assignment",
+                        "src": "253:32:46"
+                      }
+                    ],
+                    "id": 17594,
+                    "name": "ExpressionStatement",
+                    "src": "253:32:46"
+                  }
+                ],
+                "id": 17595,
+                "name": "Block",
+                "src": "243:49:46"
+              }
+            ],
+            "id": 17596,
+            "name": "FunctionDefinition",
+            "src": "192:100:46"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "refreshGasPrice",
+              "scope": 17607,
+              "stateMutability": "nonpayable",
+              "superFunction": 1058,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 17597,
+                "name": "ParameterList",
+                "src": "322:2:46"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 17598,
+                "name": "ParameterList",
+                "src": "332:0:46"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 17586,
+                              "type": "uint256",
+                              "value": "gasPrice"
+                            },
+                            "id": 17599,
+                            "name": "Identifier",
+                            "src": "342:8:46"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "arguments": [
+                                null
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "uint256",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    null
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "gasPrice",
+                                  "referencedDeclaration": 1073,
+                                  "type": "function () view external returns (uint256)"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 17584,
+                                      "type": "contract GasPriceOracle",
+                                      "value": "gasPriceOracle"
+                                    },
+                                    "id": 17600,
+                                    "name": "Identifier",
+                                    "src": "353:14:46"
+                                  }
+                                ],
+                                "id": 17601,
+                                "name": "MemberAccess",
+                                "src": "353:23:46"
+                              }
+                            ],
+                            "id": 17602,
+                            "name": "FunctionCall",
+                            "src": "353:25:46"
+                          }
+                        ],
+                        "id": 17603,
+                        "name": "Assignment",
+                        "src": "342:36:46"
+                      }
+                    ],
+                    "id": 17604,
+                    "name": "ExpressionStatement",
+                    "src": "342:36:46"
+                  }
+                ],
+                "id": 17605,
+                "name": "Block",
+                "src": "332:53:46"
+              }
+            ],
+            "id": 17606,
+            "name": "FunctionDefinition",
+            "src": "298:87:46"
+          }
+        ],
+        "id": 17607,
+        "name": "ContractDefinition",
+        "src": "58:329:46"
+      }
+    ],
+    "id": 17608,
+    "name": "SourceUnit",
+    "src": "0:387:46"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:02.121Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}

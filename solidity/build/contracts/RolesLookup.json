@@ -1,0 +1,4036 @@
+{
+  "contractName": "RolesLookup",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{},\"title\":\"Roles Lookup\"},\"userdoc\":{\"methods\":{},\"notice\":\"Library facilitating lookup of roles in stake delegation setup.\"}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol\":\"RolesLookup\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/Authorizations.sol\":{\"keccak256\":\"0xd49b3840507c924cc37ac2da48bf1549013a79d84daf2cb106b4d4b9c6096e7a\",\"urls\":[\"bzz-raw://2b740d974564d027f9df04253f71ce2314839a682beac926b778e0f7ea59fbb5\",\"dweb:/ipfs/QmamRuiYLpt2fCUPrQypkvrf7BrCsdV12QgaSHQYPsJHT2\"]},\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/home/bless/keep-core/solidity/contracts/KeepRegistry.sol\":{\"keccak256\":\"0x723cf0ade28c4158935e6c22f1da1ee98252ad1bc1cac30fe8fa462fe36ea886\",\"urls\":[\"bzz-raw://6244a0370c42ae7bac430e646694d64b80397e02209ae9ec1e01776e6b5a49fc\",\"dweb:/ipfs/QmcygjqGFv81ZpyKTUwdMRt1VdnM9H6pGUuKAP5YLmL5U8\"]},\"/home/bless/keep-core/solidity/contracts/KeepToken.sol\":{\"keccak256\":\"0x50defd2a00e356ed8eaf9aba405719f567c2da0164db5cdeadd68d155f6ded3b\",\"urls\":[\"bzz-raw://dbc8fb24f311c2dc95a26b1a1dfc9c7d93c634d32ef623fc23f799da5988fafb\",\"dweb:/ipfs/QmShZ3FtP2WUC9r1rbka8BWSf6oFkBbuxgxiDqhpwxo6zZ\"]},\"/home/bless/keep-core/solidity/contracts/ManagedGrant.sol\":{\"keccak256\":\"0x47f1cccc9f9c095b34ca514ae25cc467bbced15251b06f39896e0237e7fdec7c\",\"urls\":[\"bzz-raw://cad43bec15804ff17bd40fdee3598676f716b60204da9be163f15f45135ad250\",\"dweb:/ipfs/QmYHYEfR2UPZJZpsDhN2o1iD7drVSz8oqbYQFVT4G2oKqr\"]},\"/home/bless/keep-core/solidity/contracts/StakeDelegatable.sol\":{\"keccak256\":\"0xa1d81d17bc9f6bcc5878fb9b8acfdf7797c1561bf35111bac6bdbc3bba2c62aa\",\"urls\":[\"bzz-raw://deca3e5444cd9a5546818854009f9ac8c8e58479609de1a128ca73863f10ae7a\",\"dweb:/ipfs/QmcWYJkcHxsmCEhxRz6W5gSBgH597VYZgEaog9pzoLyZtt\"]},\"/home/bless/keep-core/solidity/contracts/TokenGrant.sol\":{\"keccak256\":\"0xad97f1a667f3be66dc6904fb7925e940ca57e4c88d38ae960672d95d7911bf6f\",\"urls\":[\"bzz-raw://f3f6b377ddcc2ad2b47811f115c20bdf6a6a208066afaebe027ac4eb165ca231\",\"dweb:/ipfs/QmXNSkqCDoBS1KGQbQ3PqXr1iMPgkPNWLcEKiBrV8u5LeW\"]},\"/home/bless/keep-core/solidity/contracts/TokenGrantStake.sol\":{\"keccak256\":\"0x014bbb7f336388024480415391cad745ec52cd255cd2740c890948246ab4d524\",\"urls\":[\"bzz-raw://745d488e7271fe9c71879c09fd09eb96b2193346adfddbb59638b80610707be3\",\"dweb:/ipfs/QmR3DyUzhTjE971QovXxMchRkUD3eHUj5S73Eahrf2Wyw8\"]},\"/home/bless/keep-core/solidity/contracts/TokenSender.sol\":{\"keccak256\":\"0xe50a3a7d2f30e8801d8b608c462f65c868e17ff8b2f0db3448876adf0f288117\",\"urls\":[\"bzz-raw://f040546b183d26a9e26adfc01a6425eb6bce1cec1ab5b142aa360c8096ede385\",\"dweb:/ipfs/QmdRa8huRUmsTTvwnWPBF7V2gTQAGsGn3VFUeBfbisBszw\"]},\"/home/bless/keep-core/solidity/contracts/TokenStaking.sol\":{\"keccak256\":\"0x957a8b500117fd8c74466e9c2cfd13e295e5cd66107bda1e5fdea1871248d0e8\",\"urls\":[\"bzz-raw://c6cca24bbf724e77009cb683d1715b8ffb1faa7ad2089156d6fc8d600a397fd4\",\"dweb:/ipfs/QmeVnKTgFhfVSfEgCcoFD86MfGUB9FTD8cbi5SxX2Vmy67\"]},\"/home/bless/keep-core/solidity/contracts/TokenStakingEscrow.sol\":{\"keccak256\":\"0x152a565d564bee09ea3f0f363c912fe3361966bf8d60f14ebcb8bf593d3b140e\",\"urls\":[\"bzz-raw://78ffe4daadcfeacc49c45c4e9879f62c2df3bdd00587b033492ee901537976f1\",\"dweb:/ipfs/QmPwmSu4XF7KpHnC6bqBTkrkjA6CUnC8h5PML9DqkAzLW8\"]},\"/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol\":{\"keccak256\":\"0x4622ccfb359f6478d3e87fb99f755dcebde1b5040662f3572ab8c8d50d2f8bc0\",\"urls\":[\"bzz-raw://cee3570c755b0a30412af08ce4663f85078b10a0eccf6808bec125897c7ead8e\",\"dweb:/ipfs/Qmc9EAjLfBYXfhtd24uNFzu1XKrPaqS5ismF4ZGsPyiBuU\"]},\"/home/bless/keep-core/solidity/contracts/libraries/grant/UnlockingSchedule.sol\":{\"keccak256\":\"0x26f8fe158e3f661bc54fc42a50a1686ef92dd18316a03592bafa2db6a2af9c3f\",\"urls\":[\"bzz-raw://718b4a48d7a50c151328cd15e91e9b9b4cba0db7f7b6b06533709614f9811a55\",\"dweb:/ipfs/QmYyTN6cLZiWumwE6jt2yDHNtc6DMCXaEntgKAN3zqp8yX\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/GrantStaking.sol\":{\"keccak256\":\"0x96253ba2eb78b83a04dd48f0a7ff6083ca72d6e4a27dec0888959c1b3b0be9aa\",\"urls\":[\"bzz-raw://a2ad3ddeba9de2f24b1c1c0339baf52a0b0446248ddfc0554d8fb71ce2057c0f\",\"dweb:/ipfs/QmdYxpcxm8TG7i3qYswudhxvff8hnARSR1GsVcY2fjUpzh\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/LockUtils.sol\":{\"keccak256\":\"0x0fbd9a4d82cf8803f00cb59cca9580d379c8d98a759b8a6d74f75f01c19fc635\",\"urls\":[\"bzz-raw://f2df931f0a11d4f63aa1f6193419606711a24ce7381dd15db52419c783dc7952\",\"dweb:/ipfs/QmRMGWSbfYPaxppBb7w2cQHpAwDc4T9MBmpZqU396i8hKK\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/Locks.sol\":{\"keccak256\":\"0xf45306074f9e893646c21e53954891e29c8011887545d8bbbcab7ef74558b18a\",\"urls\":[\"bzz-raw://971d3c54afde9050e455e79ec42b28d86a101bec8afab30e22b1fa4bfc110cc4\",\"dweb:/ipfs/QmfGTvrbc8dJXaxsxAmZM6oU8AvP5V6C2PQ5JF3gCJC81m\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":{\"keccak256\":\"0x31a399a918eba21f0002019a70b1b68c9610a5a4977fcd874b86d4965eb974c3\",\"urls\":[\"bzz-raw://acbe55a89d5e6f7b6d4add0764e7b47acbdc31afc0d5b1f211b45546d3a5cd6c\",\"dweb:/ipfs/QmcXSUaLV7d117ZvyMnRB3MVXVEGy62ccB5u6d8h1Sm792\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/TopUps.sol\":{\"keccak256\":\"0xe3a3c8d5e542f4f8ac8fdab92de57081257e1c07288e0e592cfc27551085e07f\",\"urls\":[\"bzz-raw://4cffa006da7f76868bcca1d107be436f3cd83339ff76df79c3e92a029e7ad66a\",\"dweb:/ipfs/QmZ5AArQ3gKBeXqGwGnSH45BQZQpGvjuQ4LnNaarrLrdy5\"]},\"/home/bless/keep-core/solidity/contracts/utils/AddressArrayUtils.sol\":{\"keccak256\":\"0xfb546b43ffd00d565d8440b6d221f5f046222e95469e33044665a56e79fcde48\",\"urls\":[\"bzz-raw://1f947ef8956e26d564cffd73a4f0dcdb02db1d7a46774d4e8876328116f6b663\",\"dweb:/ipfs/QmYUpg3JhhkogsY5nnjyMg6TEwoqRzTkJAWdhQGSbYqMH3\"]},\"/home/bless/keep-core/solidity/contracts/utils/BytesLib.sol\":{\"keccak256\":\"0xf5c726e1c77dea37b9ea1edd9bc7b4eebfafe33ce766a2607eb37d7144e4d68c\",\"urls\":[\"bzz-raw://32f61bad1923d749aff36ad9f62929e603ed27832348ba58d44d01561339d761\",\"dweb:/ipfs/QmWvfwapwUr9SnnEWXdmpo4r2TtVPFJFSUBXKJQpLZkYp1\"]},\"/home/bless/keep-core/solidity/contracts/utils/OperatorParams.sol\":{\"keccak256\":\"0xc13cbf7a6ad4740a8ad6373229b20b66eb4cc3d7aa9870161765ab8197513ab7\",\"urls\":[\"bzz-raw://e8343bc058fcee610863777792a25608549d80e126a05d076481dedb48587565\",\"dweb:/ipfs/QmR8ztc4StcK4yw7QmXj2b9TtS3Qs1BERrqDLtPZmUiffS\"]},\"/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol\":{\"keccak256\":\"0x696b15997a739e6c47c5bc29e1f9023998bb188405221a6b337377bca4ab3f68\",\"urls\":[\"bzz-raw://e93e2287fe6b6e1c5cc45ebc92b9d682e19a5b1302e00cb037391da753282bbf\",\"dweb:/ipfs/QmRXmEopRWNaL7mvY5nTyNNob3EPHF67R6Nxhm3F4VsDoo\"]},\"openzeppelin-solidity/contracts/GSN/Context.sol\":{\"keccak256\":\"0x90a3995645af7562d84b9d69363ffa5ae7217714ab61e951bf7bc450f40e4061\",\"urls\":[\"bzz-raw://216ef9d6b614db4eb46970b4e84903f2534a45572dd30a79f0041f1a5830f436\",\"dweb:/ipfs/QmNPrJ4MWKUAWzKXpUqeyKRUfosaoANZAqXgvepdrCwZAG\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0xecd8ab29d9a5771c3964d0cd1788c4a5098a0081b20fb275da850a22b1c59806\",\"urls\":[\"bzz-raw://696a75bc2c55407ce8251ccc7d19ecb1b7b2be1796a160a6524312babcc7e3d4\",\"dweb:/ipfs/QmQViKEp3y99h9uhRssE29TmjBKRnFMaoz3eJZ4eggggg2\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0x65a4078c03875c25413a068ce9cfdd7e68a90f8786612d1189c89341e6e3b802\",\"urls\":[\"bzz-raw://45c0d95495b944fbb1aa09d900b0ab530903a432125ab8fddfa05064a7988991\",\"dweb:/ipfs/Qma2VeknkKA1THeubGzshWFk44BktXkXP1UKp9Un2uDSsu\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0x9b94356691f3cbf90a5d83ae3fdf6a5a662bb004d2bd8b034160d60221807e64\",\"urls\":[\"bzz-raw://14a9d33db455302b8bb9fdb28998efefbe5a1cb41b29e31391609f646b2ab351\",\"dweb:/ipfs/Qmd4wFr6GEMZnnxgXeq3gmp7cs8tqDuHp3TVNhCbjnux2V\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol\":{\"keccak256\":\"0x4a3a810b7ebe742e897e1fd428b3eeed2196d3acea58eaf9c566ed10d545d2ed\",\"urls\":[\"bzz-raw://28d03f328e19e4099d5013de0649afaeaabac1a614e130767ab1cb4aca9775b6\",\"dweb:/ipfs/Qmb9iW7yNuYehB2NfhRMs9TakqbLVQhBhmGMkaDZ5g1Eb4\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0xe5bb0f57cff3e299f360052ba50f1ea0fff046df2be070b6943e0e3c3fdad8a9\",\"urls\":[\"bzz-raw://59fd025151435da35faa8093a5c7a17de02de9d08ad27275c5cdf05050820d91\",\"dweb:/ipfs/QmQMvwEcPhoRXzbXyrdoeRtvLoifUW9Qh7Luho7bmUPRkc\"]},\"openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol\":{\"keccak256\":\"0x6f2c9955d65c522b80f4b8792f076512d2df947d2112cbc4d98a4781ed42ede2\",\"urls\":[\"bzz-raw://7d8ec81683520c06baeef3f7e06cd82bd6fd5fa611f26857f475f6c829540aff\",\"dweb:/ipfs/QmTDkFzKnrpiV1UKnSoiZAHPuguWzokrr4pFbSPvyaSo56\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x70df50e240407aa50915ad14f61b1a901fa335b37de20955b99ed647be756af0\",\"urls\":[\"bzz-raw://9404711f3206610c08ea97fa52c7b6b4d2e9d536e96fc4b7210aa7e24f796c36\",\"dweb:/ipfs/QmZDzpVzjoap13SuPEq5pVCrmdjoKVZnTsQPLKXAbynTTW\"]}},\"version\":1}",
+  "bytecode": "0x60556023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a7231582031edd4f7932a1284cf7d0cfe398d07439afc95f2f47c652662a7b3a7f6eb1c1f64736f6c63430005110032",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a7231582031edd4f7932a1284cf7d0cfe398d07439afc95f2f47c652662a7b3a7f6eb1c1f64736f6c63430005110032",
+  "sourceMap": "259:3873:31:-;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
+  "deployedSourceMap": "259:3873:31:-;;;;;;;;",
+  "source": "pragma solidity 0.5.17;\n\nimport \"../utils/AddressArrayUtils.sol\";\nimport \"../StakeDelegatable.sol\";\nimport \"../TokenGrant.sol\";\nimport \"../ManagedGrant.sol\";\n\n/// @title Roles Lookup\n/// @notice Library facilitating lookup of roles in stake delegation setup.\nlibrary RolesLookup {\n    using AddressArrayUtils for address[];\n\n    /// @notice Returns true if the tokenOwner delegated tokens to operator\n    /// using the provided stakeDelegatable contract. Othwerwise, returns false.\n    /// This function works only for the case when tokenOwner own those tokens\n    /// and those are not tokens from a grant.\n    function isTokenOwnerForOperator(\n        address tokenOwner,\n        address operator,\n        StakeDelegatable stakeDelegatable\n    ) internal view returns (bool) {\n        return stakeDelegatable.ownerOf(operator) == tokenOwner;\n    }\n\n    /// @notice Returns true if the grantee delegated tokens to operator\n    /// with the provided tokenGrant contract. Otherwise, returns false.\n    /// This function works only for the case when tokens were generated from\n    /// a non-managed grant, that is, the grantee is a non-contract address to\n    /// which the delegated tokens were granted.\n    /// @dev This function does not validate the staking reltionship on\n    /// a particular staking contract. It only checks whether the grantee\n    /// staked at least one time with the given operator. If you are interested\n    /// in a particular token staking contract, you need to perform additional\n    /// check.\n    function isGranteeForOperator(\n        address grantee,\n        address operator,\n        TokenGrant tokenGrant\n    ) internal view returns (bool) {\n        address[] memory operators = tokenGrant.getGranteeOperators(grantee);\n        return operators.contains(operator);\n    }\n\n    /// @notice Returns true if the grantee from the given managed grant contract\n    /// delegated tokens to operator with the provided tokenGrant contract.\n    /// Otherwise, returns false. In case the grantee declared by the managed\n    /// grant contract does not match the provided grantee, function reverts.\n    /// This function works only for cases when grantee, from TokenGrant's\n    /// perspective, is a smart contract exposing grantee() function returning\n    /// the final grantee. One possibility is the ManagedGrant contract.\n    /// @dev This function does not validate the staking reltionship on\n    /// a particular staking contract. It only checks whether the grantee\n    /// staked at least one time with the given operator. If you are interested\n    /// in a particular token staking contract, you need to perform additional\n    /// check.\n    function isManagedGranteeForOperator(\n        address grantee,\n        address operator,\n        address managedGrantContract,\n        TokenGrant tokenGrant\n    ) internal view returns (bool) {\n        require(\n            ManagedGrant(managedGrantContract).grantee() == grantee,\n            \"Not a grantee of the provided contract\"\n        );\n\n        address[] memory operators = tokenGrant.getGranteeOperators(\n            managedGrantContract\n        );\n        return operators.contains(operator);\n    }\n\n    /// @notice Returns true if grant with the given ID has been created with\n    /// managed grant pointing currently to the grantee passed as a parameter.\n    /// @dev The function does not revert if grant has not been created with\n    /// a managed grantee. This function is not a view because it uses low-level\n    /// call to check if the grant has been created with a managed grant.\n    /// It does not however modify any state.\n    function isManagedGranteeForGrant(\n        address grantee,\n        uint256 grantId,\n        TokenGrant tokenGrant\n    ) internal returns (bool) {\n        (,,,,, address managedGrant) = tokenGrant.getGrant(grantId);\n        (, bytes memory result) = managedGrant.call(\n            abi.encodeWithSignature(\"grantee()\")\n        );\n        if (result.length == 0) {\n            return false;\n        }\n        address managedGrantee = abi.decode(result, (address));\n        return grantee == managedGrantee;\n    }\n}",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol",
+    "exportedSymbols": {
+      "RolesLookup": [
+        13541
+      ]
+    },
+    "id": 13542,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 13398,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:31"
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/AddressArrayUtils.sol",
+        "file": "../utils/AddressArrayUtils.sol",
+        "id": 13399,
+        "nodeType": "ImportDirective",
+        "scope": 13542,
+        "sourceUnit": 23701,
+        "src": "25:40:31",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/StakeDelegatable.sol",
+        "file": "../StakeDelegatable.sol",
+        "id": 13400,
+        "nodeType": "ImportDirective",
+        "scope": 13542,
+        "sourceUnit": 7368,
+        "src": "66:33:31",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/TokenGrant.sol",
+        "file": "../TokenGrant.sol",
+        "id": 13401,
+        "nodeType": "ImportDirective",
+        "scope": 13542,
+        "sourceUnit": 9181,
+        "src": "100:27:31",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/ManagedGrant.sol",
+        "file": "../ManagedGrant.sol",
+        "id": 13402,
+        "nodeType": "ImportDirective",
+        "scope": 13542,
+        "sourceUnit": 5121,
+        "src": "128:29:31",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "library",
+        "documentation": "@title Roles Lookup\n @notice Library facilitating lookup of roles in stake delegation setup.",
+        "fullyImplemented": true,
+        "id": 13541,
+        "linearizedBaseContracts": [
+          13541
+        ],
+        "name": "RolesLookup",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 13406,
+            "libraryName": {
+              "contractScope": null,
+              "id": 13403,
+              "name": "AddressArrayUtils",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 23700,
+              "src": "291:17:31",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_AddressArrayUtils_$23700",
+                "typeString": "library AddressArrayUtils"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "285:38:31",
+            "typeName": {
+              "baseType": {
+                "id": 13404,
+                "name": "address",
+                "nodeType": "ElementaryTypeName",
+                "src": "313:7:31",
+                "stateMutability": "nonpayable",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_address",
+                  "typeString": "address"
+                }
+              },
+              "id": 13405,
+              "length": null,
+              "nodeType": "ArrayTypeName",
+              "src": "313:9:31",
+              "typeDescriptions": {
+                "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                "typeString": "address[]"
+              }
+            }
+          },
+          {
+            "body": {
+              "id": 13424,
+              "nodeType": "Block",
+              "src": "777:72:31",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 13422,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "arguments": [
+                        {
+                          "argumentTypes": null,
+                          "id": 13419,
+                          "name": "operator",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 13410,
+                          "src": "819:8:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 13417,
+                          "name": "stakeDelegatable",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 13412,
+                          "src": "794:16:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_contract$_StakeDelegatable_$7367",
+                            "typeString": "contract StakeDelegatable"
+                          }
+                        },
+                        "id": 13418,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "ownerOf",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 7340,
+                        "src": "794:24:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_external_view$_t_address_$returns$_t_address_$",
+                          "typeString": "function (address) view external returns (address)"
+                        }
+                      },
+                      "id": 13420,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "functionCall",
+                      "lValueRequested": false,
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "794:34:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "id": 13421,
+                      "name": "tokenOwner",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 13408,
+                      "src": "832:10:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "794:48:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 13416,
+                  "id": 13423,
+                  "nodeType": "Return",
+                  "src": "787:55:31"
+                }
+              ]
+            },
+            "documentation": "@notice Returns true if the tokenOwner delegated tokens to operator\n using the provided stakeDelegatable contract. Othwerwise, returns false.\n This function works only for the case when tokenOwner own those tokens\n and those are not tokens from a grant.",
+            "id": 13425,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isTokenOwnerForOperator",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 13413,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13408,
+                  "name": "tokenOwner",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13425,
+                  "src": "654:18:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13407,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "654:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13410,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13425,
+                  "src": "682:16:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13409,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "682:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13412,
+                  "name": "stakeDelegatable",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13425,
+                  "src": "708:33:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_StakeDelegatable_$7367",
+                    "typeString": "contract StakeDelegatable"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 13411,
+                    "name": "StakeDelegatable",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 7367,
+                    "src": "708:16:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_StakeDelegatable_$7367",
+                      "typeString": "contract StakeDelegatable"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "644:103:31"
+            },
+            "returnParameters": {
+              "id": 13416,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13415,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13425,
+                  "src": "771:4:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 13414,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "771:4:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "770:6:31"
+            },
+            "scope": 13541,
+            "src": "612:237:31",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 13450,
+              "nodeType": "Block",
+              "src": "1674:130:31",
+              "statements": [
+                {
+                  "assignments": [
+                    13439
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 13439,
+                      "name": "operators",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 13450,
+                      "src": "1684:26:31",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                        "typeString": "address[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 13437,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1684:7:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "id": 13438,
+                        "length": null,
+                        "nodeType": "ArrayTypeName",
+                        "src": "1684:9:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                          "typeString": "address[]"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 13444,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 13442,
+                        "name": "grantee",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13427,
+                        "src": "1744:7:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13440,
+                        "name": "tokenGrant",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13431,
+                        "src": "1713:10:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                          "typeString": "contract TokenGrant"
+                        }
+                      },
+                      "id": 13441,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "getGranteeOperators",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 8240,
+                      "src": "1713:30:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$_t_address_$returns$_t_array$_t_address_$dyn_memory_ptr_$",
+                        "typeString": "function (address) view external returns (address[] memory)"
+                      }
+                    },
+                    "id": 13443,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1713:39:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                      "typeString": "address[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1684:68:31"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 13447,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13429,
+                        "src": "1788:8:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13445,
+                        "name": "operators",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13439,
+                        "src": "1769:9:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                          "typeString": "address[] memory"
+                        }
+                      },
+                      "id": 13446,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "contains",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 23632,
+                      "src": "1769:18:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_array$_t_address_$dyn_memory_ptr_$_t_address_$returns$_t_bool_$bound_to$_t_array$_t_address_$dyn_memory_ptr_$",
+                        "typeString": "function (address[] memory,address) pure returns (bool)"
+                      }
+                    },
+                    "id": 13448,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1769:28:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 13435,
+                  "id": 13449,
+                  "nodeType": "Return",
+                  "src": "1762:35:31"
+                }
+              ]
+            },
+            "documentation": "@notice Returns true if the grantee delegated tokens to operator\n with the provided tokenGrant contract. Otherwise, returns false.\n This function works only for the case when tokens were generated from\n a non-managed grant, that is, the grantee is a non-contract address to\n which the delegated tokens were granted.\n @dev This function does not validate the staking reltionship on\n a particular staking contract. It only checks whether the grantee\n staked at least one time with the given operator. If you are interested\n in a particular token staking contract, you need to perform additional\n check.",
+            "id": 13451,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isGranteeForOperator",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 13432,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13427,
+                  "name": "grantee",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13451,
+                  "src": "1566:15:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13426,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1566:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13429,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13451,
+                  "src": "1591:16:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13428,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1591:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13431,
+                  "name": "tokenGrant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13451,
+                  "src": "1617:21:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                    "typeString": "contract TokenGrant"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 13430,
+                    "name": "TokenGrant",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 9180,
+                    "src": "1617:10:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                      "typeString": "contract TokenGrant"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1556:88:31"
+            },
+            "returnParameters": {
+              "id": 13435,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13434,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13451,
+                  "src": "1668:4:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 13433,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1668:4:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1667:6:31"
+            },
+            "scope": 13541,
+            "src": "1527:277:31",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 13489,
+              "nodeType": "Block",
+              "src": "2863:316:31",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "commonType": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        "id": 13471,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "leftExpression": {
+                          "argumentTypes": null,
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "argumentTypes": null,
+                              "arguments": [
+                                {
+                                  "argumentTypes": null,
+                                  "id": 13466,
+                                  "name": "managedGrantContract",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 13457,
+                                  "src": "2907:20:31",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_address",
+                                    "typeString": "address"
+                                  }
+                                }
+                              ],
+                              "expression": {
+                                "argumentTypes": [
+                                  {
+                                    "typeIdentifier": "t_address",
+                                    "typeString": "address"
+                                  }
+                                ],
+                                "id": 13465,
+                                "name": "ManagedGrant",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 5120,
+                                "src": "2894:12:31",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_type$_t_contract$_ManagedGrant_$5120_$",
+                                  "typeString": "type(contract ManagedGrant)"
+                                }
+                              },
+                              "id": 13467,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "kind": "typeConversion",
+                              "lValueRequested": false,
+                              "names": [],
+                              "nodeType": "FunctionCall",
+                              "src": "2894:34:31",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_contract$_ManagedGrant_$5120",
+                                "typeString": "contract ManagedGrant"
+                              }
+                            },
+                            "id": 13468,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "grantee",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 4747,
+                            "src": "2894:42:31",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_external_view$__$returns$_t_address_$",
+                              "typeString": "function () view external returns (address)"
+                            }
+                          },
+                          "id": 13469,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2894:44:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "nodeType": "BinaryOperation",
+                        "operator": "==",
+                        "rightExpression": {
+                          "argumentTypes": null,
+                          "id": 13470,
+                          "name": "grantee",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 13453,
+                          "src": "2942:7:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "src": "2894:55:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "hexValue": "4e6f742061206772616e746565206f66207468652070726f766964656420636f6e7472616374",
+                        "id": 13472,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "2963:40:31",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_f4560f1dba4587e0a10393fa1dd46e433c9bdcba3ba707b45d608688f818ab53",
+                          "typeString": "literal_string \"Not a grantee of the provided contract\""
+                        },
+                        "value": "Not a grantee of the provided contract"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_f4560f1dba4587e0a10393fa1dd46e433c9bdcba3ba707b45d608688f818ab53",
+                          "typeString": "literal_string \"Not a grantee of the provided contract\""
+                        }
+                      ],
+                      "id": 13464,
+                      "name": "require",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [
+                        26000,
+                        26001
+                      ],
+                      "referencedDeclaration": 26001,
+                      "src": "2873:7:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_require_pure$_t_bool_$_t_string_memory_ptr_$returns$__$",
+                        "typeString": "function (bool,string memory) pure"
+                      }
+                    },
+                    "id": 13473,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2873:140:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 13474,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2873:140:31"
+                },
+                {
+                  "assignments": [
+                    13478
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 13478,
+                      "name": "operators",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 13489,
+                      "src": "3024:26:31",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                        "typeString": "address[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 13476,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "3024:7:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "id": 13477,
+                        "length": null,
+                        "nodeType": "ArrayTypeName",
+                        "src": "3024:9:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                          "typeString": "address[]"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 13483,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 13481,
+                        "name": "managedGrantContract",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13457,
+                        "src": "3097:20:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13479,
+                        "name": "tokenGrant",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13459,
+                        "src": "3053:10:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                          "typeString": "contract TokenGrant"
+                        }
+                      },
+                      "id": 13480,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "getGranteeOperators",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 8240,
+                      "src": "3053:30:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$_t_address_$returns$_t_array$_t_address_$dyn_memory_ptr_$",
+                        "typeString": "function (address) view external returns (address[] memory)"
+                      }
+                    },
+                    "id": 13482,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "3053:74:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                      "typeString": "address[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "3024:103:31"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 13486,
+                        "name": "operator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13455,
+                        "src": "3163:8:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13484,
+                        "name": "operators",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13478,
+                        "src": "3144:9:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                          "typeString": "address[] memory"
+                        }
+                      },
+                      "id": 13485,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "contains",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 23632,
+                      "src": "3144:18:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_array$_t_address_$dyn_memory_ptr_$_t_address_$returns$_t_bool_$bound_to$_t_array$_t_address_$dyn_memory_ptr_$",
+                        "typeString": "function (address[] memory,address) pure returns (bool)"
+                      }
+                    },
+                    "id": 13487,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "3144:28:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 13463,
+                  "id": 13488,
+                  "nodeType": "Return",
+                  "src": "3137:35:31"
+                }
+              ]
+            },
+            "documentation": "@notice Returns true if the grantee from the given managed grant contract\n delegated tokens to operator with the provided tokenGrant contract.\n Otherwise, returns false. In case the grantee declared by the managed\n grant contract does not match the provided grantee, function reverts.\n This function works only for cases when grantee, from TokenGrant's\n perspective, is a smart contract exposing grantee() function returning\n the final grantee. One possibility is the ManagedGrant contract.\n @dev This function does not validate the staking reltionship on\n a particular staking contract. It only checks whether the grantee\n staked at least one time with the given operator. If you are interested\n in a particular token staking contract, you need to perform additional\n check.",
+            "id": 13490,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isManagedGranteeForOperator",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 13460,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13453,
+                  "name": "grantee",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13490,
+                  "src": "2717:15:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13452,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2717:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13455,
+                  "name": "operator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13490,
+                  "src": "2742:16:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13454,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2742:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13457,
+                  "name": "managedGrantContract",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13490,
+                  "src": "2768:28:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13456,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2768:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13459,
+                  "name": "tokenGrant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13490,
+                  "src": "2806:21:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                    "typeString": "contract TokenGrant"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 13458,
+                    "name": "TokenGrant",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 9180,
+                    "src": "2806:10:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                      "typeString": "contract TokenGrant"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2707:126:31"
+            },
+            "returnParameters": {
+              "id": 13463,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13462,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13490,
+                  "src": "2857:4:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 13461,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2857:4:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2856:6:31"
+            },
+            "scope": 13541,
+            "src": "2671:508:31",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 13539,
+              "nodeType": "Block",
+              "src": "3765:365:31",
+              "statements": [
+                {
+                  "assignments": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    13502
+                  ],
+                  "declarations": [
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    {
+                      "constant": false,
+                      "id": 13502,
+                      "name": "managedGrant",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 13539,
+                      "src": "3782:20:31",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      },
+                      "typeName": {
+                        "id": 13501,
+                        "name": "address",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "3782:7:31",
+                        "stateMutability": "nonpayable",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 13507,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 13505,
+                        "name": "grantId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13494,
+                        "src": "3826:7:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13503,
+                        "name": "tokenGrant",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13496,
+                        "src": "3806:10:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                          "typeString": "contract TokenGrant"
+                        }
+                      },
+                      "id": 13504,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "getGrant",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 8174,
+                      "src": "3806:19:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$_t_uint256_$returns$_t_uint256_$_t_uint256_$_t_uint256_$_t_uint256_$_t_uint256_$_t_address_$",
+                        "typeString": "function (uint256) view external returns (uint256,uint256,uint256,uint256,uint256,address)"
+                      }
+                    },
+                    "id": 13506,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "3806:28:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$_t_uint256_$_t_uint256_$_t_uint256_$_t_uint256_$_t_uint256_$_t_address_$",
+                      "typeString": "tuple(uint256,uint256,uint256,uint256,uint256,address)"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "3775:59:31"
+                },
+                {
+                  "assignments": [
+                    null,
+                    13509
+                  ],
+                  "declarations": [
+                    null,
+                    {
+                      "constant": false,
+                      "id": 13509,
+                      "name": "result",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 13539,
+                      "src": "3847:19:31",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes_memory_ptr",
+                        "typeString": "bytes"
+                      },
+                      "typeName": {
+                        "id": 13508,
+                        "name": "bytes",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "3847:5:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_storage_ptr",
+                          "typeString": "bytes"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 13517,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "hexValue": "6772616e7465652829",
+                            "id": 13514,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "string",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "3925:11:31",
+                            "subdenomination": null,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_stringliteral_d5f520765e05e5807d58bc8e28a312f2f3223a294689898d92eba5ea678bb70c",
+                              "typeString": "literal_string \"grantee()\""
+                            },
+                            "value": "grantee()"
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_stringliteral_d5f520765e05e5807d58bc8e28a312f2f3223a294689898d92eba5ea678bb70c",
+                              "typeString": "literal_string \"grantee()\""
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": null,
+                            "id": 13512,
+                            "name": "abi",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 25984,
+                            "src": "3901:3:31",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_magic_abi",
+                              "typeString": "abi"
+                            }
+                          },
+                          "id": 13513,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "memberName": "encodeWithSignature",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": null,
+                          "src": "3901:23:31",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_abiencodewithsignature_pure$_t_string_memory_ptr_$returns$_t_bytes_memory_ptr_$",
+                            "typeString": "function (string memory) pure returns (bytes memory)"
+                          }
+                        },
+                        "id": 13515,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "3901:36:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13510,
+                        "name": "managedGrant",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13502,
+                        "src": "3870:12:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "id": 13511,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "call",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": null,
+                      "src": "3870:17:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$",
+                        "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                      }
+                    },
+                    "id": 13516,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "3870:77:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$_t_bool_$_t_bytes_memory_ptr_$",
+                      "typeString": "tuple(bool,bytes memory)"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "3844:103:31"
+                },
+                {
+                  "condition": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 13521,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13518,
+                        "name": "result",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13509,
+                        "src": "3961:6:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      },
+                      "id": 13519,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": null,
+                      "src": "3961:13:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "hexValue": "30",
+                      "id": 13520,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "3978:1:31",
+                      "subdenomination": null,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_0_by_1",
+                        "typeString": "int_const 0"
+                      },
+                      "value": "0"
+                    },
+                    "src": "3961:18:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": null,
+                  "id": 13525,
+                  "nodeType": "IfStatement",
+                  "src": "3957:61:31",
+                  "trueBody": {
+                    "id": 13524,
+                    "nodeType": "Block",
+                    "src": "3981:37:31",
+                    "statements": [
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "hexValue": "66616c7365",
+                          "id": 13522,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "bool",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "4002:5:31",
+                          "subdenomination": null,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          },
+                          "value": "false"
+                        },
+                        "functionReturnParameters": 13500,
+                        "id": 13523,
+                        "nodeType": "Return",
+                        "src": "3995:12:31"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "assignments": [
+                    13527
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 13527,
+                      "name": "managedGrantee",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 13539,
+                      "src": "4027:22:31",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      },
+                      "typeName": {
+                        "id": 13526,
+                        "name": "address",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "4027:7:31",
+                        "stateMutability": "nonpayable",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 13534,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 13530,
+                        "name": "result",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 13509,
+                        "src": "4063:6:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "components": [
+                          {
+                            "argumentTypes": null,
+                            "id": 13531,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "lValueRequested": false,
+                            "nodeType": "ElementaryTypeNameExpression",
+                            "src": "4072:7:31",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_type$_t_address_$",
+                              "typeString": "type(address)"
+                            },
+                            "typeName": "address"
+                          }
+                        ],
+                        "id": 13532,
+                        "isConstant": false,
+                        "isInlineArray": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "TupleExpression",
+                        "src": "4071:9:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        },
+                        {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 13528,
+                        "name": "abi",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 25984,
+                        "src": "4052:3:31",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_magic_abi",
+                          "typeString": "abi"
+                        }
+                      },
+                      "id": 13529,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberName": "decode",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": null,
+                      "src": "4052:10:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_abidecode_pure$__$returns$__$",
+                        "typeString": "function () pure"
+                      }
+                    },
+                    "id": 13533,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4052:29:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address_payable",
+                      "typeString": "address payable"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "4027:54:31"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 13537,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "id": 13535,
+                      "name": "grantee",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 13492,
+                      "src": "4098:7:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "id": 13536,
+                      "name": "managedGrantee",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 13527,
+                      "src": "4109:14:31",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "4098:25:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 13500,
+                  "id": 13538,
+                  "nodeType": "Return",
+                  "src": "4091:32:31"
+                }
+              ]
+            },
+            "documentation": "@notice Returns true if grant with the given ID has been created with\n managed grant pointing currently to the grantee passed as a parameter.\n @dev The function does not revert if grant has not been created with\n a managed grantee. This function is not a view because it uses low-level\n call to check if the grant has been created with a managed grant.\n It does not however modify any state.",
+            "id": 13540,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isManagedGranteeForGrant",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 13497,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13492,
+                  "name": "grantee",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13540,
+                  "src": "3663:15:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 13491,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3663:7:31",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13494,
+                  "name": "grantId",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13540,
+                  "src": "3688:15:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13493,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3688:7:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 13496,
+                  "name": "tokenGrant",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13540,
+                  "src": "3713:21:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                    "typeString": "contract TokenGrant"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 13495,
+                    "name": "TokenGrant",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 9180,
+                    "src": "3713:10:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_TokenGrant_$9180",
+                      "typeString": "contract TokenGrant"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3653:87:31"
+            },
+            "returnParameters": {
+              "id": 13500,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13499,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13540,
+                  "src": "3759:4:31",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 13498,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3759:4:31",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3758:6:31"
+            },
+            "scope": 13541,
+            "src": "3620:510:31",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "internal"
+          }
+        ],
+        "scope": 13542,
+        "src": "259:3873:31"
+      }
+    ],
+    "src": "0:4132:31"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol",
+      "exportedSymbols": {
+        "RolesLookup": [
+          13541
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 13398,
+        "name": "PragmaDirective",
+        "src": "0:23:31"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 23701,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/AddressArrayUtils.sol",
+          "file": "../utils/AddressArrayUtils.sol",
+          "scope": 13542,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 13399,
+        "name": "ImportDirective",
+        "src": "25:40:31"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 7368,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/StakeDelegatable.sol",
+          "file": "../StakeDelegatable.sol",
+          "scope": 13542,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 13400,
+        "name": "ImportDirective",
+        "src": "66:33:31"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 9181,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/TokenGrant.sol",
+          "file": "../TokenGrant.sol",
+          "scope": 13542,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 13401,
+        "name": "ImportDirective",
+        "src": "100:27:31"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 5121,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/ManagedGrant.sol",
+          "file": "../ManagedGrant.sol",
+          "scope": 13542,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 13402,
+        "name": "ImportDirective",
+        "src": "128:29:31"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "library",
+          "documentation": "@title Roles Lookup\n @notice Library facilitating lookup of roles in stake delegation setup.",
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            13541
+          ],
+          "name": "RolesLookup",
+          "scope": 13542
+        },
+        "children": [
+          {
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "AddressArrayUtils",
+                  "referencedDeclaration": 23700,
+                  "type": "library AddressArrayUtils"
+                },
+                "id": 13403,
+                "name": "UserDefinedTypeName",
+                "src": "291:17:31"
+              },
+              {
+                "attributes": {
+                  "length": null,
+                  "type": "address[]"
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "name": "address",
+                      "stateMutability": "nonpayable",
+                      "type": "address"
+                    },
+                    "id": 13404,
+                    "name": "ElementaryTypeName",
+                    "src": "313:7:31"
+                  }
+                ],
+                "id": 13405,
+                "name": "ArrayTypeName",
+                "src": "313:9:31"
+              }
+            ],
+            "id": 13406,
+            "name": "UsingForDirective",
+            "src": "285:38:31"
+          },
+          {
+            "attributes": {
+              "documentation": "@notice Returns true if the tokenOwner delegated tokens to operator\n using the provided stakeDelegatable contract. Othwerwise, returns false.\n This function works only for the case when tokenOwner own those tokens\n and those are not tokens from a grant.",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "isTokenOwnerForOperator",
+              "scope": 13541,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "tokenOwner",
+                      "scope": 13425,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13407,
+                        "name": "ElementaryTypeName",
+                        "src": "654:7:31"
+                      }
+                    ],
+                    "id": 13408,
+                    "name": "VariableDeclaration",
+                    "src": "654:18:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 13425,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13409,
+                        "name": "ElementaryTypeName",
+                        "src": "682:7:31"
+                      }
+                    ],
+                    "id": 13410,
+                    "name": "VariableDeclaration",
+                    "src": "682:16:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "stakeDelegatable",
+                      "scope": 13425,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "contract StakeDelegatable",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "contractScope": null,
+                          "name": "StakeDelegatable",
+                          "referencedDeclaration": 7367,
+                          "type": "contract StakeDelegatable"
+                        },
+                        "id": 13411,
+                        "name": "UserDefinedTypeName",
+                        "src": "708:16:31"
+                      }
+                    ],
+                    "id": 13412,
+                    "name": "VariableDeclaration",
+                    "src": "708:33:31"
+                  }
+                ],
+                "id": 13413,
+                "name": "ParameterList",
+                "src": "644:103:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 13425,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 13414,
+                        "name": "ElementaryTypeName",
+                        "src": "771:4:31"
+                      }
+                    ],
+                    "id": 13415,
+                    "name": "VariableDeclaration",
+                    "src": "771:4:31"
+                  }
+                ],
+                "id": 13416,
+                "name": "ParameterList",
+                "src": "770:6:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 13416
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          },
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "==",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "address",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_address",
+                                      "typeString": "address"
+                                    }
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "ownerOf",
+                                  "referencedDeclaration": 7340,
+                                  "type": "function (address) view external returns (address)"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 13412,
+                                      "type": "contract StakeDelegatable",
+                                      "value": "stakeDelegatable"
+                                    },
+                                    "id": 13417,
+                                    "name": "Identifier",
+                                    "src": "794:16:31"
+                                  }
+                                ],
+                                "id": 13418,
+                                "name": "MemberAccess",
+                                "src": "794:24:31"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13410,
+                                  "type": "address",
+                                  "value": "operator"
+                                },
+                                "id": 13419,
+                                "name": "Identifier",
+                                "src": "819:8:31"
+                              }
+                            ],
+                            "id": 13420,
+                            "name": "FunctionCall",
+                            "src": "794:34:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13408,
+                              "type": "address",
+                              "value": "tokenOwner"
+                            },
+                            "id": 13421,
+                            "name": "Identifier",
+                            "src": "832:10:31"
+                          }
+                        ],
+                        "id": 13422,
+                        "name": "BinaryOperation",
+                        "src": "794:48:31"
+                      }
+                    ],
+                    "id": 13423,
+                    "name": "Return",
+                    "src": "787:55:31"
+                  }
+                ],
+                "id": 13424,
+                "name": "Block",
+                "src": "777:72:31"
+              }
+            ],
+            "id": 13425,
+            "name": "FunctionDefinition",
+            "src": "612:237:31"
+          },
+          {
+            "attributes": {
+              "documentation": "@notice Returns true if the grantee delegated tokens to operator\n with the provided tokenGrant contract. Otherwise, returns false.\n This function works only for the case when tokens were generated from\n a non-managed grant, that is, the grantee is a non-contract address to\n which the delegated tokens were granted.\n @dev This function does not validate the staking reltionship on\n a particular staking contract. It only checks whether the grantee\n staked at least one time with the given operator. If you are interested\n in a particular token staking contract, you need to perform additional\n check.",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "isGranteeForOperator",
+              "scope": 13541,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "grantee",
+                      "scope": 13451,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13426,
+                        "name": "ElementaryTypeName",
+                        "src": "1566:7:31"
+                      }
+                    ],
+                    "id": 13427,
+                    "name": "VariableDeclaration",
+                    "src": "1566:15:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 13451,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13428,
+                        "name": "ElementaryTypeName",
+                        "src": "1591:7:31"
+                      }
+                    ],
+                    "id": 13429,
+                    "name": "VariableDeclaration",
+                    "src": "1591:16:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "tokenGrant",
+                      "scope": 13451,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "contract TokenGrant",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "contractScope": null,
+                          "name": "TokenGrant",
+                          "referencedDeclaration": 9180,
+                          "type": "contract TokenGrant"
+                        },
+                        "id": 13430,
+                        "name": "UserDefinedTypeName",
+                        "src": "1617:10:31"
+                      }
+                    ],
+                    "id": 13431,
+                    "name": "VariableDeclaration",
+                    "src": "1617:21:31"
+                  }
+                ],
+                "id": 13432,
+                "name": "ParameterList",
+                "src": "1556:88:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 13451,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 13433,
+                        "name": "ElementaryTypeName",
+                        "src": "1668:4:31"
+                      }
+                    ],
+                    "id": 13434,
+                    "name": "VariableDeclaration",
+                    "src": "1668:4:31"
+                  }
+                ],
+                "id": 13435,
+                "name": "ParameterList",
+                "src": "1667:6:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        13439
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "operators",
+                          "scope": 13450,
+                          "stateVariable": false,
+                          "storageLocation": "memory",
+                          "type": "address[]",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "length": null,
+                              "type": "address[]"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "name": "address",
+                                  "type": "address"
+                                },
+                                "id": 13437,
+                                "name": "ElementaryTypeName",
+                                "src": "1684:7:31"
+                              }
+                            ],
+                            "id": 13438,
+                            "name": "ArrayTypeName",
+                            "src": "1684:9:31"
+                          }
+                        ],
+                        "id": 13439,
+                        "name": "VariableDeclaration",
+                        "src": "1684:26:31"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "address[] memory",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "getGranteeOperators",
+                              "referencedDeclaration": 8240,
+                              "type": "function (address) view external returns (address[] memory)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13431,
+                                  "type": "contract TokenGrant",
+                                  "value": "tokenGrant"
+                                },
+                                "id": 13440,
+                                "name": "Identifier",
+                                "src": "1713:10:31"
+                              }
+                            ],
+                            "id": 13441,
+                            "name": "MemberAccess",
+                            "src": "1713:30:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13427,
+                              "type": "address",
+                              "value": "grantee"
+                            },
+                            "id": 13442,
+                            "name": "Identifier",
+                            "src": "1744:7:31"
+                          }
+                        ],
+                        "id": 13443,
+                        "name": "FunctionCall",
+                        "src": "1713:39:31"
+                      }
+                    ],
+                    "id": 13444,
+                    "name": "VariableDeclarationStatement",
+                    "src": "1684:68:31"
+                  },
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 13435
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "bool",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "contains",
+                              "referencedDeclaration": 23632,
+                              "type": "function (address[] memory,address) pure returns (bool)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13439,
+                                  "type": "address[] memory",
+                                  "value": "operators"
+                                },
+                                "id": 13445,
+                                "name": "Identifier",
+                                "src": "1769:9:31"
+                              }
+                            ],
+                            "id": 13446,
+                            "name": "MemberAccess",
+                            "src": "1769:18:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13429,
+                              "type": "address",
+                              "value": "operator"
+                            },
+                            "id": 13447,
+                            "name": "Identifier",
+                            "src": "1788:8:31"
+                          }
+                        ],
+                        "id": 13448,
+                        "name": "FunctionCall",
+                        "src": "1769:28:31"
+                      }
+                    ],
+                    "id": 13449,
+                    "name": "Return",
+                    "src": "1762:35:31"
+                  }
+                ],
+                "id": 13450,
+                "name": "Block",
+                "src": "1674:130:31"
+              }
+            ],
+            "id": 13451,
+            "name": "FunctionDefinition",
+            "src": "1527:277:31"
+          },
+          {
+            "attributes": {
+              "documentation": "@notice Returns true if the grantee from the given managed grant contract\n delegated tokens to operator with the provided tokenGrant contract.\n Otherwise, returns false. In case the grantee declared by the managed\n grant contract does not match the provided grantee, function reverts.\n This function works only for cases when grantee, from TokenGrant's\n perspective, is a smart contract exposing grantee() function returning\n the final grantee. One possibility is the ManagedGrant contract.\n @dev This function does not validate the staking reltionship on\n a particular staking contract. It only checks whether the grantee\n staked at least one time with the given operator. If you are interested\n in a particular token staking contract, you need to perform additional\n check.",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "isManagedGranteeForOperator",
+              "scope": 13541,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "grantee",
+                      "scope": 13490,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13452,
+                        "name": "ElementaryTypeName",
+                        "src": "2717:7:31"
+                      }
+                    ],
+                    "id": 13453,
+                    "name": "VariableDeclaration",
+                    "src": "2717:15:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "operator",
+                      "scope": 13490,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13454,
+                        "name": "ElementaryTypeName",
+                        "src": "2742:7:31"
+                      }
+                    ],
+                    "id": 13455,
+                    "name": "VariableDeclaration",
+                    "src": "2742:16:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "managedGrantContract",
+                      "scope": 13490,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13456,
+                        "name": "ElementaryTypeName",
+                        "src": "2768:7:31"
+                      }
+                    ],
+                    "id": 13457,
+                    "name": "VariableDeclaration",
+                    "src": "2768:28:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "tokenGrant",
+                      "scope": 13490,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "contract TokenGrant",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "contractScope": null,
+                          "name": "TokenGrant",
+                          "referencedDeclaration": 9180,
+                          "type": "contract TokenGrant"
+                        },
+                        "id": 13458,
+                        "name": "UserDefinedTypeName",
+                        "src": "2806:10:31"
+                      }
+                    ],
+                    "id": 13459,
+                    "name": "VariableDeclaration",
+                    "src": "2806:21:31"
+                  }
+                ],
+                "id": 13460,
+                "name": "ParameterList",
+                "src": "2707:126:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 13490,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 13461,
+                        "name": "ElementaryTypeName",
+                        "src": "2857:4:31"
+                      }
+                    ],
+                    "id": 13462,
+                    "name": "VariableDeclaration",
+                    "src": "2857:4:31"
+                  }
+                ],
+                "id": 13463,
+                "name": "ParameterList",
+                "src": "2856:6:31"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bool",
+                                  "typeString": "bool"
+                                },
+                                {
+                                  "typeIdentifier": "t_stringliteral_f4560f1dba4587e0a10393fa1dd46e433c9bdcba3ba707b45d608688f818ab53",
+                                  "typeString": "literal_string \"Not a grantee of the provided contract\""
+                                }
+                              ],
+                              "overloadedDeclarations": [
+                                26000,
+                                26001
+                              ],
+                              "referencedDeclaration": 26001,
+                              "type": "function (bool,string memory) pure",
+                              "value": "require"
+                            },
+                            "id": 13464,
+                            "name": "Identifier",
+                            "src": "2873:7:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "commonType": {
+                                "typeIdentifier": "t_address",
+                                "typeString": "address"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "==",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "arguments": [
+                                    null
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "isStructConstructorCall": false,
+                                  "lValueRequested": false,
+                                  "names": [
+                                    null
+                                  ],
+                                  "type": "address",
+                                  "type_conversion": false
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": [
+                                        null
+                                      ],
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "grantee",
+                                      "referencedDeclaration": 4747,
+                                      "type": "function () view external returns (address)"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": false,
+                                          "isStructConstructorCall": false,
+                                          "lValueRequested": false,
+                                          "names": [
+                                            null
+                                          ],
+                                          "type": "contract ManagedGrant",
+                                          "type_conversion": true
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": [
+                                                {
+                                                  "typeIdentifier": "t_address",
+                                                  "typeString": "address"
+                                                }
+                                              ],
+                                              "overloadedDeclarations": [
+                                                null
+                                              ],
+                                              "referencedDeclaration": 5120,
+                                              "type": "type(contract ManagedGrant)",
+                                              "value": "ManagedGrant"
+                                            },
+                                            "id": 13465,
+                                            "name": "Identifier",
+                                            "src": "2894:12:31"
+                                          },
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "overloadedDeclarations": [
+                                                null
+                                              ],
+                                              "referencedDeclaration": 13457,
+                                              "type": "address",
+                                              "value": "managedGrantContract"
+                                            },
+                                            "id": 13466,
+                                            "name": "Identifier",
+                                            "src": "2907:20:31"
+                                          }
+                                        ],
+                                        "id": 13467,
+                                        "name": "FunctionCall",
+                                        "src": "2894:34:31"
+                                      }
+                                    ],
+                                    "id": 13468,
+                                    "name": "MemberAccess",
+                                    "src": "2894:42:31"
+                                  }
+                                ],
+                                "id": 13469,
+                                "name": "FunctionCall",
+                                "src": "2894:44:31"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13453,
+                                  "type": "address",
+                                  "value": "grantee"
+                                },
+                                "id": 13470,
+                                "name": "Identifier",
+                                "src": "2942:7:31"
+                              }
+                            ],
+                            "id": 13471,
+                            "name": "BinaryOperation",
+                            "src": "2894:55:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "hexvalue": "4e6f742061206772616e746565206f66207468652070726f766964656420636f6e7472616374",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "subdenomination": null,
+                              "token": "string",
+                              "type": "literal_string \"Not a grantee of the provided contract\"",
+                              "value": "Not a grantee of the provided contract"
+                            },
+                            "id": 13472,
+                            "name": "Literal",
+                            "src": "2963:40:31"
+                          }
+                        ],
+                        "id": 13473,
+                        "name": "FunctionCall",
+                        "src": "2873:140:31"
+                      }
+                    ],
+                    "id": 13474,
+                    "name": "ExpressionStatement",
+                    "src": "2873:140:31"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        13478
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "operators",
+                          "scope": 13489,
+                          "stateVariable": false,
+                          "storageLocation": "memory",
+                          "type": "address[]",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "length": null,
+                              "type": "address[]"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "name": "address",
+                                  "type": "address"
+                                },
+                                "id": 13476,
+                                "name": "ElementaryTypeName",
+                                "src": "3024:7:31"
+                              }
+                            ],
+                            "id": 13477,
+                            "name": "ArrayTypeName",
+                            "src": "3024:9:31"
+                          }
+                        ],
+                        "id": 13478,
+                        "name": "VariableDeclaration",
+                        "src": "3024:26:31"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "address[] memory",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "getGranteeOperators",
+                              "referencedDeclaration": 8240,
+                              "type": "function (address) view external returns (address[] memory)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13459,
+                                  "type": "contract TokenGrant",
+                                  "value": "tokenGrant"
+                                },
+                                "id": 13479,
+                                "name": "Identifier",
+                                "src": "3053:10:31"
+                              }
+                            ],
+                            "id": 13480,
+                            "name": "MemberAccess",
+                            "src": "3053:30:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13457,
+                              "type": "address",
+                              "value": "managedGrantContract"
+                            },
+                            "id": 13481,
+                            "name": "Identifier",
+                            "src": "3097:20:31"
+                          }
+                        ],
+                        "id": 13482,
+                        "name": "FunctionCall",
+                        "src": "3053:74:31"
+                      }
+                    ],
+                    "id": 13483,
+                    "name": "VariableDeclarationStatement",
+                    "src": "3024:103:31"
+                  },
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 13463
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "bool",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "contains",
+                              "referencedDeclaration": 23632,
+                              "type": "function (address[] memory,address) pure returns (bool)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13478,
+                                  "type": "address[] memory",
+                                  "value": "operators"
+                                },
+                                "id": 13484,
+                                "name": "Identifier",
+                                "src": "3144:9:31"
+                              }
+                            ],
+                            "id": 13485,
+                            "name": "MemberAccess",
+                            "src": "3144:18:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13455,
+                              "type": "address",
+                              "value": "operator"
+                            },
+                            "id": 13486,
+                            "name": "Identifier",
+                            "src": "3163:8:31"
+                          }
+                        ],
+                        "id": 13487,
+                        "name": "FunctionCall",
+                        "src": "3144:28:31"
+                      }
+                    ],
+                    "id": 13488,
+                    "name": "Return",
+                    "src": "3137:35:31"
+                  }
+                ],
+                "id": 13489,
+                "name": "Block",
+                "src": "2863:316:31"
+              }
+            ],
+            "id": 13490,
+            "name": "FunctionDefinition",
+            "src": "2671:508:31"
+          },
+          {
+            "attributes": {
+              "documentation": "@notice Returns true if grant with the given ID has been created with\n managed grant pointing currently to the grantee passed as a parameter.\n @dev The function does not revert if grant has not been created with\n a managed grantee. This function is not a view because it uses low-level\n call to check if the grant has been created with a managed grant.\n It does not however modify any state.",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "isManagedGranteeForGrant",
+              "scope": 13541,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "grantee",
+                      "scope": 13540,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 13491,
+                        "name": "ElementaryTypeName",
+                        "src": "3663:7:31"
+                      }
+                    ],
+                    "id": 13492,
+                    "name": "VariableDeclaration",
+                    "src": "3663:15:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "grantId",
+                      "scope": 13540,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 13493,
+                        "name": "ElementaryTypeName",
+                        "src": "3688:7:31"
+                      }
+                    ],
+                    "id": 13494,
+                    "name": "VariableDeclaration",
+                    "src": "3688:15:31"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "tokenGrant",
+                      "scope": 13540,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "contract TokenGrant",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "contractScope": null,
+                          "name": "TokenGrant",
+                          "referencedDeclaration": 9180,
+                          "type": "contract TokenGrant"
+                        },
+                        "id": 13495,
+                        "name": "UserDefinedTypeName",
+                        "src": "3713:10:31"
+                      }
+                    ],
+                    "id": 13496,
+                    "name": "VariableDeclaration",
+                    "src": "3713:21:31"
+                  }
+                ],
+                "id": 13497,
+                "name": "ParameterList",
+                "src": "3653:87:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 13540,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 13498,
+                        "name": "ElementaryTypeName",
+                        "src": "3759:4:31"
+                      }
+                    ],
+                    "id": 13499,
+                    "name": "VariableDeclaration",
+                    "src": "3759:4:31"
+                  }
+                ],
+                "id": 13500,
+                "name": "ParameterList",
+                "src": "3758:6:31"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        13502
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "managedGrant",
+                          "scope": 13539,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "address",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "address",
+                              "stateMutability": "nonpayable",
+                              "type": "address"
+                            },
+                            "id": 13501,
+                            "name": "ElementaryTypeName",
+                            "src": "3782:7:31"
+                          }
+                        ],
+                        "id": 13502,
+                        "name": "VariableDeclaration",
+                        "src": "3782:20:31"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple(uint256,uint256,uint256,uint256,uint256,address)",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "getGrant",
+                              "referencedDeclaration": 8174,
+                              "type": "function (uint256) view external returns (uint256,uint256,uint256,uint256,uint256,address)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13496,
+                                  "type": "contract TokenGrant",
+                                  "value": "tokenGrant"
+                                },
+                                "id": 13503,
+                                "name": "Identifier",
+                                "src": "3806:10:31"
+                              }
+                            ],
+                            "id": 13504,
+                            "name": "MemberAccess",
+                            "src": "3806:19:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13494,
+                              "type": "uint256",
+                              "value": "grantId"
+                            },
+                            "id": 13505,
+                            "name": "Identifier",
+                            "src": "3826:7:31"
+                          }
+                        ],
+                        "id": 13506,
+                        "name": "FunctionCall",
+                        "src": "3806:28:31"
+                      }
+                    ],
+                    "id": 13507,
+                    "name": "VariableDeclarationStatement",
+                    "src": "3775:59:31"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        null,
+                        13509
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "result",
+                          "scope": 13539,
+                          "stateVariable": false,
+                          "storageLocation": "memory",
+                          "type": "bytes",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "bytes",
+                              "type": "bytes"
+                            },
+                            "id": 13508,
+                            "name": "ElementaryTypeName",
+                            "src": "3847:5:31"
+                          }
+                        ],
+                        "id": 13509,
+                        "name": "VariableDeclaration",
+                        "src": "3847:19:31"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple(bool,bytes memory)",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bytes_memory_ptr",
+                                  "typeString": "bytes memory"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "call",
+                              "referencedDeclaration": null,
+                              "type": "function (bytes memory) payable returns (bool,bytes memory)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13502,
+                                  "type": "address",
+                                  "value": "managedGrant"
+                                },
+                                "id": 13510,
+                                "name": "Identifier",
+                                "src": "3870:12:31"
+                              }
+                            ],
+                            "id": 13511,
+                            "name": "MemberAccess",
+                            "src": "3870:17:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "bytes memory",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_stringliteral_d5f520765e05e5807d58bc8e28a312f2f3223a294689898d92eba5ea678bb70c",
+                                      "typeString": "literal_string \"grantee()\""
+                                    }
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "member_name": "encodeWithSignature",
+                                  "referencedDeclaration": null,
+                                  "type": "function (string memory) pure returns (bytes memory)"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 25984,
+                                      "type": "abi",
+                                      "value": "abi"
+                                    },
+                                    "id": 13512,
+                                    "name": "Identifier",
+                                    "src": "3901:3:31"
+                                  }
+                                ],
+                                "id": 13513,
+                                "name": "MemberAccess",
+                                "src": "3901:23:31"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "hexvalue": "6772616e7465652829",
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "subdenomination": null,
+                                  "token": "string",
+                                  "type": "literal_string \"grantee()\"",
+                                  "value": "grantee()"
+                                },
+                                "id": 13514,
+                                "name": "Literal",
+                                "src": "3925:11:31"
+                              }
+                            ],
+                            "id": 13515,
+                            "name": "FunctionCall",
+                            "src": "3901:36:31"
+                          }
+                        ],
+                        "id": 13516,
+                        "name": "FunctionCall",
+                        "src": "3870:77:31"
+                      }
+                    ],
+                    "id": 13517,
+                    "name": "VariableDeclarationStatement",
+                    "src": "3844:103:31"
+                  },
+                  {
+                    "attributes": {
+                      "falseBody": null
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "==",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "length",
+                              "referencedDeclaration": null,
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 13509,
+                                  "type": "bytes memory",
+                                  "value": "result"
+                                },
+                                "id": 13518,
+                                "name": "Identifier",
+                                "src": "3961:6:31"
+                              }
+                            ],
+                            "id": 13519,
+                            "name": "MemberAccess",
+                            "src": "3961:13:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "hexvalue": "30",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "subdenomination": null,
+                              "token": "number",
+                              "type": "int_const 0",
+                              "value": "0"
+                            },
+                            "id": 13520,
+                            "name": "Literal",
+                            "src": "3978:1:31"
+                          }
+                        ],
+                        "id": 13521,
+                        "name": "BinaryOperation",
+                        "src": "3961:18:31"
+                      },
+                      {
+                        "children": [
+                          {
+                            "attributes": {
+                              "functionReturnParameters": 13500
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "hexvalue": "66616c7365",
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "subdenomination": null,
+                                  "token": "bool",
+                                  "type": "bool",
+                                  "value": "false"
+                                },
+                                "id": 13522,
+                                "name": "Literal",
+                                "src": "4002:5:31"
+                              }
+                            ],
+                            "id": 13523,
+                            "name": "Return",
+                            "src": "3995:12:31"
+                          }
+                        ],
+                        "id": 13524,
+                        "name": "Block",
+                        "src": "3981:37:31"
+                      }
+                    ],
+                    "id": 13525,
+                    "name": "IfStatement",
+                    "src": "3957:61:31"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        13527
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "managedGrantee",
+                          "scope": 13539,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "address",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "address",
+                              "stateMutability": "nonpayable",
+                              "type": "address"
+                            },
+                            "id": 13526,
+                            "name": "ElementaryTypeName",
+                            "src": "4027:7:31"
+                          }
+                        ],
+                        "id": 13527,
+                        "name": "VariableDeclaration",
+                        "src": "4027:22:31"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "address payable",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_bytes_memory_ptr",
+                                  "typeString": "bytes memory"
+                                },
+                                {
+                                  "typeIdentifier": "t_type$_t_address_$",
+                                  "typeString": "type(address)"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "member_name": "decode",
+                              "referencedDeclaration": null,
+                              "type": "function () pure"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 25984,
+                                  "type": "abi",
+                                  "value": "abi"
+                                },
+                                "id": 13528,
+                                "name": "Identifier",
+                                "src": "4052:3:31"
+                              }
+                            ],
+                            "id": 13529,
+                            "name": "MemberAccess",
+                            "src": "4052:10:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13509,
+                              "type": "bytes memory",
+                              "value": "result"
+                            },
+                            "id": 13530,
+                            "name": "Identifier",
+                            "src": "4063:6:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isInlineArray": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "type": "type(address)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "type": "type(address)",
+                                  "value": "address"
+                                },
+                                "id": 13531,
+                                "name": "ElementaryTypeNameExpression",
+                                "src": "4072:7:31"
+                              }
+                            ],
+                            "id": 13532,
+                            "name": "TupleExpression",
+                            "src": "4071:9:31"
+                          }
+                        ],
+                        "id": 13533,
+                        "name": "FunctionCall",
+                        "src": "4052:29:31"
+                      }
+                    ],
+                    "id": 13534,
+                    "name": "VariableDeclarationStatement",
+                    "src": "4027:54:31"
+                  },
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 13500
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          },
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "==",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13492,
+                              "type": "address",
+                              "value": "grantee"
+                            },
+                            "id": 13535,
+                            "name": "Identifier",
+                            "src": "4098:7:31"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13527,
+                              "type": "address",
+                              "value": "managedGrantee"
+                            },
+                            "id": 13536,
+                            "name": "Identifier",
+                            "src": "4109:14:31"
+                          }
+                        ],
+                        "id": 13537,
+                        "name": "BinaryOperation",
+                        "src": "4098:25:31"
+                      }
+                    ],
+                    "id": 13538,
+                    "name": "Return",
+                    "src": "4091:32:31"
+                  }
+                ],
+                "id": 13539,
+                "name": "Block",
+                "src": "3765:365:31"
+              }
+            ],
+            "id": 13540,
+            "name": "FunctionDefinition",
+            "src": "3620:510:31"
+          }
+        ],
+        "id": 13541,
+        "name": "ContractDefinition",
+        "src": "259:3873:31"
+      }
+    ],
+    "id": 13542,
+    "name": "SourceUnit",
+    "src": "0:4132:31"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:02.065Z",
+  "devdoc": {
+    "methods": {},
+    "title": "Roles Lookup"
+  },
+  "userdoc": {
+    "methods": {},
+    "notice": "Library facilitating lookup of roles in stake delegation setup."
+  }
+}

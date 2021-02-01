@@ -10,11 +10,14 @@ const OldTokenStaking = artifacts.require("../stubs/OldTokenStaking.sol");
 
 module.exports = async function(deployer, network) {
     const keepRandomBeaconService = await KeepRandomBeaconService.deployed();
+
     const keepRandomBeaconServiceImplV1 = await KeepRandomBeaconServiceImplV1.at(keepRandomBeaconService.address);
     const keepRandomBeaconOperator = await KeepRandomBeaconOperator.deployed();
+
+
     const keepRegistry = await KeepRegistry.deployed();
     const tokenStaking = await TokenStaking.deployed();
-    const oldTokenStaking = await OldTokenStaking.deployed();
+    // const oldTokenStaking = await OldTokenStaking.deployed();
     const tokenStakingEscrow = await TokenStakingEscrow.deployed();
     const tokenGrant = await TokenGrant.deployed();
     const gasPriceOracle = await GasPriceOracle.deployed();
@@ -26,9 +29,9 @@ module.exports = async function(deployer, network) {
     await tokenStakingEscrow.transferOwnership(tokenStaking.address);
 
     await tokenGrant.authorizeStakingContract(tokenStaking.address);
-    if(network === "local") {
-        await tokenGrant.authorizeStakingContract(oldTokenStaking.address);
-    }
+    // if(network === "local") {
+    //     await tokenGrant.authorizeStakingContract(oldTokenStaking.address);
+    // }
 
     await keepRegistry.approveOperatorContract(keepRandomBeaconOperator.address);
 

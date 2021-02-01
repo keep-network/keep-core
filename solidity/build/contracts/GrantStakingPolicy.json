@@ -1,0 +1,592 @@
+{
+  "contractName": "GrantStakingPolicy",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_now",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "grantedAmount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "duration",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "start",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "cliff",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "withdrawn",
+          "type": "uint256"
+        }
+      ],
+      "name": "getStakeableAmount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{},\"title\":\"GrantStakingPolicy\"},\"userdoc\":{\"methods\":{},\"notice\":\"A staking policy defines the function `getStakeableAmount` which calculates how many tokens may be staked from a token grant.\"}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":\"GrantStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]}},\"version\":1}",
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity 0.5.17;\n\n/// @title GrantStakingPolicy\n/// @notice A staking policy defines the function `getStakeableAmount`\n/// which calculates how many tokens may be staked from a token grant.\ncontract GrantStakingPolicy {\n    function getStakeableAmount(\n        uint256 _now,\n        uint256 grantedAmount,\n        uint256 duration,\n        uint256 start,\n        uint256 cliff,\n        uint256 withdrawn) public view returns (uint256);\n}\n",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+    "exportedSymbols": {
+      "GrantStakingPolicy": [
+        1238
+      ]
+    },
+    "id": 1239,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 1220,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:6"
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": "@title GrantStakingPolicy\n @notice A staking policy defines the function `getStakeableAmount`\n which calculates how many tokens may be staked from a token grant.",
+        "fullyImplemented": false,
+        "id": 1238,
+        "linearizedBaseContracts": [
+          1238
+        ],
+        "name": "GrantStakingPolicy",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "body": null,
+            "documentation": null,
+            "id": 1237,
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getStakeableAmount",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 1233,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1222,
+                  "name": "_now",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "268:12:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1221,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "268:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1224,
+                  "name": "grantedAmount",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "290:21:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1223,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "290:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1226,
+                  "name": "duration",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "321:16:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1225,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "321:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1228,
+                  "name": "start",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "347:13:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1227,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "347:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1230,
+                  "name": "cliff",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "370:13:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1229,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "370:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 1232,
+                  "name": "withdrawn",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "393:17:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1231,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "393:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "258:153:6"
+            },
+            "returnParameters": {
+              "id": 1236,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 1235,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 1237,
+                  "src": "433:7:6",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 1234,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "433:7:6",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "432:9:6"
+            },
+            "scope": 1238,
+            "src": "231:211:6",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 1239,
+        "src": "197:247:6"
+      }
+    ],
+    "src": "0:445:6"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+      "exportedSymbols": {
+        "GrantStakingPolicy": [
+          1238
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 1220,
+        "name": "PragmaDirective",
+        "src": "0:23:6"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": "@title GrantStakingPolicy\n @notice A staking policy defines the function `getStakeableAmount`\n which calculates how many tokens may be staked from a token grant.",
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            1238
+          ],
+          "name": "GrantStakingPolicy",
+          "scope": 1239
+        },
+        "children": [
+          {
+            "attributes": {
+              "body": null,
+              "documentation": null,
+              "implemented": false,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "getStakeableAmount",
+              "scope": 1238,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "_now",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1221,
+                        "name": "ElementaryTypeName",
+                        "src": "268:7:6"
+                      }
+                    ],
+                    "id": 1222,
+                    "name": "VariableDeclaration",
+                    "src": "268:12:6"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "grantedAmount",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1223,
+                        "name": "ElementaryTypeName",
+                        "src": "290:7:6"
+                      }
+                    ],
+                    "id": 1224,
+                    "name": "VariableDeclaration",
+                    "src": "290:21:6"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "duration",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1225,
+                        "name": "ElementaryTypeName",
+                        "src": "321:7:6"
+                      }
+                    ],
+                    "id": 1226,
+                    "name": "VariableDeclaration",
+                    "src": "321:16:6"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "start",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1227,
+                        "name": "ElementaryTypeName",
+                        "src": "347:7:6"
+                      }
+                    ],
+                    "id": 1228,
+                    "name": "VariableDeclaration",
+                    "src": "347:13:6"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "cliff",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1229,
+                        "name": "ElementaryTypeName",
+                        "src": "370:7:6"
+                      }
+                    ],
+                    "id": 1230,
+                    "name": "VariableDeclaration",
+                    "src": "370:13:6"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "withdrawn",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1231,
+                        "name": "ElementaryTypeName",
+                        "src": "393:7:6"
+                      }
+                    ],
+                    "id": 1232,
+                    "name": "VariableDeclaration",
+                    "src": "393:17:6"
+                  }
+                ],
+                "id": 1233,
+                "name": "ParameterList",
+                "src": "258:153:6"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 1237,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1234,
+                        "name": "ElementaryTypeName",
+                        "src": "433:7:6"
+                      }
+                    ],
+                    "id": 1235,
+                    "name": "VariableDeclaration",
+                    "src": "433:7:6"
+                  }
+                ],
+                "id": 1236,
+                "name": "ParameterList",
+                "src": "432:9:6"
+              }
+            ],
+            "id": 1237,
+            "name": "FunctionDefinition",
+            "src": "231:211:6"
+          }
+        ],
+        "id": 1238,
+        "name": "ContractDefinition",
+        "src": "197:247:6"
+      }
+    ],
+    "id": 1239,
+    "name": "SourceUnit",
+    "src": "0:445:6"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:01.824Z",
+  "devdoc": {
+    "methods": {},
+    "title": "GrantStakingPolicy"
+  },
+  "userdoc": {
+    "methods": {},
+    "notice": "A staking policy defines the function `getStakeableAmount` which calculates how many tokens may be staked from a token grant."
+  }
+}

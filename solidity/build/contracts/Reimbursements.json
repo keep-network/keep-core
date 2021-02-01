@@ -1,0 +1,3612 @@
+{
+  "contractName": "Reimbursements",
+  "abi": [],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{\"reimburseCallback(TokenStaking,uint256,uint256,uint256,uint256,bytes)\":{\"params\":{\"callbackFee\":\"Fee paid for the callback by the requestor\",\"callbackSurplusRecipientData\":\"Data containing surplus recipient address\",\"gasLimit\":\"Gas limit set for the callback\",\"gasPriceCeiling\":\"Gas price ceiling in wei\",\"gasSpent\":\"Gas spent by the submitter on the callback\",\"stakingContract\":\"Staking contract to get the address of the beneficiary\"}}}},\"userdoc\":{\"methods\":{\"reimburseCallback(TokenStaking,uint256,uint256,uint256,uint256,bytes)\":{\"notice\":\"Reimburses callback execution cost and surplus based on actual gas usage to the submitter's beneficiary address and if necessary to the callback requestor (surplus recipient).\"}}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/libraries/operator/Reimbursements.sol\":\"Reimbursements\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/Authorizations.sol\":{\"keccak256\":\"0xd49b3840507c924cc37ac2da48bf1549013a79d84daf2cb106b4d4b9c6096e7a\",\"urls\":[\"bzz-raw://2b740d974564d027f9df04253f71ce2314839a682beac926b778e0f7ea59fbb5\",\"dweb:/ipfs/QmamRuiYLpt2fCUPrQypkvrf7BrCsdV12QgaSHQYPsJHT2\"]},\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/home/bless/keep-core/solidity/contracts/KeepRegistry.sol\":{\"keccak256\":\"0x723cf0ade28c4158935e6c22f1da1ee98252ad1bc1cac30fe8fa462fe36ea886\",\"urls\":[\"bzz-raw://6244a0370c42ae7bac430e646694d64b80397e02209ae9ec1e01776e6b5a49fc\",\"dweb:/ipfs/QmcygjqGFv81ZpyKTUwdMRt1VdnM9H6pGUuKAP5YLmL5U8\"]},\"/home/bless/keep-core/solidity/contracts/KeepToken.sol\":{\"keccak256\":\"0x50defd2a00e356ed8eaf9aba405719f567c2da0164db5cdeadd68d155f6ded3b\",\"urls\":[\"bzz-raw://dbc8fb24f311c2dc95a26b1a1dfc9c7d93c634d32ef623fc23f799da5988fafb\",\"dweb:/ipfs/QmShZ3FtP2WUC9r1rbka8BWSf6oFkBbuxgxiDqhpwxo6zZ\"]},\"/home/bless/keep-core/solidity/contracts/ManagedGrant.sol\":{\"keccak256\":\"0x47f1cccc9f9c095b34ca514ae25cc467bbced15251b06f39896e0237e7fdec7c\",\"urls\":[\"bzz-raw://cad43bec15804ff17bd40fdee3598676f716b60204da9be163f15f45135ad250\",\"dweb:/ipfs/QmYHYEfR2UPZJZpsDhN2o1iD7drVSz8oqbYQFVT4G2oKqr\"]},\"/home/bless/keep-core/solidity/contracts/StakeDelegatable.sol\":{\"keccak256\":\"0xa1d81d17bc9f6bcc5878fb9b8acfdf7797c1561bf35111bac6bdbc3bba2c62aa\",\"urls\":[\"bzz-raw://deca3e5444cd9a5546818854009f9ac8c8e58479609de1a128ca73863f10ae7a\",\"dweb:/ipfs/QmcWYJkcHxsmCEhxRz6W5gSBgH597VYZgEaog9pzoLyZtt\"]},\"/home/bless/keep-core/solidity/contracts/TokenGrant.sol\":{\"keccak256\":\"0xad97f1a667f3be66dc6904fb7925e940ca57e4c88d38ae960672d95d7911bf6f\",\"urls\":[\"bzz-raw://f3f6b377ddcc2ad2b47811f115c20bdf6a6a208066afaebe027ac4eb165ca231\",\"dweb:/ipfs/QmXNSkqCDoBS1KGQbQ3PqXr1iMPgkPNWLcEKiBrV8u5LeW\"]},\"/home/bless/keep-core/solidity/contracts/TokenGrantStake.sol\":{\"keccak256\":\"0x014bbb7f336388024480415391cad745ec52cd255cd2740c890948246ab4d524\",\"urls\":[\"bzz-raw://745d488e7271fe9c71879c09fd09eb96b2193346adfddbb59638b80610707be3\",\"dweb:/ipfs/QmR3DyUzhTjE971QovXxMchRkUD3eHUj5S73Eahrf2Wyw8\"]},\"/home/bless/keep-core/solidity/contracts/TokenSender.sol\":{\"keccak256\":\"0xe50a3a7d2f30e8801d8b608c462f65c868e17ff8b2f0db3448876adf0f288117\",\"urls\":[\"bzz-raw://f040546b183d26a9e26adfc01a6425eb6bce1cec1ab5b142aa360c8096ede385\",\"dweb:/ipfs/QmdRa8huRUmsTTvwnWPBF7V2gTQAGsGn3VFUeBfbisBszw\"]},\"/home/bless/keep-core/solidity/contracts/TokenStaking.sol\":{\"keccak256\":\"0x957a8b500117fd8c74466e9c2cfd13e295e5cd66107bda1e5fdea1871248d0e8\",\"urls\":[\"bzz-raw://c6cca24bbf724e77009cb683d1715b8ffb1faa7ad2089156d6fc8d600a397fd4\",\"dweb:/ipfs/QmeVnKTgFhfVSfEgCcoFD86MfGUB9FTD8cbi5SxX2Vmy67\"]},\"/home/bless/keep-core/solidity/contracts/TokenStakingEscrow.sol\":{\"keccak256\":\"0x152a565d564bee09ea3f0f363c912fe3361966bf8d60f14ebcb8bf593d3b140e\",\"urls\":[\"bzz-raw://78ffe4daadcfeacc49c45c4e9879f62c2df3bdd00587b033492ee901537976f1\",\"dweb:/ipfs/QmPwmSu4XF7KpHnC6bqBTkrkjA6CUnC8h5PML9DqkAzLW8\"]},\"/home/bless/keep-core/solidity/contracts/libraries/RolesLookup.sol\":{\"keccak256\":\"0x4622ccfb359f6478d3e87fb99f755dcebde1b5040662f3572ab8c8d50d2f8bc0\",\"urls\":[\"bzz-raw://cee3570c755b0a30412af08ce4663f85078b10a0eccf6808bec125897c7ead8e\",\"dweb:/ipfs/Qmc9EAjLfBYXfhtd24uNFzu1XKrPaqS5ismF4ZGsPyiBuU\"]},\"/home/bless/keep-core/solidity/contracts/libraries/grant/UnlockingSchedule.sol\":{\"keccak256\":\"0x26f8fe158e3f661bc54fc42a50a1686ef92dd18316a03592bafa2db6a2af9c3f\",\"urls\":[\"bzz-raw://718b4a48d7a50c151328cd15e91e9b9b4cba0db7f7b6b06533709614f9811a55\",\"dweb:/ipfs/QmYyTN6cLZiWumwE6jt2yDHNtc6DMCXaEntgKAN3zqp8yX\"]},\"/home/bless/keep-core/solidity/contracts/libraries/operator/Reimbursements.sol\":{\"keccak256\":\"0xc5ff37a0e306ad51511f2ab3ec9af9e6a6aa5fbe981257b319ca1c7019ceb612\",\"urls\":[\"bzz-raw://119f7de7d7cbe0273c74e872e43b3cb300e4dc2a4100cde6d6ba1c944fe8c969\",\"dweb:/ipfs/QmZEzz1oUvCH82GqNMcgxq2wUdAKQv9UsK1GpiVq1be7fN\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/GrantStaking.sol\":{\"keccak256\":\"0x96253ba2eb78b83a04dd48f0a7ff6083ca72d6e4a27dec0888959c1b3b0be9aa\",\"urls\":[\"bzz-raw://a2ad3ddeba9de2f24b1c1c0339baf52a0b0446248ddfc0554d8fb71ce2057c0f\",\"dweb:/ipfs/QmdYxpcxm8TG7i3qYswudhxvff8hnARSR1GsVcY2fjUpzh\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/LockUtils.sol\":{\"keccak256\":\"0x0fbd9a4d82cf8803f00cb59cca9580d379c8d98a759b8a6d74f75f01c19fc635\",\"urls\":[\"bzz-raw://f2df931f0a11d4f63aa1f6193419606711a24ce7381dd15db52419c783dc7952\",\"dweb:/ipfs/QmRMGWSbfYPaxppBb7w2cQHpAwDc4T9MBmpZqU396i8hKK\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/Locks.sol\":{\"keccak256\":\"0xf45306074f9e893646c21e53954891e29c8011887545d8bbbcab7ef74558b18a\",\"urls\":[\"bzz-raw://971d3c54afde9050e455e79ec42b28d86a101bec8afab30e22b1fa4bfc110cc4\",\"dweb:/ipfs/QmfGTvrbc8dJXaxsxAmZM6oU8AvP5V6C2PQ5JF3gCJC81m\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":{\"keccak256\":\"0x31a399a918eba21f0002019a70b1b68c9610a5a4977fcd874b86d4965eb974c3\",\"urls\":[\"bzz-raw://acbe55a89d5e6f7b6d4add0764e7b47acbdc31afc0d5b1f211b45546d3a5cd6c\",\"dweb:/ipfs/QmcXSUaLV7d117ZvyMnRB3MVXVEGy62ccB5u6d8h1Sm792\"]},\"/home/bless/keep-core/solidity/contracts/libraries/staking/TopUps.sol\":{\"keccak256\":\"0xe3a3c8d5e542f4f8ac8fdab92de57081257e1c07288e0e592cfc27551085e07f\",\"urls\":[\"bzz-raw://4cffa006da7f76868bcca1d107be436f3cd83339ff76df79c3e92a029e7ad66a\",\"dweb:/ipfs/QmZ5AArQ3gKBeXqGwGnSH45BQZQpGvjuQ4LnNaarrLrdy5\"]},\"/home/bless/keep-core/solidity/contracts/utils/AddressArrayUtils.sol\":{\"keccak256\":\"0xfb546b43ffd00d565d8440b6d221f5f046222e95469e33044665a56e79fcde48\",\"urls\":[\"bzz-raw://1f947ef8956e26d564cffd73a4f0dcdb02db1d7a46774d4e8876328116f6b663\",\"dweb:/ipfs/QmYUpg3JhhkogsY5nnjyMg6TEwoqRzTkJAWdhQGSbYqMH3\"]},\"/home/bless/keep-core/solidity/contracts/utils/BytesLib.sol\":{\"keccak256\":\"0xf5c726e1c77dea37b9ea1edd9bc7b4eebfafe33ce766a2607eb37d7144e4d68c\",\"urls\":[\"bzz-raw://32f61bad1923d749aff36ad9f62929e603ed27832348ba58d44d01561339d761\",\"dweb:/ipfs/QmWvfwapwUr9SnnEWXdmpo4r2TtVPFJFSUBXKJQpLZkYp1\"]},\"/home/bless/keep-core/solidity/contracts/utils/OperatorParams.sol\":{\"keccak256\":\"0xc13cbf7a6ad4740a8ad6373229b20b66eb4cc3d7aa9870161765ab8197513ab7\",\"urls\":[\"bzz-raw://e8343bc058fcee610863777792a25608549d80e126a05d076481dedb48587565\",\"dweb:/ipfs/QmR8ztc4StcK4yw7QmXj2b9TtS3Qs1BERrqDLtPZmUiffS\"]},\"/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol\":{\"keccak256\":\"0x696b15997a739e6c47c5bc29e1f9023998bb188405221a6b337377bca4ab3f68\",\"urls\":[\"bzz-raw://e93e2287fe6b6e1c5cc45ebc92b9d682e19a5b1302e00cb037391da753282bbf\",\"dweb:/ipfs/QmRXmEopRWNaL7mvY5nTyNNob3EPHF67R6Nxhm3F4VsDoo\"]},\"openzeppelin-solidity/contracts/GSN/Context.sol\":{\"keccak256\":\"0x90a3995645af7562d84b9d69363ffa5ae7217714ab61e951bf7bc450f40e4061\",\"urls\":[\"bzz-raw://216ef9d6b614db4eb46970b4e84903f2534a45572dd30a79f0041f1a5830f436\",\"dweb:/ipfs/QmNPrJ4MWKUAWzKXpUqeyKRUfosaoANZAqXgvepdrCwZAG\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]},\"openzeppelin-solidity/contracts/ownership/Ownable.sol\":{\"keccak256\":\"0xecd8ab29d9a5771c3964d0cd1788c4a5098a0081b20fb275da850a22b1c59806\",\"urls\":[\"bzz-raw://696a75bc2c55407ce8251ccc7d19ecb1b7b2be1796a160a6524312babcc7e3d4\",\"dweb:/ipfs/QmQViKEp3y99h9uhRssE29TmjBKRnFMaoz3eJZ4eggggg2\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0x65a4078c03875c25413a068ce9cfdd7e68a90f8786612d1189c89341e6e3b802\",\"urls\":[\"bzz-raw://45c0d95495b944fbb1aa09d900b0ab530903a432125ab8fddfa05064a7988991\",\"dweb:/ipfs/Qma2VeknkKA1THeubGzshWFk44BktXkXP1UKp9Un2uDSsu\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Burnable.sol\":{\"keccak256\":\"0x9b94356691f3cbf90a5d83ae3fdf6a5a662bb004d2bd8b034160d60221807e64\",\"urls\":[\"bzz-raw://14a9d33db455302b8bb9fdb28998efefbe5a1cb41b29e31391609f646b2ab351\",\"dweb:/ipfs/Qmd4wFr6GEMZnnxgXeq3gmp7cs8tqDuHp3TVNhCbjnux2V\"]},\"openzeppelin-solidity/contracts/token/ERC20/ERC20Detailed.sol\":{\"keccak256\":\"0x4a3a810b7ebe742e897e1fd428b3eeed2196d3acea58eaf9c566ed10d545d2ed\",\"urls\":[\"bzz-raw://28d03f328e19e4099d5013de0649afaeaabac1a614e130767ab1cb4aca9775b6\",\"dweb:/ipfs/Qmb9iW7yNuYehB2NfhRMs9TakqbLVQhBhmGMkaDZ5g1Eb4\"]},\"openzeppelin-solidity/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0xe5bb0f57cff3e299f360052ba50f1ea0fff046df2be070b6943e0e3c3fdad8a9\",\"urls\":[\"bzz-raw://59fd025151435da35faa8093a5c7a17de02de9d08ad27275c5cdf05050820d91\",\"dweb:/ipfs/QmQMvwEcPhoRXzbXyrdoeRtvLoifUW9Qh7Luho7bmUPRkc\"]},\"openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol\":{\"keccak256\":\"0x6f2c9955d65c522b80f4b8792f076512d2df947d2112cbc4d98a4781ed42ede2\",\"urls\":[\"bzz-raw://7d8ec81683520c06baeef3f7e06cd82bd6fd5fa611f26857f475f6c829540aff\",\"dweb:/ipfs/QmTDkFzKnrpiV1UKnSoiZAHPuguWzokrr4pFbSPvyaSo56\"]},\"openzeppelin-solidity/contracts/utils/Address.sol\":{\"keccak256\":\"0x70df50e240407aa50915ad14f61b1a901fa335b37de20955b99ed647be756af0\",\"urls\":[\"bzz-raw://9404711f3206610c08ea97fa52c7b6b4d2e9d536e96fc4b7210aa7e24f796c36\",\"dweb:/ipfs/QmZDzpVzjoap13SuPEq5pVCrmdjoKVZnTsQPLKXAbynTTW\"]}},\"version\":1}",
+  "bytecode": "0x610673610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100355760003560e01c806346a500891461003a575b600080fd5b81801561004657600080fd5b50610148600480360360c081101561005d57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001906401000000008111156100c257600080fd5b8201836020820111156100d457600080fd5b803590602001918460018302840111640100000000831117156100f657600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f82011690508083019250505050505050919291929050505061014a565b005b600085905060003a11801561015e5750853a105b15610167573a90505b60008585106101765785610178565b845b9050600061018f83836103d990919063ffffffff16565b905060008973ffffffffffffffffffffffffffffffffffffffff1663ba7bffd3336040518263ffffffff1660e01b8152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060206040518083038186803b15801561021057600080fd5b505afa158015610224573d6000803e3d6000fd5b505050506040513d602081101561023a57600080fd5b810190808051906020019092919050505090508582101561036657600061026a838861045f90919063ffffffff16565b90508173ffffffffffffffffffffffffffffffffffffffff168360405180600001905060006040518083038185875af1925050503d80600081146102ca576040519150601f19603f3d011682016040523d82523d6000602084013e6102cf565b606091505b5050506020865114156103605760006102f2600c886104a990919063ffffffff16565b90508073ffffffffffffffffffffffffffffffffffffffff16611f4083604051806000019050600060405180830381858888f193505050503d8060008114610356576040519150601f19603f3d011682016040523d82523d6000602084013e61035b565b606091505b505050505b506103cd565b8073ffffffffffffffffffffffffffffffffffffffff168660405180600001905060006040518083038185875af1925050503d80600081146103c4576040519150601f19603f3d011682016040523d82523d6000602084013e6103c9565b606091505b5050505b50505050505050505050565b6000808314156103ec5760009050610459565b60008284029050828482816103fd57fe5b0414610454576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602181526020018061061e6021913960400191505060405180910390fd5b809150505b92915050565b60006104a183836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f77000081525061053c565b905092915050565b60008060148301905082811180156104c2575080845110155b610517576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260218152602001806105fd6021913960400191505060405180910390fd5b60006c0100000000000000000000000084602087010151049050809250505092915050565b60008383111582906105e9576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825283818151815260200191508051906020019080838360005b838110156105ae578082015181840152602081019050610593565b50505050905090810190601f1680156105db5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b506000838503905080915050939250505056fe4164647265737320636f6e76657273696f6e206f7574206f6620626f756e64732e536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a265627a7a72315820b6e4a9e9776837c35865eaa750db8f68d732a939d921c4772ec8cc1d8241869a64736f6c63430005110032",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600436106100355760003560e01c806346a500891461003a575b600080fd5b81801561004657600080fd5b50610148600480360360c081101561005d57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001906401000000008111156100c257600080fd5b8201836020820111156100d457600080fd5b803590602001918460018302840111640100000000831117156100f657600080fd5b91908080601f016020809104026020016040519081016040528093929190818152602001838380828437600081840152601f19601f82011690508083019250505050505050919291929050505061014a565b005b600085905060003a11801561015e5750853a105b15610167573a90505b60008585106101765785610178565b845b9050600061018f83836103d990919063ffffffff16565b905060008973ffffffffffffffffffffffffffffffffffffffff1663ba7bffd3336040518263ffffffff1660e01b8152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060206040518083038186803b15801561021057600080fd5b505afa158015610224573d6000803e3d6000fd5b505050506040513d602081101561023a57600080fd5b810190808051906020019092919050505090508582101561036657600061026a838861045f90919063ffffffff16565b90508173ffffffffffffffffffffffffffffffffffffffff168360405180600001905060006040518083038185875af1925050503d80600081146102ca576040519150601f19603f3d011682016040523d82523d6000602084013e6102cf565b606091505b5050506020865114156103605760006102f2600c886104a990919063ffffffff16565b90508073ffffffffffffffffffffffffffffffffffffffff16611f4083604051806000019050600060405180830381858888f193505050503d8060008114610356576040519150601f19603f3d011682016040523d82523d6000602084013e61035b565b606091505b505050505b506103cd565b8073ffffffffffffffffffffffffffffffffffffffff168660405180600001905060006040518083038185875af1925050503d80600081146103c4576040519150601f19603f3d011682016040523d82523d6000602084013e6103c9565b606091505b5050505b50505050505050505050565b6000808314156103ec5760009050610459565b60008284029050828482816103fd57fe5b0414610454576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602181526020018061061e6021913960400191505060405180910390fd5b809150505b92915050565b60006104a183836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f77000081525061053c565b905092915050565b60008060148301905082811180156104c2575080845110155b610517576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825260218152602001806105fd6021913960400191505060405180910390fd5b60006c0100000000000000000000000084602087010151049050809250505092915050565b60008383111582906105e9576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825283818151815260200191508051906020019080838360005b838110156105ae578082015181840152602081019050610593565b50505050905090810190601f1680156105db5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b506000838503905080915050939250505056fe4164647265737320636f6e76657273696f6e206f7574206f6620626f756e64732e536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a265627a7a72315820b6e4a9e9776837c35865eaa750db8f68d732a939d921c4772ec8cc1d8241869a64736f6c63430005110032",
+  "sourceMap": "154:2853:37:-;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
+  "deployedSourceMap": "154:2853:37:-;;;;;;;;;;;;;;;;;;;;;;;;874:2131;;8:9:-1;5:2;;;30:1;27;20:12;5:2;874:2131:37;;;;;;13:3:-1;8;5:12;2:2;;;30:1;27;20:12;2:2;874:2131:37;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;21:11:-1;8;5:28;2:2;;;46:1;43;36:12;2:2;874:2131:37;;35:9:-1;28:4;12:14;8:25;5:40;2:2;;;58:1;55;48:12;2:2;874:2131:37;;;;;;100:9:-1;95:1;81:12;77:20;67:8;63:35;60:50;39:11;25:12;22:29;11:107;8:2;;;131:1;128;121:12;8:2;874:2131:37;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;30:3:-1;22:6;14;1:33;99:1;93:3;85:6;81:16;74:27;137:4;133:9;126:4;121:3;117:14;113:30;106:37;;169:3;161:6;157:16;147:26;;874:2131:37;;;;;;;;;;;;;;;:::i;:::-;;;1127:16;1146:15;1127:34;;1358:1;1344:11;:15;:48;;;;;1377:15;1363:11;:29;1344:48;1340:101;;;1419:11;1408:22;;1340:101;1823:25;1862:8;1851;:19;:41;;1884:8;1851:41;;;1873:8;1851:41;1823:69;;1902:25;1930:31;1952:8;1930:17;:21;;:31;;;;:::i;:::-;1902:59;;2004:27;2034:15;:29;;;2064:10;2034:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;2034:41:37;;;;8:9:-1;5:2;;;45:16;42:1;39;24:38;77:16;74:1;67:27;5:2;2034:41:37;;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;2034:41:37;;;;;;;;;;;;;;;;2004:71;;2260:11;2240:17;:31;2236:763;;;2287:23;2313:34;2329:17;2313:11;:15;;:34;;;;:::i;:::-;2287:60;;2427:11;:16;;2450:17;2427:45;;;;;;;;;;;;;;;;;;;;;;;14:1:-1;21;16:31;;;;75:4;69:11;64:16;;144:4;140:9;133:4;115:16;111:27;107:43;104:1;100:51;94:4;87:65;169:16;166:1;159:27;225:16;222:1;215:4;212:1;208:12;193:49;7:242;;16:31;36:4;31:9;;7:242;;2427:45:37;;2653:2;2614:28;:35;:41;2610:225;;;2675:24;2702:42;2741:2;2702:28;:38;;:42;;;;:::i;:::-;2675:69;;2762:16;:21;;2788:4;2800:15;2762:58;;;;;;;;;;;;;;;;;;;;;;;;14:1:-1;21;16:31;;;;75:4;69:11;64:16;;144:4;140:9;133:4;115:16;111:27;107:43;104:1;100:51;94:4;87:65;169:16;166:1;159:27;225:16;222:1;215:4;212:1;208:12;193:49;7:242;;16:31;36:4;31:9;;7:242;;2762:58:37;;2610:225;;2236:763;;;;2949:11;:16;;2972:11;2949:39;;;;;;;;;;;;;;;;;;;;;;;14:1:-1;21;16:31;;;;75:4;69:11;64:16;;144:4;140:9;133:4;115:16;111:27;107:43;104:1;100:51;94:4;87:65;169:16;166:1;159:27;225:16;222:1;215:4;212:1;208:12;193:49;7:242;;16:31;36:4;31:9;;7:242;;2949:39:37;;2236:763;874:2131;;;;;;;;;;:::o;2159:459:88:-;2217:7;2463:1;2458;:6;2454:45;;;2487:1;2480:8;;;;2454:45;2509:9;2525:1;2521;:5;2509:17;;2553:1;2548;2544;:5;;;;;;:10;2536:56;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2610:1;2603:8;;;2159:459;;;;;:::o;1274:134::-;1332:7;1358:43;1362:1;1365;1358:43;;;;;;;;;;;;;;;;;:3;:43::i;:::-;1351:50;;1274:134;;;;:::o;11349:422:79:-;11426:7;11445:14;11471:2;11462:6;:11;11445:28;;11503:6;11491:9;:18;:48;;;;;11530:9;11513:6;:13;:26;;11491:48;11483:94;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;11587:19;11698:27;11688:6;11681:4;11673:6;11669:17;11665:30;11659:37;11655:71;11640:86;;11753:11;11746:18;;;;11349:422;;;;:::o;1732:187:88:-;1818:7;1850:1;1845;:6;;1853:12;1837:29;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;1837:29:88;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1876:9;1892:1;1888;:5;1876:17;;1911:1;1904:8;;;1732:187;;;;;:::o",
+  "source": "pragma solidity 0.5.17;\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\nimport \"../../utils/BytesLib.sol\";\nimport \"../../TokenStaking.sol\";\n\nlibrary Reimbursements {\n    using SafeMath for uint256;\n    using BytesLib for bytes;\n\n    /// @notice Reimburses callback execution cost and surplus based on actual gas\n    /// usage to the submitter's beneficiary address and if necessary to the\n    /// callback requestor (surplus recipient).\n    /// @param stakingContract Staking contract to get the address of the beneficiary\n    /// @param gasPriceCeiling Gas price ceiling in wei\n    /// @param gasLimit Gas limit set for the callback\n    /// @param gasSpent Gas spent by the submitter on the callback\n    /// @param callbackFee Fee paid for the callback by the requestor\n    /// @param callbackSurplusRecipientData Data containing surplus recipient address\n    function reimburseCallback(\n        TokenStaking stakingContract,\n        uint256 gasPriceCeiling,\n        uint256 gasLimit,\n        uint256 gasSpent,\n        uint256 callbackFee,\n        bytes memory callbackSurplusRecipientData\n    ) public {\n        uint256 gasPrice = gasPriceCeiling;\n        // We need to check if tx.gasprice is non-zero as a workaround to a bug\n        // in go-ethereum:\n        // https://github.com/ethereum/go-ethereum/pull/20189\n        if (tx.gasprice > 0 && tx.gasprice < gasPriceCeiling) {\n            gasPrice = tx.gasprice;\n        }\n\n        // Obtain the actual callback gas expenditure and refund the surplus.\n        //\n        // In case of heavily underpriced transactions, EVM may wrap the call\n        // with additional opcodes. In this case gasSpent > gasLimit.\n        // The worst scenario cost is included in entry verification fee.\n        // If this happens we return just the gasLimit here.\n        uint256 actualCallbackGas = gasSpent < gasLimit ? gasSpent : gasLimit;\n        uint256 actualCallbackFee = actualCallbackGas.mul(gasPrice);\n\n        // Get the beneficiary.\n        address payable beneficiary = stakingContract.beneficiaryOf(msg.sender);\n\n        // If we spent less on the callback than the customer transferred for the\n        // callback execution, we need to reimburse the difference.\n        if (actualCallbackFee < callbackFee) {\n            uint256 callbackSurplus = callbackFee.sub(actualCallbackFee);\n            // Reimburse submitter with his actual callback cost.\n            beneficiary.call.value(actualCallbackFee)(\"\");\n\n            // Return callback surplus to the requestor.\n            // Expecting 32 bytes data containing 20 byte address\n            if (callbackSurplusRecipientData.length == 32) {\n                address surplusRecipient = callbackSurplusRecipientData.toAddress(12);\n                surplusRecipient.call.gas(8000).value(callbackSurplus)(\"\");\n            }\n        } else {\n            // Reimburse submitter with the callback payment sent by the requestor.\n            beneficiary.call.value(callbackFee)(\"\");\n        }\n    }\n}\n",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/libraries/operator/Reimbursements.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/operator/Reimbursements.sol",
+    "exportedSymbols": {
+      "Reimbursements": [
+        16090
+      ]
+    },
+    "id": 16091,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 15961,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:37"
+      },
+      {
+        "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+        "id": 15962,
+        "nodeType": "ImportDirective",
+        "scope": 16091,
+        "sourceUnit": 24976,
+        "src": "25:59:37",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/BytesLib.sol",
+        "file": "../../utils/BytesLib.sol",
+        "id": 15963,
+        "nodeType": "ImportDirective",
+        "scope": 16091,
+        "sourceUnit": 23937,
+        "src": "85:34:37",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/TokenStaking.sol",
+        "file": "../../TokenStaking.sol",
+        "id": 15964,
+        "nodeType": "ImportDirective",
+        "scope": 16091,
+        "sourceUnit": 10914,
+        "src": "120:32:37",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "library",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 16090,
+        "linearizedBaseContracts": [
+          16090
+        ],
+        "name": "Reimbursements",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 15967,
+            "libraryName": {
+              "contractScope": null,
+              "id": 15965,
+              "name": "SafeMath",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 24975,
+              "src": "189:8:37",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_SafeMath_$24975",
+                "typeString": "library SafeMath"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "183:27:37",
+            "typeName": {
+              "id": 15966,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "202:7:37",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            }
+          },
+          {
+            "id": 15970,
+            "libraryName": {
+              "contractScope": null,
+              "id": 15968,
+              "name": "BytesLib",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 23936,
+              "src": "221:8:37",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_BytesLib_$23936",
+                "typeString": "library BytesLib"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "215:25:37",
+            "typeName": {
+              "id": 15969,
+              "name": "bytes",
+              "nodeType": "ElementaryTypeName",
+              "src": "234:5:37",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes_storage_ptr",
+                "typeString": "bytes"
+              }
+            }
+          },
+          {
+            "body": {
+              "id": 16088,
+              "nodeType": "Block",
+              "src": "1117:1888:37",
+              "statements": [
+                {
+                  "assignments": [
+                    15986
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 15986,
+                      "name": "gasPrice",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 16088,
+                      "src": "1127:16:37",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 15985,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1127:7:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 15988,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "id": 15987,
+                    "name": "gasPriceCeiling",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 15974,
+                    "src": "1146:15:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1127:34:37"
+                },
+                {
+                  "condition": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    },
+                    "id": 15997,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "commonType": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "id": 15992,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 15989,
+                          "name": "tx",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 26009,
+                          "src": "1344:2:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_transaction",
+                            "typeString": "tx"
+                          }
+                        },
+                        "id": 15990,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "gasprice",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "1344:11:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": ">",
+                      "rightExpression": {
+                        "argumentTypes": null,
+                        "hexValue": "30",
+                        "id": 15991,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1358:1:37",
+                        "subdenomination": null,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      },
+                      "src": "1344:15:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "&&",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "commonType": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "id": 15996,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 15993,
+                          "name": "tx",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 26009,
+                          "src": "1363:2:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_transaction",
+                            "typeString": "tx"
+                          }
+                        },
+                        "id": 15994,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "gasprice",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "1363:11:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": "<",
+                      "rightExpression": {
+                        "argumentTypes": null,
+                        "id": 15995,
+                        "name": "gasPriceCeiling",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 15974,
+                        "src": "1377:15:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "src": "1363:29:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "src": "1344:48:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": null,
+                  "id": 16004,
+                  "nodeType": "IfStatement",
+                  "src": "1340:101:37",
+                  "trueBody": {
+                    "id": 16003,
+                    "nodeType": "Block",
+                    "src": "1394:47:37",
+                    "statements": [
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 16001,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "argumentTypes": null,
+                            "id": 15998,
+                            "name": "gasPrice",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 15986,
+                            "src": "1408:8:37",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "argumentTypes": null,
+                            "expression": {
+                              "argumentTypes": null,
+                              "id": 15999,
+                              "name": "tx",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 26009,
+                              "src": "1419:2:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_magic_transaction",
+                                "typeString": "tx"
+                              }
+                            },
+                            "id": 16000,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "gasprice",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": null,
+                            "src": "1419:11:37",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          },
+                          "src": "1408:22:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "id": 16002,
+                        "nodeType": "ExpressionStatement",
+                        "src": "1408:22:37"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "assignments": [
+                    16006
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 16006,
+                      "name": "actualCallbackGas",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 16088,
+                      "src": "1823:25:37",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 16005,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1823:7:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 16013,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "condition": {
+                      "argumentTypes": null,
+                      "commonType": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "id": 16009,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "leftExpression": {
+                        "argumentTypes": null,
+                        "id": 16007,
+                        "name": "gasSpent",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 15978,
+                        "src": "1851:8:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "nodeType": "BinaryOperation",
+                      "operator": "<",
+                      "rightExpression": {
+                        "argumentTypes": null,
+                        "id": 16008,
+                        "name": "gasLimit",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 15976,
+                        "src": "1862:8:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "src": "1851:19:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bool",
+                        "typeString": "bool"
+                      }
+                    },
+                    "falseExpression": {
+                      "argumentTypes": null,
+                      "id": 16011,
+                      "name": "gasLimit",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 15976,
+                      "src": "1884:8:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 16012,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "Conditional",
+                    "src": "1851:41:37",
+                    "trueExpression": {
+                      "argumentTypes": null,
+                      "id": 16010,
+                      "name": "gasSpent",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 15978,
+                      "src": "1873:8:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1823:69:37"
+                },
+                {
+                  "assignments": [
+                    16015
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 16015,
+                      "name": "actualCallbackFee",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 16088,
+                      "src": "1902:25:37",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 16014,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "1902:7:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 16020,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 16018,
+                        "name": "gasPrice",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 15986,
+                        "src": "1952:8:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16016,
+                        "name": "actualCallbackGas",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 16006,
+                        "src": "1930:17:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "id": 16017,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "mul",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 24892,
+                      "src": "1930:21:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
+                        "typeString": "function (uint256,uint256) pure returns (uint256)"
+                      }
+                    },
+                    "id": 16019,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1930:31:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1902:59:37"
+                },
+                {
+                  "assignments": [
+                    16022
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 16022,
+                      "name": "beneficiary",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 16088,
+                      "src": "2004:27:37",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address_payable",
+                        "typeString": "address payable"
+                      },
+                      "typeName": {
+                        "id": 16021,
+                        "name": "address",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "2004:15:37",
+                        "stateMutability": "payable",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 16028,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 16025,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 25997,
+                          "src": "2064:3:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 16026,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "2064:10:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address_payable",
+                          "typeString": "address payable"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 16023,
+                        "name": "stakingContract",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 15972,
+                        "src": "2034:15:37",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_TokenStaking_$10913",
+                          "typeString": "contract TokenStaking"
+                        }
+                      },
+                      "id": 16024,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "beneficiaryOf",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 7353,
+                      "src": "2034:29:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$_t_address_$returns$_t_address_payable_$",
+                        "typeString": "function (address) view external returns (address payable)"
+                      }
+                    },
+                    "id": 16027,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2034:41:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address_payable",
+                      "typeString": "address payable"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "2004:71:37"
+                },
+                {
+                  "condition": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 16031,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "id": 16029,
+                      "name": "actualCallbackFee",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 16015,
+                      "src": "2240:17:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "id": 16030,
+                      "name": "callbackFee",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 15980,
+                      "src": "2260:11:37",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "2240:31:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "falseBody": {
+                    "id": 16086,
+                    "nodeType": "Block",
+                    "src": "2851:148:37",
+                    "statements": [
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "arguments": [
+                            {
+                              "argumentTypes": null,
+                              "hexValue": "",
+                              "id": 16083,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "kind": "string",
+                              "lValueRequested": false,
+                              "nodeType": "Literal",
+                              "src": "2985:2:37",
+                              "subdenomination": null,
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "typeString": "literal_string \"\""
+                              },
+                              "value": ""
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "typeString": "literal_string \"\""
+                              }
+                            ],
+                            "arguments": [
+                              {
+                                "argumentTypes": null,
+                                "id": 16081,
+                                "name": "callbackFee",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 15980,
+                                "src": "2972:11:37",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "expression": {
+                                "argumentTypes": null,
+                                "expression": {
+                                  "argumentTypes": null,
+                                  "id": 16076,
+                                  "name": "beneficiary",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 16022,
+                                  "src": "2949:11:37",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_address_payable",
+                                    "typeString": "address payable"
+                                  }
+                                },
+                                "id": 16079,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "call",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": null,
+                                "src": "2949:16:37",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$",
+                                  "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                                }
+                              },
+                              "id": 16080,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "memberName": "value",
+                              "nodeType": "MemberAccess",
+                              "referencedDeclaration": null,
+                              "src": "2949:22:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_function_setvalue_pure$_t_uint256_$returns$_t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$value_$",
+                                "typeString": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                              }
+                            },
+                            "id": 16082,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "functionCall",
+                            "lValueRequested": false,
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "2949:35:37",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$value",
+                              "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                            }
+                          },
+                          "id": 16084,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2949:39:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$_t_bool_$_t_bytes_memory_ptr_$",
+                            "typeString": "tuple(bool,bytes memory)"
+                          }
+                        },
+                        "id": 16085,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2949:39:37"
+                      }
+                    ]
+                  },
+                  "id": 16087,
+                  "nodeType": "IfStatement",
+                  "src": "2236:763:37",
+                  "trueBody": {
+                    "id": 16075,
+                    "nodeType": "Block",
+                    "src": "2273:572:37",
+                    "statements": [
+                      {
+                        "assignments": [
+                          16033
+                        ],
+                        "declarations": [
+                          {
+                            "constant": false,
+                            "id": 16033,
+                            "name": "callbackSurplus",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 16075,
+                            "src": "2287:23:37",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            },
+                            "typeName": {
+                              "id": 16032,
+                              "name": "uint256",
+                              "nodeType": "ElementaryTypeName",
+                              "src": "2287:7:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "value": null,
+                            "visibility": "internal"
+                          }
+                        ],
+                        "id": 16038,
+                        "initialValue": {
+                          "argumentTypes": null,
+                          "arguments": [
+                            {
+                              "argumentTypes": null,
+                              "id": 16036,
+                              "name": "actualCallbackFee",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 16015,
+                              "src": "2329:17:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": null,
+                              "id": 16034,
+                              "name": "callbackFee",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 15980,
+                              "src": "2313:11:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "id": 16035,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "sub",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 24831,
+                            "src": "2313:15:37",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$_t_uint256_$_t_uint256_$returns$_t_uint256_$bound_to$_t_uint256_$",
+                              "typeString": "function (uint256,uint256) pure returns (uint256)"
+                            }
+                          },
+                          "id": 16037,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2313:34:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "nodeType": "VariableDeclarationStatement",
+                        "src": "2287:60:37"
+                      },
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "arguments": [
+                            {
+                              "argumentTypes": null,
+                              "hexValue": "",
+                              "id": 16046,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "kind": "string",
+                              "lValueRequested": false,
+                              "nodeType": "Literal",
+                              "src": "2469:2:37",
+                              "subdenomination": null,
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "typeString": "literal_string \"\""
+                              },
+                              "value": ""
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                "typeString": "literal_string \"\""
+                              }
+                            ],
+                            "arguments": [
+                              {
+                                "argumentTypes": null,
+                                "id": 16044,
+                                "name": "actualCallbackFee",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 16015,
+                                "src": "2450:17:37",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "expression": {
+                                "argumentTypes": null,
+                                "expression": {
+                                  "argumentTypes": null,
+                                  "id": 16039,
+                                  "name": "beneficiary",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 16022,
+                                  "src": "2427:11:37",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_address_payable",
+                                    "typeString": "address payable"
+                                  }
+                                },
+                                "id": 16042,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "call",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": null,
+                                "src": "2427:16:37",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$",
+                                  "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                                }
+                              },
+                              "id": 16043,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "memberName": "value",
+                              "nodeType": "MemberAccess",
+                              "referencedDeclaration": null,
+                              "src": "2427:22:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_function_setvalue_pure$_t_uint256_$returns$_t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$value_$",
+                                "typeString": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                              }
+                            },
+                            "id": 16045,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "functionCall",
+                            "lValueRequested": false,
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "2427:41:37",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$value",
+                              "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                            }
+                          },
+                          "id": 16047,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2427:45:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$_t_bool_$_t_bytes_memory_ptr_$",
+                            "typeString": "tuple(bool,bytes memory)"
+                          }
+                        },
+                        "id": 16048,
+                        "nodeType": "ExpressionStatement",
+                        "src": "2427:45:37"
+                      },
+                      {
+                        "condition": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          "id": 16052,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftExpression": {
+                            "argumentTypes": null,
+                            "expression": {
+                              "argumentTypes": null,
+                              "id": 16049,
+                              "name": "callbackSurplusRecipientData",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 15982,
+                              "src": "2614:28:37",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bytes_memory_ptr",
+                                "typeString": "bytes memory"
+                              }
+                            },
+                            "id": 16050,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "length",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": null,
+                            "src": "2614:35:37",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          },
+                          "nodeType": "BinaryOperation",
+                          "operator": "==",
+                          "rightExpression": {
+                            "argumentTypes": null,
+                            "hexValue": "3332",
+                            "id": 16051,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "number",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "2653:2:37",
+                            "subdenomination": null,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_rational_32_by_1",
+                              "typeString": "int_const 32"
+                            },
+                            "value": "32"
+                          },
+                          "src": "2614:41:37",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        },
+                        "falseBody": null,
+                        "id": 16074,
+                        "nodeType": "IfStatement",
+                        "src": "2610:225:37",
+                        "trueBody": {
+                          "id": 16073,
+                          "nodeType": "Block",
+                          "src": "2657:178:37",
+                          "statements": [
+                            {
+                              "assignments": [
+                                16054
+                              ],
+                              "declarations": [
+                                {
+                                  "constant": false,
+                                  "id": 16054,
+                                  "name": "surplusRecipient",
+                                  "nodeType": "VariableDeclaration",
+                                  "scope": 16073,
+                                  "src": "2675:24:37",
+                                  "stateVariable": false,
+                                  "storageLocation": "default",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_address",
+                                    "typeString": "address"
+                                  },
+                                  "typeName": {
+                                    "id": 16053,
+                                    "name": "address",
+                                    "nodeType": "ElementaryTypeName",
+                                    "src": "2675:7:37",
+                                    "stateMutability": "nonpayable",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_address",
+                                      "typeString": "address"
+                                    }
+                                  },
+                                  "value": null,
+                                  "visibility": "internal"
+                                }
+                              ],
+                              "id": 16059,
+                              "initialValue": {
+                                "argumentTypes": null,
+                                "arguments": [
+                                  {
+                                    "argumentTypes": null,
+                                    "hexValue": "3132",
+                                    "id": 16057,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": true,
+                                    "kind": "number",
+                                    "lValueRequested": false,
+                                    "nodeType": "Literal",
+                                    "src": "2741:2:37",
+                                    "subdenomination": null,
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_rational_12_by_1",
+                                      "typeString": "int_const 12"
+                                    },
+                                    "value": "12"
+                                  }
+                                ],
+                                "expression": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_rational_12_by_1",
+                                      "typeString": "int_const 12"
+                                    }
+                                  ],
+                                  "expression": {
+                                    "argumentTypes": null,
+                                    "id": 16055,
+                                    "name": "callbackSurplusRecipientData",
+                                    "nodeType": "Identifier",
+                                    "overloadedDeclarations": [],
+                                    "referencedDeclaration": 15982,
+                                    "src": "2702:28:37",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_bytes_memory_ptr",
+                                      "typeString": "bytes memory"
+                                    }
+                                  },
+                                  "id": 16056,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "memberName": "toAddress",
+                                  "nodeType": "MemberAccess",
+                                  "referencedDeclaration": 23792,
+                                  "src": "2702:38:37",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_function_internal_pure$_t_bytes_memory_ptr_$_t_uint256_$returns$_t_address_$bound_to$_t_bytes_memory_ptr_$",
+                                    "typeString": "function (bytes memory,uint256) pure returns (address)"
+                                  }
+                                },
+                                "id": 16058,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": false,
+                                "kind": "functionCall",
+                                "lValueRequested": false,
+                                "names": [],
+                                "nodeType": "FunctionCall",
+                                "src": "2702:42:37",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              },
+                              "nodeType": "VariableDeclarationStatement",
+                              "src": "2675:69:37"
+                            },
+                            {
+                              "expression": {
+                                "argumentTypes": null,
+                                "arguments": [
+                                  {
+                                    "argumentTypes": null,
+                                    "hexValue": "",
+                                    "id": 16070,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": true,
+                                    "kind": "string",
+                                    "lValueRequested": false,
+                                    "nodeType": "Literal",
+                                    "src": "2817:2:37",
+                                    "subdenomination": null,
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                      "typeString": "literal_string \"\""
+                                    },
+                                    "value": ""
+                                  }
+                                ],
+                                "expression": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                      "typeString": "literal_string \"\""
+                                    }
+                                  ],
+                                  "arguments": [
+                                    {
+                                      "argumentTypes": null,
+                                      "id": 16068,
+                                      "name": "callbackSurplus",
+                                      "nodeType": "Identifier",
+                                      "overloadedDeclarations": [],
+                                      "referencedDeclaration": 16033,
+                                      "src": "2800:15:37",
+                                      "typeDescriptions": {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                      }
+                                    }
+                                  ],
+                                  "expression": {
+                                    "argumentTypes": [
+                                      {
+                                        "typeIdentifier": "t_uint256",
+                                        "typeString": "uint256"
+                                      }
+                                    ],
+                                    "expression": {
+                                      "argumentTypes": null,
+                                      "arguments": [
+                                        {
+                                          "argumentTypes": null,
+                                          "hexValue": "38303030",
+                                          "id": 16065,
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": true,
+                                          "kind": "number",
+                                          "lValueRequested": false,
+                                          "nodeType": "Literal",
+                                          "src": "2788:4:37",
+                                          "subdenomination": null,
+                                          "typeDescriptions": {
+                                            "typeIdentifier": "t_rational_8000_by_1",
+                                            "typeString": "int_const 8000"
+                                          },
+                                          "value": "8000"
+                                        }
+                                      ],
+                                      "expression": {
+                                        "argumentTypes": [
+                                          {
+                                            "typeIdentifier": "t_rational_8000_by_1",
+                                            "typeString": "int_const 8000"
+                                          }
+                                        ],
+                                        "expression": {
+                                          "argumentTypes": null,
+                                          "expression": {
+                                            "argumentTypes": null,
+                                            "id": 16060,
+                                            "name": "surplusRecipient",
+                                            "nodeType": "Identifier",
+                                            "overloadedDeclarations": [],
+                                            "referencedDeclaration": 16054,
+                                            "src": "2762:16:37",
+                                            "typeDescriptions": {
+                                              "typeIdentifier": "t_address",
+                                              "typeString": "address"
+                                            }
+                                          },
+                                          "id": 16063,
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": false,
+                                          "lValueRequested": false,
+                                          "memberName": "call",
+                                          "nodeType": "MemberAccess",
+                                          "referencedDeclaration": null,
+                                          "src": "2762:21:37",
+                                          "typeDescriptions": {
+                                            "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$",
+                                            "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                                          }
+                                        },
+                                        "id": 16064,
+                                        "isConstant": false,
+                                        "isLValue": false,
+                                        "isPure": false,
+                                        "lValueRequested": false,
+                                        "memberName": "gas",
+                                        "nodeType": "MemberAccess",
+                                        "referencedDeclaration": null,
+                                        "src": "2762:25:37",
+                                        "typeDescriptions": {
+                                          "typeIdentifier": "t_function_setgas_pure$_t_uint256_$returns$_t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$gas_$",
+                                          "typeString": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                                        }
+                                      },
+                                      "id": 16066,
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "kind": "functionCall",
+                                      "lValueRequested": false,
+                                      "names": [],
+                                      "nodeType": "FunctionCall",
+                                      "src": "2762:31:37",
+                                      "typeDescriptions": {
+                                        "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$gas",
+                                        "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                                      }
+                                    },
+                                    "id": 16067,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "lValueRequested": false,
+                                    "memberName": "value",
+                                    "nodeType": "MemberAccess",
+                                    "referencedDeclaration": null,
+                                    "src": "2762:37:37",
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_function_setvalue_pure$_t_uint256_$returns$_t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$gasvalue_$gas",
+                                      "typeString": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                                    }
+                                  },
+                                  "id": 16069,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "kind": "functionCall",
+                                  "lValueRequested": false,
+                                  "names": [],
+                                  "nodeType": "FunctionCall",
+                                  "src": "2762:54:37",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_function_barecall_payable$_t_bytes_memory_ptr_$returns$_t_bool_$_t_bytes_memory_ptr_$gasvalue",
+                                    "typeString": "function (bytes memory) payable returns (bool,bytes memory)"
+                                  }
+                                },
+                                "id": 16071,
+                                "isConstant": false,
+                                "isLValue": false,
+                                "isPure": false,
+                                "kind": "functionCall",
+                                "lValueRequested": false,
+                                "names": [],
+                                "nodeType": "FunctionCall",
+                                "src": "2762:58:37",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_tuple$_t_bool_$_t_bytes_memory_ptr_$",
+                                  "typeString": "tuple(bool,bytes memory)"
+                                }
+                              },
+                              "id": 16072,
+                              "nodeType": "ExpressionStatement",
+                              "src": "2762:58:37"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "documentation": "@notice Reimburses callback execution cost and surplus based on actual gas\n usage to the submitter's beneficiary address and if necessary to the\n callback requestor (surplus recipient).\n @param stakingContract Staking contract to get the address of the beneficiary\n @param gasPriceCeiling Gas price ceiling in wei\n @param gasLimit Gas limit set for the callback\n @param gasSpent Gas spent by the submitter on the callback\n @param callbackFee Fee paid for the callback by the requestor\n @param callbackSurplusRecipientData Data containing surplus recipient address",
+            "id": 16089,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "reimburseCallback",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 15983,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 15972,
+                  "name": "stakingContract",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 16089,
+                  "src": "910:28:37",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_contract$_TokenStaking_$10913",
+                    "typeString": "contract TokenStaking"
+                  },
+                  "typeName": {
+                    "contractScope": null,
+                    "id": 15971,
+                    "name": "TokenStaking",
+                    "nodeType": "UserDefinedTypeName",
+                    "referencedDeclaration": 10913,
+                    "src": "910:12:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_contract$_TokenStaking_$10913",
+                      "typeString": "contract TokenStaking"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 15974,
+                  "name": "gasPriceCeiling",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 16089,
+                  "src": "948:23:37",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 15973,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "948:7:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 15976,
+                  "name": "gasLimit",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 16089,
+                  "src": "981:16:37",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 15975,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "981:7:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 15978,
+                  "name": "gasSpent",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 16089,
+                  "src": "1007:16:37",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 15977,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1007:7:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 15980,
+                  "name": "callbackFee",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 16089,
+                  "src": "1033:19:37",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 15979,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1033:7:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 15982,
+                  "name": "callbackSurplusRecipientData",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 16089,
+                  "src": "1062:41:37",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 15981,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1062:5:37",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "900:209:37"
+            },
+            "returnParameters": {
+              "id": 15984,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1117:0:37"
+            },
+            "scope": 16090,
+            "src": "874:2131:37",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 16091,
+        "src": "154:2853:37"
+      }
+    ],
+    "src": "0:3008:37"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/operator/Reimbursements.sol",
+      "exportedSymbols": {
+        "Reimbursements": [
+          16090
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 15961,
+        "name": "PragmaDirective",
+        "src": "0:23:37"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 24976,
+          "absolutePath": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+          "file": "openzeppelin-solidity/contracts/math/SafeMath.sol",
+          "scope": 16091,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 15962,
+        "name": "ImportDirective",
+        "src": "25:59:37"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 23937,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/BytesLib.sol",
+          "file": "../../utils/BytesLib.sol",
+          "scope": 16091,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 15963,
+        "name": "ImportDirective",
+        "src": "85:34:37"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 10914,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/TokenStaking.sol",
+          "file": "../../TokenStaking.sol",
+          "scope": 16091,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 15964,
+        "name": "ImportDirective",
+        "src": "120:32:37"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "library",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            16090
+          ],
+          "name": "Reimbursements",
+          "scope": 16091
+        },
+        "children": [
+          {
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "SafeMath",
+                  "referencedDeclaration": 24975,
+                  "type": "library SafeMath"
+                },
+                "id": 15965,
+                "name": "UserDefinedTypeName",
+                "src": "189:8:37"
+              },
+              {
+                "attributes": {
+                  "name": "uint256",
+                  "type": "uint256"
+                },
+                "id": 15966,
+                "name": "ElementaryTypeName",
+                "src": "202:7:37"
+              }
+            ],
+            "id": 15967,
+            "name": "UsingForDirective",
+            "src": "183:27:37"
+          },
+          {
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "BytesLib",
+                  "referencedDeclaration": 23936,
+                  "type": "library BytesLib"
+                },
+                "id": 15968,
+                "name": "UserDefinedTypeName",
+                "src": "221:8:37"
+              },
+              {
+                "attributes": {
+                  "name": "bytes",
+                  "type": "bytes"
+                },
+                "id": 15969,
+                "name": "ElementaryTypeName",
+                "src": "234:5:37"
+              }
+            ],
+            "id": 15970,
+            "name": "UsingForDirective",
+            "src": "215:25:37"
+          },
+          {
+            "attributes": {
+              "documentation": "@notice Reimburses callback execution cost and surplus based on actual gas\n usage to the submitter's beneficiary address and if necessary to the\n callback requestor (surplus recipient).\n @param stakingContract Staking contract to get the address of the beneficiary\n @param gasPriceCeiling Gas price ceiling in wei\n @param gasLimit Gas limit set for the callback\n @param gasSpent Gas spent by the submitter on the callback\n @param callbackFee Fee paid for the callback by the requestor\n @param callbackSurplusRecipientData Data containing surplus recipient address",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "reimburseCallback",
+              "scope": 16090,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "stakingContract",
+                      "scope": 16089,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "contract TokenStaking",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "contractScope": null,
+                          "name": "TokenStaking",
+                          "referencedDeclaration": 10913,
+                          "type": "contract TokenStaking"
+                        },
+                        "id": 15971,
+                        "name": "UserDefinedTypeName",
+                        "src": "910:12:37"
+                      }
+                    ],
+                    "id": 15972,
+                    "name": "VariableDeclaration",
+                    "src": "910:28:37"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "gasPriceCeiling",
+                      "scope": 16089,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 15973,
+                        "name": "ElementaryTypeName",
+                        "src": "948:7:37"
+                      }
+                    ],
+                    "id": 15974,
+                    "name": "VariableDeclaration",
+                    "src": "948:23:37"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "gasLimit",
+                      "scope": 16089,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 15975,
+                        "name": "ElementaryTypeName",
+                        "src": "981:7:37"
+                      }
+                    ],
+                    "id": 15976,
+                    "name": "VariableDeclaration",
+                    "src": "981:16:37"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "gasSpent",
+                      "scope": 16089,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 15977,
+                        "name": "ElementaryTypeName",
+                        "src": "1007:7:37"
+                      }
+                    ],
+                    "id": 15978,
+                    "name": "VariableDeclaration",
+                    "src": "1007:16:37"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "callbackFee",
+                      "scope": 16089,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 15979,
+                        "name": "ElementaryTypeName",
+                        "src": "1033:7:37"
+                      }
+                    ],
+                    "id": 15980,
+                    "name": "VariableDeclaration",
+                    "src": "1033:19:37"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "callbackSurplusRecipientData",
+                      "scope": 16089,
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "type": "bytes",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bytes",
+                          "type": "bytes"
+                        },
+                        "id": 15981,
+                        "name": "ElementaryTypeName",
+                        "src": "1062:5:37"
+                      }
+                    ],
+                    "id": 15982,
+                    "name": "VariableDeclaration",
+                    "src": "1062:41:37"
+                  }
+                ],
+                "id": 15983,
+                "name": "ParameterList",
+                "src": "900:209:37"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 15984,
+                "name": "ParameterList",
+                "src": "1117:0:37"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        15986
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "gasPrice",
+                          "scope": 16088,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "uint256",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "uint256",
+                              "type": "uint256"
+                            },
+                            "id": 15985,
+                            "name": "ElementaryTypeName",
+                            "src": "1127:7:37"
+                          }
+                        ],
+                        "id": 15986,
+                        "name": "VariableDeclaration",
+                        "src": "1127:16:37"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "overloadedDeclarations": [
+                            null
+                          ],
+                          "referencedDeclaration": 15974,
+                          "type": "uint256",
+                          "value": "gasPriceCeiling"
+                        },
+                        "id": 15987,
+                        "name": "Identifier",
+                        "src": "1146:15:37"
+                      }
+                    ],
+                    "id": 15988,
+                    "name": "VariableDeclarationStatement",
+                    "src": "1127:34:37"
+                  },
+                  {
+                    "attributes": {
+                      "falseBody": null
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          },
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "&&",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "commonType": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": ">",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "gasprice",
+                                  "referencedDeclaration": null,
+                                  "type": "uint256"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 26009,
+                                      "type": "tx",
+                                      "value": "tx"
+                                    },
+                                    "id": 15989,
+                                    "name": "Identifier",
+                                    "src": "1344:2:37"
+                                  }
+                                ],
+                                "id": 15990,
+                                "name": "MemberAccess",
+                                "src": "1344:11:37"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "hexvalue": "30",
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "subdenomination": null,
+                                  "token": "number",
+                                  "type": "int_const 0",
+                                  "value": "0"
+                                },
+                                "id": 15991,
+                                "name": "Literal",
+                                "src": "1358:1:37"
+                              }
+                            ],
+                            "id": 15992,
+                            "name": "BinaryOperation",
+                            "src": "1344:15:37"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "commonType": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "<",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "gasprice",
+                                  "referencedDeclaration": null,
+                                  "type": "uint256"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 26009,
+                                      "type": "tx",
+                                      "value": "tx"
+                                    },
+                                    "id": 15993,
+                                    "name": "Identifier",
+                                    "src": "1363:2:37"
+                                  }
+                                ],
+                                "id": 15994,
+                                "name": "MemberAccess",
+                                "src": "1363:11:37"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 15974,
+                                  "type": "uint256",
+                                  "value": "gasPriceCeiling"
+                                },
+                                "id": 15995,
+                                "name": "Identifier",
+                                "src": "1377:15:37"
+                              }
+                            ],
+                            "id": 15996,
+                            "name": "BinaryOperation",
+                            "src": "1363:29:37"
+                          }
+                        ],
+                        "id": 15997,
+                        "name": "BinaryOperation",
+                        "src": "1344:48:37"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "operator": "=",
+                                  "type": "uint256"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 15986,
+                                      "type": "uint256",
+                                      "value": "gasPrice"
+                                    },
+                                    "id": 15998,
+                                    "name": "Identifier",
+                                    "src": "1408:8:37"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "gasprice",
+                                      "referencedDeclaration": null,
+                                      "type": "uint256"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 26009,
+                                          "type": "tx",
+                                          "value": "tx"
+                                        },
+                                        "id": 15999,
+                                        "name": "Identifier",
+                                        "src": "1419:2:37"
+                                      }
+                                    ],
+                                    "id": 16000,
+                                    "name": "MemberAccess",
+                                    "src": "1419:11:37"
+                                  }
+                                ],
+                                "id": 16001,
+                                "name": "Assignment",
+                                "src": "1408:22:37"
+                              }
+                            ],
+                            "id": 16002,
+                            "name": "ExpressionStatement",
+                            "src": "1408:22:37"
+                          }
+                        ],
+                        "id": 16003,
+                        "name": "Block",
+                        "src": "1394:47:37"
+                      }
+                    ],
+                    "id": 16004,
+                    "name": "IfStatement",
+                    "src": "1340:101:37"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        16006
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "actualCallbackGas",
+                          "scope": 16088,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "uint256",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "uint256",
+                              "type": "uint256"
+                            },
+                            "id": 16005,
+                            "name": "ElementaryTypeName",
+                            "src": "1823:7:37"
+                          }
+                        ],
+                        "id": 16006,
+                        "name": "VariableDeclaration",
+                        "src": "1823:25:37"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "commonType": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              },
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "<",
+                              "type": "bool"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 15978,
+                                  "type": "uint256",
+                                  "value": "gasSpent"
+                                },
+                                "id": 16007,
+                                "name": "Identifier",
+                                "src": "1851:8:37"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 15976,
+                                  "type": "uint256",
+                                  "value": "gasLimit"
+                                },
+                                "id": 16008,
+                                "name": "Identifier",
+                                "src": "1862:8:37"
+                              }
+                            ],
+                            "id": 16009,
+                            "name": "BinaryOperation",
+                            "src": "1851:19:37"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 15978,
+                              "type": "uint256",
+                              "value": "gasSpent"
+                            },
+                            "id": 16010,
+                            "name": "Identifier",
+                            "src": "1873:8:37"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 15976,
+                              "type": "uint256",
+                              "value": "gasLimit"
+                            },
+                            "id": 16011,
+                            "name": "Identifier",
+                            "src": "1884:8:37"
+                          }
+                        ],
+                        "id": 16012,
+                        "name": "Conditional",
+                        "src": "1851:41:37"
+                      }
+                    ],
+                    "id": 16013,
+                    "name": "VariableDeclarationStatement",
+                    "src": "1823:69:37"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        16015
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "actualCallbackFee",
+                          "scope": 16088,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "uint256",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "uint256",
+                              "type": "uint256"
+                            },
+                            "id": 16014,
+                            "name": "ElementaryTypeName",
+                            "src": "1902:7:37"
+                          }
+                        ],
+                        "id": 16015,
+                        "name": "VariableDeclaration",
+                        "src": "1902:25:37"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "uint256",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "mul",
+                              "referencedDeclaration": 24892,
+                              "type": "function (uint256,uint256) pure returns (uint256)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 16006,
+                                  "type": "uint256",
+                                  "value": "actualCallbackGas"
+                                },
+                                "id": 16016,
+                                "name": "Identifier",
+                                "src": "1930:17:37"
+                              }
+                            ],
+                            "id": 16017,
+                            "name": "MemberAccess",
+                            "src": "1930:21:37"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 15986,
+                              "type": "uint256",
+                              "value": "gasPrice"
+                            },
+                            "id": 16018,
+                            "name": "Identifier",
+                            "src": "1952:8:37"
+                          }
+                        ],
+                        "id": 16019,
+                        "name": "FunctionCall",
+                        "src": "1930:31:37"
+                      }
+                    ],
+                    "id": 16020,
+                    "name": "VariableDeclarationStatement",
+                    "src": "1902:59:37"
+                  },
+                  {
+                    "attributes": {
+                      "assignments": [
+                        16022
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "beneficiary",
+                          "scope": 16088,
+                          "stateVariable": false,
+                          "storageLocation": "default",
+                          "type": "address payable",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "address",
+                              "stateMutability": "payable",
+                              "type": "address payable"
+                            },
+                            "id": 16021,
+                            "name": "ElementaryTypeName",
+                            "src": "2004:15:37"
+                          }
+                        ],
+                        "id": 16022,
+                        "name": "VariableDeclaration",
+                        "src": "2004:27:37"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "address payable",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address_payable",
+                                  "typeString": "address payable"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "beneficiaryOf",
+                              "referencedDeclaration": 7353,
+                              "type": "function (address) view external returns (address payable)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 15972,
+                                  "type": "contract TokenStaking",
+                                  "value": "stakingContract"
+                                },
+                                "id": 16023,
+                                "name": "Identifier",
+                                "src": "2034:15:37"
+                              }
+                            ],
+                            "id": 16024,
+                            "name": "MemberAccess",
+                            "src": "2034:29:37"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "sender",
+                              "referencedDeclaration": null,
+                              "type": "address payable"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 25997,
+                                  "type": "msg",
+                                  "value": "msg"
+                                },
+                                "id": 16025,
+                                "name": "Identifier",
+                                "src": "2064:3:37"
+                              }
+                            ],
+                            "id": 16026,
+                            "name": "MemberAccess",
+                            "src": "2064:10:37"
+                          }
+                        ],
+                        "id": 16027,
+                        "name": "FunctionCall",
+                        "src": "2034:41:37"
+                      }
+                    ],
+                    "id": 16028,
+                    "name": "VariableDeclarationStatement",
+                    "src": "2004:71:37"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "<",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 16015,
+                              "type": "uint256",
+                              "value": "actualCallbackFee"
+                            },
+                            "id": 16029,
+                            "name": "Identifier",
+                            "src": "2240:17:37"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 15980,
+                              "type": "uint256",
+                              "value": "callbackFee"
+                            },
+                            "id": 16030,
+                            "name": "Identifier",
+                            "src": "2260:11:37"
+                          }
+                        ],
+                        "id": 16031,
+                        "name": "BinaryOperation",
+                        "src": "2240:31:37"
+                      },
+                      {
+                        "children": [
+                          {
+                            "attributes": {
+                              "assignments": [
+                                16033
+                              ]
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "constant": false,
+                                  "name": "callbackSurplus",
+                                  "scope": 16075,
+                                  "stateVariable": false,
+                                  "storageLocation": "default",
+                                  "type": "uint256",
+                                  "value": null,
+                                  "visibility": "internal"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "name": "uint256",
+                                      "type": "uint256"
+                                    },
+                                    "id": 16032,
+                                    "name": "ElementaryTypeName",
+                                    "src": "2287:7:37"
+                                  }
+                                ],
+                                "id": 16033,
+                                "name": "VariableDeclaration",
+                                "src": "2287:23:37"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "isStructConstructorCall": false,
+                                  "lValueRequested": false,
+                                  "names": [
+                                    null
+                                  ],
+                                  "type": "uint256",
+                                  "type_conversion": false
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": [
+                                        {
+                                          "typeIdentifier": "t_uint256",
+                                          "typeString": "uint256"
+                                        }
+                                      ],
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "sub",
+                                      "referencedDeclaration": 24831,
+                                      "type": "function (uint256,uint256) pure returns (uint256)"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 15980,
+                                          "type": "uint256",
+                                          "value": "callbackFee"
+                                        },
+                                        "id": 16034,
+                                        "name": "Identifier",
+                                        "src": "2313:11:37"
+                                      }
+                                    ],
+                                    "id": 16035,
+                                    "name": "MemberAccess",
+                                    "src": "2313:15:37"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 16015,
+                                      "type": "uint256",
+                                      "value": "actualCallbackFee"
+                                    },
+                                    "id": 16036,
+                                    "name": "Identifier",
+                                    "src": "2329:17:37"
+                                  }
+                                ],
+                                "id": 16037,
+                                "name": "FunctionCall",
+                                "src": "2313:34:37"
+                              }
+                            ],
+                            "id": 16038,
+                            "name": "VariableDeclarationStatement",
+                            "src": "2287:60:37"
+                          },
+                          {
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "isStructConstructorCall": false,
+                                  "lValueRequested": false,
+                                  "names": [
+                                    null
+                                  ],
+                                  "type": "tuple(bool,bytes memory)",
+                                  "type_conversion": false
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": [
+                                        {
+                                          "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                          "typeString": "literal_string \"\""
+                                        }
+                                      ],
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "isStructConstructorCall": false,
+                                      "lValueRequested": false,
+                                      "names": [
+                                        null
+                                      ],
+                                      "type": "function (bytes memory) payable returns (bool,bytes memory)",
+                                      "type_conversion": false
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": [
+                                            {
+                                              "typeIdentifier": "t_uint256",
+                                              "typeString": "uint256"
+                                            }
+                                          ],
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": false,
+                                          "lValueRequested": false,
+                                          "member_name": "value",
+                                          "referencedDeclaration": null,
+                                          "type": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "isConstant": false,
+                                              "isLValue": false,
+                                              "isPure": false,
+                                              "lValueRequested": false,
+                                              "member_name": "call",
+                                              "referencedDeclaration": null,
+                                              "type": "function (bytes memory) payable returns (bool,bytes memory)"
+                                            },
+                                            "children": [
+                                              {
+                                                "attributes": {
+                                                  "argumentTypes": null,
+                                                  "overloadedDeclarations": [
+                                                    null
+                                                  ],
+                                                  "referencedDeclaration": 16022,
+                                                  "type": "address payable",
+                                                  "value": "beneficiary"
+                                                },
+                                                "id": 16039,
+                                                "name": "Identifier",
+                                                "src": "2427:11:37"
+                                              }
+                                            ],
+                                            "id": 16042,
+                                            "name": "MemberAccess",
+                                            "src": "2427:16:37"
+                                          }
+                                        ],
+                                        "id": 16043,
+                                        "name": "MemberAccess",
+                                        "src": "2427:22:37"
+                                      },
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 16015,
+                                          "type": "uint256",
+                                          "value": "actualCallbackFee"
+                                        },
+                                        "id": 16044,
+                                        "name": "Identifier",
+                                        "src": "2450:17:37"
+                                      }
+                                    ],
+                                    "id": 16045,
+                                    "name": "FunctionCall",
+                                    "src": "2427:41:37"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "hexvalue": "",
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": true,
+                                      "lValueRequested": false,
+                                      "subdenomination": null,
+                                      "token": "string",
+                                      "type": "literal_string \"\"",
+                                      "value": ""
+                                    },
+                                    "id": 16046,
+                                    "name": "Literal",
+                                    "src": "2469:2:37"
+                                  }
+                                ],
+                                "id": 16047,
+                                "name": "FunctionCall",
+                                "src": "2427:45:37"
+                              }
+                            ],
+                            "id": 16048,
+                            "name": "ExpressionStatement",
+                            "src": "2427:45:37"
+                          },
+                          {
+                            "attributes": {
+                              "falseBody": null
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "commonType": {
+                                    "typeIdentifier": "t_uint256",
+                                    "typeString": "uint256"
+                                  },
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "operator": "==",
+                                  "type": "bool"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "length",
+                                      "referencedDeclaration": null,
+                                      "type": "uint256"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 15982,
+                                          "type": "bytes memory",
+                                          "value": "callbackSurplusRecipientData"
+                                        },
+                                        "id": 16049,
+                                        "name": "Identifier",
+                                        "src": "2614:28:37"
+                                      }
+                                    ],
+                                    "id": 16050,
+                                    "name": "MemberAccess",
+                                    "src": "2614:35:37"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "hexvalue": "3332",
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": true,
+                                      "lValueRequested": false,
+                                      "subdenomination": null,
+                                      "token": "number",
+                                      "type": "int_const 32",
+                                      "value": "32"
+                                    },
+                                    "id": 16051,
+                                    "name": "Literal",
+                                    "src": "2653:2:37"
+                                  }
+                                ],
+                                "id": 16052,
+                                "name": "BinaryOperation",
+                                "src": "2614:41:37"
+                              },
+                              {
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "assignments": [
+                                        16054
+                                      ]
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "constant": false,
+                                          "name": "surplusRecipient",
+                                          "scope": 16073,
+                                          "stateVariable": false,
+                                          "storageLocation": "default",
+                                          "type": "address",
+                                          "value": null,
+                                          "visibility": "internal"
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "name": "address",
+                                              "stateMutability": "nonpayable",
+                                              "type": "address"
+                                            },
+                                            "id": 16053,
+                                            "name": "ElementaryTypeName",
+                                            "src": "2675:7:37"
+                                          }
+                                        ],
+                                        "id": 16054,
+                                        "name": "VariableDeclaration",
+                                        "src": "2675:24:37"
+                                      },
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": false,
+                                          "isStructConstructorCall": false,
+                                          "lValueRequested": false,
+                                          "names": [
+                                            null
+                                          ],
+                                          "type": "address",
+                                          "type_conversion": false
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": [
+                                                {
+                                                  "typeIdentifier": "t_rational_12_by_1",
+                                                  "typeString": "int_const 12"
+                                                }
+                                              ],
+                                              "isConstant": false,
+                                              "isLValue": false,
+                                              "isPure": false,
+                                              "lValueRequested": false,
+                                              "member_name": "toAddress",
+                                              "referencedDeclaration": 23792,
+                                              "type": "function (bytes memory,uint256) pure returns (address)"
+                                            },
+                                            "children": [
+                                              {
+                                                "attributes": {
+                                                  "argumentTypes": null,
+                                                  "overloadedDeclarations": [
+                                                    null
+                                                  ],
+                                                  "referencedDeclaration": 15982,
+                                                  "type": "bytes memory",
+                                                  "value": "callbackSurplusRecipientData"
+                                                },
+                                                "id": 16055,
+                                                "name": "Identifier",
+                                                "src": "2702:28:37"
+                                              }
+                                            ],
+                                            "id": 16056,
+                                            "name": "MemberAccess",
+                                            "src": "2702:38:37"
+                                          },
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "hexvalue": "3132",
+                                              "isConstant": false,
+                                              "isLValue": false,
+                                              "isPure": true,
+                                              "lValueRequested": false,
+                                              "subdenomination": null,
+                                              "token": "number",
+                                              "type": "int_const 12",
+                                              "value": "12"
+                                            },
+                                            "id": 16057,
+                                            "name": "Literal",
+                                            "src": "2741:2:37"
+                                          }
+                                        ],
+                                        "id": 16058,
+                                        "name": "FunctionCall",
+                                        "src": "2702:42:37"
+                                      }
+                                    ],
+                                    "id": 16059,
+                                    "name": "VariableDeclarationStatement",
+                                    "src": "2675:69:37"
+                                  },
+                                  {
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": false,
+                                          "isStructConstructorCall": false,
+                                          "lValueRequested": false,
+                                          "names": [
+                                            null
+                                          ],
+                                          "type": "tuple(bool,bytes memory)",
+                                          "type_conversion": false
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": [
+                                                {
+                                                  "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                                  "typeString": "literal_string \"\""
+                                                }
+                                              ],
+                                              "isConstant": false,
+                                              "isLValue": false,
+                                              "isPure": false,
+                                              "isStructConstructorCall": false,
+                                              "lValueRequested": false,
+                                              "names": [
+                                                null
+                                              ],
+                                              "type": "function (bytes memory) payable returns (bool,bytes memory)",
+                                              "type_conversion": false
+                                            },
+                                            "children": [
+                                              {
+                                                "attributes": {
+                                                  "argumentTypes": [
+                                                    {
+                                                      "typeIdentifier": "t_uint256",
+                                                      "typeString": "uint256"
+                                                    }
+                                                  ],
+                                                  "isConstant": false,
+                                                  "isLValue": false,
+                                                  "isPure": false,
+                                                  "lValueRequested": false,
+                                                  "member_name": "value",
+                                                  "referencedDeclaration": null,
+                                                  "type": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                                                },
+                                                "children": [
+                                                  {
+                                                    "attributes": {
+                                                      "argumentTypes": null,
+                                                      "isConstant": false,
+                                                      "isLValue": false,
+                                                      "isPure": false,
+                                                      "isStructConstructorCall": false,
+                                                      "lValueRequested": false,
+                                                      "names": [
+                                                        null
+                                                      ],
+                                                      "type": "function (bytes memory) payable returns (bool,bytes memory)",
+                                                      "type_conversion": false
+                                                    },
+                                                    "children": [
+                                                      {
+                                                        "attributes": {
+                                                          "argumentTypes": [
+                                                            {
+                                                              "typeIdentifier": "t_rational_8000_by_1",
+                                                              "typeString": "int_const 8000"
+                                                            }
+                                                          ],
+                                                          "isConstant": false,
+                                                          "isLValue": false,
+                                                          "isPure": false,
+                                                          "lValueRequested": false,
+                                                          "member_name": "gas",
+                                                          "referencedDeclaration": null,
+                                                          "type": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                                                        },
+                                                        "children": [
+                                                          {
+                                                            "attributes": {
+                                                              "argumentTypes": null,
+                                                              "isConstant": false,
+                                                              "isLValue": false,
+                                                              "isPure": false,
+                                                              "lValueRequested": false,
+                                                              "member_name": "call",
+                                                              "referencedDeclaration": null,
+                                                              "type": "function (bytes memory) payable returns (bool,bytes memory)"
+                                                            },
+                                                            "children": [
+                                                              {
+                                                                "attributes": {
+                                                                  "argumentTypes": null,
+                                                                  "overloadedDeclarations": [
+                                                                    null
+                                                                  ],
+                                                                  "referencedDeclaration": 16054,
+                                                                  "type": "address",
+                                                                  "value": "surplusRecipient"
+                                                                },
+                                                                "id": 16060,
+                                                                "name": "Identifier",
+                                                                "src": "2762:16:37"
+                                                              }
+                                                            ],
+                                                            "id": 16063,
+                                                            "name": "MemberAccess",
+                                                            "src": "2762:21:37"
+                                                          }
+                                                        ],
+                                                        "id": 16064,
+                                                        "name": "MemberAccess",
+                                                        "src": "2762:25:37"
+                                                      },
+                                                      {
+                                                        "attributes": {
+                                                          "argumentTypes": null,
+                                                          "hexvalue": "38303030",
+                                                          "isConstant": false,
+                                                          "isLValue": false,
+                                                          "isPure": true,
+                                                          "lValueRequested": false,
+                                                          "subdenomination": null,
+                                                          "token": "number",
+                                                          "type": "int_const 8000",
+                                                          "value": "8000"
+                                                        },
+                                                        "id": 16065,
+                                                        "name": "Literal",
+                                                        "src": "2788:4:37"
+                                                      }
+                                                    ],
+                                                    "id": 16066,
+                                                    "name": "FunctionCall",
+                                                    "src": "2762:31:37"
+                                                  }
+                                                ],
+                                                "id": 16067,
+                                                "name": "MemberAccess",
+                                                "src": "2762:37:37"
+                                              },
+                                              {
+                                                "attributes": {
+                                                  "argumentTypes": null,
+                                                  "overloadedDeclarations": [
+                                                    null
+                                                  ],
+                                                  "referencedDeclaration": 16033,
+                                                  "type": "uint256",
+                                                  "value": "callbackSurplus"
+                                                },
+                                                "id": 16068,
+                                                "name": "Identifier",
+                                                "src": "2800:15:37"
+                                              }
+                                            ],
+                                            "id": 16069,
+                                            "name": "FunctionCall",
+                                            "src": "2762:54:37"
+                                          },
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "hexvalue": "",
+                                              "isConstant": false,
+                                              "isLValue": false,
+                                              "isPure": true,
+                                              "lValueRequested": false,
+                                              "subdenomination": null,
+                                              "token": "string",
+                                              "type": "literal_string \"\"",
+                                              "value": ""
+                                            },
+                                            "id": 16070,
+                                            "name": "Literal",
+                                            "src": "2817:2:37"
+                                          }
+                                        ],
+                                        "id": 16071,
+                                        "name": "FunctionCall",
+                                        "src": "2762:58:37"
+                                      }
+                                    ],
+                                    "id": 16072,
+                                    "name": "ExpressionStatement",
+                                    "src": "2762:58:37"
+                                  }
+                                ],
+                                "id": 16073,
+                                "name": "Block",
+                                "src": "2657:178:37"
+                              }
+                            ],
+                            "id": 16074,
+                            "name": "IfStatement",
+                            "src": "2610:225:37"
+                          }
+                        ],
+                        "id": 16075,
+                        "name": "Block",
+                        "src": "2273:572:37"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "isStructConstructorCall": false,
+                                  "lValueRequested": false,
+                                  "names": [
+                                    null
+                                  ],
+                                  "type": "tuple(bool,bytes memory)",
+                                  "type_conversion": false
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": [
+                                        {
+                                          "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                                          "typeString": "literal_string \"\""
+                                        }
+                                      ],
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "isStructConstructorCall": false,
+                                      "lValueRequested": false,
+                                      "names": [
+                                        null
+                                      ],
+                                      "type": "function (bytes memory) payable returns (bool,bytes memory)",
+                                      "type_conversion": false
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": [
+                                            {
+                                              "typeIdentifier": "t_uint256",
+                                              "typeString": "uint256"
+                                            }
+                                          ],
+                                          "isConstant": false,
+                                          "isLValue": false,
+                                          "isPure": false,
+                                          "lValueRequested": false,
+                                          "member_name": "value",
+                                          "referencedDeclaration": null,
+                                          "type": "function (uint256) pure returns (function (bytes memory) payable returns (bool,bytes memory))"
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "isConstant": false,
+                                              "isLValue": false,
+                                              "isPure": false,
+                                              "lValueRequested": false,
+                                              "member_name": "call",
+                                              "referencedDeclaration": null,
+                                              "type": "function (bytes memory) payable returns (bool,bytes memory)"
+                                            },
+                                            "children": [
+                                              {
+                                                "attributes": {
+                                                  "argumentTypes": null,
+                                                  "overloadedDeclarations": [
+                                                    null
+                                                  ],
+                                                  "referencedDeclaration": 16022,
+                                                  "type": "address payable",
+                                                  "value": "beneficiary"
+                                                },
+                                                "id": 16076,
+                                                "name": "Identifier",
+                                                "src": "2949:11:37"
+                                              }
+                                            ],
+                                            "id": 16079,
+                                            "name": "MemberAccess",
+                                            "src": "2949:16:37"
+                                          }
+                                        ],
+                                        "id": 16080,
+                                        "name": "MemberAccess",
+                                        "src": "2949:22:37"
+                                      },
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 15980,
+                                          "type": "uint256",
+                                          "value": "callbackFee"
+                                        },
+                                        "id": 16081,
+                                        "name": "Identifier",
+                                        "src": "2972:11:37"
+                                      }
+                                    ],
+                                    "id": 16082,
+                                    "name": "FunctionCall",
+                                    "src": "2949:35:37"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "hexvalue": "",
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": true,
+                                      "lValueRequested": false,
+                                      "subdenomination": null,
+                                      "token": "string",
+                                      "type": "literal_string \"\"",
+                                      "value": ""
+                                    },
+                                    "id": 16083,
+                                    "name": "Literal",
+                                    "src": "2985:2:37"
+                                  }
+                                ],
+                                "id": 16084,
+                                "name": "FunctionCall",
+                                "src": "2949:39:37"
+                              }
+                            ],
+                            "id": 16085,
+                            "name": "ExpressionStatement",
+                            "src": "2949:39:37"
+                          }
+                        ],
+                        "id": 16086,
+                        "name": "Block",
+                        "src": "2851:148:37"
+                      }
+                    ],
+                    "id": 16087,
+                    "name": "IfStatement",
+                    "src": "2236:763:37"
+                  }
+                ],
+                "id": 16088,
+                "name": "Block",
+                "src": "1117:1888:37"
+              }
+            ],
+            "id": 16089,
+            "name": "FunctionDefinition",
+            "src": "874:2131:37"
+          }
+        ],
+        "id": 16090,
+        "name": "ContractDefinition",
+        "src": "154:2853:37"
+      }
+    ],
+    "id": 16091,
+    "name": "SourceUnit",
+    "src": "0:3008:37"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {
+    "5777": {
+      "events": {},
+      "links": {},
+      "address": "0x7C08d10A71Be4b1A18b8E7a5550e7A9BAF6112f4",
+      "transactionHash": "0x8549004b2f082a54100ad874d673b6abf136251980bb27bd3e6fa85f13b3b8d8"
+    }
+  },
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:25.384Z",
+  "networkType": "ethereum",
+  "devdoc": {
+    "methods": {
+      "reimburseCallback(TokenStaking,uint256,uint256,uint256,uint256,bytes)": {
+        "params": {
+          "callbackFee": "Fee paid for the callback by the requestor",
+          "callbackSurplusRecipientData": "Data containing surplus recipient address",
+          "gasLimit": "Gas limit set for the callback",
+          "gasPriceCeiling": "Gas price ceiling in wei",
+          "gasSpent": "Gas spent by the submitter on the callback",
+          "stakingContract": "Staking contract to get the address of the beneficiary"
+        }
+      }
+    }
+  },
+  "userdoc": {
+    "methods": {
+      "reimburseCallback(TokenStaking,uint256,uint256,uint256,uint256,bytes)": {
+        "notice": "Reimburses callback execution cost and surplus based on actual gas usage to the submitter's beneficiary address and if necessary to the callback requestor (surplus recipient)."
+      }
+    }
+  }
+}

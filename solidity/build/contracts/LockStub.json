@@ -1,0 +1,2964 @@
+{
+  "contractName": "LockStub",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        }
+      ],
+      "name": "publicContains",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        }
+      ],
+      "name": "publicGetLockTime",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiresAt",
+          "type": "uint256"
+        }
+      ],
+      "name": "publicSetLock",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "creator",
+          "type": "address"
+        }
+      ],
+      "name": "publicReleaseLock",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "publicEnumerateCreators",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"publicContains\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"publicEnumerateCreators\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"publicGetLockTime\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"}],\"name\":\"publicReleaseLock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"creator\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"expiresAt\",\"type\":\"uint256\"}],\"name\":\"publicSetLock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/stubs/LockStub.sol\":\"LockStub\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/libraries/staking/LockUtils.sol\":{\"keccak256\":\"0x0fbd9a4d82cf8803f00cb59cca9580d379c8d98a759b8a6d74f75f01c19fc635\",\"urls\":[\"bzz-raw://f2df931f0a11d4f63aa1f6193419606711a24ce7381dd15db52419c783dc7952\",\"dweb:/ipfs/QmRMGWSbfYPaxppBb7w2cQHpAwDc4T9MBmpZqU396i8hKK\"]},\"/home/bless/keep-core/solidity/contracts/stubs/LockStub.sol\":{\"keccak256\":\"0x3fe94d86e75bbd1fa5fb3dc8f6597b42af4dde7aa452f6246ac18a428c1481bb\",\"urls\":[\"bzz-raw://83def52acecb96255ed7403716b4fae727a40b5b5a896fa2876567339d98d175\",\"dweb:/ipfs/QmVL9PtfeuFJeT6B9kSz15CMmoPdk8e2Deu89ys1wHu8Ga\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506109af806100206000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c8063189efe241461005c578063b0cfb1b2146100bb578063d0bb7c9314610109578063e022e77c1461014d578063f5310178146101a5575b600080fd5b610064610201565b6040518080602001828103825283818151815260200191508051906020019060200280838360005b838110156100a757808201518184015260208101905061008c565b505050509050019250505060405180910390f35b610107600480360360408110156100d157600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102ea565b005b61014b6004803603602081101561011f57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610304565b005b61018f6004803603602081101561016357600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061031b565b6040518082815260200191505060405180910390f35b6101e7600480360360208110156101bb57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610346565b604051808215151515815260200191505060405180910390f35b606080600080018054905060405190808252806020026020018201604052801561023a5781602001602082028038833980820191505090505b50905060008090505b60008001805490508110156102e25760008001818154811061026157fe5b9060005260206000200160000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1682828151811061029b57fe5b602002602001019073ffffffffffffffffffffffffffffffffffffffff16908173ffffffffffffffffffffffffffffffffffffffff16815250508080600101915050610243565b508091505090565b610300828260006103639092919063ffffffff16565b5050565b61031881600061054a90919063ffffffff16565b50565b60006103318260006107c090919063ffffffff16565b6bffffffffffffffffffffffff169050919050565b600061035c82600061085c90919063ffffffff16565b9050919050565b60008360010160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205490506103b16108ab565b60405180604001604052808573ffffffffffffffffffffffffffffffffffffffff168152602001846bffffffffffffffffffffffff16815250905060008214156104f457846000018190806001815401808255809150509060018203906000526020600020016000909192909190915060008201518160000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555060208201518160000160146101000a8154816bffffffffffffffffffffffff02191690836bffffffffffffffffffffffff16021790555050505084600001805490508560010160008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550610543565b8285600001600184038154811061050757fe5b9060005260206000200160000160146101000a8154816bffffffffffffffffffffffff02191690836bffffffffffffffffffffffff1602179055505b5050505050565b60008260010160008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050600081146107bb5760008360000180549050905080821461075a576105b36108ab565b8460000160018303815481106105c557fe5b906000526020600020016040518060400160405290816000820160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020016000820160149054906101000a90046bffffffffffffffffffffffff166bffffffffffffffffffffffff166bffffffffffffffffffffffff168152505090508085600001600185038154811061068357fe5b9060005260206000200160008201518160000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555060208201518160000160146101000a8154816bffffffffffffffffffffffff02191690836bffffffffffffffffffffffff16021790555090505082856001016000836000015173ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550505b8360000180548091906001900361077191906108e9565b5060008460010160008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550505b505050565b6000808360010160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050600081141561081a576000915050610856565b83600001600182038154811061082c57fe5b9060005260206000200160000160149054906101000a90046bffffffffffffffffffffffff169150505b92915050565b6000808360010160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020541415905092915050565b6040518060400160405280600073ffffffffffffffffffffffffffffffffffffffff16815260200160006bffffffffffffffffffffffff1681525090565b8154818355818111156109105781836000526020600020918201910161090f9190610915565b5b505050565b61097791905b8082111561097357600080820160006101000a81549073ffffffffffffffffffffffffffffffffffffffff02191690556000820160146101000a8154906bffffffffffffffffffffffff02191690555060010161091b565b5090565b9056fea265627a7a723158200fe93753eaa26f01c02f36f737771427948a8fbadba3daa027039d482886136c64736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100575760003560e01c8063189efe241461005c578063b0cfb1b2146100bb578063d0bb7c9314610109578063e022e77c1461014d578063f5310178146101a5575b600080fd5b610064610201565b6040518080602001828103825283818151815260200191508051906020019060200280838360005b838110156100a757808201518184015260208101905061008c565b505050509050019250505060405180910390f35b610107600480360360408110156100d157600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190803590602001909291905050506102ea565b005b61014b6004803603602081101561011f57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610304565b005b61018f6004803603602081101561016357600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061031b565b6040518082815260200191505060405180910390f35b6101e7600480360360208110156101bb57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610346565b604051808215151515815260200191505060405180910390f35b606080600080018054905060405190808252806020026020018201604052801561023a5781602001602082028038833980820191505090505b50905060008090505b60008001805490508110156102e25760008001818154811061026157fe5b9060005260206000200160000160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1682828151811061029b57fe5b602002602001019073ffffffffffffffffffffffffffffffffffffffff16908173ffffffffffffffffffffffffffffffffffffffff16815250508080600101915050610243565b508091505090565b610300828260006103639092919063ffffffff16565b5050565b61031881600061054a90919063ffffffff16565b50565b60006103318260006107c090919063ffffffff16565b6bffffffffffffffffffffffff169050919050565b600061035c82600061085c90919063ffffffff16565b9050919050565b60008360010160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000205490506103b16108ab565b60405180604001604052808573ffffffffffffffffffffffffffffffffffffffff168152602001846bffffffffffffffffffffffff16815250905060008214156104f457846000018190806001815401808255809150509060018203906000526020600020016000909192909190915060008201518160000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555060208201518160000160146101000a8154816bffffffffffffffffffffffff02191690836bffffffffffffffffffffffff16021790555050505084600001805490508560010160008673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550610543565b8285600001600184038154811061050757fe5b9060005260206000200160000160146101000a8154816bffffffffffffffffffffffff02191690836bffffffffffffffffffffffff1602179055505b5050505050565b60008260010160008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050600081146107bb5760008360000180549050905080821461075a576105b36108ab565b8460000160018303815481106105c557fe5b906000526020600020016040518060400160405290816000820160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020016000820160149054906101000a90046bffffffffffffffffffffffff166bffffffffffffffffffffffff166bffffffffffffffffffffffff168152505090508085600001600185038154811061068357fe5b9060005260206000200160008201518160000160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555060208201518160000160146101000a8154816bffffffffffffffffffffffff02191690836bffffffffffffffffffffffff16021790555090505082856001016000836000015173ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550505b8360000180548091906001900361077191906108e9565b5060008460010160008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002081905550505b505050565b6000808360010160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020549050600081141561081a576000915050610856565b83600001600182038154811061082c57fe5b9060005260206000200160000160149054906101000a90046bffffffffffffffffffffffff169150505b92915050565b6000808360010160008473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020541415905092915050565b6040518060400160405280600073ffffffffffffffffffffffffffffffffffffffff16815260200160006bffffffffffffffffffffffff1681525090565b8154818355818111156109105781836000526020600020918201910161090f9190610915565b5b505050565b61097791905b8082111561097357600080820160006101000a81549073ffffffffffffffffffffffffffffffffffffffff02191690556000820160146101000a8154906bffffffffffffffffffffffff02191690555060010161091b565b5090565b9056fea265627a7a723158200fe93753eaa26f01c02f36f737771427948a8fbadba3daa027039d482886136c64736f6c63430005110032",
+  "sourceMap": "71:894:64:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;71:894:64;;;;;;;",
+  "deployedSourceMap": "71:894:64:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;71:894:64;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;664:299;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;664:299:64;;;;;;;;;;;;;;;;;432:125;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;432:125:64;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;563:95;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;563:95:64;;;;;;;;;;;;;;;;;;;:::i;:::-;;292:134;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;292:134:64;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;170:116;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;170:116:64;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;664:299;720:16;748:25;790:6;:12;;:19;;;;776:34;;;;;;;;;;;;;;;;;;;;;;29:2:-1;21:6;17:15;117:4;105:10;97:6;88:34;148:4;140:6;136:17;126:27;;0:157;776:34:64;;;;748:62;;825:9;837:1;825:13;;820:112;844:6;:12;;:19;;;;840:1;:23;820:112;;;898:6;:12;;911:1;898:15;;;;;;;;;;;;;;;:23;;;;;;;;;;;;884:8;893:1;884:11;;;;;;;;;;;;;:37;;;;;;;;;;;865:3;;;;;;;820:112;;;;948:8;941:15;;;664:299;:::o;432:125::-;508:42;523:7;539:9;508:6;:14;;:42;;;;;:::i;:::-;432:125;;:::o;563:95::-;624:27;643:7;624:6;:18;;:27;;;;:::i;:::-;563:95;:::o;292:134::-;357:7;391:27;410:7;391:6;:18;;:27;;;;:::i;:::-;383:36;;376:43;;292:134;;;:::o;170:116::-;232:4;255:24;271:7;255:6;:15;;:24;;;;:::i;:::-;248:31;;170:116;;;:::o;1133:522:39:-;1258:23;1284:4;:14;;:24;1299:8;1284:24;;;;;;;;;;;;;;;;1258:50;;1318:16;;:::i;:::-;1337:26;;;;;;;;1342:8;1337:26;;;;;;1352:10;1337:26;;;;;1318:45;;1424:1;1405:15;:20;1401:248;;;1441:4;:10;;1457:4;1441:21;;39:1:-1;33:3;27:10;23:18;57:10;52:3;45:23;79:10;72:17;;0:93;1441:21:39;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1503:4;:10;;:17;;;;1476:4;:14;;:24;1491:8;1476:24;;;;;;;;;;;;;;;:44;;;;1401:248;;;1628:10;1584:4;:10;;1613:1;1595:15;:19;1584:31;;;;;;;;;;;;;;;:41;;;:54;;;;;;;;;;;;;;;;;;1401:248;1133:522;;;;;:::o;1747:704::-;1849:23;1875:4;:14;;:24;1890:8;1875:24;;;;;;;;;;;;;;;;1849:50;;1932:1;1913:15;:20;1909:536;;1949:17;1969:4;:10;;:17;;;;1949:37;;2023:9;2004:15;:28;2000:360;;2169:20;;:::i;:::-;2192:4;:10;;2215:1;2203:9;:13;2192:25;;;;;;;;;;;;;;;2169:48;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2269:8;2235:4;:10;;2264:1;2246:15;:19;2235:31;;;;;;;;;;;;;;;:42;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2330:15;2295:4;:14;;:32;2310:8;:16;;;2295:32;;;;;;;;;;;;;;;:50;;;;2000:360;;2373:4;:10;;:19;;;;;;;;;;;;:::i;:::-;;2433:1;2406:4;:14;;:24;2421:8;2406:24;;;;;;;;;;;;;;;:28;;;;1909:536;;1747:704;;;:::o;753:271::-;844:6;862:23;888:4;:14;;:23;903:7;888:23;;;;;;;;;;;;;;;;862:49;;944:1;925:15;:20;921:39;;;956:1;949:8;;;;;921:39;976:4;:10;;1005:1;987:15;:19;976:31;;;;;;;;;;;;;;;:41;;;;;;;;;;;;969:48;;;753:271;;;;;:::o;599:148::-;687:4;738:1;711:4;:14;;:23;726:7;711:23;;;;;;;;;;;;;;;;:28;;703:37;;599:148;;;;:::o;71:894:64:-;;;;;;;;;;;;;;;;;;;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;:::o;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::o",
+  "source": "pragma solidity 0.5.17;\n\nimport \"../libraries/staking/LockUtils.sol\";\n\ncontract LockStub {\n    using LockUtils for LockUtils.LockSet;\n\n    LockUtils.LockSet _locks;\n\n    function publicContains(address creator) public view returns (bool) {\n        return _locks.contains(creator);\n    }\n\n    function publicGetLockTime(address creator) public view returns (uint256) {\n        return uint256(_locks.getLockTime(creator));\n    }\n\n    function publicSetLock(address creator, uint256 expiresAt) public {\n        _locks.setLock(creator, uint96(expiresAt));\n    }\n\n    function publicReleaseLock(address creator) public {\n        _locks.releaseLock(creator);\n    }\n\n    function publicEnumerateCreators() public view returns (address[] memory) {\n        address[] memory creators = new address[](_locks.locks.length);\n        for (uint256 i = 0; i < _locks.locks.length; i++) {\n            creators[i] = _locks.locks[i].creator;\n        }\n        return creators;\n    }\n}\n",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/stubs/LockStub.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/LockStub.sol",
+    "exportedSymbols": {
+      "LockStub": [
+        19230
+      ]
+    },
+    "id": 19231,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 19121,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:64"
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/LockUtils.sol",
+        "file": "../libraries/staking/LockUtils.sol",
+        "id": 19122,
+        "nodeType": "ImportDirective",
+        "scope": 19231,
+        "sourceUnit": 16592,
+        "src": "25:44:64",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [],
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "documentation": null,
+        "fullyImplemented": true,
+        "id": 19230,
+        "linearizedBaseContracts": [
+          19230
+        ],
+        "name": "LockStub",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "id": 19125,
+            "libraryName": {
+              "contractScope": null,
+              "id": 19123,
+              "name": "LockUtils",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16591,
+              "src": "101:9:64",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_LockUtils_$16591",
+                "typeString": "library LockUtils"
+              }
+            },
+            "nodeType": "UsingForDirective",
+            "src": "95:38:64",
+            "typeName": {
+              "contractScope": null,
+              "id": 19124,
+              "name": "LockUtils.LockSet",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16395,
+              "src": "115:17:64",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_LockSet_$16395_storage_ptr",
+                "typeString": "struct LockUtils.LockSet"
+              }
+            }
+          },
+          {
+            "constant": false,
+            "id": 19127,
+            "name": "_locks",
+            "nodeType": "VariableDeclaration",
+            "scope": 19230,
+            "src": "139:24:64",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+              "typeString": "struct LockUtils.LockSet"
+            },
+            "typeName": {
+              "contractScope": null,
+              "id": 19126,
+              "name": "LockUtils.LockSet",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 16395,
+              "src": "139:17:64",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_LockSet_$16395_storage_ptr",
+                "typeString": "struct LockUtils.LockSet"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 19139,
+              "nodeType": "Block",
+              "src": "238:48:64",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 19136,
+                        "name": "creator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19129,
+                        "src": "271:7:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 19134,
+                        "name": "_locks",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19127,
+                        "src": "255:6:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                          "typeString": "struct LockUtils.LockSet storage ref"
+                        }
+                      },
+                      "id": 19135,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "contains",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 16413,
+                      "src": "255:15:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_struct$_LockSet_$16395_storage_ptr_$_t_address_$returns$_t_bool_$bound_to$_t_struct$_LockSet_$16395_storage_ptr_$",
+                        "typeString": "function (struct LockUtils.LockSet storage pointer,address) view returns (bool)"
+                      }
+                    },
+                    "id": 19137,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "255:24:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "functionReturnParameters": 19133,
+                  "id": 19138,
+                  "nodeType": "Return",
+                  "src": "248:31:64"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19140,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "publicContains",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19130,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19129,
+                  "name": "creator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19140,
+                  "src": "194:15:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19128,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "194:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "193:17:64"
+            },
+            "returnParameters": {
+              "id": 19133,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19132,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19140,
+                  "src": "232:4:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 19131,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "232:4:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "231:6:64"
+            },
+            "scope": 19230,
+            "src": "170:116:64",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19154,
+              "nodeType": "Block",
+              "src": "366:60:64",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 19150,
+                            "name": "creator",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 19142,
+                            "src": "410:7:64",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": null,
+                            "id": 19148,
+                            "name": "_locks",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 19127,
+                            "src": "391:6:64",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                              "typeString": "struct LockUtils.LockSet storage ref"
+                            }
+                          },
+                          "id": 19149,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "getLockTime",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 16445,
+                          "src": "391:18:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_internal_view$_t_struct$_LockSet_$16395_storage_ptr_$_t_address_$returns$_t_uint96_$bound_to$_t_struct$_LockSet_$16395_storage_ptr_$",
+                            "typeString": "function (struct LockUtils.LockSet storage pointer,address) view returns (uint96)"
+                          }
+                        },
+                        "id": 19151,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "391:27:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint96",
+                          "typeString": "uint96"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint96",
+                          "typeString": "uint96"
+                        }
+                      ],
+                      "id": 19147,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "ElementaryTypeNameExpression",
+                      "src": "383:7:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_type$_t_uint256_$",
+                        "typeString": "type(uint256)"
+                      },
+                      "typeName": "uint256"
+                    },
+                    "id": 19152,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "typeConversion",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "383:36:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 19146,
+                  "id": 19153,
+                  "nodeType": "Return",
+                  "src": "376:43:64"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19155,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "publicGetLockTime",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19143,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19142,
+                  "name": "creator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19155,
+                  "src": "319:15:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19141,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "319:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "318:17:64"
+            },
+            "returnParameters": {
+              "id": 19146,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19145,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19155,
+                  "src": "357:7:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 19144,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "357:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "356:9:64"
+            },
+            "scope": 19230,
+            "src": "292:134:64",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19171,
+              "nodeType": "Block",
+              "src": "498:59:64",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 19165,
+                        "name": "creator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19157,
+                        "src": "523:7:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "argumentTypes": null,
+                        "arguments": [
+                          {
+                            "argumentTypes": null,
+                            "id": 19167,
+                            "name": "expiresAt",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 19159,
+                            "src": "539:9:64",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_uint256",
+                              "typeString": "uint256"
+                            }
+                          ],
+                          "id": 19166,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "532:6:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_uint96_$",
+                            "typeString": "type(uint96)"
+                          },
+                          "typeName": "uint96"
+                        },
+                        "id": 19168,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "532:17:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint96",
+                          "typeString": "uint96"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_uint96",
+                          "typeString": "uint96"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 19162,
+                        "name": "_locks",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19127,
+                        "src": "508:6:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                          "typeString": "struct LockUtils.LockSet storage ref"
+                        }
+                      },
+                      "id": 19164,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "setLock",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 16504,
+                      "src": "508:14:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_LockSet_$16395_storage_ptr_$_t_address_$_t_uint96_$returns$__$bound_to$_t_struct$_LockSet_$16395_storage_ptr_$",
+                        "typeString": "function (struct LockUtils.LockSet storage pointer,address,uint96)"
+                      }
+                    },
+                    "id": 19169,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "508:42:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19170,
+                  "nodeType": "ExpressionStatement",
+                  "src": "508:42:64"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19172,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "publicSetLock",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19160,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19157,
+                  "name": "creator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19172,
+                  "src": "455:15:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19156,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "455:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 19159,
+                  "name": "expiresAt",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19172,
+                  "src": "472:17:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 19158,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "472:7:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "454:36:64"
+            },
+            "returnParameters": {
+              "id": 19161,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "498:0:64"
+            },
+            "scope": 19230,
+            "src": "432:125:64",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19183,
+              "nodeType": "Block",
+              "src": "614:44:64",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "id": 19180,
+                        "name": "creator",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19174,
+                        "src": "643:7:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": null,
+                        "id": 19177,
+                        "name": "_locks",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19127,
+                        "src": "624:6:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                          "typeString": "struct LockUtils.LockSet storage ref"
+                        }
+                      },
+                      "id": 19179,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "releaseLock",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 16578,
+                      "src": "624:18:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_LockSet_$16395_storage_ptr_$_t_address_$returns$__$bound_to$_t_struct$_LockSet_$16395_storage_ptr_$",
+                        "typeString": "function (struct LockUtils.LockSet storage pointer,address)"
+                      }
+                    },
+                    "id": 19181,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "624:27:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 19182,
+                  "nodeType": "ExpressionStatement",
+                  "src": "624:27:64"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19184,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "publicReleaseLock",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19175,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19174,
+                  "name": "creator",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19184,
+                  "src": "590:15:64",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 19173,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "590:7:64",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "589:17:64"
+            },
+            "returnParameters": {
+              "id": 19176,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "614:0:64"
+            },
+            "scope": 19230,
+            "src": "563:95:64",
+            "stateMutability": "nonpayable",
+            "superFunction": null,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 19228,
+              "nodeType": "Block",
+              "src": "738:225:64",
+              "statements": [
+                {
+                  "assignments": [
+                    19193
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 19193,
+                      "name": "creators",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 19228,
+                      "src": "748:25:64",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                        "typeString": "address[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 19191,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "748:7:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "id": 19192,
+                        "length": null,
+                        "nodeType": "ArrayTypeName",
+                        "src": "748:9:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                          "typeString": "address[]"
+                        }
+                      },
+                      "value": null,
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 19201,
+                  "initialValue": {
+                    "argumentTypes": null,
+                    "arguments": [
+                      {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "expression": {
+                            "argumentTypes": null,
+                            "id": 19197,
+                            "name": "_locks",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 19127,
+                            "src": "790:6:64",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                              "typeString": "struct LockUtils.LockSet storage ref"
+                            }
+                          },
+                          "id": 19198,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberName": "locks",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 16390,
+                          "src": "790:12:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_struct$_Lock_$16387_storage_$dyn_storage",
+                            "typeString": "struct LockUtils.Lock storage ref[] storage ref"
+                          }
+                        },
+                        "id": 19199,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "length",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": null,
+                        "src": "790:19:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "id": 19196,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "NewExpression",
+                      "src": "776:13:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_address_$dyn_memory_$",
+                        "typeString": "function (uint256) pure returns (address[] memory)"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 19194,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "780:7:64",
+                          "stateMutability": "nonpayable",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "id": 19195,
+                        "length": null,
+                        "nodeType": "ArrayTypeName",
+                        "src": "780:9:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                          "typeString": "address[]"
+                        }
+                      }
+                    },
+                    "id": 19200,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "776:34:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_memory",
+                      "typeString": "address[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "748:62:64"
+                },
+                {
+                  "body": {
+                    "id": 19224,
+                    "nodeType": "Block",
+                    "src": "870:62:64",
+                    "statements": [
+                      {
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 19222,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "leftHandSide": {
+                            "argumentTypes": null,
+                            "baseExpression": {
+                              "argumentTypes": null,
+                              "id": 19214,
+                              "name": "creators",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19193,
+                              "src": "884:8:64",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                                "typeString": "address[] memory"
+                              }
+                            },
+                            "id": 19216,
+                            "indexExpression": {
+                              "argumentTypes": null,
+                              "id": 19215,
+                              "name": "i",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 19203,
+                              "src": "893:1:64",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_uint256",
+                                "typeString": "uint256"
+                              }
+                            },
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": true,
+                            "nodeType": "IndexAccess",
+                            "src": "884:11:64",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          },
+                          "nodeType": "Assignment",
+                          "operator": "=",
+                          "rightHandSide": {
+                            "argumentTypes": null,
+                            "expression": {
+                              "argumentTypes": null,
+                              "baseExpression": {
+                                "argumentTypes": null,
+                                "expression": {
+                                  "argumentTypes": null,
+                                  "id": 19217,
+                                  "name": "_locks",
+                                  "nodeType": "Identifier",
+                                  "overloadedDeclarations": [],
+                                  "referencedDeclaration": 19127,
+                                  "src": "898:6:64",
+                                  "typeDescriptions": {
+                                    "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                                    "typeString": "struct LockUtils.LockSet storage ref"
+                                  }
+                                },
+                                "id": 19218,
+                                "isConstant": false,
+                                "isLValue": true,
+                                "isPure": false,
+                                "lValueRequested": false,
+                                "memberName": "locks",
+                                "nodeType": "MemberAccess",
+                                "referencedDeclaration": 16390,
+                                "src": "898:12:64",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_array$_t_struct$_Lock_$16387_storage_$dyn_storage",
+                                  "typeString": "struct LockUtils.Lock storage ref[] storage ref"
+                                }
+                              },
+                              "id": 19220,
+                              "indexExpression": {
+                                "argumentTypes": null,
+                                "id": 19219,
+                                "name": "i",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 19203,
+                                "src": "911:1:64",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              },
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "IndexAccess",
+                              "src": "898:15:64",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_Lock_$16387_storage",
+                                "typeString": "struct LockUtils.Lock storage ref"
+                              }
+                            },
+                            "id": 19221,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberName": "creator",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 16384,
+                            "src": "898:23:64",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          },
+                          "src": "884:37:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "id": 19223,
+                        "nodeType": "ExpressionStatement",
+                        "src": "884:37:64"
+                      }
+                    ]
+                  },
+                  "condition": {
+                    "argumentTypes": null,
+                    "commonType": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    },
+                    "id": 19210,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "argumentTypes": null,
+                      "id": 19206,
+                      "name": "i",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 19203,
+                      "src": "840:1:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "<",
+                    "rightExpression": {
+                      "argumentTypes": null,
+                      "expression": {
+                        "argumentTypes": null,
+                        "expression": {
+                          "argumentTypes": null,
+                          "id": 19207,
+                          "name": "_locks",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 19127,
+                          "src": "844:6:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_LockSet_$16395_storage",
+                            "typeString": "struct LockUtils.LockSet storage ref"
+                          }
+                        },
+                        "id": 19208,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberName": "locks",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 16390,
+                        "src": "844:12:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_Lock_$16387_storage_$dyn_storage",
+                          "typeString": "struct LockUtils.Lock storage ref[] storage ref"
+                        }
+                      },
+                      "id": 19209,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberName": "length",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": null,
+                      "src": "844:19:64",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "840:23:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 19225,
+                  "initializationExpression": {
+                    "assignments": [
+                      19203
+                    ],
+                    "declarations": [
+                      {
+                        "constant": false,
+                        "id": 19203,
+                        "name": "i",
+                        "nodeType": "VariableDeclaration",
+                        "scope": 19225,
+                        "src": "825:9:64",
+                        "stateVariable": false,
+                        "storageLocation": "default",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        "typeName": {
+                          "id": 19202,
+                          "name": "uint256",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "825:7:64",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "value": null,
+                        "visibility": "internal"
+                      }
+                    ],
+                    "id": 19205,
+                    "initialValue": {
+                      "argumentTypes": null,
+                      "hexValue": "30",
+                      "id": 19204,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "number",
+                      "lValueRequested": false,
+                      "nodeType": "Literal",
+                      "src": "837:1:64",
+                      "subdenomination": null,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_rational_0_by_1",
+                        "typeString": "int_const 0"
+                      },
+                      "value": "0"
+                    },
+                    "nodeType": "VariableDeclarationStatement",
+                    "src": "825:13:64"
+                  },
+                  "loopExpression": {
+                    "expression": {
+                      "argumentTypes": null,
+                      "id": 19212,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "UnaryOperation",
+                      "operator": "++",
+                      "prefix": false,
+                      "src": "865:3:64",
+                      "subExpression": {
+                        "argumentTypes": null,
+                        "id": 19211,
+                        "name": "i",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 19203,
+                        "src": "865:1:64",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "id": 19213,
+                    "nodeType": "ExpressionStatement",
+                    "src": "865:3:64"
+                  },
+                  "nodeType": "ForStatement",
+                  "src": "820:112:64"
+                },
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 19226,
+                    "name": "creators",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 19193,
+                    "src": "948:8:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                      "typeString": "address[] memory"
+                    }
+                  },
+                  "functionReturnParameters": 19189,
+                  "id": 19227,
+                  "nodeType": "Return",
+                  "src": "941:15:64"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 19229,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "publicEnumerateCreators",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 19185,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "696:2:64"
+            },
+            "returnParameters": {
+              "id": 19189,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 19188,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 19229,
+                  "src": "720:16:64",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 19186,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "720:7:64",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 19187,
+                    "length": null,
+                    "nodeType": "ArrayTypeName",
+                    "src": "720:9:64",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "719:18:64"
+            },
+            "scope": 19230,
+            "src": "664:299:64",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 19231,
+        "src": "71:894:64"
+      }
+    ],
+    "src": "0:966:64"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/LockStub.sol",
+      "exportedSymbols": {
+        "LockStub": [
+          19230
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 19121,
+        "name": "PragmaDirective",
+        "src": "0:23:64"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 16592,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/LockUtils.sol",
+          "file": "../libraries/staking/LockUtils.sol",
+          "scope": 19231,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 19122,
+        "name": "ImportDirective",
+        "src": "25:44:64"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            19230
+          ],
+          "name": "LockStub",
+          "scope": 19231
+        },
+        "children": [
+          {
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "LockUtils",
+                  "referencedDeclaration": 16591,
+                  "type": "library LockUtils"
+                },
+                "id": 19123,
+                "name": "UserDefinedTypeName",
+                "src": "101:9:64"
+              },
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "LockUtils.LockSet",
+                  "referencedDeclaration": 16395,
+                  "type": "struct LockUtils.LockSet"
+                },
+                "id": 19124,
+                "name": "UserDefinedTypeName",
+                "src": "115:17:64"
+              }
+            ],
+            "id": 19125,
+            "name": "UsingForDirective",
+            "src": "95:38:64"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "_locks",
+              "scope": 19230,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "struct LockUtils.LockSet",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "LockUtils.LockSet",
+                  "referencedDeclaration": 16395,
+                  "type": "struct LockUtils.LockSet"
+                },
+                "id": 19126,
+                "name": "UserDefinedTypeName",
+                "src": "139:17:64"
+              }
+            ],
+            "id": 19127,
+            "name": "VariableDeclaration",
+            "src": "139:24:64"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "publicContains",
+              "scope": 19230,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "creator",
+                      "scope": 19140,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19128,
+                        "name": "ElementaryTypeName",
+                        "src": "194:7:64"
+                      }
+                    ],
+                    "id": 19129,
+                    "name": "VariableDeclaration",
+                    "src": "194:15:64"
+                  }
+                ],
+                "id": 19130,
+                "name": "ParameterList",
+                "src": "193:17:64"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 19140,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "bool",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "bool",
+                          "type": "bool"
+                        },
+                        "id": 19131,
+                        "name": "ElementaryTypeName",
+                        "src": "232:4:64"
+                      }
+                    ],
+                    "id": 19132,
+                    "name": "VariableDeclaration",
+                    "src": "232:4:64"
+                  }
+                ],
+                "id": 19133,
+                "name": "ParameterList",
+                "src": "231:6:64"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 19133
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "bool",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "contains",
+                              "referencedDeclaration": 16413,
+                              "type": "function (struct LockUtils.LockSet storage pointer,address) view returns (bool)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19127,
+                                  "type": "struct LockUtils.LockSet storage ref",
+                                  "value": "_locks"
+                                },
+                                "id": 19134,
+                                "name": "Identifier",
+                                "src": "255:6:64"
+                              }
+                            ],
+                            "id": 19135,
+                            "name": "MemberAccess",
+                            "src": "255:15:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 19129,
+                              "type": "address",
+                              "value": "creator"
+                            },
+                            "id": 19136,
+                            "name": "Identifier",
+                            "src": "271:7:64"
+                          }
+                        ],
+                        "id": 19137,
+                        "name": "FunctionCall",
+                        "src": "255:24:64"
+                      }
+                    ],
+                    "id": 19138,
+                    "name": "Return",
+                    "src": "248:31:64"
+                  }
+                ],
+                "id": 19139,
+                "name": "Block",
+                "src": "238:48:64"
+              }
+            ],
+            "id": 19140,
+            "name": "FunctionDefinition",
+            "src": "170:116:64"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "publicGetLockTime",
+              "scope": 19230,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "creator",
+                      "scope": 19155,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19141,
+                        "name": "ElementaryTypeName",
+                        "src": "319:7:64"
+                      }
+                    ],
+                    "id": 19142,
+                    "name": "VariableDeclaration",
+                    "src": "319:15:64"
+                  }
+                ],
+                "id": 19143,
+                "name": "ParameterList",
+                "src": "318:17:64"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 19155,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 19144,
+                        "name": "ElementaryTypeName",
+                        "src": "357:7:64"
+                      }
+                    ],
+                    "id": 19145,
+                    "name": "VariableDeclaration",
+                    "src": "357:7:64"
+                  }
+                ],
+                "id": 19146,
+                "name": "ParameterList",
+                "src": "356:9:64"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 19146
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "uint256",
+                          "type_conversion": true
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_uint96",
+                                  "typeString": "uint96"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "type": "type(uint256)",
+                              "value": "uint256"
+                            },
+                            "id": 19147,
+                            "name": "ElementaryTypeNameExpression",
+                            "src": "383:7:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "uint96",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_address",
+                                      "typeString": "address"
+                                    }
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "getLockTime",
+                                  "referencedDeclaration": 16445,
+                                  "type": "function (struct LockUtils.LockSet storage pointer,address) view returns (uint96)"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 19127,
+                                      "type": "struct LockUtils.LockSet storage ref",
+                                      "value": "_locks"
+                                    },
+                                    "id": 19148,
+                                    "name": "Identifier",
+                                    "src": "391:6:64"
+                                  }
+                                ],
+                                "id": 19149,
+                                "name": "MemberAccess",
+                                "src": "391:18:64"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19142,
+                                  "type": "address",
+                                  "value": "creator"
+                                },
+                                "id": 19150,
+                                "name": "Identifier",
+                                "src": "410:7:64"
+                              }
+                            ],
+                            "id": 19151,
+                            "name": "FunctionCall",
+                            "src": "391:27:64"
+                          }
+                        ],
+                        "id": 19152,
+                        "name": "FunctionCall",
+                        "src": "383:36:64"
+                      }
+                    ],
+                    "id": 19153,
+                    "name": "Return",
+                    "src": "376:43:64"
+                  }
+                ],
+                "id": 19154,
+                "name": "Block",
+                "src": "366:60:64"
+              }
+            ],
+            "id": 19155,
+            "name": "FunctionDefinition",
+            "src": "292:134:64"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "publicSetLock",
+              "scope": 19230,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "creator",
+                      "scope": 19172,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19156,
+                        "name": "ElementaryTypeName",
+                        "src": "455:7:64"
+                      }
+                    ],
+                    "id": 19157,
+                    "name": "VariableDeclaration",
+                    "src": "455:15:64"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "expiresAt",
+                      "scope": 19172,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 19158,
+                        "name": "ElementaryTypeName",
+                        "src": "472:7:64"
+                      }
+                    ],
+                    "id": 19159,
+                    "name": "VariableDeclaration",
+                    "src": "472:17:64"
+                  }
+                ],
+                "id": 19160,
+                "name": "ParameterList",
+                "src": "454:36:64"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 19161,
+                "name": "ParameterList",
+                "src": "498:0:64"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                },
+                                {
+                                  "typeIdentifier": "t_uint96",
+                                  "typeString": "uint96"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "setLock",
+                              "referencedDeclaration": 16504,
+                              "type": "function (struct LockUtils.LockSet storage pointer,address,uint96)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19127,
+                                  "type": "struct LockUtils.LockSet storage ref",
+                                  "value": "_locks"
+                                },
+                                "id": 19162,
+                                "name": "Identifier",
+                                "src": "508:6:64"
+                              }
+                            ],
+                            "id": 19164,
+                            "name": "MemberAccess",
+                            "src": "508:14:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 19157,
+                              "type": "address",
+                              "value": "creator"
+                            },
+                            "id": 19165,
+                            "name": "Identifier",
+                            "src": "523:7:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "uint96",
+                              "type_conversion": true
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": true,
+                                  "lValueRequested": false,
+                                  "type": "type(uint96)",
+                                  "value": "uint96"
+                                },
+                                "id": 19166,
+                                "name": "ElementaryTypeNameExpression",
+                                "src": "532:6:64"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19159,
+                                  "type": "uint256",
+                                  "value": "expiresAt"
+                                },
+                                "id": 19167,
+                                "name": "Identifier",
+                                "src": "539:9:64"
+                              }
+                            ],
+                            "id": 19168,
+                            "name": "FunctionCall",
+                            "src": "532:17:64"
+                          }
+                        ],
+                        "id": 19169,
+                        "name": "FunctionCall",
+                        "src": "508:42:64"
+                      }
+                    ],
+                    "id": 19170,
+                    "name": "ExpressionStatement",
+                    "src": "508:42:64"
+                  }
+                ],
+                "id": 19171,
+                "name": "Block",
+                "src": "498:59:64"
+              }
+            ],
+            "id": 19172,
+            "name": "FunctionDefinition",
+            "src": "432:125:64"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "publicReleaseLock",
+              "scope": 19230,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "creator",
+                      "scope": 19184,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 19173,
+                        "name": "ElementaryTypeName",
+                        "src": "590:7:64"
+                      }
+                    ],
+                    "id": 19174,
+                    "name": "VariableDeclaration",
+                    "src": "590:15:64"
+                  }
+                ],
+                "id": 19175,
+                "name": "ParameterList",
+                "src": "589:17:64"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 19176,
+                "name": "ParameterList",
+                "src": "614:0:64"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "tuple()",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "releaseLock",
+                              "referencedDeclaration": 16578,
+                              "type": "function (struct LockUtils.LockSet storage pointer,address)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19127,
+                                  "type": "struct LockUtils.LockSet storage ref",
+                                  "value": "_locks"
+                                },
+                                "id": 19177,
+                                "name": "Identifier",
+                                "src": "624:6:64"
+                              }
+                            ],
+                            "id": 19179,
+                            "name": "MemberAccess",
+                            "src": "624:18:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 19174,
+                              "type": "address",
+                              "value": "creator"
+                            },
+                            "id": 19180,
+                            "name": "Identifier",
+                            "src": "643:7:64"
+                          }
+                        ],
+                        "id": 19181,
+                        "name": "FunctionCall",
+                        "src": "624:27:64"
+                      }
+                    ],
+                    "id": 19182,
+                    "name": "ExpressionStatement",
+                    "src": "624:27:64"
+                  }
+                ],
+                "id": 19183,
+                "name": "Block",
+                "src": "614:44:64"
+              }
+            ],
+            "id": 19184,
+            "name": "FunctionDefinition",
+            "src": "563:95:64"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "publicEnumerateCreators",
+              "scope": 19230,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 19185,
+                "name": "ParameterList",
+                "src": "696:2:64"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 19229,
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "type": "address[]",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "length": null,
+                          "type": "address[]"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "name": "address",
+                              "stateMutability": "nonpayable",
+                              "type": "address"
+                            },
+                            "id": 19186,
+                            "name": "ElementaryTypeName",
+                            "src": "720:7:64"
+                          }
+                        ],
+                        "id": 19187,
+                        "name": "ArrayTypeName",
+                        "src": "720:9:64"
+                      }
+                    ],
+                    "id": 19188,
+                    "name": "VariableDeclaration",
+                    "src": "720:16:64"
+                  }
+                ],
+                "id": 19189,
+                "name": "ParameterList",
+                "src": "719:18:64"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "assignments": [
+                        19193
+                      ]
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "constant": false,
+                          "name": "creators",
+                          "scope": 19228,
+                          "stateVariable": false,
+                          "storageLocation": "memory",
+                          "type": "address[]",
+                          "value": null,
+                          "visibility": "internal"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "length": null,
+                              "type": "address[]"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "name": "address",
+                                  "type": "address"
+                                },
+                                "id": 19191,
+                                "name": "ElementaryTypeName",
+                                "src": "748:7:64"
+                              }
+                            ],
+                            "id": 19192,
+                            "name": "ArrayTypeName",
+                            "src": "748:9:64"
+                          }
+                        ],
+                        "id": 19193,
+                        "name": "VariableDeclaration",
+                        "src": "748:25:64"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "isStructConstructorCall": false,
+                          "lValueRequested": false,
+                          "names": [
+                            null
+                          ],
+                          "type": "address[] memory",
+                          "type_conversion": false
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_uint256",
+                                  "typeString": "uint256"
+                                }
+                              ],
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "type": "function (uint256) pure returns (address[] memory)"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "length": null,
+                                  "type": "address[]"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "name": "address",
+                                      "stateMutability": "nonpayable",
+                                      "type": "address"
+                                    },
+                                    "id": 19194,
+                                    "name": "ElementaryTypeName",
+                                    "src": "780:7:64"
+                                  }
+                                ],
+                                "id": 19195,
+                                "name": "ArrayTypeName",
+                                "src": "780:9:64"
+                              }
+                            ],
+                            "id": 19196,
+                            "name": "NewExpression",
+                            "src": "776:13:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "length",
+                              "referencedDeclaration": null,
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "locks",
+                                  "referencedDeclaration": 16390,
+                                  "type": "struct LockUtils.Lock storage ref[] storage ref"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 19127,
+                                      "type": "struct LockUtils.LockSet storage ref",
+                                      "value": "_locks"
+                                    },
+                                    "id": 19197,
+                                    "name": "Identifier",
+                                    "src": "790:6:64"
+                                  }
+                                ],
+                                "id": 19198,
+                                "name": "MemberAccess",
+                                "src": "790:12:64"
+                              }
+                            ],
+                            "id": 19199,
+                            "name": "MemberAccess",
+                            "src": "790:19:64"
+                          }
+                        ],
+                        "id": 19200,
+                        "name": "FunctionCall",
+                        "src": "776:34:64"
+                      }
+                    ],
+                    "id": 19201,
+                    "name": "VariableDeclarationStatement",
+                    "src": "748:62:64"
+                  },
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "assignments": [
+                            19203
+                          ]
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "constant": false,
+                              "name": "i",
+                              "scope": 19225,
+                              "stateVariable": false,
+                              "storageLocation": "default",
+                              "type": "uint256",
+                              "value": null,
+                              "visibility": "internal"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "name": "uint256",
+                                  "type": "uint256"
+                                },
+                                "id": 19202,
+                                "name": "ElementaryTypeName",
+                                "src": "825:7:64"
+                              }
+                            ],
+                            "id": 19203,
+                            "name": "VariableDeclaration",
+                            "src": "825:9:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "hexvalue": "30",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "subdenomination": null,
+                              "token": "number",
+                              "type": "int_const 0",
+                              "value": "0"
+                            },
+                            "id": 19204,
+                            "name": "Literal",
+                            "src": "837:1:64"
+                          }
+                        ],
+                        "id": 19205,
+                        "name": "VariableDeclarationStatement",
+                        "src": "825:13:64"
+                      },
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "commonType": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          },
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "<",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 19203,
+                              "type": "uint256",
+                              "value": "i"
+                            },
+                            "id": 19206,
+                            "name": "Identifier",
+                            "src": "840:1:64"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": true,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "member_name": "length",
+                              "referencedDeclaration": null,
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": true,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "locks",
+                                  "referencedDeclaration": 16390,
+                                  "type": "struct LockUtils.Lock storage ref[] storage ref"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 19127,
+                                      "type": "struct LockUtils.LockSet storage ref",
+                                      "value": "_locks"
+                                    },
+                                    "id": 19207,
+                                    "name": "Identifier",
+                                    "src": "844:6:64"
+                                  }
+                                ],
+                                "id": 19208,
+                                "name": "MemberAccess",
+                                "src": "844:12:64"
+                              }
+                            ],
+                            "id": 19209,
+                            "name": "MemberAccess",
+                            "src": "844:19:64"
+                          }
+                        ],
+                        "id": 19210,
+                        "name": "BinaryOperation",
+                        "src": "840:23:64"
+                      },
+                      {
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "operator": "++",
+                              "prefix": false,
+                              "type": "uint256"
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 19203,
+                                  "type": "uint256",
+                                  "value": "i"
+                                },
+                                "id": 19211,
+                                "name": "Identifier",
+                                "src": "865:1:64"
+                              }
+                            ],
+                            "id": 19212,
+                            "name": "UnaryOperation",
+                            "src": "865:3:64"
+                          }
+                        ],
+                        "id": 19213,
+                        "name": "ExpressionStatement",
+                        "src": "865:3:64"
+                      },
+                      {
+                        "children": [
+                          {
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "operator": "=",
+                                  "type": "address"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "isConstant": false,
+                                      "isLValue": true,
+                                      "isPure": false,
+                                      "lValueRequested": true,
+                                      "type": "address"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 19193,
+                                          "type": "address[] memory",
+                                          "value": "creators"
+                                        },
+                                        "id": 19214,
+                                        "name": "Identifier",
+                                        "src": "884:8:64"
+                                      },
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 19203,
+                                          "type": "uint256",
+                                          "value": "i"
+                                        },
+                                        "id": 19215,
+                                        "name": "Identifier",
+                                        "src": "893:1:64"
+                                      }
+                                    ],
+                                    "id": 19216,
+                                    "name": "IndexAccess",
+                                    "src": "884:11:64"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "isConstant": false,
+                                      "isLValue": true,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "creator",
+                                      "referencedDeclaration": 16384,
+                                      "type": "address"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "isConstant": false,
+                                          "isLValue": true,
+                                          "isPure": false,
+                                          "lValueRequested": false,
+                                          "type": "struct LockUtils.Lock storage ref"
+                                        },
+                                        "children": [
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "isConstant": false,
+                                              "isLValue": true,
+                                              "isPure": false,
+                                              "lValueRequested": false,
+                                              "member_name": "locks",
+                                              "referencedDeclaration": 16390,
+                                              "type": "struct LockUtils.Lock storage ref[] storage ref"
+                                            },
+                                            "children": [
+                                              {
+                                                "attributes": {
+                                                  "argumentTypes": null,
+                                                  "overloadedDeclarations": [
+                                                    null
+                                                  ],
+                                                  "referencedDeclaration": 19127,
+                                                  "type": "struct LockUtils.LockSet storage ref",
+                                                  "value": "_locks"
+                                                },
+                                                "id": 19217,
+                                                "name": "Identifier",
+                                                "src": "898:6:64"
+                                              }
+                                            ],
+                                            "id": 19218,
+                                            "name": "MemberAccess",
+                                            "src": "898:12:64"
+                                          },
+                                          {
+                                            "attributes": {
+                                              "argumentTypes": null,
+                                              "overloadedDeclarations": [
+                                                null
+                                              ],
+                                              "referencedDeclaration": 19203,
+                                              "type": "uint256",
+                                              "value": "i"
+                                            },
+                                            "id": 19219,
+                                            "name": "Identifier",
+                                            "src": "911:1:64"
+                                          }
+                                        ],
+                                        "id": 19220,
+                                        "name": "IndexAccess",
+                                        "src": "898:15:64"
+                                      }
+                                    ],
+                                    "id": 19221,
+                                    "name": "MemberAccess",
+                                    "src": "898:23:64"
+                                  }
+                                ],
+                                "id": 19222,
+                                "name": "Assignment",
+                                "src": "884:37:64"
+                              }
+                            ],
+                            "id": 19223,
+                            "name": "ExpressionStatement",
+                            "src": "884:37:64"
+                          }
+                        ],
+                        "id": 19224,
+                        "name": "Block",
+                        "src": "870:62:64"
+                      }
+                    ],
+                    "id": 19225,
+                    "name": "ForStatement",
+                    "src": "820:112:64"
+                  },
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 19189
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "overloadedDeclarations": [
+                            null
+                          ],
+                          "referencedDeclaration": 19193,
+                          "type": "address[] memory",
+                          "value": "creators"
+                        },
+                        "id": 19226,
+                        "name": "Identifier",
+                        "src": "948:8:64"
+                      }
+                    ],
+                    "id": 19227,
+                    "name": "Return",
+                    "src": "941:15:64"
+                  }
+                ],
+                "id": 19228,
+                "name": "Block",
+                "src": "738:225:64"
+              }
+            ],
+            "id": 19229,
+            "name": "FunctionDefinition",
+            "src": "664:299:64"
+          }
+        ],
+        "id": 19230,
+        "name": "ContractDefinition",
+        "src": "71:894:64"
+      }
+    ],
+    "id": 19231,
+    "name": "SourceUnit",
+    "src": "0:966:64"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:02.164Z",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}

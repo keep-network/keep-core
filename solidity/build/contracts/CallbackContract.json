@@ -1,0 +1,670 @@
+{
+  "contractName": "CallbackContract",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "entry",
+          "type": "uint256"
+        }
+      ],
+      "name": "__beaconCallback",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "lastEntry",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"__beaconCallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lastEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Example callback contract for Random Beacon.\",\"methods\":{},\"title\":\"CallbackContract\"},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol\":\"CallbackContract\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol\":{\"keccak256\":\"0x7582dc270725d9d15dbc2e13b263fa2f2c3164d9c2ac4a452b2a891a8285262a\",\"urls\":[\"bzz-raw://25cfc654326961065b23bd76da82b9c86354b30bf0b37d16c4734bdc3033b84d\",\"dweb:/ipfs/QmYvebB1arUVwod3speEHWZx6qZNaPuB94XhSFR6hPw8a6\"]},\"/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol\":{\"keccak256\":\"0xdee3f4590f2cc6262ca481bc892c1dd04604907b235bf370270aa9044d54acc7\",\"urls\":[\"bzz-raw://147b7259d58316c07db48b43cffc05578f2cb2bc0c188dd1a815f28788cb0702\",\"dweb:/ipfs/QmckN6CMfmD8J1r5zEnTVpMuCXnLznbip6sZpeZq3L8NuJ\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5060c68061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063356e0728146037578063ffa2f8c3146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b60686088565b6040518082815260200191505060405180910390f35b8060008190555050565b6000805490509056fea265627a7a72315820776c1d72cd125d48df63971a5fe9ca59d999d65ec1234c2b404b82f54ee5b13464736f6c63430005110032",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060325760003560e01c8063356e0728146037578063ffa2f8c3146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b60686088565b6040518082815260200191505060405180910390f35b8060008190555050565b6000805490509056fea265627a7a72315820776c1d72cd125d48df63971a5fe9ca59d999d65ec1234c2b404b82f54ee5b13464736f6c63430005110032",
+  "sourceMap": "145:284:29:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;145:284:29;;;;;;;",
+  "deployedSourceMap": "145:284:29:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;145:284:29;;;;;;;;;;;;;;;;;;;;;;;;237:95;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;237:95:29;;;;;;;;;;;;;;;;;:::i;:::-;;338:89;;;:::i;:::-;;;;;;;;;;;;;;;;;;;237:95;320:5;307:10;:18;;;;237:95;:::o;338:89::-;380:7;410:10;;403:17;;338:89;:::o",
+  "source": "pragma solidity 0.5.17;\n\nimport \"../IRandomBeacon.sol\";\n\n/**\n * @title CallbackContract\n * @dev Example callback contract for Random Beacon.\n */\ncontract CallbackContract is IRandomBeaconConsumer {\n\n    uint256 internal _lastEntry;\n\n    function __beaconCallback(uint256 entry)\n        public\n    {\n        _lastEntry = entry;\n    }\n\n    function lastEntry() public view returns (uint256)\n    {\n        return _lastEntry;\n    }\n}\n",
+  "sourcePath": "/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol",
+  "ast": {
+    "absolutePath": "/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol",
+    "exportedSymbols": {
+      "CallbackContract": [
+        13314
+      ]
+    },
+    "id": 13315,
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 13290,
+        "literals": [
+          "solidity",
+          "0.5",
+          ".17"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "0:23:29"
+      },
+      {
+        "absolutePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+        "file": "../IRandomBeacon.sol",
+        "id": 13291,
+        "nodeType": "ImportDirective",
+        "scope": 13315,
+        "sourceUnit": 1364,
+        "src": "25:30:29",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 13292,
+              "name": "IRandomBeaconConsumer",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 1363,
+              "src": "174:21:29",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_IRandomBeaconConsumer_$1363",
+                "typeString": "contract IRandomBeaconConsumer"
+              }
+            },
+            "id": 13293,
+            "nodeType": "InheritanceSpecifier",
+            "src": "174:21:29"
+          }
+        ],
+        "contractDependencies": [
+          1363
+        ],
+        "contractKind": "contract",
+        "documentation": "@title CallbackContract\n@dev Example callback contract for Random Beacon.",
+        "fullyImplemented": true,
+        "id": 13314,
+        "linearizedBaseContracts": [
+          13314,
+          1363
+        ],
+        "name": "CallbackContract",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "constant": false,
+            "id": 13295,
+            "name": "_lastEntry",
+            "nodeType": "VariableDeclaration",
+            "scope": 13314,
+            "src": "203:27:29",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_uint256",
+              "typeString": "uint256"
+            },
+            "typeName": {
+              "id": 13294,
+              "name": "uint256",
+              "nodeType": "ElementaryTypeName",
+              "src": "203:7:29",
+              "typeDescriptions": {
+                "typeIdentifier": "t_uint256",
+                "typeString": "uint256"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 13304,
+              "nodeType": "Block",
+              "src": "297:35:29",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 13302,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 13300,
+                      "name": "_lastEntry",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 13295,
+                      "src": "307:10:29",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 13301,
+                      "name": "entry",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 13297,
+                      "src": "320:5:29",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      }
+                    },
+                    "src": "307:18:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "id": 13303,
+                  "nodeType": "ExpressionStatement",
+                  "src": "307:18:29"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 13305,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "__beaconCallback",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 13298,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13297,
+                  "name": "entry",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13305,
+                  "src": "263:13:29",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13296,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "263:7:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "262:15:29"
+            },
+            "returnParameters": {
+              "id": 13299,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "297:0:29"
+            },
+            "scope": 13314,
+            "src": "237:95:29",
+            "stateMutability": "nonpayable",
+            "superFunction": 1362,
+            "visibility": "public"
+          },
+          {
+            "body": {
+              "id": 13312,
+              "nodeType": "Block",
+              "src": "393:34:29",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 13310,
+                    "name": "_lastEntry",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 13295,
+                    "src": "410:10:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "functionReturnParameters": 13309,
+                  "id": 13311,
+                  "nodeType": "Return",
+                  "src": "403:17:29"
+                }
+              ]
+            },
+            "documentation": null,
+            "id": 13313,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "lastEntry",
+            "nodeType": "FunctionDefinition",
+            "parameters": {
+              "id": 13306,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "356:2:29"
+            },
+            "returnParameters": {
+              "id": 13309,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 13308,
+                  "name": "",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 13313,
+                  "src": "380:7:29",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 13307,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "380:7:29",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "379:9:29"
+            },
+            "scope": 13314,
+            "src": "338:89:29",
+            "stateMutability": "view",
+            "superFunction": null,
+            "visibility": "public"
+          }
+        ],
+        "scope": 13315,
+        "src": "145:284:29"
+      }
+    ],
+    "src": "0:430:29"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol",
+      "exportedSymbols": {
+        "CallbackContract": [
+          13314
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "0.5",
+            ".17"
+          ]
+        },
+        "id": 13290,
+        "name": "PragmaDirective",
+        "src": "0:23:29"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 1364,
+          "absolutePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+          "file": "../IRandomBeacon.sol",
+          "scope": 13315,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 13291,
+        "name": "ImportDirective",
+        "src": "25:30:29"
+      },
+      {
+        "attributes": {
+          "contractDependencies": [
+            1363
+          ],
+          "contractKind": "contract",
+          "documentation": "@title CallbackContract\n@dev Example callback contract for Random Beacon.",
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            13314,
+            1363
+          ],
+          "name": "CallbackContract",
+          "scope": 13315
+        },
+        "children": [
+          {
+            "attributes": {
+              "arguments": null
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "IRandomBeaconConsumer",
+                  "referencedDeclaration": 1363,
+                  "type": "contract IRandomBeaconConsumer"
+                },
+                "id": 13292,
+                "name": "UserDefinedTypeName",
+                "src": "174:21:29"
+              }
+            ],
+            "id": 13293,
+            "name": "InheritanceSpecifier",
+            "src": "174:21:29"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "_lastEntry",
+              "scope": 13314,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "uint256",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "uint256",
+                  "type": "uint256"
+                },
+                "id": 13294,
+                "name": "ElementaryTypeName",
+                "src": "203:7:29"
+              }
+            ],
+            "id": 13295,
+            "name": "VariableDeclaration",
+            "src": "203:27:29"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "__beaconCallback",
+              "scope": 13314,
+              "stateMutability": "nonpayable",
+              "superFunction": 1362,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "entry",
+                      "scope": 13305,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 13296,
+                        "name": "ElementaryTypeName",
+                        "src": "263:7:29"
+                      }
+                    ],
+                    "id": 13297,
+                    "name": "VariableDeclaration",
+                    "src": "263:13:29"
+                  }
+                ],
+                "id": 13298,
+                "name": "ParameterList",
+                "src": "262:15:29"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 13299,
+                "name": "ParameterList",
+                "src": "297:0:29"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "uint256"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13295,
+                              "type": "uint256",
+                              "value": "_lastEntry"
+                            },
+                            "id": 13300,
+                            "name": "Identifier",
+                            "src": "307:10:29"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 13297,
+                              "type": "uint256",
+                              "value": "entry"
+                            },
+                            "id": 13301,
+                            "name": "Identifier",
+                            "src": "320:5:29"
+                          }
+                        ],
+                        "id": 13302,
+                        "name": "Assignment",
+                        "src": "307:18:29"
+                      }
+                    ],
+                    "id": 13303,
+                    "name": "ExpressionStatement",
+                    "src": "307:18:29"
+                  }
+                ],
+                "id": 13304,
+                "name": "Block",
+                "src": "297:35:29"
+              }
+            ],
+            "id": 13305,
+            "name": "FunctionDefinition",
+            "src": "237:95:29"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "modifiers": [
+                null
+              ],
+              "name": "lastEntry",
+              "scope": 13314,
+              "stateMutability": "view",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 13306,
+                "name": "ParameterList",
+                "src": "356:2:29"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "",
+                      "scope": 13313,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 13307,
+                        "name": "ElementaryTypeName",
+                        "src": "380:7:29"
+                      }
+                    ],
+                    "id": 13308,
+                    "name": "VariableDeclaration",
+                    "src": "380:7:29"
+                  }
+                ],
+                "id": 13309,
+                "name": "ParameterList",
+                "src": "379:9:29"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "functionReturnParameters": 13309
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "overloadedDeclarations": [
+                            null
+                          ],
+                          "referencedDeclaration": 13295,
+                          "type": "uint256",
+                          "value": "_lastEntry"
+                        },
+                        "id": 13310,
+                        "name": "Identifier",
+                        "src": "410:10:29"
+                      }
+                    ],
+                    "id": 13311,
+                    "name": "Return",
+                    "src": "403:17:29"
+                  }
+                ],
+                "id": 13312,
+                "name": "Block",
+                "src": "393:34:29"
+              }
+            ],
+            "id": 13313,
+            "name": "FunctionDefinition",
+            "src": "338:89:29"
+          }
+        ],
+        "id": 13314,
+        "name": "ContractDefinition",
+        "src": "145:284:29"
+      }
+    ],
+    "id": 13315,
+    "name": "SourceUnit",
+    "src": "0:430:29"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.5.17+commit.d19bba13.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.3.3",
+  "updatedAt": "2021-01-29T15:47:02.062Z",
+  "devdoc": {
+    "details": "Example callback contract for Random Beacon.",
+    "methods": {},
+    "title": "CallbackContract"
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
