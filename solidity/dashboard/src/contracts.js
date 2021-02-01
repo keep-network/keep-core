@@ -20,9 +20,8 @@ import ECDSARewardsDistributor from "@keep-network/keep-ecdsa/artifacts/ECDSARew
 import LPRewardsKEEPETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPETH.json"
 import LPRewardsTBTCETH from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCETH.json"
 import LPRewardsKEEPTBTC from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
-import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
-// TODO: change import path
-import KeepOnlyPool from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
+import LPRewardsTBTCSaddle from "@keep-network/keep-ecdsa/artifacts/LPRewardsTBTCSaddle.json"
+import KeepOnlyPool from "@keep-network/keep-core/artifacts/KeepTokenGeyser.json"
 import IERC20 from "@keep-network/keep-core/artifacts/IERC20.json"
 import SaddleSwap from "./contracts-artifacts/SaddleSwap.json"
 import Web3 from "web3"
