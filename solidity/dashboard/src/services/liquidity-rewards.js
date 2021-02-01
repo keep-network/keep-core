@@ -257,8 +257,8 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return await this.LPRewardsContract.methods.totalStaked().call()
   }
 
-  rewardBalance = async (address) => {
-    return await this.LPRewardsContract.methods.unstakeQuery(address).call()
+  rewardBalance = async (address, amount) => {
+    return await this.LPRewardsContract.methods.unstakeQuery(amount).call()
   }
 
   rewardPoolPerWeek = async () => 0

@@ -56,7 +56,8 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       // Fetching available reward balance from `LPRewards` contract.
       reward = yield call(
         [LiquidityRewards, LiquidityRewards.rewardBalance],
-        address
+        address,
+        lpBalance
       )
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()

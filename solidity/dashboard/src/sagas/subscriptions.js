@@ -681,9 +681,23 @@ function* lpTokensStakedOrWithdrawn(
     totalSupply
   )
 
+  const { lpBalance } = yield select(
+    (state) => state.liquidityRewards[liquidityRewardPairName]
+  )
+
+  let updatedlpBalance = lpBalance
+  let emittedAmountValue = 0
+  // Update only if this transacion relates to the current logged account.
+  if (isSameEthAddress(defaultAccount, user)) {
+    emittedAmountValue = amount
+    const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
+    updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
+  }
+
   const reward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
-    defaultAccount
+    defaultAccount,
+    lpBalance
   )
 
   // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
@@ -691,8 +705,8 @@ function* lpTokensStakedOrWithdrawn(
   yield put({
     type: actionType,
     payload: {
-      // Update only if this transacion relates to the current logged account.
-      amount: isSameEthAddress(defaultAccount, user) ? amount : 0,
+      amount: emittedAmountValue,
+      lpBalance: updatedlpBalance,
       totalSupply,
       reward,
       apy,
