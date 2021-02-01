@@ -5,7 +5,7 @@ import {
   CONTRACT_DEPLOY_BLOCK_NUMBER,
 } from "../contracts"
 import BigNumber from "bignumber.js"
-import { toTokenUnit } from "../utils/token.utils"
+import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
 import {
   getPairData,
   getKeepTokenPriceInUSD,
@@ -13,6 +13,7 @@ import {
 } from "./uniswap-api"
 import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
+import { isEmptyArray } from "../utils/array.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -261,20 +262,15 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return await this.LPRewardsContract.methods.unstakeQuery(amount).call()
   }
 
-  rewardPoolPerWeek = async () => 0
-
   calculateAPY = async (totalSupplyOfLPRewards) => {
     totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
 
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
-    const wrappedTokenTotalSupply = toTokenUnit(
-      await this.wrappedTokenTotalSupply()
-    )
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
 
-    const lpRewardsPoolInUSD = totalSupplyOfLPRewards
-      .multipliedBy(keepTokenInUSD)
-      .div(wrappedTokenTotalSupply)
+    const lpRewardsPoolInUSD = totalSupplyOfLPRewards.multipliedBy(
+      keepTokenInUSD
+    )
 
     const r = this._calculateR(
       keepTokenInUSD,
@@ -283,6 +279,27 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     )
 
     return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+
+  rewardPoolPerWeek = async () => {
+    const tokensLockedEvents = await this.LPRewardsContract.getPastEvents(
+      "TokensLocked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.keepTokenGeyserContract,
+      }
+    )
+
+    // The KEEP-only pool will earn 100k KEEP per month.
+    let rewardPoolPerMonth = fromTokenUnit(10e4)
+    const weeksInMonth = new BigNumber(
+      moment.duration(1, "months").asSeconds()
+    ).div(moment.duration(7, "days").asSeconds())
+
+    if (!isEmptyArray(tokensLockedEvents)) {
+      rewardPoolPerMonth = new BigNumber(tokensLockedEvents.reverse()[0].amount)
+    }
+
+    return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
 }
 
