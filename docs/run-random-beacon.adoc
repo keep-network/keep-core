@@ -259,6 +259,17 @@ reference].
 |Yes
 |===
 
+==== Celo Alfajores
+The https://docs.celo.org/getting-started/alfajores-testnet[Alfajores Testnet] is a Celo test network for developers building on the Celo platform.
+
+[source,toml]
+----
+# Celo Alfajores host connection info.
+  URL    = "wss://alfajores-forno.celo-testnet.org/ws"
+  URLRPC = "https://alfajores-forno.celo-testnet.org"
+----
+
+
 == Build from Source
 
 See the https://github.com/keep-network/keep-core/tree/master/docs/development#building[building] section in our developer docs.
