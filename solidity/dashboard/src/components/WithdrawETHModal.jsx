@@ -5,7 +5,7 @@ import web3Utils from "web3-utils"
 import { useWeb3Context } from "./WithWeb3Context"
 import * as Icons from "./Icons"
 import AvailableEthAmount from "./AvailableEthAmount"
-import AvailableETHForm from "./AvailableETHForm"
+import AvailableETHForm from "./AvailableTokenForm"
 import {
   withdrawUnbondedEth,
   withdrawUnbondedEthAsManagedGrantee,
