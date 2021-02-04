@@ -19,6 +19,7 @@ import {
 import { lte } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
 import Tag from "./Tag"
+import MaxAmountAddon from "./MaxAmountAddon"
 
 const DelegateStakeForm = ({
   onSubmit,
@@ -133,7 +134,9 @@ const TokensAmountField = ({
             minStake
           )} KEEP`}
           leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
-          inputAddon={<MaxStakeAddon onClick={onAddonClick} />}
+          inputAddon={
+            <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
+          }
         />
         <ProgressBar
           total={availableToStake}
@@ -152,10 +155,6 @@ const TokensAmountField = ({
       </div>
     </div>
   )
-}
-
-const MaxStakeAddon = ({ onClick }) => {
-  return <Tag IconComponent={Icons.Plus} text="Max Stake" onClick={onClick} />
 }
 
 const connectedWithFormik = withFormik({
