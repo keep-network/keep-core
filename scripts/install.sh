@@ -22,7 +22,7 @@ help()
    echo -e "\t--config-dir: Configuration path for keep-core client"
    echo -e "\t--account-password: Account password"
    echo -e "\t--private-key: Contract owner's account private key"
-   echo -e "\t--network: Connection network for keep-core client"
+   echo -e "\t--network: Host chain network for keep-core client"
    exit 1 # Exit script after printing help
 }
 
