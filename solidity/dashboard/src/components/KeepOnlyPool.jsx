@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useMemo, useCallback } from "react"
 import CountUp from "react-countup"
 import Divider from "./Divider"
 import { SubmitButton } from "./Button"
@@ -26,13 +26,28 @@ const KeepOnlyPool = ({
   liquidityContractName,
   pool,
 }) => {
+  const lockedKEEP = useMemo(() => {
+    return add(lpBalance, rewardBalance)
+  }, [lpBalance, rewardBalance])
+
+  const formattingFn = useCallback((value) => {
+    return displayAmount(fromTokenUnit(value))
+  }, [])
+
   return (
     <section className="keep-only-pool">
       <section className="tile keep-only-pool__overview">
         <section>
-          <h2 className="h2--alt text-grey-70">Total KEEP Locked</h2>
+          <h2 className="h2--alt text-grey-70">Your KEEP Total Locked</h2>
           <h1 className="text-mint-100 mt-2">
-            0&nbsp;<span className="h2">KEEP</span>
+            <CountUp
+              end={toTokenUnit(lockedKEEP).toNumber()}
+              preserveValue
+              decimals={2}
+              duration={1}
+              formattingFn={formattingFn}
+            />
+            &nbsp;<span className="h2">KEEP</span>
           </h1>
           <div className="flex row space-between text-grey-40 mt-1">
             <h4>Deposited KEEP tokens</h4>
@@ -42,7 +57,7 @@ const KeepOnlyPool = ({
                 preserveValue
                 decimals={2}
                 duration={1}
-                formattingFn={(value) => displayAmount(fromTokenUnit(value))}
+                formattingFn={formattingFn}
               />
               KEEP
             </h4>
@@ -56,7 +71,7 @@ const KeepOnlyPool = ({
                 preserveValue
                 decimals={2}
                 duration={1}
-                formattingFn={(value) => displayAmount(fromTokenUnit(value))}
+                formattingFn={formattingFn}
               />
               KEEP
             </h4>
