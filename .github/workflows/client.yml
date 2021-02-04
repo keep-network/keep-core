@@ -1,0 +1,22 @@
+name: Go
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      #- name: Login to DockerHub Registry # is that needed? do we use secrets in GitHub?
+      #  run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+      - name: Run Docker build
+        # run: |
+        #    docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN --target gobuild -t go-build-env .
+        #    docker build --build-arg GITHUB_TOKEN=$GITHUB_TOKEN -t $GCR_REGISTRY_URL/$GOOGLE_PROJECT_ID/keep-client .
+        run: docker build --tag keep-client .
+ 
+        #- name: Run Go tests
+        #  run: |
+        #    docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env gotestsum --junitfile /mnt/test-results/unit-tests.xml
+        #    docker run -v /tmp/test-results:/mnt/test-results -w /go/src/github.com/keep-network/keep-core go-build-env cat /mnt/test-results/unit-tests.xml > /tmp/test-results/keep-core-go/unit-tests.xml
+   
