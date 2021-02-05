@@ -697,7 +697,7 @@ function* lpTokensStakedOrWithdrawn(
   const reward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
     defaultAccount,
-    lpBalance
+    updatedlpBalance
   )
 
   // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
