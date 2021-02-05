@@ -76,8 +76,31 @@ const KeepOnlyPool = ({
     ]
   )
 
-  // TODO
-  const withdrawKEEP = useCallback(() => {})
+  const withdrawKEEP = useCallback(
+    async (awaitingPromise) => {
+      const { stakeTokens: amount } = await openConfirmationModal(
+        {
+          modalOptions: { title: "Withdraw Locked KEEP" },
+          depositedAmount: lpBalance,
+        },
+        WithdrawKEEPFormik
+      )
+
+      withdrawLiquidityRewards(
+        liquidityContractName,
+        fromTokenUnit(amount).toString(),
+        pool,
+        awaitingPromise
+      )
+    },
+    [
+      withdrawLiquidityRewards,
+      lpBalance,
+      openConfirmationModal,
+      pool,
+      liquidityContractName,
+    ]
+  )
 
   return (
     <section className="keep-only-pool">
@@ -205,7 +228,7 @@ const AddKEEPForm = (props) => {
           normalize: normalizeAmount,
           format: formatFormAmount,
           placeholder: "0",
-          inputAddon: <MaxAmountAddon onClick={setMaxAmount} />,
+          inputAddon: <MaxAmountAddon onClick={setMaxAmount} text="Max KEEP" />,
         }}
         {...formikProps}
       />
@@ -237,3 +260,99 @@ const AddKEEPFormik = withFormik({
   handleSubmit: (values, { props }) => props.onBtnClick(values),
   displayName: "AddKEEPFormik",
 })(AddKEEPForm)
+
+const WithdrawKEEPForm = (props) => {
+  const { depositedAmount, rewardedAmount, onCancel, ...formikProps } = props
+  const setMaxAmount = useSetMaxAmountToken("withdrawTokens", depositedAmount)
+
+  return (
+    <>
+      <h3 className="mb-1">Amount available to withdraw.</h3>
+      <div className="flex row mb-2">
+        <AmountTile
+          title="deposited"
+          amount={depositedAmount}
+          icon={<Icons.KeepOutline className="keep-outline--mint-80" />}
+        />
+        <AmountTile
+          title="rewarded"
+          amount={rewardedAmount}
+          icon={
+            <Icons.Rewards
+              width={32}
+              height={32}
+              className="reward-icon--mint-80"
+            />
+          }
+        />
+      </div>
+      <AvailableTokenForm
+        onSubmit={formikProps.handleSubmit}
+        onCancel={onCancel}
+        submitBtnText="withdraw keep"
+        formInputProps={{
+          name: "withdrawTokens",
+          type: "text",
+          label: "Withdraw",
+          normalize: normalizeAmount,
+          format: formatFormAmount,
+          placeholder: "0",
+          inputAddon: <MaxAmountAddon onClick={setMaxAmount} text="Max KEEP" />,
+        }}
+        {...formikProps}
+      />
+    </>
+  )
+}
+
+const styles = {
+  amountTileWrapper: {
+    justifyContent: "flex-start",
+    flexGrow: "1",
+    padding: "0.5rem",
+    height: "auto",
+  },
+}
+const AmountTile = ({ amount, title, icon }) => {
+  return (
+    <MetricsTile
+      className="bg-grey-10 self-start"
+      style={styles.amountTileWrapper}
+    >
+      <h5 className="text-grey-40 text-left mb-1">{title}</h5>
+      <div className="flex row mb-1">
+        {icon}
+        &nbsp;
+        <h2 className="text-mint-100">
+          {displayAmountWithMetricSuffix(amount)}
+          <span className="h3">&nbsp;KEEP</span>
+        </h2>
+      </div>
+    </MetricsTile>
+  )
+}
+
+const WithdrawKEEPFormik = withFormik({
+  validateOnChange: false,
+  validateOnBlur: false,
+  mapPropsToValues: () => ({
+    withdrawTokens: "0",
+  }),
+  validate: ({ withdrawTokens }, { depositedAmount }) => {
+    const errors = {}
+
+    if (lte(depositedAmount || 0, 0)) {
+      errors.withdrawTokens = "Insufficient funds"
+    } else {
+      errors.withdrawTokens = validateAmountInRange(
+        withdrawTokens,
+        depositedAmount,
+        1
+      )
+    }
+
+    return getErrorsObj(errors)
+  },
+  handleSubmit: (values, { props }) => props.onBtnClick(values),
+  displayName: "WithdrawKEEPFormik",
+})(WithdrawKEEPForm)
