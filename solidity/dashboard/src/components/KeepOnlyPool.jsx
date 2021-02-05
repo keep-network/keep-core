@@ -4,7 +4,7 @@ import { withFormik } from "formik"
 import Divider from "./Divider"
 import { SubmitButton } from "./Button"
 import * as Icons from "./Icons"
-import { APY, ShareOfPool } from "./liquidity"
+import { APY } from "./liquidity"
 import { gt, add, lte } from "../utils/arithmetics.utils"
 import {
   //   displayAmountWithMetricSuffix,
@@ -12,6 +12,8 @@ import {
   toTokenUnit,
   displayAmount,
   fromTokenUnit,
+  displayAmountWithMetricSuffix,
+  displayNumberWithMetricSuffix,
 } from "../utils/token.utils"
 import {
   normalizeAmount,
@@ -24,6 +26,7 @@ import { validateAmountInRange, getErrorsObj } from "../forms/common-validators"
 import { useModal } from "../hooks/useModal"
 import TokenAmount from "./TokenAmount"
 import MetricsTile from "./MetricsTile"
+import { Skeleton } from "./skeletons"
 
 const KeepOnlyPool = ({
   apy,
@@ -32,7 +35,6 @@ const KeepOnlyPool = ({
   wrappedTokenBalance,
   isFetching,
   isAPYFetching,
-  percentageOfTotalPool,
   addLpTokens,
   withdrawLiquidityRewards,
   liquidityContractName,
@@ -154,11 +156,19 @@ const KeepOnlyPool = ({
             <h6>Estimate of pool apy</h6>
           </MetricsTile>
           <MetricsTile className="liquidity__info-tile bg-mint-10">
-            <ShareOfPool
-              className="liquidity__info-tile__title text-mint-100"
-              percentageOfTotalPool={percentageOfTotalPool}
-              isFetching={isFetching}
-            />
+            {isFetching ? (
+              <Skeleton tag="h2" shining={true} color="grey-10" />
+            ) : (
+              <h2 className="liquidity__info-tile__title text-mint-100">
+                <CountUp
+                  end={toTokenUnit(rewardBalance).toNumber()}
+                  preserveValue
+                  decimals={2}
+                  duration={1}
+                  formattingFn={displayNumberWithMetricSuffix}
+                />
+              </h2>
+            )}
             <h6>your keep rewards</h6>
           </MetricsTile>
         </section>
