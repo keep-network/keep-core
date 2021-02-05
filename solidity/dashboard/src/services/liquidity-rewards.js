@@ -259,7 +259,22 @@ class TokenGeyserLPRewards extends LiquidityRewards {
   }
 
   rewardBalance = async (address, amount) => {
-    return await this.LPRewardsContract.methods.unstakeQuery(amount).call()
+    try {
+      // The `TokenGeyser.unstakeQuery` throws an error in case when eg. the
+      // amount param is greater than the real user's stake or when
+      // the user stakes KEEP in block `X` and call unstakeQuery in block `X`
+      // (`SafeMath: division by zero` error is thrown.). The web3 parses the
+      // error message in the wrong way when the `hanleRevert` option is enabled
+      // [1]. So here we clone the rewards contract instance and disable the
+      // `hanldeRevert` option.
+      // References: [1]:
+      // https://github.com/ChainSafe/web3.js/issues/3742
+      const clonedLPRewardsContract = this.LPRewardsContract.clone()
+      clonedLPRewardsContract.handleRevert = false
+      return await clonedLPRewardsContract.methods.unstakeQuery(amount).call()
+    } catch (error) {
+      return 0
+    }
   }
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
