@@ -38,7 +38,7 @@ module.exports = {
     alfajores: {
       provider: function() {
         const kit = Kit.newKit('https://alfajores-forno.celo-testnet.org')
-        kit.addAccount(process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY)
+        kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
         return kit.web3.currentProvider
       },
       network_id: 44787
