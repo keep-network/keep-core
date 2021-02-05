@@ -52,7 +52,7 @@ const KeepOnlyPool = ({
 
   const addKEEP = useCallback(
     async (awaitingPromise) => {
-      const { stakeTokens: amount } = await openConfirmationModal(
+      const { amount } = await openConfirmationModal(
         {
           modalOptions: { title: "Deposit KEEP" },
           availableAmount: wrappedTokenBalance,
@@ -78,10 +78,11 @@ const KeepOnlyPool = ({
 
   const withdrawKEEP = useCallback(
     async (awaitingPromise) => {
-      const { stakeTokens: amount } = await openConfirmationModal(
+      const { amount } = await openConfirmationModal(
         {
           modalOptions: { title: "Withdraw Locked KEEP" },
-          depositedAmount: lpBalance,
+          availableAmount: lpBalance,
+          rewardedAmount: rewardBalance,
         },
         WithdrawKEEPFormik
       )
@@ -99,6 +100,7 @@ const KeepOnlyPool = ({
       openConfirmationModal,
       pool,
       liquidityContractName,
+      rewardBalance,
     ]
   )
 
@@ -207,7 +209,7 @@ export default KeepOnlyPool
 
 const AddKEEPForm = (props) => {
   const { availableAmount, onCancel, ...formikProps } = props
-  const setMaxAmount = useSetMaxAmountToken("stakeTokens", availableAmount)
+  const setMaxAmount = useSetMaxAmountToken("amount", availableAmount)
 
   return (
     <>
@@ -222,7 +224,7 @@ const AddKEEPForm = (props) => {
         onCancel={onCancel}
         submitBtnText="deposit keep"
         formInputProps={{
-          name: "stakeTokens",
+          name: "amount",
           type: "text",
           label: "Deposit",
           normalize: normalizeAmount,
@@ -236,34 +238,9 @@ const AddKEEPForm = (props) => {
   )
 }
 
-const AddKEEPFormik = withFormik({
-  validateOnChange: false,
-  validateOnBlur: false,
-  mapPropsToValues: () => ({
-    stakeTokens: "0",
-  }),
-  validate: ({ stakeTokens }, { availableAmount }) => {
-    const errors = {}
-
-    if (lte(availableAmount || 0, 0)) {
-      errors.stakeTokens = "Insufficient funds"
-    } else {
-      errors.stakeTokens = validateAmountInRange(
-        stakeTokens,
-        availableAmount,
-        1
-      )
-    }
-
-    return getErrorsObj(errors)
-  },
-  handleSubmit: (values, { props }) => props.onBtnClick(values),
-  displayName: "AddKEEPFormik",
-})(AddKEEPForm)
-
 const WithdrawKEEPForm = (props) => {
-  const { depositedAmount, rewardedAmount, onCancel, ...formikProps } = props
-  const setMaxAmount = useSetMaxAmountToken("withdrawTokens", depositedAmount)
+  const { availableAmount, rewardedAmount, onCancel, ...formikProps } = props
+  const setMaxAmount = useSetMaxAmountToken("amount", availableAmount)
 
   return (
     <>
@@ -271,7 +248,7 @@ const WithdrawKEEPForm = (props) => {
       <div className="flex row mb-2">
         <AmountTile
           title="deposited"
-          amount={depositedAmount}
+          amount={availableAmount}
           icon={<Icons.KeepOutline className="keep-outline--mint-80" />}
         />
         <AmountTile
@@ -291,7 +268,7 @@ const WithdrawKEEPForm = (props) => {
         onCancel={onCancel}
         submitBtnText="withdraw keep"
         formInputProps={{
-          name: "withdrawTokens",
+          name: "amount",
           type: "text",
           label: "Withdraw",
           normalize: normalizeAmount,
@@ -332,27 +309,29 @@ const AmountTile = ({ amount, title, icon }) => {
   )
 }
 
-const WithdrawKEEPFormik = withFormik({
-  validateOnChange: false,
-  validateOnBlur: false,
+const commonFormikOptions = {
   mapPropsToValues: () => ({
-    withdrawTokens: "0",
+    amount: "0",
   }),
-  validate: ({ withdrawTokens }, { depositedAmount }) => {
+  validate: ({ amount }, { availableAmount }) => {
     const errors = {}
 
-    if (lte(depositedAmount || 0, 0)) {
-      errors.withdrawTokens = "Insufficient funds"
+    if (lte(availableAmount || 0, 0)) {
+      errors.amount = "Insufficient funds"
     } else {
-      errors.withdrawTokens = validateAmountInRange(
-        withdrawTokens,
-        depositedAmount,
-        1
-      )
+      errors.amount = validateAmountInRange(amount, availableAmount, 1)
     }
 
     return getErrorsObj(errors)
   },
   handleSubmit: (values, { props }) => props.onBtnClick(values),
+}
+const WithdrawKEEPFormik = withFormik({
+  ...commonFormikOptions,
   displayName: "WithdrawKEEPFormik",
 })(WithdrawKEEPForm)
+
+const AddKEEPFormik = withFormik({
+  ...commonFormikOptions,
+  displayName: "AddKEEPFormik",
+})(AddKEEPForm)
