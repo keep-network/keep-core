@@ -11,6 +11,7 @@ import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { APY, ShareOfPool } from "./liquidity"
+import MetricsTile from "./MetricsTile"
 
 const LiquidityRewardCard = ({
   title,
@@ -116,23 +117,25 @@ const LiquidityRewardCard = ({
           gt(lpBalance, 0) ? "" : "--locked"
         } mt-2 mb-2`}
       >
-        <div className={"liquidity__info-tile bg-mint-10"}>
-          <APY.Tooltip className="liquidity__info-tile__tooltip" />
+        <MetricsTile className="liquidity__info-tile bg-mint-10">
+          <MetricsTile.Tooltip className="liquidity__info-tile__tooltip">
+            <APY.TooltipContent />
+          </MetricsTile.Tooltip>
           <APY
             apy={apy}
             isFetching={isAPYFetching}
             className="liquidity__info-tile__title text-mint-100"
           />
           <h6>Estimate of pool apy</h6>
-        </div>
-        <div className={"liquidity__info-tile bg-mint-10"}>
+        </MetricsTile>
+        <MetricsTile className="liquidity__info-tile bg-mint-10">
           <ShareOfPool
             className="liquidity__info-tile__title text-mint-100"
             percentageOfTotalPool={percentageOfTotalPool}
             isFetching={isFetching}
           />
           <h6>Your share of POOL</h6>
-        </div>
+        </MetricsTile>
       </div>
       {renderUserInfoBanner()}
       <div className={"liquidity__reward-balance"}>

@@ -2,8 +2,6 @@ import React, { useMemo } from "react"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import { Skeleton } from "../skeletons"
-import * as Icons from "../Icons"
-import Tooltip from "../Tooltip"
 import {
   displayPercentageValue,
   formatPercentage,
@@ -48,14 +46,9 @@ export const APY = ({
   )
 }
 
-APY.Tooltip = ({ className = "" }) => {
+APY.TooltipContent = () => {
   return (
-    <Tooltip
-      simple
-      delay={0}
-      triggerComponent={Icons.MoreInfo}
-      className={className}
-    >
+    <>
       Pool APY is calculated using the&nbsp;
       <a
         target="_blank"
@@ -66,7 +59,7 @@ APY.Tooltip = ({ className = "" }) => {
         Uniswap subgraph API
       </a>
       &nbsp;to fetch the total pool value and KEEP token in USD.
-    </Tooltip>
+    </>
   )
 }
 
