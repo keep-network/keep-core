@@ -73,7 +73,7 @@ export const LIQUIDITY_REWARD_PAIRS = {
     address: "0x854056fd40c1b52037166285b2e54fee774d33f6",
     pool: "UNISWAP",
   },
-  KEEP: {
+  KEEP_ONLY: {
     contractName: KEEP_TOKEN_GEYSER_CONTRACT_NAME,
     label: "KEEP",
     pool: "TOKEN_GEYSER",

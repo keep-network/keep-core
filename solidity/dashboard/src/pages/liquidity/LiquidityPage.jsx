@@ -24,7 +24,7 @@ const LiquidityPage = ({ headerTitle }) => {
   const { isConnected } = useWeb3Context()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
-  const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC, KEEP } = useSelector(
+  const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC, KEEP_ONLY } = useSelector(
     (state) => state.liquidityRewards
   )
 
@@ -122,13 +122,13 @@ const LiquidityPage = ({ headerTitle }) => {
       )}
 
       <KeepOnlyPool
-        {...KEEP}
-        percentageOfTotalPool={KEEP.shareOfPoolInPercent}
-        rewardBalance={KEEP.reward}
+        {...KEEP_ONLY}
+        percentageOfTotalPool={KEEP_ONLY.shareOfPoolInPercent}
+        rewardBalance={KEEP_ONLY.reward}
         addLpTokens={addLpTokens}
         withdrawLiquidityRewards={withdrawLiquidityRewards}
-        liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP.contractName}
-        pool={LIQUIDITY_REWARD_PAIRS.KEEP.pool}
+        liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.contractName}
+        pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
       />
       <CardContainer>
         <LiquidityRewardCard
