@@ -216,6 +216,8 @@ const AddKEEPForm = (props) => {
         amount={availableAmount}
         currencySymbol="KEEP"
         wrapperClassName="mb-1"
+        currencyIconProps={{ className: "keep-outline--mint-80" }}
+        amountClassName="h1 text-mint-100"
       />
       <AvailableTokenForm
         onSubmit={formikProps.handleSubmit}
