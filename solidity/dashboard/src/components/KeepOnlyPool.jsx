@@ -7,8 +7,6 @@ import * as Icons from "./Icons"
 import { APY } from "./liquidity"
 import { gt, add, lte } from "../utils/arithmetics.utils"
 import {
-  //   displayAmountWithMetricSuffix,
-  //   getNumberWithMetricSuffix,
   toTokenUnit,
   displayAmount,
   fromTokenUnit,

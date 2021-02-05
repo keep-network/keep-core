@@ -28,8 +28,6 @@ const LiquidityPage = ({ headerTitle }) => {
     (state) => state.liquidityRewards
   )
 
-  console.log("KEEP", KEEP)
-
   const dispatch = useDispatch()
   const address = useWeb3Address()
 
