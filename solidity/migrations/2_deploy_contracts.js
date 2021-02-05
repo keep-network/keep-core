@@ -48,7 +48,7 @@ const BeaconRewards = artifacts.require("./BeaconRewards.sol")
 
 let initializationPeriod = 43200 // ~12 hours
 const dkgContributionMargin = 1 // 1%
-const testNetworks = ['local', 'ropsten', 'keep_dev', 'alfajores']
+const testNetworks = ["local", "ropsten", "keep_dev", "alfajores"]
 
 module.exports = async function (deployer, network) {
   // Set the stake initialization period to 1 block for local development and testnet.
@@ -88,7 +88,7 @@ module.exports = async function (deployer, network) {
 
   let oldStakingContractAddress
   if (testNetworks.includes(network)) {
-    const OldTokenStaking = artifacts.require("./stubs/OldTokenStaking.sol");
+    const OldTokenStaking = artifacts.require("./stubs/OldTokenStaking.sol")
     await deployer.link(MinimumStakeSchedule, OldTokenStaking)
     await deployer.link(GrantStaking, OldTokenStaking)
     await deployer.link(Locks, OldTokenStaking)

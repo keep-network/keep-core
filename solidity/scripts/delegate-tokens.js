@@ -30,7 +30,7 @@ module.exports = async function () {
 
     // Stake delegate tokens for first 5 accounts as operators,
     // including the first account where owner operating for themself.
-    const numberOfAccounts = Math.min(accounts.length, 5);
+    const numberOfAccounts = Math.min(accounts.length, 5)
     for (let i = 0; i < numberOfAccounts; i++) {
       const operator = accounts[i]
       const beneficiary = accounts[i] // The address where the rewards for participation are sent.
