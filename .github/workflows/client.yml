@@ -1,6 +1,7 @@
 name: Go
 
-on: push #TODO: extend the conditions
+#TODO: extend the conditions
+on: [push, pull_request]
 
 jobs:
   build:
