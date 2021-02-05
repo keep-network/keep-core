@@ -5,7 +5,6 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 import "../../TokenStakingEscrow.sol";
 import "../../utils/OperatorParams.sol";
 
-
 /// @notice TokenStaking contract library allowing to perform two-step stake
 /// top-ups for existing delegations.
 /// Top-up is a two-step process: it is initiated with a declared top-up value
@@ -132,10 +131,10 @@ library TopUps {
     /// used when the stake is recovered to return tokens from a pending,
     /// initiating top-up.
     /// @param operator Operator The operator from which the stake is recovered.
-    function cancel(
-        Storage storage self,
-        address operator
-    ) public returns (uint256) {
+    function cancel(Storage storage self, address operator)
+        public
+        returns (uint256)
+    {
         TopUp memory topUp = self.topUps[operator];
         if (topUp.amount == 0) {
             return 0;
@@ -151,7 +150,10 @@ library TopUps {
     /// @param operatorParams Parameters of the operator, as stored in the
     /// staking contract.
     function isUndelegating(uint256 operatorParams)
-        internal view returns (bool) {
+        internal
+        view
+        returns (bool)
+    {
         uint256 undelegatedAt = operatorParams.getUndelegationTimestamp();
         return (undelegatedAt != 0) && (block.timestamp > undelegatedAt);
     }

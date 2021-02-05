@@ -3,7 +3,6 @@ pragma solidity 0.5.17;
 import "../libraries/RolesLookup.sol";
 
 contract RolesLookupStub {
-
     TokenStaking internal tokenStaking;
     TokenGrant internal tokenGrant;
 
@@ -12,26 +11,25 @@ contract RolesLookupStub {
         tokenGrant = _tokenGrant;
     }
 
-    function isTokenOwnerForOperator(
-        address tokenOwner,
-        address operator
-    ) public view returns (bool) {
-        return RolesLookup.isTokenOwnerForOperator(
-            tokenOwner,
-            operator,
-            tokenStaking
-        );
+    function isTokenOwnerForOperator(address tokenOwner, address operator)
+        public
+        view
+        returns (bool)
+    {
+        return
+            RolesLookup.isTokenOwnerForOperator(
+                tokenOwner,
+                operator,
+                tokenStaking
+            );
     }
 
-    function isGranteeForOperator(
-        address grantee,
-        address operator
-    ) public view returns (bool) {
-        return RolesLookup.isGranteeForOperator(
-            grantee,
-            operator,
-            tokenGrant
-        );
+    function isGranteeForOperator(address grantee, address operator)
+        public
+        view
+        returns (bool)
+    {
+        return RolesLookup.isGranteeForOperator(grantee, operator, tokenGrant);
     }
 
     function isManagedGranteeForOperator(
@@ -39,22 +37,20 @@ contract RolesLookupStub {
         address operator,
         address granteeContract
     ) public view returns (bool) {
-        return RolesLookup.isManagedGranteeForOperator(
-            grantee,
-            operator,
-            granteeContract,
-            tokenGrant
-        );
+        return
+            RolesLookup.isManagedGranteeForOperator(
+                grantee,
+                operator,
+                granteeContract,
+                tokenGrant
+            );
     }
 
-    function isManagedGranteeForGrant(
-        address grantee,
-        uint256 grantId
-    ) public returns (bool) {
-        return RolesLookup.isManagedGranteeForGrant(
-            grantee,
-            grantId,
-            tokenGrant
-        );
+    function isManagedGranteeForGrant(address grantee, uint256 grantId)
+        public
+        returns (bool)
+    {
+        return
+            RolesLookup.isManagedGranteeForGrant(grantee, grantId, tokenGrant);
     }
 }

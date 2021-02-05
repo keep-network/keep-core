@@ -3,19 +3,20 @@ pragma solidity 0.5.17;
 import "../KeepRandomBeaconOperator.sol";
 
 contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
-
     constructor(
         address _serviceContract,
         address _stakingContract,
         address _registryContract,
         address _gasPriceOracle
-    ) KeepRandomBeaconOperator(
-        _serviceContract,
-        _stakingContract,
-        _registryContract,
-        _gasPriceOracle
-    ) public {
-    }
+    )
+        public
+        KeepRandomBeaconOperator(
+            _serviceContract,
+            _stakingContract,
+            _registryContract,
+            _gasPriceOracle
+        )
+    {}
 
     function registerNewGroup(bytes memory groupPublicKey) public {
         groups.addGroup(groupPublicKey);
@@ -37,18 +38,20 @@ contract KeepRandomBeaconOperatorPricingStub is KeepRandomBeaconOperator {
         gasPriceCeiling = _gasPriceCeiling;
     }
 
-    function getNewEntryRewardsBreakdown() public view returns(
-        uint256 groupMemberReward,
-        uint256 submitterReward,
-        uint256 subsidy
-    ) {
+    function getNewEntryRewardsBreakdown()
+        public
+        view
+        returns (
+            uint256 groupMemberReward,
+            uint256 submitterReward,
+            uint256 subsidy
+        )
+    {
         return super.newEntryRewardsBreakdown();
     }
 
-    function delayFactor() public view returns(uint256) {
-        return DelayFactor.calculate(
-            currentRequestStartBlock,
-            relayEntryTimeout
-        );
+    function delayFactor() public view returns (uint256) {
+        return
+            DelayFactor.calculate(currentRequestStartBlock, relayEntryTimeout);
     }
 }

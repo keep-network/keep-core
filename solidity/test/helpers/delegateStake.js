@@ -1,23 +1,24 @@
 async function delegateStake(
-  tokenContract, 
-  stakingContract, 
+  tokenContract,
+  stakingContract,
   tokenOwner,
   operator,
   beneficiary,
   authorizer,
   amount
 ) {
-  let data = Buffer.concat([
-    Buffer.from(beneficiary.substr(2), 'hex'),
-    Buffer.from(operator.substr(2), 'hex'),
-    Buffer.from(authorizer.substr(2), 'hex')
-  ]);
-    
+  const data = Buffer.concat([
+    Buffer.from(beneficiary.substr(2), "hex"),
+    Buffer.from(operator.substr(2), "hex"),
+    Buffer.from(authorizer.substr(2), "hex"),
+  ])
+
   return tokenContract.approveAndCall(
-    stakingContract.address, amount, 
-    '0x' + data.toString('hex'), 
-    {from: tokenOwner}
-  );
+    stakingContract.address,
+    amount,
+    "0x" + data.toString("hex"),
+    { from: tokenOwner }
+  )
 }
 
 async function delegateStakeFromGrant(
@@ -30,18 +31,18 @@ async function delegateStakeFromGrant(
   amount,
   grantId
 ) {
-  let delegation = Buffer.concat([
-    Buffer.from(beneficiary.substr(2), 'hex'),
-    Buffer.from(operator.substr(2), 'hex'),
-    Buffer.from(authorizer.substr(2), 'hex')
+  const delegation = Buffer.concat([
+    Buffer.from(beneficiary.substr(2), "hex"),
+    Buffer.from(operator.substr(2), "hex"),
+    Buffer.from(authorizer.substr(2), "hex"),
   ])
 
   return grantContract.stake(
-    grantId, 
-    stakingContractAddress, 
-    amount, 
-    delegation, 
-    {from: grantee}
+    grantId,
+    stakingContractAddress,
+    amount,
+    delegation,
+    { from: grantee }
   )
 }
 
@@ -54,18 +55,15 @@ async function delegateStakeFromManagedGrant(
   authorizer,
   amount
 ) {
-  let delegation = Buffer.concat([
-    Buffer.from(beneficiary.substr(2), 'hex'),
-    Buffer.from(operator.substr(2), 'hex'),
-    Buffer.from(authorizer.substr(2), 'hex')
+  const delegation = Buffer.concat([
+    Buffer.from(beneficiary.substr(2), "hex"),
+    Buffer.from(operator.substr(2), "hex"),
+    Buffer.from(authorizer.substr(2), "hex"),
   ])
 
-  return managedGrant.stake(
-    stakingContractAddress, 
-    amount, 
-    delegation, 
-    {from: grantee}
-  )
+  return managedGrant.stake(stakingContractAddress, amount, delegation, {
+    from: grantee,
+  })
 }
 
 module.exports.delegateStake = delegateStake

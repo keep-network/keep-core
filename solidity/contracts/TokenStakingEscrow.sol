@@ -36,7 +36,6 @@ import "./TokenSender.sol";
 /// `TokenStaking` can be done do the given operator ever. Even if the previous
 /// delegation ended, operator address cannot be reused.
 contract TokenStakingEscrow is Ownable {
-
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using BytesLib for bytes;
@@ -63,10 +62,7 @@ contract TokenStakingEscrow is Ownable {
         address indexed grantManager,
         uint256 amount
     );
-    event EscrowAuthorized(
-        address indexed grantManager,
-        address escrow
-    );
+    event EscrowAuthorized(address indexed grantManager, address escrow);
 
     IERC20 public keepToken;
     TokenGrant public tokenGrant;
@@ -84,12 +80,9 @@ contract TokenStakingEscrow is Ownable {
     // Other escrows authorized by grant manager. Grantee may request to migrate
     // tokens to another authorized escrow.
     // grant manager -> escrow -> authorized?
-    mapping(address => mapping (address => bool)) internal authorizedEscrows;
+    mapping(address => mapping(address => bool)) internal authorizedEscrows;
 
-    constructor(
-        KeepToken _keepToken,
-        TokenGrant _tokenGrant
-    ) public {
+    constructor(KeepToken _keepToken, TokenGrant _tokenGrant) public {
         keepToken = _keepToken;
         tokenGrant = _tokenGrant;
     }
@@ -115,9 +108,8 @@ contract TokenStakingEscrow is Ownable {
         require(msg.sender == token, "KEEP token is not the sender");
         require(extraData.length == 64, "Unexpected data length");
 
-        (address operator, uint256 grantId) = abi.decode(
-            extraData, (address, uint256)
-        );
+        (address operator, uint256 grantId) =
+            abi.decode(extraData, (address, uint256));
         receiveDeposit(from, value, operator, grantId);
     }
 
@@ -155,7 +147,9 @@ contract TokenStakingEscrow is Ownable {
             "Redelegating to previously used operator is not allowed"
         );
 
-        deposits[previousOperator].redelegated = deposit.redelegated.add(amount);
+        deposits[previousOperator].redelegated = deposit.redelegated.add(
+            amount
+        );
 
         TokenSender(address(keepToken)).approveAndCall(
             owner(), // TokenStaking contract associated with the escrow
@@ -163,12 +157,7 @@ contract TokenStakingEscrow is Ownable {
             abi.encodePacked(extraData, grantId)
         );
 
-        emit DepositRedelegated(
-            previousOperator,
-            newOperator,
-            grantId,
-            amount
-        );
+        emit DepositRedelegated(previousOperator, newOperator, grantId, amount);
     }
 
     /// @notice Returns true if there is a deposit for the given operator in
@@ -210,7 +199,11 @@ contract TokenStakingEscrow is Ownable {
     /// in the escrow contract after undelegating it from the provided operator.
     /// @param operator Address of the operator from the undelegated/canceled
     /// delegation from which tokens were deposited.
-    function depositWithdrawnAmount(address operator) public view returns (uint256) {
+    function depositWithdrawnAmount(address operator)
+        public
+        view
+        returns (uint256)
+    {
         return deposits[operator].withdrawn;
     }
 
@@ -219,7 +212,11 @@ contract TokenStakingEscrow is Ownable {
     /// operator.
     /// @param operator Address of the operator from the undelegated/canceled
     /// delegation from which tokens were deposited.
-    function depositRedelegatedAmount(address operator) public view returns (uint256) {
+    function depositRedelegatedAmount(address operator)
+        public
+        view
+        returns (uint256)
+    {
         return deposits[operator].redelegated;
     }
 
@@ -244,18 +241,11 @@ contract TokenStakingEscrow is Ownable {
         // If the entire grant unlocked before it's been reverted, escrow
         // lets to withdraw the entire deposited amount.
         if (getAmountRevoked(deposit.grantId) == 0) {
-            (
-                uint256 duration,
-                uint256 start,
-                uint256 cliff
-            ) = getUnlockingSchedule(deposit.grantId);
+            (uint256 duration, uint256 start, uint256 cliff) =
+                getUnlockingSchedule(deposit.grantId);
 
-            uint256 unlocked = now.getUnlockedAmount(
-                deposit.amount,
-                duration,
-                start,
-                cliff
-            );
+            uint256 unlocked =
+                now.getUnlockedAmount(deposit.amount, duration, start, cliff);
 
             if (deposit.withdrawn.add(deposit.redelegated) < unlocked) {
                 return unlocked.sub(deposit.withdrawn).sub(deposit.redelegated);
@@ -279,9 +269,10 @@ contract TokenStakingEscrow is Ownable {
         // Make sure this function is not called for a managed grant.
         // If called for a managed grant, tokens could be locked there.
         // Better be safe than sorry.
-        (bool success, ) = address(this).call(
-            abi.encodeWithSignature("getManagedGrantee(address)", grantee)
-        );
+        (bool success, ) =
+            address(this).call(
+                abi.encodeWithSignature("getManagedGrantee(address)", grantee)
+            );
         require(!success, "Can not be called for managed grant");
 
         require(
@@ -319,10 +310,7 @@ contract TokenStakingEscrow is Ownable {
     /// @param receivingEscrow Escrow to which tokens should be migrated.
     /// @dev The receiving escrow needs to accept deposits from this escrow, at
     /// least for the period of migration.
-    function migrate(
-        address operator,
-        address receivingEscrow
-    ) public {
+    function migrate(address operator, address receivingEscrow) public {
         Deposit memory deposit = deposits[operator];
         require(isGrantee(msg.sender, deposit.grantId), "Not authorized");
 
@@ -361,10 +349,7 @@ contract TokenStakingEscrow is Ownable {
     /// @notice Used by grant manager to authorize another escrows for
     // funds migration.
     function authorizeEscrow(address anotherEscrow) public {
-        require(
-            anotherEscrow != address(0x0),
-            "Escrow address can't be zero"
-        );
+        require(anotherEscrow != address(0x0), "Escrow address can't be zero");
         authorizedEscrows[msg.sender][anotherEscrow] = true;
         emit EscrowAuthorized(msg.sender, anotherEscrow);
     }
@@ -372,9 +357,11 @@ contract TokenStakingEscrow is Ownable {
     /// @notice Resolves the final grantee of ManagedGrant contract. If the
     /// provided address is not a ManagedGrant contract, function reverts.
     /// @param managedGrant Address of the managed grant contract.
-    function getManagedGrantee(
-        address managedGrant
-    ) public view returns(address) {
+    function getManagedGrantee(address managedGrant)
+        public
+        view
+        returns (address)
+    {
         ManagedGrant grant = ManagedGrant(managedGrant);
         return grant.grantee();
     }
@@ -405,10 +392,10 @@ contract TokenStakingEscrow is Ownable {
         emit Deposited(operator, grantId, value);
     }
 
-    function isGrantee(
-        address maybeGrantee,
-        uint256 grantId
-    ) internal returns (bool) {
+    function isGrantee(address maybeGrantee, uint256 grantId)
+        internal
+        returns (bool)
+    {
         // Let's check the simplest case first - standard grantee.
         // If the given address is set as a grantee for grant with the given ID,
         // we return true.
@@ -422,9 +409,10 @@ contract TokenStakingEscrow is Ownable {
         // getManagedGrantee that will cast the grantee to ManagedGrant and try
         // to call getGrantee() function. If this call returns non-zero address,
         // it means we are dealing with a ManagedGrant.
-        (, bytes memory result) = address(this).call(
-            abi.encodeWithSignature("getManagedGrantee(address)", grantee)
-        );
+        (, bytes memory result) =
+            address(this).call(
+                abi.encodeWithSignature("getManagedGrantee(address)", grantee)
+            );
         if (result.length == 0) {
             return false;
         }
@@ -460,35 +448,49 @@ contract TokenStakingEscrow is Ownable {
         emit RevokedDepositWithdrawn(operator, grantManager, amount);
     }
 
-    function getAmountGranted(uint256 grantId) internal view returns (
-        uint256 amountGranted
-    ) {
-        (amountGranted,,,,,) = tokenGrant.getGrant(grantId);
+    function getAmountGranted(uint256 grantId)
+        internal
+        view
+        returns (uint256 amountGranted)
+    {
+        (amountGranted, , , , , ) = tokenGrant.getGrant(grantId);
     }
 
-    function getAmountRevoked(uint256 grantId) internal view returns (
-        uint256 amountRevoked
-    ) {
-        (,,,amountRevoked,,) = tokenGrant.getGrant(grantId);
+    function getAmountRevoked(uint256 grantId)
+        internal
+        view
+        returns (uint256 amountRevoked)
+    {
+        (, , , amountRevoked, , ) = tokenGrant.getGrant(grantId);
     }
 
-    function getUnlockingSchedule(uint256 grantId) internal view returns (
-        uint256 duration,
-        uint256 start,
-        uint256 cliff
-    ) {
-        (,duration,start,cliff,) = tokenGrant.getGrantUnlockingSchedule(grantId);
+    function getUnlockingSchedule(uint256 grantId)
+        internal
+        view
+        returns (
+            uint256 duration,
+            uint256 start,
+            uint256 cliff
+        )
+    {
+        (, duration, start, cliff, ) = tokenGrant.getGrantUnlockingSchedule(
+            grantId
+        );
     }
 
-    function getGrantee(uint256 grantId) internal view returns (
-        address grantee
-    ) {
-        (,,,,,grantee) = tokenGrant.getGrant(grantId);
+    function getGrantee(uint256 grantId)
+        internal
+        view
+        returns (address grantee)
+    {
+        (, , , , , grantee) = tokenGrant.getGrant(grantId);
     }
 
-    function getGrantManager(uint256 grantId) internal view returns (
-        address grantManager
-    ) {
-        (grantManager,,,,) = tokenGrant.getGrantUnlockingSchedule(grantId);
+    function getGrantManager(uint256 grantId)
+        internal
+        view
+        returns (address grantManager)
+    {
+        (grantManager, , , , ) = tokenGrant.getGrantUnlockingSchedule(grantId);
     }
 }

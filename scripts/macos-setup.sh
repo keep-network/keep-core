@@ -22,6 +22,9 @@ brew list pre-commit &>/dev/null || brew install pre-commit
 go get -u golang.org/x/tools/cmd/goimports
 go get -u golang.org/x/lint/golint
 
+echo "Installing jq..."
+brew list jq &>/dev/null || brew install jq
+
 echo "Installing pre-commit and specified hooks..."
 pre-commit install --install-hooks
 
