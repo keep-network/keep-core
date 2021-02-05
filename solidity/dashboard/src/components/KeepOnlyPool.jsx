@@ -127,7 +127,7 @@ const KeepOnlyPool = ({
                 duration={1}
                 formattingFn={formattingFn}
               />
-              KEEP
+              &nbsp;KEEP
             </h4>
           </div>
           <Divider style={{ margin: "0.5rem 0" }} />
@@ -141,7 +141,7 @@ const KeepOnlyPool = ({
                 duration={1}
                 formattingFn={formattingFn}
               />
-              KEEP
+              &nbsp;KEEP
             </h4>
           </div>
 
