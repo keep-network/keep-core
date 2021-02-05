@@ -311,7 +311,9 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     ).div(moment.duration(7, "days").asSeconds())
 
     if (!isEmptyArray(tokensLockedEvents)) {
-      rewardPoolPerMonth = new BigNumber(tokensLockedEvents.reverse()[0].amount)
+      rewardPoolPerMonth = new BigNumber(
+        tokensLockedEvents.reverse()[0].returnValues.amount
+      )
     }
 
     return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
