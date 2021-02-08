@@ -1,7 +1,11 @@
 name: Go
 
 #TODO: extend the conditions once workflow gets tested together with other workflows 
-on: [push, pull_request]
+on:  
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   build-and-test:
