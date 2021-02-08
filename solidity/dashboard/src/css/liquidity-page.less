@@ -159,15 +159,15 @@
   }
 
   &__icon {
+    background: url("../static/svg/keep-only-pool.svg");
     background-color: @color-grey-10;
-    margin-bottom: 1.2rem;
-
-    > svg {
-      height: 100%;
-    }
+    background-size: cover;
+    background-position: center center;
+    background-repeat:no-repeat;
+    height: 400px;
   }
 
-  @media screen and (min-width: 900px) {
+  @media screen and (min-width: 1000px) {
     flex-direction: row;
     &__overview {
       flex-direction: row;
@@ -176,6 +176,12 @@
       &__info-tiles {
         display: block;
       }
+    }
+
+    &__icon {
+      flex-grow: 0.5;
+      height: auto;
+      margin-bottom: 1.2rem;
     }
   }
 }

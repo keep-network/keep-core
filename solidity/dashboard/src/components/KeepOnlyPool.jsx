@@ -196,9 +196,7 @@ const KeepOnlyPool = ({
           </MetricsTile>
         </section>
       </section>
-      <section className="keep-only-pool__icon">
-        <Icons.KeepOnlyPool preserveAspectRatio="none" />
-      </section>
+      <section className="keep-only-pool__icon" />
     </section>
   )
 }
