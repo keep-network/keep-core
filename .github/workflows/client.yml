@@ -10,17 +10,24 @@ jobs:
       - uses: actions/checkout@v1
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
-      - name: Create test results directory
-        run: |
-          mkdir -p /tmp/test-results/keep-core-go
       - name: Run Docker build
         run: |
-          docker build --target gobuild --tag go-build-env .
-          docker build --tag keep-client . 
+          docker build \
+            --target gobuild \
+            --tag go-build-env .
+          docker build \
+            --tag keep-client . 
+      - name: Create and enter test results directory
+        run: |
+          mkdir -p /tmp/test-results/keep-core-go
+          cd /tmp/test-results/keep-core-go/
       - name: Run Go tests
         run: |
-          docker run --volume /tmp/test-results/keep-core-go:/mnt/test-results --workdir /go/src/github.com/keep-network/keep-core go-build-env gotestsum --junitfile /mnt/test-results/unit-tests.xml
-          docker run --volume /tmp/test-results/keep-core-go:/mnt/test-results --workdir /go/src/github.com/keep-network/keep-core go-build-env cat /mnt/test-results/unit-tests.xml > ./unit-tests.xml
+          docker run \
+            --volume /tmp/test-results/keep-core-go:/mnt/test-results \
+            --workdir /go/src/github.com/keep-network/keep-core \
+            go-build-env \
+            gotestsum --junitfile /mnt/test-results/unit-tests.xml
       - name: Publish Unit Test results
         uses: EnricoMi/publish-unit-test-result-action@v1.7
         if: always() # guarantees that this action always runs, even if earlier steps fail
