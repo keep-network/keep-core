@@ -6,6 +6,7 @@ on:
     branches:
       - master
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-and-test:
@@ -25,6 +26,18 @@ jobs:
         run: |
           mkdir -p /tmp/test-results/keep-core-go
           cd /tmp/test-results/keep-core-go/
+      - name: DEBUG
+        run: |
+          pwd
+      - name: DEBUG
+        run: |
+          ls
+      - name: DEBUG
+        run: |
+          ls /tmp/test-results/keep-core-go/
+      - name: DEBUG
+        run: |
+          ls /home/runner/work/keep-core/keep-core
       - name: Run Go tests
         run: |
           docker run \
@@ -32,6 +45,18 @@ jobs:
             --workdir /go/src/github.com/keep-network/keep-core \
             go-build-env \
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
+      - name: DEBUG
+        run: |
+          pwd
+      - name: DEBUG
+        run: |
+          ls
+      - name: DEBUG
+        run: |
+          ls /tmp/test-results/keep-core-go/
+      - name: DEBUG
+        run: |
+          ls /home/runner/work/keep-core/keep-core
       - name: Publish Unit Test results
         uses: EnricoMi/publish-unit-test-result-action@v1.7
         if: always() # guarantees that this action always runs, even if earlier steps fail
