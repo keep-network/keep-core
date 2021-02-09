@@ -147,7 +147,7 @@ func connectWithClient(
 			pv.client,
 			nonceManager,
 			miningWaiter,
-			pv.blockCounter,
+			blockCounter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -167,7 +167,7 @@ func connectWithClient(
 			pv.client,
 			nonceManager,
 			miningWaiter,
-			pv.blockCounter,
+			blockCounter,
 			pv.transactionMutex,
 		)
 	if err != nil {
