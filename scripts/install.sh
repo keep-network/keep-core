@@ -24,7 +24,7 @@ help()
    echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
-   echo -e "\t--network: Host chain network for keep-core client."\
+   echo -e "\t--network: Ethereum network for keep-core client."\
                         "Available networks and settings are specified in the 'truffle-config.js'\n"
    exit 1 # Exit script after printing help
 }
