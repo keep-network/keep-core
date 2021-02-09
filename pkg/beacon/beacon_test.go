@@ -17,7 +17,6 @@ const (
 )
 
 func TestConfirmRelayRequestOnFirstAttempt(t *testing.T) {
-	t.Fatalf("TEST ERROR")
 	expectedRequestStartBlock := 1888
 	onConfirmedExecuted := false
 	onConfirmed := func() {
