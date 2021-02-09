@@ -147,6 +147,7 @@ func connectWithClient(
 			pv.client,
 			nonceManager,
 			miningWaiter,
+			pv.blockCounter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -166,6 +167,7 @@ func connectWithClient(
 			pv.client,
 			nonceManager,
 			miningWaiter,
+			pv.blockCounter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -229,6 +231,14 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		return nil, err
 	}
 
+	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
 	checkInterval := DefaultMiningCheckInterval
 	maxGasPrice := DefaultMaxGasPrice
 	if config.MiningCheckInterval != 0 {
@@ -257,6 +267,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 			base.client,
 			nonceManager,
 			miningWaiter,
+			blockCounter,
 			base.transactionMutex,
 		)
 	if err != nil {
