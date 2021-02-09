@@ -10,7 +10,7 @@ KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 NETWORK_DEFAULT="local"
-KEEP_CELO_PASSWORD=${KEEP_CELO_ACCOUNT_PASSWORD:-"password"}
+KEEP_CELO_PASSWORD=${KEEP_CELO_PASSWORD:-"password"}
 CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
@@ -19,11 +19,12 @@ help()
            "--config-dir <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_CELO_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
+   echo -e "\tKEEP_CELO_PASSWORD: The password to unlock local Celo accounts to set up delegations."\
+           "Required only for 'local' network. Default value is 'password'"
    echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
-   echo -e "\t--network: Host chain network for keep-core client."\
+   echo -e "\t--network: Celo network for keep-core client."\
                         "Available networks and settings are specified in the 'truffle-config.js'\n"
    exit 1 # Exit script after printing help
 }
