@@ -21,7 +21,7 @@ help()
    echo -e "\tKEEP_HOST_CHAIN_ETH_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
    echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
    echo -e "\nCommand line arguments:\n"
-   echo -e "\t--config-dir: Configuration path for keep-core client"
+   echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
    echo -e "\t--network: Host chain network for keep-core client\n"
    exit 1 # Exit script after printing help
 }
