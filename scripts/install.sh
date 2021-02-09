@@ -10,7 +10,7 @@ KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 NETWORK_DEFAULT="local"
-KEEP_ETHEREUM_PASSWORD=${KEEP_ETH_ACCOUNT_PASSWORD:-"password"}
+KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
@@ -19,7 +19,7 @@ help()
            "--config-dir <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_ETH_ACCOUNT_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
+   echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
    echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
    echo -e "\nCommand line arguments:\n"
