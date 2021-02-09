@@ -65,7 +65,7 @@ cd $KEEP_CORE_SOL_PATH
 printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
-if [ "$NETWORK" != "alfajores" ]; then
+if [ "$NETWORK" == "local" ]; then
     printf "${LOG_START}Unlocking celo accounts...${LOG_END}"
     KEEP_ETHEREUM_PASSWORD=$KEEP_ACCOUNT_PASSWORD \
     CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$ACCOUNT_PRIVATE_KEY \

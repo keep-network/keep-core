@@ -67,10 +67,12 @@ cd $KEEP_CORE_SOL_PATH
 printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
-printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
-KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
-    npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+if [ "$NETWORK" == "local" ]; then
+    printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
+    KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
+    CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
+        npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
+fi
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
 rm -rf build/
