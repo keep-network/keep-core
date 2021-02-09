@@ -22,7 +22,7 @@ jobs:
             --tag go-build-env .
           docker build \
             --tag keep-client . 
-      - name: Create and enter test results directory
+      - name: Create test results directory
         run: |
           mkdir -p $GITHUB_WORKSPACE/test-results/
       - name: Run Go tests
