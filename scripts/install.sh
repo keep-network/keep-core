@@ -4,12 +4,13 @@ set -euo pipefail
 LOG_START='\n\e[1;36m' # new line + bold + color
 LOG_END='\n\e[0m' # new line + reset color
 
-# Dafault inputs.
 KEEP_CORE_PATH=$PWD
 KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
+
+# Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 NETWORK_DEFAULT="local"
-KEEP_ETHEREUM_PASSWORD=${KEEP_HOST_CHAIN_ETH_ACCOUNT_PASSWORD:-"password"}
+KEEP_ETHEREUM_PASSWORD=${KEEP_ETH_ACCOUNT_PASSWORD:-"password"}
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
@@ -18,7 +19,7 @@ help()
            "--config-dir <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_HOST_CHAIN_ETH_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
+   echo -e "\tKEEP_ETH_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
    echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
