@@ -4,6 +4,7 @@
 package contract
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"strings"
@@ -15,9 +16,11 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 
 	"github.com/ipfs/go-log"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
@@ -39,6 +42,7 @@ type TokenStaking struct {
 	errorResolver     *ethutil.ErrorResolver
 	nonceManager      *ethutil.NonceManager
 	miningWaiter      *ethutil.MiningWaiter
+	blockCounter      *blockcounter.EthereumBlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -49,6 +53,7 @@ func NewTokenStaking(
 	backend bind.ContractBackend,
 	nonceManager *ethutil.NonceManager,
 	miningWaiter *ethutil.MiningWaiter,
+	blockCounter *blockcounter.EthereumBlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*TokenStaking, error) {
 	callerOptions := &bind.CallOpts{
@@ -87,6 +92,7 @@ func NewTokenStaking(
 		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		nonceManager:      nonceManager,
 		miningWaiter:      miningWaiter,
+		blockCounter:      blockCounter,
 		transactionMutex:  transactionMutex,
 	}, nil
 }
@@ -94,16 +100,18 @@ func NewTokenStaking(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (ts *TokenStaking) Undelegate(
+func (ts *TokenStaking) AuthorizeOperatorContract(
 	_operator common.Address,
+	_operatorContract common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction undelegate",
+		"submitting transaction authorizeOperatorContract",
 		"params: ",
 		fmt.Sprint(
 			_operator,
+			_operatorContract,
 		),
 	)
 
@@ -129,22 +137,24 @@ func (ts *TokenStaking) Undelegate(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := ts.contract.Undelegate(
+	transaction, err := ts.contract.AuthorizeOperatorContract(
 		transactorOptions,
 		_operator,
+		_operatorContract,
 	)
 	if err != nil {
 		return transaction, ts.errorResolver.ResolveError(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"undelegate",
+			"authorizeOperatorContract",
 			_operator,
+			_operatorContract,
 		)
 	}
 
 	tsLogger.Infof(
-		"submitted transaction undelegate with id: [%v] and nonce [%v]",
+		"submitted transaction authorizeOperatorContract with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -155,22 +165,24 @@ func (ts *TokenStaking) Undelegate(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := ts.contract.Undelegate(
+			transaction, err := ts.contract.AuthorizeOperatorContract(
 				transactorOptions,
 				_operator,
+				_operatorContract,
 			)
 			if err != nil {
 				return transaction, ts.errorResolver.ResolveError(
 					err,
 					ts.transactorOptions.From,
 					nil,
-					"undelegate",
+					"authorizeOperatorContract",
 					_operator,
+					_operatorContract,
 				)
 			}
 
 			tsLogger.Infof(
-				"submitted transaction undelegate with id: [%v] and nonce [%v]",
+				"submitted transaction authorizeOperatorContract with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -185,8 +197,9 @@ func (ts *TokenStaking) Undelegate(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallUndelegate(
+func (ts *TokenStaking) CallAuthorizeOperatorContract(
 	_operator common.Address,
+	_operatorContract common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -198,26 +211,439 @@ func (ts *TokenStaking) CallUndelegate(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"undelegate",
+		"authorizeOperatorContract",
 		&result,
 		_operator,
+		_operatorContract,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) UndelegateGasEstimate(
+func (ts *TokenStaking) AuthorizeOperatorContractGasEstimate(
 	_operator common.Address,
+	_operatorContract common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"undelegate",
+		"authorizeOperatorContract",
 		ts.contractABI,
 		ts.transactor,
 		_operator,
+		_operatorContract,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) Slash(
+	amountToSlash *big.Int,
+	misbehavedOperators []common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction slash",
+		"params: ",
+		fmt.Sprint(
+			amountToSlash,
+			misbehavedOperators,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.Slash(
+		transactorOptions,
+		amountToSlash,
+		misbehavedOperators,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"slash",
+			amountToSlash,
+			misbehavedOperators,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction slash with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := ts.contract.Slash(
+				transactorOptions,
+				amountToSlash,
+				misbehavedOperators,
+			)
+			if err != nil {
+				return transaction, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"slash",
+					amountToSlash,
+					misbehavedOperators,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction slash with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallSlash(
+	amountToSlash *big.Int,
+	misbehavedOperators []common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"slash",
+		&result,
+		amountToSlash,
+		misbehavedOperators,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) SlashGasEstimate(
+	amountToSlash *big.Int,
+	misbehavedOperators []common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"slash",
+		ts.contractABI,
+		ts.transactor,
+		amountToSlash,
+		misbehavedOperators,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) UnlockStake(
+	operator common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction unlockStake",
+		"params: ",
+		fmt.Sprint(
+			operator,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.UnlockStake(
+		transactorOptions,
+		operator,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"unlockStake",
+			operator,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction unlockStake with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := ts.contract.UnlockStake(
+				transactorOptions,
+				operator,
+			)
+			if err != nil {
+				return transaction, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"unlockStake",
+					operator,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction unlockStake with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallUnlockStake(
+	operator common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"unlockStake",
+		&result,
+		operator,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) UnlockStakeGasEstimate(
+	operator common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"unlockStake",
+		ts.contractABI,
+		ts.transactor,
+		operator,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) LockStake(
+	operator common.Address,
+	duration *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction lockStake",
+		"params: ",
+		fmt.Sprint(
+			operator,
+			duration,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.LockStake(
+		transactorOptions,
+		operator,
+		duration,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"lockStake",
+			operator,
+			duration,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction lockStake with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := ts.contract.LockStake(
+				transactorOptions,
+				operator,
+				duration,
+			)
+			if err != nil {
+				return transaction, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"lockStake",
+					operator,
+					duration,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction lockStake with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallLockStake(
+	operator common.Address,
+	duration *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"lockStake",
+		&result,
+		operator,
+		duration,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) LockStakeGasEstimate(
+	operator common.Address,
+	duration *big.Int,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"lockStake",
+		ts.contractABI,
+		ts.transactor,
+		operator,
+		duration,
 	)
 
 	return result, err
@@ -364,13 +790,293 @@ func (ts *TokenStaking) ReleaseExpiredLockGasEstimate(
 }
 
 // Transaction submission.
-func (ts *TokenStaking) CommitTopUp(
+func (ts *TokenStaking) UndelegateAt(
+	_operator common.Address,
+	_undelegationTimestamp *big.Int,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction undelegateAt",
+		"params: ",
+		fmt.Sprint(
+			_operator,
+			_undelegationTimestamp,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.UndelegateAt(
+		transactorOptions,
+		_operator,
+		_undelegationTimestamp,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"undelegateAt",
+			_operator,
+			_undelegationTimestamp,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction undelegateAt with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := ts.contract.UndelegateAt(
+				transactorOptions,
+				_operator,
+				_undelegationTimestamp,
+			)
+			if err != nil {
+				return transaction, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"undelegateAt",
+					_operator,
+					_undelegationTimestamp,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction undelegateAt with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallUndelegateAt(
+	_operator common.Address,
+	_undelegationTimestamp *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"undelegateAt",
+		&result,
+		_operator,
+		_undelegationTimestamp,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) UndelegateAtGasEstimate(
+	_operator common.Address,
+	_undelegationTimestamp *big.Int,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"undelegateAt",
+		ts.contractABI,
+		ts.transactor,
+		_operator,
+		_undelegationTimestamp,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) TransferStakeOwnership(
+	operator common.Address,
+	newOwner common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction transferStakeOwnership",
+		"params: ",
+		fmt.Sprint(
+			operator,
+			newOwner,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.TransferStakeOwnership(
+		transactorOptions,
+		operator,
+		newOwner,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"transferStakeOwnership",
+			operator,
+			newOwner,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction transferStakeOwnership with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := ts.contract.TransferStakeOwnership(
+				transactorOptions,
+				operator,
+				newOwner,
+			)
+			if err != nil {
+				return transaction, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"transferStakeOwnership",
+					operator,
+					newOwner,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction transferStakeOwnership with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallTransferStakeOwnership(
+	operator common.Address,
+	newOwner common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"transferStakeOwnership",
+		&result,
+		operator,
+		newOwner,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) TransferStakeOwnershipGasEstimate(
+	operator common.Address,
+	newOwner common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"transferStakeOwnership",
+		ts.contractABI,
+		ts.transactor,
+		operator,
+		newOwner,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) Undelegate(
 	_operator common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction commitTopUp",
+		"submitting transaction undelegate",
 		"params: ",
 		fmt.Sprint(
 			_operator,
@@ -399,7 +1105,7 @@ func (ts *TokenStaking) CommitTopUp(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := ts.contract.CommitTopUp(
+	transaction, err := ts.contract.Undelegate(
 		transactorOptions,
 		_operator,
 	)
@@ -408,13 +1114,13 @@ func (ts *TokenStaking) CommitTopUp(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"commitTopUp",
+			"undelegate",
 			_operator,
 		)
 	}
 
 	tsLogger.Infof(
-		"submitted transaction commitTopUp with id: [%v] and nonce [%v]",
+		"submitted transaction undelegate with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -425,7 +1131,7 @@ func (ts *TokenStaking) CommitTopUp(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := ts.contract.CommitTopUp(
+			transaction, err := ts.contract.Undelegate(
 				transactorOptions,
 				_operator,
 			)
@@ -434,13 +1140,13 @@ func (ts *TokenStaking) CommitTopUp(
 					err,
 					ts.transactorOptions.From,
 					nil,
-					"commitTopUp",
+					"undelegate",
 					_operator,
 				)
 			}
 
 			tsLogger.Infof(
-				"submitted transaction commitTopUp with id: [%v] and nonce [%v]",
+				"submitted transaction undelegate with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -455,7 +1161,7 @@ func (ts *TokenStaking) CommitTopUp(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallCommitTopUp(
+func (ts *TokenStaking) CallUndelegate(
 	_operator common.Address,
 	blockNumber *big.Int,
 ) error {
@@ -468,7 +1174,7 @@ func (ts *TokenStaking) CallCommitTopUp(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"commitTopUp",
+		"undelegate",
 		&result,
 		_operator,
 	)
@@ -476,7 +1182,7 @@ func (ts *TokenStaking) CallCommitTopUp(
 	return err
 }
 
-func (ts *TokenStaking) CommitTopUpGasEstimate(
+func (ts *TokenStaking) UndelegateGasEstimate(
 	_operator common.Address,
 ) (uint64, error) {
 	var result uint64
@@ -484,10 +1190,140 @@ func (ts *TokenStaking) CommitTopUpGasEstimate(
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"commitTopUp",
+		"undelegate",
 		ts.contractABI,
 		ts.transactor,
 		_operator,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (ts *TokenStaking) ClaimDelegatedAuthority(
+	delegatedAuthoritySource common.Address,
+
+	transactionOptions ...ethutil.TransactionOptions,
+) (*types.Transaction, error) {
+	tsLogger.Debug(
+		"submitting transaction claimDelegatedAuthority",
+		"params: ",
+		fmt.Sprint(
+			delegatedAuthoritySource,
+		),
+	)
+
+	ts.transactionMutex.Lock()
+	defer ts.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *ts.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := ts.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := ts.contract.ClaimDelegatedAuthority(
+		transactorOptions,
+		delegatedAuthoritySource,
+	)
+	if err != nil {
+		return transaction, ts.errorResolver.ResolveError(
+			err,
+			ts.transactorOptions.From,
+			nil,
+			"claimDelegatedAuthority",
+			delegatedAuthoritySource,
+		)
+	}
+
+	tsLogger.Infof(
+		"submitted transaction claimDelegatedAuthority with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go ts.miningWaiter.ForceMining(
+		transaction,
+		func(newGasPrice *big.Int) (*types.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := ts.contract.ClaimDelegatedAuthority(
+				transactorOptions,
+				delegatedAuthoritySource,
+			)
+			if err != nil {
+				return transaction, ts.errorResolver.ResolveError(
+					err,
+					ts.transactorOptions.From,
+					nil,
+					"claimDelegatedAuthority",
+					delegatedAuthoritySource,
+				)
+			}
+
+			tsLogger.Infof(
+				"submitted transaction claimDelegatedAuthority with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return transaction, nil
+		},
+	)
+
+	ts.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (ts *TokenStaking) CallClaimDelegatedAuthority(
+	delegatedAuthoritySource common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := ethutil.CallAtBlock(
+		ts.transactorOptions.From,
+		blockNumber, nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"claimDelegatedAuthority",
+		&result,
+		delegatedAuthoritySource,
+	)
+
+	return err
+}
+
+func (ts *TokenStaking) ClaimDelegatedAuthorityGasEstimate(
+	delegatedAuthoritySource common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := ethutil.EstimateGas(
+		ts.callerOptions.From,
+		ts.contractAddress,
+		"claimDelegatedAuthority",
+		ts.contractABI,
+		ts.transactor,
+		delegatedAuthoritySource,
 	)
 
 	return result, err
@@ -654,13 +1490,13 @@ func (ts *TokenStaking) ReceiveApprovalGasEstimate(
 }
 
 // Transaction submission.
-func (ts *TokenStaking) RecoverStake(
+func (ts *TokenStaking) CommitTopUp(
 	_operator common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction recoverStake",
+		"submitting transaction commitTopUp",
 		"params: ",
 		fmt.Sprint(
 			_operator,
@@ -689,7 +1525,7 @@ func (ts *TokenStaking) RecoverStake(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := ts.contract.RecoverStake(
+	transaction, err := ts.contract.CommitTopUp(
 		transactorOptions,
 		_operator,
 	)
@@ -698,13 +1534,13 @@ func (ts *TokenStaking) RecoverStake(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"recoverStake",
+			"commitTopUp",
 			_operator,
 		)
 	}
 
 	tsLogger.Infof(
-		"submitted transaction recoverStake with id: [%v] and nonce [%v]",
+		"submitted transaction commitTopUp with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -715,7 +1551,7 @@ func (ts *TokenStaking) RecoverStake(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := ts.contract.RecoverStake(
+			transaction, err := ts.contract.CommitTopUp(
 				transactorOptions,
 				_operator,
 			)
@@ -724,13 +1560,13 @@ func (ts *TokenStaking) RecoverStake(
 					err,
 					ts.transactorOptions.From,
 					nil,
-					"recoverStake",
+					"commitTopUp",
 					_operator,
 				)
 			}
 
 			tsLogger.Infof(
-				"submitted transaction recoverStake with id: [%v] and nonce [%v]",
+				"submitted transaction commitTopUp with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -745,7 +1581,7 @@ func (ts *TokenStaking) RecoverStake(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallRecoverStake(
+func (ts *TokenStaking) CallCommitTopUp(
 	_operator common.Address,
 	blockNumber *big.Int,
 ) error {
@@ -758,7 +1594,7 @@ func (ts *TokenStaking) CallRecoverStake(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"recoverStake",
+		"commitTopUp",
 		&result,
 		_operator,
 	)
@@ -766,7 +1602,7 @@ func (ts *TokenStaking) CallRecoverStake(
 	return err
 }
 
-func (ts *TokenStaking) RecoverStakeGasEstimate(
+func (ts *TokenStaking) CommitTopUpGasEstimate(
 	_operator common.Address,
 ) (uint64, error) {
 	var result uint64
@@ -774,140 +1610,10 @@ func (ts *TokenStaking) RecoverStakeGasEstimate(
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"recoverStake",
+		"commitTopUp",
 		ts.contractABI,
 		ts.transactor,
 		_operator,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) UnlockStake(
-	operator common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction unlockStake",
-		"params: ",
-		fmt.Sprint(
-			operator,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := ts.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := ts.contract.UnlockStake(
-		transactorOptions,
-		operator,
-	)
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"unlockStake",
-			operator,
-		)
-	}
-
-	tsLogger.Infof(
-		"submitted transaction unlockStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go ts.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := ts.contract.UnlockStake(
-				transactorOptions,
-				operator,
-			)
-			if err != nil {
-				return transaction, ts.errorResolver.ResolveError(
-					err,
-					ts.transactorOptions.From,
-					nil,
-					"unlockStake",
-					operator,
-				)
-			}
-
-			tsLogger.Infof(
-				"submitted transaction unlockStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	ts.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallUnlockStake(
-	operator common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"unlockStake",
-		&result,
-		operator,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) UnlockStakeGasEstimate(
-	operator common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"unlockStake",
-		ts.contractABI,
-		ts.transactor,
-		operator,
 	)
 
 	return result, err
@@ -1074,146 +1780,6 @@ func (ts *TokenStaking) SeizeGasEstimate(
 }
 
 // Transaction submission.
-func (ts *TokenStaking) UndelegateAt(
-	_operator common.Address,
-	_undelegationTimestamp *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction undelegateAt",
-		"params: ",
-		fmt.Sprint(
-			_operator,
-			_undelegationTimestamp,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := ts.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := ts.contract.UndelegateAt(
-		transactorOptions,
-		_operator,
-		_undelegationTimestamp,
-	)
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"undelegateAt",
-			_operator,
-			_undelegationTimestamp,
-		)
-	}
-
-	tsLogger.Infof(
-		"submitted transaction undelegateAt with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go ts.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := ts.contract.UndelegateAt(
-				transactorOptions,
-				_operator,
-				_undelegationTimestamp,
-			)
-			if err != nil {
-				return transaction, ts.errorResolver.ResolveError(
-					err,
-					ts.transactorOptions.From,
-					nil,
-					"undelegateAt",
-					_operator,
-					_undelegationTimestamp,
-				)
-			}
-
-			tsLogger.Infof(
-				"submitted transaction undelegateAt with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	ts.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallUndelegateAt(
-	_operator common.Address,
-	_undelegationTimestamp *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"undelegateAt",
-		&result,
-		_operator,
-		_undelegationTimestamp,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) UndelegateAtGasEstimate(
-	_operator common.Address,
-	_undelegationTimestamp *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"undelegateAt",
-		ts.contractABI,
-		ts.transactor,
-		_operator,
-		_undelegationTimestamp,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
 func (ts *TokenStaking) CancelStake(
 	_operator common.Address,
 
@@ -1344,18 +1910,16 @@ func (ts *TokenStaking) CancelStakeGasEstimate(
 }
 
 // Transaction submission.
-func (ts *TokenStaking) AuthorizeOperatorContract(
+func (ts *TokenStaking) RecoverStake(
 	_operator common.Address,
-	_operatorContract common.Address,
 
 	transactionOptions ...ethutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	tsLogger.Debug(
-		"submitting transaction authorizeOperatorContract",
+		"submitting transaction recoverStake",
 		"params: ",
 		fmt.Sprint(
 			_operator,
-			_operatorContract,
 		),
 	)
 
@@ -1381,24 +1945,22 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := ts.contract.AuthorizeOperatorContract(
+	transaction, err := ts.contract.RecoverStake(
 		transactorOptions,
 		_operator,
-		_operatorContract,
 	)
 	if err != nil {
 		return transaction, ts.errorResolver.ResolveError(
 			err,
 			ts.transactorOptions.From,
 			nil,
-			"authorizeOperatorContract",
+			"recoverStake",
 			_operator,
-			_operatorContract,
 		)
 	}
 
 	tsLogger.Infof(
-		"submitted transaction authorizeOperatorContract with id: [%v] and nonce [%v]",
+		"submitted transaction recoverStake with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
@@ -1409,24 +1971,22 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := ts.contract.AuthorizeOperatorContract(
+			transaction, err := ts.contract.RecoverStake(
 				transactorOptions,
 				_operator,
-				_operatorContract,
 			)
 			if err != nil {
 				return transaction, ts.errorResolver.ResolveError(
 					err,
 					ts.transactorOptions.From,
 					nil,
-					"authorizeOperatorContract",
+					"recoverStake",
 					_operator,
-					_operatorContract,
 				)
 			}
 
 			tsLogger.Infof(
-				"submitted transaction authorizeOperatorContract with id: [%v] and nonce [%v]",
+				"submitted transaction recoverStake with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
@@ -1441,9 +2001,8 @@ func (ts *TokenStaking) AuthorizeOperatorContract(
 }
 
 // Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallAuthorizeOperatorContract(
+func (ts *TokenStaking) CallRecoverStake(
 	_operator common.Address,
-	_operatorContract common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
@@ -1455,585 +2014,305 @@ func (ts *TokenStaking) CallAuthorizeOperatorContract(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"authorizeOperatorContract",
+		"recoverStake",
 		&result,
 		_operator,
-		_operatorContract,
 	)
 
 	return err
 }
 
-func (ts *TokenStaking) AuthorizeOperatorContractGasEstimate(
+func (ts *TokenStaking) RecoverStakeGasEstimate(
 	_operator common.Address,
-	_operatorContract common.Address,
 ) (uint64, error) {
 	var result uint64
 
 	result, err := ethutil.EstimateGas(
 		ts.callerOptions.From,
 		ts.contractAddress,
-		"authorizeOperatorContract",
+		"recoverStake",
 		ts.contractABI,
 		ts.transactor,
 		_operator,
-		_operatorContract,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) ClaimDelegatedAuthority(
-	delegatedAuthoritySource common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction claimDelegatedAuthority",
-		"params: ",
-		fmt.Sprint(
-			delegatedAuthoritySource,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := ts.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := ts.contract.ClaimDelegatedAuthority(
-		transactorOptions,
-		delegatedAuthoritySource,
-	)
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"claimDelegatedAuthority",
-			delegatedAuthoritySource,
-		)
-	}
-
-	tsLogger.Infof(
-		"submitted transaction claimDelegatedAuthority with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go ts.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := ts.contract.ClaimDelegatedAuthority(
-				transactorOptions,
-				delegatedAuthoritySource,
-			)
-			if err != nil {
-				return transaction, ts.errorResolver.ResolveError(
-					err,
-					ts.transactorOptions.From,
-					nil,
-					"claimDelegatedAuthority",
-					delegatedAuthoritySource,
-				)
-			}
-
-			tsLogger.Infof(
-				"submitted transaction claimDelegatedAuthority with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	ts.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallClaimDelegatedAuthority(
-	delegatedAuthoritySource common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"claimDelegatedAuthority",
-		&result,
-		delegatedAuthoritySource,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) ClaimDelegatedAuthorityGasEstimate(
-	delegatedAuthoritySource common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"claimDelegatedAuthority",
-		ts.contractABI,
-		ts.transactor,
-		delegatedAuthoritySource,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) Slash(
-	amountToSlash *big.Int,
-	misbehavedOperators []common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction slash",
-		"params: ",
-		fmt.Sprint(
-			amountToSlash,
-			misbehavedOperators,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := ts.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := ts.contract.Slash(
-		transactorOptions,
-		amountToSlash,
-		misbehavedOperators,
-	)
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"slash",
-			amountToSlash,
-			misbehavedOperators,
-		)
-	}
-
-	tsLogger.Infof(
-		"submitted transaction slash with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go ts.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := ts.contract.Slash(
-				transactorOptions,
-				amountToSlash,
-				misbehavedOperators,
-			)
-			if err != nil {
-				return transaction, ts.errorResolver.ResolveError(
-					err,
-					ts.transactorOptions.From,
-					nil,
-					"slash",
-					amountToSlash,
-					misbehavedOperators,
-				)
-			}
-
-			tsLogger.Infof(
-				"submitted transaction slash with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	ts.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallSlash(
-	amountToSlash *big.Int,
-	misbehavedOperators []common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"slash",
-		&result,
-		amountToSlash,
-		misbehavedOperators,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) SlashGasEstimate(
-	amountToSlash *big.Int,
-	misbehavedOperators []common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"slash",
-		ts.contractABI,
-		ts.transactor,
-		amountToSlash,
-		misbehavedOperators,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) TransferStakeOwnership(
-	operator common.Address,
-	newOwner common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction transferStakeOwnership",
-		"params: ",
-		fmt.Sprint(
-			operator,
-			newOwner,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := ts.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := ts.contract.TransferStakeOwnership(
-		transactorOptions,
-		operator,
-		newOwner,
-	)
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"transferStakeOwnership",
-			operator,
-			newOwner,
-		)
-	}
-
-	tsLogger.Infof(
-		"submitted transaction transferStakeOwnership with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go ts.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := ts.contract.TransferStakeOwnership(
-				transactorOptions,
-				operator,
-				newOwner,
-			)
-			if err != nil {
-				return transaction, ts.errorResolver.ResolveError(
-					err,
-					ts.transactorOptions.From,
-					nil,
-					"transferStakeOwnership",
-					operator,
-					newOwner,
-				)
-			}
-
-			tsLogger.Infof(
-				"submitted transaction transferStakeOwnership with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	ts.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallTransferStakeOwnership(
-	operator common.Address,
-	newOwner common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"transferStakeOwnership",
-		&result,
-		operator,
-		newOwner,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) TransferStakeOwnershipGasEstimate(
-	operator common.Address,
-	newOwner common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"transferStakeOwnership",
-		ts.contractABI,
-		ts.transactor,
-		operator,
-		newOwner,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (ts *TokenStaking) LockStake(
-	operator common.Address,
-	duration *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	tsLogger.Debug(
-		"submitting transaction lockStake",
-		"params: ",
-		fmt.Sprint(
-			operator,
-			duration,
-		),
-	)
-
-	ts.transactionMutex.Lock()
-	defer ts.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *ts.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := ts.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := ts.contract.LockStake(
-		transactorOptions,
-		operator,
-		duration,
-	)
-	if err != nil {
-		return transaction, ts.errorResolver.ResolveError(
-			err,
-			ts.transactorOptions.From,
-			nil,
-			"lockStake",
-			operator,
-			duration,
-		)
-	}
-
-	tsLogger.Infof(
-		"submitted transaction lockStake with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go ts.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := ts.contract.LockStake(
-				transactorOptions,
-				operator,
-				duration,
-			)
-			if err != nil {
-				return transaction, ts.errorResolver.ResolveError(
-					err,
-					ts.transactorOptions.From,
-					nil,
-					"lockStake",
-					operator,
-					duration,
-				)
-			}
-
-			tsLogger.Infof(
-				"submitted transaction lockStake with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	ts.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (ts *TokenStaking) CallLockStake(
-	operator common.Address,
-	duration *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		ts.transactorOptions.From,
-		blockNumber, nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"lockStake",
-		&result,
-		operator,
-		duration,
-	)
-
-	return err
-}
-
-func (ts *TokenStaking) LockStakeGasEstimate(
-	operator common.Address,
-	duration *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		ts.callerOptions.From,
-		ts.contractAddress,
-		"lockStake",
-		ts.contractABI,
-		ts.transactor,
-		operator,
-		duration,
 	)
 
 	return result, err
 }
 
 // ----- Const Methods ------
+
+func (ts *TokenStaking) DeployedAt() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.DeployedAt(
+		ts.callerOptions,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"deployedAt",
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) DeployedAtAtBlock(
+	blockNumber *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"deployedAt",
+		&result,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) IsApprovedOperatorContract(
+	_operatorContract common.Address,
+) (bool, error) {
+	var result bool
+	result, err := ts.contract.IsApprovedOperatorContract(
+		ts.callerOptions,
+		_operatorContract,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"isApprovedOperatorContract",
+			_operatorContract,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) IsApprovedOperatorContractAtBlock(
+	_operatorContract common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"isApprovedOperatorContract",
+		&result,
+		_operatorContract,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) BeneficiaryOf(
+	_operator common.Address,
+) (common.Address, error) {
+	var result common.Address
+	result, err := ts.contract.BeneficiaryOf(
+		ts.callerOptions,
+		_operator,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"beneficiaryOf",
+			_operator,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) BeneficiaryOfAtBlock(
+	_operator common.Address,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"beneficiaryOf",
+		&result,
+		_operator,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) IsAuthorizedForOperator(
+	_operator common.Address,
+	_operatorContract common.Address,
+) (bool, error) {
+	var result bool
+	result, err := ts.contract.IsAuthorizedForOperator(
+		ts.callerOptions,
+		_operator,
+		_operatorContract,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"isAuthorizedForOperator",
+			_operator,
+			_operatorContract,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) IsAuthorizedForOperatorAtBlock(
+	_operator common.Address,
+	_operatorContract common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"isAuthorizedForOperator",
+		&result,
+		_operator,
+		_operatorContract,
+	)
+
+	return result, err
+}
+
+type Locks struct {
+	Creators    []common.Address
+	Expirations []*big.Int
+}
+
+func (ts *TokenStaking) GetLocks(
+	operator common.Address,
+) (Locks, error) {
+	var result Locks
+	result, err := ts.contract.GetLocks(
+		ts.callerOptions,
+		operator,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"getLocks",
+			operator,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) GetLocksAtBlock(
+	operator common.Address,
+	blockNumber *big.Int,
+) (Locks, error) {
+	var result Locks
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"getLocks",
+		&result,
+		operator,
+	)
+
+	return result, err
+}
+
+func (ts *TokenStaking) HasMinimumStake(
+	staker common.Address,
+	operatorContract common.Address,
+) (bool, error) {
+	var result bool
+	result, err := ts.contract.HasMinimumStake(
+		ts.callerOptions,
+		staker,
+		operatorContract,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"hasMinimumStake",
+			staker,
+			operatorContract,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) HasMinimumStakeAtBlock(
+	staker common.Address,
+	operatorContract common.Address,
+	blockNumber *big.Int,
+) (bool, error) {
+	var result bool
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"hasMinimumStake",
+		&result,
+		staker,
+		operatorContract,
+	)
+
+	return result, err
+}
 
 func (ts *TokenStaking) OwnerOf(
 	_operator common.Address,
@@ -2074,44 +2353,6 @@ func (ts *TokenStaking) OwnerOfAtBlock(
 		"ownerOf",
 		&result,
 		_operator,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) DeployedAt() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.DeployedAt(
-		ts.callerOptions,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"deployedAt",
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) DeployedAtAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"deployedAt",
-		&result,
 	)
 
 	return result, err
@@ -2248,93 +2489,6 @@ func (ts *TokenStaking) AuthorizerOfAtBlock(
 	return result, err
 }
 
-type Locks struct {
-	Creators    []common.Address
-	Expirations []*big.Int
-}
-
-func (ts *TokenStaking) GetLocks(
-	operator common.Address,
-) (Locks, error) {
-	var result Locks
-	result, err := ts.contract.GetLocks(
-		ts.callerOptions,
-		operator,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"getLocks",
-			operator,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) GetLocksAtBlock(
-	operator common.Address,
-	blockNumber *big.Int,
-) (Locks, error) {
-	var result Locks
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"getLocks",
-		&result,
-		operator,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) InitializationPeriod() (*big.Int, error) {
-	var result *big.Int
-	result, err := ts.contract.InitializationPeriod(
-		ts.callerOptions,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"initializationPeriod",
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) InitializationPeriodAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"initializationPeriod",
-		&result,
-	)
-
-	return result, err
-}
-
 type DelegationInfo struct {
 	Amount        *big.Int
 	CreatedAt     *big.Int
@@ -2385,55 +2539,6 @@ func (ts *TokenStaking) GetDelegationInfoAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) IsAuthorizedForOperator(
-	_operator common.Address,
-	_operatorContract common.Address,
-) (bool, error) {
-	var result bool
-	result, err := ts.contract.IsAuthorizedForOperator(
-		ts.callerOptions,
-		_operator,
-		_operatorContract,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"isAuthorizedForOperator",
-			_operator,
-			_operatorContract,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsAuthorizedForOperatorAtBlock(
-	_operator common.Address,
-	_operatorContract common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"isAuthorizedForOperator",
-		&result,
-		_operator,
-		_operatorContract,
-	)
-
-	return result, err
-}
-
 func (ts *TokenStaking) MinimumStake() (*big.Int, error) {
 	var result *big.Int
 	result, err := ts.contract.MinimumStake(
@@ -2472,13 +2577,10 @@ func (ts *TokenStaking) MinimumStakeAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) GetAuthoritySource(
-	operatorContract common.Address,
-) (common.Address, error) {
-	var result common.Address
-	result, err := ts.contract.GetAuthoritySource(
+func (ts *TokenStaking) InitializationPeriod() (*big.Int, error) {
+	var result *big.Int
+	result, err := ts.contract.InitializationPeriod(
 		ts.callerOptions,
-		operatorContract,
 	)
 
 	if err != nil {
@@ -2486,19 +2588,17 @@ func (ts *TokenStaking) GetAuthoritySource(
 			err,
 			ts.callerOptions.From,
 			nil,
-			"getAuthoritySource",
-			operatorContract,
+			"initializationPeriod",
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) GetAuthoritySourceAtBlock(
-	operatorContract common.Address,
+func (ts *TokenStaking) InitializationPeriodAtBlock(
 	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
+) (*big.Int, error) {
+	var result *big.Int
 
 	err := ethutil.CallAtBlock(
 		ts.callerOptions.From,
@@ -2508,21 +2608,20 @@ func (ts *TokenStaking) GetAuthoritySourceAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"getAuthoritySource",
+		"initializationPeriod",
 		&result,
-		operatorContract,
 	)
 
 	return result, err
 }
 
-func (ts *TokenStaking) BeneficiaryOf(
-	_operator common.Address,
-) (common.Address, error) {
-	var result common.Address
-	result, err := ts.contract.BeneficiaryOf(
+func (ts *TokenStaking) IsStakeLocked(
+	operator common.Address,
+) (bool, error) {
+	var result bool
+	result, err := ts.contract.IsStakeLocked(
 		ts.callerOptions,
-		_operator,
+		operator,
 	)
 
 	if err != nil {
@@ -2530,19 +2629,19 @@ func (ts *TokenStaking) BeneficiaryOf(
 			err,
 			ts.callerOptions.From,
 			nil,
-			"beneficiaryOf",
-			_operator,
+			"isStakeLocked",
+			operator,
 		)
 	}
 
 	return result, err
 }
 
-func (ts *TokenStaking) BeneficiaryOfAtBlock(
-	_operator common.Address,
+func (ts *TokenStaking) IsStakeLockedAtBlock(
+	operator common.Address,
 	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
+) (bool, error) {
+	var result bool
 
 	err := ethutil.CallAtBlock(
 		ts.callerOptions.From,
@@ -2552,9 +2651,9 @@ func (ts *TokenStaking) BeneficiaryOfAtBlock(
 		ts.caller,
 		ts.errorResolver,
 		ts.contractAddress,
-		"beneficiaryOf",
+		"isStakeLocked",
 		&result,
-		_operator,
+		operator,
 	)
 
 	return result, err
@@ -2609,143 +2708,6 @@ func (ts *TokenStaking) ActiveStakeAtBlock(
 	return result, err
 }
 
-func (ts *TokenStaking) IsApprovedOperatorContract(
-	_operatorContract common.Address,
-) (bool, error) {
-	var result bool
-	result, err := ts.contract.IsApprovedOperatorContract(
-		ts.callerOptions,
-		_operatorContract,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"isApprovedOperatorContract",
-			_operatorContract,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsApprovedOperatorContractAtBlock(
-	_operatorContract common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"isApprovedOperatorContract",
-		&result,
-		_operatorContract,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsStakeLocked(
-	operator common.Address,
-) (bool, error) {
-	var result bool
-	result, err := ts.contract.IsStakeLocked(
-		ts.callerOptions,
-		operator,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"isStakeLocked",
-			operator,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) IsStakeLockedAtBlock(
-	operator common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"isStakeLocked",
-		&result,
-		operator,
-	)
-
-	return result, err
-}
-
-func (ts *TokenStaking) HasMinimumStake(
-	staker common.Address,
-	operatorContract common.Address,
-) (bool, error) {
-	var result bool
-	result, err := ts.contract.HasMinimumStake(
-		ts.callerOptions,
-		staker,
-		operatorContract,
-	)
-
-	if err != nil {
-		return result, ts.errorResolver.ResolveError(
-			err,
-			ts.callerOptions.From,
-			nil,
-			"hasMinimumStake",
-			staker,
-			operatorContract,
-		)
-	}
-
-	return result, err
-}
-
-func (ts *TokenStaking) HasMinimumStakeAtBlock(
-	staker common.Address,
-	operatorContract common.Address,
-	blockNumber *big.Int,
-) (bool, error) {
-	var result bool
-
-	err := ethutil.CallAtBlock(
-		ts.callerOptions.From,
-		blockNumber,
-		nil,
-		ts.contractABI,
-		ts.caller,
-		ts.errorResolver,
-		ts.contractAddress,
-		"hasMinimumStake",
-		&result,
-		staker,
-		operatorContract,
-	)
-
-	return result, err
-}
-
 func (ts *TokenStaking) BalanceOf(
 	_address common.Address,
 ) (*big.Int, error) {
@@ -2790,160 +2752,83 @@ func (ts *TokenStaking) BalanceOfAtBlock(
 	return result, err
 }
 
+func (ts *TokenStaking) GetAuthoritySource(
+	operatorContract common.Address,
+) (common.Address, error) {
+	var result common.Address
+	result, err := ts.contract.GetAuthoritySource(
+		ts.callerOptions,
+		operatorContract,
+	)
+
+	if err != nil {
+		return result, ts.errorResolver.ResolveError(
+			err,
+			ts.callerOptions.From,
+			nil,
+			"getAuthoritySource",
+			operatorContract,
+		)
+	}
+
+	return result, err
+}
+
+func (ts *TokenStaking) GetAuthoritySourceAtBlock(
+	operatorContract common.Address,
+	blockNumber *big.Int,
+) (common.Address, error) {
+	var result common.Address
+
+	err := ethutil.CallAtBlock(
+		ts.callerOptions.From,
+		blockNumber,
+		nil,
+		ts.contractABI,
+		ts.caller,
+		ts.errorResolver,
+		ts.contractAddress,
+		"getAuthoritySource",
+		&result,
+		operatorContract,
+	)
+
+	return result, err
+}
+
 // ------ Events -------
 
-type tokenStakingLockReleasedFunc func(
-	Operator common.Address,
-	LockCreator common.Address,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) PastLockReleasedEvents(
-	startBlock uint64,
-	endBlock *uint64,
+func (ts *TokenStaking) OperatorStaked(
+	opts *ethutil.SubscribeOpts,
 	operatorFilter []common.Address,
-) ([]*abi.TokenStakingLockReleased, error) {
-	iterator, err := ts.contract.FilterLockReleased(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
+	beneficiaryFilter []common.Address,
+	authorizerFilter []common.Address,
+) *TsOperatorStakedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &TsOperatorStakedSubscription{
+		ts,
+		opts,
 		operatorFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past LockReleased events: [%v]",
-			err,
-		)
+		beneficiaryFilter,
+		authorizerFilter,
 	}
-
-	events := make([]*abi.TokenStakingLockReleased, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
 }
 
-func (ts *TokenStaking) WatchLockReleased(
-	success tokenStakingLockReleasedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeLockReleased(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event LockReleased terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeLockReleased(
-	success tokenStakingLockReleasedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingLockReleased)
-	eventSubscription, err := ts.contract.WatchLockReleased(
-		nil,
-		eventChan,
-		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for LockReleased events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.LockCreator,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+type TsOperatorStakedSubscription struct {
+	contract          *TokenStaking
+	opts              *ethutil.SubscribeOpts
+	operatorFilter    []common.Address
+	beneficiaryFilter []common.Address
+	authorizerFilter  []common.Address
 }
 
 type tokenStakingOperatorStakedFunc func(
@@ -2953,6 +2838,144 @@ type tokenStakingOperatorStakedFunc func(
 	Value *big.Int,
 	blockNumber uint64,
 )
+
+func (oss *TsOperatorStakedSubscription) OnEvent(
+	handler tokenStakingOperatorStakedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingOperatorStaked)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.Beneficiary,
+					event.Authorizer,
+					event.Value,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := oss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (oss *TsOperatorStakedSubscription) Pipe(
+	sink chan *abi.TokenStakingOperatorStaked,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(oss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := oss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - oss.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past OperatorStaked events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := oss.contract.PastOperatorStakedEvents(
+					fromBlock,
+					nil,
+					oss.operatorFilter,
+					oss.beneficiaryFilter,
+					oss.authorizerFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past OperatorStaked events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := oss.contract.watchOperatorStaked(
+		sink,
+		oss.operatorFilter,
+		oss.beneficiaryFilter,
+		oss.authorizerFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchOperatorStaked(
+	sink chan *abi.TokenStakingOperatorStaked,
+	operatorFilter []common.Address,
+	beneficiaryFilter []common.Address,
+	authorizerFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchOperatorStaked(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+			beneficiaryFilter,
+			authorizerFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event OperatorStaked had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event OperatorStaked failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (ts *TokenStaking) PastOperatorStakedEvents(
 	startBlock uint64,
@@ -2987,601 +3010,157 @@ func (ts *TokenStaking) PastOperatorStakedEvents(
 	return events, nil
 }
 
-func (ts *TokenStaking) WatchOperatorStaked(
-	success tokenStakingOperatorStakedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-	beneficiaryFilter []common.Address,
-	authorizerFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeOperatorStaked(
-			success,
-			failCallback,
-			operatorFilter,
-			beneficiaryFilter,
-			authorizerFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+func (ts *TokenStaking) RecoveredStake(
+	opts *ethutil.SubscribeOpts,
+) *TsRecoveredStakeSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event OperatorStaked terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
+	return &TsRecoveredStakeSubscription{
+		ts,
+		opts,
 	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
-func (ts *TokenStaking) subscribeOperatorStaked(
-	success tokenStakingOperatorStakedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-	beneficiaryFilter []common.Address,
-	authorizerFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingOperatorStaked)
-	eventSubscription, err := ts.contract.WatchOperatorStaked(
-		nil,
-		eventChan,
-		operatorFilter,
-		beneficiaryFilter,
-		authorizerFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for OperatorStaked events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.Beneficiary,
-					event.Authorizer,
-					event.Value,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type tokenStakingTokensSlashedFunc func(
-	Operator common.Address,
-	Amount *big.Int,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) PastTokensSlashedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	operatorFilter []common.Address,
-) ([]*abi.TokenStakingTokensSlashed, error) {
-	iterator, err := ts.contract.FilterTokensSlashed(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		operatorFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past TokensSlashed events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TokenStakingTokensSlashed, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (ts *TokenStaking) WatchTokensSlashed(
-	success tokenStakingTokensSlashedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeTokensSlashed(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event TokensSlashed terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeTokensSlashed(
-	success tokenStakingTokensSlashedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingTokensSlashed)
-	eventSubscription, err := ts.contract.WatchTokensSlashed(
-		nil,
-		eventChan,
-		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for TokensSlashed events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.Amount,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type tokenStakingUndelegatedFunc func(
-	Operator common.Address,
-	UndelegatedAt *big.Int,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) PastUndelegatedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	operatorFilter []common.Address,
-) ([]*abi.TokenStakingUndelegated, error) {
-	iterator, err := ts.contract.FilterUndelegated(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		operatorFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past Undelegated events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TokenStakingUndelegated, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (ts *TokenStaking) WatchUndelegated(
-	success tokenStakingUndelegatedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeUndelegated(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event Undelegated terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeUndelegated(
-	success tokenStakingUndelegatedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingUndelegated)
-	eventSubscription, err := ts.contract.WatchUndelegated(
-		nil,
-		eventChan,
-		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for Undelegated events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.UndelegatedAt,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-type tokenStakingExpiredLockReleasedFunc func(
-	Operator common.Address,
-	LockCreator common.Address,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) PastExpiredLockReleasedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	operatorFilter []common.Address,
-) ([]*abi.TokenStakingExpiredLockReleased, error) {
-	iterator, err := ts.contract.FilterExpiredLockReleased(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		operatorFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past ExpiredLockReleased events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TokenStakingExpiredLockReleased, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (ts *TokenStaking) WatchExpiredLockReleased(
-	success tokenStakingExpiredLockReleasedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeExpiredLockReleased(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event ExpiredLockReleased terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeExpiredLockReleased(
-	success tokenStakingExpiredLockReleasedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingExpiredLockReleased)
-	eventSubscription, err := ts.contract.WatchExpiredLockReleased(
-		nil,
-		eventChan,
-		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for ExpiredLockReleased events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.LockCreator,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+type TsRecoveredStakeSubscription struct {
+	contract *TokenStaking
+	opts     *ethutil.SubscribeOpts
 }
 
 type tokenStakingRecoveredStakeFunc func(
 	Operator common.Address,
 	blockNumber uint64,
 )
+
+func (rss *TsRecoveredStakeSubscription) OnEvent(
+	handler tokenStakingRecoveredStakeFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingRecoveredStake)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := rss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (rss *TsRecoveredStakeSubscription) Pipe(
+	sink chan *abi.TokenStakingRecoveredStake,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(rss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := rss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - rss.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past RecoveredStake events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := rss.contract.PastRecoveredStakeEvents(
+					fromBlock,
+					nil,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past RecoveredStake events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := rss.contract.watchRecoveredStake(
+		sink,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchRecoveredStake(
+	sink chan *abi.TokenStakingRecoveredStake,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchRecoveredStake(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event RecoveredStake had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event RecoveredStake failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (ts *TokenStaking) PastRecoveredStakeEvents(
 	startBlock uint64,
@@ -3610,118 +3189,34 @@ func (ts *TokenStaking) PastRecoveredStakeEvents(
 	return events, nil
 }
 
-func (ts *TokenStaking) WatchRecoveredStake(
-	success tokenStakingRecoveredStakeFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeRecoveredStake(
-			success,
-			failCallback,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+func (ts *TokenStaking) StakeDelegated(
+	opts *ethutil.SubscribeOpts,
+	ownerFilter []common.Address,
+	operatorFilter []common.Address,
+) *TsStakeDelegatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event RecoveredStake terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
+	return &TsStakeDelegatedSubscription{
+		ts,
+		opts,
+		ownerFilter,
+		operatorFilter,
 	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
-func (ts *TokenStaking) subscribeRecoveredStake(
-	success tokenStakingRecoveredStakeFunc,
-	fail func(err error) error,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingRecoveredStake)
-	eventSubscription, err := ts.contract.WatchRecoveredStake(
-		nil,
-		eventChan,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for RecoveredStake events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+type TsStakeDelegatedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	ownerFilter    []common.Address
+	operatorFilter []common.Address
 }
 
 type tokenStakingStakeDelegatedFunc func(
@@ -3729,6 +3224,138 @@ type tokenStakingStakeDelegatedFunc func(
 	Operator common.Address,
 	blockNumber uint64,
 )
+
+func (sds *TsStakeDelegatedSubscription) OnEvent(
+	handler tokenStakingStakeDelegatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingStakeDelegated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Owner,
+					event.Operator,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := sds.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (sds *TsStakeDelegatedSubscription) Pipe(
+	sink chan *abi.TokenStakingStakeDelegated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(sds.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := sds.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - sds.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past StakeDelegated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := sds.contract.PastStakeDelegatedEvents(
+					fromBlock,
+					nil,
+					sds.ownerFilter,
+					sds.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past StakeDelegated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := sds.contract.watchStakeDelegated(
+		sink,
+		sds.ownerFilter,
+		sds.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchStakeDelegated(
+	sink chan *abi.TokenStakingStakeDelegated,
+	ownerFilter []common.Address,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchStakeDelegated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			ownerFilter,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event StakeDelegated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event StakeDelegated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (ts *TokenStaking) PastStakeDelegatedEvents(
 	startBlock uint64,
@@ -3761,283 +3388,34 @@ func (ts *TokenStaking) PastStakeDelegatedEvents(
 	return events, nil
 }
 
-func (ts *TokenStaking) WatchStakeDelegated(
-	success tokenStakingStakeDelegatedFunc,
-	fail func(err error) error,
-	ownerFilter []common.Address,
+func (ts *TokenStaking) StakeOwnershipTransferred(
+	opts *ethutil.SubscribeOpts,
 	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeStakeDelegated(
-			success,
-			failCallback,
-			ownerFilter,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+	newOwnerFilter []common.Address,
+) *TsStakeOwnershipTransferredSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event StakeDelegated terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeStakeDelegated(
-	success tokenStakingStakeDelegatedFunc,
-	fail func(err error) error,
-	ownerFilter []common.Address,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingStakeDelegated)
-	eventSubscription, err := ts.contract.WatchStakeDelegated(
-		nil,
-		eventChan,
-		ownerFilter,
+	return &TsStakeOwnershipTransferredSubscription{
+		ts,
+		opts,
 		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for StakeDelegated events: [%v]",
-			err,
-		)
+		newOwnerFilter,
 	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Owner,
-					event.Operator,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
-type tokenStakingStakeLockedFunc func(
-	Operator common.Address,
-	LockCreator common.Address,
-	Until *big.Int,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) PastStakeLockedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	operatorFilter []common.Address,
-) ([]*abi.TokenStakingStakeLocked, error) {
-	iterator, err := ts.contract.FilterStakeLocked(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		operatorFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past StakeLocked events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TokenStakingStakeLocked, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (ts *TokenStaking) WatchStakeLocked(
-	success tokenStakingStakeLockedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeStakeLocked(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event StakeLocked terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeStakeLocked(
-	success tokenStakingStakeLockedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingStakeLocked)
-	eventSubscription, err := ts.contract.WatchStakeLocked(
-		nil,
-		eventChan,
-		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for StakeLocked events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.LockCreator,
-					event.Until,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+type TsStakeOwnershipTransferredSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+	newOwnerFilter []common.Address
 }
 
 type tokenStakingStakeOwnershipTransferredFunc func(
@@ -4045,6 +3423,138 @@ type tokenStakingStakeOwnershipTransferredFunc func(
 	NewOwner common.Address,
 	blockNumber uint64,
 )
+
+func (sots *TsStakeOwnershipTransferredSubscription) OnEvent(
+	handler tokenStakingStakeOwnershipTransferredFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingStakeOwnershipTransferred)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.NewOwner,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := sots.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (sots *TsStakeOwnershipTransferredSubscription) Pipe(
+	sink chan *abi.TokenStakingStakeOwnershipTransferred,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(sots.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := sots.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - sots.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past StakeOwnershipTransferred events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := sots.contract.PastStakeOwnershipTransferredEvents(
+					fromBlock,
+					nil,
+					sots.operatorFilter,
+					sots.newOwnerFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past StakeOwnershipTransferred events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := sots.contract.watchStakeOwnershipTransferred(
+		sink,
+		sots.operatorFilter,
+		sots.newOwnerFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchStakeOwnershipTransferred(
+	sink chan *abi.TokenStakingStakeOwnershipTransferred,
+	operatorFilter []common.Address,
+	newOwnerFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchStakeOwnershipTransferred(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+			newOwnerFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event StakeOwnershipTransferred had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event StakeOwnershipTransferred failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (ts *TokenStaking) PastStakeOwnershipTransferredEvents(
 	startBlock uint64,
@@ -4077,281 +3587,31 @@ func (ts *TokenStaking) PastStakeOwnershipTransferredEvents(
 	return events, nil
 }
 
-func (ts *TokenStaking) WatchStakeOwnershipTransferred(
-	success tokenStakingStakeOwnershipTransferredFunc,
-	fail func(err error) error,
+func (ts *TokenStaking) TopUpCompleted(
+	opts *ethutil.SubscribeOpts,
 	operatorFilter []common.Address,
-	newOwnerFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeStakeOwnershipTransferred(
-			success,
-			failCallback,
-			operatorFilter,
-			newOwnerFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+) *TsTopUpCompletedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event StakeOwnershipTransferred terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeStakeOwnershipTransferred(
-	success tokenStakingStakeOwnershipTransferredFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-	newOwnerFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingStakeOwnershipTransferred)
-	eventSubscription, err := ts.contract.WatchStakeOwnershipTransferred(
-		nil,
-		eventChan,
+	return &TsTopUpCompletedSubscription{
+		ts,
+		opts,
 		operatorFilter,
-		newOwnerFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for StakeOwnershipTransferred events: [%v]",
-			err,
-		)
 	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.NewOwner,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
 }
 
-type tokenStakingTokensSeizedFunc func(
-	Operator common.Address,
-	Amount *big.Int,
-	blockNumber uint64,
-)
-
-func (ts *TokenStaking) PastTokensSeizedEvents(
-	startBlock uint64,
-	endBlock *uint64,
-	operatorFilter []common.Address,
-) ([]*abi.TokenStakingTokensSeized, error) {
-	iterator, err := ts.contract.FilterTokensSeized(
-		&bind.FilterOpts{
-			Start: startBlock,
-			End:   endBlock,
-		},
-		operatorFilter,
-	)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"error retrieving past TokensSeized events: [%v]",
-			err,
-		)
-	}
-
-	events := make([]*abi.TokenStakingTokensSeized, 0)
-
-	for iterator.Next() {
-		event := iterator.Event
-		events = append(events, event)
-	}
-
-	return events, nil
-}
-
-func (ts *TokenStaking) WatchTokensSeized(
-	success tokenStakingTokensSeizedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeTokensSeized(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
-	}
-
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
-
-		for {
-			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event TokensSeized terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
-				return
-			}
-		}
-	}()
-
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
-}
-
-func (ts *TokenStaking) subscribeTokensSeized(
-	success tokenStakingTokensSeizedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingTokensSeized)
-	eventSubscription, err := ts.contract.WatchTokensSeized(
-		nil,
-		eventChan,
-		operatorFilter,
-	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for TokensSeized events: [%v]",
-			err,
-		)
-	}
-
-	var subscriptionMutex = &sync.Mutex{}
-
-	go func() {
-		for {
-			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
-					event.Operator,
-					event.Amount,
-					event.Raw.BlockNumber,
-				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
-			}
-		}
-	}()
-
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
-
-		eventSubscription.Unsubscribe()
-		close(eventChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+type TsTopUpCompletedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
 }
 
 type tokenStakingTopUpCompletedFunc func(
@@ -4359,6 +3619,134 @@ type tokenStakingTopUpCompletedFunc func(
 	NewAmount *big.Int,
 	blockNumber uint64,
 )
+
+func (tucs *TsTopUpCompletedSubscription) OnEvent(
+	handler tokenStakingTopUpCompletedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingTopUpCompleted)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.NewAmount,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := tucs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tucs *TsTopUpCompletedSubscription) Pipe(
+	sink chan *abi.TokenStakingTopUpCompleted,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(tucs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := tucs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - tucs.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past TopUpCompleted events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := tucs.contract.PastTopUpCompletedEvents(
+					fromBlock,
+					nil,
+					tucs.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past TopUpCompleted events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := tucs.contract.watchTopUpCompleted(
+		sink,
+		tucs.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchTopUpCompleted(
+	sink chan *abi.TokenStakingTopUpCompleted,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchTopUpCompleted(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event TopUpCompleted had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event TopUpCompleted failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (ts *TokenStaking) PastTopUpCompletedEvents(
 	startBlock uint64,
@@ -4389,123 +3777,601 @@ func (ts *TokenStaking) PastTopUpCompletedEvents(
 	return events, nil
 }
 
-func (ts *TokenStaking) WatchTopUpCompleted(
-	success tokenStakingTopUpCompletedFunc,
-	fail func(err error) error,
+func (ts *TokenStaking) ExpiredLockReleased(
+	opts *ethutil.SubscribeOpts,
 	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeTopUpCompleted(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+) *TsExpiredLockReleasedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
+	return &TsExpiredLockReleasedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
 
+type TsExpiredLockReleasedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+}
+
+type tokenStakingExpiredLockReleasedFunc func(
+	Operator common.Address,
+	LockCreator common.Address,
+	blockNumber uint64,
+)
+
+func (elrs *TsExpiredLockReleasedSubscription) OnEvent(
+	handler tokenStakingExpiredLockReleasedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingExpiredLockReleased)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
 		for {
 			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event TopUpCompleted terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
+			case <-ctx.Done():
 				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.LockCreator,
+					event.Raw.BlockNumber,
+				)
 			}
 		}
 	}()
 
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+	sub := elrs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
 }
 
-func (ts *TokenStaking) subscribeTopUpCompleted(
-	success tokenStakingTopUpCompletedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingTopUpCompleted)
-	eventSubscription, err := ts.contract.WatchTopUpCompleted(
-		nil,
-		eventChan,
-		operatorFilter,
+func (elrs *TsExpiredLockReleasedSubscription) Pipe(
+	sink chan *abi.TokenStakingExpiredLockReleased,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(elrs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := elrs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - elrs.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past ExpiredLockReleased events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := elrs.contract.PastExpiredLockReleasedEvents(
+					fromBlock,
+					nil,
+					elrs.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past ExpiredLockReleased events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := elrs.contract.watchExpiredLockReleased(
+		sink,
+		elrs.operatorFilter,
 	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for TopUpCompleted events: [%v]",
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchExpiredLockReleased(
+	sink chan *abi.TokenStakingExpiredLockReleased,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchExpiredLockReleased(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event ExpiredLockReleased had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event ExpiredLockReleased failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
 			err,
 		)
 	}
 
-	var subscriptionMutex = &sync.Mutex{}
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (ts *TokenStaking) PastExpiredLockReleasedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	operatorFilter []common.Address,
+) ([]*abi.TokenStakingExpiredLockReleased, error) {
+	iterator, err := ts.contract.FilterExpiredLockReleased(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		operatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past ExpiredLockReleased events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TokenStakingExpiredLockReleased, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (ts *TokenStaking) LockReleased(
+	opts *ethutil.SubscribeOpts,
+	operatorFilter []common.Address,
+) *TsLockReleasedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &TsLockReleasedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
+
+type TsLockReleasedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+}
+
+type tokenStakingLockReleasedFunc func(
+	Operator common.Address,
+	LockCreator common.Address,
+	blockNumber uint64,
+)
+
+func (lrs *TsLockReleasedSubscription) OnEvent(
+	handler tokenStakingLockReleasedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingLockReleased)
+	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
 		for {
 			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
 					event.Operator,
-					event.NewAmount,
+					event.LockCreator,
 					event.Raw.BlockNumber,
 				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
 			}
 		}
 	}()
 
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
+	sub := lrs.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
 
-		eventSubscription.Unsubscribe()
-		close(eventChan)
+func (lrs *TsLockReleasedSubscription) Pipe(
+	sink chan *abi.TokenStakingLockReleased,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(lrs.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := lrs.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - lrs.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past LockReleased events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := lrs.contract.PastLockReleasedEvents(
+					fromBlock,
+					nil,
+					lrs.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past LockReleased events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := lrs.contract.watchLockReleased(
+		sink,
+		lrs.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchLockReleased(
+	sink chan *abi.TokenStakingLockReleased,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchLockReleased(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
 	}
 
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event LockReleased had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event LockReleased failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (ts *TokenStaking) PastLockReleasedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	operatorFilter []common.Address,
+) ([]*abi.TokenStakingLockReleased, error) {
+	iterator, err := ts.contract.FilterLockReleased(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		operatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past LockReleased events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TokenStakingLockReleased, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (ts *TokenStaking) TokensSlashed(
+	opts *ethutil.SubscribeOpts,
+	operatorFilter []common.Address,
+) *TsTokensSlashedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &TsTokensSlashedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
+
+type TsTokensSlashedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+}
+
+type tokenStakingTokensSlashedFunc func(
+	Operator common.Address,
+	Amount *big.Int,
+	blockNumber uint64,
+)
+
+func (tss *TsTokensSlashedSubscription) OnEvent(
+	handler tokenStakingTokensSlashedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingTokensSlashed)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.Amount,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := tss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tss *TsTokensSlashedSubscription) Pipe(
+	sink chan *abi.TokenStakingTokensSlashed,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(tss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := tss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - tss.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past TokensSlashed events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := tss.contract.PastTokensSlashedEvents(
+					fromBlock,
+					nil,
+					tss.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past TokensSlashed events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := tss.contract.watchTokensSlashed(
+		sink,
+		tss.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchTokensSlashed(
+	sink chan *abi.TokenStakingTokensSlashed,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchTokensSlashed(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event TokensSlashed had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event TokensSlashed failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (ts *TokenStaking) PastTokensSlashedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	operatorFilter []common.Address,
+) ([]*abi.TokenStakingTokensSlashed, error) {
+	iterator, err := ts.contract.FilterTokensSlashed(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		operatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past TokensSlashed events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TokenStakingTokensSlashed, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (ts *TokenStaking) TopUpInitiated(
+	opts *ethutil.SubscribeOpts,
+	operatorFilter []common.Address,
+) *TsTopUpInitiatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &TsTopUpInitiatedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
+
+type TsTopUpInitiatedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
 }
 
 type tokenStakingTopUpInitiatedFunc func(
@@ -4513,6 +4379,134 @@ type tokenStakingTopUpInitiatedFunc func(
 	TopUp *big.Int,
 	blockNumber uint64,
 )
+
+func (tuis *TsTopUpInitiatedSubscription) OnEvent(
+	handler tokenStakingTopUpInitiatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingTopUpInitiated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.TopUp,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := tuis.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tuis *TsTopUpInitiatedSubscription) Pipe(
+	sink chan *abi.TokenStakingTopUpInitiated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(tuis.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := tuis.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - tuis.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past TopUpInitiated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := tuis.contract.PastTopUpInitiatedEvents(
+					fromBlock,
+					nil,
+					tuis.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past TopUpInitiated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := tuis.contract.watchTopUpInitiated(
+		sink,
+		tuis.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchTopUpInitiated(
+	sink chan *abi.TokenStakingTopUpInitiated,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchTopUpInitiated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event TopUpInitiated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event TopUpInitiated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
 
 func (ts *TokenStaking) PastTopUpInitiatedEvents(
 	startBlock uint64,
@@ -4543,121 +4537,574 @@ func (ts *TokenStaking) PastTopUpInitiatedEvents(
 	return events, nil
 }
 
-func (ts *TokenStaking) WatchTopUpInitiated(
-	success tokenStakingTopUpInitiatedFunc,
-	fail func(err error) error,
+func (ts *TokenStaking) Undelegated(
+	opts *ethutil.SubscribeOpts,
 	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	errorChan := make(chan error)
-	unsubscribeChan := make(chan struct{})
-
-	// Delay which must be preserved before a new resubscription attempt.
-	// There is no sense to resubscribe immediately after the fail of current
-	// subscription because the publisher must have some time to recover.
-	retryDelay := 5 * time.Second
-
-	watch := func() {
-		failCallback := func(err error) error {
-			fail(err)
-			errorChan <- err // trigger resubscription signal
-			return err
-		}
-
-		subscription, err := ts.subscribeTopUpInitiated(
-			success,
-			failCallback,
-			operatorFilter,
-		)
-		if err != nil {
-			errorChan <- err // trigger resubscription signal
-			return
-		}
-
-		// wait for unsubscription signal
-		<-unsubscribeChan
-		subscription.Unsubscribe()
+) *TsUndelegatedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
 	}
 
-	// trigger the resubscriber goroutine
-	go func() {
-		go watch() // trigger first subscription
+	return &TsUndelegatedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
 
+type TsUndelegatedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+}
+
+type tokenStakingUndelegatedFunc func(
+	Operator common.Address,
+	UndelegatedAt *big.Int,
+	blockNumber uint64,
+)
+
+func (us *TsUndelegatedSubscription) OnEvent(
+	handler tokenStakingUndelegatedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingUndelegated)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
 		for {
 			select {
-			case <-errorChan:
-				tsLogger.Warning(
-					"subscription to event TopUpInitiated terminated with error; " +
-						"resubscription attempt will be performed after the retry delay",
-				)
-				time.Sleep(retryDelay)
-				go watch()
-			case <-unsubscribeChan:
-				// shutdown the resubscriber goroutine on unsubscribe signal
+			case <-ctx.Done():
 				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.UndelegatedAt,
+					event.Raw.BlockNumber,
+				)
 			}
 		}
 	}()
 
-	// closing the unsubscribeChan will trigger a unsubscribe signal and
-	// run unsubscription for all subscription instances
-	unsubscribeCallback := func() {
-		close(unsubscribeChan)
-	}
-
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+	sub := us.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
 }
 
-func (ts *TokenStaking) subscribeTopUpInitiated(
-	success tokenStakingTopUpInitiatedFunc,
-	fail func(err error) error,
-	operatorFilter []common.Address,
-) (subscription.EventSubscription, error) {
-	eventChan := make(chan *abi.TokenStakingTopUpInitiated)
-	eventSubscription, err := ts.contract.WatchTopUpInitiated(
-		nil,
-		eventChan,
-		operatorFilter,
+func (us *TsUndelegatedSubscription) Pipe(
+	sink chan *abi.TokenStakingUndelegated,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(us.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := us.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - us.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past Undelegated events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := us.contract.PastUndelegatedEvents(
+					fromBlock,
+					nil,
+					us.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past Undelegated events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := us.contract.watchUndelegated(
+		sink,
+		us.operatorFilter,
 	)
-	if err != nil {
-		close(eventChan)
-		return eventSubscription, fmt.Errorf(
-			"error creating watch for TopUpInitiated events: [%v]",
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchUndelegated(
+	sink chan *abi.TokenStakingUndelegated,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchUndelegated(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event Undelegated had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event Undelegated failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
 			err,
 		)
 	}
 
-	var subscriptionMutex = &sync.Mutex{}
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (ts *TokenStaking) PastUndelegatedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	operatorFilter []common.Address,
+) ([]*abi.TokenStakingUndelegated, error) {
+	iterator, err := ts.contract.FilterUndelegated(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		operatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past Undelegated events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TokenStakingUndelegated, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (ts *TokenStaking) StakeLocked(
+	opts *ethutil.SubscribeOpts,
+	operatorFilter []common.Address,
+) *TsStakeLockedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &TsStakeLockedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
+
+type TsStakeLockedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+}
+
+type tokenStakingStakeLockedFunc func(
+	Operator common.Address,
+	LockCreator common.Address,
+	Until *big.Int,
+	blockNumber uint64,
+)
+
+func (sls *TsStakeLockedSubscription) OnEvent(
+	handler tokenStakingStakeLockedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingStakeLocked)
+	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	go func() {
 		for {
 			select {
-			case event, subscribed := <-eventChan:
-				subscriptionMutex.Lock()
-				// if eventChan has been closed, it means we have unsubscribed
-				if !subscribed {
-					subscriptionMutex.Unlock()
-					return
-				}
-				success(
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
 					event.Operator,
-					event.TopUp,
+					event.LockCreator,
+					event.Until,
 					event.Raw.BlockNumber,
 				)
-				subscriptionMutex.Unlock()
-			case ee := <-eventSubscription.Err():
-				fail(ee)
-				return
 			}
 		}
 	}()
 
-	unsubscribeCallback := func() {
-		subscriptionMutex.Lock()
-		defer subscriptionMutex.Unlock()
+	sub := sls.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
 
-		eventSubscription.Unsubscribe()
-		close(eventChan)
+func (sls *TsStakeLockedSubscription) Pipe(
+	sink chan *abi.TokenStakingStakeLocked,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(sls.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := sls.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - sls.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past StakeLocked events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := sls.contract.PastStakeLockedEvents(
+					fromBlock,
+					nil,
+					sls.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past StakeLocked events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := sls.contract.watchStakeLocked(
+		sink,
+		sls.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchStakeLocked(
+	sink chan *abi.TokenStakingStakeLocked,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchStakeLocked(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
 	}
 
-	return subscription.NewEventSubscription(unsubscribeCallback), nil
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event StakeLocked had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event StakeLocked failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (ts *TokenStaking) PastStakeLockedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	operatorFilter []common.Address,
+) ([]*abi.TokenStakingStakeLocked, error) {
+	iterator, err := ts.contract.FilterStakeLocked(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		operatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past StakeLocked events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TokenStakingStakeLocked, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
+}
+
+func (ts *TokenStaking) TokensSeized(
+	opts *ethutil.SubscribeOpts,
+	operatorFilter []common.Address,
+) *TsTokensSeizedSubscription {
+	if opts == nil {
+		opts = new(ethutil.SubscribeOpts)
+	}
+	if opts.Tick == 0 {
+		opts.Tick = ethutil.DefaultSubscribeOptsTick
+	}
+	if opts.PastBlocks == 0 {
+		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+	}
+
+	return &TsTokensSeizedSubscription{
+		ts,
+		opts,
+		operatorFilter,
+	}
+}
+
+type TsTokensSeizedSubscription struct {
+	contract       *TokenStaking
+	opts           *ethutil.SubscribeOpts
+	operatorFilter []common.Address
+}
+
+type tokenStakingTokensSeizedFunc func(
+	Operator common.Address,
+	Amount *big.Int,
+	blockNumber uint64,
+)
+
+func (tss *TsTokensSeizedSubscription) OnEvent(
+	handler tokenStakingTokensSeizedFunc,
+) subscription.EventSubscription {
+	eventChan := make(chan *abi.TokenStakingTokensSeized)
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case event := <-eventChan:
+				handler(
+					event.Operator,
+					event.Amount,
+					event.Raw.BlockNumber,
+				)
+			}
+		}
+	}()
+
+	sub := tss.Pipe(eventChan)
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (tss *TsTokensSeizedSubscription) Pipe(
+	sink chan *abi.TokenStakingTokensSeized,
+) subscription.EventSubscription {
+	ctx, cancelCtx := context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(tss.opts.Tick)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				lastBlock, err := tss.contract.blockCounter.CurrentBlock()
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+				}
+				fromBlock := lastBlock - tss.opts.PastBlocks
+
+				tsLogger.Infof(
+					"subscription monitoring fetching past TokensSeized events "+
+						"starting from block [%v]",
+					fromBlock,
+				)
+				events, err := tss.contract.PastTokensSeizedEvents(
+					fromBlock,
+					nil,
+					tss.operatorFilter,
+				)
+				if err != nil {
+					tsLogger.Errorf(
+						"subscription failed to pull events: [%v]",
+						err,
+					)
+					continue
+				}
+				tsLogger.Infof(
+					"subscription monitoring fetched [%v] past TokensSeized events",
+					len(events),
+				)
+
+				for _, event := range events {
+					sink <- event
+				}
+			}
+		}
+	}()
+
+	sub := tss.contract.watchTokensSeized(
+		sink,
+		tss.operatorFilter,
+	)
+
+	return subscription.NewEventSubscription(func() {
+		sub.Unsubscribe()
+		cancelCtx()
+	})
+}
+
+func (ts *TokenStaking) watchTokensSeized(
+	sink chan *abi.TokenStakingTokensSeized,
+	operatorFilter []common.Address,
+) event.Subscription {
+	subscribeFn := func(ctx context.Context) (event.Subscription, error) {
+		return ts.contract.WatchTokensSeized(
+			&bind.WatchOpts{Context: ctx},
+			sink,
+			operatorFilter,
+		)
+	}
+
+	thresholdViolatedFn := func(elapsed time.Duration) {
+		tsLogger.Errorf(
+			"subscription to event TokensSeized had to be "+
+				"retried [%s] since the last attempt; please inspect "+
+				"Ethereum connectivity",
+			elapsed,
+		)
+	}
+
+	subscriptionFailedFn := func(err error) {
+		tsLogger.Errorf(
+			"subscription to event TokensSeized failed "+
+				"with error: [%v]; resubscription attempt will be "+
+				"performed",
+			err,
+		)
+	}
+
+	return ethutil.WithResubscription(
+		ethutil.SubscriptionBackoffMax,
+		subscribeFn,
+		ethutil.SubscriptionAlertThreshold,
+		thresholdViolatedFn,
+		subscriptionFailedFn,
+	)
+}
+
+func (ts *TokenStaking) PastTokensSeizedEvents(
+	startBlock uint64,
+	endBlock *uint64,
+	operatorFilter []common.Address,
+) ([]*abi.TokenStakingTokensSeized, error) {
+	iterator, err := ts.contract.FilterTokensSeized(
+		&bind.FilterOpts{
+			Start: startBlock,
+			End:   endBlock,
+		},
+		operatorFilter,
+	)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"error retrieving past TokensSeized events: [%v]",
+			err,
+		)
+	}
+
+	events := make([]*abi.TokenStakingTokensSeized, 0)
+
+	for iterator.Next() {
+		event := iterator.Event
+		events = append(events, event)
+	}
+
+	return events, nil
 }
