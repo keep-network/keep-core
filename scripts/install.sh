@@ -9,8 +9,8 @@ KEEP_CORE_PATH=$PWD
 KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 NETWORK_DEFAULT="local"
-KEEP_ACCOUNT_PASSWORD=${KEEP_HOST_CHAIN_ACCOUNT_PASSWORD:-"password"}
-ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
+KEEP_ETHEREUM_PASSWORD=${KEEP_HOST_CHAIN_ETH_ACCOUNT_PASSWORD:-"password"}
+CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
 {
@@ -18,7 +18,7 @@ help()
            "--config-dir <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_HOST_CHAIN_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
+   echo -e "\tKEEP_HOST_CHAIN_ETH_ACCOUNT_PASSWORD: Unlock an account with a password. Default password is 'password'"
    echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Configuration path for keep-core client"
@@ -66,28 +66,28 @@ printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
 printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
-KEEP_ETHEREUM_PASSWORD=$KEEP_ACCOUNT_PASSWORD \
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$ACCOUNT_PRIVATE_KEY \
+KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
+CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
     npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
 rm -rf build/
 
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$ACCOUNT_PRIVATE_KEY \
+CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
     npx truffle migrate --reset --network $NETWORK
 
 KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$ACCOUNT_PRIVATE_KEY \
+CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
     npx truffle exec scripts/delegate-tokens.js --network $NETWORK
 
 printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
 for CONFIG_FILE in $CONFIG_DIR_PATH/*.toml
 do
     KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
-    CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$ACCOUNT_PRIVATE_KEY \
+    CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
         npx truffle exec scripts/lcl-client-config.js --network $NETWORK
 done
 
