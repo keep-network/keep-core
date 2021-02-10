@@ -16,7 +16,7 @@ const App = () => (
     <Messages>
       <Web3ContextProvider>
         <ModalContextProvider>
-          <Router>
+          <Router basename={`${process.env.PUBLIC_URL}`}>
             <AppLayout />
           </Router>
         </ModalContextProvider>
