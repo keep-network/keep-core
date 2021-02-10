@@ -17,14 +17,17 @@ import Banner from "../../components/Banner"
 import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
 
+import KeepOnlyPool from "../../components/KeepOnlyPool"
+
 const LiquidityPage = ({ headerTitle }) => {
   const [isBannerVisible, hideBanner] = useHideComponent(false)
   const { isConnected } = useWeb3Context()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
-  const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC } = useSelector(
+  const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC, KEEP_ONLY } = useSelector(
     (state) => state.liquidityRewards
   )
+
   const dispatch = useDispatch()
   const address = useWeb3Address()
 
@@ -66,10 +69,17 @@ const LiquidityPage = ({ headerTitle }) => {
 
   const withdrawLiquidityRewards = (
     liquidityPairContractName,
+    amount,
+    pool,
     awaitingPromise
   ) => {
     dispatch(
-      withdrawAllLiquidityRewards(liquidityPairContractName, awaitingPromise)
+      withdrawAllLiquidityRewards(
+        liquidityPairContractName,
+        amount,
+        pool,
+        awaitingPromise
+      )
     )
   }
 
@@ -111,6 +121,15 @@ const LiquidityPage = ({ headerTitle }) => {
         </Banner>
       )}
 
+      <KeepOnlyPool
+        {...KEEP_ONLY}
+        percentageOfTotalPool={KEEP_ONLY.shareOfPoolInPercent}
+        rewardBalance={KEEP_ONLY.reward}
+        addLpTokens={addLpTokens}
+        withdrawLiquidityRewards={withdrawLiquidityRewards}
+        liquidityContractName={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.contractName}
+        pool={LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.pool}
+      />
       <CardContainer>
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.label}

@@ -612,7 +612,7 @@ function* observeLiquidityTokenStakedEvent(liquidityRewardPair) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.LPRewardsContract,
-    "Staked"
+    LiquidityRewards.stakedEventName
   )
 
   while (true) {
@@ -640,7 +640,7 @@ function* observeLiquidityTokenWithdrawnEvent(liquidityRewardPair) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.LPRewardsContract,
-    "Withdrawn"
+    LiquidityRewards.depositWithdrawnEventName
   )
 
   while (true) {
@@ -681,9 +681,23 @@ function* lpTokensStakedOrWithdrawn(
     totalSupply
   )
 
+  const { lpBalance } = yield select(
+    (state) => state.liquidityRewards[liquidityRewardPairName]
+  )
+
+  let updatedlpBalance = lpBalance
+  let emittedAmountValue = 0
+  // Update only if this transacion relates to the current logged account.
+  if (isSameEthAddress(defaultAccount, user)) {
+    emittedAmountValue = amount
+    const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
+    updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
+  }
+
   const reward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
-    defaultAccount
+    defaultAccount,
+    updatedlpBalance
   )
 
   // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
@@ -691,8 +705,8 @@ function* lpTokensStakedOrWithdrawn(
   yield put({
     type: actionType,
     payload: {
-      // Update only if this transacion relates to the current logged account.
-      amount: isSameEthAddress(defaultAccount, user) ? amount : 0,
+      amount: emittedAmountValue,
+      lpBalance: updatedlpBalance,
       totalSupply,
       reward,
       apy,
@@ -712,16 +726,19 @@ function* observeLiquidityRewardPaidEvent(liquidityRewardPair) {
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.LPRewardsContract,
-    "RewardPaid"
+    LiquidityRewards.rewardClaimedEventName
   )
 
   while (true) {
     try {
-      const {
-        returnValues: { user, reward },
-      } = yield take(contractEventCahnnel)
+      const { returnValues } = yield take(contractEventCahnnel)
+      // LPRewards and TokenGeyser contract have different param names in an
+      // emitted event which is triggered when the reward is claimed but param
+      // which points to claimed reward amount is at the same index- 1. So we
+      // can get claimed amount by index eg. `event.returnValues["1"]`.
+      const reward = returnValues["1"]
 
-      if (isSameEthAddress(defaultAccount, user)) {
+      if (isSameEthAddress(defaultAccount, returnValues.user)) {
         yield put({
           type: `liquidity_rewards/${liquidityRewardPair.name}_reward_paid`,
           payload: {

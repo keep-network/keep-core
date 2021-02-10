@@ -56,7 +56,8 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       // Fetching available reward balance from `LPRewards` contract.
       reward = yield call(
         [LiquidityRewards, LiquidityRewards.rewardBalance],
-        address
+        address,
+        lpBalance
       )
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
@@ -114,8 +115,8 @@ function* stakeTokens(action) {
   yield call(sendTransaction, {
     payload: {
       contract: LiquidityRewards.LPRewardsContract,
-      methodName: "stake",
-      args: [amount],
+      methodName: LiquidityRewards.stakeFnName,
+      args: LiquidityRewards.stakeArgs(amount),
     },
   })
 }
@@ -185,4 +186,27 @@ export function* watchFetchLiquidityRewardsAPY() {
     "liquidity_rewards/fetch_apy_request",
     fetchAllLiquidityRewardsAPY
   )
+}
+
+function* withdrawTokens(action) {
+  const { contractName, amount, pool } = action.payload
+
+  /** @type LiquidityRewards */
+  const LiquidityRewards = yield getLPRewardsWrapper({ contractName, pool })
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: LiquidityRewards.LPRewardsContract,
+      methodName: LiquidityRewards.withdrawTokensFnName,
+      args: LiquidityRewards.withdrawTokensArgs(amount),
+    },
+  })
+}
+
+function* withdrawTokensWorker(action) {
+  yield call(submitButtonHelper, withdrawTokens, action)
+}
+
+export function* watchWithdrawTokens() {
+  yield takeEvery("liquidity_rewards/withdraw_tokens", withdrawTokensWorker)
 }
