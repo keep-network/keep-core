@@ -71,7 +71,6 @@ npm install
 if [ "$NETWORK" == "local" ]; then
     printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
     KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-    CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
         npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
 fi
 

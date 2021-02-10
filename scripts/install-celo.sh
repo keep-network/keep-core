@@ -71,7 +71,6 @@ npm install
 if [ "$NETWORK" == "local" ]; then
     printf "${LOG_START}Unlocking celo accounts...${LOG_END}"
     KEEP_ETHEREUM_PASSWORD=$KEEP_CELO_PASSWORD \
-    CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
         npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
 fi
 
