@@ -36,6 +36,7 @@ jobs:
           root: /tmp/docs
           paths:
             - solidity/*
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) has been created as part of work on RFC-18
   build_client_and_test_go:
     executor: docker-git
     steps:
