@@ -12,7 +12,7 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
       - name: Run Docker build
