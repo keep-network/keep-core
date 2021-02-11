@@ -25,10 +25,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.ref }}-{hash}
+          key: ${{ runner.os }}-buildx-v2-${{ github.ref }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-buildx-${{ github.ref }}-
-            ${{ runner.os }}-buildx-
+            ${{ runner.os }}-buildx-v2-${{ github.ref }}-
+            ${{ runner.os }}-buildx-v2-
 
       - run: sudo df -h
 
