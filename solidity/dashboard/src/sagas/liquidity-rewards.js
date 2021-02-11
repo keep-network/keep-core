@@ -146,27 +146,25 @@ function* processLiquidityRewardEarnedNotification(
   )
   // show the notification if the rewardBalance from LPRewardsContract is greater
   // than the reward amount that was last time the notification was displayed
-  if (gt(currentReward, lastNotificationRewardAmount)) {
-    if (displayMessage) {
-      yield put(
-        showMessage({
-          type: messageType.LIQUIDITY_REWARDS_EARNED,
-          title: `[${liquidityRewardPairName}] You've earned rewards!`,
-          sticky: true,
-          classes: {
-            bannerDescription: "m-0",
-          },
-        })
-      )
-
-      yield put({
-        type: `liquidity_rewards/${liquidityRewardPairName}_reward_updated`,
-        payload: {
-          liquidityRewardPairName,
-          reward: currentReward,
+  if (gt(currentReward, lastNotificationRewardAmount) && displayMessage) {
+    yield put(
+      showMessage({
+        type: messageType.LIQUIDITY_REWARDS_EARNED,
+        title: `[${liquidityRewardPairName}] You've earned rewards!`,
+        sticky: true,
+        classes: {
+          bannerDescription: "m-0",
         },
       })
-    }
+    )
+
+    yield put({
+      type: `liquidity_rewards/${liquidityRewardPairName}_reward_updated`,
+      payload: {
+        liquidityRewardPairName,
+        reward: currentReward,
+      },
+    })
   }
 
   // save last notification reward amount for future comparisons
