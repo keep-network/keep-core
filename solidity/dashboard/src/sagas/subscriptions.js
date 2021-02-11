@@ -877,6 +877,6 @@ export function* watchLiquidityRewardNotifications() {
       })
     }
     displayMessage = true
-    yield delay(420000) // every 7 minutes
+    yield delay(moment.duration(7, "minutes").asMilliseconds()) // every 7 minutes
   }
 }
