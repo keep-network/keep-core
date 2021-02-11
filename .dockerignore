@@ -1,15 +1,18 @@
 # Top-level directories unrelated to the build.
-Dockerfile
 .*
 docs
-.circleci
+infrastructure
 scripts
-testnet*
+
+# Top-level files unrealted to the build.
+CODEOWNERS
+crytic-config.json
+Dockerfile
+*.adoc
 
 # NPM stuff.
 **/node_modules/*
 
 # Go stuff.
-vendor
 **/gen/*/**/*.go
 !pkg/chain/gen/cmd/cmd*.go
