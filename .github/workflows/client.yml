@@ -35,14 +35,15 @@ jobs:
       # to have no less than 15 GB after the cache is restored.
       - run: sudo df -h
 
-      - run: ls -la .
-
-      - name: Build Docker Development Image
+      - name: Build Docker Build Image
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
           target: gobuild
           tags: go-build-env
+          build-args: |
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
           load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
@@ -55,11 +56,15 @@ jobs:
             go-build-env \
             go test -json ./...
 
-      # This step is after tests as we want eventually to configure it as publish step.
+      # This step is executed after the tests as we want to configure it eventually
+      # as image publication step.
       - name: Build Docker Runtime Image
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
           tags: keep-client
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          labels: |
+            revision=${{ github.sha }}
+          # TODO: Check branch name and publish to a registry accordingly to the
+          # environment.
+          # push: true # publish to registry
