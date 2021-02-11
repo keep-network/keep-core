@@ -35,6 +35,7 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           target: gobuild
           tags: go-build-env
+          load: true # load image to local registry to use it in next steps
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
           #,mode=max
