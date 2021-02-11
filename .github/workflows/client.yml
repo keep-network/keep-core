@@ -47,13 +47,13 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      # - name: Run Tests
-      #   run: |
-      #     docker run \
-      #       --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
-      #       --workdir /go/src/github.com/keep-network/keep-core \
-      #       go-build-env \
-      #       go test -json ./...
+      - name: Run Tests
+        run: |
+          docker run \
+            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
+            --workdir /go/src/github.com/keep-network/keep-core \
+            go-build-env \
+            go test -json ./...
 
       # This step is after tests as we want eventually to configure it as publish step.
       - name: Build Docker Runtime Image
