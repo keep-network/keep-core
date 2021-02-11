@@ -14,27 +14,45 @@ jobs:
     if: github.event.pull_request.closed != true
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo GITHUB_WORKSPACE:$GITHUB_WORKSPACE
-          sudo df -h
       - uses: actions/checkout@v1
       - run: sudo df -h
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true # ignore the failure of a step and avoid terminating the job
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
         with:
-          key: cache-docker-${{ github.workflow }}-${{ github.ref }}-{hash}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
           restore-keys: |
-            cache-docker-${{ github.workflow }}-${{ github.ref }}-{hash}
-            cache-docker-${{ github.workflow }}-${{ github.ref }}-
-            cache-docker-${{ github.workflow }}-
+            ${{ runner.os }}-buildx-
+
       - run: sudo df -h
-      - name: Run Docker build
-        run: |
-          docker build \
-            --target gobuild \
-            --tag go-build-env .
-          docker build \
-            --tag keep-client .
+
+      - run: ls -l /tmp/.buildx-cache
+
+      - name: Run Docker go-build-env
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          target: gobuild
+          tags: go-build-env
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - name: Run Docker go-build-env
+        uses: docker/build-push-action@v2
+        with:
+          builder: ${{ steps.buildx.outputs.name }}
+          tags: keep-client
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
+      - run: sudo df -h
+      - run: ls -l /tmp/.buildx-cache
+
       # - name: Create test results directory
       #   run: |
       #     mkdir test-results
@@ -45,7 +63,7 @@ jobs:
       #       --workdir /go/src/github.com/keep-network/keep-core \
       #       go-build-env \
       #       gotestsum --junitfile /mnt/test-results/unit-tests.xml
-      - run: sudo df -h
+
       # - name: Publish unit test results
       #   uses: EnricoMi/publish-unit-test-result-action@v1.7
       #   if: always() # guarantees that this action always runs, even if earlier steps fail
