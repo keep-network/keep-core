@@ -6,7 +6,6 @@ on:
     branches:
       # - master
   pull_request:
-    # types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
 
 jobs:
@@ -14,8 +13,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-
-      - run: sudo df -h
 
       - name: Set up Docker Buildx
         id: buildx
@@ -53,32 +50,11 @@ jobs:
           #,mode=max
 
       - run: sudo df -h
-      - run: ls -l /tmp/.buildx-cache
 
-      # - name: Create test results directory
-      #   run: |
-      #     mkdir test-results
-      # - name: Run Go tests
-      #   run: |
-      #     docker run \
-      #       --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
-      #       --workdir /go/src/github.com/keep-network/keep-core \
-      #       go-build-env \
-      #       gotestsum --junitfile /mnt/test-results/unit-tests.xml
-
-      # - name: Publish unit test results
-      #   uses: EnricoMi/publish-unit-test-result-action@v1.7
-      #   if: always() # guarantees that this action always runs, even if earlier steps fail
-      #   with:
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      #     files: ./test-results/unit-tests.xml
-      #     check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
-      #     comment_on_pr: false # turns off commenting on Pull Requests
-
-  # clean-cache:
-  #   if: github.event.pull_request.closed == true
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - run: |
-  #         echo GITHUB_WORKSPACE:$GITHUB_WORKSPACE
-  #         sudo df -h
+      - name: Run Tests
+        run: |
+          docker run \
+            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
+            --workdir /go/src/github.com/keep-network/keep-core \
+            go-build-env \
+            go test -json ./...
