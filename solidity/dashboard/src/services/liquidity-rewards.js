@@ -1,7 +1,11 @@
 import web3Utils from "web3-utils"
-import { createERC20Contract, createSaddleSwapContract } from "../contracts"
+import {
+  createERC20Contract,
+  createSaddleSwapContract,
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
+} from "../contracts"
 import BigNumber from "bignumber.js"
-import { toTokenUnit } from "../utils/token.utils"
+import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
 import {
   getPairData,
   getKeepTokenPriceInUSD,
@@ -9,6 +13,7 @@ import {
 } from "./uniswap-api"
 import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
+import { isEmptyArray } from "../utils/array.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -17,6 +22,10 @@ const LPRewardsToWrappedTokenCache = {}
 const WEEKS_IN_YEAR = 52
 
 class LiquidityRewards {
+  static async _getWrappedTokenAddress(LPRewardsContract) {
+    return await LPRewardsContract.methods.wrappedToken().call()
+  }
+
   constructor(_wrappedTokenContract, _LPRewardsContract, _web3) {
     this.wrappedToken = _wrappedTokenContract
     this.LPRewardsContract = _LPRewardsContract
@@ -29,6 +38,34 @@ class LiquidityRewards {
 
   get LPRewardsContractAddress() {
     return this.LPRewardsContract.options.address
+  }
+
+  get rewardClaimedEventName() {
+    return "RewardPaid"
+  }
+
+  get depositWithdrawnEventName() {
+    return "Withdrawn"
+  }
+
+  get withdrawTokensFnName() {
+    return "exit"
+  }
+
+  withdrawTokensArgs() {
+    return []
+  }
+
+  get stakedEventName() {
+    return "Staked"
+  }
+
+  get stakeFnName() {
+    return "stake"
+  }
+
+  stakeArgs(amount) {
+    return [amount]
   }
 
   wrappedTokenBalance = async (address) => {
@@ -188,20 +225,118 @@ class SaddleLPRewards extends LiquidityRewards {
   }
 }
 
+class TokenGeyserLPRewards extends LiquidityRewards {
+  static async _getWrappedTokenAddress(LPRewardsContract) {
+    return await LPRewardsContract.methods.token().call()
+  }
+
+  get rewardClaimedEventName() {
+    return "TokensClaimed"
+  }
+
+  get depositWithdrawnEventName() {
+    return "Unstaked"
+  }
+
+  get withdrawTokensFnName() {
+    return "unstake"
+  }
+
+  withdrawTokensArgs(amount) {
+    return [amount, []]
+  }
+
+  stakeArgs(amount) {
+    return [amount, []]
+  }
+
+  stakedBalance = async (address) => {
+    return await this.LPRewardsContract.methods.totalStakedFor(address).call()
+  }
+
+  totalSupply = async () => {
+    return await this.LPRewardsContract.methods.totalStaked().call()
+  }
+
+  rewardBalance = async (address, amount) => {
+    try {
+      // The `TokenGeyser.unstakeQuery` throws an error in case when eg. the
+      // amount param is greater than the real user's stake or when
+      // the user stakes KEEP in block `X` and call unstakeQuery in block `X`
+      // (`SafeMath: division by zero` error is thrown.). The web3 parses the
+      // error message in the wrong way when the `hanleRevert` option is enabled
+      // [1]. So here we clone the rewards contract instance and disable the
+      // `hanldeRevert` option.
+      // References: [1]:
+      // https://github.com/ChainSafe/web3.js/issues/3742
+      const clonedLPRewardsContract = this.LPRewardsContract.clone()
+      clonedLPRewardsContract.handleRevert = false
+      return await clonedLPRewardsContract.methods.unstakeQuery(amount).call()
+    } catch (error) {
+      return 0
+    }
+  }
+
+  calculateAPY = async (totalSupplyOfLPRewards) => {
+    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+
+    const rewardPoolPerWeek = await this.rewardPoolPerWeek()
+    const keepTokenInUSD = await getKeepTokenPriceInUSD()
+
+    const lpRewardsPoolInUSD = totalSupplyOfLPRewards.multipliedBy(
+      keepTokenInUSD
+    )
+
+    const r = this._calculateR(
+      keepTokenInUSD,
+      rewardPoolPerWeek,
+      lpRewardsPoolInUSD
+    )
+
+    return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+
+  rewardPoolPerWeek = async () => {
+    const tokensLockedEvents = await this.LPRewardsContract.getPastEvents(
+      "TokensLocked",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.keepTokenGeyserContract,
+      }
+    )
+
+    // The KEEP-only pool will earn 100k KEEP per month.
+    let rewardPoolPerMonth = fromTokenUnit(10e4)
+    const weeksInMonth = new BigNumber(
+      moment.duration(1, "months").asSeconds()
+    ).div(moment.duration(7, "days").asSeconds())
+
+    if (!isEmptyArray(tokensLockedEvents)) {
+      rewardPoolPerMonth = new BigNumber(
+        tokensLockedEvents.reverse()[0].returnValues.amount
+      )
+    }
+
+    return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
+  }
+}
+
 const LiquidityRewardsPoolStrategy = {
   UNISWAP: UniswapLPRewards,
   SADDLE: SaddleLPRewards,
+  TOKEN_GEYSER: TokenGeyserLPRewards,
 }
 
 export class LiquidityRewardsFactory {
   /**
    *
-   * @param {('UNISWAP' | 'SADDLE')} pool - The supported type of pools.
+   * @param {('UNISWAP' | 'SADDLE' | 'TOKEN_GEYSER')} pool - The supported type of pools.
    * @param {Object} LPRewardsContract - The LPRewardsContract as web3 contract instance.
    * @param {Web3} web3 - web3
    * @return {LiquidityRewards} - The Liquidity Rewards Wrapper
    */
   static async initialize(pool, LPRewardsContract, web3) {
+    const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
+
     const lpRewardsContractAddress = web3Utils.toChecksumAddress(
       LPRewardsContract.options.address
     )
@@ -209,9 +344,9 @@ export class LiquidityRewardsFactory {
     if (
       !LPRewardsToWrappedTokenCache.hasOwnProperty(lpRewardsContractAddress)
     ) {
-      const wrappedTokenAddress = await LPRewardsContract.methods
-        .wrappedToken()
-        .call()
+      const wrappedTokenAddress = await PoolStrategy._getWrappedTokenAddress(
+        LPRewardsContract
+      )
       LPRewardsToWrappedTokenCache[
         lpRewardsContractAddress
       ] = wrappedTokenAddress
@@ -221,8 +356,6 @@ export class LiquidityRewardsFactory {
       web3,
       LPRewardsToWrappedTokenCache[lpRewardsContractAddress]
     )
-
-    const PoolStrategy = LiquidityRewardsPoolStrategy[pool]
 
     return new PoolStrategy(wrappedTokenContract, LPRewardsContract, web3)
   }

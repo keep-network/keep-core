@@ -45,6 +45,7 @@ const KeepRegistry = artifacts.require("./KeepRegistry.sol")
 const GasPriceOracle = artifacts.require("./GasPriceOracle.sol")
 const StakingPortBacker = artifacts.require("./StakingPortBacker.sol")
 const BeaconRewards = artifacts.require("./BeaconRewards.sol")
+const KeepVault = artifacts.require("./geyser/KeepVault.sol")
 
 let initializationPeriod = 43200 // ~12 hours
 const dkgContributionMargin = 1 // 1%
@@ -161,5 +162,23 @@ module.exports = async function (deployer, network) {
     KeepToken.address,
     KeepRandomBeaconOperator.address,
     TokenStaking.address
+  )
+
+  // KEEP token geyser contract
+  const maxUnlockSchedules = 12
+  const startBonus = 30 // 30%
+  const bonusPeriodSec = 2592000 // 30 days in seconds
+  const initialSharesPerToken = 1
+  const durationSec = 2592000 // 30 days in seconds
+
+  await deployer.deploy(
+    KeepVault,
+    // KEEP token is a distribution and staking token.
+    KeepToken.address,
+    maxUnlockSchedules,
+    startBonus,
+    bonusPeriodSec,
+    initialSharesPerToken,
+    durationSec
   )
 }

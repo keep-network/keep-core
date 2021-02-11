@@ -16,6 +16,7 @@ const initialState = {
   KEEP_ETH: { ...liquidityPairInitialData },
   TBTC_ETH: { ...liquidityPairInitialData },
   KEEP_TBTC: { ...liquidityPairInitialData },
+  KEEP_ONLY: { ...liquidityPairInitialData },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
@@ -55,11 +56,6 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_staked`: {
-      const lpBalance = add(
-        state[liquidityRewardPairName].lpBalance,
-        restPayload.amount
-      ).toString()
-
       return {
         ...state,
         [liquidityRewardPairName]: {
@@ -68,9 +64,9 @@ const liquidityRewardsReducer = (state = initialState, action) => {
             state[liquidityRewardPairName].wrappedTokenBalance,
             restPayload.amount
           ).toString(),
-          lpBalance,
+          lpBalance: restPayload.lpBalance,
           shareOfPoolInPercent: percentageOf(
-            lpBalance,
+            restPayload.lpBalance,
             restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
@@ -79,11 +75,6 @@ const liquidityRewardsReducer = (state = initialState, action) => {
       }
     }
     case `liquidity_rewards/${liquidityRewardPairName}_withdrawn`: {
-      const lpBalance = sub(
-        state[liquidityRewardPairName].lpBalance,
-        restPayload.amount
-      ).toString()
-
       return {
         ...state,
         [liquidityRewardPairName]: {
@@ -92,9 +83,9 @@ const liquidityRewardsReducer = (state = initialState, action) => {
             state[liquidityRewardPairName].wrappedTokenBalance,
             restPayload.amount
           ).toString(),
-          lpBalance,
+          lpBalance: restPayload.lpBalance,
           shareOfPoolInPercent: percentageOf(
-            lpBalance,
+            restPayload.lpBalance,
             restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
