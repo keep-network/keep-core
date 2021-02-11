@@ -1,10 +1,10 @@
 name: Go
 
-#TODO: extend the conditions once workflow gets tested together with other workflows 
-on:  
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
   push:
     branches:
-      - master
+      # - master
   pull_request:
   workflow_dispatch:
 
@@ -61,7 +61,7 @@ jobs:
         if: always() # guarantees that this action always runs, even if earlier steps fail
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results/unit-tests.xml
+          files: ./test-results/unit-tests.xml
           check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
 
