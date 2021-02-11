@@ -1,27 +1,39 @@
 name: Go
 
-#TODO: extend the conditions once workflow gets tested together with other workflows 
-on:  
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
   push:
     branches:
-      - master
+      # - master
   pull_request:
+    # types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
 
 jobs:
   build-and-test:
+    if: github.event.pull_request.closed != true
     runs-on: ubuntu-latest
     steps:
+      - run: |
+          echo GITHUB_WORKSPACE:$GITHUB_WORKSPACE
+          sudo df -h
       - uses: actions/checkout@v1
+      - run: sudo df -h
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
+      - run: sudo df -h
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+      - run: du -hs / | sort -rh | head -10
+      - run: du -hs /mnt | sort -rh | head -10
       - name: Run Docker build
         run: |
           docker build \
             --target gobuild \
             --tag go-build-env .
           docker build \
-            --tag keep-client . 
+            --tag keep-client .
       - name: Create test results directory
         run: |
           mkdir test-results
@@ -32,11 +44,20 @@ jobs:
             --workdir /go/src/github.com/keep-network/keep-core \
             go-build-env \
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1.7
-        if: always() # guarantees that this action always runs, even if earlier steps fail
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results/unit-tests.xml
-          check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
-          comment_on_pr: false # turns off commenting on Pull Requests
+      - run: sudo df -h
+      # - name: Publish unit test results
+      #   uses: EnricoMi/publish-unit-test-result-action@v1.7
+      #   if: always() # guarantees that this action always runs, even if earlier steps fail
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     files: ./test-results/unit-tests.xml
+      #     check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
+      #     comment_on_pr: false # turns off commenting on Pull Requests
+
+  # clean-cache:
+  #   if: github.event.pull_request.closed == true
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - run: |
+  #         echo GITHUB_WORKSPACE:$GITHUB_WORKSPACE
+  #         sudo df -h
