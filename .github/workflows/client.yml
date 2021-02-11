@@ -15,6 +15,13 @@ jobs:
       - uses: actions/checkout@v2
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true # ignore the failure of a step and avoid terminating the job
+      # TODO: This step was left here intentionally so we can track disk space
+      # usage for a while. We were trying to fight problems with out of disk space
+      # that happened due to the size of data restored from cache. The cache size
+      # was growing linearly with subsequent workflow runs. We want to observe
+      # available disk space for `/`. Fresh execution starts with 20 GB, we expect
+      # to have no less than 15 GB after the cache is restored.
+      - run: sudo df -h
       - name: Run Docker build
         run: |
           docker build \
