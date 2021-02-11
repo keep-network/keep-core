@@ -5,8 +5,14 @@ import {
   call,
   put,
   select,
+  delay,
 } from "redux-saga/effects"
-import { submitButtonHelper, logError, getLPRewardsWrapper } from "./utils"
+import {
+  submitButtonHelper,
+  logError,
+  getLPRewardsWrapper,
+  getWeb3Context,
+} from "./utils"
 import { sendTransaction } from "./web3"
 import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
@@ -17,6 +23,7 @@ import { initializeWeb3, createLPRewardsContract } from "../contracts"
 import BigNumber from "bignumber.js"
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
+import moment from "moment"
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -99,19 +106,32 @@ export function* watchFetchLiquidityRewardsData() {
   )
 }
 
-export function* watchLiquidityRewardsEarnedNotification() {
-  for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
-    yield takeLatest(
-      `liquidity_rewards/${pairName}_liquidity_rewards_earned_notification`,
-      processLiquidityRewardEarnedNotification
-    )
+export function* watchLiquidityRewardNotifications() {
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
+  let displayMessage = false
+  while (true) {
+    for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
+      yield fork(
+        processLiquidityRewardEarnedNotification,
+        pairName,
+        defaultAccount,
+        displayMessage
+      )
+    }
+    displayMessage = true
+    yield delay(moment.duration(7, "minutes").asMilliseconds()) // every 7 minutes
   }
 }
 
-function* processLiquidityRewardEarnedNotification(action) {
-  const displayMessage = action.payload.displayMessage
-
-  const liquidityRewardPairName = action.payload.liquidityRewardPairName
+function* processLiquidityRewardEarnedNotification(
+  liquidityRewardPairName,
+  address,
+  displayMessage
+) {
   const liquidityRewardPair = LIQUIDITY_REWARD_PAIRS[liquidityRewardPairName]
 
   /** @type LiquidityRewards */
@@ -122,7 +142,7 @@ function* processLiquidityRewardEarnedNotification(action) {
   )
   const currentReward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
-    action.payload.address
+    address
   )
   // show the notification if the rewardBalance from LPRewardsContract is greater
   // than the reward amount that was last time the notification was displayed

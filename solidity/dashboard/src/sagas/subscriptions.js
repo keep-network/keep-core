@@ -857,26 +857,3 @@ export function* subscribeToLiquidityRewardsEvents() {
     )
   }
 }
-
-export function* watchLiquidityRewardNotifications() {
-  const {
-    eth: { defaultAccount },
-  } = yield getWeb3Context()
-
-  // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
-  let displayMessage = false
-  while (true) {
-    for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
-      yield put({
-        type: `liquidity_rewards/${pairName}_liquidity_rewards_earned_notification`,
-        payload: {
-          liquidityRewardPairName: pairName,
-          address: defaultAccount,
-          displayMessage,
-        },
-      })
-    }
-    displayMessage = true
-    yield delay(moment.duration(7, "minutes").asMilliseconds()) // every 7 minutes
-  }
-}
