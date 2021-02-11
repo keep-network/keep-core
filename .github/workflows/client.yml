@@ -40,15 +40,15 @@ jobs:
           target: gobuild
           tags: go-build-env
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
-      - name: Run Docker go-build-env
+      - name: Run Docker keep-client
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
           tags: keep-client
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
 
       - run: sudo df -h
       - run: ls -l /tmp/.buildx-cache
