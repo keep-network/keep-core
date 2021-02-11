@@ -10,8 +10,8 @@ KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
 # Defaults, can be overwritten by env variables/input parameters
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 NETWORK_DEFAULT="local"
-KEEP_ETHEREUM_PASSWORD=${KEEP_ETHEREUM_PASSWORD:-"password"}
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY:-""}
+KEEP_CELO_PASSWORD=${KEEP_CELO_PASSWORD:-"password"}
+CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=${CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY:-""}
 
 help()
 {
@@ -19,12 +19,12 @@ help()
            "--config-dir <path>"\
            "--network <network>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
+   echo -e "\tKEEP_CELO_PASSWORD: The password to unlock local Celo accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
-   echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
+   echo -e "\tCONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Celo"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
-   echo -e "\t--network: Ethereum network for keep-core client."\
+   echo -e "\t--network: Celo network for keep-core client."\
                         "Available networks and settings are specified in the 'truffle-config.js'\n"
    exit 1 # Exit script after printing help
 }
@@ -69,29 +69,29 @@ printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
 if [ "$NETWORK" == "local" ]; then
-    printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
-    KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
+    printf "${LOG_START}Unlocking celo accounts...${LOG_END}"
+    KEEP_ETHEREUM_PASSWORD=$KEEP_CELO_PASSWORD \
         npx truffle exec scripts/unlock-eth-accounts.js --network $NETWORK
 fi
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
 rm -rf build/
 
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
+CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
     npx truffle migrate --reset --network $NETWORK
 
 KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 
-CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
+CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
     npx truffle exec scripts/delegate-tokens.js --network $NETWORK
 
 printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
 for CONFIG_FILE in $CONFIG_DIR_PATH/*.toml
 do
     KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
-    CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
+    CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
         npx truffle exec scripts/lcl-client-config.js --network $NETWORK
 done
 

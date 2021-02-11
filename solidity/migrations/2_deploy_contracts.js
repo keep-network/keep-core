@@ -49,10 +49,11 @@ const KeepVault = artifacts.require("./geyser/KeepVault.sol")
 
 let initializationPeriod = 43200 // ~12 hours
 const dkgContributionMargin = 1 // 1%
+const testNetworks = ["local", "ropsten", "keep_dev", "alfajores"]
 
 module.exports = async function (deployer, network) {
   // Set the stake initialization period to 1 block for local development and testnet.
-  if (network === "local" || network === "ropsten" || network === "keep_dev") {
+  if (testNetworks.includes(network)) {
     initializationPeriod = 1
   }
 
@@ -87,7 +88,7 @@ module.exports = async function (deployer, network) {
   )
 
   let oldStakingContractAddress
-  if (network === "local" || network === "ropsten") {
+  if (testNetworks.includes(network)) {
     const OldTokenStaking = artifacts.require("./stubs/OldTokenStaking.sol")
     await deployer.link(MinimumStakeSchedule, OldTokenStaking)
     await deployer.link(GrantStaking, OldTokenStaking)
