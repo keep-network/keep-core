@@ -1,4 +1,4 @@
-const KeepTokenGeyser = artifacts.require("./geyser/KeepTokenGeyser.sol")
+const KeepVault = artifacts.require("./geyser/KeepVault.sol")
 const KeepToken = artifacts.require("./KeepToken.sol")
 const BatchedPhasedEscrow = artifacts.require("./BatchedPhasedEscrow")
 const KeepTokenGeyserRewardsEscrowBeneficiary = artifacts.require(
@@ -9,7 +9,7 @@ module.exports = async function () {
   try {
     const accounts = await web3.eth.getAccounts()
     const keepToken = await KeepToken.deployed()
-    const tokenGeyser = await KeepTokenGeyser.deployed()
+    const tokenGeyser = await KeepVault.deployed()
     const rewardsAmount = web3.utils.toWei("100000", "ether")
 
     const owner = accounts[0]
