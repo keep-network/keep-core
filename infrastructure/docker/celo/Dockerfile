@@ -2,12 +2,12 @@ FROM golang:1.14-alpine AS gobuild
 
 RUN apk add --update --no-cache \
     g++ \
-	linux-headers \
+    linux-headers \
     make \
     git
 
 ENV BIN_PATH=/usr/local/bin \
-    DATA_DIR=/data
+    DATA_DIR=/mnt/data
 
 VOLUME [$DATA_DIR]
 
@@ -23,9 +23,9 @@ ENV BIN_PATH=/usr/local/bin
 
 COPY --from=gobuild $BIN_PATH/geth $BIN_PATH
 
-# Add init directory. It contains genesis.json file and keystore used
+# Add celo-init directory. It contains genesis.json file and keystore used
 # in start.sh
-ADD ./init /init
+ADD ./celo-init /celo-init
 
 ADD ./start.sh .
 ENTRYPOINT ["./start.sh"]
