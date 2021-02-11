@@ -3,8 +3,10 @@ Dockerfile
 .*
 docs
 .circleci
+.github
 scripts
 testnet*
+infrastructure
 
 # NPM stuff.
 **/node_modules/*
