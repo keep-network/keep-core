@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+
       - run: sudo df -h
 
       - name: Set up Docker Buildx
@@ -24,31 +25,32 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          key: ${{ runner.os }}-buildx-${{ github.ref }}-{hash}
           restore-keys: |
+            ${{ runner.os }}-buildx-${{ github.ref }}-
             ${{ runner.os }}-buildx-
 
       - run: sudo df -h
 
-      # - run: ls -l /tmp/.buildx-cache
-      #   continue-on-error: true
-
-      - name: Run Docker go-build-env
+      - name: Build Docker Development Image
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
           target: gobuild
           tags: go-build-env
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          #,mode=max
+          # Maybe we don't need to do `mode=max`? It restored some cache in https://github.com/keep-network/keep-core/runs/1882494056?check_suite_focus=true
 
-      - name: Run Docker keep-client
+      - name: Build Docker Runtime Image
         uses: docker/build-push-action@v2
         with:
           builder: ${{ steps.buildx.outputs.name }}
           tags: keep-client
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+          cache-to: type=local,dest=/tmp/.buildx-cache
+          #,mode=max
 
       - run: sudo df -h
       - run: ls -l /tmp/.buildx-cache
