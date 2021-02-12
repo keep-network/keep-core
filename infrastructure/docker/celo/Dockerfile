@@ -18,6 +18,7 @@ RUN cp build/bin/geth $BIN_PATH
 FROM alpine:3.10
 
 ENV BIN_PATH=/usr/local/bin
+# Environment variables used in start.sh
 ENV CELO_DATA_DIR=/mnt/data
 ENV CELO_INIT_DIR=/celo-init
 
