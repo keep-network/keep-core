@@ -2,9 +2,9 @@
 .*
 
 # Top-level directories unrelated to the build.
-docs
-infrastructure
-scripts
+docs/
+infrastructure/
+scripts/
 
 # Top-level files unrealted to the build.
 CODEOWNERS
