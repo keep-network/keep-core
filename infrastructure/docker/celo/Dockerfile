@@ -10,7 +10,7 @@ ENV BIN_PATH=/usr/local/bin
 
 # Clone, compile, and install Celo blockchain v1.2.2
 RUN git clone https://github.com/celo-org/celo-blockchain.git
-WORKDIR celo-blockchain
+WORKDIR /go/celo-blockchain
 RUN git checkout v1.2.2
 RUN make geth-musl
 RUN cp build/bin/geth $BIN_PATH
