@@ -1,5 +1,7 @@
-# Top-level directories unrelated to the build.
+# Hidden files and directories.
 .*
+
+# Top-level directories unrelated to the build.
 docs
 infrastructure
 scripts
