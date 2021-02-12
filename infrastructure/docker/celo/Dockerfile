@@ -17,17 +17,23 @@ RUN cp build/bin/geth $BIN_PATH
 
 FROM alpine:3.10
 
+# Volume where chain data are persisted
+VOLUME [$CELO_DATA_DIR]
+
 ENV BIN_PATH=/usr/local/bin
 # Environment variables used in start.sh
 ENV CELO_DATA_DIR=/mnt/data
 ENV CELO_INIT_DIR=/celo-init
+ENV CELO_RPC_PORT=8545
+ENV CELO_WS_PORT=8546
 
-VOLUME [$CELO_DATA_DIR]
+EXPOSE $CELO_RPC_PORT
+EXPOSE $CELO_WS_PORT
 
 COPY --from=gobuild $BIN_PATH/geth $BIN_PATH
 
-# Add celo-init directory. It contains genesis.json file and keystore used
-# in start.sh
+# Add celo-init directory. It contains genesis.json file and
+# keystore used in start.sh
 ADD ./celo-init $CELO_INIT_DIR
 
 ADD ./start.sh .

@@ -6,8 +6,8 @@ cp $CELO_INIT_DIR/password.txt $CELO_DATA_DIR/password.txt
 [ ! -d "$CELO_DATA_DIR/celo" ] && geth --nousb --datadir=$CELO_DATA_DIR init $CELO_INIT_DIR/genesis.json
 
  geth --port 3000 --networkid 1101 --identity "somerandomidentity" \
-    --ws --wsaddr "0.0.0.0" --wsport "8546" --wsorigins "*" \
-    --rpc --rpcport "8545" --rpcaddr "0.0.0.0" --rpccorsdomain "" \
+    --ws --wsaddr "0.0.0.0" --wsport $CELO_WS_PORT --wsorigins "*" \
+    --rpc --rpcport $CELO_RPC_PORT --rpcaddr "0.0.0.0" --rpccorsdomain "" \
     --rpcapi "db,ssh,miner,admin,eth,net,web3,personal" \
     --wsapi "db,ssh,miner,admin,eth,net,web3,personal" \
     --datadir $CELO_DATA_DIR --syncmode "fast" \
