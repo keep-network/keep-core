@@ -21,7 +21,7 @@ ENV BIN_PATH=/usr/local/bin
 ENV CELO_DATA_DIR=/mnt/data
 ENV CELO_INIT_DIR=/celo-init
 
-VOLUME [$CELO_INIT_DIR]
+VOLUME [$CELO_DATA_DIR]
 
 COPY --from=gobuild $BIN_PATH/geth $BIN_PATH
 
