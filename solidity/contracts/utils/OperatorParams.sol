@@ -34,10 +34,7 @@ library OperatorParams {
     ) internal pure returns (uint256) {
         // Check for staked amount overflow.
         // We shouldn't actually ever need this.
-        require(
-            amount <= AMOUNT_MAX,
-            "uint128 overflow"
-        );
+        require(amount <= AMOUNT_MAX, "uint128 overflow");
         // Bitwise OR the timestamps together.
         // The resulting number is equal or greater than either,
         // and tells if we have a bit set outside the 64 available bits.
@@ -46,37 +43,47 @@ library OperatorParams {
             "uint64 overflow"
         );
 
-        return (amount << AMOUNT_SHIFT | createdAt << CREATION_SHIFT | undelegatedAt);
+        return ((amount << AMOUNT_SHIFT) |
+            (createdAt << CREATION_SHIFT) |
+            undelegatedAt);
     }
 
-    function unpack(uint256 packedParams) internal pure returns (
-        uint256 amount,
-        uint256 createdAt,
-        uint256 undelegatedAt
-    ) {
+    function unpack(uint256 packedParams)
+        internal
+        pure
+        returns (
+            uint256 amount,
+            uint256 createdAt,
+            uint256 undelegatedAt
+        )
+    {
         amount = getAmount(packedParams);
         createdAt = getCreationTimestamp(packedParams);
         undelegatedAt = getUndelegationTimestamp(packedParams);
     }
 
-    function getAmount(uint256 packedParams)
-        internal pure returns (uint256) {
+    function getAmount(uint256 packedParams) internal pure returns (uint256) {
         return (packedParams >> AMOUNT_SHIFT) & AMOUNT_MAX;
     }
 
-    function setAmount(
-        uint256 packedParams,
-        uint256 amount
-    ) internal pure returns (uint256) {
-        return pack(
-            amount,
-            getCreationTimestamp(packedParams),
-            getUndelegationTimestamp(packedParams)
-        );
+    function setAmount(uint256 packedParams, uint256 amount)
+        internal
+        pure
+        returns (uint256)
+    {
+        return
+            pack(
+                amount,
+                getCreationTimestamp(packedParams),
+                getUndelegationTimestamp(packedParams)
+            );
     }
 
     function getCreationTimestamp(uint256 packedParams)
-        internal pure returns (uint256) {
+        internal
+        pure
+        returns (uint256)
+    {
         return (packedParams >> CREATION_SHIFT) & TIMESTAMP_MAX;
     }
 
@@ -84,15 +91,19 @@ library OperatorParams {
         uint256 packedParams,
         uint256 creationTimestamp
     ) internal pure returns (uint256) {
-        return pack(
-            getAmount(packedParams),
-            creationTimestamp,
-            getUndelegationTimestamp(packedParams)
-        );
+        return
+            pack(
+                getAmount(packedParams),
+                creationTimestamp,
+                getUndelegationTimestamp(packedParams)
+            );
     }
 
     function getUndelegationTimestamp(uint256 packedParams)
-        internal pure returns (uint256) {
+        internal
+        pure
+        returns (uint256)
+    {
         return packedParams & TIMESTAMP_MAX;
     }
 
@@ -100,11 +111,12 @@ library OperatorParams {
         uint256 packedParams,
         uint256 undelegationTimestamp
     ) internal pure returns (uint256) {
-        return pack(
-            getAmount(packedParams),
-            getCreationTimestamp(packedParams),
-            undelegationTimestamp
-        );
+        return
+            pack(
+                getAmount(packedParams),
+                getCreationTimestamp(packedParams),
+                undelegationTimestamp
+            );
     }
 
     function setAmountAndCreationTimestamp(
@@ -112,10 +124,11 @@ library OperatorParams {
         uint256 amount,
         uint256 creationTimestamp
     ) internal pure returns (uint256) {
-        return pack(
-            amount,
-            creationTimestamp,
-            getUndelegationTimestamp(packedParams)
-        );
+        return
+            pack(
+                amount,
+                creationTimestamp,
+                getUndelegationTimestamp(packedParams)
+            );
     }
 }

@@ -1,5 +1,5 @@
 import React, { useCallback } from "react"
-import AvailableETHForm from "./AvailableETHForm"
+import AvailableETHForm from "./AvailableTokenForm"
 import { getErrorsObj } from "../forms/common-validators"
 import { withFormik } from "formik"
 import web3Utils from "web3-utils"

@@ -10,7 +10,6 @@ import "../utils/ModUtils.sol";
  * might not be available on all (eg private) chains.
  */
 library AltBn128 {
-
     using ModUtils for uint256;
 
     // G1Point implements a point in G1 group.
@@ -33,7 +32,8 @@ library AltBn128 {
 
     // p is a prime over which we form a basic field
     // Taken from go-ethereum/crypto/bn256/cloudflare/constants.go
-    uint256 constant p = 21888242871839275222246405745257275088696311157297823662689037894645226208583;
+    uint256 constant p =
+        21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     function getP() internal pure returns (uint256) {
         return p;
@@ -45,6 +45,7 @@ library AltBn128 {
      */
     uint256 constant g1x = 1;
     uint256 constant g1y = 2;
+
     function g1() internal pure returns (G1Point memory) {
         return G1Point(g1x, g1y);
     }
@@ -53,23 +54,28 @@ library AltBn128 {
      * @dev Gets generator of G2 group.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    uint256 constant g2xx = 11559732032986387107991004021392285783925812861821192530917403151452391805634;
-    uint256 constant g2xy = 10857046999023057135944570762232829481370756359578518086990519993285655852781;
-    uint256 constant g2yx = 4082367875863433681332203403145435568316851327593401208105741076214120093531;
-    uint256 constant g2yy = 8495653923123431417604973247489272438418190587263600148770280649306958101930;
+    uint256 constant g2xx =
+        11559732032986387107991004021392285783925812861821192530917403151452391805634;
+    uint256 constant g2xy =
+        10857046999023057135944570762232829481370756359578518086990519993285655852781;
+    uint256 constant g2yx =
+        4082367875863433681332203403145435568316851327593401208105741076214120093531;
+    uint256 constant g2yy =
+        8495653923123431417604973247489272438418190587263600148770280649306958101930;
+
     function g2() internal pure returns (G2Point memory) {
-        return G2Point(
-            gfP2(g2xx, g2xy),
-            gfP2(g2yx, g2yy)
-        );
+        return G2Point(gfP2(g2xx, g2xy), gfP2(g2yx, g2yy));
     }
 
     /**
      * @dev Gets twist curve B constant.
      * Taken from go-ethereum/crypto/bn256/cloudflare/twist.go
      */
-    uint256 constant twistBx = 266929791119991161246907387137283842545076965332900288569378510910307636690;
-    uint256 constant twistBy = 19485874751759354771024239261021720505790618469301721065564631296452457478373;
+    uint256 constant twistBx =
+        266929791119991161246907387137283842545076965332900288569378510910307636690;
+    uint256 constant twistBy =
+        19485874751759354771024239261021720505790618469301721065564631296452457478373;
+
     function twistB() private pure returns (gfP2 memory) {
         return gfP2(twistBx, twistBy);
     }
@@ -77,8 +83,11 @@ library AltBn128 {
     /**
      * @dev Gets root of the point where x and y are equal.
      */
-    uint256 constant hexRootX = 21573744529824266246521972077326577680729363968861965890554801909984373949499;
-    uint256 constant hexRootY = 16854739155576650954933913186877292401521110422362946064090026408937773542853;
+    uint256 constant hexRootX =
+        21573744529824266246521972077326577680729363968861965890554801909984373949499;
+    uint256 constant hexRootY =
+        16854739155576650954933913186877292401521110422362946064090026408937773542853;
+
     function hexRoot() private pure returns (gfP2 memory) {
         return gfP2(hexRootX, hexRootY);
     }
@@ -89,10 +98,7 @@ library AltBn128 {
      * given X, and allows a point on the curve to be represented by just
      * an X value + a sign bit.
      */
-    function g1YFromX(uint256 x)
-        internal
-        view returns(uint256)
-    {
+    function g1YFromX(uint256 x) internal view returns (uint256) {
         return ((x.modExp(3, p) + 3) % p).modSqrt(p);
     }
 
@@ -102,17 +108,16 @@ library AltBn128 {
      * given X, and allows a point on the curve to be represented by just
      * an X value + a sign bit.
      */
-    function g2YFromX(gfP2 memory _x)
-        internal
-        pure returns(gfP2 memory y)
-    {
+    function g2YFromX(gfP2 memory _x) internal pure returns (gfP2 memory y) {
         (uint256 xx, uint256 xy) = _gfP2CubeAddTwistB(_x.x, _x.y);
 
         // Using formula y = x ^ (p^2 + 15) / 32 from
         // https://github.com/ethereum/beacon_chain/blob/master/beacon_chain/utils/bls.py
         // (p^2 + 15) / 32 results into a big 512bit value, so breaking it to two uint256 as (a * a + b)
-        uint256 a = 3869331240733915743250440106392954448556483137451914450067252501901456824595;
-        uint256 b = 146360017852723390495514512480590656176144969185739259173561346299185050597;
+        uint256 a =
+            3869331240733915743250440106392954448556483137451914450067252501901456824595;
+        uint256 b =
+            146360017852723390495514512480590656176144969185739259173561346299185050597;
 
         (uint256 xbx, uint256 xby) = _gfP2Pow(xx, xy, b);
         (uint256 yax, uint256 yay) = _gfP2Pow(xx, xy, a);
@@ -133,7 +138,8 @@ library AltBn128 {
      */
     function g1HashToPoint(bytes memory m)
         internal
-        view returns(G1Point memory)
+        view
+        returns (G1Point memory)
     {
         bytes32 h = sha256(m);
         uint256 x = uint256(h) % p;
@@ -152,21 +158,18 @@ library AltBn128 {
      * @dev Calculates whether the provided number is even or odd.
      * @return 0x01 if y is an even number and 0x00 if it's odd.
      */
-    function parity(uint256 value) private pure returns (byte) {
+    function parity(uint256 value) private pure returns (bytes1) {
         return bytes32(value)[31] & 0x01;
     }
 
     /**
      * @dev Compress a point on G1 to a single uint256 for serialization.
      */
-    function g1Compress(G1Point memory point)
-        internal
-        pure returns(bytes32)
-    {
+    function g1Compress(G1Point memory point) internal pure returns (bytes32) {
         bytes32 m = bytes32(point.x);
 
-        byte leadM = m[0] | parity(point.y) << 7;
-        uint256 mask = 0xff << 31*8;
+        bytes1 leadM = m[0] | (parity(point.y) << 7);
+        uint256 mask = 0xff << (31 * 8);
         m = (m & ~bytes32(mask)) | (leadM >> 0);
 
         return m;
@@ -177,12 +180,13 @@ library AltBn128 {
      */
     function g2Compress(G2Point memory point)
         internal
-        pure returns(bytes memory)
+        pure
+        returns (bytes memory)
     {
         bytes32 m = bytes32(point.x.x);
 
-        byte leadM = m[0] | parity(point.y.x) << 7;
-        uint256 mask = 0xff << 31*8;
+        bytes1 leadM = m[0] | (parity(point.y.x) << 7);
+        uint256 mask = 0xff << (31 * 8);
         m = (m & ~bytes32(mask)) | (leadM >> 0);
 
         return abi.encodePacked(m, bytes32(point.x.y));
@@ -191,13 +195,10 @@ library AltBn128 {
     /**
      * @dev Decompress a point on G1 from a single uint256.
      */
-    function g1Decompress(bytes32 m)
-        internal
-        view returns(G1Point memory)
-    {
+    function g1Decompress(bytes32 m) internal view returns (G1Point memory) {
         bytes32 mX = bytes32(0);
-        byte leadX = m[0] & 0x7f;
-        uint256 mask = 0xff << 31*8;
+        bytes1 leadX = m[0] & 0x7f;
+        uint256 mask = 0xff << (31 * 8);
         mX = (m & ~bytes32(mask)) | (leadX >> 0);
 
         uint256 x = uint256(mX);
@@ -215,11 +216,12 @@ library AltBn128 {
     /**
      * @dev Unmarshals a point on G1 from bytes in an uncompressed form.
      */
-    function g1Unmarshal(bytes memory m) internal pure returns(G1Point memory) {
-        require(
-            m.length == 64,
-            "Invalid G1 bytes length"
-        );
+    function g1Unmarshal(bytes memory m)
+        internal
+        pure
+        returns (G1Point memory)
+    {
+        require(m.length == 64, "Invalid G1 bytes length");
 
         bytes32 x;
         bytes32 y;
@@ -236,7 +238,11 @@ library AltBn128 {
     /**
      * @dev Marshals a point on G1 to bytes form.
      */
-    function g1Marshal(G1Point memory point) internal pure returns(bytes memory) {
+    function g1Marshal(G1Point memory point)
+        internal
+        pure
+        returns (bytes memory)
+    {
         bytes memory m = new bytes(64);
         bytes32 x = bytes32(point.x);
         bytes32 y = bytes32(point.y);
@@ -253,11 +259,12 @@ library AltBn128 {
     /**
      * @dev Unmarshals a point on G2 from bytes in an uncompressed form.
      */
-    function g2Unmarshal(bytes memory m) internal pure returns(G2Point memory) {
-        require(
-            m.length == 128,
-            "Invalid G2 bytes length"
-        );
+    function g2Unmarshal(bytes memory m)
+        internal
+        pure
+        returns (G2Point memory)
+    {
+        require(m.length == 128, "Invalid G2 bytes length");
 
         uint256 xx;
         uint256 xy;
@@ -272,7 +279,7 @@ library AltBn128 {
             yy := mload(add(m, 0x80))
         }
 
-        return G2Point(gfP2(xx, xy), gfP2(yx,yy));
+        return G2Point(gfP2(xx, xy), gfP2(yx, yy));
     }
 
     /**
@@ -280,12 +287,10 @@ library AltBn128 {
      */
     function g2Decompress(bytes memory m)
         internal
-        pure returns(G2Point memory)
+        pure
+        returns (G2Point memory)
     {
-        require(
-            m.length == 64,
-            "Invalid G2 compressed bytes length"
-        );
+        require(m.length == 64, "Invalid G2 compressed bytes length");
 
         bytes32 x1;
         bytes32 x2;
@@ -301,8 +306,8 @@ library AltBn128 {
         }
 
         bytes32 mX = bytes32(0);
-        byte leadX = x1[0] & 0x7f;
-        uint256 mask = 0xff << 31*8;
+        bytes1 leadX = x1[0] & 0x7f;
+        uint256 mask = 0xff << (31 * 8);
         mX = (x1 & ~bytes32(mask)) | (leadX >> 0);
 
         gfP2 memory x = gfP2(uint256(mX), uint256(x2));
@@ -322,7 +327,10 @@ library AltBn128 {
      * curve.
      */
     function g1Add(G1Point memory a, G1Point memory b)
-        internal view returns (G1Point memory c) {
+        internal
+        view
+        returns (G1Point memory c)
+    {
         /* solium-disable-next-line */
         assembly {
             let arg := mload(0x40)
@@ -340,27 +348,37 @@ library AltBn128 {
     /**
      * @dev Return the sum of two gfP2 field elements.
      */
-    function gfP2Add(gfP2 memory a, gfP2 memory b) internal pure returns(gfP2 memory) {
-        return gfP2(
-            addmod(a.x, b.x, p),
-            addmod(a.y, b.y, p)
-        );
+    function gfP2Add(gfP2 memory a, gfP2 memory b)
+        internal
+        pure
+        returns (gfP2 memory)
+    {
+        return gfP2(addmod(a.x, b.x, p), addmod(a.y, b.y, p));
     }
 
     /**
      * @dev Return multiplication of two gfP2 field elements.
      */
-    function gfP2Multiply(gfP2 memory a, gfP2 memory b) internal pure returns(gfP2 memory) {
-        return gfP2(
-            addmod(mulmod(a.x, b.y, p), mulmod(b.x, a.y, p), p),
-            addmod(mulmod(a.y, b.y, p), p - mulmod(a.x, b.x, p), p)
-        );
+    function gfP2Multiply(gfP2 memory a, gfP2 memory b)
+        internal
+        pure
+        returns (gfP2 memory)
+    {
+        return
+            gfP2(
+                addmod(mulmod(a.x, b.y, p), mulmod(b.x, a.y, p), p),
+                addmod(mulmod(a.y, b.y, p), p - mulmod(a.x, b.x, p), p)
+            );
     }
 
     /**
      * @dev Return gfP2 element to the power of the provided exponent.
      */
-    function gfP2Pow(gfP2 memory _a, uint256 _exp) internal pure returns(gfP2 memory result) {
+    function gfP2Pow(gfP2 memory _a, uint256 _exp)
+        internal
+        pure
+        returns (gfP2 memory result)
+    {
         (uint256 x, uint256 y) = _gfP2Pow(_a.x, _a.y, _exp);
         return gfP2(x, y);
     }
@@ -373,7 +391,11 @@ library AltBn128 {
         return gfP2Multiply(a, gfP2Square(a));
     }
 
-    function gfP2CubeAddTwistB(gfP2 memory a) internal pure returns (gfP2 memory) {
+    function gfP2CubeAddTwistB(gfP2 memory a)
+        internal
+        pure
+        returns (gfP2 memory)
+    {
         (uint256 x, uint256 y) = _gfP2CubeAddTwistB(a.x, a.y);
         return gfP2(x, y);
     }
@@ -381,7 +403,7 @@ library AltBn128 {
     /**
      * @dev Return true if G2 point's y^2 equals x.
      */
-    function g2X2y(gfP2 memory x, gfP2 memory y) internal pure returns(bool) {
+    function g2X2y(gfP2 memory x, gfP2 memory y) internal pure returns (bool) {
         gfP2 memory y2;
         y2 = gfP2Square(y);
 
@@ -391,14 +413,22 @@ library AltBn128 {
     /**
      * @dev Return true if G1 point is on the curve.
      */
-    function isG1PointOnCurve(G1Point memory point) internal view returns (bool) {
+    function isG1PointOnCurve(G1Point memory point)
+        internal
+        view
+        returns (bool)
+    {
         return point.y.modExp(2, p) == (point.x.modExp(3, p) + 3) % p;
     }
 
     /**
      * @dev Return true if G2 point is on the curve.
      */
-    function isG2PointOnCurve(G2Point memory point) internal pure returns(bool) {
+    function isG2PointOnCurve(G2Point memory point)
+        internal
+        pure
+        returns (bool)
+    {
         (uint256 y2x, uint256 y2y) = _gfP2Square(point.y.x, point.y.y);
         (uint256 x3x, uint256 x3y) = _gfP2CubeAddTwistB(point.x.x, point.x.y);
 
@@ -412,7 +442,10 @@ library AltBn128 {
      * provided point isn't on the curve.
      */
     function scalarMultiply(G1Point memory p_1, uint256 scalar)
-        internal view returns (G1Point memory p_2) {
+        internal
+        view
+        returns (G1Point memory p_2)
+    {
         assembly {
             let arg := mload(0x40)
             mstore(arg, mload(p_1))
@@ -472,26 +505,40 @@ library AltBn128 {
         return _c != 0;
     }
 
-    function _gfP2Add(uint256 ax, uint256 ay, uint256 bx, uint256 by)
-        private pure returns(uint256 x, uint256 y) {
+    function _gfP2Add(
+        uint256 ax,
+        uint256 ay,
+        uint256 bx,
+        uint256 by
+    ) private pure returns (uint256 x, uint256 y) {
         x = addmod(ax, bx, p);
         y = addmod(ay, by, p);
     }
 
-    function _gfP2Multiply(uint256 ax, uint256 ay, uint256 bx, uint256 by)
-        private pure returns(uint256 x, uint256 y) {
+    function _gfP2Multiply(
+        uint256 ax,
+        uint256 ay,
+        uint256 bx,
+        uint256 by
+    ) private pure returns (uint256 x, uint256 y) {
         x = addmod(mulmod(ax, by, p), mulmod(bx, ay, p), p);
         y = addmod(mulmod(ay, by, p), p - mulmod(ax, bx, p), p);
     }
 
     function _gfP2CubeAddTwistB(uint256 ax, uint256 ay)
-        private pure returns (uint256 x, uint256 y) {
+        private
+        pure
+        returns (uint256 x, uint256 y)
+    {
         (uint256 a3x, uint256 a3y) = _gfP2Cube(ax, ay);
         return _gfP2Add(a3x, a3y, twistBx, twistBy);
     }
 
-    function _gfP2Pow(uint256 _ax, uint256 _ay, uint256 _exp)
-        private pure returns (uint256 x, uint256 y) {
+    function _gfP2Pow(
+        uint256 _ax,
+        uint256 _ay,
+        uint256 _exp
+    ) private pure returns (uint256 x, uint256 y) {
         uint256 exp = _exp;
         x = 0;
         y = 1;
@@ -511,18 +558,28 @@ library AltBn128 {
     }
 
     function _gfP2Square(uint256 _ax, uint256 _ay)
-        private pure returns (uint256 x, uint256 y) {
+        private
+        pure
+        returns (uint256 x, uint256 y)
+    {
         return _gfP2Multiply(_ax, _ay, _ax, _ay);
     }
 
     function _gfP2Cube(uint256 _ax, uint256 _ay)
-        private pure returns (uint256 x, uint256 y) {
+        private
+        pure
+        returns (uint256 x, uint256 y)
+    {
         (uint256 _bx, uint256 _by) = _gfP2Square(_ax, _ay);
         return _gfP2Multiply(_ax, _ay, _bx, _by);
     }
 
-    function _g2X2y(uint256 xx, uint256 xy, uint256 yx, uint256 yy)
-        private pure returns (bool) {
+    function _g2X2y(
+        uint256 xx,
+        uint256 xy,
+        uint256 yx,
+        uint256 yy
+    ) private pure returns (bool) {
         (uint256 y2x, uint256 y2y) = _gfP2Square(yx, yy);
 
         return (y2x == xx && y2y == xy);

@@ -5,7 +5,6 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "../utils/OperatorParams.sol";
 import "../utils/BytesLib.sol";
 
-
 /// Staking contract stub for testing purposes of copy stake flow.
 contract OldTokenStaking {
     using OperatorParams for uint256;
@@ -13,10 +12,8 @@ contract OldTokenStaking {
     ERC20Burnable public token;
     using SafeERC20 for ERC20Burnable;
 
-
     event Undelegated(address indexed operator, uint256 undelegatedAt);
     event Staked(address indexed from, uint256 value);
-
 
     mapping(address => address[]) public ownerOperators;
     mapping(address => Operator) public operators;
@@ -28,14 +25,16 @@ contract OldTokenStaking {
         address authorizer;
     }
 
-    constructor(
-        address _tokenAddress
-    ) public {
+    constructor(address _tokenAddress) public {
         require(_tokenAddress != address(0x0), "Token address can't be zero.");
         token = ERC20Burnable(_tokenAddress);
     }
 
-    function operatorsOf(address _address) public view returns (address[] memory) {
+    function operatorsOf(address _address)
+        public
+        view
+        returns (address[] memory)
+    {
         return ownerOperators[_address];
     }
 
@@ -47,7 +46,11 @@ contract OldTokenStaking {
         return operators[_operator].owner;
     }
 
-    function beneficiaryOf(address _operator) public view returns (address payable) {
+    function beneficiaryOf(address _operator)
+        public
+        view
+        returns (address payable)
+    {
         return operators[_operator].beneficiary;
     }
 
@@ -56,15 +59,22 @@ contract OldTokenStaking {
     }
 
     function getDelegationInfo(address _operator)
-    public view returns (uint256 amount, uint256 createdAt, uint256 undelegatedAt) {
+        public
+        view
+        returns (
+            uint256 amount,
+            uint256 createdAt,
+            uint256 undelegatedAt
+        )
+    {
         return operators[_operator].packedParams.unpack();
     }
 
-    function undelegationPeriod() public view returns(uint256) {
+    function undelegationPeriod() public view returns (uint256) {
         return 5184000; // two months
     }
 
-    function initializationPeriod() public view returns(uint256) {
+    function initializationPeriod() public view returns (uint256) {
         return 120;
     }
 
@@ -96,14 +106,31 @@ contract OldTokenStaking {
         ownerOperators[_owner].push(_operator);
     }
 
-    function receiveApproval(address _from, uint256 _value, address _token, bytes memory _extraData) public {
-        require(ERC20Burnable(_token) == token, "Token contract must be the same one linked to this contract.");
-        require(_value >= minimumStake(), "Tokens amount must be greater than the minimum stake");
-        require(_extraData.length == 60, "Stake delegation data must be provided.");
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory _extraData
+    ) public {
+        require(
+            ERC20Burnable(_token) == token,
+            "Token contract must be the same one linked to this contract."
+        );
+        require(
+            _value >= minimumStake(),
+            "Tokens amount must be greater than the minimum stake"
+        );
+        require(
+            _extraData.length == 60,
+            "Stake delegation data must be provided."
+        );
 
         address payable beneficiary = address(uint160(_extraData.toAddress(0)));
         address operator = _extraData.toAddress(20);
-        require(operators[operator].owner == address(0), "Operator address is already in use.");
+        require(
+            operators[operator].owner == address(0),
+            "Operator address is already in use."
+        );
         address authorizer = _extraData.toAddress(40);
 
         // Transfer tokens to this contract.

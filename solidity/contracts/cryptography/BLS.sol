@@ -2,7 +2,6 @@ pragma solidity 0.5.17;
 
 import "./AltBn128.sol";
 
-
 /**
  * @title BLS signatures verification
  * @dev Library for verification of 2-pairing-check BLS signatures, including
@@ -10,11 +9,14 @@ import "./AltBn128.sol";
  * using the AltBn128 curve.
  */
 library BLS {
-
     /**
      * @dev Creates a signature over message using the provided secret key.
      */
-    function sign(bytes memory message, uint256 secretKey) public view returns(bytes memory) {
+    function sign(bytes memory message, uint256 secretKey)
+        public
+        view
+        returns (bytes memory)
+    {
         AltBn128.G1Point memory p_1 = AltBn128.g1HashToPoint(message);
         AltBn128.G1Point memory p_2 = AltBn128.scalarMultiply(p_1, secretKey);
 
@@ -33,15 +35,15 @@ library BLS {
         bytes memory message,
         bytes memory signature
     ) public view returns (bool) {
-
         AltBn128.G1Point memory _signature = AltBn128.g1Unmarshal(signature);
 
-        return AltBn128.pairing(
-            AltBn128.G1Point(_signature.x, AltBn128.getP() - _signature.y),
-            AltBn128.g2(),
-            AltBn128.g1Unmarshal(message),
-            AltBn128.g2Unmarshal(publicKey)
-        );
+        return
+            AltBn128.pairing(
+                AltBn128.G1Point(_signature.x, AltBn128.getP() - _signature.y),
+                AltBn128.g2(),
+                AltBn128.g1Unmarshal(message),
+                AltBn128.g2Unmarshal(publicKey)
+            );
     }
 
     /**
