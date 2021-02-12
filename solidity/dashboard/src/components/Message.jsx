@@ -4,28 +4,25 @@ import Banner from "./Banner"
 import { showMessage, closeMessage } from "../actions/messages"
 import { connect } from "react-redux"
 import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
-import * as Icons from "./Icons"
-import DepositLPTokensMsgContent from "./DepositLPTokensMsgContent"
-import ViewYourLiquidityBalance from "./ViewYourLiquidityBalance"
+import LiquidityRewardsEarnedMessage from "./messages/LiquidityRewardsEarnedMessage"
+import LPTokensInWalletMessage from "./messages/LPTokensInWalletMessage"
+import WalletMessage from "./messages/WalletMessage";
+import PendingActionMessage from "./messages/PendingActionMessage";
+import SuccessMessage from "./messages/SuccessMessage";
+import ErrorMessage from "./messages/ErrorMessage";
+import DelegationAlreadyCopiedMessage from "./messages/DelegationAlreadyCopiedMessage";
 
 export const MessagesContext = React.createContext({})
 
 export const messageType = {
-  SUCCESS: { icon: Icons.Success, iconClassName: "success-icon green" },
-  ERROR: { icon: Icons.Warning },
-  PENDING_ACTION: { icon: Icons.Time },
-  INFO: { icon: Icons.Question },
-  WALLET: { icon: Icons.Wallet, iconClassName: "wallet-icon grey-50" },
-  NEW_LP_TOKENS_IN_WALLET: {
-    icon: Icons.Wallet,
-    iconClassName: "wallet-icon grey-50",
-    content: <DepositLPTokensMsgContent />,
-  },
-  LIQUIDITY_REWARDS_EARNED: {
-    icon: Icons.Rewards,
-    iconClassName: "reward-icon brand-violet",
-    content: <ViewYourLiquidityBalance />,
-  },
+  SUCCESS: SuccessMessage,
+  ERROR: ErrorMessage,
+  PENDING_ACTION: PendingActionMessage,
+  INFO: LiquidityRewardsEarnedMessage,
+  WALLET: WalletMessage,
+  NEW_LP_TOKENS_IN_WALLET: LPTokensInWalletMessage,
+  LIQUIDITY_REWARDS_EARNED: LiquidityRewardsEarnedMessage,
+  DELEGATION_ALREADY_COPIED: DelegationAlreadyCopiedMessage,
 }
 
 const messageTransitionTimeoutInMs = 500
@@ -35,8 +32,19 @@ class MessagesComponent extends React.Component {
     this.props.showMessage(options)
   }
 
-  onMessageClose = (message) => {
-    this.props.closeMessage(message.id)
+  onMessageClose = (messageId) => {
+    this.props.closeMessage(messageId)
+  }
+
+  renderSpecificMessageType = (message) => {
+    const SpecificComponent = message.messageType
+    return (
+      <SpecificComponent
+        {...message.messageProps}
+        messageId={message.id}
+        onMessageClose={this.onMessageClose}
+      />
+    )
   }
 
   render() {
@@ -55,11 +63,7 @@ class MessagesComponent extends React.Component {
                 key={message.id}
                 classNames="banner"
               >
-                <Message
-                  key={message.id}
-                  message={message}
-                  onMessageClose={this.onMessageClose}
-                />
+                {this.renderSpecificMessageType(message)}
               </CSSTransition>
             ))}
           </TransitionGroup>
@@ -86,42 +90,49 @@ export const Messages = connect(
 
 const closeMessageTimeoutInMs = 3250
 
-const Message = ({ message, onMessageClose }) => {
+export const Message = ({
+  icon,
+  sticky,
+  title,
+  content,
+  classes,
+  withTransactionHash,
+  txHash,
+  messageId,
+  onMessageClose,
+}) => {
   useEffect(() => {
-    if (!message.sticky) {
+    if (!sticky) {
       const timeout = setTimeout(
-        () => onMessageClose(message),
+        () => onMessageClose(messageId),
         closeMessageTimeoutInMs
       )
       return () => clearTimeout(timeout)
     }
-  }, [message, onMessageClose])
+  }, [sticky, onMessageClose])
 
   return (
     <Banner>
       <div className="flex row">
-        <Banner.Icon
-          icon={message.type.icon}
-          className={`${message.type.iconClassName} mr-1`}
-        />
+        <Banner.Icon icon={icon} className={`${classes?.iconClassName} mr-1`} />
         <div style={styles.messageContentWrapper}>
-          <Banner.Title>{message.title}</Banner.Title>
-          {message.content && (
-            <Banner.Description className={message.classes?.bannerDescription}>
-              {message.content}
+          <Banner.Title>{title}</Banner.Title>
+          {content && (
+            <Banner.Description className={classes?.bannerDescription}>
+              {content}
             </Banner.Description>
           )}
-          {message.withTransactionHash && (
+          {withTransactionHash && (
             <Banner.Action>
               <ViewInBlockExplorer
                 type="tx"
                 className="arrow-link"
-                id={message.txHash}
+                id={txHash}
               />
             </Banner.Action>
           )}
         </div>
-        <Banner.CloseIcon onClick={() => onMessageClose(message)} />
+        <Banner.CloseIcon onClick={() => onMessageClose(messageId)} />
       </div>
     </Banner>
   )

@@ -149,11 +149,10 @@ function* processLiquidityRewardEarnedNotification(
   if (gt(currentReward, lastNotificationRewardAmount) && displayMessage) {
     yield put(
       showMessage({
-        type: messageType.LIQUIDITY_REWARDS_EARNED,
-        title: `[${liquidityRewardPairName}] You've earned rewards!`,
-        sticky: true,
-        classes: {
-          bannerDescription: "m-0",
+        messageType: messageType.LIQUIDITY_REWARDS_EARNED,
+        messageProps: {
+          liquidityRewardPairName: liquidityRewardPairName,
+          sticky: true,
         },
       })
     )

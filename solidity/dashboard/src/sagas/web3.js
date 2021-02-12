@@ -2,7 +2,6 @@ import { eventChannel, END, buffers } from "redux-saga"
 import { take, takeEvery, put, call } from "redux-saga/effects"
 import { getContractsContext, submitButtonHelper } from "./utils"
 import {
-  Message,
   showCreatedMessage,
   showMessage,
   closeMessage,
@@ -15,32 +14,37 @@ function createTransactionEventChannel(
   args = [],
   options = {}
 ) {
-  const infoMessage = Message.create({
-    title: "Waiting for the transaction confirmation...",
-    type: messageType.WALLET,
-    sticky: true,
+  const showWalletMessage = showMessage({
+    messageType: messageType.WALLET,
+    messageProps: {
+      sticky: true,
+    },
   })
 
   const emitter = contract.methods[method](...args).send(options)
 
   let txHashCache
 
+  let showPendingActionMessage
+  let showSuccessMessage
+  let showErrorMessage
+
   return eventChannel((emit) => {
-    emit(showCreatedMessage(infoMessage))
+    emit(showWalletMessage)
     emitter
       .once("transactionHash", (txHash) => {
-        emit(closeMessage(infoMessage.id))
+        emit(closeMessage(showWalletMessage.payload.id))
         txHashCache = txHash
-        emit(
-          showCreatedMessage({
-            id: txHash,
-            title: "Pending transaction",
-            sticky: true,
-            type: messageType.PENDING_ACTION,
+        showPendingActionMessage = showCreatedMessage({
+          id: txHash,
+          messageType: messageType.PENDING_ACTION,
+          messageProps: {
+            txHash: txHash,
             withTransactionHash: true,
-            txHash,
-          })
-        )
+            sticky: true,
+          },
+        })
+        emit(showPendingActionMessage)
       })
       .once("receipt", (receipt) => {
         let id
@@ -49,30 +53,30 @@ function createTransactionEventChannel(
         } else {
           id = txHashCache
         }
-        emit(closeMessage(infoMessage.id))
+        emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(id))
-        emit(
-          showMessage({
-            title: "Success!",
-            sticky: true,
-            type: messageType.SUCCESS,
-            withTransactionHash: true,
+        showSuccessMessage = showMessage({
+          messageType: messageType.SUCCESS,
+          messageProps: {
             txHash: id,
-          })
-        )
+            withTransactionHash: true,
+            sticky: true,
+          },
+        })
+        emit(showSuccessMessage)
         emit(END)
       })
       .once("error", (error, receipt) => {
-        emit(closeMessage(infoMessage.id))
+        emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(txHashCache))
-        emit(
-          showMessage({
-            title: "Error",
+        showErrorMessage = showMessage({
+          messageType: messageType.ERROR,
+          messageProps: {
             content: error.message,
-            type: messageType.ERROR,
             sticky: true,
-          })
-        )
+          },
+        })
+        emit(showErrorMessage)
         emit(new Error())
       })
 

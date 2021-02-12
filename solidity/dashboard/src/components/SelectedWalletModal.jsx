@@ -73,9 +73,11 @@ const SelectedWalletModal = ({
             handleError(error)
           }
           showMessage({
-            type: messageType.ERROR,
-            title: error.message,
-            sticky: true,
+            messageType: messageType.ERROR,
+            messageProps: {
+              content: error.message,
+              sticky: true,
+            },
           })
         })
     }
@@ -106,7 +108,13 @@ const SelectedWalletModal = ({
       closeModal()
     } catch (error) {
       handleError(error)
-      showMessage({ type: messageType.ERROR, title: error.message })
+      showMessage({
+        messageType: messageType.ERROR,
+        messageProps: {
+          content: error.message,
+          sticky: true,
+        },
+      })
     }
   }
 

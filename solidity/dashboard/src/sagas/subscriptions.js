@@ -773,11 +773,10 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
       if (isSameEthAddress(to, defaultAccount)) {
         yield put(
           showMessage({
-            type: messageType.NEW_LP_TOKENS_IN_WALLET,
-            title: `[${liquidityRewardPair.label}] Your wallet has LP Tokens.`,
-            sticky: true,
-            classes: {
-              bannerDescription: "m-0",
+            messageType: messageType.NEW_LP_TOKENS_IN_WALLET,
+            messageProps: {
+              liquidityRewardPairName: liquidityRewardPair.label,
+              sticky: true,
             },
           })
         )
