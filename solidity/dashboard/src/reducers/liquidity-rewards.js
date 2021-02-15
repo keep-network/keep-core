@@ -115,7 +115,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         ...state,
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
-          wrappedTokenBalance: restPayload.wrappedTokenBalance,
+          wrappedTokenBalance: restPayload.wrappedTokenBalance.toString(),
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_start`:
