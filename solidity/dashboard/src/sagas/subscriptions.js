@@ -1,4 +1,4 @@
-import { fork, take, call, put, select, delay } from "redux-saga/effects"
+import { fork, take, call, put, select } from "redux-saga/effects"
 import moment from "moment"
 import { createSubcribeToContractEventChannel } from "./web3"
 import {

@@ -6,11 +6,11 @@ import { connect } from "react-redux"
 import { ViewInBlockExplorer } from "./ViewInBlockExplorer"
 import LiquidityRewardsEarnedMessage from "./messages/LiquidityRewardsEarnedMessage"
 import LPTokensInWalletMessage from "./messages/LPTokensInWalletMessage"
-import WalletMessage from "./messages/WalletMessage";
-import PendingActionMessage from "./messages/PendingActionMessage";
-import SuccessMessage from "./messages/SuccessMessage";
-import ErrorMessage from "./messages/ErrorMessage";
-import DelegationAlreadyCopiedMessage from "./messages/DelegationAlreadyCopiedMessage";
+import WalletMessage from "./messages/WalletMessage"
+import PendingActionMessage from "./messages/PendingActionMessage"
+import SuccessMessage from "./messages/SuccessMessage"
+import ErrorMessage from "./messages/ErrorMessage"
+import DelegationAlreadyCopiedMessage from "./messages/DelegationAlreadyCopiedMessage"
 
 export const MessagesContext = React.createContext({})
 
