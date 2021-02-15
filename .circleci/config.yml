@@ -339,7 +339,6 @@ workflows:
             branches:
               ignore:
                 - master
-                - /rfc-18\/.*/
           context: keep-dev
       - build_token_dashboard_dapp:
           filters:
