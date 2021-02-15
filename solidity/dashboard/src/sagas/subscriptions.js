@@ -814,9 +814,7 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
           eventsToCheck,
           transactionHash
         )
-        console.log('TRANSFER')
-        console.log('emittedevents')
-        console.log(emittedEvents)
+
         // Fetch wrappedTokenBalance value only when depositWithdrawnEventName event was not previously emitted (so
         // in other words when user did not withdraw all on the dApp, but still got some lp tokens transferred
         // to his wallet). If the user clicks withdraw all the wrappedTokenBalance will be updated on the redux
