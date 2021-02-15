@@ -1,11 +1,16 @@
 name: Go
 
-#TODO: extend the conditions once workflow gets tested together with other workflows 
-on:  
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
   push:
     branches:
-      - master
+      # TODO: Run on master after we're fully migrated from Circle CI
+      # - master
+      - "rfc-18/**"
   pull_request:
+    branches:
+      # TODO: Run on all branches after we're fully migrated from Circle CI
+      - "rfc-18/**"
   workflow_dispatch:
 
 jobs:
@@ -48,6 +53,7 @@ jobs:
       - name: Create test results directory
         run: |
           mkdir test-results
+
       - name: Run Go tests
         run: |
           docker run \
@@ -55,12 +61,13 @@ jobs:
             --workdir /go/src/github.com/keep-network/keep-core \
             go-build-env \
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
+
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v1.7
         if: always() # guarantees that this action always runs, even if earlier steps fail
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results/unit-tests.xml
+          files: ./test-results/unit-tests.xml
           check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
 
