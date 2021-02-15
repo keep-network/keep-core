@@ -109,7 +109,7 @@ export const Message = ({
       )
       return () => clearTimeout(timeout)
     }
-  }, [sticky, onMessageClose])
+  }, [sticky, messageId, onMessageClose])
 
   return (
     <Banner>
