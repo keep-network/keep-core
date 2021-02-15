@@ -805,7 +805,7 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
         const eventsToCheck = [
           [
             LiquidityRewards.LPRewardsContract,
-            LiquidityRewards.rewardClaimedEventName,
+            LiquidityRewards.depositWithdrawnEventName,
           ],
         ]
 
@@ -814,11 +814,14 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
           eventsToCheck,
           transactionHash
         )
-        // Fetch wrappedTokenBalance value only when rewardClaimedEventName event was not previously emitted (so
+        console.log('TRANSFER')
+        console.log('emittedevents')
+        console.log(emittedEvents)
+        // Fetch wrappedTokenBalance value only when depositWithdrawnEventName event was not previously emitted (so
         // in other words when user did not withdraw all on the dApp, but still got some lp tokens transferred
         // to his wallet). If the user clicks withdraw all the wrappedTokenBalance will be updated on the redux
         // side (`liquidity_rewards/${liquidityRewardPairName}_withdrawn` case) so we don't need to update it here.
-        if (!emittedEvents[LiquidityRewards.rewardClaimedEventName]) {
+        if (!emittedEvents[LiquidityRewards.depositWithdrawnEventName]) {
           yield* updateWrappedTokenBalance(
             LiquidityRewards,
             liquidityRewardPair.name,
