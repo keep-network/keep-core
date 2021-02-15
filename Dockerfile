@@ -1,8 +1,5 @@
 FROM golang:1.13.6-alpine3.10 AS gobuild
 
-ARG VERSION
-ARG REVISION
-
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-client \
@@ -62,6 +59,10 @@ RUN go generate ./.../gen
 
 COPY ./ $APP_DIR/
 RUN go generate ./pkg/gen
+
+# Client Versioning.
+ARG VERSION
+ARG REVISION
 
 RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
