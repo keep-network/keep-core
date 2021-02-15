@@ -787,7 +787,10 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
       // If the 'to' address is equal to the address of the connected wallet
       // then it means that LP tokens are transferred to this address so we are
       // displaying the proper notification
-      if (isSameEthAddress(to, defaultAccount)) {
+      if (
+        isSameEthAddress(to, defaultAccount) &&
+        liquidityRewardPair.label !== LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.label
+      ) {
         yield put(
           showMessage({
             messageType: messageType.NEW_LP_TOKENS_IN_WALLET,
