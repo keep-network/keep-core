@@ -21,7 +21,7 @@ help()
    echo -e "\nEnvironment variables:\n"
    echo -e "\tKEEP_ETHEREUM_PASSWORD: The password to unlock local Ethereum accounts to set up delegations."\
            "Required only for 'local' network. Default value is 'password'"
-   echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum"
+   echo -e "\tCONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: Contracts owner private key on Ethereum. Required for non-local network only"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--config-dir: Path to keep-core client configuration file(s)"
    echo -e "\t--network: Ethereum network for keep-core client."\
