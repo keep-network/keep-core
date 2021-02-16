@@ -13,15 +13,15 @@ import Footer from "./components/Footer"
 
 const App = () => (
   <Provider store={store}>
-    <Messages>
-      <Web3ContextProvider>
-        <ModalContextProvider>
-          <Router>
+    <Router>
+      <Messages>
+        <Web3ContextProvider>
+          <ModalContextProvider>
             <AppLayout />
-          </Router>
-        </ModalContextProvider>
-      </Web3ContextProvider>
-    </Messages>
+          </ModalContextProvider>
+        </Web3ContextProvider>
+      </Messages>
+    </Router>
   </Provider>
 )
 
