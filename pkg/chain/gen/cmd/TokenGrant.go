@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
-	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
@@ -52,6 +51,69 @@ func init() {
 		Usage:       `Provides access to the TokenGrant contract.`,
 		Description: tokenGrantDescription,
 		Subcommands: []cli.Command{{
+			Name:      "grant-stakes",
+			Usage:     "Calls the constant method grantStakes on the TokenGrant contract.",
+			ArgsUsage: "[arg0] ",
+			Action:    tgGrantStakes,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "unlocked-amount",
+			Usage:     "Calls the constant method unlockedAmount on the TokenGrant contract.",
+			ArgsUsage: "[_id] ",
+			Action:    tgUnlockedAmount,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-grant-stake-details",
+			Usage:     "Calls the constant method getGrantStakeDetails on the TokenGrant contract.",
+			ArgsUsage: "[operator] ",
+			Action:    tgGetGrantStakeDetails,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "grantees-to-operators",
+			Usage:     "Calls the constant method granteesToOperators on the TokenGrant contract.",
+			ArgsUsage: "[arg0] [arg1] ",
+			Action:    tgGranteesToOperators,
+			Before:    cmd.ArgCountChecker(2),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-grants",
+			Usage:     "Calls the constant method getGrants on the TokenGrant contract.",
+			ArgsUsage: "[_granteeOrGrantManager] ",
+			Action:    tgGetGrants,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "grant-indices",
+			Usage:     "Calls the constant method grantIndices on the TokenGrant contract.",
+			ArgsUsage: "[arg0] [arg1] ",
+			Action:    tgGrantIndices,
+			Before:    cmd.ArgCountChecker(2),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "grants",
+			Usage:     "Calls the constant method grants on the TokenGrant contract.",
+			ArgsUsage: "[arg0] ",
+			Action:    tgGrants,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "available-to-stake",
+			Usage:     "Calls the constant method availableToStake on the TokenGrant contract.",
+			ArgsUsage: "[_grantId] ",
+			Action:    tgAvailableToStake,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "balance-of",
+			Usage:     "Calls the constant method balanceOf on the TokenGrant contract.",
+			ArgsUsage: "[_owner] ",
+			Action:    tgBalanceOf,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "balances",
 			Usage:     "Calls the constant method balances on the TokenGrant contract.",
 			ArgsUsage: "[arg0] ",
@@ -66,45 +128,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "available-to-stake",
-			Usage:     "Calls the constant method availableToStake on the TokenGrant contract.",
-			ArgsUsage: "[_grantId] ",
-			Action:    tgAvailableToStake,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "unlocked-amount",
-			Usage:     "Calls the constant method unlockedAmount on the TokenGrant contract.",
-			ArgsUsage: "[_id] ",
-			Action:    tgUnlockedAmount,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
 			Name:      "get-grant",
 			Usage:     "Calls the constant method getGrant on the TokenGrant contract.",
 			ArgsUsage: "[_id] ",
 			Action:    tgGetGrant,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "token",
-			Usage:     "Calls the constant method token on the TokenGrant contract.",
-			ArgsUsage: "",
-			Action:    tgToken,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "balance-of",
-			Usage:     "Calls the constant method balanceOf on the TokenGrant contract.",
-			ArgsUsage: "[_owner] ",
-			Action:    tgBalanceOf,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-grant-stake-details",
-			Usage:     "Calls the constant method getGrantStakeDetails on the TokenGrant contract.",
-			ArgsUsage: "[operator] ",
-			Action:    tgGetGrantStakeDetails,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -115,39 +142,11 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-grantee-operators",
-			Usage:     "Calls the constant method getGranteeOperators on the TokenGrant contract.",
-			ArgsUsage: "[grantee] ",
-			Action:    tgGetGranteeOperators,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "grant-indices",
-			Usage:     "Calls the constant method grantIndices on the TokenGrant contract.",
-			ArgsUsage: "[arg0] [arg1] ",
-			Action:    tgGrantIndices,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "num-grants",
-			Usage:     "Calls the constant method numGrants on the TokenGrant contract.",
+			Name:      "token",
+			Usage:     "Calls the constant method token on the TokenGrant contract.",
 			ArgsUsage: "",
-			Action:    tgNumGrants,
+			Action:    tgToken,
 			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "grantees-to-operators",
-			Usage:     "Calls the constant method granteesToOperators on the TokenGrant contract.",
-			ArgsUsage: "[arg0] [arg1] ",
-			Action:    tgGranteesToOperators,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "grants",
-			Usage:     "Calls the constant method grants on the TokenGrant contract.",
-			ArgsUsage: "[arg0] ",
-			Action:    tgGrants,
-			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "get-grant-unlocking-schedule",
@@ -157,25 +156,25 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-grants",
-			Usage:     "Calls the constant method getGrants on the TokenGrant contract.",
-			ArgsUsage: "[_granteeOrGrantManager] ",
-			Action:    tgGetGrants,
+			Name:      "get-grantee-operators",
+			Usage:     "Calls the constant method getGranteeOperators on the TokenGrant contract.",
+			ArgsUsage: "[grantee] ",
+			Action:    tgGetGranteeOperators,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "grant-stakes",
-			Usage:     "Calls the constant method grantStakes on the TokenGrant contract.",
-			ArgsUsage: "[arg0] ",
-			Action:    tgGrantStakes,
-			Before:    cmd.ArgCountChecker(1),
+			Name:      "num-grants",
+			Usage:     "Calls the constant method numGrants on the TokenGrant contract.",
+			ArgsUsage: "",
+			Action:    tgNumGrants,
+			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "receive-approval",
-			Usage:     "Calls the method receiveApproval on the TokenGrant contract.",
-			ArgsUsage: "[_from] [_amount] [_token] [_extraData] ",
-			Action:    tgReceiveApproval,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
+			Name:      "undelegate",
+			Usage:     "Calls the method undelegate on the TokenGrant contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    tgUndelegate,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "revoke",
@@ -185,24 +184,17 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "undelegate",
-			Usage:     "Calls the method undelegate on the TokenGrant contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    tgUndelegate,
+			Name:      "withdraw",
+			Usage:     "Calls the method withdraw on the TokenGrant contract.",
+			ArgsUsage: "[_id] ",
+			Action:    tgWithdraw,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "cancel-revoked-stake",
-			Usage:     "Calls the method cancelRevokedStake on the TokenGrant contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    tgCancelRevokedStake,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "recover-stake",
-			Usage:     "Calls the method recoverStake on the TokenGrant contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    tgRecoverStake,
+			Name:      "withdraw-revoked",
+			Usage:     "Calls the method withdrawRevoked on the TokenGrant contract.",
+			ArgsUsage: "[_id] ",
+			Action:    tgWithdrawRevoked,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -213,24 +205,24 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "stake",
-			Usage:     "Calls the method stake on the TokenGrant contract.",
-			ArgsUsage: "[_id] [_stakingContract] [_amount] [_extraData] ",
-			Action:    tgStake,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "withdraw-revoked",
-			Usage:     "Calls the method withdrawRevoked on the TokenGrant contract.",
-			ArgsUsage: "[_id] ",
-			Action:    tgWithdrawRevoked,
+			Name:      "cancel-revoked-stake",
+			Usage:     "Calls the method cancelRevokedStake on the TokenGrant contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    tgCancelRevokedStake,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "cancel-stake",
-			Usage:     "Calls the method cancelStake on the TokenGrant contract.",
+			Name:      "receive-approval",
+			Usage:     "Calls the method receiveApproval on the TokenGrant contract.",
+			ArgsUsage: "[_from] [_amount] [_token] [_extraData] ",
+			Action:    tgReceiveApproval,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "recover-stake",
+			Usage:     "Calls the method recoverStake on the TokenGrant contract.",
 			ArgsUsage: "[_operator] ",
-			Action:    tgCancelStake,
+			Action:    tgRecoverStake,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -241,10 +233,17 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "withdraw",
-			Usage:     "Calls the method withdraw on the TokenGrant contract.",
-			ArgsUsage: "[_id] ",
-			Action:    tgWithdraw,
+			Name:      "stake",
+			Usage:     "Calls the method stake on the TokenGrant contract.",
+			ArgsUsage: "[_id] [_stakingContract] [_amount] [_extraData] ",
+			Action:    tgStake,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "cancel-stake",
+			Usage:     "Calls the method cancelStake on the TokenGrant contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    tgCancelStake,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}},
@@ -252,6 +251,276 @@ func init() {
 }
 
 /// ------------------- Const methods -------------------
+
+func tgGrantStakes(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GrantStakesAtBlock(
+		arg0,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgUnlockedAmount(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	_id, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _id, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.UnlockedAmountAtBlock(
+		_id,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgGetGrantStakeDetails(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetGrantStakeDetailsAtBlock(
+		operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgGranteesToOperators(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	arg1, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg1, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	result, err := contract.GranteesToOperatorsAtBlock(
+		arg0,
+		arg1,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgGetGrants(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	_granteeOrGrantManager, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _granteeOrGrantManager, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetGrantsAtBlock(
+		_granteeOrGrantManager,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgGrantIndices(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	arg1, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg1, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	result, err := contract.GrantIndicesAtBlock(
+		arg0,
+		arg1,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgGrants(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	arg0, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter arg0, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GrantsAtBlock(
+		arg0,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgAvailableToStake(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	_grantId, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _grantId, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.AvailableToStakeAtBlock(
+		_grantId,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tgBalanceOf(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+	_owner, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _owner, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.BalanceOfAtBlock(
+		_owner,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
 
 func tgBalances(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
@@ -309,62 +578,6 @@ func tgWithdrawable(c *cli.Context) error {
 	return nil
 }
 
-func tgAvailableToStake(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	_grantId, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _grantId, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.AvailableToStakeAtBlock(
-		_grantId,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgUnlockedAmount(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	_id, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _id, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.UnlockedAmountAtBlock(
-		_id,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
 func tgGetGrant(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
@@ -380,82 +593,6 @@ func tgGetGrant(c *cli.Context) error {
 
 	result, err := contract.GetGrantAtBlock(
 		_id,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgToken(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.TokenAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgBalanceOf(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	_owner, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _owner, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.BalanceOfAtBlock(
-		_owner,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgGetGrantStakeDetails(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetGrantStakeDetailsAtBlock(
-		operator,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -497,143 +634,13 @@ func tgStakeBalanceOf(c *cli.Context) error {
 	return nil
 }
 
-func tgGetGranteeOperators(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	grantee, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter grantee, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GetGranteeOperatorsAtBlock(
-		grantee,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgGrantIndices(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	arg0, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg0, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	arg1, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg1, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	result, err := contract.GrantIndicesAtBlock(
-		arg0,
-		arg1,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgNumGrants(c *cli.Context) error {
+func tgToken(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.NumGrantsAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgGranteesToOperators(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	arg0, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg0, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	arg1, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg1, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	result, err := contract.GranteesToOperatorsAtBlock(
-		arg0,
-		arg1,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tgGrants(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-	arg0, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg0, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.GrantsAtBlock(
-		arg0,
+	result, err := contract.TokenAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -675,21 +682,21 @@ func tgGetGrantUnlockingSchedule(c *cli.Context) error {
 	return nil
 }
 
-func tgGetGrants(c *cli.Context) error {
+func tgGetGranteeOperators(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
 		return err
 	}
-	_granteeOrGrantManager, err := ethutil.AddressFromHex(c.Args()[0])
+	grantee, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _granteeOrGrantManager, a address, from passed value %v",
+			"couldn't parse parameter grantee, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
 
-	result, err := contract.GetGrantsAtBlock(
-		_granteeOrGrantManager,
+	result, err := contract.GetGranteeOperatorsAtBlock(
+		grantee,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -703,21 +710,13 @@ func tgGetGrants(c *cli.Context) error {
 	return nil
 }
 
-func tgGrantStakes(c *cli.Context) error {
+func tgNumGrants(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
 		return err
 	}
-	arg0, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter arg0, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
 
-	result, err := contract.GrantStakesAtBlock(
-		arg0,
+	result, err := contract.NumGrantsAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -732,6 +731,270 @@ func tgGrantStakes(c *cli.Context) error {
 }
 
 /// ------------------- Non-const methods -------------------
+
+func tgUndelegate(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Undelegate(
+			_operator,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallUndelegate(
+			_operator,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tgRevoke(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+
+	_id, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _id, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Revoke(
+			_id,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallRevoke(
+			_id,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tgWithdraw(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+
+	_id, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _id, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Withdraw(
+			_id,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallWithdraw(
+			_id,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tgWithdrawRevoked(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+
+	_id, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _id, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.WithdrawRevoked(
+			_id,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallWithdrawRevoked(
+			_id,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tgAuthorizeStakingContract(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+
+	_stakingContract, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _stakingContract, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.AuthorizeStakingContract(
+			_stakingContract,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallAuthorizeStakingContract(
+			_stakingContract,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tgCancelRevokedStake(c *cli.Context) error {
+	contract, err := initializeTokenGrant(c)
+	if err != nil {
+		return err
+	}
+
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.CancelRevokedStake(
+			_operator,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallCancelRevokedStake(
+			_operator,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
 
 func tgReceiveApproval(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
@@ -807,138 +1070,6 @@ func tgReceiveApproval(c *cli.Context) error {
 	return nil
 }
 
-func tgRevoke(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	_id, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _id, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Revoke(
-			_id,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallRevoke(
-			_id,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tgUndelegate(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Undelegate(
-			_operator,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUndelegate(
-			_operator,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tgCancelRevokedStake(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.CancelRevokedStake(
-			_operator,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallCancelRevokedStake(
-			_operator,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
 func tgRecoverStake(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
@@ -983,16 +1114,16 @@ func tgRecoverStake(c *cli.Context) error {
 	return nil
 }
 
-func tgAuthorizeStakingContract(c *cli.Context) error {
+func tgUndelegateRevoked(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
 		return err
 	}
 
-	_stakingContract, err := ethutil.AddressFromHex(c.Args()[0])
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _stakingContract, a address, from passed value %v",
+			"couldn't parse parameter _operator, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
@@ -1003,8 +1134,8 @@ func tgAuthorizeStakingContract(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.AuthorizeStakingContract(
-			_stakingContract,
+		transaction, err = contract.UndelegateRevoked(
+			_operator,
 		)
 		if err != nil {
 			return err
@@ -1013,8 +1144,8 @@ func tgAuthorizeStakingContract(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallAuthorizeStakingContract(
-			_stakingContract,
+		err = contract.CallUndelegateRevoked(
+			_operator,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1101,50 +1232,6 @@ func tgStake(c *cli.Context) error {
 	return nil
 }
 
-func tgWithdrawRevoked(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	_id, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _id, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.WithdrawRevoked(
-			_id,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallWithdrawRevoked(
-			_id,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
 func tgCancelStake(c *cli.Context) error {
 	contract, err := initializeTokenGrant(c)
 	if err != nil {
@@ -1177,94 +1264,6 @@ func tgCancelStake(c *cli.Context) error {
 		// Do a call.
 		err = contract.CallCancelStake(
 			_operator,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tgUndelegateRevoked(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UndelegateRevoked(
-			_operator,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUndelegateRevoked(
-			_operator,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tgWithdraw(c *cli.Context) error {
-	contract, err := initializeTokenGrant(c)
-	if err != nil {
-		return err
-	}
-
-	_id, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _id, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Withdraw(
-			_id,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallWithdraw(
-			_id,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1311,18 +1310,16 @@ func initializeTokenGrant(c *cli.Context) (*contract.TokenGrant, error) {
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethlike.NewMiningWaiter(
-		ethutil.NewTransactionSourceAdapter(client),
+	miningWaiter := ethutil.NewMiningWaiter(
+		client,
 		checkInterval,
 		maxGasPrice,
 	)
 
-	blockCounter, err := ethlike.CreateBlockCounter(
-		ethutil.NewBlockSourceAdapter(client),
-	)
+	blockCounter, err := ethutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
+			"failed to create block counter: [%v]",
 			err,
 		)
 	}
@@ -1333,10 +1330,7 @@ func initializeTokenGrant(c *cli.Context) (*contract.TokenGrant, error) {
 		address,
 		key,
 		client,
-		ethlike.NewNonceManager(
-			key.Address.Hex(),
-			ethutil.NewNonceSourceAdapter(client),
-		),
+		ethutil.NewNonceManager(client, key.Address),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},
