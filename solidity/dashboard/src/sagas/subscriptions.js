@@ -887,6 +887,19 @@ export function* subscribeToLiquidityRewardsEvents() {
         yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
         yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
         yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
+      },
+      {
+        name: pairName,
+        ...value,
+      }
+    )
+  }
+}
+
+export function* subscribeToWrappedTokenMintAndBurnt() {
+  for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
+    yield fork(
+      function* (liquidityRewardPair) {
         yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
       },
       {
