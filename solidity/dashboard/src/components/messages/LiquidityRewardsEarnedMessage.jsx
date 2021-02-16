@@ -1,6 +1,7 @@
 import React from "react"
 import { Message } from "../Message"
 import * as Icons from "../Icons"
+import { Link } from "react-router-dom"
 
 const LiquidityRewardsEarnedMessage = ({
   liquidityRewardPairName,
@@ -10,7 +11,7 @@ const LiquidityRewardsEarnedMessage = ({
 }) => {
   const icon = Icons.Rewards
   const title = `[${liquidityRewardPairName}] You've earned rewards!`
-  const content = <a href={"/liquidity"}>View your balance</a>
+  const content = <Link to={"/liquidity"}>View your balance</Link>
   const classes = {
     bannerDescription: "m-0",
     iconClassName: "reward-icon brand-violet",
