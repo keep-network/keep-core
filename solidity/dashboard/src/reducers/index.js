@@ -17,4 +17,12 @@ const reducers = combineReducers({
   liquidityRewards,
 })
 
-export default reducers
+const rootReducer = (state, action) => {
+  if (action.type === "RESET_APP") {
+    state = undefined
+  }
+
+  return reducers(state, action)
+}
+
+export default rootReducer

@@ -1,15 +1,18 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { Link } from "react-router-dom"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"
 import { Messages } from "./components/Message"
 import { SideMenu } from "./components/SideMenu"
 import { BrowserRouter as Router } from "react-router-dom"
-import { Provider } from "react-redux"
+import { Provider, useDispatch } from "react-redux"
 import store from "./store"
 import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
+import { useWeb3Address } from "./components/WithWeb3Context"
+import { usePrevious } from "./hooks/usePrevious"
+import { isSameEthAddress } from "./utils/general.utils"
 
 const App = () => (
   <Provider store={store}>
@@ -26,6 +29,16 @@ const App = () => (
 )
 
 const AppLayout = () => {
+  const yourAddress = useWeb3Address()
+  const previousAddress = usePrevious(yourAddress)
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    if (previousAddress && !isSameEthAddress(previousAddress, yourAddress)) {
+      dispatch({ type: "restart_saga" })
+    }
+  })
+
   return (
     <>
       <AppHeader />
