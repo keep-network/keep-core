@@ -1,14 +1,18 @@
 import web3Utils from "web3-utils"
 import { createERC20Contract, createSaddleSwapContract } from "../contracts"
 import BigNumber from "bignumber.js"
-import { toTokenUnit } from "../utils/token.utils"
+import { fromTokenUnit, toTokenUnit } from "../utils/token.utils"
 import {
   getPairData,
   getKeepTokenPriceInUSD,
   getBTCPriceInUSD,
 } from "./uniswap-api"
 import moment from "moment"
-import { add, calculatePercentage } from "../utils/arithmetics.utils"
+import {
+  add,
+  calculatePercentage,
+  percentageOf,
+} from "../utils/arithmetics.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -127,16 +131,42 @@ class UniswapLPRewards extends LiquidityRewards {
     return this._calculateAPY(r, WEEKS_IN_YEAR)
   }
 
-  calculateLPTokenBalance = async (shareOfTotalPoolInPercent) => {
+  /**
+   * Calculates lp token balance for the given pair
+   * The calculations were done based on
+   * https://uniswap.org/docs/v2/advanced-topics/understanding-returns/#why-is-my-liquidity-worth-less-than-i-put-in
+   *
+   * @param {string} lpBalance Balance of liquidity token for a given uniswap pair deposited in
+   * the LPRewards` contract.
+   * @return {Promise<{token0: string, token1: string}>}
+   */
+  calculateLPTokenBalance = async (lpBalance) => {
     const pairData = await getPairData(this.address)
+
+    const shareOfUniswapPool = percentageOf(
+      lpBalance.toString(),
+      fromTokenUnit(pairData.totalSupply).toString()
+    )
+
+    const constantProduct = new BigNumber(pairData.reserve0).multipliedBy(
+      pairData.reserve1
+    )
+
+    const token0LiquidityPool = constantProduct
+      .div(pairData.token1Price)
+      .squareRoot()
+    const token1LiquidityPool = constantProduct
+      .multipliedBy(pairData.token1Price)
+      .squareRoot()
+
     return {
       token0: calculatePercentage(
-        shareOfTotalPoolInPercent,
-        pairData.reserve0
+        shareOfUniswapPool,
+        token0LiquidityPool
       ).toString(),
       token1: calculatePercentage(
-        shareOfTotalPoolInPercent,
-        pairData.reserve1
+        shareOfUniswapPool,
+        token1LiquidityPool
       ).toString(),
     }
   }

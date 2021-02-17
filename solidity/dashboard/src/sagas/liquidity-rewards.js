@@ -67,7 +67,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 
       lpTokenBalance = yield call(
         [LiquidityRewards, LiquidityRewards.calculateLPTokenBalance],
-        shareOfPoolInPercent
+        lpBalance
       )
     }
 
