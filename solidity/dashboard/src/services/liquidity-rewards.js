@@ -141,7 +141,7 @@ class UniswapLPRewards extends LiquidityRewards {
    * @return {Promise<{token0: string, token1: string}>}
    */
   calculateLPTokenBalance = async (lpBalance) => {
-    const pairData = await getPairData(this.address)
+    const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
 
     const shareOfUniswapPool = percentageOf(
       lpBalance.toString(),
