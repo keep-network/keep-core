@@ -8,7 +8,6 @@ import {
   Web3Loaded,
   ContractsLoaded,
 } from "../contracts"
-import { connect } from "react-redux"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -65,8 +64,6 @@ class Web3ContextProvider extends React.Component {
         window.location.reload()
       )
     }
-
-    this.props.fetchKeepTokenBalance()
 
     this.setState({
       web3,
@@ -147,11 +144,4 @@ class Web3ContextProvider extends React.Component {
   }
 }
 
-const mapDispatchToProps = (dispatch) => {
-  return {
-    fetchKeepTokenBalance: () =>
-      dispatch({ type: "keep-token/balance_request" }),
-  }
-}
-
-export default connect(null, mapDispatchToProps)(Web3ContextProvider)
+export default Web3ContextProvider
