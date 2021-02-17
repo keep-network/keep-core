@@ -2,7 +2,12 @@ import React from "react"
 import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext } from "./Message"
-import { getContracts, resolveWeb3Deferred } from "../contracts"
+import {
+  getContracts,
+  resolveWeb3Deferred,
+  Web3Loaded,
+  ContractsLoaded,
+} from "../contracts"
 import { connect } from "react-redux"
 
 class Web3ContextProvider extends React.Component {
@@ -55,8 +60,10 @@ class Web3ContextProvider extends React.Component {
     }
 
     if (providerName === "METAMASK") {
-      web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
-      web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
+      web3.eth.currentProvider.on("accountsChanged", this.onAccountsChanged)
+      web3.eth.currentProvider.on("chainChanged", () =>
+        window.location.reload()
+      )
     }
 
     this.props.fetchKeepTokenBalance()
@@ -97,26 +104,31 @@ class Web3ContextProvider extends React.Component {
     await this.connectAppWithWallet(connector, provider)
   }
 
-  refreshProvider = async ([yourAddress]) => {
-    // if (!yourAddress) {
-    //   this.setState({
-    //     isFetching: false,
-    //     yourAddress: "",
-    //     token: { options: { address: "" } },
-    //     stakingContract: { options: { address: "" } },
-    //     grantContract: { options: { address: "" } },
-    //   })
-    //   return
-    // }
-    // const { connector, provider } = this.state
-    // await this.connectAppWithWallet(connector, provider)
+  onAccountsChanged = async ([yourAddress]) => {
+    if (!yourAddress) {
+      this.setState({
+        isFetching: false,
+        yourAddress: "",
+        isConnected: false,
+      })
+      return
+    }
 
-    // This is a temporary solution to prevent a situation when a user changed
-    // an account but data has not been updated. After migrate to redux the dapp
-    // fetches data only once and updates data based on emitted events. This
-    // solution doesn't support a case where a user changed an account. We are
-    // going to address it in a follow up work.
-    window.location.reload()
+    const web3 = await Web3Loaded
+    web3.eth.defaultAccount = yourAddress
+    const contracts = await ContractsLoaded
+    for (const contractInstance of Object.values(contracts)) {
+      contractInstance.options.from = web3.eth.defaultAccount
+    }
+
+    this.setState({
+      web3,
+      yourAddress,
+      ...contracts,
+      utils: web3.utils,
+      eth: web3.eth,
+      isConnected: true,
+    })
   }
 
   render() {
