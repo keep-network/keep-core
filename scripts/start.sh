@@ -7,11 +7,32 @@ LOG_LEVEL_DEFAULT="info"
 KEEP_CORE_PATH=$PWD
 CONFIG_DIR_PATH_DEFAULT="$KEEP_CORE_PATH/configs"
 
+# FIXME: set this value as env var when calling this script. Approach should
+# stay consistent between 'install.sh' & 'start.sh' scripts.
+#
 # Read user inputs.
 read -p "Enter ethereum accounts password [$KEEP_ETHEREUM_PASSWORD_DEFAULT]: " ethereum_password
 KEEP_ETHEREUM_PASSWORD=${ethereum_password:-$KEEP_ETHEREUM_PASSWORD_DEFAULT}
 
-read -p "Enter path to keep-core config files directory [$CONFIG_DIR_PATH_DEFAULT]: " config_dir_path
+# Transform long options to short ones
+for arg in "$@"; do
+  shift
+  case "$arg" in
+    "--config-dir")  set -- "$@" "-c" ;;
+    *)               set -- "$@" "$arg"
+  esac
+done
+
+# Parse short options
+OPTIND=1
+while getopts "c:" opt
+do
+   case "$opt" in
+      c ) config_dir_path="$OPTARG" ;;
+   esac
+done
+shift $(expr $OPTIND - 1) # remove options from positional parameters
+
 CONFIG_DIR_PATH=${config_dir_path:-$CONFIG_DIR_PATH_DEFAULT}
 
 config_files=($CONFIG_DIR_PATH/*.toml)

@@ -24,7 +24,6 @@ import "../../utils/BytesLib.sol";
 /// submitted, equal to the candidate group size so that the protocol can
 /// complete successfully.
 library GroupSelection {
-
     using SafeMath for uint256;
     using BytesLib for bytes;
 
@@ -33,28 +32,21 @@ library GroupSelection {
         // selection execution and accepted by the protocol for the
         // consideration.
         uint64[] tickets;
-
         // Information about ticket submitters (group member candidates).
         mapping(uint256 => address) candidate;
-
         // Pseudorandom seed value used as an input for the group selection.
         uint256 seed;
-
         // Timeout in blocks after which the ticket submission is finished.
         uint256 ticketSubmissionTimeout;
-
         // Number of block at which the group selection started and from which
         // ticket submissions are accepted.
         uint256 ticketSubmissionStartBlock;
-
         // Indicates whether a group selection is currently in progress.
         // Concurrent group selections are not allowed.
         bool inProgress;
-
         // Captures the minimum stake when group selection starts. This is to ensure the
         // same staking weight divisor is applied for all member candidates participating.
         uint256 minimumStake;
-
         // Map simulates a sorted linked list of ticket values by their indexes.
         // key -> value represent indices from the tickets[] array.
         // 'key' index holds an index of a ticket and 'value' holds an index
@@ -69,12 +61,10 @@ library GroupSelection {
         // value points to itself because there is no `nil` in Solidity.
         // Traversing from tail: [2]->[0]->[1]->[3] result in 175->151->42->7
         bytes previousTicketIndices;
-
         // Tail represents an index of a ticket in a tickets[] array which holds
         // the highest ticket value. It is a tail of the linked list defined by
         // `previousTicketIndex`.
         uint256 tail;
-
         // Size of a group in the threshold relay.
         uint256 groupSize;
     }
@@ -160,7 +150,10 @@ library GroupSelection {
         uint256 virtualStakerIndex,
         uint256 stakingWeight
     ) public {
-        if (block.number > self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout)) {
+        if (
+            block.number >
+            self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout)
+        ) {
             revert("Ticket submission is over");
         }
 
@@ -168,13 +161,15 @@ library GroupSelection {
             revert("Duplicate ticket");
         }
 
-        if (isTicketValid(
-            ticketValue,
-            stakerValue,
-            virtualStakerIndex,
-            stakingWeight,
-            self.seed
-        )) {
+        if (
+            isTicketValid(
+                ticketValue,
+                stakerValue,
+                virtualStakerIndex,
+                stakingWeight,
+                self.seed
+            )
+        ) {
             addTicket(self, ticketValue);
         } else {
             revert("Invalid ticket");
@@ -188,28 +183,33 @@ library GroupSelection {
         uint256 virtualStakerIndex,
         uint256 stakingWeight,
         uint256 groupSelectionSeed
-    ) internal view returns(bool) {
+    ) internal view returns (bool) {
         uint64 ticketValueExpected;
-        bytes memory ticketBytes = abi.encodePacked(
-            keccak256(
-                abi.encodePacked(
-                    groupSelectionSeed,
-                    stakerValue,
-                    virtualStakerIndex
+        bytes memory ticketBytes =
+            abi.encodePacked(
+                keccak256(
+                    abi.encodePacked(
+                        groupSelectionSeed,
+                        stakerValue,
+                        virtualStakerIndex
+                    )
                 )
-            )
-        );
+            );
         // use first 8 bytes to compare ticket values
         /* solium-disable-next-line */
         assembly {
             ticketValueExpected := mload(add(ticketBytes, 8))
         }
 
-        bool isVirtualStakerIndexValid = virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
+        bool isVirtualStakerIndexValid =
+            virtualStakerIndex > 0 && virtualStakerIndex <= stakingWeight;
         bool isStakerValueValid = stakerValue == uint256(msg.sender);
         bool isTicketValueValid = ticketValue == ticketValueExpected;
 
-        return isVirtualStakerIndexValid && isStakerValueValid && isTicketValueValid;
+        return
+            isVirtualStakerIndexValid &&
+            isStakerValueValid &&
+            isTicketValueValid;
     }
 
     /// @notice Adds a new, verified ticket. Ticket is accepted when it is lower
@@ -217,34 +217,36 @@ library GroupSelection {
     /// below the group size.
     function addTicket(Storage storage self, uint64 newTicketValue) internal {
         uint256[] memory previousTicketIndex = readPreviousTicketIndices(self);
-        uint256[] memory ordered = getTicketValueOrderedIndices(
-            self,
-            previousTicketIndex
-        );
+        uint256[] memory ordered =
+            getTicketValueOrderedIndices(self, previousTicketIndex);
 
         // any ticket goes when the tickets array size is lower than the group size
         if (self.tickets.length < self.groupSize) {
             // no tickets
             if (self.tickets.length == 0) {
                 self.tickets.push(newTicketValue);
-            // higher than the current highest
+                // higher than the current highest
             } else if (newTicketValue > self.tickets[self.tail]) {
                 self.tickets.push(newTicketValue);
                 uint256 oldTail = self.tail;
-                self.tail = self.tickets.length-1;
+                self.tail = self.tickets.length - 1;
                 previousTicketIndex[self.tail] = oldTail;
-            // lower than the current lowest
+                // lower than the current lowest
             } else if (newTicketValue < self.tickets[ordered[0]]) {
                 self.tickets.push(newTicketValue);
                 // last element points to itself
-                previousTicketIndex[self.tickets.length - 1] = self.tickets.length - 1;
+                previousTicketIndex[self.tickets.length - 1] =
+                    self.tickets.length -
+                    1;
                 // previous lowest ticket points to the new lowest
                 previousTicketIndex[ordered[0]] = self.tickets.length - 1;
-            // higher than the lowest ticket value and lower than the highest ticket value
+                // higher than the lowest ticket value and lower than the highest ticket value
             } else {
                 self.tickets.push(newTicketValue);
                 uint256 j = findReplacementIndex(self, newTicketValue, ordered);
-                previousTicketIndex[self.tickets.length - 1] = previousTicketIndex[j];
+                previousTicketIndex[
+                    self.tickets.length - 1
+                ] = previousTicketIndex[j];
                 previousTicketIndex[j] = self.tickets.length - 1;
             }
             self.candidate[newTicketValue] = msg.sender;
@@ -258,12 +260,13 @@ library GroupSelection {
                 previousTicketIndex[ordered[0]] = self.tail;
                 previousTicketIndex[self.tail] = self.tail;
                 self.tail = newTail;
-            } else { // new ticket is between lowest and highest
+            } else {
+                // new ticket is between lowest and highest
                 uint256 j = findReplacementIndex(self, newTicketValue, ordered);
                 self.tickets[self.tail] = newTicketValue;
                 // do not change the order if a new ticket is still highest
                 if (j != self.tail) {
-                    uint newTail = previousTicketIndex[self.tail];
+                    uint256 newTail = previousTicketIndex[self.tail];
                     previousTicketIndex[self.tail] = previousTicketIndex[j];
                     previousTicketIndex[j] = self.tail;
                     self.tail = newTail;
@@ -301,7 +304,9 @@ library GroupSelection {
     }
 
     function readPreviousTicketIndices(Storage storage self)
-        internal view returns (uint256[] memory uncompressed)
+        internal
+        view
+        returns (uint256[] memory uncompressed)
     {
         bytes memory compressed = self.previousTicketIndices;
         uncompressed = new uint256[](self.groupSize);
@@ -333,10 +338,10 @@ library GroupSelection {
     ) internal view returns (uint256[] memory) {
         uint256[] memory ordered = new uint256[](self.tickets.length);
         if (ordered.length > 0) {
-            ordered[self.tickets.length-1] = self.tail;
+            ordered[self.tickets.length - 1] = self.tail;
             if (ordered.length > 1) {
                 for (uint256 i = self.tickets.length - 1; i > 0; i--) {
-                    ordered[i-1] = previousIndices[ordered[i]];
+                    ordered[i - 1] = previousIndices[ordered[i]];
                 }
             }
         }
@@ -345,21 +350,33 @@ library GroupSelection {
     }
 
     /// @notice Gets selected participants in ascending order of their tickets.
-    function selectedParticipants(Storage storage self) public view returns (address[] memory) {
+    function selectedParticipants(Storage storage self)
+        public
+        view
+        returns (address[] memory)
+    {
         require(
-            block.number >= self.ticketSubmissionStartBlock.add(self.ticketSubmissionTimeout),
+            block.number >=
+                self.ticketSubmissionStartBlock.add(
+                    self.ticketSubmissionTimeout
+                ),
             "Ticket submission in progress"
         );
 
-        require(self.tickets.length >= self.groupSize, "Not enough tickets submitted");
+        require(
+            self.tickets.length >= self.groupSize,
+            "Not enough tickets submitted"
+        );
 
         uint256[] memory previousTicketIndex = readPreviousTicketIndices(self);
         address[] memory selected = new address[](self.groupSize);
         uint256 ticketIndex = self.tail;
-        selected[self.tickets.length - 1] = self.candidate[self.tickets[ticketIndex]];
+        selected[self.tickets.length - 1] = self.candidate[
+            self.tickets[ticketIndex]
+        ];
         for (uint256 i = self.tickets.length - 1; i > 0; i--) {
             ticketIndex = previousTicketIndex[ticketIndex];
-            selected[i-1] = self.candidate[self.tickets[ticketIndex]];
+            selected[i - 1] = self.candidate[self.tickets[ticketIndex]];
         }
 
         return selected;
@@ -376,7 +393,7 @@ library GroupSelection {
     /// another transaction consuming a lot of gas and as a result, getting
     /// gas refund for clearing up the storage.
     function cleanupCandidates(Storage storage self) internal {
-        for (uint i = 0; i < self.tickets.length; i++) {
+        for (uint256 i = 0; i < self.tickets.length; i++) {
             delete self.candidate[self.tickets[i]];
         }
     }

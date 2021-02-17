@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react"
+import React, { useMemo } from "react"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
@@ -12,6 +12,8 @@ import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { formatPercentage } from "../utils/general.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { APY, ShareOfPool } from "./liquidity"
+import MetricsTile from "./MetricsTile"
 
 const LiquidityRewardCard = ({
   title,
@@ -37,26 +39,6 @@ const LiquidityRewardCard = ({
   isAPYFetching,
   pool,
 }) => {
-  const formattedApy = useMemo(() => {
-    const bn = new BigNumber(apy).multipliedBy(100)
-    if (bn.isEqualTo(Infinity)) {
-      return Infinity
-    } else if (bn.isLessThan(0.01) && bn.isGreaterThan(0)) {
-      return 0.01
-    } else if (bn.isGreaterThan(999)) {
-      return 999
-    }
-
-    return formatPercentage(bn)
-  }, [apy])
-
-  const formattedPercentageOfTotalPool = useMemo(() => {
-    const bn = new BigNumber(percentageOfTotalPool)
-    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? 0.01
-      : formatPercentage(bn)
-  }, [percentageOfTotalPool])
-
   const formattedLPTokenBalance = useMemo(() => {
     const token0BN = new BigNumber(lpTokenBalance.token0)
     const token1BN = new BigNumber(lpTokenBalance.token1)
@@ -69,16 +51,6 @@ const LiquidityRewardCard = ({
       token1,
     }
   }, [lpTokenBalance.token0, lpTokenBalance.token1])
-
-  const formattingFn = useCallback((value) => {
-    let prefix = ""
-    if (value === 0.01) {
-      prefix = `<`
-    } else if (value >= 999) {
-      prefix = `>`
-    }
-    return `${prefix}${value}%`
-  }, [])
 
   const hasWrappedTokens = useMemo(() => gt(wrappedTokenBalance, 0), [
     wrappedTokenBalance,
@@ -200,61 +172,25 @@ const LiquidityRewardCard = ({
           gt(lpBalance, 0) ? "" : "--locked"
         } mt-2 mb-2`}
       >
-        <div className={"liquidity__info-tile bg-mint-10"}>
-          <Tooltip
-            simple
-            delay={0}
-            triggerComponent={Icons.MoreInfo}
-            className={"liquidity__info-tile__tooltip"}
-          >
-            Pool APY is calculated using the&nbsp;
-            <a
-              target="_blank"
-              rel="noopener noreferrer"
-              href={"https://thegraph.com/explorer/subgraph/uniswap/uniswap-v2"}
-              className="text-white text-link"
-            >
-              Uniswap subgraph API
-            </a>
-            &nbsp;to fetch the total pool value and KEEP token in USD.
-          </Tooltip>
-          {isAPYFetching ? (
-            <Skeleton tag="h2" shining color="grey-10" />
-          ) : (
-            <h2 className={"liquidity__info-tile__title text-mint-100"}>
-              {formattedApy === Infinity ? (
-                <span>&#8734;</span>
-              ) : (
-                <CountUp
-                  end={formattedApy}
-                  // Save previously ended number to start every new animation from it.
-                  preserveValue
-                  decimals={2}
-                  duration={1}
-                  formattingFn={formattingFn}
-                />
-              )}
-            </h2>
-          )}
+        <MetricsTile className="liquidity__info-tile bg-mint-10">
+          <MetricsTile.Tooltip className="liquidity__info-tile__tooltip">
+            <APY.TooltipContent />
+          </MetricsTile.Tooltip>
+          <APY
+            apy={apy}
+            isFetching={isAPYFetching}
+            className="liquidity__info-tile__title text-mint-100"
+          />
           <h6>Estimate of pool apy</h6>
-        </div>
-        <div className={"liquidity__info-tile bg-mint-10"}>
-          {isFetching ? (
-            <Skeleton tag="h2" shining color="grey-10" />
-          ) : (
-            <h2 className={"liquidity__info-tile__title text-mint-100"}>
-              <CountUp
-                end={formattedPercentageOfTotalPool}
-                // Save previously ended number to start every new animation from it.
-                preserveValue
-                decimals={2}
-                duration={1}
-                formattingFn={formattingFn}
-              />
-            </h2>
-          )}
+        </MetricsTile>
+        <MetricsTile className="liquidity__info-tile bg-mint-10">
+          <ShareOfPool
+            className="liquidity__info-tile__title text-mint-100"
+            percentageOfTotalPool={percentageOfTotalPool}
+            isFetching={isFetching}
+          />
           <h6>Your share of POOL</h6>
-        </div>
+        </MetricsTile>
       </div>
       {renderUserInfoBanner()}
       {renderLPBalance()}
@@ -302,7 +238,12 @@ const LiquidityRewardCard = ({
         className={"liquidity__withdraw btn btn-secondary btn-lg w-100"}
         disabled={!gt(rewardBalance, 0) && !gt(lpBalance, 0)}
         onSubmitAction={(awaitingPromise) =>
-          withdrawLiquidityRewards(liquidityPairContractName, awaitingPromise)
+          withdrawLiquidityRewards(
+            liquidityPairContractName,
+            lpBalance,
+            pool,
+            awaitingPromise
+          )
         }
       >
         withdraw all

@@ -3,13 +3,12 @@ pragma solidity 0.5.17;
 /// @dev Stub used in TokenStakingEscrow to test migration of tokens between
 /// escrows.
 contract ReceivingEscrowStub {
-
     struct Received {
         uint256 grantId;
         uint256 amount;
     }
 
-    mapping (address => Received) public received;
+    mapping(address => Received) public received;
 
     function receiveApproval(
         address from,
@@ -17,9 +16,8 @@ contract ReceivingEscrowStub {
         address token,
         bytes memory extraData
     ) public {
-        (address operator, uint256 grantId) = abi.decode(
-            extraData, (address, uint256)
-        );
+        (address operator, uint256 grantId) =
+            abi.decode(extraData, (address, uint256));
         received[operator] = Received(grantId, value);
     }
 

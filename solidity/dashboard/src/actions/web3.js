@@ -179,13 +179,16 @@ export const withdrawGroupMemberRewards = (
 
 export const withdrawAllLiquidityRewards = (
   liquidityPairContractName,
+  amount,
+  pool,
   meta
 ) => {
   return {
-    type: WEB3_SEND_TRANSACTION,
+    type: "liquidity_rewards/withdraw_tokens",
     payload: {
       contractName: liquidityPairContractName,
-      methodName: "exit",
+      amount,
+      pool,
     },
     meta,
   }

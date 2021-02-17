@@ -88,9 +88,7 @@ ln -s build/contracts artifacts
 npm link
 
 cd $DASHBOARD_DIR_PATH
-npm link @keep-network/keep-core
-npm link @keep-network/keep-ecdsa
-npm link @keep-network/tbtc
+npm link @keep-network/keep-core @keep-network/keep-ecdsa @keep-network/tbtc
 
 # printf "${LOG_START}Starting dashboard...${LOG_END}"
 # npm start

@@ -1,92 +1,92 @@
-const {accounts, contract} = require('@openzeppelin/test-environment')
-const {time, expectRevert} = require('@openzeppelin/test-helpers')
-const {initTokenStaking} = require('./helpers/initContracts')
-const {grantTokens} = require('./helpers/grantTokens')
+const { accounts, contract } = require("@openzeppelin/test-environment")
+const { time, expectRevert } = require("@openzeppelin/test-helpers")
+const { initTokenStaking } = require("./helpers/initContracts")
+const { grantTokens } = require("./helpers/grantTokens")
 const {
   delegateStake,
   delegateStakeFromGrant,
   delegateStakeFromManagedGrant,
-} = require('./helpers/delegateStake')
-const {createSnapshot, restoreSnapshot} = require('./helpers/snapshot')
-const assert = require('chai').assert
+} = require("./helpers/delegateStake")
+const { createSnapshot, restoreSnapshot } = require("./helpers/snapshot")
+const assert = require("chai").assert
 
-const KeepToken = contract.fromArtifact('KeepToken')
-const TokenGrant = contract.fromArtifact('TokenGrant')
-const KeepRegistry = contract.fromArtifact('KeepRegistry')
-const PermissiveStakingPolicy = contract.fromArtifact('PermissiveStakingPolicy')
-const ManagedGrantFactory = contract.fromArtifact('ManagedGrantFactory')
-const ManagedGrant = contract.fromArtifact('ManagedGrant')
-const RolesLookup = contract.fromArtifact('RolesLookup')
-const RolesLookupStub = contract.fromArtifact('RolesLookupStub')
+const KeepToken = contract.fromArtifact("KeepToken")
+const TokenGrant = contract.fromArtifact("TokenGrant")
+const KeepRegistry = contract.fromArtifact("KeepRegistry")
+const PermissiveStakingPolicy = contract.fromArtifact("PermissiveStakingPolicy")
+const ManagedGrantFactory = contract.fromArtifact("ManagedGrantFactory")
+const ManagedGrant = contract.fromArtifact("ManagedGrant")
+const RolesLookup = contract.fromArtifact("RolesLookup")
+const RolesLookupStub = contract.fromArtifact("RolesLookupStub")
 
-describe('RolesLookup', () => {
-  const deployer = accounts[0],
-    tokenOwner1 = accounts[1],
-    tokenOwner2 = accounts[2],
-    nonTokenOwner = accounts[3],
-    operator1 = accounts[4],
-    operator2 = accounts[5],
-    nonOperator = accounts[6],
-    beneficiary1 = accounts[7],
-    beneficiary2 = accounts[8],
-    authorizer = accounts[9],
-    grantee1 = accounts[10],
-    grantee2 = accounts[11],
-    nonGrantee = accounts[12]
+describe("RolesLookup", () => {
+  const deployer = accounts[0]
+  const tokenOwner1 = accounts[1]
+  const tokenOwner2 = accounts[2]
+  const nonTokenOwner = accounts[3]
+  const operator1 = accounts[4]
+  const operator2 = accounts[5]
+  const nonOperator = accounts[6]
+  const beneficiary1 = accounts[7]
+  const beneficiary2 = accounts[8]
+  const authorizer = accounts[9]
+  const grantee1 = accounts[10]
+  const grantee2 = accounts[11]
+  const nonGrantee = accounts[12]
 
-  const initializationPeriod = time.duration.seconds(0),
-    grantUnlockingDuration = time.duration.seconds(0),
-    grantStart = time.duration.seconds(0),
-    grantCliff = time.duration.seconds(0),
-    grantRevocable = true
+  const initializationPeriod = time.duration.seconds(0)
+  const grantUnlockingDuration = time.duration.seconds(0)
+  const grantStart = time.duration.seconds(0)
+  const grantCliff = time.duration.seconds(0)
+  const grantRevocable = true
 
-  let token,
-    tokenGrant,
-    tokenStaking,
-    tokenGrantStakingPolicy,
-    managedGrantFactory,
-    lookup
+  let token
+  let tokenGrant
+  let tokenStaking
+  let tokenGrantStakingPolicy
+  let managedGrantFactory
+  let lookup
 
   before(async () => {
-    const registry = await KeepRegistry.new({from: deployer})
-    token = await KeepToken.new({from: deployer})
-    tokenGrant = await TokenGrant.new(token.address, {from: deployer})
+    const registry = await KeepRegistry.new({ from: deployer })
+    token = await KeepToken.new({ from: deployer })
+    tokenGrant = await TokenGrant.new(token.address, { from: deployer })
     const stakingContracts = await initTokenStaking(
       token.address,
       tokenGrant.address,
       registry.address,
       initializationPeriod,
-      contract.fromArtifact('TokenStakingEscrow'),
-      contract.fromArtifact('TokenStaking')
+      contract.fromArtifact("TokenStakingEscrow"),
+      contract.fromArtifact("TokenStaking")
     )
     tokenStaking = stakingContracts.tokenStaking
     tokenGrantStakingPolicy = await PermissiveStakingPolicy.new()
     managedGrantFactory = await ManagedGrantFactory.new(
       token.address,
       tokenGrant.address,
-      {from: deployer}
+      { from: deployer }
     )
 
     await tokenGrant.authorizeStakingContract(tokenStaking.address, {
       from: deployer,
     })
 
-    const lookupLib = await RolesLookup.new({from: deployer})
+    const lookupLib = await RolesLookup.new({ from: deployer })
     await RolesLookupStub.detectNetwork()
-    await RolesLookupStub.link('RolesLookup', lookupLib.address)
+    await RolesLookupStub.link("RolesLookup", lookupLib.address)
     lookup = await RolesLookupStub.new(
       tokenStaking.address,
       tokenGrant.address,
-      {from: deployer}
+      { from: deployer }
     )
   })
 
-  describe('isTokenOwnerForOperator', async () => {
+  describe("isTokenOwnerForOperator", async () => {
     before(async () => {
       await createSnapshot()
       const amount = await tokenStaking.minimumStake()
 
-      await token.transfer(tokenOwner1, amount, {from: deployer})
+      await token.transfer(tokenOwner1, amount, { from: deployer })
       await delegateStake(
         token,
         tokenStaking,
@@ -95,10 +95,10 @@ describe('RolesLookup', () => {
         beneficiary1,
         authorizer,
         amount,
-        {from: tokenOwner1}
+        { from: tokenOwner1 }
       )
 
-      await token.transfer(tokenOwner2, amount, {from: deployer})
+      await token.transfer(tokenOwner2, amount, { from: deployer })
       await delegateStake(
         token,
         tokenStaking,
@@ -107,7 +107,7 @@ describe('RolesLookup', () => {
         beneficiary2,
         authorizer,
         amount,
-        {from: tokenOwner2}
+        { from: tokenOwner2 }
       )
     })
 
@@ -115,39 +115,39 @@ describe('RolesLookup', () => {
       await restoreSnapshot()
     })
 
-    it('returns true for token owner and its operator', async () => {
+    it("returns true for token owner and its operator", async () => {
       assert.isTrue(
         await lookup.isTokenOwnerForOperator(tokenOwner1, operator1)
       )
     })
 
-    it('returns false for mismatched token owner and operator', async () => {
+    it("returns false for mismatched token owner and operator", async () => {
       assert.isFalse(
         await lookup.isTokenOwnerForOperator(tokenOwner1, operator2)
       )
     })
 
-    it('returns false for incorrect operator', async () => {
+    it("returns false for incorrect operator", async () => {
       assert.isFalse(
         await lookup.isTokenOwnerForOperator(tokenOwner1, nonOperator)
       )
     })
 
-    it('returns false for non-token-owner', async () => {
+    it("returns false for non-token-owner", async () => {
       assert.isFalse(
         await lookup.isTokenOwnerForOperator(nonTokenOwner, operator1)
       )
     })
   })
 
-  describe('isGranteeForOperator', async () => {
+  describe("isGranteeForOperator", async () => {
     let amount
 
     before(async () => {
       await createSnapshot()
       amount = await tokenStaking.minimumStake()
 
-      let grantId1 = await grantTokens(
+      const grantId1 = await grantTokens(
         tokenGrant,
         token,
         amount,
@@ -158,7 +158,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await delegateStakeFromGrant(
         tokenGrant,
@@ -171,7 +171,7 @@ describe('RolesLookup', () => {
         grantId1
       )
 
-      let grantId2 = await grantTokens(
+      const grantId2 = await grantTokens(
         tokenGrant,
         token,
         amount,
@@ -182,7 +182,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await delegateStakeFromGrant(
         tokenGrant,
@@ -200,25 +200,26 @@ describe('RolesLookup', () => {
       await restoreSnapshot()
     })
 
-    it('returns true for grantee and its operator', async () => {
+    it("returns true for grantee and its operator", async () => {
       assert.isTrue(await lookup.isGranteeForOperator(grantee1, operator1))
     })
 
-    it('returns false for mismatched grantee and operator', async () => {
+    it("returns false for mismatched grantee and operator", async () => {
       assert.isFalse(await lookup.isGranteeForOperator(grantee1, operator2))
     })
 
-    it('returns false for incorrect operator', async () => {
+    it("returns false for incorrect operator", async () => {
       assert.isFalse(await lookup.isGranteeForOperator(grantee1, nonOperator))
     })
 
-    it('returns false for non-grantee', async () => {
+    it("returns false for non-grantee", async () => {
       assert.isFalse(await lookup.isGranteeForOperator(nonGrantee, operator1))
     })
   })
 
-  describe('isManagedGranteeForOperator', async () => {
-    let managedGrantAddress1, managedGrantAddress2
+  describe("isManagedGranteeForOperator", async () => {
+    let managedGrantAddress1
+    let managedGrantAddress2
 
     before(async () => {
       await createSnapshot()
@@ -236,7 +237,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee1,
@@ -246,7 +247,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant1 = await ManagedGrant.at(managedGrantAddress1)
       await delegateStakeFromManagedGrant(
@@ -270,7 +271,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee2,
@@ -280,7 +281,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant2 = await ManagedGrant.at(managedGrantAddress2)
       await delegateStakeFromManagedGrant(
@@ -298,7 +299,7 @@ describe('RolesLookup', () => {
       await restoreSnapshot()
     })
 
-    it('returns true for grantee and its operator', async () => {
+    it("returns true for grantee and its operator", async () => {
       assert.isTrue(
         await lookup.isManagedGranteeForOperator(
           grantee1,
@@ -308,18 +309,18 @@ describe('RolesLookup', () => {
       )
     })
 
-    it('reverts for mismatched grantee', async () => {
+    it("reverts for mismatched grantee", async () => {
       await expectRevert(
         lookup.isManagedGranteeForOperator(
           grantee2,
           operator1,
           managedGrantAddress1
         ),
-        'Not a grantee of the provided contract'
+        "Not a grantee of the provided contract"
       )
     })
 
-    it('returns false for mismatched operator', async () => {
+    it("returns false for mismatched operator", async () => {
       assert.isFalse(
         await lookup.isManagedGranteeForOperator(
           grantee1,
@@ -329,29 +330,29 @@ describe('RolesLookup', () => {
       )
     })
 
-    it('returns false for mismatched managed grant', async () => {
+    it("returns false for mismatched managed grant", async () => {
       await expectRevert(
         lookup.isManagedGranteeForOperator(
           grantee1,
           operator1,
           managedGrantAddress2
         ),
-        'Not a grantee of the provided contract'
+        "Not a grantee of the provided contract"
       )
     })
 
-    it('reverts for mismatched operator and managed grant', async () => {
+    it("reverts for mismatched operator and managed grant", async () => {
       await expectRevert(
         lookup.isManagedGranteeForOperator(
           grantee1,
           operator2,
           managedGrantAddress2
         ),
-        'Not a grantee of the provided contract'
+        "Not a grantee of the provided contract"
       )
     })
 
-    it('returns false for incorrect operator', async () => {
+    it("returns false for incorrect operator", async () => {
       assert.isFalse(
         await lookup.isManagedGranteeForOperator(
           grantee1,
@@ -361,21 +362,23 @@ describe('RolesLookup', () => {
       )
     })
 
-    it('reverts for non-grantee', async () => {
+    it("reverts for non-grantee", async () => {
       await expectRevert(
         lookup.isManagedGranteeForOperator(
           nonGrantee,
           nonOperator,
           managedGrantAddress1
         ),
-        'Not a grantee of the provided contract'
+        "Not a grantee of the provided contract"
       )
     })
   })
 
-  describe('isManagedGranteeForGrant', async () => {
-    let managedGrant1Address, managedGrant2Address,
-      managedGrant1Id, managedGrant2Id
+  describe("isManagedGranteeForGrant", async () => {
+    let managedGrant1Address
+    let managedGrant2Address
+    let managedGrant1Id
+    let managedGrant2Id
 
     before(async () => {
       await createSnapshot()
@@ -393,7 +396,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee1,
@@ -403,10 +406,10 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant1 = await ManagedGrant.at(managedGrant1Address)
-      managedGrant1Id = await managedGrant1.grantId();
+      managedGrant1Id = await managedGrant1.grantId()
 
       await token.approve(managedGrantFactory.address, amount, {
         from: deployer,
@@ -419,7 +422,7 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       await managedGrantFactory.createManagedGrant(
         grantee2,
@@ -429,57 +432,56 @@ describe('RolesLookup', () => {
         grantCliff,
         grantRevocable,
         tokenGrantStakingPolicy.address,
-        {from: deployer}
+        { from: deployer }
       )
       const managedGrant2 = await ManagedGrant.at(managedGrant2Address)
-      managedGrant2Id = await managedGrant2.grantId();
+      managedGrant2Id = await managedGrant2.grantId()
     })
 
     after(async () => {
       await restoreSnapshot()
     })
 
-    it('returns true for managed grant and correct operator and grant ID', async () => {
-      assert.isTrue(await lookup.isManagedGranteeForGrant.call(
-        grantee1,
-        managedGrant1Id
-      ))
-      assert.isTrue(await lookup.isManagedGranteeForGrant.call(
-        grantee2,
-        managedGrant2Id
-      ))
+    it("returns true for managed grant and correct operator and grant ID", async () => {
+      assert.isTrue(
+        await lookup.isManagedGranteeForGrant.call(grantee1, managedGrant1Id)
+      )
+      assert.isTrue(
+        await lookup.isManagedGranteeForGrant.call(grantee2, managedGrant2Id)
+      )
     })
 
-    it('returns false for mismatched managed grant', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
-        grantee1,
-        managedGrant2Id
-      ))
+    it("returns false for mismatched managed grant", async () => {
+      assert.isFalse(
+        await lookup.isManagedGranteeForGrant.call(grantee1, managedGrant2Id)
+      )
     })
 
-    it('returns false for mismatched grantee', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
-        grantee2,
-        managedGrant1Id
-      ))
+    it("returns false for mismatched grantee", async () => {
+      assert.isFalse(
+        await lookup.isManagedGranteeForGrant.call(grantee2, managedGrant1Id)
+      )
     })
 
-    it('returns false for not a grantee', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
-        nonGrantee,
-        managedGrant1Id
-      ))  
+    it("returns false for not a grantee", async () => {
+      assert.isFalse(
+        await lookup.isManagedGranteeForGrant.call(nonGrantee, managedGrant1Id)
+      )
     })
 
-    it('returns false for not a managed grant', async () => {
-      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
-        grantee1,
-        token.address // not a managed grant contract
-      ))
-      assert.isFalse(await lookup.isManagedGranteeForGrant.call(
-        grantee1,
-        deployer // not a contract
-      ))
+    it("returns false for not a managed grant", async () => {
+      assert.isFalse(
+        await lookup.isManagedGranteeForGrant.call(
+          grantee1,
+          token.address // not a managed grant contract
+        )
+      )
+      assert.isFalse(
+        await lookup.isManagedGranteeForGrant.call(
+          grantee1,
+          deployer // not a contract
+        )
+      )
     })
   })
 })

@@ -74,3 +74,22 @@ export const formatPercentage = (value, decimalPlaces = 2) => {
 
   return value.decimalPlaces(decimalPlaces, BigNumber.ROUND_DOWN).toNumber()
 }
+
+export const displayPercentageValue = (
+  value,
+  isFormattedValue = true,
+  min = 0.01,
+  max = 999
+) => {
+  if (!isFormattedValue) {
+    value = formatPercentage(value)
+  }
+
+  let prefix = ""
+  if (value > 0 && value <= min) {
+    prefix = `<`
+  } else if (value >= max) {
+    prefix = `>`
+  }
+  return `${prefix}${value}%`
+}

@@ -7,18 +7,20 @@ import "../KeepRandomBeaconOperator.sol";
  * @dev A simplified Random Beacon operator contract to help local development.
  */
 contract KeepRandomBeaconOperatorPricingDKGStub is KeepRandomBeaconOperator {
-
     constructor(
         address _serviceContract,
         address _stakingContract,
         address _registryContract,
         address _gasPriceOracle
-    ) KeepRandomBeaconOperator(
-        _serviceContract,
-        _stakingContract,
-        _registryContract,
-        _gasPriceOracle
-    ) public {
+    )
+        public
+        KeepRandomBeaconOperator(
+            _serviceContract,
+            _stakingContract,
+            _registryContract,
+            _gasPriceOracle
+        )
+    {
         relayEntryTimeout = 10;
         groupSelection.ticketSubmissionTimeout = 69;
         resultPublicationBlockStep = 3;

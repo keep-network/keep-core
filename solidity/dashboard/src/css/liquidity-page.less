@@ -51,33 +51,6 @@
   .liquidity__info, .liquidity__info--locked {
     display: flex;
     justify-content: center;
-
-    .liquidity__info-tile {
-      transition: background-color 0.5s ease;
-      text-align: center;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0 0.2rem;
-      height: 9rem;
-      width: 10rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-
-      .liquidity__info-tile__tooltip {
-        width: 12px;
-        height: 12px;
-        position: absolute;
-        top: 0;
-        right: 8px;
-
-        .tooltip__content-wrapper {
-          text-align: left;
-          min-width: 16rem;
-        }
-      }
-    }
   }
 
   .liquidity__new-user-info {
@@ -104,15 +77,6 @@
       .liquidity-banner__info {
         font-weight: 400;
         margin-bottom: 0.3rem;
-      }
-    }
-  }
-
-  .liquidity__info--locked {
-    .liquidity__info-tile {
-      &:extend(.bg-grey-20);
-      .liquidity__info-tile__title {
-        color: @color-grey-60!important;
       }
     }
   }
@@ -195,6 +159,73 @@
     margin: 0.5rem 0;
   }
 
+}
+
+.liquidity__info--locked {
+  .liquidity__info-tile {
+    &:extend(.bg-grey-20);
+    .liquidity__info-tile__title {
+      color: @color-grey-60!important;
+    }
+  }
+}
+
+
+
+.keep-only-pool {
+  display: flex;
+  flex-direction: column;
+  margin: 0 3.2rem;
+
+  &__overview {
+    flex: 1 0 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+
+    > section:first-of-type {
+      flex: 1 1 auto;
+      margin-right: 2rem;
+    }
+
+    &__info-tiles {
+      display: flex;
+      justify-content: space-evenly;
+      margin-top: 1rem;
+
+      > .liquidity__info-tile:first-of-type {
+        margin: 0;
+        margin-bottom: 1rem;
+      }
+    }
+  }
+
+  &__icon {
+    background: url("../static/svg/keep-only-pool.svg");
+    background-color: @color-grey-10;
+    background-size: cover;
+    background-position: center center;
+    background-repeat:no-repeat;
+    height: 400px;
+  }
+
+  @media screen and (min-width: 1000px) {
+    flex-direction: row;
+    &__overview {
+      flex-direction: row;
+      margin-bottom: 1.2rem;
+
+      &__info-tiles {
+        display: block;
+      }
+    }
+
+    &__icon {
+      flex-grow: 0.5;
+      height: auto;
+      margin-bottom: 1.2rem;
+    }
+  }
 }
 
 .empty-page--liquidity-page {

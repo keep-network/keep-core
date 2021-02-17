@@ -20,6 +20,7 @@ export class Message {
   content
   type
   sticky
+  classes
 }
 
 export const showMessage = (options) => {

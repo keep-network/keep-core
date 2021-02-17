@@ -2,18 +2,23 @@ pragma solidity 0.5.17;
 
 import "../KeepRandomBeaconOperator.sol";
 
-contract KeepRandomBeaconOperatorGroupSelectionStub is KeepRandomBeaconOperator {
+contract KeepRandomBeaconOperatorGroupSelectionStub is
+    KeepRandomBeaconOperator
+{
     constructor(
         address _serviceContract,
         address _stakingContract,
         address _registryContract,
         address _gasPriceOracle
-    ) KeepRandomBeaconOperator(
-        _serviceContract,
-        _stakingContract,
-        _registryContract,
-        _gasPriceOracle
-    ) public {
+    )
+        public
+        KeepRandomBeaconOperator(
+            _serviceContract,
+            _stakingContract,
+            _registryContract,
+            _gasPriceOracle
+        )
+    {
         groupSelection.ticketSubmissionTimeout = 65;
 
         // setGroupSize

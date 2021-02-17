@@ -14,7 +14,11 @@ contract GrantStakingStub {
         grantStaking.setGrantForOperator(operator, grantId);
     }
 
-    function getGrantForOperator(address operator) public view returns (uint256) {
+    function getGrantForOperator(address operator)
+        public
+        view
+        returns (uint256)
+    {
         return grantStaking.getGrantForOperator(operator);
     }
 }

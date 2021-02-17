@@ -18,6 +18,7 @@ export const LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME = "LPRewardsTBTCSaddle"
 export const LP_REWARDS_KEEP_ETH_CONTRACT_NAME = "LPRewardsKEEPETHContract"
 export const LP_REWARDS_TBTC_ETH_CONTRACT_NAME = "LPRewardsTBTCETHContract"
 export const LP_REWARDS_KEEP_TBTC_CONTRACT_NAME = "LPRewardsKEEPTBTCContract"
+export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
@@ -102,5 +103,10 @@ export const LIQUIDITY_REWARD_PAIRS = {
         iconName: "EthToken",
       },
     ],
+  },
+  KEEP_ONLY: {
+    contractName: KEEP_TOKEN_GEYSER_CONTRACT_NAME,
+    label: "KEEP",
+    pool: "TOKEN_GEYSER",
   },
 }
