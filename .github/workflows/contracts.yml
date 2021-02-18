@@ -7,9 +7,8 @@ on:
       - "rfc-18/**"
       - master
     paths:
-      - "solidity/contracts/**"
-      - "solidity/package.json"
-      - "solidity/package-lock.json"
+      - "solidity/**"
+      - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
   pull_request:
     branches:
@@ -18,9 +17,8 @@ on:
       - "rfc-18/**"
       - master
     paths:
-      - "solidity/contracts/**"
-      - "solidity/package.json"
-      - "solidity/package-lock.json"
+      - "solidity/**"
+      - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
 
 jobs:
