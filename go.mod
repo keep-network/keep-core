@@ -26,7 +26,7 @@ require (
 	github.com/libp2p/go-libp2p-routing v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-secio v0.2.2
 	github.com/mattn/go-isatty v0.0.7 // indirect
-	github.com/multiformats/go-multiaddr v0.2.2
+	github.com/multiformats/go-multiaddr v0.3.1
 	github.com/pborman/uuid v1.2.0
 	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20200423211502-4bdfaf469ed5

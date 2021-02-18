@@ -6,6 +6,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	ma "github.com/multiformats/go-multiaddr"
 )
 
 // TransportIdentifier represents a protocol-level identifier. It is an opaque
@@ -67,16 +68,25 @@ type Provider interface {
 	BroadcastChannelForwarderFor(name string)
 }
 
+// AddrInfo
+type AddrInfo struct {
+	ID   string
+	Addr ma.Multiaddr
+}
+
 // ConnectionManager is an interface which exposes peers a client is connected
 // to, and their individual identities, so that a client may forcibly disconnect
 // from any given connected peer.
 type ConnectionManager interface {
 	ConnectedPeers() []string
+	ConnectedPeersAddrInfo() []AddrInfo
 	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
 	DisconnectPeer(connectedPeer string)
 
 	// AddrStrings returns all listen addresses of the provider.
 	AddrStrings() []string
+	// NetAddrStrings returns all listen addresses of the provider.
+	NetAddrStrings() []string
 
 	IsConnected(address string) bool
 }

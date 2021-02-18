@@ -2,11 +2,13 @@ package diagnostics
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/ipfs/go-log"
 	"github.com/keep-network/keep-common/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
+	manet "github.com/multiformats/go-multiaddr/net"
 )
 
 var logger = log.Logger("keep-diagnostics")
@@ -32,19 +34,26 @@ func RegisterConnectedPeersSource(
 ) {
 	registry.RegisterSource("connected_peers", func() string {
 		connectionManager := netProvider.ConnectionManager()
-		connectedPeers := connectionManager.ConnectedPeers()
+		peers := connectionManager.ConnectedPeersAddrInfo()
+		logger.Infof("get peers number: %d", len(peers))
 
-		peersList := make([]map[string]interface{}, len(connectedPeers))
-		for i := 0; i < len(connectedPeers); i++ {
-			peer := connectedPeers[i]
-			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer)
+		peersList := make([]map[string]interface{}, len(peers))
+		for i := 0; i < len(peers); i++ {
+			peer := peers[i]
+			peerPublicKey, err := connectionManager.GetPeerPublicKey(peer.ID)
 			if err != nil {
-				logger.Error("error on getting peer public key: [%v]", err)
+				logger.Errorf("error on getting peer public key: [%v]", err)
+				continue
+			}
+			Addr, err := manet.ToNetAddr(peer.Addr)
+			if err != nil {
+				logger.Errorf("error on getting peer net addr: [%v]", err)
 				continue
 			}
 
 			peersList[i] = map[string]interface{}{
-				"network_id":       peer,
+				"network_id":       peer.ID,
+				"network_addr":     Addr.String(),
 				"ethereum_address": key.NetworkPubKeyToEthAddress(peerPublicKey),
 			}
 		}
@@ -66,6 +75,8 @@ func RegisterClientInfoSource(
 	netProvider net.Provider,
 ) {
 	registry.RegisterSource("client_info", func() string {
+		logger.Warning("get client_info")
+
 		connectionManager := netProvider.ConnectionManager()
 
 		clientID := netProvider.ID().String()
@@ -78,6 +89,8 @@ func RegisterClientInfoSource(
 		clientInfo := map[string]interface{}{
 			"network_id":       clientID,
 			"ethereum_address": key.NetworkPubKeyToEthAddress(clientPublicKey),
+			"network_addrs":    connectionManager.NetAddrStrings(),
+			"datetime":         time.Now().Format("2006-01-02 15:04:05"),
 		}
 
 		bytes, err := json.Marshal(clientInfo)
