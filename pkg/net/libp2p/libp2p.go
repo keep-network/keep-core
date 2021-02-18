@@ -189,6 +189,27 @@ func (cm *connectionManager) GetPeerPublicKey(connectedPeer string) (*key.Networ
 	return key.Libp2pKeyToNetworkKey(peerPublicKey), nil
 }
 
+func (cm *connectionManager) GetPeerMultiaddresses(
+	peerHash string,
+) ([]string, error) {
+	peerID, err := peer.IDB58Decode(peerHash)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to decode peer hash [%v]: [%v]",
+			peerHash,
+			err,
+		)
+	}
+
+	multiaddresses := make([]string, 0)
+
+	for _, multiaddress := range cm.Network().Peerstore().Addrs(peerID) {
+		multiaddresses = append(multiaddresses, multiaddress.String())
+	}
+
+	return multiaddresses, nil
+}
+
 func (cm *connectionManager) DisconnectPeer(peerHash string) {
 	peerID, err := peer.IDB58Decode(peerHash)
 	if err != nil {

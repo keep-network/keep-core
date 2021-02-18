@@ -73,6 +73,7 @@ type Provider interface {
 type ConnectionManager interface {
 	ConnectedPeers() []string
 	GetPeerPublicKey(connectedPeer string) (*key.NetworkPublic, error)
+	GetPeerMultiaddresses(peerHash string) ([]string, error)
 	DisconnectPeer(connectedPeer string)
 
 	// AddrStrings returns all listen addresses of the provider.

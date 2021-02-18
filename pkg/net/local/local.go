@@ -139,3 +139,9 @@ func (lcm *localConnectionManager) AddrStrings() []string {
 func (lcm *localConnectionManager) IsConnected(address string) bool {
 	panic("not implemented")
 }
+
+func (lcm *localConnectionManager) GetPeerMultiaddresses(
+	peerHash string,
+) ([]string, error) {
+	panic("not implemented")
+}
