@@ -373,6 +373,13 @@ class TokenGeyserLPRewards extends LiquidityRewards {
 
     return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
+
+  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+    return {
+      token0: "0",
+      token1: "0",
+    }
+  }
 }
 
 const LiquidityRewardsPoolStrategy = {
