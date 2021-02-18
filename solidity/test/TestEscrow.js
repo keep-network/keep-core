@@ -60,6 +60,8 @@ describe("Escrow", () => {
     })
 
     it("sets beneficiary", async () => {
+      assert.equal(1, 0)
+
       await escrow.setBeneficiary(beneficiary, { from: owner })
 
       assert.equal(
