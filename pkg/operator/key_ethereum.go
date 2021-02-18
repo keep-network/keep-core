@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
@@ -19,6 +20,9 @@ type PrivateKey = ecdsa.PrivateKey
 // stake. It is used to authenticate the peer and for attributability
 // (verification).
 type PublicKey = ecdsa.PublicKey
+
+// Address represents an operator address.
+type Address = common.Address
 
 // GenerateKeyPair generates a new, random static key based on
 // secp256k1 ethereum curve.
@@ -57,7 +61,7 @@ func Unmarshal(data []byte) (*PublicKey, error) {
 	return (*PublicKey)(ecdsaPublicKey), nil
 }
 
-// PubkeyToAddress converts operator's PublicKey to an address in string format.
-func PubkeyToAddress(publicKey PublicKey) string {
-	return crypto.PubkeyToAddress(publicKey).String()
+// PubkeyToAddress converts operator's PublicKey to an address.
+func PubkeyToAddress(publicKey PublicKey) Address {
+	return crypto.PubkeyToAddress(publicKey)
 }
