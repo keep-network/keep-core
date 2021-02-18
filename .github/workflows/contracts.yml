@@ -42,16 +42,13 @@ jobs:
             ${{ runner.os }}-
       - name: Install dependencies
         working-directory: ./solidity
-        run: |
-          npm ci
+        run: npm ci
       - name: Build solidity contracts
         working-directory: ./solidity
-        run: |
-          npm run compile
+        run: npm run compile
       - name: Run tests
         working-directory: ./solidity
-        run: |
-          npm run test
+        run: npm run test
   lint:
     runs-on: ubuntu-latest
     steps:
