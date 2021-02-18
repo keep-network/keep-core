@@ -52,7 +52,6 @@ jobs:
         working-directory: ./solidity
         run: |
           npm run test
-          exit 0
   lint:
     runs-on: ubuntu-latest
     steps:
