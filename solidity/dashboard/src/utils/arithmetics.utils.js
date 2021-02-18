@@ -33,10 +33,10 @@ export const lte = (a, b) => {
 
 export const isZero = (a) => web3Utils.toBN(a).isZero()
 
-export const calculatePercentage = (percentage, value) => {
+export const calculatePercentage = (percentage, total) => {
   return new BigNumber(percentage)
     .div(ONE_HUNDRED.toString())
-    .multipliedBy(value)
+    .multipliedBy(total)
 }
 
 export const percentageOf = (value, total) => {
