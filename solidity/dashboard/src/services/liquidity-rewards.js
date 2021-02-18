@@ -273,7 +273,10 @@ class SaddleLPRewards extends LiquidityRewards {
   }
 
   calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
-    return 0
+    return {
+      token0: "0",
+      token1: "0",
+    }
   }
 }
 

@@ -155,6 +155,14 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           reward: restPayload.reward,
         },
       }
+    case `liquidity_rewards/${liquidityRewardPairName}_lp_balance_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          lpTokenBalance: restPayload.lpTokenBalance,
+        },
+      }
     case `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`:
       return {
         ...state,
