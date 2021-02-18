@@ -1,3 +1,5 @@
+//+build !celo
+
 package operator
 
 import (
@@ -29,10 +31,10 @@ func GenerateKeyPair() (*PrivateKey, *PublicKey, error) {
 	return (*PrivateKey)(ecdsaKey), (*PublicKey)(&ecdsaKey.PublicKey), nil
 }
 
-// EthereumKeyToOperatorKey transforms a `go-ethereum`-based ECDSA key into the
+// ChainKeyToOperatorKey transforms a `go-ethereum`-based ECDSA key into the
 // format supported by all packages used in keep-core.
-func EthereumKeyToOperatorKey(ethereumKey *keystore.Key) (*PrivateKey, *PublicKey) {
-	privKey := ethereumKey.PrivateKey
+func ChainKeyToOperatorKey(chainKey *keystore.Key) (*PrivateKey, *PublicKey) {
+	privKey := chainKey.PrivateKey
 	return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey)
 }
 
@@ -53,4 +55,9 @@ func Unmarshal(data []byte) (*PublicKey, error) {
 	}
 	ecdsaPublicKey := &ecdsa.PublicKey{Curve: crypto.S256(), X: x, Y: y}
 	return (*PublicKey)(ecdsaPublicKey), nil
+}
+
+// PubkeyToAddress converts operator's PublicKey to an address in string format.
+func PubkeyToAddress(publicKey PublicKey) string {
+	return crypto.PubkeyToAddress(publicKey).String()
 }
