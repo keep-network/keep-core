@@ -10,9 +10,8 @@ import Tooltip from "./Tooltip"
 import Banner from "./Banner"
 import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
-import { formatPercentage } from "../utils/general.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
-import { APY, ShareOfPool } from "./liquidity"
+import { APY, LPTokenBalance, ShareOfPool } from "./liquidity"
 import MetricsTile from "./MetricsTile"
 
 const LiquidityRewardCard = ({
@@ -39,19 +38,6 @@ const LiquidityRewardCard = ({
   isAPYFetching,
   pool,
 }) => {
-  const formattedLPTokenBalance = useMemo(() => {
-    const token0BN = new BigNumber(lpTokenBalance.token0)
-    const token1BN = new BigNumber(lpTokenBalance.token1)
-
-    const token0 = formatPercentage(token0BN, 0)
-    const token1 = formatPercentage(token1BN, 0)
-
-    return {
-      token0,
-      token1,
-    }
-  }, [lpTokenBalance.token0, lpTokenBalance.token1])
-
   const hasWrappedTokens = useMemo(() => gt(wrappedTokenBalance, 0), [
     wrappedTokenBalance,
   ])
@@ -91,44 +77,6 @@ const LiquidityRewardCard = ({
           </div>
         </Banner>
       )
-    )
-  }
-
-  const renderLPBalance = () => {
-    if (lpTokens && lpTokens.length === 0) return null
-    return (
-      <div className={"lp-balance"}>
-        <h4 className={"text-grey-70 mb-1"}>Your LP Token Balance</h4>
-        {lpTokens.map((lpToken, i) => {
-          const IconComponent = Icons[lpToken.iconName]
-          return (
-            <div key={`lpToken-${i}`}>
-              <div className={"lp-balance__value-container text-grey-70"}>
-                <h3 className={"lp-balance__value-label"}>
-                  <IconComponent />
-                  <span>{lpToken.tokenName}</span>
-                </h3>
-                <h3>
-                  <CountUp
-                    end={Object.values(formattedLPTokenBalance)[i]}
-                    separator={","}
-                    preserveValue
-                  />
-                </h3>
-              </div>
-              {i !== lpTokens.length - 1 && (
-                <div
-                  className={
-                    "lp-balance__plus-separator-container text-grey-70"
-                  }
-                >
-                  <span className={"lp-balance__plus-separator"}>+</span>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
     )
   }
 
@@ -193,7 +141,7 @@ const LiquidityRewardCard = ({
         </MetricsTile>
       </div>
       {renderUserInfoBanner()}
-      {renderLPBalance()}
+      <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
           Your rewards
