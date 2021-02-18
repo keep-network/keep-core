@@ -54,7 +54,7 @@ func OperatorKeyToNetworkKey(
 // account address, in a string format.
 func NetworkPubKeyToChainAddress(publicKey *NetworkPublic) string {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
-	return operator.PubkeyToAddress(*ecdsaKey)
+	return operator.PubkeyToAddress(*ecdsaKey).String()
 }
 
 // Marshal takes a network public key, converts it into an ecdsa
