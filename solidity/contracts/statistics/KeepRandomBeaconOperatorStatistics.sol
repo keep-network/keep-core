@@ -8,9 +8,7 @@ contract KeepRandomBeaconOperatorStatistics {
 
     KeepRandomBeaconOperator public operatorContract;
 
-    constructor(
-        address _operatorContract
-    ) public {
+    constructor(address _operatorContract) public {
         operatorContract = KeepRandomBeaconOperator(_operatorContract);
     }
 
@@ -18,13 +16,15 @@ contract KeepRandomBeaconOperatorStatistics {
     /// @param groupPubKey The public key of the group.
     /// @param operator The address of the operator.
     /// @return The number of members the operator has in the group.
-    function countGroupMembership(
-        bytes memory groupPubKey,
-        address operator
-    ) public view returns (uint256) {
-        address[] memory members = operatorContract.getGroupMembers(groupPubKey);
+    function countGroupMembership(bytes memory groupPubKey, address operator)
+        public
+        view
+        returns (uint256)
+    {
+        address[] memory members =
+            operatorContract.getGroupMembers(groupPubKey);
         uint256 counter;
-        for (uint i = 0; i < members.length; i++) {
+        for (uint256 i = 0; i < members.length; i++) {
             if (members[i] == operator) {
                 counter++;
             }
@@ -32,19 +32,20 @@ contract KeepRandomBeaconOperatorStatistics {
         return counter;
     }
 
-
     /// @notice Gets all indices in the provided group for a member.
     /// If the given operator is not a member, returns an empty array.
-    function getGroupMemberIndices(
-        bytes memory groupPubKey,
-        address operator
-    ) public view returns (uint256[] memory indices) {
+    function getGroupMemberIndices(bytes memory groupPubKey, address operator)
+        public
+        view
+        returns (uint256[] memory indices)
+    {
         uint256 count = countGroupMembership(groupPubKey, operator);
-        address[] memory members = operatorContract.getGroupMembers(groupPubKey);
+        address[] memory members =
+            operatorContract.getGroupMembers(groupPubKey);
 
         indices = new uint256[](count);
         uint256 counter = 0;
-        for (uint i = 0; i < members.length; i++) {
+        for (uint256 i = 0; i < members.length; i++) {
             if (members[i] == operator) {
                 indices[counter] = i;
                 counter++;
@@ -58,15 +59,18 @@ contract KeepRandomBeaconOperatorStatistics {
     /// @param operator Address of the operator.
     /// @param groupIndex Index of the group.
     /// @return The total allocated rewards.
-    function awaitingRewards(
-        address operator,
-        uint256 groupIndex
-    ) public view returns (uint256 rewards) {
+    function awaitingRewards(address operator, uint256 groupIndex)
+        public
+        view
+        returns (uint256 rewards)
+    {
         if (operatorContract.hasWithdrawnRewards(operator, groupIndex)) {
             return 0;
         }
-        bytes memory groupPubKey = operatorContract.getGroupPublicKey(groupIndex);
-        uint256 memberRewards = operatorContract.getGroupMemberRewards(groupPubKey);
+        bytes memory groupPubKey =
+            operatorContract.getGroupPublicKey(groupIndex);
+        uint256 memberRewards =
+            operatorContract.getGroupMemberRewards(groupPubKey);
 
         uint256 memberCount = countGroupMembership(groupPubKey, operator);
 
@@ -79,11 +83,13 @@ contract KeepRandomBeaconOperatorStatistics {
     /// @param operator Address of the operator.
     /// @param groupIndex Index of the group.
     /// @return The total withdrawable rewards.
-    function withdrawableRewards(
-        address operator,
-        uint256 groupIndex
-    ) public view returns (uint256 rewards) {
-        bytes memory groupPubKey = operatorContract.getGroupPublicKey(groupIndex);
+    function withdrawableRewards(address operator, uint256 groupIndex)
+        public
+        view
+        returns (uint256 rewards)
+    {
+        bytes memory groupPubKey =
+            operatorContract.getGroupPublicKey(groupIndex);
         if (operatorContract.isStaleGroup(groupPubKey)) {
             return awaitingRewards(operator, groupIndex);
         } else {

@@ -6,6 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/rate"
+
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -13,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
@@ -42,7 +45,7 @@ type ethereumChain struct {
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
-	blockCounter                     *blockcounter.EthereumBlockCounter
+	blockCounter                     *ethlike.BlockCounter
 	chainConfig                      *relaychain.Config
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -93,7 +96,7 @@ func connectWithClient(
 		transactionMutex: &sync.Mutex{},
 	}
 
-	blockCounter, err := blockcounter.CreateBlockCounter(pv.client)
+	blockCounter, err := ethutil.NewBlockCounter(pv.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -128,7 +131,11 @@ func connectWithClient(
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(pv.client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(
+		pv.client,
+		checkInterval,
+		maxGasPrice,
+	)
 
 	address, err := addressForContract(config, "KeepRandomBeaconOperator")
 	if err != nil {
@@ -136,8 +143,8 @@ func connectWithClient(
 	}
 
 	nonceManager := ethutil.NewNonceManager(
-		pv.accountKey.Address,
 		pv.client,
+		pv.accountKey.Address,
 	)
 
 	keepRandomBeaconOperatorContract, err :=
@@ -147,6 +154,7 @@ func connectWithClient(
 			pv.client,
 			nonceManager,
 			miningWaiter,
+			blockCounter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -166,6 +174,7 @@ func connectWithClient(
 			pv.client,
 			nonceManager,
 			miningWaiter,
+			blockCounter,
 			pv.transactionMutex,
 		)
 	if err != nil {
@@ -199,7 +208,7 @@ func addClientWrappers(
 
 		return ethutil.WrapRateLimiting(
 			loggingBackend,
-			&ethutil.RateLimiterConfig{
+			&rate.LimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
 			},
@@ -229,6 +238,14 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		return nil, err
 	}
 
+	blockCounter, err := ethutil.NewBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create Ethereum blockcounter: [%v]",
+			err,
+		)
+	}
+
 	checkInterval := DefaultMiningCheckInterval
 	maxGasPrice := DefaultMaxGasPrice
 	if config.MiningCheckInterval != 0 {
@@ -238,7 +255,11 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(
+		client,
+		checkInterval,
+		maxGasPrice,
+	)
 
 	address, err := addressForContract(config, "KeepRandomBeaconService")
 	if err != nil {
@@ -246,8 +267,8 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 	}
 
 	nonceManager := ethutil.NewNonceManager(
+		client,
 		base.accountKey.Address,
-		base.client,
 	)
 
 	keepRandomBeaconServiceContract, err :=
@@ -257,6 +278,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 			base.client,
 			nonceManager,
 			miningWaiter,
+			blockCounter,
 			base.transactionMutex,
 		)
 	if err != nil {

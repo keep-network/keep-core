@@ -58,25 +58,18 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "deployed-at",
-			Usage:     "Calls the constant method deployedAt on the TokenStaking contract.",
-			ArgsUsage: "",
-			Action:    tsDeployedAt,
-			Before:    cmd.ArgCountChecker(0),
+			Name:      "get-locks",
+			Usage:     "Calls the constant method getLocks on the TokenStaking contract.",
+			ArgsUsage: "[operator] ",
+			Action:    tsGetLocks,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "eligible-stake",
-			Usage:     "Calls the constant method eligibleStake on the TokenStaking contract.",
-			ArgsUsage: "[_operator] [_operatorContract] ",
-			Action:    tsEligibleStake,
-			Before:    cmd.ArgCountChecker(2),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "undelegation-period",
-			Usage:     "Calls the constant method undelegationPeriod on the TokenStaking contract.",
-			ArgsUsage: "",
-			Action:    tsUndelegationPeriod,
-			Before:    cmd.ArgCountChecker(0),
+			Name:      "is-approved-operator-contract",
+			Usage:     "Calls the constant method isApprovedOperatorContract on the TokenStaking contract.",
+			ArgsUsage: "[_operatorContract] ",
+			Action:    tsIsApprovedOperatorContract,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "authorizer-of",
@@ -86,24 +79,10 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "get-locks",
-			Usage:     "Calls the constant method getLocks on the TokenStaking contract.",
-			ArgsUsage: "[operator] ",
-			Action:    tsGetLocks,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "initialization-period",
-			Usage:     "Calls the constant method initializationPeriod on the TokenStaking contract.",
-			ArgsUsage: "",
-			Action:    tsInitializationPeriod,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "get-delegation-info",
-			Usage:     "Calls the constant method getDelegationInfo on the TokenStaking contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    tsGetDelegationInfo,
+			Name:      "balance-of",
+			Usage:     "Calls the constant method balanceOf on the TokenStaking contract.",
+			ArgsUsage: "[_address] ",
+			Action:    tsBalanceOf,
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -114,10 +93,17 @@ func init() {
 			Before:    cmd.ArgCountChecker(2),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "minimum-stake",
-			Usage:     "Calls the constant method minimumStake on the TokenStaking contract.",
+			Name:      "has-minimum-stake",
+			Usage:     "Calls the constant method hasMinimumStake on the TokenStaking contract.",
+			ArgsUsage: "[staker] [operatorContract] ",
+			Action:    tsHasMinimumStake,
+			Before:    cmd.ArgCountChecker(2),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "initialization-period",
+			Usage:     "Calls the constant method initializationPeriod on the TokenStaking contract.",
 			ArgsUsage: "",
-			Action:    tsMinimumStake,
+			Action:    tsInitializationPeriod,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -128,11 +114,39 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
+			Name:      "is-stake-locked",
+			Usage:     "Calls the constant method isStakeLocked on the TokenStaking contract.",
+			ArgsUsage: "[operator] ",
+			Action:    tsIsStakeLocked,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "minimum-stake",
+			Usage:     "Calls the constant method minimumStake on the TokenStaking contract.",
+			ArgsUsage: "",
+			Action:    tsMinimumStake,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "get-delegation-info",
+			Usage:     "Calls the constant method getDelegationInfo on the TokenStaking contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    tsGetDelegationInfo,
+			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
 			Name:      "beneficiary-of",
 			Usage:     "Calls the constant method beneficiaryOf on the TokenStaking contract.",
 			ArgsUsage: "[_operator] ",
 			Action:    tsBeneficiaryOf,
 			Before:    cmd.ArgCountChecker(1),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "deployed-at",
+			Usage:     "Calls the constant method deployedAt on the TokenStaking contract.",
+			ArgsUsage: "",
+			Action:    tsDeployedAt,
+			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "active-stake",
@@ -142,38 +156,31 @@ func init() {
 			Before:    cmd.ArgCountChecker(2),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "is-approved-operator-contract",
-			Usage:     "Calls the constant method isApprovedOperatorContract on the TokenStaking contract.",
-			ArgsUsage: "[_operatorContract] ",
-			Action:    tsIsApprovedOperatorContract,
-			Before:    cmd.ArgCountChecker(1),
+			Name:      "undelegation-period",
+			Usage:     "Calls the constant method undelegationPeriod on the TokenStaking contract.",
+			ArgsUsage: "",
+			Action:    tsUndelegationPeriod,
+			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "is-stake-locked",
-			Usage:     "Calls the constant method isStakeLocked on the TokenStaking contract.",
-			ArgsUsage: "[operator] ",
-			Action:    tsIsStakeLocked,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "has-minimum-stake",
-			Usage:     "Calls the constant method hasMinimumStake on the TokenStaking contract.",
-			ArgsUsage: "[staker] [operatorContract] ",
-			Action:    tsHasMinimumStake,
+			Name:      "eligible-stake",
+			Usage:     "Calls the constant method eligibleStake on the TokenStaking contract.",
+			ArgsUsage: "[_operator] [_operatorContract] ",
+			Action:    tsEligibleStake,
 			Before:    cmd.ArgCountChecker(2),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "balance-of",
-			Usage:     "Calls the constant method balanceOf on the TokenStaking contract.",
-			ArgsUsage: "[_address] ",
-			Action:    tsBalanceOf,
-			Before:    cmd.ArgCountChecker(1),
-			Flags:     cmd.ConstFlags,
+			Name:      "unlock-stake",
+			Usage:     "Calls the method unlockStake on the TokenStaking contract.",
+			ArgsUsage: "[operator] ",
+			Action:    tsUnlockStake,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "undelegate",
-			Usage:     "Calls the method undelegate on the TokenStaking contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    tsUndelegate,
+			Name:      "claim-delegated-authority",
+			Usage:     "Calls the method claimDelegatedAuthority on the TokenStaking contract.",
+			ArgsUsage: "[delegatedAuthoritySource] ",
+			Action:    tsClaimDelegatedAuthority,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -184,18 +191,11 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "commit-top-up",
-			Usage:     "Calls the method commitTopUp on the TokenStaking contract.",
-			ArgsUsage: "[_operator] ",
-			Action:    tsCommitTopUp,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "receive-approval",
-			Usage:     "Calls the method receiveApproval on the TokenStaking contract.",
-			ArgsUsage: "[_from] [_value] [_token] [_extraData] ",
-			Action:    tsReceiveApproval,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
+			Name:      "undelegate-at",
+			Usage:     "Calls the method undelegateAt on the TokenStaking contract.",
+			ArgsUsage: "[_operator] [_undelegationTimestamp] ",
+			Action:    tsUndelegateAt,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
 			Name:      "recover-stake",
@@ -205,38 +205,10 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "unlock-stake",
-			Usage:     "Calls the method unlockStake on the TokenStaking contract.",
-			ArgsUsage: "[operator] ",
-			Action:    tsUnlockStake,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "undelegate-at",
-			Usage:     "Calls the method undelegateAt on the TokenStaking contract.",
-			ArgsUsage: "[_operator] [_undelegationTimestamp] ",
-			Action:    tsUndelegateAt,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
 			Name:      "cancel-stake",
 			Usage:     "Calls the method cancelStake on the TokenStaking contract.",
 			ArgsUsage: "[_operator] ",
 			Action:    tsCancelStake,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "authorize-operator-contract",
-			Usage:     "Calls the method authorizeOperatorContract on the TokenStaking contract.",
-			ArgsUsage: "[_operator] [_operatorContract] ",
-			Action:    tsAuthorizeOperatorContract,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "claim-delegated-authority",
-			Usage:     "Calls the method claimDelegatedAuthority on the TokenStaking contract.",
-			ArgsUsage: "[delegatedAuthoritySource] ",
-			Action:    tsClaimDelegatedAuthority,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
@@ -247,11 +219,39 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
 			Flags:     cmd.NonConstFlags,
 		}, {
+			Name:      "receive-approval",
+			Usage:     "Calls the method receiveApproval on the TokenStaking contract.",
+			ArgsUsage: "[_from] [_value] [_token] [_extraData] ",
+			Action:    tsReceiveApproval,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(4))),
+			Flags:     cmd.NonConstFlags,
+		}, {
 			Name:      "lock-stake",
 			Usage:     "Calls the method lockStake on the TokenStaking contract.",
 			ArgsUsage: "[operator] [duration] ",
 			Action:    tsLockStake,
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "authorize-operator-contract",
+			Usage:     "Calls the method authorizeOperatorContract on the TokenStaking contract.",
+			ArgsUsage: "[_operator] [_operatorContract] ",
+			Action:    tsAuthorizeOperatorContract,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "undelegate",
+			Usage:     "Calls the method undelegate on the TokenStaking contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    tsUndelegate,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "commit-top-up",
+			Usage:     "Calls the method commitTopUp on the TokenStaking contract.",
+			ArgsUsage: "[_operator] ",
+			Action:    tsCommitTopUp,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}},
 	})
@@ -273,111 +273,6 @@ func tsOwnerOf(c *cli.Context) error {
 	}
 
 	result, err := contract.OwnerOfAtBlock(
-		_operator,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsDeployedAt(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.DeployedAtAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsEligibleStake(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	_operatorContract, err := ethutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operatorContract, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	result, err := contract.EligibleStakeAtBlock(
-		_operator,
-		_operatorContract,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsUndelegationPeriod(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.UndelegationPeriodAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsAuthorizerOf(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.AuthorizerOfAtBlock(
 		_operator,
 
 		cmd.BlockFlagValue.Uint,
@@ -420,13 +315,21 @@ func tsGetLocks(c *cli.Context) error {
 	return nil
 }
 
-func tsInitializationPeriod(c *cli.Context) error {
+func tsIsApprovedOperatorContract(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
 	}
+	_operatorContract, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operatorContract, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
 
-	result, err := contract.InitializationPeriodAtBlock(
+	result, err := contract.IsApprovedOperatorContractAtBlock(
+		_operatorContract,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -440,7 +343,7 @@ func tsInitializationPeriod(c *cli.Context) error {
 	return nil
 }
 
-func tsGetDelegationInfo(c *cli.Context) error {
+func tsAuthorizerOf(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
@@ -453,8 +356,36 @@ func tsGetDelegationInfo(c *cli.Context) error {
 		)
 	}
 
-	result, err := contract.GetDelegationInfoAtBlock(
+	result, err := contract.AuthorizerOfAtBlock(
 		_operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsBalanceOf(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+	_address, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _address, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.BalanceOfAtBlock(
+		_address,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -505,13 +436,50 @@ func tsIsAuthorizedForOperator(c *cli.Context) error {
 	return nil
 }
 
-func tsMinimumStake(c *cli.Context) error {
+func tsHasMinimumStake(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+	staker, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter staker, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	operatorContract, err := ethutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operatorContract, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	result, err := contract.HasMinimumStakeAtBlock(
+		staker,
+		operatorContract,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsInitializationPeriod(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
 	}
 
-	result, err := contract.MinimumStakeAtBlock(
+	result, err := contract.InitializationPeriodAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -553,6 +521,82 @@ func tsGetAuthoritySource(c *cli.Context) error {
 	return nil
 }
 
+func tsIsStakeLocked(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+	operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.IsStakeLockedAtBlock(
+		operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsMinimumStake(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.MinimumStakeAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsGetDelegationInfo(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	result, err := contract.GetDelegationInfoAtBlock(
+		_operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
 func tsBeneficiaryOf(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
@@ -568,6 +612,26 @@ func tsBeneficiaryOf(c *cli.Context) error {
 
 	result, err := contract.BeneficiaryOfAtBlock(
 		_operator,
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsDeployedAt(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.DeployedAtAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -618,114 +682,50 @@ func tsActiveStake(c *cli.Context) error {
 	return nil
 }
 
-func tsIsApprovedOperatorContract(c *cli.Context) error {
+func tsUndelegationPeriod(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
 	}
-	_operatorContract, err := ethutil.AddressFromHex(c.Args()[0])
+
+	result, err := contract.UndelegationPeriodAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func tsEligibleStake(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	_operatorContract, err := ethutil.AddressFromHex(c.Args()[1])
 	if err != nil {
 		return fmt.Errorf(
 			"couldn't parse parameter _operatorContract, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.IsApprovedOperatorContractAtBlock(
-		_operatorContract,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsIsStakeLocked(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-	operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.IsStakeLockedAtBlock(
-		operator,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsHasMinimumStake(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-	staker, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter staker, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	operatorContract, err := ethutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operatorContract, a address, from passed value %v",
 			c.Args()[1],
 		)
 	}
 
-	result, err := contract.HasMinimumStakeAtBlock(
-		staker,
-		operatorContract,
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func tsBalanceOf(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-	_address, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _address, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	result, err := contract.BalanceOfAtBlock(
-		_address,
+	result, err := contract.EligibleStakeAtBlock(
+		_operator,
+		_operatorContract,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -741,16 +741,16 @@ func tsBalanceOf(c *cli.Context) error {
 
 /// ------------------- Non-const methods -------------------
 
-func tsUndelegate(c *cli.Context) error {
+func tsUnlockStake(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
 	}
 
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	operator, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
+			"couldn't parse parameter operator, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
@@ -761,8 +761,8 @@ func tsUndelegate(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Undelegate(
-			_operator,
+		transaction, err = contract.UnlockStake(
+			operator,
 		)
 		if err != nil {
 			return err
@@ -771,8 +771,52 @@ func tsUndelegate(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallUndelegate(
-			_operator,
+		err = contract.CallUnlockStake(
+			operator,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tsClaimDelegatedAuthority(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	delegatedAuthoritySource, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter delegatedAuthoritySource, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.ClaimDelegatedAuthority(
+			delegatedAuthoritySource,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallClaimDelegatedAuthority(
+			delegatedAuthoritySource,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -839,7 +883,61 @@ func tsReleaseExpiredLock(c *cli.Context) error {
 	return nil
 }
 
-func tsCommitTopUp(c *cli.Context) error {
+func tsUndelegateAt(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	_undelegationTimestamp, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _undelegationTimestamp, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.UndelegateAt(
+			_operator,
+			_undelegationTimestamp,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallUndelegateAt(
+			_operator,
+			_undelegationTimestamp,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tsRecoverStake(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
@@ -859,7 +957,7 @@ func tsCommitTopUp(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.CommitTopUp(
+		transaction, err = contract.RecoverStake(
 			_operator,
 		)
 		if err != nil {
@@ -869,8 +967,106 @@ func tsCommitTopUp(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallCommitTopUp(
+		err = contract.CallRecoverStake(
 			_operator,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tsCancelStake(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter _operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.CancelStake(
+			_operator,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallCancelStake(
+			_operator,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func tsTransferStakeOwnership(c *cli.Context) error {
+	contract, err := initializeTokenStaking(c)
+	if err != nil {
+		return err
+	}
+
+	operator, err := ethutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operator, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	newOwner, err := ethutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter newOwner, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.TransferStakeOwnership(
+			operator,
+			newOwner,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallTransferStakeOwnership(
+			operator,
+			newOwner,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -957,51 +1153,7 @@ func tsReceiveApproval(c *cli.Context) error {
 	return nil
 }
 
-func tsRecoverStake(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RecoverStake(
-			_operator,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallRecoverStake(
-			_operator,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tsUnlockStake(c *cli.Context) error {
+func tsLockStake(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
@@ -1015,54 +1167,10 @@ func tsUnlockStake(c *cli.Context) error {
 		)
 	}
 
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UnlockStake(
-			operator,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallUnlockStake(
-			operator,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tsUndelegateAt(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
+	duration, err := hexutil.DecodeBig(c.Args()[1])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	_undelegationTimestamp, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _undelegationTimestamp, a uint256, from passed value %v",
+			"couldn't parse parameter duration, a uint256, from passed value %v",
 			c.Args()[1],
 		)
 	}
@@ -1073,9 +1181,9 @@ func tsUndelegateAt(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.UndelegateAt(
-			_operator,
-			_undelegationTimestamp,
+		transaction, err = contract.LockStake(
+			operator,
+			duration,
 		)
 		if err != nil {
 			return err
@@ -1084,53 +1192,9 @@ func tsUndelegateAt(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallUndelegateAt(
-			_operator,
-			_undelegationTimestamp,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tsCancelStake(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-
-	_operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter _operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.CancelStake(
-			_operator,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallCancelStake(
-			_operator,
+		err = contract.CallLockStake(
+			operator,
+			duration,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1197,16 +1261,16 @@ func tsAuthorizeOperatorContract(c *cli.Context) error {
 	return nil
 }
 
-func tsClaimDelegatedAuthority(c *cli.Context) error {
+func tsUndelegate(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
 	}
 
-	delegatedAuthoritySource, err := ethutil.AddressFromHex(c.Args()[0])
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter delegatedAuthoritySource, a address, from passed value %v",
+			"couldn't parse parameter _operator, a address, from passed value %v",
 			c.Args()[0],
 		)
 	}
@@ -1217,8 +1281,8 @@ func tsClaimDelegatedAuthority(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.ClaimDelegatedAuthority(
-			delegatedAuthoritySource,
+		transaction, err = contract.Undelegate(
+			_operator,
 		)
 		if err != nil {
 			return err
@@ -1227,8 +1291,8 @@ func tsClaimDelegatedAuthority(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallClaimDelegatedAuthority(
-			delegatedAuthoritySource,
+		err = contract.CallUndelegate(
+			_operator,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1241,25 +1305,17 @@ func tsClaimDelegatedAuthority(c *cli.Context) error {
 	return nil
 }
 
-func tsTransferStakeOwnership(c *cli.Context) error {
+func tsCommitTopUp(c *cli.Context) error {
 	contract, err := initializeTokenStaking(c)
 	if err != nil {
 		return err
 	}
 
-	operator, err := ethutil.AddressFromHex(c.Args()[0])
+	_operator, err := ethutil.AddressFromHex(c.Args()[0])
 	if err != nil {
 		return fmt.Errorf(
-			"couldn't parse parameter operator, a address, from passed value %v",
+			"couldn't parse parameter _operator, a address, from passed value %v",
 			c.Args()[0],
-		)
-	}
-
-	newOwner, err := ethutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter newOwner, a address, from passed value %v",
-			c.Args()[1],
 		)
 	}
 
@@ -1269,9 +1325,8 @@ func tsTransferStakeOwnership(c *cli.Context) error {
 
 	if c.Bool(cmd.SubmitFlag) {
 		// Do a regular submission. Take payable into account.
-		transaction, err = contract.TransferStakeOwnership(
-			operator,
-			newOwner,
+		transaction, err = contract.CommitTopUp(
+			_operator,
 		)
 		if err != nil {
 			return err
@@ -1280,63 +1335,8 @@ func tsTransferStakeOwnership(c *cli.Context) error {
 		cmd.PrintOutput(transaction.Hash)
 	} else {
 		// Do a call.
-		err = contract.CallTransferStakeOwnership(
-			operator,
-			newOwner,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func tsLockStake(c *cli.Context) error {
-	contract, err := initializeTokenStaking(c)
-	if err != nil {
-		return err
-	}
-
-	operator, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operator, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	duration, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter duration, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.LockStake(
-			operator,
-			duration,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallLockStake(
-			operator,
-			duration,
+		err = contract.CallCommitTopUp(
+			_operator,
 			cmd.BlockFlagValue.Uint,
 		)
 		if err != nil {
@@ -1383,7 +1383,19 @@ func initializeTokenStaking(c *cli.Context) (*contract.TokenStaking, error) {
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(
+		client,
+		checkInterval,
+		maxGasPrice,
+	)
+
+	blockCounter, err := ethutil.NewBlockCounter(client)
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to create block counter: [%v]",
+			err,
+		)
+	}
 
 	address := common.HexToAddress(config.ContractAddresses["TokenStaking"])
 
@@ -1391,8 +1403,9 @@ func initializeTokenStaking(c *cli.Context) (*contract.TokenStaking, error) {
 		address,
 		key,
 		client,
-		ethutil.NewNonceManager(key.Address, client),
+		ethutil.NewNonceManager(client, key.Address),
 		miningWaiter,
+		blockCounter,
 		&sync.Mutex{},
 	)
 }

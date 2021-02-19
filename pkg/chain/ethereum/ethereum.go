@@ -215,23 +215,15 @@ func (ec *ethereumChain) SubmitRelayEntry(
 func (ec *ethereumChain) OnRelayEntrySubmitted(
 	handle func(entry *event.EntrySubmitted),
 ) subscription.EventSubscription {
-	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntrySubmitted(
-		func(blockNumber uint64) {
-			handle(&event.EntrySubmitted{
-				BlockNumber: blockNumber,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch relay entry generated failed with [%v]",
-				err,
-			)
-		},
-	)
-
-	if err != nil {
-		logger.Errorf("could not watch RelayEntrySubmitted event: [%v]", err)
+	onEvent := func(blockNumber uint64) {
+		handle(&event.EntrySubmitted{
+			BlockNumber: blockNumber,
+		})
 	}
+
+	subscription := ec.keepRandomBeaconOperatorContract.RelayEntrySubmitted(
+		nil,
+	).OnEvent(onEvent)
 
 	return subscription
 }
@@ -239,28 +231,21 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 func (ec *ethereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) subscription.EventSubscription {
-	subscription, err := ec.keepRandomBeaconOperatorContract.WatchRelayEntryRequested(
-		func(
-			previousEntry []byte,
-			groupPublicKey []byte,
-			blockNumber uint64,
-		) {
-			handle(&event.Request{
-				PreviousEntry:  previousEntry,
-				GroupPublicKey: groupPublicKey,
-				BlockNumber:    blockNumber,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch relay entry requested failed with [%v]",
-				err,
-			)
-		},
-	)
-	if err != nil {
-		logger.Errorf("could not watch RelayEntryRequested event: [%v]", err)
+	onEvent := func(
+		previousEntry []byte,
+		groupPublicKey []byte,
+		blockNumber uint64,
+	) {
+		handle(&event.Request{
+			PreviousEntry:  previousEntry,
+			GroupPublicKey: groupPublicKey,
+			BlockNumber:    blockNumber,
+		})
 	}
+
+	subscription := ec.keepRandomBeaconOperatorContract.RelayEntryRequested(
+		nil,
+	).OnEvent(onEvent)
 
 	return subscription
 }
@@ -268,26 +253,19 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 func (ec *ethereumChain) OnGroupSelectionStarted(
 	handle func(groupSelectionStart *event.GroupSelectionStart),
 ) subscription.EventSubscription {
-	subscription, err := ec.keepRandomBeaconOperatorContract.WatchGroupSelectionStarted(
-		func(
-			newEntry *big.Int,
-			blockNumber uint64,
-		) {
-			handle(&event.GroupSelectionStart{
-				NewEntry:    newEntry,
-				BlockNumber: blockNumber,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch group selection started failed with [%v]",
-				err,
-			)
-		},
-	)
-	if err != nil {
-		logger.Errorf("could not watch GroupSelectionStarted event: [%v]", err)
+	onEvent := func(
+		newEntry *big.Int,
+		blockNumber uint64,
+	) {
+		handle(&event.GroupSelectionStart{
+			NewEntry:    newEntry,
+			BlockNumber: blockNumber,
+		})
 	}
+
+	subscription := ec.keepRandomBeaconOperatorContract.GroupSelectionStarted(
+		nil,
+	).OnEvent(onEvent)
 
 	return subscription
 }
@@ -295,25 +273,21 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 func (ec *ethereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {
-	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
-		func(
-			memberIndex *big.Int,
-			groupPublicKey []byte,
-			misbehaved []byte,
-			blockNumber uint64,
-		) {
-			handle(&event.GroupRegistration{
-				GroupPublicKey: groupPublicKey,
-				BlockNumber:    blockNumber,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf("entry of group key failed with: [%v]", err)
-		},
-	)
-	if err != nil {
-		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	onEvent := func(
+		memberIndex *big.Int,
+		groupPublicKey []byte,
+		misbehaved []byte,
+		blockNumber uint64,
+	) {
+		handle(&event.GroupRegistration{
+			GroupPublicKey: groupPublicKey,
+			BlockNumber:    blockNumber,
+		})
 	}
+
+	subscription := ec.keepRandomBeaconOperatorContract.DkgResultSubmittedEvent(
+		nil,
+	).OnEvent(onEvent)
 
 	return subscription
 }
@@ -348,30 +322,23 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 func (ec *ethereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) subscription.EventSubscription {
-	subscription, err := ec.keepRandomBeaconOperatorContract.WatchDkgResultSubmittedEvent(
-		func(
-			memberIndex *big.Int,
-			groupPublicKey []byte,
-			misbehaved []byte,
-			blockNumber uint64,
-		) {
-			handler(&event.DKGResultSubmission{
-				MemberIndex:    uint32(memberIndex.Uint64()),
-				GroupPublicKey: groupPublicKey,
-				Misbehaved:     misbehaved,
-				BlockNumber:    blockNumber,
-			})
-		},
-		func(err error) error {
-			return fmt.Errorf(
-				"watch DKG result published failed with: [%v]",
-				err,
-			)
-		},
-	)
-	if err != nil {
-		logger.Errorf("could not watch DkgResultSubmittedEvent event: [%v]", err)
+	onEvent := func(
+		memberIndex *big.Int,
+		groupPublicKey []byte,
+		misbehaved []byte,
+		blockNumber uint64,
+	) {
+		handler(&event.DKGResultSubmission{
+			MemberIndex:    uint32(memberIndex.Uint64()),
+			GroupPublicKey: groupPublicKey,
+			Misbehaved:     misbehaved,
+			BlockNumber:    blockNumber,
+		})
 	}
+
+	subscription := ec.keepRandomBeaconOperatorContract.DkgResultSubmittedEvent(
+		nil,
+	).OnEvent(onEvent)
 
 	return subscription
 }

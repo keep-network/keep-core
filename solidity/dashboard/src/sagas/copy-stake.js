@@ -55,10 +55,11 @@ function* copyStake(action) {
   } catch (error) {
     yield put(
       showMessage({
-        type: messageType.ERROR,
-        title: "Error",
-        subtitle: error.message,
-        sticky: true,
+        messageType: messageType.ERROR,
+        messageProps: {
+          content: error.message,
+          sticky: true,
+        },
       })
     )
     yield put({ type: "copy-stake/copy-stake_failure", payload: error })
@@ -90,11 +91,12 @@ function* safeCopyStake(operator) {
     yield put(
       showCreatedMessage({
         id: txHash,
-        title: "Your delegation has been already copied.",
-        content: txHash,
-        type: messageType.SUCCESS,
-        sticky: true,
-        withTransactionHash: true,
+        messageType: messageType.DELEGATION_ALREADY_COPIED,
+        messageProps: {
+          content: txHash,
+          withTransactionHash: true,
+          sticky: true,
+        },
       })
     )
   }

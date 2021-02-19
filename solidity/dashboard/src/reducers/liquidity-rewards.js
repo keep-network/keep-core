@@ -7,6 +7,7 @@ const liquidityPairInitialData = {
   reward: 0,
   wrappedTokenBalance: 0,
   lpBalance: 0,
+  lastNotificationRewardAmount: "0",
   isFetching: false,
   error: null,
 }
@@ -16,6 +17,7 @@ const initialState = {
   KEEP_ETH: { ...liquidityPairInitialData },
   TBTC_ETH: { ...liquidityPairInitialData },
   KEEP_TBTC: { ...liquidityPairInitialData },
+  KEEP_ONLY: { ...liquidityPairInitialData },
 }
 
 const liquidityRewardsReducer = (state = initialState, action) => {
@@ -55,11 +57,6 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_staked`: {
-      const lpBalance = add(
-        state[liquidityRewardPairName].lpBalance,
-        restPayload.amount
-      ).toString()
-
       return {
         ...state,
         [liquidityRewardPairName]: {
@@ -68,9 +65,9 @@ const liquidityRewardsReducer = (state = initialState, action) => {
             state[liquidityRewardPairName].wrappedTokenBalance,
             restPayload.amount
           ).toString(),
-          lpBalance,
+          lpBalance: restPayload.lpBalance,
           shareOfPoolInPercent: percentageOf(
-            lpBalance,
+            restPayload.lpBalance,
             restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
@@ -79,11 +76,6 @@ const liquidityRewardsReducer = (state = initialState, action) => {
       }
     }
     case `liquidity_rewards/${liquidityRewardPairName}_withdrawn`: {
-      const lpBalance = sub(
-        state[liquidityRewardPairName].lpBalance,
-        restPayload.amount
-      ).toString()
-
       return {
         ...state,
         [liquidityRewardPairName]: {
@@ -92,9 +84,9 @@ const liquidityRewardsReducer = (state = initialState, action) => {
             state[liquidityRewardPairName].wrappedTokenBalance,
             restPayload.amount
           ).toString(),
-          lpBalance,
+          lpBalance: restPayload.lpBalance,
           shareOfPoolInPercent: percentageOf(
-            lpBalance,
+            restPayload.lpBalance,
             restPayload.totalSupply
           ).toString(),
           reward: restPayload.reward,
@@ -116,6 +108,14 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           apy: restPayload.apy,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_wrapped_token_balance_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          wrappedTokenBalance: restPayload.wrappedTokenBalance.toString(),
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_start`:
@@ -141,6 +141,23 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           isAPYFetching: false,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_reward_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          reward: restPayload.reward,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          lastNotificationRewardAmount:
+            restPayload.lastNotificationRewardAmount,
         },
       }
     default:

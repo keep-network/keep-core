@@ -84,3 +84,7 @@ export const getNumberWithMetricSuffix = (number) => {
 export const displayAmountWithMetricSuffix = (amount) => {
   return getNumberWithMetricSuffix(toTokenUnit(amount)).formattedValue
 }
+
+export const displayNumberWithMetricSuffix = (number) => {
+  return getNumberWithMetricSuffix(number).formattedValue
+}
