@@ -3,6 +3,7 @@ import * as Icons from "../Icons"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import { formatPercentage } from "../../utils/general.utils"
+import Tooltip from "../Tooltip"
 
 const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
   const formattedLPTokenBalance = useMemo(() => {
@@ -21,7 +22,17 @@ const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
   if (lpTokens && lpTokens.length === 0) return null
   return (
     <div className={"lp-balance"}>
-      <h4 className={"text-grey-70 mb-1"}>Your LP Token Balance</h4>
+      <h4 className={"text-grey-70 mb-1"}>
+        Your LP Token Balance &nbsp;
+        <Tooltip
+          simple
+          delay={0}
+          triggerComponent={Icons.MoreInfo}
+          className={"liquidity__card-subtitle__tooltip"}
+        >
+          Estimated value of the LP tokens deposited on the LPRewards contract
+        </Tooltip>
+      </h4>
       {lpTokens.map((lpToken, i) => {
         const IconComponent = Icons[lpToken.iconName]
         return (
