@@ -1,6 +1,5 @@
 import React, { useMemo } from "react"
 import CountUp from "react-countup"
-import BigNumber from "bignumber.js"
 import DoubleIcon from "./DoubleIcon"
 import * as Icons from "./Icons"
 import { SubmitButton } from "./Button"
