@@ -12,11 +12,7 @@ import {
   getBTCPriceInUSD,
 } from "./uniswap-api"
 import moment from "moment"
-import {
-  add,
-  fromPercentage,
-  percentageOf,
-} from "../utils/arithmetics.utils"
+import { add, fromPercentage, percentageOf } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
