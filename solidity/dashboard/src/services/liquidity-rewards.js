@@ -14,7 +14,7 @@ import {
 import moment from "moment"
 import {
   add,
-  calculatePercentage,
+  fromPercentage,
   percentageOf,
 } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
@@ -197,11 +197,11 @@ class UniswapLPRewards extends LiquidityRewards {
       .squareRoot()
 
     return {
-      token0: calculatePercentage(
+      token0: fromPercentage(
         shareOfUniswapPool,
         token0LiquidityPool
       ).toString(),
-      token1: calculatePercentage(
+      token1: fromPercentage(
         shareOfUniswapPool,
         token1LiquidityPool
       ).toString(),
