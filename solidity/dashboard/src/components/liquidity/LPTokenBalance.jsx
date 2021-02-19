@@ -28,7 +28,7 @@ const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
           simple
           delay={0}
           triggerComponent={Icons.MoreInfo}
-          className={"liquidity__card-subtitle__tooltip"}
+          className={"lp-balance__tooltip"}
         >
           Estimated value of the LP tokens deposited on the LPRewards contract
         </Tooltip>
