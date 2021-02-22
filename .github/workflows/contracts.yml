@@ -12,18 +12,21 @@ on:
       - ".github/workflows/contracts.yml"
   pull_request:
     branches:
-      # TODO: Run on all branches or only on master (to be decided) 
-      # after we're fully migrated from Circle CI
+      # TODO: Run on all branches after we're fully migrated from Circle CI
       - "rfc-18/**"
       - master
     paths:
       - "solidity/**"
       - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
+  workflow_dispatch:
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -41,16 +44,16 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Install dependencies
-        working-directory: ./solidity
         run: npm ci
       - name: Build solidity contracts
-        working-directory: ./solidity
         run: npm run compile
       - name: Run tests
-        working-directory: ./solidity
         run: npm run test
   lint:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -68,8 +71,29 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Install dependencies
-        working-directory: ./solidity
         run: npm ci
       - name: Lint
-        working-directory: ./solidity
         run: npm run lint
+  migrate:
+    if: github.ref == 'refs/heads/releases/ropsten/**' || github.ref == 'refs/heads/rfc-18/ropsten/**'
+    # alternative notation:
+    # if: 
+    #  contains('
+    #    refs/heads/releases/ropsten/
+    #    refs/heads/rfc-18/ropsten/
+    #    ', github.ref)
+    needs: [build-and-test, lint]
+    environment: keep-test # TODO: implement similiar for keep-dev (should execute for rfc-18/master branch)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Migrate contracts
+        env: 
+          BUILD_TAG: $GITHUB_SHA
+          GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME}}
+          TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK}}
+          ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID}}
+          ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME}}
+          TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN}}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY}}
+        run: solidity/scripts/circleci-migrate-contracts.sh
