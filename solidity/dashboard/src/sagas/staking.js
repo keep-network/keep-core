@@ -16,7 +16,7 @@ import { fromTokenUnit } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
 import { fetchAvailableTopUps } from "../services/top-ups.service"
 import { isEmptyArray } from "../utils/array.utils"
-import { SHOW_MESSAGE, Message } from "../actions/messages"
+import { showMessage } from "../actions/messages"
 import { isSameEthAddress } from "../utils/general.utils"
 import { messageType } from "../components/Message"
 
@@ -222,49 +222,41 @@ function* notifyTopUpReadyToBeCommitted() {
   }
 
   const { delegations, undelegations } = yield select((state) => state.staking)
-  let isFromGrant = false
+
   let isFromLiquidTokens = false
-  const staking = [...delegations, undelegations]
+  const staking = [...delegations, ...undelegations]
   for (const { operatorAddress } of topUpsReadyToCommit) {
     if (!isFromLiquidTokens) {
       isFromLiquidTokens = staking.some(
         (_) =>
           isSameEthAddress(_.operatorAddress, operatorAddress) && !_.isFromGrant
       )
-    } else if (!isFromGrant) {
-      isFromGrant = staking.some(
-        (_) =>
-          isSameEthAddress(_.operatorAddress, operatorAddress) && _.isFromGrant
+    }
+    const stake = staking.find(
+      (_) =>
+        isSameEthAddress(_.operatorAddress, operatorAddress) && _.isFromGrant
+    )
+    if (stake) {
+      yield put(
+        showMessage({
+          messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
+          messageProps: {
+            sticky: true,
+            grantId: stake.grantId,
+          },
+        })
       )
     }
   }
 
-  if (isFromGrant) {
-    yield put({
-      type: SHOW_MESSAGE,
-      payload: Message.create({
-        // TODO: add the new type of message which handles the `top up ready to
-        // be committed` notification. The PR which will add support for
-        // displaying the specific notification via `type` field is still in
-        // prgreess[1]. We should sync with that changes as soon as the PR is merged
-        // to the `master` branch.
-        // [1]: https://github.com/keep-network/keep-core/pull/2272
-        type: messageType.WALLET,
-        context: "grant",
-        title: "[Grant] Top Up grant Ready To Be Committed",
-        sticky: true,
-      }),
-    })
-  }
   if (isFromLiquidTokens) {
-    yield put({
-      type: SHOW_MESSAGE,
-      payload: Message.create({
-        type: messageType.WALLET,
-        context: "wallet",
-        title: "[Wallet] Top Up Ready To Be Committed",
-        sticky: true,
-      }),
-    })
+    yield put(
+      showMessage({
+        messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
+        messageProps: {
+          sticky: true,
+        },
+      })
+    )
   }
 }
