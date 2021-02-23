@@ -27,7 +27,7 @@ func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
 }
 
 func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return operator.EthereumKeyToOperatorKey(ec.accountKey)
+	return operator.ChainKeyToOperatorKey(ec.accountKey)
 }
 
 func (ec *ethereumChain) Signing() chain.Signing {
