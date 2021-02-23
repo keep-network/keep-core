@@ -76,21 +76,14 @@ jobs:
         run: npm run lint
   migrate:
     needs: [build-and-test, lint]
+    if: |
+      startsWith(github.ref, 'refs/heads/releases/ropsten') 
+        || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
     environment: keep-test # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
     runs-on: ubuntu-latest
     steps:
-      - name: Check branch # Workaround for wildcards not working in 'if' conditional 
-        id: check-branch
-        run: |
-          if [[ \
-          ${{ github.ref }} == "refs/heads/rfc-18/ropsten/"* || \
-          ${{ github.ref }} == "refs/heads/releases/ropsten/"* ]]; \
-          then echo ::set-output name=match::true
-          fi
-      - if: steps.check-branch.outputs.match == 'true'
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
       - name: Migrate contracts
-        if: steps.check-branch.outputs.match == 'true'
         env: 
           BUILD_TAG: $GITHUB_SHA
           GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME}}
