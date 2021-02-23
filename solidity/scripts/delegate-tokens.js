@@ -26,11 +26,18 @@ module.exports = async function () {
     const operatorContract = await KeepRandomBeaconOperator.deployed()
 
     const owner = accounts[0] // The address of an owner of the staked tokens.
-    // accounts[1]...[4] Operators for owner delegated stake and receivers of the rewards.
+    // accounts[1] up to [4] are the operators for the owner delegated stake and
+    // receivers of the rewards.
 
-    // Stake delegate tokens for first 5 accounts as operators,
-    // including the first account where owner operating for themself.
-    for (let i = 0; i < 5; i++) {
+    // The number of accounts depends on the local setup of how many accounts were
+    // created. We limit the number of accounts to 5 for the testing purposes, but
+    // it might happen that there would be less than 5 accounts and in this case
+    // we take them all.
+
+    // Stake delegate tokens for the first accounts (up to 5) as operators,
+    // including the first account where the owner is operating for itself.
+    const numberOfAccounts = Math.min(accounts.length, 5)
+    for (let i = 0; i < numberOfAccounts; i++) {
       const operator = accounts[i]
       const beneficiary = accounts[i] // The address where the rewards for participation are sent.
       const authorizer = accounts[i] // Authorizer authorizes operator contracts the staker operates on.

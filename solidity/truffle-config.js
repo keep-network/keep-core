@@ -1,6 +1,7 @@
 require("babel-register")
 require("babel-polyfill")
 const HDWalletProvider = require("@truffle/hdwallet-provider")
+const Kit = require("@celo/contractkit")
 
 module.exports = {
   networks: {
@@ -41,6 +42,15 @@ module.exports = {
       gas: 8000000,
       network_id: 3,
       skipDryRun: true,
+    },
+
+    alfajores: {
+      provider: function () {
+        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
+        kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
+        return kit.web3.currentProvider
+      },
+      network_id: 44787,
     },
   },
 

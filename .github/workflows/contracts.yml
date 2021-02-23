@@ -3,31 +3,34 @@ name: Solidity
 on:
   push:
     branches:
+      # TODO: Run only on master after we're fully migrated from Circle CI
+      - "rfc-18/**"
       - master
     paths:
-      - "solidity/contracts/**"
-      - "solidity/package.json"
-      - "solidity/package-lock.json"
+      - "solidity/**"
+      - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
   pull_request:
     branches:
+      # TODO: Run on all branches or only on master (to be decided) 
+      # after we're fully migrated from Circle CI
+      - "rfc-18/**"
       - master
     paths:
-      - "solidity/contracts/**"
-      - "solidity/package.json"
-      - "solidity/package-lock.json"
+      - "solidity/**"
+      - "!solidity/dashboard/**"
       - ".github/workflows/contracts.yml"
 
 jobs:
-  test:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
         with:
           node-version: "12.x"
       - name: Cache node modules
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         env:
           cache-name: cache-solidity-node-modules
         with:
@@ -39,22 +42,22 @@ jobs:
             ${{ runner.os }}-
       - name: Install dependencies
         working-directory: ./solidity
-        run: |
-          npm ci
+        run: npm ci
+      - name: Build solidity contracts
+        working-directory: ./solidity
+        run: npm run compile
       - name: Run tests
         working-directory: ./solidity
-        run: |
-          npm run test
-          exit 0
+        run: npm run test
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
         with:
           node-version: "12.x"
       - name: Cache node modules
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         env:
           cache-name: cache-solidity-node-modules
         with:

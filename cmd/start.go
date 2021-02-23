@@ -130,7 +130,7 @@ func Start(c *cli.Context) error {
 	ctx := context.Background()
 
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
-		operator.EthereumKeyToOperatorKey(ethereumKey),
+		operator.ChainKeyToOperatorKey(ethereumKey),
 	)
 	netProvider, err := libp2p.Connect(
 		ctx,

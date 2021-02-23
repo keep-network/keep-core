@@ -170,15 +170,11 @@ export let Web3Loaded = Web3Deferred.promise
 export let ContractsLoaded = ContractsDeferred.promise
 
 export const resolveWeb3Deferred = (web3) => {
-  Web3Deferred = new Deferred()
   Web3Deferred.resolve(web3)
-  Web3Loaded = Web3Deferred.promise
 }
 
 export const resovleContractsDeferred = (contracts) => {
-  ContractsDeferred = new Deferred()
   ContractsDeferred.resolve(contracts)
-  ContractsLoaded = ContractsDeferred.promise
 }
 
 export async function getContracts(web3) {

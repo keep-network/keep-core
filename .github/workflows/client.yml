@@ -1,30 +1,59 @@
 name: Go
 
-#TODO: extend the conditions once workflow gets tested together with other workflows 
-on:  
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
   push:
     branches:
-      - master
+      # TODO: Run on master after we're fully migrated from Circle CI
+      # - master
+      - "rfc-18/**"
   pull_request:
+    branches:
+      # TODO: Run on all branches after we're fully migrated from Circle CI
+      - "rfc-18/**"
   workflow_dispatch:
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true # ignore the failure of a step and avoid terminating the job
-      - name: Run Docker build
-        run: |
-          docker build \
-            --target gobuild \
-            --tag go-build-env .
-          docker build \
-            --tag keep-client . 
+      - uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      # TODO: This step was left here intentionally so we can track disk space
+      # usage for a while. We were trying to fight problems with out of disk space
+      # that happened due to the size of data restored from cache. The cache size
+      # was growing linearly with subsequent workflow runs. We want to observe
+      # available disk space for `/`. Fresh execution starts with 20 GB, we expect
+      # to have no less than 15 GB after the cache is restored.
+      - run: sudo df -h
+
+      - name: Build Docker Build Image
+        uses: docker/build-push-action@v2
+        with:
+          target: gobuild
+          tags: go-build-env
+          build-args: |
+            REVISION=${{ github.sha }}
+          # VERSION= ? TODO: Configure version, sample: 1.7.6
+          load: true # load image to local registry to use it in next steps
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+
       - name: Create test results directory
         run: |
           mkdir test-results
+
       - name: Run Go tests
         run: |
           docker run \
@@ -32,11 +61,24 @@ jobs:
             --workdir /go/src/github.com/keep-network/keep-core \
             go-build-env \
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
+
       - name: Publish unit test results
         uses: EnricoMi/publish-unit-test-result-action@v1.7
         if: always() # guarantees that this action always runs, even if earlier steps fail
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          files:  ./test-results/unit-tests.xml
+          files: ./test-results/unit-tests.xml
           check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
+
+      # This step is executed after the tests as we want to configure it eventually
+      # as image publication step.
+      - name: Build Docker Runtime Image
+        uses: docker/build-push-action@v2
+        with:
+          tags: keep-client
+          labels: |
+            revision=${{ github.sha }}
+          # TODO: Check branch name and publish to a registry accordingly to the
+          # environment.
+          # push: true # publish to registry

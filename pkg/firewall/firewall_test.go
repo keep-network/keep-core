@@ -25,7 +25,7 @@ func TestHasMinimumStake(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	remotePeerAddress := key.NetworkPubKeyToEthAddress(remotePeerPublicKey)
+	remotePeerAddress := key.NetworkPubKeyToChainAddress(remotePeerPublicKey)
 
 	stakeMonitor.StakeTokens(remotePeerAddress)
 
@@ -72,7 +72,7 @@ func TestCachesHasMinimumStake(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	remotePeerAddress := key.NetworkPubKeyToEthAddress(remotePeerPublicKey)
+	remotePeerAddress := key.NetworkPubKeyToChainAddress(remotePeerPublicKey)
 	stakeMonitor.StakeTokens(remotePeerAddress)
 
 	if err := policy.Validate(
@@ -116,7 +116,7 @@ func TestCachesHasNoMinimumStake(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	remotePeerAddress := key.NetworkPubKeyToEthAddress(remotePeerPublicKey)
+	remotePeerAddress := key.NetworkPubKeyToChainAddress(remotePeerPublicKey)
 
 	if err := policy.Validate(
 		key.NetworkKeyToECDSAKey(remotePeerPublicKey),
