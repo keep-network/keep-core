@@ -6,6 +6,9 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	commoneth "github.com/keep-network/keep-common/pkg/chain/ethereum"
+
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
 	"github.com/keep-network/keep-core/pkg/net"
@@ -45,7 +48,10 @@ const startDescription = `Starts the Keep client in the foreground. Currently th
 // Values related with balance monitoring.
 // defaultBalanceAlertThreshold determines the alert threshold below which
 // the alert should be triggered.
-var defaultBalanceAlertThreshold = big.NewInt(500000000000000000) // 0.5 ether
+var defaultBalanceAlertThreshold = commoneth.WrapWei(
+	big.NewInt(500000000000000000),
+)
+
 // defaultBalanceMonitoringTick determines how often the monitoring
 // check should be triggered.
 const defaultBalanceMonitoringTick = 10 * time.Minute
@@ -168,7 +174,7 @@ func Start(c *cli.Context) error {
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(ctx, config, netProvider)
-	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey.Address.Hex())
+	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey)
 
 	select {
 	case <-ctx.Done():
@@ -267,9 +273,9 @@ func initializeBalanceMonitoring(
 	ctx context.Context,
 	chainProvider chain.Handle,
 	config *config.Config,
-	ethereumAddress string,
+	ethereumKey *keystore.Key,
 ) {
-	balanceMonitor, err := chainProvider.BalanceMonitor()
+	balanceMonitor, err := chainProvider.(*ethereum.EthereumChain).BalanceMonitor()
 	if err != nil {
 		logger.Errorf("error obtaining balance monitor handle [%v]", err)
 		return
@@ -277,12 +283,12 @@ func initializeBalanceMonitoring(
 
 	alertThreshold := defaultBalanceAlertThreshold
 	if config.Ethereum.BalanceAlertThreshold != nil {
-		alertThreshold = config.Ethereum.BalanceAlertThreshold.Int
+		alertThreshold = config.Ethereum.BalanceAlertThreshold
 	}
 
 	balanceMonitor.Observe(
 		ctx,
-		ethereumAddress,
+		ethereumKey.Address,
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -290,7 +296,7 @@ func initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v] wei",
-		ethereumAddress,
+		ethereumKey.Address.Hex(),
 		alertThreshold,
 	)
 }

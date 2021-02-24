@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethereum"
+
 	"github.com/ipfs/go-log"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,35 +23,35 @@ import (
 
 var logger = log.Logger("keep-chain-ethereum")
 
-// ThresholdRelay converts from ethereumChain to beacon.ChainInterface.
-func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
+// ThresholdRelay converts from EthereumChain to beacon.ChainInterface.
+func (ec *EthereumChain) ThresholdRelay() relayChain.Interface {
 	return ec
 }
 
-func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
+func (ec *EthereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
 	return operator.ChainKeyToOperatorKey(ec.accountKey)
 }
 
-func (ec *ethereumChain) Signing() chain.Signing {
+func (ec *EthereumChain) Signing() chain.Signing {
 	return ethutil.NewSigner(ec.accountKey.PrivateKey)
 }
 
-func (ec *ethereumChain) GetConfig() *relayChain.Config {
+func (ec *EthereumChain) GetConfig() *relayChain.Config {
 	return ec.chainConfig
 }
 
-func (ec *ethereumChain) MinimumStake() (*big.Int, error) {
+func (ec *EthereumChain) MinimumStake() (*big.Int, error) {
 	return ec.stakingContract.MinimumStake()
 }
 
 // HasMinimumStake returns true if the specified address is staked.  False will
 // be returned if not staked.  If err != nil then it was not possible to determine
 // if the address is staked or not.
-func (ec *ethereumChain) HasMinimumStake(address common.Address) (bool, error) {
+func (ec *EthereumChain) HasMinimumStake(address common.Address) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.HasMinimumStake(address)
 }
 
-func (ec *ethereumChain) SubmitTicket(ticket *relayChain.Ticket) *async.EventGroupTicketSubmissionPromise {
+func (ec *EthereumChain) SubmitTicket(ticket *relayChain.Ticket) *async.EventGroupTicketSubmissionPromise {
 	submittedTicketPromise := &async.EventGroupTicketSubmissionPromise{}
 
 	failPromise := func(err error) {
@@ -80,7 +82,7 @@ func (ec *ethereumChain) SubmitTicket(ticket *relayChain.Ticket) *async.EventGro
 	return submittedTicketPromise
 }
 
-func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
+func (ec *EthereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
 	ticketBytes := []uint8{}
 	ticketBytes = append(ticketBytes, ticket.Value[:]...)
 	ticketBytes = append(ticketBytes, common.LeftPadBytes(ticket.Proof.StakerValue.Bytes(), 20)[0:20]...)
@@ -92,11 +94,11 @@ func (ec *ethereumChain) packTicket(ticket *relayChain.Ticket) [32]uint8 {
 	return ticketFixedArray
 }
 
-func (ec *ethereumChain) GetSubmittedTickets() ([]uint64, error) {
+func (ec *EthereumChain) GetSubmittedTickets() ([]uint64, error) {
 	return ec.keepRandomBeaconOperatorContract.SubmittedTickets()
 }
 
-func (ec *ethereumChain) GetSelectedParticipants() ([]relayChain.StakerAddress, error) {
+func (ec *EthereumChain) GetSelectedParticipants() ([]relayChain.StakerAddress, error) {
 	var stakerAddresses []relayChain.StakerAddress
 	fetchParticipants := func() error {
 		participants, err := ec.keepRandomBeaconOperatorContract.SelectedParticipants()
@@ -141,7 +143,7 @@ func (ec *ethereumChain) GetSelectedParticipants() ([]relayChain.StakerAddress, 
 	}
 }
 
-func (ec *ethereumChain) SubmitRelayEntry(
+func (ec *EthereumChain) SubmitRelayEntry(
 	entry []byte,
 ) *async.EventEntrySubmittedPromise {
 	relayEntryPromise := &async.EventEntrySubmittedPromise{}
@@ -212,7 +214,7 @@ func (ec *ethereumChain) SubmitRelayEntry(
 	return relayEntryPromise
 }
 
-func (ec *ethereumChain) OnRelayEntrySubmitted(
+func (ec *EthereumChain) OnRelayEntrySubmitted(
 	handle func(entry *event.EntrySubmitted),
 ) subscription.EventSubscription {
 	onEvent := func(blockNumber uint64) {
@@ -228,7 +230,7 @@ func (ec *ethereumChain) OnRelayEntrySubmitted(
 	return subscription
 }
 
-func (ec *ethereumChain) OnRelayEntryRequested(
+func (ec *EthereumChain) OnRelayEntryRequested(
 	handle func(request *event.Request),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -250,7 +252,7 @@ func (ec *ethereumChain) OnRelayEntryRequested(
 	return subscription
 }
 
-func (ec *ethereumChain) OnGroupSelectionStarted(
+func (ec *EthereumChain) OnGroupSelectionStarted(
 	handle func(groupSelectionStart *event.GroupSelectionStart),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -270,7 +272,7 @@ func (ec *ethereumChain) OnGroupSelectionStarted(
 	return subscription
 }
 
-func (ec *ethereumChain) OnGroupRegistered(
+func (ec *EthereumChain) OnGroupRegistered(
 	handle func(groupRegistration *event.GroupRegistration),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -292,15 +294,15 @@ func (ec *ethereumChain) OnGroupRegistered(
 	return subscription
 }
 
-func (ec *ethereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
+func (ec *EthereumChain) IsGroupRegistered(groupPublicKey []byte) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsGroupRegistered(groupPublicKey)
 }
 
-func (ec *ethereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
+func (ec *EthereumChain) IsStaleGroup(groupPublicKey []byte) (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsStaleGroup(groupPublicKey)
 }
 
-func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
+func (ec *EthereumChain) GetGroupMembers(groupPublicKey []byte) (
 	[]relayChain.StakerAddress,
 	error,
 ) {
@@ -319,7 +321,7 @@ func (ec *ethereumChain) GetGroupMembers(groupPublicKey []byte) (
 	return stakerAddresses, nil
 }
 
-func (ec *ethereumChain) OnDKGResultSubmitted(
+func (ec *EthereumChain) OnDKGResultSubmitted(
 	handler func(dkgResultPublication *event.DKGResultSubmission),
 ) subscription.EventSubscription {
 	onEvent := func(
@@ -343,7 +345,7 @@ func (ec *ethereumChain) OnDKGResultSubmitted(
 	return subscription
 }
 
-func (ec *ethereumChain) ReportRelayEntryTimeout() error {
+func (ec *EthereumChain) ReportRelayEntryTimeout() error {
 	_, err := ec.keepRandomBeaconOperatorContract.ReportRelayEntryTimeout()
 	if err != nil {
 		return err
@@ -352,19 +354,19 @@ func (ec *ethereumChain) ReportRelayEntryTimeout() error {
 	return nil
 }
 
-func (ec *ethereumChain) IsEntryInProgress() (bool, error) {
+func (ec *EthereumChain) IsEntryInProgress() (bool, error) {
 	return ec.keepRandomBeaconOperatorContract.IsEntryInProgress()
 }
 
-func (ec *ethereumChain) CurrentRequestStartBlock() (*big.Int, error) {
+func (ec *EthereumChain) CurrentRequestStartBlock() (*big.Int, error) {
 	return ec.keepRandomBeaconOperatorContract.CurrentRequestStartBlock()
 }
 
-func (ec *ethereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
+func (ec *EthereumChain) CurrentRequestPreviousEntry() ([]byte, error) {
 	return ec.keepRandomBeaconOperatorContract.CurrentRequestPreviousEntry()
 }
 
-func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
+func (ec *EthereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	currentRequestGroupIndex, err := ec.keepRandomBeaconOperatorContract.CurrentRequestGroupIndex()
 	if err != nil {
 		return nil, err
@@ -373,7 +375,7 @@ func (ec *ethereumChain) CurrentRequestGroupPublicKey() ([]byte, error) {
 	return ec.keepRandomBeaconOperatorContract.GetGroupPublicKey(currentRequestGroupIndex)
 }
 
-func (ec *ethereumChain) SubmitDKGResult(
+func (ec *EthereumChain) SubmitDKGResult(
 	participantIndex relayChain.GroupMemberIndex,
 	result *relayChain.DKGResult,
 	signatures map[relayChain.GroupMemberIndex][]byte,
@@ -480,7 +482,7 @@ func convertSignaturesToChainFormat(
 // It first encodes the result using solidity ABI and then calculates Keccak-256
 // hash over it. This corresponds to the DKG result hash calculation on-chain.
 // Hashes calculated off-chain and on-chain must always match.
-func (ec *ethereumChain) CalculateDKGResultHash(
+func (ec *EthereumChain) CalculateDKGResultHash(
 	dkgResult *relayChain.DKGResult,
 ) (relayChain.DKGResultHash, error) {
 
@@ -490,13 +492,24 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 	return relayChain.DKGResultHashFromBytes(hash)
 }
 
-func (ec *ethereumChain) Address() common.Address {
+func (ec *EthereumChain) Address() common.Address {
 	return ec.accountKey.Address
 }
 
-func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
+func (ec *EthereumChain) WeiBalanceOf(
+	address common.Address,
+) (*ethereum.Wei, error) {
 	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancelCtx()
 
-	return ec.client.BalanceAt(ctx, address, nil)
+	balance, err := ec.client.BalanceAt(ctx, address, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return ethereum.WrapWei(balance), err
+}
+
+func (ec *EthereumChain) BalanceMonitor() (*ethutil.BalanceMonitor, error) {
+	return ethutil.NewBalanceMonitor(ec.WeiBalanceOf), nil
 }

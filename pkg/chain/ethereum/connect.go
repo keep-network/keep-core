@@ -37,7 +37,7 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-type ethereumChain struct {
+type EthereumChain struct {
 	config                           ethereum.Config
 	client                           ethutil.EthereumClient
 	clientRPC                        *rpc.Client
@@ -64,12 +64,12 @@ type ethereumChain struct {
 }
 
 type ethereumUtilityChain struct {
-	ethereumChain
+	EthereumChain
 
 	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
 
-func connect(config ethereum.Config) (*ethereumChain, error) {
+func connect(config ethereum.Config) (*EthereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -87,8 +87,8 @@ func connectWithClient(
 	client *ethclient.Client,
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
-) (*ethereumChain, error) {
-	pv := &ethereumChain{
+) (*EthereumChain, error) {
+	pv := &EthereumChain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
@@ -321,11 +321,11 @@ func addressForContract(config ethereum.Config, contractName string) (*common.Ad
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
-func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
+func (ec *EthereumChain) BlockCounter() (chain.BlockCounter, error) {
 	return ec.blockCounter, nil
 }
 
-func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
+func fetchChainConfig(ec *EthereumChain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
 	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
