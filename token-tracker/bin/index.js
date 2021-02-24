@@ -17,10 +17,12 @@ import Context from "../src/lib/context.js"
 import { Inspector } from "../src/inspector.js"
 import { KeepTokenTruthSource } from "../src/truth-sources/keep-token.js"
 import { TokenStakingTruthSource } from "../src/truth-sources/token-staking.js"
+import { logger } from "../src/lib/winston.js"
+import { mapToObject } from "../src/lib/map-helper.js"
 
 export async function getTokenOwnership() {
   const context = await Context.initialize()
-  console.debug("Context initialized")
+  logger.debug("Context initialized")
 
   const inspector = new Inspector(context)
 
@@ -31,6 +33,10 @@ export async function getTokenOwnership() {
   return await inspector.getOwnershipsAtBlock(10958363) // 11909645 // TODO: Update to correct value
 }
 
-console.log(JSON.stringify(await getTokenOwnership()))
+logger.on("finish", function () {
+  process.exit(0)
+})
 
-process.exit(0)
+logger.info(JSON.stringify(mapToObject(await getTokenOwnership())))
+
+logger.end()

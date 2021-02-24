@@ -59,10 +59,11 @@ export class Inspector {
       holder = toChecksumAddress(holder)
       value = new BN(value)
 
-      if (!this.tokenHoldings[holder]) {
-        this.tokenHoldings[holder] = value
+      if (this.tokenHoldings.has(holder)) {
+        console.log("already have", holder)
+        this.tokenHoldings.get(holder).iadd(value)
       } else {
-        this.tokenHoldings[holder].iadd(value)
+        this.tokenHoldings.set(holder, value)
       }
     })
   }

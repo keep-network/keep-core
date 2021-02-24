@@ -3,6 +3,7 @@
 
 import { ITruthSource } from "./index.js"
 import { Contract } from "../lib/contract-helper.js"
+import { logger } from "../lib/winston.js"
 
 import { getPastEvents, callWithRetry } from "../lib/ethereum-helper.js"
 import { writeFileSync, readFileSync } from "fs"
@@ -46,7 +47,7 @@ export class TokenStakingTruthSource extends ITruthSource {
    * @returns {Map<Address,Address>} All historic token stake operators with owners.
    */
   async findHistoricStakeOperatorsOwners() {
-    console.info(
+    logger.info(
       `looking for StakeDelegated events emitted from ${this.tokenStaking.options.address} ` +
         `between blocks ${this.context.contracts.deploymentBlock} and ${this.finalBlock}`
     )
@@ -58,7 +59,7 @@ export class TokenStakingTruthSource extends ITruthSource {
       this.context.contracts.deploymentBlock,
       this.finalBlock
     )
-    console.info(`found ${events.length} stake delegated events`)
+    logger.info(`found ${events.length} stake delegated events`)
 
     const operatorsOwnersMap = new Map()
     events.forEach((event) => {
@@ -68,7 +69,7 @@ export class TokenStakingTruthSource extends ITruthSource {
       )
     })
 
-    console.info(
+    logger.info(
       `dump all historic stakes to a file: ${TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH}`
     )
     writeFileSync(
@@ -80,19 +81,22 @@ export class TokenStakingTruthSource extends ITruthSource {
   }
 
   /**
-   * @param {Map<Address,Address>} stakes Stake owners to filter.
+   * @param {Map<Address,Address>} operatorsOwnersMap Stake owners to filter.
    * @returns {Map<Address,Address>} .
    */
-  async filterEOA(stakes) {
-    // FIXME: If the owner is TokenGrantStake or TokenStakingEscrow or StakingPortBacker contract, ignore the delegation as this amount has been already included in TokenGrant check
-    const filteredEOAs = new Map()
-    for (const [operator, owner] of stakes) {
+  async filterOwners(operatorsOwnersMap) {
+    // FIXME: If the owner is TokenGrantStake or TokenStakingEscrow or StakingPortBacker
+    // contract, ignore the delegation as this amount has been already included in TokenGrant check
+    // Right now we're ignoring all the contracts, replace it with just the listed
+    // ones.
+    const filteredOwners = new Map()
+    for (const [operator, owner] of operatorsOwnersMap) {
       const code = await this.context.web3.eth.getCode(owner)
 
-      if (code == "0x") filteredEOAs.set(operator, owner)
+      if (code == "0x") filteredOwners.set(operator, owner)
     }
 
-    return filteredEOAs
+    return filteredOwners
   }
 
   /**
@@ -100,7 +104,7 @@ export class TokenStakingTruthSource extends ITruthSource {
    * @returns {Map<Address,BN} Token holdings at the final blocks.
    */
   async checkStakedValues(stakers) {
-    console.info(`check stake delegations at block ${this.finalBlock}`)
+    logger.info(`check stake delegations at block ${this.finalBlock}`)
 
     /** @type {Map<Address,BN>} */
     const stakersBalances = new Map()
@@ -117,30 +121,30 @@ export class TokenStakingTruthSource extends ITruthSource {
       const undelegatedAt = toBN(delegationInfo.undelegatedAt)
 
       if (undelegatedAt.gtn(0)) {
-        console.debug(
+        logger.debug(
           `skipping delegation to ${operator}, undelegated at: ${undelegatedAt.toString()}`
         )
         continue
       }
 
       if (amount.eqn(0)) {
-        console.debug(`skipping delegation to ${operator}, amount is zero`)
+        logger.debug(`skipping delegation to ${operator}, amount is zero`)
         continue
       }
 
       if (stakersBalances.has(owner)) {
-        console.log("already has", owner)
+        logger.debug(`staker`)
         stakersBalances.get(owner).iadd(amount)
       } else {
         stakersBalances.set(owner, amount)
       }
+
+      logger.debug(
+        `owner ${owner} staked ${stakersBalances.get(owner).toString()}`
+      )
     }
 
-    console.info(
-      `found ${stakersBalances.length} holders at block ${this.finalBlock}`
-    )
-
-    console.info(
+    logger.info(
       `dump staked balances to a file: ${TOKEN_STAKING_BALANCES_DUMP_PATH}`
     )
     writeFileSync(
@@ -159,7 +163,7 @@ export class TokenStakingTruthSource extends ITruthSource {
 
     const allStakeOwners = await this.findHistoricStakeOperatorsOwners()
 
-    const filteredStakeOwnersEOA = await this.filterEOA(allStakeOwners)
+    const filteredStakeOwnersEOA = await this.filterOwners(allStakeOwners)
 
     const ownersBalances = await this.checkStakedValues(filteredStakeOwnersEOA)
     return ownersBalances

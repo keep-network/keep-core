@@ -6,6 +6,7 @@ import { getPastEvents, callWithRetry } from "../lib/ethereum-helper.js"
 import { writeFileSync, readFileSync } from "fs"
 import BN from "bn.js"
 import { mapToObject } from "../lib/map-helper.js"
+import { logger } from "../lib/winston.js"
 
 const KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH = "./tmp/keep-token-holders.json"
 const KEEP_TOKEN_BALANCES_DUMP_PATH = "./tmp/keep-token-balances.json"
@@ -33,7 +34,7 @@ export class KeepTokenTruthSource extends ITruthSource {
    * @returns {Array<Address>} All historic token holders.
    */
   async findHistoricHolders() {
-    console.info(
+    logger.info(
       `looking for Transfer events emitted from ${this.keepToken.options.address} ` +
         `between blocks ${this.context.contracts.deploymentBlock} and ${this.finalBlock}`
     )
@@ -45,15 +46,15 @@ export class KeepTokenTruthSource extends ITruthSource {
       this.context.contracts.deploymentBlock,
       this.finalBlock
     )
-    console.info(`found ${events.length} token transfer events`)
+    logger.info(`found ${events.length} token transfer events`)
 
     const allTokenHoldersSet = new Set()
     events.forEach((event) => allTokenHoldersSet.add(event.returnValues.to))
 
     const allTokenHolders = Array.from(allTokenHoldersSet)
-    console.info(`found ${allTokenHolders.length} unique historic holders`)
+    logger.info(`found ${allTokenHolders.length} unique historic holders`)
 
-    console.info(
+    logger.info(
       `dump all historic token holders to a file: ${KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH}`
     )
     writeFileSync(
@@ -69,7 +70,7 @@ export class KeepTokenTruthSource extends ITruthSource {
    * @returns {Map<Address,BN} Token holdings at the final blocks.
    */
   async checkFinalHoldersBalances(tokenHolders) {
-    console.info(`check token holding at block ${this.finalBlock}`)
+    logger.info(`check token holding at block ${this.finalBlock}`)
 
     /** @type {Map<Address,BN>} */
     const holdersBalances = new Map()
@@ -84,18 +85,18 @@ export class KeepTokenTruthSource extends ITruthSource {
         )
       )
 
-      console.debug(`${holderAddress}: ${finalBalance}`)
+      logger.debug(`${holderAddress}: ${finalBalance}`)
 
       if (finalBalance.gtn(0)) {
         holdersBalances.set(holderAddress, finalBalance)
       }
     }
 
-    console.info(
+    logger.info(
       `found ${holdersBalances.length} holders at block ${this.finalBlock}`
     )
 
-    console.info(
+    logger.info(
       `dump token holdings to a file: ${KEEP_TOKEN_BALANCES_DUMP_PATH}`
     )
     writeFileSync(
