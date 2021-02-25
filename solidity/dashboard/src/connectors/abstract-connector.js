@@ -7,6 +7,38 @@ import clone from "clone"
 
 const DEFAULT_NUM_ADDRESSES_TO_FETCH = 15
 
+export class AbstractConnector {
+  name
+
+  constructor(name) {
+    this.name = name
+  }
+
+  enable = async () => {
+    throw Error("Implement first")
+  }
+
+  getAccounts = async () => {
+    throw Error("Implement first")
+  }
+
+  disconnect = async () => {
+    throw Error("Implement first")
+  }
+
+  getChainId = async () => {
+    throw Error("Implement first")
+  }
+
+  getNetworkId = async () => {
+    throw Error("Implement first")
+  }
+
+  getProvider = () => {
+    return this.provider
+  }
+}
+
 export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
   provider
   defaultAccount = ""
