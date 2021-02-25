@@ -27,7 +27,7 @@ const LiquidityRewardsEarnedMessage = ({
     if (liquidityRewardPairNames.length > 0) {
       pairNamesContent = " for "
       for (const [i, pairName] of liquidityRewardPairNames.entries()) {
-        pairNamesContent = pairNamesContent.concat(pairName)
+        pairNamesContent = pairNamesContent.concat(pairName.replace("_", "+"))
         if (
           i !== liquidityRewardPairNames.length - 1 &&
           i !== liquidityRewardPairNames.length - 2
