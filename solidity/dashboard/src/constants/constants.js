@@ -24,10 +24,11 @@ export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
 
 export const WALLETS = {
-  METAMASK: { label: "MetaMask" },
-  TREZOR: { label: "Trezor" },
-  LEDGER: { label: "Ledger" },
-  COINBASE: { label: "Coinbase" },
+  METAMASK: { label: "MetaMask", name: "METAMASK" },
+  INJECTED_WALLET: { label: "InjectedWallet", name: "INJECTED_WALLET" },
+  TREZOR: { label: "Trezor", name: "TREZOR" },
+  LEDGER: { label: "Ledger", name: "LEDGER" },
+  WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
 }
 
 export const REWARD_STATUS = {
