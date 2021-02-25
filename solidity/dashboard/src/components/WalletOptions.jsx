@@ -12,8 +12,10 @@ import {
   WalletConnectConnector,
 } from "../connectors"
 import MetaMaskModal from "./MetaMaskModal"
+import WallectConnectModal from "./WalletConnectModal"
+import { WALLETS } from "../constants/constants"
 
-const WALLETS = [
+const WALLETS_OPTIONS = [
   {
     label: "MetaMask",
     icon: Icons.MetaMask,
@@ -45,10 +47,20 @@ const WALLETS = [
     isHardwareWallet: true,
     connector: new TrezorConnector(),
   },
+  {
+    label: "WalletConnect",
+    // TODO icon
+    icon: Icons.Trezor,
+    providerName: "WALLET_CONNECT",
+    isHardwareWallet: false,
+    connector: new WalletConnectConnector(),
+  },
 ]
 
 const WalletOptions = () => {
-  return <ul className="wallet__options">{WALLETS.map(renderWallet)}</ul>
+  return (
+    <ul className="wallet__options">{WALLETS_OPTIONS.map(renderWallet)}</ul>
+  )
 }
 
 const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
@@ -71,12 +83,14 @@ const Wallet = ({
   const renderModalContent = () => {
     const defaultProps = { connector, closeModal, connectAppWithWallet }
     switch (providerName) {
-      case "LEDGER":
+      case WALLETS.LEDGER.name:
         return <LedgerModal {...defaultProps} />
-      case "TREZOR":
+      case WALLETS.TREZOR.name:
         return <TrezorModal {...defaultProps} />
-      case "METAMASK":
+      case WALLETS.METAMASK.name:
         return <MetaMaskModal {...defaultProps} />
+      case WALLETS.WALLET_CONNECT.name:
+        return <WallectConnectModal {...defaultProps} />
       default:
         return null
     }
