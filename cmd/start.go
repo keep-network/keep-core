@@ -6,7 +6,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common"
+
 	commoneth "github.com/keep-network/keep-common/pkg/chain/ethereum"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
@@ -174,7 +175,7 @@ func Start(c *cli.Context) error {
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(ctx, config, netProvider)
-	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey)
+	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey.Address)
 
 	select {
 	case <-ctx.Done():
@@ -273,7 +274,7 @@ func initializeBalanceMonitoring(
 	ctx context.Context,
 	chainProvider chain.Handle,
 	config *config.Config,
-	ethereumKey *keystore.Key,
+	address common.Address,
 ) {
 	balanceMonitor, err := ethereum.BalanceMonitor(chainProvider)
 	if err != nil {
@@ -288,7 +289,7 @@ func initializeBalanceMonitoring(
 
 	balanceMonitor.Observe(
 		ctx,
-		ethereumKey.Address,
+		address,
 		alertThreshold,
 		defaultBalanceMonitoringTick,
 	)
@@ -296,7 +297,7 @@ func initializeBalanceMonitoring(
 	logger.Infof(
 		"started balance monitoring for address [%v] "+
 			"with the alert threshold set to [%v] wei",
-		ethereumKey.Address.Hex(),
+		address.Hex(),
 		alertThreshold,
 	)
 }
