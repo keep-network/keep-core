@@ -163,7 +163,6 @@ function* processLiquidityRewardEarnedNotification(
         showMessage({
           messageType: messageType.LIQUIDITY_REWARDS_EARNED,
           messageProps: {
-            liquidityRewardPairNames: [liquidityRewardPairName],
             sticky: true,
           },
         })

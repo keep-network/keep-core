@@ -5,7 +5,6 @@ import { Link } from "react-router-dom"
 import { useSelector } from "react-redux"
 
 const LiquidityRewardsEarnedMessage = ({
-  liquidityRewardPairNames,
   sticky,
   messageId,
   onMessageClose,
@@ -15,7 +14,6 @@ const LiquidityRewardsEarnedMessage = ({
   } = useSelector((state) => state.notificationsData)
 
   const icon = Icons.Rewards
-  const title = `You've earned rewards`
   const content = <Link to={"/liquidity"}>View your balance</Link>
   const classes = {
     bannerDescription: "m-0",
