@@ -46,6 +46,7 @@ const (
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
    threshold relay client for the Keep random beacon.`
 
+// TODO: add `ethereum.Wei` function which call `WrapWei` internally
 // Values related with balance monitoring.
 // defaultBalanceAlertThreshold determines the alert threshold below which
 // the alert should be triggered.
