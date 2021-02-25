@@ -40,18 +40,20 @@ export class AbstractConnector {
 }
 
 export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
-  provider
+  hardwareWalletProvider
   defaultAccount = ""
 
-  constructor(provider) {
-    super()
-    this.provider = provider
+  constructor(hardwareWalletProvider, name) {
+    super(name)
+    this.hardwareWalletProvider = hardwareWalletProvider
   }
 
   enable = async () => {
-    this.addProvider(this.provider)
+    const web3Engine = new Web3ProviderEngine()
+
+    web3Engine.addProvider(this.hardwareWalletProvider)
     const cacheSubprovider = new CacheSubprovider()
-    this.addProvider(cacheSubprovider) // initializes internal middleware
+    web3Engine.addProvider(cacheSubprovider) // initializes internal middleware
 
     // HACK ALERT Intercept middleware to always clone results. The cache
     // HACK ALERT subprovider caches results, but the cached values are mutable,
@@ -87,33 +89,33 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
       )
     }
 
-    this.addProvider(
+    web3Engine.addProvider(
       new WebsocketSubprovider({ rpcUrl: getWsUrl(), debug: true })
     )
-    this.start()
+    this.provider = web3Engine
+    this.provider.start()
 
-    return await this.getAccount()
+    return this.defaultAccount
+      ? [this.defaultAccount]
+      : await this.getAccounts()
   }
 
   getAccounts = async (
     numberOfAccounts = DEFAULT_NUM_ADDRESSES_TO_FETCH,
     accountsOffSet = 0
   ) => {
-    return await this.provider.getAccountsAsync(
+    return await this.hardwareWalletSubprovider.getAccountsAsync(
       numberOfAccounts,
       accountsOffSet
     )
   }
 
-  setProvider = (provider) => {
-    this.provider = provider
-  }
+  // TODO
+  // getChainId = async () => {
+  //   throw Error("Implement first")
+  // }
 
-  getProvider = () => {
-    return this.provider
-  }
-
-  getAccount = async () => {
-    return [this.defaultAccount]
-  }
+  // getNetworkId = async () => {
+  //   throw Error("Implement first")
+  // }
 }
