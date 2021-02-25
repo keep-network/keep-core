@@ -350,8 +350,8 @@ github.com/keep-network/cli v1.20.0 h1:mEufpPsovOVdduTTkk+a2CxS3crIrGFqUsvs58gSi
 github.com/keep-network/cli v1.20.0/go.mod h1:nzsst4JjU+rGE8Q5J839fYxectxWHpLhxKNohQWtQhA=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec h1:2pXAsi4OUUjZKr5ds5UOF2IxXN+jVW0WetVO+czkf+A=
 github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec/go.mod h1:xR8jf3/VJAjh3nWu5tFe8Yxnt2HvWsqZHfGef1P5oDk=
-github.com/keep-network/keep-common v1.3.1-0.20210224153316-e59366b9ba03 h1:q/yximjH3NIPKFynfz0jkshn3cU7BW+coyo7D6OhcPA=
-github.com/keep-network/keep-common v1.3.1-0.20210224153316-e59366b9ba03/go.mod h1:sldQ7H2fdJWFdYUJCe/UsMGlyqtoT+39o7GTvpUVWnI=
+github.com/keep-network/keep-common v1.3.1-0.20210225144425-98d03fe6e9bd h1:Aoy92eomiXN3J+CesSLaH9z6ckJmnIBGr281XZZ3Vt4=
+github.com/keep-network/keep-common v1.3.1-0.20210225144425-98d03fe6e9bd/go.mod h1:sldQ7H2fdJWFdYUJCe/UsMGlyqtoT+39o7GTvpUVWnI=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/errcheck v1.2.0/go.mod h1:/BMXB+zMLi60iA8Vv6Ksmxu/1UDYcXs4uQLJ+jE2L00=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
