@@ -3,7 +3,7 @@ import { WALLETS } from "../constants/constants"
 
 class InjectedConnector extends AbstractConnector {
   constructor() {
-    super()
+    super(WALLETS.METAMASK.name)
     this.provider = window.ethereum
   }
 
@@ -44,12 +44,6 @@ class InjectedConnector extends AbstractConnector {
   // TODO
   getNetworkId = async () => {
     throw Error("Implement first")
-  }
-
-  get name() {
-    return this.provider.isMetamask
-      ? WALLETS.METAMASK.name
-      : WALLETS.INJECTED_WALLET.name
   }
 }
 
