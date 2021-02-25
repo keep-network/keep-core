@@ -29,9 +29,11 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions/setup-node@v2
         with:
           node-version: "12.x"
+
       - name: Cache node modules
         uses: actions/cache@v2
         env:
@@ -43,12 +45,16 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
+
       - name: Install dependencies
         run: npm ci
+
       - name: Build solidity contracts
         run: npm run compile
+
       - name: Run tests
         run: npm run test
+
   lint:
     runs-on: ubuntu-latest
     defaults:
@@ -56,9 +62,11 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
       - uses: actions/setup-node@v2
         with:
           node-version: "12.x"
+
       - name: Cache node modules
         uses: actions/cache@v2
         env:
@@ -70,26 +78,58 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
+
       - name: Install dependencies
         run: npm ci
+
       - name: Lint
         run: npm run lint
-  migrate:
+
+  migrate-and-publish:
     needs: [build-and-test, lint]
     if: |
       startsWith(github.ref, 'refs/heads/releases/ropsten') 
         || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
-    environment: keep-test # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
+    # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
+    environment: keep-test 
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      # TODO: Create an action for migrating contracts and apply it instead below step
       - name: Migrate contracts
         env: 
           BUILD_TAG: $GITHUB_SHA
-          GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME}}
-          TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK}}
-          ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID}}
-          ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME}}
-          TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN}}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY}}
+          GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME }}
+          TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
+          ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID }}
+          ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
+          TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
         run: solidity/scripts/circleci-migrate-contracts.sh
+
+      - uses: google-github-actions/setup-gcloud@v0.2
+        with:
+          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }} # or GCLOUD_SERVICE_KEY?
+
+      - name: Upload contract data
+        env: 
+          CONTRACT_DATA_BUCKET: ${{ secrets.CONTRACT_DATA_BUCKET }}
+        run: |
+          cd /tmp/keep-client/contracts
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
+
+      - run: |
+          mkdir -p artifacts
+          cp -r /tmp/keep-client/contracts/* artifacts/
+
+      - name: Bump up package version
+        uses: keep-network/npm-version-bump@v1
+
+      - name: Publish to npm
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
+          dry-run: true # to be removed once testing of workflow is done
