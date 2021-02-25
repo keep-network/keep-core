@@ -5,10 +5,11 @@ import { useModal } from "../hooks/useModal"
 import LedgerModal from "./LedgerModal"
 import TrezorModal from "./TrezorModal"
 import {
-  TrezorProvider,
-  LedgerProvider,
+  TrezorConnector,
+  LedgerConnector,
   LEDGER_DERIVATION_PATHS,
-  InjectedProvider,
+  InjectedConnector,
+  WalletConnectConnector,
 } from "../connectors"
 import MetaMaskModal from "./MetaMaskModal"
 
@@ -25,7 +26,7 @@ const WALLETS = [
         "The MetaMask login screen will open in an external window. If it doesn’t load right away, click below to install:",
     },
     isHardwareWallet: false,
-    connector: InjectedProvider,
+    connector: new InjectedConnector(),
   },
   {
     label: "Ledger",
@@ -33,8 +34,8 @@ const WALLETS = [
     providerName: "LEDGER",
     isHardwareWallet: true,
     connector: {
-      LEDGER_LIVE: new LedgerProvider(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
-      LEDGER_LEGACY: new LedgerProvider(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
+      LEDGER_LIVE: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
+      LEDGER_LEGACY: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
     },
   },
   {
@@ -42,7 +43,7 @@ const WALLETS = [
     icon: Icons.Trezor,
     providerName: "TREZOR",
     isHardwareWallet: true,
-    connector: new TrezorProvider(),
+    connector: new TrezorConnector(),
   },
 ]
 

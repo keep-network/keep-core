@@ -35,7 +35,7 @@ class Web3ContextProvider extends React.Component {
       const accounts = await connector.enable()
       yourAddress = accounts[0]
 
-      web3 = new Web3(connector)
+      web3 = new Web3(connector.getProvider())
       web3.eth.defaultAccount = yourAddress
 
       resolveWeb3Deferred(web3)
@@ -53,7 +53,6 @@ class Web3ContextProvider extends React.Component {
       })
       throw error
     }
-
     if (providerName === "METAMASK") {
       web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
       web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
