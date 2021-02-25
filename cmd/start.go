@@ -275,9 +275,9 @@ func initializeBalanceMonitoring(
 	config *config.Config,
 	ethereumKey *keystore.Key,
 ) {
-	balanceMonitor, err := chainProvider.(*ethereum.EthereumChain).BalanceMonitor()
+	balanceMonitor, err := ethereum.BalanceMonitor(chainProvider)
 	if err != nil {
-		logger.Errorf("error obtaining balance monitor handle [%v]", err)
+		logger.Errorf("could not get balance monitor [%v]", err)
 		return
 	}
 

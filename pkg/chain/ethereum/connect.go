@@ -1,6 +1,7 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
@@ -37,9 +38,9 @@ var (
 	DefaultMaxGasPrice = big.NewInt(500000000000) // 500 Gwei
 )
 
-type EthereumChain struct {
+type ethereumChain struct {
 	config                           ethereum.Config
-	client                           ethutil.EthereumClient
+	client                           ethutil.HostChainClient
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
@@ -64,12 +65,12 @@ type EthereumChain struct {
 }
 
 type ethereumUtilityChain struct {
-	EthereumChain
+	ethereumChain
 
 	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
 
-func connect(config ethereum.Config) (*EthereumChain, error) {
+func connect(config ethereum.Config) (*ethereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -87,8 +88,8 @@ func connectWithClient(
 	client *ethclient.Client,
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
-) (*EthereumChain, error) {
-	pv := &EthereumChain{
+) (*ethereumChain, error) {
+	pv := &ethereumChain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
@@ -193,8 +194,8 @@ func connectWithClient(
 
 func addClientWrappers(
 	config ethereum.Config,
-	backend ethutil.EthereumClient,
-) ethutil.EthereumClient {
+	backend ethutil.HostChainClient,
+) ethutil.HostChainClient {
 	loggingBackend := ethutil.WrapCallLogging(logger, backend)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
@@ -321,11 +322,11 @@ func addressForContract(config ethereum.Config, contractName string) (*common.Ad
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
-func (ec *EthereumChain) BlockCounter() (chain.BlockCounter, error) {
+func (ec *ethereumChain) BlockCounter() (chain.BlockCounter, error) {
 	return ec.blockCounter, nil
 }
 
-func fetchChainConfig(ec *EthereumChain) (*relaychain.Config, error) {
+func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 	logger.Infof("fetching relay chain config")
 
 	groupSize, err := ec.keepRandomBeaconOperatorContract.GroupSize()
@@ -367,4 +368,30 @@ func fetchChainConfig(ec *EthereumChain) (*relaychain.Config, error) {
 		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
 		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil
+}
+
+func BalanceMonitor(chain chain.Handle) (*ethutil.BalanceMonitor, error) {
+	ethereumChain, isEthereumChain := chain.(*ethereumChain)
+	if !isEthereumChain {
+		return nil, fmt.Errorf("not an Ethereum chain")
+	}
+
+	weiBalanceOf := func(
+		address common.Address,
+	) (*ethereum.Wei, error) {
+		ctx, cancelCtx := context.WithTimeout(
+			context.Background(),
+			1*time.Minute,
+		)
+		defer cancelCtx()
+
+		balance, err := ethereumChain.client.BalanceAt(ctx, address, nil)
+		if err != nil {
+			return nil, err
+		}
+
+		return ethereum.WrapWei(balance), nil
+	}
+
+	return ethutil.NewBalanceMonitor(weiBalanceOf), nil
 }
