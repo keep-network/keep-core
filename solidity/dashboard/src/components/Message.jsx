@@ -32,8 +32,8 @@ class MessagesComponent extends React.Component {
     this.props.showMessage(options)
   }
 
-  onMessageClose = (messageId) => {
-    this.props.closeMessage(messageId)
+  onMessageClose = (messageId, messageType = null) => {
+    this.props.closeMessage(messageId, messageType)
   }
 
   renderSpecificMessageType = (message) => {
@@ -42,6 +42,7 @@ class MessagesComponent extends React.Component {
       <SpecificComponent
         {...message.messageProps}
         messageId={message.id}
+        messageType={message.messageType}
         onMessageClose={this.onMessageClose}
       />
     )
@@ -99,17 +100,18 @@ export const Message = ({
   withTransactionHash,
   txHash,
   messageId,
+  messageType,
   onMessageClose,
 }) => {
   useEffect(() => {
     if (!sticky) {
       const timeout = setTimeout(
-        () => onMessageClose(messageId),
+        () => onMessageClose(messageId, messageType),
         closeMessageTimeoutInMs
       )
       return () => clearTimeout(timeout)
     }
-  }, [sticky, messageId, onMessageClose])
+  }, [sticky, messageId, onMessageClose, messageType])
 
   return (
     <Banner>
@@ -132,7 +134,9 @@ export const Message = ({
             </Banner.Action>
           )}
         </div>
-        <Banner.CloseIcon onClick={() => onMessageClose(messageId)} />
+        <Banner.CloseIcon
+          onClick={() => onMessageClose(messageId, messageType)}
+        />
       </div>
     </Banner>
   )

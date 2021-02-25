@@ -37,9 +37,9 @@ export const showCreatedMessage = (message) => {
   }
 }
 
-export const closeMessage = (id) => {
+export const closeMessage = (id, messageType = null) => {
   return {
     type: CLOSE_MEESSAGE,
-    payload: id,
+    payload: { id, messageType },
   }
 }

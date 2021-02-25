@@ -7,6 +7,7 @@ import { useSelector } from "react-redux"
 const LiquidityRewardsEarnedMessage = ({
   sticky,
   messageId,
+  messageType,
   onMessageClose,
 }) => {
   const {
@@ -49,6 +50,7 @@ const LiquidityRewardsEarnedMessage = ({
       content={content}
       classes={classes}
       messageId={messageId}
+      messageType={messageType}
       onMessageClose={onMessageClose}
     />
   )

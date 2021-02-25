@@ -153,11 +153,12 @@ function* processLiquidityRewardEarnedNotification(
   )
   // show the notification if the rewardBalance from LPRewardsContract is greater
   // than the reward amount that was last time the notification was displayed
-  if (gt(currentReward, lastNotificationRewardAmount)  && displayMessage) {
+  if (gt(currentReward, lastNotificationRewardAmount) && displayMessage) {
     const {
       liquidityRewardNotification: { pairsDisplayed },
     } = yield select((state) => state.notificationsData)
 
+    // display notification if not already displayed
     if (!liquidityRewardNotificationAlreadyDisplayed) {
       yield put(
         showMessage({
