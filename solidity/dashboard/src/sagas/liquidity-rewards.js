@@ -69,6 +69,10 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 
     let reward = 0
     let shareOfPoolInPercent = 0
+    let lpTokenBalance = {
+      token0: 0,
+      token1: 0,
+    }
     if (gt(lpBalance, 0)) {
       // Fetching available reward balance from `LPRewards` contract.
       reward = yield call(
@@ -78,6 +82,11 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       )
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
+
+      lpTokenBalance = yield call(
+        [LiquidityRewards, LiquidityRewards.calculateLPTokenBalance],
+        lpBalance
+      )
     }
 
     yield put({
@@ -89,6 +98,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
         wrappedTokenBalance,
         reward,
         shareOfPoolInPercent,
+        lpTokenBalance,
       },
     })
   } catch (error) {
