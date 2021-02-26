@@ -70,7 +70,10 @@ type ethereumUtilityChain struct {
 	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
 
-func connect(config ethereum.Config) (*ethereumChain, error) {
+func connect(
+	ctx context.Context,
+	config ethereum.Config,
+) (*ethereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -80,16 +83,17 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		)
 	}
 
-	return connectWithClient(config, client, clientWS, clientRPC)
+	return connectWithClient(ctx, config, client, clientWS, clientRPC)
 }
 
 func connectWithClient(
+	ctx context.Context,
 	config ethereum.Config,
 	client *ethclient.Client,
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
-	pv := &ethereumChain{
+	ec := &ethereumChain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
@@ -97,16 +101,16 @@ func connectWithClient(
 		transactionMutex: &sync.Mutex{},
 	}
 
-	blockCounter, err := ethutil.NewBlockCounter(pv.client)
+	blockCounter, err := ethutil.NewBlockCounter(ec.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
 			err,
 		)
 	}
-	pv.blockCounter = blockCounter
+	ec.blockCounter = blockCounter
 
-	if pv.accountKey == nil {
+	if ec.accountKey == nil {
 		key, err := ethutil.DecryptKeyFile(
 			config.Account.KeyFile,
 			config.Account.KeyFilePassword,
@@ -118,7 +122,7 @@ func connectWithClient(
 				err,
 			)
 		}
-		pv.accountKey = key
+		ec.accountKey = key
 	}
 
 	checkInterval := DefaultMiningCheckInterval
@@ -133,7 +137,7 @@ func connectWithClient(
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
 	miningWaiter := ethutil.NewMiningWaiter(
-		pv.client,
+		ec.client,
 		checkInterval,
 		maxGasPrice,
 	)
@@ -144,24 +148,24 @@ func connectWithClient(
 	}
 
 	nonceManager := ethutil.NewNonceManager(
-		pv.client,
-		pv.accountKey.Address,
+		ec.client,
+		ec.accountKey.Address,
 	)
 
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
 			*address,
-			pv.accountKey,
-			pv.client,
+			ec.accountKey,
+			ec.client,
 			nonceManager,
 			miningWaiter,
 			blockCounter,
-			pv.transactionMutex,
+			ec.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepRandomBeaconOperator contract: [%v]", err)
 	}
-	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
+	ec.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
 	address, err = addressForContract(config, "TokenStaking")
 	if err != nil {
@@ -171,25 +175,27 @@ func connectWithClient(
 	stakingContract, err :=
 		contract.NewTokenStaking(
 			*address,
-			pv.accountKey,
-			pv.client,
+			ec.accountKey,
+			ec.client,
 			nonceManager,
 			miningWaiter,
 			blockCounter,
-			pv.transactionMutex,
+			ec.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
 	}
-	pv.stakingContract = stakingContract
+	ec.stakingContract = stakingContract
 
-	chainConfig, err := fetchChainConfig(pv)
+	chainConfig, err := fetchChainConfig(ec)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch chain config: [%v]", err)
 	}
-	pv.chainConfig = chainConfig
+	ec.chainConfig = chainConfig
 
-	return pv, nil
+	ec.initializeBalanceMonitoring(ctx)
+
+	return ec, nil
 }
 
 func addClientWrappers(
@@ -234,7 +240,13 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		)
 	}
 
-	base, err := connectWithClient(config, client, clientWS, clientRPC)
+	base, err := connectWithClient(
+		context.Background(),
+		config,
+		client,
+		clientWS,
+		clientRPC,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -296,8 +308,11 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 // standard handle to the chain interface. Note: for other things to work
 // correctly the configuration will need to reference a websocket, "ws://", or
 // local IPC connection.
-func Connect(config ethereum.Config) (chain.Handle, error) {
-	return connect(config)
+func Connect(
+	ctx context.Context,
+	config ethereum.Config,
+) (chain.Handle, error) {
+	return connect(ctx, config)
 }
 
 func addressForContract(config ethereum.Config, contractName string) (*common.Address, error) {
@@ -368,30 +383,4 @@ func fetchChainConfig(ec *ethereumChain) (*relaychain.Config, error) {
 		ResultPublicationBlockStep: resultPublicationBlockStep.Uint64(),
 		RelayEntryTimeout:          relayEntryTimeout.Uint64(),
 	}, nil
-}
-
-func BalanceMonitor(chain chain.Handle) (*ethutil.BalanceMonitor, error) {
-	ethereumChain, isEthereumChain := chain.(*ethereumChain)
-	if !isEthereumChain {
-		return nil, fmt.Errorf("not an Ethereum chain")
-	}
-
-	weiBalanceOf := func(
-		address common.Address,
-	) (*ethereum.Wei, error) {
-		ctx, cancelCtx := context.WithTimeout(
-			context.Background(),
-			1*time.Minute,
-		)
-		defer cancelCtx()
-
-		balance, err := ethereumChain.client.BalanceAt(ctx, address, nil)
-		if err != nil {
-			return nil, err
-		}
-
-		return ethereum.WrapWei(balance), nil
-	}
-
-	return ethutil.NewBalanceMonitor(weiBalanceOf), nil
 }

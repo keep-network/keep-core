@@ -3,12 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"math/big"
 	"time"
-
-	"github.com/ethereum/go-ethereum/common"
-
-	commoneth "github.com/keep-network/keep-common/pkg/chain/ethereum"
 
 	"github.com/keep-network/keep-core/pkg/diagnostics"
 	"github.com/keep-network/keep-core/pkg/metrics"
@@ -46,18 +41,6 @@ const (
 const startDescription = `Starts the Keep client in the foreground. Currently this only consists of the
    threshold relay client for the Keep random beacon.`
 
-// TODO: add `ethereum.Wei` function which call `WrapWei` internally
-// Values related with balance monitoring.
-// defaultBalanceAlertThreshold determines the alert threshold below which
-// the alert should be triggered.
-var defaultBalanceAlertThreshold = commoneth.WrapWei(
-	big.NewInt(500000000000000000),
-)
-
-// defaultBalanceMonitoringTick determines how often the monitoring
-// check should be triggered.
-const defaultBalanceMonitoringTick = 10 * time.Minute
-
 func init() {
 	StartCommand =
 		cli.Command{
@@ -79,6 +62,8 @@ func init() {
 // Start starts a node; if it's not a bootstrap node it will get the Node.URLs
 // from the config file
 func Start(c *cli.Context) error {
+	ctx := context.Background()
+
 	config, err := config.ReadConfig(c.GlobalString("config"))
 	if err != nil {
 		return fmt.Errorf("error reading config file: %v", err)
@@ -100,7 +85,7 @@ func Start(c *cli.Context) error {
 		)
 	}
 
-	chainProvider, err := ethereum.Connect(config.Ethereum)
+	chainProvider, err := ethereum.Connect(ctx, config.Ethereum)
 	if err != nil {
 		return fmt.Errorf("error connecting to Ethereum node: [%v]", err)
 	}
@@ -134,8 +119,6 @@ func Start(c *cli.Context) error {
 				"contract has been authorized to operate on the stake",
 		)
 	}
-
-	ctx := context.Background()
 
 	networkPrivateKey, _ := key.OperatorKeyToNetworkKey(
 		operator.ChainKeyToOperatorKey(ethereumKey),
@@ -176,7 +159,6 @@ func Start(c *cli.Context) error {
 
 	initializeMetrics(ctx, config, netProvider, stakeMonitor, ethereumKey.Address.Hex())
 	initializeDiagnostics(ctx, config, netProvider)
-	initializeBalanceMonitoring(ctx, chainProvider, config, ethereumKey.Address)
 
 	select {
 	case <-ctx.Done():
@@ -269,36 +251,4 @@ func initializeDiagnostics(
 
 	diagnostics.RegisterConnectedPeersSource(registry, netProvider)
 	diagnostics.RegisterClientInfoSource(registry, netProvider)
-}
-
-func initializeBalanceMonitoring(
-	ctx context.Context,
-	chainProvider chain.Handle,
-	config *config.Config,
-	address common.Address,
-) {
-	balanceMonitor, err := ethereum.BalanceMonitor(chainProvider)
-	if err != nil {
-		logger.Errorf("could not get balance monitor [%v]", err)
-		return
-	}
-
-	alertThreshold := defaultBalanceAlertThreshold
-	if config.Ethereum.BalanceAlertThreshold != nil {
-		alertThreshold = config.Ethereum.BalanceAlertThreshold
-	}
-
-	balanceMonitor.Observe(
-		ctx,
-		address,
-		alertThreshold,
-		defaultBalanceMonitoringTick,
-	)
-
-	logger.Infof(
-		"started balance monitoring for address [%v] "+
-			"with the alert threshold set to [%v] wei",
-		address.Hex(),
-		alertThreshold,
-	)
 }
