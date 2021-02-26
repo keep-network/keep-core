@@ -1,4 +1,5 @@
 import WalletConnect from "@walletconnect/web3-provider"
+import BigNumber from "bignumber.js"
 import { AbstractConnector } from "./abstract-connector"
 import { WALLETS } from "../constants/constants"
 import { getRPCRequestPayload } from "./utils"
@@ -38,7 +39,8 @@ export class WalletConnectConnector extends AbstractConnector {
       const response = await this.provider.handleReadRequests(
         getRPCRequestPayload("eth_chainId")
       )
-      return response.result
+      // In case the provider returns chainId in hex.
+      return new BigNumber(response.result).toString()
     } catch (error) {
       throw error
     }

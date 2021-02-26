@@ -1,6 +1,7 @@
 import Web3ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
+import BigNumber from "bignumber.js"
 import { getWsUrl, getRPCRequestPayload } from "./utils"
 
 import clone from "clone"
@@ -28,11 +29,34 @@ export class AbstractConnector {
   }
 
   getChainId = async () => {
-    throw Error("Implement first")
+    const chainIdDeferred = new Deferred()
+    this.provider.sendAsync(
+      getRPCRequestPayload("eth_chainId"),
+      (error, response) => {
+        if (error) {
+          chainIdDeferred.reject(error)
+        } else {
+          // Convert response to `BigNumber` in case the provider returns chainId in hex.
+          chainIdDeferred.resolve(new BigNumber(response.result).toString())
+        }
+      }
+    )
+    return await chainIdDeferred.promise
   }
 
   getNetworkId = async () => {
-    throw Error("Implement first")
+    const netIdDeferred = new Deferred()
+    this.provider.sendAsync(
+      getRPCRequestPayload("net_version"),
+      (error, response) => {
+        if (error) {
+          netIdDeferred.reject(error)
+        } else {
+          netIdDeferred.resolve(response.result)
+        }
+      }
+    )
+    return await netIdDeferred.promise
   }
 
   getProvider = () => {
@@ -109,35 +133,5 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
       numberOfAccounts,
       accountsOffSet
     )
-  }
-
-  getChainId = async () => {
-    const chainIdDeferred = new Deferred()
-    this.provider.sendAsync(
-      getRPCRequestPayload("eth_chainId"),
-      (error, response) => {
-        if (error) {
-          chainIdDeferred.reject(error)
-        } else {
-          chainIdDeferred.resolve(response.result)
-        }
-      }
-    )
-    return await chainIdDeferred.promise
-  }
-
-  getNetworkId = async () => {
-    const netIdDeferred = new Deferred()
-    this.provider.sendAsync(
-      getRPCRequestPayload("net_version"),
-      (error, response) => {
-        if (error) {
-          netIdDeferred.reject(error)
-        } else {
-          netIdDeferred.resolve(response.result)
-        }
-      }
-    )
-    return await netIdDeferred.promise
   }
 }

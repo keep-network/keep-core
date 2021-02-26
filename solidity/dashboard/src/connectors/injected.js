@@ -1,5 +1,6 @@
 import { AbstractConnector } from "./abstract-connector"
 import { WALLETS } from "../constants/constants"
+import BigNumber from "bignumber.js"
 
 class InjectedConnector extends AbstractConnector {
   constructor() {
@@ -36,7 +37,9 @@ class InjectedConnector extends AbstractConnector {
   }
 
   getChainId = async () => {
-    return await this.provider.request({ method: "eth_chainId" })
+    const chainId = await this.provider.request({ method: "eth_chainId" })
+    // In case the provider returns chainId in hex.
+    return new BigNumber(chainId).toString()
   }
 
   getNetworkId = async () => {
