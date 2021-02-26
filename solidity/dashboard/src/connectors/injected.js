@@ -12,7 +12,6 @@ class InjectedConnector extends AbstractConnector {
       throw new Error("window.ethereum provider not found")
     }
 
-    this.provider = window.provider
     // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
     this.provider.autoRefreshOnNetworkChange = false
 

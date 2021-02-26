@@ -10,7 +10,7 @@ const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
       walletName="MetaMask"
       iconDescription={null}
       description={
-        connector.getProvier()
+        connector.getProvider()
           ? "The MetaMask login screen will open in an external window."
           : "Please install the MetaMask extension"
       }
@@ -20,7 +20,7 @@ const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
       closeModal={closeModal}
       connectWithWalletOnMount
     >
-      {!connector.getProvier() && (
+      {!connector.getProvider() && (
         <a
           href="https://metamask.io"
           className="btn bt-lg btn-primary mt-3"
