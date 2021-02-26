@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build-test-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -63,7 +63,7 @@ jobs:
             gotestsum --junitfile /mnt/test-results/unit-tests.xml
 
       - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1.7
+        uses: EnricoMi/publish-unit-test-result-action@v1
         if: always() # guarantees that this action always runs, even if earlier steps fail
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -71,14 +71,25 @@ jobs:
           check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
           comment_on_pr: false # turns off commenting on Pull Requests
 
-      # This step is executed after the tests as we want to configure it eventually
-      # as image publication step.
-      - name: Build Docker Runtime Image
-        uses: docker/build-push-action@v2
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v1
         with:
-          tags: keep-client
+          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish Docker Runtime Image
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'keep-client-wip' # TODO: change later to 'keep-client'
+          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
+        with:
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: |
             revision=${{ github.sha }}
-          # TODO: Check branch name and publish to a registry accordingly to the
-          # environment.
-          # push: true # publish to registry
+          push: |
+            ${{ startsWith(github.ref, 'refs/heads/releases')
+              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
