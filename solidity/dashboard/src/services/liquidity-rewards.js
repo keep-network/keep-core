@@ -12,7 +12,7 @@ import {
   getBTCPriceInUSD,
 } from "./uniswap-api"
 import moment from "moment"
-import { add, fromPercentage, percentageOf } from "../utils/arithmetics.utils"
+import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
@@ -176,30 +176,16 @@ class UniswapLPRewards extends LiquidityRewards {
   calculateLPTokenBalance = async (lpBalance) => {
     const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
 
-    const shareOfUniswapPool = percentageOf(
-      lpBalance.toString(),
-      fromTokenUnit(pairData.totalSupply).toString()
-    )
-
-    const constantProduct = new BigNumber(pairData.reserve0).multipliedBy(
-      pairData.reserve1
-    )
-
-    const token0LiquidityPool = constantProduct
-      .div(pairData.token1Price)
-      .squareRoot()
-    const token1LiquidityPool = constantProduct
-      .multipliedBy(pairData.token1Price)
-      .squareRoot()
-
     return {
-      token0: fromPercentage(
-        shareOfUniswapPool,
-        token0LiquidityPool
+      token0: toTokenUnit(
+        new BigNumber(lpBalance)
+          .multipliedBy(pairData.reserve0)
+          .dividedBy(pairData.totalSupply)
       ).toString(),
-      token1: fromPercentage(
-        shareOfUniswapPool,
-        token1LiquidityPool
+      token1: toTokenUnit(
+        new BigNumber(lpBalance)
+          .multipliedBy(pairData.reserve1)
+          .dividedBy(pairData.totalSupply)
       ).toString(),
     }
   }
