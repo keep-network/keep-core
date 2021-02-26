@@ -1,7 +1,7 @@
 /** @typedef { import("web3").default } Web3 */
 /** @typedef { import("web3-eth-contract").Contract } Web3Contract */
 /** @typedef { import("@keep-network/tbtc.js/src/EthereumHelpers.js").TruffleArtifact} TruffleArtifact */
-/** @typedef { import("@keep-network/tbtc.js/src/EthereumHelpers.js").Contract } EthereumContract */
+/** @typedef { import("@keep-network/tbtc.js/src/EthereumHelpers.js").Contract } ContractInstance */
 
 import { EthereumHelpers } from "@keep-network/tbtc.js"
 
@@ -23,7 +23,7 @@ export class Contract {
    * address provided in contract artifact. Throws if the artifact does not
    * contain deployment information for the specified network id.
    *
-   * @return {Promise<EthereumContract>} A contract ready for usage with web3 for the
+   * @return {Promise<ContractInstance>} A contract ready for usage with web3 for the
    * given network and artifact.
    */
   async deployed() {
@@ -39,7 +39,7 @@ export class Contract {
   /**
    *
    * @param {string} address Address at which contract was deployed.
-   * @return {Promise<EthereumContract>} A contract ready for usage.
+   * @return {Promise<ContractInstance>} A contract ready for usage.
    */
   async at(address) {
     const { buildContract } = EthereumHelpers

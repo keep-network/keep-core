@@ -75,7 +75,7 @@ export class KeepTokenTruthSource extends ITruthSource {
    * Filters addresses based on the rules defined for sources of truth. Ignores
    * addresses of known Keep contracts for which actual holders are resolved.
    * @param {Set<Address>} addresses Token holders addresses.
-   * @return {Set<Address>}
+   * @return {Set<Address>} Filtered set of addresses.
    */
   async filterHolders(addresses) {
     logger.info(`filter holders`)
