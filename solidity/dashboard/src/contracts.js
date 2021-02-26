@@ -163,11 +163,11 @@ export function Deferred() {
   }
 }
 
-let ContractsDeferred = new Deferred()
-let Web3Deferred = new Deferred()
+const ContractsDeferred = new Deferred()
+const Web3Deferred = new Deferred()
 
-export let Web3Loaded = Web3Deferred.promise
-export let ContractsLoaded = ContractsDeferred.promise
+export const Web3Loaded = Web3Deferred.promise
+export const ContractsLoaded = ContractsDeferred.promise
 
 export const resolveWeb3Deferred = (web3) => {
   Web3Deferred.resolve(web3)
@@ -177,30 +177,7 @@ export const resovleContractsDeferred = (contracts) => {
   ContractsDeferred.resolve(contracts)
 }
 
-export async function getContracts(web3) {
-  // This is a workaround for `web3.eth.net.getId()`, since on local machine
-  // returns unexpected values(eg. 105) and after calling this method the web3
-  // cannot call any other function eq `getTransaction` and doesnt throw errors.
-  // This is probably problem with `WebocketProvider`, because if we replace it
-  // with `RpcSubprovider` the result will be as expected (eg. for Mainnet
-  // returns 1).
-  const netIdDeferred = new Deferred()
-  web3.currentProvider.sendAsync(
-    {
-      jsonrpc: "2.0",
-      method: "net_version",
-      params: [],
-      id: new Date().getTime(),
-    },
-    (error, response) => {
-      if (error) {
-        netIdDeferred.reject(error)
-      } else {
-        netIdDeferred.resolve(response.result)
-      }
-    }
-  )
-  const netId = await netIdDeferred.promise
+export async function getContracts(web3, netId) {
   if (netId.toString() !== getFirstNetworkIdFromArtifact()) {
     console.error(
       `network id: ${netId}; expected network id ${getFirstNetworkIdFromArtifact()}`

@@ -5,6 +5,7 @@ import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
 import { connect } from "react-redux"
 import { WALLETS } from "../constants/constants"
+import { getNetworkName } from "../utils/ethereum.utils"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -31,8 +32,15 @@ class Web3ContextProvider extends React.Component {
     let web3
     let yourAddress
     let contracts
+    let networkId
+    let chainId
     try {
       const accounts = await connector.enable()
+      networkId = await connector.getNetworkId()
+      chainId = await connector.getChainId()
+      console.log(
+        `Connected to the network; chainId: ${chainId.toString()}, networkId: ${networkId}`
+      )
       yourAddress = accounts[0]
 
       web3 = new Web3(connector.getProvider())
@@ -45,7 +53,7 @@ class Web3ContextProvider extends React.Component {
     }
 
     try {
-      contracts = await getContracts(web3)
+      contracts = await getContracts(web3, networkId)
     } catch (error) {
       this.setState({
         isFetching: false,
@@ -64,7 +72,9 @@ class Web3ContextProvider extends React.Component {
     this.setState({
       web3,
       yourAddress,
-      networkType: await web3.eth.net.getNetworkType(),
+      networkType: getNetworkName(chainId),
+      chainId,
+      networkId,
       ...contracts,
       utils: web3.utils,
       eth: web3.eth,
