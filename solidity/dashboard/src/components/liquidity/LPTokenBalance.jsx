@@ -4,6 +4,7 @@ import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import { formatPercentage } from "../../utils/general.utils"
 import Tooltip from "../Tooltip"
+import { toTokenUnit } from "../../utils/token.utils"
 
 const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
   const formattedLPTokenBalance = useMemo(() => {
@@ -14,8 +15,8 @@ const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
     const token1 = formatPercentage(token1BN, 0)
 
     return {
-      token0,
-      token1,
+      token0: toTokenUnit(token0),
+      token1: toTokenUnit(token1),
     }
   }, [lpTokenBalance.token0, lpTokenBalance.token1])
 

@@ -177,16 +177,14 @@ class UniswapLPRewards extends LiquidityRewards {
     const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
 
     return {
-      token0: toTokenUnit(
-        new BigNumber(lpBalance)
-          .multipliedBy(pairData.reserve0)
-          .dividedBy(pairData.totalSupply)
-      ).toString(),
-      token1: toTokenUnit(
-        new BigNumber(lpBalance)
-          .multipliedBy(pairData.reserve1)
-          .dividedBy(pairData.totalSupply)
-      ).toString(),
+      token0: new BigNumber(lpBalance)
+        .multipliedBy(pairData.reserve0)
+        .dividedBy(pairData.totalSupply)
+        .toString(),
+      token1: new BigNumber(lpBalance)
+        .multipliedBy(pairData.reserve1)
+        .dividedBy(pairData.totalSupply)
+        .toString(),
     }
   }
 }
