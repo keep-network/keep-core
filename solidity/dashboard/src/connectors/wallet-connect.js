@@ -1,5 +1,7 @@
 import WalletConnect from "@walletconnect/web3-provider"
 import { AbstractConnector } from "./abstract-connector"
+import { WALLETS } from "../constants/constants"
+import { getRPCRequestPayload } from "./utils"
 
 export class WalletConnectConnector extends AbstractConnector {
   constructor(
@@ -10,7 +12,7 @@ export class WalletConnectConnector extends AbstractConnector {
       },
     }
   ) {
-    super()
+    super(WALLETS.WALLET_CONNECT.name)
     this.provider = new WalletConnect(options)
   }
 
@@ -31,23 +33,23 @@ export class WalletConnectConnector extends AbstractConnector {
     await this.provider.disconnect()
   }
 
-  sendAsync = async (payload, callback) => {
-    return await this.provider.sendAsync(payload, callback)
-  }
-
   getChainId = async () => {
-    return this.provider.chainId
+    try {
+      const response = await this.provider.handleReadRequests(
+        getRPCRequestPayload("eth_chainId")
+      )
+      return response.result
+    } catch (error) {
+      throw error
+    }
   }
 
   getNetworkId = async () => {
     try {
-      const response = await this.provider.handleReadRequests({
-        jsonrpc: "2.0",
-        method: "net_version",
-        params: [],
-        id: new Date().getTime(),
-      })
-      return response.result.toString(16)
+      const response = await this.provider.handleReadRequests(
+        getRPCRequestPayload("net_version")
+      )
+      return response.result
     } catch (error) {
       throw error
     }

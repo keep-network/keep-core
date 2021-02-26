@@ -77,3 +77,22 @@ export function displayEthAmount(
 }
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
+export const getNetworkName = (chainId) => {
+  switch (chainId) {
+    case 1:
+      return "main net"
+    case 2:
+      return "morden"
+    case 3:
+      return "ropsten"
+    case 4:
+      return "rinkeby"
+    case 5:
+      return "goerli"
+    case 42:
+      return "kovan"
+    default:
+      return "private"
+  }
+}

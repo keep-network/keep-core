@@ -1,9 +1,10 @@
 import Web3ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
-import { getWsUrl } from "./utils"
+import { getWsUrl, getRPCRequestPayload } from "./utils"
 
 import clone from "clone"
+import { Deferred } from "../contracts"
 
 const DEFAULT_NUM_ADDRESSES_TO_FETCH = 15
 
@@ -110,12 +111,33 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
     )
   }
 
-  // TODO
-  // getChainId = async () => {
-  //   throw Error("Implement first")
-  // }
+  getChainId = async () => {
+    const chainIdDeferred = new Deferred()
+    this.provider.sendAsync(
+      getRPCRequestPayload("eth_chainId"),
+      (error, response) => {
+        if (error) {
+          chainIdDeferred.reject(error)
+        } else {
+          chainIdDeferred.resolve(response.result)
+        }
+      }
+    )
+    return await chainIdDeferred.promise
+  }
 
-  // getNetworkId = async () => {
-  //   throw Error("Implement first")
-  // }
+  getNetworkId = async () => {
+    const netIdDeferred = new Deferred()
+    this.provider.sendAsync(
+      getRPCRequestPayload("net_version"),
+      (error, response) => {
+        if (error) {
+          netIdDeferred.reject(error)
+        } else {
+          netIdDeferred.resolve(response.result)
+        }
+      }
+    )
+    return await netIdDeferred.promise
+  }
 }

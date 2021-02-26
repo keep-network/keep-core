@@ -36,14 +36,12 @@ class InjectedConnector extends AbstractConnector {
     }
   }
 
-  // TODO
   getChainId = async () => {
-    throw Error("Implement first")
+    return await this.provider.request({ method: "eth_chainId" })
   }
 
-  // TODO
   getNetworkId = async () => {
-    throw Error("Implement first")
+    return await this.provider.request({ method: "net_version" })
   }
 }
 

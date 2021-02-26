@@ -38,3 +38,12 @@ export const getWsUrl = () => {
   }
   return config.networks[getChainId()].wsURL
 }
+
+export const getRPCRequestPayload = (method, params = []) => {
+  return {
+    jsonrpc: "2.0",
+    method,
+    params,
+    id: new Date().getTime(),
+  }
+}
