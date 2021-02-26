@@ -27,7 +27,6 @@ const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
       walletName="Ledger"
       descriptionIcon={<Icons.LedgerDevice className="mb3" />}
       description="Plug in Ledger device and unlock."
-      providerName="LEDGER"
       connector={connector[ledgerVersion]}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}

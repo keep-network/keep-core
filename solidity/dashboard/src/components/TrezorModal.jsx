@@ -24,7 +24,6 @@ const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
       descriptionIcon={<Icons.TrezorDevice className="mb3" />}
       description="Plug in your Trezor device and unlock. If the setup screen doesn’t
         load right away, go to Trezor setup:"
-      providerName="TREZOR"
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}

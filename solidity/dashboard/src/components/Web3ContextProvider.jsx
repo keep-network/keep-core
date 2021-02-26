@@ -4,6 +4,7 @@ import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
 import { connect } from "react-redux"
+import { WALLETS } from "../constants/constants"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -11,7 +12,6 @@ class Web3ContextProvider extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      provider: null,
       web3: null,
       isFetching: false,
       yourAddress: "",
@@ -26,7 +26,7 @@ class Web3ContextProvider extends React.Component {
     }
   }
 
-  connectAppWithWallet = async (connector, providerName) => {
+  connectAppWithWallet = async (connector) => {
     this.setState({ isFetching: true })
     let web3
     let yourAddress
@@ -53,7 +53,8 @@ class Web3ContextProvider extends React.Component {
       })
       throw error
     }
-    if (providerName === "METAMASK") {
+
+    if (connector.name === WALLETS.METAMASK.name) {
       web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
       web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
     }
@@ -62,7 +63,6 @@ class Web3ContextProvider extends React.Component {
 
     this.setState({
       web3,
-      provider: providerName,
       yourAddress,
       networkType: await web3.eth.net.getNetworkType(),
       ...contracts,
@@ -76,7 +76,6 @@ class Web3ContextProvider extends React.Component {
 
   abortWalletConnection = () => {
     this.setState({
-      provider: null,
       web3: null,
       isFetching: false,
       yourAddress: "",
@@ -92,8 +91,8 @@ class Web3ContextProvider extends React.Component {
   }
 
   connectAppWithAccount = async () => {
-    const { connector, provider } = this.state
-    await this.connectAppWithWallet(connector, provider)
+    const { connector } = this.state
+    await this.connectAppWithWallet(connector)
   }
 
   refreshProvider = async ([yourAddress]) => {

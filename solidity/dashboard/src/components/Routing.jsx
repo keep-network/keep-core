@@ -71,12 +71,11 @@ const CustomRoute = ({
   withConnectWalletGuard = false,
   ...componentProps
 }) => {
-  const { yourAddress, provider } = useWeb3Context()
+  const { isConnected } = useWeb3Context()
 
   return (
     <Route path={path} exact={exact}>
-      {!withConnectWalletGuard ||
-      (withConnectWalletGuard && yourAddress && provider) ? (
+      {!withConnectWalletGuard || (withConnectWalletGuard && isConnected) ? (
         <Component routes={Component.route.pages} {...componentProps} />
       ) : (
         <EmptyStateComponent {...Component.route} />

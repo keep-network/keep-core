@@ -19,21 +19,12 @@ const WALLETS_OPTIONS = [
   {
     label: "MetaMask",
     icon: Icons.MetaMask,
-    providerName: "METAMASK",
-    modalProps: {
-      iconDescription: null,
-      btnText: "install extension",
-      btnLink: "https://metamask.io",
-      description:
-        "The MetaMask login screen will open in an external window. If it doesn’t load right away, click below to install:",
-    },
     isHardwareWallet: false,
     connector: new InjectedConnector(),
   },
   {
     label: "Ledger",
     icon: Icons.Ledger,
-    providerName: "LEDGER",
     isHardwareWallet: true,
     connector: {
       LEDGER_LIVE: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
@@ -43,7 +34,6 @@ const WALLETS_OPTIONS = [
   {
     label: "Trezor",
     icon: Icons.Trezor,
-    providerName: "TREZOR",
     isHardwareWallet: true,
     connector: new TrezorConnector(),
   },
@@ -51,7 +41,6 @@ const WALLETS_OPTIONS = [
     label: "WalletConnect",
     // TODO icon
     icon: Icons.Trezor,
-    providerName: "WALLET_CONNECT",
     isHardwareWallet: false,
     connector: new WalletConnectConnector(),
   },
@@ -65,13 +54,7 @@ const WalletOptions = () => {
 
 const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
-const Wallet = ({
-  label,
-  icon: IconComponent,
-  providerName,
-  modalProps,
-  connector,
-}) => {
+const Wallet = ({ label, icon: IconComponent, connector }) => {
   const { openModal, closeModal } = useModal()
   const { connectAppWithWallet, abortWalletConnection } = useWeb3Context()
 
@@ -82,7 +65,7 @@ const Wallet = ({
 
   const renderModalContent = () => {
     const defaultProps = { connector, closeModal, connectAppWithWallet }
-    switch (providerName) {
+    switch (connector.name) {
       case WALLETS.LEDGER.name:
         return <LedgerModal {...defaultProps} />
       case WALLETS.TREZOR.name:

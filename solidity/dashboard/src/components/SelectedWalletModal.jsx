@@ -61,7 +61,7 @@ const SelectedWalletModal = ({
     if (connector && connectWithWalletOnMount) {
       setIsConnecting(true)
       wait(1000) // Delay request and show loading indicator.
-        .then(() => connectAppWithWallet(connector, providerName))
+        .then(() => connectAppWithWallet(connector))
         .then(() => {
           if (shouldSetState) {
             setIsConnecting(false)
@@ -88,7 +88,6 @@ const SelectedWalletModal = ({
   }, [
     connector,
     connectAppWithWallet,
-    providerName,
     closeModal,
     showMessage,
     connectWithWalletOnMount,
@@ -103,7 +102,7 @@ const SelectedWalletModal = ({
     try {
       connector.defaultAccount = account
       setIsConnecting(true)
-      await connectAppWithWallet(connector, providerName)
+      await connectAppWithWallet(connector)
       setIsConnecting(false)
       closeModal()
     } catch (error) {

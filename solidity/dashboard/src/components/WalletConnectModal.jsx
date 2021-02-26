@@ -15,7 +15,6 @@ const WalletConnectModal = ({
       iconDescription={null}
       // TODO
       description={"desc"}
-      providerName={WALLETS.WALLET_CONNECT.name}
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}

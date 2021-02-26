@@ -1,7 +1,6 @@
 import React from "react"
 import SelectedWalletModal from "./SelectedWalletModal"
 import * as Icons from "./Icons"
-import { WALLETS } from "../constants/constants"
 
 const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
   return (
@@ -14,7 +13,6 @@ const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
           ? "The MetaMask login screen will open in an external window."
           : "Please install the MetaMask extension"
       }
-      providerName={WALLETS.METAMASK.name}
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}
