@@ -14,7 +14,10 @@ import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
 import { fromTokenUnit } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
-import { fetchAvailableTopUps } from "../services/top-ups.service"
+import {
+  fetchAvailableTopUps,
+  isTopUpReadyToBeCommitted,
+} from "../services/top-ups.service"
 import { isEmptyArray } from "../utils/array.utils"
 import { showMessage } from "../actions/messages"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -179,14 +182,20 @@ function* fetchTopUps() {
     }
 
     yield put({ type: "staking/fetch_top_ups_start" })
-    const { delegations, undelegations } = yield select(
+    const { delegations, undelegations, initializationPeriod } = yield select(
       (state) => state.staking
     )
     const operators = [...undelegations, ...delegations].map(
       ({ operatorAddress }) => operatorAddress
     )
     const topUps = yield call(fetchAvailableTopUps, operators)
-    yield put({ type: "staking/fetch_top_ups_success", payload: topUps })
+    yield put({
+      type: "staking/fetch_top_ups_success",
+      payload: topUps.map((_) => ({
+        ..._,
+        readyToBeCommitted: isTopUpReadyToBeCommitted(_, initializationPeriod),
+      })),
+    })
   } catch (error) {
     yield* logError("staking/fetch_top_ups_failure", error)
   }
@@ -210,32 +219,34 @@ function* notifyTopUpReadyToBeCommitted() {
     (state) => state.staking.initializationPeriod
   )
 
-  const topUpsReadyToCommit = topUps.filter(({ createdAt }) =>
-    moment
-      .unix(createdAt)
-      .add(initializationPeriod, "seconds")
-      .isBefore(moment())
+  const topUpsReadyToCommit = topUps.filter((topUp) =>
+    isTopUpReadyToBeCommitted(topUp, initializationPeriod)
   )
 
   if (isEmptyArray(topUpsReadyToCommit)) {
     return
   }
 
-  const { delegations, undelegations } = yield select((state) => state.staking)
+  yield put({
+    type: "staking/top_ups_ready_to_be_committed",
+    payload: topUpsReadyToCommit,
+  })
+
+  const { delegations } = yield select((state) => state.staking)
 
   let isFromLiquidTokens = false
-  const staking = [...delegations, ...undelegations]
   for (const { operatorAddress } of topUpsReadyToCommit) {
     if (!isFromLiquidTokens) {
-      isFromLiquidTokens = staking.some(
+      isFromLiquidTokens = delegations.some(
         (_) =>
           isSameEthAddress(_.operatorAddress, operatorAddress) && !_.isFromGrant
       )
     }
-    const stake = staking.find(
+    const stake = delegations.find(
       (_) =>
         isSameEthAddress(_.operatorAddress, operatorAddress) && _.isFromGrant
     )
+
     if (stake) {
       yield put(
         showMessage({

@@ -1,4 +1,5 @@
 import moment from "moment"
+import web3Utils from "web3-utils"
 import { add } from "../utils/arithmetics.utils"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -116,6 +117,11 @@ const stakingReducer = (state = initialState, action) => {
         ),
         delegations: topUpCompleted([...state.delegations], action.payload),
       }
+    case "staking/top_ups_ready_to_be_committed":
+      return {
+        ...state,
+        topUps: topUpsReadyToBeCommitted([...state.topUps], action.payload),
+      }
     default:
       return state
   }
@@ -150,7 +156,7 @@ const topUpInitiated = (topUps, { operator, topUp }) => {
       {
         operatorAddress: operator,
         availableTopUpAmount: topUp,
-        createdAt: moment.unix(),
+        createdAt: moment().unix(),
       },
       ...topUps,
     ]
@@ -160,7 +166,7 @@ const topUpInitiated = (topUps, { operator, topUp }) => {
     topUpToUpdate.availableTopUpAmount,
     topUp
   )
-  topUpToUpdate.createdAt = moment.unix()
+  topUpToUpdate.createdAt = moment().unix()
   topUps[indexInArray] = topUpToUpdate
 
   return topUps
@@ -180,4 +186,19 @@ const topUpCompleted = (delegations, { operator, newAmount }) => {
   delegations[indexInArray] = { ...delegationsToUpdate, amount: newAmount }
 
   return delegations
+}
+
+const topUpsReadyToBeCommitted = (topUps, topUpsReadyToBeCommitted) => {
+  const topUpsReadyToBeCommittedSet = new Set(
+    topUpsReadyToBeCommitted.map((_) =>
+      web3Utils.toChecksumAddress(_.operatorAddress)
+    )
+  )
+  return topUps.map((topUp) =>
+    topUpsReadyToBeCommittedSet.has(
+      web3Utils.toChecksumAddress(topUp.operatorAddress)
+    )
+      ? { ...topUp, readyToBeCommitted: true }
+      : topUp
+  )
 }
