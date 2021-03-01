@@ -27,11 +27,6 @@ function* removeMessage(action) {
         break
     }
   }
-  yield put({
-    type:
-      "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
-    payload: [],
-  })
 }
 
 export function* showMessageSaga() {
