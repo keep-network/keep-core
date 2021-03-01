@@ -133,9 +133,7 @@ export const Message = ({
             </Banner.Action>
           )}
         </div>
-        <Banner.CloseIcon
-          onClick={() => onMessageClose(messageId)}
-        />
+        <Banner.CloseIcon onClick={() => onMessageClose(messageId)} />
       </div>
     </Banner>
   )

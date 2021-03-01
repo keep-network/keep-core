@@ -11,7 +11,7 @@ function* addMessage(action) {
 }
 
 function* removeMessage(action) {
-  yield put({ type: REMOVE_MESSAGE, payload: action.payload})
+  yield put({ type: REMOVE_MESSAGE, payload: action.payload })
 }
 
 export function* showMessageSaga() {

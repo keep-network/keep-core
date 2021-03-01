@@ -7,7 +7,6 @@ import { useDispatch, useSelector } from "react-redux"
 const LiquidityRewardsEarnedMessage = ({
   sticky,
   messageId,
-  messageType,
   onMessageClose,
 }) => {
   const {
