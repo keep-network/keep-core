@@ -1,62 +1,64 @@
 /** @typedef { import("../lib/context.js").Context } Context */
 /** @typedef { import("../lib/ethereum-helper").Address } Address */
 
-import { ITruthSource } from "./index.js"
+import { ITruthSource, AddressesResolver } from "./truth-source.js"
 import { Contract } from "../lib/contract-helper.js"
 import { logger } from "../lib/winston.js"
+import { getPastEvents } from "../lib/ethereum-helper.js"
+import { dumpDataToFile } from "../lib/file-helper.js"
 
-import { getPastEvents, callWithRetry } from "../lib/ethereum-helper.js"
-import { writeFileSync, readFileSync } from "fs"
-import BN from "bn.js"
+import { EthereumHelpers } from "@keep-network/tbtc.js"
+const { callWithRetry } = EthereumHelpers
 
-import TokenStakingJson from "@keep-network/keep-core/artifacts/TokenStaking.json"
-import { mapToObject } from "../lib/map-helper.js"
+import Web3 from "web3"
+const { toBN } = Web3.utils
 
-// import { toBN } from "web3-utils" FIXME: workaround
-import web3Utils from "web3-utils"
-const { toBN } = web3Utils
+import TokenStakingJSON from "@keep-network/keep-core/artifacts/TokenStaking.json"
 
 const TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH =
   "./tmp/token-staking-stakers.json"
 const TOKEN_STAKING_BALANCES_DUMP_PATH = "./tmp/token-staking-balances.json"
+const TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_DUMP_PATH =
+  "./tmp/token-staking-unknown_owners_contracts.json"
 
-/**
- * TODO: Write docs
- * Short description.
- * @typedef {ITruthSource} TokenStakingTruthSource
- */
+// TODO: Add support for the old TokenStaking contract.
 
 export class TokenStakingTruthSource extends ITruthSource {
-  /**
-   * @param {Context} context
-   * @param {Number} finalBlock
-   */
-  constructor(context, finalBlock) {
+  constructor(
+    /** @type {Context} */ context,
+    /** @type {Number} */ finalBlock
+  ) {
     super(context, finalBlock)
   }
 
   async initialize() {
-    const TokenStaking = new Contract(TokenStakingJson, this.context.web3)
+    this.context.addContract(
+      "TokenStaking",
+      new Contract(TokenStakingJSON, this.context.web3)
+    )
 
-    this.context.addContract("TokenStaking", TokenStaking)
-
-    this.tokenStaking = await this.context.contracts.TokenStaking.deployed()
+    this.tokenStaking = await this.context
+      .getContract("TokenStaking")
+      .deployed()
   }
 
   /**
-   * @returns {Map<Address,Address>} All historic token stake operators with owners.
+   * Finds all historic stakers based on StakeDelegated events emitted by TokenStaking
+   * contract.
+   * @return {Map<Address,Address>} All historic token stake operators with their
+   * owners.
    */
   async findHistoricStakeOperatorsOwners() {
     logger.info(
       `looking for StakeDelegated events emitted from ${this.tokenStaking.options.address} ` +
-        `between blocks ${this.context.contracts.deploymentBlock} and ${this.finalBlock}`
+        `between blocks ${this.context.deploymentBlock} and ${this.finalBlock}`
     )
 
     const events = await getPastEvents(
       this.context.web3,
       this.tokenStaking,
       "StakeDelegated",
-      this.context.contracts.deploymentBlock,
+      this.context.deploymentBlock,
       this.finalBlock
     )
     logger.info(`found ${events.length} stake delegated events`)
@@ -69,39 +71,60 @@ export class TokenStakingTruthSource extends ITruthSource {
       )
     })
 
-    logger.info(
-      `dump all historic stakes to a file: ${TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH}`
-    )
-    writeFileSync(
-      TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH,
-      JSON.stringify(mapToObject(operatorsOwnersMap), null, 2)
-    )
+    dumpDataToFile(operatorsOwnersMap, TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH)
 
     return operatorsOwnersMap
   }
 
   /**
-   * @param {Map<Address,Address>} operatorsOwnersMap Stake owners to filter.
-   * @returns {Map<Address,Address>} .
+   * Filters owners based on the rules defined for sources of truth. Ignores
+   * addresses of known Keep contracts for which actual holders are resolved.
+   * @param {Map<Address,Address>} operatorsOwnersMap Map of operators and their
+   * owners to filter.
+   * @return {Map<Address,Address>} Filtered map of operators and owners.
    */
   async filterOwners(operatorsOwnersMap) {
-    // FIXME: If the owner is TokenGrantStake or TokenStakingEscrow or StakingPortBacker
-    // contract, ignore the delegation as this amount has been already included in TokenGrant check
-    // Right now we're ignoring all the contracts, replace it with just the listed
-    // ones.
-    const filteredOwners = new Map()
-    for (const [operator, owner] of operatorsOwnersMap) {
-      const code = await this.context.web3.eth.getCode(owner)
+    logger.info(`filter owners`)
 
-      if (code == "0x") filteredOwners.set(operator, owner)
+    const filteredOperatorsOwners = new Map()
+    const unknownContracts = new Set()
+
+    for (const [operator, owner] of operatorsOwnersMap) {
+      const [
+        isIgnored,
+        addressType,
+      ] = await this.addressesResolver.isIgnoredAddress(owner)
+
+      logger.debug(
+        `operator's [${operator}] owner [${owner}] is ${addressType}`
+      )
+
+      if (isIgnored) {
+        continue // skip this operator
+      }
+
+      // If the address doesn't match any of ignored contracts store it for
+      // reference if we want to double check them.
+      if (addressType === AddressesResolver.UNKNOWN_CONTRACT)
+        unknownContracts.add(owner)
+
+      filteredOperatorsOwners.set(operator, owner)
     }
 
-    return filteredOwners
+    dumpDataToFile(
+      unknownContracts,
+      TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_DUMP_PATH
+    )
+
+    return filteredOperatorsOwners
   }
 
   /**
-   * @param {Map<Address,Address>} stakers Token holders to check.
-   * @returns {Map<Address,BN} Token holdings at the final blocks.
+   * Checks token balances for owners in the operators to owner map. It walks over
+   * delegations to operators, ignored delegations that were undelegated. Combines
+   * results for owners that have multiple operators.
+   * @param {Map<Address,Address>} stakers Map of operators and owners to check.
+   * @return {Map<Address,BN>} Token holdings at the final blocks.
    */
   async checkStakedValues(stakers) {
     logger.info(`check stake delegations at block ${this.finalBlock}`)
@@ -132,40 +155,33 @@ export class TokenStakingTruthSource extends ITruthSource {
         continue
       }
 
-      if (stakersBalances.has(owner)) {
-        logger.debug(`staker`)
-        stakersBalances.get(owner).iadd(amount)
-      } else {
-        stakersBalances.set(owner, amount)
+      if (!stakersBalances.has(owner)) {
+        stakersBalances.set(owner, toBN(0))
       }
+      stakersBalances.get(owner).iadd(amount)
 
       logger.debug(
-        `owner ${owner} staked ${stakersBalances.get(owner).toString()}`
+        `owner's ${owner} total stake: ${stakersBalances.get(owner).toString()}`
       )
     }
 
-    logger.info(
-      `dump staked balances to a file: ${TOKEN_STAKING_BALANCES_DUMP_PATH}`
-    )
-    writeFileSync(
-      TOKEN_STAKING_BALANCES_DUMP_PATH,
-      JSON.stringify(mapToObject(stakersBalances), null, 2)
-    )
+    dumpDataToFile(stakersBalances, TOKEN_STAKING_BALANCES_DUMP_PATH)
 
     return stakersBalances
   }
 
   /**
-   * @returns {Map<Address,BN>} Token holdings at the final blocks.
+   * Returns a map of addresses with their token holdings based on Token Staking.
+   * @return {Map<Address,BN>} Token holdings at the final blocks.
    */
   async getTokenHoldingsAtFinalBlock() {
     await this.initialize()
 
     const allStakeOwners = await this.findHistoricStakeOperatorsOwners()
 
-    const filteredStakeOwnersEOA = await this.filterOwners(allStakeOwners)
+    const filteredStakeOwners = await this.filterOwners(allStakeOwners)
 
-    const ownersBalances = await this.checkStakedValues(filteredStakeOwnersEOA)
+    const ownersBalances = await this.checkStakedValues(filteredStakeOwners)
     return ownersBalances
   }
 }

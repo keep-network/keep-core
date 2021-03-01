@@ -1,18 +1,17 @@
-/** @typedef { import("web3-eth-contract").Contract } Web3Contract */
 /** @typedef { import("web3").default } Web3 */
+/** @typedef { import("web3-eth-contract").Contract } Web3Contract */
+/** @typedef { import("@keep-network/tbtc.js/src/EthereumHelpers.js").TruffleArtifact} TruffleArtifact */
+/** @typedef { import("@keep-network/tbtc.js/src/EthereumHelpers.js").Contract } ContractInstance */
 
 import { EthereumHelpers } from "@keep-network/tbtc.js"
 
-/**
- * @typedef {Object} ContractArtifact
- * @property {JSON} artifact
- * @property {Web3} web3
- */
-
+import { getChainID } from "./ethereum-helper.js"
+import { logger } from "./winston.js"
 export class Contract {
   /**
-   * @param {JSON} artifact
-   * @param {Web3} web3
+   * @param {TruffleArtifact} artifact The Truffle artifact for the deployed
+   * contract.
+   * @param {Web3} web3 The Web3 instance to instantiate the contract on.
    */
   constructor(artifact, web3) {
     this.artifact = artifact
@@ -20,20 +19,27 @@ export class Contract {
   }
 
   /**
-   * @return {Web3Contract}
+   * Gets the Web3 Contract instance deployed to the current network under
+   * address provided in contract artifact. Throws if the artifact does not
+   * contain deployment information for the specified network id.
+   *
+   * @return {Promise<ContractInstance>} A contract ready for usage with web3 for the
+   * given network and artifact.
    */
   async deployed() {
     const { getDeployedContract } = EthereumHelpers
 
-    // const networkId = await web3.eth.net.getId()
-    const networkId = 1 // FIXME: Workaround
-
-    return getDeployedContract(this.artifact, this.web3, networkId)
+    return getDeployedContract(
+      this.artifact,
+      this.web3,
+      await getChainID(this.web3)
+    )
   }
 
   /**
-   * @param {string} address
-   * @return {Web3Contract}
+   *
+   * @param {string} address Address at which contract was deployed.
+   * @return {Promise<ContractInstance>} A contract ready for usage.
    */
   async at(address) {
     const { buildContract } = EthereumHelpers
@@ -42,21 +48,32 @@ export class Contract {
   }
 }
 
+/**
+ * Fetches deployment block number from a contract artifact.
+ *
+ * @param {TruffleArtifact} artifact Truffle deployment contract artifact.
+ * @param {Web3} web3 Web3 instance.
+ * @return {Number} Block number at which contract was deployed.
+ */
 export async function getDeploymentBlockNumber(artifact, web3) {
-  // const networkId = await web3.eth.net.getId()
-  const networkId = 1 // FIXME: Workaround
+  const chainID = await getChainID(web3)
+  logger.debug(`chain id: ${chainID}`)
 
-  const transactionHash = artifact.networks[networkId].transactionHash
+  if (!artifact.networks[chainID]) {
+    throw new Error(`artifact does not define network ${chainID}`)
+  }
+  if (!artifact.networks[chainID].transactionHash) {
+    throw new Error(`missing transaction hash for network ${chainID}`)
+  }
 
-  console.log("transactionHash", transactionHash)
+  const transactionHash = artifact.networks[chainID].transactionHash
 
-  console.log("web3", web3.version)
-
-  const transaction = await web3.eth
-    .getTransaction(transactionHash)
-    .catch((err) => {
-      console.error("DUPA", err)
-    })
+  const transaction = await web3.eth.getTransactionReceipt(transactionHash)
+  if (!(transaction && transaction.blockNumber)) {
+    throw new Error(
+      `failed to fetch block number for transaction ${transactionHash}`
+    )
+  }
 
   return transaction.blockNumber
 }

@@ -1,0 +1,86 @@
+# KEEP Token Tracker
+
+This is a tool for tracking KEEP Token ownership. It will walk over predefined
+sources of truth and inspect KEEP Token ownership at a specific block number.
+
+The tool returns a map of addresses with their total KEEP Token holdings.
+
+## Sources Of Truth
+
+Holders of the tokens can be externally owned accounts or contracts. It is
+necessary to resolve actual owner for tokens held by a contract.
+
+Following sources are currently defined:
+
+- <<KEEP Token>> contract
+- <<Token Staking>> contract
+- <<Token Grant>> contract
+- <<Liquidity Rewards>> contracts
+
+The list of supported sources of truth can be enhanced. For guidelines on 
+implementing additional sources please see <<Development>> section.
+
+
+### KEEP Token
+
+Scans `KeepToken` contract for any historic accounts that have held KEEP token.
+Iterates over the set of addresses and checks KEEP token balance at the specific
+final block.
+
+To avoid duplication with results of other source of truths lookups it ignores
+addresses that are contracts handled by the other sources.
+
+### Token Staking
+
+// TODO: Write docs
+// TODO: ADD OLD TOKEN STAKING SUPPORT
+
+### Token Grant
+
+// TODO: Write docs
+
+## Run
+
+### Prerequisites
+
+1. It requires node version greater than `14`: `nvm use 14`.
+
+2. Install dependencies: `npm install`.
+
+### Execute
+
+Following environment variables are expected to be configured:
+
+- `ETH_HOSTNAME` (required) - URL for Ethereum API
+
+- `ETH_ACCOUNT_PRIVATE_KEY` (optional) - ethereum account private key, required only
+if sending transactions to the chain.
+
+Following arguments are expected by the program:
+
+- `final-block` (required) - block at which calculations should be made
+
+Command example:
+
+```sh
+ETH_HOSTNAME="wss://eth-mainnet.ws.alchemyapi.io/v2/....." \
+  ETH_ACCOUNT_PRIVATE_KEY=..... \
+  ./bin/inspec-token-ownership.js --final-block 10000000
+```
+
+## Development
+
+// TODO: Write docs
+
+## Known Issues
+
+### error: artifact does not define network *
+
+Web3 provider may return invalid results for `getChainId()` function. The error
+looks like on this example:
+```
+debug: chain id: 11927526
+error: artifact does not define network 11927526
+```
+
+As a workaround rerun the script.

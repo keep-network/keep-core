@@ -1,21 +1,28 @@
 /** @typedef { import("../lib/context").Context } Context */
 /** @typedef { import("../lib/ethereum-helper").Address } Address */
 
-import { ITruthSource } from "./index.js"
-import { getPastEvents, callWithRetry } from "../lib/ethereum-helper.js"
-import { writeFileSync, readFileSync } from "fs"
 import BN from "bn.js"
-import { mapToObject } from "../lib/map-helper.js"
+import pAll from "p-all"
+
+import { ITruthSource, AddressesResolver } from "./truth-source.js"
+
+import { Contract } from "../lib/contract-helper.js"
+
+import { EthereumHelpers } from "@keep-network/tbtc.js"
+const { callWithRetry } = EthereumHelpers
+
+import { getPastEvents } from "../lib/ethereum-helper.js"
+import { dumpDataToFile } from "../lib/file-helper.js"
 import { logger } from "../lib/winston.js"
+
+import KeepTokenJSON from "@keep-network/keep-core/artifacts/KeepToken.json"
 
 const KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH = "./tmp/keep-token-holders.json"
 const KEEP_TOKEN_BALANCES_DUMP_PATH = "./tmp/keep-token-balances.json"
+const KEEP_TOKEN_UNKNOWN_HOLDERS_CONTRACTS_DUMP_PATH =
+  "./tmp/keep-token-unknown_holders_contracts.json"
 
-/**
- * TODO: Write docs
- * Short description.
- * @typedef {ITruthSource} KeepTokenTruthSource
- */
+const CONCURRENCY_LEVEL = 20
 
 export class KeepTokenTruthSource extends ITruthSource {
   /**
@@ -27,96 +34,180 @@ export class KeepTokenTruthSource extends ITruthSource {
   }
 
   async initialize() {
-    this.keepToken = await this.context.contracts.KeepToken.deployed()
+    this.context.addContract(
+      "KeepToken",
+      new Contract(KeepTokenJSON, this.context.web3)
+    )
+
+    this.keepToken = await this.context.getContract("KeepToken").deployed()
   }
 
   /**
-   * @returns {Array<Address>} All historic token holders.
-   */
+   * Finds all historic holders of KEEP token based on Transfer events.
+   * @return {Set<Address>} All historic token holders.
+   * */
   async findHistoricHolders() {
     logger.info(
       `looking for Transfer events emitted from ${this.keepToken.options.address} ` +
-        `between blocks ${this.context.contracts.deploymentBlock} and ${this.finalBlock}`
+        `between blocks ${this.context.deploymentBlock} and ${this.finalBlock}`
     )
 
     const events = await getPastEvents(
       this.context.web3,
       this.keepToken,
       "Transfer",
-      this.context.contracts.deploymentBlock,
+      this.context.deploymentBlock,
       this.finalBlock
     )
     logger.info(`found ${events.length} token transfer events`)
 
-    const allTokenHoldersSet = new Set()
-    events.forEach((event) => allTokenHoldersSet.add(event.returnValues.to))
+    const tokenHolders = new Set()
+    events.forEach((event) => tokenHolders.add(event.returnValues.to))
 
-    const allTokenHolders = Array.from(allTokenHoldersSet)
-    logger.info(`found ${allTokenHolders.length} unique historic holders`)
+    logger.info(`found ${tokenHolders.size} unique historic holders`)
 
-    logger.info(
-      `dump all historic token holders to a file: ${KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH}`
-    )
-    writeFileSync(
-      KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH,
-      JSON.stringify(allTokenHolders, null, 2)
-    )
+    dumpDataToFile(tokenHolders, KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH)
 
-    return allTokenHolders
+    return tokenHolders
   }
 
   /**
-   * @param {Array<Address>} tokenHolders Token holders to check.
-   * @returns {Map<Address,BN} Token holdings at the final blocks.
+   * Filters addresses based on the rules defined for sources of truth. Ignores
+   * addresses of known Keep contracts for which actual holders are resolved.
+   * @param {Set<Address>} addresses Token holders addresses.
+   * @return {Set<Address>} Filtered set of addresses.
+   */
+  async filterHolders(addresses) {
+    logger.info(`filter holders`)
+
+    const unknownContracts = new Set()
+
+    /**
+     *
+     * @param {AddressesResolver} addressesResolver
+     * @param {Address} address
+     */
+    const checkAddress = async (addressesResolver, address) => {
+      const [isIgnored, addressType] = await addressesResolver.isIgnoredAddress(
+        address
+      )
+
+      logger.debug(`${address} is ${addressType}`)
+
+      if (isIgnored) {
+        return false
+      }
+
+      // If the address doesn't match any of ignored contracts store it for
+      // reference if we want to double check them.
+      if (addressType === AddressesResolver.UNKNOWN_CONTRACT)
+        unknownContracts.add(address)
+
+      return true
+    }
+
+    // TODO: Consider moving addresses ignore out from soure of truth scripts to
+    // the very final step after we've got a combined map of holdings.
+    const concurrentAddressChecks = Array.from(addresses).map((address) => () =>
+      new Promise(async (resolve, reject) => {
+        await checkAddress(this.addressesResolver, address)
+          .then((result) => {
+            if (result) {
+              resolve(address)
+            } else {
+              resolve()
+            }
+          })
+          .catch(reject)
+      })
+    )
+
+    const filteredHolders = await pAll(concurrentAddressChecks, {
+      concurrency: CONCURRENCY_LEVEL,
+    })
+
+    dumpDataToFile(
+      unknownContracts,
+      KEEP_TOKEN_UNKNOWN_HOLDERS_CONTRACTS_DUMP_PATH
+    )
+
+    return new Set(filteredHolders.filter(Boolean)) // filter out empty entries
+  }
+
+  /**
+   * Checks token balance for addresses on the list.
+   * @param {Set<Address>} tokenHolders Token holders to check.
+   * @return {Map<Address,BN>} Token holdings at the final blocks.
    */
   async checkFinalHoldersBalances(tokenHolders) {
-    logger.info(`check token holding at block ${this.finalBlock}`)
+    logger.info(`check token holdings at block ${this.finalBlock}`)
+
+    const concurrentBalanceChecks = Array.from(tokenHolders).map(
+      (holder) => () =>
+        new Promise(async (resolve, reject) => {
+          callWithRetry(
+            this.keepToken.methods.balanceOf(holder),
+            undefined,
+            undefined,
+            this.finalBlock
+          )
+            .then((finalBalance) => {
+              logger.debug(`holder ${holder} balance ${finalBalance}`)
+              resolve({ holder: holder, balance: finalBalance })
+            })
+            .catch(reject)
+        })
+    )
+
+    let balances
+    try {
+      balances = await pAll(concurrentBalanceChecks, {
+        concurrency: CONCURRENCY_LEVEL,
+      })
+    } catch (err) {
+      throw new Error(`concurrent execution failed: ${err}`)
+    }
+
+    if (tokenHolders.size != balances.length) {
+      throw new Error(
+        `unexpected number of fetched holders balances; ` +
+          `expected: ${tokenHolders.size}, actual: ${balances.length}`
+      )
+    }
 
     /** @type {Map<Address,BN>} */
     const holdersBalances = new Map()
 
-    for (const holderAddress of tokenHolders) {
-      const finalBalance = new BN(
-        await callWithRetry(
-          this.keepToken.methods.balanceOf(holderAddress),
-          undefined,
-          undefined,
-          this.finalBlock
-        )
-      )
-
-      logger.debug(`${holderAddress}: ${finalBalance}`)
+    for (const entry of balances) {
+      const holder = entry.holder
+      const finalBalance = new BN(entry.balance)
 
       if (finalBalance.gtn(0)) {
-        holdersBalances.set(holderAddress, finalBalance)
+        holdersBalances.set(holder, finalBalance)
       }
     }
 
     logger.info(
-      `found ${holdersBalances.length} holders at block ${this.finalBlock}`
+      `found ${holdersBalances.size} holders at block ${this.finalBlock}`
     )
 
-    logger.info(
-      `dump token holdings to a file: ${KEEP_TOKEN_BALANCES_DUMP_PATH}`
-    )
-    writeFileSync(
-      KEEP_TOKEN_BALANCES_DUMP_PATH,
-      JSON.stringify(mapToObject(holdersBalances), null, 2)
-    )
+    dumpDataToFile(holdersBalances, KEEP_TOKEN_BALANCES_DUMP_PATH)
 
     return holdersBalances
   }
 
   /**
-   * @returns {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the final blocks.
    */
   async getTokenHoldingsAtFinalBlock() {
     await this.initialize()
 
     const allTokenHolders = await this.findHistoricHolders()
 
+    const filteredTokenHolders = await this.filterHolders(allTokenHolders)
+
     const holdersBalances = await this.checkFinalHoldersBalances(
-      allTokenHolders
+      filteredTokenHolders
     )
 
     return holdersBalances
