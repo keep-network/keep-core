@@ -12,7 +12,6 @@ function* addMessage(action) {
 }
 
 function* removeMessage(action) {
-  console.log("action", action)
   yield put({ type: REMOVE_MESSAGE, payload: action.payload.id })
   if (action.messageType) {
     // switch for future notification data clearance for other message types
