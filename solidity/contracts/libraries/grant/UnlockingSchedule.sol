@@ -13,12 +13,16 @@ library UnlockingSchedule {
         uint256 cliff
     ) internal pure returns (uint256) {
         bool cliffNotReached = _now < cliff;
-        if (cliffNotReached) { return 0; }
+        if (cliffNotReached) {
+            return 0;
+        }
 
         uint256 timeElapsed = _now.sub(start);
 
         bool unlockingPeriodFinished = timeElapsed >= duration;
-        if (unlockingPeriodFinished) { return grantedAmount; }
+        if (unlockingPeriodFinished) {
+            return grantedAmount;
+        }
 
         return grantedAmount.mul(timeElapsed).div(duration);
     }

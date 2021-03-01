@@ -1,48 +1,67 @@
-require('babel-register');
-require('babel-polyfill');
-const HDWalletProvider = require("@truffle/hdwallet-provider");
+require("babel-register")
+require("babel-polyfill")
+const HDWalletProvider = require("@truffle/hdwallet-provider")
+const Kit = require("@celo/contractkit")
 
 module.exports = {
   networks: {
     local: {
       host: "localhost",
       port: 8545,
-      network_id: "*"
+      network_id: "*",
     },
     keep_dev: {
-      provider: function() {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://localhost:8545")
+      provider: function () {
+        return new HDWalletProvider(
+          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
+          "http://localhost:8545"
+        )
       },
       gas: 6721975,
-      network_id: 1101
+      network_id: 1101,
     },
 
     keep_dev_vpn: {
-      provider: function() {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, "http://eth-tx-node.default.svc.cluster.local:8545")
+      provider: function () {
+        return new HDWalletProvider(
+          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
+          "http://eth-tx-node.default.svc.cluster.local:8545"
+        )
       },
       gas: 6721975,
-      network_id: 1101
+      network_id: 1101,
     },
 
     ropsten: {
-      provider: function() {
-        return new HDWalletProvider(process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY, process.env.ETH_HOSTNAME)
+      provider: function () {
+        return new HDWalletProvider(
+          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
+          process.env.ETH_HOSTNAME
+        )
       },
       gas: 8000000,
       network_id: 3,
-      skipDryRun: true
-    }
+      skipDryRun: true,
+    },
+
+    alfajores: {
+      provider: function () {
+        const kit = Kit.newKit("https://alfajores-forno.celo-testnet.org")
+        kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
+        return kit.web3.currentProvider
+      },
+      network_id: 44787,
+    },
   },
 
   mocha: {
     useColors: true,
-    reporter: 'eth-gas-reporter',
+    reporter: "eth-gas-reporter",
     reporterOptions: {
-      currency: 'USD',
+      currency: "USD",
       gasPrice: 21,
-      showTimeSpent: true
-    }
+      showTimeSpent: true,
+    },
   },
 
   compilers: {
@@ -50,8 +69,8 @@ module.exports = {
       version: "0.5.17",
       optimizer: {
         enabled: true,
-        runs: 200
-      }
-    }
-  }
-};
+        runs: 200,
+      },
+    },
+  },
+}

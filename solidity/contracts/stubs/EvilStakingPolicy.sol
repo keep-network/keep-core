@@ -9,7 +9,7 @@ import "../GrantStakingPolicy.sol";
 contract EvilStakingPolicy is GrantStakingPolicy {
     using SafeMath for uint256;
 
-    function getStakeableAmount (
+    function getStakeableAmount(
         uint256 _now,
         uint256 grantedAmount,
         uint256 duration,

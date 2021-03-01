@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 )
@@ -119,10 +120,10 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 					)
 				}
 
-				if len(signaturesSlice) != (SignatureSize * len(indicesSlice)) {
+				if len(signaturesSlice) != (ethutil.SignatureSize * len(indicesSlice)) {
 					t.Errorf(
 						"invalid signatures slice size\nexpected: %v\nactual:   %v\n",
-						(SignatureSize * len(indicesSlice)),
+						(ethutil.SignatureSize * len(indicesSlice)),
 						len(signaturesSlice),
 					)
 				}
@@ -131,7 +132,7 @@ func TestConvertSignaturesToChainFormat(t *testing.T) {
 			for i, actualMemberIndex := range indicesSlice {
 				memberIndex := chain.GroupMemberIndex(actualMemberIndex.Uint64())
 
-				actualSignature := signaturesSlice[SignatureSize*i : SignatureSize*(i+1)]
+				actualSignature := signaturesSlice[ethutil.SignatureSize*i : ethutil.SignatureSize*(i+1)]
 				if !bytes.Equal(
 					test.signaturesMap[memberIndex],
 					actualSignature,

@@ -2,6 +2,7 @@ import React, { useMemo, useContext } from "react"
 import BigNumber from "bignumber.js"
 import CircularProgressBar from "./CircularProgressBar"
 import { percentageOf, sub, lt } from "../utils/arithmetics.utils"
+import { formatPercentage } from "../utils/general.utils"
 
 const defaultValue = 0
 const totalDefaultValue = 1
@@ -134,7 +135,7 @@ export const renderProgressBarLegendItem = (item, index) => (
 const PercentageLabel = ({ text, className = "" }) => {
   const { value, total } = useProgressBarContext()
   const percentageOfValue = useMemo(
-    () => percentageOf(value, total).toString(),
+    () => formatPercentage(percentageOf(value, total)),
     [value, total]
   )
 

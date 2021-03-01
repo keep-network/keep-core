@@ -144,7 +144,7 @@ func TestNetworkPubKeyToAddress(t *testing.T) {
 
 	ethAddress := crypto.PubkeyToAddress(libp2pPrivateKey.PublicKey).String()
 
-	libp2pAddress := NetworkPubKeyToEthAddress(libp2pPublicKey)
+	libp2pAddress := NetworkPubKeyToChainAddress(libp2pPublicKey)
 
 	if ethAddress != libp2pAddress {
 		t.Errorf(

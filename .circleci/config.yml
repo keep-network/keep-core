@@ -36,6 +36,7 @@ jobs:
           root: /tmp/docs
           paths:
             - solidity/*
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) has been created as part of work on RFC-18
   build_client_and_test_go:
     executor: docker-git
     steps:
@@ -107,6 +108,8 @@ jobs:
           root: /tmp/keep-client
           paths:
             - contracts
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) 
+  # has been created as part of work on RFC-18
   publish_keep_client:
     executor: gcp-gcr/default
     steps:
@@ -211,7 +214,7 @@ jobs:
     executor: docker-node
     steps:
       - run:
-          name: "Rebuild downstream same-branch build(s)"
+          name: 'Rebuild downstream same-branch build(s)'
           command: |
             # CIRCLE_BRANCH || CIRCLE_TAG?
             # curl CIRCLE_API_BUILD/keep-tecdsa?branch=${CIRCLE_BRANCH}
@@ -229,7 +232,10 @@ jobs:
           name: Resolve latest contracts
           working_directory: ~/project/solidity/dashboard
           command: |
-            npm upgrade @keep-network/keep-core
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/keep-ecdsa \
+              @keep-network/tbtc
       - run:
           name: Run Docker build
           working_directory: ~/project/solidity/dashboard
@@ -333,7 +339,8 @@ workflows:
       - build_client_and_test_go:
           filters:
             branches:
-              ignore: master
+              ignore:
+                - master
           context: keep-dev
       - build_token_dashboard_dapp:
           filters:
@@ -365,109 +372,118 @@ workflows:
           requires:
             - build_token_dashboard_dapp
   build-test-migrate-publish-keep-test:
-      jobs:
-        - keep_test_approval:
-            type: approval
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-        - build_client_and_test_go:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - keep_test_approval
-        - build_initcontainer:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - migrate_contracts
-              - build_client_and_test_go
-        - migrate_contracts:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-        - publish_keep_client:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-              - build_initcontainer
-              - migrate_contracts
-        - publish_initcontainer_provision_keep_client:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-              - build_initcontainer
-              - migrate_contracts
-        - publish_contract_data:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_client_and_test_go
-              - migrate_contracts
-        - publish_npm_package:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - migrate_contracts
-        - trigger_downstream_builds:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - publish_npm_package
-        - build_token_dashboard_dapp:
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - publish_npm_package
-        - publish_token_dashboard_dapp:
-            context: keep-test
-            filters:
-              tags:
-                only: /^v.*/
-              branches:
-                only: /releases\/.*/
-            requires:
-              - build_token_dashboard_dapp
+    jobs:
+      - keep_test_approval:
+          type: approval
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+      - build_client_and_test_go:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - keep_test_approval
+      - build_initcontainer:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - migrate_contracts
+            - build_client_and_test_go
+      - migrate_contracts:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+      - publish_keep_client:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+            - build_initcontainer
+            - migrate_contracts
+      - publish_initcontainer_provision_keep_client:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+            - build_initcontainer
+            - migrate_contracts
+      - publish_contract_data:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_client_and_test_go
+            - migrate_contracts
+      - publish_npm_package:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - migrate_contracts
+      - trigger_downstream_builds:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - publish_npm_package
+  build-publish-dashboard-keep-test:
+    jobs:
+      - keep_test_approval:
+          type: approval
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+      - build_token_dashboard_dapp:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - keep_test_approval
+      - publish_token_dashboard_dapp:
+          context: keep-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /releases\/.*/
+          requires:
+            - build_token_dashboard_dapp
   docs:
     jobs:
       - generate_docs_tex

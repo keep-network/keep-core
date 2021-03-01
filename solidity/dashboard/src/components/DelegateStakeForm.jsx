@@ -1,5 +1,4 @@
 import React, { useState } from "react"
-import BigNumber from "bignumber.js"
 import { SubmitButton } from "./Button"
 import FormInput from "./FormInput"
 import { withFormik, useFormikContext } from "formik"
@@ -9,7 +8,7 @@ import {
   getErrorsObj,
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { displayAmount, fromTokenUnit, toTokenUnit } from "../utils/token.utils"
+import { displayAmount, fromTokenUnit } from "../utils/token.utils"
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
 import {
@@ -18,7 +17,8 @@ import {
 } from "../forms/form.utils.js"
 import { lte } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
-import Tag from "./Tag"
+import MaxAmountAddon from "./MaxAmountAddon"
+import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
 
 const DelegateStakeForm = ({
   onSubmit,
@@ -111,11 +111,8 @@ const TokensAmountField = ({
   minStake,
   stakeTokensValue,
 }) => {
-  const { setFieldValue } = useFormikContext()
+  const onAddonClick = useSetMaxAmountToken("stakeTokens", availableToStake)
 
-  const onAddonClick = () => {
-    setFieldValue("stakeTokens", toTokenUnit(availableToStake).toFixed(0, BigNumber.ROUND_DOWN))
-  }
   return (
     <div className="token-amount-wrapper">
       <div className="token-amount-field">
@@ -130,7 +127,9 @@ const TokensAmountField = ({
             minStake
           )} KEEP`}
           leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
-          inputAddon={<MaxStakeAddon onClick={onAddonClick} />}
+          inputAddon={
+            <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
+          }
         />
         <ProgressBar
           total={availableToStake}
@@ -149,10 +148,6 @@ const TokensAmountField = ({
       </div>
     </div>
   )
-}
-
-const MaxStakeAddon = ({ onClick }) => {
-  return <Tag IconComponent={Icons.Plus} text="Max Stake" onClick={onClick} />
 }
 
 const connectedWithFormik = withFormik({

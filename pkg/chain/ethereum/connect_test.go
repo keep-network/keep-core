@@ -5,13 +5,17 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 )
 
 func TestResolveContractByName(t *testing.T) {
 	config := ethereum.Config{
-		ContractAddresses: make(map[string]string),
+		Config: ethlike.Config{
+			ContractAddresses: make(map[string]string),
+		},
 	}
 
 	barbarianAddress := "0x0b185C37E1C9D01437c800a8B60fA0845742c271"

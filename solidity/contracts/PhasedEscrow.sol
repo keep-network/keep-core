@@ -27,22 +27,13 @@ contract PhasedEscrow is Ownable {
         token = _token;
     }
 
-    /// @notice Funds the escrow by transferring all of the approved tokens
-    ///         to the escrow.
-    function receiveApproval(
-        address _from,
-        uint256 _value,
-        address _token,
-        bytes memory
-    ) public {
-        require(IERC20(_token) == token, "Unsupported token");
-        token.safeTransferFrom(_from, address(this), _value);
-    }
-
     /// @notice Sets the provided address as a beneficiary allowing it to
     ///         withdraw all tokens from escrow. This function can be called only
     ///         by escrow owner.
-    function setBeneficiary(IBeneficiaryContract _beneficiary) external onlyOwner {
+    function setBeneficiary(IBeneficiaryContract _beneficiary)
+        external
+        onlyOwner
+    {
         beneficiary = _beneficiary;
         emit BeneficiaryUpdated(address(beneficiary));
     }
@@ -62,6 +53,18 @@ contract PhasedEscrow is Ownable {
         beneficiary.__escrowSentTokens(amount);
     }
 
+    /// @notice Funds the escrow by transferring all of the approved tokens
+    ///         to the escrow.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        require(IERC20(_token) == token, "Unsupported token");
+        token.safeTransferFrom(_from, address(this), _value);
+    }
+
     /// @notice Withdraws all funds from a non-phased Escrow passed as
     ///         a parameter. For this function to succeed, this PhasedEscrow
     ///         has to be set as a beneficiary of the non-phased Escrow.
@@ -70,26 +73,132 @@ contract PhasedEscrow is Ownable {
     }
 }
 
-interface ICurveRewards {
+/// @title BatchedPhasedEscrow
+/// @notice A token holder contract allowing contract owner to approve a set of
+///         beneficiaries of tokens held by the contract, to appoint a separate
+///         drawee role, and allowing that drawee to withdraw tokens to approved
+///         beneficiaries in phases.
+contract BatchedPhasedEscrow is Ownable {
+    using SafeERC20 for IERC20;
+
+    event BeneficiaryApproved(address beneficiary);
+    event TokensWithdrawn(address beneficiary, uint256 amount);
+    event DraweeRoleTransferred(address oldDrawee, address newDrawee);
+
+    IERC20 public token;
+    address public drawee;
+    mapping(address => bool) private approvedBeneficiaries;
+
+    modifier onlyDrawee() {
+        require(drawee == msg.sender, "Caller is not the drawee");
+        _;
+    }
+
+    constructor(IERC20 _token) public {
+        token = _token;
+        drawee = msg.sender;
+    }
+
+    /// @notice Approves the provided address as a beneficiary of tokens held by
+    ///         the escrow. Can be called only by escrow owner.
+    function approveBeneficiary(IBeneficiaryContract _beneficiary)
+        external
+        onlyOwner
+    {
+        address beneficiaryAddress = address(_beneficiary);
+        require(
+            beneficiaryAddress != address(0),
+            "Beneficiary can not be zero address"
+        );
+        approvedBeneficiaries[beneficiaryAddress] = true;
+        emit BeneficiaryApproved(beneficiaryAddress);
+    }
+
+    /// @notice Returns `true` if the given address has been approved as a
+    ///         beneficiary of the escrow, `false` otherwise.
+    function isBeneficiaryApproved(IBeneficiaryContract _beneficiary)
+        public
+        view
+        returns (bool)
+    {
+        return approvedBeneficiaries[address(_beneficiary)];
+    }
+
+    /// @notice Transfers the role of drawee to another address. Can be called
+    ///         only by the contract owner.
+    function setDrawee(address newDrawee) public onlyOwner {
+        require(newDrawee != address(0), "New drawee can not be zero address");
+        emit DraweeRoleTransferred(drawee, newDrawee);
+        drawee = newDrawee;
+    }
+
+    /// @notice Funds the escrow by transferring all of the approved tokens
+    ///         to the escrow.
+    function receiveApproval(
+        address _from,
+        uint256 _value,
+        address _token,
+        bytes memory
+    ) public {
+        require(IERC20(_token) == token, "Unsupported token");
+        token.safeTransferFrom(_from, address(this), _value);
+    }
+
+    /// @notice Withdraws tokens from escrow to selected beneficiaries,
+    ///         transferring to each beneficiary the amount of tokens specified
+    ///         as a parameter. Only beneficiaries previously approved by escrow
+    ///         owner can receive funds.
+    function batchedWithdraw(
+        IBeneficiaryContract[] memory beneficiaries,
+        uint256[] memory amounts
+    ) public onlyDrawee {
+        require(
+            beneficiaries.length == amounts.length,
+            "Mismatched arrays length"
+        );
+
+        for (uint256 i = 0; i < beneficiaries.length; i++) {
+            IBeneficiaryContract beneficiary = beneficiaries[i];
+            require(
+                isBeneficiaryApproved(beneficiary),
+                "Beneficiary was not approved"
+            );
+            withdraw(beneficiary, amounts[i]);
+        }
+    }
+
+    function withdraw(IBeneficiaryContract beneficiary, uint256 amount)
+        private
+    {
+        token.safeTransfer(address(beneficiary), amount);
+        emit TokensWithdrawn(address(beneficiary), amount);
+        beneficiary.__escrowSentTokens(amount);
+    }
+}
+
+// Interface representing staking pool rewards contract such as CurveRewards
+// contract deployed for Keep (0xAF379f0228ad0d46bB7B4f38f9dc9bCC1ad0360c) or
+// LPRewards contract from keep-ecdsa repository deployed for Uniswap.
+interface IStakingPoolRewards {
     function notifyRewardAmount(uint256 amount) external;
 }
 
-/// @title CurveRewardsEscrowBeneficiary
+/// @title StakingPoolRewardsEscrowBeneficiary
 /// @notice A beneficiary contract that can receive a withdrawal phase from a
 ///         PhasedEscrow contract. Immediately stakes the received tokens on a
-///         designated CurveRewards contract.
-contract CurveRewardsEscrowBeneficiary is Ownable {
+///         designated IStakingPoolRewards contract.
+contract StakingPoolRewardsEscrowBeneficiary is Ownable, IBeneficiaryContract {
     IERC20 public token;
-    ICurveRewards public curveRewards;
+    IStakingPoolRewards public rewards;
 
-    constructor(IERC20 _token, ICurveRewards _curveRewards) public {
+    constructor(IERC20 _token, IStakingPoolRewards _rewards) public {
         token = _token;
-        curveRewards = _curveRewards;
+        rewards = _rewards;
     }
 
     function __escrowSentTokens(uint256 amount) external onlyOwner {
-        token.approve(address(curveRewards), amount);
-        curveRewards.notifyRewardAmount(amount);
+        token.approve(address(rewards), amount);
+        rewards.notifyRewardAmount(amount);
     }
 }
 
@@ -105,7 +214,7 @@ interface IStakerRewards {
 
 /// @title StakerRewardsBeneficiary
 /// @notice An abstract beneficiary contract that can receive a withdrawal phase
-///         from a PhasedEscrow contract. The received tokens are immediately 
+///         from a PhasedEscrow contract. The received tokens are immediately
 ///         funded for a designated rewards escrow beneficiary contract.
 contract StakerRewardsBeneficiary is Ownable {
     IERC20 public token;
@@ -119,7 +228,7 @@ contract StakerRewardsBeneficiary is Ownable {
     function __escrowSentTokens(uint256 amount) external onlyOwner {
         bool success = token.approve(address(stakerRewards), amount);
         require(success, "Token transfer approval failed");
-        
+
         stakerRewards.receiveApproval(
             address(this),
             amount,

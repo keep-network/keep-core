@@ -176,3 +176,39 @@ export const withdrawGroupMemberRewards = (
     meta,
   }
 }
+
+export const withdrawAllLiquidityRewards = (
+  liquidityPairContractName,
+  amount,
+  pool,
+  meta
+) => {
+  return {
+    type: "liquidity_rewards/withdraw_tokens",
+    payload: {
+      contractName: liquidityPairContractName,
+      amount,
+      pool,
+    },
+    meta,
+  }
+}
+
+export const addMoreLpTokens = (
+  amount,
+  address,
+  liquidityPairContractName,
+  pool,
+  meta
+) => {
+  return {
+    type: "liquidity_rewards/stake_tokens",
+    payload: {
+      contractName: liquidityPairContractName,
+      amount,
+      address,
+      pool,
+    },
+    meta,
+  }
+}

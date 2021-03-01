@@ -1,4 +1,5 @@
 import web3Utils from "web3-utils"
+import BigNumber from "bignumber.js"
 
 const ONE_HUNDRED = web3Utils.toBN(100)
 
@@ -32,10 +33,20 @@ export const lte = (a, b) => {
 
 export const isZero = (a) => web3Utils.toBN(a).isZero()
 
+export const fromPercentage = (percentage, total) => {
+  return new BigNumber(percentage)
+    .div(ONE_HUNDRED.toString())
+    .multipliedBy(total)
+}
+
 export const percentageOf = (value, total) => {
   if (isZero(total)) {
     return 0
   }
 
-  return div(web3Utils.toBN(value).mul(ONE_HUNDRED), total)
+  return new BigNumber(value).div(total).multipliedBy(ONE_HUNDRED.toString())
+}
+
+export const eq = (a, b) => {
+  return web3Utils.toBN(a).eq(web3Utils.toBN(b))
 }

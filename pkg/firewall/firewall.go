@@ -56,7 +56,7 @@ func (msp *minimumStakePolicy) Validate(
 	remotePeerPublicKey *ecdsa.PublicKey,
 ) error {
 	networkPublicKey := key.NetworkPublic(*remotePeerPublicKey)
-	address := key.NetworkPubKeyToEthAddress(&networkPublicKey)
+	address := key.NetworkPubKeyToChainAddress(&networkPublicKey)
 
 	// First, check in the in-memory time caches to minimize hits to ETH client.
 	// If the Keep client with the given chain address is in the positive result

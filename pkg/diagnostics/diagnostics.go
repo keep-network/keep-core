@@ -45,7 +45,7 @@ func RegisterConnectedPeersSource(
 
 			peersList[i] = map[string]interface{}{
 				"network_id":       peer,
-				"ethereum_address": key.NetworkPubKeyToEthAddress(peerPublicKey),
+				"ethereum_address": key.NetworkPubKeyToChainAddress(peerPublicKey),
 			}
 		}
 
@@ -77,7 +77,7 @@ func RegisterClientInfoSource(
 
 		clientInfo := map[string]interface{}{
 			"network_id":       clientID,
-			"ethereum_address": key.NetworkPubKeyToEthAddress(clientPublicKey),
+			"ethereum_address": key.NetworkPubKeyToChainAddress(clientPublicKey),
 		}
 
 		bytes, err := json.Marshal(clientInfo)

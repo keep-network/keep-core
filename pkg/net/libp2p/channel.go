@@ -27,7 +27,7 @@ var (
 
 const (
 	incomingMessageThrottle = 4096
-	messageHandlerThrottle  = 256
+	messageHandlerThrottle  = 512
 )
 
 type channel struct {

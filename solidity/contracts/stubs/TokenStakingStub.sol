@@ -18,8 +18,16 @@ contract TokenStakingStub is TokenStaking {
         TokenStakingEscrow _escrow,
         KeepRegistry _registry,
         uint256 _initializationPeriod
-    ) TokenStaking(_token, _tokenGrant, _escrow, _registry, _initializationPeriod) public {
-    }
+    )
+        public
+        TokenStaking(
+            _token,
+            _tokenGrant,
+            _escrow,
+            _registry,
+            _initializationPeriod
+        )
+    {}
 
     function minimumStake() public view returns (uint256) {
         return 100000 * 1e18;

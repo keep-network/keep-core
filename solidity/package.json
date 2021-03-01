@@ -1,6 +1,6 @@
 {
   "name": "@keep-network/keep-core",
-  "version": "1.6.0-pre.0",
+  "version": "1.8.0-pre.0",
   "description": "Smart Contracts for the Keep Network Core",
   "repository": {
     "type": "git",
@@ -18,9 +18,11 @@
     "test:quick": "mocha --exit --recursive --timeout 45000",
     "test:quick:watch": "mocha --watch --exit --recursive --timeout 45000",
     "demo": "truffle migrate --reset && truffle exec ./scripts/delegate-tokens.js",
-    "lint": "solium --dir ./contracts",
-    "lint:js": "eslint ${npm_package_config_eslintPaths}",
-    "lint:fix:js": "eslint --fix ${npm_package_config_eslintPaths}"
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:js": "eslint . --ignore-pattern 'dashboard/'",
+    "lint:fix:js": "eslint . --fix --ignore-pattern 'dashboard/'",
+    "lint:sol": "solium -d contracts/ && prettier --check '**/*.sol'",
+    "lint:fix:sol": "solium -d contracts/ --fix && prettier --write '**/*.sol'"
   },
   "author": "Satoshi Nakamoto 🤪",
   "license": "MIT",
@@ -33,6 +35,7 @@
     "openzeppelin-solidity": "2.4.0"
   },
   "devDependencies": {
+    "@celo/contractkit": "^1.0.1",
     "@openzeppelin/test-environment": "^0.1.3",
     "@openzeppelin/test-helpers": "^0.5.5",
     "@truffle/hdwallet-provider": "^1.0.40",
@@ -56,7 +59,7 @@
     "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
     "eslint": "^6.8.0",
     "eslint-config-keep": "github:keep-network/eslint-config-keep#0.3.0",
-    "prettier": "^2.0.2",
-    "prettier-plugin-solidity": "^1.0.0-alpha.47"
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.2 "
   }
 }
