@@ -42,6 +42,19 @@ const LiquidityRewardsEarnedMessage = ({
     return mainText.concat(pairNamesContent)
   }
 
+  /**
+   * Clears the pairs saved in the redux store.
+   *
+   * This function should be called whenever notification is being closed
+   */
+  const clearNotificationData = () => {
+    dispatch({
+      type:
+        "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
+      payload: [],
+    })
+  }
+
   return (
     <Message
       sticky={sticky}
@@ -51,12 +64,10 @@ const LiquidityRewardsEarnedMessage = ({
       classes={classes}
       messageId={messageId}
       onMessageClose={(messageId) => {
-        dispatch({
-          type:
-            "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
-          payload: [],
-        })
         onMessageClose(messageId)
+        setTimeout(() => {
+          clearNotificationData()
+        }, 300)
       }}
     />
   )
