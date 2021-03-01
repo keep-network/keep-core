@@ -84,31 +84,34 @@ function* fetchECDSARewardsData(action) {
     // Owner operators.
     const ownerOperators = yield call(getOperatorsOfOwner, address)
     // Grantee operators.
-    const grenteeOperators = yield call(getOperatorsOfGrantee, address)
+    const { allOperators: grenteeOperators } = yield call(
+      getOperatorsOfGrantee,
+      address
+    )
     // Managed grantee operators.
-    const mangedGranteeOperators = yield call(
+    const { allOperators: mangedGranteeOperators } = yield call(
       getOperatorsOfManagedGrantee,
       address
     )
     // Get operators of copied delegations where an owner of the old delegations
     // is `address`.
     const copiedOperators = yield call(getOperatorsOfCopiedDelegations, address)
-    // The same address can be used as beneficiary and owner. So addresses in
-    // array may be repeated. Let's convert to a Set to make sure the given
-    // address is in array only once.
-    const operators = new Set(
-      beneficiaryOperators
-        .concat(ownerOperators)
-        .concat(grenteeOperators)
-        .concat(mangedGranteeOperators)
-        .concat(copiedOperators)
+
+    const operators = Array.from(
+      // The same address can be used as beneficiary and owner. So addresses in
+      // array may be repeated. Let's convert to a Set to make sure the given
+      // address is in array only once.
+      new Set(
+        beneficiaryOperators
+          .concat(ownerOperators)
+          .concat(grenteeOperators)
+          .concat(mangedGranteeOperators)
+          .concat(copiedOperators)
+          .map((address) => web3Utils.toChecksumAddress(address))
+      ).add(web3Utils.toChecksumAddress(address)) // Operator can also view own rewards.
     )
-    // Operator can also view own rewards.
-    operators.add(web3Utils.toChecksumAddress(address))
-    let availableRewards = yield call(
-      fetchECDSAAvailableRewards,
-      Array.from(operators)
-    )
+
+    let availableRewards = yield call(fetchECDSAAvailableRewards, operators)
     const claimedRewards = yield call(fetchECDSAClaimedRewards, operators)
 
     // Available rewards are fetched from merkle generator's output file. This
