@@ -2,7 +2,7 @@ import React from "react"
 import { Message } from "../Message"
 import * as Icons from "../Icons"
 import { Link } from "react-router-dom"
-import { useSelector } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 
 const LiquidityRewardsEarnedMessage = ({
   sticky,
@@ -20,6 +20,7 @@ const LiquidityRewardsEarnedMessage = ({
     bannerDescription: "m-0",
     iconClassName: "reward-icon brand-violet",
   }
+  const dispatch = useDispatch()
 
   const formattedTitle = (liquidityRewardPairNames) => {
     const mainText = "You've earned rewards"
@@ -50,8 +51,14 @@ const LiquidityRewardsEarnedMessage = ({
       content={content}
       classes={classes}
       messageId={messageId}
-      messageType={messageType}
-      onMessageClose={onMessageClose}
+      onMessageClose={(messageId) => {
+        dispatch({
+          type:
+            "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
+          payload: [],
+        })
+        onMessageClose(messageId)
+      }}
     />
   )
 }
