@@ -42,7 +42,6 @@ class MessagesComponent extends React.Component {
       <SpecificComponent
         {...message.messageProps}
         messageId={message.id}
-        messageType={message.messageType}
         onMessageClose={this.onMessageClose}
       />
     )
