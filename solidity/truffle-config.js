@@ -12,10 +12,10 @@ module.exports = {
     },
     keep_dev: {
       provider: function () {
-        return new HDWalletProvider(
-          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
-          "http://localhost:8545"
-        )
+        return new HDWalletProvider({
+          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: "http://localhost:8545",
+        })
       },
       gas: 6721975,
       network_id: 1101,
@@ -23,10 +23,10 @@ module.exports = {
 
     keep_dev_vpn: {
       provider: function () {
-        return new HDWalletProvider(
-          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
-          "http://eth-tx-node.default.svc.cluster.local:8545"
-        )
+        return new HDWalletProvider({
+          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: "http://eth-tx-node.default.svc.cluster.local:8545",
+        })
       },
       gas: 6721975,
       network_id: 1101,
@@ -34,10 +34,10 @@ module.exports = {
 
     ropsten: {
       provider: function () {
-        return new HDWalletProvider(
-          process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY,
-          process.env.ETH_HOSTNAME
-        )
+        return new HDWalletProvider({
+          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: process.env.ETH_HOSTNAME,
+        })
       },
       gas: 8000000,
       network_id: 3,
