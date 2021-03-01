@@ -69,6 +69,8 @@ jobs:
           root: /tmp/keep-client
           paths:
             - docker-images
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   build_initcontainer:
     executor: docker-git
     steps:
@@ -130,6 +132,8 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: keep-client
           tag: latest
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   publish_initcontainer_provision_keep_client:
     executor: gcp-gcr/default
     steps:
