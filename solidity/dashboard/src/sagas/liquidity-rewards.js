@@ -124,7 +124,7 @@ export function* watchLiquidityRewardNotifications() {
       )
     }
     displayMessage = true
-    yield delay(moment.duration(30, "minutes").asMilliseconds())
+    yield delay(moment.duration(15, "minutes").asMilliseconds())
   }
 }
 
