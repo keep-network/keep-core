@@ -232,7 +232,17 @@ function* notifyTopUpReadyToBeCommitted() {
   })
 
   const { delegations } = yield select((state) => state.staking)
+  const displayedMessages = yield select((state) => state.messages)
+  const liquidTopUpNotificationAlreadyDisplayed = displayedMessages.some(
+    (message) =>
+      message.messageType === messageType.TOP_UP_READY_TO_BE_COMMITTED &&
+      !message.messageProps.grantId
+  )
 
+  // We only want to display a single notification if in a grant are multiple
+  // top-ups, so we store grant ids that have already been notified. The top-ups
+  // are grouped by grant in a data table.
+  const notifiedGrants = new Set()
   let isFromLiquidTokens = false
   for (const { operatorAddress } of topUpsReadyToCommit) {
     if (!isFromLiquidTokens) {
@@ -246,7 +256,16 @@ function* notifyTopUpReadyToBeCommitted() {
         isSameEthAddress(_.operatorAddress, operatorAddress) && _.isFromGrant
     )
 
-    if (stake) {
+    if (
+      stake &&
+      !notifiedGrants.has(stake.grantId) &&
+      !displayedMessages.some(
+        (message) =>
+          message.messageType === messageType.TOP_UP_READY_TO_BE_COMMITTED &&
+          message.messageProps.grantId === stake.grantId
+      )
+    ) {
+      notifiedGrants.add(stake.grantId)
       yield put(
         showMessage({
           messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
@@ -259,7 +278,7 @@ function* notifyTopUpReadyToBeCommitted() {
     }
   }
 
-  if (isFromLiquidTokens) {
+  if (isFromLiquidTokens && !liquidTopUpNotificationAlreadyDisplayed) {
     yield put(
       showMessage({
         messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
