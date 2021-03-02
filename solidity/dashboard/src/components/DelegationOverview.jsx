@@ -51,6 +51,17 @@ const DelegationOverview = ({
     <section>
       <DelegationHeader type={context} selectedGrant={selectedGrant} />
       <LoadingOverlay
+        isFetching={areTopUpsFetching}
+        skeletonComponent={<DataTableSkeleton columns={3} />}
+      >
+        <Tile>
+          <TopUpsDataTable
+            topUps={filteredTopUps}
+            initializationPeriod={initializationPeriod}
+          />
+        </Tile>
+      </LoadingOverlay>
+      <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<DataTableSkeleton />}
       >
@@ -67,17 +78,6 @@ const DelegationOverview = ({
         skeletonComponent={<DataTableSkeleton />}
       >
         <Undelegations undelegations={undelegations} />
-      </LoadingOverlay>
-      <LoadingOverlay
-        isFetching={areTopUpsFetching}
-        skeletonComponent={<DataTableSkeleton columns={3} />}
-      >
-        <Tile>
-          <TopUpsDataTable
-            topUps={filteredTopUps}
-            initializationPeriod={initializationPeriod}
-          />
-        </Tile>
       </LoadingOverlay>
     </section>
   )
