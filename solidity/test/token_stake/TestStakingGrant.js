@@ -575,10 +575,12 @@ describe("TokenStaking/StakingGrant", () => {
       // availabale amount slightly less than 50%
       const redelegationAmountUpperBound = web3.utils.toWei("1000000")
       const redelegationAmountLowerBound = web3.utils.toWei("999999")
-      const redelegationAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+      const redelegationAmount = await tokenStakingEscrow.availableAmount(
+        operatorOne
+      )
       expect(redelegationAmount).to.gt.BN(redelegationAmountLowerBound)
       expect(redelegationAmount).to.lte.BN(redelegationAmountUpperBound)
-        
+
       // And now, let's redelegate the remaining 1 000 000 KEEP...
       await tokenStakingEscrow.redelegate(
         operatorOne,
