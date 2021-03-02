@@ -49,7 +49,7 @@ jobs:
     #    build-folder: solidity/dashboard/build
     # A pull_request event is a PR; deploy to preview bucket.
     - if: github.event_name == 'pull_request'
-      name: Deploy PR to GCP
+      name: Deploy PR preview to GCP
       uses: thesis/gcp-storage-bucket-action@v3.1.0
       with:
         service-key: ${{ secrets.KEEP_DASHBOARD_UPLOADER_SERVICE_KEY_JSON_BASE64 }}
