@@ -1,11 +1,27 @@
-import { take, takeEvery, call, fork, put, select } from "redux-saga/effects"
+import {
+  take,
+  takeEvery,
+  call,
+  fork,
+  put,
+  select,
+  delay,
+} from "redux-saga/effects"
+import moment from "moment"
 import { getContractsContext, submitButtonHelper, logError } from "./utils"
 import { sendTransaction } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
 import { fromTokenUnit } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
-import { fetchAvailableTopUps } from "../services/top-ups.service"
+import {
+  fetchAvailableTopUps,
+  isTopUpReadyToBeCommitted,
+} from "../services/top-ups.service"
+import { isEmptyArray } from "../utils/array.utils"
+import { showMessage } from "../actions/messages"
+import { isSameEthAddress } from "../utils/general.utils"
+import { messageType } from "../components/Message"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -166,15 +182,110 @@ function* fetchTopUps() {
     }
 
     yield put({ type: "staking/fetch_top_ups_start" })
-    const { delegations, undelegations } = yield select(
+    const { delegations, undelegations, initializationPeriod } = yield select(
       (state) => state.staking
     )
     const operators = [...undelegations, ...delegations].map(
       ({ operatorAddress }) => operatorAddress
     )
     const topUps = yield call(fetchAvailableTopUps, operators)
-    yield put({ type: "staking/fetch_top_ups_success", payload: topUps })
+    yield put({
+      type: "staking/fetch_top_ups_success",
+      payload: topUps.map((_) => ({
+        ..._,
+        readyToBeCommitted: isTopUpReadyToBeCommitted(_, initializationPeriod),
+      })),
+    })
   } catch (error) {
     yield* logError("staking/fetch_top_ups_failure", error)
+  }
+}
+
+export function* watchTopUpReadyToBeCommitted() {
+  // Waiting for top-ups data.
+  yield take("staking/fetch_top_ups_success")
+  yield call(notifyTopUpReadyToBeCommitted)
+
+  while (true) {
+    yield delay(moment.duration(5, "minutes").asMilliseconds())
+    yield call(notifyTopUpReadyToBeCommitted)
+  }
+}
+
+function* notifyTopUpReadyToBeCommitted() {
+  const topUps = yield select((state) => state.staking.topUps)
+  const initializationPeriod = yield select(
+    (state) => state.staking.initializationPeriod
+  )
+
+  const topUpsReadyToCommit = topUps.filter((topUp) =>
+    isTopUpReadyToBeCommitted(topUp, initializationPeriod)
+  )
+
+  if (isEmptyArray(topUpsReadyToCommit)) {
+    return
+  }
+
+  yield put({
+    type: "staking/top_ups_ready_to_be_committed",
+    payload: topUpsReadyToCommit,
+  })
+
+  const { delegations } = yield select((state) => state.staking)
+  const displayedMessages = yield select((state) => state.messages)
+  const liquidTopUpNotificationAlreadyDisplayed = displayedMessages.some(
+    (message) =>
+      message.messageType === messageType.TOP_UP_READY_TO_BE_COMMITTED &&
+      !message.messageProps.grantId
+  )
+
+  // We only want to display a single notification if in a grant are multiple
+  // top-ups, so we store grant ids that have already been notified. The top-ups
+  // are grouped by grant in a data table.
+  const notifiedGrants = new Set()
+  let isFromLiquidTokens = false
+  for (const { operatorAddress } of topUpsReadyToCommit) {
+    if (!isFromLiquidTokens) {
+      isFromLiquidTokens = delegations.some(
+        (_) =>
+          isSameEthAddress(_.operatorAddress, operatorAddress) && !_.isFromGrant
+      )
+    }
+    const stake = delegations.find(
+      (_) =>
+        isSameEthAddress(_.operatorAddress, operatorAddress) && _.isFromGrant
+    )
+
+    if (
+      stake &&
+      !notifiedGrants.has(stake.grantId) &&
+      !displayedMessages.some(
+        (message) =>
+          message.messageType === messageType.TOP_UP_READY_TO_BE_COMMITTED &&
+          message.messageProps.grantId === stake.grantId
+      )
+    ) {
+      notifiedGrants.add(stake.grantId)
+      yield put(
+        showMessage({
+          messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
+          messageProps: {
+            sticky: true,
+            grantId: stake.grantId,
+          },
+        })
+      )
+    }
+  }
+
+  if (isFromLiquidTokens && !liquidTopUpNotificationAlreadyDisplayed) {
+    yield put(
+      showMessage({
+        messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
+        messageProps: {
+          sticky: true,
+        },
+      })
+    )
   }
 }

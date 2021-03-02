@@ -6,6 +6,7 @@ import staking from "./staking"
 import tokenGrants from "./token-grant"
 import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
+import notificationsData from "./notifications-data"
 
 const reducers = combineReducers({
   messages,
@@ -15,6 +16,7 @@ const reducers = combineReducers({
   tokenGrants,
   rewards,
   liquidityRewards,
+  notificationsData,
 })
 
 export default reducers

@@ -127,6 +127,10 @@ class LiquidityRewards {
   calculateAPY = async (totalSupplyOfLPRewards) => {
     throw new Error("First, implement the `calculateAPY` function")
   }
+
+  calculateLPTokenBalance = async (shareOfPoolInPercent) => {
+    throw new Error("First, implement the `calculateLPTokenBalance` function")
+  }
 }
 
 class UniswapLPRewards extends LiquidityRewards {
@@ -158,6 +162,30 @@ class UniswapLPRewards extends LiquidityRewards {
     )
 
     return this._calculateAPY(r, WEEKS_IN_YEAR)
+  }
+
+  /**
+   * Calculates lp token balance for the given pair
+   * The calculations were done based on
+   * https://uniswap.org/docs/v2/advanced-topics/understanding-returns/#why-is-my-liquidity-worth-less-than-i-put-in
+   *
+   * @param {string} lpBalance Balance of liquidity token for a given uniswap pair deposited in
+   * the LPRewards` contract.
+   * @return {Promise<{token0: string, token1: string}>}
+   */
+  calculateLPTokenBalance = async (lpBalance) => {
+    const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
+
+    return {
+      token0: new BigNumber(lpBalance)
+        .multipliedBy(pairData.reserve0)
+        .dividedBy(pairData.totalSupply)
+        .toString(),
+      token1: new BigNumber(lpBalance)
+        .multipliedBy(pairData.reserve1)
+        .dividedBy(pairData.totalSupply)
+        .toString(),
+    }
   }
 }
 
@@ -222,6 +250,13 @@ class SaddleLPRewards extends LiquidityRewards {
 
   _getTokenBalance = async (index) => {
     return await this.swapContract.methods.getTokenBalance(index).call()
+  }
+
+  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+    return {
+      token0: "0",
+      token1: "0",
+    }
   }
 }
 
@@ -317,6 +352,13 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     }
 
     return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
+  }
+
+  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+    return {
+      token0: "0",
+      token1: "0",
+    }
   }
 }
 

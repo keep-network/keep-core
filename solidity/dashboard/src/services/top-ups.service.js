@@ -1,3 +1,4 @@
+import moment from "moment"
 import {
   ContractsLoaded,
   Web3Loaded,
@@ -103,4 +104,14 @@ const filterByAfterLatestCompletedTopUp = (latestTopUpCompletedEvent) => (
     isAfterLatestCompletedTopUpBlock ||
     isAfterLatestCompletedTopUpTransactionInBlock
   )
+}
+
+export const isTopUpReadyToBeCommitted = (
+  topUp,
+  initializationPeriodInSeconds
+) => {
+  return moment
+    .unix(topUp.createdAt)
+    .add(initializationPeriodInSeconds, "seconds")
+    .isBefore(moment())
 }
