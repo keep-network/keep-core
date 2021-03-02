@@ -1,0 +1,87 @@
+name: Token Dashboard dApp
+
+#TODO: extend the conditions once workflow gets tested together with other workflows
+on:
+  push:
+    branches:
+      # TODO: Run on master after we're fully migrated from Circle CI
+      # - master
+      - "rfc-18/**"
+    paths:
+      - "solidity/dashboard/**"
+      - ".github/workflows/token-dashboard.yml"
+  pull_request:
+    branches:
+      # TODO: Run on all branches after we're fully migrated from Circle CI
+      - "rfc-18/**"
+    paths:
+      - "solidity/dashboard/**"
+      - ".github/workflows/token-dashboard.yml"
+
+jobs:
+  build-deploy-token-dashboard-dapp:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity/dashboard
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12.x"
+
+      # - name: Cache node modules
+      #   uses: actions/cache@v2
+      #   env:
+      #     cache-name: cache-solidity-node-modules
+      #   with:
+      #     path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+      #     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-build-${{ env.cache-name }}-
+      #       ${{ runner.os }}-build-
+      #       ${{ runner.os }}-
+
+      - name: Resolve latest contracts
+        run: |
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/keep-ecdsa \
+              @keep-network/tbtc
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to Google Container Registry
+        if:  |
+          startsWith(github.ref, 'refs/heads/releases/ropsten') 
+            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish Keep Token Dashboard dApp image
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'keep-dapp-token-dashboard-wip' # TODO: change later to 'keep-dapp-token-dashboard'
+          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
+        with:
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: revision=${{ github.sha }}
+          push: |
+            ${{ startsWith(github.ref, 'refs/heads/releases')
+              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}

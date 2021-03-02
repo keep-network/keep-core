@@ -220,6 +220,8 @@ jobs:
             # curl CIRCLE_API_BUILD/keep-tecdsa?branch=${CIRCLE_BRANCH}
             echo "Eventually trigger downstream for $CIRCLE_BRANCH"
 
+  # GitHub Actions equivalent of this job (.github/workflows/token-dashboard.yml) 
+  # has been created as part of work on RFC-18
   build_token_dashboard_dapp:
     executor: docker-node
     steps:
@@ -251,6 +253,8 @@ jobs:
           root: /tmp/keep-dapp-token-dashboard
           paths:
             - docker-images
+  # GitHub Actions equivalent of this job (.github/workflows/token-dashboard.yml) 
+  # has been created as part of work on RFC-18
   publish_token_dashboard_dapp:
     executor: gcp-gcr/default
     steps:
