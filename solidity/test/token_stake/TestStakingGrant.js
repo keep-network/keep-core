@@ -562,20 +562,27 @@ describe("TokenStaking/StakingGrant", () => {
     })
 
     it("redelegates not yet withdrawn tokens", async () => {
+      // Increasing the time programatically by OZ may lead to a slight delay
+      // and results in different amounts which are a little bit less than expected.
       await time.increaseTo(grantStart.add(time.duration.years(1)))
+
       // 2 000 000 undelegated to escrow for 2-years grant.
       // One year passed, so 50% of tokens, 1 000 000, is withdrawable
       // from the escrow. Let's withdraw them.
       await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
 
+      // It may happen that OZ will add a split of a second which results in
+      // availabale amount slightly less than 50%
+      const redelegationAmountUpperBound = web3.utils.toWei("1000000")
+      const redelegationAmountLowerBound = web3.utils.toWei("999999")
+      const redelegationAmount = await tokenStakingEscrow.availableAmount(operatorOne)
+      expect(redelegationAmount).to.gt.BN(redelegationAmountLowerBound)
+      expect(redelegationAmount).to.lte.BN(redelegationAmountUpperBound)
+        
       // And now, let's redelegate the remaining 1 000 000 KEEP...
-
-      // 1000000000000000000000000
-      const redelegatedAmount = web3.utils.toWei("1000000")
-
       await tokenStakingEscrow.redelegate(
         operatorOne,
-        redelegatedAmount,
+        redelegationAmount,
         data3,
         { from: grantee }
       )
