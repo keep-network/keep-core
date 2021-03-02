@@ -207,7 +207,6 @@ export function* watchTopUpReadyToBeCommitted() {
   yield call(notifyTopUpReadyToBeCommitted)
 
   while (true) {
-    // Every 5 minutes.
     yield delay(moment.duration(5, "minutes").asMilliseconds())
     yield call(notifyTopUpReadyToBeCommitted)
   }
