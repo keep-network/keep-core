@@ -1,6 +1,7 @@
 /** @typedef { import("../lib/context.js").default } Context */
 /** @typedef { import("../lib/ethereum-helper").Address } Address */
 /** @typedef { import("../lib/contract-helper").ContractInstance } ContractInstance*/
+/** @typedef { import("bn.js") } BN */
 
 import { ITruthSource } from "./truth-source.js"
 import { Contract } from "../lib/contract-helper.js"
@@ -33,17 +34,29 @@ export class TokenGrantTruthSource extends ITruthSource {
   }
 
   async initialize() {
-    const TokenGrant = new Contract(TokenGrantJSON, this.context.web3)
-
-    this.context.addContract("TokenGrant", TokenGrant)
+    this.context.addContract(
+      "TokenGrant",
+      new Contract(TokenGrantJSON, this.context.web3)
+    )
 
     this.tokenGrant = await this.context.getContract("TokenGrant").deployed()
+    this.tokenStaking = await this.context
+      .getContract("TokenStaking")
+      .deployed()
+    this.oldTokenStaking = await this.context
+      .getContract("OldTokenStaking")
+      .deployed()
   }
 
   /**
    * @typedef {Object} TokenGrant
    * @property {string} id
    * @property {Address} grantee
+   * @property {BN} amount
+   * @property {BN} withdrawn
+   * @property {BN} revoked
+   * @property {BN} slashed
+   * @property {BN} seized
    * @property {BN} balance
    */
 
@@ -78,25 +91,126 @@ export class TokenGrantTruthSource extends ITruthSource {
     /** @type {TokenGrant[]} */
     const tokenGrants = []
     for (const id of tokenGrantIDs) {
-      const grant = await callWithRetry(
+      logger.debug(`processing grant with id: ${id}`)
+
+      const grantDetails = await callWithRetry(
         this.tokenGrant.methods.getGrant(id),
         undefined,
         undefined,
         this.targetBlock
       )
 
+      /** @type {TokenGrant} */
+      const grant = {
+        id: id,
+        grantee: grantDetails.grantee,
+        amount: toBN(grantDetails.amount),
+        withdrawn: toBN(grantDetails.withdrawn),
+        revoked: toBN(grantDetails.revokedAmount),
+      }
+
       // Balance is the total grant amount minus revoked and withdrawn tokens. The
       // value includes staked tokens.
-      const balance = toBN(grant.amount)
-        .sub(toBN(grant.withdrawn))
-        .sub(toBN(grant.revokedAmount))
+      grant.balance = grant.amount.sub(grant.withdrawn).sub(grant.revoked)
 
-      tokenGrants.push({ id: id, grantee: grant.grantee, balance: balance })
+      // If tokens were staked, check for any seized or slashed ones.
+      if (toBN(grantDetails.staked).gtn(0)) {
+        ;[grant.slashed, grant.seized] = await this.getSlashedSeizedAmount(id)
+
+        if (grant.slashed.gtn(0))
+          logger.debug(`grant ${id}: slashed tokens: ${grant.slashed}`)
+        if (grant.seized.gtn(0))
+          logger.debug(`grant ${id}: seized tokens: ${grant.seized}`)
+
+        grant.balance.isub(grant.slashed)
+        grant.balance.isub(grant.seized)
+      }
+
+      tokenGrants.push(grant)
     }
 
     dumpDataToFile(tokenGrants, TOKEN_GRANT_OUTPUT_PATH)
 
     return tokenGrants
+  }
+
+  /**
+   * @param {String} grantID
+   * @return {Promise<[BN,BN]>}
+   */
+  async getSlashedSeizedAmount(grantID) {
+    /** @type {Array} */
+    const grantStakedEvents = await getPastEvents(
+      this.context.web3,
+      this.tokenGrant,
+      "TokenGrantStaked",
+      this.context.deploymentBlock,
+      this.targetBlock,
+      { grantId: grantID }
+    )
+    logger.debug(
+      `found ${grantStakedEvents.length} token grant staked events for grant ${grantID}`
+    )
+
+    /** @type {String[]} */
+    const operators = grantStakedEvents.map(
+      (event) => event.returnValues.operator
+    )
+
+    const slashedAmount = toBN(0)
+    const seizedAmount = toBN(0)
+    for (const operator of operators) {
+      logger.debug(
+        `looking for slashed or seized tokens for operator: ${operator}`
+      )
+
+      slashedAmount.iadd(
+        await this.getAmountFromTokenStakingEvent("TokensSlashed", operator)
+      )
+      seizedAmount.iadd(
+        await this.getAmountFromTokenStakingEvent("TokensSeized", operator)
+      )
+    }
+
+    return [slashedAmount, seizedAmount]
+  }
+
+  /**
+   * @param {String} eventName Name of the event to check.
+   * @param {Address} operator Operator address to filter events.
+   * @return {Promise<BN>}
+   */
+  async getAmountFromTokenStakingEvent(eventName, operator) {
+    /** @type {Array} */
+    const eventsTokenStaking = await getPastEvents(
+      this.context.web3,
+      this.tokenStaking,
+      eventName,
+      this.context.deploymentBlock,
+      this.targetBlock,
+      { operator: operator }
+    )
+
+    /** @type {Array} */
+    const eventsOldTokenStaking = await getPastEvents(
+      this.context.web3,
+      this.oldTokenStaking,
+      eventName,
+      this.context.deploymentBlock,
+      this.targetBlock,
+      { operator: operator }
+    )
+
+    const totalAmount = toBN(0)
+
+    eventsTokenStaking.forEach((event) =>
+      totalAmount.iadd(toBN(event.returnValues.amount))
+    )
+    eventsOldTokenStaking.forEach((event) =>
+      totalAmount.iadd(toBN(event.returnValues.amount))
+    )
+
+    return toBN(totalAmount)
   }
 
   /**
@@ -114,7 +228,9 @@ export class TokenGrantTruthSource extends ITruthSource {
 
       const owner = await resolveGrantee(this.context.web3, grantee)
 
-      if (owner !== grantee)
+      const { toChecksumAddress } = this.context.web3.utils
+
+      if (toChecksumAddress(owner) !== toChecksumAddress(grantee))
         logger.debug(
           `resolved grantee for managed grant [${grantee}]: ${owner}`
         )
