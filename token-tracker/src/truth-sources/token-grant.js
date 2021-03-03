@@ -122,7 +122,7 @@ export class TokenGrantTruthSource extends ITruthSource {
       if (ownersBalances.has(owner)) {
         ownersBalances.get(owner).iadd(balance)
       } else {
-        ownersBalances.set(owner, toBN(0))
+        ownersBalances.set(owner, balance)
       }
     }
 

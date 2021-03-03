@@ -32,11 +32,6 @@ export class TokenStakingTruthSource extends ITruthSource {
   }
 
   async initialize() {
-    this.context.addContract(
-      "TokenStaking",
-      new Contract(TokenStakingJSON, this.context.web3)
-    )
-
     this.tokenStaking = await this.context
       .getContract("TokenStaking")
       .deployed()
@@ -158,10 +153,11 @@ export class TokenStakingTruthSource extends ITruthSource {
         continue
       }
 
-      if (!stakersBalances.has(owner)) {
-        stakersBalances.set(owner, toBN(0))
+      if (stakersBalances.has(owner)) {
+        stakersBalances.get(owner).iadd(amount)
+      } else {
+        stakersBalances.set(owner, amount)
       }
-      stakersBalances.get(owner).iadd(amount)
 
       logger.debug(
         `owner's ${owner} total stake: ${stakersBalances.get(owner).toString()}`
