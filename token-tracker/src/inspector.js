@@ -4,9 +4,6 @@
 
 import BN from "bn.js"
 
-import Web3 from "web3"
-const { toChecksumAddress } = Web3.utils
-
 export class Inspector {
   /** @type {Set<Function>} */
   #truthSources
@@ -55,7 +52,7 @@ export class Inspector {
    */
   addTokenHoldings(newHoldings) {
     newHoldings.forEach((value, holder) => {
-      holder = toChecksumAddress(holder)
+      holder = this.context.web3.utils.toChecksumAddress(holder)
       value = new BN(value)
 
       if (this.tokenHoldings.has(holder)) {

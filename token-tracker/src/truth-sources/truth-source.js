@@ -1,15 +1,13 @@
 /** @typedef { import("../lib/context").default } Context */
 /** @typedef { import("../lib/ethereum-helper").Address } Address */
 /** @typedef { import("bn.js") } BN */
+/** @typedef { import("Web3").default } Web3 */
 
 /**
  * @typedef {Object} ITruthSource
  * @prop {Context} context Description.
  * @prop {Number} targetBlock Description.
  */
-
-import Web3 from "web3"
-const { toChecksumAddress } = Web3.utils
 
 /**
  * This is an interface that should be implemented by all sources of truth for
@@ -50,6 +48,8 @@ export class ITruthSource {
  * contracts handled by truth of sources implementations.
  */
 export class AddressesResolver {
+  /** @property {Web3} web3 */
+
   /**
    * List of known contracts' addresses that should be ignored as token holders
    * as source of truth implementation resolved actual owners of the tokens locked
@@ -100,6 +100,8 @@ export class AddressesResolver {
     for (const [ignoredContractName, ignoredContractAddress] of Object.entries(
       AddressesResolver.IGNORED_CONTRACTS
     )) {
+      const { toChecksumAddress } = this.web3.utils
+
       if (
         toChecksumAddress(ignoredContractAddress) === toChecksumAddress(address)
       ) {

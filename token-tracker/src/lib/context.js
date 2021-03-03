@@ -1,4 +1,5 @@
 /** @typedef { import("./contract-helper.js").Contract } Contract */
+/** @typedef { import("Web3").default } Web3 */
 
 import { initWeb3 } from "./ethereum-helper.js"
 
