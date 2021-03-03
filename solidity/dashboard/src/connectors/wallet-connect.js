@@ -1,8 +1,9 @@
 import WalletConnect from "@walletconnect/web3-provider"
+import CacheSubprovider from "web3-provider-engine/subproviders/cache"
 import BigNumber from "bignumber.js"
 import { AbstractConnector } from "./abstract-connector"
 import { WALLETS } from "../constants/constants"
-import { getRPCRequestPayload } from "./utils"
+import { getRPCRequestPayload, overrideCacheMiddleware } from "./utils"
 
 export class WalletConnectConnector extends AbstractConnector {
   constructor(
@@ -15,6 +16,11 @@ export class WalletConnectConnector extends AbstractConnector {
   ) {
     super(WALLETS.WALLET_CONNECT.name)
     this.provider = new WalletConnect(options)
+
+    const cacheSubprovider = this.provider._providers.find(
+      (provider) => provider.constructor.name === CacheSubprovider.name
+    )
+    overrideCacheMiddleware(cacheSubprovider)
   }
 
   enable = async () => {
