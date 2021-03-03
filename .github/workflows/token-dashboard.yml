@@ -63,7 +63,7 @@ jobs:
 
       - name: Login to Google Container Registry
         if:  |
-          startsWith(github.ref, 'refs/heads/releases/ropsten') 
+          startsWith(github.ref, 'refs/heads/releases/ropsten')
             || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
         uses: docker/login-action@v1
         with:
