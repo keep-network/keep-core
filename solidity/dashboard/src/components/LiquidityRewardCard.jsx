@@ -10,7 +10,7 @@ import Banner from "./Banner"
 import { toTokenUnit } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
-import { APY, ShareOfPool } from "./liquidity"
+import { APY, LPTokenBalance, ShareOfPool } from "./liquidity"
 import MetricsTile from "./MetricsTile"
 
 const LiquidityRewardCard = ({
@@ -28,6 +28,8 @@ const LiquidityRewardCard = ({
   wrappedTokenBalance,
   // Balance of wrapped token deposited in the `LPRewards` contract.
   lpBalance,
+  lpTokenBalance,
+  lpTokens,
   isFetching,
   wrapperClassName = "",
   addLpTokens,
@@ -138,6 +140,7 @@ const LiquidityRewardCard = ({
         </MetricsTile>
       </div>
       {renderUserInfoBanner()}
+      <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
           Your rewards
@@ -156,6 +159,7 @@ const LiquidityRewardCard = ({
             <h3>
               <CountUp
                 end={toTokenUnit(rewardBalance).toNumber()}
+                separator={","}
                 preserveValue
               />
             </h3>

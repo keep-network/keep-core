@@ -42,13 +42,13 @@ abi/%.go: abi/%.abi
 	go run github.com/ethereum/go-ethereum/cmd/abigen --abi $< --pkg abi --type $* --out $@
 
 contract/%.go cmd/%.go: abi/%ImplV1.abi abi/%ImplV1.go abi/%.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*.go cmd/$*.go
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/$*.go cmd/$*.go
 
 contract/%Operator.go cmd/%Operator.go: abi/%Operator.abi abi/%Operator.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/$*Operator.go cmd/$*Operator.go
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/$*Operator.go cmd/$*Operator.go
 
 contract/TokenStaking.go cmd/TokenStaking.go: abi/TokenStaking.abi abi/TokenStaking.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TokenStaking.go cmd/TokenStaking.go
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/TokenStaking.go cmd/TokenStaking.go
 
 contract/TokenGrant.go cmd/TokenGrant.go: abi/TokenGrant.abi abi/TokenGrant.go *.go
-	go run github.com/keep-network/keep-common/tools/generators/ethereum $< contract/TokenGrant.go cmd/TokenGrant.go
+	go run github.com/keep-network/keep-common/tools/generators/ethlike $< contract/TokenGrant.go cmd/TokenGrant.go

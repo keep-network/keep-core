@@ -11,6 +11,7 @@ import PendingActionMessage from "./messages/PendingActionMessage"
 import SuccessMessage from "./messages/SuccessMessage"
 import ErrorMessage from "./messages/ErrorMessage"
 import DelegationAlreadyCopiedMessage from "./messages/DelegationAlreadyCopiedMessage"
+import TopUpReadyToBeCommittedMessage from "./messages/TopUpReadyToBeCommittedMessage"
 
 export const MessagesContext = React.createContext({})
 
@@ -23,6 +24,7 @@ export const messageType = {
   NEW_LP_TOKENS_IN_WALLET: LPTokensInWalletMessage,
   LIQUIDITY_REWARDS_EARNED: LiquidityRewardsEarnedMessage,
   DELEGATION_ALREADY_COPIED: DelegationAlreadyCopiedMessage,
+  TOP_UP_READY_TO_BE_COMMITTED: TopUpReadyToBeCommittedMessage,
 }
 
 const messageTransitionTimeoutInMs = 500

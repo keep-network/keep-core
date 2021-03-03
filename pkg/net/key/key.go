@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 
 	"github.com/btcsuite/btcd/btcec"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/keep-network/keep-core/pkg/operator"
 	libp2pcrypto "github.com/libp2p/go-libp2p-core/crypto"
 )
@@ -21,7 +20,7 @@ type NetworkPrivate = libp2pcrypto.Secp256k1PrivateKey
 type NetworkPublic = libp2pcrypto.Secp256k1PublicKey
 
 // GenerateStaticNetworkKey generates a new, random static key based on
-// secp256k1 ethereum curve.
+// secp256k1 curve.
 func GenerateStaticNetworkKey() (*NetworkPrivate, *NetworkPublic, error) {
 	privKey, pubKey, err := operator.GenerateKeyPair()
 	if err != nil {
@@ -31,13 +30,13 @@ func GenerateStaticNetworkKey() (*NetworkPrivate, *NetworkPublic, error) {
 	return networkPrivateKey, networkPublicKey, nil
 }
 
-// OperatorKeyToNetworkKey transforms a static ECDSA key into the format supported
-// by the network layer. Because all curve parameters of the secp256k1 curve
-// defined by `go-ethereum` and all curve parameters of secp256k1 curve defined
-// by `btcsuite` used by `lipb2b` under the hood are identical, we can simply
-// rewrite the private key.
+// OperatorKeyToNetworkKey transforms a static ECDSA key into the format
+// supported by the network layer. Because all curve parameters of the secp256k1
+// curve defined by `go-ethereum`-based modules and all curve parameters of
+// secp256k1 curve defined by `btcsuite` used by `lipb2b` under the hood are
+// identical, we can simply rewrite the private key.
 //
-// `libp2p` does not recognize `go-ethereum` curves and when it comes to
+// `libp2p` does not recognize `go-ethereum`-based curves and when it comes to
 // creating peer's ID or deserializing the key, operation fails with
 // unrecognized curve error. This is no longer a problem if we transform the
 // key using this function.
@@ -51,11 +50,11 @@ func OperatorKeyToNetworkKey(
 	return (*NetworkPrivate)(privKey), (*NetworkPublic)(pubKey)
 }
 
-// NetworkPubKeyToEthAddress transforms the network public key into an Ethereum
+// NetworkPubKeyToChainAddress transforms the network public key into a chain
 // account address, in a string format.
-func NetworkPubKeyToEthAddress(publicKey *NetworkPublic) string {
+func NetworkPubKeyToChainAddress(publicKey *NetworkPublic) string {
 	ecdsaKey := (*btcec.PublicKey)(publicKey).ToECDSA()
-	return crypto.PubkeyToAddress(*ecdsaKey).String()
+	return operator.PubkeyToAddress(*ecdsaKey).String()
 }
 
 // Marshal takes a network public key, converts it into an ecdsa

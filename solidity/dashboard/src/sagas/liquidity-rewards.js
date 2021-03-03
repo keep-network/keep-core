@@ -69,6 +69,10 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 
     let reward = 0
     let shareOfPoolInPercent = 0
+    let lpTokenBalance = {
+      token0: 0,
+      token1: 0,
+    }
     if (gt(lpBalance, 0)) {
       // Fetching available reward balance from `LPRewards` contract.
       reward = yield call(
@@ -78,6 +82,11 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       )
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
+
+      lpTokenBalance = yield call(
+        [LiquidityRewards, LiquidityRewards.calculateLPTokenBalance],
+        lpBalance
+      )
     }
 
     yield put({
@@ -89,6 +98,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
         wrappedTokenBalance,
         reward,
         shareOfPoolInPercent,
+        lpTokenBalance,
       },
     })
   } catch (error) {
@@ -124,7 +134,7 @@ export function* watchLiquidityRewardNotifications() {
       )
     }
     displayMessage = true
-    yield delay(moment.duration(7, "minutes").asMilliseconds()) // every 7 minutes
+    yield delay(moment.duration(15, "minutes").asMilliseconds())
   }
 }
 
@@ -145,18 +155,43 @@ function* processLiquidityRewardEarnedNotification(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
     address
   )
+  const displayedMessages = yield select((state) => state.messages)
+  const liquidityRewardNotificationAlreadyDisplayed = displayedMessages.some(
+    (message) => {
+      return message.messageType === messageType.LIQUIDITY_REWARDS_EARNED
+    }
+  )
   // show the notification if the rewardBalance from LPRewardsContract is greater
   // than the reward amount that was last time the notification was displayed
   if (gt(currentReward, lastNotificationRewardAmount) && displayMessage) {
-    yield put(
-      showMessage({
-        messageType: messageType.LIQUIDITY_REWARDS_EARNED,
-        messageProps: {
-          liquidityRewardPairName: liquidityRewardPairName,
-          sticky: true,
-        },
+    const {
+      liquidityRewardNotification: { pairsDisplayed },
+    } = yield select((state) => state.notificationsData)
+
+    // display notification if not already displayed
+    if (!liquidityRewardNotificationAlreadyDisplayed) {
+      yield put(
+        showMessage({
+          messageType: messageType.LIQUIDITY_REWARDS_EARNED,
+          messageProps: {
+            sticky: true,
+          },
+        })
+      )
+    }
+
+    // check if liquidity pair is already in displayed notification
+    if (
+      !pairsDisplayed.some(
+        (pairDisplayed) => pairDisplayed === liquidityRewardPairName
+      )
+    ) {
+      yield put({
+        type:
+          "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
+        payload: [...pairsDisplayed, liquidityRewardPairName],
       })
-    )
+    }
 
     yield put({
       type: `liquidity_rewards/${liquidityRewardPairName}_reward_updated`,
