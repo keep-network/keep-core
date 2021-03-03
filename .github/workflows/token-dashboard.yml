@@ -31,17 +31,17 @@ jobs:
         with:
           node-version: "12.x"
 
-      # - name: Cache node modules
-      #   uses: actions/cache@v2
-      #   env:
-      #     cache-name: cache-solidity-node-modules
-      #   with:
-      #     path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-      #     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-build-${{ env.cache-name }}-
-      #       ${{ runner.os }}-build-
-      #       ${{ runner.os }}-
+      - name: Cache resolved contracts
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-resolved-contracts
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
 
       - name: Resolve latest contracts
         run: |
