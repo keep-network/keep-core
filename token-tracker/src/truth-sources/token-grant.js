@@ -115,7 +115,9 @@ export class TokenGrantTruthSource extends ITruthSource {
       const owner = await resolveGrantee(this.context.web3, grantee)
 
       if (owner !== grantee)
-        logger.debug(`resolved owner of grantee [${grantee}]: ${owner}`)
+        logger.debug(
+          `resolved grantee for managed grant [${grantee}]: ${owner}`
+        )
 
       if (ownersBalances.has(owner)) {
         ownersBalances.get(owner).iadd(balance)
