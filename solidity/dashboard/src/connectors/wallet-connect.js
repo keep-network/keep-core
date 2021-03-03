@@ -1,9 +1,14 @@
 import WalletConnect from "@walletconnect/web3-provider"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
+import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import BigNumber from "bignumber.js"
 import { AbstractConnector } from "./abstract-connector"
 import { WALLETS } from "../constants/constants"
-import { getRPCRequestPayload, overrideCacheMiddleware } from "./utils"
+import {
+  getRPCRequestPayload,
+  overrideCacheMiddleware,
+  getWsUrl,
+} from "./utils"
 
 export class WalletConnectConnector extends AbstractConnector {
   constructor(
@@ -25,6 +30,36 @@ export class WalletConnectConnector extends AbstractConnector {
 
   enable = async () => {
     try {
+      // Override `handleRequest` in order to support event subscriptions via
+      // `WebsocketSubprovider`
+      const requestProvider = this.provider._providers[
+        this.provider._providers.length - 1
+      ]
+      const originalHandleRequest = requestProvider.handleRequest.bind(
+        requestProvider
+      )
+
+      requestProvider.handleRequest = async (payload, next, end) => {
+        switch (payload.method) {
+          case "eth_getLogs":
+          case "eth_subscribe": {
+            // Pass this request to the next subprovider.
+            next()
+            return
+          }
+          default: {
+            await originalHandleRequest(payload, next, end)
+            return
+          }
+        }
+      }
+
+      this.provider.addProvider(
+        new WebsocketSubprovider({
+          rpcUrl: getWsUrl(),
+          debug: true,
+        })
+      )
       const accounts = await this.provider.enable()
       return accounts
     } catch (error) {
