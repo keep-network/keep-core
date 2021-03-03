@@ -49,7 +49,7 @@ async function initializeContext() {
 }
 
 export async function getTokenOwnership(targetBlockNumber) {
-  if (!targetBlockNumber) throw new Error("target block not defined")
+  if (!targetBlockNumber) throw new Error("target block is not defined")
 
   logger.info(`Inspect token ownership at block ${targetBlockNumber}`)
 
