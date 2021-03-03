@@ -18,7 +18,7 @@ import commander from "commander"
 const program = new commander.Command()
 
 program
-  .requiredOption("--final-block <number>", "final block number")
+  .requiredOption("--target-block <number>", "target block number")
   .parse(process.argv)
 
 const TMP_DIR = "./tmp"
@@ -46,10 +46,10 @@ async function initializeContext() {
   return context
 }
 
-export async function getTokenOwnership(finalBlockNumber) {
-  if (!finalBlockNumber) throw new Error("final block not defined")
+export async function getTokenOwnership(targetBlockNumber) {
+  if (!targetBlockNumber) throw new Error("target block not defined")
 
-  logger.info(`Inspect token ownership at block ${finalBlockNumber}`)
+  logger.info(`Inspect token ownership at block ${targetBlockNumber}`)
 
   const context = await initializeContext()
 
@@ -60,7 +60,7 @@ export async function getTokenOwnership(finalBlockNumber) {
   inspector.registerTruthSource(TokenStakingTruthSource)
   inspector.registerTruthSource(TokenGrantTruthSource)
 
-  return await inspector.getOwnershipsAtBlock(finalBlockNumber)
+  return await inspector.getOwnershipsAtBlock(targetBlockNumber)
 }
 
 async function run() {
@@ -68,7 +68,7 @@ async function run() {
     mkdirSync(TMP_DIR)
   }
 
-  const result = await getTokenOwnership(program.opts().finalBlock)
+  const result = await getTokenOwnership(program.opts().targetBlock)
 
   dumpDataToFile(result, RESULT_DUMP_PATH)
 

@@ -34,15 +34,15 @@ export class Inspector {
 
   /**
    * Gets token ownership at the given block for all registered sources of truth.
-   * @param {Number} finalBlock Block to check token holdings at.
+   * @param {Number} targetBlock Block to check token holdings at.
    * @return {Promise<Map<Address,BN>>} Map of owners to their balances.
    */
-  async getOwnershipsAtBlock(finalBlock) {
+  async getOwnershipsAtBlock(targetBlock) {
     for (const TruthSource of this.#truthSources) {
       /** @type {ITruthSource} */
-      const truthSourceInstance = new TruthSource(this.context, finalBlock)
+      const truthSourceInstance = new TruthSource(this.context, targetBlock)
 
-      const newHoldings = await truthSourceInstance.getTokenHoldingsAtFinalBlock()
+      const newHoldings = await truthSourceInstance.getTokenHoldingsAtTargetBlock()
 
       this.addTokenHoldings(newHoldings)
     }

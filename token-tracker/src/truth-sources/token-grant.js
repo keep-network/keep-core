@@ -25,8 +25,11 @@ const TOKEN_GRANT_BALANCES_DUMP_PATH = "./tmp/token-grant-balances.json"
 export class TokenGrantTruthSource extends ITruthSource {
   /** @property {ContractInstance} tokenGrant */
 
-  constructor(/** @type {Context} */ context, /** @type {Number}*/ finalBlock) {
-    super(context, finalBlock)
+  constructor(
+    /** @type {Context} */ context,
+    /** @type {Number}*/ targetBlock
+  ) {
+    super(context, targetBlock)
   }
 
   async initialize() {
@@ -47,16 +50,16 @@ export class TokenGrantTruthSource extends ITruthSource {
   /**
    * Gets all token grants based on TokenGrantCreated event of TokenGrant contract.
    * Returns details of each grant like ID, grantee and balance. The balance is
-   * calculated at the pre defined final block as total grant amount minus withdrawn
+   * calculated at the pre defined target block as total grant amount minus withdrawn
    * and revoked tokens. The balance includes tokens that were staked, it's important
    * to exclude the stake amount in TokenStaking source of truth to avoid value
    * duplication.
-   * @return {TokenGrant[]} Token grant with ID, grantee and balance at final block.
+   * @return {TokenGrant[]} Token grant with ID, grantee and balance at target block.
    */
   async findTokenGrants() {
     logger.info(
       `looking for TokenGrantCreated events emitted from ${this.tokenGrant.options.address} ` +
-        `between blocks ${this.context.deploymentBlock} and ${this.finalBlock}`
+        `between blocks ${this.context.deploymentBlock} and ${this.targetBlock}`
     )
 
     /** @type {Array} */
@@ -65,7 +68,7 @@ export class TokenGrantTruthSource extends ITruthSource {
       this.tokenGrant,
       "TokenGrantCreated",
       this.context.deploymentBlock,
-      this.finalBlock
+      this.targetBlock
     )
     logger.info(`found ${events.length} token grant created events`)
 
@@ -79,7 +82,7 @@ export class TokenGrantTruthSource extends ITruthSource {
         this.tokenGrant.methods.getGrant(id),
         undefined,
         undefined,
-        this.finalBlock
+        this.targetBlock
       )
 
       // Balance is the total grant amount minus revoked and withdrawn tokens. The
@@ -128,9 +131,9 @@ export class TokenGrantTruthSource extends ITruthSource {
 
   /**
    * Returns a map of addresses with their token holdings based on Token Grants.
-   * @return {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the target block.
    */
-  async getTokenHoldingsAtFinalBlock() {
+  async getTokenHoldingsAtTargetBlock() {
     await this.initialize()
 
     const allGrants = await this.findTokenGrants()

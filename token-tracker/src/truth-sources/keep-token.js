@@ -27,10 +27,10 @@ const CONCURRENCY_LEVEL = 20
 export class KeepTokenTruthSource extends ITruthSource {
   /**
    * @param {Context} context
-   * @param {Number} finalBlock
+   * @param {Number} targetBlock
    */
-  constructor(context, finalBlock) {
-    super(context, finalBlock)
+  constructor(context, targetBlock) {
+    super(context, targetBlock)
   }
 
   async initialize() {
@@ -49,7 +49,7 @@ export class KeepTokenTruthSource extends ITruthSource {
   async findHistoricHolders() {
     logger.info(
       `looking for Transfer events emitted from ${this.keepToken.options.address} ` +
-        `between blocks ${this.context.deploymentBlock} and ${this.finalBlock}`
+        `between blocks ${this.context.deploymentBlock} and ${this.targetBlock}`
     )
 
     const events = await getPastEvents(
@@ -57,7 +57,7 @@ export class KeepTokenTruthSource extends ITruthSource {
       this.keepToken,
       "Transfer",
       this.context.deploymentBlock,
-      this.finalBlock
+      this.targetBlock
     )
     logger.info(`found ${events.length} token transfer events`)
 
@@ -137,10 +137,10 @@ export class KeepTokenTruthSource extends ITruthSource {
   /**
    * Checks token balance for addresses on the list.
    * @param {Set<Address>} tokenHolders Token holders to check.
-   * @return {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the target blocks.
    */
-  async checkFinalHoldersBalances(tokenHolders) {
-    logger.info(`check token holdings at block ${this.finalBlock}`)
+  async checkTargetHoldersBalances(tokenHolders) {
+    logger.info(`check token holdings at block ${this.targetBlock}`)
 
     const concurrentBalanceChecks = Array.from(tokenHolders).map(
       (holder) => () =>
@@ -149,11 +149,11 @@ export class KeepTokenTruthSource extends ITruthSource {
             this.keepToken.methods.balanceOf(holder),
             undefined,
             undefined,
-            this.finalBlock
+            this.targetBlock
           )
-            .then((finalBalance) => {
-              logger.debug(`holder ${holder} balance ${finalBalance}`)
-              resolve({ holder: holder, balance: finalBalance })
+            .then((targetBalance) => {
+              logger.debug(`holder ${holder} balance ${targetBalance}`)
+              resolve({ holder: holder, balance: targetBalance })
             })
             .catch(reject)
         })
@@ -180,15 +180,15 @@ export class KeepTokenTruthSource extends ITruthSource {
 
     for (const entry of balances) {
       const holder = entry.holder
-      const finalBalance = new BN(entry.balance)
+      const targetBalance = new BN(entry.balance)
 
-      if (finalBalance.gtn(0)) {
-        holdersBalances.set(holder, finalBalance)
+      if (targetBalance.gtn(0)) {
+        holdersBalances.set(holder, targetBalance)
       }
     }
 
     logger.info(
-      `found ${holdersBalances.size} holders at block ${this.finalBlock}`
+      `found ${holdersBalances.size} holders at block ${this.targetBlock}`
     )
 
     dumpDataToFile(holdersBalances, KEEP_TOKEN_BALANCES_DUMP_PATH)
@@ -197,16 +197,16 @@ export class KeepTokenTruthSource extends ITruthSource {
   }
 
   /**
-   * @return {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the target blocks.
    */
-  async getTokenHoldingsAtFinalBlock() {
+  async getTokenHoldingsAtTargetBlock() {
     await this.initialize()
 
     const allTokenHolders = await this.findHistoricHolders()
 
     const filteredTokenHolders = await this.filterHolders(allTokenHolders)
 
-    const holdersBalances = await this.checkFinalHoldersBalances(
+    const holdersBalances = await this.checkTargetHoldersBalances(
       filteredTokenHolders
     )
 

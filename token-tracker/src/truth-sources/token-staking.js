@@ -26,9 +26,9 @@ const TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_DUMP_PATH =
 export class TokenStakingTruthSource extends ITruthSource {
   constructor(
     /** @type {Context} */ context,
-    /** @type {Number} */ finalBlock
+    /** @type {Number} */ targetBlock
   ) {
-    super(context, finalBlock)
+    super(context, targetBlock)
   }
 
   async initialize() {
@@ -51,7 +51,7 @@ export class TokenStakingTruthSource extends ITruthSource {
   async findHistoricStakeOperatorsOwners() {
     logger.info(
       `looking for StakeDelegated events emitted from ${this.tokenStaking.options.address} ` +
-        `between blocks ${this.context.deploymentBlock} and ${this.finalBlock}`
+        `between blocks ${this.context.deploymentBlock} and ${this.targetBlock}`
     )
 
     const events = await getPastEvents(
@@ -59,7 +59,7 @@ export class TokenStakingTruthSource extends ITruthSource {
       this.tokenStaking,
       "StakeDelegated",
       this.context.deploymentBlock,
-      this.finalBlock
+      this.targetBlock
     )
     logger.info(`found ${events.length} stake delegated events`)
 
@@ -124,10 +124,10 @@ export class TokenStakingTruthSource extends ITruthSource {
    * delegations to operators, ignored delegations that were undelegated. Combines
    * results for owners that have multiple operators.
    * @param {Map<Address,Address>} stakers Map of operators and owners to check.
-   * @return {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the target block.
    */
   async checkStakedValues(stakers) {
-    logger.info(`check stake delegations at block ${this.finalBlock}`)
+    logger.info(`check stake delegations at block ${this.targetBlock}`)
 
     /** @type {Map<Address,BN>} */
     const stakersBalances = new Map()
@@ -137,7 +137,7 @@ export class TokenStakingTruthSource extends ITruthSource {
         this.tokenStaking.methods.getDelegationInfo(operator),
         undefined,
         undefined,
-        this.finalBlock
+        this.targetBlock
       )
 
       const amount = toBN(delegationInfo.amount)
@@ -172,9 +172,9 @@ export class TokenStakingTruthSource extends ITruthSource {
 
   /**
    * Returns a map of addresses with their token holdings based on Token Staking.
-   * @return {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the target blocks.
    */
-  async getTokenHoldingsAtFinalBlock() {
+  async getTokenHoldingsAtTargetBlock() {
     await this.initialize()
 
     const allStakeOwners = await this.findHistoricStakeOperatorsOwners()
