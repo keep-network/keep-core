@@ -139,14 +139,6 @@ export class TokenStakingTruthSource extends ITruthSource {
       )
 
       const amount = toBN(delegationInfo.amount)
-      const undelegatedAt = toBN(delegationInfo.undelegatedAt)
-
-      if (undelegatedAt.gtn(0)) {
-        logger.debug(
-          `skipping delegation to ${operator}, undelegated at: ${undelegatedAt.toString()}`
-        )
-        continue
-      }
 
       if (amount.eqn(0)) {
         logger.debug(`skipping delegation to ${operator}, amount is zero`)
