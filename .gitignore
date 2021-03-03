@@ -43,4 +43,3 @@ configs
 # Private testnet artifacts
 *-keep-client-deployment-bundle.tar.gz
 keep-client-snapshot.tar
-token-tracker/tmp/*
