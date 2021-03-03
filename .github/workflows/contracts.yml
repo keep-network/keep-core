@@ -107,7 +107,8 @@ jobs:
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Push contracts to Tenderly
-        uses: keep-network/tenderly-push-action #add @v1 once action gets tagged
+        # once below action gets tagged replace `@main` with `@v1` 
+        uses: keep-network/tenderly-push-action@main
         continue-on-error: true
         with:
           working-directory: ./solidity
