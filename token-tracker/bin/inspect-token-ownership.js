@@ -27,7 +27,9 @@ const RESULT_DUMP_PATH = "./tmp/result.json"
 async function initializeContext() {
   const context = await Context.initialize(
     process.env.ETH_HOSTNAME,
-    process.env.ETH_ACCOUNT_PRIVATE_KEY || "01".repeat(32)
+    // Initializes web3 in the read only mode. Provide actual private key to
+    // interact with the chain.
+    "01".repeat(32)
   )
   logger.debug("context initialized")
 

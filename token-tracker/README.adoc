@@ -53,9 +53,6 @@ Following environment variables are expected to be configured:
 
 - `ETH_HOSTNAME` (required) - URL for Ethereum API
 
-- `ETH_ACCOUNT_PRIVATE_KEY` (optional) - ethereum account private key, required only
-if sending transactions to the chain.
-
 Following arguments are expected by the program:
 
 - `final-block` (required) - block at which calculations should be made
