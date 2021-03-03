@@ -37,10 +37,10 @@ const KEEP_IN_LP_KEEPTBTC_BALANCES_PATH =
 export class LPTokenTruthSource extends ITruthSource {
   /**
    * @param {Context} context
-   * @param {Number} finalBlock
+   * @param {Number} targetBlock
    */
-  constructor(context, finalBlock) {
-    super(context, finalBlock)
+  constructor(context, targetBlock) {
+    super(context, targetBlock)
   }
 
   async initialize() {
@@ -95,7 +95,7 @@ export class LPTokenTruthSource extends ITruthSource {
     logger.info(
       `looking for Transfer events emitted from ${lpRewardsContractAddress} ` +
         `to ${pairName} pair ${this.liquidityStaking.lpTokenContract.options.address} ` +
-        `between blocks ${this.liquidityStaking.lpCreationBlock} and ${this.finalBlock}`
+        `between blocks ${this.liquidityStaking.lpCreationBlock} and ${this.targetBlock}`
     )
 
     const events = await getPastEvents(
@@ -103,7 +103,7 @@ export class LPTokenTruthSource extends ITruthSource {
       this.liquidityStaking.lpTokenContract,
       "Transfer",
       this.liquidityStaking.lpCreationBlock,
-      this.finalBlock
+      this.targetBlock
     )
     logger.info(`found ${events.length} lp ${pairName} token transfer events`)
 
@@ -135,7 +135,7 @@ export class LPTokenTruthSource extends ITruthSource {
       const lpBalance = new BN(
         await this.liquidityStaking.lpRewardsContract.methods
           .balanceOf(lpStakers[i])
-          .call({}, this.finalBlock)
+          .call({}, this.targetBlock)
       )
       if (!lpBalance.isZero()) {
         lpBalanceByStaker.set(lpStakers[i], lpBalance)
@@ -145,7 +145,7 @@ export class LPTokenTruthSource extends ITruthSource {
     const actualTotalSupply = new BN(
       await this.liquidityStaking.lpRewardsContract.methods
         .totalSupply()
-        .call({}, this.finalBlock)
+        .call({}, this.targetBlock)
     )
 
     if (!expectedTotalSupply.eq(actualTotalSupply)) {
@@ -164,10 +164,10 @@ export class LPTokenTruthSource extends ITruthSource {
    *
    * @param {Map<Address, BN>} stakersBalances LP KEEP-ETH / KEEP-TBTC Token amounts by stakers
    *
-   * @return {Map<Address,BN>} KEEP Tokens in LP KEEP-ETH / KEEP-TBTC at the final block
+   * @return {Map<Address,BN>} KEEP Tokens in LP KEEP-ETH / KEEP-TBTC at the target block
    */
   async calcKeepInStakersBalances(stakersBalances) {
-    logger.info(`check token stakers at block ${this.finalBlock}`)
+    logger.info(`check token stakers at block ${this.targetBlock}`)
 
     const keepInLpByStakers = new Map()
 
@@ -186,7 +186,7 @@ export class LPTokenTruthSource extends ITruthSource {
     }
 
     logger.info(
-      `found ${keepInLpByStakers.size} stakers at block ${this.finalBlock}`
+      `found ${keepInLpByStakers.size} stakers at block ${this.targetBlock}`
     )
 
     dumpDataToFile(
@@ -218,9 +218,9 @@ export class LPTokenTruthSource extends ITruthSource {
   }
 
   /**
-   * @return {Map<Address,BN>} KEEP token amounts staked by stakers at the final block
+   * @return {Map<Address,BN>} KEEP token amounts staked by stakers at the target block
    */
-  async getTokenHoldingsAtFinalBlock() {
+  async getTokenHoldingsAtTargetBlock() {
     await this.initialize()
     const keepInLPsByStakers = new Map()
 
