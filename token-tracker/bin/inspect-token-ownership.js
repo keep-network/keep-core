@@ -1,6 +1,7 @@
 #!/usr/bin/env NODE_BACKEND=js node --experimental-modules --experimental-json-modules
 
 import { existsSync, mkdirSync } from "fs"
+import path from "path"
 
 import Context from "../src/lib/context.js"
 import { logger } from "../src/lib/winston.js"
@@ -22,7 +23,8 @@ program
   .parse(process.argv)
 
 const TMP_DIR = "./tmp"
-const RESULT_DUMP_PATH = "./tmp/result.json"
+const OUT_DIR = "./output"
+const RESULT_DUMP_PATH = path.join(OUT_DIR, "result.json")
 
 async function initializeContext() {
   const context = await Context.initialize(
@@ -66,6 +68,9 @@ export async function getTokenOwnership(targetBlockNumber) {
 async function run() {
   if (!existsSync(TMP_DIR)) {
     mkdirSync(TMP_DIR)
+  }
+  if (!existsSync(OUT_DIR)) {
+    mkdirSync(OUT_DIR)
   }
 
   const result = await getTokenOwnership(program.opts().targetBlock)
