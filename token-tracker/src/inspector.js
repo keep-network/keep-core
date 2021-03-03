@@ -2,11 +2,10 @@
 /** @typedef { import("./truth-sources/truth-source").ITruthSource } ITruthSource */
 /** @typedef { import("./lib/ethereum-helper").Address } Address */
 
-import BN from "bn.js"
-
 import { logger } from "./lib/winston.js"
 import { getDeploymentBlockNumber } from "./lib/contract-helper.js"
 import { Contract } from "./lib/contract-helper.js"
+import { addTokenHoldings } from "./lib/map-helper.js"
 
 import KeepTokenJson from "@keep-network/keep-core/artifacts/KeepToken.json"
 import TokenStakingJSON from "@keep-network/keep-core/artifacts/TokenStaking.json"
@@ -69,25 +68,8 @@ export class Inspector {
 
       const newHoldings = await truthSourceInstance.getTokenHoldingsAtTargetBlock()
 
-      this.addTokenHoldings(newHoldings)
+      this.tokenHoldings = addTokenHoldings(this.tokenHoldings, newHoldings)
     }
     return this.tokenHoldings
-  }
-
-  /**
-   * Adds balances of new tokens holdings to the existing map of holdings.
-   * @param {Map<Address,BN>} newHoldings Map of token holders to add.
-   */
-  addTokenHoldings(newHoldings) {
-    newHoldings.forEach((value, holder) => {
-      holder = this.context.web3.utils.toChecksumAddress(holder)
-      value = new BN(value)
-
-      if (this.tokenHoldings.has(holder)) {
-        this.tokenHoldings.get(holder).iadd(value)
-      } else {
-        this.tokenHoldings.set(holder, value)
-      }
-    })
   }
 }
