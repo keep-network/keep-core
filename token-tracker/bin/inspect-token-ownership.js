@@ -11,7 +11,7 @@ import { Inspector } from "../src/inspector.js"
 import { KeepTokenTruthSource } from "../src/truth-sources/keep-token.js"
 import { TokenStakingTruthSource } from "../src/truth-sources/token-staking.js"
 import { TokenGrantTruthSource } from "../src/truth-sources/token-grant.js"
-import { LPTokenTruthSource } from "../src/truth-sources/lp-token.js"
+import { LPTokenTruthSource } from "../src/truth-sources/lp-tokens.js"
 
 import KeepTokenJson from "@keep-network/keep-core/artifacts/KeepToken.json"
 
