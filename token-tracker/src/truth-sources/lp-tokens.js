@@ -222,6 +222,7 @@ export class LPTokenTruthSource extends ITruthSource {
    */
   async getTokenHoldingsAtFinalBlock() {
     await this.initialize()
+    const keepInLPsByStakers = new Map()
 
     for (const [pairName, pairObj] of Object.entries(
       this.liquidityStakingObjects
@@ -230,9 +231,17 @@ export class LPTokenTruthSource extends ITruthSource {
 
       const lpStakers = await this.findStakers(pairName)
       const stakersBalances = await this.getLpTokenStakersBalances(lpStakers)
-      await this.calcKeepInStakersBalances(stakersBalances)
+      const keepInLpByStakers = await this.calcKeepInStakersBalances(stakersBalances)
+
+      keepInLpByStakers.forEach((balance, staker) => {
+        if (keepInLPsByStakers.has(staker)) {
+          keepInLPsByStakers.get(staker).iadd(balance)
+        } else {
+          keepInLPsByStakers.set(staker, new BN(balance))
+        }
+      })
     }
 
-    return {}
+    return keepInLPsByStakers
   }
 }
