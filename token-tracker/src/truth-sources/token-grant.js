@@ -117,11 +117,11 @@ export class TokenGrantTruthSource extends ITruthSource {
       if (owner !== grantee)
         logger.debug(`resolved owner of grantee [${grantee}]: ${owner}`)
 
-      if (!ownersBalances.has(owner)) {
+      if (ownersBalances.has(owner)) {
+        ownersBalances.get(owner).iadd(balance)
+      } else {
         ownersBalances.set(owner, toBN(0))
       }
-
-      ownersBalances.get(owner).iadd(balance)
     }
 
     dumpDataToFile(ownersBalances, TOKEN_GRANT_BALANCES_DUMP_PATH)

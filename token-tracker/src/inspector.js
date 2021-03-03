@@ -50,7 +50,7 @@ export class Inspector {
   }
 
   /**
-   * Adds balances of new tokens holdings to the existing map of holdings. 
+   * Adds balances of new tokens holdings to the existing map of holdings.
    * @param {Map<Address,BN>} newHoldings Map of token holders to add.
    */
   addTokenHoldings(newHoldings) {
@@ -58,11 +58,11 @@ export class Inspector {
       holder = toChecksumAddress(holder)
       value = new BN(value)
 
-      if (!this.tokenHoldings.has(holder)) {
-        this.tokenHoldings.set(holder, new BN(0))
+      if (this.tokenHoldings.has(holder)) {
+        this.tokenHoldings.get(holder).iadd(value)
+      } else {
+        this.tokenHoldings.set(holder, value)
       }
-
-      this.tokenHoldings.get(holder).iadd(value)
     })
   }
 }
