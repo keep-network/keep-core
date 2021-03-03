@@ -95,37 +95,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      # OLD CODE FOR CONTRACTS MIGRATION
-      # # TODO: Create an action for migrating contracts and apply it instead of below step
-      # - name: Migrate contracts
-      #   env: 
-      #     BUILD_TAG: $GITHUB_SHA
-      #     GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME }}
-      #     TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
-      #     ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID }}
-      #     ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
-      #     TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
-      #     CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
-      #   run: solidity/scripts/circleci-migrate-contracts.sh
 
+      - name: Install dependencies
+        working-directory: ./solidity
+        run: npm ci
+      
       - name: Migrate contracts
         env: 
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
         working-directory: ./solidity
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      # # DRAFT CODE FOR PUSHING CONTRACTS TO TENDERLY
-      # - name: Push contracts to Tenderly
-      #   uses: keep-network/tenderly-push-action #add @v1 once action gets tagged
-      #   continue-on-error: true # optional, don't fail the job on step failure
-      #   with: # do we ad 'wip' suffix anywhere?
-      #     working-directory: ./solidity
-      #     tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
-      #     tenderly-project: thesis/keep-test # in the example it was thesis/keep-dev
-      #     eth-network-id: ${{ secrets.ETH_NETWORK_ID }} # 1101
-      #     github-project-name: keep-core
-      #     version-tag: $GITHUB_SHA
+      - name: Push contracts to Tenderly
+        uses: keep-network/tenderly-push-action #add @v1 once action gets tagged
+        continue-on-error: true
+        with:
+          working-directory: ./solidity
+          tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
+          tenderly-project: thesis/keep-test
+          eth-network-id: ${{ secrets.ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          github-project-name: keep-core
+          # version-tag: # resolve npm package version
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
