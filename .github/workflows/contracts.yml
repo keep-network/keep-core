@@ -95,18 +95,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      
+      # OLD CODE FOR CONTRACTS MIGRATION
+      # # TODO: Create an action for migrating contracts and apply it instead of below step
+      # - name: Migrate contracts
+      #   env: 
+      #     BUILD_TAG: $GITHUB_SHA
+      #     GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME }}
+      #     TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
+      #     ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID }}
+      #     ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
+      #     TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
+      #     CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
+      #   run: solidity/scripts/circleci-migrate-contracts.sh
 
-      # TODO: Create an action for migrating contracts and apply it instead below step
       - name: Migrate contracts
         env: 
-          BUILD_TAG: $GITHUB_SHA
-          GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME }}
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
-          ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID }}
-          ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
-          TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
-        run: solidity/scripts/circleci-migrate-contracts.sh
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      # DRAFT CODE FOR PUSHING CONTRACTS TO TENDERLY
+      # - name: Push contracts to Tenderly
+      #   uses: keep-network/tenderly-push-action@v1
+      #   working-directory: solidity
+      #   continue-on-error: true # optional, don't fail the job on step failure
+      #   with:
+      #     tenderly-token: 0123456789AbCdEf
+      #     tenderly-project: thesis/keep-dev
+      #     eth-network-id: "1937"
+      #     github-project-name: keep-core
+      #     version-tag: "1.2.3" 
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
