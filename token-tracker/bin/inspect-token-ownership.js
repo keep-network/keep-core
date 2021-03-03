@@ -1,6 +1,7 @@
 #!/usr/bin/env NODE_BACKEND=js node --experimental-modules --experimental-json-modules
 
 import { existsSync, mkdirSync } from "fs"
+import path from "path"
 
 import Context from "../src/lib/context.js"
 import { logger } from "../src/lib/winston.js"
@@ -19,16 +20,19 @@ import commander from "commander"
 const program = new commander.Command()
 
 program
-  .requiredOption("--final-block <number>", "final block number")
+  .requiredOption("--target-block <number>", "target block number")
   .parse(process.argv)
 
 const TMP_DIR = "./tmp"
-const RESULT_DUMP_PATH = "./tmp/result.json"
+const OUT_DIR = "./output"
+const RESULT_OUTPUT_PATH = path.join(OUT_DIR, "result.json")
 
 async function initializeContext() {
   const context = await Context.initialize(
     process.env.ETH_HOSTNAME,
-    process.env.ETH_ACCOUNT_PRIVATE_KEY || "01".repeat(32)
+    // Initializes web3 in the read only mode. Provide actual private key to
+    // interact with the chain.
+    "01".repeat(32)
   )
   logger.debug("context initialized")
 
@@ -45,10 +49,10 @@ async function initializeContext() {
   return context
 }
 
-export async function getTokenOwnership(finalBlockNumber) {
-  if (!finalBlockNumber) throw new Error("final block not defined")
+export async function getTokenOwnership(targetBlockNumber) {
+  if (!targetBlockNumber) throw new Error("target block is not defined")
 
-  logger.info(`Inspect token ownership at block ${finalBlockNumber}`)
+  logger.info(`Inspect token ownership at block ${targetBlockNumber}`)
 
   const context = await initializeContext()
 
@@ -60,17 +64,20 @@ export async function getTokenOwnership(finalBlockNumber) {
   inspector.registerTruthSource(TokenGrantTruthSource)
   inspector.registerTruthSource(LPTokenTruthSource)
 
-  return await inspector.getOwnershipsAtBlock(finalBlockNumber)
+  return await inspector.getOwnershipsAtBlock(targetBlockNumber)
 }
 
 async function run() {
   if (!existsSync(TMP_DIR)) {
     mkdirSync(TMP_DIR)
   }
+  if (!existsSync(OUT_DIR)) {
+    mkdirSync(OUT_DIR)
+  }
 
-  const result = await getTokenOwnership(program.opts().finalBlock)
+  const result = await getTokenOwnership(program.opts().targetBlock)
 
-  dumpDataToFile(result, RESULT_DUMP_PATH)
+  dumpDataToFile(result, RESULT_OUTPUT_PATH)
 
   logger.info("DONE!")
 }

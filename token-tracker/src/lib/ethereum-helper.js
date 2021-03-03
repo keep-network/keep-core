@@ -94,7 +94,9 @@ export async function getPastEvents(
       })
     } catch (err) {
       logger.warn(
-        `switching to partial events pulls; failed to get events in one request: [${err.message}]`
+        `switching to partial events pulls;` +
+          `failed to get events in one request for event [${eventName}], ` +
+          `fromBlock: [${fromBlock}], toBlock: [${toBlock}]: [${err.message}]`
       )
 
       try {
@@ -105,6 +107,10 @@ export async function getPastEvents(
           if (toBlock > endBlock) {
             toBlock = endBlock
           }
+          logger.debug(
+            `executing partial events pull for event [${eventName}], ` +
+              `fromBlock: [${fromBlock}], toBlock: [${toBlock}]`
+          )
           const foundEvents = await backoffRetrier(3)(async () => {
             return await contract.getPastEvents(eventName, {
               fromBlock: fromBlock,
@@ -113,6 +119,10 @@ export async function getPastEvents(
           })
 
           resultEvents = resultEvents.concat(foundEvents)
+          logger.debug(
+            `fetched [${foundEvents.length}] events, has ` +
+              `[${resultEvents.length}] total`
+          )
 
           fromBlock = toBlock + 1
         }

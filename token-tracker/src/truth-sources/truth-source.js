@@ -1,21 +1,19 @@
 /** @typedef { import("../lib/context").default } Context */
 /** @typedef { import("../lib/ethereum-helper").Address } Address */
 /** @typedef { import("bn.js") } BN */
+/** @typedef { import("Web3").default } Web3 */
 
 /**
  * @typedef {Object} ITruthSource
  * @prop {Context} context Description.
- * @prop {Number} finalBlock Description.
+ * @prop {Number} targetBlock Description.
  */
-
-import Web3 from "web3"
-const { toChecksumAddress } = Web3.utils
 
 /**
  * This is an interface that should be implemented by all sources of truth for
  * token ownership inspection.
  * @property {Context} context Context instance.
- * @property {Number} finalBlock Block at which ownership should be inspected.
+ * @property {Number} targetBlock Block at which ownership should be inspected.
  * @property {IgnoredContractsResolver} ignoredContractsResolver Resolver for
  * filtering owners that are contracts. If the owner is one of the ignored contracts
  * it should be removed as it should be already handled by a truth source implementation,
@@ -24,10 +22,10 @@ const { toChecksumAddress } = Web3.utils
 export class ITruthSource {
   constructor(
     /** @type {Context} */ context,
-    /** @type {Number} */ finalBlock
+    /** @type {Number} */ targetBlock
   ) {
     this.context = context
-    this.finalBlock = finalBlock
+    this.targetBlock = targetBlock
 
     this.addressesResolver = new AddressesResolver(context.web3)
   }
@@ -35,10 +33,10 @@ export class ITruthSource {
   /**
    * Returns a map of addresses with their token holdings discovered using the
    * specific source of truth.
-   * @return {Map<Address,BN>} Token holdings at the final blocks.
+   * @return {Map<Address,BN>} Token holdings at the target blocks.
    */
-  async getTokenHoldingsAtFinalBlock() {
-    throw new Error("getTokenHoldingsAtFinalBlock not implemented")
+  async getTokenHoldingsAtTargetBlock() {
+    throw new Error("getTokenHoldingsAtTargetBlock not implemented")
   }
 }
 
@@ -50,6 +48,8 @@ export class ITruthSource {
  * contracts handled by truth of sources implementations.
  */
 export class AddressesResolver {
+  /** @property {Web3} web3 */
+
   /**
    * List of known contracts' addresses that should be ignored as token holders
    * as source of truth implementation resolved actual owners of the tokens locked
@@ -100,6 +100,8 @@ export class AddressesResolver {
     for (const [ignoredContractName, ignoredContractAddress] of Object.entries(
       AddressesResolver.IGNORED_CONTRACTS
     )) {
+      const { toChecksumAddress } = this.web3.utils
+
       if (
         toChecksumAddress(ignoredContractAddress) === toChecksumAddress(address)
       ) {

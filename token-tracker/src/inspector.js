@@ -4,9 +4,6 @@
 
 import BN from "bn.js"
 
-import Web3 from "web3"
-const { toChecksumAddress } = Web3.utils
-
 export class Inspector {
   /** @type {Set<Function>} */
   #truthSources
@@ -34,15 +31,15 @@ export class Inspector {
 
   /**
    * Gets token ownership at the given block for all registered sources of truth.
-   * @param {Number} finalBlock Block to check token holdings at.
+   * @param {Number} targetBlock Block to check token holdings at.
    * @return {Promise<Map<Address,BN>>} Map of owners to their balances.
    */
-  async getOwnershipsAtBlock(finalBlock) {
+  async getOwnershipsAtBlock(targetBlock) {
     for (const TruthSource of this.#truthSources) {
       /** @type {ITruthSource} */
-      const truthSourceInstance = new TruthSource(this.context, finalBlock)
+      const truthSourceInstance = new TruthSource(this.context, targetBlock)
 
-      const newHoldings = await truthSourceInstance.getTokenHoldingsAtFinalBlock()
+      const newHoldings = await truthSourceInstance.getTokenHoldingsAtTargetBlock()
 
       this.addTokenHoldings(newHoldings)
     }
@@ -50,19 +47,19 @@ export class Inspector {
   }
 
   /**
-   * Adds balances of new tokens holdings to the existing map of holdings. 
+   * Adds balances of new tokens holdings to the existing map of holdings.
    * @param {Map<Address,BN>} newHoldings Map of token holders to add.
    */
   addTokenHoldings(newHoldings) {
     newHoldings.forEach((value, holder) => {
-      holder = toChecksumAddress(holder)
+      holder = this.context.web3.utils.toChecksumAddress(holder)
       value = new BN(value)
 
-      if (!this.tokenHoldings.has(holder)) {
-        this.tokenHoldings.set(holder, new BN(0))
+      if (this.tokenHoldings.has(holder)) {
+        this.tokenHoldings.get(holder).iadd(value)
+      } else {
+        this.tokenHoldings.set(holder, value)
       }
-
-      this.tokenHoldings.get(holder).iadd(value)
     })
   }
 }
