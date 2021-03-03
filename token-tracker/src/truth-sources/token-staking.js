@@ -214,21 +214,38 @@ export class TokenStakingTruthSource extends ITruthSource {
         this.targetBlock
       )
 
-      const amount = toBN(delegationInfo.amount)
+      const stakedAmount = toBN(delegationInfo.amount)
 
-      if (amount.eqn(0)) {
+      if (stakedAmount.eqn(0)) {
         logger.debug(`skipping delegation to ${operator}, amount is zero`)
         continue
       }
 
+      logger.debug(
+        `owner ${owner} staked ${stakedAmount} to operator ${operator}`
+      )
+
+      // Check for any slashed or seized tokens.
+      const [slashedAmount, seizedAmount] = await this.getSlashedSeizedAmount(
+        stakingContract,
+        operator
+      )
+      if (slashedAmount.gtn(0))
+        logger.debug(`operator's ${operator} slashed tokens: ${slashedAmount}`)
+
+      if (seizedAmount.gtn(0))
+        logger.debug(`operator's ${operator} seized tokens: ${seizedAmount}`)
+
+      const operatorBalance = stakedAmount.sub(slashedAmount).sub(seizedAmount)
+
       if (stakersBalances.has(owner)) {
-        stakersBalances.get(owner).iadd(amount)
+        stakersBalances.get(owner).iadd(operatorBalance)
       } else {
-        stakersBalances.set(owner, amount)
+        stakersBalances.set(owner, operatorBalance)
       }
 
       logger.debug(
-        `owner ${owner} staked ${amount} to operator ${operator}; owner's total stake: ${stakersBalances
+        `owner ${owner} operator's ${operator} balance: ${operatorBalance}; owner's total stake: ${stakersBalances
           .get(owner)
           .toString()}`
       )
@@ -237,6 +254,57 @@ export class TokenStakingTruthSource extends ITruthSource {
     dumpDataToFile(stakersBalances, balancesOutputPath)
 
     return stakersBalances
+  }
+
+  /**
+   * @param {Contract} stakingContract Staking contract to verify.
+   * @param {Address} operator
+   * @return {Promise<[BN,BN]>}
+   */
+  async getSlashedSeizedAmount(stakingContract, operator) {
+    logger.debug(
+      `looking for slashed or seized tokens for operator: ${operator}`
+    )
+
+    const slashedAmount = await this.getAmountFromTokenStakingEvent(
+      stakingContract,
+      "TokensSlashed",
+      operator
+    )
+
+    const seizedAmount = await this.getAmountFromTokenStakingEvent(
+      stakingContract,
+      "TokensSeized",
+      operator
+    )
+
+    return [slashedAmount, seizedAmount]
+  }
+
+  /**
+   * @param {Contract} stakingContract Staking contract to verify.
+   * @param {String} eventName Name of the event to check.
+   * @param {Address} operator Operator address to filter events.
+   * @return {Promise<BN>}
+   */
+  async getAmountFromTokenStakingEvent(stakingContract, eventName, operator) {
+    /** @type {Array} */
+    const eventsTokenStaking = await getPastEvents(
+      this.context.web3,
+      stakingContract,
+      eventName,
+      this.context.deploymentBlock,
+      this.targetBlock,
+      { operator: operator }
+    )
+
+    const totalAmount = toBN(0)
+
+    eventsTokenStaking.forEach((event) =>
+      totalAmount.iadd(toBN(event.returnValues.amount))
+    )
+
+    return toBN(totalAmount)
   }
 
   /**
