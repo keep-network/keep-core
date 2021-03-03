@@ -67,12 +67,12 @@ const toValidHex = (hex) => {
   return hex.length % 2 !== 0 ? `0${hex}` : hex
 }
 
-export const formatPercentage = (value) => {
+export const formatPercentage = (value, decimalPlaces = 2) => {
   if (!value) return 0
 
   value = BigNumber.isBigNumber(value) ? value : new BigNumber(value)
 
-  return value.decimalPlaces(2, BigNumber.ROUND_DOWN).toNumber()
+  return value.decimalPlaces(decimalPlaces, BigNumber.ROUND_DOWN).toNumber()
 }
 
 export const displayPercentageValue = (

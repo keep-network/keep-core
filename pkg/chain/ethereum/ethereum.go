@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -492,11 +491,4 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 func (ec *ethereumChain) Address() common.Address {
 	return ec.accountKey.Address
-}
-
-func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancelCtx()
-
-	return ec.client.BalanceAt(ctx, address, nil)
 }

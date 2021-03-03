@@ -108,6 +108,8 @@ jobs:
           root: /tmp/keep-client
           paths:
             - contracts
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) 
+  # has been created as part of work on RFC-18
   publish_keep_client:
     executor: gcp-gcr/default
     steps:
