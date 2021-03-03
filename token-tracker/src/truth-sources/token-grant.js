@@ -19,8 +19,8 @@ const { toBN } = Web3.utils
 
 import { resolveGrantee } from "../lib/owner-lookup.js"
 
-const TOKEN_GRANT_DUMP_PATH = "./tmp/token-grant.json"
-const TOKEN_GRANT_BALANCES_DUMP_PATH = "./tmp/token-grant-balances.json"
+const TOKEN_GRANT_OUTPUT_PATH = "./tmp/token-grant.json"
+const TOKEN_GRANT_BALANCES_OUTPUT_PATH = "./tmp/token-grant-balances.json"
 
 export class TokenGrantTruthSource extends ITruthSource {
   /** @property {ContractInstance} tokenGrant */
@@ -94,7 +94,7 @@ export class TokenGrantTruthSource extends ITruthSource {
       tokenGrants.push({ id: id, grantee: grant.grantee, balance: balance })
     }
 
-    dumpDataToFile(tokenGrants, TOKEN_GRANT_DUMP_PATH)
+    dumpDataToFile(tokenGrants, TOKEN_GRANT_OUTPUT_PATH)
 
     return tokenGrants
   }
@@ -124,7 +124,7 @@ export class TokenGrantTruthSource extends ITruthSource {
       }
     }
 
-    dumpDataToFile(ownersBalances, TOKEN_GRANT_BALANCES_DUMP_PATH)
+    dumpDataToFile(ownersBalances, TOKEN_GRANT_BALANCES_OUTPUT_PATH)
 
     return ownersBalances
   }

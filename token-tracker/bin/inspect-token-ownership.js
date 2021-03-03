@@ -24,7 +24,7 @@ program
 
 const TMP_DIR = "./tmp"
 const OUT_DIR = "./output"
-const RESULT_DUMP_PATH = path.join(OUT_DIR, "result.json")
+const RESULT_OUTPUT_PATH = path.join(OUT_DIR, "result.json")
 
 async function initializeContext() {
   const context = await Context.initialize(
@@ -75,7 +75,7 @@ async function run() {
 
   const result = await getTokenOwnership(program.opts().targetBlock)
 
-  dumpDataToFile(result, RESULT_DUMP_PATH)
+  dumpDataToFile(result, RESULT_OUTPUT_PATH)
 
   logger.info("DONE!")
 }

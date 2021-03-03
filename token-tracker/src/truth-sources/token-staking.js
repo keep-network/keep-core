@@ -15,10 +15,10 @@ const { toBN } = Web3.utils
 
 import TokenStakingJSON from "@keep-network/keep-core/artifacts/TokenStaking.json"
 
-const TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH =
+const TOKEN_STAKING_HISTORIC_STAKERS_OUTPUT_PATH =
   "./tmp/token-staking-stakers.json"
-const TOKEN_STAKING_BALANCES_DUMP_PATH = "./tmp/token-staking-balances.json"
-const TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_DUMP_PATH =
+const TOKEN_STAKING_BALANCES_OUTPUT_PATH = "./tmp/token-staking-balances.json"
+const TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_OUTPUT_PATH =
   "./tmp/token-staking-unknown_owners_contracts.json"
 
 // TODO: Add support for the old TokenStaking contract.
@@ -71,7 +71,10 @@ export class TokenStakingTruthSource extends ITruthSource {
       )
     })
 
-    dumpDataToFile(operatorsOwnersMap, TOKEN_STAKING_HISTORIC_STAKERS_DUMP_PATH)
+    dumpDataToFile(
+      operatorsOwnersMap,
+      TOKEN_STAKING_HISTORIC_STAKERS_OUTPUT_PATH
+    )
 
     return operatorsOwnersMap
   }
@@ -113,7 +116,7 @@ export class TokenStakingTruthSource extends ITruthSource {
 
     dumpDataToFile(
       unknownContracts,
-      TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_DUMP_PATH
+      TOKEN_STAKING_UNKNOWN_OWNERS_CONTRACTS_OUTPUT_PATH
     )
 
     return filteredOperatorsOwners
@@ -165,7 +168,7 @@ export class TokenStakingTruthSource extends ITruthSource {
       )
     }
 
-    dumpDataToFile(stakersBalances, TOKEN_STAKING_BALANCES_DUMP_PATH)
+    dumpDataToFile(stakersBalances, TOKEN_STAKING_BALANCES_OUTPUT_PATH)
 
     return stakersBalances
   }

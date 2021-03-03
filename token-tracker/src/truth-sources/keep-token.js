@@ -17,9 +17,9 @@ import { logger } from "../lib/winston.js"
 
 import KeepTokenJSON from "@keep-network/keep-core/artifacts/KeepToken.json"
 
-const KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH = "./tmp/keep-token-holders.json"
-const KEEP_TOKEN_BALANCES_DUMP_PATH = "./tmp/keep-token-balances.json"
-const KEEP_TOKEN_UNKNOWN_HOLDERS_CONTRACTS_DUMP_PATH =
+const KEEP_TOKEN_HISTORIC_HOLDERS_OUTPUT_PATH = "./tmp/keep-token-holders.json"
+const KEEP_TOKEN_BALANCES_OUTPUT_PATH = "./tmp/keep-token-balances.json"
+const KEEP_TOKEN_UNKNOWN_HOLDERS_CONTRACTS_OUTPUT_PATH =
   "./tmp/keep-token-unknown_holders_contracts.json"
 
 const CONCURRENCY_LEVEL = 20
@@ -66,7 +66,7 @@ export class KeepTokenTruthSource extends ITruthSource {
 
     logger.info(`found ${tokenHolders.size} unique historic holders`)
 
-    dumpDataToFile(tokenHolders, KEEP_TOKEN_HISTORIC_HOLDERS_DUMP_PATH)
+    dumpDataToFile(tokenHolders, KEEP_TOKEN_HISTORIC_HOLDERS_OUTPUT_PATH)
 
     return tokenHolders
   }
@@ -128,7 +128,7 @@ export class KeepTokenTruthSource extends ITruthSource {
 
     dumpDataToFile(
       unknownContracts,
-      KEEP_TOKEN_UNKNOWN_HOLDERS_CONTRACTS_DUMP_PATH
+      KEEP_TOKEN_UNKNOWN_HOLDERS_CONTRACTS_OUTPUT_PATH
     )
 
     return new Set(filteredHolders.filter(Boolean)) // filter out empty entries
@@ -191,7 +191,7 @@ export class KeepTokenTruthSource extends ITruthSource {
       `found ${holdersBalances.size} holders at block ${this.targetBlock}`
     )
 
-    dumpDataToFile(holdersBalances, KEEP_TOKEN_BALANCES_DUMP_PATH)
+    dumpDataToFile(holdersBalances, KEEP_TOKEN_BALANCES_OUTPUT_PATH)
 
     return holdersBalances
   }
