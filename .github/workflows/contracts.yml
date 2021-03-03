@@ -112,19 +112,20 @@ jobs:
       - name: Migrate contracts
         env: 
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
+        working-directory: ./solidity
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      # DRAFT CODE FOR PUSHING CONTRACTS TO TENDERLY
+      # # DRAFT CODE FOR PUSHING CONTRACTS TO TENDERLY
       # - name: Push contracts to Tenderly
-      #   uses: keep-network/tenderly-push-action@v1
-      #   working-directory: solidity
+      #   uses: keep-network/tenderly-push-action #add @v1 once action gets tagged
       #   continue-on-error: true # optional, don't fail the job on step failure
-      #   with:
-      #     tenderly-token: 0123456789AbCdEf
-      #     tenderly-project: thesis/keep-dev
-      #     eth-network-id: "1937"
+      #   with: # do we ad 'wip' suffix anywhere?
+      #     working-directory: ./solidity
+      #     tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
+      #     tenderly-project: thesis/keep-test # in the example it was thesis/keep-dev
+      #     eth-network-id: ${{ secrets.ETH_NETWORK_ID }} # 1101
       #     github-project-name: keep-core
-      #     version-tag: "1.2.3" 
+      #     version-tag: $GITHUB_SHA
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
