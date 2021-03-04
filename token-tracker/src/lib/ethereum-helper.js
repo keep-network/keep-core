@@ -68,6 +68,7 @@ export async function getChainID(web3) {
  * @param {String} eventName Event name.
  * @param {Number} fromBlock Starting block.
  * @param {Number} toBlock End block.
+ * @param {Object} filter Filter events by indexed parameter.
  * @return {Promise<[*]>} Found events.
  */
 export async function getPastEvents(
@@ -75,7 +76,8 @@ export async function getPastEvents(
   contract,
   eventName,
   fromBlock = 0,
-  toBlock
+  toBlock,
+  filter
 ) {
   if (fromBlock < 0) {
     throw new Error(
@@ -90,6 +92,7 @@ export async function getPastEvents(
         return await contract.getPastEvents(eventName, {
           fromBlock: fromBlock,
           toBlock: toBlock || "latest",
+          filter: filter,
         })
       })
     } catch (err) {
@@ -115,6 +118,7 @@ export async function getPastEvents(
             return await contract.getPastEvents(eventName, {
               fromBlock: fromBlock,
               toBlock: toBlock,
+              filter: filter,
             })
           })
 

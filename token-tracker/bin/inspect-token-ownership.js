@@ -6,15 +6,13 @@ import path from "path"
 import Context from "../src/lib/context.js"
 import { logger } from "../src/lib/winston.js"
 import { dumpDataToFile } from "../src/lib/file-helper.js"
-import { getDeploymentBlockNumber } from "../src/lib/contract-helper.js"
+
 import { Inspector } from "../src/inspector.js"
 
 import { KeepTokenTruthSource } from "../src/truth-sources/keep-token.js"
 import { TokenStakingTruthSource } from "../src/truth-sources/token-staking.js"
 import { TokenGrantTruthSource } from "../src/truth-sources/token-grant.js"
 import { LPTokenTruthSource } from "../src/truth-sources/lp-tokens.js"
-
-import KeepTokenJson from "@keep-network/keep-core/artifacts/KeepToken.json"
 
 import commander from "commander"
 const program = new commander.Command()
@@ -35,16 +33,6 @@ async function initializeContext() {
     "01".repeat(32)
   )
   logger.debug("context initialized")
-
-  // FIXME: We can get rid of global deployment block tracking and switch to
-  // particular contracts deployment blocks if we use tbtc.js like functions
-  // to get past events with a contract instance defining deployment block.
-  context.deploymentBlock = await getDeploymentBlockNumber(
-    KeepTokenJson,
-    context.web3
-  )
-
-  logger.debug(`deployment block: ${context.deploymentBlock}`)
 
   return context
 }

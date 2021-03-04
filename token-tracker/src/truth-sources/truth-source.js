@@ -81,6 +81,10 @@ export class AddressesResolver {
 
   /**
    * Checks if an address should be ignored when resolving token ownership.
+   * There are some special cases where truth of sources implementations can
+   * duplicate actual ownerships, e.g. grant tokens locked in staking contract.
+   * In such cases a custom logic has to be implemented to resolve actual ownerships.
+   *
    * It checks the code deployed under the address to determine type of the address.
    * It returns a boolean flag stating if the address should be ignored additionally
    * with a type resolved for an address.

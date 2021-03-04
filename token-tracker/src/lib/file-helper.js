@@ -21,7 +21,7 @@ export function dumpDataToFile(data, filePath) {
 
 function mapToObject(map) {
   return Array.from(map).reduce((obj, [key, value]) => {
-    obj[key] = value
+    obj[key] = value || ""
     return obj
   }, {})
 }
