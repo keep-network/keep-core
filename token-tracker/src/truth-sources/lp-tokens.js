@@ -86,6 +86,8 @@ export class LPTokenTruthSource extends ITruthSource {
    * Finds all historic stakers of LP KEEP-ETH / KEEP-TBTC pair token based on
    * "Transfer" events
    *
+   * @param {String} pairName LP pair name
+   *
    * @return {Set<Address>} All historic LP KEEP-ETH / KEEP-TBTC token stakers
    * */
   async findStakers(pairName) {
@@ -198,10 +200,26 @@ export class LPTokenTruthSource extends ITruthSource {
   }
 
   /**
-   * Calculating amount of KEEP token which makes a KEEP-ETH / KEEP-TBTC Uniswap pair.
-   * Math is based on https://uniswap.org/docs/v2/advanced-topics/understanding-returns/
+   * Calculates amount of KEEP token which makes a KEEP-ETH / KEEP-TBTC Uniswap pair.
+   * A Uniswap LP pair is a bookeeping tool to keep track of how much the liquidity
+   * stakers are owed. They store two assets of equivalent value of each, ex. KEEP-ETH.
+   * This means that the value of KEEP owned is dependent on the ratio of staked
+   * LP tokens and the total LP supply. Ratio between LP tokens and KEEP tokens
+   * should be equal:
+   * LP_staker_balance / LP_total_supply_pool == KEEP_staker_owed / KEEP_total_liquidity_pool
+   * Now, the number of KEEP tokens which makes a KEEP-ETH pair can be calculated
+   * using the following equation:
+   * KEEP_staker_owed = (LP_staker_balance * KEEP_total_liquidity_pool) / LP_total_supply_pool
+   * where:
+   * LP_staker_balance is retrieved from LPRewardsContract
+   * KEEP_total_liquidity_pool is queried from Uniswap API - pairData.reserve0
+   * LP_total_supply_pool is queried from Uniswap API - pairData.totalSupply
    *
-   * @param {BN} lpBalance LP amount staked by a staker
+   * References:
+   * Uniswap API: https://uniswap.org/docs/v2/API/queries/#pair-data
+   * Returns in Uniswap: https://uniswap.org/docs/v2/advanced-topics/understanding-returns/
+   *
+   * @param {BN} lpBalance LP amount staked by a staker in a LPRewardsContract
    * @param {PairData} pairData KEEP-ETH / KEEP-TBTC pair data fetched from Uniswap
    *
    * @return {BN} KEEP token amounts in LP token balance
@@ -231,7 +249,9 @@ export class LPTokenTruthSource extends ITruthSource {
 
       const lpStakers = await this.findStakers(pairName)
       const stakersBalances = await this.getLpTokenStakersBalances(lpStakers)
-      const keepInLpByStakers = await this.calcKeepInStakersBalances(stakersBalances)
+      const keepInLpByStakers = await this.calcKeepInStakersBalances(
+        stakersBalances
+      )
 
       keepInLpByStakers.forEach((balance, staker) => {
         if (keepInLPsByStakers.has(staker)) {
