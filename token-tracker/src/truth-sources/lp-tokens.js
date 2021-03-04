@@ -4,11 +4,11 @@
 import BN from "bn.js"
 
 import { ITruthSource } from "./truth-source.js"
-import { Contract } from "../lib/contract-helper.js"
-import { getPastEvents } from "../lib/ethereum-helper.js"
+import { getPastEvents, getChainID } from "../lib/ethereum-helper.js"
 import { dumpDataToFile } from "../lib/file-helper.js"
 import { logger } from "../lib/winston.js"
 import { getPairData } from "../lib/uniswap.js"
+import { EthereumHelpers } from "@keep-network/tbtc.js"
 
 // https://etherscan.io/address/0xe6f19dab7d43317344282f803f8e8d240708174a#code
 import keepEthTokenJson from "../../artifacts/KEEP-ETH-UNI-V2-Token.json"
@@ -44,37 +44,43 @@ export class LPTokenTruthSource extends ITruthSource {
   }
 
   async initialize() {
-    const keepEthPairTokenAbi = JSON.parse(keepEthTokenJson.result)
-    const keepEthTokenContract = new this.context.web3.eth.Contract(
-      keepEthPairTokenAbi,
+    const chainID = await getChainID(this.context.web3)
+
+    const keepEthTokenContract = EthereumHelpers.buildContract(
+      this.context.web3,
+      JSON.parse(keepEthTokenJson.result),
       KEEPETH_PAIR_ADDRESS
     )
-    const lpRewardKeepEth = new Contract(
-      LPRewardsKEEPETHJson,
-      this.context.web3
+
+    const lpRewardKeepEthContract = EthereumHelpers.buildContract(
+      this.context.web3,
+      LPRewardsKEEPETHJson.abi,
+      LPRewardsKEEPETHJson.networks[chainID].address
     )
 
-    const KEEPTBTCPairTokenAbi = JSON.parse(keepTbtcTokenJson.result)
-    const keepTbtcTokenContract = new this.context.web3.eth.Contract(
-      KEEPTBTCPairTokenAbi,
+    const keepTbtcTokenContract = EthereumHelpers.buildContract(
+      this.context.web3,
+      JSON.parse(keepTbtcTokenJson.result),
       KEEPTBTC_PAIR_ADDRESS
     )
-    const lpRewardKeepTbtc = new Contract(
-      LPRewardsKEEPTBTCJson,
-      this.context.web3
+
+    const lpRewardKeepTbtcContract = EthereumHelpers.buildContract(
+      this.context.web3,
+      LPRewardsKEEPTBTCJson.abi,
+      LPRewardsKEEPTBTCJson.networks[chainID].address
     )
 
     this.liquidityStakingObjects = {
       KEEPETH: {
         lpTokenContract: keepEthTokenContract,
-        lpRewardsContract: await lpRewardKeepEth.deployed(),
+        lpRewardsContract: lpRewardKeepEthContract,
         lpCreationBlock: KEEPETH_CREATION_BLOCK,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPETH_BALANCES_PATH,
         lpPairAddress: KEEPETH_PAIR_ADDRESS,
       },
       KEEPTBTC: {
         lpTokenContract: keepTbtcTokenContract,
-        lpRewardsContract: await lpRewardKeepTbtc.deployed(),
+        lpRewardsContract: lpRewardKeepTbtcContract,
         lpCreationBlock: KEEPTBTC_CREATION_BLOCK,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPTBTC_BALANCES_PATH,
         lpPairAddress: KEEPTBTC_PAIR_ADDRESS,
