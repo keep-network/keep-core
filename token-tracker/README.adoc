@@ -28,16 +28,20 @@ Iterates over the set of addresses and checks KEEP token balance at the specific
 target block.
 
 To avoid duplication with results of other source of truths lookups it ignores
-addresses that are contracts handled by the other sources.
+addresses that are contracts handled by the other sources. For the ignored contracts
+separate sources of truth should be implemented.
 
 ### Token Staking
 
-// TODO: Write docs
-// TODO: ADD OLD TOKEN STAKING SUPPORT
+Scans `OldTokenStaking` and `TokenStaking` contracts for any historic stakes to
+determine amount of tokens locked in them.
+
+To avoid duplication with results of other source of truths lookups it ignores
+addresses that are contracts handled by the other sources.
 
 ### Token Grant
 
-// TODO: Write docs
+Scans `TokenGrant` contract for grant holders and their balances.
 
 ## Run
 
@@ -67,7 +71,15 @@ ETH_HOSTNAME="wss://eth-mainnet.ws.alchemyapi.io/v2/....." \
 
 ## Development
 
-// TODO: Write docs
+New truth of sources can be added by extending `ITruthSource` class. The new class
+should implement `getTokenHoldingsAtTargetBlock` function that will return
+a map of token holding. The source of truth should be registered with 
+`registerTruthSource` function.
+
+It's important that sources of truth do not duplicate the balances, when
+a holding can occur in few of them. E.g. when an owner staked tokens from a grant
+we could end up with duplications in TokenStaking and TokenGrant. To handle such
+situation we ignore any non externally owned accounts in TokenStaking.
 
 ## Known Issues
 
