@@ -19,7 +19,7 @@ on:
       - ".github/workflows/dashboard-testnet.yml"
 
 jobs:
-  build-publish-token-dashboard-dapp:
+  build-and-publish:
     runs-on: ubuntu-latest
     defaults:
       run:
