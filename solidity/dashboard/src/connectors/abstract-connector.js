@@ -67,7 +67,7 @@ export class AbstractConnector {
   }
 }
 
-export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
+export class AbstractHardwareWalletConnector extends AbstractConnector {
   hardwareWalletProvider
   defaultAccount = ""
 
@@ -99,7 +99,7 @@ export class AbstractHardwareWalletConnector extends Web3ProviderEngine {
     numberOfAccounts = DEFAULT_NUM_ADDRESSES_TO_FETCH,
     accountsOffSet = 0
   ) => {
-    return await this.hardwareWalletSubprovider.getAccountsAsync(
+    return await this.hardwareWalletProvider.getAccountsAsync(
       numberOfAccounts,
       accountsOffSet
     )

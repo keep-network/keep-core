@@ -27,6 +27,12 @@ const WALLETS_OPTIONS = [
     icon: Icons.Ledger,
     isHardwareWallet: true,
     connector: {
+      // Add additional filed `name` to handle `switch` statement in
+      // `renderModalContent` function in `Wallet` component. The `LedgerModal`
+      // component is able to handle this pseudo connector object correctly and
+      // choose the right connector from the object depending on user
+      // preferences.
+      name: WALLETS.LEDGER.name,
       LEDGER_LIVE: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
       LEDGER_LEGACY: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
     },
