@@ -134,7 +134,7 @@ jobs:
 
       - name: Upload contract data
         env: 
-          CONTRACT_DATA_BUCKET: ${{ secrets.CONTRACT_DATA_BUCKET }}
+          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
           cd ./solidity/build/contracts
           gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
