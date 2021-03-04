@@ -106,7 +106,7 @@ jobs:
           ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
         working-directory: ./solidity
-        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK # writes artifacts to /home/runner/work/keep-core/keep-core/solidity/build/contracts
 
       - name: Push contracts to Tenderly
         # once below action gets tagged replace `@main` with `@v1` 
@@ -123,18 +123,29 @@ jobs:
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }} # or GCLOUD_SERVICE_KEY?
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      # - name: Upload contract data
+      #   env: 
+      #     CONTRACT_DATA_BUCKET: ${{ secrets.CONTRACT_DATA_BUCKET }}
+      #   run: |
+      #     cd /tmp/keep-client/contracts
+      #     gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
 
       - name: Upload contract data
         env: 
           CONTRACT_DATA_BUCKET: ${{ secrets.CONTRACT_DATA_BUCKET }}
         run: |
-          cd /tmp/keep-client/contracts
+          cd ./solidity/build/contracts
           gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
+
+      # - run: |
+      #     mkdir -p artifacts
+      #     cp -r /tmp/keep-client/contracts/* artifacts/
 
       - run: |
           mkdir -p artifacts
-          cp -r /tmp/keep-client/contracts/* artifacts/
+          cp -r ./solidity/build/contracts/* artifacts/
 
       - name: Bump up package version
         uses: keep-network/npm-version-bump@v1
