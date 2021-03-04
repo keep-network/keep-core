@@ -19,9 +19,9 @@ import LPRewardsKEEPETHJson from "@keep-network/keep-ecdsa/artifacts/LPRewardsKE
 import LPRewardsKEEPTBTCJson from "@keep-network/keep-ecdsa/artifacts/LPRewardsKEEPTBTC.json"
 
 // https://info.uniswap.org/pair/0xe6f19dab7d43317344282f803f8e8d240708174a
-const KEEPETH_PAIR = "0xe6f19dab7d43317344282f803f8e8d240708174a"
+const KEEPETH_PAIR_ADDRESS = "0xe6f19dab7d43317344282f803f8e8d240708174a"
 // https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081
-const KEEPTBTC_PAIR = "0x38c8ffee49f286f25d25bad919ff7552e5daf081"
+const KEEPTBTC_PAIR_ADDRESS = "0x38c8ffee49f286f25d25bad919ff7552e5daf081"
 
 // https://etherscan.io/tx/0xc64ac175846e719bb4f7f9b17a0b04bc365db3dda9d97ef70d7ede8f9c1a265b
 const KEEPETH_CREATION_BLOCK = "10100034"
@@ -47,7 +47,7 @@ export class LPTokenTruthSource extends ITruthSource {
     const keepEthPairTokenAbi = JSON.parse(keepEthTokenJson.result)
     const keepEthTokenContract = new this.context.web3.eth.Contract(
       keepEthPairTokenAbi,
-      KEEPETH_PAIR
+      KEEPETH_PAIR_ADDRESS
     )
     const lpRewardKeepEth = new Contract(
       LPRewardsKEEPETHJson,
@@ -57,7 +57,7 @@ export class LPTokenTruthSource extends ITruthSource {
     const KEEPTBTCPairTokenAbi = JSON.parse(keepTbtcTokenJson.result)
     const keepTbtcTokenContract = new this.context.web3.eth.Contract(
       KEEPTBTCPairTokenAbi,
-      KEEPTBTC_PAIR
+      KEEPTBTC_PAIR_ADDRESS
     )
     const lpRewardKeepTbtc = new Contract(
       LPRewardsKEEPTBTCJson,
@@ -70,14 +70,14 @@ export class LPTokenTruthSource extends ITruthSource {
         lpRewardsContract: await lpRewardKeepEth.deployed(),
         lpCreationBlock: KEEPETH_CREATION_BLOCK,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPETH_BALANCES_PATH,
-        lpPairAddress: KEEPETH_PAIR,
+        lpPairAddress: KEEPETH_PAIR_ADDRESS,
       },
       KEEPTBTC: {
         lpTokenContract: keepTbtcTokenContract,
         lpRewardsContract: await lpRewardKeepTbtc.deployed(),
         lpCreationBlock: KEEPTBTC_CREATION_BLOCK,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPTBTC_BALANCES_PATH,
-        lpPairAddress: KEEPTBTC_PAIR,
+        lpPairAddress: KEEPTBTC_PAIR_ADDRESS,
       },
     }
   }
