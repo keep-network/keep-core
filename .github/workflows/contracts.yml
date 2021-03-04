@@ -93,11 +93,13 @@ jobs:
     # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
     environment: keep-test 
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
       - name: Install dependencies
-        working-directory: ./solidity
         run: npm ci
       
       - name: Migrate contracts
@@ -105,11 +107,10 @@ jobs:
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
           ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
-        working-directory: ./solidity
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK # writes artifacts to /home/runner/work/keep-core/keep-core/solidity/build/contracts
 
       - name: Push contracts to Tenderly
-        # once below action gets tagged replace `@main` with `@v1` 
+        # TODO: once below action gets tagged replace `@main` with `@v1` 
         uses: keep-network/tenderly-push-action@main
         continue-on-error: true
         with:
@@ -118,34 +119,24 @@ jobs:
           tenderly-project: thesis/keep-test
           eth-network-id: ${{ secrets.ETH_NETWORK_ID }} # currently ='3' (ropsten)
           github-project-name: keep-core
-          # version-tag: # resolve npm package version
+          # version-tag: # TODO: resolve npm package version
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
           service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
-      # - name: Upload contract data
-      #   env: 
-      #     CONTRACT_DATA_BUCKET: ${{ secrets.CONTRACT_DATA_BUCKET }}
-      #   run: |
-      #     cd /tmp/keep-client/contracts
-      #     gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
-
       - name: Upload contract data
         env: 
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
-          cd ./solidity/build/contracts
+          cd build/contracts
           gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
 
-      # - run: |
-      #     mkdir -p artifacts
-      #     cp -r /tmp/keep-client/contracts/* artifacts/
-
-      - run: |
+      - name: Copy artifacts
+        run: |
           mkdir -p artifacts
-          cp -r ./solidity/build/contracts/* artifacts/
+          cp -r build/contracts/* artifacts/
 
       - name: Bump up package version
         uses: keep-network/npm-version-bump@v1
@@ -155,4 +146,4 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           access: public
-          dry-run: true # to be removed once testing of workflow is done
+          dry-run: true # TODO: to be removed once testing of workflow is done
