@@ -9,14 +9,14 @@ on:
       - "rfc-18/**"
     paths:
       - "solidity/dashboard/**"
-      - ".github/workflows/token-dashboard.yml"
+      - ".github/workflows/dashboard-testnet.yml"
   pull_request:
     branches:
       # TODO: Run on all branches after we're fully migrated from Circle CI
       - "rfc-18/**"
     paths:
       - "solidity/dashboard/**"
-      - ".github/workflows/token-dashboard.yml"
+      - ".github/workflows/dashboard-testnet.yml"
 
 jobs:
   build-publish-token-dashboard-dapp:
