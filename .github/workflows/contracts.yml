@@ -103,6 +103,8 @@ jobs:
       - name: Migrate contracts
         env: 
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
+          ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
         working-directory: ./solidity
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
