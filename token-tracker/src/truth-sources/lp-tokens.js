@@ -131,12 +131,12 @@ export class LPTokenTruthSource extends ITruthSource {
   }
 
   /**
-   * Retrieves balances of LP KEEP-ETH / KEEP-TBTC pair for stakers in LPRewards* contract
+   * Retrieves balances of LP tokens locked in LPRewards contracts for stakers.
    *
-   * @param {Array<Address>} lpStakers LP KEEP-ETH / KEEP-TBTC stakers
-   * @param {Object} pairObj LP pair object
+   * @param {Array<Address>} lpStakers LP stakers addresses.
+   * @param {Object} pairObj LP pair object.
    *
-   * @return {Map<Address,BN>} LP Balances by lp stakers
+   * @return {Map<Address,BN>} Staked LP balances by lp stakers.
    */
   async getLpTokenStakersBalances(lpStakers, pairObj) {
     const lpBalanceByStaker = new Map()
