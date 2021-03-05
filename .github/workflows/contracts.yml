@@ -144,9 +144,17 @@ jobs:
           workDir: ./solidity
 
       - name: Publish to npm
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          package: ./solidity/package.json
-          token: ${{ secrets.NPM_TOKEN }}
-          access: public
-          dry-run: true # TODO: to be removed once testing of workflow is done
+        # TODO: --dry-run to be removed once testing of workflow is done
+        run: |
+          echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
+          npm publish --access=public --dry-run 
+
+      # TODO: consider swithing to below action, after tweaking 
+      # (requires some changes, as below config throws an error)
+      # - name: Publish to npm
+      #   uses: JS-DevTools/npm-publish@v1
+      #   with:
+      #     package: ./solidity/package.json
+      #     token: ${{ secrets.NPM_TOKEN }}
+      #     access: public
+      #     dry-run: true # TODO: to be removed once testing of workflow is done
