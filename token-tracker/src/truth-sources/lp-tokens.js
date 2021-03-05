@@ -183,6 +183,7 @@ export class LPTokenTruthSource extends ITruthSource {
 
     // Retrieve current pair data
     const pairData = await getPairData(pairObj.lpPairAddress)
+
     for (const [stakerAddress, lpBalance] of stakersBalances.entries()) {
       const keepInLPToken = await this.calcKeepTokenfromLPToken(
         lpBalance,
