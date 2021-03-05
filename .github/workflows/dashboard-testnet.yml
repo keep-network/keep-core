@@ -61,9 +61,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to Google Container Registry
-        if:  |
-          startsWith(github.ref, 'refs/heads/releases/ropsten')
-            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+        if: github.event_name == 'push'
         uses: docker/login-action@v1
         with:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
@@ -81,8 +79,8 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
-          push: |
-            ${{ startsWith(github.head_ref, 'releases/ropsten/token-dashboard/')
-              || startsWith(github.head_ref, 'rfc-18/ropsten') }}
+          # Below condition together with workflow trigger restictions means 
+          # that image will be pushed to registry only on merges to master.
+          push: ${{ github.event_name == 'push' }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
