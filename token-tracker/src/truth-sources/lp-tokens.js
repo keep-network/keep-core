@@ -7,7 +7,6 @@ import { ITruthSource } from "./truth-source.js"
 import { getPastEvents, getChainID } from "../lib/ethereum-helper.js"
 import { dumpDataToFile } from "../lib/file-helper.js"
 import { logger } from "../lib/winston.js"
-import { getPairData } from "../lib/uniswap.js"
 import { EthereumHelpers } from "@keep-network/tbtc.js"
 
 // https://etherscan.io/address/0xe6f19dab7d43317344282f803f8e8d240708174a#code
@@ -179,20 +178,30 @@ export class LPTokenTruthSource extends ITruthSource {
   async calcKeepInStakersBalances(stakersBalances, pairObj) {
     logger.info(`check token stakers at block ${this.targetBlock}`)
 
+    const totalSupply = await pairObj.lpTokenContract.methods
+      .totalSupply()
+      .call({}, this.targetBlock)
+
+    const keepReserve = await pairObj.lpTokenContract.methods
+      .getReserves()
+      .call({}, this.targetBlock)
+
+    const lpPairData = {
+      keepLiquidityPool: keepReserve._reserve0,
+      lpTotalSupply: totalSupply,
+    }
+
     const keepInLpByStakers = new Map()
 
-    // Retrieve current pair data
-    const uniswapPairData = await getPairData(pairObj.lpPairAddress)
-
-    for (const [stakerAddress, lpBalance] of stakersBalances.entries()) {
+    for (const [stakerAddress, lpStakerBalance] of stakersBalances.entries()) {
       const keepInLPToken = await this.calcKeepTokenfromLPToken(
-        lpBalance,
-        uniswapPairData
+        lpStakerBalance,
+        lpPairData
       )
       keepInLpByStakers.set(stakerAddress, keepInLPToken)
 
       logger.info(
-        `Staker: ${stakerAddress} - LP Balance: ${lpBalance} - KEEP in LP: ${keepInLPToken}`
+        `Staker: ${stakerAddress} - LP Balance: ${lpStakerBalance} - KEEP in LP: ${keepInLPToken}`
       )
     }
 
@@ -218,27 +227,21 @@ export class LPTokenTruthSource extends ITruthSource {
    * KEEP_staker_owed = (LP_staker_balance * KEEP_total_liquidity_pool) / LP_total_supply_pool
    * where:
    * LP_staker_balance is retrieved from LPRewardsContract
-   * KEEP_total_liquidity_pool is queried from Uniswap API - uniswapPairData.reserve0
-   * LP_total_supply_pool is queried from Uniswap API - uniswapPairData.totalSupply
+   * KEEP_total_liquidity_pool is fetched from Uniswap LP Token - lpToken.getReserves()._reserve0
+   * LP_total_supply_pool is fetched from Uniswap LP Token - lpToken.totalSupply()
    *
    * References:
-   * Uniswap API: https://uniswap.org/docs/v2/API/queries/#pair-data
    * Returns in Uniswap: https://uniswap.org/docs/v2/advanced-topics/understanding-returns/
    *
-   * @param {BN} lpBalance LP amount staked by a staker in a LPRewardsContract
-   * @param {PairData} uniswapPairData KEEP-ETH / KEEP-TBTC pair data fetched from Uniswap
+   * @param {BN} lpStakerBalance LP amount staked by a staker in a LPRewardsContract
+   * @param {PairData} lpPairData Pair data fetched from LP Token Contract
    *
    * @return {BN} KEEP token amounts in LP token balance
    */
-  async calcKeepTokenfromLPToken(lpBalance, uniswapPairData) {
-    const uniswapTotalSupply = new BN(
-      this.context.web3.utils.toWei(uniswapPairData.totalSupply.toString())
-    )
-    const keepLiquidityPool = new BN(
-      this.context.web3.utils.toWei(uniswapPairData.reserve0.toString())
-    )
-
-    return lpBalance.mul(keepLiquidityPool).div(uniswapTotalSupply)
+  async calcKeepTokenfromLPToken(lpStakerBalance, lpPairData) {
+    return lpStakerBalance
+      .mul(new BN(lpPairData.keepLiquidityPool))
+      .div(new BN(lpPairData.lpTotalSupply))
   }
 
   /**
