@@ -29,11 +29,9 @@ class InjectedConnector extends AbstractConnector {
     }
   }
 
-  // TODO
   disconnect = async () => {
-    if (window.ethereum) {
-      window.ethereum.stop()
-    }
+    // window.ethereum injected by MetaMask does not provide a method to
+    // disconnect a wallet.
   }
 
   getChainId = async () => {
