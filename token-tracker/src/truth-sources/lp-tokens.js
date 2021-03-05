@@ -97,13 +97,12 @@ export class LPTokenTruthSource extends ITruthSource {
   }
 
   /**
-   * Finds all historic stakers of LP KEEP-ETH / KEEP-TBTC pair token based on
-   * "Transfer" events
+   * Finds all historic stakers in LP Rewards contracts based on "Staked" events
    *
    * @param {String} pairName LP pair name
    * @param {Object} pairObj LP pair object
    *
-   * @return {Set<Address>} All historic LP KEEP-ETH / KEEP-TBTC token stakers
+   * @return {Set<Address>} All historic LP token stakers
    * */
   async findStakers(pairName, pairObj) {
     const lpRewardsContractAddress = pairObj.lpRewardsContract.options.address
