@@ -88,8 +88,8 @@ jobs:
   migrate-and-publish:
     needs: [build-and-test, lint]
     if: |
-      startsWith(github.ref, 'refs/heads/releases/ropsten') 
-        || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+      startsWith(github.head_ref, 'releases/ropsten') 
+        || startsWith(github.head_ref, 'rfc-18/ropsten')
     # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
     environment: keep-test 
     runs-on: ubuntu-latest
