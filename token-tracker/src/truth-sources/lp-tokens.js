@@ -7,6 +7,7 @@ import { ITruthSource } from "./truth-source.js"
 import { getPastEvents, getChainID } from "../lib/ethereum-helper.js"
 import { dumpDataToFile } from "../lib/file-helper.js"
 import { logger } from "../lib/winston.js"
+import { getDeploymentBlockNumber } from "../lib/contract-helper.js"
 import { EthereumHelpers } from "@keep-network/tbtc.js"
 const { callWithRetry } = EthereumHelpers
 
@@ -22,11 +23,6 @@ import LPRewardsKEEPTBTCJson from "@keep-network/keep-ecdsa/artifacts/LPRewardsK
 const KEEPETH_PAIR_ADDRESS = "0xe6f19dab7d43317344282f803f8e8d240708174a"
 // https://info.uniswap.org/pair/0x38c8ffee49f286f25d25bad919ff7552e5daf081
 const KEEPTBTC_PAIR_ADDRESS = "0x38c8ffee49f286f25d25bad919ff7552e5daf081"
-
-// https://etherscan.io/tx/0xc64ac175846e719bb4f7f9b17a0b04bc365db3dda9d97ef70d7ede8f9c1a265b
-const KEEPETH_CREATION_BLOCK = "10100034"
-// https://etherscan.io/tx/0x1592f9b235c602c87a5b8cc5f896164dc43d16b92664cb9c8b420d28b64ca4a0
-const KEEPTBTC_CREATION_BLOCK = "11452642"
 
 const KEEP_IN_LP_KEEPETH_BALANCES_PATH =
   "./tmp/keep-in-lp-keepeth-token-balances.json"
@@ -58,6 +54,11 @@ export class LPTokenTruthSource extends ITruthSource {
       LPRewardsKEEPETHJson.networks[chainID].address
     )
 
+    const lpRewardKeepEthDeploymentBlock = await getDeploymentBlockNumber(
+      LPRewardsKEEPETHJson,
+      this.context.web3
+    )
+
     const keepTbtcTokenContract = EthereumHelpers.buildContract(
       this.context.web3,
       JSON.parse(keepTbtcTokenJson.result),
@@ -70,12 +71,17 @@ export class LPTokenTruthSource extends ITruthSource {
       LPRewardsKEEPTBTCJson.networks[chainID].address
     )
 
+    const lpRewardKeepTbtcDeploymentBlock = await getDeploymentBlockNumber(
+      LPRewardsKEEPTBTCJson,
+      this.context.web3
+    )
+
     this.liquidityStakingObjects = {
       KEEPETH: {
         lpTokenContract: keepEthTokenContract,
         lpRewardsContract: lpRewardKeepEthContract,
         lpRewardsContractName: "LPRewardsKEEPETH",
-        lpCreationBlock: KEEPETH_CREATION_BLOCK,
+        lpRewardsContractDeploymentBlock: lpRewardKeepEthDeploymentBlock,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPETH_BALANCES_PATH,
         lpPairAddress: KEEPETH_PAIR_ADDRESS,
       },
@@ -83,7 +89,7 @@ export class LPTokenTruthSource extends ITruthSource {
         lpTokenContract: keepTbtcTokenContract,
         lpRewardsContract: lpRewardKeepTbtcContract,
         lpRewardsContractName: "LPRewardsKEEPTBTC",
-        lpCreationBlock: KEEPTBTC_CREATION_BLOCK,
+        lpRewardsContractDeploymentBlock: lpRewardKeepTbtcDeploymentBlock,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPTBTC_BALANCES_PATH,
         lpPairAddress: KEEPTBTC_PAIR_ADDRESS,
       },
@@ -103,26 +109,24 @@ export class LPTokenTruthSource extends ITruthSource {
     const lpRewardsContractAddress = pairObj.lpRewardsContract.options.address
 
     logger.info(
-      `looking for Transfer events emitted from ${lpRewardsContractAddress} ` +
-        `to ${pairName} pair ${pairObj.lpTokenContract.options.address} ` +
-        `between blocks ${pairObj.lpCreationBlock} and ${this.targetBlock}`
+      `looking for "Staked" events emitted from ${pairObj.lpRewardsContractName} ` +
+        `contract at ${lpRewardsContractAddress} when staking ${pairName} pair ` +
+        `${pairObj.lpTokenContract.options.address} between blocks ` +
+        `${pairObj.lpRewardsContractDeploymentBlock} and ${this.targetBlock}`
     )
 
     const events = await getPastEvents(
       this.context.web3,
-      pairObj.lpTokenContract,
-      "Transfer",
-      pairObj.lpCreationBlock,
+      pairObj.lpRewardsContract,
+      "Staked",
+      pairObj.lpRewardsContractDeploymentBlock,
       this.targetBlock
     )
-    logger.info(`found ${events.length} lp ${pairName} token transfer events`)
+    logger.info(`found ${events.length} lp ${pairName} token staked events`)
 
     const lpTokenStakersSet = new Set()
     events.forEach((event) => {
-      // include accounts that staked in LPReward contract only
-      if (event.returnValues.to == lpRewardsContractAddress) {
-        lpTokenStakersSet.add(event.returnValues.from)
-      }
+      lpTokenStakersSet.add(event.returnValues.user)
     })
 
     logger.info(`found ${lpTokenStakersSet.size} unique historic stakers`)
