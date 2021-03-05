@@ -24,7 +24,12 @@ class Web3ContextProvider extends React.Component {
       eth: {},
       error: "",
       isConnected: false,
+      connector: null,
     }
+  }
+
+  componentWillUnmount() {
+    this.disconnect(false)
   }
 
   connectAppWithWallet = async (connector) => {
@@ -127,6 +132,28 @@ class Web3ContextProvider extends React.Component {
     window.location.reload()
   }
 
+  disconnect = async (shouldSetState = true) => {
+    const { connector } = this.state
+    if (!connector) {
+      return
+    }
+
+    await connector.disconnect()
+    if (shouldSetState) {
+      this.setState({
+        web3: null,
+        isFetching: false,
+        yourAddress: "",
+        networkType: "",
+        utils: {},
+        eth: {},
+        error: "",
+        isConnected: false,
+        connector: null,
+      })
+    }
+  }
+
   render() {
     return (
       <Web3Context.Provider
@@ -135,6 +162,7 @@ class Web3ContextProvider extends React.Component {
           connectAppWithAccount: this.connectAppWithAccount,
           connectAppWithWallet: this.connectAppWithWallet,
           abortWalletConnection: this.abortWalletConnection,
+          disconnect: this.disconnect,
         }}
       >
         {this.props.children}
