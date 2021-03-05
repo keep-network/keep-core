@@ -3,15 +3,8 @@ name: Token Dashboard / Testnet
 #TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
-    branches:
-     - master
-    paths:
-      - "solidity/dashboard/**"
-      - ".github/workflows/dashboard-testnet.yml"
   pull_request:
-    paths:
-      - "solidity/dashboard/**"
-      - ".github/workflows/dashboard-testnet.yml"
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
@@ -19,46 +12,56 @@ jobs:
     strategy:
       matrix:
         node-version: [12.x]
-    defaults:
-      run:
-        working-directory: ./solidity/dashboard
+    # defaults:
+    #   run:
+    #     working-directory: ./solidity/dashboard
     steps:
-      - uses: actions/checkout@v2
+      # - uses: actions/checkout@v2
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ matrix.node-version }}
+      # - name: Use Node.js ${{ matrix.node-version }}
+      #   uses: actions/setup-node@v2
+      #   with:
+      #     node-version: ${{ matrix.node-version }}
 
-      - name: Cache Global NPM Cache
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-global-npm-cache
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
+      # - name: Cache Global NPM Cache
+      #   uses: actions/cache@v2
+      #   env:
+      #     cache-name: cache-global-npm-cache
+      #   with:
+      #     path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+      #     key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-build-${{ env.cache-name }}-
+      #       ${{ runner.os }}-build-
+      #       ${{ runner.os }}-
 
-      - name: Resolve latest contracts
-        run: |
-            npm update \
-              @keep-network/keep-core \
-              @keep-network/keep-ecdsa \
-              @keep-network/tbtc
+      # - name: Resolve latest contracts
+      #   run: |
+      #       npm update \
+      #         @keep-network/keep-core \
+      #         @keep-network/keep-ecdsa \
+      #         @keep-network/tbtc
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v1
 
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
+      # - name: Cache Docker layers
+      #   uses: actions/cache@v2
+      #   with:
+      #     path: /tmp/.buildx-cache
+      #     key: ${{ runner.os }}-buildx-${{ github.sha }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-buildx-
+      - name: DEBUG
+        run:  |
+          echo github.head_ref: ${{ github.head_ref }}
+          echo github.ref: ${{ github.ref }}
+      
+      - name: DEBUG 2
+        if:  |
+          startsWith(github.ref, 'refs/heads/releases/ropsten')
+            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+        run: echo condition TRUE
 
       - name: Login to Google Container Registry
         if:  |
@@ -69,20 +72,3 @@ jobs:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
           username: _json_key
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Build and publish Keep Token Dashboard image
-        uses: docker/build-push-action@v2
-        env:
-          IMAGE_NAME: 'keep-dapp-token-dashboard-wip' # TODO: change later to 'keep-dapp-token-dashboard'
-          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
-        with:
-          # GCR image should be named according to following convention:
-          # HOSTNAME/PROJECT-ID/IMAGE:TAG
-          # We don't use TAG yet, will be added at later stages of work on RFC-18.
-          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
-          labels: revision=${{ github.sha }}
-          push: |
-            ${{ startsWith(github.head_ref, 'releases/ropsten/token-dashboard/')
-              || startsWith(github.head_ref, 'rfc-18/ropsten') }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
