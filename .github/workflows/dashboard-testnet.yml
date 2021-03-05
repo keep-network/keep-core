@@ -12,6 +12,7 @@ on:
     paths:
       - "solidity/dashboard/**"
       - ".github/workflows/dashboard-testnet.yml"
+  workflow_dispatch:
 
 jobs:
   build-and-publish:
