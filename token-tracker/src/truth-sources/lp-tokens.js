@@ -76,7 +76,7 @@ export class LPTokenTruthSource extends ITruthSource {
       this.context.web3
     )
 
-    this.liquidityStakingObjects = {
+    this.liquidityStaking = {
       KEEPETH: {
         lpTokenContract: keepEthTokenContract,
         lpRewardsContract: lpRewardKeepEthContract,
@@ -287,9 +287,7 @@ export class LPTokenTruthSource extends ITruthSource {
     await this.initialize()
     const keepInLPsByStakers = new Map()
 
-    for (const [pairName, pairObj] of Object.entries(
-      this.liquidityStakingObjects
-    )) {
+    for (const [pairName, pairObj] of Object.entries(this.liquidityStaking)) {
       const lpStakers = await this.findStakers(pairName, pairObj)
       const stakersBalances = await this.getLpTokenStakersBalances(
         lpStakers,
