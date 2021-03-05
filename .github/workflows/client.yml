@@ -14,82 +14,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-test-publish:
+  debug:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
     steps:
-      - uses: actions/checkout@v2
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      - name: DEBUG
+        run:  |
+          echo github.head_ref: ${{ github.head_ref }}
+          echo github.ref: ${{ github.ref }}
+      
+      - name: DEBUG 2
+        if:  |
+          startsWith(github.ref, 'refs/heads/releases/ropsten')
+            || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+        run: echo github.ref condition TRUE
 
-      - name: Cache Docker layers
-        uses: actions/cache@v2
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      # TODO: This step was left here intentionally so we can track disk space
-      # usage for a while. We were trying to fight problems with out of disk space
-      # that happened due to the size of data restored from cache. The cache size
-      # was growing linearly with subsequent workflow runs. We want to observe
-      # available disk space for `/`. Fresh execution starts with 20 GB, we expect
-      # to have no less than 15 GB after the cache is restored.
-      - run: sudo df -h
-
-      - name: Build Docker Build Image
-        uses: docker/build-push-action@v2
-        with:
-          target: gobuild
-          tags: go-build-env
-          build-args: |
-            REVISION=${{ github.sha }}
-          # VERSION= ? TODO: Configure version, sample: 1.7.6
-          load: true # load image to local registry to use it in next steps
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
-
-      - name: Create test results directory
-        run: |
-          mkdir test-results
-
-      - name: Run Go tests
-        run: |
-          docker run \
-            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
-            --workdir /go/src/github.com/keep-network/keep-core \
-            go-build-env \
-            gotestsum --junitfile /mnt/test-results/unit-tests.xml
-
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1
-        if: always() # guarantees that this action always runs, even if earlier steps fail
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files: ./test-results/unit-tests.xml
-          check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
-          comment_on_pr: false # turns off commenting on Pull Requests
-
-      - name: Login to Google Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ secrets.GCR_REGISTRY_URL }}
-          username: _json_key
-          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Build and publish Docker Runtime Image
-        uses: docker/build-push-action@v2
-        env:
-          IMAGE_NAME: 'keep-client-wip' # TODO: change later to 'keep-client'
-          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
-        with:
-          # GCR image should be named according to following convention:
-          # HOSTNAME/PROJECT-ID/IMAGE:TAG
-          # We don't use TAG yet, will be added at later stages of work on RFC-18.
-          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
-          labels: |
-            revision=${{ github.sha }}
-          push: |
-            ${{ startsWith(github.ref, 'refs/heads/releases')
-              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
+      - name: DEBUG 3
+        if:  |
+          startsWith(github.head_ref, 'releases/ropsten')
+            || startsWith(github.head_ref, 'rfc-18/ropsten')
+        run: echo github.head_ref condition TRUE
