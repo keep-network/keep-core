@@ -186,13 +186,13 @@ export class LPTokenTruthSource extends ITruthSource {
   }
 
   /**
-   * Calculates KEEP for all LP KEEP-ETH / KEEP-TBTC stakers.
+   * Calculates KEEP amount for all LP stakers.
    *
-   * @param {Map<Address, BN>} stakersBalances LP KEEP-ETH / KEEP-TBTC Token amounts by stakers
+   * @param {Map<Address, BN>} stakersBalances LP Token amounts by stakers
    * @param {String} pairName LP pair name
    * @param {Object} pairObj LP pair object
    *
-   * @return {Map<Address,BN>} KEEP Tokens in LP KEEP-ETH / KEEP-TBTC at the target block
+   * @return {Map<Address,BN>} KEEP amounts in LP Token at the target block
    */
   async calcKeepInStakersBalances(stakersBalances, pairName, pairObj) {
     logger.info(`check token stakers at block ${this.targetBlock}`)
