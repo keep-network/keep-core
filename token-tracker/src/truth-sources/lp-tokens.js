@@ -93,24 +93,24 @@ export class LPTokenTruthSource extends ITruthSource {
    * "Transfer" events
    *
    * @param {String} pairName LP pair name
+   * @param {Object} pairObj LP pair object
    *
    * @return {Set<Address>} All historic LP KEEP-ETH / KEEP-TBTC token stakers
    * */
-  async findStakers(pairName) {
-    const lpRewardsContractAddress = this.liquidityStaking.lpRewardsContract
-      .options.address
+  async findStakers(pairName, pairObj) {
+    const lpRewardsContractAddress = pairObj.lpRewardsContract.options.address
 
     logger.info(
       `looking for Transfer events emitted from ${lpRewardsContractAddress} ` +
-        `to ${pairName} pair ${this.liquidityStaking.lpTokenContract.options.address} ` +
-        `between blocks ${this.liquidityStaking.lpCreationBlock} and ${this.targetBlock}`
+        `to ${pairName} pair ${pairObj.lpTokenContract.options.address} ` +
+        `between blocks ${pairObj.lpCreationBlock} and ${this.targetBlock}`
     )
 
     const events = await getPastEvents(
       this.context.web3,
-      this.liquidityStaking.lpTokenContract,
+      pairObj.lpTokenContract,
       "Transfer",
-      this.liquidityStaking.lpCreationBlock,
+      pairObj.lpCreationBlock,
       this.targetBlock
     )
     logger.info(`found ${events.length} lp ${pairName} token transfer events`)
@@ -132,16 +132,17 @@ export class LPTokenTruthSource extends ITruthSource {
    * Retrieves balances of LP KEEP-ETH / KEEP-TBTC pair for stakers in LPRewards* contract
    *
    * @param {Array<Address>} lpStakers LP KEEP-ETH / KEEP-TBTC stakers
+   * @param {Object} pairObj LP pair object
    *
    * @return {Map<Address,BN>} LP Balances by lp stakers
    */
-  async getLpTokenStakersBalances(lpStakers) {
+  async getLpTokenStakersBalances(lpStakers, pairObj) {
     const lpBalanceByStaker = new Map()
     let expectedTotalSupply = new BN(0)
 
     for (let i = 0; i < lpStakers.length; i++) {
       const lpBalance = new BN(
-        await this.liquidityStaking.lpRewardsContract.methods
+        await pairObj.lpRewardsContract.methods
           .balanceOf(lpStakers[i])
           .call({}, this.targetBlock)
       )
@@ -151,7 +152,7 @@ export class LPTokenTruthSource extends ITruthSource {
       }
     }
     const actualTotalSupply = new BN(
-      await this.liquidityStaking.lpRewardsContract.methods
+      await pairObj.lpRewardsContract.methods
         .totalSupply()
         .call({}, this.targetBlock)
     )
@@ -171,16 +172,17 @@ export class LPTokenTruthSource extends ITruthSource {
    * Calculates KEEP for all LP KEEP-ETH / KEEP-TBTC stakers.
    *
    * @param {Map<Address, BN>} stakersBalances LP KEEP-ETH / KEEP-TBTC Token amounts by stakers
+   * @param {Object} pairObj LP pair object
    *
    * @return {Map<Address,BN>} KEEP Tokens in LP KEEP-ETH / KEEP-TBTC at the target block
    */
-  async calcKeepInStakersBalances(stakersBalances) {
+  async calcKeepInStakersBalances(stakersBalances, pairObj) {
     logger.info(`check token stakers at block ${this.targetBlock}`)
 
     const keepInLpByStakers = new Map()
 
     // Retrieve current pair data
-    const pairData = await getPairData(this.liquidityStaking.lpPairAddress)
+    const pairData = await getPairData(pairObj.lpPairAddress)
     for (const [stakerAddress, lpBalance] of stakersBalances.entries()) {
       const keepInLPToken = await this.calcKeepTokenfromLPToken(
         lpBalance,
@@ -197,10 +199,7 @@ export class LPTokenTruthSource extends ITruthSource {
       `found ${keepInLpByStakers.size} stakers at block ${this.targetBlock}`
     )
 
-    dumpDataToFile(
-      keepInLpByStakers,
-      this.liquidityStaking.keepInLpTokenFilePath
-    )
+    dumpDataToFile(keepInLpByStakers, pairObj.keepInLpTokenFilePath)
 
     return keepInLpByStakers
   }
@@ -251,12 +250,14 @@ export class LPTokenTruthSource extends ITruthSource {
     for (const [pairName, pairObj] of Object.entries(
       this.liquidityStakingObjects
     )) {
-      this.liquidityStaking = pairObj
-
-      const lpStakers = await this.findStakers(pairName)
-      const stakersBalances = await this.getLpTokenStakersBalances(lpStakers)
+      const lpStakers = await this.findStakers(pairName, pairObj)
+      const stakersBalances = await this.getLpTokenStakersBalances(
+        lpStakers,
+        pairObj
+      )
       const keepInLpByStakers = await this.calcKeepInStakersBalances(
-        stakersBalances
+        stakersBalances,
+        pairObj
       )
 
       keepInLpByStakers.forEach((balance, staker) => {
