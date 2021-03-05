@@ -262,8 +262,12 @@ export class LPTokenTruthSource extends ITruthSource {
    * KEEP_total_liquidity_pool is fetched from Uniswap LP Token - lpToken.getReserves()._reserve0
    * LP_total_supply_pool is fetched from Uniswap LP Token - lpToken.totalSupply()
    *
+   * Another way to look at asset calculation in LP tokens is referring to a mint()
+   * function in UniswapV2Pair contract, which produces the same equation as above.
+   *
    * References:
    * Returns in Uniswap: https://uniswap.org/docs/v2/advanced-topics/understanding-returns/
+   * LP minting: https://github.com/Uniswap/uniswap-v2-core/blob/4dd59067c76dea4a0e8e4bfdda41877a6b16dedc/contracts/UniswapV2Pair.sol#L123
    *
    * @param {BN} lpStakerBalance LP amount staked by a staker in a LPRewardsContract
    * @param {PairData} lpPairData Pair data fetched from LP Token Contract
