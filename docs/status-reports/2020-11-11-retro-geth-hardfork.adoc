@@ -120,6 +120,6 @@ this incident:
 Lastly, the team is working on strategies for staking providers and
 individual stakers to coordinate with each other in cases where network
 failures cross node and network boundaries. There is currently space for ad
-hoc coordination, but the Keep team is often an intermediary; while this has
-worked reasonably well until now, ETH-only staking means the number of
-operators will make it an untenable strategy moving forward.
+hoc coordination, but the Keep team is often an intermediary; future network
+growth will likely mean the number of operators will make it an untenable
+strategy moving forward.
