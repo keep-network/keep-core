@@ -25,6 +25,14 @@ const TMP_DIR = "./tmp"
 const OUT_DIR = "./output"
 const RESULT_OUTPUT_PATH = path.join(OUT_DIR, "result.json")
 
+// Forward logs printed from tbtc.js.
+console.debug = function (msg) {
+  // Filter out `making attempt number 0`, as it makes a lot of noise in logs.
+  if (msg === "making attempt number 0") return
+
+  logger.debug(msg)
+}
+
 async function initializeContext() {
   const context = await Context.initialize(
     process.env.ETH_HOSTNAME,
