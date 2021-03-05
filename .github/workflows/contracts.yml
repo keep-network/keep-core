@@ -140,10 +140,13 @@ jobs:
 
       - name: Bump up package version
         uses: keep-network/npm-version-bump@v1
+        with:
+          workDir: ./solidity
 
       - name: Publish to npm
         uses: JS-DevTools/npm-publish@v1
         with:
+          package: ./solidity
           token: ${{ secrets.NPM_TOKEN }}
           access: public
           dry-run: true # TODO: to be removed once testing of workflow is done
