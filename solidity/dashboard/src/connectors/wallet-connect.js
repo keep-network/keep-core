@@ -1,14 +1,10 @@
-import WalletConnect from "@walletconnect/web3-provider"
+import Web3ProviderEngine from "web3-provider-engine"
+import WalletConnectSubprovider from "@walletconnect/web3-subprovider"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
-import BigNumber from "bignumber.js"
 import { AbstractConnector } from "./abstract-connector"
 import { WALLETS } from "../constants/constants"
-import {
-  getRPCRequestPayload,
-  overrideCacheMiddleware,
-  getWsUrl,
-} from "./utils"
+import { overrideCacheMiddleware, getWsUrl } from "./utils"
 
 export class WalletConnectConnector extends AbstractConnector {
   constructor(
@@ -20,47 +16,43 @@ export class WalletConnectConnector extends AbstractConnector {
     }
   ) {
     super(WALLETS.WALLET_CONNECT.name)
-    this.provider = new WalletConnect(options)
-
-    const cacheSubprovider = this.provider._providers.find(
-      (provider) => provider.constructor.name === CacheSubprovider.name
-    )
-    overrideCacheMiddleware(cacheSubprovider)
+    this.walletConnectSubprovider = new WalletConnectSubprovider(options)
   }
 
   enable = async () => {
     try {
-      // Override `handleRequest` in order to support event subscriptions via
-      // `WebsocketSubprovider`
-      const requestProvider = this.provider._providers[
-        this.provider._providers.length - 1
-      ]
-      const originalHandleRequest = requestProvider.handleRequest.bind(
-        requestProvider
-      )
+      this.provider = new Web3ProviderEngine()
 
-      requestProvider.handleRequest = async (payload, next, end) => {
-        switch (payload.method) {
-          case "eth_getLogs":
-          case "eth_subscribe": {
-            // Pass this request to the next subprovider.
-            next()
-            return
-          }
-          default: {
-            await originalHandleRequest(payload, next, end)
-            return
-          }
-        }
-      }
+      this.provider.addProvider(this.walletConnectSubprovider)
+
+      const cacheSubprovider = new CacheSubprovider()
+      this.provider.addProvider(cacheSubprovider)
+      overrideCacheMiddleware(cacheSubprovider)
 
       this.provider.addProvider(
-        new WebsocketSubprovider({
-          rpcUrl: getWsUrl(),
-          debug: true,
-        })
+        new WebsocketSubprovider({ rpcUrl: getWsUrl() })
       )
-      const accounts = await this.provider.enable()
+
+      this.provider.start()
+
+      // Set the correct chainId and networkid for the WallectConnect
+      // subprovider. Also override the `getChainId` and `getNetworkId` to avoid
+      // additional requests to the node- we can return values from the
+      // WalleConnect subprovider object.
+      this.walletConnectSubprovider.chainId = await this.getChainId()
+      this.walletConnectSubprovider.networkId = await this.getNetworkId()
+      this.getChainId = async () => this.walletConnectSubprovider.chainId
+      this.getNetworkId = async () => this.walletConnectSubprovider.networkId
+
+      // There is a bug in the WallecConnect subprovider. The bug is that the
+      // WalletConnect subprovider doesn't implement `updateState` and` emit`
+      // functions so there is a need to override them to avoid throwing errors.
+      this.walletConnectSubprovider.updateState = () => {}
+      this.walletConnectSubprovider.emit = () => {}
+
+      await this.walletConnectSubprovider.getWalletConnector()
+
+      const accounts = this.walletConnectSubprovider.accounts
       return accounts
     } catch (error) {
       if (error.message === "User closed modal") {
@@ -73,28 +65,5 @@ export class WalletConnectConnector extends AbstractConnector {
 
   disconnect = async () => {
     await this.provider.disconnect()
-  }
-
-  getChainId = async () => {
-    try {
-      const response = await this.provider.handleReadRequests(
-        getRPCRequestPayload("eth_chainId")
-      )
-      // In case the provider returns chainId in hex.
-      return new BigNumber(response.result).toString()
-    } catch (error) {
-      throw error
-    }
-  }
-
-  getNetworkId = async () => {
-    try {
-      const response = await this.provider.handleReadRequests(
-        getRPCRequestPayload("net_version")
-      )
-      return response.result
-    } catch (error) {
-      throw error
-    }
   }
 }
