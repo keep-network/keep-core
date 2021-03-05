@@ -146,7 +146,7 @@ jobs:
       - name: Publish to npm
         uses: JS-DevTools/npm-publish@v1
         with:
-          package: ./solidity
+          package: ./solidity/package.json
           token: ${{ secrets.NPM_TOKEN }}
           access: public
           dry-run: true # TODO: to be removed once testing of workflow is done
