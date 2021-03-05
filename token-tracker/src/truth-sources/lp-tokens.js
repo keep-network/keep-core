@@ -182,12 +182,12 @@ export class LPTokenTruthSource extends ITruthSource {
     const keepInLpByStakers = new Map()
 
     // Retrieve current pair data
-    const pairData = await getPairData(pairObj.lpPairAddress)
+    const uniswapPairData = await getPairData(pairObj.lpPairAddress)
 
     for (const [stakerAddress, lpBalance] of stakersBalances.entries()) {
       const keepInLPToken = await this.calcKeepTokenfromLPToken(
         lpBalance,
-        pairData
+        uniswapPairData
       )
       keepInLpByStakers.set(stakerAddress, keepInLPToken)
 
@@ -218,24 +218,24 @@ export class LPTokenTruthSource extends ITruthSource {
    * KEEP_staker_owed = (LP_staker_balance * KEEP_total_liquidity_pool) / LP_total_supply_pool
    * where:
    * LP_staker_balance is retrieved from LPRewardsContract
-   * KEEP_total_liquidity_pool is queried from Uniswap API - pairData.reserve0
-   * LP_total_supply_pool is queried from Uniswap API - pairData.totalSupply
+   * KEEP_total_liquidity_pool is queried from Uniswap API - uniswapPairData.reserve0
+   * LP_total_supply_pool is queried from Uniswap API - uniswapPairData.totalSupply
    *
    * References:
    * Uniswap API: https://uniswap.org/docs/v2/API/queries/#pair-data
    * Returns in Uniswap: https://uniswap.org/docs/v2/advanced-topics/understanding-returns/
    *
    * @param {BN} lpBalance LP amount staked by a staker in a LPRewardsContract
-   * @param {PairData} pairData KEEP-ETH / KEEP-TBTC pair data fetched from Uniswap
+   * @param {PairData} uniswapPairData KEEP-ETH / KEEP-TBTC pair data fetched from Uniswap
    *
    * @return {BN} KEEP token amounts in LP token balance
    */
-  async calcKeepTokenfromLPToken(lpBalance, pairData) {
+  async calcKeepTokenfromLPToken(lpBalance, uniswapPairData) {
     const uniswapTotalSupply = new BN(
-      this.context.web3.utils.toWei(pairData.totalSupply.toString())
+      this.context.web3.utils.toWei(uniswapPairData.totalSupply.toString())
     )
     const keepLiquidityPool = new BN(
-      this.context.web3.utils.toWei(pairData.reserve0.toString())
+      this.context.web3.utils.toWei(uniswapPairData.reserve0.toString())
     )
 
     return lpBalance.mul(keepLiquidityPool).div(uniswapTotalSupply)
