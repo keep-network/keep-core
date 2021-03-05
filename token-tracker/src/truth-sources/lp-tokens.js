@@ -8,6 +8,7 @@ import { getPastEvents, getChainID } from "../lib/ethereum-helper.js"
 import { dumpDataToFile } from "../lib/file-helper.js"
 import { logger } from "../lib/winston.js"
 import { EthereumHelpers } from "@keep-network/tbtc.js"
+const { callWithRetry } = EthereumHelpers
 
 // https://etherscan.io/address/0xe6f19dab7d43317344282f803f8e8d240708174a#code
 import keepEthTokenJson from "../../artifacts/KEEP-ETH-UNI-V2-Token.json"
@@ -141,9 +142,12 @@ export class LPTokenTruthSource extends ITruthSource {
 
     for (const staker of lpStakers) {
       const lpBalance = new BN(
-        await pairObj.lpRewardsContract.methods
-          .balanceOf(staker)
-          .call({}, this.targetBlock)
+        await callWithRetry(
+          pairObj.lpRewardsContract.methods.balanceOf(staker),
+          undefined,
+          undefined,
+          this.targetBlock
+        )
       )
       if (!lpBalance.isZero()) {
         lpBalanceByStaker.set(staker, lpBalance)
@@ -151,18 +155,21 @@ export class LPTokenTruthSource extends ITruthSource {
       }
     }
     const actualTotalSupply = new BN(
-      await pairObj.lpRewardsContract.methods
-        .totalSupply()
-        .call({}, this.targetBlock)
+      await callWithRetry(
+        pairObj.lpRewardsContract.methods.totalSupply(),
+        undefined,
+        undefined,
+        this.targetBlock
+      )
     )
 
     if (!expectedTotalSupply.eq(actualTotalSupply)) {
       logger.error(
-        `Sum of LP staker balances ${expectedTotalSupply} does not match the total supply ${actualTotalSupply}`
+        `sum of LP staker balances ${expectedTotalSupply} does not match the total supply ${actualTotalSupply}`
       )
     }
 
-    logger.info(`Total supply of LP Token: ${expectedTotalSupply.toString()}`)
+    logger.info(`total supply of LP Token: ${expectedTotalSupply.toString()}`)
 
     return lpBalanceByStaker
   }
@@ -171,23 +178,36 @@ export class LPTokenTruthSource extends ITruthSource {
    * Calculates KEEP for all LP KEEP-ETH / KEEP-TBTC stakers.
    *
    * @param {Map<Address, BN>} stakersBalances LP KEEP-ETH / KEEP-TBTC Token amounts by stakers
+   * @param {String} pairName LP pair name
    * @param {Object} pairObj LP pair object
    *
    * @return {Map<Address,BN>} KEEP Tokens in LP KEEP-ETH / KEEP-TBTC at the target block
    */
-  async calcKeepInStakersBalances(stakersBalances, pairObj) {
+  async calcKeepInStakersBalances(stakersBalances, pairName, pairObj) {
     logger.info(`check token stakers at block ${this.targetBlock}`)
 
-    const totalSupply = await pairObj.lpTokenContract.methods
-      .totalSupply()
-      .call({}, this.targetBlock)
+    const totalSupply = await callWithRetry(
+      pairObj.lpTokenContract.methods.totalSupply(),
+      undefined,
+      undefined,
+      this.targetBlock
+    )
+    logger.info(
+      `total supply of LP ${pairName} token at block ${this.targetBlock} is: ${totalSupply}`
+    )
 
-    const keepReserve = await pairObj.lpTokenContract.methods
-      .getReserves()
-      .call({}, this.targetBlock)
+    const lpReserves = await callWithRetry(
+      pairObj.lpTokenContract.methods.getReserves(),
+      undefined,
+      undefined,
+      this.targetBlock
+    )
+    logger.info(
+      `KEEP Liquidity pool at block ${this.targetBlock} is: ${lpReserves._reserve0}`
+    )
 
     const lpPairData = {
-      keepLiquidityPool: keepReserve._reserve0,
+      keepLiquidityPool: lpReserves._reserve0,
       lpTotalSupply: totalSupply,
     }
 
@@ -201,7 +221,7 @@ export class LPTokenTruthSource extends ITruthSource {
       keepInLpByStakers.set(stakerAddress, keepInLPToken)
 
       logger.info(
-        `Staker: ${stakerAddress} - LP Balance: ${lpStakerBalance} - KEEP in LP: ${keepInLPToken}`
+        `staker: ${stakerAddress} - LP Balance: ${lpStakerBalance} - KEEP in LP: ${keepInLPToken}`
       )
     }
 
@@ -261,6 +281,7 @@ export class LPTokenTruthSource extends ITruthSource {
       )
       const keepInLpByStakers = await this.calcKeepInStakersBalances(
         stakersBalances,
+        pairName,
         pairObj
       )
 
