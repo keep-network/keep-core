@@ -32,14 +32,15 @@ contract TokenDistributor {
         bytes32 r,
         bytes32 s
     ) internal pure returns (address) {
-        // Validate `s` value for a malleability concern described in EIP-2.
+        // Validate `s` and `v` values for a malleability concern described in EIP-2.
         // Only signatures with `s` value in the lower half of the secp256k1
-        // curve's order are considered valid.
+        // curve's order and `v` value of 27 or 28 are considered valid.
         require(
             uint256(s) <=
                 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0,
-            "Malleable signature - s should be in the low half of secp256k1 curve's order"
+            "Invalid signature 's' value"
         );
+        require(v == 27 || v == 28, "Invalid signature 'v' value");
 
         bytes32 digest = keccak256(message);
         bytes32 prefixedDigest =

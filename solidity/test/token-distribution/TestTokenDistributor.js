@@ -126,7 +126,18 @@ describe("TokenDistributor", () => {
           signature.r,
           malleableS
         ),
-        "Malleable signature - s should be in the low half of secp256k1 curve's order"
+        "Invalid signature 's' value"
+      )
+
+      await expectRevert(
+        tokenDistributor.claim(
+          recipientAddress,
+          destinationAddress,
+          signature.v - 27,
+          signature.r,
+          signature.s
+        ),
+        "Invalid signature 'v' value"
       )
     })
   })
