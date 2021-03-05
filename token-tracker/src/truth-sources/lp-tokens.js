@@ -140,14 +140,14 @@ export class LPTokenTruthSource extends ITruthSource {
     const lpBalanceByStaker = new Map()
     let expectedTotalSupply = new BN(0)
 
-    for (let i = 0; i < lpStakers.length; i++) {
+    for (const staker of lpStakers) {
       const lpBalance = new BN(
         await pairObj.lpRewardsContract.methods
-          .balanceOf(lpStakers[i])
+          .balanceOf(staker)
           .call({}, this.targetBlock)
       )
       if (!lpBalance.isZero()) {
-        lpBalanceByStaker.set(lpStakers[i], lpBalance)
+        lpBalanceByStaker.set(staker, lpBalance)
         expectedTotalSupply = expectedTotalSupply.add(lpBalance)
       }
     }
