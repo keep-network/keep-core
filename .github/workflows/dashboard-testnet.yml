@@ -4,16 +4,11 @@ name: Token Dashboard / Testnet
 on:
   push:
     branches:
-      # TODO: Run on master after we're fully migrated from Circle CI
-      # - master
-      - "rfc-18/**"
+     - master
     paths:
       - "solidity/dashboard/**"
       - ".github/workflows/dashboard-testnet.yml"
   pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
     paths:
       - "solidity/dashboard/**"
       - ".github/workflows/dashboard-testnet.yml"
