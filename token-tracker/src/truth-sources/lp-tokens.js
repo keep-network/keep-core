@@ -74,6 +74,7 @@ export class LPTokenTruthSource extends ITruthSource {
       KEEPETH: {
         lpTokenContract: keepEthTokenContract,
         lpRewardsContract: lpRewardKeepEthContract,
+        lpRewardsContractName: "LPRewardsKEEPETH",
         lpCreationBlock: KEEPETH_CREATION_BLOCK,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPETH_BALANCES_PATH,
         lpPairAddress: KEEPETH_PAIR_ADDRESS,
@@ -81,6 +82,7 @@ export class LPTokenTruthSource extends ITruthSource {
       KEEPTBTC: {
         lpTokenContract: keepTbtcTokenContract,
         lpRewardsContract: lpRewardKeepTbtcContract,
+        lpRewardsContractName: "LPRewardsKEEPTBTC",
         lpCreationBlock: KEEPTBTC_CREATION_BLOCK,
         keepInLpTokenFilePath: KEEP_IN_LP_KEEPTBTC_BALANCES_PATH,
         lpPairAddress: KEEPTBTC_PAIR_ADDRESS,
@@ -165,11 +167,17 @@ export class LPTokenTruthSource extends ITruthSource {
 
     if (!expectedTotalSupply.eq(actualTotalSupply)) {
       logger.error(
-        `sum of LP staker balances ${expectedTotalSupply} does not match the total supply ${actualTotalSupply}`
+        `sum of LP staker balances ${expectedTotalSupply} does not match
+        the total supply ${actualTotalSupply} of locked LP tokens
+        in ${pairObj.lpRewardsContractName} contract`
       )
     }
 
-    logger.info(`total supply of LP Token: ${expectedTotalSupply.toString()}`)
+    logger.info(
+      `total supply of LP Tokens locked in ${
+        pairObj.lpRewardsContractName
+      } is: ${expectedTotalSupply.toString()}`
+    )
 
     return lpBalanceByStaker
   }
