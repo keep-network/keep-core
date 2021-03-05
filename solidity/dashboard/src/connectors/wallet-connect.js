@@ -3,14 +3,21 @@ import WalletConnectSubprovider from "@walletconnect/web3-subprovider"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import { AbstractConnector } from "./abstract-connector"
+import config from "../config/config.json"
 import { WALLETS } from "../constants/constants"
 import { overrideCacheMiddleware, getWsUrl } from "./utils"
 
 export class WalletConnectConnector extends AbstractConnector {
   constructor(
     options = {
-      // TODO add chains
       rpc: {
+        // Mainnet
+        1: config.networks["1"].rpcURL,
+        // Ropsten
+        3: config.networks["3"].rpcURL,
+        // Internal keep-dev network
+        1101: config.networks["1101"].rpcURL,
+        // Development- private network, change if you use a different one.
         1337: "http://localhost:8545",
       },
     }
