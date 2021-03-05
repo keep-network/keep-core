@@ -82,7 +82,7 @@ jobs:
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           push: |
-            ${{ startsWith(github.ref, 'refs/heads/releases')
-              || startsWith(github.ref, 'refs/heads/rfc-18/ropsten') }}
+            ${{ startsWith(github.head_ref, 'releases/ropsten/token-dashboard/')
+              || startsWith(github.head_ref, 'rfc-18/ropsten') }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
