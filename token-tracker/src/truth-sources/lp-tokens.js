@@ -156,6 +156,9 @@ export class LPTokenTruthSource extends ITruthSource {
       )
       if (!lpBalance.isZero()) {
         lpBalanceByStaker.set(staker, lpBalance)
+        logger.info(
+          `found active staker ${staker} at block ${this.targetBlock}`
+        )
         expectedTotalSupply = expectedTotalSupply.add(lpBalance)
       }
     }
@@ -195,8 +198,6 @@ export class LPTokenTruthSource extends ITruthSource {
    * @return {Map<Address,BN>} KEEP amounts in LP Token at the target block
    */
   async calcKeepInStakersBalances(stakersBalances, pairName, pairObj) {
-    logger.info(`check token stakers at block ${this.targetBlock}`)
-
     const totalSupply = await callWithRetry(
       pairObj.lpTokenContract.methods.totalSupply(),
       undefined,
@@ -214,7 +215,7 @@ export class LPTokenTruthSource extends ITruthSource {
       this.targetBlock
     )
     logger.info(
-      `KEEP Liquidity pool at block ${this.targetBlock} is: ${lpReserves._reserve0}`
+      `KEEP reserve in liquidity pool at block ${this.targetBlock} is: ${lpReserves._reserve0}`
     )
 
     const lpPairData = {
@@ -237,7 +238,7 @@ export class LPTokenTruthSource extends ITruthSource {
     }
 
     logger.info(
-      `found ${keepInLpByStakers.size} stakers at block ${this.targetBlock}`
+      `found ${keepInLpByStakers.size} active stakers at block ${this.targetBlock}`
     )
 
     dumpDataToFile(keepInLpByStakers, pairObj.keepInLpTokenFilePath)
