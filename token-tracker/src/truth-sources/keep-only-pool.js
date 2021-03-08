@@ -4,7 +4,7 @@
 import BN from "bn.js"
 
 import { ITruthSource } from "./truth-source.js"
-import { Contract, getDeploymentBlockNumber } from "../lib/contract-helper.js"
+import { getDeploymentBlockNumber } from "../lib/contract-helper.js"
 import { getPastEvents, getChainID } from "../lib/ethereum-helper.js"
 import { dumpDataToFile } from "../lib/file-helper.js"
 import { logger } from "../lib/winston.js"
@@ -35,13 +35,17 @@ export class KeepOnlyPoolTruthSource extends ITruthSource {
     )
   }
 
+  /**
+   * Finds all historic KEEP-only pool stakers in KeepVault contract based on
+   * "Staked" events.
+   *
+   * @return {Set<Address>} All historic KEEP-only pool stakers.
+   */
   async findHistoricKeepOnlyPoolStakers() {
     const keepVaultDeploymentBlock = await getDeploymentBlockNumber(
       KeepVaultJSON,
       this.context.web3
     )
-
-    console.log("keepVaultDeploymentBlock: ", keepVaultDeploymentBlock)
 
     logger.info(
       `looking for "Staked" events emitted from ${this.keepVault.options.address} ` +
@@ -60,13 +64,23 @@ export class KeepOnlyPoolTruthSource extends ITruthSource {
     const tokenStakers = new Set()
     events.forEach((event) => tokenStakers.add(event.returnValues.user))
 
-    logger.info(`found ${tokenStakers.size} unique historic stakers`)
+    logger.info(
+      `found ${tokenStakers.size} unique historic KEEP-only pool stakers`
+    )
 
     return tokenStakers
   }
 
+  /**
+   * Retrieves balances of KEEP tokens locked in KeepVault contract for stakers.
+   *
+   * @param {Array<Address>} stakers KEEP-only pool stakers addresses.
+   *
+   * @return {Map<Address,BN>} Staked KEEP balances by stakers addresses.
+   */
   async getTokenStakersBalances(stakers) {
-    const balancesByStaker = new Map()
+    const balancesByStakerAddress = new Map()
+    let expectedTotalStaking = new BN(0)
 
     for (const staker of stakers) {
       const stakerBalance = new BN(
@@ -78,22 +92,53 @@ export class KeepOnlyPoolTruthSource extends ITruthSource {
         )
       )
       if (!stakerBalance.isZero()) {
-        balancesByStaker.set(staker, stakerBalance)
+        balancesByStakerAddress.set(staker, stakerBalance)
+        expectedTotalStaking = expectedTotalStaking.add(stakerBalance)
+
+        logger.info(`staker: ${staker} - KEEP balance: ${stakerBalance}`)
       }
     }
 
-    console.log("balancesByStaker: ", balancesByStaker)
+    const actualTotalStaking = new BN(
+      await callWithRetry(
+        this.keepVault.methods.totalStakingShares(),
+        undefined,
+        undefined,
+        this.targetBlock
+      )
+    )
 
-    return balancesByStaker
+    if (!expectedTotalStaking.eq(actualTotalStaking)) {
+      logger.error(
+        `sum of KEEP staker balances ${expectedTotalStaking} does not match
+        the total staking supply ${actualTotalStaking} of KEEP tokens
+        in KeepVault contract`
+      )
+    }
+
+    logger.info(
+      `total supply of staked KEEP tokens locked in KeepVault is: ${actualTotalStaking.toString()}`
+    )
+
+    dumpDataToFile(
+      balancesByStakerAddress,
+      KEEP_STAKER_BALANCES_IN_KEEP_ONLY_POOL_PATH
+    )
+
+    return balancesByStakerAddress
   }
 
+  /**
+   * Initializes KeepVault contract and retrieves all the stakers with their
+   * KEEP balances at the target block.
+   *
+   * @return {Map<Address,BN>} KEEP token amounts staked by stakers at the target block.
+   */
   async getTokenHoldingsAtTargetBlock() {
     await this.initialize()
 
     const stakers = await this.findHistoricKeepOnlyPoolStakers()
 
-    await this.getTokenStakersBalances(stakers)
-
-    return {}
+    return await this.getTokenStakersBalances(stakers)
   }
 }
