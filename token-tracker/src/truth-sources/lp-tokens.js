@@ -121,7 +121,7 @@ export class LPTokenTruthSource extends ITruthSource {
       pairObj.lpRewardsContractDeploymentBlock,
       this.targetBlock
     )
-    logger.info(`found ${events.length} lp ${pairName} token staked events`)
+    logger.info(`found ${events.length} LP ${pairName} token staked events`)
 
     const lpTokenStakersSet = new Set()
     events.forEach((event) => {
@@ -145,6 +145,7 @@ export class LPTokenTruthSource extends ITruthSource {
     const lpBalanceByStaker = new Map()
     let expectedTotalSupply = new BN(0)
 
+    logger.info(`looking for active stakers at block ${this.targetBlock}`)
     for (const staker of lpStakers) {
       const lpBalance = new BN(
         await callWithRetry(
@@ -157,7 +158,7 @@ export class LPTokenTruthSource extends ITruthSource {
       if (!lpBalance.isZero()) {
         lpBalanceByStaker.set(staker, lpBalance)
         logger.info(
-          `found active staker ${staker} at block ${this.targetBlock}`
+          `found an active staker ${staker} with the balance of ${lpBalance}`
         )
         expectedTotalSupply = expectedTotalSupply.add(lpBalance)
       }
@@ -215,7 +216,7 @@ export class LPTokenTruthSource extends ITruthSource {
       this.targetBlock
     )
     logger.info(
-      `KEEP reserve in liquidity pool at block ${this.targetBlock} is: ${lpReserves._reserve0}`
+      `KEEP reserve in the KEEP liquidity pool at block ${this.targetBlock} is: ${lpReserves._reserve0}`
     )
 
     // Token reserve0 must be KEEP token 0x85eee30c52b0b379b046fb0f85f4f3dc3009afec
@@ -225,6 +226,8 @@ export class LPTokenTruthSource extends ITruthSource {
       lpTotalSupply: totalSupply,
     }
 
+    let totalLpStaked = new BN(0)
+    let totalKeepInLpStaked = new BN(0)
     const keepInLpByStakers = new Map()
 
     for (const [stakerAddress, lpStakerBalance] of stakersBalances.entries()) {
@@ -233,15 +236,25 @@ export class LPTokenTruthSource extends ITruthSource {
         lpPairData
       )
       keepInLpByStakers.set(stakerAddress, keepInLPToken)
+      totalLpStaked = totalLpStaked.add(lpStakerBalance)
+      totalKeepInLpStaked = totalKeepInLpStaked.add(keepInLPToken)
 
       logger.info(
-        `staker: ${stakerAddress} - LP Balance: ${lpStakerBalance} - KEEP in LP: ${keepInLPToken}`
+        `staker: ${stakerAddress} - LP ${pairName} Balance: ${lpStakerBalance} - KEEP in LP: ${keepInLPToken}`
       )
     }
 
     logger.info(
-      `found ${keepInLpByStakers.size} active stakers at block ${this.targetBlock}`
+      `found ${keepInLpByStakers.size} active stakers with the total of ` +
+        `${totalLpStaked} LP ${pairName} tokens staked. The total of KEEP asset is ${totalKeepInLpStaked}`
     )
+
+    if (totalKeepInLpStaked.lte(lpPairData.keepLiquidityPool)) {
+      logger.error(
+        `total of KEEP asset ${totalKeepInLpStaked} in LP tokens must be less or equal ` +
+          `the total amount in the KEEP liquidity reserve ${lpPairData.keepLiquidityPool}`
+      )
+    }
 
     dumpDataToFile(keepInLpByStakers, pairObj.keepInLpTokenFilePath)
 
