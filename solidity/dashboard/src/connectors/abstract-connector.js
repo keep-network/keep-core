@@ -100,4 +100,8 @@ export class AbstractHardwareWalletConnector extends AbstractConnector {
       accountsOffSet
     )
   }
+
+  disconnect = () => {
+    this.provider.stop()
+  }
 }
