@@ -85,13 +85,16 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  migrate-and-publish:
+  migrate-and-publish-ethereum:
     needs: [build-and-test, lint]
+    # TODO: Remove 'rfc-18/' condition once migration to GH Actions is done
     if: |
-      startsWith(github.head_ref, 'releases/ropsten') 
-        || startsWith(github.head_ref, 'rfc-18/ropsten')
-    # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
-    environment: keep-test 
+      (startsWith(github.ref, 'refs/heads/rfc-18/')
+        || github.ref == 'refs/heads/master')
+        && (github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch')
+    # TODO: Implement similiar for keep-dev (should execute for rfc-18... & master branch)
+    environment: keep-test # currently keep-test requires manual aproval of job
     runs-on: ubuntu-latest
     defaults:
       run:
