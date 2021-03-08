@@ -218,6 +218,8 @@ export class LPTokenTruthSource extends ITruthSource {
       `KEEP reserve in liquidity pool at block ${this.targetBlock} is: ${lpReserves._reserve0}`
     )
 
+    // Token reserve0 must be KEEP token 0x85eee30c52b0b379b046fb0f85f4f3dc3009afec
+    // which makes a LP pair token.
     const lpPairData = {
       keepLiquidityPool: lpReserves._reserve0,
       lpTotalSupply: totalSupply,
