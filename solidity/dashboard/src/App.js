@@ -13,7 +13,7 @@ import Footer from "./components/Footer"
 
 const App = () => (
   <Provider store={store}>
-    <Router>
+    <Router basename={`${process.env.PUBLIC_URL}`}>
       <Messages>
         <Web3ContextProvider>
           <ModalContextProvider>

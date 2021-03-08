@@ -14,6 +14,7 @@ import { getPastEvents } from "../lib/ethereum-helper.js"
 import { dumpDataToFile } from "../lib/file-helper.js"
 
 import TokenGrantJSON from "@keep-network/keep-core/artifacts/TokenGrant.json"
+import TokenStakingEscrowJSON from "@keep-network/keep-core/artifacts/TokenStakingEscrow.json"
 
 import Web3 from "web3"
 const { toBN } = Web3.utils
@@ -25,6 +26,9 @@ const TOKEN_GRANT_BALANCES_OUTPUT_PATH = "./tmp/token-grant-balances.json"
 
 export class TokenGrantTruthSource extends ITruthSource {
   /** @property {ContractInstance} tokenGrant */
+  /** @property {ContractInstance} tokenStaking */
+  /** @property {ContractInstance} oldTokenStaking */
+  /** @property {ContractInstance} tokenStakingEscrow */
 
   constructor(
     /** @type {Context} */ context,
@@ -38,6 +42,10 @@ export class TokenGrantTruthSource extends ITruthSource {
       "TokenGrant",
       new Contract(TokenGrantJSON, this.context.web3)
     )
+    this.context.addContract(
+      "TokenStakingEscrow",
+      new Contract(TokenStakingEscrowJSON, this.context.web3)
+    )
 
     this.tokenGrant = await this.context.getContract("TokenGrant").deployed()
     this.tokenStaking = await this.context
@@ -45,6 +53,9 @@ export class TokenGrantTruthSource extends ITruthSource {
       .deployed()
     this.oldTokenStaking = await this.context
       .getContract("OldTokenStaking")
+      .deployed()
+    this.tokenStakingEscrow = await this.context
+      .getContract("TokenStakingEscrow")
       .deployed()
   }
 
@@ -57,6 +68,8 @@ export class TokenGrantTruthSource extends ITruthSource {
    * @property {BN} revoked
    * @property {BN} slashed
    * @property {BN} seized
+   * @property {BN} escrowWithdrawn
+   * @property {BN} escrowRevoked
    * @property {BN} balance
    */
 
@@ -113,9 +126,14 @@ export class TokenGrantTruthSource extends ITruthSource {
       // value includes staked tokens.
       grant.balance = grant.amount.sub(grant.withdrawn).sub(grant.revoked)
 
-      // If tokens were staked, check for any seized or slashed ones.
+      // If tokens were staked.
       if (toBN(grantDetails.staked).gtn(0)) {
-        ;[grant.slashed, grant.seized] = await this.getSlashedSeizedAmount(id)
+        const operators = await this.getOperatorsForGrant(id)
+
+        // Check for any seized or slashed ones.
+        ;[grant.slashed, grant.seized] = await this.getSlashedSeizedAmount(
+          operators
+        )
 
         if (grant.slashed.gtn(0))
           logger.debug(`grant ${id}: slashed tokens: ${grant.slashed}`)
@@ -124,6 +142,24 @@ export class TokenGrantTruthSource extends ITruthSource {
 
         grant.balance.isub(grant.slashed)
         grant.balance.isub(grant.seized)
+
+        // Check for any withdrawn or revoked tokens in TokenStakingEscrow.
+        ;[
+          grant.escrowWithdrawn,
+          grant.escrowRevoked,
+        ] = await this.getWithdrawnRevokedAmountFromEscrow(operators)
+
+        if (grant.escrowWithdrawn.gtn(0))
+          logger.debug(
+            `grant ${id}: escrow withdrawn tokens: ${grant.escrowWithdrawn}`
+          )
+        if (grant.escrowRevoked.gtn(0))
+          logger.debug(
+            `grant ${id}: escrow revoked tokens: ${grant.escrowRevoked}`
+          )
+
+        grant.balance.isub(grant.escrowWithdrawn)
+        grant.balance.isub(grant.escrowRevoked)
       }
 
       tokenGrants.push(grant)
@@ -136,9 +172,12 @@ export class TokenGrantTruthSource extends ITruthSource {
 
   /**
    * @param {String} grantID
-   * @return {Promise<[BN,BN]>}
+   * @return {Address[]}
    */
-  async getSlashedSeizedAmount(grantID) {
+  async getOperatorsForGrant(grantID) {
+    /** @type {Set<Address>} */
+    const operators = new Set()
+
     /** @type {Array} */
     const grantStakedEvents = await getPastEvents(
       this.context.web3,
@@ -149,14 +188,83 @@ export class TokenGrantTruthSource extends ITruthSource {
       { grantId: grantID }
     )
     logger.debug(
-      `found ${grantStakedEvents.length} token grant staked events for grant ${grantID}`
+      `found ${grantStakedEvents.length} TokenGrantStaked events for grant ${grantID}`
     )
 
-    /** @type {String[]} */
-    const operators = grantStakedEvents.map(
-      (event) => event.returnValues.operator
+    grantStakedEvents.forEach((event) =>
+      operators.add(event.returnValues.operator)
     )
 
+    /** @type {Array} */
+    const tokenStakingEscrowEvents = await getPastEvents(
+      this.context.web3,
+      this.tokenStakingEscrow,
+      "DepositRedelegated",
+      this.context.deploymentBlock,
+      this.targetBlock,
+      { grantId: grantID }
+    )
+    logger.debug(
+      `found ${tokenStakingEscrowEvents.length} DepositRedelegated events for grant ${grantID}`
+    )
+
+    tokenStakingEscrowEvents.forEach((event) =>
+      operators.add(event.returnValues.newOperator)
+    )
+
+    return Array.from(operators)
+  }
+
+  /**
+   * @param {Address[]} operators
+   * @return {Promise<[BN,BN]>}
+   */
+  async getWithdrawnRevokedAmountFromEscrow(operators) {
+    const withdrawnAmount = toBN(0)
+    const revokedAmount = toBN(0)
+
+    for (const operator of operators) {
+      logger.debug(
+        `looking for tokens withdrawn or revoked from escrow for operator: ${operator}`
+      )
+
+      /** @type {Array} */
+      const withdrawnEvents = await getPastEvents(
+        this.context.web3,
+        this.tokenStakingEscrow,
+        "DepositWithdrawn",
+        this.context.deploymentBlock,
+        this.targetBlock,
+        { operator: operator }
+      )
+
+      withdrawnEvents.forEach((event) =>
+        withdrawnAmount.iadd(toBN(event.returnValues.amount))
+      )
+
+      /** @type {Array} */
+      const revokedEvents = await getPastEvents(
+        this.context.web3,
+        this.tokenStakingEscrow,
+        "RevokedDepositWithdrawn",
+        this.context.deploymentBlock,
+        this.targetBlock,
+        { operator: operator }
+      )
+
+      revokedEvents.forEach((event) =>
+        revokedAmount.iadd(toBN(event.returnValues.amount))
+      )
+    }
+
+    return [withdrawnAmount, revokedAmount]
+  }
+
+  /**
+   * @param {Address[]} operators
+   * @return {Promise<[BN,BN]>}
+   */
+  async getSlashedSeizedAmount(operators) {
     const slashedAmount = toBN(0)
     const seizedAmount = toBN(0)
     for (const operator of operators) {
