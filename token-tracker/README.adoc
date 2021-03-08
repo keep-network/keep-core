@@ -16,6 +16,7 @@ Following sources are currently defined:
 - <<Token Staking>> contract
 - <<Token Grant>> contract
 - <<Liquidity Rewards>> contracts
+- <<KEEP-only pool>> contracts
 
 The list of supported sources of truth can be enhanced. For guidelines on 
 implementing additional sources please see <<Development>> section.
@@ -42,6 +43,11 @@ addresses that are contracts handled by the other sources.
 ### Token Grant
 
 Scans `TokenGrant` contract for grant holders and their balances.
+
+### KEEP-only pool
+
+Scans for `Staked` events in the `KeepVault` contract. It retrieves all the stakers 
+addresses with their KEEP balances at the provided target block.
 
 ## Run
 
