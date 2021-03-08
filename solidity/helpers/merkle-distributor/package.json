@@ -1,0 +1,17 @@
+{
+  "name": "@keep-network/merkle-distributor-helper",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=12"
+  },
+  "main": "dist/parse-balance-map.js",
+  "types": "dist/parse-balance-map.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "ethereumjs-util": "^7.0.4",
+    "ethers": "^5.0.31",
+    "ts-node": "^8.10.2"
+  }
+}
