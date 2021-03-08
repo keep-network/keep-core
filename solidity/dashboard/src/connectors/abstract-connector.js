@@ -23,10 +23,6 @@ export class AbstractConnector {
     throw Error("Implement first")
   }
 
-  getAccounts = async () => {
-    throw Error("Implement first")
-  }
-
   disconnect = async () => {
     throw Error("Implement first")
   }
