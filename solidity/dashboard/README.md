@@ -121,4 +121,38 @@ For more config information you can follow these links:
 3. [Setup and run the emulator](https://github.com/trezor/trezor-firmware/blob/master/docs/core/emulator/index.md)
 
 ## LEDGER
-To test the dapp with the ledger hardware wallet run the following command: `HTTPS=true npm start`
+To test the dapp with the ledger hardware wallet run the following command:
+`HTTPS=true npm start`
+
+## WalletConnect
+To test WalletConnect integration follow these steps:
+1. Clone
+   [`walletconnect-test-wallet`](https://github.com/WalletConnect/walletconnect-test-wallet)
+   repo:
+   1. Add infura project id in the `src/.env` file
+     `REACT_APP_INFURA_PROJECT_ID=<your id here>`,
+   2. Add a local network param in the `src/constants/chains.ts` eg. params for
+     local ganache network:
+     ```json
+      {
+        name: "Ethereum Ganache",
+        short_name: "eth_ganache",
+        chain: "ETH",
+        network: "local_ganache",
+        chain_id: 1337,
+        network_id: 1101,
+        rpc_url: "http://localhost:8545",
+        native_currency: {
+          symbol: "ETH",
+          name: "Ether",
+          decimals: "18",
+          contractAddress: "",
+          balance: "",
+       }
+      }
+     ```
+   3. Run `walletconnect-test-wallet` app: `npm start`
+2. In the KEEP token dashboard select the `WalletConnect` option to connect with
+   the test walletconnect wallet. The modal with QR code will be displayed. Copy
+   code and past to the `walletconnect-test-wallet`. The dapp should successfully
+   connect with a wallet.
