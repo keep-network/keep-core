@@ -7,26 +7,45 @@ import {
   getRPCRequestPayload,
   overrideCacheMiddleware,
 } from "./utils"
-
 import { Deferred } from "../contracts"
 
-const DEFAULT_NUM_ADDRESSES_TO_FETCH = 15
-
+/**
+ * Representing an abstract connector.
+ */
 export class AbstractConnector {
+  /** @type {string} */
   name
+  /** @type {Web3ProviderEngine} */
+  provider
 
+  /**
+   * Create a connector.
+   *
+   * @param {string} name - Name of the connector.
+   */
   constructor(name) {
     this.name = name
   }
 
+  /**
+   * Enable the connector and return available accounts.
+   *
+   * @return {Promise<Array<string>>} Available accounts.
+   */
   enable = async () => {
     throw Error("Implement first")
   }
 
+  /**
+   * Disconnect a connector.
+   */
   disconnect = async () => {
     throw Error("Implement first")
   }
 
+  /**
+   * @return {Promise<string>} The chain id.
+   */
   getChainId = async () => {
     const chainIdDeferred = new Deferred()
     this.provider.sendAsync(
@@ -43,6 +62,9 @@ export class AbstractConnector {
     return await chainIdDeferred.promise
   }
 
+  /**
+   * @return {Promise<string>} The network id.
+   */
   getNetworkId = async () => {
     const netIdDeferred = new Deferred()
     this.provider.sendAsync(
@@ -58,15 +80,30 @@ export class AbstractConnector {
     return await netIdDeferred.promise
   }
 
+  /**
+   * @return {Web3ProviderEngine} The web3 proivder engine.
+   */
   getProvider = () => {
     return this.provider
   }
 }
 
+const DEFAULT_NUM_ADDRESSES_TO_FETCH = 15
+/**
+ * Representing an abstract connector for hardware wallets.
+ * @extends AbstractConnector
+ */
 export class AbstractHardwareWalletConnector extends AbstractConnector {
   hardwareWalletProvider
+  /** @type {string} To store selected account by user. */
   defaultAccount = ""
 
+  /**
+   * Create an abstract hardware wallet connector.
+   *
+   * @param {any} hardwareWalletProvider - The hardware wallet subprovider.
+   * @param {string} name - Name of the connector.
+   */
   constructor(hardwareWalletProvider, name) {
     super(name)
     this.hardwareWalletProvider = hardwareWalletProvider
@@ -91,6 +128,14 @@ export class AbstractHardwareWalletConnector extends AbstractConnector {
       : await this.getAccounts()
   }
 
+  /**
+   * Get available accounts from the hardware wallet subprovider.
+   *
+   * @param {number} numberOfAccounts - The number of accounts to return.
+   * @param {number} accountsOffSet - The start index.
+   *
+   * @return {Primise<Array<string>>} Accounts.
+   */
   getAccounts = async (
     numberOfAccounts = DEFAULT_NUM_ADDRESSES_TO_FETCH,
     accountsOffSet = 0
