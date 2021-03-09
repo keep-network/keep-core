@@ -193,23 +193,13 @@ jobs:
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
         with:
+          # TODO: consider adding version to the name
           name: Contracts (Node.js ${{ matrix.node-version }})
-          path: /solidity/build/contracts/**/* # or /tmp/keep-client/contracts/* ?
-          # We are updating artifacts only so that they could be accessed by 
-          # another job (build-and-publish-initcontainer) in this workflow.
-          # After downloading the artifacts, they no longer need to be stored.
-          # Currently the `download-artifact` action cannot be configured to
-          # delete artifacts directly after download, so as a workaround we
-          # set the life-span of the artifact to 1 day.
-          retention-days: 1
+          path: ./solidity/build/contracts/*
 
   build-and-publish-initcontainer:
     needs: [migrate-and-publish-ethereum]
-    # if: |
-    #   startsWith(github.ref, 'refs/heads/releases/ropsten') 
-    #     || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
-    # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
-    # environment: keep-test 
+    if: needs.migrate-and-publish-ethereum.result === "success"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -222,8 +212,8 @@ jobs:
 
       - name: Copy contracts to initcontainer context folder
         run: |
-          cp -r /solidity/build/contracts/* \
-            infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
+          cp -r ./solidity/build/contracts/* \
+            ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
