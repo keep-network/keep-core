@@ -39,7 +39,7 @@ describe("TokenDistributor", () => {
       web3.utils.sha3(destination),
       privateKeys[recipientIndex]
     ),
-    merkle: parseBalanceMap({ allocationsMap }),
+    merkle: parseBalanceMap(allocationsMap),
   }
 
   before(async () => {

@@ -19,6 +19,9 @@ contract TokenDistributor is Ownable {
     IERC20 public token;
 
     bytes32 public merkleRoot;
+    // Timestamp after which allocated tokens can be recovered from the contract
+    // by the owner. If the value is zero the recovery is not possible.
+    uint256 public unclaimedUnlockTimestamp;
 
     mapping(uint256 => uint256) private claimedBitMap;
 
@@ -30,6 +33,8 @@ contract TokenDistributor is Ownable {
         address indexed destination,
         uint256 amount
     );
+
+    event TokensRecovered(address indexed destination, uint256 amount);
 
     constructor(IERC20 _token) public {
         token = _token;
@@ -88,7 +93,14 @@ contract TokenDistributor is Ownable {
     /// Allocates amount of tokens for the merkle root.
     /// @param _merkleRoot The merkle root.
     /// @param _amount The amount of tokens allocated for the merkle root.
-    function allocate(bytes32 _merkleRoot, uint256 _amount) public onlyOwner {
+    /// @param _unclaimedUnlockDuration Duration of a period after which unclaimed
+    /// tokens can be recovered from the contract. If the value is zero the
+    /// recovery won't be allowed.
+    function allocate(
+        bytes32 _merkleRoot,
+        uint256 _amount,
+        uint256 _unclaimedUnlockDuration
+    ) public onlyOwner {
         require(merkleRoot == "", "tokens were already allocated");
         require(_merkleRoot != "", "merkle root cannot be empty");
 
@@ -96,7 +108,35 @@ contract TokenDistributor is Ownable {
 
         merkleRoot = _merkleRoot;
 
+        // If unclaimed unlock duration was provided calculate timestamp after
+        // which unclaimed tokens will be recoverable. If the duration is set to
+        // zero the tokens won't be recoverable.
+        if (_unclaimedUnlockDuration > 0) {
+            unclaimedUnlockTimestamp =
+                /* solium-disable-next-line security/no-block-members */
+                block.timestamp +
+                _unclaimedUnlockDuration;
+        }
+
         emit TokensAllocated(_merkleRoot, _amount);
+    }
+
+    // Tokens not claimed within a given timeout should go to a treasury
+    // wallet address set on that contract.
+    // TODO: Is it fine to provide address on function call or do we want to declare
+    // it upfront on token deployment or allocation?
+    // TODO: Update docs
+    function recoverUnclaimed(address _destination) public onlyOwner {
+        require(unclaimedUnlockTimestamp > 0, "token recovery is not allowed");
+        require(
+            unclaimedUnlockTimestamp <= now,
+            "token recovery is not possible yet"
+        );
+
+        uint256 amount = token.balanceOf(address(this));
+        token.safeTransfer(_destination, amount);
+
+        emit TokensRecovered(_destination, amount);
     }
 
     function isClaimed(uint256 _index) public view returns (bool) {
@@ -139,7 +179,4 @@ contract TokenDistributor is Ownable {
             claimedBitMap[claimedWordIndex] |
             (1 << claimedBitIndex);
     }
-
-    // TODO: Tokens not claimed within a given timeout should go to a treasury
-    // wallet address set on that contract.
 }
