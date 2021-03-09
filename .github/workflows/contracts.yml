@@ -162,7 +162,7 @@ jobs:
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core
 
       - name: Copy artifacts
         run: |
@@ -178,9 +178,9 @@ jobs:
         # TODO: --dry-run to be removed once testing of workflow is done
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
-          npm publish --access=public --dry-run 
+          npm publish --access=public --dry-run
 
-      # TODO: consider swithing to below action, after tweaking 
+      # TODO: consider swithing to below action, after tweaking
       # (requires some changes, as below config throws an error)
       # - name: Publish to npm
       #   uses: JS-DevTools/npm-publish@v1
@@ -237,7 +237,7 @@ jobs:
         uses: docker/build-push-action@v2
         env:
           # TODO: change later to 'initcontainer-provision-keep-client'
-          IMAGE_NAME: 'initcontainer-provision-keep-client-wip' 
+          IMAGE_NAME: 'initcontainer-provision-keep-client-wip'
           GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
