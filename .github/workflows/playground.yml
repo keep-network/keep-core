@@ -30,7 +30,7 @@ jobs:
       - run: echo 1
   job2:
     needs: job1
-    if: needs.job1.result == "success" # || needs.job1.result == "skipped"
+    if: needs.job1.result == 'success' # || needs.job1.result == "skipped"
     runs-on: ubuntu-latest
     steps:
       - run: echo 2
