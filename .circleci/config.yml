@@ -111,6 +111,8 @@ jobs:
           root: /tmp/keep-client
           paths:
             - contracts
+  # GitHub Actions equivalent of this job (.github/workflows/client.yml) 
+  # has been created as part of work on RFC-18
   publish_keep_client:
     executor: gcp-gcr/default
     steps:
@@ -149,6 +151,8 @@ jobs:
           registry-url: $GCR_REGISTRY_URL
           image: initcontainer-provision-keep-client
           tag: latest
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   publish_contract_data:
     executor: gcp-cli/default
     steps:
@@ -165,7 +169,8 @@ jobs:
           command: |
             cd /tmp/keep-client/contracts
             gsutil -m cp * gs://${CONTRACT_DATA_BUCKET}/keep-core
-
+  # GitHub Actions equivalent of this job (.github/workflows/contracts.yml) 
+  # has been created as part of work on RFC-18
   publish_npm_package:
     executor: docker-node
     steps:
