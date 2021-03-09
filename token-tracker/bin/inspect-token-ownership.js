@@ -12,6 +12,7 @@ import { Inspector } from "../src/inspector.js"
 import { KeepTokenTruthSource } from "../src/truth-sources/keep-token.js"
 import { TokenStakingTruthSource } from "../src/truth-sources/token-staking.js"
 import { TokenGrantTruthSource } from "../src/truth-sources/token-grant.js"
+import { LPTokenTruthSource } from "../src/truth-sources/lp-tokens.js"
 import { KeepOnlyPoolTruthSource } from "../src/truth-sources/keep-only-pool.js"
 
 import commander from "commander"
@@ -58,6 +59,7 @@ export async function getTokenOwnership(targetBlockNumber) {
   inspector.registerTruthSource(KeepTokenTruthSource)
   inspector.registerTruthSource(TokenStakingTruthSource)
   inspector.registerTruthSource(TokenGrantTruthSource)
+  inspector.registerTruthSource(LPTokenTruthSource)
   inspector.registerTruthSource(KeepOnlyPoolTruthSource)
 
   return await inspector.getOwnershipsAtBlock(targetBlockNumber)

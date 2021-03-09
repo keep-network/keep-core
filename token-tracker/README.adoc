@@ -44,6 +44,13 @@ addresses that are contracts handled by the other sources.
 
 Scans `TokenGrant` contract for grant holders and their balances.
 
+### Liquidity Rewards
+
+Scans for `Staked` events in the KEEP-ETH and KEEP-TBTC LP Rewards contracts. It
+finds all the stakers addresses and their LP balances locked in these contracts 
+at the provided target block. KEEP locked amount is calculated for each staker 
+based on their LP tokens balances.
+
 ### KEEP-only pool
 
 Scans for `Staked` events in the `KeepVault` contract. It retrieves all the stakers 
