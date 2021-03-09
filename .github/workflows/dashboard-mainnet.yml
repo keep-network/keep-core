@@ -1,4 +1,4 @@
-name: Token Dashboard
+name: Token Dashboard / Mainnet
 
 on:
   pull_request:

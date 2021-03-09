@@ -220,6 +220,8 @@ jobs:
             # curl CIRCLE_API_BUILD/keep-tecdsa?branch=${CIRCLE_BRANCH}
             echo "Eventually trigger downstream for $CIRCLE_BRANCH"
 
+  # GitHub Actions equivalent of this job (.github/workflows/dashboard-testnet.yml) 
+  # has been created as part of work on RFC-18. 
   build_token_dashboard_dapp:
     executor: docker-node
     steps:
@@ -251,6 +253,8 @@ jobs:
           root: /tmp/keep-dapp-token-dashboard
           paths:
             - docker-images
+  # GitHub Actions equivalent of this job (.github/workflows/dashboard-testnet.yml) 
+  # has been created as part of work on RFC-18
   publish_token_dashboard_dapp:
     executor: gcp-gcr/default
     steps:
@@ -342,10 +346,6 @@ workflows:
               ignore:
                 - master
           context: keep-dev
-      - build_token_dashboard_dapp:
-          filters:
-            branches:
-              ignore: master
   build-test-publish-keep-dev:
     jobs:
       - build_client_and_test_go:
@@ -458,32 +458,6 @@ workflows:
               only: /releases\/.*/
           requires:
             - publish_npm_package
-  build-publish-dashboard-keep-test:
-    jobs:
-      - keep_test_approval:
-          type: approval
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: /releases\/.*/
-      - build_token_dashboard_dapp:
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: /releases\/.*/
-          requires:
-            - keep_test_approval
-      - publish_token_dashboard_dapp:
-          context: keep-test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only: /releases\/.*/
-          requires:
-            - build_token_dashboard_dapp
   docs:
     jobs:
       - generate_docs_tex
