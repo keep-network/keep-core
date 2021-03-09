@@ -199,7 +199,7 @@ jobs:
 
   build-and-publish-initcontainer:
     needs: [migrate-and-publish-ethereum]
-    if: needs.migrate-and-publish-ethereum.result === "success"
+    if: needs.migrate-and-publish-ethereum.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       matrix:
