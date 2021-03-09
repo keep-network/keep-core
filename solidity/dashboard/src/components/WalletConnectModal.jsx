@@ -10,11 +10,16 @@ const WalletConnectModal = ({
 }) => {
   return (
     <SelectedWalletModal
-      icon={<Icons.MetaMask />}
+      icon={
+        <Icons.WalletConnect
+          className="wallet-connect-logo--black"
+          width={30}
+          height={28}
+        />
+      }
       walletName={WALLETS.WALLET_CONNECT.label}
       iconDescription={null}
-      // TODO
-      description={"desc"}
+      description={null}
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}

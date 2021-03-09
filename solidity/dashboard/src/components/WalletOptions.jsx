@@ -45,8 +45,7 @@ const WALLETS_OPTIONS = [
   },
   {
     label: "WalletConnect",
-    // TODO icon
-    icon: Icons.Trezor,
+    icon: Icons.WalletConnect,
     isHardwareWallet: false,
     connector: new WalletConnectConnector(),
   },
