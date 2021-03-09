@@ -102,7 +102,7 @@ export class LPTokenTruthSource extends ITruthSource {
    * @param {String} pairName LP pair name
    * @param {Object} pairObj LP pair object
    *
-   * @return {Set<Address>} All historic LP token stakers
+   * @return {Array<Address>} All historic LP token stakers
    * */
   async findStakers(pairName, pairObj) {
     const lpRewardsContractAddress = pairObj.lpRewardsContract.options.address
