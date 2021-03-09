@@ -24,15 +24,19 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
         with:
-          node-version: "12.x"
+          node-version: ${{ matrix.node-version }}
 
       - name: Cache node modules
         uses: actions/cache@v2
@@ -57,15 +61,19 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
         with:
-          node-version: "12.x"
+          node-version: ${{ matrix.node-version }}
 
       - name: Cache node modules
         uses: actions/cache@v2
@@ -85,62 +93,148 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  build-migrate-publish-contracts-and-initcontainer:
+  migrate-and-publish-ethereum:
     needs: [build-and-test, lint]
+    # TODO: Remove 'rfc-18/' condition once migration to GH Actions is done
     if: |
-      startsWith(github.ref, 'refs/heads/releases/ropsten') 
-        || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
-    # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
-    environment: keep-test 
+      (startsWith(github.ref, 'refs/heads/rfc-18/')
+        || github.ref == 'refs/heads/master')
+        && (github.event_name == 'push'
+        || github.event_name == 'workflow_dispatch')
+    # TODO: Implement similiar for keep-dev (should execute for rfc-18... & master branch)
+    environment: keep-test # currently keep-test requires manual aproval of job
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    defaults:
+      run:
+        working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
-      # TODO: Create an action for migrating contracts and apply it instead below step
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+      
       - name: Migrate contracts
         env: 
-          BUILD_TAG: $GITHUB_SHA
-          GOOGLE_PROJECT_NAME: ${{ secrets.GOOGLE_PROJECT_NAME }}
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
-          ETH_NETWORK_ID: ${{ secrets.ETH_NETWORK_ID }}
           ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
-          TENDERLY_TOKEN: ${{ secrets.TENDERLY_TOKEN }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
-        run: solidity/scripts/circleci-migrate-contracts.sh
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK # writes artifacts to /home/runner/work/keep-core/keep-core/solidity/build/contracts
+
+      - name: Push contracts to Tenderly
+        # TODO: once below action gets tagged replace `@main` with `@v1` 
+        uses: keep-network/tenderly-push-action@main
+        continue-on-error: true
+        with:
+          working-directory: ./solidity
+          tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
+          tenderly-project: thesis/keep-test
+          eth-network-id: ${{ secrets.ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          github-project-name: keep-core
+          # version-tag: # TODO: resolve npm package version
 
       - uses: google-github-actions/setup-gcloud@v0.2.0
         with:
           project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }} # or GCLOUD_SERVICE_KEY?
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
       - name: Upload contract data
         env: 
-          CONTRACT_DATA_BUCKET: ${{ secrets.CONTRACT_DATA_BUCKET }}
+          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
         run: |
-          cd /tmp/keep-client/contracts
+          cd build/contracts
           gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core 
 
-      - run: |
+      - name: Copy artifacts
+        run: |
           mkdir -p artifacts
-          cp -r /tmp/keep-client/contracts/* artifacts/
+          cp -r build/contracts/* artifacts/
 
       - name: Bump up package version
         uses: keep-network/npm-version-bump@v1
+        with:
+          workDir: ./solidity
 
       - name: Publish to npm
-        uses: JS-DevTools/npm-publish@v1
+        # TODO: --dry-run to be removed once testing of workflow is done
+        run: |
+          echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
+          npm publish --access=public --dry-run 
+
+      # TODO: consider swithing to below action, after tweaking 
+      # (requires some changes, as below config throws an error)
+      # - name: Publish to npm
+      #   uses: JS-DevTools/npm-publish@v1
+      #   with:
+      #     package: ./solidity/package.json
+      #     token: ${{ secrets.NPM_TOKEN }}
+      #     access: public
+      #     dry-run: true # TODO: to be removed once testing of workflow is done
+
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
         with:
-          token: ${{ secrets.NPM_TOKEN }}
-          access: public
-          dry-run: true # to be removed once testing of workflow is done
+          name: Contracts (Node.js ${{ matrix.node-version }})
+          path: /solidity/build/contracts/**/* # or /tmp/keep-client/contracts/* ?
+          # We are updating artifacts only so that they could be accessed by 
+          # another job (build-and-publish-initcontainer) in this workflow.
+          # After downloading the artifacts, they no longer need to be stored.
+          # Currently the `download-artifact` action cannot be configured to
+          # delete artifacts directly after download, so as a workaround we
+          # set the life-span of the artifact to 1 day.
+          retention-days: 1
+
+  build-and-publish-initcontainer:
+    needs: [migrate-and-publish-ethereum]
+    # if: |
+    #   startsWith(github.ref, 'refs/heads/releases/ropsten') 
+    #     || startsWith(github.ref, 'refs/heads/rfc-18/ropsten')
+    # TODO: Implement similiar for keep-dev (should execute for rfc-18/master branch)
+    # environment: keep-test 
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: Contracts (Node.js ${{ matrix.node-version }})
 
       - name: Copy contracts to initcontainer context folder
         run: |
-          cp /tmp/keep-client/contracts/* \
+          cp -r /solidity/build/contracts/* \
             infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
       - name: Login to Google Container Registry
         uses: docker/login-action@v1
@@ -152,7 +246,8 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'initcontainer-provision-keep-client-wip' # TODO: change later to 'initcontainer-provision-keep-client'
+          # TODO: change later to 'initcontainer-provision-keep-client'
+          IMAGE_NAME: 'initcontainer-provision-keep-client-wip' 
           GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
@@ -163,6 +258,5 @@ jobs:
           labels: |
             revision=${{ github.sha }}
           push: true
-          # add cache? if so, new actions/cache@v2 action would need to be configued
-          # cache-from: type=local,src=/tmp/.buildx-cache
-          # cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
