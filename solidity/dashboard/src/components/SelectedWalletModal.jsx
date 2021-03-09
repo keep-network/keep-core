@@ -4,6 +4,7 @@ import { useShowMessage, messageType } from "./Message"
 import ChooseWalletAddress from "./ChooseWalletAddress"
 import { isEmptyArray } from "../utils/array.utils"
 import { wait } from "../utils/general.utils"
+import { UserRejectedConnectionRequestError } from "../connectors"
 
 const SelectedWalletModal = ({
   icon,
@@ -13,6 +14,7 @@ const SelectedWalletModal = ({
   connector,
   connectAppWithWallet,
   closeModal,
+  userRejectedConnectionRequestErrorMsg,
   fetchAvailableAccounts = null,
   numberOfAccounts = 15,
   connectWithWalletOnMount = false,
@@ -93,7 +95,8 @@ const SelectedWalletModal = ({
   ])
 
   const handleError = (error) => {
-    setError(error.toString())
+    console.error("Failed to connect to a wallet.", error)
+    setError(error)
     setIsConnecting(false)
   }
 
@@ -116,6 +119,21 @@ const SelectedWalletModal = ({
     }
   }
 
+  const renderError = () => {
+    const parseError = (msg) => `Error: ${msg}`
+    if (!error) {
+      return null
+    }
+
+    if (error && error instanceof UserRejectedConnectionRequestError) {
+      return parseError(userRejectedConnectionRequestErrorMsg || error.message)
+    }
+
+    return error && error.message
+      ? parseError(error.message.toString())
+      : parseError("Unexpected error, please try again.")
+  }
+
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
@@ -133,7 +151,7 @@ const SelectedWalletModal = ({
             : `Connecting...`}
         </>
       ) : null}
-      {error && error}
+      {renderError()}
       {!isEmptyArray(availableAccounts) &&
         !accountsAreFetching &&
         !isConnecting && (

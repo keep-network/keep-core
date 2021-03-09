@@ -2,6 +2,9 @@ import React from "react"
 import SelectedWalletModal from "./SelectedWalletModal"
 import * as Icons from "./Icons"
 
+const rejectedConnectionErrorMsg =
+  "You rejected the connection request in MetaMask. Please close and try again, and click confirm connection in MetaMask window."
+
 const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
   return (
     <SelectedWalletModal
@@ -15,6 +18,7 @@ const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
       }
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
+      userRejectedConnectionRequestErrorMsg={rejectedConnectionErrorMsg}
       closeModal={closeModal}
       connectWithWalletOnMount
     >
