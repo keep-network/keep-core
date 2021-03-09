@@ -1,0 +1,37 @@
+name: Playground
+
+on:
+  push:
+    branches:
+      # TODO: Run only on master after we're fully migrated from Circle CI
+      - "rfc-18/**"
+      - master
+    paths:
+      - "solidity/**"
+      - "!solidity/dashboard/**"
+      - ".github/workflows/contracts.yml"
+  pull_request:
+    branches:
+      # TODO: Run on all branches after we're fully migrated from Circle CI
+      - "rfc-18/**"
+      - master
+    paths:
+      - "solidity/**"
+      - "!solidity/dashboard/**"
+      - ".github/workflows/contracts.yml"
+  workflow_dispatch:
+
+jobs:
+  job1:
+    # if: 1==2 #false
+    # if: 1==1 #true
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 1
+  job2:
+    needs: job1
+    if: needs.job1.result == "success" # || needs.job1.result == "skipped"
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 2
+      
