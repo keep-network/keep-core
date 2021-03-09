@@ -10,7 +10,6 @@ const SelectedWalletModal = ({
   walletName,
   iconDescription,
   description,
-  providerName,
   connector,
   connectAppWithWallet,
   closeModal,
@@ -124,7 +123,7 @@ const SelectedWalletModal = ({
         <h3 className="ml-1">{walletName}</h3>
       </div>
       {iconDescription && iconDescription}
-      <span className="text-center">{description}</span>
+      <span className="text-center mt-1">{description}</span>
       {children}
       {isConnecting || accountsAreFetching ? (
         <>

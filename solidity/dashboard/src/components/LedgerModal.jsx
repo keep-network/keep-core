@@ -23,9 +23,9 @@ const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
 
   return (
     <SelectedWalletModal
-      icon={<Icons.Ledger />}
+      icon={<Icons.Ledger class="ledger-logo--black" />}
       walletName="Ledger"
-      descriptionIcon={<Icons.LedgerDevice className="mb3" />}
+      iconDescription={<Icons.LedgerDevice />}
       description="Plug in Ledger device and unlock."
       connector={connector[ledgerVersion]}
       connectAppWithWallet={connectAppWithWallet}
@@ -44,13 +44,13 @@ const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
         >
           <Button
             onClick={() => setLedgerVersion("LEDGER_LIVE")}
-            className="btn btn-primary btn-md mb-1"
+            className="btn btn-primary btn-lg mb-1"
           >
             ledger live
           </Button>
           <Button
             onClick={() => setLedgerVersion("LEDGER_LEGACY")}
-            className="btn btn-primary btn-md"
+            className="btn btn-primary btn-lg"
           >
             ledger legacy
           </Button>

@@ -19,9 +19,9 @@ const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
   )
   return (
     <SelectedWalletModal
-      icon={<Icons.Trezor />}
+      icon={<Icons.Trezor class="trezor-logo--black" />}
       walletName="Trezor"
-      descriptionIcon={<Icons.TrezorDevice className="mb3" />}
+      iconDescription={<Icons.TrezorDevice />}
       description="Plug in your Trezor device and unlock. If the setup screen doesn’t
         load right away, go to Trezor setup:"
       connector={connector}
@@ -30,8 +30,8 @@ const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
       fetchAvailableAccounts={fetchAccounts}
     >
       <a
-        href="https://trezor.io/start/</div>"
-        className="btn bt-lg btn-primary mt-3 mb-2"
+        href="https://trezor.io/start/"
+        className="btn btn-lg btn-primary mt-1 mb-1"
         target="_blank"
         rel="noopener noreferrer"
       >

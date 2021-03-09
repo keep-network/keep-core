@@ -21,7 +21,7 @@ const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
       {!connector.getProvider() && (
         <a
           href="https://metamask.io"
-          className="btn bt-lg btn-primary mt-3"
+          className="btn btn-lg btn-primary mt-1 mb-1"
           target="_blank"
           rel="noopener noreferrer"
         >
