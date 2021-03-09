@@ -5,20 +5,6 @@ on:
     branches:
       # TODO: Run only on master after we're fully migrated from Circle CI
       - "rfc-18/**"
-      - master
-    paths:
-      - "solidity/**"
-      - "!solidity/dashboard/**"
-      - ".github/workflows/contracts.yml"
-  pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
-      - master
-    paths:
-      - "solidity/**"
-      - "!solidity/dashboard/**"
-      - ".github/workflows/contracts.yml"
   workflow_dispatch:
 
 jobs:
