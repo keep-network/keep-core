@@ -82,3 +82,9 @@ export const overrideCacheMiddleware = (cacheSubprovider) => {
     )
   }
 }
+
+export class UserRejectedConnectionRequestError extends Error {
+  constructor() {
+    super("User rejected connection request.")
+  }
+}

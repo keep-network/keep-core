@@ -6,6 +6,7 @@ import { AbstractConnector } from "./abstract-connector"
 import config from "../config/config.json"
 import { WALLETS } from "../constants/constants"
 import { overrideCacheMiddleware, getWsUrl } from "./utils"
+import { UserRejectedConnectionRequestError } from "."
 
 export class WalletConnectConnector extends AbstractConnector {
   constructor(
@@ -63,7 +64,7 @@ export class WalletConnectConnector extends AbstractConnector {
       return accounts
     } catch (error) {
       if (error.message === "User closed modal") {
-        throw new Error("The user rejected the request")
+        throw new UserRejectedConnectionRequestError()
       }
 
       throw error

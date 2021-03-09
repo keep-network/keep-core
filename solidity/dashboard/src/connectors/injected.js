@@ -1,6 +1,7 @@
 import { AbstractConnector } from "./abstract-connector"
 import { WALLETS } from "../constants/constants"
 import BigNumber from "bignumber.js"
+import { UserRejectedConnectionRequestError } from "./utils"
 
 class InjectedConnector extends AbstractConnector {
   constructor() {
@@ -23,7 +24,7 @@ class InjectedConnector extends AbstractConnector {
         // EIP-1193 userRejectedRequest error
         // If this happens, the user rejected the connection request.
         console.error("The user rejected the connection request.")
-        throw new Error("User rejected request")
+        throw new UserRejectedConnectionRequestError()
       }
       throw error
     }
