@@ -205,15 +205,13 @@ jobs:
       matrix:
         node-version: [12.x]
     steps:
+      - uses: actions/checkout@v2
+      
       - name: Download a Build Artifact
         uses: actions/download-artifact@v2
         with:
           name: Contracts (Node.js ${{ matrix.node-version }})
-
-      - name: Copy contracts to initcontainer context folder
-        run: |
-          cp -r ./solidity/build/contracts/* \
-            ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
+          path: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
