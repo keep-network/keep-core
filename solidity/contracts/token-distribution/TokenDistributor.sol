@@ -141,6 +141,10 @@ contract TokenDistributor is Ownable {
     // it upfront on token deployment or allocation?
     // TODO: Update docs
     function recoverUnclaimed(address _destination) public onlyOwner {
+        require(
+            _destination != address(0),
+            "destination address cannot be zero"
+        );
         require(unclaimedUnlockTimestamp > 0, "token recovery is not allowed");
         require(
             unclaimedUnlockTimestamp <= now,
