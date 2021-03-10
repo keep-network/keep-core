@@ -147,7 +147,8 @@ contract TokenDistributor is Ownable {
         );
         require(unclaimedUnlockTimestamp > 0, "token recovery is not allowed");
         require(
-            unclaimedUnlockTimestamp <= now,
+             /* solium-disable-next-line security/no-block-members */
+            unclaimedUnlockTimestamp <= block.timestamp,
             "token recovery is not possible yet"
         );
 
