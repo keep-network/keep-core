@@ -338,7 +338,7 @@ describe("TokenDistributor", () => {
         console.log(`      ${testCaseName}`)
         try {
           const signature = web3.eth.accounts.sign(
-            web3.utils.sha3(destination),
+            web3.utils.keccak256(destination),
             testCaseData.signerPrivateKey
           )
 
