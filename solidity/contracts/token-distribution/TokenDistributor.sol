@@ -79,13 +79,7 @@ contract TokenDistributor is Ownable {
 
         // Verify the signature over destination address.
         require(
-            _recipient ==
-                recoverSignerAddress(
-                    abi.encodePacked(_destination),
-                    _v,
-                    _r,
-                    _s
-                ),
+            _recipient == recoverSignerAddress(_destination, _v, _r, _s),
             "invalid signature of destination address"
         );
 
@@ -168,7 +162,7 @@ contract TokenDistributor is Ownable {
     }
 
     function recoverSignerAddress(
-        bytes memory _message,
+        address _destination,
         uint8 _v,
         bytes32 _r,
         bytes32 _s
@@ -183,7 +177,7 @@ contract TokenDistributor is Ownable {
         );
         require(_v == 27 || _v == 28, "Invalid signature 'v' value");
 
-        bytes32 digest = keccak256(_message);
+        bytes32 digest = keccak256(abi.encodePacked(_destination));
         bytes32 prefixedDigest =
             keccak256(
                 abi.encodePacked("\x19Ethereum Signed Message:\n32", digest)
