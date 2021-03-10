@@ -185,6 +185,20 @@ describe("TokenDistributor", () => {
       )
     })
 
+    it("reverts on zero amount", async function () {
+      await expectRevert(
+        tokenDistributor.allocate(
+          testData.merkle.merkleRoot,
+          0,
+          unclaimedUnlockDuration,
+          {
+            from: owner,
+          }
+        ),
+        "amount has to be greater than zero"
+      )
+    })
+
     it("reverts on token transfer failure", async function () {
       await expectRevert(
         tokenDistributor.allocate(

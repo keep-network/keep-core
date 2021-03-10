@@ -117,6 +117,7 @@ contract TokenDistributor is Ownable {
     ) public onlyOwner {
         require(merkleRoot == "", "tokens were already allocated");
         require(_merkleRoot != "", "merkle root cannot be empty");
+        require(_amount > 0, "amount has to be greater than zero");
 
         token.safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -147,7 +148,7 @@ contract TokenDistributor is Ownable {
         );
         require(unclaimedUnlockTimestamp > 0, "token recovery is not allowed");
         require(
-             /* solium-disable-next-line security/no-block-members */
+            /* solium-disable-next-line security/no-block-members */
             unclaimedUnlockTimestamp <= block.timestamp,
             "token recovery is not possible yet"
         );
