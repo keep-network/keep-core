@@ -48,7 +48,7 @@ contract TokenDistributor is Ownable {
         uint256 amount
     );
 
-    event TokensRecovered(address indexed destination, uint256 amount);
+    event TokensRecovered(address destination, uint256 amount);
 
     constructor(IERC20 _token) public {
         token = _token;
