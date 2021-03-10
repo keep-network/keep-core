@@ -228,12 +228,13 @@ const getManagedGranteeDelegations = async (
   initializationPeriod,
   undelegationPeriod
 ) => {
-  const { allOperators, granteeGrants } = await getOperatorsOfManagedGrantee(
-    address
-  )
+  const {
+    operatorToGrantDetailsMap,
+    granteeGrants,
+  } = await getOperatorsOfManagedGrantee(address)
 
   const [delegations, undelegations] = await getDelegations(
-    allOperators,
+    operatorToGrantDetailsMap,
     initializationPeriod,
     undelegationPeriod
   )
@@ -246,10 +247,13 @@ const getGranteeDelegations = async (
   initializationPeriod,
   undelegationPeriod
 ) => {
-  const { allOperators, granteeGrants } = await getOperatorsOfGrantee(address)
+  const {
+    granteeGrants,
+    operatorToGrantDetailsMap,
+  } = await getOperatorsOfGrantee(address)
 
   const [delegations, undelegations] = await getDelegations(
-    allOperators,
+    operatorToGrantDetailsMap,
     initializationPeriod,
     undelegationPeriod
   )

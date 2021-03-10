@@ -225,8 +225,9 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
     )
   )
 
-  // Fetch `StakeOwnershipTransferred` by operator field. We need to check more recent event
-  // to make sure the delegation ownership has not been transferred.
+  // Fetch `StakeOwnershipTransferred` by operator field. We need to check more
+  // recent event to make sure the delegation ownership has not been
+  // transferred.
   let transferEventsByOperators = {}
   if (!isEmptyArray(operators)) {
     transferEventsByOperators = (
@@ -279,12 +280,12 @@ export const getOperatorsOfGrantee = async (address) => {
     await grantContract.methods.getGranteeOperators(address).call()
   )
 
-  const allOperators = await getAllGranteeOperators(
-    Array.from(granteeOperators),
-    granteeGrants
-  )
+  const {
+    allOperators,
+    operatorToGrantDetailsMap,
+  } = await getAllGranteeOperators(Array.from(granteeOperators), granteeGrants)
 
-  return { allOperators, granteeGrants }
+  return { allOperators, granteeGrants, operatorToGrantDetailsMap }
 }
 
 export const getOperatorsOfManagedGrantee = async (address) => {
@@ -305,12 +306,12 @@ export const getOperatorsOfManagedGrantee = async (address) => {
     grenteeOperators.forEach(operators.add, operators)
   }
 
-  const allOperators = await getAllGranteeOperators(
-    Array.from(operators),
-    grantIds
-  )
+  const {
+    allOperators,
+    operatorToGrantDetailsMap,
+  } = await getAllGranteeOperators(Array.from(operators), grantIds, true)
 
-  return { allOperators, granteeGrants: grantIds }
+  return { allOperators, granteeGrants: grantIds, operatorToGrantDetailsMap }
 }
 
 /**
@@ -324,12 +325,19 @@ export const getOperatorsOfManagedGrantee = async (address) => {
  * @param {string[]} granteeOperators The result of the
  * `TokenGrant::getGranteeOperators`.
  * @param {string[]} grantIds Array of all grantee grants ids.
+ * @param {boolean} isManagedGrant The flag informs that grants in `grantIds`
+ * param are managed grants.
  * @return {Promise<string[]>} Array of all grantee operators.
  */
-const getAllGranteeOperators = async (granteeOperators, grantIds) => {
+const getAllGranteeOperators = async (
+  granteeOperators,
+  grantIds,
+  isManagedGrant = false
+) => {
   const {
     tokenStakingEscrow,
     stakingPortBackerContract,
+    stakingContract,
   } = await ContractsLoaded
 
   let escrowRedelegation = []
@@ -345,12 +353,19 @@ const getAllGranteeOperators = async (granteeOperators, grantIds) => {
     )
   }
 
+  const newOperatorToGrantId = escrowRedelegation.reduce((reducer, event) => {
+    const {
+      returnValues: { newOperator, grantId },
+    } = event
+    reducer[newOperator] = grantId
+    return reducer
+  }, {})
   const newOperators = escrowRedelegation.map((_) => _.returnValues.newOperator)
   const obsoleteOperators = escrowRedelegation.map(
     (_) => _.returnValues.previousOperator
   )
 
-  const activeOperators = granteeOperators
+  let activeOperators = granteeOperators
     .filter((operator) => !obsoleteOperators.includes(operator))
     .concat(newOperators)
 
@@ -364,9 +379,36 @@ const getAllGranteeOperators = async (granteeOperators, grantIds) => {
       )
 
   // We want to skip copied delegations.
-  return activeOperators.filter(
+  activeOperators = activeOperators.filter(
     (operator) => !operatorsOfPortBacker.includes(operator)
   )
+
+  let operatorToGrantDetailsMap = {}
+  if (!isEmptyArray(activeOperators)) {
+    operatorToGrantDetailsMap = (
+      await stakingContract.getPastEvents("OperatorStaked", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: activeOperators },
+      })
+    ).reduce((reducer, _) => {
+      reducer[_.returnValues.operator] = _.returnValues
+      return reducer
+    }, {})
+  }
+
+  for (const operator of Object.keys(operatorToGrantDetailsMap)) {
+    const grantId = newOperatorToGrantId.hasOwnProperty(operator)
+      ? newOperatorToGrantId[operator]
+      : null
+    operatorToGrantDetailsMap[operator] = {
+      ...operatorToGrantDetailsMap[operator],
+      isFromGrant: true,
+      isManagedGrant,
+      grantId,
+    }
+  }
+
+  return { allOperators: activeOperators, operatorToGrantDetailsMap }
 }
 
 export const getOperatorsOfCopiedDelegations = async (ownerOrGrantee) => {
