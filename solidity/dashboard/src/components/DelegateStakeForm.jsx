@@ -131,17 +131,6 @@ const TokensAmountField = ({
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
         />
-        <ProgressBar
-          total={availableToStake}
-          value={stakeTokensValue}
-          color={colors.mint80}
-          bgColor={colors.mint20}
-        >
-          <ProgressBar.Inline
-            height={10}
-            className="token-amount__progress-bar"
-          />
-        </ProgressBar>
         <div className="text-caption text-grey-60 text-right ml-a">
           {displayAmount(availableToStake)} KEEP available
         </div>
