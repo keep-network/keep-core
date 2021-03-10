@@ -3,17 +3,17 @@ const {
   expectEvent,
   constants,
   time,
+  send,
+  ether,
 } = require("@openzeppelin/test-helpers")
-
 const {
   accounts,
-  privateKeys,
   contract,
   web3,
+  defaultSender,
 } = require("@openzeppelin/test-environment")
 
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
-const { parseBalanceMap } = require("@keep-network/merkle-distributor-helper")
 
 const TokenDistributor = contract.fromArtifact("TokenDistributor")
 const TestToken = contract.fromArtifact("TestToken")
@@ -25,33 +25,18 @@ const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const { expect } = chai
 
-describe("TokenDistributor", () => {
-  const ownerIndex = 1
-  const recipientIndex = 2
-  const destinationIndex = 3
-  const thirdPartyIndex = 4
+const testData = require("./testData.json")
 
-  const owner = accounts[ownerIndex]
-  const recipient = accounts[recipientIndex]
-  const destination = accounts[destinationIndex]
-  const thirdParty = accounts[thirdPartyIndex]
+describe("TokenDistributor", () => {
+  const [owner] = accounts
 
   const unclaimedUnlockDuration = time.duration.weeks(12)
 
-  const allocationsMap = {}
-  allocationsMap[thirdParty] = (27600092).toString(16)
-  allocationsMap[recipient] = (15800037).toString(16)
-
-  const testData = {
-    signature: web3.eth.accounts.sign(
-      web3.utils.sha3(destination),
-      privateKeys[recipientIndex]
-    ),
-    merkle: parseBalanceMap(allocationsMap),
-  }
-
   let testToken
   let tokenDistributor
+  let recipient
+  let destination
+  let thirdParty
 
   const freshDeployment = async () => {
     testToken = await TestToken.new({ from: owner })
@@ -69,7 +54,17 @@ describe("TokenDistributor", () => {
     )
   }
 
-  before(freshDeployment)
+  before(async () => {
+    recipient = await importAccountFromPrivateKey(testData.recipient.privateKey)
+    destination = await importAccountFromPrivateKey(
+      testData.destination.privateKey
+    )
+    thirdParty = await importAccountFromPrivateKey(
+      testData.thirdParty.privateKey
+    )
+
+    await freshDeployment()
+  })
 
   beforeEach(async () => {
     await createSnapshot()
@@ -290,48 +285,48 @@ describe("TokenDistributor", () => {
         [
           "completes when signed by recipient, submitted by third-party",
           {
-            signer: recipientIndex,
-            submitter: thirdPartyIndex,
+            signerPrivateKey: testData.recipient.privateKey,
+            submitter: thirdParty,
             expectRevert: false,
           },
         ],
         [
           "completes when signed by recipient, submitted by recipient",
           {
-            signer: recipientIndex,
-            submitter: recipientIndex,
+            signerPrivateKey: testData.recipient.privateKey,
+            submitter: recipient,
             expectRevert: false,
           },
         ],
         [
           "reverts when signed by third-party, submitted by recipient",
           {
-            signer: thirdPartyIndex,
-            submitter: recipientIndex,
+            signerPrivateKey: testData.thirdParty.privateKey,
+            submitter: recipient,
             expectRevert: true,
           },
         ],
         [
           "completes when signed by recipient, submitted by destination",
           {
-            signer: recipientIndex,
-            submitter: destinationIndex,
+            signerPrivateKey: testData.recipient.privateKey,
+            submitter: destination,
             expectRevert: false,
           },
         ],
         [
           "reverts when signed by destination, submitted by recipient",
           {
-            signer: destinationIndex,
-            submitter: recipientIndex,
+            signerPrivateKey: testData.destination.privateKey,
+            submitter: recipient,
             expectRevert: true,
           },
         ],
         [
           "reverts when signed by destination, submitted by destination",
           {
-            signer: destinationIndex,
-            submitter: destinationIndex,
+            signerPrivateKey: testData.destination.privateKey,
+            submitter: destination,
             expectRevert: true,
           },
         ],
@@ -344,7 +339,7 @@ describe("TokenDistributor", () => {
         try {
           const signature = web3.eth.accounts.sign(
             web3.utils.sha3(destination),
-            privateKeys[testCaseData.signer]
+            testCaseData.signerPrivateKey
           )
 
           claimFuncCall = tokenDistributor.claim(
@@ -356,7 +351,7 @@ describe("TokenDistributor", () => {
             testData.merkle.claims[recipient].index,
             testData.merkle.claims[recipient].amount,
             testData.merkle.claims[recipient].proof,
-            { from: accounts[testCaseData.submitter] }
+            { from: testCaseData.submitter }
           )
 
           if (testCaseData.expectRevert) {
@@ -552,7 +547,7 @@ describe("TokenDistributor", () => {
     it("reverts if unlock period has not passed yet", async function () {
       const timestamp = await allocate(unclaimedUnlockDuration)
 
-      await time.increaseTo(timestamp.add(unclaimedUnlockDuration).subn(1))
+      await time.increaseTo(timestamp.add(unclaimedUnlockDuration).subn(10))
 
       await expectRevert(
         tokenDistributor.recoverUnclaimed(destination, { from: owner }),
@@ -569,4 +564,17 @@ describe("TokenDistributor", () => {
       )
     })
   })
+
+  async function importAccountFromPrivateKey(privateKey) {
+    const password = "password"
+
+    const address = web3.utils.toChecksumAddress(
+      await web3.eth.personal.importRawKey(privateKey, password)
+    )
+
+    await web3.eth.personal.unlockAccount(address, password, 600)
+
+    await send.ether(defaultSender, address, ether("1"))
+    return address
+  }
 })
