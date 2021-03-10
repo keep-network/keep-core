@@ -934,4 +934,3 @@ export function* subscribeToLiquidityRewardsEvents() {
     )
   }
 }
-
