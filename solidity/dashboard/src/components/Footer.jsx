@@ -18,7 +18,14 @@ const Footer = ({ className }) => {
         <p>&#169; 2020 Keep, SEZC</p>
         <p>All Rights Reserved.</p>
       </div>
-      <a className="footer__app-version" rel="noopener noreferrer" href="https://github.com/keep-network/keep-core/releases" target="_blank">{`Version ${process.env.REACT_APP_VERSION}`}</a>
+      <a 
+        href="https://github.com/keep-network/keep-core/releases" 
+        className="footer__app-version" 
+        rel="noopener noreferrer" 
+        target="_blank"
+      >
+        {`Version ${process.env.REACT_APP_VERSION}`}
+      </a>
     </footer>
   )
 }
