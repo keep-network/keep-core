@@ -481,6 +481,38 @@ describe("TokenDistributor", () => {
         "tokens already claimed"
       )
     })
+
+    it("reverts on invalid amount", async function () {
+      await expectRevert(
+        tokenDistributor.claim(
+          recipient,
+          destination,
+          testData.signature.v,
+          testData.signature.r,
+          testData.signature.s,
+          testData.merkle.claims[recipient].index,
+          toBN(testData.merkle.claims[recipient].amount).addn(1),
+          testData.merkle.claims[recipient].proof
+        ),
+        "invalid proof"
+      )
+    })
+
+    it("reverts on wrong merkle data", async function () {
+      await expectRevert(
+        tokenDistributor.claim(
+          recipient,
+          destination,
+          testData.signature.v,
+          testData.signature.r,
+          testData.signature.s,
+          testData.merkle.claims[thirdParty].index,
+          testData.merkle.claims[thirdParty].amount,
+          testData.merkle.claims[thirdParty].proof
+        ),
+        "invalid proof"
+      )
+    })
   })
 
   describe("recoverUnclaimed", async function () {
