@@ -39,11 +39,14 @@ const FormInput = ({
     <div className="form-input flex flex-1 column">
       <label className="input__label" style={alignToInput}>
         <span className="input__label__text">{label}</span>
-        <div className={"input__label__info-container"}>
+        <div
+          className={`input__label__info-container ${
+            additionalInfoText ? "align-right" : ""
+          }`}
+        >
           {tooltipText && (
             <Tooltip
               simple
-              direction="top"
               delay={0}
               triggerComponent={Icons.MoreInfo}
               className="input__label__info-container__tooltip"

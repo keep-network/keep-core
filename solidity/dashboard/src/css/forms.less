@@ -82,10 +82,14 @@ input {
       }
 
       &__info-container {
-        margin-left: auto;
         display: flex;
         align-items: center;
-        margin-bottom: 0.5rem;
+        margin-left: 0.1rem;
+
+        &.align-right {
+          margin-left: auto;
+          margin-bottom: 0.5rem;
+        }
 
         &__additional-info-text {
           font-weight: 500;
@@ -95,10 +99,11 @@ input {
           padding: 0.3rem 0.5rem;
           background-color: @color-mint-40;
           line-height: 1.25rem;
+          margin-left: 0.5rem;
         }
 
         &__tooltip {
-          margin-right: 0.5rem;
+          margin-left: 0.25rem;
         }
       }
     }

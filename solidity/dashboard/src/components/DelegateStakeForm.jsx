@@ -9,8 +9,6 @@ import {
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import { displayAmount, fromTokenUnit } from "../utils/token.utils"
-import ProgressBar from "./ProgressBar"
-import { colors } from "../constants/colors"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
@@ -112,6 +110,16 @@ const TokensAmountField = ({
   stakeTokensValue,
 }) => {
   const onAddonClick = useSetMaxAmountToken("stakeTokens", availableToStake)
+  const stakingDocsLink = (
+    <a
+      target="_blank"
+      rel="noopener noreferrer"
+      href={"https://staking.keep.network/about-staking/staking-minimums"}
+      className="text-white text-link"
+    >
+      here
+    </a>
+  )
 
   return (
     <div className="token-amount-wrapper">
@@ -129,7 +137,11 @@ const TokensAmountField = ({
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
           tooltipText={
-            "The minimum stake will decrease to 50,000 KEEP on 04/28/2021. You can see the full shedule in our staking docs here."
+            <>
+              The minimum stake will decrease to 50,000 KEEP on 04/28/2021. You
+              can see the full schedule in our staking docs{" "}
+              {stakingDocsLink}
+            </>
           }
         />
         <div className="text-caption--green-theme text-right ml-a">
