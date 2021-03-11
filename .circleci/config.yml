@@ -1,22 +1,9 @@
 version: 2.1
 
 executors:
-  docker-git:
-    docker:
-      - image: docker:18.06.0-ce-git
-  docker-gcloud-cli:
-    docker:
-      - image: google/cloud-sdk:slim
   docker-node:
     docker:
       - image: circleci/node:11
-  docker-thesis-buildpack:
-    docker:
-      - image: thesisco/docker-buildpack:bionic
-
-orbs:
-  gcp-gcr: circleci/gcp-gcr@0.0.4
-  gcp-cli: circleci/gcp-cli@1.8.2
 
 jobs:
   generate_docs_solidity:
