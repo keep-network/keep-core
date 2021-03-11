@@ -39,22 +39,24 @@ const FormInput = ({
     <div className="form-input flex flex-1 column">
       <label className="input__label" style={alignToInput}>
         <span className="input__label__text">{label}</span>
-        {additionalInfoText && (
-          <span className="input__label__additional-info-text">
-            {additionalInfoText}
-          </span>
-        )}
-        {tooltipText && (
-          <Tooltip
-            simple
-            direction="top"
-            delay={0}
-            triggerComponent={Icons.MoreInfo}
-            className="input__label__tooltip"
-          >
-            {tooltipText}
-          </Tooltip>
-        )}
+        <div className={"input__label__info-container"}>
+          {tooltipText && (
+            <Tooltip
+              simple
+              direction="top"
+              delay={0}
+              triggerComponent={Icons.MoreInfo}
+              className="input__label__info-container__tooltip"
+            >
+              {tooltipText}
+            </Tooltip>
+          )}
+          {additionalInfoText && (
+            <span className="input__label__info-container__additional-info-text">
+              {additionalInfoText}
+            </span>
+          )}
+        </div>
       </label>
       <div className="form-input__wrapper">
         {leftIconComponent}

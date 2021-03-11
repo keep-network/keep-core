@@ -128,6 +128,9 @@ const TokensAmountField = ({
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
+          tooltipText={
+            "The minimum stake will decrease to 50,000 KEEP on 04/28/2021. You can see the full shedule in our staking docs here."
+          }
         />
         <div className="text-caption--green-theme text-right ml-a">
           {displayAmount(availableToStake)} available to stake

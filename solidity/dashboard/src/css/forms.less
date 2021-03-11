@@ -81,19 +81,25 @@ input {
         color: @color-grey-60
       }
 
-      &__additional-info-text {
-        font-weight: 500;
+      &__info-container {
         margin-left: auto;
+        display: flex;
+        align-items: center;
         margin-bottom: 0.5rem;
-        float: right;
-        border-radius: 100px;
-        padding: 0.3rem 0.5rem;
-        background-color: @color-mint-40;
-        line-height: 1.25rem;
-      }
 
-      &__tooltip {
-        margin-left: 0.25rem;
+        &__additional-info-text {
+          font-weight: 500;
+          margin-bottom: 0.3rem;
+          float: right;
+          border-radius: 100px;
+          padding: 0.3rem 0.5rem;
+          background-color: @color-mint-40;
+          line-height: 1.25rem;
+        }
+
+        &__tooltip {
+          margin-right: 0.5rem;
+        }
       }
     }
 
