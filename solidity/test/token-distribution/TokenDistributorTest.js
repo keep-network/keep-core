@@ -294,93 +294,78 @@ describe("TokenDistributor", () => {
       )
     })
 
-    it("destination address signature verification", async function () {
-      const testCases = new Map([
-        [
-          "completes when signed by recipient, submitted by third-party",
-          {
-            signerPrivateKey: testData.recipient.privateKey,
-            submitter: thirdParty,
-            expectRevert: false,
-          },
-        ],
-        [
-          "completes when signed by recipient, submitted by recipient",
-          {
-            signerPrivateKey: testData.recipient.privateKey,
-            submitter: recipient,
-            expectRevert: false,
-          },
-        ],
-        [
-          "reverts when signed by third-party, submitted by recipient",
-          {
-            signerPrivateKey: testData.thirdParty.privateKey,
-            submitter: recipient,
-            expectRevert: true,
-          },
-        ],
-        [
-          "completes when signed by recipient, submitted by destination",
-          {
-            signerPrivateKey: testData.recipient.privateKey,
-            submitter: destination,
-            expectRevert: false,
-          },
-        ],
-        [
-          "reverts when signed by destination, submitted by recipient",
-          {
-            signerPrivateKey: testData.destination.privateKey,
-            submitter: recipient,
-            expectRevert: true,
-          },
-        ],
-        [
-          "reverts when signed by destination, submitted by destination",
-          {
-            signerPrivateKey: testData.destination.privateKey,
-            submitter: destination,
-            expectRevert: true,
-          },
-        ],
-      ])
+    describe("when verifying destination signature", async function () {
+      async function signatureVerificationTest(
+        signerPrivateKey,
+        submitter,
+        shouldRevert
+      ) {
+        const signature = web3.eth.accounts.sign(
+          web3.utils.keccak256(destination),
+          signerPrivateKey
+        )
 
-      for (const [testCaseName, testCaseData] of testCases) {
-        await createSnapshot()
+        claimFuncCall = tokenDistributor.claim(
+          recipient,
+          destination,
+          signature.v,
+          signature.r,
+          signature.s,
+          testData.merkle.claims[recipient].index,
+          testData.merkle.claims[recipient].amount,
+          testData.merkle.claims[recipient].proof,
+          { from: submitter }
+        )
 
-        console.log(`      ${testCaseName}`)
-        try {
-          const signature = web3.eth.accounts.sign(
-            web3.utils.keccak256(destination),
-            testCaseData.signerPrivateKey
-          )
-
-          claimFuncCall = tokenDistributor.claim(
-            recipient,
-            destination,
-            signature.v,
-            signature.r,
-            signature.s,
-            testData.merkle.claims[recipient].index,
-            testData.merkle.claims[recipient].amount,
-            testData.merkle.claims[recipient].proof,
-            { from: testCaseData.submitter }
-          )
-
-          if (testCaseData.expectRevert) {
-            await expectRevert(claimFuncCall, "invalid signature")
-          } else {
-            await claimFuncCall
-          }
-        } catch (err) {
-          throw new Error(
-            `Test case [${testCaseName}] failed with error: ${err}`
-          )
-        } finally {
-          await restoreSnapshot()
-        }
+        shouldRevert
+          ? await expectRevert(claimFuncCall, "invalid signature")
+          : await claimFuncCall
       }
+
+      it("completes when signed by recipient, submitted by third-party", async function () {
+        await signatureVerificationTest(
+          testData.recipient.privateKey,
+          thirdParty
+        )
+      })
+
+      it("completes when signed by recipient, submitted by recipient", async function () {
+        await signatureVerificationTest(
+          testData.recipient.privateKey,
+          recipient
+        )
+      })
+
+      it("reverts when signed by third-party, submitted by recipient", async function () {
+        await signatureVerificationTest(
+          testData.thirdParty.privateKey,
+          recipient,
+          true
+        )
+      })
+
+      it("completes when signed by recipient, submitted by destination", async function () {
+        await signatureVerificationTest(
+          testData.recipient.privateKey,
+          destination
+        )
+      })
+
+      it("reverts when signed by destination, submitted by recipient", async function () {
+        await signatureVerificationTest(
+          testData.destination.privateKey,
+          recipient,
+          true
+        )
+      })
+
+      it("reverts when signed by destination, submitted by destination", async function () {
+        await signatureVerificationTest(
+          testData.destination.privateKey,
+          destination,
+          true
+        )
+      })
     })
 
     it("reverts on malleable signatures", async function () {
