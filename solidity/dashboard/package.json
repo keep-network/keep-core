@@ -20,12 +20,12 @@
     "less-plugin-clean-css": "^1.5.1",
     "less-watch-compiler": "^1.10.0",
     "moment": "2.24.0",
-    "react": "^16.13.1",
+    "react": "^17.0.1",
     "react-countup": "^4.3.3",
-    "react-dom": "^16.13.1",
+    "react-dom": "^17.0.1",
     "react-redux": "^7.2.1",
     "react-router-dom": "^5.1.2",
-    "react-scripts": "^3.4.1",
+    "react-scripts": "^4.0.3",
     "react-transition-group": "^4.3.0",
     "recharts": "^1.8.5",
     "redux": "^4.0.5",
@@ -44,12 +44,13 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "js:lint": "eslint src/**/*.js src/**/*.jsx",
-    "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx"
+    "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx",
+    "format": "prettier --write \"**/*.+(js|jsx|json|css|md)\""
   },
   "devDependencies": {
-    "eslint": "^6.8.0",
-    "prettier": "^2.0.4",
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
+    "eslint": "^7.21.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
+    "prettier": "^2.0.4"
   },
   "browserslist": [
     ">0.2%",
