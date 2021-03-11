@@ -28,14 +28,14 @@ const { expect } = chai
 const testData = require("./testData.json")
 
 describe("TokenDistributor", () => {
-  const [owner] = accounts
+  const [owner, recoveryDestination] = accounts
 
   const unclaimedUnlockDuration = time.duration.weeks(12)
 
   let testToken
   let tokenDistributor
   let recipient
-  let destination
+  let claimDestination
   let thirdParty
 
   const freshDeployment = async () => {
@@ -56,7 +56,7 @@ describe("TokenDistributor", () => {
 
   before(async () => {
     recipient = await importAccountFromPrivateKey(testData.recipient.privateKey)
-    destination = await importAccountFromPrivateKey(
+    claimDestination = await importAccountFromPrivateKey(
       testData.destination.privateKey
     )
     thirdParty = await importAccountFromPrivateKey(
@@ -243,12 +243,12 @@ describe("TokenDistributor", () => {
     it("transfers tokens", async function () {
       const recipientInitialBalance = toBN(await testToken.balanceOf(recipient))
       const destinationInitialBalance = toBN(
-        await testToken.balanceOf(destination)
+        await testToken.balanceOf(claimDestination)
       )
 
       await tokenDistributor.claim(
         recipient,
-        destination,
+        claimDestination,
         testData.signature.v,
         testData.signature.r,
         testData.signature.s,
@@ -263,7 +263,7 @@ describe("TokenDistributor", () => {
       ).to.eq.BN(toBN(recipientInitialBalance))
 
       expect(
-        await testToken.balanceOf(destination),
+        await testToken.balanceOf(claimDestination),
         "invalid destination address balance"
       ).to.eq.BN(
         destinationInitialBalance.add(
@@ -276,7 +276,7 @@ describe("TokenDistributor", () => {
       expectEvent(
         await tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           testData.signature.s,
@@ -288,7 +288,7 @@ describe("TokenDistributor", () => {
         {
           index: testData.merkle.claims[recipient].index.toString(),
           recipient: recipient,
-          destination: destination,
+          destination: claimDestination,
           amount: toBN(testData.merkle.claims[recipient].amount),
         }
       )
@@ -301,13 +301,13 @@ describe("TokenDistributor", () => {
         shouldRevert
       ) {
         const signature = web3.eth.accounts.sign(
-          web3.utils.keccak256(destination),
+          web3.utils.keccak256(claimDestination),
           signerPrivateKey
         )
 
         claimFuncCall = tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           signature.v,
           signature.r,
           signature.s,
@@ -347,7 +347,7 @@ describe("TokenDistributor", () => {
       it("completes when signed by recipient, submitted by destination", async function () {
         await signatureVerificationTest(
           testData.recipient.privateKey,
-          destination
+          claimDestination
         )
       })
 
@@ -362,7 +362,7 @@ describe("TokenDistributor", () => {
       it("reverts when signed by destination, submitted by destination", async function () {
         await signatureVerificationTest(
           testData.destination.privateKey,
-          destination,
+          claimDestination,
           true
         )
       })
@@ -379,7 +379,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           malleableS,
@@ -393,7 +393,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v - 27,
           testData.signature.r,
           testData.signature.s,
@@ -409,7 +409,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           ZERO_ADDRESS,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           testData.signature.s,
@@ -443,7 +443,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           testData.signature.s,
@@ -458,7 +458,7 @@ describe("TokenDistributor", () => {
     it("reverts if tokens were already claimed", async function () {
       await tokenDistributor.claim(
         recipient,
-        destination,
+        claimDestination,
         testData.signature.v,
         testData.signature.r,
         testData.signature.s,
@@ -470,7 +470,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           testData.signature.s,
@@ -486,7 +486,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           testData.signature.s,
@@ -502,7 +502,7 @@ describe("TokenDistributor", () => {
       await expectRevert(
         tokenDistributor.claim(
           recipient,
-          destination,
+          claimDestination,
           testData.signature.v,
           testData.signature.r,
           testData.signature.s,
@@ -532,13 +532,15 @@ describe("TokenDistributor", () => {
       await time.increaseTo(timestamp.add(unclaimedUnlockDuration))
 
       const destinationInitialBalance = toBN(
-        await testToken.balanceOf(destination)
+        await testToken.balanceOf(recoveryDestination)
       )
 
-      await tokenDistributor.recoverUnclaimed(destination, { from: owner })
+      await tokenDistributor.recoverUnclaimed(recoveryDestination, {
+        from: owner,
+      })
 
       expect(
-        await testToken.balanceOf(destination),
+        await testToken.balanceOf(recoveryDestination),
         "invalid recipient address balance"
       ).to.eq.BN(
         toBN(destinationInitialBalance.add(toBN(testData.merkle.tokenTotal)))
@@ -550,12 +552,50 @@ describe("TokenDistributor", () => {
       await time.increaseTo(timestamp.add(unclaimedUnlockDuration))
 
       expectEvent(
-        await tokenDistributor.recoverUnclaimed(destination, { from: owner }),
+        await tokenDistributor.recoverUnclaimed(recoveryDestination, {
+          from: owner,
+        }),
         "TokensRecovered",
         {
-          destination: destination,
+          destination: recoveryDestination,
           amount: toBN(testData.merkle.tokenTotal),
         }
+      )
+    })
+
+    it("transfers only unclaimed tokens", async function () {
+      const timestamp = await allocate(unclaimedUnlockDuration)
+
+      const destinationInitialBalance = toBN(
+        await testToken.balanceOf(recoveryDestination)
+      )
+
+      await tokenDistributor.claim(
+        recipient,
+        claimDestination,
+        testData.signature.v,
+        testData.signature.r,
+        testData.signature.s,
+        testData.merkle.claims[recipient].index,
+        testData.merkle.claims[recipient].amount,
+        testData.merkle.claims[recipient].proof
+      )
+
+      await time.increaseTo(timestamp.add(unclaimedUnlockDuration))
+
+      await tokenDistributor.recoverUnclaimed(recoveryDestination, {
+        from: owner,
+      })
+
+      expect(
+        await testToken.balanceOf(recoveryDestination),
+        "invalid recipient address balance"
+      ).to.eq.BN(
+        toBN(
+          destinationInitialBalance
+            .add(toBN(testData.merkle.tokenTotal))
+            .sub(toBN(testData.merkle.claims[recipient].amount))
+        )
       )
     })
 
@@ -570,7 +610,7 @@ describe("TokenDistributor", () => {
       await allocate(0)
 
       await expectRevert(
-        tokenDistributor.recoverUnclaimed(destination, { from: owner }),
+        tokenDistributor.recoverUnclaimed(recoveryDestination, { from: owner }),
         "token recovery is not allowed"
       )
     })
@@ -581,14 +621,14 @@ describe("TokenDistributor", () => {
       await time.increaseTo(timestamp.add(unclaimedUnlockDuration).subn(10))
 
       await expectRevert(
-        tokenDistributor.recoverUnclaimed(destination, { from: owner }),
+        tokenDistributor.recoverUnclaimed(recoveryDestination, { from: owner }),
         "token recovery is not possible yet"
       )
     })
 
     it("reverts when called by non-owner", async function () {
       await expectRevert(
-        tokenDistributor.recoverUnclaimed(destination, {
+        tokenDistributor.recoverUnclaimed(recoveryDestination, {
           from: thirdParty,
         }),
         "Ownable: caller is not the owner"
