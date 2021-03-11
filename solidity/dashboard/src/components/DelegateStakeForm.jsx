@@ -131,8 +131,8 @@ const TokensAmountField = ({
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
         />
-        <div className="text-caption text-grey-60 text-right ml-a">
-          {displayAmount(availableToStake)} KEEP available
+        <div className="text-caption--green-theme text-right ml-a">
+          {displayAmount(availableToStake)} available to stake
         </div>
       </div>
     </div>
