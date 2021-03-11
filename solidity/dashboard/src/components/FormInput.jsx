@@ -1,4 +1,4 @@
-import React from "react"
+import React, {useLayoutEffect, useRef, useState} from "react"
 import { useField } from "formik"
 import * as Icons from "./Icons"
 import Tooltip from "./Tooltip"
@@ -20,6 +20,14 @@ const FormInput = ({
   ...props
 }) => {
   const [field, meta, helpers] = useField(props.name, props.type)
+  const inputAddonRef = useRef(null)
+  const [inputPaddingRight, setInputPaddingRight] = useState(0)
+
+  useLayoutEffect(() => {
+    const inputAddonStyles = window.getComputedStyle(inputAddonRef.current)
+    const finalWidth = parseInt(inputAddonStyles.right, 10) + parseInt(inputAddonStyles.width, 10) + 10
+    setInputPaddingRight(finalWidth)
+  }, [])
 
   const leftIconComponent =
     leftIcon && React.isValidElement(leftIcon)
@@ -71,8 +79,9 @@ const FormInput = ({
             helpers.setValue(normalize ? normalize(value) : value)
           }}
           value={format ? format(field.value) : field.value}
+          style={{ paddingRight: `${inputPaddingRight}px`}}
         />
-        <div className="form-input__addon">{inputAddon}</div>
+        <div ref={inputAddonRef} className="form-input__addon">{inputAddon}</div>
       </div>
       {meta.touched && meta.error ? (
         <div className="form-input__error" style={alignToInput}>
