@@ -14,7 +14,7 @@ const FormInput = ({
   format,
   normalize,
   tooltipText,
-  instructionText,
+  additionalInfoText,
   leftIcon,
   inputAddon,
   ...props
@@ -39,9 +39,9 @@ const FormInput = ({
     <div className="form-input flex flex-1 column">
       <label className="input__label" style={alignToInput}>
         <span className="input__label__text">{label}</span>
-        {instructionText && (
-          <span className="input__label__instruction-text">
-            {instructionText}
+        {additionalInfoText && (
+          <span className="input__label__additional-info-text">
+            {additionalInfoText}
           </span>
         )}
         {tooltipText && (

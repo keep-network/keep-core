@@ -123,9 +123,7 @@ const TokensAmountField = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
           placeholder="0"
-          instructionText={`The minimum stake is ${displayAmount(
-            minStake
-          )} KEEP`}
+          additionalInfoText={`MIN STAKE ${displayAmount(minStake)} KEEP`}
           leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
