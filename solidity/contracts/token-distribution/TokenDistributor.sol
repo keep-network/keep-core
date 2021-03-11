@@ -20,19 +20,42 @@ import "openzeppelin-solidity/contracts/token/ERC20/SafeERC20.sol";
 import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 
 /// @title Token Distributor
-/// @notice This contract can be used to distribute ERC20 tokens
+/// @notice This contract can be used to distribute ERC20 tokens with a merkle
+/// tree distribution mechanism in a cross-chain environment.
+/// An owner of the contract has to calculate a merkle tree for tokens assignments
+/// based on a mapping of a recipient addresses with the assigned tokens amount.
+/// Next the owner allocates the total amount of tokens in the contract by calling
+/// allocate function with the calculated merkle tree root. The owner has also
+/// a possibility to define a period after which unclaimed tokens will be allowed
+/// to recover by the owner. Once tokens allocation is made recipients can call
+/// claim function to withdraw tokens to any destination address. The destination
+/// address should be signed by the recipient prior to calling the function and
+/// the signature should be provided on claim. For details of the signature see
+/// claim function documentation.
+/// Signing of destination addresses is implemented to allow cross-chain tokens
+/// distribution. It covers a situation when recipient receives a tokens assignment
+/// based on their address on some chain (A), and operates under a different address
+/// on the host chain (B) where tokens distribution takes place (e.g. a recipient
+/// is as a multi-sig wallet on chain A and receives tokens assignment on chain B,
+/// they have to sign an address on chain B they control with a signature calculated
+/// with a private key controlling the address on chain A).
 /// @dev This contract is based on the Uniswap's Merkle Distributor
 /// https://github.com/Uniswap/merkle-distributor with some modifications:
-/// - added 'allocate()' function that will be called to allocate tokens for a
+/// - added 'allocate' function that will be called to allocate tokens for a
 ///   merkle root,
-/// - added a possibility for recipient to redirect tokens withdrawal to another
-///   address by providing a signature over that address.
+/// - added a possibility for a recipient to redirect tokens withdrawal to another
+///   address by providing a signature over that address,
+/// - added a possibility for the owner to recover unclaimed tokens after the
+///   unclaimed unlock duration that is configurable on tokens allocation.
 contract TokenDistributor is Ownable {
     using SafeERC20 for IERC20;
 
+    // Distributed token.
     IERC20 public token;
 
+    // Merkle tree root.
     bytes32 public merkleRoot;
+
     // Timestamp after which allocated tokens can be recovered from the contract
     // by the owner. If the value is zero the recovery is not possible.
     uint256 public unclaimedUnlockTimestamp;
@@ -54,11 +77,32 @@ contract TokenDistributor is Ownable {
         token = _token;
     }
 
-    // In the claim function, you need to provide Ethereum address and a signed
-    // address of token recipient (the signature by Ethereum address from a
-    // merkle tree). We'll validate the signature and see how many tokens should
-    // be claimable by that address based on the information in Merkle tree.
-    // TODO:Update docs
+    /// @notice Claim assigned tokens. The function can be used to withdraw tokens
+    /// assigned to the recipient in the merkle tree distribution. The caller has
+    /// to provide merkle data: recipient address, index, amount, and merkle proof.
+    /// Anyone can call this function. The function requires a destination address
+    /// for a transfer to be provided. The destination address should be signed
+    /// by the recipient. To construct the message to signing recipient has to
+    /// hash destination address with keccak256 and prefix the obtained digest with
+    /// Ethereum specific `\x19Ethereum Signed Message:\n32`. When using web3's
+    /// signing function the prefixing is done automatically, so the signing operation
+    /// can look like: `sign(keccak256(destination), privateKey)`.
+    /// The signature should be provided with the call to this function. This is
+    /// to confirm that the recipient approved the destination address for a transfer.
+    /// The solution allows cross-chain allocations, where a recipient from a
+    /// different chain does not operate under the same address on the host chain
+    /// where the tokens were allocated, (e.g. recipient is a wallet)
+    /// @dev Due to the malleability concern described in EIP-2, the function expects
+    /// s values in the lower half of the secp256k1 curve's order and v value of
+    /// 27 or 28.
+    /// @param _recipient Address that received tokens assignment.
+    /// @param _destination Address to send tokens to.
+    /// @param _v Destination address signature's v parameter.
+    /// @param _r Destination address signature's r parameter.
+    /// @param _s Destination address signature's s parameter.
+    /// @param _index Merkle index.
+    /// @param _amount Assigned tokens amount.
+    /// @param _merkleProof Merkle proof.
     function claim(
         address _recipient,
         address _destination,
@@ -130,11 +174,10 @@ contract TokenDistributor is Ownable {
         emit TokensAllocated(_merkleRoot, _amount);
     }
 
-    // Tokens not claimed within a given timeout should go to a treasury
-    // wallet address set on that contract.
-    // TODO: Is it fine to provide address on function call or do we want to declare
-    // it upfront on token deployment or allocation?
-    // TODO: Update docs
+    /// @notice Withdraws unclaimed tokens to the destination address. The function
+    /// can be called only by the contract owner. Tokens are recoverable after
+    /// unlock duration defined on tokens allocation.
+    /// @param _destination Address to send tokens to.
     function recoverUnclaimed(address _destination) public onlyOwner {
         require(
             _destination != address(0),
@@ -153,6 +196,9 @@ contract TokenDistributor is Ownable {
         emit TokensRecovered(_destination, amount);
     }
 
+    /// @notice Checks if tokens were claimed for the given merkle index.
+    /// @param _index Merkle index.
+    /// @return True is tokens were claimed, false otherwise.
     function isClaimed(uint256 _index) public view returns (bool) {
         uint256 claimedWordIndex = _index / 256;
         uint256 claimedBitIndex = _index % 256;
@@ -161,6 +207,13 @@ contract TokenDistributor is Ownable {
         return claimedWord & mask == mask;
     }
 
+    /// @notice Recovers signer's address from a signature and destination address.
+    /// @dev Destination address is a part of a message that should be signed.
+    /// To construct the message one has to hash destination address with keccak256
+    /// and prefix the obtained digest with Ethereum specific `\x19Ethereum Signed Message:\n32`.
+    /// Due to the malleability concern described in EIP-2, the function expects
+    /// s values in the lower half of the secp256k1 curve's order and v value of
+    /// 27 or 28.
     function recoverSignerAddress(
         address _destination,
         uint8 _v,
@@ -186,6 +239,8 @@ contract TokenDistributor is Ownable {
         return ecrecover(prefixedDigest, _v, _r, _s);
     }
 
+    /// @notice Marks the given merkle index as claimed.
+    /// @param _index Merkle index.
     function setClaimed(uint256 _index) private {
         uint256 claimedWordIndex = _index / 256;
         uint256 claimedBitIndex = _index % 256;
