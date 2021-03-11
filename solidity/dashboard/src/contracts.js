@@ -163,11 +163,11 @@ export function Deferred() {
   }
 }
 
-let ContractsDeferred = new Deferred()
-let Web3Deferred = new Deferred()
+const ContractsDeferred = new Deferred()
+const Web3Deferred = new Deferred()
 
-export let Web3Loaded = Web3Deferred.promise
-export let ContractsLoaded = ContractsDeferred.promise
+export const Web3Loaded = Web3Deferred.promise
+export const ContractsLoaded = ContractsDeferred.promise
 
 export const resolveWeb3Deferred = (web3) => {
   Web3Deferred.resolve(web3)
