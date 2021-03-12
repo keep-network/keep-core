@@ -162,7 +162,9 @@ export class TokenGrantTruthSource extends ITruthSource {
         grant.balance.isub(grant.escrowRevoked)
       }
 
-      tokenGrants.push(grant)
+      if (grant.balance.gtn(0)) {
+        tokenGrants.push(grant)
+      }
     }
 
     dumpDataToFile(tokenGrants, TOKEN_GRANT_OUTPUT_PATH)
