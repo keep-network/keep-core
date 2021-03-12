@@ -35,7 +35,7 @@ import "openzeppelin-solidity/contracts/cryptography/MerkleProof.sol";
 /// Signing of destination addresses is implemented to allow cross-chain tokens
 /// distribution. It covers a situation when recipient receives a tokens assignment
 /// based on their address on some chain (A), and operates under a different address
-/// on the host chain (B) where tokens distribution takes place (e.g. a recipient
+/// on another chain (B) where tokens distribution takes place (e.g. a recipient
 /// is as a multi-sig wallet on chain A and receives tokens assignment on chain B,
 /// they have to sign an address on chain B they control with a signature calculated
 /// with a private key controlling the address on chain A).
@@ -56,8 +56,8 @@ contract TokenDistributor is Ownable {
     // Merkle tree root.
     bytes32 public merkleRoot;
 
-    // Timestamp after which allocated tokens can be recovered from the contract
-    // by the owner. If the value is zero the recovery is not possible.
+    // Timestamp after which allocated and unclaimed tokens can be recovered from
+    // the contract by the owner. If the value is zero the recovery is not possible.
     uint256 public unclaimedUnlockTimestamp;
 
     mapping(uint256 => uint256) private claimedBitMap;
@@ -90,7 +90,7 @@ contract TokenDistributor is Ownable {
     /// The signature should be provided with the call to this function. This is
     /// to confirm that the recipient approved the destination address for a transfer.
     /// The solution allows cross-chain allocations, where a recipient from a
-    /// different chain does not operate under the same address on the host chain
+    /// different chain does not operate under the same address on the chain
     /// where the tokens were allocated, (e.g. recipient is a wallet)
     /// @dev Due to the malleability concern described in EIP-2, the function expects
     /// s values in the lower half of the secp256k1 curve's order and v value of
