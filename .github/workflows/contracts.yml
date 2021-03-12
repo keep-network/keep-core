@@ -91,8 +91,7 @@ jobs:
       github.ref == 'refs/heads/master'
         && (github.event_name == 'push'
         || github.event_name == 'workflow_dispatch')
-    # TODO: Implement similiar for keep-dev
-    environment: keep-test # currently keep-test requires manual aproval of job
+    environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -128,7 +127,7 @@ jobs:
           TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
           ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
           CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK # writes artifacts to /home/runner/work/keep-core/keep-core/solidity/build/contracts
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Push contracts to Tenderly
         # TODO: once below action gets tagged replace `@main` with `@v1` 
@@ -168,16 +167,6 @@ jobs:
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
-
-      # TODO: consider swithing to below action, after tweaking
-      # (requires some changes, as below config throws an error)
-      # - name: Publish to npm
-      #   uses: JS-DevTools/npm-publish@v1
-      #   with:
-      #     package: ./solidity/package.json
-      #     token: ${{ secrets.NPM_TOKEN }}
-      #     access: public
-      #     dry-run: true # TODO: to be removed once testing of workflow is done
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
