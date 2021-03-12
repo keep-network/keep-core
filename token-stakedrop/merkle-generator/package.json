@@ -1,6 +1,6 @@
 {
   "name": "stakedrop-merkle-tree",
-  "description": "Generates merkle objects for rewards distribution",
+  "description": "Generates merkle objects for token distribution",
   "version": "1.0.0",
   "keywords": [
     "keep-network",
