@@ -20,11 +20,10 @@ fi
 
 help()
 {
-   echo -e "\nUsage: ENV_VAR(S) $0"\
+   echo -e "\nUsage: ETH_HOSTNAME=<eth_hostname> $0"\
            "--target-block <block_number>"
    echo -e "\nEnvironment variables:\n"
-   echo -e "\tETH_ACCOUNT_PRIVATE_KEY: Ethereum account private key\n"\
-           "\tETH_HOSTNAME: Ethereum endpoint hostname"
+   echo -e "\tETH_HOSTNAME: Ethereum endpoint hostname"
    echo -e "\nCommand line arguments:\n"
    echo -e "\t--target-block: Block height when the stakedrop happens"
    exit 1 # Exit script after printing help
@@ -51,11 +50,6 @@ do
    esac
 done
 shift $(expr $OPTIND - 1) # remove options from positional parameters
-
-# enter ETH_ACCOUNT_PRIVATE_KEY if not provided
-if [[ -z "$ETH_ACCOUNT_PRIVATE_KEY" ]]; then
-  read -p "Enter Ethereum account private key: " ETH_ACCOUNT_PRIVATE_KEY
-fi
 
 # enter ETH_HOSTNAME if not provided
 if [[ -z "$ETH_HOSTNAME" ]]; then
