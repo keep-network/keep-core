@@ -145,13 +145,13 @@ contract TokenDistributor is Ownable {
     /// Allocates amount of tokens for the merkle root.
     /// @param _merkleRoot The merkle root.
     /// @param _amount The amount of tokens allocated for the merkle root.
-    /// @param _unclaimedUnlockDuration Duration of a period after which unclaimed
-    /// tokens can be recovered from the contract. If the value is zero the
-    /// recovery won't be allowed.
+    /// @param _unclaimedUnlockDurationSec Duration of a period (in seconds)
+    /// after which  unclaimed tokens can be recovered from the contract. If the
+    /// value is zero the recovery won't be allowed.
     function allocate(
         bytes32 _merkleRoot,
         uint256 _amount,
-        uint256 _unclaimedUnlockDuration
+        uint256 _unclaimedUnlockDurationSec
     ) public onlyOwner {
         require(merkleRoot == "", "tokens were already allocated");
         require(_merkleRoot != "", "merkle root cannot be empty");
@@ -164,11 +164,11 @@ contract TokenDistributor is Ownable {
         // If unclaimed unlock duration was provided calculate timestamp after
         // which unclaimed tokens will be recoverable. If the duration is set to
         // zero the tokens won't be recoverable.
-        if (_unclaimedUnlockDuration > 0) {
+        if (_unclaimedUnlockDurationSec > 0) {
             unclaimedUnlockTimestamp =
                 /* solium-disable-next-line security/no-block-members */
                 block.timestamp +
-                _unclaimedUnlockDuration;
+                _unclaimedUnlockDurationSec;
         }
 
         emit TokensAllocated(_merkleRoot, _amount);
