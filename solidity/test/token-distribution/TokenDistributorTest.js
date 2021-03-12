@@ -229,7 +229,7 @@ describe("TokenDistributor", () => {
   })
 
   describe("claim", async () => {
-    before(async () => {
+    beforeEach(async () => {
       await tokenDistributor.allocate(
         testData.merkle.merkleRoot,
         testData.merkle.tokenTotal,
@@ -237,8 +237,6 @@ describe("TokenDistributor", () => {
         { from: owner }
       )
     })
-
-    after(freshDeployment)
 
     it("transfers tokens", async function () {
       const recipientInitialBalance = toBN(await testToken.balanceOf(recipient))
