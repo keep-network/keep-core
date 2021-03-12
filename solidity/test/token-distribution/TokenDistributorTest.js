@@ -319,7 +319,10 @@ describe("TokenDistributor", () => {
 
         shouldRevert
           ? await expectRevert(claimFuncCall, "invalid signature")
-          : await claimFuncCall
+          : expectEvent(await claimFuncCall, "TokensClaimed", {
+              recipient: recipient,
+              destination: claimDestination,
+            })
       }
 
       it("completes when signed by recipient, submitted by third-party", async function () {
