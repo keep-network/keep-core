@@ -78,7 +78,7 @@ const LiquidityRewardCard = ({
       !hasWrappedTokens && (
         <Banner
           className={`liquidity__new-user-info ${
-            incentivesRemoved ? "liquidity__new-user-info--warning" : ""
+            incentivesRemoved ? "liquidity__new-user-info--warning mt-2" : ""
           }`}
         >
           <Banner.Icon
@@ -154,31 +154,33 @@ const LiquidityRewardCard = ({
           to your share of the total pool.
         </Tooltip>
       </h4>
-      <div
-        className={`liquidity__info${
-          gt(lpBalance, 0) ? "" : "--locked"
-        } mt-2 mb-2`}
-      >
-        <MetricsTile className="liquidity__info-tile bg-mint-10">
-          <MetricsTile.Tooltip className="liquidity__info-tile__tooltip">
-            <APY.TooltipContent />
-          </MetricsTile.Tooltip>
-          <APY
-            apy={!incentivesRemoved ? apy : 0}
-            isFetching={isAPYFetching}
-            className="liquidity__info-tile__title text-mint-100"
-          />
-          <h6>Estimate of pool apy</h6>
-        </MetricsTile>
-        <MetricsTile className="liquidity__info-tile bg-mint-10">
-          <ShareOfPool
-            className="liquidity__info-tile__title text-mint-100"
-            percentageOfTotalPool={percentageOfTotalPool}
-            isFetching={isFetching}
-          />
-          <h6>Your share of POOL</h6>
-        </MetricsTile>
-      </div>
+      {!incentivesRemoved && (
+        <div
+          className={`liquidity__info${
+            gt(lpBalance, 0) ? "" : "--locked"
+          } mt-2 mb-2`}
+        >
+          <MetricsTile className="liquidity__info-tile bg-mint-10">
+            <MetricsTile.Tooltip className="liquidity__info-tile__tooltip">
+              <APY.TooltipContent />
+            </MetricsTile.Tooltip>
+            <APY
+              apy={apy}
+              isFetching={isAPYFetching}
+              className="liquidity__info-tile__title text-mint-100"
+            />
+            <h6>Estimate of pool apy</h6>
+          </MetricsTile>
+          <MetricsTile className="liquidity__info-tile bg-mint-10">
+            <ShareOfPool
+              className="liquidity__info-tile__title text-mint-100"
+              percentageOfTotalPool={percentageOfTotalPool}
+              isFetching={isFetching}
+            />
+            <h6>Your share of POOL</h6>
+          </MetricsTile>
+        </div>
+      )}
       {renderUserInfoBanner()}
       <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
       <div className={"liquidity__reward-balance"}>
