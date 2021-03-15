@@ -229,9 +229,10 @@ jobs:
 
       - name: Migrate contracts
         env:
+          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_CELO_TRUFFLE_NETWORK }}
           CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network alfajores
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       # TODO: if Celo works with Tenderly, add appropriate push step
 
