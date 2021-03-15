@@ -179,8 +179,7 @@ const LiquidityRewardCard = ({
           <h6>Your share of POOL</h6>
         </MetricsTile>
       </div>
-       {renderUserInfoBanner()}
-      {/*{renderIncentivesRemovedBanner()}*/}
+      {renderUserInfoBanner()}
       <LPTokenBalance lpTokens={lpTokens} lpTokenBalance={lpTokenBalance} />
       <div className={"liquidity__reward-balance"}>
         <h4 className={"liquidity__reward-balance__title text-grey-70"}>
