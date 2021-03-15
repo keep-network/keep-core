@@ -198,6 +198,7 @@ const LiquidityPage = ({ headerTitle }) => {
           withdrawLiquidityRewards={withdrawLiquidityRewards}
           isAPYFetching={KEEP_TBTC.isAPYFetching}
           pool={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.pool}
+          incentivesRemoved={true}
         />
         <LiquidityRewardCard
           title={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.label}
