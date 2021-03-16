@@ -17,6 +17,8 @@ import { lte } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
 import MaxAmountAddon from "./MaxAmountAddon"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
+import moment from "moment"
+import { AMOUNT_UNIT } from "../constants/constants"
 
 const DelegateStakeForm = ({
   onSubmit,
@@ -121,6 +123,43 @@ const TokensAmountField = ({
     </a>
   )
 
+  const nextMinStake = () => {
+    let finalValue = 110000
+    const currentDate = moment().utc()
+
+    // Minimum stake diminishing schedule can be found here:
+    // https://staking.keep.network/about-staking/staking-minimums
+    const minimumStakeDiminishingSchedule = [
+      moment.utc("04-28-2020", "MM-DD-YYYY"),
+      moment.utc("07-10-2020", "MM-DD-YYYY"),
+      moment.utc("09-21-2020", "MM-DD-YYYY"),
+      moment.utc("03-12-2020", "MM-DD-YYYY"),
+      moment.utc("02-14-2021", "MM-DD-YYYY"),
+      moment.utc("04-28-2021", "MM-DD-YYYY"),
+      moment.utc("07-10-2021", "MM-DD-YYYY"),
+      moment.utc("21-09-2021", "MM-DD-YYYY"),
+      moment.utc("12-03-2021", "MM-DD-YYYY"),
+      moment.utc("02-14-2022", "MM-DD-YYYY"),
+    ]
+
+    let finalDate = minimumStakeDiminishingSchedule[0]
+
+    for (const date of minimumStakeDiminishingSchedule) {
+      if (currentDate.isSameOrAfter(date)) {
+        finalValue -= 10000
+      } else {
+        finalDate = date
+        break
+      }
+    }
+
+    return {
+      value: finalValue,
+      date: finalDate.format("MM/DD/YYYY"),
+    }
+  }
+
+  const nextMinStakeInfo = nextMinStake()
   return (
     <div className="token-amount-wrapper">
       <div className="token-amount-field">
@@ -138,9 +177,10 @@ const TokensAmountField = ({
           }
           tooltipText={
             <>
-              The minimum stake will decrease to 50,000 KEEP on 04/28/2021. You
-              can see the full schedule in our staking docs{" "}
-              {stakingDocsLink}
+              The minimum stake will decrease to{" "}
+              {displayAmount(nextMinStakeInfo.value, true, AMOUNT_UNIT.TOKEN)}{" "}
+              KEEP on {nextMinStakeInfo.date}. You can see the full schedule in
+              our staking docs {stakingDocsLink}
             </>
           }
         />
