@@ -78,7 +78,6 @@ Command example:
 
 ```sh
 ETH_HOSTNAME="wss://eth-mainnet.ws.alchemyapi.io/v2/....." \
-  ETH_ACCOUNT_PRIVATE_KEY=..... \
   ./bin/inspect-token-ownership.js --target-block 10000000
 ```
 

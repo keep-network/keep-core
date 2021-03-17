@@ -70,7 +70,7 @@ const TBTCRewardsPage = () => {
             height: 32,
           }}
           amount={totalAmount}
-          currencySymbol="tBTC"
+          currencySymbol="TBTC"
           displayWithMetricSuffix={false}
           displayAmountFunction={(amount) => toTokenUnit(amount).toString()}
         />
