@@ -11,6 +11,7 @@ import {
 import { isSameEthAddress } from "../utils/general.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import { getEventsFromTransaction } from "../utils/ethereum.utils"
+import { tokenGrantsService } from "./token-grants.service"
 
 const delegationInfoFromStakedEvents = async (address) => {
   const { stakingContract } = await ContractsLoaded
@@ -224,8 +225,9 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
     )
   )
 
-  // Fetch `StakeOwnershipTransferred` by operator field. We need to check more recent event
-  // to make sure the delegation ownership has not been transferred.
+  // Fetch `StakeOwnershipTransferred` by operator field. We need to check more
+  // recent event to make sure the delegation ownership has not been
+  // transferred.
   let transferEventsByOperators = {}
   if (!isEmptyArray(operators)) {
     transferEventsByOperators = (
@@ -253,6 +255,182 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
 
     return false
   })
+}
+
+export const getOperatorsOfGrantee = async (address) => {
+  const { grantContract } = await ContractsLoaded
+
+  // The `getGrants` function returns grants for a grant manager or grantee. So
+  // it's possible that the provided address is a grantee in grant A and a grant
+  // manager in grant B. In that case a `getGrants` function returns [A, B].
+  const grantIds = new Set(
+    await grantContract.methods.getGrants(address).call()
+  )
+
+  // Filter out grants. We just want grants from the grantee's perspective
+  const granteeGrants = []
+  for (const grantId of grantIds) {
+    const { grantee } = await grantContract.methods.getGrant(grantId).call()
+    if (isSameEthAddress(grantee, address)) {
+      granteeGrants.push(grantId)
+    }
+  }
+
+  const granteeOperators = new Set(
+    await grantContract.methods.getGranteeOperators(address).call()
+  )
+
+  const {
+    allOperators,
+    operatorToGrantDetailsMap,
+  } = await getAllGranteeOperators(Array.from(granteeOperators), granteeGrants)
+
+  return { allOperators, granteeGrants, operatorToGrantDetailsMap }
+}
+
+export const getOperatorsOfManagedGrantee = async (address) => {
+  const { grantContract } = await ContractsLoaded
+
+  const managedGrants = await tokenGrantsService.fetchManagedGrants(address)
+
+  const grantIds = managedGrants.map(({ grantId }) => grantId)
+
+  const operators = new Set()
+
+  for (const managedGrant of managedGrants) {
+    const { managedGrantContractInstance } = managedGrant
+    const granteeAddress = managedGrantContractInstance.options.address
+    const grenteeOperators = await grantContract.methods
+      .getGranteeOperators(granteeAddress)
+      .call()
+    grenteeOperators.forEach(operators.add, operators)
+  }
+
+  const {
+    allOperators,
+    operatorToGrantDetailsMap,
+  } = await getAllGranteeOperators(Array.from(operators), grantIds, true)
+
+  return { allOperators, granteeGrants: grantIds, operatorToGrantDetailsMap }
+}
+
+/**
+ * The `getGranteeOperators` function returns only operators stored in the
+ * `TokenGrant` contract. If the grant delegation will be canceled/revoked,
+ * tokens go to the `TokenStakingEscrow` contract. The grantee can redelagte
+ * tokens via `TokenStakingEscrow` and  only the `TokenStakingEscrow` knows
+ * about the new operators so we need to take into account redelegations from
+ * `TokenStakingEscrow`.
+ *
+ * @param {string[]} granteeOperators The result of the
+ * `TokenGrant::getGranteeOperators`.
+ * @param {string[]} grantIds Array of all grantee grants ids.
+ * @param {boolean} isManagedGrant The flag informs that grants in `grantIds`
+ * param are managed grants.
+ * @return {Promise<string[]>} Array of all grantee operators.
+ */
+const getAllGranteeOperators = async (
+  granteeOperators,
+  grantIds,
+  isManagedGrant = false
+) => {
+  const {
+    tokenStakingEscrow,
+    stakingPortBackerContract,
+    stakingContract,
+  } = await ContractsLoaded
+
+  let escrowRedelegation = []
+  if (!isEmptyArray(grantIds)) {
+    escrowRedelegation = await tokenStakingEscrow.getPastEvents(
+      "DepositRedelegated",
+      {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+        filter: {
+          grantId: grantIds,
+        },
+      }
+    )
+  }
+
+  const newOperatorToGrantId = escrowRedelegation.reduce((reducer, event) => {
+    const {
+      returnValues: { newOperator, grantId },
+    } = event
+    reducer[newOperator] = grantId
+    return reducer
+  }, {})
+  const newOperators = escrowRedelegation.map((_) => _.returnValues.newOperator)
+  const obsoleteOperators = escrowRedelegation.map(
+    (_) => _.returnValues.previousOperator
+  )
+
+  let activeOperators = granteeOperators
+    .filter((operator) => !obsoleteOperators.includes(operator))
+    .concat(newOperators)
+
+  // Copied delegations but not yet paid back. The owner of the not paid back
+  // delegation is `StakingPortBacker` contract.
+  const operatorsOfPortBacker = isEmptyArray(activeOperators)
+    ? []
+    : await getOperatorsOfOwner(
+        stakingPortBackerContract.options.address,
+        activeOperators
+      )
+
+  // We want to skip copied delegations.
+  activeOperators = activeOperators.filter(
+    (operator) => !operatorsOfPortBacker.includes(operator)
+  )
+
+  let operatorToGrantDetailsMap = {}
+  if (!isEmptyArray(activeOperators)) {
+    operatorToGrantDetailsMap = (
+      await stakingContract.getPastEvents("OperatorStaked", {
+        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        filter: { operator: activeOperators },
+      })
+    ).reduce((reducer, _) => {
+      reducer[_.returnValues.operator] = _.returnValues
+      return reducer
+    }, {})
+  }
+
+  for (const operator of Object.keys(operatorToGrantDetailsMap)) {
+    const grantId = newOperatorToGrantId.hasOwnProperty(operator)
+      ? newOperatorToGrantId[operator]
+      : null
+    operatorToGrantDetailsMap[operator] = {
+      ...operatorToGrantDetailsMap[operator],
+      isFromGrant: true,
+      isManagedGrant,
+      grantId,
+    }
+  }
+
+  return { allOperators: activeOperators, operatorToGrantDetailsMap }
+}
+
+export const getOperatorsOfCopiedDelegations = async (ownerOrGrantee) => {
+  const { stakingPortBackerContract } = await ContractsLoaded
+  const operatorsToCheck = (
+    await stakingPortBackerContract.getPastEvents("StakeCopied", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      filter: { owner: ownerOrGrantee },
+    })
+  ).map((_) => _.returnValues.operator)
+
+  // No copied delegations.
+  if (isEmptyArray(operatorsToCheck)) {
+    return []
+  }
+
+  // We only want operators for whom the delegation has not been paid back. The
+  // owner of the not paid back delegation is `StakingPortBacker` contract.
+  return await getOperatorsOfOwner(
+    stakingPortBackerContract.options.address,
+    operatorsToCheck
+  )
 }
 
 const reduceByOperator = (result, event) => {

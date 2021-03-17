@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useLayoutEffect, useRef, useState } from "react"
 import { useField } from "formik"
 import * as Icons from "./Icons"
 import Tooltip from "./Tooltip"
@@ -14,12 +14,23 @@ const FormInput = ({
   format,
   normalize,
   tooltipText,
-  instructionText,
+  additionalInfoText,
   leftIcon,
   inputAddon,
   ...props
 }) => {
   const [field, meta, helpers] = useField(props.name, props.type)
+  const inputAddonRef = useRef(null)
+  const [inputPaddingRight, setInputPaddingRight] = useState(0)
+
+  useLayoutEffect(() => {
+    const inputAddonStyles = window.getComputedStyle(inputAddonRef.current)
+    const finalWidth =
+      parseInt(inputAddonStyles.right, 10) +
+      parseInt(inputAddonStyles.width, 10) +
+      10
+    setInputPaddingRight(finalWidth)
+  }, [])
 
   const leftIconComponent =
     leftIcon && React.isValidElement(leftIcon)
@@ -39,22 +50,27 @@ const FormInput = ({
     <div className="form-input flex flex-1 column">
       <label className="input__label" style={alignToInput}>
         <span className="input__label__text">{label}</span>
-        {instructionText && (
-          <span className="input__label__instruction-text">
-            {instructionText}
-          </span>
-        )}
-        {tooltipText && (
-          <Tooltip
-            simple
-            direction="top"
-            delay={0}
-            triggerComponent={Icons.MoreInfo}
-            className="input__label__tooltip"
-          >
-            {tooltipText}
-          </Tooltip>
-        )}
+        <div
+          className={`input__label__info-container ${
+            additionalInfoText ? "align-right" : ""
+          }`}
+        >
+          {tooltipText && (
+            <Tooltip
+              simple
+              delay={0}
+              triggerComponent={Icons.MoreInfo}
+              className="input__label__info-container__tooltip"
+            >
+              {tooltipText}
+            </Tooltip>
+          )}
+          {additionalInfoText && (
+            <span className="input__label__info-container__additional-info-text">
+              {additionalInfoText}
+            </span>
+          )}
+        </div>
       </label>
       <div className="form-input__wrapper">
         {leftIconComponent}
@@ -66,8 +82,11 @@ const FormInput = ({
             helpers.setValue(normalize ? normalize(value) : value)
           }}
           value={format ? format(field.value) : field.value}
+          style={{ paddingRight: `${inputPaddingRight}px` }}
         />
-        <div className="form-input__addon">{inputAddon}</div>
+        <div ref={inputAddonRef} className="form-input__addon">
+          {inputAddon}
+        </div>
       </div>
       {meta.touched && meta.error ? (
         <div className="form-input__error" style={alignToInput}>

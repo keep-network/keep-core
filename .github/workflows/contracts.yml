@@ -124,9 +124,9 @@ jobs:
       
       - name: Migrate contracts
         env: 
-          TRUFFLE_NETWORK: ${{ secrets.TRUFFLE_NETWORK }}
-          ETH_HOSTNAME: ${{ secrets.ETH_HOSTNAME }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY }}
+          TRUFFLE_NETWORK: ${{ secrets.KEEP_TEST_ETH_TRUFFLE_NETWORK }}
+          ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
       - name: Push contracts to Tenderly
@@ -137,7 +137,7 @@ jobs:
           working-directory: ./solidity
           tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
           tenderly-project: thesis/keep-test
-          eth-network-id: ${{ secrets.ETH_NETWORK_ID }} # currently ='3' (ropsten)
+          eth-network-id: ${{ secrets.KEEP_TEST_ETH_NETWORK_ID }} # currently ='3' (ropsten)
           github-project-name: keep-core
           # version-tag: # TODO: resolve npm package version
 
