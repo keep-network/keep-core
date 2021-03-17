@@ -7,11 +7,9 @@ on:
      - master
     paths:
       - "solidity/dashboard/**"
-      - ".github/workflows/dashboard-testnet.yml"
   pull_request:
     paths:
       - "solidity/dashboard/**"
-      - ".github/workflows/dashboard-testnet.yml"
   workflow_dispatch:
 
 jobs:
