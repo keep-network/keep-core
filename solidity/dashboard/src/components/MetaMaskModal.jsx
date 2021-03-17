@@ -10,7 +10,6 @@ const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
     <SelectedWalletModal
       icon={<Icons.MetaMask />}
       walletName="MetaMask"
-      iconDescription={null}
       description={
         connector.getProvider()
           ? "The MetaMask login screen will open in an external window."

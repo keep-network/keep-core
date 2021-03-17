@@ -18,8 +18,6 @@ const WalletConnectModal = ({
         />
       }
       walletName={WALLETS.WALLET_CONNECT.label}
-      iconDescription={null}
-      description={null}
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}

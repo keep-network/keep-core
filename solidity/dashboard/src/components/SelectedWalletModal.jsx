@@ -9,7 +9,7 @@ import { UserRejectedConnectionRequestError } from "../connectors"
 const SelectedWalletModal = ({
   icon,
   walletName,
-  iconDescription,
+  descriptionIcon,
   description,
   connector,
   connectAppWithWallet,
@@ -140,7 +140,7 @@ const SelectedWalletModal = ({
         {icon}
         <h3 className="ml-1">{walletName}</h3>
       </div>
-      {iconDescription && iconDescription}
+      {descriptionIcon && descriptionIcon}
       <span className="text-center mt-1">{description}</span>
       {children}
       {isConnecting || accountsAreFetching ? (
