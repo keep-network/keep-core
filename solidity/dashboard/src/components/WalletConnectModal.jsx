@@ -12,7 +12,7 @@ const WalletConnectModal = ({
     <SelectedWalletModal
       icon={
         <Icons.WalletConnect
-          className="wallet-connect-logo--black"
+          className="wallet-connect-logo wallet-connect-logo--black"
           width={30}
           height={28}
         />

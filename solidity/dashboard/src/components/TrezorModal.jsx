@@ -19,7 +19,7 @@ const TrezorModal = ({ connector, connectAppWithWallet, closeModal }) => {
   )
   return (
     <SelectedWalletModal
-      icon={<Icons.Trezor class="trezor-logo--black" />}
+      icon={<Icons.Trezor class="trezor-logo trezor-logo--black" />}
       walletName="Trezor"
       descriptionIcon={<Icons.TrezorDevice />}
       description="Plug in your Trezor device and unlock. If the setup screen doesn’t

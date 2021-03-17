@@ -23,7 +23,7 @@ const LedgerModal = ({ connector, connectAppWithWallet, closeModal }) => {
 
   return (
     <SelectedWalletModal
-      icon={<Icons.Ledger class="ledger-logo--black" />}
+      icon={<Icons.Ledger class="ledger-logo ledger-logo--black" />}
       walletName="Ledger"
       descriptionIcon={<Icons.LedgerDevice />}
       description="Plug in Ledger device and unlock."
