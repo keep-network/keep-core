@@ -151,7 +151,8 @@ To test WalletConnect integration follow these steps:
        }
       }
      ```
-   3. Run `walletconnect-test-wallet` app: `npm start`
+   3. Install `walletconnect-test-wallet` dependencies: `npm install`
+   4. Run `walletconnect-test-wallet` app: `npm start`
 2. In the KEEP token dashboard select the `WalletConnect` option to connect with
    the test walletconnect wallet. The modal with QR code will be displayed. Copy
    code and past to the `walletconnect-test-wallet`. The dapp should successfully
