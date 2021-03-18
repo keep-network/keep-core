@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindKeepRandomBeaconService(address common.Address, caller bind.ContractCal
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRandomBeaconService *KeepRandomBeaconServiceRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRandomBeaconService *KeepRandomBeaconServiceRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRandomBeaconService.Contract.KeepRandomBeaconServiceCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_KeepRandomBeaconService *KeepRandomBeaconServiceRaw) Transact(opts *bind.
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRandomBeaconService.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,156 +173,186 @@ func (_KeepRandomBeaconService *KeepRandomBeaconServiceTransactorRaw) Transact(o
 
 // Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
-// Solidity: function admin() constant returns(address adm)
+// Solidity: function admin() view returns(address adm)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCaller) Admin(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconService.contract.Call(opts, out, "admin")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconService.contract.Call(opts, &out, "admin")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
-// Solidity: function admin() constant returns(address adm)
+// Solidity: function admin() view returns(address adm)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) Admin() (common.Address, error) {
 	return _KeepRandomBeaconService.Contract.Admin(&_KeepRandomBeaconService.CallOpts)
 }
 
 // Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
-// Solidity: function admin() constant returns(address adm)
+// Solidity: function admin() view returns(address adm)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerSession) Admin() (common.Address, error) {
 	return _KeepRandomBeaconService.Contract.Admin(&_KeepRandomBeaconService.CallOpts)
 }
 
 // Implementation is a free data retrieval call binding the contract method 0x5c60da1b.
 //
-// Solidity: function implementation() constant returns(address)
+// Solidity: function implementation() view returns(address)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCaller) Implementation(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconService.contract.Call(opts, out, "implementation")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconService.contract.Call(opts, &out, "implementation")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Implementation is a free data retrieval call binding the contract method 0x5c60da1b.
 //
-// Solidity: function implementation() constant returns(address)
+// Solidity: function implementation() view returns(address)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) Implementation() (common.Address, error) {
 	return _KeepRandomBeaconService.Contract.Implementation(&_KeepRandomBeaconService.CallOpts)
 }
 
 // Implementation is a free data retrieval call binding the contract method 0x5c60da1b.
 //
-// Solidity: function implementation() constant returns(address)
+// Solidity: function implementation() view returns(address)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerSession) Implementation() (common.Address, error) {
 	return _KeepRandomBeaconService.Contract.Implementation(&_KeepRandomBeaconService.CallOpts)
 }
 
 // InitializationData is a free data retrieval call binding the contract method 0x0f51d40d.
 //
-// Solidity: function initializationData(address ) constant returns(bytes)
+// Solidity: function initializationData(address ) view returns(bytes)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCaller) InitializationData(opts *bind.CallOpts, arg0 common.Address) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _KeepRandomBeaconService.contract.Call(opts, out, "initializationData", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconService.contract.Call(opts, &out, "initializationData", arg0)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // InitializationData is a free data retrieval call binding the contract method 0x0f51d40d.
 //
-// Solidity: function initializationData(address ) constant returns(bytes)
+// Solidity: function initializationData(address ) view returns(bytes)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) InitializationData(arg0 common.Address) ([]byte, error) {
 	return _KeepRandomBeaconService.Contract.InitializationData(&_KeepRandomBeaconService.CallOpts, arg0)
 }
 
 // InitializationData is a free data retrieval call binding the contract method 0x0f51d40d.
 //
-// Solidity: function initializationData(address ) constant returns(bytes)
+// Solidity: function initializationData(address ) view returns(bytes)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerSession) InitializationData(arg0 common.Address) ([]byte, error) {
 	return _KeepRandomBeaconService.Contract.InitializationData(&_KeepRandomBeaconService.CallOpts, arg0)
 }
 
 // NewImplementation is a free data retrieval call binding the contract method 0x8b677b03.
 //
-// Solidity: function newImplementation() constant returns(address _newImplementation)
+// Solidity: function newImplementation() view returns(address _newImplementation)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCaller) NewImplementation(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconService.contract.Call(opts, out, "newImplementation")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconService.contract.Call(opts, &out, "newImplementation")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // NewImplementation is a free data retrieval call binding the contract method 0x8b677b03.
 //
-// Solidity: function newImplementation() constant returns(address _newImplementation)
+// Solidity: function newImplementation() view returns(address _newImplementation)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) NewImplementation() (common.Address, error) {
 	return _KeepRandomBeaconService.Contract.NewImplementation(&_KeepRandomBeaconService.CallOpts)
 }
 
 // NewImplementation is a free data retrieval call binding the contract method 0x8b677b03.
 //
-// Solidity: function newImplementation() constant returns(address _newImplementation)
+// Solidity: function newImplementation() view returns(address _newImplementation)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerSession) NewImplementation() (common.Address, error) {
 	return _KeepRandomBeaconService.Contract.NewImplementation(&_KeepRandomBeaconService.CallOpts)
 }
 
 // UpgradeInitiatedTimestamp is a free data retrieval call binding the contract method 0x95131526.
 //
-// Solidity: function upgradeInitiatedTimestamp() constant returns(uint256 _upgradeInitiatedTimestamp)
+// Solidity: function upgradeInitiatedTimestamp() view returns(uint256 _upgradeInitiatedTimestamp)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCaller) UpgradeInitiatedTimestamp(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconService.contract.Call(opts, out, "upgradeInitiatedTimestamp")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconService.contract.Call(opts, &out, "upgradeInitiatedTimestamp")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UpgradeInitiatedTimestamp is a free data retrieval call binding the contract method 0x95131526.
 //
-// Solidity: function upgradeInitiatedTimestamp() constant returns(uint256 _upgradeInitiatedTimestamp)
+// Solidity: function upgradeInitiatedTimestamp() view returns(uint256 _upgradeInitiatedTimestamp)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) UpgradeInitiatedTimestamp() (*big.Int, error) {
 	return _KeepRandomBeaconService.Contract.UpgradeInitiatedTimestamp(&_KeepRandomBeaconService.CallOpts)
 }
 
 // UpgradeInitiatedTimestamp is a free data retrieval call binding the contract method 0x95131526.
 //
-// Solidity: function upgradeInitiatedTimestamp() constant returns(uint256 _upgradeInitiatedTimestamp)
+// Solidity: function upgradeInitiatedTimestamp() view returns(uint256 _upgradeInitiatedTimestamp)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerSession) UpgradeInitiatedTimestamp() (*big.Int, error) {
 	return _KeepRandomBeaconService.Contract.UpgradeInitiatedTimestamp(&_KeepRandomBeaconService.CallOpts)
 }
 
 // UpgradeTimeDelay is a free data retrieval call binding the contract method 0x9260315b.
 //
-// Solidity: function upgradeTimeDelay() constant returns(uint256 _upgradeTimeDelay)
+// Solidity: function upgradeTimeDelay() view returns(uint256 _upgradeTimeDelay)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCaller) UpgradeTimeDelay(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconService.contract.Call(opts, out, "upgradeTimeDelay")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconService.contract.Call(opts, &out, "upgradeTimeDelay")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UpgradeTimeDelay is a free data retrieval call binding the contract method 0x9260315b.
 //
-// Solidity: function upgradeTimeDelay() constant returns(uint256 _upgradeTimeDelay)
+// Solidity: function upgradeTimeDelay() view returns(uint256 _upgradeTimeDelay)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) UpgradeTimeDelay() (*big.Int, error) {
 	return _KeepRandomBeaconService.Contract.UpgradeTimeDelay(&_KeepRandomBeaconService.CallOpts)
 }
 
 // UpgradeTimeDelay is a free data retrieval call binding the contract method 0x9260315b.
 //
-// Solidity: function upgradeTimeDelay() constant returns(uint256 _upgradeTimeDelay)
+// Solidity: function upgradeTimeDelay() view returns(uint256 _upgradeTimeDelay)
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceCallerSession) UpgradeTimeDelay() (*big.Int, error) {
 	return _KeepRandomBeaconService.Contract.UpgradeTimeDelay(&_KeepRandomBeaconService.CallOpts)
 }
@@ -389,6 +418,27 @@ func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) UpgradeTo(_newIm
 // Solidity: function upgradeTo(address _newImplementation, bytes _data) returns()
 func (_KeepRandomBeaconService *KeepRandomBeaconServiceTransactorSession) UpgradeTo(_newImplementation common.Address, _data []byte) (*types.Transaction, error) {
 	return _KeepRandomBeaconService.Contract.UpgradeTo(&_KeepRandomBeaconService.TransactOpts, _newImplementation, _data)
+}
+
+// Fallback is a paid mutator transaction binding the contract fallback function.
+//
+// Solidity: fallback() payable returns()
+func (_KeepRandomBeaconService *KeepRandomBeaconServiceTransactor) Fallback(opts *bind.TransactOpts, calldata []byte) (*types.Transaction, error) {
+	return _KeepRandomBeaconService.contract.RawTransact(opts, calldata)
+}
+
+// Fallback is a paid mutator transaction binding the contract fallback function.
+//
+// Solidity: fallback() payable returns()
+func (_KeepRandomBeaconService *KeepRandomBeaconServiceSession) Fallback(calldata []byte) (*types.Transaction, error) {
+	return _KeepRandomBeaconService.Contract.Fallback(&_KeepRandomBeaconService.TransactOpts, calldata)
+}
+
+// Fallback is a paid mutator transaction binding the contract fallback function.
+//
+// Solidity: fallback() payable returns()
+func (_KeepRandomBeaconService *KeepRandomBeaconServiceTransactorSession) Fallback(calldata []byte) (*types.Transaction, error) {
+	return _KeepRandomBeaconService.Contract.Fallback(&_KeepRandomBeaconService.TransactOpts, calldata)
 }
 
 // KeepRandomBeaconServiceUpgradeCompletedIterator is returned from FilterUpgradeCompleted and is used to iterate over the raw logs and unpacked data for UpgradeCompleted events raised by the KeepRandomBeaconService contract.
@@ -521,6 +571,7 @@ func (_KeepRandomBeaconService *KeepRandomBeaconServiceFilterer) ParseUpgradeCom
 	if err := _KeepRandomBeaconService.contract.UnpackLog(event, "UpgradeCompleted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -655,5 +706,6 @@ func (_KeepRandomBeaconService *KeepRandomBeaconServiceFilterer) ParseUpgradeSta
 	if err := _KeepRandomBeaconService.contract.UnpackLog(event, "UpgradeStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

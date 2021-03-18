@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindKeepRegistry(address common.Address, caller bind.ContractCaller, transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRegistry *KeepRegistryRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRegistry *KeepRegistryRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRegistry.Contract.KeepRegistryCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_KeepRegistry *KeepRegistryRaw) Transact(opts *bind.TransactOpts, method s
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRegistry *KeepRegistryCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRegistry *KeepRegistryCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRegistry.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,286 +173,341 @@ func (_KeepRegistry *KeepRegistryTransactorRaw) Transact(opts *bind.TransactOpts
 
 // DefaultPanicButton is a free data retrieval call binding the contract method 0x2afb015e.
 //
-// Solidity: function defaultPanicButton() constant returns(address)
+// Solidity: function defaultPanicButton() view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) DefaultPanicButton(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "defaultPanicButton")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "defaultPanicButton")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // DefaultPanicButton is a free data retrieval call binding the contract method 0x2afb015e.
 //
-// Solidity: function defaultPanicButton() constant returns(address)
+// Solidity: function defaultPanicButton() view returns(address)
 func (_KeepRegistry *KeepRegistrySession) DefaultPanicButton() (common.Address, error) {
 	return _KeepRegistry.Contract.DefaultPanicButton(&_KeepRegistry.CallOpts)
 }
 
 // DefaultPanicButton is a free data retrieval call binding the contract method 0x2afb015e.
 //
-// Solidity: function defaultPanicButton() constant returns(address)
+// Solidity: function defaultPanicButton() view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) DefaultPanicButton() (common.Address, error) {
 	return _KeepRegistry.Contract.DefaultPanicButton(&_KeepRegistry.CallOpts)
 }
 
 // Governance is a free data retrieval call binding the contract method 0x5aa6e675.
 //
-// Solidity: function governance() constant returns(address)
+// Solidity: function governance() view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) Governance(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "governance")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "governance")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Governance is a free data retrieval call binding the contract method 0x5aa6e675.
 //
-// Solidity: function governance() constant returns(address)
+// Solidity: function governance() view returns(address)
 func (_KeepRegistry *KeepRegistrySession) Governance() (common.Address, error) {
 	return _KeepRegistry.Contract.Governance(&_KeepRegistry.CallOpts)
 }
 
 // Governance is a free data retrieval call binding the contract method 0x5aa6e675.
 //
-// Solidity: function governance() constant returns(address)
+// Solidity: function governance() view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) Governance() (common.Address, error) {
 	return _KeepRegistry.Contract.Governance(&_KeepRegistry.CallOpts)
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address operatorContract) view returns(bool)
 func (_KeepRegistry *KeepRegistryCaller) IsApprovedOperatorContract(opts *bind.CallOpts, operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "isApprovedOperatorContract", operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "isApprovedOperatorContract", operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address operatorContract) view returns(bool)
 func (_KeepRegistry *KeepRegistrySession) IsApprovedOperatorContract(operatorContract common.Address) (bool, error) {
 	return _KeepRegistry.Contract.IsApprovedOperatorContract(&_KeepRegistry.CallOpts, operatorContract)
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address operatorContract) view returns(bool)
 func (_KeepRegistry *KeepRegistryCallerSession) IsApprovedOperatorContract(operatorContract common.Address) (bool, error) {
 	return _KeepRegistry.Contract.IsApprovedOperatorContract(&_KeepRegistry.CallOpts, operatorContract)
 }
 
 // IsNewOperatorContract is a free data retrieval call binding the contract method 0x5a9671f5.
 //
-// Solidity: function isNewOperatorContract(address operatorContract) constant returns(bool)
+// Solidity: function isNewOperatorContract(address operatorContract) view returns(bool)
 func (_KeepRegistry *KeepRegistryCaller) IsNewOperatorContract(opts *bind.CallOpts, operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "isNewOperatorContract", operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "isNewOperatorContract", operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsNewOperatorContract is a free data retrieval call binding the contract method 0x5a9671f5.
 //
-// Solidity: function isNewOperatorContract(address operatorContract) constant returns(bool)
+// Solidity: function isNewOperatorContract(address operatorContract) view returns(bool)
 func (_KeepRegistry *KeepRegistrySession) IsNewOperatorContract(operatorContract common.Address) (bool, error) {
 	return _KeepRegistry.Contract.IsNewOperatorContract(&_KeepRegistry.CallOpts, operatorContract)
 }
 
 // IsNewOperatorContract is a free data retrieval call binding the contract method 0x5a9671f5.
 //
-// Solidity: function isNewOperatorContract(address operatorContract) constant returns(bool)
+// Solidity: function isNewOperatorContract(address operatorContract) view returns(bool)
 func (_KeepRegistry *KeepRegistryCallerSession) IsNewOperatorContract(operatorContract common.Address) (bool, error) {
 	return _KeepRegistry.Contract.IsNewOperatorContract(&_KeepRegistry.CallOpts, operatorContract)
 }
 
 // OperatorContractUpgraderFor is a free data retrieval call binding the contract method 0x63dc5fcf.
 //
-// Solidity: function operatorContractUpgraderFor(address _serviceContract) constant returns(address)
+// Solidity: function operatorContractUpgraderFor(address _serviceContract) view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) OperatorContractUpgraderFor(opts *bind.CallOpts, _serviceContract common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "operatorContractUpgraderFor", _serviceContract)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "operatorContractUpgraderFor", _serviceContract)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // OperatorContractUpgraderFor is a free data retrieval call binding the contract method 0x63dc5fcf.
 //
-// Solidity: function operatorContractUpgraderFor(address _serviceContract) constant returns(address)
+// Solidity: function operatorContractUpgraderFor(address _serviceContract) view returns(address)
 func (_KeepRegistry *KeepRegistrySession) OperatorContractUpgraderFor(_serviceContract common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.OperatorContractUpgraderFor(&_KeepRegistry.CallOpts, _serviceContract)
 }
 
 // OperatorContractUpgraderFor is a free data retrieval call binding the contract method 0x63dc5fcf.
 //
-// Solidity: function operatorContractUpgraderFor(address _serviceContract) constant returns(address)
+// Solidity: function operatorContractUpgraderFor(address _serviceContract) view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) OperatorContractUpgraderFor(_serviceContract common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.OperatorContractUpgraderFor(&_KeepRegistry.CallOpts, _serviceContract)
 }
 
 // OperatorContractUpgraders is a free data retrieval call binding the contract method 0xd858008a.
 //
-// Solidity: function operatorContractUpgraders(address ) constant returns(address)
+// Solidity: function operatorContractUpgraders(address ) view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) OperatorContractUpgraders(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "operatorContractUpgraders", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "operatorContractUpgraders", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // OperatorContractUpgraders is a free data retrieval call binding the contract method 0xd858008a.
 //
-// Solidity: function operatorContractUpgraders(address ) constant returns(address)
+// Solidity: function operatorContractUpgraders(address ) view returns(address)
 func (_KeepRegistry *KeepRegistrySession) OperatorContractUpgraders(arg0 common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.OperatorContractUpgraders(&_KeepRegistry.CallOpts, arg0)
 }
 
 // OperatorContractUpgraders is a free data retrieval call binding the contract method 0xd858008a.
 //
-// Solidity: function operatorContractUpgraders(address ) constant returns(address)
+// Solidity: function operatorContractUpgraders(address ) view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) OperatorContractUpgraders(arg0 common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.OperatorContractUpgraders(&_KeepRegistry.CallOpts, arg0)
 }
 
 // OperatorContracts is a free data retrieval call binding the contract method 0x3dbcab45.
 //
-// Solidity: function operatorContracts(address ) constant returns(uint8)
+// Solidity: function operatorContracts(address ) view returns(uint8)
 func (_KeepRegistry *KeepRegistryCaller) OperatorContracts(opts *bind.CallOpts, arg0 common.Address) (uint8, error) {
-	var (
-		ret0 = new(uint8)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "operatorContracts", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "operatorContracts", arg0)
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
 }
 
 // OperatorContracts is a free data retrieval call binding the contract method 0x3dbcab45.
 //
-// Solidity: function operatorContracts(address ) constant returns(uint8)
+// Solidity: function operatorContracts(address ) view returns(uint8)
 func (_KeepRegistry *KeepRegistrySession) OperatorContracts(arg0 common.Address) (uint8, error) {
 	return _KeepRegistry.Contract.OperatorContracts(&_KeepRegistry.CallOpts, arg0)
 }
 
 // OperatorContracts is a free data retrieval call binding the contract method 0x3dbcab45.
 //
-// Solidity: function operatorContracts(address ) constant returns(uint8)
+// Solidity: function operatorContracts(address ) view returns(uint8)
 func (_KeepRegistry *KeepRegistryCallerSession) OperatorContracts(arg0 common.Address) (uint8, error) {
 	return _KeepRegistry.Contract.OperatorContracts(&_KeepRegistry.CallOpts, arg0)
 }
 
 // PanicButtons is a free data retrieval call binding the contract method 0x7b4df938.
 //
-// Solidity: function panicButtons(address ) constant returns(address)
+// Solidity: function panicButtons(address ) view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) PanicButtons(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "panicButtons", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "panicButtons", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // PanicButtons is a free data retrieval call binding the contract method 0x7b4df938.
 //
-// Solidity: function panicButtons(address ) constant returns(address)
+// Solidity: function panicButtons(address ) view returns(address)
 func (_KeepRegistry *KeepRegistrySession) PanicButtons(arg0 common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.PanicButtons(&_KeepRegistry.CallOpts, arg0)
 }
 
 // PanicButtons is a free data retrieval call binding the contract method 0x7b4df938.
 //
-// Solidity: function panicButtons(address ) constant returns(address)
+// Solidity: function panicButtons(address ) view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) PanicButtons(arg0 common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.PanicButtons(&_KeepRegistry.CallOpts, arg0)
 }
 
 // RegistryKeeper is a free data retrieval call binding the contract method 0x84c07bd2.
 //
-// Solidity: function registryKeeper() constant returns(address)
+// Solidity: function registryKeeper() view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) RegistryKeeper(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "registryKeeper")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "registryKeeper")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // RegistryKeeper is a free data retrieval call binding the contract method 0x84c07bd2.
 //
-// Solidity: function registryKeeper() constant returns(address)
+// Solidity: function registryKeeper() view returns(address)
 func (_KeepRegistry *KeepRegistrySession) RegistryKeeper() (common.Address, error) {
 	return _KeepRegistry.Contract.RegistryKeeper(&_KeepRegistry.CallOpts)
 }
 
 // RegistryKeeper is a free data retrieval call binding the contract method 0x84c07bd2.
 //
-// Solidity: function registryKeeper() constant returns(address)
+// Solidity: function registryKeeper() view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) RegistryKeeper() (common.Address, error) {
 	return _KeepRegistry.Contract.RegistryKeeper(&_KeepRegistry.CallOpts)
 }
 
 // ServiceContractUpgraderFor is a free data retrieval call binding the contract method 0x6557eccf.
 //
-// Solidity: function serviceContractUpgraderFor(address _operatorContract) constant returns(address)
+// Solidity: function serviceContractUpgraderFor(address _operatorContract) view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) ServiceContractUpgraderFor(opts *bind.CallOpts, _operatorContract common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "serviceContractUpgraderFor", _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "serviceContractUpgraderFor", _operatorContract)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ServiceContractUpgraderFor is a free data retrieval call binding the contract method 0x6557eccf.
 //
-// Solidity: function serviceContractUpgraderFor(address _operatorContract) constant returns(address)
+// Solidity: function serviceContractUpgraderFor(address _operatorContract) view returns(address)
 func (_KeepRegistry *KeepRegistrySession) ServiceContractUpgraderFor(_operatorContract common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.ServiceContractUpgraderFor(&_KeepRegistry.CallOpts, _operatorContract)
 }
 
 // ServiceContractUpgraderFor is a free data retrieval call binding the contract method 0x6557eccf.
 //
-// Solidity: function serviceContractUpgraderFor(address _operatorContract) constant returns(address)
+// Solidity: function serviceContractUpgraderFor(address _operatorContract) view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) ServiceContractUpgraderFor(_operatorContract common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.ServiceContractUpgraderFor(&_KeepRegistry.CallOpts, _operatorContract)
 }
 
 // ServiceContractUpgraders is a free data retrieval call binding the contract method 0xff111e3b.
 //
-// Solidity: function serviceContractUpgraders(address ) constant returns(address)
+// Solidity: function serviceContractUpgraders(address ) view returns(address)
 func (_KeepRegistry *KeepRegistryCaller) ServiceContractUpgraders(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRegistry.contract.Call(opts, out, "serviceContractUpgraders", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRegistry.contract.Call(opts, &out, "serviceContractUpgraders", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ServiceContractUpgraders is a free data retrieval call binding the contract method 0xff111e3b.
 //
-// Solidity: function serviceContractUpgraders(address ) constant returns(address)
+// Solidity: function serviceContractUpgraders(address ) view returns(address)
 func (_KeepRegistry *KeepRegistrySession) ServiceContractUpgraders(arg0 common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.ServiceContractUpgraders(&_KeepRegistry.CallOpts, arg0)
 }
 
 // ServiceContractUpgraders is a free data retrieval call binding the contract method 0xff111e3b.
 //
-// Solidity: function serviceContractUpgraders(address ) constant returns(address)
+// Solidity: function serviceContractUpgraders(address ) view returns(address)
 func (_KeepRegistry *KeepRegistryCallerSession) ServiceContractUpgraders(arg0 common.Address) (common.Address, error) {
 	return _KeepRegistry.Contract.ServiceContractUpgraders(&_KeepRegistry.CallOpts, arg0)
 }
@@ -777,6 +831,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseDefaultPanicButtonUpdated(log ty
 	if err := _KeepRegistry.contract.UnpackLog(event, "DefaultPanicButtonUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -910,6 +965,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseGovernanceUpdated(log types.Log)
 	if err := _KeepRegistry.contract.UnpackLog(event, "GovernanceUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1043,6 +1099,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseOperatorContractApproved(log typ
 	if err := _KeepRegistry.contract.UnpackLog(event, "OperatorContractApproved", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1176,6 +1233,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseOperatorContractDisabled(log typ
 	if err := _KeepRegistry.contract.UnpackLog(event, "OperatorContractDisabled", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1309,6 +1367,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseOperatorContractPanicButtonDisab
 	if err := _KeepRegistry.contract.UnpackLog(event, "OperatorContractPanicButtonDisabled", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1443,6 +1502,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseOperatorContractPanicButtonUpdat
 	if err := _KeepRegistry.contract.UnpackLog(event, "OperatorContractPanicButtonUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1577,6 +1637,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseOperatorContractUpgraderUpdated(
 	if err := _KeepRegistry.contract.UnpackLog(event, "OperatorContractUpgraderUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1710,6 +1771,7 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseRegistryKeeperUpdated(log types.
 	if err := _KeepRegistry.contract.UnpackLog(event, "RegistryKeeperUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1844,5 +1906,6 @@ func (_KeepRegistry *KeepRegistryFilterer) ParseServiceContractUpgraderUpdated(l
 	if err := _KeepRegistry.contract.UnpackLog(event, "ServiceContractUpgraderUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

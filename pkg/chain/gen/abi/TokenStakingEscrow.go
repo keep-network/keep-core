@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindTokenStakingEscrow(address common.Address, caller bind.ContractCaller, 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TokenStakingEscrow *TokenStakingEscrowRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TokenStakingEscrow *TokenStakingEscrowRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TokenStakingEscrow.Contract.TokenStakingEscrowCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_TokenStakingEscrow *TokenStakingEscrowRaw) Transact(opts *bind.TransactOp
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TokenStakingEscrow *TokenStakingEscrowCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TokenStakingEscrow *TokenStakingEscrowCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TokenStakingEscrow.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,312 +173,372 @@ func (_TokenStakingEscrow *TokenStakingEscrowTransactorRaw) Transact(opts *bind.
 
 // AvailableAmount is a free data retrieval call binding the contract method 0x654259dd.
 //
-// Solidity: function availableAmount(address operator) constant returns(uint256)
+// Solidity: function availableAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) AvailableAmount(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "availableAmount", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "availableAmount", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // AvailableAmount is a free data retrieval call binding the contract method 0x654259dd.
 //
-// Solidity: function availableAmount(address operator) constant returns(uint256)
+// Solidity: function availableAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) AvailableAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.AvailableAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // AvailableAmount is a free data retrieval call binding the contract method 0x654259dd.
 //
-// Solidity: function availableAmount(address operator) constant returns(uint256)
+// Solidity: function availableAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) AvailableAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.AvailableAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositGrantId is a free data retrieval call binding the contract method 0x7589d761.
 //
-// Solidity: function depositGrantId(address operator) constant returns(uint256)
+// Solidity: function depositGrantId(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) DepositGrantId(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "depositGrantId", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "depositGrantId", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DepositGrantId is a free data retrieval call binding the contract method 0x7589d761.
 //
-// Solidity: function depositGrantId(address operator) constant returns(uint256)
+// Solidity: function depositGrantId(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) DepositGrantId(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositGrantId(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositGrantId is a free data retrieval call binding the contract method 0x7589d761.
 //
-// Solidity: function depositGrantId(address operator) constant returns(uint256)
+// Solidity: function depositGrantId(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) DepositGrantId(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositGrantId(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositRedelegatedAmount is a free data retrieval call binding the contract method 0x2c5cd1ed.
 //
-// Solidity: function depositRedelegatedAmount(address operator) constant returns(uint256)
+// Solidity: function depositRedelegatedAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) DepositRedelegatedAmount(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "depositRedelegatedAmount", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "depositRedelegatedAmount", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DepositRedelegatedAmount is a free data retrieval call binding the contract method 0x2c5cd1ed.
 //
-// Solidity: function depositRedelegatedAmount(address operator) constant returns(uint256)
+// Solidity: function depositRedelegatedAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) DepositRedelegatedAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositRedelegatedAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositRedelegatedAmount is a free data retrieval call binding the contract method 0x2c5cd1ed.
 //
-// Solidity: function depositRedelegatedAmount(address operator) constant returns(uint256)
+// Solidity: function depositRedelegatedAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) DepositRedelegatedAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositRedelegatedAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositWithdrawnAmount is a free data retrieval call binding the contract method 0xa6cedc84.
 //
-// Solidity: function depositWithdrawnAmount(address operator) constant returns(uint256)
+// Solidity: function depositWithdrawnAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) DepositWithdrawnAmount(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "depositWithdrawnAmount", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "depositWithdrawnAmount", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DepositWithdrawnAmount is a free data retrieval call binding the contract method 0xa6cedc84.
 //
-// Solidity: function depositWithdrawnAmount(address operator) constant returns(uint256)
+// Solidity: function depositWithdrawnAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) DepositWithdrawnAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositWithdrawnAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositWithdrawnAmount is a free data retrieval call binding the contract method 0xa6cedc84.
 //
-// Solidity: function depositWithdrawnAmount(address operator) constant returns(uint256)
+// Solidity: function depositWithdrawnAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) DepositWithdrawnAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositWithdrawnAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositedAmount is a free data retrieval call binding the contract method 0x4a4643f7.
 //
-// Solidity: function depositedAmount(address operator) constant returns(uint256)
+// Solidity: function depositedAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) DepositedAmount(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "depositedAmount", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "depositedAmount", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DepositedAmount is a free data retrieval call binding the contract method 0x4a4643f7.
 //
-// Solidity: function depositedAmount(address operator) constant returns(uint256)
+// Solidity: function depositedAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) DepositedAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositedAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // DepositedAmount is a free data retrieval call binding the contract method 0x4a4643f7.
 //
-// Solidity: function depositedAmount(address operator) constant returns(uint256)
+// Solidity: function depositedAmount(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) DepositedAmount(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.DepositedAmount(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // GetManagedGrantee is a free data retrieval call binding the contract method 0x012b1973.
 //
-// Solidity: function getManagedGrantee(address managedGrant) constant returns(address)
+// Solidity: function getManagedGrantee(address managedGrant) view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) GetManagedGrantee(opts *bind.CallOpts, managedGrant common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "getManagedGrantee", managedGrant)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "getManagedGrantee", managedGrant)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GetManagedGrantee is a free data retrieval call binding the contract method 0x012b1973.
 //
-// Solidity: function getManagedGrantee(address managedGrant) constant returns(address)
+// Solidity: function getManagedGrantee(address managedGrant) view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) GetManagedGrantee(managedGrant common.Address) (common.Address, error) {
 	return _TokenStakingEscrow.Contract.GetManagedGrantee(&_TokenStakingEscrow.CallOpts, managedGrant)
 }
 
 // GetManagedGrantee is a free data retrieval call binding the contract method 0x012b1973.
 //
-// Solidity: function getManagedGrantee(address managedGrant) constant returns(address)
+// Solidity: function getManagedGrantee(address managedGrant) view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) GetManagedGrantee(managedGrant common.Address) (common.Address, error) {
 	return _TokenStakingEscrow.Contract.GetManagedGrantee(&_TokenStakingEscrow.CallOpts, managedGrant)
 }
 
 // HasDeposit is a free data retrieval call binding the contract method 0x1c48c7ec.
 //
-// Solidity: function hasDeposit(address operator) constant returns(bool)
+// Solidity: function hasDeposit(address operator) view returns(bool)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) HasDeposit(opts *bind.CallOpts, operator common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "hasDeposit", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "hasDeposit", operator)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // HasDeposit is a free data retrieval call binding the contract method 0x1c48c7ec.
 //
-// Solidity: function hasDeposit(address operator) constant returns(bool)
+// Solidity: function hasDeposit(address operator) view returns(bool)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) HasDeposit(operator common.Address) (bool, error) {
 	return _TokenStakingEscrow.Contract.HasDeposit(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // HasDeposit is a free data retrieval call binding the contract method 0x1c48c7ec.
 //
-// Solidity: function hasDeposit(address operator) constant returns(bool)
+// Solidity: function hasDeposit(address operator) view returns(bool)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) HasDeposit(operator common.Address) (bool, error) {
 	return _TokenStakingEscrow.Contract.HasDeposit(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) IsOwner() (bool, error) {
 	return _TokenStakingEscrow.Contract.IsOwner(&_TokenStakingEscrow.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) IsOwner() (bool, error) {
 	return _TokenStakingEscrow.Contract.IsOwner(&_TokenStakingEscrow.CallOpts)
 }
 
 // KeepToken is a free data retrieval call binding the contract method 0x467c5adf.
 //
-// Solidity: function keepToken() constant returns(address)
+// Solidity: function keepToken() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) KeepToken(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "keepToken")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "keepToken")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // KeepToken is a free data retrieval call binding the contract method 0x467c5adf.
 //
-// Solidity: function keepToken() constant returns(address)
+// Solidity: function keepToken() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) KeepToken() (common.Address, error) {
 	return _TokenStakingEscrow.Contract.KeepToken(&_TokenStakingEscrow.CallOpts)
 }
 
 // KeepToken is a free data retrieval call binding the contract method 0x467c5adf.
 //
-// Solidity: function keepToken() constant returns(address)
+// Solidity: function keepToken() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) KeepToken() (common.Address, error) {
 	return _TokenStakingEscrow.Contract.KeepToken(&_TokenStakingEscrow.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) Owner() (common.Address, error) {
 	return _TokenStakingEscrow.Contract.Owner(&_TokenStakingEscrow.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) Owner() (common.Address, error) {
 	return _TokenStakingEscrow.Contract.Owner(&_TokenStakingEscrow.CallOpts)
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) TokenGrant(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "tokenGrant")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "tokenGrant")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) TokenGrant() (common.Address, error) {
 	return _TokenStakingEscrow.Contract.TokenGrant(&_TokenStakingEscrow.CallOpts)
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) TokenGrant() (common.Address, error) {
 	return _TokenStakingEscrow.Contract.TokenGrant(&_TokenStakingEscrow.CallOpts)
 }
 
 // Withdrawable is a free data retrieval call binding the contract method 0xce513b6f.
 //
-// Solidity: function withdrawable(address operator) constant returns(uint256)
+// Solidity: function withdrawable(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCaller) Withdrawable(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStakingEscrow.contract.Call(opts, out, "withdrawable", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStakingEscrow.contract.Call(opts, &out, "withdrawable", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Withdrawable is a free data retrieval call binding the contract method 0xce513b6f.
 //
-// Solidity: function withdrawable(address operator) constant returns(uint256)
+// Solidity: function withdrawable(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowSession) Withdrawable(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.Withdrawable(&_TokenStakingEscrow.CallOpts, operator)
 }
 
 // Withdrawable is a free data retrieval call binding the contract method 0xce513b6f.
 //
-// Solidity: function withdrawable(address operator) constant returns(uint256)
+// Solidity: function withdrawable(address operator) view returns(uint256)
 func (_TokenStakingEscrow *TokenStakingEscrowCallerSession) Withdrawable(operator common.Address) (*big.Int, error) {
 	return _TokenStakingEscrow.Contract.Withdrawable(&_TokenStakingEscrow.CallOpts, operator)
 }
@@ -832,6 +891,7 @@ func (_TokenStakingEscrow *TokenStakingEscrowFilterer) ParseDepositRedelegated(l
 	if err := _TokenStakingEscrow.contract.UnpackLog(event, "DepositRedelegated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -985,6 +1045,7 @@ func (_TokenStakingEscrow *TokenStakingEscrowFilterer) ParseDepositWithdrawn(log
 	if err := _TokenStakingEscrow.contract.UnpackLog(event, "DepositWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1138,6 +1199,7 @@ func (_TokenStakingEscrow *TokenStakingEscrowFilterer) ParseDeposited(log types.
 	if err := _TokenStakingEscrow.contract.UnpackLog(event, "Deposited", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1282,6 +1344,7 @@ func (_TokenStakingEscrow *TokenStakingEscrowFilterer) ParseEscrowAuthorized(log
 	if err := _TokenStakingEscrow.contract.UnpackLog(event, "EscrowAuthorized", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1434,6 +1497,7 @@ func (_TokenStakingEscrow *TokenStakingEscrowFilterer) ParseOwnershipTransferred
 	if err := _TokenStakingEscrow.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1587,5 +1651,6 @@ func (_TokenStakingEscrow *TokenStakingEscrowFilterer) ParseRevokedDepositWithdr
 	if err := _TokenStakingEscrow.contract.UnpackLog(event, "RevokedDepositWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

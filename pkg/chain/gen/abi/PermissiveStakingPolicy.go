@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindPermissiveStakingPolicy(address common.Address, caller bind.ContractCal
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_PermissiveStakingPolicy *PermissiveStakingPolicyRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_PermissiveStakingPolicy *PermissiveStakingPolicyRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _PermissiveStakingPolicy.Contract.PermissiveStakingPolicyCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_PermissiveStakingPolicy *PermissiveStakingPolicyRaw) Transact(opts *bind.
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_PermissiveStakingPolicy *PermissiveStakingPolicyCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_PermissiveStakingPolicy *PermissiveStakingPolicyCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _PermissiveStakingPolicy.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,26 +173,31 @@ func (_PermissiveStakingPolicy *PermissiveStakingPolicyTransactorRaw) Transact(o
 
 // GetStakeableAmount is a free data retrieval call binding the contract method 0xdab40935.
 //
-// Solidity: function getStakeableAmount(uint256 _now, uint256 grantedAmount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn) constant returns(uint256)
+// Solidity: function getStakeableAmount(uint256 _now, uint256 grantedAmount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn) view returns(uint256)
 func (_PermissiveStakingPolicy *PermissiveStakingPolicyCaller) GetStakeableAmount(opts *bind.CallOpts, _now *big.Int, grantedAmount *big.Int, duration *big.Int, start *big.Int, cliff *big.Int, withdrawn *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _PermissiveStakingPolicy.contract.Call(opts, out, "getStakeableAmount", _now, grantedAmount, duration, start, cliff, withdrawn)
-	return *ret0, err
+	var out []interface{}
+	err := _PermissiveStakingPolicy.contract.Call(opts, &out, "getStakeableAmount", _now, grantedAmount, duration, start, cliff, withdrawn)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetStakeableAmount is a free data retrieval call binding the contract method 0xdab40935.
 //
-// Solidity: function getStakeableAmount(uint256 _now, uint256 grantedAmount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn) constant returns(uint256)
+// Solidity: function getStakeableAmount(uint256 _now, uint256 grantedAmount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn) view returns(uint256)
 func (_PermissiveStakingPolicy *PermissiveStakingPolicySession) GetStakeableAmount(_now *big.Int, grantedAmount *big.Int, duration *big.Int, start *big.Int, cliff *big.Int, withdrawn *big.Int) (*big.Int, error) {
 	return _PermissiveStakingPolicy.Contract.GetStakeableAmount(&_PermissiveStakingPolicy.CallOpts, _now, grantedAmount, duration, start, cliff, withdrawn)
 }
 
 // GetStakeableAmount is a free data retrieval call binding the contract method 0xdab40935.
 //
-// Solidity: function getStakeableAmount(uint256 _now, uint256 grantedAmount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn) constant returns(uint256)
+// Solidity: function getStakeableAmount(uint256 _now, uint256 grantedAmount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn) view returns(uint256)
 func (_PermissiveStakingPolicy *PermissiveStakingPolicyCallerSession) GetStakeableAmount(_now *big.Int, grantedAmount *big.Int, duration *big.Int, start *big.Int, cliff *big.Int, withdrawn *big.Int) (*big.Int, error) {
 	return _PermissiveStakingPolicy.Contract.GetStakeableAmount(&_PermissiveStakingPolicy.CallOpts, _now, grantedAmount, duration, start, cliff, withdrawn)
 }
