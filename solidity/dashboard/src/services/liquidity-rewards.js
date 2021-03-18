@@ -131,6 +131,10 @@ class LiquidityRewards {
   calculateLPTokenBalance = async (shareOfPoolInPercent) => {
     throw new Error("First, implement the `calculateLPTokenBalance` function")
   }
+
+  calculateRewardMultiplier = async (address) => {
+    throw new Error("First, implement the `calculateRewardMultiplier` function")
+  }
 }
 
 class UniswapLPRewards extends LiquidityRewards {
@@ -186,6 +190,10 @@ class UniswapLPRewards extends LiquidityRewards {
         .dividedBy(pairData.totalSupply)
         .toString(),
     }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 0
   }
 }
 
@@ -257,6 +265,10 @@ class SaddleLPRewards extends LiquidityRewards {
       token0: "0",
       token1: "0",
     }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 0
   }
 }
 
@@ -359,6 +371,27 @@ class TokenGeyserLPRewards extends LiquidityRewards {
       token0: "0",
       token1: "0",
     }
+  }
+
+  /**
+   * Calculates reward multiplier for KEEP-ONLY pool for a given user
+   *
+   * @param {string} address - address of the user's wallet
+   * @return {Promise<string>}
+   */
+  calculateRewardMultiplier = async (address) => {
+    const stakedBalanceOfUser = await this.stakedBalance(address)
+    const rewardBalance = await this.rewardBalance(stakedBalanceOfUser)
+
+    const stakedBalanceOfUserBN = new BigNumber(stakedBalanceOfUser)
+    const rewardBalanceBN = new BigNumber(rewardBalance)
+
+    const rewardMultiplier = stakedBalanceOfUserBN
+      .plus(rewardBalanceBN)
+      .dividedBy(stakedBalanceOfUserBN)
+      .toString()
+
+    return rewardMultiplier
   }
 }
 
