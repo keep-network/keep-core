@@ -128,7 +128,7 @@ class LiquidityRewards {
     throw new Error("First, implement the `calculateAPY` function")
   }
 
-  calculateLPTokenBalance = async (shareOfPoolInPercent) => {
+  calculateLPTokenBalance = async (lpBalance) => {
     throw new Error("First, implement the `calculateLPTokenBalance` function")
   }
 
@@ -260,7 +260,7 @@ class SaddleLPRewards extends LiquidityRewards {
     return await this.swapContract.methods.getTokenBalance(index).call()
   }
 
-  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+  calculateLPTokenBalance = (lpBalance) => {
     return {
       token0: "0",
       token1: "0",
@@ -366,7 +366,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
 
-  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+  calculateLPTokenBalance = (lpBalance) => {
     return {
       token0: "0",
       token1: "0",
