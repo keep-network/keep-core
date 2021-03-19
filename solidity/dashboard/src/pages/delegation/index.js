@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from "react"
+import React, { useCallback } from "react"
 import { connect } from "react-redux"
 import moment from "moment"
 import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../../actions"
@@ -12,6 +12,7 @@ import * as Icons from "../../components/Icons"
 
 import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
+import { useDispatchWhenAccountChanged } from "../../hooks/useDispatchWhenAccountChanged"
 
 const DelegationPage = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
@@ -28,21 +29,26 @@ const DelegationPageWrapperComponent = ({
   children,
   ...restProps
 }) => {
-  useEffect(() => {
-    fetchOldDelegations()
-  }, [fetchOldDelegations])
+  // useEffect(() => {
+  //   fetchOldDelegations()
+  // }, [fetchOldDelegations])
 
-  useEffect(() => {
-    fetchGrants()
-  }, [fetchGrants])
+  // useEffect(() => {
+  //   fetchGrants()
+  // }, [fetchGrants])
 
-  useEffect(() => {
-    fetchDelegations()
-  }, [fetchDelegations])
+  // useEffect(() => {
+  //   fetchDelegations()
+  // }, [fetchDelegations])
 
-  useEffect(() => {
-    fetchTopUps()
-  }, [fetchTopUps])
+  // useEffect(() => {
+  //   fetchTopUps()
+  // }, [fetchTopUps])
+
+  useDispatchWhenAccountChanged(fetchOldDelegations)
+  useDispatchWhenAccountChanged(fetchGrants)
+  useDispatchWhenAccountChanged(fetchDelegations)
+  useDispatchWhenAccountChanged(fetchTopUps)
 
   const { openModal, openConfirmationModal } = useModal()
 
