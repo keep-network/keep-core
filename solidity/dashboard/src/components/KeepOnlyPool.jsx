@@ -11,7 +11,6 @@ import {
   displayAmount,
   fromTokenUnit,
   displayAmountWithMetricSuffix,
-  displayNumberWithMetricSuffix,
 } from "../utils/token.utils"
 import {
   normalizeAmount,
@@ -37,6 +36,7 @@ const KeepOnlyPool = ({
   withdrawLiquidityRewards,
   liquidityContractName,
   pool,
+  rewardMultiplier,
 }) => {
   const { openConfirmationModal } = useModal()
 
@@ -184,15 +184,15 @@ const KeepOnlyPool = ({
             ) : (
               <h2 className="liquidity__info-tile__title text-mint-100">
                 <CountUp
-                  end={toTokenUnit(rewardBalance).toNumber()}
+                  end={rewardMultiplier}
                   preserveValue
-                  decimals={2}
+                  decimals={1}
                   duration={1}
-                  formattingFn={displayNumberWithMetricSuffix}
+                  suffix={"x"}
                 />
               </h2>
             )}
-            <h6>your keep rewards</h6>
+            <h6>reward multiplier</h6>
           </MetricsTile>
         </section>
       </section>
