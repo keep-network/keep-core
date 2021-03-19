@@ -193,7 +193,7 @@ class UniswapLPRewards extends LiquidityRewards {
   }
 
   calculateRewardMultiplier = async (address) => {
-    return 0
+    return 1
   }
 }
 
@@ -268,7 +268,7 @@ class SaddleLPRewards extends LiquidityRewards {
   }
 
   calculateRewardMultiplier = async (address) => {
-    return 0
+    return 1
   }
 }
 

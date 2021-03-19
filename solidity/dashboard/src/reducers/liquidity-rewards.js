@@ -12,7 +12,7 @@ const liquidityPairInitialData = {
     token0: 0,
     token1: 0,
   },
-  rewardMultiplier: 0,
+  rewardMultiplier: 1,
   isFetching: false,
   error: null,
 }
