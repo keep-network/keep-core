@@ -23,7 +23,7 @@ import { validateAmountInRange, getErrorsObj } from "../forms/common-validators"
 import { useModal } from "../hooks/useModal"
 import TokenAmount from "./TokenAmount"
 import MetricsTile from "./MetricsTile"
-import RewardMultiplier from "./liquidity/RewardMultiplier";
+import RewardMultiplier from "./liquidity/RewardMultiplier"
 
 const KeepOnlyPool = ({
   apy,
