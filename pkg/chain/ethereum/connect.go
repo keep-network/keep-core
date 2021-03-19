@@ -46,12 +46,13 @@ var (
 
 type ethereumChain struct {
 	config                           ethereum.Config
+	accountKey                       *keystore.Key
 	client                           ethutil.EthereumClient
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
+	chainID                          *big.Int
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
-	accountKey                       *keystore.Key
 	blockCounter                     *ethlike.BlockCounter
 	chainConfig                      *relaychain.Config
 
@@ -99,11 +100,20 @@ func connectWithClient(
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
+	chainID, err := client.ChainID(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf(
+			"failed to resolve Ethereum chain id: [%v]",
+			err,
+		)
+	}
+
 	ec := &ethereumChain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
 		clientWS:         clientWS,
+		chainID:          chainID,
 		transactionMutex: &sync.Mutex{},
 	}
 
@@ -161,6 +171,7 @@ func connectWithClient(
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
 			address,
+			ec.chainID,
 			ec.accountKey,
 			ec.client,
 			nonceManager,
@@ -181,6 +192,7 @@ func connectWithClient(
 	stakingContract, err :=
 		contract.NewTokenStaking(
 			address,
+			ec.chainID,
 			ec.accountKey,
 			ec.client,
 			nonceManager,
@@ -293,6 +305,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 	keepRandomBeaconServiceContract, err :=
 		contract.NewKeepRandomBeaconService(
 			address,
+			base.chainID,
 			base.accountKey,
 			base.client,
 			nonceManager,
