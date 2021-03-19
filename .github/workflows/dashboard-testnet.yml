@@ -78,8 +78,9 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
-          # Below condition together with workflow trigger restictions means 
-          # that image will be pushed to registry only on merges to master.
-          push: ${{ github.event_name == 'push' }}
+          push: |
+            ${{ github.ref == 'refs/heads/master'
+              && (github.event_name == 'push'
+              || github.event_name == 'workflow_dispatch') }} 
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
