@@ -7,6 +7,16 @@ import tokenGrants from "./token-grant"
 import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
 
+const app = (state = { isReady: true }, action) => {
+  switch (action.type) {
+    case "app/reinitialization":
+      return { ...state, isReady: false }
+
+    default:
+      return state
+  }
+}
+
 const reducers = combineReducers({
   messages,
   copyStake,
@@ -15,10 +25,11 @@ const reducers = combineReducers({
   tokenGrants,
   rewards,
   liquidityRewards,
+  app,
 })
 
 const rootReducer = (state, action) => {
-  if (action.type === "RESET_APP") {
+  if (action.type === "app/reset_store") {
     state = undefined
   }
 
