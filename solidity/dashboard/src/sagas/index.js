@@ -1,4 +1,4 @@
-import { all, fork, take, cancel, put } from "redux-saga/effects"
+import { all, fork, take, cancel, put, delay } from "redux-saga/effects"
 import * as messagesSaga from "./messages"
 import * as delegateStakeSaga from "./staking"
 import * as tokenGrantSaga from "./token-grant"
@@ -24,8 +24,11 @@ export default function* rootSaga() {
         ...Object.values(liquidityRewards),
       ].map(fork)
     )
-    yield take("restart_saga")
+
+    yield take("root_saga/restart")
+    yield put({ type: "app/reinitialization" })
     yield cancel(tasks)
-    yield put({ type: "RESET_APP" })
+    yield delay(500)
+    yield put({ type: "app/reset_store" })
   }
 }
