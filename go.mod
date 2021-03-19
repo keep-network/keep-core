@@ -12,6 +12,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa
+	github.com/google/uuid v1.1.5
 	github.com/ipfs/go-datastore v0.4.4
 	github.com/ipfs/go-log v1.0.4
 	github.com/keep-network/go-libp2p-bootstrap v0.0.0-20200423153828-ed815bc50aec
@@ -26,7 +27,6 @@ require (
 	github.com/libp2p/go-libp2p-routing v0.1.0 // indirect
 	github.com/libp2p/go-libp2p-secio v0.2.2
 	github.com/multiformats/go-multiaddr v0.2.2
-	github.com/pborman/uuid v1.2.0
 	github.com/urfave/cli v1.22.1
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )

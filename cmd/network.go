@@ -14,13 +14,13 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
+	"github.com/google/uuid"
 	"github.com/keep-network/keep-core/pkg/firewall"
 	"github.com/keep-network/keep-core/pkg/net"
 	"github.com/keep-network/keep-core/pkg/net/key"
 	"github.com/keep-network/keep-core/pkg/net/libp2p"
 	"github.com/keep-network/keep-core/pkg/net/retransmission"
 	"github.com/keep-network/keep-core/pkg/operator"
-	"github.com/pborman/uuid"
 	"github.com/urfave/cli"
 )
 
@@ -335,7 +335,7 @@ func getPeerNetworkKey(privateEcdsaKey *big.Int) (
 	)
 
 	ethereumKey := &keystore.Key{
-		Id:         uuid.NewRandom(),
+		Id:         uuid.New(),
 		Address:    crypto.PubkeyToAddress(ecdsaKey.PublicKey),
 		PrivateKey: ecdsaKey,
 	}
