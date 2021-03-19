@@ -35,7 +35,7 @@ const AppLayout = () => {
 
   useEffect(() => {
     if (previousAddress && !isSameEthAddress(previousAddress, yourAddress)) {
-      dispatch({ type: "restart_saga" })
+      dispatch({ type: "root_saga/restart" })
     }
   })
 
