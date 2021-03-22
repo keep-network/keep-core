@@ -40,6 +40,11 @@ export function* logError(errorActionType, error, payload = {}) {
   })
 }
 
+export function* logErrorAndThrow(errorActionType, error, payload = {}) {
+  yield* logError(errorActionType, error, payload)
+  throw error
+}
+
 /**
  *
  * @param {Object} liquidityRewardPair - Liquidity reward data.

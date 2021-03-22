@@ -1,5 +1,5 @@
-import React, { useCallback } from "react"
-import { connect } from "react-redux"
+import React, { useEffect, useCallback } from "react"
+import { connect, useSelector } from "react-redux"
 import moment from "moment"
 import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../../actions"
 import { isEmptyArray } from "../../utils/array.utils"
@@ -9,10 +9,9 @@ import { useModal } from "../../hooks/useModal"
 import CopyStakePage from "../CopyStakePage"
 import PageWrapper from "../../components/PageWrapper"
 import * as Icons from "../../components/Icons"
-
 import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
-import { useDispatchWhenAccountChanged } from "../../hooks/useDispatchWhenAccountChanged"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const DelegationPage = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
@@ -29,6 +28,8 @@ const DelegationPageWrapperComponent = ({
   children,
   ...restProps
 }) => {
+  const app = useSelector((state) => state.app)
+  const yourAddress = useWeb3Address()
   // useEffect(() => {
   //   fetchOldDelegations()
   // }, [fetchOldDelegations])
@@ -37,18 +38,18 @@ const DelegationPageWrapperComponent = ({
   //   fetchGrants()
   // }, [fetchGrants])
 
-  // useEffect(() => {
-  //   fetchDelegations()
-  // }, [fetchDelegations])
+  useEffect(() => {
+    fetchDelegations(yourAddress)
+  }, [fetchDelegations, app.isReady, yourAddress])
 
   // useEffect(() => {
   //   fetchTopUps()
   // }, [fetchTopUps])
 
-  useDispatchWhenAccountChanged(fetchOldDelegations)
-  useDispatchWhenAccountChanged(fetchGrants)
-  useDispatchWhenAccountChanged(fetchDelegations)
-  useDispatchWhenAccountChanged(fetchTopUps)
+  // useDispatchWhenAccountChanged(fetchOldDelegations)
+  // useDispatchWhenAccountChanged(fetchGrants)
+  // useDispatchWhenAccountChanged(fetchDelegations)
+  // useDispatchWhenAccountChanged(fetchTopUps)
 
   const { openModal, openConfirmationModal } = useModal()
 
@@ -121,8 +122,11 @@ const mapDispatchToProps = (dispatch) => {
     fetchOldDelegations: () =>
       dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
     fetchGrants: () => dispatch({ type: "token-grant/fetch_grants_request" }),
-    fetchDelegations: () =>
-      dispatch({ type: "staking/fetch_delegations_request" }),
+    fetchDelegations: (address) =>
+      dispatch({
+        type: "staking/fetch_delegations_request",
+        payload: { address },
+      }),
     fetchTopUps: () => dispatch({ type: "staking/fetch_top_ups_request" }),
   }
 }
