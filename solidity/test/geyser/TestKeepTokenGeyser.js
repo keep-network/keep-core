@@ -371,24 +371,29 @@ describe("KeepTokenGeyser", async () => {
       })
 
       // Validate stakers' stake token balances.
-      expect(
+      expectCloseTo(
         await stakeToken.balanceOf.call(staker1),
+        stakerInitialBalance1,
         "invalid staker's 1 token balance"
-      ).to.eq.BN(stakerInitialBalance1)
-      expect(
+      )
+      expectCloseTo(
         await stakeToken.balanceOf.call(staker2),
+        stakerInitialBalance2,
         "invalid staker's 2 token balance"
-      ).to.eq.BN(stakerInitialBalance2)
+      )
 
       // Validate stakers' distribution token balances.
-      expect(
+      expectCloseTo(
         await keepToken.balanceOf.call(staker1),
+        expectedRewards1,
         "invalid staker's 1 rewards token balance"
-      ).to.eq.BN(expectedRewards1)
-      expect(
+      )
+
+      expectCloseTo(
         await keepToken.balanceOf.call(staker2),
+        expectedRewards2,
         "invalid staker's 2 rewards token balance"
-      ).to.eq.BN(expectedRewards2)
+      )
     })
 
     async function checkRewards(staker, stakeAmount, expectedRewards, message) {
