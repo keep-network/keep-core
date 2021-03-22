@@ -5,8 +5,7 @@ const {
   time,
 } = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
-
-const { toBN } = require("web3-utils")
+const { expectCloseTo } = require("../helpers/numbers.js")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const TestToken = contract.fromArtifact("TestToken")
@@ -15,8 +14,7 @@ const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
 const KeepTokenGeyserRewardsEscrowBeneficiary = contract.fromArtifact(
   "KeepTokenGeyserRewardsEscrowBeneficiary"
 )
-
-const BN = web3.utils.BN
+const { BN, toBN } = web3.utils
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
@@ -425,21 +423,5 @@ describe("KeepTokenGeyser", async () => {
     await stakeToken.approve(tokenGeyser.address, amount, { from: staker })
 
     return await tokenGeyser.stake(amount, [], { from: staker })
-  }
-
-  function expectCloseTo(actual, expected, message) {
-    actualBN = toBN(actual)
-    expectedBN = toBN(expected)
-
-    const delta = actualBN.muln(1).divn(100) // approx. 1%
-
-    if (
-      actualBN.lt(expectedBN.sub(delta)) ||
-      actualBN.gt(expectedBN.add(delta))
-    ) {
-      expect.fail(
-        `${message}\nexpected : ${expectedBN.toString()}\nactual   : ${actualBN.toString()}`
-      )
-    }
   }
 })
