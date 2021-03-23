@@ -40,7 +40,7 @@ function* observeKeepTokenTransfer() {
         returnValues: { from, to, value },
       } = yield take(contractEventCahnnel)
 
-      let arithmeticOpration
+      let arithmeticOpration = null
       if (isSameEthAddress(defaultAccount, from)) {
         arithmeticOpration = sub
       } else if (isSameEthAddress(defaultAccount, to)) {
@@ -689,12 +689,19 @@ function* lpTokensStakedOrWithdrawn(
 
   let updatedlpBalance = lpBalance
   let emittedAmountValue = 0
-  // Update only if this transacion relates to the current logged account.
+  // Update only if this transaction relates to the current logged account.
   if (isSameEthAddress(defaultAccount, user)) {
     emittedAmountValue = amount
     const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
     updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
   }
+
+  yield* updateLPTokenBalance(
+    LiquidityRewards,
+    liquidityRewardPairName,
+    defaultAccount,
+    updatedlpBalance
+  )
 
   const reward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
@@ -779,10 +786,15 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
 
       // If the `from` is a zero address it means it was a `mint` transaction.
       // If the `to` is a zero address it means it was a `burn` transaction. For
-      // these casese we need to update APY value because the tootal pool value
-      // of the wrapped token has been increased / decresed.
+      // these cases we need to update APY value because the total pool value
+      // of the wrapped token has been increased / decreased.
       if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
         yield* updateAPY(LiquidityRewards, liquidityRewardPair.name)
+        yield* updateLPTokenBalance(
+          LiquidityRewards,
+          liquidityRewardPair.name,
+          defaultAccount
+        )
       }
 
       // If the 'to' address is equal to the address of the connected wallet
@@ -874,6 +886,32 @@ function* updateWrappedTokenBalance(
       wrappedTokenBalance,
       liquidityRewardPairName,
     },
+  })
+}
+
+function* updateLPTokenBalance(
+  LiquidityRewards,
+  liquidityRewardPairName,
+  address,
+  lpBalance = null
+) {
+  if (!lpBalance) {
+    // Fetching balance of liquidity token for a given uniswap pair deposited in
+    // the `LPRewards` contract.
+    lpBalance = yield call(
+      [LiquidityRewards, LiquidityRewards.stakedBalance],
+      address
+    )
+  }
+
+  const lpTokenBalance = yield call(
+    [LiquidityRewards, LiquidityRewards.calculateLPTokenBalance],
+    lpBalance
+  )
+
+  yield put({
+    type: `liquidity_rewards/${liquidityRewardPairName}_lp_balance_updated`,
+    payload: { lpTokenBalance, liquidityRewardPairName },
   })
 }
 

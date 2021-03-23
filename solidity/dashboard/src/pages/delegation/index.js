@@ -149,7 +149,7 @@ export const DelegationPageWrapper = connect(
 DelegationPage.route = {
   title: "Delegations",
   path: "/delegations",
-  pages: [WalletTokensPage, GrantedTokensPage],
+  pages: [GrantedTokensPage, WalletTokensPage],
 }
 
 export default DelegationPage

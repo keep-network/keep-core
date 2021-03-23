@@ -20,29 +20,12 @@ const EmptyStatePage = () => {
           <Skeleton tag="h5" className="mb-1" color="grey-20" width="65%" />
           <Skeleton tag="h5" className="mb-1" color="grey-20" width="65%" />
         </SkeletonBox>
-
         <SkeletonBox>
           <Skeleton tag="h3" className="mb-2" />
           <Skeleton tag="h5" className="mb-1" color="grey-20" width="65%" />
           <Skeleton tag="h5" className="mb-1" color="grey-20" width="45%" />
           <Skeleton tag="h5" className="mb-1" color="grey-20" width="85%" />
           <Skeleton tag="h5" className="mb-1" color="grey-20" width="40%" />
-        </SkeletonBox>
-
-        <SkeletonBox>
-          <Skeleton tag="h3" className="mb-2" width="75%" />
-          <div className="flex row center mb-2">
-            <Icons.KeepCircle />
-            <Skeleton tag="h3" color="grey-20" className="ml-1" width="50%" />
-          </div>
-          <Skeleton tag="h3" color="grey-30" width="50%" />
-        </SkeletonBox>
-
-        <SkeletonBox>
-          <Skeleton tag="h3" className="mb-2" />
-          <Skeleton tag="h5" className="mb-1" color="grey-20" width="100%" />
-          <Skeleton tag="h5" className="mb-1" color="grey-20" width="85%" />
-          <Skeleton tag="h5" className="mb-1" color="grey-20" width="75%" />
         </SkeletonBox>
       </EmptyState.Skeleton>
       <EmptyState.Title text={title} />

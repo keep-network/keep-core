@@ -8,6 +8,10 @@ const liquidityPairInitialData = {
   wrappedTokenBalance: 0,
   lpBalance: 0,
   lastNotificationRewardAmount: "0",
+  lpTokenBalance: {
+    token0: 0,
+    token1: 0,
+  },
   isFetching: false,
   error: null,
 }
@@ -149,6 +153,14 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           reward: restPayload.reward,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_lp_balance_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          lpTokenBalance: restPayload.lpTokenBalance,
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`:

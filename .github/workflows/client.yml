@@ -1,20 +1,14 @@
 name: Go
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
-      # TODO: Run on master after we're fully migrated from Circle CI
-      # - master
-      - "rfc-18/**"
+      - master
   pull_request:
-    branches:
-      # TODO: Run on all branches after we're fully migrated from Circle CI
-      - "rfc-18/**"
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  build-test-publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,14 +24,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      # TODO: This step was left here intentionally so we can track disk space
-      # usage for a while. We were trying to fight problems with out of disk space
-      # that happened due to the size of data restored from cache. The cache size
-      # was growing linearly with subsequent workflow runs. We want to observe
-      # available disk space for `/`. Fresh execution starts with 20 GB, we expect
-      # to have no less than 15 GB after the cache is restored.
-      - run: sudo df -h
-
       - name: Build Docker Build Image
         uses: docker/build-push-action@v2
         with:
@@ -50,35 +36,36 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-      - name: Create test results directory
-        run: |
-          mkdir test-results
-
       - name: Run Go tests
         run: |
           docker run \
-            --volume $GITHUB_WORKSPACE/test-results:/mnt/test-results \
             --workdir /go/src/github.com/keep-network/keep-core \
             go-build-env \
-            gotestsum --junitfile /mnt/test-results/unit-tests.xml
+            gotestsum
 
-      - name: Publish unit test results
-        uses: EnricoMi/publish-unit-test-result-action@v1.7
-        if: always() # guarantees that this action always runs, even if earlier steps fail
+      - name: Login to Google Container Registry
+        if:  |
+            github.ref == 'refs/heads/master'
+              && (github.event_name == 'push'
+              || github.event_name == 'workflow_dispatch')
+        uses: docker/login-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          files: ./test-results/unit-tests.xml
-          check_name: Go Test Results # name under which test results will be presented in GitHub (optional)
-          comment_on_pr: false # turns off commenting on Pull Requests
+          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
-      # This step is executed after the tests as we want to configure it eventually
-      # as image publication step.
-      - name: Build Docker Runtime Image
+      - name: Build and publish Docker Runtime Image
         uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'keep-client'
+          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
-          tags: keep-client
-          labels: |
-            revision=${{ github.sha }}
-          # TODO: Check branch name and publish to a registry accordingly to the
-          # environment.
-          # push: true # publish to registry
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: revision=${{ github.sha }}
+          push: |
+            ${{ github.ref == 'refs/heads/master'
+              && (github.event_name == 'push'
+              || github.event_name == 'workflow_dispatch') }}

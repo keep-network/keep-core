@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	ethereumabi "github.com/ethereum/go-ethereum/accounts/abi"
+	hostchainabi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,8 +20,8 @@ import (
 
 	"github.com/ipfs/go-log"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
 	"github.com/keep-network/keep-common/pkg/subscription"
 	"github.com/keep-network/keep-core/pkg/chain/gen/abi"
 )
@@ -34,15 +34,15 @@ var krbsLogger = log.Logger("keep-contract-KeepRandomBeaconService")
 type KeepRandomBeaconService struct {
 	contract          *abi.KeepRandomBeaconServiceImplV1
 	contractAddress   common.Address
-	contractABI       *ethereumabi.ABI
+	contractABI       *hostchainabi.ABI
 	caller            bind.ContractCaller
 	transactor        bind.ContractTransactor
 	callerOptions     *bind.CallOpts
 	transactorOptions *bind.TransactOpts
-	errorResolver     *ethutil.ErrorResolver
-	nonceManager      *ethutil.NonceManager
-	miningWaiter      *ethutil.MiningWaiter
-	blockCounter      *blockcounter.EthereumBlockCounter
+	errorResolver     *chainutil.ErrorResolver
+	nonceManager      *ethlike.NonceManager
+	miningWaiter      *ethlike.MiningWaiter
+	blockCounter      *ethlike.BlockCounter
 
 	transactionMutex *sync.Mutex
 }
@@ -51,9 +51,9 @@ func NewKeepRandomBeaconService(
 	contractAddress common.Address,
 	accountKey *keystore.Key,
 	backend bind.ContractBackend,
-	nonceManager *ethutil.NonceManager,
-	miningWaiter *ethutil.MiningWaiter,
-	blockCounter *blockcounter.EthereumBlockCounter,
+	nonceManager *ethlike.NonceManager,
+	miningWaiter *ethlike.MiningWaiter,
+	blockCounter *ethlike.BlockCounter,
 	transactionMutex *sync.Mutex,
 ) (*KeepRandomBeaconService, error) {
 	callerOptions := &bind.CallOpts{
@@ -64,7 +64,7 @@ func NewKeepRandomBeaconService(
 		accountKey.PrivateKey,
 	)
 
-	randomBeaconContract, err := abi.NewKeepRandomBeaconServiceImplV1(
+	contract, err := abi.NewKeepRandomBeaconServiceImplV1(
 		contractAddress,
 		backend,
 	)
@@ -76,20 +76,20 @@ func NewKeepRandomBeaconService(
 		)
 	}
 
-	contractABI, err := ethereumabi.JSON(strings.NewReader(abi.KeepRandomBeaconServiceImplV1ABI))
+	contractABI, err := hostchainabi.JSON(strings.NewReader(abi.KeepRandomBeaconServiceImplV1ABI))
 	if err != nil {
 		return nil, fmt.Errorf("failed to instantiate ABI: [%v]", err)
 	}
 
 	return &KeepRandomBeaconService{
-		contract:          randomBeaconContract,
+		contract:          contract,
 		contractAddress:   contractAddress,
 		contractABI:       &contractABI,
 		caller:            backend,
 		transactor:        backend,
 		callerOptions:     callerOptions,
 		transactorOptions: transactorOptions,
-		errorResolver:     ethutil.NewErrorResolver(backend, &contractABI, &contractAddress),
+		errorResolver:     chainutil.NewErrorResolver(backend, &contractABI, &contractAddress),
 		nonceManager:      nonceManager,
 		miningWaiter:      miningWaiter,
 		blockCounter:      blockCounter,
@@ -100,19 +100,14 @@ func NewKeepRandomBeaconService(
 // ----- Non-const Methods ------
 
 // Transaction submission.
-func (krbs *KeepRandomBeaconService) Initialize(
-	dkgContributionMargin *big.Int,
-	registry common.Address,
+func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
+	value *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
-		"submitting transaction initialize",
-		"params: ",
-		fmt.Sprint(
-			dkgContributionMargin,
-			registry,
-		),
+		"submitting transaction fundRequestSubsidyFeePool",
+		"value: ", value,
 	)
 
 	krbs.transactionMutex.Lock()
@@ -121,6 +116,8 @@ func (krbs *KeepRandomBeaconService) Initialize(
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
 	*transactorOptions = *krbs.transactorOptions
+
+	transactorOptions.Value = value
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -137,57 +134,55 @@ func (krbs *KeepRandomBeaconService) Initialize(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := krbs.contract.Initialize(
+	transaction, err := krbs.contract.FundRequestSubsidyFeePool(
 		transactorOptions,
-		dkgContributionMargin,
-		registry,
 	)
 	if err != nil {
 		return transaction, krbs.errorResolver.ResolveError(
 			err,
 			krbs.transactorOptions.From,
-			nil,
-			"initialize",
-			dkgContributionMargin,
-			registry,
+			value,
+			"fundRequestSubsidyFeePool",
 		)
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction initialize with id: [%v] and nonce [%v]",
+		"submitted transaction fundRequestSubsidyFeePool with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := krbs.contract.Initialize(
+			transaction, err := krbs.contract.FundRequestSubsidyFeePool(
 				transactorOptions,
-				dkgContributionMargin,
-				registry,
 			)
 			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
+				return nil, krbs.errorResolver.ResolveError(
 					err,
 					krbs.transactorOptions.From,
-					nil,
-					"initialize",
-					dkgContributionMargin,
-					registry,
+					value,
+					"fundRequestSubsidyFeePool",
 				)
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction initialize with id: [%v] and nonce [%v]",
+				"submitted transaction fundRequestSubsidyFeePool with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
 
-			return transaction, nil
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
 		},
 	)
 
@@ -197,60 +192,49 @@ func (krbs *KeepRandomBeaconService) Initialize(
 }
 
 // Non-mutating call, not a transaction submission.
-func (krbs *KeepRandomBeaconService) CallInitialize(
-	dkgContributionMargin *big.Int,
-	registry common.Address,
+func (krbs *KeepRandomBeaconService) CallFundRequestSubsidyFeePool(
+	value *big.Int,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.transactorOptions.From,
-		blockNumber, nil,
+		blockNumber, value,
 		krbs.contractABI,
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"initialize",
+		"fundRequestSubsidyFeePool",
 		&result,
-		dkgContributionMargin,
-		registry,
 	)
 
 	return err
 }
 
-func (krbs *KeepRandomBeaconService) InitializeGasEstimate(
-	dkgContributionMargin *big.Int,
-	registry common.Address,
-) (uint64, error) {
+func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePoolGasEstimate() (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		krbs.callerOptions.From,
 		krbs.contractAddress,
-		"initialize",
+		"fundRequestSubsidyFeePool",
 		krbs.contractABI,
 		krbs.transactor,
-		dkgContributionMargin,
-		registry,
 	)
 
 	return result, err
 }
 
 // Transaction submission.
-func (krbs *KeepRandomBeaconService) AddOperatorContract(
-	operatorContract common.Address,
+func (krbs *KeepRandomBeaconService) RequestRelayEntry(
+	value *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
-		"submitting transaction addOperatorContract",
-		"params: ",
-		fmt.Sprint(
-			operatorContract,
-		),
+		"submitting transaction requestRelayEntry",
+		"value: ", value,
 	)
 
 	krbs.transactionMutex.Lock()
@@ -259,6 +243,8 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
 	*transactorOptions = *krbs.transactorOptions
+
+	transactorOptions.Value = value
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -275,53 +261,55 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := krbs.contract.AddOperatorContract(
+	transaction, err := krbs.contract.RequestRelayEntry(
 		transactorOptions,
-		operatorContract,
 	)
 	if err != nil {
 		return transaction, krbs.errorResolver.ResolveError(
 			err,
 			krbs.transactorOptions.From,
-			nil,
-			"addOperatorContract",
-			operatorContract,
+			value,
+			"requestRelayEntry",
 		)
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction addOperatorContract with id: [%v] and nonce [%v]",
+		"submitted transaction requestRelayEntry with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := krbs.contract.AddOperatorContract(
+			transaction, err := krbs.contract.RequestRelayEntry(
 				transactorOptions,
-				operatorContract,
 			)
 			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
+				return nil, krbs.errorResolver.ResolveError(
 					err,
 					krbs.transactorOptions.From,
-					nil,
-					"addOperatorContract",
-					operatorContract,
+					value,
+					"requestRelayEntry",
 				)
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction addOperatorContract with id: [%v] and nonce [%v]",
+				"submitted transaction requestRelayEntry with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
 
-			return transaction, nil
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
 		},
 	)
 
@@ -331,329 +319,35 @@ func (krbs *KeepRandomBeaconService) AddOperatorContract(
 }
 
 // Non-mutating call, not a transaction submission.
-func (krbs *KeepRandomBeaconService) CallAddOperatorContract(
-	operatorContract common.Address,
+func (krbs *KeepRandomBeaconService) CallRequestRelayEntry(
+	value *big.Int,
 	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
+) (*big.Int, error) {
+	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.transactorOptions.From,
-		blockNumber, nil,
+		blockNumber, value,
 		krbs.contractABI,
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"addOperatorContract",
+		"requestRelayEntry",
 		&result,
-		operatorContract,
-	)
-
-	return err
-}
-
-func (krbs *KeepRandomBeaconService) AddOperatorContractGasEstimate(
-	operatorContract common.Address,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbs.callerOptions.From,
-		krbs.contractAddress,
-		"addOperatorContract",
-		krbs.contractABI,
-		krbs.transactor,
-		operatorContract,
 	)
 
 	return result, err
 }
 
-// Transaction submission.
-func (krbs *KeepRandomBeaconService) EntryCreated(
-	requestId *big.Int,
-	entry []uint8,
-	submitter common.Address,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krbsLogger.Debug(
-		"submitting transaction entryCreated",
-		"params: ",
-		fmt.Sprint(
-			requestId,
-			entry,
-			submitter,
-		),
-	)
-
-	krbs.transactionMutex.Lock()
-	defer krbs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := krbs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := krbs.contract.EntryCreated(
-		transactorOptions,
-		requestId,
-		entry,
-		submitter,
-	)
-	if err != nil {
-		return transaction, krbs.errorResolver.ResolveError(
-			err,
-			krbs.transactorOptions.From,
-			nil,
-			"entryCreated",
-			requestId,
-			entry,
-			submitter,
-		)
-	}
-
-	krbsLogger.Infof(
-		"submitted transaction entryCreated with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := krbs.contract.EntryCreated(
-				transactorOptions,
-				requestId,
-				entry,
-				submitter,
-			)
-			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
-					err,
-					krbs.transactorOptions.From,
-					nil,
-					"entryCreated",
-					requestId,
-					entry,
-					submitter,
-				)
-			}
-
-			krbsLogger.Infof(
-				"submitted transaction entryCreated with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	krbs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbs *KeepRandomBeaconService) CallEntryCreated(
-	requestId *big.Int,
-	entry []uint8,
-	submitter common.Address,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbs.transactorOptions.From,
-		blockNumber, nil,
-		krbs.contractABI,
-		krbs.caller,
-		krbs.errorResolver,
-		krbs.contractAddress,
-		"entryCreated",
-		&result,
-		requestId,
-		entry,
-		submitter,
-	)
-
-	return err
-}
-
-func (krbs *KeepRandomBeaconService) EntryCreatedGasEstimate(
-	requestId *big.Int,
-	entry []uint8,
-	submitter common.Address,
-) (uint64, error) {
+func (krbs *KeepRandomBeaconService) RequestRelayEntryGasEstimate() (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		krbs.callerOptions.From,
 		krbs.contractAddress,
-		"entryCreated",
+		"requestRelayEntry",
 		krbs.contractABI,
 		krbs.transactor,
-		requestId,
-		entry,
-		submitter,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbs *KeepRandomBeaconService) ExecuteCallback(
-	requestId *big.Int,
-	entry *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krbsLogger.Debug(
-		"submitting transaction executeCallback",
-		"params: ",
-		fmt.Sprint(
-			requestId,
-			entry,
-		),
-	)
-
-	krbs.transactionMutex.Lock()
-	defer krbs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbs.transactorOptions
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := krbs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := krbs.contract.ExecuteCallback(
-		transactorOptions,
-		requestId,
-		entry,
-	)
-	if err != nil {
-		return transaction, krbs.errorResolver.ResolveError(
-			err,
-			krbs.transactorOptions.From,
-			nil,
-			"executeCallback",
-			requestId,
-			entry,
-		)
-	}
-
-	krbsLogger.Infof(
-		"submitted transaction executeCallback with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := krbs.contract.ExecuteCallback(
-				transactorOptions,
-				requestId,
-				entry,
-			)
-			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
-					err,
-					krbs.transactorOptions.From,
-					nil,
-					"executeCallback",
-					requestId,
-					entry,
-				)
-			}
-
-			krbsLogger.Infof(
-				"submitted transaction executeCallback with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	krbs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbs *KeepRandomBeaconService) CallExecuteCallback(
-	requestId *big.Int,
-	entry *big.Int,
-	blockNumber *big.Int,
-) error {
-	var result interface{} = nil
-
-	err := ethutil.CallAtBlock(
-		krbs.transactorOptions.From,
-		blockNumber, nil,
-		krbs.contractABI,
-		krbs.caller,
-		krbs.errorResolver,
-		krbs.contractAddress,
-		"executeCallback",
-		&result,
-		requestId,
-		entry,
-	)
-
-	return err
-}
-
-func (krbs *KeepRandomBeaconService) ExecuteCallbackGasEstimate(
-	requestId *big.Int,
-	entry *big.Int,
-) (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbs.callerOptions.From,
-		krbs.contractAddress,
-		"executeCallback",
-		krbs.contractABI,
-		krbs.transactor,
-		requestId,
-		entry,
 	)
 
 	return result, err
@@ -665,7 +359,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 	callbackGas *big.Int,
 	value *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction requestRelayEntry0",
@@ -724,8 +418,11 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
@@ -735,7 +432,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 				callbackGas,
 			)
 			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
+				return nil, krbs.errorResolver.ResolveError(
 					err,
 					krbs.transactorOptions.From,
 					value,
@@ -751,7 +448,10 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0(
 				transaction.Nonce(),
 			)
 
-			return transaction, nil
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
 		},
 	)
 
@@ -769,7 +469,7 @@ func (krbs *KeepRandomBeaconService) CallRequestRelayEntry0(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.transactorOptions.From,
 		blockNumber, value,
 		krbs.contractABI,
@@ -791,7 +491,7 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0GasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		krbs.callerOptions.From,
 		krbs.contractAddress,
 		"requestRelayEntry0",
@@ -805,10 +505,156 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntry0GasEstimate(
 }
 
 // Transaction submission.
+func (krbs *KeepRandomBeaconService) ExecuteCallback(
+	requestId *big.Int,
+	entry *big.Int,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krbsLogger.Debug(
+		"submitting transaction executeCallback",
+		"params: ",
+		fmt.Sprint(
+			requestId,
+			entry,
+		),
+	)
+
+	krbs.transactionMutex.Lock()
+	defer krbs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbs.contract.ExecuteCallback(
+		transactorOptions,
+		requestId,
+		entry,
+	)
+	if err != nil {
+		return transaction, krbs.errorResolver.ResolveError(
+			err,
+			krbs.transactorOptions.From,
+			nil,
+			"executeCallback",
+			requestId,
+			entry,
+		)
+	}
+
+	krbsLogger.Infof(
+		"submitted transaction executeCallback with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbs.miningWaiter.ForceMining(
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbs.contract.ExecuteCallback(
+				transactorOptions,
+				requestId,
+				entry,
+			)
+			if err != nil {
+				return nil, krbs.errorResolver.ResolveError(
+					err,
+					krbs.transactorOptions.From,
+					nil,
+					"executeCallback",
+					requestId,
+					entry,
+				)
+			}
+
+			krbsLogger.Infof(
+				"submitted transaction executeCallback with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
+		},
+	)
+
+	krbs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbs *KeepRandomBeaconService) CallExecuteCallback(
+	requestId *big.Int,
+	entry *big.Int,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		krbs.transactorOptions.From,
+		blockNumber, nil,
+		krbs.contractABI,
+		krbs.caller,
+		krbs.errorResolver,
+		krbs.contractAddress,
+		"executeCallback",
+		&result,
+		requestId,
+		entry,
+	)
+
+	return err
+}
+
+func (krbs *KeepRandomBeaconService) ExecuteCallbackGasEstimate(
+	requestId *big.Int,
+	entry *big.Int,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		krbs.callerOptions.From,
+		krbs.contractAddress,
+		"executeCallback",
+		krbs.contractABI,
+		krbs.transactor,
+		requestId,
+		entry,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 	value *big.Int,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction fundDkgFeePool",
@@ -858,8 +704,11 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
@@ -867,7 +716,7 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 				transactorOptions,
 			)
 			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
+				return nil, krbs.errorResolver.ResolveError(
 					err,
 					krbs.transactorOptions.From,
 					value,
@@ -881,7 +730,10 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePool(
 				transaction.Nonce(),
 			)
 
-			return transaction, nil
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
 		},
 	)
 
@@ -897,7 +749,7 @@ func (krbs *KeepRandomBeaconService) CallFundDkgFeePool(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.transactorOptions.From,
 		blockNumber, value,
 		krbs.contractABI,
@@ -914,7 +766,7 @@ func (krbs *KeepRandomBeaconService) CallFundDkgFeePool(
 func (krbs *KeepRandomBeaconService) FundDkgFeePoolGasEstimate() (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		krbs.callerOptions.From,
 		krbs.contractAddress,
 		"fundDkgFeePool",
@@ -926,10 +778,292 @@ func (krbs *KeepRandomBeaconService) FundDkgFeePoolGasEstimate() (uint64, error)
 }
 
 // Transaction submission.
+func (krbs *KeepRandomBeaconService) Initialize(
+	dkgContributionMargin *big.Int,
+	registry common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krbsLogger.Debug(
+		"submitting transaction initialize",
+		"params: ",
+		fmt.Sprint(
+			dkgContributionMargin,
+			registry,
+		),
+	)
+
+	krbs.transactionMutex.Lock()
+	defer krbs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbs.contract.Initialize(
+		transactorOptions,
+		dkgContributionMargin,
+		registry,
+	)
+	if err != nil {
+		return transaction, krbs.errorResolver.ResolveError(
+			err,
+			krbs.transactorOptions.From,
+			nil,
+			"initialize",
+			dkgContributionMargin,
+			registry,
+		)
+	}
+
+	krbsLogger.Infof(
+		"submitted transaction initialize with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbs.miningWaiter.ForceMining(
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbs.contract.Initialize(
+				transactorOptions,
+				dkgContributionMargin,
+				registry,
+			)
+			if err != nil {
+				return nil, krbs.errorResolver.ResolveError(
+					err,
+					krbs.transactorOptions.From,
+					nil,
+					"initialize",
+					dkgContributionMargin,
+					registry,
+				)
+			}
+
+			krbsLogger.Infof(
+				"submitted transaction initialize with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
+		},
+	)
+
+	krbs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbs *KeepRandomBeaconService) CallInitialize(
+	dkgContributionMargin *big.Int,
+	registry common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		krbs.transactorOptions.From,
+		blockNumber, nil,
+		krbs.contractABI,
+		krbs.caller,
+		krbs.errorResolver,
+		krbs.contractAddress,
+		"initialize",
+		&result,
+		dkgContributionMargin,
+		registry,
+	)
+
+	return err
+}
+
+func (krbs *KeepRandomBeaconService) InitializeGasEstimate(
+	dkgContributionMargin *big.Int,
+	registry common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		krbs.callerOptions.From,
+		krbs.contractAddress,
+		"initialize",
+		krbs.contractABI,
+		krbs.transactor,
+		dkgContributionMargin,
+		registry,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
+func (krbs *KeepRandomBeaconService) AddOperatorContract(
+	operatorContract common.Address,
+
+	transactionOptions ...chainutil.TransactionOptions,
+) (*types.Transaction, error) {
+	krbsLogger.Debug(
+		"submitting transaction addOperatorContract",
+		"params: ",
+		fmt.Sprint(
+			operatorContract,
+		),
+	)
+
+	krbs.transactionMutex.Lock()
+	defer krbs.transactionMutex.Unlock()
+
+	// create a copy
+	transactorOptions := new(bind.TransactOpts)
+	*transactorOptions = *krbs.transactorOptions
+
+	if len(transactionOptions) > 1 {
+		return nil, fmt.Errorf(
+			"could not process multiple transaction options sets",
+		)
+	} else if len(transactionOptions) > 0 {
+		transactionOptions[0].Apply(transactorOptions)
+	}
+
+	nonce, err := krbs.nonceManager.CurrentNonce()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
+	}
+
+	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
+
+	transaction, err := krbs.contract.AddOperatorContract(
+		transactorOptions,
+		operatorContract,
+	)
+	if err != nil {
+		return transaction, krbs.errorResolver.ResolveError(
+			err,
+			krbs.transactorOptions.From,
+			nil,
+			"addOperatorContract",
+			operatorContract,
+		)
+	}
+
+	krbsLogger.Infof(
+		"submitted transaction addOperatorContract with id: [%v] and nonce [%v]",
+		transaction.Hash().Hex(),
+		transaction.Nonce(),
+	)
+
+	go krbs.miningWaiter.ForceMining(
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
+			transactorOptions.GasLimit = transaction.Gas()
+			transactorOptions.GasPrice = newGasPrice
+
+			transaction, err := krbs.contract.AddOperatorContract(
+				transactorOptions,
+				operatorContract,
+			)
+			if err != nil {
+				return nil, krbs.errorResolver.ResolveError(
+					err,
+					krbs.transactorOptions.From,
+					nil,
+					"addOperatorContract",
+					operatorContract,
+				)
+			}
+
+			krbsLogger.Infof(
+				"submitted transaction addOperatorContract with id: [%v] and nonce [%v]",
+				transaction.Hash().Hex(),
+				transaction.Nonce(),
+			)
+
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
+		},
+	)
+
+	krbs.nonceManager.IncrementNonce()
+
+	return transaction, err
+}
+
+// Non-mutating call, not a transaction submission.
+func (krbs *KeepRandomBeaconService) CallAddOperatorContract(
+	operatorContract common.Address,
+	blockNumber *big.Int,
+) error {
+	var result interface{} = nil
+
+	err := chainutil.CallAtBlock(
+		krbs.transactorOptions.From,
+		blockNumber, nil,
+		krbs.contractABI,
+		krbs.caller,
+		krbs.errorResolver,
+		krbs.contractAddress,
+		"addOperatorContract",
+		&result,
+		operatorContract,
+	)
+
+	return err
+}
+
+func (krbs *KeepRandomBeaconService) AddOperatorContractGasEstimate(
+	operatorContract common.Address,
+) (uint64, error) {
+	var result uint64
+
+	result, err := chainutil.EstimateGas(
+		krbs.callerOptions.From,
+		krbs.contractAddress,
+		"addOperatorContract",
+		krbs.contractABI,
+		krbs.transactor,
+		operatorContract,
+	)
+
+	return result, err
+}
+
+// Transaction submission.
 func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 	operatorContract common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
 		"submitting transaction removeOperatorContract",
@@ -982,8 +1116,11 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
@@ -992,7 +1129,7 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 				operatorContract,
 			)
 			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
+				return nil, krbs.errorResolver.ResolveError(
 					err,
 					krbs.transactorOptions.From,
 					nil,
@@ -1007,7 +1144,10 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContract(
 				transaction.Nonce(),
 			)
 
-			return transaction, nil
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
 		},
 	)
 
@@ -1023,7 +1163,7 @@ func (krbs *KeepRandomBeaconService) CallRemoveOperatorContract(
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.transactorOptions.From,
 		blockNumber, nil,
 		krbs.contractABI,
@@ -1043,7 +1183,7 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContractGasEstimate(
 ) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		krbs.callerOptions.From,
 		krbs.contractAddress,
 		"removeOperatorContract",
@@ -1056,14 +1196,21 @@ func (krbs *KeepRandomBeaconService) RemoveOperatorContractGasEstimate(
 }
 
 // Transaction submission.
-func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
-	value *big.Int,
+func (krbs *KeepRandomBeaconService) EntryCreated(
+	requestId *big.Int,
+	entry []uint8,
+	submitter common.Address,
 
-	transactionOptions ...ethutil.TransactionOptions,
+	transactionOptions ...chainutil.TransactionOptions,
 ) (*types.Transaction, error) {
 	krbsLogger.Debug(
-		"submitting transaction fundRequestSubsidyFeePool",
-		"value: ", value,
+		"submitting transaction entryCreated",
+		"params: ",
+		fmt.Sprint(
+			requestId,
+			entry,
+			submitter,
+		),
 	)
 
 	krbs.transactionMutex.Lock()
@@ -1072,8 +1219,6 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 	// create a copy
 	transactorOptions := new(bind.TransactOpts)
 	*transactorOptions = *krbs.transactorOptions
-
-	transactorOptions.Value = value
 
 	if len(transactionOptions) > 1 {
 		return nil, fmt.Errorf(
@@ -1090,49 +1235,67 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 
 	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
 
-	transaction, err := krbs.contract.FundRequestSubsidyFeePool(
+	transaction, err := krbs.contract.EntryCreated(
 		transactorOptions,
+		requestId,
+		entry,
+		submitter,
 	)
 	if err != nil {
 		return transaction, krbs.errorResolver.ResolveError(
 			err,
 			krbs.transactorOptions.From,
-			value,
-			"fundRequestSubsidyFeePool",
+			nil,
+			"entryCreated",
+			requestId,
+			entry,
+			submitter,
 		)
 	}
 
 	krbsLogger.Infof(
-		"submitted transaction fundRequestSubsidyFeePool with id: [%v] and nonce [%v]",
+		"submitted transaction entryCreated with id: [%v] and nonce [%v]",
 		transaction.Hash().Hex(),
 		transaction.Nonce(),
 	)
 
 	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
+		&ethlike.Transaction{
+			Hash:     ethlike.Hash(transaction.Hash()),
+			GasPrice: transaction.GasPrice(),
+		},
+		func(newGasPrice *big.Int) (*ethlike.Transaction, error) {
 			transactorOptions.GasLimit = transaction.Gas()
 			transactorOptions.GasPrice = newGasPrice
 
-			transaction, err := krbs.contract.FundRequestSubsidyFeePool(
+			transaction, err := krbs.contract.EntryCreated(
 				transactorOptions,
+				requestId,
+				entry,
+				submitter,
 			)
 			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
+				return nil, krbs.errorResolver.ResolveError(
 					err,
 					krbs.transactorOptions.From,
-					value,
-					"fundRequestSubsidyFeePool",
+					nil,
+					"entryCreated",
+					requestId,
+					entry,
+					submitter,
 				)
 			}
 
 			krbsLogger.Infof(
-				"submitted transaction fundRequestSubsidyFeePool with id: [%v] and nonce [%v]",
+				"submitted transaction entryCreated with id: [%v] and nonce [%v]",
 				transaction.Hash().Hex(),
 				transaction.Nonce(),
 			)
 
-			return transaction, nil
+			return &ethlike.Transaction{
+				Hash:     ethlike.Hash(transaction.Hash()),
+				GasPrice: transaction.GasPrice(),
+			}, nil
 		},
 	)
 
@@ -1142,156 +1305,47 @@ func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePool(
 }
 
 // Non-mutating call, not a transaction submission.
-func (krbs *KeepRandomBeaconService) CallFundRequestSubsidyFeePool(
-	value *big.Int,
+func (krbs *KeepRandomBeaconService) CallEntryCreated(
+	requestId *big.Int,
+	entry []uint8,
+	submitter common.Address,
 	blockNumber *big.Int,
 ) error {
 	var result interface{} = nil
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.transactorOptions.From,
-		blockNumber, value,
+		blockNumber, nil,
 		krbs.contractABI,
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"fundRequestSubsidyFeePool",
+		"entryCreated",
 		&result,
+		requestId,
+		entry,
+		submitter,
 	)
 
 	return err
 }
 
-func (krbs *KeepRandomBeaconService) FundRequestSubsidyFeePoolGasEstimate() (uint64, error) {
+func (krbs *KeepRandomBeaconService) EntryCreatedGasEstimate(
+	requestId *big.Int,
+	entry []uint8,
+	submitter common.Address,
+) (uint64, error) {
 	var result uint64
 
-	result, err := ethutil.EstimateGas(
+	result, err := chainutil.EstimateGas(
 		krbs.callerOptions.From,
 		krbs.contractAddress,
-		"fundRequestSubsidyFeePool",
+		"entryCreated",
 		krbs.contractABI,
 		krbs.transactor,
-	)
-
-	return result, err
-}
-
-// Transaction submission.
-func (krbs *KeepRandomBeaconService) RequestRelayEntry(
-	value *big.Int,
-
-	transactionOptions ...ethutil.TransactionOptions,
-) (*types.Transaction, error) {
-	krbsLogger.Debug(
-		"submitting transaction requestRelayEntry",
-		"value: ", value,
-	)
-
-	krbs.transactionMutex.Lock()
-	defer krbs.transactionMutex.Unlock()
-
-	// create a copy
-	transactorOptions := new(bind.TransactOpts)
-	*transactorOptions = *krbs.transactorOptions
-
-	transactorOptions.Value = value
-
-	if len(transactionOptions) > 1 {
-		return nil, fmt.Errorf(
-			"could not process multiple transaction options sets",
-		)
-	} else if len(transactionOptions) > 0 {
-		transactionOptions[0].Apply(transactorOptions)
-	}
-
-	nonce, err := krbs.nonceManager.CurrentNonce()
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve account nonce: %v", err)
-	}
-
-	transactorOptions.Nonce = new(big.Int).SetUint64(nonce)
-
-	transaction, err := krbs.contract.RequestRelayEntry(
-		transactorOptions,
-	)
-	if err != nil {
-		return transaction, krbs.errorResolver.ResolveError(
-			err,
-			krbs.transactorOptions.From,
-			value,
-			"requestRelayEntry",
-		)
-	}
-
-	krbsLogger.Infof(
-		"submitted transaction requestRelayEntry with id: [%v] and nonce [%v]",
-		transaction.Hash().Hex(),
-		transaction.Nonce(),
-	)
-
-	go krbs.miningWaiter.ForceMining(
-		transaction,
-		func(newGasPrice *big.Int) (*types.Transaction, error) {
-			transactorOptions.GasLimit = transaction.Gas()
-			transactorOptions.GasPrice = newGasPrice
-
-			transaction, err := krbs.contract.RequestRelayEntry(
-				transactorOptions,
-			)
-			if err != nil {
-				return transaction, krbs.errorResolver.ResolveError(
-					err,
-					krbs.transactorOptions.From,
-					value,
-					"requestRelayEntry",
-				)
-			}
-
-			krbsLogger.Infof(
-				"submitted transaction requestRelayEntry with id: [%v] and nonce [%v]",
-				transaction.Hash().Hex(),
-				transaction.Nonce(),
-			)
-
-			return transaction, nil
-		},
-	)
-
-	krbs.nonceManager.IncrementNonce()
-
-	return transaction, err
-}
-
-// Non-mutating call, not a transaction submission.
-func (krbs *KeepRandomBeaconService) CallRequestRelayEntry(
-	value *big.Int,
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbs.transactorOptions.From,
-		blockNumber, value,
-		krbs.contractABI,
-		krbs.caller,
-		krbs.errorResolver,
-		krbs.contractAddress,
-		"requestRelayEntry",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbs *KeepRandomBeaconService) RequestRelayEntryGasEstimate() (uint64, error) {
-	var result uint64
-
-	result, err := ethutil.EstimateGas(
-		krbs.callerOptions.From,
-		krbs.contractAddress,
-		"requestRelayEntry",
-		krbs.contractABI,
-		krbs.transactor,
+		requestId,
+		entry,
+		submitter,
 	)
 
 	return result, err
@@ -1299,10 +1353,13 @@ func (krbs *KeepRandomBeaconService) RequestRelayEntryGasEstimate() (uint64, err
 
 // ----- Const Methods ------
 
-func (krbs *KeepRandomBeaconService) BaseCallbackGas() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbs.contract.BaseCallbackGas(
+func (krbs *KeepRandomBeaconService) SelectOperatorContract(
+	seed *big.Int,
+) (common.Address, error) {
+	var result common.Address
+	result, err := krbs.contract.SelectOperatorContract(
 		krbs.callerOptions,
+		seed,
 	)
 
 	if err != nil {
@@ -1310,19 +1367,21 @@ func (krbs *KeepRandomBeaconService) BaseCallbackGas() (*big.Int, error) {
 			err,
 			krbs.callerOptions.From,
 			nil,
-			"baseCallbackGas",
+			"selectOperatorContract",
+			seed,
 		)
 	}
 
 	return result, err
 }
 
-func (krbs *KeepRandomBeaconService) BaseCallbackGasAtBlock(
+func (krbs *KeepRandomBeaconService) SelectOperatorContractAtBlock(
+	seed *big.Int,
 	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
+) (common.Address, error) {
+	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1330,8 +1389,9 @@ func (krbs *KeepRandomBeaconService) BaseCallbackGasAtBlock(
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"baseCallbackGas",
+		"selectOperatorContract",
 		&result,
+		seed,
 	)
 
 	return result, err
@@ -1365,7 +1425,7 @@ func (krbs *KeepRandomBeaconService) CallbackSurplusRecipientAtBlock(
 ) (common.Address, error) {
 	var result common.Address
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1381,17 +1441,13 @@ func (krbs *KeepRandomBeaconService) CallbackSurplusRecipientAtBlock(
 	return result, err
 }
 
-type entryFeeBreakdown struct {
-	EntryVerificationFee *big.Int
-	DkgContributionFee   *big.Int
-	GroupProfitFee       *big.Int
-	GasPriceCeiling      *big.Int
-}
-
-func (krbs *KeepRandomBeaconService) EntryFeeBreakdown() (entryFeeBreakdown, error) {
-	var result entryFeeBreakdown
-	result, err := krbs.contract.EntryFeeBreakdown(
+func (krbs *KeepRandomBeaconService) EntryFeeEstimate(
+	callbackGas *big.Int,
+) (*big.Int, error) {
+	var result *big.Int
+	result, err := krbs.contract.EntryFeeEstimate(
 		krbs.callerOptions,
+		callbackGas,
 	)
 
 	if err != nil {
@@ -1399,19 +1455,21 @@ func (krbs *KeepRandomBeaconService) EntryFeeBreakdown() (entryFeeBreakdown, err
 			err,
 			krbs.callerOptions.From,
 			nil,
-			"entryFeeBreakdown",
+			"entryFeeEstimate",
+			callbackGas,
 		)
 	}
 
 	return result, err
 }
 
-func (krbs *KeepRandomBeaconService) EntryFeeBreakdownAtBlock(
+func (krbs *KeepRandomBeaconService) EntryFeeEstimateAtBlock(
+	callbackGas *big.Int,
 	blockNumber *big.Int,
-) (entryFeeBreakdown, error) {
-	var result entryFeeBreakdown
+) (*big.Int, error) {
+	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1419,8 +1477,9 @@ func (krbs *KeepRandomBeaconService) EntryFeeBreakdownAtBlock(
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"entryFeeBreakdown",
+		"entryFeeEstimate",
 		&result,
+		callbackGas,
 	)
 
 	return result, err
@@ -1449,7 +1508,7 @@ func (krbs *KeepRandomBeaconService) InitializedAtBlock(
 ) (bool, error) {
 	var result bool
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1458,44 +1517,6 @@ func (krbs *KeepRandomBeaconService) InitializedAtBlock(
 		krbs.errorResolver,
 		krbs.contractAddress,
 		"initialized",
-		&result,
-	)
-
-	return result, err
-}
-
-func (krbs *KeepRandomBeaconService) RequestSubsidyFeePool() (*big.Int, error) {
-	var result *big.Int
-	result, err := krbs.contract.RequestSubsidyFeePool(
-		krbs.callerOptions,
-	)
-
-	if err != nil {
-		return result, krbs.errorResolver.ResolveError(
-			err,
-			krbs.callerOptions.From,
-			nil,
-			"requestSubsidyFeePool",
-		)
-	}
-
-	return result, err
-}
-
-func (krbs *KeepRandomBeaconService) RequestSubsidyFeePoolAtBlock(
-	blockNumber *big.Int,
-) (*big.Int, error) {
-	var result *big.Int
-
-	err := ethutil.CallAtBlock(
-		krbs.callerOptions.From,
-		blockNumber,
-		nil,
-		krbs.contractABI,
-		krbs.caller,
-		krbs.errorResolver,
-		krbs.contractAddress,
-		"requestSubsidyFeePool",
 		&result,
 	)
 
@@ -1525,7 +1546,7 @@ func (krbs *KeepRandomBeaconService) VersionAtBlock(
 ) (string, error) {
 	var result string
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1563,7 +1584,7 @@ func (krbs *KeepRandomBeaconService) DkgContributionMarginAtBlock(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1601,7 +1622,7 @@ func (krbs *KeepRandomBeaconService) DkgFeePoolAtBlock(
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1616,13 +1637,10 @@ func (krbs *KeepRandomBeaconService) DkgFeePoolAtBlock(
 	return result, err
 }
 
-func (krbs *KeepRandomBeaconService) EntryFeeEstimate(
-	callbackGas *big.Int,
-) (*big.Int, error) {
+func (krbs *KeepRandomBeaconService) RequestSubsidyFeePool() (*big.Int, error) {
 	var result *big.Int
-	result, err := krbs.contract.EntryFeeEstimate(
+	result, err := krbs.contract.RequestSubsidyFeePool(
 		krbs.callerOptions,
-		callbackGas,
 	)
 
 	if err != nil {
@@ -1630,21 +1648,19 @@ func (krbs *KeepRandomBeaconService) EntryFeeEstimate(
 			err,
 			krbs.callerOptions.From,
 			nil,
-			"entryFeeEstimate",
-			callbackGas,
+			"requestSubsidyFeePool",
 		)
 	}
 
 	return result, err
 }
 
-func (krbs *KeepRandomBeaconService) EntryFeeEstimateAtBlock(
-	callbackGas *big.Int,
+func (krbs *KeepRandomBeaconService) RequestSubsidyFeePoolAtBlock(
 	blockNumber *big.Int,
 ) (*big.Int, error) {
 	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1652,21 +1668,17 @@ func (krbs *KeepRandomBeaconService) EntryFeeEstimateAtBlock(
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"entryFeeEstimate",
+		"requestSubsidyFeePool",
 		&result,
-		callbackGas,
 	)
 
 	return result, err
 }
 
-func (krbs *KeepRandomBeaconService) SelectOperatorContract(
-	seed *big.Int,
-) (common.Address, error) {
-	var result common.Address
-	result, err := krbs.contract.SelectOperatorContract(
+func (krbs *KeepRandomBeaconService) BaseCallbackGas() (*big.Int, error) {
+	var result *big.Int
+	result, err := krbs.contract.BaseCallbackGas(
 		krbs.callerOptions,
-		seed,
 	)
 
 	if err != nil {
@@ -1674,21 +1686,19 @@ func (krbs *KeepRandomBeaconService) SelectOperatorContract(
 			err,
 			krbs.callerOptions.From,
 			nil,
-			"selectOperatorContract",
-			seed,
+			"baseCallbackGas",
 		)
 	}
 
 	return result, err
 }
 
-func (krbs *KeepRandomBeaconService) SelectOperatorContractAtBlock(
-	seed *big.Int,
+func (krbs *KeepRandomBeaconService) BaseCallbackGasAtBlock(
 	blockNumber *big.Int,
-) (common.Address, error) {
-	var result common.Address
+) (*big.Int, error) {
+	var result *big.Int
 
-	err := ethutil.CallAtBlock(
+	err := chainutil.CallAtBlock(
 		krbs.callerOptions.From,
 		blockNumber,
 		nil,
@@ -1696,9 +1706,53 @@ func (krbs *KeepRandomBeaconService) SelectOperatorContractAtBlock(
 		krbs.caller,
 		krbs.errorResolver,
 		krbs.contractAddress,
-		"selectOperatorContract",
+		"baseCallbackGas",
 		&result,
-		seed,
+	)
+
+	return result, err
+}
+
+type entryFeeBreakdown struct {
+	EntryVerificationFee *big.Int
+	DkgContributionFee   *big.Int
+	GroupProfitFee       *big.Int
+	GasPriceCeiling      *big.Int
+}
+
+func (krbs *KeepRandomBeaconService) EntryFeeBreakdown() (entryFeeBreakdown, error) {
+	var result entryFeeBreakdown
+	result, err := krbs.contract.EntryFeeBreakdown(
+		krbs.callerOptions,
+	)
+
+	if err != nil {
+		return result, krbs.errorResolver.ResolveError(
+			err,
+			krbs.callerOptions.From,
+			nil,
+			"entryFeeBreakdown",
+		)
+	}
+
+	return result, err
+}
+
+func (krbs *KeepRandomBeaconService) EntryFeeBreakdownAtBlock(
+	blockNumber *big.Int,
+) (entryFeeBreakdown, error) {
+	var result entryFeeBreakdown
+
+	err := chainutil.CallAtBlock(
+		krbs.callerOptions.From,
+		blockNumber,
+		nil,
+		krbs.contractABI,
+		krbs.caller,
+		krbs.errorResolver,
+		krbs.contractAddress,
+		"entryFeeBreakdown",
+		&result,
 	)
 
 	return result, err
@@ -1707,16 +1761,16 @@ func (krbs *KeepRandomBeaconService) SelectOperatorContractAtBlock(
 // ------ Events -------
 
 func (krbs *KeepRandomBeaconService) RelayEntryGenerated(
-	opts *ethutil.SubscribeOpts,
+	opts *ethlike.SubscribeOpts,
 ) *KrbsRelayEntryGeneratedSubscription {
 	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
+		opts = new(ethlike.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
 	}
 	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
 	return &KrbsRelayEntryGeneratedSubscription{
@@ -1727,7 +1781,7 @@ func (krbs *KeepRandomBeaconService) RelayEntryGenerated(
 
 type KrbsRelayEntryGeneratedSubscription struct {
 	contract *KeepRandomBeaconService
-	opts     *ethutil.SubscribeOpts
+	opts     *ethlike.SubscribeOpts
 }
 
 type keepRandomBeaconServiceRelayEntryGeneratedFunc func(
@@ -1837,7 +1891,7 @@ func (krbs *KeepRandomBeaconService) watchRelayEntryGenerated(
 		krbsLogger.Errorf(
 			"subscription to event RelayEntryGenerated had to be "+
 				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
+				"host chain connectivity",
 			elapsed,
 		)
 	}
@@ -1851,10 +1905,10 @@ func (krbs *KeepRandomBeaconService) watchRelayEntryGenerated(
 		)
 	}
 
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
 		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
+		chainutil.SubscriptionAlertThreshold,
 		thresholdViolatedFn,
 		subscriptionFailedFn,
 	)
@@ -1888,16 +1942,16 @@ func (krbs *KeepRandomBeaconService) PastRelayEntryGeneratedEvents(
 }
 
 func (krbs *KeepRandomBeaconService) RelayEntryRequested(
-	opts *ethutil.SubscribeOpts,
+	opts *ethlike.SubscribeOpts,
 ) *KrbsRelayEntryRequestedSubscription {
 	if opts == nil {
-		opts = new(ethutil.SubscribeOpts)
+		opts = new(ethlike.SubscribeOpts)
 	}
 	if opts.Tick == 0 {
-		opts.Tick = ethutil.DefaultSubscribeOptsTick
+		opts.Tick = chainutil.DefaultSubscribeOptsTick
 	}
 	if opts.PastBlocks == 0 {
-		opts.PastBlocks = ethutil.DefaultSubscribeOptsPastBlocks
+		opts.PastBlocks = chainutil.DefaultSubscribeOptsPastBlocks
 	}
 
 	return &KrbsRelayEntryRequestedSubscription{
@@ -1908,7 +1962,7 @@ func (krbs *KeepRandomBeaconService) RelayEntryRequested(
 
 type KrbsRelayEntryRequestedSubscription struct {
 	contract *KeepRandomBeaconService
-	opts     *ethutil.SubscribeOpts
+	opts     *ethlike.SubscribeOpts
 }
 
 type keepRandomBeaconServiceRelayEntryRequestedFunc func(
@@ -2016,7 +2070,7 @@ func (krbs *KeepRandomBeaconService) watchRelayEntryRequested(
 		krbsLogger.Errorf(
 			"subscription to event RelayEntryRequested had to be "+
 				"retried [%s] since the last attempt; please inspect "+
-				"Ethereum connectivity",
+				"host chain connectivity",
 			elapsed,
 		)
 	}
@@ -2030,10 +2084,10 @@ func (krbs *KeepRandomBeaconService) watchRelayEntryRequested(
 		)
 	}
 
-	return ethutil.WithResubscription(
-		ethutil.SubscriptionBackoffMax,
+	return chainutil.WithResubscription(
+		chainutil.SubscriptionBackoffMax,
 		subscribeFn,
-		ethutil.SubscriptionAlertThreshold,
+		chainutil.SubscriptionAlertThreshold,
 		thresholdViolatedFn,
 		subscriptionFailedFn,
 	)

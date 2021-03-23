@@ -6,6 +6,7 @@ import staking from "./staking"
 import tokenGrants from "./token-grant"
 import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
+import notificationsData from "./notifications-data"
 
 const app = (state = { isReady: true }, action) => {
   switch (action.type) {
@@ -26,6 +27,7 @@ const reducers = combineReducers({
   rewards,
   liquidityRewards,
   app,
+  notificationsData,
 })
 
 const rootReducer = (state, action) => {

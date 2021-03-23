@@ -13,8 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
+	chainutil "github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-common/pkg/cmd"
 	"github.com/keep-network/keep-core/config"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
@@ -25,7 +24,7 @@ import (
 var KeepRandomBeaconServiceCommand cli.Command
 
 var keepRandomBeaconServiceDescription = `The keep-random-beacon-service command allows calling the KeepRandomBeaconService contract on an
-	Ethereum network. It has subcommands corresponding to each contract method,
+	ETH-like network. It has subcommands corresponding to each contract method,
 	which respectively each take parameters based on the contract method's
 	parameters.
 
@@ -53,11 +52,11 @@ func init() {
 		Usage:       `Provides access to the KeepRandomBeaconService contract.`,
 		Description: keepRandomBeaconServiceDescription,
 		Subcommands: []cli.Command{{
-			Name:      "base-callback-gas",
-			Usage:     "Calls the constant method baseCallbackGas on the KeepRandomBeaconService contract.",
-			ArgsUsage: "",
-			Action:    krbsBaseCallbackGas,
-			Before:    cmd.ArgCountChecker(0),
+			Name:      "select-operator-contract",
+			Usage:     "Calls the constant method selectOperatorContract on the KeepRandomBeaconService contract.",
+			ArgsUsage: "[seed] ",
+			Action:    krbsSelectOperatorContract,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "callback-surplus-recipient",
@@ -67,24 +66,17 @@ func init() {
 			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "entry-fee-breakdown",
-			Usage:     "Calls the constant method entryFeeBreakdown on the KeepRandomBeaconService contract.",
-			ArgsUsage: "",
-			Action:    krbsEntryFeeBreakdown,
-			Before:    cmd.ArgCountChecker(0),
+			Name:      "entry-fee-estimate",
+			Usage:     "Calls the constant method entryFeeEstimate on the KeepRandomBeaconService contract.",
+			ArgsUsage: "[callbackGas] ",
+			Action:    krbsEntryFeeEstimate,
+			Before:    cmd.ArgCountChecker(1),
 			Flags:     cmd.ConstFlags,
 		}, {
 			Name:      "initialized",
 			Usage:     "Calls the constant method initialized on the KeepRandomBeaconService contract.",
 			ArgsUsage: "",
 			Action:    krbsInitialized,
-			Before:    cmd.ArgCountChecker(0),
-			Flags:     cmd.ConstFlags,
-		}, {
-			Name:      "request-subsidy-fee-pool",
-			Usage:     "Calls the constant method requestSubsidyFeePool on the KeepRandomBeaconService contract.",
-			ArgsUsage: "",
-			Action:    krbsRequestSubsidyFeePool,
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
@@ -109,19 +101,61 @@ func init() {
 			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "entry-fee-estimate",
-			Usage:     "Calls the constant method entryFeeEstimate on the KeepRandomBeaconService contract.",
-			ArgsUsage: "[callbackGas] ",
-			Action:    krbsEntryFeeEstimate,
-			Before:    cmd.ArgCountChecker(1),
+			Name:      "request-subsidy-fee-pool",
+			Usage:     "Calls the constant method requestSubsidyFeePool on the KeepRandomBeaconService contract.",
+			ArgsUsage: "",
+			Action:    krbsRequestSubsidyFeePool,
+			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
 		}, {
-			Name:      "select-operator-contract",
-			Usage:     "Calls the constant method selectOperatorContract on the KeepRandomBeaconService contract.",
-			ArgsUsage: "[seed] ",
-			Action:    krbsSelectOperatorContract,
-			Before:    cmd.ArgCountChecker(1),
+			Name:      "base-callback-gas",
+			Usage:     "Calls the constant method baseCallbackGas on the KeepRandomBeaconService contract.",
+			ArgsUsage: "",
+			Action:    krbsBaseCallbackGas,
+			Before:    cmd.ArgCountChecker(0),
 			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "entry-fee-breakdown",
+			Usage:     "Calls the constant method entryFeeBreakdown on the KeepRandomBeaconService contract.",
+			ArgsUsage: "",
+			Action:    krbsEntryFeeBreakdown,
+			Before:    cmd.ArgCountChecker(0),
+			Flags:     cmd.ConstFlags,
+		}, {
+			Name:      "fund-request-subsidy-fee-pool",
+			Usage:     "Calls the payable method fundRequestSubsidyFeePool on the KeepRandomBeaconService contract.",
+			ArgsUsage: "",
+			Action:    krbsFundRequestSubsidyFeePool,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "request-relay-entry",
+			Usage:     "Calls the payable method requestRelayEntry on the KeepRandomBeaconService contract.",
+			ArgsUsage: "",
+			Action:    krbsRequestRelayEntry,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "request-relay-entry0",
+			Usage:     "Calls the payable method requestRelayEntry0 on the KeepRandomBeaconService contract.",
+			ArgsUsage: "[callbackContract] [callbackGas] ",
+			Action:    krbsRequestRelayEntry0,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Flags:     cmd.PayableFlags,
+		}, {
+			Name:      "execute-callback",
+			Usage:     "Calls the method executeCallback on the KeepRandomBeaconService contract.",
+			ArgsUsage: "[requestId] [entry] ",
+			Action:    krbsExecuteCallback,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
+			Flags:     cmd.NonConstFlags,
+		}, {
+			Name:      "fund-dkg-fee-pool",
+			Usage:     "Calls the payable method fundDkgFeePool on the KeepRandomBeaconService contract.",
+			ArgsUsage: "",
+			Action:    krbsFundDkgFeePool,
+			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
+			Flags:     cmd.PayableFlags,
 		}, {
 			Name:      "initialize",
 			Usage:     "Calls the method initialize on the KeepRandomBeaconService contract.",
@@ -137,34 +171,6 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "entry-created",
-			Usage:     "Calls the method entryCreated on the KeepRandomBeaconService contract.",
-			ArgsUsage: "[requestId] [entry] [submitter] ",
-			Action:    krbsEntryCreated,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "execute-callback",
-			Usage:     "Calls the method executeCallback on the KeepRandomBeaconService contract.",
-			ArgsUsage: "[requestId] [entry] ",
-			Action:    krbsExecuteCallback,
-			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.NonConstFlags,
-		}, {
-			Name:      "request-relay-entry0",
-			Usage:     "Calls the payable method requestRelayEntry0 on the KeepRandomBeaconService contract.",
-			ArgsUsage: "[callbackContract] [callbackGas] ",
-			Action:    krbsRequestRelayEntry0,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(2))),
-			Flags:     cmd.PayableFlags,
-		}, {
-			Name:      "fund-dkg-fee-pool",
-			Usage:     "Calls the payable method fundDkgFeePool on the KeepRandomBeaconService contract.",
-			ArgsUsage: "",
-			Action:    krbsFundDkgFeePool,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.PayableFlags,
-		}, {
 			Name:      "remove-operator-contract",
 			Usage:     "Calls the method removeOperatorContract on the KeepRandomBeaconService contract.",
 			ArgsUsage: "[operatorContract] ",
@@ -172,32 +178,33 @@ func init() {
 			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(1))),
 			Flags:     cmd.NonConstFlags,
 		}, {
-			Name:      "fund-request-subsidy-fee-pool",
-			Usage:     "Calls the payable method fundRequestSubsidyFeePool on the KeepRandomBeaconService contract.",
-			ArgsUsage: "",
-			Action:    krbsFundRequestSubsidyFeePool,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.PayableFlags,
-		}, {
-			Name:      "request-relay-entry",
-			Usage:     "Calls the payable method requestRelayEntry on the KeepRandomBeaconService contract.",
-			ArgsUsage: "",
-			Action:    krbsRequestRelayEntry,
-			Before:    cli.BeforeFunc(cmd.PayableArgsChecker.AndThen(cmd.ArgCountChecker(0))),
-			Flags:     cmd.PayableFlags,
+			Name:      "entry-created",
+			Usage:     "Calls the method entryCreated on the KeepRandomBeaconService contract.",
+			ArgsUsage: "[requestId] [entry] [submitter] ",
+			Action:    krbsEntryCreated,
+			Before:    cli.BeforeFunc(cmd.NonConstArgsChecker.AndThen(cmd.ArgCountChecker(3))),
+			Flags:     cmd.NonConstFlags,
 		}},
 	})
 }
 
 /// ------------------- Const methods -------------------
 
-func krbsBaseCallbackGas(c *cli.Context) error {
+func krbsSelectOperatorContract(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconService(c)
 	if err != nil {
 		return err
 	}
+	seed, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter seed, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
 
-	result, err := contract.BaseCallbackGasAtBlock(
+	result, err := contract.SelectOperatorContractAtBlock(
+		seed,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -239,13 +246,21 @@ func krbsCallbackSurplusRecipient(c *cli.Context) error {
 	return nil
 }
 
-func krbsEntryFeeBreakdown(c *cli.Context) error {
+func krbsEntryFeeEstimate(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconService(c)
 	if err != nil {
 		return err
 	}
+	callbackGas, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter callbackGas, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
 
-	result, err := contract.EntryFeeBreakdownAtBlock(
+	result, err := contract.EntryFeeEstimateAtBlock(
+		callbackGas,
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -266,26 +281,6 @@ func krbsInitialized(c *cli.Context) error {
 	}
 
 	result, err := contract.InitializedAtBlock(
-
-		cmd.BlockFlagValue.Uint,
-	)
-
-	if err != nil {
-		return err
-	}
-
-	cmd.PrintOutput(result)
-
-	return nil
-}
-
-func krbsRequestSubsidyFeePool(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	result, err := contract.RequestSubsidyFeePoolAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -359,21 +354,13 @@ func krbsDkgFeePool(c *cli.Context) error {
 	return nil
 }
 
-func krbsEntryFeeEstimate(c *cli.Context) error {
+func krbsRequestSubsidyFeePool(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconService(c)
 	if err != nil {
 		return err
 	}
-	callbackGas, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter callbackGas, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
 
-	result, err := contract.EntryFeeEstimateAtBlock(
-		callbackGas,
+	result, err := contract.RequestSubsidyFeePoolAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -387,21 +374,33 @@ func krbsEntryFeeEstimate(c *cli.Context) error {
 	return nil
 }
 
-func krbsSelectOperatorContract(c *cli.Context) error {
+func krbsBaseCallbackGas(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconService(c)
 	if err != nil {
 		return err
 	}
-	seed, err := hexutil.DecodeBig(c.Args()[0])
+
+	result, err := contract.BaseCallbackGasAtBlock(
+
+		cmd.BlockFlagValue.Uint,
+	)
+
 	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter seed, a uint256, from passed value %v",
-			c.Args()[0],
-		)
+		return err
 	}
 
-	result, err := contract.SelectOperatorContractAtBlock(
-		seed,
+	cmd.PrintOutput(result)
+
+	return nil
+}
+
+func krbsEntryFeeBreakdown(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	result, err := contract.EntryFeeBreakdownAtBlock(
 
 		cmd.BlockFlagValue.Uint,
 	)
@@ -416,355 +415,6 @@ func krbsSelectOperatorContract(c *cli.Context) error {
 }
 
 /// ------------------- Non-const methods -------------------
-
-func krbsInitialize(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	dkgContributionMargin, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter dkgContributionMargin, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	registry, err := ethutil.AddressFromHex(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter registry, a address, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.Initialize(
-			dkgContributionMargin,
-			registry,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallInitialize(
-			dkgContributionMargin,
-			registry,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krbsAddOperatorContract(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	operatorContract, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operatorContract, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.AddOperatorContract(
-			operatorContract,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallAddOperatorContract(
-			operatorContract,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krbsEntryCreated(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	requestId, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter requestId, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	entry, err := hexutil.Decode(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter entry, a bytes, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	submitter, err := ethutil.AddressFromHex(c.Args()[2])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter submitter, a address, from passed value %v",
-			c.Args()[2],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.EntryCreated(
-			requestId,
-			entry,
-			submitter,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallEntryCreated(
-			requestId,
-			entry,
-			submitter,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krbsExecuteCallback(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	requestId, err := hexutil.DecodeBig(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter requestId, a uint256, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	entry, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter entry, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.ExecuteCallback(
-			requestId,
-			entry,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallExecuteCallback(
-			requestId,
-			entry,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krbsRequestRelayEntry0(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	callbackContract, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter callbackContract, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	callbackGas, err := hexutil.DecodeBig(c.Args()[1])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter callbackGas, a uint256, from passed value %v",
-			c.Args()[1],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-		result      *big.Int
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RequestRelayEntry0(
-			callbackContract,
-			callbackGas,
-			cmd.ValueFlagValue.Uint)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		result, err = contract.CallRequestRelayEntry0(
-			callbackContract,
-			callbackGas,
-			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(result)
-	}
-
-	return nil
-}
-
-func krbsFundDkgFeePool(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.FundDkgFeePool(
-			cmd.ValueFlagValue.Uint)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallFundDkgFeePool(
-			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
-
-func krbsRemoveOperatorContract(c *cli.Context) error {
-	contract, err := initializeKeepRandomBeaconService(c)
-	if err != nil {
-		return err
-	}
-
-	operatorContract, err := ethutil.AddressFromHex(c.Args()[0])
-	if err != nil {
-		return fmt.Errorf(
-			"couldn't parse parameter operatorContract, a address, from passed value %v",
-			c.Args()[0],
-		)
-	}
-
-	var (
-		transaction *types.Transaction
-	)
-
-	if c.Bool(cmd.SubmitFlag) {
-		// Do a regular submission. Take payable into account.
-		transaction, err = contract.RemoveOperatorContract(
-			operatorContract,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(transaction.Hash)
-	} else {
-		// Do a call.
-		err = contract.CallRemoveOperatorContract(
-			operatorContract,
-			cmd.BlockFlagValue.Uint,
-		)
-		if err != nil {
-			return err
-		}
-
-		cmd.PrintOutput(nil)
-	}
-
-	return nil
-}
 
 func krbsFundRequestSubsidyFeePool(c *cli.Context) error {
 	contract, err := initializeKeepRandomBeaconService(c)
@@ -835,20 +485,369 @@ func krbsRequestRelayEntry(c *cli.Context) error {
 	return nil
 }
 
+func krbsRequestRelayEntry0(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	callbackContract, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter callbackContract, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	callbackGas, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter callbackGas, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+		result      *big.Int
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RequestRelayEntry0(
+			callbackContract,
+			callbackGas,
+			cmd.ValueFlagValue.Uint)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		result, err = contract.CallRequestRelayEntry0(
+			callbackContract,
+			callbackGas,
+			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(result)
+	}
+
+	return nil
+}
+
+func krbsExecuteCallback(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	requestId, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter requestId, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	entry, err := hexutil.DecodeBig(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter entry, a uint256, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.ExecuteCallback(
+			requestId,
+			entry,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallExecuteCallback(
+			requestId,
+			entry,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krbsFundDkgFeePool(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.FundDkgFeePool(
+			cmd.ValueFlagValue.Uint)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallFundDkgFeePool(
+			cmd.ValueFlagValue.Uint, cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krbsInitialize(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	dkgContributionMargin, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter dkgContributionMargin, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	registry, err := chainutil.AddressFromHex(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter registry, a address, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.Initialize(
+			dkgContributionMargin,
+			registry,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallInitialize(
+			dkgContributionMargin,
+			registry,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krbsAddOperatorContract(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	operatorContract, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operatorContract, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.AddOperatorContract(
+			operatorContract,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallAddOperatorContract(
+			operatorContract,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krbsRemoveOperatorContract(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	operatorContract, err := chainutil.AddressFromHex(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter operatorContract, a address, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.RemoveOperatorContract(
+			operatorContract,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallRemoveOperatorContract(
+			operatorContract,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
+func krbsEntryCreated(c *cli.Context) error {
+	contract, err := initializeKeepRandomBeaconService(c)
+	if err != nil {
+		return err
+	}
+
+	requestId, err := hexutil.DecodeBig(c.Args()[0])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter requestId, a uint256, from passed value %v",
+			c.Args()[0],
+		)
+	}
+
+	entry, err := hexutil.Decode(c.Args()[1])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter entry, a bytes, from passed value %v",
+			c.Args()[1],
+		)
+	}
+
+	submitter, err := chainutil.AddressFromHex(c.Args()[2])
+	if err != nil {
+		return fmt.Errorf(
+			"couldn't parse parameter submitter, a address, from passed value %v",
+			c.Args()[2],
+		)
+	}
+
+	var (
+		transaction *types.Transaction
+	)
+
+	if c.Bool(cmd.SubmitFlag) {
+		// Do a regular submission. Take payable into account.
+		transaction, err = contract.EntryCreated(
+			requestId,
+			entry,
+			submitter,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(transaction.Hash)
+	} else {
+		// Do a call.
+		err = contract.CallEntryCreated(
+			requestId,
+			entry,
+			submitter,
+			cmd.BlockFlagValue.Uint,
+		)
+		if err != nil {
+			return err
+		}
+
+		cmd.PrintOutput(nil)
+	}
+
+	return nil
+}
+
 /// ------------------- Initialization -------------------
 
 func initializeKeepRandomBeaconService(c *cli.Context) (*contract.KeepRandomBeaconService, error) {
 	config, err := config.ReadEthereumConfig(c.GlobalString("config"))
 	if err != nil {
-		return nil, fmt.Errorf("error reading Ethereum config from file: [%v]", err)
+		return nil, fmt.Errorf("error reading config from file: [%v]", err)
 	}
 
-	client, _, _, err := ethutil.ConnectClients(config.URL, config.URLRPC)
+	client, _, _, err := chainutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to Ethereum node: [%v]", err)
+		return nil, fmt.Errorf("error connecting to host chain node: [%v]", err)
 	}
 
-	key, err := ethutil.DecryptKeyFile(
+	key, err := chainutil.DecryptKeyFile(
 		config.Account.KeyFile,
 		config.Account.KeyFilePassword,
 	)
@@ -869,12 +868,16 @@ func initializeKeepRandomBeaconService(c *cli.Context) (*contract.KeepRandomBeac
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := chainutil.NewMiningWaiter(
+		client,
+		checkInterval,
+		maxGasPrice,
+	)
 
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	blockCounter, err := chainutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to create Ethereum blockcounter: [%v]",
+			"failed to create block counter: [%v]",
 			err,
 		)
 	}
@@ -885,7 +888,7 @@ func initializeKeepRandomBeaconService(c *cli.Context) (*contract.KeepRandomBeac
 		address,
 		key,
 		client,
-		ethutil.NewNonceManager(key.Address, client),
+		chainutil.NewNonceManager(client, key.Address),
 		miningWaiter,
 		blockCounter,
 		&sync.Mutex{},

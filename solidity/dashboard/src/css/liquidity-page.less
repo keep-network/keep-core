@@ -59,6 +59,11 @@
     display: flex;
     padding: 0.7rem 0.5rem;
 
+    &--warning {
+      background-color: @color-grey-20;
+      padding-right: 0.8rem;
+    }
+
     .liquidity__rewards-icon {
       width: 1.5rem;
       height: 1.5rem;
@@ -67,6 +72,12 @@
 
       path {
         fill: white;
+      }
+
+      &--warning {
+        path {
+          fill: @color-grey-60;
+        }
       }
     }
 
@@ -77,6 +88,55 @@
       .liquidity-banner__info {
         font-weight: 400;
         margin-bottom: 0.3rem;
+      }
+    }
+  }
+
+  .lp-balance {
+    margin: 2rem 0;
+
+    .lp-balance__tooltip {
+      .tooltip__content-wrapper {
+        text-align: left;
+        min-width: 15rem;
+      }
+    }
+
+    .lp-balance__value-container {
+      display: flex;
+      justify-content: space-between;
+
+      .lp-balance__value-label {
+        display: flex;
+        align-items: center;
+
+        svg {
+          height: 1.5rem;
+          width: 1.5rem;
+          margin-right: 0.4rem;
+        }
+      }
+    }
+
+    .lp-balance__plus-separator-container {
+      .lp-balance__plus-separator {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .lp-balance__plus-separator::before, .lp-balance__plus-separator::after {
+        content: "";
+        flex: 1;
+        border-bottom: 1px solid @color-grey-70;
+        margin: auto;
+      }
+
+      .lp-balance__plus-separator::before {
+        margin-right: .75rem;
+      }
+
+      .lp-balance__plus-separator::after {
+        margin-left: .75rem;
       }
     }
   }
@@ -172,7 +232,7 @@
     &__overview {
       flex-direction: row;
       margin-bottom: 1.2rem;
-    
+
       &__info-tiles {
         display: block;
       }

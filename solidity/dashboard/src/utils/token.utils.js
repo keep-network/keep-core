@@ -1,4 +1,5 @@
 import BigNumber from "bignumber.js"
+import { AMOUNT_UNIT } from "../constants/constants"
 
 const metrics = [
   { divisor: 1, symbol: "" },
@@ -6,9 +7,14 @@ const metrics = [
   { divisor: 1e6, symbol: "M" },
 ]
 
-export function displayAmount(amount, withCommaSeparator = true) {
+export function displayAmount(
+  amount,
+  withCommaSeparator = true,
+  unit = AMOUNT_UNIT.WEI
+) {
   if (amount) {
-    const readableFormat = toTokenUnit(amount)
+    const readableFormat =
+      unit === AMOUNT_UNIT.WEI ? toTokenUnit(amount) : new BigNumber(amount)
     return withCommaSeparator
       ? readableFormat.toFormat(0, BigNumber.ROUND_DOWN)
       : readableFormat.toString()

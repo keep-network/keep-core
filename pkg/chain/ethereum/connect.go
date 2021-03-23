@@ -1,22 +1,32 @@
 package ethereum
 
 import (
+	"context"
 	"fmt"
 	"math/big"
 	"sync"
 	"time"
 
+	"github.com/keep-network/keep-common/pkg/rate"
+
+	"github.com/keep-network/keep-common/pkg/chain/ethlike"
+
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
-	"github.com/keep-network/keep-common/pkg/chain/ethereum/blockcounter"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
+)
+
+// Definitions of contract names.
+const (
+	KeepRandomBeaconOperatorContractName = "KeepRandomBeaconOperator"
+	TokenStakingContractName             = "TokenStaking"
+	KeepRandomBeaconServiceContractName  = "KeepRandomBeaconService"
 )
 
 var (
@@ -42,7 +52,7 @@ type ethereumChain struct {
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
 	stakingContract                  *contract.TokenStaking
 	accountKey                       *keystore.Key
-	blockCounter                     *blockcounter.EthereumBlockCounter
+	blockCounter                     *ethlike.BlockCounter
 	chainConfig                      *relaychain.Config
 
 	// transactionMutex allows interested parties to forcibly serialize
@@ -66,7 +76,10 @@ type ethereumUtilityChain struct {
 	keepRandomBeaconServiceContract *contract.KeepRandomBeaconService
 }
 
-func connect(config ethereum.Config) (*ethereumChain, error) {
+func connect(
+	ctx context.Context,
+	config ethereum.Config,
+) (*ethereumChain, error) {
 	client, clientWS, clientRPC, err := ethutil.ConnectClients(config.URL, config.URLRPC)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -76,16 +89,17 @@ func connect(config ethereum.Config) (*ethereumChain, error) {
 		)
 	}
 
-	return connectWithClient(config, client, clientWS, clientRPC)
+	return connectWithClient(ctx, config, client, clientWS, clientRPC)
 }
 
 func connectWithClient(
+	ctx context.Context,
 	config ethereum.Config,
 	client *ethclient.Client,
 	clientWS *rpc.Client,
 	clientRPC *rpc.Client,
 ) (*ethereumChain, error) {
-	pv := &ethereumChain{
+	ec := &ethereumChain{
 		config:           config,
 		client:           addClientWrappers(config, client),
 		clientRPC:        clientRPC,
@@ -93,16 +107,16 @@ func connectWithClient(
 		transactionMutex: &sync.Mutex{},
 	}
 
-	blockCounter, err := blockcounter.CreateBlockCounter(pv.client)
+	blockCounter, err := ethutil.NewBlockCounter(ec.client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
 			err,
 		)
 	}
-	pv.blockCounter = blockCounter
+	ec.blockCounter = blockCounter
 
-	if pv.accountKey == nil {
+	if ec.accountKey == nil {
 		key, err := ethutil.DecryptKeyFile(
 			config.Account.KeyFile,
 			config.Account.KeyFilePassword,
@@ -114,7 +128,7 @@ func connectWithClient(
 				err,
 			)
 		}
-		pv.accountKey = key
+		ec.accountKey = key
 	}
 
 	checkInterval := DefaultMiningCheckInterval
@@ -128,60 +142,66 @@ func connectWithClient(
 
 	logger.Infof("using [%v] mining check interval", checkInterval)
 	logger.Infof("using [%v] wei max gas price", maxGasPrice)
-	miningWaiter := ethutil.NewMiningWaiter(pv.client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(
+		ec.client,
+		checkInterval,
+		maxGasPrice,
+	)
 
-	address, err := addressForContract(config, "KeepRandomBeaconOperator")
+	address, err := config.ContractAddress(KeepRandomBeaconOperatorContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
 
 	nonceManager := ethutil.NewNonceManager(
-		pv.accountKey.Address,
-		pv.client,
+		ec.client,
+		ec.accountKey.Address,
 	)
 
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
-			*address,
-			pv.accountKey,
-			pv.client,
+			address,
+			ec.accountKey,
+			ec.client,
 			nonceManager,
 			miningWaiter,
 			blockCounter,
-			pv.transactionMutex,
+			ec.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to KeepRandomBeaconOperator contract: [%v]", err)
 	}
-	pv.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
+	ec.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
-	address, err = addressForContract(config, "TokenStaking")
+	address, err = config.ContractAddress(TokenStakingContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
 	}
 
 	stakingContract, err :=
 		contract.NewTokenStaking(
-			*address,
-			pv.accountKey,
-			pv.client,
+			address,
+			ec.accountKey,
+			ec.client,
 			nonceManager,
 			miningWaiter,
 			blockCounter,
-			pv.transactionMutex,
+			ec.transactionMutex,
 		)
 	if err != nil {
 		return nil, fmt.Errorf("error attaching to TokenStaking contract: [%v]", err)
 	}
-	pv.stakingContract = stakingContract
+	ec.stakingContract = stakingContract
 
-	chainConfig, err := fetchChainConfig(pv)
+	chainConfig, err := fetchChainConfig(ec)
 	if err != nil {
 		return nil, fmt.Errorf("could not fetch chain config: [%v]", err)
 	}
-	pv.chainConfig = chainConfig
+	ec.chainConfig = chainConfig
 
-	return pv, nil
+	ec.initializeBalanceMonitoring(ctx)
+
+	return ec, nil
 }
 
 func addClientWrappers(
@@ -201,7 +221,7 @@ func addClientWrappers(
 
 		return ethutil.WrapRateLimiting(
 			loggingBackend,
-			&ethutil.RateLimiterConfig{
+			&rate.LimiterConfig{
 				RequestsPerSecondLimit: config.RequestsPerSecondLimit,
 				ConcurrencyLimit:       config.ConcurrencyLimit,
 			},
@@ -226,12 +246,18 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		)
 	}
 
-	base, err := connectWithClient(config, client, clientWS, clientRPC)
+	base, err := connectWithClient(
+		context.Background(),
+		config,
+		client,
+		clientWS,
+		clientRPC,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	blockCounter, err := blockcounter.CreateBlockCounter(client)
+	blockCounter, err := ethutil.NewBlockCounter(client)
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",
@@ -248,21 +274,25 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		maxGasPrice = config.MaxGasPrice.Int
 	}
 
-	miningWaiter := ethutil.NewMiningWaiter(client, checkInterval, maxGasPrice)
+	miningWaiter := ethutil.NewMiningWaiter(
+		client,
+		checkInterval,
+		maxGasPrice,
+	)
 
-	address, err := addressForContract(config, "KeepRandomBeaconService")
+	address, err := config.ContractAddress(KeepRandomBeaconServiceContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
 	}
 
 	nonceManager := ethutil.NewNonceManager(
+		client,
 		base.accountKey.Address,
-		base.client,
 	)
 
 	keepRandomBeaconServiceContract, err :=
 		contract.NewKeepRandomBeaconService(
-			*address,
+			address,
 			base.accountKey,
 			base.client,
 			nonceManager,
@@ -284,29 +314,11 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 // standard handle to the chain interface. Note: for other things to work
 // correctly the configuration will need to reference a websocket, "ws://", or
 // local IPC connection.
-func Connect(config ethereum.Config) (chain.Handle, error) {
-	return connect(config)
-}
-
-func addressForContract(config ethereum.Config, contractName string) (*common.Address, error) {
-	addressString, exists := config.ContractAddresses[contractName]
-	if !exists {
-		return nil, fmt.Errorf(
-			"no address information for [%v] in configuration",
-			contractName,
-		)
-	}
-
-	if !common.IsHexAddress(addressString) {
-		return nil, fmt.Errorf(
-			"configured address [%v] for contract [%v] is not valid hex address",
-			addressString,
-			contractName,
-		)
-	}
-
-	address := common.HexToAddress(addressString)
-	return &address, nil
+func Connect(
+	ctx context.Context,
+	config ethereum.Config,
+) (chain.Handle, error) {
+	return connect(ctx, config)
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.
