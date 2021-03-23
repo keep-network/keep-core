@@ -59,6 +59,11 @@
     display: flex;
     padding: 0.7rem 0.5rem;
 
+    &--warning {
+      background-color: @color-grey-20;
+      padding-right: 0.8rem;
+    }
+
     .liquidity__rewards-icon {
       width: 1.5rem;
       height: 1.5rem;
@@ -67,6 +72,12 @@
 
       path {
         fill: white;
+      }
+
+      &--warning {
+        path {
+          fill: @color-grey-60;
+        }
       }
     }
 

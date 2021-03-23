@@ -23,6 +23,11 @@ export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
 
+export const AMOUNT_UNIT = {
+  TOKEN: "TOKEN",
+  WEI: "WEI",
+}
+
 export const WALLETS = {
   METAMASK: { label: "MetaMask", name: "METAMASK" },
   TREZOR: { label: "Trezor", name: "TREZOR" },

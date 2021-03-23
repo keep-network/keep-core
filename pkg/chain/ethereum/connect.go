@@ -14,13 +14,19 @@ import (
 	relaychain "github.com/keep-network/keep-core/pkg/beacon/relay/chain"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum"
 	"github.com/keep-network/keep-common/pkg/chain/ethereum/ethutil"
 	"github.com/keep-network/keep-core/pkg/chain"
 	"github.com/keep-network/keep-core/pkg/chain/gen/contract"
+)
+
+// Definitions of contract names.
+const (
+	KeepRandomBeaconOperatorContractName = "KeepRandomBeaconOperator"
+	TokenStakingContractName             = "TokenStaking"
+	KeepRandomBeaconServiceContractName  = "KeepRandomBeaconService"
 )
 
 var (
@@ -40,7 +46,7 @@ var (
 
 type ethereumChain struct {
 	config                           ethereum.Config
-	client                           ethutil.HostChainClient
+	client                           ethutil.EthereumClient
 	clientRPC                        *rpc.Client
 	clientWS                         *rpc.Client
 	keepRandomBeaconOperatorContract *contract.KeepRandomBeaconOperator
@@ -142,7 +148,7 @@ func connectWithClient(
 		maxGasPrice,
 	)
 
-	address, err := addressForContract(config, "KeepRandomBeaconOperator")
+	address, err := config.ContractAddress(KeepRandomBeaconOperatorContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconOperator contract: [%v]", err)
 	}
@@ -154,7 +160,7 @@ func connectWithClient(
 
 	keepRandomBeaconOperatorContract, err :=
 		contract.NewKeepRandomBeaconOperator(
-			*address,
+			address,
 			ec.accountKey,
 			ec.client,
 			nonceManager,
@@ -167,14 +173,14 @@ func connectWithClient(
 	}
 	ec.keepRandomBeaconOperatorContract = keepRandomBeaconOperatorContract
 
-	address, err = addressForContract(config, "TokenStaking")
+	address, err = config.ContractAddress(TokenStakingContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving TokenStaking contract: [%v]", err)
 	}
 
 	stakingContract, err :=
 		contract.NewTokenStaking(
-			*address,
+			address,
 			ec.accountKey,
 			ec.client,
 			nonceManager,
@@ -200,8 +206,8 @@ func connectWithClient(
 
 func addClientWrappers(
 	config ethereum.Config,
-	backend ethutil.HostChainClient,
-) ethutil.HostChainClient {
+	backend ethutil.EthereumClient,
+) ethutil.EthereumClient {
 	loggingBackend := ethutil.WrapCallLogging(logger, backend)
 
 	if config.RequestsPerSecondLimit > 0 || config.ConcurrencyLimit > 0 {
@@ -274,7 +280,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 		maxGasPrice,
 	)
 
-	address, err := addressForContract(config, "KeepRandomBeaconService")
+	address, err := config.ContractAddress(KeepRandomBeaconServiceContractName)
 	if err != nil {
 		return nil, fmt.Errorf("error resolving KeepRandomBeaconService contract: [%v]", err)
 	}
@@ -286,7 +292,7 @@ func ConnectUtility(config ethereum.Config) (chain.Utility, error) {
 
 	keepRandomBeaconServiceContract, err :=
 		contract.NewKeepRandomBeaconService(
-			*address,
+			address,
 			base.accountKey,
 			base.client,
 			nonceManager,
@@ -313,27 +319,6 @@ func Connect(
 	config ethereum.Config,
 ) (chain.Handle, error) {
 	return connect(ctx, config)
-}
-
-func addressForContract(config ethereum.Config, contractName string) (*common.Address, error) {
-	addressString, exists := config.ContractAddresses[contractName]
-	if !exists {
-		return nil, fmt.Errorf(
-			"no address information for [%v] in configuration",
-			contractName,
-		)
-	}
-
-	if !common.IsHexAddress(addressString) {
-		return nil, fmt.Errorf(
-			"configured address [%v] for contract [%v] is not valid hex address",
-			addressString,
-			contractName,
-		)
-	}
-
-	address := common.HexToAddress(addressString)
-	return &address, nil
 }
 
 // BlockCounter creates a BlockCounter that uses the block number in ethereum.

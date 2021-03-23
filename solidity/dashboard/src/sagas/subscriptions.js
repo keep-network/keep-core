@@ -40,7 +40,7 @@ function* observeKeepTokenTransfer() {
         returnValues: { from, to, value },
       } = yield take(contractEventCahnnel)
 
-      let arithmeticOpration
+      let arithmeticOpration = null
       if (isSameEthAddress(defaultAccount, from)) {
         arithmeticOpration = sub
       } else if (isSameEthAddress(defaultAccount, to)) {
