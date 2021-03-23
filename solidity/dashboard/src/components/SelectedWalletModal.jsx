@@ -4,16 +4,17 @@ import { useShowMessage, messageType } from "./Message"
 import ChooseWalletAddress from "./ChooseWalletAddress"
 import { isEmptyArray } from "../utils/array.utils"
 import { wait } from "../utils/general.utils"
+import { UserRejectedConnectionRequestError } from "../connectors"
 
 const SelectedWalletModal = ({
   icon,
   walletName,
-  iconDescription,
+  descriptionIcon,
   description,
-  providerName,
   connector,
   connectAppWithWallet,
   closeModal,
+  userRejectedConnectionRequestErrorMsg,
   fetchAvailableAccounts = null,
   numberOfAccounts = 15,
   connectWithWalletOnMount = false,
@@ -61,7 +62,7 @@ const SelectedWalletModal = ({
     if (connector && connectWithWalletOnMount) {
       setIsConnecting(true)
       wait(1000) // Delay request and show loading indicator.
-        .then(() => connectAppWithWallet(connector, providerName))
+        .then(() => connectAppWithWallet(connector))
         .then(() => {
           if (shouldSetState) {
             setIsConnecting(false)
@@ -88,14 +89,14 @@ const SelectedWalletModal = ({
   }, [
     connector,
     connectAppWithWallet,
-    providerName,
     closeModal,
     showMessage,
     connectWithWalletOnMount,
   ])
 
   const handleError = (error) => {
-    setError(error.toString())
+    console.error("Failed to connect to a wallet.", error)
+    setError(error)
     setIsConnecting(false)
   }
 
@@ -103,7 +104,7 @@ const SelectedWalletModal = ({
     try {
       connector.defaultAccount = account
       setIsConnecting(true)
-      await connectAppWithWallet(connector, providerName)
+      await connectAppWithWallet(connector)
       setIsConnecting(false)
       closeModal()
     } catch (error) {
@@ -118,14 +119,29 @@ const SelectedWalletModal = ({
     }
   }
 
+  const renderError = () => {
+    const parseError = (msg) => `Error: ${msg}`
+    if (!error) {
+      return null
+    }
+
+    if (error && error instanceof UserRejectedConnectionRequestError) {
+      return parseError(userRejectedConnectionRequestErrorMsg || error.message)
+    }
+
+    return error && error.message
+      ? parseError(error.message.toString())
+      : parseError("Unexpected error, please try again.")
+  }
+
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
         {icon}
         <h3 className="ml-1">{walletName}</h3>
       </div>
-      {iconDescription && iconDescription}
-      <span className="text-center">{description}</span>
+      {descriptionIcon && descriptionIcon}
+      <span className="text-center mt-1">{description}</span>
       {children}
       {isConnecting || accountsAreFetching ? (
         <>
@@ -135,7 +151,7 @@ const SelectedWalletModal = ({
             : `Connecting...`}
         </>
       ) : null}
-      {error && error}
+      {renderError()}
       {!isEmptyArray(availableAccounts) &&
         !accountsAreFetching &&
         !isConnecting && (

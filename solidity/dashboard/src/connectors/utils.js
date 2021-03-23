@@ -1,5 +1,6 @@
 import Common from "ethereumjs-common"
 import { Transaction as EthereumTx } from "ethereumjs-tx"
+import clone from "clone"
 import config from "../config/config.json"
 import { getFirstNetworkIdFromArtifact } from "../contracts"
 
@@ -37,4 +38,53 @@ export const getWsUrl = () => {
     return "ws://localhost:8545"
   }
   return config.networks[getChainId()].wsURL
+}
+
+export const getRPCRequestPayload = (method, params = []) => {
+  return {
+    jsonrpc: "2.0",
+    method,
+    params,
+    id: new Date().getTime(),
+  }
+}
+
+export const overrideCacheMiddleware = (cacheSubprovider) => {
+  // HACK ALERT Intercept middleware to always clone results. The cache
+  // HACK ALERT subprovider caches results, but the cached values are mutable,
+  // HACK ALERT and sure enough, the downstream handlers can and do at times
+  // HACK ALERT mangle the results in non-idempotent ways. This means that
+  // HACK ALERT when they receive cached values that they've already mangled
+  // HACK ALERT later, everything blows up. This mini-middleware clones
+  // HACK ALERT the results at the two exit points that the cache subprovider
+  // HACK ALERT can use, ensuring that any downstream handlers are mutating
+  // HACK ALERT a request-specific version of the value, without mangling the
+  // HACK ALERT cached version.
+  const originalMiddleware = cacheSubprovider.middleware.bind(cacheSubprovider)
+  cacheSubprovider.middleware = (request, response, nextMiddleware, end) => {
+    originalMiddleware(
+      request,
+      response,
+      (handler) => {
+        nextMiddleware((nextHandler) => {
+          handler(nextHandler)
+          // If the handler filled in a result, make sure to clone it so the
+          // cache value is independent of downstream changes.
+          response.result = clone(response.result)
+        })
+      },
+      (error) => {
+        // If the handler filled in a result, make sure to clone it so the
+        // cache value is independent of downstream changes.
+        response.result = clone(response.result)
+        end(error)
+      }
+    )
+  }
+}
+
+export class UserRejectedConnectionRequestError extends Error {
+  constructor() {
+    super("User rejected connection request.")
+  }
 }

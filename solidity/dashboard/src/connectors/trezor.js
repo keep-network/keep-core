@@ -5,10 +5,11 @@ import { AbstractHardwareWalletConnector } from "./abstract-connector"
 import { getEthereumTxObj, getChainIdFromV } from "./utils"
 import { getBufferFromHex } from "../utils/general.utils"
 import { getChainId } from "./utils"
+import { WALLETS } from "../constants/constants"
 
-export class TrezorProvider extends AbstractHardwareWalletConnector {
-  constructor() {
-    super(new CustomTrezorSubprovider(getChainId()))
+export class TrezorConnector extends AbstractHardwareWalletConnector {
+  constructor(name = WALLETS.TREZOR.name) {
+    super(new CustomTrezorSubprovider(getChainId()), name)
   }
 }
 

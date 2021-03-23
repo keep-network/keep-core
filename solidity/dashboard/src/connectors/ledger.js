@@ -5,15 +5,16 @@ import { AbstractHardwareWalletConnector } from "./abstract-connector"
 import { getChainIdFromV, getEthereumTxObj, getChainId } from "./utils"
 import web3Utils from "web3-utils"
 import { getBufferFromHex } from "../utils/general.utils"
+import { WALLETS } from "../constants/constants"
 
 export const LEDGER_DERIVATION_PATHS = {
   LEDGER_LIVE: `m/44'/60'/x'/0/0`,
   LEDGER_LEGACY: `m/44'/60'/0'/x`,
 }
 
-export class LedgerProvider extends AbstractHardwareWalletConnector {
-  constructor(baseDerivationPath) {
-    super(new CustomLedgerSubprovider(getChainId(), baseDerivationPath))
+export class LedgerConnector extends AbstractHardwareWalletConnector {
+  constructor(baseDerivationPath, name = WALLETS.LEDGER.name) {
+    super(new CustomLedgerSubprovider(getChainId(), baseDerivationPath), name)
   }
 }
 
