@@ -53,6 +53,7 @@ export { ReactComponent as EthToken } from "../static/svg/eth_token.svg"
 export { ReactComponent as KeepOnlyPool } from "../static/svg/keep-only-pool.svg"
 export { ReactComponent as BalancerLogo } from "../static/svg/balancer-logo.svg"
 export { ReactComponent as UniswapLogo } from "../static/svg/uniswap-logo.svg"
+export { ReactComponent as WalletConnect } from "../static/svg/wallet-connect.svg"
 
 const Badge = ({ height, width }) => (
   <svg

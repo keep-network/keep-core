@@ -29,10 +29,10 @@ export const AMOUNT_UNIT = {
 }
 
 export const WALLETS = {
-  METAMASK: { label: "MetaMask" },
-  TREZOR: { label: "Trezor" },
-  LEDGER: { label: "Ledger" },
-  COINBASE: { label: "Coinbase" },
+  METAMASK: { label: "MetaMask", name: "METAMASK" },
+  TREZOR: { label: "Trezor", name: "TREZOR" },
+  LEDGER: { label: "Ledger", name: "LEDGER" },
+  WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
 }
 
 export const REWARD_STATUS = {

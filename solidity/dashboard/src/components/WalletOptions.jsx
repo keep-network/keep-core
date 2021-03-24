@@ -5,60 +5,61 @@ import { useModal } from "../hooks/useModal"
 import LedgerModal from "./LedgerModal"
 import TrezorModal from "./TrezorModal"
 import {
-  TrezorProvider,
-  LedgerProvider,
+  TrezorConnector,
+  LedgerConnector,
   LEDGER_DERIVATION_PATHS,
-  InjectedProvider,
+  InjectedConnector,
+  WalletConnectConnector,
 } from "../connectors"
 import MetaMaskModal from "./MetaMaskModal"
+import WallectConnectModal from "./WalletConnectModal"
+import { WALLETS } from "../constants/constants"
 
-const WALLETS = [
+const WALLETS_OPTIONS = [
   {
     label: "MetaMask",
     icon: Icons.MetaMask,
-    providerName: "METAMASK",
-    modalProps: {
-      iconDescription: null,
-      btnText: "install extension",
-      btnLink: "https://metamask.io",
-      description:
-        "The MetaMask login screen will open in an external window. If it doesn’t load right away, click below to install:",
-    },
     isHardwareWallet: false,
-    connector: InjectedProvider,
+    connector: new InjectedConnector(),
   },
   {
     label: "Ledger",
     icon: Icons.Ledger,
-    providerName: "LEDGER",
     isHardwareWallet: true,
     connector: {
-      LEDGER_LIVE: new LedgerProvider(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
-      LEDGER_LEGACY: new LedgerProvider(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
+      // Add additional filed `name` to handle `switch` statement in
+      // `renderModalContent` function in `Wallet` component. The `LedgerModal`
+      // component is able to handle this pseudo connector object correctly and
+      // choose the right connector from the object depending on user
+      // preferences.
+      name: WALLETS.LEDGER.name,
+      LEDGER_LIVE: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LIVE),
+      LEDGER_LEGACY: new LedgerConnector(LEDGER_DERIVATION_PATHS.LEDGER_LEGACY),
     },
   },
   {
     label: "Trezor",
     icon: Icons.Trezor,
-    providerName: "TREZOR",
     isHardwareWallet: true,
-    connector: new TrezorProvider(),
+    connector: new TrezorConnector(),
+  },
+  {
+    label: "WalletConnect",
+    icon: Icons.WalletConnect,
+    isHardwareWallet: false,
+    connector: new WalletConnectConnector(),
   },
 ]
 
 const WalletOptions = () => {
-  return <ul className="wallet__options">{WALLETS.map(renderWallet)}</ul>
+  return (
+    <ul className="wallet__options">{WALLETS_OPTIONS.map(renderWallet)}</ul>
+  )
 }
 
 const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
-const Wallet = ({
-  label,
-  icon: IconComponent,
-  providerName,
-  modalProps,
-  connector,
-}) => {
+const Wallet = ({ label, icon: IconComponent, connector }) => {
   const { openModal, closeModal } = useModal()
   const { connectAppWithWallet, abortWalletConnection } = useWeb3Context()
 
@@ -69,13 +70,15 @@ const Wallet = ({
 
   const renderModalContent = () => {
     const defaultProps = { connector, closeModal, connectAppWithWallet }
-    switch (providerName) {
-      case "LEDGER":
+    switch (connector.name) {
+      case WALLETS.LEDGER.name:
         return <LedgerModal {...defaultProps} />
-      case "TREZOR":
+      case WALLETS.TREZOR.name:
         return <TrezorModal {...defaultProps} />
-      case "METAMASK":
+      case WALLETS.METAMASK.name:
         return <MetaMaskModal {...defaultProps} />
+      case WALLETS.WALLET_CONNECT.name:
+        return <WallectConnectModal {...defaultProps} />
       default:
         return null
     }

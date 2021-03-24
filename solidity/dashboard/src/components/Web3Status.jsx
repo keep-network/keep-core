@@ -9,9 +9,7 @@ import CopyToClipboard from "./CopyToClipboard"
 import { displayAmount } from "../utils/token.utils"
 
 export const Web3Status = () => {
-  const { yourAddress, provider } = useWeb3Context()
-
-  const isActive = yourAddress && provider
+  const { yourAddress, isConnected } = useWeb3Context()
 
   return (
     <div className="web3-status">
@@ -21,14 +19,14 @@ export const Web3Status = () => {
         </div>
         <div className="web3-status__wallet">
           <Icons.Wallet
-            className={`wallet__icon${isActive ? "--active" : ""}`}
+            className={`wallet__icon${isConnected ? "--active" : ""}`}
           />
-          <div className={`wallet__address${isActive ? "--active" : ""}`}>
-            {isActive ? shortenAddress(yourAddress) : "connect wallet"}
+          <div className={`wallet__address${isConnected ? "--active" : ""}`}>
+            {isConnected ? shortenAddress(yourAddress) : "connect wallet"}
           </div>
           <div className="wallet__menu-container">
             <div className="wallet__menu">
-              {isActive ? <WalletMenu /> : <WalletOptions />}
+              {isConnected ? <WalletMenu /> : <WalletOptions />}
             </div>
           </div>
         </div>

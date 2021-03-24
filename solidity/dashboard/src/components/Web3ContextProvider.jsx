@@ -4,6 +4,8 @@ import { Web3Context } from "./WithWeb3Context"
 import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
 import { connect } from "react-redux"
+import { WALLETS } from "../constants/constants"
+import { getNetworkName } from "../utils/ethereum.utils"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -11,7 +13,6 @@ class Web3ContextProvider extends React.Component {
   constructor(props) {
     super(props)
     this.state = {
-      provider: null,
       web3: null,
       isFetching: false,
       yourAddress: "",
@@ -23,19 +24,31 @@ class Web3ContextProvider extends React.Component {
       eth: {},
       error: "",
       isConnected: false,
+      connector: null,
     }
   }
 
-  connectAppWithWallet = async (connector, providerName) => {
+  componentWillUnmount() {
+    this.disconnect(false)
+  }
+
+  connectAppWithWallet = async (connector) => {
     this.setState({ isFetching: true })
     let web3
     let yourAddress
     let contracts
+    let networkId
+    let chainId
     try {
       const accounts = await connector.enable()
+      networkId = await connector.getNetworkId()
+      chainId = await connector.getChainId()
+      console.log(
+        `Connected to the network; chainId: ${chainId.toString()}, networkId: ${networkId}`
+      )
       yourAddress = accounts[0]
 
-      web3 = new Web3(connector)
+      web3 = new Web3(connector.getProvider())
       web3.eth.defaultAccount = yourAddress
 
       resolveWeb3Deferred(web3)
@@ -45,7 +58,7 @@ class Web3ContextProvider extends React.Component {
     }
 
     try {
-      contracts = await getContracts(web3)
+      contracts = await getContracts(web3, networkId)
     } catch (error) {
       this.setState({
         isFetching: false,
@@ -54,7 +67,7 @@ class Web3ContextProvider extends React.Component {
       throw error
     }
 
-    if (providerName === "METAMASK") {
+    if (connector.name === WALLETS.METAMASK.name) {
       web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
       web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
     }
@@ -63,9 +76,10 @@ class Web3ContextProvider extends React.Component {
 
     this.setState({
       web3,
-      provider: providerName,
       yourAddress,
-      networkType: await web3.eth.net.getNetworkType(),
+      networkType: getNetworkName(chainId),
+      chainId,
+      networkId,
       ...contracts,
       utils: web3.utils,
       eth: web3.eth,
@@ -77,7 +91,6 @@ class Web3ContextProvider extends React.Component {
 
   abortWalletConnection = () => {
     this.setState({
-      provider: null,
       web3: null,
       isFetching: false,
       yourAddress: "",
@@ -93,8 +106,8 @@ class Web3ContextProvider extends React.Component {
   }
 
   connectAppWithAccount = async () => {
-    const { connector, provider } = this.state
-    await this.connectAppWithWallet(connector, provider)
+    const { connector } = this.state
+    await this.connectAppWithWallet(connector)
   }
 
   refreshProvider = async ([yourAddress]) => {
@@ -119,6 +132,28 @@ class Web3ContextProvider extends React.Component {
     window.location.reload()
   }
 
+  disconnect = async (shouldSetState = true) => {
+    const { connector } = this.state
+    if (!connector) {
+      return
+    }
+
+    await connector.disconnect()
+    if (shouldSetState) {
+      this.setState({
+        web3: null,
+        isFetching: false,
+        yourAddress: "",
+        networkType: "",
+        utils: {},
+        eth: {},
+        error: "",
+        isConnected: false,
+        connector: null,
+      })
+    }
+  }
+
   render() {
     return (
       <Web3Context.Provider
@@ -127,6 +162,7 @@ class Web3ContextProvider extends React.Component {
           connectAppWithAccount: this.connectAppWithAccount,
           connectAppWithWallet: this.connectAppWithWallet,
           abortWalletConnection: this.abortWalletConnection,
+          disconnect: this.disconnect,
         }}
       >
         {this.props.children}
