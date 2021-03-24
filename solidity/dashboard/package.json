@@ -49,9 +49,11 @@
     "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx"
   },
   "devDependencies": {
+    "@types/jest": "^26.0.21",
     "eslint": "^6.8.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
     "prettier": "^2.0.4",
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
+    "redux-saga-test-plan": "^4.0.1"
   },
   "browserslist": [
     ">0.2%",
