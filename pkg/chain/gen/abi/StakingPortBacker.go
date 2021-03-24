@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindStakingPortBacker(address common.Address, caller bind.ContractCaller, t
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_StakingPortBacker *StakingPortBackerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_StakingPortBacker *StakingPortBackerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _StakingPortBacker.Contract.StakingPortBackerCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_StakingPortBacker *StakingPortBackerRaw) Transact(opts *bind.TransactOpts
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_StakingPortBacker *StakingPortBackerCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_StakingPortBacker *StakingPortBackerCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _StakingPortBacker.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,53 +173,69 @@ func (_StakingPortBacker *StakingPortBackerTransactorRaw) Transact(opts *bind.Tr
 
 // AllowedOperators is a free data retrieval call binding the contract method 0xa6674f88.
 //
-// Solidity: function allowedOperators(address ) constant returns(bool)
+// Solidity: function allowedOperators(address ) view returns(bool)
 func (_StakingPortBacker *StakingPortBackerCaller) AllowedOperators(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "allowedOperators", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "allowedOperators", arg0)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // AllowedOperators is a free data retrieval call binding the contract method 0xa6674f88.
 //
-// Solidity: function allowedOperators(address ) constant returns(bool)
+// Solidity: function allowedOperators(address ) view returns(bool)
 func (_StakingPortBacker *StakingPortBackerSession) AllowedOperators(arg0 common.Address) (bool, error) {
 	return _StakingPortBacker.Contract.AllowedOperators(&_StakingPortBacker.CallOpts, arg0)
 }
 
 // AllowedOperators is a free data retrieval call binding the contract method 0xa6674f88.
 //
-// Solidity: function allowedOperators(address ) constant returns(bool)
+// Solidity: function allowedOperators(address ) view returns(bool)
 func (_StakingPortBacker *StakingPortBackerCallerSession) AllowedOperators(arg0 common.Address) (bool, error) {
 	return _StakingPortBacker.Contract.AllowedOperators(&_StakingPortBacker.CallOpts, arg0)
 }
 
 // CopiedStakes is a free data retrieval call binding the contract method 0x4d85d9cb.
 //
-// Solidity: function copiedStakes(address ) constant returns(address owner, uint256 amount, uint256 timestamp, bool paidBack)
+// Solidity: function copiedStakes(address ) view returns(address owner, uint256 amount, uint256 timestamp, bool paidBack)
 func (_StakingPortBacker *StakingPortBackerCaller) CopiedStakes(opts *bind.CallOpts, arg0 common.Address) (struct {
 	Owner     common.Address
 	Amount    *big.Int
 	Timestamp *big.Int
 	PaidBack  bool
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "copiedStakes", arg0)
+
+	outstruct := new(struct {
 		Owner     common.Address
 		Amount    *big.Int
 		Timestamp *big.Int
 		PaidBack  bool
 	})
-	out := ret
-	err := _StakingPortBacker.contract.Call(opts, out, "copiedStakes", arg0)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Owner = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	outstruct.Amount = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.Timestamp = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+	outstruct.PaidBack = *abi.ConvertType(out[3], new(bool)).(*bool)
+
+	return *outstruct, err
+
 }
 
 // CopiedStakes is a free data retrieval call binding the contract method 0x4d85d9cb.
 //
-// Solidity: function copiedStakes(address ) constant returns(address owner, uint256 amount, uint256 timestamp, bool paidBack)
+// Solidity: function copiedStakes(address ) view returns(address owner, uint256 amount, uint256 timestamp, bool paidBack)
 func (_StakingPortBacker *StakingPortBackerSession) CopiedStakes(arg0 common.Address) (struct {
 	Owner     common.Address
 	Amount    *big.Int
@@ -232,7 +247,7 @@ func (_StakingPortBacker *StakingPortBackerSession) CopiedStakes(arg0 common.Add
 
 // CopiedStakes is a free data retrieval call binding the contract method 0x4d85d9cb.
 //
-// Solidity: function copiedStakes(address ) constant returns(address owner, uint256 amount, uint256 timestamp, bool paidBack)
+// Solidity: function copiedStakes(address ) view returns(address owner, uint256 amount, uint256 timestamp, bool paidBack)
 func (_StakingPortBacker *StakingPortBackerCallerSession) CopiedStakes(arg0 common.Address) (struct {
 	Owner     common.Address
 	Amount    *big.Int
@@ -244,156 +259,186 @@ func (_StakingPortBacker *StakingPortBackerCallerSession) CopiedStakes(arg0 comm
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_StakingPortBacker *StakingPortBackerCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_StakingPortBacker *StakingPortBackerSession) IsOwner() (bool, error) {
 	return _StakingPortBacker.Contract.IsOwner(&_StakingPortBacker.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_StakingPortBacker *StakingPortBackerCallerSession) IsOwner() (bool, error) {
 	return _StakingPortBacker.Contract.IsOwner(&_StakingPortBacker.CallOpts)
 }
 
 // KeepToken is a free data retrieval call binding the contract method 0x467c5adf.
 //
-// Solidity: function keepToken() constant returns(address)
+// Solidity: function keepToken() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCaller) KeepToken(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "keepToken")
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "keepToken")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // KeepToken is a free data retrieval call binding the contract method 0x467c5adf.
 //
-// Solidity: function keepToken() constant returns(address)
+// Solidity: function keepToken() view returns(address)
 func (_StakingPortBacker *StakingPortBackerSession) KeepToken() (common.Address, error) {
 	return _StakingPortBacker.Contract.KeepToken(&_StakingPortBacker.CallOpts)
 }
 
 // KeepToken is a free data retrieval call binding the contract method 0x467c5adf.
 //
-// Solidity: function keepToken() constant returns(address)
+// Solidity: function keepToken() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCallerSession) KeepToken() (common.Address, error) {
 	return _StakingPortBacker.Contract.KeepToken(&_StakingPortBacker.CallOpts)
 }
 
 // MaxAllowedBackingDuration is a free data retrieval call binding the contract method 0xd97d5953.
 //
-// Solidity: function maxAllowedBackingDuration() constant returns(uint256)
+// Solidity: function maxAllowedBackingDuration() view returns(uint256)
 func (_StakingPortBacker *StakingPortBackerCaller) MaxAllowedBackingDuration(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "maxAllowedBackingDuration")
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "maxAllowedBackingDuration")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // MaxAllowedBackingDuration is a free data retrieval call binding the contract method 0xd97d5953.
 //
-// Solidity: function maxAllowedBackingDuration() constant returns(uint256)
+// Solidity: function maxAllowedBackingDuration() view returns(uint256)
 func (_StakingPortBacker *StakingPortBackerSession) MaxAllowedBackingDuration() (*big.Int, error) {
 	return _StakingPortBacker.Contract.MaxAllowedBackingDuration(&_StakingPortBacker.CallOpts)
 }
 
 // MaxAllowedBackingDuration is a free data retrieval call binding the contract method 0xd97d5953.
 //
-// Solidity: function maxAllowedBackingDuration() constant returns(uint256)
+// Solidity: function maxAllowedBackingDuration() view returns(uint256)
 func (_StakingPortBacker *StakingPortBackerCallerSession) MaxAllowedBackingDuration() (*big.Int, error) {
 	return _StakingPortBacker.Contract.MaxAllowedBackingDuration(&_StakingPortBacker.CallOpts)
 }
 
 // NewStakingContract is a free data retrieval call binding the contract method 0xae81dfe4.
 //
-// Solidity: function newStakingContract() constant returns(address)
+// Solidity: function newStakingContract() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCaller) NewStakingContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "newStakingContract")
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "newStakingContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // NewStakingContract is a free data retrieval call binding the contract method 0xae81dfe4.
 //
-// Solidity: function newStakingContract() constant returns(address)
+// Solidity: function newStakingContract() view returns(address)
 func (_StakingPortBacker *StakingPortBackerSession) NewStakingContract() (common.Address, error) {
 	return _StakingPortBacker.Contract.NewStakingContract(&_StakingPortBacker.CallOpts)
 }
 
 // NewStakingContract is a free data retrieval call binding the contract method 0xae81dfe4.
 //
-// Solidity: function newStakingContract() constant returns(address)
+// Solidity: function newStakingContract() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCallerSession) NewStakingContract() (common.Address, error) {
 	return _StakingPortBacker.Contract.NewStakingContract(&_StakingPortBacker.CallOpts)
 }
 
 // OldStakingContract is a free data retrieval call binding the contract method 0xe59dd90d.
 //
-// Solidity: function oldStakingContract() constant returns(address)
+// Solidity: function oldStakingContract() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCaller) OldStakingContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "oldStakingContract")
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "oldStakingContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // OldStakingContract is a free data retrieval call binding the contract method 0xe59dd90d.
 //
-// Solidity: function oldStakingContract() constant returns(address)
+// Solidity: function oldStakingContract() view returns(address)
 func (_StakingPortBacker *StakingPortBackerSession) OldStakingContract() (common.Address, error) {
 	return _StakingPortBacker.Contract.OldStakingContract(&_StakingPortBacker.CallOpts)
 }
 
 // OldStakingContract is a free data retrieval call binding the contract method 0xe59dd90d.
 //
-// Solidity: function oldStakingContract() constant returns(address)
+// Solidity: function oldStakingContract() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCallerSession) OldStakingContract() (common.Address, error) {
 	return _StakingPortBacker.Contract.OldStakingContract(&_StakingPortBacker.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakingPortBacker.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _StakingPortBacker.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_StakingPortBacker *StakingPortBackerSession) Owner() (common.Address, error) {
 	return _StakingPortBacker.Contract.Owner(&_StakingPortBacker.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_StakingPortBacker *StakingPortBackerCallerSession) Owner() (common.Address, error) {
 	return _StakingPortBacker.Contract.Owner(&_StakingPortBacker.CallOpts)
 }
@@ -757,6 +802,7 @@ func (_StakingPortBacker *StakingPortBackerFilterer) ParseOwnershipTransferred(l
 	if err := _StakingPortBacker.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -910,6 +956,7 @@ func (_StakingPortBacker *StakingPortBackerFilterer) ParseStakeCopied(log types.
 	if err := _StakingPortBacker.contract.UnpackLog(event, "StakeCopied", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1062,6 +1109,7 @@ func (_StakingPortBacker *StakingPortBackerFilterer) ParseStakePaidBack(log type
 	if err := _StakingPortBacker.contract.UnpackLog(event, "StakePaidBack", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1195,5 +1243,6 @@ func (_StakingPortBacker *StakingPortBackerFilterer) ParseTokensWithdrawn(log ty
 	if err := _StakingPortBacker.contract.UnpackLog(event, "TokensWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

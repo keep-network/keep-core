@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindTokenGrant(address common.Address, caller bind.ContractCaller, transact
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TokenGrant *TokenGrantRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TokenGrant *TokenGrantRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TokenGrant.Contract.TokenGrantCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_TokenGrant *TokenGrantRaw) Transact(opts *bind.TransactOpts, method strin
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TokenGrant *TokenGrantCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TokenGrant *TokenGrantCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TokenGrant.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,85 +173,100 @@ func (_TokenGrant *TokenGrantTransactorRaw) Transact(opts *bind.TransactOpts, me
 
 // AvailableToStake is a free data retrieval call binding the contract method 0x910bcf61.
 //
-// Solidity: function availableToStake(uint256 _grantId) constant returns(uint256)
+// Solidity: function availableToStake(uint256 _grantId) view returns(uint256)
 func (_TokenGrant *TokenGrantCaller) AvailableToStake(opts *bind.CallOpts, _grantId *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "availableToStake", _grantId)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "availableToStake", _grantId)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // AvailableToStake is a free data retrieval call binding the contract method 0x910bcf61.
 //
-// Solidity: function availableToStake(uint256 _grantId) constant returns(uint256)
+// Solidity: function availableToStake(uint256 _grantId) view returns(uint256)
 func (_TokenGrant *TokenGrantSession) AvailableToStake(_grantId *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.AvailableToStake(&_TokenGrant.CallOpts, _grantId)
 }
 
 // AvailableToStake is a free data retrieval call binding the contract method 0x910bcf61.
 //
-// Solidity: function availableToStake(uint256 _grantId) constant returns(uint256)
+// Solidity: function availableToStake(uint256 _grantId) view returns(uint256)
 func (_TokenGrant *TokenGrantCallerSession) AvailableToStake(_grantId *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.AvailableToStake(&_TokenGrant.CallOpts, _grantId)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _owner) view returns(uint256 balance)
 func (_TokenGrant *TokenGrantCaller) BalanceOf(opts *bind.CallOpts, _owner common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "balanceOf", _owner)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "balanceOf", _owner)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _owner) view returns(uint256 balance)
 func (_TokenGrant *TokenGrantSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _TokenGrant.Contract.BalanceOf(&_TokenGrant.CallOpts, _owner)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _owner) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _owner) view returns(uint256 balance)
 func (_TokenGrant *TokenGrantCallerSession) BalanceOf(_owner common.Address) (*big.Int, error) {
 	return _TokenGrant.Contract.BalanceOf(&_TokenGrant.CallOpts, _owner)
 }
 
 // Balances is a free data retrieval call binding the contract method 0x27e235e3.
 //
-// Solidity: function balances(address ) constant returns(uint256)
+// Solidity: function balances(address ) view returns(uint256)
 func (_TokenGrant *TokenGrantCaller) Balances(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "balances", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "balances", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Balances is a free data retrieval call binding the contract method 0x27e235e3.
 //
-// Solidity: function balances(address ) constant returns(uint256)
+// Solidity: function balances(address ) view returns(uint256)
 func (_TokenGrant *TokenGrantSession) Balances(arg0 common.Address) (*big.Int, error) {
 	return _TokenGrant.Contract.Balances(&_TokenGrant.CallOpts, arg0)
 }
 
 // Balances is a free data retrieval call binding the contract method 0x27e235e3.
 //
-// Solidity: function balances(address ) constant returns(uint256)
+// Solidity: function balances(address ) view returns(uint256)
 func (_TokenGrant *TokenGrantCallerSession) Balances(arg0 common.Address) (*big.Int, error) {
 	return _TokenGrant.Contract.Balances(&_TokenGrant.CallOpts, arg0)
 }
 
 // GetGrant is a free data retrieval call binding the contract method 0xb8cc6c93.
 //
-// Solidity: function getGrant(uint256 _id) constant returns(uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAmount, uint256 revokedAt, address grantee)
+// Solidity: function getGrant(uint256 _id) view returns(uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAmount, uint256 revokedAt, address grantee)
 func (_TokenGrant *TokenGrantCaller) GetGrant(opts *bind.CallOpts, _id *big.Int) (struct {
 	Amount        *big.Int
 	Withdrawn     *big.Int
@@ -261,7 +275,10 @@ func (_TokenGrant *TokenGrantCaller) GetGrant(opts *bind.CallOpts, _id *big.Int)
 	RevokedAt     *big.Int
 	Grantee       common.Address
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "getGrant", _id)
+
+	outstruct := new(struct {
 		Amount        *big.Int
 		Withdrawn     *big.Int
 		Staked        *big.Int
@@ -269,14 +286,24 @@ func (_TokenGrant *TokenGrantCaller) GetGrant(opts *bind.CallOpts, _id *big.Int)
 		RevokedAt     *big.Int
 		Grantee       common.Address
 	})
-	out := ret
-	err := _TokenGrant.contract.Call(opts, out, "getGrant", _id)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Amount = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.Withdrawn = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.Staked = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+	outstruct.RevokedAmount = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+	outstruct.RevokedAt = *abi.ConvertType(out[4], new(*big.Int)).(**big.Int)
+	outstruct.Grantee = *abi.ConvertType(out[5], new(common.Address)).(*common.Address)
+
+	return *outstruct, err
+
 }
 
 // GetGrant is a free data retrieval call binding the contract method 0xb8cc6c93.
 //
-// Solidity: function getGrant(uint256 _id) constant returns(uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAmount, uint256 revokedAt, address grantee)
+// Solidity: function getGrant(uint256 _id) view returns(uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAmount, uint256 revokedAt, address grantee)
 func (_TokenGrant *TokenGrantSession) GetGrant(_id *big.Int) (struct {
 	Amount        *big.Int
 	Withdrawn     *big.Int
@@ -290,7 +317,7 @@ func (_TokenGrant *TokenGrantSession) GetGrant(_id *big.Int) (struct {
 
 // GetGrant is a free data retrieval call binding the contract method 0xb8cc6c93.
 //
-// Solidity: function getGrant(uint256 _id) constant returns(uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAmount, uint256 revokedAt, address grantee)
+// Solidity: function getGrant(uint256 _id) view returns(uint256 amount, uint256 withdrawn, uint256 staked, uint256 revokedAmount, uint256 revokedAt, address grantee)
 func (_TokenGrant *TokenGrantCallerSession) GetGrant(_id *big.Int) (struct {
 	Amount        *big.Int
 	Withdrawn     *big.Int
@@ -304,25 +331,35 @@ func (_TokenGrant *TokenGrantCallerSession) GetGrant(_id *big.Int) (struct {
 
 // GetGrantStakeDetails is a free data retrieval call binding the contract method 0xf29e2737.
 //
-// Solidity: function getGrantStakeDetails(address operator) constant returns(uint256 grantId, uint256 amount, address stakingContract)
+// Solidity: function getGrantStakeDetails(address operator) view returns(uint256 grantId, uint256 amount, address stakingContract)
 func (_TokenGrant *TokenGrantCaller) GetGrantStakeDetails(opts *bind.CallOpts, operator common.Address) (struct {
 	GrantId         *big.Int
 	Amount          *big.Int
 	StakingContract common.Address
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "getGrantStakeDetails", operator)
+
+	outstruct := new(struct {
 		GrantId         *big.Int
 		Amount          *big.Int
 		StakingContract common.Address
 	})
-	out := ret
-	err := _TokenGrant.contract.Call(opts, out, "getGrantStakeDetails", operator)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.GrantId = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.Amount = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.StakingContract = *abi.ConvertType(out[2], new(common.Address)).(*common.Address)
+
+	return *outstruct, err
+
 }
 
 // GetGrantStakeDetails is a free data retrieval call binding the contract method 0xf29e2737.
 //
-// Solidity: function getGrantStakeDetails(address operator) constant returns(uint256 grantId, uint256 amount, address stakingContract)
+// Solidity: function getGrantStakeDetails(address operator) view returns(uint256 grantId, uint256 amount, address stakingContract)
 func (_TokenGrant *TokenGrantSession) GetGrantStakeDetails(operator common.Address) (struct {
 	GrantId         *big.Int
 	Amount          *big.Int
@@ -333,7 +370,7 @@ func (_TokenGrant *TokenGrantSession) GetGrantStakeDetails(operator common.Addre
 
 // GetGrantStakeDetails is a free data retrieval call binding the contract method 0xf29e2737.
 //
-// Solidity: function getGrantStakeDetails(address operator) constant returns(uint256 grantId, uint256 amount, address stakingContract)
+// Solidity: function getGrantStakeDetails(address operator) view returns(uint256 grantId, uint256 amount, address stakingContract)
 func (_TokenGrant *TokenGrantCallerSession) GetGrantStakeDetails(operator common.Address) (struct {
 	GrantId         *big.Int
 	Amount          *big.Int
@@ -344,7 +381,7 @@ func (_TokenGrant *TokenGrantCallerSession) GetGrantStakeDetails(operator common
 
 // GetGrantUnlockingSchedule is a free data retrieval call binding the contract method 0xc6076b7a.
 //
-// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
+// Solidity: function getGrantUnlockingSchedule(uint256 _id) view returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
 func (_TokenGrant *TokenGrantCaller) GetGrantUnlockingSchedule(opts *bind.CallOpts, _id *big.Int) (struct {
 	GrantManager common.Address
 	Duration     *big.Int
@@ -352,21 +389,33 @@ func (_TokenGrant *TokenGrantCaller) GetGrantUnlockingSchedule(opts *bind.CallOp
 	Cliff        *big.Int
 	Policy       common.Address
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "getGrantUnlockingSchedule", _id)
+
+	outstruct := new(struct {
 		GrantManager common.Address
 		Duration     *big.Int
 		Start        *big.Int
 		Cliff        *big.Int
 		Policy       common.Address
 	})
-	out := ret
-	err := _TokenGrant.contract.Call(opts, out, "getGrantUnlockingSchedule", _id)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.GrantManager = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	outstruct.Duration = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.Start = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+	outstruct.Cliff = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+	outstruct.Policy = *abi.ConvertType(out[4], new(common.Address)).(*common.Address)
+
+	return *outstruct, err
+
 }
 
 // GetGrantUnlockingSchedule is a free data retrieval call binding the contract method 0xc6076b7a.
 //
-// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
+// Solidity: function getGrantUnlockingSchedule(uint256 _id) view returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
 func (_TokenGrant *TokenGrantSession) GetGrantUnlockingSchedule(_id *big.Int) (struct {
 	GrantManager common.Address
 	Duration     *big.Int
@@ -379,7 +428,7 @@ func (_TokenGrant *TokenGrantSession) GetGrantUnlockingSchedule(_id *big.Int) (s
 
 // GetGrantUnlockingSchedule is a free data retrieval call binding the contract method 0xc6076b7a.
 //
-// Solidity: function getGrantUnlockingSchedule(uint256 _id) constant returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
+// Solidity: function getGrantUnlockingSchedule(uint256 _id) view returns(address grantManager, uint256 duration, uint256 start, uint256 cliff, address policy)
 func (_TokenGrant *TokenGrantCallerSession) GetGrantUnlockingSchedule(_id *big.Int) (struct {
 	GrantManager common.Address
 	Duration     *big.Int
@@ -392,137 +441,162 @@ func (_TokenGrant *TokenGrantCallerSession) GetGrantUnlockingSchedule(_id *big.I
 
 // GetGranteeOperators is a free data retrieval call binding the contract method 0xca9a33ce.
 //
-// Solidity: function getGranteeOperators(address grantee) constant returns(address[])
+// Solidity: function getGranteeOperators(address grantee) view returns(address[])
 func (_TokenGrant *TokenGrantCaller) GetGranteeOperators(opts *bind.CallOpts, grantee common.Address) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "getGranteeOperators", grantee)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "getGranteeOperators", grantee)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
 // GetGranteeOperators is a free data retrieval call binding the contract method 0xca9a33ce.
 //
-// Solidity: function getGranteeOperators(address grantee) constant returns(address[])
+// Solidity: function getGranteeOperators(address grantee) view returns(address[])
 func (_TokenGrant *TokenGrantSession) GetGranteeOperators(grantee common.Address) ([]common.Address, error) {
 	return _TokenGrant.Contract.GetGranteeOperators(&_TokenGrant.CallOpts, grantee)
 }
 
 // GetGranteeOperators is a free data retrieval call binding the contract method 0xca9a33ce.
 //
-// Solidity: function getGranteeOperators(address grantee) constant returns(address[])
+// Solidity: function getGranteeOperators(address grantee) view returns(address[])
 func (_TokenGrant *TokenGrantCallerSession) GetGranteeOperators(grantee common.Address) ([]common.Address, error) {
 	return _TokenGrant.Contract.GetGranteeOperators(&_TokenGrant.CallOpts, grantee)
 }
 
 // GetGrants is a free data retrieval call binding the contract method 0xf3ad1c1a.
 //
-// Solidity: function getGrants(address _granteeOrGrantManager) constant returns(uint256[])
+// Solidity: function getGrants(address _granteeOrGrantManager) view returns(uint256[])
 func (_TokenGrant *TokenGrantCaller) GetGrants(opts *bind.CallOpts, _granteeOrGrantManager common.Address) ([]*big.Int, error) {
-	var (
-		ret0 = new([]*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "getGrants", _granteeOrGrantManager)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "getGrants", _granteeOrGrantManager)
+
+	if err != nil {
+		return *new([]*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, err
+
 }
 
 // GetGrants is a free data retrieval call binding the contract method 0xf3ad1c1a.
 //
-// Solidity: function getGrants(address _granteeOrGrantManager) constant returns(uint256[])
+// Solidity: function getGrants(address _granteeOrGrantManager) view returns(uint256[])
 func (_TokenGrant *TokenGrantSession) GetGrants(_granteeOrGrantManager common.Address) ([]*big.Int, error) {
 	return _TokenGrant.Contract.GetGrants(&_TokenGrant.CallOpts, _granteeOrGrantManager)
 }
 
 // GetGrants is a free data retrieval call binding the contract method 0xf3ad1c1a.
 //
-// Solidity: function getGrants(address _granteeOrGrantManager) constant returns(uint256[])
+// Solidity: function getGrants(address _granteeOrGrantManager) view returns(uint256[])
 func (_TokenGrant *TokenGrantCallerSession) GetGrants(_granteeOrGrantManager common.Address) ([]*big.Int, error) {
 	return _TokenGrant.Contract.GetGrants(&_TokenGrant.CallOpts, _granteeOrGrantManager)
 }
 
 // GrantIndices is a free data retrieval call binding the contract method 0x73297585.
 //
-// Solidity: function grantIndices(address , uint256 ) constant returns(uint256)
+// Solidity: function grantIndices(address , uint256 ) view returns(uint256)
 func (_TokenGrant *TokenGrantCaller) GrantIndices(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "grantIndices", arg0, arg1)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "grantIndices", arg0, arg1)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GrantIndices is a free data retrieval call binding the contract method 0x73297585.
 //
-// Solidity: function grantIndices(address , uint256 ) constant returns(uint256)
+// Solidity: function grantIndices(address , uint256 ) view returns(uint256)
 func (_TokenGrant *TokenGrantSession) GrantIndices(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.GrantIndices(&_TokenGrant.CallOpts, arg0, arg1)
 }
 
 // GrantIndices is a free data retrieval call binding the contract method 0x73297585.
 //
-// Solidity: function grantIndices(address , uint256 ) constant returns(uint256)
+// Solidity: function grantIndices(address , uint256 ) view returns(uint256)
 func (_TokenGrant *TokenGrantCallerSession) GrantIndices(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.GrantIndices(&_TokenGrant.CallOpts, arg0, arg1)
 }
 
 // GrantStakes is a free data retrieval call binding the contract method 0x2496bfb3.
 //
-// Solidity: function grantStakes(address ) constant returns(address)
+// Solidity: function grantStakes(address ) view returns(address)
 func (_TokenGrant *TokenGrantCaller) GrantStakes(opts *bind.CallOpts, arg0 common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "grantStakes", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "grantStakes", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GrantStakes is a free data retrieval call binding the contract method 0x2496bfb3.
 //
-// Solidity: function grantStakes(address ) constant returns(address)
+// Solidity: function grantStakes(address ) view returns(address)
 func (_TokenGrant *TokenGrantSession) GrantStakes(arg0 common.Address) (common.Address, error) {
 	return _TokenGrant.Contract.GrantStakes(&_TokenGrant.CallOpts, arg0)
 }
 
 // GrantStakes is a free data retrieval call binding the contract method 0x2496bfb3.
 //
-// Solidity: function grantStakes(address ) constant returns(address)
+// Solidity: function grantStakes(address ) view returns(address)
 func (_TokenGrant *TokenGrantCallerSession) GrantStakes(arg0 common.Address) (common.Address, error) {
 	return _TokenGrant.Contract.GrantStakes(&_TokenGrant.CallOpts, arg0)
 }
 
 // GranteesToOperators is a free data retrieval call binding the contract method 0x9ae6e9c4.
 //
-// Solidity: function granteesToOperators(address , uint256 ) constant returns(address)
+// Solidity: function granteesToOperators(address , uint256 ) view returns(address)
 func (_TokenGrant *TokenGrantCaller) GranteesToOperators(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "granteesToOperators", arg0, arg1)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "granteesToOperators", arg0, arg1)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GranteesToOperators is a free data retrieval call binding the contract method 0x9ae6e9c4.
 //
-// Solidity: function granteesToOperators(address , uint256 ) constant returns(address)
+// Solidity: function granteesToOperators(address , uint256 ) view returns(address)
 func (_TokenGrant *TokenGrantSession) GranteesToOperators(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
 	return _TokenGrant.Contract.GranteesToOperators(&_TokenGrant.CallOpts, arg0, arg1)
 }
 
 // GranteesToOperators is a free data retrieval call binding the contract method 0x9ae6e9c4.
 //
-// Solidity: function granteesToOperators(address , uint256 ) constant returns(address)
+// Solidity: function granteesToOperators(address , uint256 ) view returns(address)
 func (_TokenGrant *TokenGrantCallerSession) GranteesToOperators(arg0 common.Address, arg1 *big.Int) (common.Address, error) {
 	return _TokenGrant.Contract.GranteesToOperators(&_TokenGrant.CallOpts, arg0, arg1)
 }
 
 // Grants is a free data retrieval call binding the contract method 0x0c0debea.
 //
-// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
+// Solidity: function grants(uint256 ) view returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
 func (_TokenGrant *TokenGrantCaller) Grants(opts *bind.CallOpts, arg0 *big.Int) (struct {
 	GrantManager     common.Address
 	Grantee          common.Address
@@ -538,7 +612,10 @@ func (_TokenGrant *TokenGrantCaller) Grants(opts *bind.CallOpts, arg0 *big.Int) 
 	Staked           *big.Int
 	StakingPolicy    common.Address
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "grants", arg0)
+
+	outstruct := new(struct {
 		GrantManager     common.Address
 		Grantee          common.Address
 		RevokedAt        *big.Int
@@ -553,14 +630,31 @@ func (_TokenGrant *TokenGrantCaller) Grants(opts *bind.CallOpts, arg0 *big.Int) 
 		Staked           *big.Int
 		StakingPolicy    common.Address
 	})
-	out := ret
-	err := _TokenGrant.contract.Call(opts, out, "grants", arg0)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.GrantManager = *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+	outstruct.Grantee = *abi.ConvertType(out[1], new(common.Address)).(*common.Address)
+	outstruct.RevokedAt = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+	outstruct.RevokedAmount = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+	outstruct.RevokedWithdrawn = *abi.ConvertType(out[4], new(*big.Int)).(**big.Int)
+	outstruct.Revocable = *abi.ConvertType(out[5], new(bool)).(*bool)
+	outstruct.Amount = *abi.ConvertType(out[6], new(*big.Int)).(**big.Int)
+	outstruct.Duration = *abi.ConvertType(out[7], new(*big.Int)).(**big.Int)
+	outstruct.Start = *abi.ConvertType(out[8], new(*big.Int)).(**big.Int)
+	outstruct.Cliff = *abi.ConvertType(out[9], new(*big.Int)).(**big.Int)
+	outstruct.Withdrawn = *abi.ConvertType(out[10], new(*big.Int)).(**big.Int)
+	outstruct.Staked = *abi.ConvertType(out[11], new(*big.Int)).(**big.Int)
+	outstruct.StakingPolicy = *abi.ConvertType(out[12], new(common.Address)).(*common.Address)
+
+	return *outstruct, err
+
 }
 
 // Grants is a free data retrieval call binding the contract method 0x0c0debea.
 //
-// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
+// Solidity: function grants(uint256 ) view returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
 func (_TokenGrant *TokenGrantSession) Grants(arg0 *big.Int) (struct {
 	GrantManager     common.Address
 	Grantee          common.Address
@@ -581,7 +675,7 @@ func (_TokenGrant *TokenGrantSession) Grants(arg0 *big.Int) (struct {
 
 // Grants is a free data retrieval call binding the contract method 0x0c0debea.
 //
-// Solidity: function grants(uint256 ) constant returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
+// Solidity: function grants(uint256 ) view returns(address grantManager, address grantee, uint256 revokedAt, uint256 revokedAmount, uint256 revokedWithdrawn, bool revocable, uint256 amount, uint256 duration, uint256 start, uint256 cliff, uint256 withdrawn, uint256 staked, address stakingPolicy)
 func (_TokenGrant *TokenGrantCallerSession) Grants(arg0 *big.Int) (struct {
 	GrantManager     common.Address
 	Grantee          common.Address
@@ -602,130 +696,155 @@ func (_TokenGrant *TokenGrantCallerSession) Grants(arg0 *big.Int) (struct {
 
 // NumGrants is a free data retrieval call binding the contract method 0xf81a6463.
 //
-// Solidity: function numGrants() constant returns(uint256)
+// Solidity: function numGrants() view returns(uint256)
 func (_TokenGrant *TokenGrantCaller) NumGrants(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "numGrants")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "numGrants")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // NumGrants is a free data retrieval call binding the contract method 0xf81a6463.
 //
-// Solidity: function numGrants() constant returns(uint256)
+// Solidity: function numGrants() view returns(uint256)
 func (_TokenGrant *TokenGrantSession) NumGrants() (*big.Int, error) {
 	return _TokenGrant.Contract.NumGrants(&_TokenGrant.CallOpts)
 }
 
 // NumGrants is a free data retrieval call binding the contract method 0xf81a6463.
 //
-// Solidity: function numGrants() constant returns(uint256)
+// Solidity: function numGrants() view returns(uint256)
 func (_TokenGrant *TokenGrantCallerSession) NumGrants() (*big.Int, error) {
 	return _TokenGrant.Contract.NumGrants(&_TokenGrant.CallOpts)
 }
 
 // StakeBalanceOf is a free data retrieval call binding the contract method 0xaf46aa08.
 //
-// Solidity: function stakeBalanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function stakeBalanceOf(address _address) view returns(uint256 balance)
 func (_TokenGrant *TokenGrantCaller) StakeBalanceOf(opts *bind.CallOpts, _address common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "stakeBalanceOf", _address)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "stakeBalanceOf", _address)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // StakeBalanceOf is a free data retrieval call binding the contract method 0xaf46aa08.
 //
-// Solidity: function stakeBalanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function stakeBalanceOf(address _address) view returns(uint256 balance)
 func (_TokenGrant *TokenGrantSession) StakeBalanceOf(_address common.Address) (*big.Int, error) {
 	return _TokenGrant.Contract.StakeBalanceOf(&_TokenGrant.CallOpts, _address)
 }
 
 // StakeBalanceOf is a free data retrieval call binding the contract method 0xaf46aa08.
 //
-// Solidity: function stakeBalanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function stakeBalanceOf(address _address) view returns(uint256 balance)
 func (_TokenGrant *TokenGrantCallerSession) StakeBalanceOf(_address common.Address) (*big.Int, error) {
 	return _TokenGrant.Contract.StakeBalanceOf(&_TokenGrant.CallOpts, _address)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_TokenGrant *TokenGrantCaller) Token(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "token")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "token")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_TokenGrant *TokenGrantSession) Token() (common.Address, error) {
 	return _TokenGrant.Contract.Token(&_TokenGrant.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_TokenGrant *TokenGrantCallerSession) Token() (common.Address, error) {
 	return _TokenGrant.Contract.Token(&_TokenGrant.CallOpts)
 }
 
 // UnlockedAmount is a free data retrieval call binding the contract method 0xc90376e4.
 //
-// Solidity: function unlockedAmount(uint256 _id) constant returns(uint256)
+// Solidity: function unlockedAmount(uint256 _id) view returns(uint256)
 func (_TokenGrant *TokenGrantCaller) UnlockedAmount(opts *bind.CallOpts, _id *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "unlockedAmount", _id)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "unlockedAmount", _id)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UnlockedAmount is a free data retrieval call binding the contract method 0xc90376e4.
 //
-// Solidity: function unlockedAmount(uint256 _id) constant returns(uint256)
+// Solidity: function unlockedAmount(uint256 _id) view returns(uint256)
 func (_TokenGrant *TokenGrantSession) UnlockedAmount(_id *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.UnlockedAmount(&_TokenGrant.CallOpts, _id)
 }
 
 // UnlockedAmount is a free data retrieval call binding the contract method 0xc90376e4.
 //
-// Solidity: function unlockedAmount(uint256 _id) constant returns(uint256)
+// Solidity: function unlockedAmount(uint256 _id) view returns(uint256)
 func (_TokenGrant *TokenGrantCallerSession) UnlockedAmount(_id *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.UnlockedAmount(&_TokenGrant.CallOpts, _id)
 }
 
 // Withdrawable is a free data retrieval call binding the contract method 0xf11988e0.
 //
-// Solidity: function withdrawable(uint256 _id) constant returns(uint256)
+// Solidity: function withdrawable(uint256 _id) view returns(uint256)
 func (_TokenGrant *TokenGrantCaller) Withdrawable(opts *bind.CallOpts, _id *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenGrant.contract.Call(opts, out, "withdrawable", _id)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenGrant.contract.Call(opts, &out, "withdrawable", _id)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Withdrawable is a free data retrieval call binding the contract method 0xf11988e0.
 //
-// Solidity: function withdrawable(uint256 _id) constant returns(uint256)
+// Solidity: function withdrawable(uint256 _id) view returns(uint256)
 func (_TokenGrant *TokenGrantSession) Withdrawable(_id *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.Withdrawable(&_TokenGrant.CallOpts, _id)
 }
 
 // Withdrawable is a free data retrieval call binding the contract method 0xf11988e0.
 //
-// Solidity: function withdrawable(uint256 _id) constant returns(uint256)
+// Solidity: function withdrawable(uint256 _id) view returns(uint256)
 func (_TokenGrant *TokenGrantCallerSession) Withdrawable(_id *big.Int) (*big.Int, error) {
 	return _TokenGrant.Contract.Withdrawable(&_TokenGrant.CallOpts, _id)
 }
@@ -1102,6 +1221,7 @@ func (_TokenGrant *TokenGrantFilterer) ParseStakingContractAuthorized(log types.
 	if err := _TokenGrant.contract.UnpackLog(event, "StakingContractAuthorized", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1235,6 +1355,7 @@ func (_TokenGrant *TokenGrantFilterer) ParseTokenGrantCreated(log types.Log) (*T
 	if err := _TokenGrant.contract.UnpackLog(event, "TokenGrantCreated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1368,6 +1489,7 @@ func (_TokenGrant *TokenGrantFilterer) ParseTokenGrantRevoked(log types.Log) (*T
 	if err := _TokenGrant.contract.UnpackLog(event, "TokenGrantRevoked", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1513,6 +1635,7 @@ func (_TokenGrant *TokenGrantFilterer) ParseTokenGrantStaked(log types.Log) (*To
 	if err := _TokenGrant.contract.UnpackLog(event, "TokenGrantStaked", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1657,5 +1780,6 @@ func (_TokenGrant *TokenGrantFilterer) ParseTokenGrantWithdrawn(log types.Log) (
 	if err := _TokenGrant.contract.UnpackLog(event, "TokenGrantWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

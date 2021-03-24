@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindGasPriceOracle(address common.Address, caller bind.ContractCaller, tran
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_GasPriceOracle *GasPriceOracleRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_GasPriceOracle *GasPriceOracleRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _GasPriceOracle.Contract.GasPriceOracleCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_GasPriceOracle *GasPriceOracleRaw) Transact(opts *bind.TransactOpts, meth
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_GasPriceOracle *GasPriceOracleCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_GasPriceOracle *GasPriceOracleCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _GasPriceOracle.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,208 +173,248 @@ func (_GasPriceOracle *GasPriceOracleTransactorRaw) Transact(opts *bind.Transact
 
 // ConsumerContracts is a free data retrieval call binding the contract method 0x9955efd0.
 //
-// Solidity: function consumerContracts(uint256 ) constant returns(address)
+// Solidity: function consumerContracts(uint256 ) view returns(address)
 func (_GasPriceOracle *GasPriceOracleCaller) ConsumerContracts(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "consumerContracts", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "consumerContracts", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ConsumerContracts is a free data retrieval call binding the contract method 0x9955efd0.
 //
-// Solidity: function consumerContracts(uint256 ) constant returns(address)
+// Solidity: function consumerContracts(uint256 ) view returns(address)
 func (_GasPriceOracle *GasPriceOracleSession) ConsumerContracts(arg0 *big.Int) (common.Address, error) {
 	return _GasPriceOracle.Contract.ConsumerContracts(&_GasPriceOracle.CallOpts, arg0)
 }
 
 // ConsumerContracts is a free data retrieval call binding the contract method 0x9955efd0.
 //
-// Solidity: function consumerContracts(uint256 ) constant returns(address)
+// Solidity: function consumerContracts(uint256 ) view returns(address)
 func (_GasPriceOracle *GasPriceOracleCallerSession) ConsumerContracts(arg0 *big.Int) (common.Address, error) {
 	return _GasPriceOracle.Contract.ConsumerContracts(&_GasPriceOracle.CallOpts, arg0)
 }
 
 // GasPrice is a free data retrieval call binding the contract method 0xfe173b97.
 //
-// Solidity: function gasPrice() constant returns(uint256)
+// Solidity: function gasPrice() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCaller) GasPrice(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "gasPrice")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "gasPrice")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GasPrice is a free data retrieval call binding the contract method 0xfe173b97.
 //
-// Solidity: function gasPrice() constant returns(uint256)
+// Solidity: function gasPrice() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleSession) GasPrice() (*big.Int, error) {
 	return _GasPriceOracle.Contract.GasPrice(&_GasPriceOracle.CallOpts)
 }
 
 // GasPrice is a free data retrieval call binding the contract method 0xfe173b97.
 //
-// Solidity: function gasPrice() constant returns(uint256)
+// Solidity: function gasPrice() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCallerSession) GasPrice() (*big.Int, error) {
 	return _GasPriceOracle.Contract.GasPrice(&_GasPriceOracle.CallOpts)
 }
 
 // GasPriceChangeInitiated is a free data retrieval call binding the contract method 0xe02e9783.
 //
-// Solidity: function gasPriceChangeInitiated() constant returns(uint256)
+// Solidity: function gasPriceChangeInitiated() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCaller) GasPriceChangeInitiated(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "gasPriceChangeInitiated")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "gasPriceChangeInitiated")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GasPriceChangeInitiated is a free data retrieval call binding the contract method 0xe02e9783.
 //
-// Solidity: function gasPriceChangeInitiated() constant returns(uint256)
+// Solidity: function gasPriceChangeInitiated() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleSession) GasPriceChangeInitiated() (*big.Int, error) {
 	return _GasPriceOracle.Contract.GasPriceChangeInitiated(&_GasPriceOracle.CallOpts)
 }
 
 // GasPriceChangeInitiated is a free data retrieval call binding the contract method 0xe02e9783.
 //
-// Solidity: function gasPriceChangeInitiated() constant returns(uint256)
+// Solidity: function gasPriceChangeInitiated() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCallerSession) GasPriceChangeInitiated() (*big.Int, error) {
 	return _GasPriceOracle.Contract.GasPriceChangeInitiated(&_GasPriceOracle.CallOpts)
 }
 
 // GetConsumerContracts is a free data retrieval call binding the contract method 0x5b4fb912.
 //
-// Solidity: function getConsumerContracts() constant returns(address[])
+// Solidity: function getConsumerContracts() view returns(address[])
 func (_GasPriceOracle *GasPriceOracleCaller) GetConsumerContracts(opts *bind.CallOpts) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "getConsumerContracts")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "getConsumerContracts")
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
 // GetConsumerContracts is a free data retrieval call binding the contract method 0x5b4fb912.
 //
-// Solidity: function getConsumerContracts() constant returns(address[])
+// Solidity: function getConsumerContracts() view returns(address[])
 func (_GasPriceOracle *GasPriceOracleSession) GetConsumerContracts() ([]common.Address, error) {
 	return _GasPriceOracle.Contract.GetConsumerContracts(&_GasPriceOracle.CallOpts)
 }
 
 // GetConsumerContracts is a free data retrieval call binding the contract method 0x5b4fb912.
 //
-// Solidity: function getConsumerContracts() constant returns(address[])
+// Solidity: function getConsumerContracts() view returns(address[])
 func (_GasPriceOracle *GasPriceOracleCallerSession) GetConsumerContracts() ([]common.Address, error) {
 	return _GasPriceOracle.Contract.GetConsumerContracts(&_GasPriceOracle.CallOpts)
 }
 
 // GovernanceDelay is a free data retrieval call binding the contract method 0xbba32939.
 //
-// Solidity: function governanceDelay() constant returns(uint256)
+// Solidity: function governanceDelay() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCaller) GovernanceDelay(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "governanceDelay")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "governanceDelay")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GovernanceDelay is a free data retrieval call binding the contract method 0xbba32939.
 //
-// Solidity: function governanceDelay() constant returns(uint256)
+// Solidity: function governanceDelay() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleSession) GovernanceDelay() (*big.Int, error) {
 	return _GasPriceOracle.Contract.GovernanceDelay(&_GasPriceOracle.CallOpts)
 }
 
 // GovernanceDelay is a free data retrieval call binding the contract method 0xbba32939.
 //
-// Solidity: function governanceDelay() constant returns(uint256)
+// Solidity: function governanceDelay() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCallerSession) GovernanceDelay() (*big.Int, error) {
 	return _GasPriceOracle.Contract.GovernanceDelay(&_GasPriceOracle.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_GasPriceOracle *GasPriceOracleCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_GasPriceOracle *GasPriceOracleSession) IsOwner() (bool, error) {
 	return _GasPriceOracle.Contract.IsOwner(&_GasPriceOracle.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_GasPriceOracle *GasPriceOracleCallerSession) IsOwner() (bool, error) {
 	return _GasPriceOracle.Contract.IsOwner(&_GasPriceOracle.CallOpts)
 }
 
 // NewGasPrice is a free data retrieval call binding the contract method 0xfad2c8fd.
 //
-// Solidity: function newGasPrice() constant returns(uint256)
+// Solidity: function newGasPrice() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCaller) NewGasPrice(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "newGasPrice")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "newGasPrice")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // NewGasPrice is a free data retrieval call binding the contract method 0xfad2c8fd.
 //
-// Solidity: function newGasPrice() constant returns(uint256)
+// Solidity: function newGasPrice() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleSession) NewGasPrice() (*big.Int, error) {
 	return _GasPriceOracle.Contract.NewGasPrice(&_GasPriceOracle.CallOpts)
 }
 
 // NewGasPrice is a free data retrieval call binding the contract method 0xfad2c8fd.
 //
-// Solidity: function newGasPrice() constant returns(uint256)
+// Solidity: function newGasPrice() view returns(uint256)
 func (_GasPriceOracle *GasPriceOracleCallerSession) NewGasPrice() (*big.Int, error) {
 	return _GasPriceOracle.Contract.NewGasPrice(&_GasPriceOracle.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_GasPriceOracle *GasPriceOracleCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _GasPriceOracle.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _GasPriceOracle.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_GasPriceOracle *GasPriceOracleSession) Owner() (common.Address, error) {
 	return _GasPriceOracle.Contract.Owner(&_GasPriceOracle.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_GasPriceOracle *GasPriceOracleCallerSession) Owner() (common.Address, error) {
 	return _GasPriceOracle.Contract.Owner(&_GasPriceOracle.CallOpts)
 }
@@ -636,6 +675,7 @@ func (_GasPriceOracle *GasPriceOracleFilterer) ParseGasPriceUpdated(log types.Lo
 	if err := _GasPriceOracle.contract.UnpackLog(event, "GasPriceUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -788,5 +828,6 @@ func (_GasPriceOracle *GasPriceOracleFilterer) ParseOwnershipTransferred(log typ
 	if err := _GasPriceOracle.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

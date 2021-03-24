@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindKeepRandomBeaconServiceImplV1(address common.Address, caller bind.Contr
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Raw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Raw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRandomBeaconServiceImplV1.Contract.KeepRandomBeaconServiceImplV1Caller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Raw) Transact
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRandomBeaconServiceImplV1.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,131 +173,162 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorRaw
 
 // BaseCallbackGas is a free data retrieval call binding the contract method 0xd09dd574.
 //
-// Solidity: function baseCallbackGas() constant returns(uint256)
+// Solidity: function baseCallbackGas() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) BaseCallbackGas(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "baseCallbackGas")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "baseCallbackGas")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // BaseCallbackGas is a free data retrieval call binding the contract method 0xd09dd574.
 //
-// Solidity: function baseCallbackGas() constant returns(uint256)
+// Solidity: function baseCallbackGas() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) BaseCallbackGas() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.BaseCallbackGas(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // BaseCallbackGas is a free data retrieval call binding the contract method 0xd09dd574.
 //
-// Solidity: function baseCallbackGas() constant returns(uint256)
+// Solidity: function baseCallbackGas() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) BaseCallbackGas() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.BaseCallbackGas(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // CallbackSurplusRecipient is a free data retrieval call binding the contract method 0x0fda9ce4.
 //
-// Solidity: function callbackSurplusRecipient(uint256 requestId) constant returns(address)
+// Solidity: function callbackSurplusRecipient(uint256 requestId) view returns(address)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) CallbackSurplusRecipient(opts *bind.CallOpts, requestId *big.Int) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "callbackSurplusRecipient", requestId)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "callbackSurplusRecipient", requestId)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // CallbackSurplusRecipient is a free data retrieval call binding the contract method 0x0fda9ce4.
 //
-// Solidity: function callbackSurplusRecipient(uint256 requestId) constant returns(address)
+// Solidity: function callbackSurplusRecipient(uint256 requestId) view returns(address)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) CallbackSurplusRecipient(requestId *big.Int) (common.Address, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.CallbackSurplusRecipient(&_KeepRandomBeaconServiceImplV1.CallOpts, requestId)
 }
 
 // CallbackSurplusRecipient is a free data retrieval call binding the contract method 0x0fda9ce4.
 //
-// Solidity: function callbackSurplusRecipient(uint256 requestId) constant returns(address)
+// Solidity: function callbackSurplusRecipient(uint256 requestId) view returns(address)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) CallbackSurplusRecipient(requestId *big.Int) (common.Address, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.CallbackSurplusRecipient(&_KeepRandomBeaconServiceImplV1.CallOpts, requestId)
 }
 
 // DkgContributionMargin is a free data retrieval call binding the contract method 0x280f2043.
 //
-// Solidity: function dkgContributionMargin() constant returns(uint256)
+// Solidity: function dkgContributionMargin() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) DkgContributionMargin(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "dkgContributionMargin")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "dkgContributionMargin")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DkgContributionMargin is a free data retrieval call binding the contract method 0x280f2043.
 //
-// Solidity: function dkgContributionMargin() constant returns(uint256)
+// Solidity: function dkgContributionMargin() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) DkgContributionMargin() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.DkgContributionMargin(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // DkgContributionMargin is a free data retrieval call binding the contract method 0x280f2043.
 //
-// Solidity: function dkgContributionMargin() constant returns(uint256)
+// Solidity: function dkgContributionMargin() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) DkgContributionMargin() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.DkgContributionMargin(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // DkgFeePool is a free data retrieval call binding the contract method 0x100aea0b.
 //
-// Solidity: function dkgFeePool() constant returns(uint256)
+// Solidity: function dkgFeePool() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) DkgFeePool(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "dkgFeePool")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "dkgFeePool")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DkgFeePool is a free data retrieval call binding the contract method 0x100aea0b.
 //
-// Solidity: function dkgFeePool() constant returns(uint256)
+// Solidity: function dkgFeePool() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) DkgFeePool() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.DkgFeePool(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // DkgFeePool is a free data retrieval call binding the contract method 0x100aea0b.
 //
-// Solidity: function dkgFeePool() constant returns(uint256)
+// Solidity: function dkgFeePool() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) DkgFeePool() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.DkgFeePool(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // EntryFeeBreakdown is a free data retrieval call binding the contract method 0xdede8e95.
 //
-// Solidity: function entryFeeBreakdown() constant returns(uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee, uint256 gasPriceCeiling)
+// Solidity: function entryFeeBreakdown() view returns(uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee, uint256 gasPriceCeiling)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) EntryFeeBreakdown(opts *bind.CallOpts) (struct {
 	EntryVerificationFee *big.Int
 	DkgContributionFee   *big.Int
 	GroupProfitFee       *big.Int
 	GasPriceCeiling      *big.Int
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "entryFeeBreakdown")
+
+	outstruct := new(struct {
 		EntryVerificationFee *big.Int
 		DkgContributionFee   *big.Int
 		GroupProfitFee       *big.Int
 		GasPriceCeiling      *big.Int
 	})
-	out := ret
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "entryFeeBreakdown")
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.EntryVerificationFee = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.DkgContributionFee = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.GroupProfitFee = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+	outstruct.GasPriceCeiling = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
 }
 
 // EntryFeeBreakdown is a free data retrieval call binding the contract method 0xdede8e95.
 //
-// Solidity: function entryFeeBreakdown() constant returns(uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee, uint256 gasPriceCeiling)
+// Solidity: function entryFeeBreakdown() view returns(uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee, uint256 gasPriceCeiling)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) EntryFeeBreakdown() (struct {
 	EntryVerificationFee *big.Int
 	DkgContributionFee   *big.Int
@@ -310,7 +340,7 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Entr
 
 // EntryFeeBreakdown is a free data retrieval call binding the contract method 0xdede8e95.
 //
-// Solidity: function entryFeeBreakdown() constant returns(uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee, uint256 gasPriceCeiling)
+// Solidity: function entryFeeBreakdown() view returns(uint256 entryVerificationFee, uint256 dkgContributionFee, uint256 groupProfitFee, uint256 gasPriceCeiling)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) EntryFeeBreakdown() (struct {
 	EntryVerificationFee *big.Int
 	DkgContributionFee   *big.Int
@@ -322,130 +352,155 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession
 
 // EntryFeeEstimate is a free data retrieval call binding the contract method 0xd13f1391.
 //
-// Solidity: function entryFeeEstimate(uint256 callbackGas) constant returns(uint256)
+// Solidity: function entryFeeEstimate(uint256 callbackGas) view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) EntryFeeEstimate(opts *bind.CallOpts, callbackGas *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "entryFeeEstimate", callbackGas)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "entryFeeEstimate", callbackGas)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // EntryFeeEstimate is a free data retrieval call binding the contract method 0xd13f1391.
 //
-// Solidity: function entryFeeEstimate(uint256 callbackGas) constant returns(uint256)
+// Solidity: function entryFeeEstimate(uint256 callbackGas) view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) EntryFeeEstimate(callbackGas *big.Int) (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.EntryFeeEstimate(&_KeepRandomBeaconServiceImplV1.CallOpts, callbackGas)
 }
 
 // EntryFeeEstimate is a free data retrieval call binding the contract method 0xd13f1391.
 //
-// Solidity: function entryFeeEstimate(uint256 callbackGas) constant returns(uint256)
+// Solidity: function entryFeeEstimate(uint256 callbackGas) view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) EntryFeeEstimate(callbackGas *big.Int) (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.EntryFeeEstimate(&_KeepRandomBeaconServiceImplV1.CallOpts, callbackGas)
 }
 
 // Initialized is a free data retrieval call binding the contract method 0x158ef93e.
 //
-// Solidity: function initialized() constant returns(bool)
+// Solidity: function initialized() view returns(bool)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) Initialized(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "initialized")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "initialized")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // Initialized is a free data retrieval call binding the contract method 0x158ef93e.
 //
-// Solidity: function initialized() constant returns(bool)
+// Solidity: function initialized() view returns(bool)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Initialized() (bool, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.Initialized(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // Initialized is a free data retrieval call binding the contract method 0x158ef93e.
 //
-// Solidity: function initialized() constant returns(bool)
+// Solidity: function initialized() view returns(bool)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) Initialized() (bool, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.Initialized(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // RequestSubsidyFeePool is a free data retrieval call binding the contract method 0x687d088e.
 //
-// Solidity: function requestSubsidyFeePool() constant returns(uint256)
+// Solidity: function requestSubsidyFeePool() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) RequestSubsidyFeePool(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "requestSubsidyFeePool")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "requestSubsidyFeePool")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // RequestSubsidyFeePool is a free data retrieval call binding the contract method 0x687d088e.
 //
-// Solidity: function requestSubsidyFeePool() constant returns(uint256)
+// Solidity: function requestSubsidyFeePool() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) RequestSubsidyFeePool() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestSubsidyFeePool(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // RequestSubsidyFeePool is a free data retrieval call binding the contract method 0x687d088e.
 //
-// Solidity: function requestSubsidyFeePool() constant returns(uint256)
+// Solidity: function requestSubsidyFeePool() view returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) RequestSubsidyFeePool() (*big.Int, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestSubsidyFeePool(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // SelectOperatorContract is a free data retrieval call binding the contract method 0xefc4971f.
 //
-// Solidity: function selectOperatorContract(uint256 seed) constant returns(address)
+// Solidity: function selectOperatorContract(uint256 seed) view returns(address)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) SelectOperatorContract(opts *bind.CallOpts, seed *big.Int) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "selectOperatorContract", seed)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "selectOperatorContract", seed)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // SelectOperatorContract is a free data retrieval call binding the contract method 0xefc4971f.
 //
-// Solidity: function selectOperatorContract(uint256 seed) constant returns(address)
+// Solidity: function selectOperatorContract(uint256 seed) view returns(address)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) SelectOperatorContract(seed *big.Int) (common.Address, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.SelectOperatorContract(&_KeepRandomBeaconServiceImplV1.CallOpts, seed)
 }
 
 // SelectOperatorContract is a free data retrieval call binding the contract method 0xefc4971f.
 //
-// Solidity: function selectOperatorContract(uint256 seed) constant returns(address)
+// Solidity: function selectOperatorContract(uint256 seed) view returns(address)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) SelectOperatorContract(seed *big.Int) (common.Address, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.SelectOperatorContract(&_KeepRandomBeaconServiceImplV1.CallOpts, seed)
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
-// Solidity: function version() constant returns(string)
+// Solidity: function version() pure returns(string)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Caller) Version(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, out, "version")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconServiceImplV1.contract.Call(opts, &out, "version")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
-// Solidity: function version() constant returns(string)
+// Solidity: function version() pure returns(string)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) Version() (string, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.Version(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
 
 // Version is a free data retrieval call binding the contract method 0x54fd4d50.
 //
-// Solidity: function version() constant returns(string)
+// Solidity: function version() pure returns(string)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1CallerSession) Version() (string, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.Version(&_KeepRandomBeaconServiceImplV1.CallOpts)
 }
@@ -515,42 +570,42 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSes
 
 // FundDkgFeePool is a paid mutator transaction binding the contract method 0x4611b648.
 //
-// Solidity: function fundDkgFeePool() returns()
+// Solidity: function fundDkgFeePool() payable returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) FundDkgFeePool(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "fundDkgFeePool")
 }
 
 // FundDkgFeePool is a paid mutator transaction binding the contract method 0x4611b648.
 //
-// Solidity: function fundDkgFeePool() returns()
+// Solidity: function fundDkgFeePool() payable returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) FundDkgFeePool() (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.FundDkgFeePool(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
 // FundDkgFeePool is a paid mutator transaction binding the contract method 0x4611b648.
 //
-// Solidity: function fundDkgFeePool() returns()
+// Solidity: function fundDkgFeePool() payable returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) FundDkgFeePool() (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.FundDkgFeePool(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
 // FundRequestSubsidyFeePool is a paid mutator transaction binding the contract method 0x11e816ee.
 //
-// Solidity: function fundRequestSubsidyFeePool() returns()
+// Solidity: function fundRequestSubsidyFeePool() payable returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) FundRequestSubsidyFeePool(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "fundRequestSubsidyFeePool")
 }
 
 // FundRequestSubsidyFeePool is a paid mutator transaction binding the contract method 0x11e816ee.
 //
-// Solidity: function fundRequestSubsidyFeePool() returns()
+// Solidity: function fundRequestSubsidyFeePool() payable returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) FundRequestSubsidyFeePool() (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.FundRequestSubsidyFeePool(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
 // FundRequestSubsidyFeePool is a paid mutator transaction binding the contract method 0x11e816ee.
 //
-// Solidity: function fundRequestSubsidyFeePool() returns()
+// Solidity: function fundRequestSubsidyFeePool() payable returns()
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) FundRequestSubsidyFeePool() (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.FundRequestSubsidyFeePool(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
@@ -599,42 +654,42 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSes
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
 //
-// Solidity: function requestRelayEntry() returns(uint256)
+// Solidity: function requestRelayEntry() payable returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) RequestRelayEntry(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "requestRelayEntry")
 }
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
 //
-// Solidity: function requestRelayEntry() returns(uint256)
+// Solidity: function requestRelayEntry() payable returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) RequestRelayEntry() (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestRelayEntry(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
 //
-// Solidity: function requestRelayEntry() returns(uint256)
+// Solidity: function requestRelayEntry() payable returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) RequestRelayEntry() (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestRelayEntry(&_KeepRandomBeaconServiceImplV1.TransactOpts)
 }
 
 // RequestRelayEntry0 is a paid mutator transaction binding the contract method 0xe1f95890.
 //
-// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
+// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) payable returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Transactor) RequestRelayEntry0(opts *bind.TransactOpts, callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.contract.Transact(opts, "requestRelayEntry0", callbackContract, callbackGas)
 }
 
 // RequestRelayEntry0 is a paid mutator transaction binding the contract method 0xe1f95890.
 //
-// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
+// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) payable returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Session) RequestRelayEntry0(callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestRelayEntry0(&_KeepRandomBeaconServiceImplV1.TransactOpts, callbackContract, callbackGas)
 }
 
 // RequestRelayEntry0 is a paid mutator transaction binding the contract method 0xe1f95890.
 //
-// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
+// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) payable returns(uint256)
 func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1TransactorSession) RequestRelayEntry0(callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _KeepRandomBeaconServiceImplV1.Contract.RequestRelayEntry0(&_KeepRandomBeaconServiceImplV1.TransactOpts, callbackContract, callbackGas)
 }
@@ -770,6 +825,7 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Filterer) Par
 	if err := _KeepRandomBeaconServiceImplV1.contract.UnpackLog(event, "RelayEntryGenerated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -903,5 +959,6 @@ func (_KeepRandomBeaconServiceImplV1 *KeepRandomBeaconServiceImplV1Filterer) Par
 	if err := _KeepRandomBeaconServiceImplV1.contract.UnpackLog(event, "RelayEntryRequested", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindBeaconRewards(address common.Address, caller bind.ContractCaller, trans
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BeaconRewards *BeaconRewardsRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BeaconRewards *BeaconRewardsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BeaconRewards.Contract.BeaconRewardsCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_BeaconRewards *BeaconRewardsRaw) Transact(opts *bind.TransactOpts, method
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_BeaconRewards *BeaconRewardsCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_BeaconRewards *BeaconRewardsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _BeaconRewards.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,728 +173,868 @@ func (_BeaconRewards *BeaconRewardsTransactorRaw) Transact(opts *bind.TransactOp
 
 // DispensedRewards is a free data retrieval call binding the contract method 0xe1fcd5e8.
 //
-// Solidity: function dispensedRewards() constant returns(uint256)
+// Solidity: function dispensedRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) DispensedRewards(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "dispensedRewards")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "dispensedRewards")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DispensedRewards is a free data retrieval call binding the contract method 0xe1fcd5e8.
 //
-// Solidity: function dispensedRewards() constant returns(uint256)
+// Solidity: function dispensedRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) DispensedRewards() (*big.Int, error) {
 	return _BeaconRewards.Contract.DispensedRewards(&_BeaconRewards.CallOpts)
 }
 
 // DispensedRewards is a free data retrieval call binding the contract method 0xe1fcd5e8.
 //
-// Solidity: function dispensedRewards() constant returns(uint256)
+// Solidity: function dispensedRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) DispensedRewards() (*big.Int, error) {
 	return _BeaconRewards.Contract.DispensedRewards(&_BeaconRewards.CallOpts)
 }
 
 // EligibleButTerminated is a free data retrieval call binding the contract method 0x97a1e434.
 //
-// Solidity: function eligibleButTerminated(bytes32 _keep) constant returns(bool)
+// Solidity: function eligibleButTerminated(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) EligibleButTerminated(opts *bind.CallOpts, _keep [32]byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "eligibleButTerminated", _keep)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "eligibleButTerminated", _keep)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // EligibleButTerminated is a free data retrieval call binding the contract method 0x97a1e434.
 //
-// Solidity: function eligibleButTerminated(bytes32 _keep) constant returns(bool)
+// Solidity: function eligibleButTerminated(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) EligibleButTerminated(_keep [32]byte) (bool, error) {
 	return _BeaconRewards.Contract.EligibleButTerminated(&_BeaconRewards.CallOpts, _keep)
 }
 
 // EligibleButTerminated is a free data retrieval call binding the contract method 0x97a1e434.
 //
-// Solidity: function eligibleButTerminated(bytes32 _keep) constant returns(bool)
+// Solidity: function eligibleButTerminated(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) EligibleButTerminated(_keep [32]byte) (bool, error) {
 	return _BeaconRewards.Contract.EligibleButTerminated(&_BeaconRewards.CallOpts, _keep)
 }
 
 // EligibleForReward is a free data retrieval call binding the contract method 0x12f57063.
 //
-// Solidity: function eligibleForReward(bytes32 _keep) constant returns(bool)
+// Solidity: function eligibleForReward(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) EligibleForReward(opts *bind.CallOpts, _keep [32]byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "eligibleForReward", _keep)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "eligibleForReward", _keep)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // EligibleForReward is a free data retrieval call binding the contract method 0x12f57063.
 //
-// Solidity: function eligibleForReward(bytes32 _keep) constant returns(bool)
+// Solidity: function eligibleForReward(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) EligibleForReward(_keep [32]byte) (bool, error) {
 	return _BeaconRewards.Contract.EligibleForReward(&_BeaconRewards.CallOpts, _keep)
 }
 
 // EligibleForReward is a free data retrieval call binding the contract method 0x12f57063.
 //
-// Solidity: function eligibleForReward(bytes32 _keep) constant returns(bool)
+// Solidity: function eligibleForReward(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) EligibleForReward(_keep [32]byte) (bool, error) {
 	return _BeaconRewards.Contract.EligibleForReward(&_BeaconRewards.CallOpts, _keep)
 }
 
 // EligibleForReward0 is a free data retrieval call binding the contract method 0x4611ae04.
 //
-// Solidity: function eligibleForReward(uint256 groupIndex) constant returns(bool)
+// Solidity: function eligibleForReward(uint256 groupIndex) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) EligibleForReward0(opts *bind.CallOpts, groupIndex *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "eligibleForReward0", groupIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "eligibleForReward0", groupIndex)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // EligibleForReward0 is a free data retrieval call binding the contract method 0x4611ae04.
 //
-// Solidity: function eligibleForReward(uint256 groupIndex) constant returns(bool)
+// Solidity: function eligibleForReward(uint256 groupIndex) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) EligibleForReward0(groupIndex *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.EligibleForReward0(&_BeaconRewards.CallOpts, groupIndex)
 }
 
 // EligibleForReward0 is a free data retrieval call binding the contract method 0x4611ae04.
 //
-// Solidity: function eligibleForReward(uint256 groupIndex) constant returns(bool)
+// Solidity: function eligibleForReward(uint256 groupIndex) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) EligibleForReward0(groupIndex *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.EligibleForReward0(&_BeaconRewards.CallOpts, groupIndex)
 }
 
 // EndOf is a free data retrieval call binding the contract method 0xb965933e.
 //
-// Solidity: function endOf(uint256 interval) constant returns(uint256)
+// Solidity: function endOf(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) EndOf(opts *bind.CallOpts, interval *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "endOf", interval)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "endOf", interval)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // EndOf is a free data retrieval call binding the contract method 0xb965933e.
 //
-// Solidity: function endOf(uint256 interval) constant returns(uint256)
+// Solidity: function endOf(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) EndOf(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.EndOf(&_BeaconRewards.CallOpts, interval)
 }
 
 // EndOf is a free data retrieval call binding the contract method 0xb965933e.
 //
-// Solidity: function endOf(uint256 interval) constant returns(uint256)
+// Solidity: function endOf(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) EndOf(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.EndOf(&_BeaconRewards.CallOpts, interval)
 }
 
 // FirstIntervalStart is a free data retrieval call binding the contract method 0x95aeca48.
 //
-// Solidity: function firstIntervalStart() constant returns(uint256)
+// Solidity: function firstIntervalStart() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) FirstIntervalStart(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "firstIntervalStart")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "firstIntervalStart")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // FirstIntervalStart is a free data retrieval call binding the contract method 0x95aeca48.
 //
-// Solidity: function firstIntervalStart() constant returns(uint256)
+// Solidity: function firstIntervalStart() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) FirstIntervalStart() (*big.Int, error) {
 	return _BeaconRewards.Contract.FirstIntervalStart(&_BeaconRewards.CallOpts)
 }
 
 // FirstIntervalStart is a free data retrieval call binding the contract method 0x95aeca48.
 //
-// Solidity: function firstIntervalStart() constant returns(uint256)
+// Solidity: function firstIntervalStart() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) FirstIntervalStart() (*big.Int, error) {
 	return _BeaconRewards.Contract.FirstIntervalStart(&_BeaconRewards.CallOpts)
 }
 
 // Funded is a free data retrieval call binding the contract method 0xf3a504f2.
 //
-// Solidity: function funded() constant returns(bool)
+// Solidity: function funded() view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) Funded(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "funded")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "funded")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // Funded is a free data retrieval call binding the contract method 0xf3a504f2.
 //
-// Solidity: function funded() constant returns(bool)
+// Solidity: function funded() view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) Funded() (bool, error) {
 	return _BeaconRewards.Contract.Funded(&_BeaconRewards.CallOpts)
 }
 
 // Funded is a free data retrieval call binding the contract method 0xf3a504f2.
 //
-// Solidity: function funded() constant returns(bool)
+// Solidity: function funded() view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) Funded() (bool, error) {
 	return _BeaconRewards.Contract.Funded(&_BeaconRewards.CallOpts)
 }
 
 // GetAllocatedRewards is a free data retrieval call binding the contract method 0x35c9ef71.
 //
-// Solidity: function getAllocatedRewards(uint256 interval) constant returns(uint256)
+// Solidity: function getAllocatedRewards(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) GetAllocatedRewards(opts *bind.CallOpts, interval *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "getAllocatedRewards", interval)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "getAllocatedRewards", interval)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetAllocatedRewards is a free data retrieval call binding the contract method 0x35c9ef71.
 //
-// Solidity: function getAllocatedRewards(uint256 interval) constant returns(uint256)
+// Solidity: function getAllocatedRewards(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) GetAllocatedRewards(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.GetAllocatedRewards(&_BeaconRewards.CallOpts, interval)
 }
 
 // GetAllocatedRewards is a free data retrieval call binding the contract method 0x35c9ef71.
 //
-// Solidity: function getAllocatedRewards(uint256 interval) constant returns(uint256)
+// Solidity: function getAllocatedRewards(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) GetAllocatedRewards(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.GetAllocatedRewards(&_BeaconRewards.CallOpts, interval)
 }
 
 // GetIntervalCount is a free data retrieval call binding the contract method 0x183affa1.
 //
-// Solidity: function getIntervalCount() constant returns(uint256)
+// Solidity: function getIntervalCount() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) GetIntervalCount(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "getIntervalCount")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "getIntervalCount")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetIntervalCount is a free data retrieval call binding the contract method 0x183affa1.
 //
-// Solidity: function getIntervalCount() constant returns(uint256)
+// Solidity: function getIntervalCount() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) GetIntervalCount() (*big.Int, error) {
 	return _BeaconRewards.Contract.GetIntervalCount(&_BeaconRewards.CallOpts)
 }
 
 // GetIntervalCount is a free data retrieval call binding the contract method 0x183affa1.
 //
-// Solidity: function getIntervalCount() constant returns(uint256)
+// Solidity: function getIntervalCount() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) GetIntervalCount() (*big.Int, error) {
 	return _BeaconRewards.Contract.GetIntervalCount(&_BeaconRewards.CallOpts)
 }
 
 // GetIntervalWeight is a free data retrieval call binding the contract method 0x36544951.
 //
-// Solidity: function getIntervalWeight(uint256 interval) constant returns(uint256)
+// Solidity: function getIntervalWeight(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) GetIntervalWeight(opts *bind.CallOpts, interval *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "getIntervalWeight", interval)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "getIntervalWeight", interval)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetIntervalWeight is a free data retrieval call binding the contract method 0x36544951.
 //
-// Solidity: function getIntervalWeight(uint256 interval) constant returns(uint256)
+// Solidity: function getIntervalWeight(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) GetIntervalWeight(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.GetIntervalWeight(&_BeaconRewards.CallOpts, interval)
 }
 
 // GetIntervalWeight is a free data retrieval call binding the contract method 0x36544951.
 //
-// Solidity: function getIntervalWeight(uint256 interval) constant returns(uint256)
+// Solidity: function getIntervalWeight(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) GetIntervalWeight(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.GetIntervalWeight(&_BeaconRewards.CallOpts, interval)
 }
 
 // IntervalKeepsProcessed is a free data retrieval call binding the contract method 0x6a823878.
 //
-// Solidity: function intervalKeepsProcessed(uint256 ) constant returns(uint256)
+// Solidity: function intervalKeepsProcessed(uint256 ) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) IntervalKeepsProcessed(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "intervalKeepsProcessed", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "intervalKeepsProcessed", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // IntervalKeepsProcessed is a free data retrieval call binding the contract method 0x6a823878.
 //
-// Solidity: function intervalKeepsProcessed(uint256 ) constant returns(uint256)
+// Solidity: function intervalKeepsProcessed(uint256 ) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) IntervalKeepsProcessed(arg0 *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.IntervalKeepsProcessed(&_BeaconRewards.CallOpts, arg0)
 }
 
 // IntervalKeepsProcessed is a free data retrieval call binding the contract method 0x6a823878.
 //
-// Solidity: function intervalKeepsProcessed(uint256 ) constant returns(uint256)
+// Solidity: function intervalKeepsProcessed(uint256 ) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) IntervalKeepsProcessed(arg0 *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.IntervalKeepsProcessed(&_BeaconRewards.CallOpts, arg0)
 }
 
 // IntervalOf is a free data retrieval call binding the contract method 0xb369af71.
 //
-// Solidity: function intervalOf(uint256 timestamp) constant returns(uint256)
+// Solidity: function intervalOf(uint256 timestamp) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) IntervalOf(opts *bind.CallOpts, timestamp *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "intervalOf", timestamp)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "intervalOf", timestamp)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // IntervalOf is a free data retrieval call binding the contract method 0xb369af71.
 //
-// Solidity: function intervalOf(uint256 timestamp) constant returns(uint256)
+// Solidity: function intervalOf(uint256 timestamp) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) IntervalOf(timestamp *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.IntervalOf(&_BeaconRewards.CallOpts, timestamp)
 }
 
 // IntervalOf is a free data retrieval call binding the contract method 0xb369af71.
 //
-// Solidity: function intervalOf(uint256 timestamp) constant returns(uint256)
+// Solidity: function intervalOf(uint256 timestamp) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) IntervalOf(timestamp *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.IntervalOf(&_BeaconRewards.CallOpts, timestamp)
 }
 
 // IntervalWeights is a free data retrieval call binding the contract method 0x92672b35.
 //
-// Solidity: function intervalWeights(uint256 ) constant returns(uint256)
+// Solidity: function intervalWeights(uint256 ) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) IntervalWeights(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "intervalWeights", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "intervalWeights", arg0)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // IntervalWeights is a free data retrieval call binding the contract method 0x92672b35.
 //
-// Solidity: function intervalWeights(uint256 ) constant returns(uint256)
+// Solidity: function intervalWeights(uint256 ) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) IntervalWeights(arg0 *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.IntervalWeights(&_BeaconRewards.CallOpts, arg0)
 }
 
 // IntervalWeights is a free data retrieval call binding the contract method 0x92672b35.
 //
-// Solidity: function intervalWeights(uint256 ) constant returns(uint256)
+// Solidity: function intervalWeights(uint256 ) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) IntervalWeights(arg0 *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.IntervalWeights(&_BeaconRewards.CallOpts, arg0)
 }
 
 // IsAllocated is a free data retrieval call binding the contract method 0x0a1bb1b1.
 //
-// Solidity: function isAllocated(uint256 interval) constant returns(bool)
+// Solidity: function isAllocated(uint256 interval) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) IsAllocated(opts *bind.CallOpts, interval *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "isAllocated", interval)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "isAllocated", interval)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsAllocated is a free data retrieval call binding the contract method 0x0a1bb1b1.
 //
-// Solidity: function isAllocated(uint256 interval) constant returns(bool)
+// Solidity: function isAllocated(uint256 interval) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) IsAllocated(interval *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.IsAllocated(&_BeaconRewards.CallOpts, interval)
 }
 
 // IsAllocated is a free data retrieval call binding the contract method 0x0a1bb1b1.
 //
-// Solidity: function isAllocated(uint256 interval) constant returns(bool)
+// Solidity: function isAllocated(uint256 interval) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) IsAllocated(interval *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.IsAllocated(&_BeaconRewards.CallOpts, interval)
 }
 
 // IsFinished is a free data retrieval call binding the contract method 0xe8ba6509.
 //
-// Solidity: function isFinished(uint256 interval) constant returns(bool)
+// Solidity: function isFinished(uint256 interval) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) IsFinished(opts *bind.CallOpts, interval *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "isFinished", interval)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "isFinished", interval)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsFinished is a free data retrieval call binding the contract method 0xe8ba6509.
 //
-// Solidity: function isFinished(uint256 interval) constant returns(bool)
+// Solidity: function isFinished(uint256 interval) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) IsFinished(interval *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.IsFinished(&_BeaconRewards.CallOpts, interval)
 }
 
 // IsFinished is a free data retrieval call binding the contract method 0xe8ba6509.
 //
-// Solidity: function isFinished(uint256 interval) constant returns(bool)
+// Solidity: function isFinished(uint256 interval) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) IsFinished(interval *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.IsFinished(&_BeaconRewards.CallOpts, interval)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) IsOwner() (bool, error) {
 	return _BeaconRewards.Contract.IsOwner(&_BeaconRewards.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) IsOwner() (bool, error) {
 	return _BeaconRewards.Contract.IsOwner(&_BeaconRewards.CallOpts)
 }
 
 // IsTerminated is a free data retrieval call binding the contract method 0xad36d6cc.
 //
-// Solidity: function isTerminated(uint256 groupIndex) constant returns(bool)
+// Solidity: function isTerminated(uint256 groupIndex) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) IsTerminated(opts *bind.CallOpts, groupIndex *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "isTerminated", groupIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "isTerminated", groupIndex)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsTerminated is a free data retrieval call binding the contract method 0xad36d6cc.
 //
-// Solidity: function isTerminated(uint256 groupIndex) constant returns(bool)
+// Solidity: function isTerminated(uint256 groupIndex) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) IsTerminated(groupIndex *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.IsTerminated(&_BeaconRewards.CallOpts, groupIndex)
 }
 
 // IsTerminated is a free data retrieval call binding the contract method 0xad36d6cc.
 //
-// Solidity: function isTerminated(uint256 groupIndex) constant returns(bool)
+// Solidity: function isTerminated(uint256 groupIndex) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) IsTerminated(groupIndex *big.Int) (bool, error) {
 	return _BeaconRewards.Contract.IsTerminated(&_BeaconRewards.CallOpts, groupIndex)
 }
 
 // MinimumKeepsPerInterval is a free data retrieval call binding the contract method 0xc70cee6a.
 //
-// Solidity: function minimumKeepsPerInterval() constant returns(uint256)
+// Solidity: function minimumKeepsPerInterval() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) MinimumKeepsPerInterval(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "minimumKeepsPerInterval")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "minimumKeepsPerInterval")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // MinimumKeepsPerInterval is a free data retrieval call binding the contract method 0xc70cee6a.
 //
-// Solidity: function minimumKeepsPerInterval() constant returns(uint256)
+// Solidity: function minimumKeepsPerInterval() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) MinimumKeepsPerInterval() (*big.Int, error) {
 	return _BeaconRewards.Contract.MinimumKeepsPerInterval(&_BeaconRewards.CallOpts)
 }
 
 // MinimumKeepsPerInterval is a free data retrieval call binding the contract method 0xc70cee6a.
 //
-// Solidity: function minimumKeepsPerInterval() constant returns(uint256)
+// Solidity: function minimumKeepsPerInterval() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) MinimumKeepsPerInterval() (*big.Int, error) {
 	return _BeaconRewards.Contract.MinimumKeepsPerInterval(&_BeaconRewards.CallOpts)
 }
 
 // NewRewardsContract is a free data retrieval call binding the contract method 0x81b83c33.
 //
-// Solidity: function newRewardsContract() constant returns(address)
+// Solidity: function newRewardsContract() view returns(address)
 func (_BeaconRewards *BeaconRewardsCaller) NewRewardsContract(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "newRewardsContract")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "newRewardsContract")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // NewRewardsContract is a free data retrieval call binding the contract method 0x81b83c33.
 //
-// Solidity: function newRewardsContract() constant returns(address)
+// Solidity: function newRewardsContract() view returns(address)
 func (_BeaconRewards *BeaconRewardsSession) NewRewardsContract() (common.Address, error) {
 	return _BeaconRewards.Contract.NewRewardsContract(&_BeaconRewards.CallOpts)
 }
 
 // NewRewardsContract is a free data retrieval call binding the contract method 0x81b83c33.
 //
-// Solidity: function newRewardsContract() constant returns(address)
+// Solidity: function newRewardsContract() view returns(address)
 func (_BeaconRewards *BeaconRewardsCallerSession) NewRewardsContract() (common.Address, error) {
 	return _BeaconRewards.Contract.NewRewardsContract(&_BeaconRewards.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_BeaconRewards *BeaconRewardsCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_BeaconRewards *BeaconRewardsSession) Owner() (common.Address, error) {
 	return _BeaconRewards.Contract.Owner(&_BeaconRewards.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_BeaconRewards *BeaconRewardsCallerSession) Owner() (common.Address, error) {
 	return _BeaconRewards.Contract.Owner(&_BeaconRewards.CallOpts)
 }
 
 // RewardClaimed is a free data retrieval call binding the contract method 0xce2830ad.
 //
-// Solidity: function rewardClaimed(bytes32 _keep) constant returns(bool)
+// Solidity: function rewardClaimed(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCaller) RewardClaimed(opts *bind.CallOpts, _keep [32]byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "rewardClaimed", _keep)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "rewardClaimed", _keep)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // RewardClaimed is a free data retrieval call binding the contract method 0xce2830ad.
 //
-// Solidity: function rewardClaimed(bytes32 _keep) constant returns(bool)
+// Solidity: function rewardClaimed(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsSession) RewardClaimed(_keep [32]byte) (bool, error) {
 	return _BeaconRewards.Contract.RewardClaimed(&_BeaconRewards.CallOpts, _keep)
 }
 
 // RewardClaimed is a free data retrieval call binding the contract method 0xce2830ad.
 //
-// Solidity: function rewardClaimed(bytes32 _keep) constant returns(bool)
+// Solidity: function rewardClaimed(bytes32 _keep) view returns(bool)
 func (_BeaconRewards *BeaconRewardsCallerSession) RewardClaimed(_keep [32]byte) (bool, error) {
 	return _BeaconRewards.Contract.RewardClaimed(&_BeaconRewards.CallOpts, _keep)
 }
 
 // StartOf is a free data retrieval call binding the contract method 0xb41e7f47.
 //
-// Solidity: function startOf(uint256 interval) constant returns(uint256)
+// Solidity: function startOf(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) StartOf(opts *bind.CallOpts, interval *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "startOf", interval)
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "startOf", interval)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // StartOf is a free data retrieval call binding the contract method 0xb41e7f47.
 //
-// Solidity: function startOf(uint256 interval) constant returns(uint256)
+// Solidity: function startOf(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) StartOf(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.StartOf(&_BeaconRewards.CallOpts, interval)
 }
 
 // StartOf is a free data retrieval call binding the contract method 0xb41e7f47.
 //
-// Solidity: function startOf(uint256 interval) constant returns(uint256)
+// Solidity: function startOf(uint256 interval) view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) StartOf(interval *big.Int) (*big.Int, error) {
 	return _BeaconRewards.Contract.StartOf(&_BeaconRewards.CallOpts, interval)
 }
 
 // TermLength is a free data retrieval call binding the contract method 0x79b18cd1.
 //
-// Solidity: function termLength() constant returns(uint256)
+// Solidity: function termLength() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) TermLength(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "termLength")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "termLength")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TermLength is a free data retrieval call binding the contract method 0x79b18cd1.
 //
-// Solidity: function termLength() constant returns(uint256)
+// Solidity: function termLength() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) TermLength() (*big.Int, error) {
 	return _BeaconRewards.Contract.TermLength(&_BeaconRewards.CallOpts)
 }
 
 // TermLength is a free data retrieval call binding the contract method 0x79b18cd1.
 //
-// Solidity: function termLength() constant returns(uint256)
+// Solidity: function termLength() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) TermLength() (*big.Int, error) {
 	return _BeaconRewards.Contract.TermLength(&_BeaconRewards.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_BeaconRewards *BeaconRewardsCaller) Token(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "token")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "token")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_BeaconRewards *BeaconRewardsSession) Token() (common.Address, error) {
 	return _BeaconRewards.Contract.Token(&_BeaconRewards.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_BeaconRewards *BeaconRewardsCallerSession) Token() (common.Address, error) {
 	return _BeaconRewards.Contract.Token(&_BeaconRewards.CallOpts)
 }
 
 // TotalRewards is a free data retrieval call binding the contract method 0x0e15561a.
 //
-// Solidity: function totalRewards() constant returns(uint256)
+// Solidity: function totalRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) TotalRewards(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "totalRewards")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "totalRewards")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TotalRewards is a free data retrieval call binding the contract method 0x0e15561a.
 //
-// Solidity: function totalRewards() constant returns(uint256)
+// Solidity: function totalRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) TotalRewards() (*big.Int, error) {
 	return _BeaconRewards.Contract.TotalRewards(&_BeaconRewards.CallOpts)
 }
 
 // TotalRewards is a free data retrieval call binding the contract method 0x0e15561a.
 //
-// Solidity: function totalRewards() constant returns(uint256)
+// Solidity: function totalRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) TotalRewards() (*big.Int, error) {
 	return _BeaconRewards.Contract.TotalRewards(&_BeaconRewards.CallOpts)
 }
 
 // UnallocatedRewards is a free data retrieval call binding the contract method 0x2b6fdc7e.
 //
-// Solidity: function unallocatedRewards() constant returns(uint256)
+// Solidity: function unallocatedRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) UnallocatedRewards(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "unallocatedRewards")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "unallocatedRewards")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UnallocatedRewards is a free data retrieval call binding the contract method 0x2b6fdc7e.
 //
-// Solidity: function unallocatedRewards() constant returns(uint256)
+// Solidity: function unallocatedRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) UnallocatedRewards() (*big.Int, error) {
 	return _BeaconRewards.Contract.UnallocatedRewards(&_BeaconRewards.CallOpts)
 }
 
 // UnallocatedRewards is a free data retrieval call binding the contract method 0x2b6fdc7e.
 //
-// Solidity: function unallocatedRewards() constant returns(uint256)
+// Solidity: function unallocatedRewards() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) UnallocatedRewards() (*big.Int, error) {
 	return _BeaconRewards.Contract.UnallocatedRewards(&_BeaconRewards.CallOpts)
 }
 
 // UpgradeFinalizedTimestamp is a free data retrieval call binding the contract method 0xce2b3e3c.
 //
-// Solidity: function upgradeFinalizedTimestamp() constant returns(uint256)
+// Solidity: function upgradeFinalizedTimestamp() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) UpgradeFinalizedTimestamp(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "upgradeFinalizedTimestamp")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "upgradeFinalizedTimestamp")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UpgradeFinalizedTimestamp is a free data retrieval call binding the contract method 0xce2b3e3c.
 //
-// Solidity: function upgradeFinalizedTimestamp() constant returns(uint256)
+// Solidity: function upgradeFinalizedTimestamp() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) UpgradeFinalizedTimestamp() (*big.Int, error) {
 	return _BeaconRewards.Contract.UpgradeFinalizedTimestamp(&_BeaconRewards.CallOpts)
 }
 
 // UpgradeFinalizedTimestamp is a free data retrieval call binding the contract method 0xce2b3e3c.
 //
-// Solidity: function upgradeFinalizedTimestamp() constant returns(uint256)
+// Solidity: function upgradeFinalizedTimestamp() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) UpgradeFinalizedTimestamp() (*big.Int, error) {
 	return _BeaconRewards.Contract.UpgradeFinalizedTimestamp(&_BeaconRewards.CallOpts)
 }
 
 // UpgradeInitiatedTimestamp is a free data retrieval call binding the contract method 0x95131526.
 //
-// Solidity: function upgradeInitiatedTimestamp() constant returns(uint256)
+// Solidity: function upgradeInitiatedTimestamp() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCaller) UpgradeInitiatedTimestamp(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _BeaconRewards.contract.Call(opts, out, "upgradeInitiatedTimestamp")
-	return *ret0, err
+	var out []interface{}
+	err := _BeaconRewards.contract.Call(opts, &out, "upgradeInitiatedTimestamp")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UpgradeInitiatedTimestamp is a free data retrieval call binding the contract method 0x95131526.
 //
-// Solidity: function upgradeInitiatedTimestamp() constant returns(uint256)
+// Solidity: function upgradeInitiatedTimestamp() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsSession) UpgradeInitiatedTimestamp() (*big.Int, error) {
 	return _BeaconRewards.Contract.UpgradeInitiatedTimestamp(&_BeaconRewards.CallOpts)
 }
 
 // UpgradeInitiatedTimestamp is a free data retrieval call binding the contract method 0x95131526.
 //
-// Solidity: function upgradeInitiatedTimestamp() constant returns(uint256)
+// Solidity: function upgradeInitiatedTimestamp() view returns(uint256)
 func (_BeaconRewards *BeaconRewardsCallerSession) UpgradeInitiatedTimestamp() (*big.Int, error) {
 	return _BeaconRewards.Contract.UpgradeInitiatedTimestamp(&_BeaconRewards.CallOpts)
 }
@@ -1385,6 +1524,7 @@ func (_BeaconRewards *BeaconRewardsFilterer) ParseOwnershipTransferred(log types
 	if err := _BeaconRewards.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1519,6 +1659,7 @@ func (_BeaconRewards *BeaconRewardsFilterer) ParseRewardReceived(log types.Log) 
 	if err := _BeaconRewards.contract.UnpackLog(event, "RewardReceived", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1652,6 +1793,7 @@ func (_BeaconRewards *BeaconRewardsFilterer) ParseUpgradeFinalized(log types.Log
 	if err := _BeaconRewards.contract.UnpackLog(event, "UpgradeFinalized", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1785,5 +1927,6 @@ func (_BeaconRewards *BeaconRewardsFilterer) ParseUpgradeInitiated(log types.Log
 	if err := _BeaconRewards.contract.UnpackLog(event, "UpgradeInitiated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

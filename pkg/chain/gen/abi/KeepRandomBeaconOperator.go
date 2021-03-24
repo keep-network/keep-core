@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindKeepRandomBeaconOperator(address common.Address, caller bind.ContractCa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRandomBeaconOperator.Contract.KeepRandomBeaconOperatorCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorRaw) Transact(opts *bin
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepRandomBeaconOperator.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,858 +173,1023 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorRaw) Transact
 
 // CurrentRequestGroupIndex is a free data retrieval call binding the contract method 0x7031b7ff.
 //
-// Solidity: function currentRequestGroupIndex() constant returns(uint256)
+// Solidity: function currentRequestGroupIndex() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) CurrentRequestGroupIndex(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "currentRequestGroupIndex")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "currentRequestGroupIndex")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CurrentRequestGroupIndex is a free data retrieval call binding the contract method 0x7031b7ff.
 //
-// Solidity: function currentRequestGroupIndex() constant returns(uint256)
+// Solidity: function currentRequestGroupIndex() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CurrentRequestGroupIndex() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.CurrentRequestGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // CurrentRequestGroupIndex is a free data retrieval call binding the contract method 0x7031b7ff.
 //
-// Solidity: function currentRequestGroupIndex() constant returns(uint256)
+// Solidity: function currentRequestGroupIndex() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) CurrentRequestGroupIndex() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.CurrentRequestGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // CurrentRequestPreviousEntry is a free data retrieval call binding the contract method 0x618c2656.
 //
-// Solidity: function currentRequestPreviousEntry() constant returns(bytes)
+// Solidity: function currentRequestPreviousEntry() view returns(bytes)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) CurrentRequestPreviousEntry(opts *bind.CallOpts) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "currentRequestPreviousEntry")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "currentRequestPreviousEntry")
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // CurrentRequestPreviousEntry is a free data retrieval call binding the contract method 0x618c2656.
 //
-// Solidity: function currentRequestPreviousEntry() constant returns(bytes)
+// Solidity: function currentRequestPreviousEntry() view returns(bytes)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CurrentRequestPreviousEntry() ([]byte, error) {
 	return _KeepRandomBeaconOperator.Contract.CurrentRequestPreviousEntry(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // CurrentRequestPreviousEntry is a free data retrieval call binding the contract method 0x618c2656.
 //
-// Solidity: function currentRequestPreviousEntry() constant returns(bytes)
+// Solidity: function currentRequestPreviousEntry() view returns(bytes)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) CurrentRequestPreviousEntry() ([]byte, error) {
 	return _KeepRandomBeaconOperator.Contract.CurrentRequestPreviousEntry(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // CurrentRequestStartBlock is a free data retrieval call binding the contract method 0x8e9e56a5.
 //
-// Solidity: function currentRequestStartBlock() constant returns(uint256)
+// Solidity: function currentRequestStartBlock() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) CurrentRequestStartBlock(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "currentRequestStartBlock")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "currentRequestStartBlock")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CurrentRequestStartBlock is a free data retrieval call binding the contract method 0x8e9e56a5.
 //
-// Solidity: function currentRequestStartBlock() constant returns(uint256)
+// Solidity: function currentRequestStartBlock() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CurrentRequestStartBlock() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.CurrentRequestStartBlock(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // CurrentRequestStartBlock is a free data retrieval call binding the contract method 0x8e9e56a5.
 //
-// Solidity: function currentRequestStartBlock() constant returns(uint256)
+// Solidity: function currentRequestStartBlock() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) CurrentRequestStartBlock() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.CurrentRequestStartBlock(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // DkgGasEstimate is a free data retrieval call binding the contract method 0x003bf87e.
 //
-// Solidity: function dkgGasEstimate() constant returns(uint256)
+// Solidity: function dkgGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) DkgGasEstimate(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "dkgGasEstimate")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "dkgGasEstimate")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DkgGasEstimate is a free data retrieval call binding the contract method 0x003bf87e.
 //
-// Solidity: function dkgGasEstimate() constant returns(uint256)
+// Solidity: function dkgGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) DkgGasEstimate() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.DkgGasEstimate(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // DkgGasEstimate is a free data retrieval call binding the contract method 0x003bf87e.
 //
-// Solidity: function dkgGasEstimate() constant returns(uint256)
+// Solidity: function dkgGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) DkgGasEstimate() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.DkgGasEstimate(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // DkgSubmitterReimbursementFee is a free data retrieval call binding the contract method 0xb1c77c8f.
 //
-// Solidity: function dkgSubmitterReimbursementFee() constant returns(uint256)
+// Solidity: function dkgSubmitterReimbursementFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) DkgSubmitterReimbursementFee(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "dkgSubmitterReimbursementFee")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "dkgSubmitterReimbursementFee")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DkgSubmitterReimbursementFee is a free data retrieval call binding the contract method 0xb1c77c8f.
 //
-// Solidity: function dkgSubmitterReimbursementFee() constant returns(uint256)
+// Solidity: function dkgSubmitterReimbursementFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) DkgSubmitterReimbursementFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.DkgSubmitterReimbursementFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // DkgSubmitterReimbursementFee is a free data retrieval call binding the contract method 0xb1c77c8f.
 //
-// Solidity: function dkgSubmitterReimbursementFee() constant returns(uint256)
+// Solidity: function dkgSubmitterReimbursementFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) DkgSubmitterReimbursementFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.DkgSubmitterReimbursementFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // EntryVerificationFee is a free data retrieval call binding the contract method 0x517471a9.
 //
-// Solidity: function entryVerificationFee() constant returns(uint256)
+// Solidity: function entryVerificationFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) EntryVerificationFee(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "entryVerificationFee")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "entryVerificationFee")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // EntryVerificationFee is a free data retrieval call binding the contract method 0x517471a9.
 //
-// Solidity: function entryVerificationFee() constant returns(uint256)
+// Solidity: function entryVerificationFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) EntryVerificationFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.EntryVerificationFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // EntryVerificationFee is a free data retrieval call binding the contract method 0x517471a9.
 //
-// Solidity: function entryVerificationFee() constant returns(uint256)
+// Solidity: function entryVerificationFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) EntryVerificationFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.EntryVerificationFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // EntryVerificationGasEstimate is a free data retrieval call binding the contract method 0x79f9fb7e.
 //
-// Solidity: function entryVerificationGasEstimate() constant returns(uint256)
+// Solidity: function entryVerificationGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) EntryVerificationGasEstimate(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "entryVerificationGasEstimate")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "entryVerificationGasEstimate")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // EntryVerificationGasEstimate is a free data retrieval call binding the contract method 0x79f9fb7e.
 //
-// Solidity: function entryVerificationGasEstimate() constant returns(uint256)
+// Solidity: function entryVerificationGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) EntryVerificationGasEstimate() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.EntryVerificationGasEstimate(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // EntryVerificationGasEstimate is a free data retrieval call binding the contract method 0x79f9fb7e.
 //
-// Solidity: function entryVerificationGasEstimate() constant returns(uint256)
+// Solidity: function entryVerificationGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) EntryVerificationGasEstimate() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.EntryVerificationGasEstimate(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GasPriceCeiling is a free data retrieval call binding the contract method 0xe1f4d632.
 //
-// Solidity: function gasPriceCeiling() constant returns(uint256)
+// Solidity: function gasPriceCeiling() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GasPriceCeiling(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "gasPriceCeiling")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "gasPriceCeiling")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GasPriceCeiling is a free data retrieval call binding the contract method 0xe1f4d632.
 //
-// Solidity: function gasPriceCeiling() constant returns(uint256)
+// Solidity: function gasPriceCeiling() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GasPriceCeiling() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GasPriceCeiling(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GasPriceCeiling is a free data retrieval call binding the contract method 0xe1f4d632.
 //
-// Solidity: function gasPriceCeiling() constant returns(uint256)
+// Solidity: function gasPriceCeiling() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GasPriceCeiling() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GasPriceCeiling(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GetFirstActiveGroupIndex is a free data retrieval call binding the contract method 0xeb9488d3.
 //
-// Solidity: function getFirstActiveGroupIndex() constant returns(uint256)
+// Solidity: function getFirstActiveGroupIndex() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetFirstActiveGroupIndex(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getFirstActiveGroupIndex")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "getFirstActiveGroupIndex")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetFirstActiveGroupIndex is a free data retrieval call binding the contract method 0xeb9488d3.
 //
-// Solidity: function getFirstActiveGroupIndex() constant returns(uint256)
+// Solidity: function getFirstActiveGroupIndex() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetFirstActiveGroupIndex() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetFirstActiveGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GetFirstActiveGroupIndex is a free data retrieval call binding the contract method 0xeb9488d3.
 //
-// Solidity: function getFirstActiveGroupIndex() constant returns(uint256)
+// Solidity: function getFirstActiveGroupIndex() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetFirstActiveGroupIndex() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetFirstActiveGroupIndex(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GetGroupMemberRewards is a free data retrieval call binding the contract method 0x9dabee44.
 //
-// Solidity: function getGroupMemberRewards(bytes groupPubKey) constant returns(uint256)
+// Solidity: function getGroupMemberRewards(bytes groupPubKey) view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetGroupMemberRewards(opts *bind.CallOpts, groupPubKey []byte) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getGroupMemberRewards", groupPubKey)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "getGroupMemberRewards", groupPubKey)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetGroupMemberRewards is a free data retrieval call binding the contract method 0x9dabee44.
 //
-// Solidity: function getGroupMemberRewards(bytes groupPubKey) constant returns(uint256)
+// Solidity: function getGroupMemberRewards(bytes groupPubKey) view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetGroupMemberRewards(groupPubKey []byte) (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupMemberRewards(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // GetGroupMemberRewards is a free data retrieval call binding the contract method 0x9dabee44.
 //
-// Solidity: function getGroupMemberRewards(bytes groupPubKey) constant returns(uint256)
+// Solidity: function getGroupMemberRewards(bytes groupPubKey) view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetGroupMemberRewards(groupPubKey []byte) (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupMemberRewards(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // GetGroupMembers is a free data retrieval call binding the contract method 0xd12f5e69.
 //
-// Solidity: function getGroupMembers(bytes groupPubKey) constant returns(address[] members)
+// Solidity: function getGroupMembers(bytes groupPubKey) view returns(address[] members)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetGroupMembers(opts *bind.CallOpts, groupPubKey []byte) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getGroupMembers", groupPubKey)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "getGroupMembers", groupPubKey)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
 // GetGroupMembers is a free data retrieval call binding the contract method 0xd12f5e69.
 //
-// Solidity: function getGroupMembers(bytes groupPubKey) constant returns(address[] members)
+// Solidity: function getGroupMembers(bytes groupPubKey) view returns(address[] members)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetGroupMembers(groupPubKey []byte) ([]common.Address, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupMembers(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // GetGroupMembers is a free data retrieval call binding the contract method 0xd12f5e69.
 //
-// Solidity: function getGroupMembers(bytes groupPubKey) constant returns(address[] members)
+// Solidity: function getGroupMembers(bytes groupPubKey) view returns(address[] members)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetGroupMembers(groupPubKey []byte) ([]common.Address, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupMembers(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // GetGroupPublicKey is a free data retrieval call binding the contract method 0xef7c8f9c.
 //
-// Solidity: function getGroupPublicKey(uint256 groupIndex) constant returns(bytes)
+// Solidity: function getGroupPublicKey(uint256 groupIndex) view returns(bytes)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetGroupPublicKey(opts *bind.CallOpts, groupIndex *big.Int) ([]byte, error) {
-	var (
-		ret0 = new([]byte)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getGroupPublicKey", groupIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "getGroupPublicKey", groupIndex)
+
+	if err != nil {
+		return *new([]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]byte)).(*[]byte)
+
+	return out0, err
+
 }
 
 // GetGroupPublicKey is a free data retrieval call binding the contract method 0xef7c8f9c.
 //
-// Solidity: function getGroupPublicKey(uint256 groupIndex) constant returns(bytes)
+// Solidity: function getGroupPublicKey(uint256 groupIndex) view returns(bytes)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetGroupPublicKey(groupIndex *big.Int) ([]byte, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupPublicKey(&_KeepRandomBeaconOperator.CallOpts, groupIndex)
 }
 
 // GetGroupPublicKey is a free data retrieval call binding the contract method 0xef7c8f9c.
 //
-// Solidity: function getGroupPublicKey(uint256 groupIndex) constant returns(bytes)
+// Solidity: function getGroupPublicKey(uint256 groupIndex) view returns(bytes)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetGroupPublicKey(groupIndex *big.Int) ([]byte, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupPublicKey(&_KeepRandomBeaconOperator.CallOpts, groupIndex)
 }
 
 // GetGroupRegistrationTime is a free data retrieval call binding the contract method 0x5ec60d61.
 //
-// Solidity: function getGroupRegistrationTime(uint256 groupIndex) constant returns(uint256)
+// Solidity: function getGroupRegistrationTime(uint256 groupIndex) view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetGroupRegistrationTime(opts *bind.CallOpts, groupIndex *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getGroupRegistrationTime", groupIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "getGroupRegistrationTime", groupIndex)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetGroupRegistrationTime is a free data retrieval call binding the contract method 0x5ec60d61.
 //
-// Solidity: function getGroupRegistrationTime(uint256 groupIndex) constant returns(uint256)
+// Solidity: function getGroupRegistrationTime(uint256 groupIndex) view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetGroupRegistrationTime(groupIndex *big.Int) (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupRegistrationTime(&_KeepRandomBeaconOperator.CallOpts, groupIndex)
 }
 
 // GetGroupRegistrationTime is a free data retrieval call binding the contract method 0x5ec60d61.
 //
-// Solidity: function getGroupRegistrationTime(uint256 groupIndex) constant returns(uint256)
+// Solidity: function getGroupRegistrationTime(uint256 groupIndex) view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetGroupRegistrationTime(groupIndex *big.Int) (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetGroupRegistrationTime(&_KeepRandomBeaconOperator.CallOpts, groupIndex)
 }
 
 // GetNumberOfCreatedGroups is a free data retrieval call binding the contract method 0xfdd18b13.
 //
-// Solidity: function getNumberOfCreatedGroups() constant returns(uint256)
+// Solidity: function getNumberOfCreatedGroups() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GetNumberOfCreatedGroups(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "getNumberOfCreatedGroups")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "getNumberOfCreatedGroups")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetNumberOfCreatedGroups is a free data retrieval call binding the contract method 0xfdd18b13.
 //
-// Solidity: function getNumberOfCreatedGroups() constant returns(uint256)
+// Solidity: function getNumberOfCreatedGroups() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GetNumberOfCreatedGroups() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetNumberOfCreatedGroups(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GetNumberOfCreatedGroups is a free data retrieval call binding the contract method 0xfdd18b13.
 //
-// Solidity: function getNumberOfCreatedGroups() constant returns(uint256)
+// Solidity: function getNumberOfCreatedGroups() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GetNumberOfCreatedGroups() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GetNumberOfCreatedGroups(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupCreationFee is a free data retrieval call binding the contract method 0xc300d058.
 //
-// Solidity: function groupCreationFee() constant returns(uint256)
+// Solidity: function groupCreationFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GroupCreationFee(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "groupCreationFee")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "groupCreationFee")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GroupCreationFee is a free data retrieval call binding the contract method 0xc300d058.
 //
-// Solidity: function groupCreationFee() constant returns(uint256)
+// Solidity: function groupCreationFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GroupCreationFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupCreationFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupCreationFee is a free data retrieval call binding the contract method 0xc300d058.
 //
-// Solidity: function groupCreationFee() constant returns(uint256)
+// Solidity: function groupCreationFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GroupCreationFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupCreationFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupMemberBaseReward is a free data retrieval call binding the contract method 0x7d7d7dd9.
 //
-// Solidity: function groupMemberBaseReward() constant returns(uint256)
+// Solidity: function groupMemberBaseReward() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GroupMemberBaseReward(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "groupMemberBaseReward")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "groupMemberBaseReward")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GroupMemberBaseReward is a free data retrieval call binding the contract method 0x7d7d7dd9.
 //
-// Solidity: function groupMemberBaseReward() constant returns(uint256)
+// Solidity: function groupMemberBaseReward() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GroupMemberBaseReward() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupMemberBaseReward(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupMemberBaseReward is a free data retrieval call binding the contract method 0x7d7d7dd9.
 //
-// Solidity: function groupMemberBaseReward() constant returns(uint256)
+// Solidity: function groupMemberBaseReward() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GroupMemberBaseReward() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupMemberBaseReward(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupProfitFee is a free data retrieval call binding the contract method 0xc4438946.
 //
-// Solidity: function groupProfitFee() constant returns(uint256)
+// Solidity: function groupProfitFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GroupProfitFee(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "groupProfitFee")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "groupProfitFee")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GroupProfitFee is a free data retrieval call binding the contract method 0xc4438946.
 //
-// Solidity: function groupProfitFee() constant returns(uint256)
+// Solidity: function groupProfitFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GroupProfitFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupProfitFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupProfitFee is a free data retrieval call binding the contract method 0xc4438946.
 //
-// Solidity: function groupProfitFee() constant returns(uint256)
+// Solidity: function groupProfitFee() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GroupProfitFee() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupProfitFee(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupSelectionGasEstimate is a free data retrieval call binding the contract method 0x24f17313.
 //
-// Solidity: function groupSelectionGasEstimate() constant returns(uint256)
+// Solidity: function groupSelectionGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GroupSelectionGasEstimate(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "groupSelectionGasEstimate")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "groupSelectionGasEstimate")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GroupSelectionGasEstimate is a free data retrieval call binding the contract method 0x24f17313.
 //
-// Solidity: function groupSelectionGasEstimate() constant returns(uint256)
+// Solidity: function groupSelectionGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GroupSelectionGasEstimate() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupSelectionGasEstimate(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupSelectionGasEstimate is a free data retrieval call binding the contract method 0x24f17313.
 //
-// Solidity: function groupSelectionGasEstimate() constant returns(uint256)
+// Solidity: function groupSelectionGasEstimate() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GroupSelectionGasEstimate() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupSelectionGasEstimate(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupSize is a free data retrieval call binding the contract method 0x63b635ea.
 //
-// Solidity: function groupSize() constant returns(uint256)
+// Solidity: function groupSize() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GroupSize(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "groupSize")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "groupSize")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GroupSize is a free data retrieval call binding the contract method 0x63b635ea.
 //
-// Solidity: function groupSize() constant returns(uint256)
+// Solidity: function groupSize() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GroupSize() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupSize(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupSize is a free data retrieval call binding the contract method 0x63b635ea.
 //
-// Solidity: function groupSize() constant returns(uint256)
+// Solidity: function groupSize() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GroupSize() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupSize(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupThreshold is a free data retrieval call binding the contract method 0x6dcc64f8.
 //
-// Solidity: function groupThreshold() constant returns(uint256)
+// Solidity: function groupThreshold() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) GroupThreshold(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "groupThreshold")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "groupThreshold")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GroupThreshold is a free data retrieval call binding the contract method 0x6dcc64f8.
 //
-// Solidity: function groupThreshold() constant returns(uint256)
+// Solidity: function groupThreshold() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) GroupThreshold() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupThreshold(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // GroupThreshold is a free data retrieval call binding the contract method 0x6dcc64f8.
 //
-// Solidity: function groupThreshold() constant returns(uint256)
+// Solidity: function groupThreshold() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) GroupThreshold() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.GroupThreshold(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // HasMinimumStake is a free data retrieval call binding the contract method 0x5c1c0710.
 //
-// Solidity: function hasMinimumStake(address staker) constant returns(bool)
+// Solidity: function hasMinimumStake(address staker) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) HasMinimumStake(opts *bind.CallOpts, staker common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "hasMinimumStake", staker)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "hasMinimumStake", staker)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // HasMinimumStake is a free data retrieval call binding the contract method 0x5c1c0710.
 //
-// Solidity: function hasMinimumStake(address staker) constant returns(bool)
+// Solidity: function hasMinimumStake(address staker) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) HasMinimumStake(staker common.Address) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.HasMinimumStake(&_KeepRandomBeaconOperator.CallOpts, staker)
 }
 
 // HasMinimumStake is a free data retrieval call binding the contract method 0x5c1c0710.
 //
-// Solidity: function hasMinimumStake(address staker) constant returns(bool)
+// Solidity: function hasMinimumStake(address staker) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) HasMinimumStake(staker common.Address) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.HasMinimumStake(&_KeepRandomBeaconOperator.CallOpts, staker)
 }
 
 // HasWithdrawnRewards is a free data retrieval call binding the contract method 0x376f7a11.
 //
-// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) constant returns(bool)
+// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) HasWithdrawnRewards(opts *bind.CallOpts, operator common.Address, groupIndex *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "hasWithdrawnRewards", operator, groupIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "hasWithdrawnRewards", operator, groupIndex)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // HasWithdrawnRewards is a free data retrieval call binding the contract method 0x376f7a11.
 //
-// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) constant returns(bool)
+// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) HasWithdrawnRewards(operator common.Address, groupIndex *big.Int) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.HasWithdrawnRewards(&_KeepRandomBeaconOperator.CallOpts, operator, groupIndex)
 }
 
 // HasWithdrawnRewards is a free data retrieval call binding the contract method 0x376f7a11.
 //
-// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) constant returns(bool)
+// Solidity: function hasWithdrawnRewards(address operator, uint256 groupIndex) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) HasWithdrawnRewards(operator common.Address, groupIndex *big.Int) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.HasWithdrawnRewards(&_KeepRandomBeaconOperator.CallOpts, operator, groupIndex)
 }
 
 // IsEntryInProgress is a free data retrieval call binding the contract method 0x6e5636e4.
 //
-// Solidity: function isEntryInProgress() constant returns(bool)
+// Solidity: function isEntryInProgress() view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) IsEntryInProgress(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "isEntryInProgress")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "isEntryInProgress")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsEntryInProgress is a free data retrieval call binding the contract method 0x6e5636e4.
 //
-// Solidity: function isEntryInProgress() constant returns(bool)
+// Solidity: function isEntryInProgress() view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) IsEntryInProgress() (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsEntryInProgress(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // IsEntryInProgress is a free data retrieval call binding the contract method 0x6e5636e4.
 //
-// Solidity: function isEntryInProgress() constant returns(bool)
+// Solidity: function isEntryInProgress() view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) IsEntryInProgress() (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsEntryInProgress(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // IsGroupRegistered is a free data retrieval call binding the contract method 0x1c524ac2.
 //
-// Solidity: function isGroupRegistered(bytes groupPubKey) constant returns(bool)
+// Solidity: function isGroupRegistered(bytes groupPubKey) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) IsGroupRegistered(opts *bind.CallOpts, groupPubKey []byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "isGroupRegistered", groupPubKey)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "isGroupRegistered", groupPubKey)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsGroupRegistered is a free data retrieval call binding the contract method 0x1c524ac2.
 //
-// Solidity: function isGroupRegistered(bytes groupPubKey) constant returns(bool)
+// Solidity: function isGroupRegistered(bytes groupPubKey) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) IsGroupRegistered(groupPubKey []byte) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsGroupRegistered(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // IsGroupRegistered is a free data retrieval call binding the contract method 0x1c524ac2.
 //
-// Solidity: function isGroupRegistered(bytes groupPubKey) constant returns(bool)
+// Solidity: function isGroupRegistered(bytes groupPubKey) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) IsGroupRegistered(groupPubKey []byte) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsGroupRegistered(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // IsGroupSelectionPossible is a free data retrieval call binding the contract method 0x21a8f86c.
 //
-// Solidity: function isGroupSelectionPossible() constant returns(bool)
+// Solidity: function isGroupSelectionPossible() view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) IsGroupSelectionPossible(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "isGroupSelectionPossible")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "isGroupSelectionPossible")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsGroupSelectionPossible is a free data retrieval call binding the contract method 0x21a8f86c.
 //
-// Solidity: function isGroupSelectionPossible() constant returns(bool)
+// Solidity: function isGroupSelectionPossible() view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) IsGroupSelectionPossible() (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsGroupSelectionPossible(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // IsGroupSelectionPossible is a free data retrieval call binding the contract method 0x21a8f86c.
 //
-// Solidity: function isGroupSelectionPossible() constant returns(bool)
+// Solidity: function isGroupSelectionPossible() view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) IsGroupSelectionPossible() (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsGroupSelectionPossible(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // IsGroupTerminated is a free data retrieval call binding the contract method 0x885c0204.
 //
-// Solidity: function isGroupTerminated(uint256 groupIndex) constant returns(bool)
+// Solidity: function isGroupTerminated(uint256 groupIndex) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) IsGroupTerminated(opts *bind.CallOpts, groupIndex *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "isGroupTerminated", groupIndex)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "isGroupTerminated", groupIndex)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsGroupTerminated is a free data retrieval call binding the contract method 0x885c0204.
 //
-// Solidity: function isGroupTerminated(uint256 groupIndex) constant returns(bool)
+// Solidity: function isGroupTerminated(uint256 groupIndex) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) IsGroupTerminated(groupIndex *big.Int) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsGroupTerminated(&_KeepRandomBeaconOperator.CallOpts, groupIndex)
 }
 
 // IsGroupTerminated is a free data retrieval call binding the contract method 0x885c0204.
 //
-// Solidity: function isGroupTerminated(uint256 groupIndex) constant returns(bool)
+// Solidity: function isGroupTerminated(uint256 groupIndex) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) IsGroupTerminated(groupIndex *big.Int) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsGroupTerminated(&_KeepRandomBeaconOperator.CallOpts, groupIndex)
 }
 
 // IsStaleGroup is a free data retrieval call binding the contract method 0x2d6f8f31.
 //
-// Solidity: function isStaleGroup(bytes groupPubKey) constant returns(bool)
+// Solidity: function isStaleGroup(bytes groupPubKey) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) IsStaleGroup(opts *bind.CallOpts, groupPubKey []byte) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "isStaleGroup", groupPubKey)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "isStaleGroup", groupPubKey)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsStaleGroup is a free data retrieval call binding the contract method 0x2d6f8f31.
 //
-// Solidity: function isStaleGroup(bytes groupPubKey) constant returns(bool)
+// Solidity: function isStaleGroup(bytes groupPubKey) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) IsStaleGroup(groupPubKey []byte) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsStaleGroup(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // IsStaleGroup is a free data retrieval call binding the contract method 0x2d6f8f31.
 //
-// Solidity: function isStaleGroup(bytes groupPubKey) constant returns(bool)
+// Solidity: function isStaleGroup(bytes groupPubKey) view returns(bool)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) IsStaleGroup(groupPubKey []byte) (bool, error) {
 	return _KeepRandomBeaconOperator.Contract.IsStaleGroup(&_KeepRandomBeaconOperator.CallOpts, groupPubKey)
 }
 
 // NumberOfGroups is a free data retrieval call binding the contract method 0xbf952496.
 //
-// Solidity: function numberOfGroups() constant returns(uint256)
+// Solidity: function numberOfGroups() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) NumberOfGroups(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "numberOfGroups")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "numberOfGroups")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // NumberOfGroups is a free data retrieval call binding the contract method 0xbf952496.
 //
-// Solidity: function numberOfGroups() constant returns(uint256)
+// Solidity: function numberOfGroups() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) NumberOfGroups() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.NumberOfGroups(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // NumberOfGroups is a free data retrieval call binding the contract method 0xbf952496.
 //
-// Solidity: function numberOfGroups() constant returns(uint256)
+// Solidity: function numberOfGroups() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) NumberOfGroups() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.NumberOfGroups(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // RelayEntryTimeout is a free data retrieval call binding the contract method 0xb99f0c43.
 //
-// Solidity: function relayEntryTimeout() constant returns(uint256)
+// Solidity: function relayEntryTimeout() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) RelayEntryTimeout(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "relayEntryTimeout")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "relayEntryTimeout")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // RelayEntryTimeout is a free data retrieval call binding the contract method 0xb99f0c43.
 //
-// Solidity: function relayEntryTimeout() constant returns(uint256)
+// Solidity: function relayEntryTimeout() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) RelayEntryTimeout() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.RelayEntryTimeout(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // RelayEntryTimeout is a free data retrieval call binding the contract method 0xb99f0c43.
 //
-// Solidity: function relayEntryTimeout() constant returns(uint256)
+// Solidity: function relayEntryTimeout() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) RelayEntryTimeout() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.RelayEntryTimeout(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // ResultPublicationBlockStep is a free data retrieval call binding the contract method 0x36c85717.
 //
-// Solidity: function resultPublicationBlockStep() constant returns(uint256)
+// Solidity: function resultPublicationBlockStep() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) ResultPublicationBlockStep(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "resultPublicationBlockStep")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "resultPublicationBlockStep")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // ResultPublicationBlockStep is a free data retrieval call binding the contract method 0x36c85717.
 //
-// Solidity: function resultPublicationBlockStep() constant returns(uint256)
+// Solidity: function resultPublicationBlockStep() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) ResultPublicationBlockStep() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.ResultPublicationBlockStep(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // ResultPublicationBlockStep is a free data retrieval call binding the contract method 0x36c85717.
 //
-// Solidity: function resultPublicationBlockStep() constant returns(uint256)
+// Solidity: function resultPublicationBlockStep() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) ResultPublicationBlockStep() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.ResultPublicationBlockStep(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // SelectedParticipants is a free data retrieval call binding the contract method 0x0b19991f.
 //
-// Solidity: function selectedParticipants() constant returns(address[])
+// Solidity: function selectedParticipants() view returns(address[])
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) SelectedParticipants(opts *bind.CallOpts) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "selectedParticipants")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "selectedParticipants")
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
 }
 
 // SelectedParticipants is a free data retrieval call binding the contract method 0x0b19991f.
 //
-// Solidity: function selectedParticipants() constant returns(address[])
+// Solidity: function selectedParticipants() view returns(address[])
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) SelectedParticipants() ([]common.Address, error) {
 	return _KeepRandomBeaconOperator.Contract.SelectedParticipants(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // SelectedParticipants is a free data retrieval call binding the contract method 0x0b19991f.
 //
-// Solidity: function selectedParticipants() constant returns(address[])
+// Solidity: function selectedParticipants() view returns(address[])
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) SelectedParticipants() ([]common.Address, error) {
 	return _KeepRandomBeaconOperator.Contract.SelectedParticipants(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // SubmittedTickets is a free data retrieval call binding the contract method 0x6262d54e.
 //
-// Solidity: function submittedTickets() constant returns(uint64[])
+// Solidity: function submittedTickets() view returns(uint64[])
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) SubmittedTickets(opts *bind.CallOpts) ([]uint64, error) {
-	var (
-		ret0 = new([]uint64)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "submittedTickets")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "submittedTickets")
+
+	if err != nil {
+		return *new([]uint64), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]uint64)).(*[]uint64)
+
+	return out0, err
+
 }
 
 // SubmittedTickets is a free data retrieval call binding the contract method 0x6262d54e.
 //
-// Solidity: function submittedTickets() constant returns(uint64[])
+// Solidity: function submittedTickets() view returns(uint64[])
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) SubmittedTickets() ([]uint64, error) {
 	return _KeepRandomBeaconOperator.Contract.SubmittedTickets(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // SubmittedTickets is a free data retrieval call binding the contract method 0x6262d54e.
 //
-// Solidity: function submittedTickets() constant returns(uint64[])
+// Solidity: function submittedTickets() view returns(uint64[])
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) SubmittedTickets() ([]uint64, error) {
 	return _KeepRandomBeaconOperator.Contract.SubmittedTickets(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // TicketSubmissionTimeout is a free data retrieval call binding the contract method 0xc98622fb.
 //
-// Solidity: function ticketSubmissionTimeout() constant returns(uint256)
+// Solidity: function ticketSubmissionTimeout() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCaller) TicketSubmissionTimeout(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepRandomBeaconOperator.contract.Call(opts, out, "ticketSubmissionTimeout")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepRandomBeaconOperator.contract.Call(opts, &out, "ticketSubmissionTimeout")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TicketSubmissionTimeout is a free data retrieval call binding the contract method 0xc98622fb.
 //
-// Solidity: function ticketSubmissionTimeout() constant returns(uint256)
+// Solidity: function ticketSubmissionTimeout() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) TicketSubmissionTimeout() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.TicketSubmissionTimeout(&_KeepRandomBeaconOperator.CallOpts)
 }
 
 // TicketSubmissionTimeout is a free data retrieval call binding the contract method 0xc98622fb.
 //
-// Solidity: function ticketSubmissionTimeout() constant returns(uint256)
+// Solidity: function ticketSubmissionTimeout() view returns(uint256)
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorCallerSession) TicketSubmissionTimeout() (*big.Int, error) {
 	return _KeepRandomBeaconOperator.Contract.TicketSubmissionTimeout(&_KeepRandomBeaconOperator.CallOpts)
 }
@@ -1053,42 +1217,42 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) AddS
 
 // CreateGroup is a paid mutator transaction binding the contract method 0xc96e71fb.
 //
-// Solidity: function createGroup(uint256 _newEntry, address submitter) returns()
+// Solidity: function createGroup(uint256 _newEntry, address submitter) payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactor) CreateGroup(opts *bind.TransactOpts, _newEntry *big.Int, submitter common.Address) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.contract.Transact(opts, "createGroup", _newEntry, submitter)
 }
 
 // CreateGroup is a paid mutator transaction binding the contract method 0xc96e71fb.
 //
-// Solidity: function createGroup(uint256 _newEntry, address submitter) returns()
+// Solidity: function createGroup(uint256 _newEntry, address submitter) payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) CreateGroup(_newEntry *big.Int, submitter common.Address) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.CreateGroup(&_KeepRandomBeaconOperator.TransactOpts, _newEntry, submitter)
 }
 
 // CreateGroup is a paid mutator transaction binding the contract method 0xc96e71fb.
 //
-// Solidity: function createGroup(uint256 _newEntry, address submitter) returns()
+// Solidity: function createGroup(uint256 _newEntry, address submitter) payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) CreateGroup(_newEntry *big.Int, submitter common.Address) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.CreateGroup(&_KeepRandomBeaconOperator.TransactOpts, _newEntry, submitter)
 }
 
 // Genesis is a paid mutator transaction binding the contract method 0xa7f0b3de.
 //
-// Solidity: function genesis() returns()
+// Solidity: function genesis() payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactor) Genesis(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.contract.Transact(opts, "genesis")
 }
 
 // Genesis is a paid mutator transaction binding the contract method 0xa7f0b3de.
 //
-// Solidity: function genesis() returns()
+// Solidity: function genesis() payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) Genesis() (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.Genesis(&_KeepRandomBeaconOperator.TransactOpts)
 }
 
 // Genesis is a paid mutator transaction binding the contract method 0xa7f0b3de.
 //
-// Solidity: function genesis() returns()
+// Solidity: function genesis() payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) Genesis() (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.Genesis(&_KeepRandomBeaconOperator.TransactOpts)
 }
@@ -1179,21 +1343,21 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) Repo
 
 // Sign is a paid mutator transaction binding the contract method 0x9b3d270a.
 //
-// Solidity: function sign(uint256 requestId, bytes previousEntry) returns()
+// Solidity: function sign(uint256 requestId, bytes previousEntry) payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactor) Sign(opts *bind.TransactOpts, requestId *big.Int, previousEntry []byte) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.contract.Transact(opts, "sign", requestId, previousEntry)
 }
 
 // Sign is a paid mutator transaction binding the contract method 0x9b3d270a.
 //
-// Solidity: function sign(uint256 requestId, bytes previousEntry) returns()
+// Solidity: function sign(uint256 requestId, bytes previousEntry) payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorSession) Sign(requestId *big.Int, previousEntry []byte) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.Sign(&_KeepRandomBeaconOperator.TransactOpts, requestId, previousEntry)
 }
 
 // Sign is a paid mutator transaction binding the contract method 0x9b3d270a.
 //
-// Solidity: function sign(uint256 requestId, bytes previousEntry) returns()
+// Solidity: function sign(uint256 requestId, bytes previousEntry) payable returns()
 func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorTransactorSession) Sign(requestId *big.Int, previousEntry []byte) (*types.Transaction, error) {
 	return _KeepRandomBeaconOperator.Contract.Sign(&_KeepRandomBeaconOperator.TransactOpts, requestId, previousEntry)
 }
@@ -1393,6 +1557,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseDkgResul
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "DkgResultSubmittedEvent", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1539,6 +1704,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseGroupMem
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "GroupMemberRewardsWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1672,6 +1838,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseGroupSel
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "GroupSelectionStarted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1805,6 +1972,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseOnGroupR
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "OnGroupRegistered", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1939,6 +2107,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseRelayEnt
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "RelayEntryRequested", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2071,6 +2240,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseRelayEnt
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "RelayEntrySubmitted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2214,6 +2384,7 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseRelayEnt
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "RelayEntryTimeoutReported", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2357,5 +2528,6 @@ func (_KeepRandomBeaconOperator *KeepRandomBeaconOperatorFilterer) ParseUnauthor
 	if err := _KeepRandomBeaconOperator.contract.UnpackLog(event, "UnauthorizedSigningReported", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
