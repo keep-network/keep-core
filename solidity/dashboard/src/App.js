@@ -10,9 +10,9 @@ import store from "./store"
 import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
-import { useWeb3Address } from "./components/WithWeb3Context"
 import { usePrevious } from "./hooks/usePrevious"
 import { isSameEthAddress } from "./utils/general.utils"
+import { useWeb3Context } from "./components/WithWeb3Context"
 
 const App = () => (
   <Provider store={store}>
@@ -29,15 +29,24 @@ const App = () => (
 )
 
 const AppLayout = () => {
-  const yourAddress = useWeb3Address()
-  const previousAddress = usePrevious(yourAddress)
+  const { isConnected, connector, yourAddress } = useWeb3Context()
   const dispatch = useDispatch()
 
   useEffect(() => {
-    if (previousAddress && !isSameEthAddress(previousAddress, yourAddress)) {
-      dispatch({ type: "root_saga/restart" })
+    const eventHandler = (address) => {
+      dispatch({ type: "app/account_changed", payload: { address } })
     }
-  })
+    if (isConnected) {
+      dispatch({ type: "app/set_account", payload: { address: yourAddress } })
+      connector.on("accountsChanged", eventHandler)
+    }
+
+    return () => {
+      if (connector) {
+        connector.removeListener("accountsChanged", eventHandler)
+      }
+    }
+  }, [isConnected, connector, dispatch, yourAddress])
 
   return (
     <>

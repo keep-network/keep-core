@@ -8,10 +8,10 @@ import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
 import notificationsData from "./notifications-data"
 
-const app = (state = { isReady: true }, action) => {
+const app = (state = { address: null }, action) => {
   switch (action.type) {
-    case "app/reinitialization":
-      return { ...state, isReady: false }
+    case "app/set_account":
+      return { ...state, address: action.payload.address }
 
     default:
       return state
