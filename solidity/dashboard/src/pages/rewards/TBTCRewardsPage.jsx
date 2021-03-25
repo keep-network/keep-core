@@ -22,6 +22,7 @@ import EmptyStatePage from "./EmptyStatePage"
 const TBTCRewardsPage = () => {
   const dispatch = useDispatch()
   const yourAddress = useWeb3Address()
+  const app = useSelector((state) => state.app)
   const currentIntervalEndOf = ECDSARewardsHelper.intervalEndOf(
     ECDSARewardsHelper.currentInterval
   ).unix()
@@ -36,9 +37,9 @@ const TBTCRewardsPage = () => {
   useEffect(() => {
     dispatch({
       type: "rewards/ecdsa_fetch_rewards_data_request",
-      payload: yourAddress,
+      payload: { address: yourAddress },
     })
-  }, [dispatch, yourAddress])
+  }, [dispatch, yourAddress, app.isReady])
 
   const withdrawRewards = useCallback(
     (submitButtonPromise) => {

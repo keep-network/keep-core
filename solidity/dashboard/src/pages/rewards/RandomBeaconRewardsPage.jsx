@@ -11,6 +11,7 @@ import { gt } from "../../utils/arithmetics.utils"
 
 const RandomBeaconRewardsPage = () => {
   const dispatch = useDispatch()
+  const app = useSelector((state) => state.app)
   const { yourAddress } = useWeb3Context()
   const { beaconRewardsFetching, becaonRewardsBalance } = useSelector(
     (state) => state.rewards
@@ -21,7 +22,7 @@ const RandomBeaconRewardsPage = () => {
       type: "rewards/beacon_fetch_distributed_rewards_request",
       payload: yourAddress,
     })
-  }, [dispatch, yourAddress])
+  }, [dispatch, yourAddress, app.isReady])
 
   return (
     <>
