@@ -45,7 +45,7 @@ const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
               </h3>
               <h3>
                 <CountUp
-                  end={Object.values(formattedLPTokenBalance)[i]}
+                  end={Object.values(formattedLPTokenBalance)[i].toNumber()}
                   separator={","}
                   preserveValue
                 />
