@@ -7,6 +7,11 @@ class InjectedConnector extends AbstractConnector {
   constructor() {
     super(WALLETS.METAMASK.name)
     this.provider = window.ethereum
+    if (this.provider) {
+      this.provider.on("accountsChanged", ([address]) => {
+        this.emit("accountsChanged", address)
+      })
+    }
   }
 
   enable = async () => {
