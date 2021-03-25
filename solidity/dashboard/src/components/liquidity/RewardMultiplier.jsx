@@ -25,7 +25,13 @@ export const RewardMultiplier = ({
 
 RewardMultiplier.TooltipContent = () => {
   // TODO: content of the tooltip
-  return <>Reward multiplier tooltip</>
+  return (
+    <>
+      Deposit liquidity tokens for 30 days to achieve a 3x reward multiplier.
+      The multiplier is individual for each stake, so this value is an average
+      of the boosts of all your stakes.{" "}
+    </>
+  )
 }
 
 export default RewardMultiplier
