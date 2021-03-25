@@ -67,3 +67,9 @@ export function* getLPRewardsWrapper(liquidityRewardPair) {
 
   return LiquidityRewards
 }
+
+export const identifyTaskByAddress = (action) =>
+  identifyTaskBy("address")(action)
+
+export const identifyTaskBy = (indentificationField) => (action) =>
+  action.payload[indentificationField]

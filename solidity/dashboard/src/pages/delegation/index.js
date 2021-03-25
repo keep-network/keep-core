@@ -30,26 +30,22 @@ const DelegationPageWrapperComponent = ({
 }) => {
   const app = useSelector((state) => state.app)
   const yourAddress = useWeb3Address()
-  // useEffect(() => {
-  //   fetchOldDelegations()
-  // }, [fetchOldDelegations])
 
-  // useEffect(() => {
-  //   fetchGrants()
-  // }, [fetchGrants])
+  useEffect(() => {
+    fetchOldDelegations()
+  }, [fetchOldDelegations, app.isReady])
+
+  useEffect(() => {
+    fetchGrants(yourAddress)
+  }, [fetchGrants, yourAddress, app.isReady])
 
   useEffect(() => {
     fetchDelegations(yourAddress)
-  }, [fetchDelegations, app.isReady, yourAddress])
+  }, [fetchDelegations, yourAddress, app.isReady])
 
-  // useEffect(() => {
-  //   fetchTopUps()
-  // }, [fetchTopUps])
-
-  // useDispatchWhenAccountChanged(fetchOldDelegations)
-  // useDispatchWhenAccountChanged(fetchGrants)
-  // useDispatchWhenAccountChanged(fetchDelegations)
-  // useDispatchWhenAccountChanged(fetchTopUps)
+  useEffect(() => {
+    fetchTopUps(yourAddress)
+  }, [fetchTopUps, yourAddress, app.isReady])
 
   const { openModal, openConfirmationModal } = useModal()
 
@@ -121,13 +117,18 @@ const mapDispatchToProps = (dispatch) => {
       }),
     fetchOldDelegations: () =>
       dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
-    fetchGrants: () => dispatch({ type: "token-grant/fetch_grants_request" }),
+    fetchGrants: (address) =>
+      dispatch({
+        type: "token-grant/fetch_grants_request",
+        payload: { address },
+      }),
     fetchDelegations: (address) =>
       dispatch({
         type: "staking/fetch_delegations_request",
         payload: { address },
       }),
-    fetchTopUps: () => dispatch({ type: "staking/fetch_top_ups_request" }),
+    fetchTopUps: (address) =>
+      dispatch({ type: "staking/fetch_top_ups_request", payload: { address } }),
   }
 }
 

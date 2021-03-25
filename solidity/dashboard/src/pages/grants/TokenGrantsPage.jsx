@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react"
+import React, { useMemo } from "react"
 import Web3 from "web3"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import ProviderEngine from "web3-provider-engine"
@@ -29,14 +29,25 @@ import {
 import { getWsUrl } from "../../connectors/utils"
 import { Web3Context } from "../../components/WithWeb3Context"
 import { GrantedTokensPage } from "../delegation/GrantedTokensPage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
+import { useCallback } from "react"
+import { useDispatchWhenAccountChanged } from "../../hooks/useDispatchWhenAccountChanged"
 
 const TokenGrantsPage = (props) => {
   const dispatch = useDispatch()
-  const { grants, isFetching } = useSelector((state) => state.tokenGrants)
+  const address = useWeb3Address()
 
-  useEffect(() => {
-    dispatch({ type: "token-grant/fetch_grants_request" })
-  }, [dispatch])
+  const { grants, isFetching } = useSelector((state) => state.tokenGrants)
+  const fetchGrants = useCallback(
+    () =>
+      dispatch({
+        type: "token-grant/fetch_grants_request",
+        payload: { address },
+      }),
+    [address, dispatch]
+  )
+
+  useDispatchWhenAccountChanged(fetchGrants)
 
   const totalGrantAmount = useMemo(() => {
     return grants.map(({ amount }) => amount).reduce(add, "0")

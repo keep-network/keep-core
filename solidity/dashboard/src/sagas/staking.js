@@ -1,18 +1,10 @@
-import {
-  take,
-  takeEvery,
-  call,
-  fork,
-  put,
-  select,
-  delay,
-} from "redux-saga/effects"
+import { take, takeEvery, call, put, select, delay } from "redux-saga/effects"
 import { takeOnlyOnce } from "./effects"
 import {
   getContractsContext,
   submitButtonHelper,
-  logError,
   logErrorAndThrow,
+  identifyTaskByAddress,
 } from "./utils"
 import moment from "moment"
 import { sendTransaction } from "./web3"
@@ -174,8 +166,11 @@ function* fetchDelegations() {
 
 export function* watchFetchTopUpsRequest() {
   // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_top_ups_request")
-  yield fork(fetchTopUps)
+  yield takeOnlyOnce(
+    "staking/fetch_top_ups_request",
+    identifyTaskByAddress,
+    fetchTopUps
+  )
 }
 
 function* fetchTopUps() {
@@ -205,7 +200,7 @@ function* fetchTopUps() {
       })),
     })
   } catch (error) {
-    yield* logError("staking/fetch_top_ups_failure", error)
+    yield* logErrorAndThrow("staking/fetch_top_ups_failure", error)
   }
 }
 
