@@ -14,6 +14,8 @@ import {
 import MetaMaskModal from "./MetaMaskModal"
 import WallectConnectModal from "./WalletConnectModal"
 import { WALLETS } from "../constants/constants"
+import ReadOnlyAddressModal from "./ReadOnlyAddressModal"
+import { ReadOnlyConnector } from "../connectors/read-only-connector"
 
 const WALLETS_OPTIONS = [
   {
@@ -49,6 +51,12 @@ const WALLETS_OPTIONS = [
     isHardwareWallet: false,
     connector: new WalletConnectConnector(),
   },
+  {
+    label: "ReadOnlyAddress",
+    icon: Icons.Wallet,
+    isHardwareWallet: false,
+    connector: new ReadOnlyConnector(),
+  },
 ]
 
 const WalletOptions = () => {
@@ -79,6 +87,8 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
         return <MetaMaskModal {...defaultProps} />
       case WALLETS.WALLET_CONNECT.name:
         return <WallectConnectModal {...defaultProps} />
+      case WALLETS.READ_ONLY_ADDRESS.name:
+        return <ReadOnlyAddressModal {...defaultProps} />
       default:
         return null
     }

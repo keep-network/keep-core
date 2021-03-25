@@ -33,6 +33,7 @@ export const WALLETS = {
   TREZOR: { label: "Trezor", name: "TREZOR" },
   LEDGER: { label: "Ledger", name: "LEDGER" },
   WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
+  READ_ONLY_ADDRESS: { label: "ReadOnlyAddress", name: "READ_ONLY_ADDRESS" },
 }
 
 export const REWARD_STATUS = {
