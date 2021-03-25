@@ -72,8 +72,8 @@ class Web3ContextProvider extends React.Component {
     }
 
     if (connector.name === WALLETS.METAMASK.name) {
-      web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
-      web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
+      connector.provider.on("accountsChanged", this.onAccountsChanged)
+      connector.provider.on("chainChanged", this.onAccountsChanged)
     }
 
     this.setState({

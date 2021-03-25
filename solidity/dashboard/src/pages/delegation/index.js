@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from "react"
-import { connect, useSelector } from "react-redux"
+import { connect } from "react-redux"
 import moment from "moment"
 import { FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST } from "../../actions"
 import { isEmptyArray } from "../../utils/array.utils"
@@ -28,24 +28,23 @@ const DelegationPageWrapperComponent = ({
   children,
   ...restProps
 }) => {
-  const app = useSelector((state) => state.app)
   const yourAddress = useWeb3Address()
 
   useEffect(() => {
     fetchOldDelegations()
-  }, [fetchOldDelegations, app.isReady])
+  }, [fetchOldDelegations, yourAddress])
 
   useEffect(() => {
     fetchGrants(yourAddress)
-  }, [fetchGrants, yourAddress, app.isReady])
+  }, [fetchGrants, yourAddress])
 
   useEffect(() => {
     fetchDelegations(yourAddress)
-  }, [fetchDelegations, yourAddress, app.isReady])
+  }, [fetchDelegations, yourAddress])
 
   useEffect(() => {
     fetchTopUps(yourAddress)
-  }, [fetchTopUps, yourAddress, app.isReady])
+  }, [fetchTopUps, yourAddress])
 
   const { openModal, openConfirmationModal } = useModal()
 
