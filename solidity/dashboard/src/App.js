@@ -10,8 +10,6 @@ import store from "./store"
 import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
-import { usePrevious } from "./hooks/usePrevious"
-import { isSameEthAddress } from "./utils/general.utils"
 import { useWeb3Context } from "./components/WithWeb3Context"
 
 const App = () => (

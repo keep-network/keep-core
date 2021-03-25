@@ -1,4 +1,4 @@
-import { all, fork, take, cancel, put, delay } from "redux-saga/effects"
+import { all, fork, take, cancel, put } from "redux-saga/effects"
 import * as messagesSaga from "./messages"
 import * as delegateStakeSaga from "./staking"
 import * as tokenGrantSaga from "./token-grant"
