@@ -7,11 +7,14 @@ class InjectedConnector extends AbstractConnector {
   constructor() {
     super(WALLETS.METAMASK.name)
     this.provider = window.ethereum
-    if (this.provider) {
-      this.provider.on("accountsChanged", ([address]) => {
-        this.emit("accountsChanged", address)
-      })
-    }
+  }
+
+  _onAccountChanged = ([address]) => {
+    this.emit("accountsChanged", address)
+  }
+
+  _onDisconnect = () => {
+    this.emit("disconnect")
   }
 
   enable = async () => {
@@ -21,6 +24,11 @@ class InjectedConnector extends AbstractConnector {
 
     // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
     this.provider.autoRefreshOnNetworkChange = false
+
+    if (this.provider && this.provider.on) {
+      this.provider.on("accountsChanged", this._onAccountChanged)
+      this.provider.on("disconnect", this._onDisconnect)
+    }
 
     try {
       return await this.provider.request({ method: "eth_requestAccounts" })
@@ -38,6 +46,9 @@ class InjectedConnector extends AbstractConnector {
   disconnect = async () => {
     // window.ethereum injected by MetaMask does not provide a method to
     // disconnect a wallet.
+    this.emit("disconnect")
+    this.provider.removeListener("accountsChanged", this._onAccountChanged)
+    this.provider.removeListener("disconnect", this._onDisconnect)
   }
 
   getChainId = async () => {
