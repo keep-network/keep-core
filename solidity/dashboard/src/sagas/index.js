@@ -10,7 +10,19 @@ import * as rewards from "./rewards"
 import * as liquidityRewards from "./liquidity-rewards"
 
 export default function* rootSaga() {
-  yield take("app/set_account")
+  while (true) {
+    const {
+      payload: { address },
+    } = yield take("app/login")
+    yield put({ type: "app/set_account", payload: { address } })
+    const task = yield fork(runTasks)
+    yield take("app/logout")
+    yield cancel(task)
+    yield put({ type: "app/reset_store" })
+  }
+}
+
+export function* runTasks() {
   while (true) {
     const tasks = yield all(
       [

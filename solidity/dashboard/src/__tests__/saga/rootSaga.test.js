@@ -1,7 +1,7 @@
 import { all, fork, take, cancel, put } from "redux-saga/effects"
 import { createMockTask } from "@redux-saga/testing-utils"
 import { expectSaga } from "redux-saga-test-plan"
-import rootSaga from "../../sagas"
+import rootSaga, { runTasks } from "../../sagas"
 import * as messagesSaga from "../../sagas/messages"
 import * as delegateStakeSaga from "../../sagas/staking"
 import * as tokenGrantSaga from "../../sagas/token-grant"
@@ -13,15 +13,26 @@ import * as rewards from "../../sagas/rewards"
 import * as liquidityRewards from "../../sagas/liquidity-rewards"
 
 describe("Test root saga", () => {
-  it("should start correctly and handle dispatched actions", () => {
+  it("should start correctly and handle login flow", () => {
     const mockTasks = [fork(() => {}), fork(() => {})]
 
     return expectSaga(rootSaga)
       .provide([[all(), mockTasks]])
-      .dispatch({ type: "app/set_account" })
+      .dispatch({ type: "app/login", payload: { address: "0x0" } })
+      .put({ type: "app/set_account", payload: { address: "0x0" } })
+      .dispatch({ type: "app/logout" })
+      .put({ type: "app/reset_store" })
+      .run()
+  })
+
+  it("should handle account switching flow", () => {
+    return expectSaga(rootSaga)
+      .dispatch({ type: "app/login", payload: { address: "0x0" } })
+      .put({ type: "app/set_account", payload: { address: "0x0" } })
       .dispatch({ type: "app/account_changed", payload: { address: "0x1" } })
       .put({ type: "app/reset_store" })
       .put({ type: "app/set_account", payload: { address: "0x1" } })
+      .not.put({ type: "app/logout" })
       .run()
   })
 })
@@ -35,13 +46,51 @@ describe("Test root saga step by step", () => {
     generator = rootSaga()
   })
 
-  afterAll(() => {
-    generator.cancel()
+  it("should wait for start action", () => {
+    const expectedYield = take("app/login")
+    expect(generator.next().value).toStrictEqual(expectedYield)
   })
 
-  it("should wait for start action", () => {
-    const expectedYield = take("app/set_account")
+  it("should set account", () => {
+    const expectedYield = put({
+      type: "app/set_account",
+      payload: { address: mockAddress },
+    })
+    const mockedAction = {
+      type: "app/login",
+      payload: { address: mockAddress },
+    }
+    expect(generator.next(mockedAction).value).toStrictEqual(expectedYield)
+  })
+
+  it("should fork background tasks", () => {
+    const expectedYield = fork(runTasks)
     expect(generator.next().value).toStrictEqual(expectedYield)
+  })
+
+  it("should wait for stop action", () => {
+    expect(generator.next(mockTask).value).toStrictEqual(take("app/logout"))
+  })
+
+  it("should cancel background task", () => {
+    const mockedAction = { type: "app/logout" }
+    expect(generator.next(mockedAction).value).toStrictEqual(cancel(mockTask))
+  })
+
+  it("should dispatch action that restets the store", () => {
+    expect(generator.next().value).toStrictEqual(
+      put({ type: "app/reset_store" })
+    )
+  })
+})
+
+describe("Test account switching saga step by step", () => {
+  let generator = null
+  const mockTask = createMockTask()
+  const mockAddress = "0x0"
+
+  beforeAll(() => {
+    generator = runTasks()
   })
 
   it("should fork all sagas", () => {

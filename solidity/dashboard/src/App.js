@@ -34,14 +34,21 @@ const AppLayout = () => {
     const eventHandler = (address) => {
       dispatch({ type: "app/account_changed", payload: { address } })
     }
-    if (isConnected) {
-      dispatch({ type: "app/set_account", payload: { address: yourAddress } })
+
+    const disconnectEventHandler = () => {
+      dispatch({ type: "app/logout" })
+    }
+
+    if (isConnected && connector) {
+      dispatch({ type: "app/login", payload: { address: yourAddress } })
       connector.on("accountsChanged", eventHandler)
+      connector.once("disconnect", disconnectEventHandler)
     }
 
     return () => {
       if (connector) {
         connector.removeListener("accountsChanged", eventHandler)
+        connector.removeListener("disconnect", disconnectEventHandler)
       }
     }
   }, [isConnected, connector, dispatch, yourAddress])

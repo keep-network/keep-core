@@ -72,8 +72,8 @@ class Web3ContextProvider extends React.Component {
     }
 
     if (connector.name === WALLETS.METAMASK.name) {
-      connector.provider.on("accountsChanged", this.onAccountsChanged)
-      connector.provider.on("chainChanged", this.onAccountsChanged)
+      connector.on("accountsChanged", this.onAccountsChanged)
+      connector.once("disconnect", this.disconnect)
     }
 
     this.setState({
@@ -112,13 +112,9 @@ class Web3ContextProvider extends React.Component {
     await this.connectAppWithWallet(connector)
   }
 
-  onAccountsChanged = async ([yourAddress]) => {
+  onAccountsChanged = async (yourAddress) => {
     if (!yourAddress) {
-      this.setState({
-        isFetching: false,
-        yourAddress: "",
-        isConnected: false,
-      })
+      await this.disconnect()
       return
     }
 
