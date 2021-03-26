@@ -77,6 +77,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
+          rewardMultiplier: restPayload.rewardMultiplier,
         },
       }
     }
@@ -96,6 +97,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
+          rewardMultiplier: restPayload.rewardMultiplier,
         },
       }
     }

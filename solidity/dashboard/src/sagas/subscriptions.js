@@ -709,6 +709,11 @@ function* lpTokensStakedOrWithdrawn(
     updatedlpBalance
   )
 
+  const rewardMultiplier = yield call(
+    [LiquidityRewards, LiquidityRewards.calculateRewardMultiplier],
+    defaultAccount
+  )
+
   // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
   // APY and reward value have changed.
   yield put({
@@ -720,6 +725,7 @@ function* lpTokensStakedOrWithdrawn(
       reward,
       apy,
       liquidityRewardPairName,
+      rewardMultiplier,
     },
   })
 }
