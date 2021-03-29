@@ -29,8 +29,7 @@ jobs:
     needs: dashboard-detect-changes
     if: |
       github.event_name != 'pull_request'
-        || (github.event_name == 'pull_request'
-        && needs.dashboard-detect-changes.outputs.path-filter == 'true') 
+        && needs.dashboard-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
