@@ -1,70 +1,87 @@
-# KEEP Token Tracker
+# Overview
 
-This is a tool for tracking KEEP Token ownership. It will walk over predefined
-sources of truth and inspect KEEP Token ownership at a specific block number.
+This is a tool for finding KEEP token owners on Ethereum (or on any other 
+EVM-compatible chain). It will walk over predefined sources of truth
+(information) and lookup KEEP token owners at a specific block number.
+The tool generates a Merkle tree used as an input to
+https://github.com/keep-network/keep-core/blob/master/solidity/contracts/token-distribution/TokenDistributor.sol[`TokenDistributor`]
+contract airdropping another ERC20 token with amounts based on KEEP token 
+balances. 
 
-The tool returns a map of addresses with their total KEEP Token holdings.
-
-## Sources Of Truth
+# Sources of truth
 
 Holders of the tokens can be externally owned accounts or contracts. It is
-necessary to resolve actual owner for tokens held by a contract.
+necessary to resolve actual owner of tokens held by a contract.
 
 Following sources are currently defined:
 
-- <<KEEP Token>> contract
-- <<Token Staking>> contract
-- <<Token Grant>> contract
-- <<Liquidity Rewards>> contracts
-- <<KEEP-only pool>> contracts
+- <<KEEP Token>> contract,
+- <<Token Staking>> contracts,
+- <<Token Grant and Token Staking Escrow>> contracts,
+- <<Liquidity Rewards>> contracts,
+- <<KEEP-only pool>> contract.
 
 The list of supported sources of truth can be enhanced. For guidelines on 
 implementing additional sources please see <<Development>> section.
 
 
-### KEEP Token
+## KEEP Token
 
-Scans `KeepToken` contract for any historic accounts that have held KEEP token.
-Iterates over the set of addresses and checks KEEP token balance at the specific
-target block.
+Scans `KeepToken` contract (`0x85Eee30c52B0b379b046Fb0F85F4f3Dc3009aFEC`) 
+for any accounts that have ever held KEEP tokens. Iterates over the set of
+addresses and checks KEEP token balance at the specific target block.
 
-To avoid duplication with results of other source of truths lookups it ignores
-addresses that are contracts handled by the other sources. For the ignored contracts
-separate sources of truth should be implemented.
+To avoid duplication with results of lookups of other sources of truth, it ignores
+addresses of contracts handled by them. For the ignored contract addresses, separate
+sources of truth are implemented. For example, Token Grant and Token Staking
+contract addresses are ignored as the actual owners of KEEP tokens
+locked in these contracts are resolved separately by <<Token Staking>> and 
+<<Token Grant and Token Staking Escrow>> sources.
 
-### Token Staking
+## Token Staking
 
-Scans `OldTokenStaking` and `TokenStaking` contracts for any historic stakes to
-determine amount of tokens locked in them.
+Scans old `TokenStaking` (`0x6D1140a8c8e6Fac242652F0a5A8171b898c67600`) and new 
+`TokenStaking` (`0x1293a54e160D1cd7075487898d65266081A15458`) contracts for any
+historic stakes to determine amount of tokens still locked in them. Ignores tokens
+staked from grants as those are resolved by <<Token Grant and Token Staking Escrow>>
+source.
 
-To avoid duplication with results of other source of truths lookups it ignores
-addresses that are contracts handled by the other sources.
+## Token Grant and Token Staking Escrow
 
-### Token Grant
+Scans `TokenGrant` contract (`0x175989c71Fd023D580C65F5dC214002687ff88B7`) for 
+grant holders  and their balances. Scans `TokenStakingEscrow` contract 
+(`0xDa534b567099Ca481384133bC121D5843F681365`) for undelegated grant stakes, their
+owners and balances. The final balance is calculated as a total grant amount minus
+withdrawn and revoked tokens.
 
-Scans `TokenGrant` contract for grant holders and their balances.
+Note that `TokenStakingEscrow` holds tokens from undelegated stakes that were
+created from grants. Tokens from stakes created from liquid tokens and undelegated,
+come back to the owner address and are covered by <<KEEP Token>> source of truth.
 
-### Liquidity Rewards
+## Liquidity Rewards
 
-Scans for `Staked` events in the KEEP-ETH and KEEP-TBTC LP Rewards contracts. It
-finds all the stakers addresses and their LP balances locked in these contracts 
-at the provided target block. KEEP locked amount is calculated for each staker 
-based on their LP tokens balances.
+Scans for `Staked` events in the KEEP-ETH (`0x47A5f2ffdf66D13ED7e317581F458d09b49d6F44`)
+and KEEP-TBTC (`0xb3d03A5411261fC2094697C5e969D552eE55cF6B`) LP Reward contracts. It
+finds all the staker addresses and their LP balances staked in these contracts 
+at the provided target block (`balanceOf` function). KEEP locked amount is calculated 
+for each staker proportionally based on their staked LP tokens and KEEP token reserve
+held by the pool.
 
-### KEEP-only pool
+## KEEP-only pool
 
-Scans for `Staked` events in the `KeepVault` contract. It retrieves all the stakers 
-addresses with their KEEP balances at the provided target block.
+Scans for `Staked` events in the `KeepVault` contract (`0xdF00daC2Be1250cF62cBFc617EE7bC45C0016c87`).
+It retrieves all the historical staker addresses and resolves amounts of KEEP tokens
+staked by them at the provided target block (`balanceOf` function).
 
-## Run
+# How to run
 
-### Prerequisites
+## Prerequisites
 
 1. It requires node version greater than `14`: `nvm use 14`.
 
 2. Install dependencies: `npm install`.
 
-### Execute
+## Execution
 
 Following environment variables are expected to be configured:
 
@@ -81,7 +98,7 @@ ETH_HOSTNAME="wss://eth-mainnet.ws.alchemyapi.io/v2/....." \
   ./bin/inspect-token-ownership.js --target-block 10000000
 ```
 
-## Development
+# Development
 
 New truth of sources can be added by extending `ITruthSource` class. The new class
 should implement `getTokenHoldingsAtTargetBlock` function that will return
@@ -93,9 +110,9 @@ a holding can occur in few of them. E.g. when an owner staked tokens from a gran
 we could end up with duplications in TokenStaking and TokenGrant. To handle such
 situation we ignore any non externally owned accounts in TokenStaking.
 
-## Known Issues
+# Known Issues
 
-### error: artifact does not define network *
+## error: artifact does not define network *
 
 Web3 provider may return invalid results for `getChainId()` function. The error
 looks like on this example:
