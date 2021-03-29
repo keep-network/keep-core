@@ -72,6 +72,10 @@ class Web3ContextProvider extends React.Component {
       web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
     }
 
+    if (connector.name === WALLETS.READ_ONLY_ADDRESS.name) {
+      connector.eventEmitter.on("chooseWallet", this.showChooseWalletModal)
+    }
+
     this.props.fetchKeepTokenBalance()
 
     this.setState({
@@ -130,6 +134,9 @@ class Web3ContextProvider extends React.Component {
     // solution doesn't support a case where a user changed an account. We are
     // going to address it in a follow up work.
     window.location.reload()
+  }
+
+  showChooseWalletModal = () => {
   }
 
   disconnect = async (shouldSetState = true) => {
