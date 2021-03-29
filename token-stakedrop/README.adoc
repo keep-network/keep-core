@@ -10,8 +10,8 @@ balances.
 
 # Sources of truth
 
-Holders of the tokens can be externally owned accounts or contracts. It is
-necessary to resolve actual owner of tokens held by a contract.
+Holders of KEEP tokens can be externally owned accounts or contracts. It is
+necessary to resolve an actual owner of tokens held by a contract.
 
 Following sources are currently defined:
 
@@ -32,9 +32,9 @@ for any accounts that have ever held KEEP tokens. Iterates over the set of
 addresses and checks KEEP token balance at the specific target block.
 
 To avoid duplication with results of lookups of other sources of truth, it ignores
-addresses of contracts handled by them. For the ignored contract addresses, separate
-sources of truth are implemented. For example, Token Grant and Token Staking
-contract addresses are ignored as the actual owners of KEEP tokens
+addresses of contracts handled by those sources. For the ignored contract addresses,
+separate sources of truth are implemented. For example, Token Grant and Token Staking
+contracts addresses are ignored as the actual owners of KEEP tokens
 locked in these contracts are resolved separately by <<Token Staking>> and 
 <<Token Grant and Token Staking Escrow>> sources.
 
