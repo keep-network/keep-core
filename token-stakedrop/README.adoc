@@ -52,7 +52,7 @@ Scans `TokenGrant` contract (`0x175989c71Fd023D580C65F5dC214002687ff88B7`) for
 grant holders  and their balances. Scans `TokenStakingEscrow` contract 
 (`0xDa534b567099Ca481384133bC121D5843F681365`) for undelegated grant stakes, their
 owners and balances. The final balance is calculated as a total grant amount minus
-withdrawn and revoked tokens.
+withdrawn, revoked, and slashed tokens.
 
 Note that `TokenStakingEscrow` holds tokens from undelegated stakes that were
 created from grants. Tokens from stakes created from liquid tokens and undelegated,
