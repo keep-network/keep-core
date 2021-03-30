@@ -4,7 +4,7 @@ import { getWsUrl } from "./utils"
 import Web3ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import ExplorerModeSubprovider from "./explorerModeSubprovider";
-import {EventEmitter} from "events"
+import { EventEmitter } from "events"
 
 export class ReadOnlyConnector extends AbstractConnector {
   /** @type {string} To store selected account by user. */

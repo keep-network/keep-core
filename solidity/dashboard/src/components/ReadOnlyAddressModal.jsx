@@ -2,17 +2,25 @@ import React, { useEffect } from "react"
 import SelectedWalletModal from "./SelectedWalletModal"
 import * as Icons from "./Icons"
 import { WALLETS } from "../constants/constants"
+import { useState } from "react"
+import ExplorerModeAddressForm from "./ExplorerModeAddressForm";
 
 const ReadOnlyAddressModal = ({
   connector,
   connectAppWithWallet,
   closeModal,
 }) => {
-  useEffect(() => {
-    connector.setSelectedAccount("0x857173e7c7d76e051e80d30FCc3EA6A9C2b53756")
-  }, [])
+  const [selectedAddress, setSelectedAddress] = useState("")
 
-  return (
+  useEffect(() => {
+    connector.setSelectedAccount(selectedAddress)
+  }, [selectedAddress])
+
+  const submitAction = (values) => {
+    setSelectedAddress(values.address)
+  }
+
+  return selectedAddress ? (
     <SelectedWalletModal
       icon={
         <Icons.Wallet
@@ -27,6 +35,10 @@ const ReadOnlyAddressModal = ({
       closeModal={closeModal}
       connectWithWalletOnMount
     />
+  ) : (
+    <div>
+      <ExplorerModeAddressForm submitAction={submitAction} />
+    </div>
   )
 }
 
