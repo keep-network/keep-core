@@ -31,24 +31,24 @@ const AppLayout = () => {
   const dispatch = useDispatch()
 
   useEffect(() => {
-    const eventHandler = (address) => {
+    const accountChangedHandler = (address) => {
       dispatch({ type: "app/account_changed", payload: { address } })
     }
 
-    const disconnectEventHandler = () => {
+    const disconnectHandler = () => {
       dispatch({ type: "app/logout" })
     }
 
     if (isConnected && connector) {
       dispatch({ type: "app/login", payload: { address: yourAddress } })
-      connector.on("accountsChanged", eventHandler)
-      connector.once("disconnect", disconnectEventHandler)
+      connector.on("accountsChanged", accountChangedHandler)
+      connector.once("disconnect", disconnectHandler)
     }
 
     return () => {
       if (connector) {
-        connector.removeListener("accountsChanged", eventHandler)
-        connector.removeListener("disconnect", disconnectEventHandler)
+        connector.removeListener("accountsChanged", accountChangedHandler)
+        connector.removeListener("disconnect", disconnectHandler)
       }
     }
   }, [isConnected, connector, dispatch, yourAddress])
