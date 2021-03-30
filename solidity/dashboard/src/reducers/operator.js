@@ -42,7 +42,7 @@ const operatorReducer = (state = initialState, action) => {
     case FETCH_OPERATOR_SLASHED_TOKENS_FAILURE:
       return {
         ...state,
-        isFetching: false,
+        areSlashedTokensFetching: false,
         slashedTokensError: action.payload.error,
       }
     case OPERATOR_DELEGATION_UNDELEGATED:
