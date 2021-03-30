@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useCallback, useState } from "react"
 import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 import ConfirmationModal from "./ConfirmationModal"
+import { WalletSelectionModalContent } from "./WalletSelectionModal"
+import { useSelector } from "react-redux"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
@@ -70,12 +72,20 @@ export const ModalContextProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [modalOptions, setModalOptions] = useState(null)
   const awaitingPromiseRef = useRef()
+  const modalWindowState = useSelector((state) => state.modalWindow)
 
   const openModal = useCallback((modalComponent, modalOptions = {}) => {
     setModalComponent(modalComponent)
     setModalOptions(modalOptions)
     setIsOpen(true)
   }, [])
+
+  // TODO: Get modal component name from redux
+  useEffect(() => {
+    if (modalWindowState.displayModal) {
+      openModal(<WalletSelectionModalContent />)
+    }
+  }, [modalWindowState.displayModal])
 
   const closeModal = useCallback(() => {
     if (awaitingPromiseRef.current) {

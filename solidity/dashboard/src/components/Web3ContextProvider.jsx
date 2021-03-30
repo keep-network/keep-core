@@ -137,6 +137,7 @@ class Web3ContextProvider extends React.Component {
   }
 
   showChooseWalletModal = () => {
+    this.props.displayModal(null)
   }
 
   disconnect = async (shouldSetState = true) => {
@@ -182,6 +183,11 @@ const mapDispatchToProps = (dispatch) => {
   return {
     fetchKeepTokenBalance: () =>
       dispatch({ type: "keep-token/balance_request" }),
+    displayModal: (modalComponent) =>
+      dispatch({
+        type: "modal_window/display_modal",
+        payload: modalComponent,
+      }),
   }
 }
 

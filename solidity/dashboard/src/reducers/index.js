@@ -7,6 +7,7 @@ import tokenGrants from "./token-grant"
 import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
 import notificationsData from "./notifications-data"
+import modalWindow from "./modal-window"
 
 const reducers = combineReducers({
   messages,
@@ -17,6 +18,7 @@ const reducers = combineReducers({
   rewards,
   liquidityRewards,
   notificationsData,
+  modalWindow,
 })
 
 export default reducers
