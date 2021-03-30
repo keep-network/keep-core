@@ -103,7 +103,9 @@ const LiquidityPage = ({ headerTitle }) => {
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={"https://balancer.exchange/#/swap/ether/0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"}
+                href={
+                  "https://balancer.exchange/#/swap/ether/0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"
+                }
                 className="text-link"
               >
                 Balancer
@@ -112,7 +114,9 @@ const LiquidityPage = ({ headerTitle }) => {
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={"https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"}
+                href={
+                  "https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"
+                }
                 className="text-link"
               >
                 Uniswap
@@ -147,6 +151,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrappedTokenBalance={TBTC_SADDLE.wrappedTokenBalance}
           lpBalance={TBTC_SADDLE.lpBalance}
           lpTokenBalance={TBTC_SADDLE.lpTokenBalance}
+          rewardMultiplier={TBTC_SADDLE.rewardMultiplier}
           lpTokens={LIQUIDITY_REWARD_PAIRS.TBTC_SADDLE.lpTokens}
           isFetching={TBTC_SADDLE.isFetching}
           wrapperClassName="tbtc-saddle"
@@ -169,6 +174,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrappedTokenBalance={KEEP_ETH.wrappedTokenBalance}
           lpBalance={KEEP_ETH.lpBalance}
           lpTokenBalance={KEEP_ETH.lpTokenBalance}
+          rewardMultiplier={KEEP_ETH.rewardMultiplier}
           lpTokens={LIQUIDITY_REWARD_PAIRS.KEEP_ETH.lpTokens}
           isFetching={KEEP_ETH.isFetching}
           wrapperClassName="keep-eth"
@@ -191,6 +197,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrappedTokenBalance={KEEP_TBTC.wrappedTokenBalance}
           lpBalance={KEEP_TBTC.lpBalance}
           lpTokenBalance={KEEP_TBTC.lpTokenBalance}
+          rewardMultiplier={KEEP_TBTC.rewardMultiplier}
           lpTokens={LIQUIDITY_REWARD_PAIRS.KEEP_TBTC.lpTokens}
           isFetching={KEEP_TBTC.isFetching}
           wrapperClassName="keep-tbtc"
@@ -214,6 +221,7 @@ const LiquidityPage = ({ headerTitle }) => {
           wrappedTokenBalance={TBTC_ETH.wrappedTokenBalance}
           lpBalance={TBTC_ETH.lpBalance}
           lpTokenBalance={TBTC_ETH.lpTokenBalance}
+          rewardMultiplier={TBTC_ETH.rewardMultiplier}
           lpTokens={LIQUIDITY_REWARD_PAIRS.TBTC_ETH.lpTokens}
           isFetching={TBTC_ETH.isFetching}
           wrapperClassName="tbtc-eth"
