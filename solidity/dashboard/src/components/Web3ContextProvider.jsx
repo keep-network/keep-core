@@ -8,7 +8,6 @@ import {
   Web3Loaded,
   ContractsLoaded,
 } from "../contracts"
-import { WALLETS } from "../constants/constants"
 import { getNetworkName } from "../utils/ethereum.utils"
 
 class Web3ContextProvider extends React.Component {
@@ -71,10 +70,9 @@ class Web3ContextProvider extends React.Component {
       throw error
     }
 
-    if (connector.name === WALLETS.METAMASK.name) {
-      connector.on("accountsChanged", this.onAccountsChanged)
-      connector.once("disconnect", this.disconnect)
-    }
+    connector.on("accountsChanged", this.onAccountsChanged)
+    connector.on("chainChanged", () => window.location.reload())
+    connector.once("disconnect", this.disconnect)
 
     this.setState({
       web3,
