@@ -29,3 +29,5 @@ export const FETCH_OPERATOR_SLASHED_TOKENS_SUCCESS =
   "operator/fetch_slashed_tokens_success"
 export const FETCH_OPERATOR_SLASHED_TOKENS_FAILURE =
   "operator/fetch_slashed_tokens_failure"
+export const OPERATOR_DELEGATION_UNDELEGATED = "operator/delegation_undelegated"
+export const OPERATR_DELEGATION_CANCELED = "operator/delegation_canceled"

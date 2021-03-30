@@ -1,6 +1,6 @@
-import React, { useContext } from "react"
+import React from "react"
 import AddressShortcut from "./AddressShortcut"
-import { Web3Context } from "./WithWeb3Context"
+import { useWeb3Address } from "./WithWeb3Context"
 import UndelegateStakeButton from "./UndelegateStakeButton"
 import Banner from "./Banner"
 import moment from "moment"
@@ -8,8 +8,8 @@ import TokenAmount from "./TokenAmount"
 import { formatDate } from "../utils/general.utils"
 import * as Icons from "./Icons"
 
-const DelegatedTokens = ({ data, setData }) => {
-  const { yourAddress } = useContext(Web3Context)
+const DelegatedTokens = ({ data, cancelSuccessCallback }) => {
+  const yourAddress = useWeb3Address()
 
   const {
     stakedBalance,
@@ -24,14 +24,6 @@ const DelegatedTokens = ({ data, setData }) => {
     delegationStatus,
     undelegationCompletedAt,
   } = data
-
-  const cancelSuccessCallback = () => {
-    setData({
-      ...data,
-      stakedBalance: "0",
-      delegationStatus: "CANCELED",
-    })
-  }
 
   const getUndelegationBannerTitle = () => {
     const undelegationPeriodRelativeTime = moment()

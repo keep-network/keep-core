@@ -6,6 +6,8 @@ import {
   FETCH_OPERATOR_SLASHED_TOKENS_START,
   FETCH_OPERATOR_SLASHED_TOKENS_SUCCESS,
   FETCH_OPERATOR_SLASHED_TOKENS_FAILURE,
+  OPERATOR_DELEGATION_UNDELEGATED,
+  OPERATR_DELEGATION_CANCELED,
 } from "../actions"
 
 const initialState = {
@@ -42,6 +44,18 @@ const operatorReducer = (state = initialState, action) => {
         ...state,
         isFetching: false,
         slashedTokensError: action.payload.error,
+      }
+    case OPERATOR_DELEGATION_UNDELEGATED:
+      return {
+        ...state,
+        undelegationCompletedAt: action.payload.undelegationCompletedAt,
+        delegationStatus: action.payload.delegationStatus,
+      }
+    case OPERATR_DELEGATION_CANCELED:
+      return {
+        ...state,
+        stakedBalance: 0,
+        delegationStatus: "CANCELED",
       }
     default:
       return state
