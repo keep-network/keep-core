@@ -5,23 +5,25 @@ import SlashedTokens from "../../components/SlashedTokens"
 import { useSubscribeToContractEvent } from "../../hooks/useSubscribeToContractEvent"
 import { TOKEN_STAKING_CONTRACT_NAME } from "../../constants/constants"
 import PageWrapper from "../../components/PageWrapper"
-import { operatorService } from "../../services/token-staking.service"
-import { useFetchData } from "../../hooks/useFetchData"
 import { LoadingOverlay } from "../../components/Loadable"
 import DelegatedTokensSkeleton from "../../components/skeletons/DelegatedTokensSkeleton"
-import { ZERO_ADDRESS } from "../../utils/ethereum.utils"
+import { useDispatch, useSelector } from "react-redux"
+import { useEffect } from "react"
+import { FETCH_OPERATOR_DELEGATIONS_RERQUEST } from "../../actions"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const OperatorPage = ({ title }) => {
-  const [state, setData] = useFetchData(
-    operatorService.fetchDelegatedTokensData,
-    {
-      stakedBalance: "0",
-      ownerAddress: ZERO_ADDRESS,
-      beneficiaryAddress: ZERO_ADDRESS,
-      authorizerAddress: ZERO_ADDRESS,
-    }
-  )
-  const { isFetching, data } = state
+  const dispatch = useDispatch()
+  const address = useWeb3Address()
+
+  useEffect(() => {
+    dispatch({
+      type: FETCH_OPERATOR_DELEGATIONS_RERQUEST,
+      payload: { address },
+    })
+  }, [dispatch, address])
+
+  const { isFetching, ...data } = useSelector((state) => state.operator)
 
   const { latestEvent } = useSubscribeToContractEvent(
     TOKEN_STAKING_CONTRACT_NAME,
@@ -37,13 +39,13 @@ const OperatorPage = ({ title }) => {
         <DelegatedTokens
           isFetching={isFetching}
           data={data}
-          setData={setData}
+          // setData={setData}
         />
       </LoadingOverlay>
       <PendingUndelegation
         latestUnstakeEvent={latestEvent}
         data={data}
-        setData={setData}
+        // setData={setData}
       />
       <SlashedTokens />
     </PageWrapper>

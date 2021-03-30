@@ -11,3 +11,13 @@ export const RESET_COPY_STAKE_FLOW = "copy-stake/reset_flow"
 export const SET_STRATEGY = "copy-stake/set_strategy"
 export const SET_DELEGATION = "copy-stake/set_delegation"
 export const COPY_STAKE_REQUEST = "copy-stake/copy_stake_request"
+
+// OPERATOR
+export const FETCH_OPERATOR_DELEGATIONS_RERQUEST =
+  "operator/fetch_delegations_request"
+export const FETCH_OPERATOR_DELEGATIONS_START =
+  "operator/fetch_delegations_start"
+export const FETCH_OPERATOR_DELEGATIONS_SUCCESS =
+  "operator/fetch_delegations_success"
+export const FETCH_OPERATOR_DELEGATIONS_FAILURE =
+  "operator/fetch_delegations_failure"

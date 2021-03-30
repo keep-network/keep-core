@@ -44,23 +44,20 @@ const delegationInfoFromStakedEvents = async (address) => {
   }
 }
 
-const fetchDelegatedTokensData = async () => {
+const fetchDelegatedTokensData = async (address) => {
   const { grantContract, stakingContract } = await ContractsLoaded
   const web3 = await Web3Loaded
-  const {
-    eth,
-    eth: { defaultAccount: yourAddress },
-  } = web3
+  const { eth } = web3
   let ownerAddress
 
   const {
     stakingTransactionHash,
     beneficiaryAddress,
     authorizerAddress,
-  } = await delegationInfoFromStakedEvents(yourAddress)
+  } = await delegationInfoFromStakedEvents(address)
 
   const [stakedBalance, initializationPeriod] = await Promise.all([
-    stakingContract.methods.balanceOf(yourAddress).call(),
+    stakingContract.methods.balanceOf(address).call(),
     stakingContract.methods.initializationPeriod().call(),
   ])
 
@@ -93,7 +90,7 @@ const fetchDelegatedTokensData = async () => {
       ownerAddress = await managedGrantContractInstance.methods.grantee().call()
     }
   } else {
-    ownerAddress = await stakingContract.methods.ownerOf(yourAddress).call()
+    ownerAddress = await stakingContract.methods.ownerOf(address).call()
   }
 
   const {
