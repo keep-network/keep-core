@@ -17,21 +17,27 @@ class InjectedConnector extends AbstractConnector {
     this.emit("disconnect")
   }
 
+  _onChainChanged = (chainId) => {
+    this.emit("chainChanged", chainId)
+  }
+
   enable = async () => {
     if (!this.provider) {
       throw new Error("window.ethereum provider not found")
     }
 
-    // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
-    this.provider.autoRefreshOnNetworkChange = false
-
-    if (this.provider && this.provider.on) {
-      this.provider.on("accountsChanged", this._onAccountChanged)
-      this.provider.on("disconnect", this._onDisconnect)
-    }
-
     try {
-      return await this.provider.request({ method: "eth_requestAccounts" })
+      const accounts = await this.provider.request({
+        method: "eth_requestAccounts",
+      })
+      // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
+      this.provider.autoRefreshOnNetworkChange = false
+      if (this.provider && this.provider.on) {
+        this.provider.on("accountsChanged", this._onAccountChanged)
+        this.provider.on("disconnect", this._onDisconnect)
+        this.provider.on("chainChanged", this._onChainChanged)
+      }
+      return accounts
     } catch (error) {
       if (error.code === 4001) {
         // EIP-1193 userRejectedRequest error
@@ -46,9 +52,10 @@ class InjectedConnector extends AbstractConnector {
   disconnect = async () => {
     // window.ethereum injected by MetaMask does not provide a method to
     // disconnect a wallet.
-    this.emit("disconnect")
+    this._onDisconnect()
     this.provider.removeListener("accountsChanged", this._onAccountChanged)
     this.provider.removeListener("disconnect", this._onDisconnect)
+    this.provider.removeListener("chainChanged", this._onChainChanged)
   }
 
   getChainId = async () => {
