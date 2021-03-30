@@ -21,3 +21,11 @@ export const FETCH_OPERATOR_DELEGATIONS_SUCCESS =
   "operator/fetch_delegations_success"
 export const FETCH_OPERATOR_DELEGATIONS_FAILURE =
   "operator/fetch_delegations_failure"
+export const FETCH_OPERATOR_SLASHED_TOKENS_RERQUEST =
+  "operator/fetch_slashed_tokens_request"
+export const FETCH_OPERATOR_SLASHED_TOKENS_START =
+  "operator/fetch_slashed_tokens_start"
+export const FETCH_OPERATOR_SLASHED_TOKENS_SUCCESS =
+  "operator/fetch_slashed_tokens_success"
+export const FETCH_OPERATOR_SLASHED_TOKENS_FAILURE =
+  "operator/fetch_slashed_tokens_failure"
