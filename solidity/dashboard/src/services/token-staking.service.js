@@ -1,4 +1,3 @@
-import { contractService } from "./contracts.service"
 import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
 import moment from "moment"
 import {
@@ -167,17 +166,13 @@ export const operatorService = {
   fetchPendingUndelegation,
 }
 
-export const getOperatorsOfAuthorizer = async (web3Context, authorizer) => {
+export const getOperatorsOfAuthorizer = async (authorizer) => {
+  const { stakingContract } = await ContractsLoaded
   return (
-    await contractService.getPastEvents(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "OperatorStaked",
-      {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
-        filter: { authorizer },
-      }
-    )
+    await stakingContract.getPastEvents("OperatorStaked", {
+      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
+      filter: { authorizer },
+    })
   ).map((_) => _.returnValues.operator)
 }
 

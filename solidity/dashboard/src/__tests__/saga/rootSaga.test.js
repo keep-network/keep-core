@@ -12,6 +12,7 @@ import * as keepTokenBalance from "../../sagas/keep-balance"
 import * as rewards from "../../sagas/rewards"
 import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
+import * as authorization from "../../sagas/authorization"
 
 describe("Test root saga", () => {
   it("should start correctly and handle login flow", () => {
@@ -107,6 +108,7 @@ describe("Test account switching saga step by step", () => {
         ...Object.values(rewards),
         ...Object.values(liquidityRewards),
         ...Object.values(operator),
+        ...Object.values(authorization),
       ].map(fork)
     )
     expect(generator.next().value).toStrictEqual(expectedAllYield)

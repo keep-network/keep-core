@@ -31,3 +31,15 @@ export const FETCH_OPERATOR_SLASHED_TOKENS_FAILURE =
   "operator/fetch_slashed_tokens_failure"
 export const OPERATOR_DELEGATION_UNDELEGATED = "operator/delegation_undelegated"
 export const OPERATR_DELEGATION_CANCELED = "operator/delegation_canceled"
+
+// AUTHORIZATION RANDOM BEACON
+export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_REQUEST =
+  "authorization_beacon/fetch_auth_data_request"
+export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_START =
+  "authorization_beacon/fetch_auth_data_start"
+export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_SUCCESS =
+  "authorization_beacon/fetch_auth_data_success"
+export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_FAILURE =
+  "authorization_beacon/fetch_auth_data_failure"
+export const KEEP_RRANDOM_BEACON_AUTHORIZED =
+  "authorization_beacon/beacon_authorized"

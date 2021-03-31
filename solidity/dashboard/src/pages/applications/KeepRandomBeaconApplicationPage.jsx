@@ -1,64 +1,42 @@
-import React, { useCallback, useMemo, useState } from "react"
+import React, { useEffect, useCallback, useMemo, useState } from "react"
+import { useSelector, useDispatch } from "react-redux"
 import AuthorizeContracts from "../../components/AuthorizeContracts"
 import AuthorizationHistory from "../../components/AuthorizationHistory"
-import { useFetchData } from "../../hooks/useFetchData"
-import {
-  findIndexAndObject,
-  compareEthAddresses,
-} from "../../utils/array.utils"
 import { LoadingOverlay } from "../../components/Loadable"
-import { beaconAuthorizationService } from "../../services/beacon-authorization.service"
 import { isSameEthAddress } from "../../utils/general.utils"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
 import { authorizeOperatorContract } from "../../actions/web3"
-import { connect } from "react-redux"
 import { getKeepRandomBeaconOperatorAddress } from "../../contracts"
 import EmptyStatePage from "./EmptyStatePage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
+import {
+  FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_REQUEST,
+  KEEP_RRANDOM_BEACON_AUTHORIZED,
+} from "../../actions"
 
-const KeepRandomBeaconApplicationPage = ({ authorizeOperatorContract }) => {
+const KeepRandomBeaconApplicationPage = () => {
+  const dispatch = useDispatch()
+  const address = useWeb3Address()
   const [selectedOperator, setOperator] = useState({})
-
-  const [{ data, isFetching }, updateData] = useFetchData(
-    beaconAuthorizationService.fetchRandomBeaconAuthorizationData,
-    []
+  const { isFetching, authData: data } = useSelector(
+    (state) => state.authorization
   )
+
+  useEffect(() => {
+    dispatch({
+      type: FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_REQUEST,
+      payload: { address },
+    })
+  }, [dispatch, address])
 
   const onAuthorizationSuccessCallback = useCallback(
     (contractName, operatorAddress) => {
-      const {
-        indexInArray: operatorIndexInArray,
-        obj: obsoleteOperator,
-      } = findIndexAndObject(
-        "operatorAddress",
-        operatorAddress,
-        data,
-        compareEthAddresses
-      )
-      if (operatorIndexInArray === null) {
-        return
-      }
-      const {
-        indexInArray: contractIndexInArray,
-        obj: obsoleteContract,
-      } = findIndexAndObject(
-        "contractName",
-        contractName,
-        obsoleteOperator.contracts
-      )
-      const updatedContracts = [...obsoleteOperator.contracts]
-      updatedContracts[contractIndexInArray] = {
-        ...obsoleteContract,
-        isAuthorized: true,
-      }
-      const updatedOperators = [...data]
-      updatedOperators[operatorIndexInArray] = {
-        ...obsoleteOperator,
-        contracts: updatedContracts,
-      }
-
-      updateData(updatedOperators)
+      dispatch({
+        type: KEEP_RRANDOM_BEACON_AUTHORIZED,
+        payload: { contractName, operatorAddress },
+      })
     },
-    [data, updateData]
+    [dispatch]
   )
 
   const authorizeContract = useCallback(
@@ -66,12 +44,14 @@ const KeepRandomBeaconApplicationPage = ({ authorizeOperatorContract }) => {
       const { operatorAddress } = data
       const operatorContractAddress = getKeepRandomBeaconOperatorAddress()
 
-      authorizeOperatorContract(
-        { operatorAddress, operatorContractAddress },
-        awaitingPromise
+      dispatch(
+        authorizeOperatorContract(
+          { operatorAddress, operatorContractAddress },
+          awaitingPromise
+        )
       )
     },
-    [authorizeOperatorContract]
+    [dispatch]
   )
 
   const authorizeContractsData = useMemo(() => {
@@ -140,15 +120,7 @@ const toAuthHistoryData = (authData) => ({
   ...authData.contracts[0],
 })
 
-const mapDispatchToProps = {
-  authorizeOperatorContract,
-}
-const ConnectedKeepRandomBeaconApplicationPage = connect(
-  null,
-  mapDispatchToProps
-)(KeepRandomBeaconApplicationPage)
-
-ConnectedKeepRandomBeaconApplicationPage.route = {
+KeepRandomBeaconApplicationPage.route = {
   title: "Keep Random Beacon",
   path: "/applications/random-beacon",
   exact: true,
@@ -156,4 +128,4 @@ ConnectedKeepRandomBeaconApplicationPage.route = {
   emptyStateComponent: EmptyStatePage,
 }
 
-export default ConnectedKeepRandomBeaconApplicationPage
+export default KeepRandomBeaconApplicationPage

@@ -9,6 +9,7 @@ import * as keepTokenBalance from "./keep-balance"
 import * as rewards from "./rewards"
 import * as liquidityRewards from "./liquidity-rewards"
 import * as operator from "./operartor"
+import * as authrization from "./authorization"
 
 export default function* rootSaga() {
   while (true) {
@@ -37,6 +38,7 @@ export function* runTasks() {
         ...Object.values(rewards),
         ...Object.values(liquidityRewards),
         ...Object.values(operator),
+        ...Object.values(authrization),
       ].map(fork)
     )
 
