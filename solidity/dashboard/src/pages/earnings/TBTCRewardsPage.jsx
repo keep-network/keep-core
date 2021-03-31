@@ -1,7 +1,6 @@
-import React, { useMemo, useCallback } from "react"
+import React, { useEffect, useMemo, useCallback } from "react"
 import TBTCEarningsDataTable from "../../components/TBTCEarningsDataTable"
 import { LoadingOverlay } from "../../components/Loadable"
-import { useWeb3Context } from "../../components/WithWeb3Context"
 import {
   DataTableSkeleton,
   TokenAmountSkeleton,
@@ -14,15 +13,22 @@ import { add } from "../../utils/arithmetics.utils"
 import { toTokenUnit } from "../../utils/token.utils"
 import { findIndexAndObject } from "../../utils/array.utils"
 import EmptyStatePage from "./EmptyStatePage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const TBTCRewardsPage = () => {
-  const web3Context = useWeb3Context()
-  const { yourAddress } = web3Context
-  const [{ data, isFetching }, updateRewardsData] = useFetchData(
-    tbtcRewardsService.fetchTBTCRewards,
-    [],
-    yourAddress
-  )
+  const address = useWeb3Address()
+  const [
+    { data, isFetching },
+    updateRewardsData,
+    ,
+    setServiceArgs,
+  ] = useFetchData(tbtcRewardsService.fetchTBTCRewards, [], address)
+
+  useEffect(() => {
+    if (address) {
+      setServiceArgs(address)
+    }
+  }, [setServiceArgs, address])
 
   const totalAmount = useMemo(() => {
     return data
@@ -34,8 +40,7 @@ const TBTCRewardsPage = () => {
   const fetchOperatorByDepositId = useCallback(
     async (depositId) => {
       const operators = await tbtcRewardsService.fetchBeneficiaryOperatorsFromDeposit(
-        web3Context,
-        yourAddress,
+        address,
         depositId
       )
       const updatedData = [...data]
@@ -53,7 +58,7 @@ const TBTCRewardsPage = () => {
 
       updateRewardsData(updatedData)
     },
-    [data, updateRewardsData, yourAddress, web3Context]
+    [data, updateRewardsData, address]
   )
 
   return (
