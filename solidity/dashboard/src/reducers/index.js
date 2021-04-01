@@ -7,6 +7,8 @@ import tokenGrants from "./token-grant"
 import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
 import notificationsData from "./notifications-data"
+import operator from "./operator"
+import authorization from "./authorization"
 
 const app = (state = { address: null }, action) => {
   switch (action.type) {
@@ -28,6 +30,8 @@ const reducers = combineReducers({
   liquidityRewards,
   app,
   notificationsData,
+  operator,
+  authorization,
 })
 
 const rootReducer = (state, action) => {

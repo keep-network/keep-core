@@ -1,34 +1,37 @@
-import { contractService } from "./contracts.service"
 import {
   OPERATOR_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
 } from "../constants/constants"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import {
+  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  Web3Loaded,
+  ContractsLoaded,
+} from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
 import { add, lte } from "../utils/arithmetics.utils"
 import moment from "moment"
 
-const fetchSlashedTokens = async (web3Context) => {
-  const { yourAddress, eth } = web3Context
+const fetchSlashedTokens = async (address) => {
+  const { eth } = await Web3Loaded
+  const {
+    stakingContract,
+    keepRandomBeaconOperatorContract,
+  } = await ContractsLoaded
   const operatorEventsSearchFilters = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
   }
 
   const eventsSearchFilters = {
     fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
-    filter: { operator: yourAddress },
+    filter: { operator: address },
   }
   const data = []
 
-  const slashedTokensEvents = await contractService.getPastEvents(
-    web3Context,
-    TOKEN_STAKING_CONTRACT_NAME,
+  const slashedTokensEvents = await stakingContract.getPastEvents(
     "TokensSlashed",
     eventsSearchFilters
   )
-  const seizedTokensEvents = await contractService.getPastEvents(
-    web3Context,
-    TOKEN_STAKING_CONTRACT_NAME,
+  const seizedTokensEvents = await stakingContract.getPastEvents(
     "TokensSeized",
     eventsSearchFilters
   )
@@ -37,16 +40,12 @@ const fetchSlashedTokens = async (web3Context) => {
     return data
   }
 
-  const unauthorizedSigningEvents = await contractService.getPastEvents(
-    web3Context,
-    OPERATOR_CONTRACT_NAME,
+  const unauthorizedSigningEvents = await keepRandomBeaconOperatorContract.getPastEvents(
     "UnauthorizedSigningReported",
     operatorEventsSearchFilters
   )
 
-  const relayEntryTimeoutEvents = await contractService.getPastEvents(
-    web3Context,
-    OPERATOR_CONTRACT_NAME,
+  const relayEntryTimeoutEvents = await keepRandomBeaconOperatorContract.getPastEvents(
     "RelayEntryTimeoutReported",
     operatorEventsSearchFilters
   )
@@ -85,12 +84,9 @@ const fetchSlashedTokens = async (web3Context) => {
     punishmentData.date = moment.unix(
       (await eth.getBlock(blockNumber)).timestamp
     )
-    punishmentData.groupPublicKey = await contractService.makeCall(
-      web3Context,
-      OPERATOR_CONTRACT_NAME,
-      "getGroupPublicKey",
-      groupIndex
-    )
+    punishmentData.groupPublicKey = await keepRandomBeaconOperatorContract.methods
+      .getGroupPublicKey(groupIndex)
+      .call()
 
     data.push(punishmentData)
   }
