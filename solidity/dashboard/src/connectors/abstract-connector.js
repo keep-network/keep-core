@@ -150,5 +150,6 @@ export class AbstractHardwareWalletConnector extends AbstractConnector {
 
   disconnect = () => {
     this.provider.stop()
+    this.emit("disconnect")
   }
 }
