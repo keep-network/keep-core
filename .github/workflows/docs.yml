@@ -71,32 +71,26 @@ jobs:
           cp -r asciidoc-out/docs/* $DOCS_DIR
           sudo rm -rf asciidoc-out
 
-      - name: Upload a Build Artifact # TODO: Remove this and switch to publishing to GCS
-        uses: actions/upload-artifact@v2
+      # A push event is a master merge; deploy to primary bucket.
+      # TODO: Discuss bucket name, path and project and adjust acordingly
+      - if: github.event_name == 'push'
+        name: Upload asciidocs
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
-          name: Docs
-          path: ${{ env.DOCS_DIR }}
+          service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+          project: keep-test
+          bucket-name: docs.keep.network
+          bucket-path: core
+          build-folder: ${{ env.DOCS_DIR }}
 
-      # # A push event is a master merge; deploy to primary bucket.
-      # # TODO: Discuss bucket name, path and project once and adjust acordingly
-      # - if: github.event_name == 'push'
-      #   name: Upload asciidocs
-      #   uses: thesis/gcp-storage-bucket-action@v3.1.0
-      #   with:
-      #     service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-      #     project: keep-test
-      #     bucket-name: docs.keep.network
-      #     bucket-path: core
-      #     build-folder: ${{ env.$DOCS_DIR }}
-
-      # # A pull_request event is a PR; deploy to preview bucket.
-      # # TODO: Discuss bucket name, path and project once and adjust acordingly
-      # - if: github.event_name == 'pull_request'
-      #   name: Upload asciidocs preview
-      #   uses: thesis/gcp-storage-bucket-action@v3.1.0
-      #   with:
-      #     service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-      #     project: keep-test
-      #     bucket-name: docs.keep.network
-      #     bucket-path: core/${{ github.head_ref }}
-      #     build-folder: ${{ env.$DOCS_DIR }}
+      # A pull_request event is a PR; deploy to preview bucket.
+      # TODO: Discuss bucket name, path and project and adjust acordingly
+      - if: github.event_name == 'pull_request'
+        name: Upload asciidocs preview
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        with:
+          service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+          project: keep-test
+          bucket-name: docs.keep.network
+          bucket-path: core/${{ github.head_ref }}
+          build-folder: ${{ env.DOCS_DIR }}
