@@ -11,7 +11,6 @@ import {
   displayAmount,
   fromTokenUnit,
   displayAmountWithMetricSuffix,
-  displayNumberWithMetricSuffix,
 } from "../utils/token.utils"
 import {
   normalizeAmount,
@@ -24,7 +23,7 @@ import { validateAmountInRange, getErrorsObj } from "../forms/common-validators"
 import { useModal } from "../hooks/useModal"
 import TokenAmount from "./TokenAmount"
 import MetricsTile from "./MetricsTile"
-import { Skeleton } from "./skeletons"
+import RewardMultiplier from "./liquidity/RewardMultiplier"
 
 const KeepOnlyPool = ({
   apy,
@@ -37,6 +36,7 @@ const KeepOnlyPool = ({
   withdrawLiquidityRewards,
   liquidityContractName,
   pool,
+  rewardMultiplier,
 }) => {
   const { openConfirmationModal } = useModal()
 
@@ -179,20 +179,14 @@ const KeepOnlyPool = ({
             <h6>Estimate of pool apy</h6>
           </MetricsTile>
           <MetricsTile className="liquidity__info-tile bg-mint-10">
-            {isFetching ? (
-              <Skeleton tag="h2" shining={true} color="grey-10" />
-            ) : (
-              <h2 className="liquidity__info-tile__title text-mint-100">
-                <CountUp
-                  end={toTokenUnit(rewardBalance).toNumber()}
-                  preserveValue
-                  decimals={2}
-                  duration={1}
-                  formattingFn={displayNumberWithMetricSuffix}
-                />
-              </h2>
-            )}
-            <h6>your keep rewards</h6>
+            <MetricsTile.Tooltip className="liquidity__info-tile__tooltip">
+              <RewardMultiplier.TooltipContent />
+            </MetricsTile.Tooltip>
+            <RewardMultiplier
+              rewardMultiplier={rewardMultiplier}
+              className="liquidity__info-tile__title text-mint-100"
+            />
+            <h6>reward multiplier</h6>
           </MetricsTile>
         </section>
       </section>

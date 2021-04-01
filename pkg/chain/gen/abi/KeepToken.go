@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindKeepToken(address common.Address, caller bind.ContractCaller, transacto
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepToken *KeepTokenRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepToken *KeepTokenRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepToken.Contract.KeepTokenCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_KeepToken *KeepTokenRaw) Transact(opts *bind.TransactOpts, method string,
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_KeepToken *KeepTokenCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_KeepToken *KeepTokenCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _KeepToken.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,260 +173,310 @@ func (_KeepToken *KeepTokenTransactorRaw) Transact(opts *bind.TransactOpts, meth
 
 // DECIMALS is a free data retrieval call binding the contract method 0x2e0f2625.
 //
-// Solidity: function DECIMALS() constant returns(uint8)
+// Solidity: function DECIMALS() view returns(uint8)
 func (_KeepToken *KeepTokenCaller) DECIMALS(opts *bind.CallOpts) (uint8, error) {
-	var (
-		ret0 = new(uint8)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "DECIMALS")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "DECIMALS")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
 }
 
 // DECIMALS is a free data retrieval call binding the contract method 0x2e0f2625.
 //
-// Solidity: function DECIMALS() constant returns(uint8)
+// Solidity: function DECIMALS() view returns(uint8)
 func (_KeepToken *KeepTokenSession) DECIMALS() (uint8, error) {
 	return _KeepToken.Contract.DECIMALS(&_KeepToken.CallOpts)
 }
 
 // DECIMALS is a free data retrieval call binding the contract method 0x2e0f2625.
 //
-// Solidity: function DECIMALS() constant returns(uint8)
+// Solidity: function DECIMALS() view returns(uint8)
 func (_KeepToken *KeepTokenCallerSession) DECIMALS() (uint8, error) {
 	return _KeepToken.Contract.DECIMALS(&_KeepToken.CallOpts)
 }
 
 // INITIALSUPPLY is a free data retrieval call binding the contract method 0x2ff2e9dc.
 //
-// Solidity: function INITIAL_SUPPLY() constant returns(uint256)
+// Solidity: function INITIAL_SUPPLY() view returns(uint256)
 func (_KeepToken *KeepTokenCaller) INITIALSUPPLY(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "INITIAL_SUPPLY")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "INITIAL_SUPPLY")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // INITIALSUPPLY is a free data retrieval call binding the contract method 0x2ff2e9dc.
 //
-// Solidity: function INITIAL_SUPPLY() constant returns(uint256)
+// Solidity: function INITIAL_SUPPLY() view returns(uint256)
 func (_KeepToken *KeepTokenSession) INITIALSUPPLY() (*big.Int, error) {
 	return _KeepToken.Contract.INITIALSUPPLY(&_KeepToken.CallOpts)
 }
 
 // INITIALSUPPLY is a free data retrieval call binding the contract method 0x2ff2e9dc.
 //
-// Solidity: function INITIAL_SUPPLY() constant returns(uint256)
+// Solidity: function INITIAL_SUPPLY() view returns(uint256)
 func (_KeepToken *KeepTokenCallerSession) INITIALSUPPLY() (*big.Int, error) {
 	return _KeepToken.Contract.INITIALSUPPLY(&_KeepToken.CallOpts)
 }
 
 // NAME is a free data retrieval call binding the contract method 0xa3f4df7e.
 //
-// Solidity: function NAME() constant returns(string)
+// Solidity: function NAME() view returns(string)
 func (_KeepToken *KeepTokenCaller) NAME(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "NAME")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "NAME")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // NAME is a free data retrieval call binding the contract method 0xa3f4df7e.
 //
-// Solidity: function NAME() constant returns(string)
+// Solidity: function NAME() view returns(string)
 func (_KeepToken *KeepTokenSession) NAME() (string, error) {
 	return _KeepToken.Contract.NAME(&_KeepToken.CallOpts)
 }
 
 // NAME is a free data retrieval call binding the contract method 0xa3f4df7e.
 //
-// Solidity: function NAME() constant returns(string)
+// Solidity: function NAME() view returns(string)
 func (_KeepToken *KeepTokenCallerSession) NAME() (string, error) {
 	return _KeepToken.Contract.NAME(&_KeepToken.CallOpts)
 }
 
 // SYMBOL is a free data retrieval call binding the contract method 0xf76f8d78.
 //
-// Solidity: function SYMBOL() constant returns(string)
+// Solidity: function SYMBOL() view returns(string)
 func (_KeepToken *KeepTokenCaller) SYMBOL(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "SYMBOL")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "SYMBOL")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // SYMBOL is a free data retrieval call binding the contract method 0xf76f8d78.
 //
-// Solidity: function SYMBOL() constant returns(string)
+// Solidity: function SYMBOL() view returns(string)
 func (_KeepToken *KeepTokenSession) SYMBOL() (string, error) {
 	return _KeepToken.Contract.SYMBOL(&_KeepToken.CallOpts)
 }
 
 // SYMBOL is a free data retrieval call binding the contract method 0xf76f8d78.
 //
-// Solidity: function SYMBOL() constant returns(string)
+// Solidity: function SYMBOL() view returns(string)
 func (_KeepToken *KeepTokenCallerSession) SYMBOL() (string, error) {
 	return _KeepToken.Contract.SYMBOL(&_KeepToken.CallOpts)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address owner, address spender) constant returns(uint256)
+// Solidity: function allowance(address owner, address spender) view returns(uint256)
 func (_KeepToken *KeepTokenCaller) Allowance(opts *bind.CallOpts, owner common.Address, spender common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "allowance", owner, spender)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "allowance", owner, spender)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address owner, address spender) constant returns(uint256)
+// Solidity: function allowance(address owner, address spender) view returns(uint256)
 func (_KeepToken *KeepTokenSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
 	return _KeepToken.Contract.Allowance(&_KeepToken.CallOpts, owner, spender)
 }
 
 // Allowance is a free data retrieval call binding the contract method 0xdd62ed3e.
 //
-// Solidity: function allowance(address owner, address spender) constant returns(uint256)
+// Solidity: function allowance(address owner, address spender) view returns(uint256)
 func (_KeepToken *KeepTokenCallerSession) Allowance(owner common.Address, spender common.Address) (*big.Int, error) {
 	return _KeepToken.Contract.Allowance(&_KeepToken.CallOpts, owner, spender)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address account) constant returns(uint256)
+// Solidity: function balanceOf(address account) view returns(uint256)
 func (_KeepToken *KeepTokenCaller) BalanceOf(opts *bind.CallOpts, account common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "balanceOf", account)
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "balanceOf", account)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address account) constant returns(uint256)
+// Solidity: function balanceOf(address account) view returns(uint256)
 func (_KeepToken *KeepTokenSession) BalanceOf(account common.Address) (*big.Int, error) {
 	return _KeepToken.Contract.BalanceOf(&_KeepToken.CallOpts, account)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address account) constant returns(uint256)
+// Solidity: function balanceOf(address account) view returns(uint256)
 func (_KeepToken *KeepTokenCallerSession) BalanceOf(account common.Address) (*big.Int, error) {
 	return _KeepToken.Contract.BalanceOf(&_KeepToken.CallOpts, account)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_KeepToken *KeepTokenCaller) Decimals(opts *bind.CallOpts) (uint8, error) {
-	var (
-		ret0 = new(uint8)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "decimals")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "decimals")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_KeepToken *KeepTokenSession) Decimals() (uint8, error) {
 	return _KeepToken.Contract.Decimals(&_KeepToken.CallOpts)
 }
 
 // Decimals is a free data retrieval call binding the contract method 0x313ce567.
 //
-// Solidity: function decimals() constant returns(uint8)
+// Solidity: function decimals() view returns(uint8)
 func (_KeepToken *KeepTokenCallerSession) Decimals() (uint8, error) {
 	return _KeepToken.Contract.Decimals(&_KeepToken.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_KeepToken *KeepTokenCaller) Name(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "name")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "name")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_KeepToken *KeepTokenSession) Name() (string, error) {
 	return _KeepToken.Contract.Name(&_KeepToken.CallOpts)
 }
 
 // Name is a free data retrieval call binding the contract method 0x06fdde03.
 //
-// Solidity: function name() constant returns(string)
+// Solidity: function name() view returns(string)
 func (_KeepToken *KeepTokenCallerSession) Name() (string, error) {
 	return _KeepToken.Contract.Name(&_KeepToken.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_KeepToken *KeepTokenCaller) Symbol(opts *bind.CallOpts) (string, error) {
-	var (
-		ret0 = new(string)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "symbol")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "symbol")
+
+	if err != nil {
+		return *new(string), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(string)).(*string)
+
+	return out0, err
+
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_KeepToken *KeepTokenSession) Symbol() (string, error) {
 	return _KeepToken.Contract.Symbol(&_KeepToken.CallOpts)
 }
 
 // Symbol is a free data retrieval call binding the contract method 0x95d89b41.
 //
-// Solidity: function symbol() constant returns(string)
+// Solidity: function symbol() view returns(string)
 func (_KeepToken *KeepTokenCallerSession) Symbol() (string, error) {
 	return _KeepToken.Contract.Symbol(&_KeepToken.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
-// Solidity: function totalSupply() constant returns(uint256)
+// Solidity: function totalSupply() view returns(uint256)
 func (_KeepToken *KeepTokenCaller) TotalSupply(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _KeepToken.contract.Call(opts, out, "totalSupply")
-	return *ret0, err
+	var out []interface{}
+	err := _KeepToken.contract.Call(opts, &out, "totalSupply")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
-// Solidity: function totalSupply() constant returns(uint256)
+// Solidity: function totalSupply() view returns(uint256)
 func (_KeepToken *KeepTokenSession) TotalSupply() (*big.Int, error) {
 	return _KeepToken.Contract.TotalSupply(&_KeepToken.CallOpts)
 }
 
 // TotalSupply is a free data retrieval call binding the contract method 0x18160ddd.
 //
-// Solidity: function totalSupply() constant returns(uint256)
+// Solidity: function totalSupply() view returns(uint256)
 func (_KeepToken *KeepTokenCallerSession) TotalSupply() (*big.Int, error) {
 	return _KeepToken.Contract.TotalSupply(&_KeepToken.CallOpts)
 }
@@ -750,6 +799,7 @@ func (_KeepToken *KeepTokenFilterer) ParseApproval(log types.Log) (*KeepTokenApp
 	if err := _KeepToken.contract.UnpackLog(event, "Approval", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -903,5 +953,6 @@ func (_KeepToken *KeepTokenFilterer) ParseTransfer(log types.Log) (*KeepTokenTra
 	if err := _KeepToken.contract.UnpackLog(event, "Transfer", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindManagedGrant(address common.Address, caller bind.ContractCaller, transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ManagedGrant *ManagedGrantRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ManagedGrant *ManagedGrantRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ManagedGrant.Contract.ManagedGrantCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_ManagedGrant *ManagedGrantRaw) Transact(opts *bind.TransactOpts, method s
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ManagedGrant *ManagedGrantCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ManagedGrant *ManagedGrantCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ManagedGrant.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,156 +173,186 @@ func (_ManagedGrant *ManagedGrantTransactorRaw) Transact(opts *bind.TransactOpts
 
 // GrantId is a free data retrieval call binding the contract method 0xf30c0e08.
 //
-// Solidity: function grantId() constant returns(uint256)
+// Solidity: function grantId() view returns(uint256)
 func (_ManagedGrant *ManagedGrantCaller) GrantId(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _ManagedGrant.contract.Call(opts, out, "grantId")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrant.contract.Call(opts, &out, "grantId")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GrantId is a free data retrieval call binding the contract method 0xf30c0e08.
 //
-// Solidity: function grantId() constant returns(uint256)
+// Solidity: function grantId() view returns(uint256)
 func (_ManagedGrant *ManagedGrantSession) GrantId() (*big.Int, error) {
 	return _ManagedGrant.Contract.GrantId(&_ManagedGrant.CallOpts)
 }
 
 // GrantId is a free data retrieval call binding the contract method 0xf30c0e08.
 //
-// Solidity: function grantId() constant returns(uint256)
+// Solidity: function grantId() view returns(uint256)
 func (_ManagedGrant *ManagedGrantCallerSession) GrantId() (*big.Int, error) {
 	return _ManagedGrant.Contract.GrantId(&_ManagedGrant.CallOpts)
 }
 
 // GrantManager is a free data retrieval call binding the contract method 0x545c156b.
 //
-// Solidity: function grantManager() constant returns(address)
+// Solidity: function grantManager() view returns(address)
 func (_ManagedGrant *ManagedGrantCaller) GrantManager(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrant.contract.Call(opts, out, "grantManager")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrant.contract.Call(opts, &out, "grantManager")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GrantManager is a free data retrieval call binding the contract method 0x545c156b.
 //
-// Solidity: function grantManager() constant returns(address)
+// Solidity: function grantManager() view returns(address)
 func (_ManagedGrant *ManagedGrantSession) GrantManager() (common.Address, error) {
 	return _ManagedGrant.Contract.GrantManager(&_ManagedGrant.CallOpts)
 }
 
 // GrantManager is a free data retrieval call binding the contract method 0x545c156b.
 //
-// Solidity: function grantManager() constant returns(address)
+// Solidity: function grantManager() view returns(address)
 func (_ManagedGrant *ManagedGrantCallerSession) GrantManager() (common.Address, error) {
 	return _ManagedGrant.Contract.GrantManager(&_ManagedGrant.CallOpts)
 }
 
 // Grantee is a free data retrieval call binding the contract method 0xd5f52076.
 //
-// Solidity: function grantee() constant returns(address)
+// Solidity: function grantee() view returns(address)
 func (_ManagedGrant *ManagedGrantCaller) Grantee(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrant.contract.Call(opts, out, "grantee")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrant.contract.Call(opts, &out, "grantee")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Grantee is a free data retrieval call binding the contract method 0xd5f52076.
 //
-// Solidity: function grantee() constant returns(address)
+// Solidity: function grantee() view returns(address)
 func (_ManagedGrant *ManagedGrantSession) Grantee() (common.Address, error) {
 	return _ManagedGrant.Contract.Grantee(&_ManagedGrant.CallOpts)
 }
 
 // Grantee is a free data retrieval call binding the contract method 0xd5f52076.
 //
-// Solidity: function grantee() constant returns(address)
+// Solidity: function grantee() view returns(address)
 func (_ManagedGrant *ManagedGrantCallerSession) Grantee() (common.Address, error) {
 	return _ManagedGrant.Contract.Grantee(&_ManagedGrant.CallOpts)
 }
 
 // RequestedNewGrantee is a free data retrieval call binding the contract method 0x289f51b1.
 //
-// Solidity: function requestedNewGrantee() constant returns(address)
+// Solidity: function requestedNewGrantee() view returns(address)
 func (_ManagedGrant *ManagedGrantCaller) RequestedNewGrantee(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrant.contract.Call(opts, out, "requestedNewGrantee")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrant.contract.Call(opts, &out, "requestedNewGrantee")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // RequestedNewGrantee is a free data retrieval call binding the contract method 0x289f51b1.
 //
-// Solidity: function requestedNewGrantee() constant returns(address)
+// Solidity: function requestedNewGrantee() view returns(address)
 func (_ManagedGrant *ManagedGrantSession) RequestedNewGrantee() (common.Address, error) {
 	return _ManagedGrant.Contract.RequestedNewGrantee(&_ManagedGrant.CallOpts)
 }
 
 // RequestedNewGrantee is a free data retrieval call binding the contract method 0x289f51b1.
 //
-// Solidity: function requestedNewGrantee() constant returns(address)
+// Solidity: function requestedNewGrantee() view returns(address)
 func (_ManagedGrant *ManagedGrantCallerSession) RequestedNewGrantee() (common.Address, error) {
 	return _ManagedGrant.Contract.RequestedNewGrantee(&_ManagedGrant.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_ManagedGrant *ManagedGrantCaller) Token(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrant.contract.Call(opts, out, "token")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrant.contract.Call(opts, &out, "token")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_ManagedGrant *ManagedGrantSession) Token() (common.Address, error) {
 	return _ManagedGrant.Contract.Token(&_ManagedGrant.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_ManagedGrant *ManagedGrantCallerSession) Token() (common.Address, error) {
 	return _ManagedGrant.Contract.Token(&_ManagedGrant.CallOpts)
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_ManagedGrant *ManagedGrantCaller) TokenGrant(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrant.contract.Call(opts, out, "tokenGrant")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrant.contract.Call(opts, &out, "tokenGrant")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_ManagedGrant *ManagedGrantSession) TokenGrant() (common.Address, error) {
 	return _ManagedGrant.Contract.TokenGrant(&_ManagedGrant.CallOpts)
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_ManagedGrant *ManagedGrantCallerSession) TokenGrant() (common.Address, error) {
 	return _ManagedGrant.Contract.TokenGrant(&_ManagedGrant.CallOpts)
 }
@@ -647,6 +676,7 @@ func (_ManagedGrant *ManagedGrantFilterer) ParseGranteeReassignmentCancelled(log
 	if err := _ManagedGrant.contract.UnpackLog(event, "GranteeReassignmentCancelled", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -781,6 +811,7 @@ func (_ManagedGrant *ManagedGrantFilterer) ParseGranteeReassignmentChanged(log t
 	if err := _ManagedGrant.contract.UnpackLog(event, "GranteeReassignmentChanged", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -915,6 +946,7 @@ func (_ManagedGrant *ManagedGrantFilterer) ParseGranteeReassignmentConfirmed(log
 	if err := _ManagedGrant.contract.UnpackLog(event, "GranteeReassignmentConfirmed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1048,6 +1080,7 @@ func (_ManagedGrant *ManagedGrantFilterer) ParseGranteeReassignmentRequested(log
 	if err := _ManagedGrant.contract.UnpackLog(event, "GranteeReassignmentRequested", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1182,5 +1215,6 @@ func (_ManagedGrant *ManagedGrantFilterer) ParseTokensWithdrawn(log types.Log) (
 	if err := _ManagedGrant.contract.UnpackLog(event, "TokensWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

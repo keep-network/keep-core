@@ -91,6 +91,11 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       )
     }
 
+    const rewardMultiplier = yield call(
+      [LiquidityRewards, LiquidityRewards.calculateRewardMultiplier],
+      address
+    )
+
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
       payload: {
@@ -101,6 +106,7 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
         reward,
         shareOfPoolInPercent,
         lpTokenBalance,
+        rewardMultiplier,
       },
     })
   } catch (error) {

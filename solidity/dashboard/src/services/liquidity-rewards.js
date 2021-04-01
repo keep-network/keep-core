@@ -128,8 +128,12 @@ class LiquidityRewards {
     throw new Error("First, implement the `calculateAPY` function")
   }
 
-  calculateLPTokenBalance = async (shareOfPoolInPercent) => {
+  calculateLPTokenBalance = async (lpBalance) => {
     throw new Error("First, implement the `calculateLPTokenBalance` function")
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    throw new Error("First, implement the `calculateRewardMultiplier` function")
   }
 }
 
@@ -186,6 +190,10 @@ class UniswapLPRewards extends LiquidityRewards {
         .dividedBy(pairData.totalSupply)
         .toString(),
     }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 1
   }
 }
 
@@ -252,11 +260,15 @@ class SaddleLPRewards extends LiquidityRewards {
     return await this.swapContract.methods.getTokenBalance(index).call()
   }
 
-  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+  calculateLPTokenBalance = (lpBalance) => {
     return {
       token0: "0",
       token1: "0",
     }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 1
   }
 }
 
@@ -354,11 +366,32 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
 
-  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+  calculateLPTokenBalance = (lpBalance) => {
     return {
       token0: "0",
       token1: "0",
     }
+  }
+
+  /**
+   * Calculates reward multiplier for KEEP-ONLY pool for a given user
+   *
+   * @param {string} address - address of the user's wallet
+   * @return {Promise<string>}
+   */
+  calculateRewardMultiplier = async (address) => {
+    const stakedBalanceOfUser = await this.stakedBalance(address)
+    const rewardBalance = await this.rewardBalance(stakedBalanceOfUser)
+
+    const stakedBalanceOfUserBN = new BigNumber(stakedBalanceOfUser)
+    const rewardBalanceBN = new BigNumber(rewardBalance)
+
+    const rewardMultiplier = stakedBalanceOfUserBN
+      .plus(rewardBalanceBN)
+      .dividedBy(stakedBalanceOfUserBN)
+      .toString()
+
+    return rewardMultiplier
   }
 }
 

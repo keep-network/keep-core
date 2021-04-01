@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindAuthorizations(address common.Address, caller bind.ContractCaller, tran
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Authorizations *AuthorizationsRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Authorizations *AuthorizationsRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Authorizations.Contract.AuthorizationsCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_Authorizations *AuthorizationsRaw) Transact(opts *bind.TransactOpts, meth
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Authorizations *AuthorizationsCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Authorizations *AuthorizationsCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Authorizations.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,104 +173,124 @@ func (_Authorizations *AuthorizationsTransactorRaw) Transact(opts *bind.Transact
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_Authorizations *AuthorizationsCaller) AuthorizerOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Authorizations.contract.Call(opts, out, "authorizerOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _Authorizations.contract.Call(opts, &out, "authorizerOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_Authorizations *AuthorizationsSession) AuthorizerOf(_operator common.Address) (common.Address, error) {
 	return _Authorizations.Contract.AuthorizerOf(&_Authorizations.CallOpts, _operator)
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_Authorizations *AuthorizationsCallerSession) AuthorizerOf(_operator common.Address) (common.Address, error) {
 	return _Authorizations.Contract.AuthorizerOf(&_Authorizations.CallOpts, _operator)
 }
 
 // GetAuthoritySource is a free data retrieval call binding the contract method 0xcbe945dc.
 //
-// Solidity: function getAuthoritySource(address operatorContract) constant returns(address)
+// Solidity: function getAuthoritySource(address operatorContract) view returns(address)
 func (_Authorizations *AuthorizationsCaller) GetAuthoritySource(opts *bind.CallOpts, operatorContract common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Authorizations.contract.Call(opts, out, "getAuthoritySource", operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _Authorizations.contract.Call(opts, &out, "getAuthoritySource", operatorContract)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GetAuthoritySource is a free data retrieval call binding the contract method 0xcbe945dc.
 //
-// Solidity: function getAuthoritySource(address operatorContract) constant returns(address)
+// Solidity: function getAuthoritySource(address operatorContract) view returns(address)
 func (_Authorizations *AuthorizationsSession) GetAuthoritySource(operatorContract common.Address) (common.Address, error) {
 	return _Authorizations.Contract.GetAuthoritySource(&_Authorizations.CallOpts, operatorContract)
 }
 
 // GetAuthoritySource is a free data retrieval call binding the contract method 0xcbe945dc.
 //
-// Solidity: function getAuthoritySource(address operatorContract) constant returns(address)
+// Solidity: function getAuthoritySource(address operatorContract) view returns(address)
 func (_Authorizations *AuthorizationsCallerSession) GetAuthoritySource(operatorContract common.Address) (common.Address, error) {
 	return _Authorizations.Contract.GetAuthoritySource(&_Authorizations.CallOpts, operatorContract)
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address _operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address _operatorContract) view returns(bool)
 func (_Authorizations *AuthorizationsCaller) IsApprovedOperatorContract(opts *bind.CallOpts, _operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Authorizations.contract.Call(opts, out, "isApprovedOperatorContract", _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _Authorizations.contract.Call(opts, &out, "isApprovedOperatorContract", _operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address _operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address _operatorContract) view returns(bool)
 func (_Authorizations *AuthorizationsSession) IsApprovedOperatorContract(_operatorContract common.Address) (bool, error) {
 	return _Authorizations.Contract.IsApprovedOperatorContract(&_Authorizations.CallOpts, _operatorContract)
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address _operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address _operatorContract) view returns(bool)
 func (_Authorizations *AuthorizationsCallerSession) IsApprovedOperatorContract(_operatorContract common.Address) (bool, error) {
 	return _Authorizations.Contract.IsApprovedOperatorContract(&_Authorizations.CallOpts, _operatorContract)
 }
 
 // IsAuthorizedForOperator is a free data retrieval call binding the contract method 0xef1f9661.
 //
-// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) constant returns(bool)
+// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) view returns(bool)
 func (_Authorizations *AuthorizationsCaller) IsAuthorizedForOperator(opts *bind.CallOpts, _operator common.Address, _operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Authorizations.contract.Call(opts, out, "isAuthorizedForOperator", _operator, _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _Authorizations.contract.Call(opts, &out, "isAuthorizedForOperator", _operator, _operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsAuthorizedForOperator is a free data retrieval call binding the contract method 0xef1f9661.
 //
-// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) constant returns(bool)
+// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) view returns(bool)
 func (_Authorizations *AuthorizationsSession) IsAuthorizedForOperator(_operator common.Address, _operatorContract common.Address) (bool, error) {
 	return _Authorizations.Contract.IsAuthorizedForOperator(&_Authorizations.CallOpts, _operator, _operatorContract)
 }
 
 // IsAuthorizedForOperator is a free data retrieval call binding the contract method 0xef1f9661.
 //
-// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) constant returns(bool)
+// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) view returns(bool)
 func (_Authorizations *AuthorizationsCallerSession) IsAuthorizedForOperator(_operator common.Address, _operatorContract common.Address) (bool, error) {
 	return _Authorizations.Contract.IsAuthorizedForOperator(&_Authorizations.CallOpts, _operator, _operatorContract)
 }
