@@ -41,5 +41,5 @@ export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_SUCCESS =
   "authorization_beacon/fetch_auth_data_success"
 export const FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_FAILURE =
   "authorization_beacon/fetch_auth_data_failure"
-export const KEEP_RRANDOM_BEACON_AUTHORIZED =
+export const KEEP_RANDOM_BEACON_AUTHORIZED =
   "authorization_beacon/beacon_authorized"

@@ -11,7 +11,7 @@ import EmptyStatePage from "./EmptyStatePage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import {
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_REQUEST,
-  KEEP_RRANDOM_BEACON_AUTHORIZED,
+  KEEP_RANDOM_BEACON_AUTHORIZED,
 } from "../../actions"
 
 const KeepRandomBeaconApplicationPage = () => {
@@ -32,7 +32,7 @@ const KeepRandomBeaconApplicationPage = () => {
   const onAuthorizationSuccessCallback = useCallback(
     (contractName, operatorAddress) => {
       dispatch({
-        type: KEEP_RRANDOM_BEACON_AUTHORIZED,
+        type: KEEP_RANDOM_BEACON_AUTHORIZED,
         payload: { contractName, operatorAddress },
       })
     },

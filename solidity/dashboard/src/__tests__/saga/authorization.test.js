@@ -9,7 +9,7 @@ import {
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_START,
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_SUCCESS,
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_FAILURE,
-  KEEP_RRANDOM_BEACON_AUTHORIZED,
+  KEEP_RANDOM_BEACON_AUTHORIZED,
 } from "../../actions"
 
 describe("Authorization saga test", () => {
@@ -109,7 +109,7 @@ describe("Authorization saga test", () => {
           payload: { address: mockedAddress },
         })
         .dispatch({
-          type: KEEP_RRANDOM_BEACON_AUTHORIZED,
+          type: KEEP_RANDOM_BEACON_AUTHORIZED,
           payload: { contractName, operatorAddress },
         })
         .hasFinalState({

@@ -2,7 +2,7 @@ import {
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_START,
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_SUCCESS,
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_FAILURE,
-  KEEP_RRANDOM_BEACON_AUTHORIZED,
+  KEEP_RANDOM_BEACON_AUTHORIZED,
 } from "../actions"
 import { findIndexAndObject, compareEthAddresses } from "../utils/array.utils"
 
@@ -31,7 +31,7 @@ const authorizationReducer = (state = initialState, action) => {
         isFetching: false,
         error: action.payload.error,
       }
-    case KEEP_RRANDOM_BEACON_AUTHORIZED:
+    case KEEP_RANDOM_BEACON_AUTHORIZED:
       return {
         ...state,
         authData: updateAuthData([...state.authData], { ...action.payload }),
