@@ -35,7 +35,7 @@ class Web3ContextProvider extends React.Component {
     this.disconnect(false)
   }
 
-  connectAppWithWallet = async (connector) => {
+  connectAppWithWallet = async (connector, shouldSetError = true) => {
     this.setState({ isFetching: true })
     let web3
     let yourAddress
@@ -65,7 +65,7 @@ class Web3ContextProvider extends React.Component {
     } catch (error) {
       this.setState({
         isFetching: false,
-        error: error.message,
+        error: shouldSetError ? error.message : null,
       })
       throw error
     }

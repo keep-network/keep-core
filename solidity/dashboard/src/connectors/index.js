@@ -4,11 +4,13 @@ import { InjectedConnector } from "./injected"
 import { WalletConnectConnector } from "./wallet-connect"
 import { UserRejectedConnectionRequestError } from "./utils"
 
+const injected = new InjectedConnector()
+
 export {
   TrezorConnector,
   LedgerConnector,
   LEDGER_DERIVATION_PATHS,
-  InjectedConnector,
+  injected,
   WalletConnectConnector,
   UserRejectedConnectionRequestError,
 }

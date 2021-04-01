@@ -67,6 +67,12 @@ class InjectedConnector extends AbstractConnector {
   getNetworkId = async () => {
     return await this.provider.request({ method: "net_version" })
   }
+
+  getAccounts = async () => {
+    return this.provider && this.provider.request
+      ? await this.provider.request({ method: "eth_accounts" })
+      : []
+  }
 }
 
 export { InjectedConnector }
