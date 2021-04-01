@@ -2,5 +2,4 @@
     "typeAcquisition": {
         "include": ["jest"]
     }
-    
 }
