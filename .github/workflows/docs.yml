@@ -1,0 +1,102 @@
+name: Docs
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - "docs/**"
+      - "solidity/scripts/generate-api-docs.js"
+  pull_request: # TODO: Swith to using path-filter action
+    paths:
+      - "docs/**"
+      - "solidity/scripts/generate-api-docs.js"
+      - ".github/workflows/docs.yml" # TODO: Remove once workflow gets tested
+  workflow_dispatch:
+
+jobs:
+  generate-docs:
+    runs-on: ubuntu-latest
+    env:
+      DOCS_DIR: ${{ github.workspace }}/tmp/docs
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Create temporary docs directory
+        run: mkdir -p $DOCS_DIR
+
+      - name: Generate TeX document files
+        uses: addnab/docker-run-action@v3 # Runs shell commands within specified container
+        with:
+          registry: ghcr.io
+          image: keepnetwork/texlive:3
+          options: -v ${{ github.workspace }}:/volume-dir
+          run: |
+            mkdir /volume-dir/tmp/docs/img
+            cd /volume-dir/docs
+            make clean
+            make docs
+            cp relay-states.pdf /volume-dir/tmp/docs
+            cp -r img/generated /volume-dir/tmp/docs/img/generated
+
+      - name: Generate solidity docs
+        run: |
+          cd solidity && npm install
+          node_modules/.bin/truffle compile
+          mkdir -p ${{ github.workspace }}/docs/solidity
+          node scripts/generate-api-docs.js > ${{ github.workspace }}/docs/solidity/index.adoc
+
+      - name: Generate asciidoctor HTML files
+        id: asciidoctor-html
+        uses: thesis/asciidoctor-action@v1.0.1 # Saves results to asciidoc-out
+        with:
+          files: 'docs/*.adoc docs/**/*.adoc'
+          asciidoctor-args: '--failure-level=ERROR'
+
+      - name: Copy HTML files to temporary directory
+        run: |
+          cp -r asciidoc-out/docs/* $DOCS_DIR
+          sudo rm -rf asciidoc-out
+      
+      - name: Generate asciidoctor PDF files
+        id: asciidoctor-pdf
+        uses: thesis/asciidoctor-action@v1.0.1 # Saves results to asciidoc-out
+        with:
+          files: 'docs/*.adoc docs/**/*.adoc'
+          format: pdf
+          asciidoctor-args: '--failure-level=ERROR'
+
+      - name: Copy PDF files to temporary directory
+        run: |
+          cp -r asciidoc-out/docs/* $DOCS_DIR
+          sudo rm -rf asciidoc-out
+
+      - name: Upload a Build Artifact # TODO: Remove this and switch to publishing to GCS
+        uses: actions/upload-artifact@v2
+        with:
+          name: Docs
+          path: ${{ env.DOCS_DIR }}
+
+      # # A push event is a master merge; deploy to primary bucket.
+      # # TODO: Discuss bucket name, path and project once and adjust acordingly
+      # - if: github.event_name == 'push'
+      #   name: Upload asciidocs
+      #   uses: thesis/gcp-storage-bucket-action@v3.1.0
+      #   with:
+      #     service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+      #     project: keep-test
+      #     bucket-name: docs.keep.network
+      #     bucket-path: core
+      #     build-folder: ${{ env.$DOCS_DIR }}
+
+      # # A pull_request event is a PR; deploy to preview bucket.
+      # # TODO: Discuss bucket name, path and project once and adjust acordingly
+      # - if: github.event_name == 'pull_request'
+      #   name: Upload asciidocs preview
+      #   uses: thesis/gcp-storage-bucket-action@v3.1.0
+      #   with:
+      #     service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+      #     project: keep-test
+      #     bucket-name: docs.keep.network
+      #     bucket-path: core/${{ github.head_ref }}
+      #     build-folder: ${{ env.$DOCS_DIR }}
