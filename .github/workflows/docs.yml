@@ -81,7 +81,7 @@ jobs:
           project: keep-test
           bucket-name: docs.keep.network
           bucket-path: core
-          build-folder: ${{ env.DOCS_DIR }}
+          build-folder: tmp/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
       # TODO: Discuss bucket name, path and project and adjust acordingly
@@ -93,4 +93,4 @@ jobs:
           project: keep-test
           bucket-name: docs.keep.network
           bucket-path: core/${{ github.head_ref }}
-          build-folder: ${{ env.DOCS_DIR }}
+          build-folder: tmp/docs
