@@ -25,7 +25,7 @@ const ExplorerModeModal = ({ connector, connectAppWithWallet, closeModal }) => {
           height={28}
         />
       }
-      walletName={WALLETS.EXPLORER_MODE_ADDRESS.label}
+      walletName={WALLETS.EXPLORER_MODE.label}
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}

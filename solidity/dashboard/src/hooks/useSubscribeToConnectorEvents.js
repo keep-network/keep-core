@@ -30,7 +30,7 @@ const useSubscribeToConnectorEvents = () => {
         connector.getProvider().on("chainChanged", disconnectHandler)
       }
 
-      if (connector.name === WALLETS.EXPLORER_MODE_ADDRESS.name) {
+      if (connector.name === WALLETS.EXPLORER_MODE.name) {
         connector.eventEmitter.on(
           "chooseWalletAndSendTransaction",
           showChooseWalletModal

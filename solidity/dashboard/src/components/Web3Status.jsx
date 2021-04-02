@@ -20,7 +20,7 @@ export const Web3Status = () => {
         </div>
         <div
           className={`web3-status__wallet ${
-            connector?.name === WALLETS.EXPLORER_MODE_ADDRESS.name
+            connector?.name === WALLETS.EXPLORER_MODE.name
               ? "web3-status__wallet--explorer-mode"
               : ""
           }`}

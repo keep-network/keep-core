@@ -11,7 +11,7 @@ export class ExplorerModeConnector extends AbstractConnector {
   selectedAccount = ""
 
   constructor() {
-    super(WALLETS.EXPLORER_MODE_ADDRESS.name)
+    super(WALLETS.EXPLORER_MODE.name)
     this.websocketSubprovider = new WebsocketSubprovider({ rpcUrl: getWsUrl() })
     this.eventEmitter = new EventEmitter()
   }
