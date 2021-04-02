@@ -83,10 +83,11 @@ contract TokenDistributor is Ownable {
     /// Anyone can call this function. The function requires a destination address
     /// for a transfer to be provided. The destination address should be signed
     /// by the recipient. To construct the message to signing recipient has to
-    /// hash destination address with keccak256 and prefix the obtained digest with
-    /// Ethereum specific `\x19Ethereum Signed Message:\n32`. When using web3's
-    /// signing function the prefixing is done automatically, so the signing operation
-    /// can look like: `sign(keccak256(destination), privateKey)`.
+    /// hash this contract address and destination address with keccak256 and
+    /// prefix the obtained digest with Ethereum specific `\x19Ethereum Signed Message:\n32`.
+    /// When using web3's signing function the prefixing is done automatically,
+    /// so the signing operation can look like:
+    /// `sign(soliditySha3(tokenDistributor, destination), privateKey)`.
     /// The signature should be provided with the call to this function. This is
     /// to confirm that the recipient approved the destination address for a transfer.
     /// The solution allows cross-chain allocations, where a recipient from a
@@ -209,8 +210,9 @@ contract TokenDistributor is Ownable {
 
     /// @notice Recovers signer's address from a signature and destination address.
     /// @dev Destination address is a part of a message that should be signed.
-    /// To construct the message one has to hash destination address with keccak256
-    /// and prefix the obtained digest with Ethereum specific `\x19Ethereum Signed Message:\n32`.
+    /// To construct the message one has to hash this contract address along with
+    /// destination address with keccak256 and prefix the obtained digest with
+    /// Ethereum specific `\x19Ethereum Signed Message:\n32`.
     /// Due to the malleability concern described in EIP-2, the function expects
     /// s values in the lower half of the secp256k1 curve's order and v value of
     /// 27 or 28.
@@ -219,7 +221,7 @@ contract TokenDistributor is Ownable {
         uint8 _v,
         bytes32 _r,
         bytes32 _s
-    ) internal pure returns (address) {
+    ) internal view returns (address) {
         // Validate `s` and `v` values for a malleability concern described in EIP-2.
         // Only signatures with `s` value in the lower half of the secp256k1
         // curve's order and `v` value of 27 or 28 are considered valid.
@@ -230,7 +232,8 @@ contract TokenDistributor is Ownable {
         );
         require(_v == 27 || _v == 28, "Invalid signature 'v' value");
 
-        bytes32 digest = keccak256(abi.encodePacked(_destination));
+        bytes32 digest =
+            keccak256(abi.encodePacked(address(this), _destination));
         bytes32 prefixedDigest =
             keccak256(
                 abi.encodePacked("\x19Ethereum Signed Message:\n32", digest)

@@ -11,14 +11,6 @@
     "address": "0x8f733469c5d1fCee27a7E4c5433517ccAD992e6C",
     "privateKey": "0xd889eda11a6cfb36248b65e9e525c99d13e34d835cf81d063212483a65ec43bb"
   },
-  "signature": {
-    "message": "0x54eb9b035164b6d75fa1548d432dcf1c3c4e069bc9b64398ff9d76998577dcee",
-    "messageHash": "0xfee0fafe229b9b5a0d09d3bf7025eadc104e457752d267283bf31f49f7aa97f7",
-    "v": "0x1b",
-    "r": "0xeaf83e40545ba1fa5261ecbcda24973210c24974111a35eee881624fbf38bc21",
-    "s": "0x2b8b60138f1035b71193ffe7c6607429d1d01cebf016a69fed421a416bdf3582",
-    "signature": "0xeaf83e40545ba1fa5261ecbcda24973210c24974111a35eee881624fbf38bc212b8b60138f1035b71193ffe7c6607429d1d01cebf016a69fed421a416bdf35821b"
-  },
   "merkle": {
     "merkleRoot": "0xb83c6e12d9018f63a9741859cd7a8852e7808af9f9adb37d14d6eb7fd91153fe",
     "tokenTotal": "0x20b34706499fd319400000",
