@@ -7,9 +7,10 @@ import { shortenAddress } from "../utils/general.utils"
 import WalletOptions from "./WalletOptions"
 import CopyToClipboard from "./CopyToClipboard"
 import { displayAmount } from "../utils/token.utils"
+import { WALLETS } from "../constants/constants"
 
 export const Web3Status = () => {
-  const { yourAddress, isConnected } = useWeb3Context()
+  const { yourAddress, isConnected, connector } = useWeb3Context()
 
   return (
     <div className="web3-status">
@@ -17,7 +18,13 @@ export const Web3Status = () => {
         <div className="web3-status__network-status">
           <NetworkStatus />
         </div>
-        <div className="web3-status__wallet">
+        <div
+          className={`web3-status__wallet ${
+            connector?.name === WALLETS.EXPLORER_MODE_ADDRESS.name
+              ? "web3-status__wallet--explorer-mode"
+              : ""
+          }`}
+        >
           <Icons.Wallet
             className={`wallet__icon${isConnected ? "--active" : ""}`}
           />

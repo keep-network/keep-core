@@ -33,7 +33,10 @@ export const WALLETS = {
   TREZOR: { label: "Trezor", name: "TREZOR" },
   LEDGER: { label: "Ledger", name: "LEDGER" },
   WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
-  EXPLORER_MODE_ADDRESS: { label: "ExplorerModeAddress", name: "EXPLORER_MODE_ADDRESS" },
+  EXPLORER_MODE_ADDRESS: {
+    label: "ExplorerModeAddress",
+    name: "EXPLORER_MODE_ADDRESS",
+  },
 }
 
 export const REWARD_STATUS = {
