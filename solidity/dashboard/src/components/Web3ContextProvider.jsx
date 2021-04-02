@@ -48,6 +48,15 @@ class Web3ContextProvider extends React.Component {
       )
       yourAddress = accounts[0]
 
+      if (
+        this.state.connector?.name === WALLETS.READ_ONLY_ADDRESS.name &&
+        connector.name !== WALLETS.READ_ONLY_ADDRESS.name
+      ) {
+        if (this.state.yourAddress && this.state.yourAddress !== yourAddress) {
+          throw "invalid account"
+        }
+      }
+
       web3 = new Web3(connector.getProvider())
       web3.eth.defaultAccount = yourAddress
 
