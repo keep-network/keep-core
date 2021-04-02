@@ -10,6 +10,7 @@ import store from "./store"
 import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
+import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents";
 
 const App = () => (
   <Provider store={store}>
@@ -26,6 +27,7 @@ const App = () => (
 )
 
 const AppLayout = () => {
+  useSubscribeToConnectorEvents()
   return (
     <>
       <AppHeader />

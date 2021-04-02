@@ -6,6 +6,7 @@ import { getContracts, resolveWeb3Deferred } from "../contracts"
 import { connect } from "react-redux"
 import { WALLETS } from "../constants/constants"
 import { getNetworkName } from "../utils/ethereum.utils"
+import { isSameEthAddress } from "../utils/general.utils"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -52,7 +53,10 @@ class Web3ContextProvider extends React.Component {
         this.state.connector?.name === WALLETS.READ_ONLY_ADDRESS.name &&
         connector.name !== WALLETS.READ_ONLY_ADDRESS.name
       ) {
-        if (this.state.yourAddress && this.state.yourAddress !== yourAddress) {
+        if (
+          this.state.yourAddress &&
+          !isSameEthAddress(this.state.yourAddress, yourAddress)
+        ) {
           throw "invalid account"
         }
       }
@@ -79,11 +83,6 @@ class Web3ContextProvider extends React.Component {
         error: error.message,
       })
       throw error
-    }
-
-    if (connector.name === WALLETS.METAMASK.name) {
-      web3.eth.currentProvider.on("accountsChanged", this.refreshProvider)
-      web3.eth.currentProvider.on("chainChanged", this.refreshProvider)
     }
 
     if (connector.name === WALLETS.READ_ONLY_ADDRESS.name) {

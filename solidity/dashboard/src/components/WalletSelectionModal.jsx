@@ -2,7 +2,7 @@ import React from "react"
 import WalletOptions from "./WalletOptions"
 import Tooltip from "./Tooltip"
 
-export const WalletSelectionModal= ({ closeModal }) => {
+export const WalletSelectionModal = ({ closeModal }) => {
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
