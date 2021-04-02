@@ -10,7 +10,7 @@ class ExplorerModeSubprovider extends Subprovider {
     switch (payload.method) {
       case "eth_sendTransaction":
         this.eventEmitter.emit("chooseWalletAndSendTransaction", payload)
-        next()
+        end()
         return
       default:
         next()
