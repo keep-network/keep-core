@@ -121,6 +121,7 @@ describe("TokenDistributor", () => {
         {
           merkleRoot: testData.merkle.merkleRoot,
           amount: toBN(testData.merkle.tokenTotal),
+          unclaimedUnlockTimestamp: await tokenDistributor.unclaimedUnlockTimestamp(),
         }
       )
     })
@@ -137,14 +138,22 @@ describe("TokenDistributor", () => {
         (await web3.eth.getBlock(receipt.blockNumber)).timestamp
       )
 
+      const expectedUnclaimedUnlockDuration = toBN(
+        timestamp.add(unclaimedUnlockDuration)
+      )
+
       expect(
         await tokenDistributor.unclaimedUnlockTimestamp(),
         "invalid unclaimed unlock timestamp"
-      ).to.eq.BN(timestamp.add(unclaimedUnlockDuration))
+      ).to.eq.BN(expectedUnclaimedUnlockDuration)
+
+      expectEvent(receipt, "TokensAllocated", {
+        unclaimedUnlockTimestamp: expectedUnclaimedUnlockDuration,
+      })
     })
 
     it("doesn't set unclaimed tokens unlock timestamp when unclaimed duration is not provided", async function () {
-      await tokenDistributor.allocate(
+      const receipt = await tokenDistributor.allocate(
         testData.merkle.merkleRoot,
         testData.merkle.tokenTotal,
         0,
@@ -155,6 +164,10 @@ describe("TokenDistributor", () => {
         await tokenDistributor.unclaimedUnlockTimestamp(),
         "invalid unclaimed unlock timestamp"
       ).to.eq.BN(0)
+
+      expectEvent(receipt, "TokensAllocated", {
+        unclaimedUnlockTimestamp: toBN(0),
+      })
     })
 
     it("reverts on merkle root overwrite", async function () {

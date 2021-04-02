@@ -62,7 +62,11 @@ contract TokenDistributor is Ownable {
 
     mapping(uint256 => uint256) private claimedBitMap;
 
-    event TokensAllocated(bytes32 merkleRoot, uint256 amount);
+    event TokensAllocated(
+        bytes32 merkleRoot,
+        uint256 amount,
+        uint256 unclaimedUnlockTimestamp
+    );
 
     event TokensClaimed(
         uint256 indexed index,
@@ -172,7 +176,7 @@ contract TokenDistributor is Ownable {
                 _unclaimedUnlockDurationSec;
         }
 
-        emit TokensAllocated(_merkleRoot, _amount);
+        emit TokensAllocated(_merkleRoot, _amount, unclaimedUnlockTimestamp);
     }
 
     /// @notice Withdraws unclaimed tokens to the destination address. The function
