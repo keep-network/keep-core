@@ -7,15 +7,30 @@ on:
     paths:
       - "docs/**"
       - "solidity/scripts/generate-api-docs.js"
-  pull_request: # TODO: Swith to using path-filter action
-    paths:
-      - "docs/**"
-      - "solidity/scripts/generate-api-docs.js"
-      - ".github/workflows/docs.yml" # TODO: Remove once workflow gets tested
+  pull_request:
   workflow_dispatch:
 
 jobs:
-  generate-docs:
+  docs-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: | # TODO: Remove '|(.github/workflows/docs.yml)' once workflow gets tested
+          path-filter:
+            - './((docs/**)|(solidity/scripts/generate-api-docs.js)|(.github/workflows/docs.yml))'
+
+  docs-generate:
+    needs: docs-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.docs-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     env:
       DOCS_DIR: ${{ github.workspace }}/tmp/docs
