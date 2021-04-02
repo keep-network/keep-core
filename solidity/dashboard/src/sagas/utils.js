@@ -40,6 +40,11 @@ export function* logError(errorActionType, error, payload = {}) {
   })
 }
 
+export function* logErrorAndThrow(errorActionType, error, payload = {}) {
+  yield* logError(errorActionType, error, payload)
+  throw error
+}
+
 /**
  *
  * @param {Object} liquidityRewardPair - Liquidity reward data.
@@ -62,3 +67,9 @@ export function* getLPRewardsWrapper(liquidityRewardPair) {
 
   return LiquidityRewards
 }
+
+export const identifyTaskByAddress = (action) =>
+  identifyTaskBy("address")(action)
+
+export const identifyTaskBy = (indentificationField) => (action) =>
+  action.payload[indentificationField]

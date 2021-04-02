@@ -1,14 +1,12 @@
+import { take, takeEvery, call, put, select, delay } from "redux-saga/effects"
+import { takeOnlyOnce } from "./effects"
 import {
-  take,
-  takeEvery,
-  call,
-  fork,
-  put,
-  select,
-  delay,
-} from "redux-saga/effects"
+  getContractsContext,
+  submitButtonHelper,
+  logErrorAndThrow,
+  identifyTaskByAddress,
+} from "./utils"
 import moment from "moment"
-import { getContractsContext, submitButtonHelper, logError } from "./utils"
 import { sendTransaction } from "./web3"
 import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
@@ -149,9 +147,11 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
 }
 
 export function* watchFetchDelegationRequest() {
-  // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_delegations_request")
-  yield fork(fetchDelegations)
+  yield takeOnlyOnce(
+    "staking/fetch_delegations_request",
+    (action) => action.payload.address,
+    fetchDelegations
+  )
 }
 
 function* fetchDelegations() {
@@ -160,14 +160,17 @@ function* fetchDelegations() {
     const data = yield call(tokensPageService.fetchTokensPageData)
     yield put({ type: "staking/fetch_delegations_success", payload: data })
   } catch (error) {
-    yield* logError("staking/fetch_delegations_failure", error)
+    yield* logErrorAndThrow("staking/fetch_delegations_failure", error)
   }
 }
 
 export function* watchFetchTopUpsRequest() {
   // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_top_ups_request")
-  yield fork(fetchTopUps)
+  yield takeOnlyOnce(
+    "staking/fetch_top_ups_request",
+    identifyTaskByAddress,
+    fetchTopUps
+  )
 }
 
 function* fetchTopUps() {
@@ -197,7 +200,7 @@ function* fetchTopUps() {
       })),
     })
   } catch (error) {
-    yield* logError("staking/fetch_top_ups_failure", error)
+    yield* logErrorAndThrow("staking/fetch_top_ups_failure", error)
   }
 }
 

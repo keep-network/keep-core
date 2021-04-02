@@ -22,14 +22,12 @@ import KeepOnlyPool from "../../components/KeepOnlyPool"
 const LiquidityPage = ({ headerTitle }) => {
   const [isBannerVisible, hideBanner] = useHideComponent(false)
   const { isConnected } = useWeb3Context()
+  const dispatch = useDispatch()
+  const address = useWeb3Address()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
-
   const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC, KEEP_ONLY } = useSelector(
     (state) => state.liquidityRewards
   )
-
-  const dispatch = useDispatch()
-  const address = useWeb3Address()
 
   useEffect(() => {
     if (isConnected) {
@@ -41,10 +39,11 @@ const LiquidityPage = ({ headerTitle }) => {
   }, [dispatch, address, isConnected])
 
   useEffect(() => {
-    dispatch({
-      type: "liquidity_rewards/fetch_apy_request",
-    })
-  }, [dispatch])
+    if (!isConnected)
+      dispatch({
+        type: "liquidity_rewards/fetch_apy_request",
+      })
+  }, [dispatch, isConnected])
 
   useEffect(() => {
     if (isBannerVisible && isConnected && gt(keepTokenBalance.value || 0, 0)) {

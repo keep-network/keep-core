@@ -1,6 +1,12 @@
-import { take, takeLatest, call, put, fork } from "redux-saga/effects"
+import { takeLatest, call, put } from "redux-saga/effects"
+import { takeOnlyOnce } from "./effects"
 import web3Utils from "web3-utils"
-import { logError, submitButtonHelper, getContractsContext } from "./utils"
+import {
+  logError,
+  submitButtonHelper,
+  getContractsContext,
+  identifyTaskByAddress,
+} from "./utils"
 import {
   fetchtTotalDistributedRewards,
   fetchECDSAAvailableRewards,
@@ -18,7 +24,10 @@ import {
 } from "../services/token-staking.service"
 import { REWARD_STATUS } from "../constants/constants"
 
-function* fetchBeaconDistributedRewards(address) {
+function* fetchBeaconDistributedRewards(action) {
+  const {
+    payload: { address },
+  } = action
   try {
     yield put({ type: "rewards/beacon_fetch_distributed_rewards_start" })
     const balance = yield call(
@@ -36,10 +45,11 @@ function* fetchBeaconDistributedRewards(address) {
 }
 
 export function* watchFetchBeaconDistributedRewards() {
-  const { payload } = yield take(
-    "rewards/beacon_fetch_distributed_rewards_request"
+  yield takeOnlyOnce(
+    "rewards/beacon_fetch_distributed_rewards_request",
+    identifyTaskByAddress,
+    fetchBeaconDistributedRewards
   )
-  yield fork(fetchBeaconDistributedRewards, payload)
 }
 
 function* withdrawECDSARewards(action) {
@@ -75,7 +85,7 @@ export function* watchWithdrawECDSARewards() {
 }
 
 function* fetchECDSARewardsData(action) {
-  const address = action.payload
+  const { address } = action.payload
   try {
     yield put({ type: "rewards/ecdsa_fetch_rewards_data_start" })
 
@@ -159,8 +169,9 @@ function* fetchECDSARewardsData(action) {
 }
 
 export function* watchFetchECDSARewards() {
-  yield takeLatest(
+  yield takeOnlyOnce(
     "rewards/ecdsa_fetch_rewards_data_request",
+    identifyTaskByAddress,
     fetchECDSARewardsData
   )
 }

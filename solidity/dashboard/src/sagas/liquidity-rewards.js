@@ -7,11 +7,15 @@ import {
   select,
   delay,
 } from "redux-saga/effects"
+import BigNumber from "bignumber.js"
+import moment from "moment"
+import { takeOnlyOnce } from "./effects"
 import {
   submitButtonHelper,
   logError,
   getLPRewardsWrapper,
   getWeb3Context,
+  identifyTaskByAddress,
 } from "./utils"
 import { sendTransaction } from "./web3"
 import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
@@ -20,10 +24,8 @@ import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { getWsUrl } from "../connectors/utils"
 import { initializeWeb3, createLPRewardsContract } from "../contracts"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
-import BigNumber from "bignumber.js"
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
-import moment from "moment"
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -117,8 +119,9 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 }
 
 export function* watchFetchLiquidityRewardsData() {
-  yield takeLatest(
+  yield takeOnlyOnce(
     "liquidity_rewards/fetch_data_request",
+    identifyTaskByAddress,
     fetchAllLiquidtyRewardsData
   )
 }

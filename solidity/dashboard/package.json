@@ -30,6 +30,7 @@
     "react-transition-group": "^4.3.0",
     "recharts": "^1.8.5",
     "redux": "^4.0.5",
+    "redux-devtools-extension": "^2.13.8",
     "redux-saga": "^1.1.3",
     "trezor-connect": "^8.0.13",
     "web3": "1.3.3",
@@ -48,9 +49,12 @@
     "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx"
   },
   "devDependencies": {
+    "@redux-saga/testing-utils": "^1.1.3",
+    "@types/jest": "^26.0.21",
     "eslint": "^6.8.0",
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
     "prettier": "^2.0.4",
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
+    "redux-saga-test-plan": "^4.0.1"
   },
   "browserslist": [
     ">0.2%",

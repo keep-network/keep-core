@@ -1,15 +1,16 @@
 import React from "react"
-import { Link } from "react-router-dom"
+import { Provider } from "react-redux"
+import { BrowserRouter as Router, Link } from "react-router-dom"
+import store from "./store"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"
 import { Messages } from "./components/Message"
 import { SideMenu } from "./components/SideMenu"
-import { BrowserRouter as Router } from "react-router-dom"
-import { Provider } from "react-redux"
-import store from "./store"
 import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
+import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents"
+import useInjectedAutoConnect from "./hooks/useInjectedAutoConnect"
 
 const App = () => (
   <Provider store={store}>
@@ -26,6 +27,9 @@ const App = () => (
 )
 
 const AppLayout = () => {
+  useInjectedAutoConnect()
+  useSubscribeToConnectorEvents()
+
   return (
     <>
       <AppHeader />

@@ -9,9 +9,9 @@ import { useModal } from "../../hooks/useModal"
 import CopyStakePage from "../CopyStakePage"
 import PageWrapper from "../../components/PageWrapper"
 import * as Icons from "../../components/Icons"
-
 import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const DelegationPage = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
@@ -28,21 +28,23 @@ const DelegationPageWrapperComponent = ({
   children,
   ...restProps
 }) => {
+  const yourAddress = useWeb3Address()
+
   useEffect(() => {
     fetchOldDelegations()
-  }, [fetchOldDelegations])
+  }, [fetchOldDelegations, yourAddress])
 
   useEffect(() => {
-    fetchGrants()
-  }, [fetchGrants])
+    fetchGrants(yourAddress)
+  }, [fetchGrants, yourAddress])
 
   useEffect(() => {
-    fetchDelegations()
-  }, [fetchDelegations])
+    fetchDelegations(yourAddress)
+  }, [fetchDelegations, yourAddress])
 
   useEffect(() => {
-    fetchTopUps()
-  }, [fetchTopUps])
+    fetchTopUps(yourAddress)
+  }, [fetchTopUps, yourAddress])
 
   const { openModal, openConfirmationModal } = useModal()
 
@@ -114,10 +116,18 @@ const mapDispatchToProps = (dispatch) => {
       }),
     fetchOldDelegations: () =>
       dispatch({ type: FETCH_DELEGATIONS_FROM_OLD_STAKING_CONTRACT_REQUEST }),
-    fetchGrants: () => dispatch({ type: "token-grant/fetch_grants_request" }),
-    fetchDelegations: () =>
-      dispatch({ type: "staking/fetch_delegations_request" }),
-    fetchTopUps: () => dispatch({ type: "staking/fetch_top_ups_request" }),
+    fetchGrants: (address) =>
+      dispatch({
+        type: "token-grant/fetch_grants_request",
+        payload: { address },
+      }),
+    fetchDelegations: (address) =>
+      dispatch({
+        type: "staking/fetch_delegations_request",
+        payload: { address },
+      }),
+    fetchTopUps: (address) =>
+      dispatch({ type: "staking/fetch_top_ups_request", payload: { address } }),
   }
 }
 

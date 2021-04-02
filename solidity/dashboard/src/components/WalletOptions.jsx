@@ -8,7 +8,7 @@ import {
   TrezorConnector,
   LedgerConnector,
   LEDGER_DERIVATION_PATHS,
-  InjectedConnector,
+  injected,
   WalletConnectConnector,
 } from "../connectors"
 import MetaMaskModal from "./MetaMaskModal"
@@ -20,7 +20,7 @@ const WALLETS_OPTIONS = [
     label: "MetaMask",
     icon: Icons.MetaMask,
     isHardwareWallet: false,
-    connector: new InjectedConnector(),
+    connector: injected,
   },
   {
     label: "Ledger",

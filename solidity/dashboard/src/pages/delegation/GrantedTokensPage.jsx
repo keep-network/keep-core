@@ -50,6 +50,8 @@ const GrantedTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
       const lookupGrantId = hash.substr(1)
       const grantByHash = grants.find((grant) => grant.id === lookupGrantId)
       setSelectedGrant(grantByHash || grants[0])
+    } else if (!isEmptyObj(selectedGrant) && isEmptyArray(grants)) {
+      setSelectedGrant({})
     }
   }, [grants, selectedGrant, previousGrant.id, hash])
 

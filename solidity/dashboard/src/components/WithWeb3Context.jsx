@@ -1,4 +1,5 @@
 import React, { useContext } from "react"
+import { useSelector } from "react-redux"
 
 export const Web3Context = React.createContext({
   web3: null,
@@ -24,7 +25,7 @@ export const useWeb3Context = () => {
 }
 
 export const useWeb3Address = () => {
-  return useWeb3Context().yourAddress
+  return useSelector((state) => state.app.address)
 }
 
 const withWeb3Context = (Component) => {

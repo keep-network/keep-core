@@ -2,6 +2,7 @@ import Web3ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import CacheSubprovider from "web3-provider-engine/subproviders/cache"
 import BigNumber from "bignumber.js"
+import { EventEmitter } from "events"
 import {
   getWsUrl,
   getRPCRequestPayload,
@@ -12,7 +13,7 @@ import { Deferred } from "../contracts"
 /**
  * Representing an abstract connector.
  */
-export class AbstractConnector {
+export class AbstractConnector extends EventEmitter {
   /** @type {string} */
   name
   /** @type {Web3ProviderEngine} */
@@ -24,6 +25,7 @@ export class AbstractConnector {
    * @param {string} name - Name of the connector.
    */
   constructor(name) {
+    super()
     this.name = name
   }
 
@@ -148,5 +150,6 @@ export class AbstractHardwareWalletConnector extends AbstractConnector {
 
   disconnect = () => {
     this.provider.stop()
+    this.emit("disconnect")
   }
 }
