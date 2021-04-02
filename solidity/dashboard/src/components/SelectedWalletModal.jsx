@@ -5,6 +5,7 @@ import ChooseWalletAddress from "./ChooseWalletAddress"
 import { isEmptyArray } from "../utils/array.utils"
 import { wait } from "../utils/general.utils"
 import { UserRejectedConnectionRequestError } from "../connectors"
+import { useSelector } from "react-redux"
 
 const SelectedWalletModal = ({
   icon,
@@ -27,6 +28,7 @@ const SelectedWalletModal = ({
   const [accountsAreFetching, setAccountsAreFetching] = useState(false)
   const [availableAccounts, setAvailableAccounts] = useState([])
   const [error, setError] = useState("")
+  const modalWindowState = useSelector((state) => state.modalWindow)
 
   useEffect(() => {
     let shouldSetState = true
@@ -62,8 +64,10 @@ const SelectedWalletModal = ({
     if (connector && connectWithWalletOnMount) {
       setIsConnecting(true)
       wait(1000) // Delay request and show loading indicator.
-        .then(() => connectAppWithWallet(connector))
         .then(() => {
+          connectAppWithWallet(connector, modalWindowState.payload)
+        })
+        .then(async () => {
           if (shouldSetState) {
             setIsConnecting(false)
           }
@@ -104,7 +108,7 @@ const SelectedWalletModal = ({
     try {
       connector.defaultAccount = account
       setIsConnecting(true)
-      await connectAppWithWallet(connector)
+      await connectAppWithWallet(connector, modalWindowState.payload)
       setIsConnecting(false)
       closeModal()
     } catch (error) {

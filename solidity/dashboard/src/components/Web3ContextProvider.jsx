@@ -32,7 +32,7 @@ class Web3ContextProvider extends React.Component {
     this.disconnect(false)
   }
 
-  connectAppWithWallet = async (connector) => {
+  connectAppWithWallet = async (connector, payload = null) => {
     this.setState({ isFetching: true })
     let web3
     let yourAddress
@@ -51,7 +51,12 @@ class Web3ContextProvider extends React.Component {
       web3 = new Web3(connector.getProvider())
       web3.eth.defaultAccount = yourAddress
 
-      resolveWeb3Deferred(web3)
+      await resolveWeb3Deferred(web3)
+
+      if (payload) {
+        await web3.eth.currentProvider.sendAsync(payload.payload)
+        this.props.hideModal()
+      }
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       throw error
@@ -73,7 +78,10 @@ class Web3ContextProvider extends React.Component {
     }
 
     if (connector.name === WALLETS.READ_ONLY_ADDRESS.name) {
-      connector.eventEmitter.on("chooseWallet", this.showChooseWalletModal)
+      connector.eventEmitter.on(
+        "chooseWalletAndSendTransaction",
+        this.showChooseWalletModal
+      )
     }
 
     this.props.fetchKeepTokenBalance()
@@ -136,8 +144,10 @@ class Web3ContextProvider extends React.Component {
     window.location.reload()
   }
 
-  showChooseWalletModal = () => {
-    this.props.displayModal(null)
+  showChooseWalletModal = (payload) => {
+    this.props.displayModal({
+      payload: payload,
+    })
   }
 
   disconnect = async (shouldSetState = true) => {
@@ -183,10 +193,14 @@ const mapDispatchToProps = (dispatch) => {
   return {
     fetchKeepTokenBalance: () =>
       dispatch({ type: "keep-token/balance_request" }),
-    displayModal: (modalComponent) =>
+    displayModal: (payload) =>
       dispatch({
         type: "modal_window/display_modal",
-        payload: modalComponent,
+        payload: payload,
+      }),
+    hideModal: () =>
+      dispatch({
+        type: "modal_window/hide_modal",
       }),
   }
 }

@@ -156,8 +156,28 @@ export function Deferred() {
     reject = rej
   })
 
+  let isPending = true
+  let isRejected = false
+  let isFulfilled = false
+
+  const extraPromise = promise
+    .then((fn) => {
+      isFulfilled = true
+      isPending = false
+      return fn
+    })
+    .catch((e) => {
+      isRejected = true
+      isPending = false
+      throw e
+    })
+
+  extraPromise.isFulfilled = () => isFulfilled
+  extraPromise.isRejected = () => isRejected
+  extraPromise.isPending = () => isPending
+
   return {
-    promise,
+    promise: extraPromise,
     reject,
     resolve,
   }
@@ -169,8 +189,14 @@ const Web3Deferred = new Deferred()
 export const Web3Loaded = Web3Deferred.promise
 export const ContractsLoaded = ContractsDeferred.promise
 
-export const resolveWeb3Deferred = (web3) => {
-  Web3Deferred.resolve(web3)
+export const resolveWeb3Deferred = async (web3) => {
+  if (Web3Loaded.isFulfilled()) {
+    const existingWeb3 = await Web3Loaded
+    existingWeb3.setProvider(web3.currentProvider)
+    existingWeb3.eth.defaultAccount = web3.eth.defaultAccount
+  } else {
+    Web3Deferred.resolve(web3)
+  }
 }
 
 export const resovleContractsDeferred = (contracts) => {
@@ -183,6 +209,15 @@ export async function getContracts(web3, netId) {
       `network id: ${netId}; expected network id ${getFirstNetworkIdFromArtifact()}`
     )
     throw new Error("Please connect to the appropriate Ethereum network.")
+  }
+
+  if (ContractsLoaded.isFulfilled()) {
+    const existingContracts = await ContractsLoaded
+    for (const contractInstance of Object.values(existingContracts)) {
+      contractInstance.options.from = web3.eth.defaultAccount
+    }
+
+    return contracts
   }
 
   const web3Contracts = {}

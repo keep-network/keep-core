@@ -1,18 +1,18 @@
 const initialState = {
   displayModal: false,
-  modalComponent: null,
+  payload: null,
 }
 
 const modalWindowReducer = (state = initialState, action) => {
-  if (!action.payload) {
-    return state
-  }
+  // if (!action.payload) {
+  //   return state
+  // }
 
   switch (action.type) {
     case "modal_window/display_modal":
       return {
         displayModal: true,
-        modalComponent: action.payload,
+        payload: action.payload,
       }
     case "modal_window/hide_modal":
       return initialState
