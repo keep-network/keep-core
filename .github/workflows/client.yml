@@ -33,7 +33,7 @@ jobs:
     needs: client-detect-changes
     if: |
       github.event_name != 'pull_request'
-        && needs.client-detect-changes.outputs.path-filter == 'true'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -97,7 +97,7 @@ jobs:
     needs: client-detect-changes
     if: |
       github.event_name != 'pull_request'
-        && needs.client-detect-changes.outputs.path-filter == 'true'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     env:
       GO111MODULE: on
