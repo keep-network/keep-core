@@ -59,15 +59,21 @@ const WALLETS_OPTIONS = [
   },
 ]
 
-const WalletOptions = () => {
+const WalletOptions = ({ payload = null}) => {
   return (
-    <ul className="wallet__options">{WALLETS_OPTIONS.map(renderWallet)}</ul>
+    <ul className="wallet__options">
+      {WALLETS_OPTIONS.map((wallet) => {
+        return renderWallet(wallet, payload)
+      })}
+    </ul>
   )
 }
 
-const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
+const renderWallet = (wallet, payload) => {
+  return <Wallet key={wallet.label} {...wallet} payload={payload}/>
+}
 
-const Wallet = ({ label, icon: IconComponent, connector }) => {
+const Wallet = ({ label, icon: IconComponent, connector, payload = null}) => {
   const { openModal, closeModal } = useModal()
   const { connectAppWithWallet, abortWalletConnection } = useWeb3Context()
 
@@ -76,8 +82,13 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
     closeModal()
   }, [abortWalletConnection, closeModal])
 
-  const renderModalContent = () => {
-    const defaultProps = { connector, closeModal, connectAppWithWallet }
+  const renderModalContent = (payload = null) => {
+    const defaultProps = {
+      connector,
+      closeModal,
+      connectAppWithWallet,
+      payload,
+    }
     switch (connector.name) {
       case WALLETS.LEDGER.name:
         return <LedgerModal {...defaultProps} />
@@ -98,7 +109,7 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
     <li
       className="wallet__item"
       onClick={async () => {
-        openModal(renderModalContent(), {
+        openModal(renderModalContent(payload), {
           title: "Connect Wallet",
           closeModal: customCloseModal,
         })

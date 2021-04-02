@@ -67,8 +67,7 @@ class Web3ContextProvider extends React.Component {
       await resolveWeb3Deferred(web3)
 
       if (payload) {
-        await web3.eth.currentProvider.sendAsync(payload.payload)
-        this.props.hideModal()
+        await web3.eth.currentProvider.sendAsync(payload)
       }
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
@@ -83,13 +82,6 @@ class Web3ContextProvider extends React.Component {
         error: error.message,
       })
       throw error
-    }
-
-    if (connector.name === WALLETS.READ_ONLY_ADDRESS.name) {
-      connector.eventEmitter.on(
-        "chooseWalletAndSendTransaction",
-        this.showChooseWalletModal
-      )
     }
 
     this.props.fetchKeepTokenBalance()
@@ -152,12 +144,6 @@ class Web3ContextProvider extends React.Component {
     window.location.reload()
   }
 
-  showChooseWalletModal = (payload) => {
-    this.props.displayModal({
-      payload: payload,
-    })
-  }
-
   disconnect = async (shouldSetState = true) => {
     const { connector } = this.state
     if (!connector) {
@@ -201,15 +187,6 @@ const mapDispatchToProps = (dispatch) => {
   return {
     fetchKeepTokenBalance: () =>
       dispatch({ type: "keep-token/balance_request" }),
-    displayModal: (payload) =>
-      dispatch({
-        type: "modal_window/display_modal",
-        payload: payload,
-      }),
-    hideModal: () =>
-      dispatch({
-        type: "modal_window/hide_modal",
-      }),
   }
 }
 

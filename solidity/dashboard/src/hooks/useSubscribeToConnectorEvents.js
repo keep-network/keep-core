@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, {useCallback, useEffect} from "react"
 import { useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
@@ -20,7 +20,7 @@ const useSubscribeToConnectorEvents = () => {
     }
 
     const showChooseWalletModal = (payload) => {
-      openModal(<WalletSelectionModal />)
+      openModal(<WalletSelectionModal payload={payload} />)
     }
 
     if (isConnected && connector) {

@@ -21,6 +21,7 @@ const SelectedWalletModal = ({
   connectWithWalletOnMount = false,
   withAccountPagination = false,
   children,
+  payload = null,
 }) => {
   const showMessage = useShowMessage()
   const [isConnecting, setIsConnecting] = useState(false)
@@ -28,7 +29,6 @@ const SelectedWalletModal = ({
   const [accountsAreFetching, setAccountsAreFetching] = useState(false)
   const [availableAccounts, setAvailableAccounts] = useState([])
   const [error, setError] = useState("")
-  const modalWindowState = useSelector((state) => state.modalWindow)
 
   useEffect(() => {
     let shouldSetState = true
@@ -65,7 +65,7 @@ const SelectedWalletModal = ({
       setIsConnecting(true)
       wait(1000) // Delay request and show loading indicator.
         .then(() => {
-          connectAppWithWallet(connector, modalWindowState.payload)
+          connectAppWithWallet(connector, payload)
         })
         .then(async () => {
           if (shouldSetState) {
@@ -108,7 +108,7 @@ const SelectedWalletModal = ({
     try {
       connector.defaultAccount = account
       setIsConnecting(true)
-      await connectAppWithWallet(connector, modalWindowState.payload)
+      await connectAppWithWallet(connector, payload)
       setIsConnecting(false)
       closeModal()
     } catch (error) {

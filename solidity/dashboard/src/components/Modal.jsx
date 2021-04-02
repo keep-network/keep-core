@@ -72,20 +72,12 @@ export const ModalContextProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [modalOptions, setModalOptions] = useState(null)
   const awaitingPromiseRef = useRef()
-  const modalWindowState = useSelector((state) => state.modalWindow)
 
   const openModal = useCallback((modalComponent, modalOptions = {}) => {
     setModalComponent(modalComponent)
     setModalOptions(modalOptions)
     setIsOpen(true)
   }, [])
-
-  // TODO: Get modal component name from redux
-  useEffect(() => {
-    if (modalWindowState.displayModal) {
-      openModal(<WalletSelectionModal />)
-    }
-  }, [modalWindowState.displayModal])
 
   const closeModal = useCallback(() => {
     if (awaitingPromiseRef.current) {

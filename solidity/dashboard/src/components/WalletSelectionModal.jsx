@@ -1,8 +1,9 @@
-import React from "react"
+import React, {useEffect} from "react"
 import WalletOptions from "./WalletOptions"
 import Tooltip from "./Tooltip"
+import {useWeb3Context} from "./WithWeb3Context";
 
-export const WalletSelectionModal = ({ closeModal }) => {
+export const WalletSelectionModal = ({ payload = null }) => {
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
@@ -24,7 +25,7 @@ export const WalletSelectionModal = ({ closeModal }) => {
               </span>
             )}
           >
-            <WalletOptions />
+            <WalletOptions payload={payload} />
           </Tooltip>
         }
       </span>
