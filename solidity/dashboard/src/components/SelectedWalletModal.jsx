@@ -64,8 +64,8 @@ const SelectedWalletModal = ({
     if (connector && connectWithWalletOnMount) {
       setIsConnecting(true)
       wait(1000) // Delay request and show loading indicator.
-        .then(() => {
-          connectAppWithWallet(connector, payload)
+        .then(async () => {
+          await connectAppWithWallet(connector, payload)
         })
         .then(async () => {
           if (shouldSetState) {
@@ -74,6 +74,8 @@ const SelectedWalletModal = ({
           closeModal()
         })
         .catch((error) => {
+          console.log('ERRORRR')
+          console.log(error)
           if (shouldSetState) {
             handleError(error)
           }

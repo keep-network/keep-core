@@ -75,10 +75,16 @@ const renderWallet = (wallet, payload) => {
 
 const Wallet = ({ label, icon: IconComponent, connector, payload = null}) => {
   const { openModal, closeModal } = useModal()
-  const { connectAppWithWallet, abortWalletConnection } = useWeb3Context()
+  const {
+    connectAppWithWallet,
+    abortWalletConnection,
+    connector: currentConnector,
+  } = useWeb3Context()
 
   const customCloseModal = useCallback(() => {
-    abortWalletConnection()
+    if (currentConnector.name !== WALLETS.READ_ONLY_ADDRESS.name) {
+      abortWalletConnection()
+    }
     closeModal()
   }, [abortWalletConnection, closeModal])
 

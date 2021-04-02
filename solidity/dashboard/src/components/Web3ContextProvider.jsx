@@ -1,7 +1,7 @@
 import React from "react"
 import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
-import { MessagesContext } from "./Message"
+import { MessagesContext, useShowMessage } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
 import { connect } from "react-redux"
 import { WALLETS } from "../constants/constants"
@@ -57,7 +57,9 @@ class Web3ContextProvider extends React.Component {
           this.state.yourAddress &&
           !isSameEthAddress(this.state.yourAddress, yourAddress)
         ) {
-          throw "invalid account"
+          throw new Error(
+            "Connected address is different from the one used in Explorer Mode."
+          )
         }
       }
 
