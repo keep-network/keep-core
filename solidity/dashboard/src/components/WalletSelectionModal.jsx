@@ -1,9 +1,8 @@
-import React, { useEffect } from "react"
-import { useModal } from "../hooks/useModal"
+import React from "react"
 import WalletOptions from "./WalletOptions"
 import Tooltip from "./Tooltip"
 
-export const WalletSelectionModalContent = ({ closeModal }) => {
+export const WalletSelectionModal= ({ closeModal }) => {
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
@@ -32,17 +31,3 @@ export const WalletSelectionModalContent = ({ closeModal }) => {
     </div>
   )
 }
-
-const WalletSelectionModal = () => {
-  const { openModal, closeModal } = useModal()
-
-  const component = <WalletSelectionModalContent closeModal={closeModal} />
-
-  useEffect(() => {
-    openModal(component, { title: "Select wallet" })
-  }, [])
-
-  return null
-}
-
-export default WalletSelectionModal
