@@ -14,8 +14,8 @@ import {
 import MetaMaskModal from "./MetaMaskModal"
 import WallectConnectModal from "./WalletConnectModal"
 import { WALLETS } from "../constants/constants"
-import ReadOnlyAddressModal from "./ReadOnlyAddressModal"
-import { ReadOnlyConnector } from "../connectors/read-only-connector"
+import ExplorerModeModal from "./ExplorerModeModal"
+import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 
 const WALLETS_OPTIONS = [
   {
@@ -52,10 +52,10 @@ const WALLETS_OPTIONS = [
     connector: new WalletConnectConnector(),
   },
   {
-    label: "ReadOnlyAddress",
+    label: "ExplorerMode",
     icon: Icons.Wallet,
     isHardwareWallet: false,
-    connector: new ReadOnlyConnector(),
+    connector: new ExplorerModeConnector(),
   },
 ]
 
@@ -82,7 +82,7 @@ const Wallet = ({ label, icon: IconComponent, connector, payload = null}) => {
   } = useWeb3Context()
 
   const customCloseModal = useCallback(() => {
-    if (currentConnector.name !== WALLETS.READ_ONLY_ADDRESS.name) {
+    if (currentConnector.name !== WALLETS.EXPLORER_MODE_ADDRESS.name) {
       abortWalletConnection()
     }
     closeModal()
@@ -104,8 +104,8 @@ const Wallet = ({ label, icon: IconComponent, connector, payload = null}) => {
         return <MetaMaskModal {...defaultProps} />
       case WALLETS.WALLET_CONNECT.name:
         return <WallectConnectModal {...defaultProps} />
-      case WALLETS.READ_ONLY_ADDRESS.name:
-        return <ReadOnlyAddressModal {...defaultProps} />
+      case WALLETS.EXPLORER_MODE_ADDRESS.name:
+        return <ExplorerModeModal {...defaultProps} />
       default:
         return null
     }

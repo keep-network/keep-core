@@ -3,13 +3,9 @@ import SelectedWalletModal from "./SelectedWalletModal"
 import * as Icons from "./Icons"
 import { WALLETS } from "../constants/constants"
 import { useState } from "react"
-import ExplorerModeAddressForm from "./ExplorerModeAddressForm";
+import ExplorerModeAddressForm from "./ExplorerModeAddressForm"
 
-const ReadOnlyAddressModal = ({
-  connector,
-  connectAppWithWallet,
-  closeModal,
-}) => {
+const ExplorerModeModal = ({ connector, connectAppWithWallet, closeModal }) => {
   const [selectedAddress, setSelectedAddress] = useState("")
 
   useEffect(() => {
@@ -29,7 +25,7 @@ const ReadOnlyAddressModal = ({
           height={28}
         />
       }
-      walletName={WALLETS.READ_ONLY_ADDRESS.label}
+      walletName={WALLETS.EXPLORER_MODE_ADDRESS.label}
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}
@@ -42,4 +38,4 @@ const ReadOnlyAddressModal = ({
   )
 }
 
-export default React.memo(ReadOnlyAddressModal)
+export default React.memo(ExplorerModeModal)

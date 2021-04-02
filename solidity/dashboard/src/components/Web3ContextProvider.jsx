@@ -50,8 +50,8 @@ class Web3ContextProvider extends React.Component {
       yourAddress = accounts[0]
 
       if (
-        this.state.connector?.name === WALLETS.READ_ONLY_ADDRESS.name &&
-        connector.name !== WALLETS.READ_ONLY_ADDRESS.name
+        this.state.connector?.name === WALLETS.EXPLORER_MODE_ADDRESS.name &&
+        connector.name !== WALLETS.EXPLORER_MODE_ADDRESS.name
       ) {
         if (
           this.state.yourAddress &&
