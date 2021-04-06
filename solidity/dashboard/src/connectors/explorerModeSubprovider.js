@@ -1,5 +1,4 @@
-import { Subprovider } from "@0x/subproviders";
-
+import { Subprovider } from "@0x/subproviders"
 
 class ExplorerModeSubprovider extends Subprovider {
   constructor(_eventEmitter) {

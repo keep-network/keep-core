@@ -1,7 +1,6 @@
-import React, {useEffect} from "react"
+import React from "react"
 import WalletOptions from "./WalletOptions"
 import Tooltip from "./Tooltip"
-import {useWeb3Context} from "./WithWeb3Context";
 
 export const WalletSelectionModal = ({ payload = null }) => {
   return (

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect} from "react"
+import React, { useEffect } from "react"
 import { useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
@@ -8,7 +8,7 @@ import { WalletSelectionModal } from "../components/WalletSelectionModal"
 const useSubscribeToConnectorEvents = () => {
   const dispatch = useDispatch()
   const { isConnected, connector, yourAddress } = useWeb3Context()
-  const { openModal, closeModal } = useModal()
+  const { openModal } = useModal()
 
   useEffect(() => {
     const accountChangedHandler = (address) => {

@@ -1,7 +1,7 @@
 import React from "react"
 import Web3 from "web3"
 import { Web3Context } from "./WithWeb3Context"
-import { MessagesContext, useShowMessage } from "./Message"
+import { MessagesContext } from "./Message"
 import { getContracts, resolveWeb3Deferred } from "../contracts"
 import { connect } from "react-redux"
 import { WALLETS } from "../constants/constants"

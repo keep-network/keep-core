@@ -5,7 +5,6 @@ import ChooseWalletAddress from "./ChooseWalletAddress"
 import { isEmptyArray } from "../utils/array.utils"
 import { wait } from "../utils/general.utils"
 import { UserRejectedConnectionRequestError } from "../connectors"
-import { useSelector } from "react-redux"
 
 const SelectedWalletModal = ({
   icon,
@@ -74,8 +73,6 @@ const SelectedWalletModal = ({
           closeModal()
         })
         .catch((error) => {
-          console.log('ERRORRR')
-          console.log(error)
           if (shouldSetState) {
             handleError(error)
           }

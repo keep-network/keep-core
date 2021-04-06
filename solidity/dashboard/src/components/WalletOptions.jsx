@@ -59,7 +59,7 @@ const WALLETS_OPTIONS = [
   },
 ]
 
-const WalletOptions = ({ payload = null}) => {
+const WalletOptions = ({ payload = null }) => {
   return (
     <ul className="wallet__options">
       {WALLETS_OPTIONS.map((wallet) => {
@@ -70,10 +70,10 @@ const WalletOptions = ({ payload = null}) => {
 }
 
 const renderWallet = (wallet, payload) => {
-  return <Wallet key={wallet.label} {...wallet} payload={payload}/>
+  return <Wallet key={wallet.label} {...wallet} payload={payload} />
 }
 
-const Wallet = ({ label, icon: IconComponent, connector, payload = null}) => {
+const Wallet = ({ label, icon: IconComponent, connector, payload = null }) => {
   const { openModal, closeModal } = useModal()
   const {
     connectAppWithWallet,

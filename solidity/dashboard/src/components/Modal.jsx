@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useCallback, useState } from "react"
 import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 import ConfirmationModal from "./ConfirmationModal"
-import { WalletSelectionModal } from "./WalletSelectionModal"
-import { useSelector } from "react-redux"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
