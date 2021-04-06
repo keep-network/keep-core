@@ -82,7 +82,7 @@ const Wallet = ({ label, icon: IconComponent, connector, payload = null}) => {
   } = useWeb3Context()
 
   const customCloseModal = useCallback(() => {
-    if (currentConnector.name !== WALLETS.EXPLORER_MODE.name) {
+    if (currentConnector?.name !== WALLETS.EXPLORER_MODE.name) {
       abortWalletConnection()
     }
     closeModal()
