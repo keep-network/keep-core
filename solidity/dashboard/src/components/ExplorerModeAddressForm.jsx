@@ -3,6 +3,7 @@ import { SubmitButton } from "./Button"
 import React from "react"
 import { withFormik } from "formik"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
+import {getErrorsObj, validateEthAddress} from "../forms/common-validators";
 
 const ExplorerModeAddressForm = ({ submitAction }) => {
   const onSubmit = useCustomOnSubmitFormik(submitAction)
@@ -32,6 +33,14 @@ const connectWithFormik = withFormik({
   mapPropsToValues: () => ({
     address: "",
   }),
+  validate: (values, props) => {
+    const { address } = values
+    const errors = {}
+
+    errors.address = validateEthAddress(address)
+
+    return getErrorsObj(errors)
+  },
 })(ExplorerModeAddressForm)
 
 export default connectWithFormik
