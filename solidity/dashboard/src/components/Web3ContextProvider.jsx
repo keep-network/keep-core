@@ -33,7 +33,7 @@ class Web3ContextProvider extends React.Component {
     this.disconnect(false)
   }
 
-  connectAppWithWallet = async (connector, payload = null) => {
+  connectAppWithWallet = async (connector) => {
     this.setState({ isFetching: true })
     let web3
     let yourAddress
@@ -67,10 +67,6 @@ class Web3ContextProvider extends React.Component {
       web3.eth.defaultAccount = yourAddress
 
       await resolveWeb3Deferred(web3)
-
-      if (payload) {
-        await web3.eth.currentProvider.sendAsync(payload)
-      }
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       throw error

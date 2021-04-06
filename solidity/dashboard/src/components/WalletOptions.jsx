@@ -59,23 +59,15 @@ const WALLETS_OPTIONS = [
   },
 ]
 
-const WalletOptions = ({ payload = null }) => {
+const WalletOptions = () => {
   return (
-    <ul className="wallet__options">
-      {WALLETS_OPTIONS.map((wallet) => {
-        // do not display explorer mode option inside WalletSelectionModal
-        if (payload && wallet.label === "ExplorerMode") return null
-        return renderWallet(wallet, payload)
-      })}
-    </ul>
+    <ul className="wallet__options">{WALLETS_OPTIONS.map(renderWallet)}</ul>
   )
 }
 
-const renderWallet = (wallet, payload) => {
-  return <Wallet key={wallet.label} {...wallet} payload={payload} />
-}
+const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
-const Wallet = ({ label, icon: IconComponent, connector, payload = null }) => {
+const Wallet = ({ label, icon: IconComponent, connector }) => {
   const { openModal, closeModal } = useModal()
   const {
     connectAppWithWallet,
@@ -90,13 +82,8 @@ const Wallet = ({ label, icon: IconComponent, connector, payload = null }) => {
     closeModal()
   }, [abortWalletConnection, closeModal])
 
-  const renderModalContent = (payload = null) => {
-    const defaultProps = {
-      connector,
-      closeModal,
-      connectAppWithWallet,
-      payload,
-    }
+  const renderModalContent = () => {
+    const defaultProps = { connector, closeModal, connectAppWithWallet }
     switch (connector.name) {
       case WALLETS.LEDGER.name:
         return <LedgerModal {...defaultProps} />
@@ -117,7 +104,7 @@ const Wallet = ({ label, icon: IconComponent, connector, payload = null }) => {
     <li
       className="wallet__item"
       onClick={async () => {
-        openModal(renderModalContent(payload), {
+        openModal(renderModalContent(), {
           title: "Connect Wallet",
           closeModal: customCloseModal,
         })

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react"
-import { useDispatch } from "react-redux"
+import { useDispatch, useSelector } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
 import { useModal } from "./useModal"
@@ -7,8 +7,9 @@ import { WalletSelectionModal } from "../components/WalletSelectionModal"
 
 const useSubscribeToConnectorEvents = () => {
   const dispatch = useDispatch()
-  const { isConnected, connector, yourAddress } = useWeb3Context()
+  const { isConnected, connector, yourAddress, web3 } = useWeb3Context()
   const { openModal } = useModal()
+  const { transactionQueue } = useSelector((state) => state.transactions)
 
   useEffect(() => {
     const accountChangedHandler = (address) => {
@@ -20,9 +21,24 @@ const useSubscribeToConnectorEvents = () => {
     }
 
     const showChooseWalletModal = (payload) => {
-      openModal(<WalletSelectionModal payload={payload} />, {
+      dispatch({
+        type: "transactions/transaction_added_to_queue",
+        payload: payload,
+      })
+      openModal(<WalletSelectionModal />, {
         title: "Select wallet",
       })
+    }
+
+    const executeTransactionsInQueue = async () => {
+      if (transactionQueue.length > 0) {
+        for (const transaction of transactionQueue) {
+          await web3.eth.currentProvider.sendAsync(transaction)
+        }
+        dispatch({
+          type: "transactions/clear_queue",
+        })
+      }
     }
 
     if (isConnected && connector) {
@@ -37,6 +53,8 @@ const useSubscribeToConnectorEvents = () => {
           "chooseWalletAndSendTransaction",
           showChooseWalletModal
         )
+      } else {
+        executeTransactionsInQueue()
       }
     }
 
@@ -48,7 +66,7 @@ const useSubscribeToConnectorEvents = () => {
         connector.getProvider().removeListener("disconnect", disconnectHandler)
       }
     }
-  }, [isConnected, connector, dispatch, yourAddress])
+  }, [isConnected, connector, dispatch, yourAddress, web3])
 }
 
 export default useSubscribeToConnectorEvents

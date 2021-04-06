@@ -20,7 +20,6 @@ const SelectedWalletModal = ({
   connectWithWalletOnMount = false,
   withAccountPagination = false,
   children,
-  payload = null,
 }) => {
   const showMessage = useShowMessage()
   const [isConnecting, setIsConnecting] = useState(false)
@@ -64,7 +63,7 @@ const SelectedWalletModal = ({
       setIsConnecting(true)
       wait(1000) // Delay request and show loading indicator.
         .then(async () => {
-          await connectAppWithWallet(connector, payload)
+          await connectAppWithWallet(connector)
         })
         .then(async () => {
           if (shouldSetState) {
@@ -107,7 +106,7 @@ const SelectedWalletModal = ({
     try {
       connector.defaultAccount = account
       setIsConnecting(true)
-      await connectAppWithWallet(connector, payload)
+      await connectAppWithWallet(connector)
       setIsConnecting(false)
       closeModal()
     } catch (error) {

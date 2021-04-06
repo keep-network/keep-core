@@ -5,12 +5,7 @@ import * as Icons from "./Icons"
 const rejectedConnectionErrorMsg =
   "You rejected the connection request in MetaMask. Please close and try again, and click confirm connection in MetaMask window."
 
-const MetaMaskModal = ({
-  connector,
-  connectAppWithWallet,
-  closeModal,
-  payload = null,
-}) => {
+const MetaMaskModal = ({ connector, connectAppWithWallet, closeModal }) => {
   return (
     <SelectedWalletModal
       icon={<Icons.MetaMask />}
@@ -25,7 +20,6 @@ const MetaMaskModal = ({
       userRejectedConnectionRequestErrorMsg={rejectedConnectionErrorMsg}
       closeModal={closeModal}
       connectWithWalletOnMount
-      payload={payload}
     >
       {!connector.getProvider() && (
         <a

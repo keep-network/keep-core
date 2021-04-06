@@ -2,7 +2,7 @@ import React from "react"
 import WalletOptions from "./WalletOptions"
 import Tooltip from "./Tooltip"
 
-export const WalletSelectionModal = ({ payload = null }) => {
+export const WalletSelectionModal = () => {
   return (
     <div className="flex column center">
       <div className="flex full-center mb-3">
@@ -24,7 +24,7 @@ export const WalletSelectionModal = ({ payload = null }) => {
               </span>
             )}
           >
-            <WalletOptions payload={payload} />
+            <WalletOptions />
           </Tooltip>
         }
       </span>
