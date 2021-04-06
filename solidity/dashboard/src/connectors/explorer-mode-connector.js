@@ -12,7 +12,6 @@ export class ExplorerModeConnector extends AbstractConnector {
 
   constructor() {
     super(WALLETS.EXPLORER_MODE.name)
-    this.websocketSubprovider = new WebsocketSubprovider({ rpcUrl: getWsUrl() })
     this.eventEmitter = new EventEmitter()
   }
 
@@ -27,7 +26,7 @@ export class ExplorerModeConnector extends AbstractConnector {
 
     this.provider = new Web3ProviderEngine()
     this.provider.addProvider(new ExplorerModeSubprovider(this.eventEmitter))
-    this.provider.addProvider(this.websocketSubprovider)
+    this.provider.addProvider(new WebsocketSubprovider({ rpcUrl: getWsUrl() }))
 
     this.provider.start()
 
