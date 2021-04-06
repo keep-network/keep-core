@@ -24,7 +24,7 @@ export const WalletSelectionModal = () => {
               </span>
             )}
           >
-            <WalletOptions />
+            <WalletOptions displayExplorerMode={false} />
           </Tooltip>
         }
       </span>
