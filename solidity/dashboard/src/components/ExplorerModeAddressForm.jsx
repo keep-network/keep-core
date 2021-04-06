@@ -3,7 +3,7 @@ import { SubmitButton } from "./Button"
 import React from "react"
 import { withFormik } from "formik"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import {getErrorsObj, validateEthAddress} from "../forms/common-validators";
+import { getErrorsObj, validateEthAddress } from "../forms/common-validators"
 
 const ExplorerModeAddressForm = ({ submitAction }) => {
   const onSubmit = useCustomOnSubmitFormik(submitAction)

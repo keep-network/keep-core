@@ -63,6 +63,8 @@ const WalletOptions = ({ payload = null }) => {
   return (
     <ul className="wallet__options">
       {WALLETS_OPTIONS.map((wallet) => {
+        // do not display explorer mode option inside WalletSelectionModal
+        if (payload && wallet.label === "ExplorerMode") return null
         return renderWallet(wallet, payload)
       })}
     </ul>

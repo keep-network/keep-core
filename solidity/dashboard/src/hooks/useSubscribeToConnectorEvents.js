@@ -20,7 +20,9 @@ const useSubscribeToConnectorEvents = () => {
     }
 
     const showChooseWalletModal = (payload) => {
-      openModal(<WalletSelectionModal payload={payload} />)
+      openModal(<WalletSelectionModal payload={payload} />, {
+        title: "Select wallet",
+      })
     }
 
     if (isConnected && connector) {
