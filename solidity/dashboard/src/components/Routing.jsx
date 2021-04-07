@@ -11,6 +11,7 @@ import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 import RewardsPage from "../pages/rewards"
 import LiquidityPage from "../pages/liquidity"
+import withAddress from "./ExplorerModeComponentContainer";
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 const pages = [
@@ -40,6 +41,7 @@ class Routing extends React.Component {
           component={CreateTokenGrantPage}
         /> */}
         {pages.map(renderPage)}
+        {pages.map(renderExplorerModePage)}
         <Route exact path="/">
           <Redirect to="/overview" />
         </Route>
@@ -81,6 +83,26 @@ const CustomRoute = ({
         <EmptyStateComponent {...Component.route} />
       )}
     </Route>
+  )
+}
+
+export const renderExplorerModePage = (PageComponent, index) => {
+  const finalPath = "/:address" + PageComponent.route.path
+  return (
+    <Route
+      path={finalPath}
+      exact={PageComponent.route.exact}
+      key={`${finalPath}-${index}`}
+      render={(routeProps) => {
+        const ExplorerPageComponent = withAddress(PageComponent)
+        return (
+          <ExplorerPageComponent
+            routes={PageComponent.route.pages}
+            {...PageComponent.routes}
+          />
+        )
+      }}
+    />
   )
 }
 
