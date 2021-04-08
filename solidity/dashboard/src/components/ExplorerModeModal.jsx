@@ -5,7 +5,7 @@ import { WALLETS } from "../constants/constants"
 import { useState } from "react"
 import ExplorerModeAddressForm from "./ExplorerModeAddressForm"
 
-const ExplorerModeModal = ({ connector, connectAppWithWallet, closeModal, address = "", connectWithWalletOnMount = false }) => {
+const ExplorerModeModal = ({ connector, connectAppWithWallet, closeModal, address = "" }) => {
   const [selectedAddress, setSelectedAddress] = useState("")
 
   useEffect(() => {
@@ -13,7 +13,7 @@ const ExplorerModeModal = ({ connector, connectAppWithWallet, closeModal, addres
   }, [selectedAddress])
 
   useEffect(() => {
-    setSelectedAddress(address)
+    if (address) setSelectedAddress(address)
   }, [address])
 
   const submitAction = (values) => {
@@ -33,7 +33,7 @@ const ExplorerModeModal = ({ connector, connectAppWithWallet, closeModal, addres
       connector={connector}
       connectAppWithWallet={connectAppWithWallet}
       closeModal={closeModal}
-      connectWithWalletOnMount={connectWithWalletOnMount}
+      connectWithWalletOnMount={true}
     />
   ) : (
     <div>
