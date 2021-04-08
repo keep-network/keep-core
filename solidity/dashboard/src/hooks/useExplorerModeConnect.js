@@ -39,6 +39,9 @@ const useExplorerModeConnect = () => {
         )
       }
     }
+
+    // TODO: CHeck if connector is set to explorer mode and if yes
+    // then redirect to proper site with the wallet address in URL
   }, [location.pathname])
 }
 

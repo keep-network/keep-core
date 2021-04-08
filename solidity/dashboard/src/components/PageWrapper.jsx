@@ -1,8 +1,9 @@
 import React from "react"
 import { Switch, Redirect } from "react-router-dom"
 import Header from "./Header"
-import { renderPage } from "./Routing"
+import { renderExplorerModePage, renderPage } from "./Routing"
 import { isEmptyArray } from "../utils/array.utils"
+import useWalletAddressFromUrl from "../hooks/useWalletAddressFromUrl"
 
 const PageWrapper = ({
   title,
@@ -12,6 +13,7 @@ const PageWrapper = ({
   newPage = false,
 }) => {
   const hasRoutes = !isEmptyArray(routes)
+  const walletAddressFromUrl = useWalletAddressFromUrl()
 
   return (
     <>
@@ -26,7 +28,14 @@ const PageWrapper = ({
         {hasRoutes && (
           <Switch>
             {routes.map(renderPage)}
-            <Redirect to={routes[0].route.path} />
+            {routes.map(renderExplorerModePage)}
+            <Redirect
+              to={
+                walletAddressFromUrl
+                  ? "/" + walletAddressFromUrl + routes[0].route.path
+                  : routes[0].route.path
+              }
+            />
           </Switch>
         )}
       </main>

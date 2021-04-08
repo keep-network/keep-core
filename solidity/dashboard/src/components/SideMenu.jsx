@@ -13,6 +13,7 @@ import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
+import useWalletAddressFromUrl from "../hooks/useWalletAddressFromUrl";
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -95,9 +96,17 @@ const NavLinkSectionRoute = ({ title, path, exact, withNewLabel }) => {
     exact,
   })
 
+  const walletAddressFromUrl = useWalletAddressFromUrl()
+  const finalPath = walletAddressFromUrl
+    ? "/" + walletAddressFromUrl + path
+    : path
+
   return (
     <li className="side-menu__route-wrapper">
-      <Link to={path} className={`side-menu__route${match ? "--active" : ""}`}>
+      <Link
+        to={finalPath}
+        className={`side-menu__route${match ? "--active" : ""}`}
+      >
         {title}
         {withNewLabel && <Chip text="NEW" size="tiny" className="ml-1" />}
       </Link>
