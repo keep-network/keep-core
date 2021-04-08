@@ -9,7 +9,11 @@ class ExplorerModeSubprovider extends Subprovider {
     switch (payload.method) {
       case "eth_sendTransaction":
         this.eventEmitter.emit("chooseWalletAndSendTransaction", payload)
-        next()
+        const error = new Error(
+          "You have to be connected to a wallet to do the transaction"
+        )
+        error.name = "ExplorerModeSubproviderError"
+        end(error)
         return
       default:
         next()
