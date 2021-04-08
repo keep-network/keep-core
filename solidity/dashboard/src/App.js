@@ -1,4 +1,4 @@
-import React from "react"
+import React  from "react"
 import { Link } from "react-router-dom"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"
@@ -11,6 +11,7 @@ import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
 import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents"
+import useExplorerModeConnect from "./hooks/useExplorerModeConnect";
 
 const App = () => (
   <Provider store={store}>
@@ -28,6 +29,7 @@ const App = () => (
 
 const AppLayout = () => {
   useSubscribeToConnectorEvents()
+  useExplorerModeConnect()
   return (
     <>
       <AppHeader />

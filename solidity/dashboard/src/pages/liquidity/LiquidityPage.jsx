@@ -18,15 +18,11 @@ import { useHideComponent } from "../../hooks/useHideComponent"
 import { gt } from "../../utils/arithmetics.utils"
 
 import KeepOnlyPool from "../../components/KeepOnlyPool"
-import { ExplorerModeConnector } from "../../connectors/explorer-mode-connector"
-import { useModal } from "../../hooks/useModal"
-import ExplorerModeModal from "../../components/ExplorerModeModal"
 
-const LiquidityPage = ({ headerTitle, explorerMode = false }) => {
+const LiquidityPage = ({ headerTitle }) => {
   const [isBannerVisible, hideBanner] = useHideComponent(false)
-  const { isConnected, connector, connectAppWithWallet } = useWeb3Context()
+  const { isConnected } = useWeb3Context()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
-  const { openModal, closeModal } = useModal()
 
   const { TBTC_SADDLE, KEEP_ETH, TBTC_ETH, KEEP_TBTC, KEEP_ONLY } = useSelector(
     (state) => state.liquidityRewards
@@ -34,26 +30,6 @@ const LiquidityPage = ({ headerTitle, explorerMode = false }) => {
 
   const dispatch = useDispatch()
   const address = useWeb3Address()
-
-  useEffect(() => {
-    // TODO: separate getting address from url to separate function
-    const address = window.location.pathname.split("/")[1]
-    if (explorerMode && !connector) {
-      const explorerModeConnector = new ExplorerModeConnector()
-      openModal(
-        <ExplorerModeModal
-          connectAppWithWallet={connectAppWithWallet}
-          connector={explorerModeConnector}
-          closeModal={closeModal}
-          address={address}
-          connectWithWalletOnMount={true}
-        />,
-        {
-          title: "Connect Wallet",
-        }
-      )
-    }
-  }, [])
 
   useEffect(() => {
     if (isConnected) {

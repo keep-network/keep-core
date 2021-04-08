@@ -92,16 +92,13 @@ export const renderExplorerModePage = (PageComponent, index) => {
       exact={PageComponent.route.exact}
       key={`${finalPath}-${index}`}
       render={(routeProps) => {
-        const pathname = routeProps.location.pathname
-        // TODO: separate getting address from url to separate function
-        const address = pathname.split("/")[1]
+        const address = routeProps.match.params.address
         // TODO: Use/Create function to check if it's valid eth address
         if (address.slice(0, 2) === "0x") {
           return (
             <PageComponent
               routes={PageComponent.route.pages}
               {...PageComponent.route}
-              explorerMode={true}
             />
           )
         }
