@@ -1,8 +1,13 @@
-import { KEEP_BONDING_CONTRACT_NAME } from "../constants/constants"
+import {
+  KEEP_BONDING_CONTRACT_NAME,
+  TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+  TOKEN_STAKING_CONTRACT_NAME,
+  STAKING_PORT_BACKER_CONTRACT_NAME,
+} from "../constants/constants"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import {
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
   getBondedECDSAKeepFactoryAddress,
   getTBTCSystemAddress,
   ContractsLoaded,
@@ -163,7 +168,9 @@ const fetchCreatedBonds = async (operatorAddresses, sortitionPoolAddress) => {
   if (!isEmptyArray(operatorAddresses)) {
     createdBonds = (
       await keepBondingContract.getPastEvents("BondCreated", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[KEEP_BONDING_CONTRACT_NAME],
+        fromBlock: await getContractDeploymentBlockNumber(
+          KEEP_BONDING_CONTRACT_NAME
+        ),
         filter: {
           operator: operatorAddresses,
           sortitionPool: sortitionPoolAddress,
@@ -302,7 +309,9 @@ const getAllGranteeOperators = async (operatorsOfGrantee) => {
   // We need to take into account that the delegation from a grant can be redelegated to a new operator.
   const grantIdsToScan = (
     await tokenStakingEscrow.getPastEvents("DepositRedelegated", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_ESCROW_CONTRACT_NAME
+      ),
       filter: {
         previousOperator: operatorsOfGrantee,
       },
@@ -315,7 +324,9 @@ const getAllGranteeOperators = async (operatorsOfGrantee) => {
   const redelagations = isEmptyArray(grantIdsToScan)
     ? []
     : await tokenStakingEscrow.getPastEvents("DepositRedelegated", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_STAKING_ESCROW_CONTRACT_NAME
+        ),
         filter: {
           grantId: grantIdsToScan,
         },
@@ -347,7 +358,9 @@ const getAllGranteeOperators = async (operatorsOfGrantee) => {
       // since `TokenGrant` stores the old grantee-operator relationship.
       (
         await stakingContract.getPastEvents("OperatorStaked", {
-          fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+          fromBlock: await getContractDeploymentBlockNumber(
+            TOKEN_STAKING_CONTRACT_NAME
+          ),
           filter: { operator: activeOperators },
         })
       ).map((_) => _.returnValues.operator)
@@ -361,7 +374,9 @@ const getCopiedOperatorsFromLiquidTokens = async (
 
   const operatorsToCheck = (
     await stakingPortBackerContract.getPastEvents("StakeCopied", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        STAKING_PORT_BACKER_CONTRACT_NAME
+      ),
       filter: { owner: ownerOrGrantee },
     })
   )

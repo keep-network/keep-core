@@ -1,9 +1,13 @@
 import web3Utils from "web3-utils"
-import { ContractsLoaded, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { ContractsLoaded, getContractDeploymentBlockNumber } from "../contracts"
 import { ECDSARewardsHelper } from "../utils/rewardsHelper"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import rewardsData from "../rewards-allocation/rewards.json"
+import {
+  KEEP_TOKEN_CONTRACT_NAME,
+  ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME,
+} from "../constants/constants"
 
 // The merkle root is as key in the `rewards.json` data. First merkle root
 // points to a first reward interval, second to a second reward interval and so on.
@@ -24,7 +28,9 @@ export const fetchtTotalDistributedRewards = async (
   // In ^ that case we are sure that transferred KEEPs were from rewards contract.
   return (
     await tokenContract.getPastEvents("Transfer", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.token,
+      fromBlock: await getContractDeploymentBlockNumber(
+        KEEP_TOKEN_CONTRACT_NAME
+      ),
       filter: { from: rewardsContract.options.address, to: beneficiary },
     })
   ).reduce((reducer, event) => add(reducer, event.returnValues.value), 0)
@@ -96,7 +102,9 @@ export const fetchECDSAClaimedRewards = async (operators) => {
 
   return (
     await ECDSARewardsDistributorContract.getPastEvents("RewardsClaimed", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.ECDSARewardsDistributorContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME
+      ),
       filter: { operator: operators },
     })
   ).map((event) => {

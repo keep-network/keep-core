@@ -3,7 +3,7 @@ import {
   TOKEN_STAKING_CONTRACT_NAME,
 } from "../constants/constants"
 import {
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
   Web3Loaded,
   ContractsLoaded,
 } from "../contracts"
@@ -18,11 +18,13 @@ const fetchSlashedTokens = async (address) => {
     keepRandomBeaconOperatorContract,
   } = await ContractsLoaded
   const operatorEventsSearchFilters = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(OPERATOR_CONTRACT_NAME),
   }
 
   const eventsSearchFilters = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(
+      TOKEN_STAKING_CONTRACT_NAME
+    ),
     filter: { operator: address },
   }
   const data = []

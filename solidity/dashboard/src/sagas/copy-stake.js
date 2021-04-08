@@ -8,10 +8,11 @@ import {
 import { fetchOldDelegations } from "../services/staking-port-backer.service"
 import { getContractsContext } from "./utils"
 import { sendTransaction, createSubcribeToContractEventChannel } from "./web3"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { getContractDeploymentBlockNumber } from "../contracts"
 import { showMessage, showCreatedMessage } from "../actions/messages"
 import { isEmptyArray } from "../utils/array.utils"
 import { messageType } from "../components/Message"
+import { STAKING_PORT_BACKER_CONTRACT_NAME } from "../constants/constants"
 
 function* fetchOldStakingDelegations() {
   try {
@@ -73,7 +74,10 @@ function* safeCopyStake(operator) {
     [stakingPortBackerContract, stakingPortBackerContract.getPastEvents],
     "StakeCopied",
     {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      fromBlock: yield call(
+        getContractDeploymentBlockNumber,
+        STAKING_PORT_BACKER_CONTRACT_NAME
+      ),
       filter: { operator },
     }
   )
