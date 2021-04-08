@@ -69,7 +69,7 @@ function createTransactionEventChannel(
       .once("error", (error, receipt) => {
         emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(txHashCache))
-        if (error.name === "ExplorerModeSubproviderError") return
+        if (error.name === "ExplorerModeSubproviderError") emit(END)
         showErrorMessage = showMessage({
           messageType: messageType.ERROR,
           messageProps: {
