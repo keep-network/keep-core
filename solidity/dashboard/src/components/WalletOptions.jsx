@@ -52,7 +52,7 @@ const WALLETS_OPTIONS = [
     connector: new WalletConnectConnector(),
   },
   {
-    label: "ExplorerMode",
+    label: "Explorer Mode",
     icon: Icons.Wallet,
     isHardwareWallet: false,
     connector: new ExplorerModeConnector(),
@@ -64,7 +64,11 @@ const WalletOptions = ({ displayExplorerMode = true }) => {
     <ul className="wallet__options">
       {WALLETS_OPTIONS.map((wallet) => {
         // do not display explorer mode option inside WalletSelectionModal
-        if (!displayExplorerMode && wallet.label === "ExplorerMode") return null
+        if (
+          !displayExplorerMode &&
+          wallet.label === WALLETS.EXPLORER_MODE.label
+        )
+          return null
         return renderWallet(wallet)
       })}
     </ul>
@@ -106,12 +110,19 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
     }
   }
 
+  const modalTitle =
+    label === WALLETS.EXPLORER_MODE.label
+      ? "Connect Ethereum Address"
+      : "Connect Wallet"
+
+  console.log('LABEL', label)
+
   return (
     <li
       className="wallet__item"
       onClick={async () => {
         openModal(renderModalContent(), {
-          title: "Connect Wallet",
+          title: modalTitle,
           closeModal: customCloseModal,
         })
       }}

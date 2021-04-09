@@ -34,7 +34,7 @@ export const WALLETS = {
   LEDGER: { label: "Ledger", name: "LEDGER" },
   WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
   EXPLORER_MODE: {
-    label: "ExplorerMode",
+    label: "Explorer Mode",
     name: "EXPLORER_MODE",
   },
 }

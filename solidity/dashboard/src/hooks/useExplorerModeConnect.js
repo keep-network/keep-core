@@ -38,7 +38,7 @@ const useExplorerModeConnect = () => {
             connectWithWalletOnMount={true}
           />,
           {
-            title: "Connect Wallet",
+            title: "Connect Ethereum Address",
           }
         )
       }

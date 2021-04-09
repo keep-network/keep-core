@@ -7,7 +7,9 @@ export const WalletSelectionModal = () => {
     <div className="flex column center">
       <div className="flex full-center mb-3">
         <h3 className="ml-1">
-          Select the wallet you want to connect with to proceed
+          {
+            "You're viewing the Dashboard in Explorer Mode. Connect a wallet to proceed."
+          }
         </h3>
       </div>
       <span className="text-center mt-1">

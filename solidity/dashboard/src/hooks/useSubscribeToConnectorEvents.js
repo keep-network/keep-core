@@ -31,7 +31,7 @@ const useSubscribeToConnectorEvents = () => {
         payload: payload,
       })
       openModal(<WalletSelectionModal />, {
-        title: "Select wallet",
+        title: "Select Wallet",
       })
     }
 
