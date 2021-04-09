@@ -6,7 +6,7 @@ import {
   getGuaranteedMinimumStakingPolicyContractAddress,
   getPermissiveStakingPolicyContractAddress,
   createManagedGrantContractInstance,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
   Web3Loaded,
   ContractsLoaded,
 } from "../contracts"
@@ -187,8 +187,9 @@ const fetchManagedGrants = async () => {
   const managedGrantCreatedEvents = await managedGrantFactoryContract.getPastEvents(
     "ManagedGrantCreated",
     {
-      fromBlock:
-        CONTRACT_DEPLOY_BLOCK_NUMBER[MANAGED_GRANT_FACTORY_CONTRACT_NAME],
+      fromBlock: await getContractDeploymentBlockNumber(
+        MANAGED_GRANT_FACTORY_CONTRACT_NAME
+      ),
     }
   )
   const grants = []

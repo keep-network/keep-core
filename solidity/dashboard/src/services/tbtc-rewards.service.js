@@ -4,7 +4,7 @@ import {
   TBTC_SYSTEM_CONTRACT_NAME,
 } from "../constants/constants"
 import {
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
   createDepositContractInstance,
   createBondedECDSAKeepContractInstance,
   ContractsLoaded,
@@ -21,7 +21,7 @@ const fetchTBTCRewards = async (beneficiaryAddress) => {
   }
 
   const transferEventSearchFilter = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_TOKEN_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(TBTC_TOKEN_CONTRACT_NAME),
     filter: { to: web3Utils.toChecksumAddress(beneficiaryAddress) },
   }
 
@@ -38,7 +38,9 @@ const fetchTBTCRewards = async (beneficiaryAddress) => {
         ),
       }
   const depositCreatedSearchFilter = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_SYSTEM_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(
+      TBTC_SYSTEM_CONTRACT_NAME
+    ),
     filter: depositCreatedFilterParam,
   }
 

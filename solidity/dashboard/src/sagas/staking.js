@@ -8,7 +8,7 @@ import {
 } from "./utils"
 import moment from "moment"
 import { sendTransaction } from "./web3"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { getContractDeploymentBlockNumber } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
 import { fromTokenUnit } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
@@ -20,6 +20,7 @@ import { isEmptyArray } from "../utils/array.utils"
 import { showMessage } from "../actions/messages"
 import { isSameEthAddress } from "../utils/general.utils"
 import { messageType } from "../components/Message"
+import { TOKEN_STAKING_ESCROW_CONTRACT_NAME } from "../constants/constants"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -106,7 +107,10 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
     [tokenStakingEscrow, tokenStakingEscrow.getPastEvents],
     "Deposited",
     {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+      fromBlock: yield call(
+        getContractDeploymentBlockNumber,
+        TOKEN_STAKING_ESCROW_CONTRACT_NAME
+      ),
       filter: { grantId },
     }
   )

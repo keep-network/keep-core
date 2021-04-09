@@ -2,7 +2,7 @@ import web3Utils from "web3-utils"
 import {
   createERC20Contract,
   createSaddleSwapContract,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
 } from "../contracts"
 import BigNumber from "bignumber.js"
 import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
@@ -14,6 +14,7 @@ import {
 import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import { KEEP_TOKEN_GEYSER_CONTRACT_NAME } from "../constants/constants"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -347,7 +348,9 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     const tokensLockedEvents = await this.LPRewardsContract.getPastEvents(
       "TokensLocked",
       {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.keepTokenGeyserContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          KEEP_TOKEN_GEYSER_CONTRACT_NAME
+        ),
       }
     )
 

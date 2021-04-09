@@ -6,9 +6,10 @@ import {
   createManagedGrantContractInstance,
   Web3Loaded,
   ContractsLoaded,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
 } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
+import { STAKING_PORT_BACKER_CONTRACT_NAME } from "../constants/constants"
 
 const filterOutByOperator = (toFilterOut) => (operator) =>
   !toFilterOut.includes(operator)
@@ -26,7 +27,9 @@ export const fetchOldDelegations = async () => {
   // the `StakedCopied` event from the `StakingPortBacker` contract.
   const copiedStakesOperator = (
     await stakingPortBackerContract.getPastEvents("StakeCopied", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        STAKING_PORT_BACKER_CONTRACT_NAME
+      ),
       filter: { owner: yourAddress },
     })
   ).map((_) => _.returnValues.operator)
@@ -58,7 +61,9 @@ export const fetchOldDelegations = async () => {
   ) {
     operatorsToSkip = (
       await oldTokenStakingContract.getPastEvents("Undelegated", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          STAKING_PORT_BACKER_CONTRACT_NAME
+        ),
         filter: {
           operator: [
             ...operatorsAddressesSet,

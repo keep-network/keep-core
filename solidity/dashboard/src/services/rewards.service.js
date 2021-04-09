@@ -1,6 +1,6 @@
 import web3Utils from "web3-utils"
 import { add, gt } from "../utils/arithmetics.utils"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER, ContractsLoaded } from "../contracts"
+import { getContractDeploymentBlockNumber, ContractsLoaded } from "../contracts"
 import {
   OPERATOR_CONTRACT_NAME,
   REWARD_STATUS,
@@ -17,7 +17,7 @@ const fetchAvailableRewards = async (address) => {
   try {
     let totalRewardsBalance = web3Utils.toBN(0)
     const operatorEventsSearchFilters = {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
+      fromBlock: await getContractDeploymentBlockNumber(OPERATOR_CONTRACT_NAME),
     }
 
     // get all created groups
@@ -95,7 +95,7 @@ const fetchAvailableRewards = async (address) => {
 const fetchWithdrawalHistory = async (address) => {
   const { keepRandomBeaconOperatorContract } = await ContractsLoaded
   const searchFilters = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(OPERATOR_CONTRACT_NAME),
     filter: { beneficiary: address },
   }
 

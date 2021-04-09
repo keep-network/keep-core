@@ -2,7 +2,7 @@ import web3Utils from "web3-utils"
 import moment from "moment"
 import {
   createManagedGrantContractInstance,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
 } from "../contracts"
 import { ContractsLoaded, Web3Loaded } from "../contracts"
 import {
@@ -13,6 +13,10 @@ import {
 } from "./token-staking.service"
 import { sub, gt } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import {
+  TOKEN_STAKING_CONTRACT_NAME,
+  TOKEN_GRANT_CONTRACT_NAME,
+} from "../constants/constants"
 
 export const fetchTokensPageData = async () => {
   const web3 = await Web3Loaded
@@ -211,7 +215,9 @@ const getOwnedDelegations = async (
   // Scan `OperatorStaked` event by operator(indexed param) to get authorizer and beneeficiary.
   const operatorToDetails = (
     await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { operator: operators },
     })
   ).reduce(toOperator, {})
@@ -281,7 +287,9 @@ export const getCopiedDelegations = async (
   const operatorToDetails = (isEmptyArray(operators)
     ? []
     : await stakingContract.getPastEvents("OperatorStaked", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_STAKING_CONTRACT_NAME
+        ),
         filter: { operator: operators },
       })
   ).reduce((reducer, _) => {
@@ -296,7 +304,9 @@ export const getCopiedDelegations = async (
     const tokenGrantStakingEvents = await grantContract.getPastEvents(
       "TokenGrantStaked",
       {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.grantContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_GRANT_CONTRACT_NAME
+        ),
         filter: { grantId: grantIds },
       }
     )
