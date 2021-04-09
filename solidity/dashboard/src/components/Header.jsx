@@ -1,9 +1,8 @@
 import React from "react"
-import { NavLink } from "react-router-dom"
 import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
 import Chip from "./Chip"
-import useWalletAddressFromUrl from "../hooks/useWalletAddressFromUrl";
+import CustomNavLink from "./CustomNavLink";
 
 const Header = ({ title, subLinks, className = "", newPage = false }) => {
   return (
@@ -25,20 +24,16 @@ const Header = ({ title, subLinks, className = "", newPage = false }) => {
 }
 
 const SubNavItem = ({ title, path }) => {
-  const walletAddressFromUrl = useWalletAddressFromUrl()
-  const finalPath = walletAddressFromUrl
-    ? "/" + walletAddressFromUrl + path
-    : path
   return (
     <li className="sub-nav__item-wrapper">
-      <NavLink
-        to={finalPath}
+      <CustomNavLink
+        to={path}
         className="sub-nav__item"
         activeClassName="sub-nav__item--active"
         exact={true}
       >
         {title}
-      </NavLink>
+      </CustomNavLink>
     </li>
   )
 }

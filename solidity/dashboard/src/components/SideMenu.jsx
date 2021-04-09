@@ -1,5 +1,5 @@
 import React from "react"
-import { Link, NavLink, useRouteMatch } from "react-router-dom"
+import { useRouteMatch } from "react-router-dom"
 import OverviewPage from "../pages/OverviewPage"
 import DelegationPage from "../pages/delegation"
 import TokenGrantsPage from "../pages/grants"
@@ -13,7 +13,7 @@ import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
-import useWalletAddressFromUrl from "../hooks/useWalletAddressFromUrl";
+import CustomNavLink from "./CustomNavLink";
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -24,13 +24,13 @@ export const SideMenu = (props) => {
     <nav className="side-menu--active">
       <ul className="side-menu__list">
         <li className="side-menu__route-wrapper">
-          <NavLink
+          <CustomNavLink
             to={OverviewPage.route.path}
             className="side-menu__route"
             activeClassName="side-menu__route--active"
           >
             {OverviewPage.route.title}
-          </NavLink>
+          </CustomNavLink>
           <Divider style={styles.overviewDivider} />
         </li>
         <NavLinkSection
@@ -96,20 +96,16 @@ const NavLinkSectionRoute = ({ title, path, exact, withNewLabel }) => {
     exact,
   })
 
-  const walletAddressFromUrl = useWalletAddressFromUrl()
-  const finalPath = walletAddressFromUrl
-    ? "/" + walletAddressFromUrl + path
-    : path
-
   return (
     <li className="side-menu__route-wrapper">
-      <Link
-        to={finalPath}
+      <CustomNavLink
+        to={path}
         className={`side-menu__route${match ? "--active" : ""}`}
+        activeClassName={`side-menu__route--active`}
       >
         {title}
         {withNewLabel && <Chip text="NEW" size="tiny" className="ml-1" />}
-      </Link>
+      </CustomNavLink>
     </li>
   )
 }
