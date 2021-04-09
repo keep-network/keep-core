@@ -4,12 +4,17 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
 import { useModal } from "./useModal"
 import { WalletSelectionModal } from "../components/WalletSelectionModal"
+import { useLocation, useHistory } from "react-router-dom"
+import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 
 const useSubscribeToConnectorEvents = () => {
   const dispatch = useDispatch()
   const { isConnected, connector, yourAddress, web3 } = useWeb3Context()
   const { openModal } = useModal()
   const { transactionQueue } = useSelector((state) => state.transactions)
+  const history = useHistory()
+  const location = useLocation()
+  const walletAddressFromUrl = useWalletAddressFromUrl()
 
   useEffect(() => {
     const accountChangedHandler = (address) => {
@@ -30,14 +35,14 @@ const useSubscribeToConnectorEvents = () => {
       })
     }
 
-    const executeTransactionsInQueue = async () => {
-      if (transactionQueue.length > 0) {
-        for (const transaction of transactionQueue) {
-          await web3.eth.currentProvider.sendAsync(transaction)
-        }
+    const executeTransactionsInQueue = async (transactions) => {
+      if (transactions.length > 0) {
         dispatch({
           type: "transactions/clear_queue",
         })
+        for (const transaction of transactions) {
+          await web3.eth.currentProvider.sendAsync(transaction)
+        }
       }
     }
 
@@ -54,7 +59,14 @@ const useSubscribeToConnectorEvents = () => {
           showChooseWalletModal
         )
       } else {
-        executeTransactionsInQueue()
+        executeTransactionsInQueue(transactionQueue)
+        if (walletAddressFromUrl) {
+          const newPath = location.pathname.replace(
+            "/" + walletAddressFromUrl,
+            ""
+          )
+          history.push({ pathname: newPath })
+        }
       }
     }
 

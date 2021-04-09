@@ -1,4 +1,4 @@
-import React  from "react"
+import React from "react"
 import { Link } from "react-router-dom"
 import Web3ContextProvider from "./components/Web3ContextProvider"
 import Routing from "./components/Routing"

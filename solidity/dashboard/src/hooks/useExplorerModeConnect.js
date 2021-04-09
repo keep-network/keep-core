@@ -2,12 +2,14 @@ import React, { useEffect } from "react"
 import web3Utils from "web3-utils"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import ExplorerModeModal from "../components/ExplorerModeModal"
-import { useLocation } from "react-router-dom"
+import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
+import { WALLETS } from "../constants/constants"
 
 /**
  * Checks if there is addres in the url and the tries to connect to explorer mode
+ *
  *
  * Url pattern: http(s)://<site_name>/<address>/<page>
  * Example for localhost:
@@ -16,14 +18,16 @@ import { useWeb3Context } from "../components/WithWeb3Context"
  */
 const useExplorerModeConnect = () => {
   const location = useLocation()
+  const history = useHistory()
   const { openModal, closeModal } = useModal()
-  const { connector, connectAppWithWallet } = useWeb3Context()
+  const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
 
   useEffect(() => {
     const pathnameSplitted = location.pathname.split("/")
-    if (pathnameSplitted.length > 1 && pathnameSplitted[1] && !connector) {
+    if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
       const address = pathnameSplitted[1]
-      if (web3Utils.isAddress(address)) {
+      // log in to explorer mode when pasting url with address
+      if (web3Utils.isAddress(address) && !connector) {
         const explorerModeConnector = new ExplorerModeConnector()
         openModal(
           <ExplorerModeModal
@@ -38,11 +42,19 @@ const useExplorerModeConnect = () => {
           }
         )
       }
-    }
 
-    // TODO: CHeck if connector is set to explorer mode and if yes
-    // then redirect to proper site with the wallet address in URL
-  }, [location.pathname])
+      // change url to the one with address when we connect to the explorer mode
+      if (
+        !web3Utils.isAddress(address) &&
+        connector &&
+        yourAddress &&
+        connector.name === WALLETS.EXPLORER_MODE.name
+      ) {
+        const newPathname = "/" + yourAddress + location.pathname
+        history.push({ pathname: newPathname })
+      }
+    }
+  }, [location.pathname, connector, yourAddress])
 }
 
 export default useExplorerModeConnect
