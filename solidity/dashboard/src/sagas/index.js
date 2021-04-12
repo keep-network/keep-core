@@ -9,9 +9,31 @@ import * as keepTokenBalance from "./keep-balance"
 import * as rewards from "./rewards"
 import * as liquidityRewards from "./liquidity-rewards"
 import * as operator from "./operartor"
-import * as authrization from "./authorization"
+import * as authorization from "./authorization"
+
+const {
+  watchFetchLiquidityRewardsAPY,
+  ...restliquidityRewards
+} = liquidityRewards
+
+const loginRequiredSagas = [
+  ...Object.values(delegateStakeSaga),
+  watchSendTransactionRequest,
+  ...Object.values(tokenGrantSaga),
+  ...Object.values(copyStakeSaga),
+  ...Object.values(subscriptions),
+  ...Object.values(keepTokenBalance),
+  ...Object.values(rewards),
+  ...Object.values(restliquidityRewards),
+  ...Object.values(operator),
+  ...Object.values(authorization),
+]
+
+const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
 
 export default function* rootSaga() {
+  yield all(sagas.map(fork))
+
   while (true) {
     const {
       payload: { address },
@@ -26,21 +48,7 @@ export default function* rootSaga() {
 
 export function* runTasks() {
   while (true) {
-    const tasks = yield all(
-      [
-        ...Object.values(messagesSaga),
-        ...Object.values(delegateStakeSaga),
-        watchSendTransactionRequest,
-        ...Object.values(tokenGrantSaga),
-        ...Object.values(copyStakeSaga),
-        ...Object.values(subscriptions),
-        ...Object.values(keepTokenBalance),
-        ...Object.values(rewards),
-        ...Object.values(liquidityRewards),
-        ...Object.values(operator),
-        ...Object.values(authrization),
-      ].map(fork)
-    )
+    const tasks = yield all(loginRequiredSagas.map(fork))
 
     const {
       payload: { address },

@@ -349,7 +349,8 @@ class TokenGeyserLPRewards extends LiquidityRewards {
       "TokensLocked",
       {
         fromBlock: await getContractDeploymentBlockNumber(
-          KEEP_TOKEN_GEYSER_CONTRACT_NAME
+          KEEP_TOKEN_GEYSER_CONTRACT_NAME,
+          this.web3
         ),
       }
     )
