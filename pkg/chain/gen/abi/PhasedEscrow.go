@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindPhasedEscrow(address common.Address, caller bind.ContractCaller, transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_PhasedEscrow *PhasedEscrowRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_PhasedEscrow *PhasedEscrowRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _PhasedEscrow.Contract.PhasedEscrowCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_PhasedEscrow *PhasedEscrowRaw) Transact(opts *bind.TransactOpts, method s
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_PhasedEscrow *PhasedEscrowCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_PhasedEscrow *PhasedEscrowCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _PhasedEscrow.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,104 +173,124 @@ func (_PhasedEscrow *PhasedEscrowTransactorRaw) Transact(opts *bind.TransactOpts
 
 // Beneficiary is a free data retrieval call binding the contract method 0x38af3eed.
 //
-// Solidity: function beneficiary() constant returns(address)
+// Solidity: function beneficiary() view returns(address)
 func (_PhasedEscrow *PhasedEscrowCaller) Beneficiary(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _PhasedEscrow.contract.Call(opts, out, "beneficiary")
-	return *ret0, err
+	var out []interface{}
+	err := _PhasedEscrow.contract.Call(opts, &out, "beneficiary")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Beneficiary is a free data retrieval call binding the contract method 0x38af3eed.
 //
-// Solidity: function beneficiary() constant returns(address)
+// Solidity: function beneficiary() view returns(address)
 func (_PhasedEscrow *PhasedEscrowSession) Beneficiary() (common.Address, error) {
 	return _PhasedEscrow.Contract.Beneficiary(&_PhasedEscrow.CallOpts)
 }
 
 // Beneficiary is a free data retrieval call binding the contract method 0x38af3eed.
 //
-// Solidity: function beneficiary() constant returns(address)
+// Solidity: function beneficiary() view returns(address)
 func (_PhasedEscrow *PhasedEscrowCallerSession) Beneficiary() (common.Address, error) {
 	return _PhasedEscrow.Contract.Beneficiary(&_PhasedEscrow.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_PhasedEscrow *PhasedEscrowCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _PhasedEscrow.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _PhasedEscrow.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_PhasedEscrow *PhasedEscrowSession) IsOwner() (bool, error) {
 	return _PhasedEscrow.Contract.IsOwner(&_PhasedEscrow.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_PhasedEscrow *PhasedEscrowCallerSession) IsOwner() (bool, error) {
 	return _PhasedEscrow.Contract.IsOwner(&_PhasedEscrow.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_PhasedEscrow *PhasedEscrowCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _PhasedEscrow.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _PhasedEscrow.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_PhasedEscrow *PhasedEscrowSession) Owner() (common.Address, error) {
 	return _PhasedEscrow.Contract.Owner(&_PhasedEscrow.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_PhasedEscrow *PhasedEscrowCallerSession) Owner() (common.Address, error) {
 	return _PhasedEscrow.Contract.Owner(&_PhasedEscrow.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_PhasedEscrow *PhasedEscrowCaller) Token(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _PhasedEscrow.contract.Call(opts, out, "token")
-	return *ret0, err
+	var out []interface{}
+	err := _PhasedEscrow.contract.Call(opts, &out, "token")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_PhasedEscrow *PhasedEscrowSession) Token() (common.Address, error) {
 	return _PhasedEscrow.Contract.Token(&_PhasedEscrow.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_PhasedEscrow *PhasedEscrowCallerSession) Token() (common.Address, error) {
 	return _PhasedEscrow.Contract.Token(&_PhasedEscrow.CallOpts)
 }
@@ -532,6 +551,7 @@ func (_PhasedEscrow *PhasedEscrowFilterer) ParseBeneficiaryUpdated(log types.Log
 	if err := _PhasedEscrow.contract.UnpackLog(event, "BeneficiaryUpdated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -684,6 +704,7 @@ func (_PhasedEscrow *PhasedEscrowFilterer) ParseOwnershipTransferred(log types.L
 	if err := _PhasedEscrow.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -818,5 +839,6 @@ func (_PhasedEscrow *PhasedEscrowFilterer) ParseTokensWithdrawn(log types.Log) (
 	if err := _PhasedEscrow.contract.UnpackLog(event, "TokensWithdrawn", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

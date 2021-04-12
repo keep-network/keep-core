@@ -37,6 +37,7 @@ describe("TokenDistributor", () => {
   let recipient
   let claimDestination
   let thirdParty
+  let signature
 
   const freshDeployment = async () => {
     testToken = await TestToken.new({ from: owner })
@@ -64,6 +65,12 @@ describe("TokenDistributor", () => {
     )
 
     await freshDeployment()
+
+    signature = signDestinationAddress(
+      testData.recipient.privateKey,
+      tokenDistributor.address,
+      claimDestination
+    )
   })
 
   beforeEach(async () => {
@@ -114,6 +121,7 @@ describe("TokenDistributor", () => {
         {
           merkleRoot: testData.merkle.merkleRoot,
           amount: toBN(testData.merkle.tokenTotal),
+          unclaimedUnlockTimestamp: await tokenDistributor.unclaimedUnlockTimestamp(),
         }
       )
     })
@@ -130,14 +138,22 @@ describe("TokenDistributor", () => {
         (await web3.eth.getBlock(receipt.blockNumber)).timestamp
       )
 
+      const expectedUnclaimedUnlockDuration = toBN(
+        timestamp.add(unclaimedUnlockDuration)
+      )
+
       expect(
         await tokenDistributor.unclaimedUnlockTimestamp(),
         "invalid unclaimed unlock timestamp"
-      ).to.eq.BN(timestamp.add(unclaimedUnlockDuration))
+      ).to.eq.BN(expectedUnclaimedUnlockDuration)
+
+      expectEvent(receipt, "TokensAllocated", {
+        unclaimedUnlockTimestamp: expectedUnclaimedUnlockDuration,
+      })
     })
 
     it("doesn't set unclaimed tokens unlock timestamp when unclaimed duration is not provided", async function () {
-      await tokenDistributor.allocate(
+      const receipt = await tokenDistributor.allocate(
         testData.merkle.merkleRoot,
         testData.merkle.tokenTotal,
         0,
@@ -148,6 +164,10 @@ describe("TokenDistributor", () => {
         await tokenDistributor.unclaimedUnlockTimestamp(),
         "invalid unclaimed unlock timestamp"
       ).to.eq.BN(0)
+
+      expectEvent(receipt, "TokensAllocated", {
+        unclaimedUnlockTimestamp: toBN(0),
+      })
     })
 
     it("reverts on merkle root overwrite", async function () {
@@ -247,9 +267,9 @@ describe("TokenDistributor", () => {
       await tokenDistributor.claim(
         recipient,
         claimDestination,
-        testData.signature.v,
-        testData.signature.r,
-        testData.signature.s,
+        signature.v,
+        signature.r,
+        signature.s,
         testData.merkle.claims[recipient].index,
         testData.merkle.claims[recipient].amount,
         testData.merkle.claims[recipient].proof
@@ -271,13 +291,19 @@ describe("TokenDistributor", () => {
     })
 
     it("emits event", async function () {
+      const signature = signDestinationAddress(
+        testData.recipient.privateKey,
+        tokenDistributor.address,
+        claimDestination
+      )
+
       expectEvent(
         await tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
           testData.merkle.claims[recipient].proof
@@ -298,9 +324,10 @@ describe("TokenDistributor", () => {
         submitter,
         shouldRevert
       ) {
-        const signature = web3.eth.accounts.sign(
-          web3.utils.keccak256(claimDestination),
-          signerPrivateKey
+        const signature = signDestinationAddress(
+          signerPrivateKey,
+          tokenDistributor.address,
+          claimDestination
         )
 
         claimFuncCall = tokenDistributor.claim(
@@ -374,15 +401,14 @@ describe("TokenDistributor", () => {
         "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"
       )
 
-      const malleableS =
-        "0x" + secp256k1N.sub(toBN(testData.signature.s)).toJSON()
+      const malleableS = "0x" + secp256k1N.sub(toBN(signature.s)).toJSON()
 
       await expectRevert(
         tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
+          signature.v,
+          signature.r,
           malleableS,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
@@ -395,9 +421,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v - 27,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v - 27,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
           testData.merkle.claims[recipient].proof
@@ -411,9 +437,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           ZERO_ADDRESS,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
           testData.merkle.claims[recipient].proof
@@ -425,9 +451,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           recipient,
           ZERO_ADDRESS,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
           testData.merkle.claims[recipient].proof
@@ -445,9 +471,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
           testData.merkle.claims[recipient].proof
@@ -460,9 +486,9 @@ describe("TokenDistributor", () => {
       await tokenDistributor.claim(
         recipient,
         claimDestination,
-        testData.signature.v,
-        testData.signature.r,
-        testData.signature.s,
+        signature.v,
+        signature.r,
+        signature.s,
         testData.merkle.claims[recipient].index,
         testData.merkle.claims[recipient].amount,
         testData.merkle.claims[recipient].proof
@@ -472,9 +498,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           testData.merkle.claims[recipient].amount,
           testData.merkle.claims[recipient].proof
@@ -488,9 +514,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[recipient].index,
           toBN(testData.merkle.claims[recipient].amount).addn(1),
           testData.merkle.claims[recipient].proof
@@ -504,9 +530,9 @@ describe("TokenDistributor", () => {
         tokenDistributor.claim(
           recipient,
           claimDestination,
-          testData.signature.v,
-          testData.signature.r,
-          testData.signature.s,
+          signature.v,
+          signature.r,
+          signature.s,
           testData.merkle.claims[thirdParty].index,
           testData.merkle.claims[thirdParty].amount,
           testData.merkle.claims[thirdParty].proof
@@ -574,9 +600,9 @@ describe("TokenDistributor", () => {
       await tokenDistributor.claim(
         recipient,
         claimDestination,
-        testData.signature.v,
-        testData.signature.r,
-        testData.signature.s,
+        signature.v,
+        signature.r,
+        signature.s,
         testData.merkle.claims[recipient].index,
         testData.merkle.claims[recipient].amount,
         testData.merkle.claims[recipient].proof
@@ -636,6 +662,19 @@ describe("TokenDistributor", () => {
       )
     })
   })
+
+  function signDestinationAddress(
+    signerPrivateKey,
+    tokenDistributorAddress,
+    destinationAddress
+  ) {
+    const digest = web3.utils.soliditySha3(
+      tokenDistributorAddress,
+      destinationAddress
+    )
+
+    return web3.eth.accounts.sign(digest, signerPrivateKey)
+  }
 
   async function importAccountFromPrivateKey(privateKey) {
     const password = "password"

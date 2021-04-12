@@ -1,10 +1,13 @@
-import { contractService } from "./contracts.service"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
+import {
+  TOKEN_STAKING_CONTRACT_NAME,
+  TOKEN_STAKING_ESCROW_CONTRACT_NAME,
+  STAKING_PORT_BACKER_CONTRACT_NAME,
+} from "../constants/constants"
 import moment from "moment"
 import {
   isCodeValid,
   createManagedGrantContractInstance,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
   ContractsLoaded,
   Web3Loaded,
 } from "../contracts"
@@ -20,7 +23,9 @@ const delegationInfoFromStakedEvents = async (address) => {
     operatorStakedEvents = await stakingContract.getPastEvents(
       "OperatorStaked",
       {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_STAKING_CONTRACT_NAME
+        ),
         filter: { operator: address },
       }
     )
@@ -44,23 +49,20 @@ const delegationInfoFromStakedEvents = async (address) => {
   }
 }
 
-const fetchDelegatedTokensData = async () => {
+const fetchDelegatedTokensData = async (address) => {
   const { grantContract, stakingContract } = await ContractsLoaded
   const web3 = await Web3Loaded
-  const {
-    eth,
-    eth: { defaultAccount: yourAddress },
-  } = web3
+  const { eth } = web3
   let ownerAddress
 
   const {
     stakingTransactionHash,
     beneficiaryAddress,
     authorizerAddress,
-  } = await delegationInfoFromStakedEvents(yourAddress)
+  } = await delegationInfoFromStakedEvents(address)
 
   const [stakedBalance, initializationPeriod] = await Promise.all([
-    stakingContract.methods.balanceOf(yourAddress).call(),
+    stakingContract.methods.balanceOf(address).call(),
     stakingContract.methods.initializationPeriod().call(),
   ])
 
@@ -93,7 +95,7 @@ const fetchDelegatedTokensData = async () => {
       ownerAddress = await managedGrantContractInstance.methods.grantee().call()
     }
   } else {
-    ownerAddress = await stakingContract.methods.ownerOf(yourAddress).call()
+    ownerAddress = await stakingContract.methods.ownerOf(address).call()
   }
 
   const {
@@ -170,17 +172,15 @@ export const operatorService = {
   fetchPendingUndelegation,
 }
 
-export const getOperatorsOfAuthorizer = async (web3Context, authorizer) => {
+export const getOperatorsOfAuthorizer = async (authorizer) => {
+  const { stakingContract } = await ContractsLoaded
   return (
-    await contractService.getPastEvents(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "OperatorStaked",
-      {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
-        filter: { authorizer },
-      }
-    )
+    await stakingContract.getPastEvents("OperatorStaked", {
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
+      filter: { authorizer },
+    })
   ).map((_) => _.returnValues.operator)
 }
 
@@ -189,7 +189,9 @@ export const getOperatorsOfBeneficiary = async (beneficiary) => {
 
   return (
     await stakingContract.getPastEvents("OperatorStaked", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TOKEN_STAKING_CONTRACT_NAME],
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { beneficiary },
     })
   ).map((_) => _.returnValues.operator)
@@ -204,7 +206,7 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
   const ownerDelegations = await stakingContract.getPastEvents(
     "StakeDelegated",
     {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber.stakingContract,
       filter: { owner, ...filterParam },
     }
   )
@@ -212,7 +214,9 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
   const transferEventsByOwner = await stakingContract.getPastEvents(
     "StakeOwnershipTransferred",
     {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { newOwner: owner, ...filterParam },
     }
   )
@@ -232,7 +236,9 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
   if (!isEmptyArray(operators)) {
     transferEventsByOperators = (
       await stakingContract.getPastEvents("StakeOwnershipTransferred", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_STAKING_CONTRACT_NAME
+        ),
         filter: { operator: operators },
       })
     ).reduce(reduceByOperator, {})
@@ -345,7 +351,9 @@ const getAllGranteeOperators = async (
     escrowRedelegation = await tokenStakingEscrow.getPastEvents(
       "DepositRedelegated",
       {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_STAKING_ESCROW_CONTRACT_NAME
+        ),
         filter: {
           grantId: grantIds,
         },
@@ -387,7 +395,9 @@ const getAllGranteeOperators = async (
   if (!isEmptyArray(activeOperators)) {
     operatorToGrantDetailsMap = (
       await stakingContract.getPastEvents("OperatorStaked", {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          TOKEN_STAKING_CONTRACT_NAME
+        ),
         filter: { operator: activeOperators },
       })
     ).reduce((reducer, _) => {
@@ -415,7 +425,9 @@ export const getOperatorsOfCopiedDelegations = async (ownerOrGrantee) => {
   const { stakingPortBackerContract } = await ContractsLoaded
   const operatorsToCheck = (
     await stakingPortBackerContract.getPastEvents("StakeCopied", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        STAKING_PORT_BACKER_CONTRACT_NAME
+      ),
       filter: { owner: ownerOrGrantee },
     })
   ).map((_) => _.returnValues.operator)

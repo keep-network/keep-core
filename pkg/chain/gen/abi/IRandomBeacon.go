@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindIRandomBeacon(address common.Address, caller bind.ContractCaller, trans
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_IRandomBeacon *IRandomBeaconRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_IRandomBeacon *IRandomBeaconRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _IRandomBeacon.Contract.IRandomBeaconCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_IRandomBeacon *IRandomBeaconRaw) Transact(opts *bind.TransactOpts, method
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_IRandomBeacon *IRandomBeaconCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_IRandomBeacon *IRandomBeaconCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _IRandomBeacon.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,68 +173,73 @@ func (_IRandomBeacon *IRandomBeaconTransactorRaw) Transact(opts *bind.TransactOp
 
 // EntryFeeEstimate is a free data retrieval call binding the contract method 0xd13f1391.
 //
-// Solidity: function entryFeeEstimate(uint256 callbackGas) constant returns(uint256)
+// Solidity: function entryFeeEstimate(uint256 callbackGas) view returns(uint256)
 func (_IRandomBeacon *IRandomBeaconCaller) EntryFeeEstimate(opts *bind.CallOpts, callbackGas *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _IRandomBeacon.contract.Call(opts, out, "entryFeeEstimate", callbackGas)
-	return *ret0, err
+	var out []interface{}
+	err := _IRandomBeacon.contract.Call(opts, &out, "entryFeeEstimate", callbackGas)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // EntryFeeEstimate is a free data retrieval call binding the contract method 0xd13f1391.
 //
-// Solidity: function entryFeeEstimate(uint256 callbackGas) constant returns(uint256)
+// Solidity: function entryFeeEstimate(uint256 callbackGas) view returns(uint256)
 func (_IRandomBeacon *IRandomBeaconSession) EntryFeeEstimate(callbackGas *big.Int) (*big.Int, error) {
 	return _IRandomBeacon.Contract.EntryFeeEstimate(&_IRandomBeacon.CallOpts, callbackGas)
 }
 
 // EntryFeeEstimate is a free data retrieval call binding the contract method 0xd13f1391.
 //
-// Solidity: function entryFeeEstimate(uint256 callbackGas) constant returns(uint256)
+// Solidity: function entryFeeEstimate(uint256 callbackGas) view returns(uint256)
 func (_IRandomBeacon *IRandomBeaconCallerSession) EntryFeeEstimate(callbackGas *big.Int) (*big.Int, error) {
 	return _IRandomBeacon.Contract.EntryFeeEstimate(&_IRandomBeacon.CallOpts, callbackGas)
 }
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
 //
-// Solidity: function requestRelayEntry() returns(uint256)
+// Solidity: function requestRelayEntry() payable returns(uint256)
 func (_IRandomBeacon *IRandomBeaconTransactor) RequestRelayEntry(opts *bind.TransactOpts) (*types.Transaction, error) {
 	return _IRandomBeacon.contract.Transact(opts, "requestRelayEntry")
 }
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
 //
-// Solidity: function requestRelayEntry() returns(uint256)
+// Solidity: function requestRelayEntry() payable returns(uint256)
 func (_IRandomBeacon *IRandomBeaconSession) RequestRelayEntry() (*types.Transaction, error) {
 	return _IRandomBeacon.Contract.RequestRelayEntry(&_IRandomBeacon.TransactOpts)
 }
 
 // RequestRelayEntry is a paid mutator transaction binding the contract method 0x2d53fe8b.
 //
-// Solidity: function requestRelayEntry() returns(uint256)
+// Solidity: function requestRelayEntry() payable returns(uint256)
 func (_IRandomBeacon *IRandomBeaconTransactorSession) RequestRelayEntry() (*types.Transaction, error) {
 	return _IRandomBeacon.Contract.RequestRelayEntry(&_IRandomBeacon.TransactOpts)
 }
 
 // RequestRelayEntry0 is a paid mutator transaction binding the contract method 0xe1f95890.
 //
-// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
+// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) payable returns(uint256)
 func (_IRandomBeacon *IRandomBeaconTransactor) RequestRelayEntry0(opts *bind.TransactOpts, callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _IRandomBeacon.contract.Transact(opts, "requestRelayEntry0", callbackContract, callbackGas)
 }
 
 // RequestRelayEntry0 is a paid mutator transaction binding the contract method 0xe1f95890.
 //
-// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
+// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) payable returns(uint256)
 func (_IRandomBeacon *IRandomBeaconSession) RequestRelayEntry0(callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _IRandomBeacon.Contract.RequestRelayEntry0(&_IRandomBeacon.TransactOpts, callbackContract, callbackGas)
 }
 
 // RequestRelayEntry0 is a paid mutator transaction binding the contract method 0xe1f95890.
 //
-// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) returns(uint256)
+// Solidity: function requestRelayEntry(address callbackContract, uint256 callbackGas) payable returns(uint256)
 func (_IRandomBeacon *IRandomBeaconTransactorSession) RequestRelayEntry0(callbackContract common.Address, callbackGas *big.Int) (*types.Transaction, error) {
 	return _IRandomBeacon.Contract.RequestRelayEntry0(&_IRandomBeacon.TransactOpts, callbackContract, callbackGas)
 }
@@ -371,5 +375,6 @@ func (_IRandomBeacon *IRandomBeaconFilterer) ParseRelayEntryGenerated(log types.
 	if err := _IRandomBeacon.contract.UnpackLog(event, "RelayEntryGenerated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

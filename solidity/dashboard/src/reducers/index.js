@@ -7,6 +7,18 @@ import tokenGrants from "./token-grant"
 import rewards from "./rewards"
 import liquidityRewards from "./liquidity-rewards"
 import notificationsData from "./notifications-data"
+import operator from "./operator"
+import authorization from "./authorization"
+
+const app = (state = { address: null }, action) => {
+  switch (action.type) {
+    case "app/set_account":
+      return { ...state, address: action.payload.address }
+
+    default:
+      return state
+  }
+}
 import transactions from "./transactions"
 
 const reducers = combineReducers({
@@ -17,8 +29,19 @@ const reducers = combineReducers({
   tokenGrants,
   rewards,
   liquidityRewards,
+  app,
   notificationsData,
+  operator,
+  authorization,
   transactions,
 })
 
-export default reducers
+const rootReducer = (state, action) => {
+  if (action.type === "app/reset_store") {
+    state = undefined
+  }
+
+  return reducers(state, action)
+}
+
+export default rootReducer

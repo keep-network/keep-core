@@ -1,36 +1,26 @@
-import { contractService } from "./contracts.service"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
-import { getKeepRandomBeaconOperatorAddress } from "../contracts"
+import {
+  getKeepRandomBeaconOperatorAddress,
+  ContractsLoaded,
+} from "../contracts"
 import { getOperatorsOfAuthorizer } from "./token-staking.service"
 
 const keepRandomBeaconOperatorAddress = getKeepRandomBeaconOperatorAddress()
 
-const fetchRandomBeaconAuthorizationData = async (web3Context) => {
-  const { yourAddress } = web3Context
-
-  const authorizerOperators = await getOperatorsOfAuthorizer(
-    web3Context,
-    yourAddress
-  )
+const fetchRandomBeaconAuthorizationData = async (address) => {
+  const { stakingContract } = await ContractsLoaded
+  const authorizerOperators = await getOperatorsOfAuthorizer(address)
   const authorizationData = []
   // Fetch all authorizer operators
   for (let i = 0; i < authorizerOperators.length; i++) {
     const operatorAddress = authorizerOperators[i]
 
-    const delegatedTokens = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "getDelegationInfo",
-      operatorAddress
-    )
+    const delegatedTokens = await stakingContract.methods
+      .getDelegationInfo(operatorAddress)
+      .call()
 
-    const isKeepRandomBeaconOperatorAuthorized = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "isAuthorizedForOperator",
-      operatorAddress,
-      keepRandomBeaconOperatorAddress
-    )
+    const isKeepRandomBeaconOperatorAuthorized = await stakingContract.methods
+      .isAuthorizedForOperator(operatorAddress, keepRandomBeaconOperatorAddress)
+      .call()
 
     const authorizerOperator = {
       operatorAddress: operatorAddress,

@@ -14,6 +14,10 @@ import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
 import { showMessage } from "../actions/messages"
 import { messageType } from "../components/Message"
+import {
+  OPERATOR_DELEGATION_UNDELEGATED,
+  FETCH_OPERATOR_DELEGATIONS_SUCCESS,
+} from "../actions"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -709,6 +713,11 @@ function* lpTokensStakedOrWithdrawn(
     updatedlpBalance
   )
 
+  const rewardMultiplier = yield call(
+    [LiquidityRewards, LiquidityRewards.calculateRewardMultiplier],
+    defaultAccount
+  )
+
   // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
   // APY and reward value have changed.
   yield put({
@@ -720,6 +729,7 @@ function* lpTokensStakedOrWithdrawn(
       reward,
       apy,
       liquidityRewardPairName,
+      rewardMultiplier,
     },
   })
 }
@@ -933,4 +943,50 @@ export function* subscribeToLiquidityRewardsEvents() {
       }
     )
   }
+}
+
+function* updateOperatorData() {
+  const { stakingContract } = yield getContractsContext()
+
+  // Create subscription channel.
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    stakingContract,
+    "Undelegated"
+  )
+
+  // Observe and dispatch an action that updates keep token balance.
+  while (true) {
+    try {
+      const {
+        returnValues: { operator, undelegatedAt },
+      } = yield take(contractEventCahnnel)
+      const {
+        eth: { defaultAccount },
+      } = yield getWeb3Context()
+
+      if (!isSameEthAddress(defaultAccount, operator)) {
+        return
+      }
+
+      const { undelegationPeriod } = yield select((state) => state.operator)
+
+      const undelegationCompletedAt = moment
+        .unix(undelegatedAt)
+        .add(undelegationPeriod, "seconds")
+
+      yield put({
+        type: OPERATOR_DELEGATION_UNDELEGATED,
+        payload: { undelegationCompletedAt, delegationStatus: "UNDELEGATED" },
+      })
+    } catch (error) {
+      console.error(`Failed subscribing to Undelegated event`, error)
+      contractEventCahnnel.close()
+    }
+  }
+}
+
+export function* subscribeToOperatorUndelegateEvent() {
+  yield take(FETCH_OPERATOR_DELEGATIONS_SUCCESS)
+  yield fork(updateOperatorData)
 }

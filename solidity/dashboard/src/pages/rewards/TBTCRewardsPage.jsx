@@ -36,7 +36,7 @@ const TBTCRewardsPage = () => {
   useEffect(() => {
     dispatch({
       type: "rewards/ecdsa_fetch_rewards_data_request",
-      payload: yourAddress,
+      payload: { address: yourAddress },
     })
   }, [dispatch, yourAddress])
 

@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react"
-import { connect } from "react-redux"
+import React, { useEffect, useState, useMemo } from "react"
+import { useDispatch } from "react-redux"
 import Button from "./Button"
 import { LoadingOverlay } from "./Loadable"
 import { useFetchData } from "../hooks/useFetchData"
@@ -8,7 +8,7 @@ import DataTableSkeleton from "./skeletons/DataTableSkeleton"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
-import { useWeb3Context } from "./WithWeb3Context"
+import { useWeb3Context, useWeb3Address } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
@@ -40,26 +40,42 @@ const rewardsStatusFilterOptions = [
   { status: REWARD_STATUS.WITHDRAWN },
 ]
 
-const RewardsComponent = ({ withdrawRewardAction }) => {
-  const web3Context = useWeb3Context()
+export const Rewards = () => {
+  const dispatch = useDispatch()
+  const { keepRandomBeaconOperatorContract } = useWeb3Context()
+  const address = useWeb3Address()
 
-  const { yourAddress, keepRandomBeaconOperatorContract } = web3Context
   // fetch rewards
-  const [state, updateData] = useFetchData(
+  const [state, updateData, , setFetchAvailableRewardsArgs] = useFetchData(
     rewardsService.fetchAvailableRewards,
-    initialRewardsData
+    initialRewardsData,
+    address
   )
   const {
     isFetching,
     data: [rewards, totalRewardsBalance],
   } = state
 
+  useEffect(() => {
+    if (address) {
+      setFetchAvailableRewardsArgs([address])
+    }
+  }, [setFetchAvailableRewardsArgs, address])
+
   // fetch withdrawals
-  const [withdrawalHistoryState, updateWithdrawalHistoryData] = useFetchData(
-    rewardsService.fetchWithdrawalHistory,
-    []
-  )
+  const [
+    withdrawalHistoryState,
+    updateWithdrawalHistoryData,
+    ,
+    setFetchWithdrawalHistoryArgs,
+  ] = useFetchData(rewardsService.fetchWithdrawalHistory, [])
   const { data: withdrawals } = withdrawalHistoryState
+
+  useEffect(() => {
+    if (address) {
+      setFetchWithdrawalHistoryArgs([address])
+    }
+  }, [setFetchWithdrawalHistoryArgs, address])
 
   // see more/less button state
   const [showAll, setShowAll] = useState(false)
@@ -74,7 +90,7 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
       returnValues: { groupIndex, amount, beneficiary, operator },
     } = latestEvent
 
-    if (!isSameEthAddress(yourAddress, beneficiary)) {
+    if (!isSameEthAddress(address, beneficiary)) {
       return
     }
 
@@ -131,7 +147,9 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
     awaitingPromise
   ) => {
     updateRewardStatus(PENDING_STATUS, groupIndex, operatorAddress)
-    withdrawRewardAction(operatorAddress, groupIndex, awaitingPromise)
+    dispatch(
+      withdrawGroupMemberRewards(operatorAddress, groupIndex, awaitingPromise)
+    )
   }
 
   const updateRewardStatus = (status, groupIndex, operator) => {
@@ -350,9 +368,3 @@ const RewardsComponent = ({ withdrawRewardAction }) => {
 const isSameRewardRecord = (reward, groupIndex, operator) =>
   reward.groupIndex === groupIndex &&
   isSameEthAddress(operator, reward.operatorAddress)
-
-const mapDispatchToProps = {
-  withdrawRewardAction: withdrawGroupMemberRewards,
-}
-
-export const Rewards = connect(null, mapDispatchToProps)(RewardsComponent)

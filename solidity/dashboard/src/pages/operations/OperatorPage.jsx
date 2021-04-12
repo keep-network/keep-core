@@ -1,32 +1,41 @@
-import React from "react"
+import React, { useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
 import DelegatedTokens from "../../components/DelegatedTokens"
 import PendingUndelegation from "../../components/PendingUndelegation"
-import SlashedTokens from "../../components/SlashedTokens"
-import { useSubscribeToContractEvent } from "../../hooks/useSubscribeToContractEvent"
-import { TOKEN_STAKING_CONTRACT_NAME } from "../../constants/constants"
+import Tile from "../../components/Tile"
+import SlashedTokensList from "../../components/SlashedTokensList"
 import PageWrapper from "../../components/PageWrapper"
-import { operatorService } from "../../services/token-staking.service"
-import { useFetchData } from "../../hooks/useFetchData"
 import { LoadingOverlay } from "../../components/Loadable"
 import DelegatedTokensSkeleton from "../../components/skeletons/DelegatedTokensSkeleton"
-import { ZERO_ADDRESS } from "../../utils/ethereum.utils"
+import { useWeb3Address } from "../../components/WithWeb3Context"
+import { DataTableSkeleton } from "../../components/skeletons"
+import {
+  FETCH_OPERATOR_DELEGATIONS_RERQUEST,
+  FETCH_OPERATOR_SLASHED_TOKENS_RERQUEST,
+  OPERATR_DELEGATION_CANCELED,
+} from "../../actions"
 
 const OperatorPage = ({ title }) => {
-  const [state, setData] = useFetchData(
-    operatorService.fetchDelegatedTokensData,
-    {
-      stakedBalance: "0",
-      ownerAddress: ZERO_ADDRESS,
-      beneficiaryAddress: ZERO_ADDRESS,
-      authorizerAddress: ZERO_ADDRESS,
-    }
-  )
-  const { isFetching, data } = state
+  const dispatch = useDispatch()
+  const address = useWeb3Address()
 
-  const { latestEvent } = useSubscribeToContractEvent(
-    TOKEN_STAKING_CONTRACT_NAME,
-    "Undelegated"
-  )
+  useEffect(() => {
+    dispatch({
+      type: FETCH_OPERATOR_DELEGATIONS_RERQUEST,
+      payload: { address },
+    })
+    dispatch({
+      type: FETCH_OPERATOR_SLASHED_TOKENS_RERQUEST,
+      payload: { address },
+    })
+  }, [dispatch, address])
+
+  const {
+    isFetching,
+    areSlashedTokensFetching,
+    slashedTokens,
+    ...data
+  } = useSelector((state) => state.operator)
 
   return (
     <PageWrapper title={title}>
@@ -35,17 +44,21 @@ const OperatorPage = ({ title }) => {
         skeletonComponent={<DelegatedTokensSkeleton />}
       >
         <DelegatedTokens
-          isFetching={isFetching}
           data={data}
-          setData={setData}
+          cancelSuccessCallback={() => {
+            dispatch({ type: OPERATR_DELEGATION_CANCELED })
+          }}
         />
       </LoadingOverlay>
-      <PendingUndelegation
-        latestUnstakeEvent={latestEvent}
-        data={data}
-        setData={setData}
-      />
-      <SlashedTokens />
+      <PendingUndelegation data={data} />
+      <LoadingOverlay
+        isFetching={areSlashedTokensFetching}
+        skeletonComponent={<DataTableSkeleton columns={2} />}
+      >
+        <Tile id="slashed-tokens">
+          <SlashedTokensList slashedTokens={slashedTokens} />
+        </Tile>
+      </LoadingOverlay>
     </PageWrapper>
   )
 }

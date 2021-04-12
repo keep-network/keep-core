@@ -2,10 +2,11 @@ import moment from "moment"
 import {
   ContractsLoaded,
   Web3Loaded,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
 } from "../contracts"
 import { isEmptyArray } from "../utils/array.utils"
 import { add } from "../utils/arithmetics.utils"
+import { TOKEN_STAKING_CONTRACT_NAME } from "../constants/constants"
 
 export const commitTopUp = async (operator, onTransactionHashCallback) => {
   const { stakingContract } = await ContractsLoaded
@@ -28,14 +29,18 @@ export const fetchAvailableTopUps = async (operators) => {
 
   const toupUpsInitiatedByOperator = (
     await stakingContract.getPastEvents("TopUpInitiated", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { operator: operators },
     })
   ).reduce(reduceByOperator, {})
 
   const topUpsCompletedByOperator = (
     await stakingContract.getPastEvents("TopUpCompleted", {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { operator: operators },
     })
   ).reduce(reduceByOperator, {})

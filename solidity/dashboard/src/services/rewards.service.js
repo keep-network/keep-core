@@ -1,37 +1,34 @@
 import web3Utils from "web3-utils"
 import { add, gt } from "../utils/arithmetics.utils"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { getContractDeploymentBlockNumber, ContractsLoaded } from "../contracts"
 import {
   OPERATOR_CONTRACT_NAME,
   REWARD_STATUS,
   SIGNING_GROUP_STATUS,
 } from "../constants/constants"
-import { contractService } from "./contracts.service"
 import { getOperatorsOfBeneficiary } from "./token-staking.service"
 
-const fetchAvailableRewards = async (web3Context) => {
+const fetchAvailableRewards = async (address) => {
   const {
     keepRandomBeaconOperatorContract,
     keepRandomBeaconOperatorStatistics,
-    yourAddress,
-  } = web3Context
+  } = await ContractsLoaded
+
   try {
     let totalRewardsBalance = web3Utils.toBN(0)
     const operatorEventsSearchFilters = {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
+      fromBlock: await getContractDeploymentBlockNumber(OPERATOR_CONTRACT_NAME),
     }
 
     // get all created groups
     const groupPubKeys = (
-      await contractService.getPastEvents(
-        web3Context,
-        OPERATOR_CONTRACT_NAME,
+      await keepRandomBeaconOperatorContract.getPastEvents(
         "DkgResultSubmittedEvent",
         operatorEventsSearchFilters
       )
     ).map((event) => event.returnValues.groupPubKey)
 
-    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(yourAddress)
+    const operatorsOfBeneficiary = await getOperatorsOfBeneficiary(address)
     const rewards = []
     const groups = {}
 
@@ -95,25 +92,11 @@ const fetchAvailableRewards = async (web3Context) => {
   }
 }
 
-const withdrawRewardFromGroup = async (
-  web3Context,
-  data,
-  onTransactionHash
-) => {
-  const { keepRandomBeaconOperatorContract, yourAddress } = web3Context
-  const { operatorAddress, groupIndex } = data
-
-  await keepRandomBeaconOperatorContract.methods
-    .withdrawGroupMemberRewards(operatorAddress, groupIndex)
-    .send({ from: yourAddress })
-    .on("transactionHash", onTransactionHash)
-}
-
-const fetchWithdrawalHistory = async (web3Context) => {
-  const { keepRandomBeaconOperatorContract, yourAddress } = web3Context
+const fetchWithdrawalHistory = async (address) => {
+  const { keepRandomBeaconOperatorContract } = await ContractsLoaded
   const searchFilters = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[OPERATOR_CONTRACT_NAME],
-    filter: { beneficiary: yourAddress },
+    fromBlock: await getContractDeploymentBlockNumber(OPERATOR_CONTRACT_NAME),
+    filter: { beneficiary: address },
   }
 
   try {
@@ -151,7 +134,6 @@ const fetchWithdrawalHistory = async (web3Context) => {
 
 const rewardsService = {
   fetchAvailableRewards,
-  withdrawRewardFromGroup,
   fetchWithdrawalHistory,
 }
 

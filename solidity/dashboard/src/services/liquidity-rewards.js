@@ -2,7 +2,7 @@ import web3Utils from "web3-utils"
 import {
   createERC20Contract,
   createSaddleSwapContract,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
 } from "../contracts"
 import BigNumber from "bignumber.js"
 import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
@@ -14,6 +14,7 @@ import {
 import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import { KEEP_TOKEN_GEYSER_CONTRACT_NAME } from "../constants/constants"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -128,8 +129,12 @@ class LiquidityRewards {
     throw new Error("First, implement the `calculateAPY` function")
   }
 
-  calculateLPTokenBalance = async (shareOfPoolInPercent) => {
+  calculateLPTokenBalance = async (lpBalance) => {
     throw new Error("First, implement the `calculateLPTokenBalance` function")
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    throw new Error("First, implement the `calculateRewardMultiplier` function")
   }
 }
 
@@ -186,6 +191,10 @@ class UniswapLPRewards extends LiquidityRewards {
         .dividedBy(pairData.totalSupply)
         .toString(),
     }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 1
   }
 }
 
@@ -252,11 +261,15 @@ class SaddleLPRewards extends LiquidityRewards {
     return await this.swapContract.methods.getTokenBalance(index).call()
   }
 
-  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+  calculateLPTokenBalance = (lpBalance) => {
     return {
       token0: "0",
       token1: "0",
     }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 1
   }
 }
 
@@ -335,7 +348,9 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     const tokensLockedEvents = await this.LPRewardsContract.getPastEvents(
       "TokensLocked",
       {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.keepTokenGeyserContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          KEEP_TOKEN_GEYSER_CONTRACT_NAME
+        ),
       }
     )
 
@@ -354,11 +369,32 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
 
-  calculateLPTokenBalance = (shareOfTotalPoolInPercent) => {
+  calculateLPTokenBalance = (lpBalance) => {
     return {
       token0: "0",
       token1: "0",
     }
+  }
+
+  /**
+   * Calculates reward multiplier for KEEP-ONLY pool for a given user
+   *
+   * @param {string} address - address of the user's wallet
+   * @return {Promise<string>}
+   */
+  calculateRewardMultiplier = async (address) => {
+    const stakedBalanceOfUser = await this.stakedBalance(address)
+    const rewardBalance = await this.rewardBalance(stakedBalanceOfUser)
+
+    const stakedBalanceOfUserBN = new BigNumber(stakedBalanceOfUser)
+    const rewardBalanceBN = new BigNumber(rewardBalance)
+
+    const rewardMultiplier = stakedBalanceOfUserBN
+      .plus(rewardBalanceBN)
+      .dividedBy(stakedBalanceOfUserBN)
+      .toString()
+
+    return rewardMultiplier
   }
 }
 

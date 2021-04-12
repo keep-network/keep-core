@@ -41,8 +41,7 @@ COPY go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
-RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
-RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
+RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
 COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install

@@ -12,6 +12,7 @@ const liquidityPairInitialData = {
     token0: 0,
     token1: 0,
   },
+  rewardMultiplier: 1,
   isFetching: false,
   error: null,
 }
@@ -76,6 +77,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
+          rewardMultiplier: restPayload.rewardMultiplier,
         },
       }
     }
@@ -95,6 +97,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
+          rewardMultiplier: restPayload.rewardMultiplier,
         },
       }
     }

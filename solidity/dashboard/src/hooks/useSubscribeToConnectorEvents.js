@@ -48,10 +48,9 @@ const useSubscribeToConnectorEvents = () => {
 
     if (isConnected && connector) {
       dispatch({ type: "app/login", payload: { address: yourAddress } })
-      if (connector.name === WALLETS.METAMASK.name) {
-        connector.getProvider().on("accountsChanged", accountChangedHandler)
-        connector.getProvider().on("chainChanged", disconnectHandler)
-      }
+      connector.on("accountsChanged", accountChangedHandler)
+      connector.once("disconnect", disconnectHandler)
+
 
       if (connector.name === WALLETS.EXPLORER_MODE.name) {
         connector.eventEmitter.on(
@@ -71,11 +70,9 @@ const useSubscribeToConnectorEvents = () => {
     }
 
     return () => {
-      if (connector && connector.name === WALLETS.METAMASK.name) {
-        connector
-          .getProvider()
-          .removeListener("accountsChanged", accountChangedHandler)
-        connector.getProvider().removeListener("disconnect", disconnectHandler)
+      if (connector) {
+        connector.removeListener("accountsChanged", accountChangedHandler)
+        connector.removeListener("disconnect", disconnectHandler)
       }
     }
   }, [isConnected, connector, dispatch, yourAddress, web3])

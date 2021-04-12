@@ -45,7 +45,7 @@ export const Web3Status = () => {
 }
 
 const WalletMenu = () => {
-  const { yourAddress } = useWeb3Context()
+  const { yourAddress, disconnect } = useWeb3Context()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
   return (
     <>
@@ -72,10 +72,9 @@ const WalletMenu = () => {
           ? "loading KEEP balance..."
           : `${displayAmount(keepTokenBalance.value)} KEEP`}
       </div>
-      {/* TODO add support for dissconnect wallet */}
-      {/* <div className="wallet__menu__disconnect" onClick={disconnect}>
+      <div className="wallet__menu__disconnect" onClick={disconnect}>
         Disconnect
-      </div> */}
+      </div>
     </>
   )
 }

@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindTokenStaking(address common.Address, caller bind.ContractCaller, transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TokenStaking *TokenStakingRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TokenStaking *TokenStakingRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TokenStaking.Contract.TokenStakingCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_TokenStaking *TokenStakingRaw) Transact(opts *bind.TransactOpts, method s
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_TokenStaking *TokenStakingCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_TokenStaking *TokenStakingCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _TokenStaking.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,207 +173,252 @@ func (_TokenStaking *TokenStakingTransactorRaw) Transact(opts *bind.TransactOpts
 
 // ActiveStake is a free data retrieval call binding the contract method 0x9557e0bb.
 //
-// Solidity: function activeStake(address _operator, address _operatorContract) constant returns(uint256 balance)
+// Solidity: function activeStake(address _operator, address _operatorContract) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingCaller) ActiveStake(opts *bind.CallOpts, _operator common.Address, _operatorContract common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "activeStake", _operator, _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "activeStake", _operator, _operatorContract)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // ActiveStake is a free data retrieval call binding the contract method 0x9557e0bb.
 //
-// Solidity: function activeStake(address _operator, address _operatorContract) constant returns(uint256 balance)
+// Solidity: function activeStake(address _operator, address _operatorContract) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingSession) ActiveStake(_operator common.Address, _operatorContract common.Address) (*big.Int, error) {
 	return _TokenStaking.Contract.ActiveStake(&_TokenStaking.CallOpts, _operator, _operatorContract)
 }
 
 // ActiveStake is a free data retrieval call binding the contract method 0x9557e0bb.
 //
-// Solidity: function activeStake(address _operator, address _operatorContract) constant returns(uint256 balance)
+// Solidity: function activeStake(address _operator, address _operatorContract) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingCallerSession) ActiveStake(_operator common.Address, _operatorContract common.Address) (*big.Int, error) {
 	return _TokenStaking.Contract.ActiveStake(&_TokenStaking.CallOpts, _operator, _operatorContract)
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingCaller) AuthorizerOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "authorizerOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "authorizerOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingSession) AuthorizerOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.AuthorizerOf(&_TokenStaking.CallOpts, _operator)
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingCallerSession) AuthorizerOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.AuthorizerOf(&_TokenStaking.CallOpts, _operator)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _address) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingCaller) BalanceOf(opts *bind.CallOpts, _address common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "balanceOf", _address)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "balanceOf", _address)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _address) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingSession) BalanceOf(_address common.Address) (*big.Int, error) {
 	return _TokenStaking.Contract.BalanceOf(&_TokenStaking.CallOpts, _address)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _address) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingCallerSession) BalanceOf(_address common.Address) (*big.Int, error) {
 	return _TokenStaking.Contract.BalanceOf(&_TokenStaking.CallOpts, _address)
 }
 
 // BeneficiaryOf is a free data retrieval call binding the contract method 0xba7bffd3.
 //
-// Solidity: function beneficiaryOf(address _operator) constant returns(address)
+// Solidity: function beneficiaryOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingCaller) BeneficiaryOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "beneficiaryOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "beneficiaryOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // BeneficiaryOf is a free data retrieval call binding the contract method 0xba7bffd3.
 //
-// Solidity: function beneficiaryOf(address _operator) constant returns(address)
+// Solidity: function beneficiaryOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingSession) BeneficiaryOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.BeneficiaryOf(&_TokenStaking.CallOpts, _operator)
 }
 
 // BeneficiaryOf is a free data retrieval call binding the contract method 0xba7bffd3.
 //
-// Solidity: function beneficiaryOf(address _operator) constant returns(address)
+// Solidity: function beneficiaryOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingCallerSession) BeneficiaryOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.BeneficiaryOf(&_TokenStaking.CallOpts, _operator)
 }
 
 // DeployedAt is a free data retrieval call binding the contract method 0xeae4c19f.
 //
-// Solidity: function deployedAt() constant returns(uint256)
+// Solidity: function deployedAt() view returns(uint256)
 func (_TokenStaking *TokenStakingCaller) DeployedAt(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "deployedAt")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "deployedAt")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // DeployedAt is a free data retrieval call binding the contract method 0xeae4c19f.
 //
-// Solidity: function deployedAt() constant returns(uint256)
+// Solidity: function deployedAt() view returns(uint256)
 func (_TokenStaking *TokenStakingSession) DeployedAt() (*big.Int, error) {
 	return _TokenStaking.Contract.DeployedAt(&_TokenStaking.CallOpts)
 }
 
 // DeployedAt is a free data retrieval call binding the contract method 0xeae4c19f.
 //
-// Solidity: function deployedAt() constant returns(uint256)
+// Solidity: function deployedAt() view returns(uint256)
 func (_TokenStaking *TokenStakingCallerSession) DeployedAt() (*big.Int, error) {
 	return _TokenStaking.Contract.DeployedAt(&_TokenStaking.CallOpts)
 }
 
 // EligibleStake is a free data retrieval call binding the contract method 0xafff33ef.
 //
-// Solidity: function eligibleStake(address _operator, address _operatorContract) constant returns(uint256 balance)
+// Solidity: function eligibleStake(address _operator, address _operatorContract) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingCaller) EligibleStake(opts *bind.CallOpts, _operator common.Address, _operatorContract common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "eligibleStake", _operator, _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "eligibleStake", _operator, _operatorContract)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // EligibleStake is a free data retrieval call binding the contract method 0xafff33ef.
 //
-// Solidity: function eligibleStake(address _operator, address _operatorContract) constant returns(uint256 balance)
+// Solidity: function eligibleStake(address _operator, address _operatorContract) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingSession) EligibleStake(_operator common.Address, _operatorContract common.Address) (*big.Int, error) {
 	return _TokenStaking.Contract.EligibleStake(&_TokenStaking.CallOpts, _operator, _operatorContract)
 }
 
 // EligibleStake is a free data retrieval call binding the contract method 0xafff33ef.
 //
-// Solidity: function eligibleStake(address _operator, address _operatorContract) constant returns(uint256 balance)
+// Solidity: function eligibleStake(address _operator, address _operatorContract) view returns(uint256 balance)
 func (_TokenStaking *TokenStakingCallerSession) EligibleStake(_operator common.Address, _operatorContract common.Address) (*big.Int, error) {
 	return _TokenStaking.Contract.EligibleStake(&_TokenStaking.CallOpts, _operator, _operatorContract)
 }
 
 // GetAuthoritySource is a free data retrieval call binding the contract method 0xcbe945dc.
 //
-// Solidity: function getAuthoritySource(address operatorContract) constant returns(address)
+// Solidity: function getAuthoritySource(address operatorContract) view returns(address)
 func (_TokenStaking *TokenStakingCaller) GetAuthoritySource(opts *bind.CallOpts, operatorContract common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "getAuthoritySource", operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "getAuthoritySource", operatorContract)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // GetAuthoritySource is a free data retrieval call binding the contract method 0xcbe945dc.
 //
-// Solidity: function getAuthoritySource(address operatorContract) constant returns(address)
+// Solidity: function getAuthoritySource(address operatorContract) view returns(address)
 func (_TokenStaking *TokenStakingSession) GetAuthoritySource(operatorContract common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.GetAuthoritySource(&_TokenStaking.CallOpts, operatorContract)
 }
 
 // GetAuthoritySource is a free data retrieval call binding the contract method 0xcbe945dc.
 //
-// Solidity: function getAuthoritySource(address operatorContract) constant returns(address)
+// Solidity: function getAuthoritySource(address operatorContract) view returns(address)
 func (_TokenStaking *TokenStakingCallerSession) GetAuthoritySource(operatorContract common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.GetAuthoritySource(&_TokenStaking.CallOpts, operatorContract)
 }
 
 // GetDelegationInfo is a free data retrieval call binding the contract method 0xfab46d66.
 //
-// Solidity: function getDelegationInfo(address _operator) constant returns(uint256 amount, uint256 createdAt, uint256 undelegatedAt)
+// Solidity: function getDelegationInfo(address _operator) view returns(uint256 amount, uint256 createdAt, uint256 undelegatedAt)
 func (_TokenStaking *TokenStakingCaller) GetDelegationInfo(opts *bind.CallOpts, _operator common.Address) (struct {
 	Amount        *big.Int
 	CreatedAt     *big.Int
 	UndelegatedAt *big.Int
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "getDelegationInfo", _operator)
+
+	outstruct := new(struct {
 		Amount        *big.Int
 		CreatedAt     *big.Int
 		UndelegatedAt *big.Int
 	})
-	out := ret
-	err := _TokenStaking.contract.Call(opts, out, "getDelegationInfo", _operator)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Amount = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.CreatedAt = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.UndelegatedAt = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
 }
 
 // GetDelegationInfo is a free data retrieval call binding the contract method 0xfab46d66.
 //
-// Solidity: function getDelegationInfo(address _operator) constant returns(uint256 amount, uint256 createdAt, uint256 undelegatedAt)
+// Solidity: function getDelegationInfo(address _operator) view returns(uint256 amount, uint256 createdAt, uint256 undelegatedAt)
 func (_TokenStaking *TokenStakingSession) GetDelegationInfo(_operator common.Address) (struct {
 	Amount        *big.Int
 	CreatedAt     *big.Int
@@ -385,7 +429,7 @@ func (_TokenStaking *TokenStakingSession) GetDelegationInfo(_operator common.Add
 
 // GetDelegationInfo is a free data retrieval call binding the contract method 0xfab46d66.
 //
-// Solidity: function getDelegationInfo(address _operator) constant returns(uint256 amount, uint256 createdAt, uint256 undelegatedAt)
+// Solidity: function getDelegationInfo(address _operator) view returns(uint256 amount, uint256 createdAt, uint256 undelegatedAt)
 func (_TokenStaking *TokenStakingCallerSession) GetDelegationInfo(_operator common.Address) (struct {
 	Amount        *big.Int
 	CreatedAt     *big.Int
@@ -396,23 +440,32 @@ func (_TokenStaking *TokenStakingCallerSession) GetDelegationInfo(_operator comm
 
 // GetLocks is a free data retrieval call binding the contract method 0x719f3089.
 //
-// Solidity: function getLocks(address operator) constant returns(address[] creators, uint256[] expirations)
+// Solidity: function getLocks(address operator) view returns(address[] creators, uint256[] expirations)
 func (_TokenStaking *TokenStakingCaller) GetLocks(opts *bind.CallOpts, operator common.Address) (struct {
 	Creators    []common.Address
 	Expirations []*big.Int
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "getLocks", operator)
+
+	outstruct := new(struct {
 		Creators    []common.Address
 		Expirations []*big.Int
 	})
-	out := ret
-	err := _TokenStaking.contract.Call(opts, out, "getLocks", operator)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Creators = *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+	outstruct.Expirations = *abi.ConvertType(out[1], new([]*big.Int)).(*[]*big.Int)
+
+	return *outstruct, err
+
 }
 
 // GetLocks is a free data retrieval call binding the contract method 0x719f3089.
 //
-// Solidity: function getLocks(address operator) constant returns(address[] creators, uint256[] expirations)
+// Solidity: function getLocks(address operator) view returns(address[] creators, uint256[] expirations)
 func (_TokenStaking *TokenStakingSession) GetLocks(operator common.Address) (struct {
 	Creators    []common.Address
 	Expirations []*big.Int
@@ -422,7 +475,7 @@ func (_TokenStaking *TokenStakingSession) GetLocks(operator common.Address) (str
 
 // GetLocks is a free data retrieval call binding the contract method 0x719f3089.
 //
-// Solidity: function getLocks(address operator) constant returns(address[] creators, uint256[] expirations)
+// Solidity: function getLocks(address operator) view returns(address[] creators, uint256[] expirations)
 func (_TokenStaking *TokenStakingCallerSession) GetLocks(operator common.Address) (struct {
 	Creators    []common.Address
 	Expirations []*big.Int
@@ -432,208 +485,248 @@ func (_TokenStaking *TokenStakingCallerSession) GetLocks(operator common.Address
 
 // HasMinimumStake is a free data retrieval call binding the contract method 0x10a63ec0.
 //
-// Solidity: function hasMinimumStake(address staker, address operatorContract) constant returns(bool)
+// Solidity: function hasMinimumStake(address staker, address operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingCaller) HasMinimumStake(opts *bind.CallOpts, staker common.Address, operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "hasMinimumStake", staker, operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "hasMinimumStake", staker, operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // HasMinimumStake is a free data retrieval call binding the contract method 0x10a63ec0.
 //
-// Solidity: function hasMinimumStake(address staker, address operatorContract) constant returns(bool)
+// Solidity: function hasMinimumStake(address staker, address operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingSession) HasMinimumStake(staker common.Address, operatorContract common.Address) (bool, error) {
 	return _TokenStaking.Contract.HasMinimumStake(&_TokenStaking.CallOpts, staker, operatorContract)
 }
 
 // HasMinimumStake is a free data retrieval call binding the contract method 0x10a63ec0.
 //
-// Solidity: function hasMinimumStake(address staker, address operatorContract) constant returns(bool)
+// Solidity: function hasMinimumStake(address staker, address operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingCallerSession) HasMinimumStake(staker common.Address, operatorContract common.Address) (bool, error) {
 	return _TokenStaking.Contract.HasMinimumStake(&_TokenStaking.CallOpts, staker, operatorContract)
 }
 
 // InitializationPeriod is a free data retrieval call binding the contract method 0xaed1ec72.
 //
-// Solidity: function initializationPeriod() constant returns(uint256)
+// Solidity: function initializationPeriod() view returns(uint256)
 func (_TokenStaking *TokenStakingCaller) InitializationPeriod(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "initializationPeriod")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "initializationPeriod")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // InitializationPeriod is a free data retrieval call binding the contract method 0xaed1ec72.
 //
-// Solidity: function initializationPeriod() constant returns(uint256)
+// Solidity: function initializationPeriod() view returns(uint256)
 func (_TokenStaking *TokenStakingSession) InitializationPeriod() (*big.Int, error) {
 	return _TokenStaking.Contract.InitializationPeriod(&_TokenStaking.CallOpts)
 }
 
 // InitializationPeriod is a free data retrieval call binding the contract method 0xaed1ec72.
 //
-// Solidity: function initializationPeriod() constant returns(uint256)
+// Solidity: function initializationPeriod() view returns(uint256)
 func (_TokenStaking *TokenStakingCallerSession) InitializationPeriod() (*big.Int, error) {
 	return _TokenStaking.Contract.InitializationPeriod(&_TokenStaking.CallOpts)
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address _operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address _operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingCaller) IsApprovedOperatorContract(opts *bind.CallOpts, _operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "isApprovedOperatorContract", _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "isApprovedOperatorContract", _operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address _operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address _operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingSession) IsApprovedOperatorContract(_operatorContract common.Address) (bool, error) {
 	return _TokenStaking.Contract.IsApprovedOperatorContract(&_TokenStaking.CallOpts, _operatorContract)
 }
 
 // IsApprovedOperatorContract is a free data retrieval call binding the contract method 0x84d57689.
 //
-// Solidity: function isApprovedOperatorContract(address _operatorContract) constant returns(bool)
+// Solidity: function isApprovedOperatorContract(address _operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingCallerSession) IsApprovedOperatorContract(_operatorContract common.Address) (bool, error) {
 	return _TokenStaking.Contract.IsApprovedOperatorContract(&_TokenStaking.CallOpts, _operatorContract)
 }
 
 // IsAuthorizedForOperator is a free data retrieval call binding the contract method 0xef1f9661.
 //
-// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) constant returns(bool)
+// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingCaller) IsAuthorizedForOperator(opts *bind.CallOpts, _operator common.Address, _operatorContract common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "isAuthorizedForOperator", _operator, _operatorContract)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "isAuthorizedForOperator", _operator, _operatorContract)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsAuthorizedForOperator is a free data retrieval call binding the contract method 0xef1f9661.
 //
-// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) constant returns(bool)
+// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingSession) IsAuthorizedForOperator(_operator common.Address, _operatorContract common.Address) (bool, error) {
 	return _TokenStaking.Contract.IsAuthorizedForOperator(&_TokenStaking.CallOpts, _operator, _operatorContract)
 }
 
 // IsAuthorizedForOperator is a free data retrieval call binding the contract method 0xef1f9661.
 //
-// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) constant returns(bool)
+// Solidity: function isAuthorizedForOperator(address _operator, address _operatorContract) view returns(bool)
 func (_TokenStaking *TokenStakingCallerSession) IsAuthorizedForOperator(_operator common.Address, _operatorContract common.Address) (bool, error) {
 	return _TokenStaking.Contract.IsAuthorizedForOperator(&_TokenStaking.CallOpts, _operator, _operatorContract)
 }
 
 // IsStakeLocked is a free data retrieval call binding the contract method 0x335e91a1.
 //
-// Solidity: function isStakeLocked(address operator) constant returns(bool)
+// Solidity: function isStakeLocked(address operator) view returns(bool)
 func (_TokenStaking *TokenStakingCaller) IsStakeLocked(opts *bind.CallOpts, operator common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "isStakeLocked", operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "isStakeLocked", operator)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsStakeLocked is a free data retrieval call binding the contract method 0x335e91a1.
 //
-// Solidity: function isStakeLocked(address operator) constant returns(bool)
+// Solidity: function isStakeLocked(address operator) view returns(bool)
 func (_TokenStaking *TokenStakingSession) IsStakeLocked(operator common.Address) (bool, error) {
 	return _TokenStaking.Contract.IsStakeLocked(&_TokenStaking.CallOpts, operator)
 }
 
 // IsStakeLocked is a free data retrieval call binding the contract method 0x335e91a1.
 //
-// Solidity: function isStakeLocked(address operator) constant returns(bool)
+// Solidity: function isStakeLocked(address operator) view returns(bool)
 func (_TokenStaking *TokenStakingCallerSession) IsStakeLocked(operator common.Address) (bool, error) {
 	return _TokenStaking.Contract.IsStakeLocked(&_TokenStaking.CallOpts, operator)
 }
 
 // MinimumStake is a free data retrieval call binding the contract method 0xec5ffac2.
 //
-// Solidity: function minimumStake() constant returns(uint256)
+// Solidity: function minimumStake() view returns(uint256)
 func (_TokenStaking *TokenStakingCaller) MinimumStake(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "minimumStake")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "minimumStake")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // MinimumStake is a free data retrieval call binding the contract method 0xec5ffac2.
 //
-// Solidity: function minimumStake() constant returns(uint256)
+// Solidity: function minimumStake() view returns(uint256)
 func (_TokenStaking *TokenStakingSession) MinimumStake() (*big.Int, error) {
 	return _TokenStaking.Contract.MinimumStake(&_TokenStaking.CallOpts)
 }
 
 // MinimumStake is a free data retrieval call binding the contract method 0xec5ffac2.
 //
-// Solidity: function minimumStake() constant returns(uint256)
+// Solidity: function minimumStake() view returns(uint256)
 func (_TokenStaking *TokenStakingCallerSession) MinimumStake() (*big.Int, error) {
 	return _TokenStaking.Contract.MinimumStake(&_TokenStaking.CallOpts)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
 //
-// Solidity: function ownerOf(address _operator) constant returns(address)
+// Solidity: function ownerOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingCaller) OwnerOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "ownerOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "ownerOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
 //
-// Solidity: function ownerOf(address _operator) constant returns(address)
+// Solidity: function ownerOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingSession) OwnerOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.OwnerOf(&_TokenStaking.CallOpts, _operator)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
 //
-// Solidity: function ownerOf(address _operator) constant returns(address)
+// Solidity: function ownerOf(address _operator) view returns(address)
 func (_TokenStaking *TokenStakingCallerSession) OwnerOf(_operator common.Address) (common.Address, error) {
 	return _TokenStaking.Contract.OwnerOf(&_TokenStaking.CallOpts, _operator)
 }
 
 // UndelegationPeriod is a free data retrieval call binding the contract method 0xfdd1f986.
 //
-// Solidity: function undelegationPeriod() constant returns(uint256)
+// Solidity: function undelegationPeriod() view returns(uint256)
 func (_TokenStaking *TokenStakingCaller) UndelegationPeriod(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _TokenStaking.contract.Call(opts, out, "undelegationPeriod")
-	return *ret0, err
+	var out []interface{}
+	err := _TokenStaking.contract.Call(opts, &out, "undelegationPeriod")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // UndelegationPeriod is a free data retrieval call binding the contract method 0xfdd1f986.
 //
-// Solidity: function undelegationPeriod() constant returns(uint256)
+// Solidity: function undelegationPeriod() view returns(uint256)
 func (_TokenStaking *TokenStakingSession) UndelegationPeriod() (*big.Int, error) {
 	return _TokenStaking.Contract.UndelegationPeriod(&_TokenStaking.CallOpts)
 }
 
 // UndelegationPeriod is a free data retrieval call binding the contract method 0xfdd1f986.
 //
-// Solidity: function undelegationPeriod() constant returns(uint256)
+// Solidity: function undelegationPeriod() view returns(uint256)
 func (_TokenStaking *TokenStakingCallerSession) UndelegationPeriod() (*big.Int, error) {
 	return _TokenStaking.Contract.UndelegationPeriod(&_TokenStaking.CallOpts)
 }
@@ -1073,6 +1166,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseExpiredLockReleased(log types.Lo
 	if err := _TokenStaking.contract.UnpackLog(event, "ExpiredLockReleased", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1217,6 +1311,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseLockReleased(log types.Log) (*To
 	if err := _TokenStaking.contract.UnpackLog(event, "LockReleased", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1379,6 +1474,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseOperatorStaked(log types.Log) (*
 	if err := _TokenStaking.contract.UnpackLog(event, "OperatorStaked", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1512,6 +1608,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseRecoveredStake(log types.Log) (*
 	if err := _TokenStaking.contract.UnpackLog(event, "RecoveredStake", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1664,6 +1761,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseStakeDelegated(log types.Log) (*
 	if err := _TokenStaking.contract.UnpackLog(event, "StakeDelegated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1809,6 +1907,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseStakeLocked(log types.Log) (*Tok
 	if err := _TokenStaking.contract.UnpackLog(event, "StakeLocked", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -1961,6 +2060,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseStakeOwnershipTransferred(log ty
 	if err := _TokenStaking.contract.UnpackLog(event, "StakeOwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2105,6 +2205,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseTokensSeized(log types.Log) (*To
 	if err := _TokenStaking.contract.UnpackLog(event, "TokensSeized", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2249,6 +2350,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseTokensSlashed(log types.Log) (*T
 	if err := _TokenStaking.contract.UnpackLog(event, "TokensSlashed", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2393,6 +2495,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseTopUpCompleted(log types.Log) (*
 	if err := _TokenStaking.contract.UnpackLog(event, "TopUpCompleted", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2537,6 +2640,7 @@ func (_TokenStaking *TokenStakingFilterer) ParseTopUpInitiated(log types.Log) (*
 	if err := _TokenStaking.contract.UnpackLog(event, "TopUpInitiated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }
 
@@ -2681,5 +2785,6 @@ func (_TokenStaking *TokenStakingFilterer) ParseUndelegated(log types.Log) (*Tok
 	if err := _TokenStaking.contract.UnpackLog(event, "Undelegated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

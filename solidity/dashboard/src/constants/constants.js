@@ -19,6 +19,8 @@ export const LP_REWARDS_KEEP_ETH_CONTRACT_NAME = "LPRewardsKEEPETHContract"
 export const LP_REWARDS_TBTC_ETH_CONTRACT_NAME = "LPRewardsTBTCETHContract"
 export const LP_REWARDS_KEEP_TBTC_CONTRACT_NAME = "LPRewardsKEEPTBTCContract"
 export const KEEP_TOKEN_GEYSER_CONTRACT_NAME = "keepTokenGeyserContract"
+export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
+  "ECDSARewardsDistributorContract"
 
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"

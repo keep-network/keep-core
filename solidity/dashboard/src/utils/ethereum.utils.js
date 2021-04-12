@@ -79,7 +79,7 @@ export function displayEthAmount(
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 export const getNetworkName = (chainId) => {
-  switch (chainId) {
+  switch (Number(chainId)) {
     case 1:
       return "main net"
     case 2:

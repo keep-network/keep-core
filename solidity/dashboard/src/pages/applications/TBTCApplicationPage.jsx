@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from "react"
+import React, { useEffect, useCallback, useState, useMemo } from "react"
 import AuthorizeContracts from "../../components/AuthorizeContracts"
 import { tbtcAuthorizationService } from "../../services/tbtc-authorization.service"
 import { useFetchData } from "../../hooks/useFetchData"
@@ -22,6 +22,7 @@ import {
 import { connect } from "react-redux"
 import { getBondedECDSAKeepFactoryAddress } from "../../contracts"
 import EmptyStatePage from "./EmptyStatePage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const initialData = []
 const TBTCApplicationPage = ({
@@ -30,17 +31,28 @@ const TBTCApplicationPage = ({
   deauthorizeSortitionPoolContract,
 }) => {
   const [selectedOperator, setOperator] = useState({})
+  const address = useWeb3Address()
 
   // fetch data from service
-  const [tbtcAuthState, updateTbtcAuthData] = useFetchData(
+  const [tbtcAuthState, updateTbtcAuthData, , setAuthDataArgs] = useFetchData(
     tbtcAuthorizationService.fetchTBTCAuthorizationData,
-    initialData
+    initialData,
+    address
   )
   // fetch bonding data
-  const [bondingState, updateBondinData] = useFetchData(
+  const [bondingState, updateBondinData, , setBondingArgs] = useFetchData(
     tbtcAuthorizationService.fetchBondingData,
-    initialData
+    initialData,
+    address
   )
+
+  useEffect(() => {
+    setBondingArgs([address])
+  }, [setBondingArgs, address])
+
+  useEffect(() => {
+    setAuthDataArgs([address])
+  }, [setAuthDataArgs, address])
 
   const unbondedValueUpdated = useCallback(
     (event, arithmeticOpration = add) => {
