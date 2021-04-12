@@ -65,7 +65,7 @@ const SelectedWalletModal = ({
         .then(async () => {
           await connectAppWithWallet(connector)
         })
-        .then(async () => {
+        .then(() => {
           if (shouldSetState) {
             setIsConnecting(false)
           }

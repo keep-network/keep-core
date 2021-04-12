@@ -1,6 +1,5 @@
 import React from "react"
-import WalletOptions from "./WalletOptions"
-import Tooltip from "./Tooltip"
+import ConnectWalletBtn from "./ConnectWalletBtn";
 
 export const WalletSelectionModal = () => {
   return (
@@ -14,20 +13,10 @@ export const WalletSelectionModal = () => {
       </div>
       <span className="text-center mt-1">
         {
-          <Tooltip
-            direction="top"
-            simple
-            className="empty-state__wallet-options-tooltip"
-            triggerComponent={() => (
-              <span
-                className={`btn btn-primary btn-lg empty-state__connect-wallet-btn`}
-              >
-                Connect wallet
-              </span>
-            )}
-          >
-            <WalletOptions displayExplorerMode={false} />
-          </Tooltip>
+          <ConnectWalletBtn
+            text={"Connect wallet"}
+            displayExplorerMode={false}
+          />
         }
       </span>
     </div>
