@@ -115,8 +115,6 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
       ? "Connect Ethereum Address"
       : "Connect Wallet"
 
-  console.log('LABEL', label)
-
   return (
     <li
       className="wallet__item"

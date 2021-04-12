@@ -51,7 +51,6 @@ const useSubscribeToConnectorEvents = () => {
       connector.on("accountsChanged", accountChangedHandler)
       connector.once("disconnect", disconnectHandler)
 
-
       if (connector.name === WALLETS.EXPLORER_MODE.name) {
         connector.eventEmitter.on(
           "chooseWalletAndSendTransaction",

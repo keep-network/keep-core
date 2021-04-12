@@ -35,5 +35,6 @@ export class ExplorerModeConnector extends AbstractConnector {
 
   disconnect = async () => {
     this.provider.stop()
+    this.emit("disconnect")
   }
 }

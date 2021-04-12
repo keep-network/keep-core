@@ -8,8 +8,10 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
 
 /**
- * Checks if there is addres in the url and the tries to connect to explorer mode
+ * Checks if there is a wallet addres in the url and then tries to connect to
+ * Explorer Mode.
  *
+ * Also changes the url after connecting and disconnecting from the Eplorer Mode
  *
  * Url pattern: http(s)://<site_name>/<address>/<page>
  * Example for localhost:
@@ -21,6 +23,29 @@ const useExplorerModeConnect = () => {
   const history = useHistory()
   const { openModal, closeModal } = useModal()
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
+
+  useEffect(() => {
+    const pathnameSplitted = location.pathname.split("/")
+    if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
+      const address = pathnameSplitted[1]
+      // change url to the one without an address when disconnecting
+      if (web3Utils.isAddress(address) && !connector) {
+        const newPathname = location.pathname.replace("/" + address, "")
+        history.push({ pathname: newPathname })
+      }
+
+      // change url to the one with address when we connect to the explorer mode
+      if (
+        !web3Utils.isAddress(address) &&
+        connector &&
+        yourAddress &&
+        connector.name === WALLETS.EXPLORER_MODE.name
+      ) {
+        const newPathname = "/" + yourAddress + location.pathname
+        history.push({ pathname: newPathname })
+      }
+    }
+  }, [connector, yourAddress])
 
   useEffect(() => {
     const pathnameSplitted = location.pathname.split("/")
@@ -42,19 +67,8 @@ const useExplorerModeConnect = () => {
           }
         )
       }
-
-      // change url to the one with address when we connect to the explorer mode
-      if (
-        !web3Utils.isAddress(address) &&
-        connector &&
-        yourAddress &&
-        connector.name === WALLETS.EXPLORER_MODE.name
-      ) {
-        const newPathname = "/" + yourAddress + location.pathname
-        history.push({ pathname: newPathname })
-      }
     }
-  }, [location.pathname, connector, yourAddress])
+  }, [location.pathname])
 }
 
 export default useExplorerModeConnect
