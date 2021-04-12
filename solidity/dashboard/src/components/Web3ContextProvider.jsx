@@ -53,19 +53,12 @@ class Web3ContextProvider extends React.Component {
       )
       yourAddress = accounts[0]
 
-      if (
-        this.state.connector?.name === WALLETS.EXPLORER_MODE.name &&
-        connector.name !== WALLETS.EXPLORER_MODE.name
-      ) {
-        if (
-          this.state.yourAddress &&
-          !isSameEthAddress(this.state.yourAddress, yourAddress)
-        ) {
-          throw new Error(
-            "Connected address is different from the one used in Explorer Mode."
-          )
-        }
-      }
+      this.explorerModeToWalletConnectionCheck(
+        this.state.connector,
+        connector,
+        this.state.yourAddress,
+        yourAddress
+      )
 
       web3 = new Web3(connector.getProvider())
       web3.eth.defaultAccount = yourAddress
@@ -168,6 +161,27 @@ class Web3ContextProvider extends React.Component {
         isConnected: false,
         connector: null,
       })
+    }
+  }
+
+  explorerModeToWalletConnectionCheck = (
+    explorerModeConnector,
+    walletConnector,
+    explorerModeAddress,
+    walletAddress
+  ) => {
+    if (
+      explorerModeConnector?.name === WALLETS.EXPLORER_MODE.name &&
+      walletConnector?.name !== WALLETS.EXPLORER_MODE.name
+    ) {
+      if (
+        explorerModeAddress &&
+        !isSameEthAddress(explorerModeAddress, walletAddress)
+      ) {
+        throw new Error(
+          "Connected address is different from the one used in Explorer Mode."
+        )
+      }
     }
   }
 

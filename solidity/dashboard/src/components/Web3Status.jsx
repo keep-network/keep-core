@@ -19,7 +19,7 @@ export const Web3Status = () => {
         <div className="web3-status__network-status">
           <NetworkStatus />
         </div>
-        {connector && <CurrentWalletIconTooltip />}
+        {isConnected && <CurrentWalletIconTooltip />}
         <div
           className={`web3-status__wallet ${
             connector?.name === WALLETS.EXPLORER_MODE.name

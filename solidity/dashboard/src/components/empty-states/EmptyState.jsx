@@ -2,6 +2,7 @@ import React from "react"
 import WalletOptions from "../WalletOptions"
 import Tooltip from "../Tooltip"
 import ResourceTooltip from "../ResourceTooltip"
+import ConnectWalletBtn from "../ConnectWalletBtn";
 
 const EmptyState = ({ children }) => {
   return <section className="empty-state__wrapper">{children}</section>
@@ -42,22 +43,7 @@ EmptyState.ConnectWalletBtn = ({
   btnClassName = "",
 }) => {
   // TODO connect to a wallet onClick
-  return (
-    <Tooltip
-      direction="top"
-      simple
-      className="empty-state__wallet-options-tooltip"
-      triggerComponent={() => (
-        <span
-          className={`btn btn-primary btn-lg empty-state__connect-wallet-btn ${btnClassName}`}
-        >
-          {text}
-        </span>
-      )}
-    >
-      <WalletOptions />
-    </Tooltip>
-  )
+  return <ConnectWalletBtn text={text} btnClassName={btnClassName} />
 }
 
 export default EmptyState
