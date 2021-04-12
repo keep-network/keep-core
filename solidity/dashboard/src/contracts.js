@@ -49,14 +49,17 @@ import {
 
 const CONTRACT_DEPLOYMENT_BLOCK_CACHE = {}
 
-export const getContractDeploymentBlockNumber = async (contractName) => {
+export const getContractDeploymentBlockNumber = async (
+  contractName,
+  web3Instance
+) => {
   if (
     CONTRACT_DEPLOYMENT_BLOCK_CACHE?.[contractName] !== undefined &&
     CONTRACT_DEPLOYMENT_BLOCK_CACHE?.[contractName] !== null
   ) {
     return CONTRACT_DEPLOYMENT_BLOCK_CACHE[contractName]
   }
-  const web3 = await Web3Loaded
+  const web3 = web3Instance || (await Web3Loaded)
   const blockNumber = await contractDeployedAtBlock(
     web3,
     contracts[contractName].artifact
