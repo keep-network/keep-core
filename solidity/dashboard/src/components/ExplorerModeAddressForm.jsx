@@ -4,8 +4,9 @@ import React from "react"
 import { withFormik } from "formik"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import { getErrorsObj, validateEthAddress } from "../forms/common-validators"
+import { colors } from "../constants/colors"
 
-const ExplorerModeAddressForm = ({ submitAction }) => {
+const ExplorerModeAddressForm = ({ submitAction, onCancel }) => {
   const onSubmit = useCustomOnSubmitFormik(submitAction)
 
   return (
@@ -16,15 +17,27 @@ const ExplorerModeAddressForm = ({ submitAction }) => {
         label="Enter an address"
         tooltipText={<>tooltip text</>}
       />
-      <SubmitButton
-        className="btn btn-primary"
-        type="submit"
-        onSubmitAction={onSubmit}
-        withMessageActionIsPending={false}
-        triggerManuallyFetch={false}
+      <div
+        className="flex row center mt-2"
+        style={{
+          borderTop: `1px solid ${colors.grey20}`,
+          margin: "0 -2rem",
+          padding: "2rem 2rem 0",
+        }}
       >
-        explore
-      </SubmitButton>
+        <SubmitButton
+          className="btn btn-primary"
+          type="submit"
+          onSubmitAction={onSubmit}
+          withMessageActionIsPending={false}
+          triggerManuallyFetch={false}
+        >
+          explore
+        </SubmitButton>
+        <span onClick={onCancel} className="ml-1 text-link">
+          Cancel
+        </span>
+      </div>
     </form>
   )
 }
