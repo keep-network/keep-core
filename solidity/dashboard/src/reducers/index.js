@@ -9,6 +9,7 @@ import liquidityRewards from "./liquidity-rewards"
 import notificationsData from "./notifications-data"
 import operator from "./operator"
 import authorization from "./authorization"
+import transactions from "./transactions"
 
 const app = (state = { address: null }, action) => {
   switch (action.type) {
@@ -19,7 +20,6 @@ const app = (state = { address: null }, action) => {
       return state
   }
 }
-import transactions from "./transactions"
 
 const reducers = combineReducers({
   messages,

@@ -10,6 +10,7 @@ import {
 } from "../contracts"
 import { getNetworkName } from "../utils/ethereum.utils"
 import { isSameEthAddress } from "../utils/general.utils"
+import { WALLETS } from "../constants/constants"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
