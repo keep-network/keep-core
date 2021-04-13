@@ -6,6 +6,7 @@ import { useModal } from "./useModal"
 import { WalletSelectionModal } from "../components/WalletSelectionModal"
 import { useLocation, useHistory } from "react-router-dom"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
+import { Deferred } from "../contracts"
 
 const useSubscribeToConnectorEvents = () => {
   const dispatch = useDispatch()
@@ -35,14 +36,28 @@ const useSubscribeToConnectorEvents = () => {
       })
     }
 
+    const sendNextTransactionFromQueue = async (
+      transactions,
+      transactionIndex = 0
+    ) => {
+      web3.eth.sendTransaction(
+        transactions[transactionIndex].params[0],
+        async (error, response) => {
+          if (!error) {
+            const nextIndex = transactionIndex + 1
+            if (transactions[nextIndex])
+              await sendNextTransactionFromQueue(transactions, nextIndex)
+          }
+        }
+      )
+    }
+
     const executeTransactionsInQueue = async (transactions) => {
       if (transactions.length > 0) {
         dispatch({
           type: "transactions/clear_queue",
         })
-        for (const transaction of transactions) {
-          await web3.eth.currentProvider.sendAsync(transaction)
-        }
+        await sendNextTransactionFromQueue(transactions)
       }
     }
 
@@ -72,6 +87,12 @@ const useSubscribeToConnectorEvents = () => {
       if (connector) {
         connector.removeListener("accountsChanged", accountChangedHandler)
         connector.removeListener("disconnect", disconnectHandler)
+        if (connector.name === WALLETS.EXPLORER_MODE.name) {
+          connector.eventEmitter.removeListener(
+            "chooseWalletAndSendTransaction",
+            showChooseWalletModal
+          )
+        }
       }
     }
   }, [isConnected, connector, dispatch, yourAddress, web3])
