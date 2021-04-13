@@ -7,35 +7,41 @@ import Tooltip from "./Tooltip"
 const CurrentWalletIconTooltip = () => {
   const { connector } = useWeb3Context()
 
+  const getTooltipText = (walletLabel) => {
+    return walletLabel === WALLETS.EXPLORER_MODE.label
+      ? `You are viewing the site in an ${walletLabel}`
+      : `You are connected to ${walletLabel}`
+  }
+
   const renderWalletTypeIcon = () => {
     let tooltipText = ""
     let iconComponent = <></>
 
     switch (connector?.name) {
       case WALLETS.METAMASK.name:
-        tooltipText = "You are connected to MetaMask"
+        tooltipText = getTooltipText(WALLETS.METAMASK.label)
         iconComponent = <Icons.MetaMask className="flex" />
         break
       case WALLETS.LEDGER:
-        tooltipText = "You are connected to Ledger"
+        tooltipText = getTooltipText(WALLETS.LEDGER.label)
         iconComponent = (
           <Icons.Ledger className="ledger-logo ledger-logo--black flex" />
         )
         break
       case WALLETS.TREZOR:
-        tooltipText = "You are connected to Trezor"
+        tooltipText = getTooltipText(WALLETS.TREZOR.label)
         iconComponent = (
           <Icons.Trezor className="trezor-logo trezor-logo--black flex" />
         )
         break
       case WALLETS.WALLET_CONNECT:
-        tooltipText = "You are connected to WalletConnect"
+        tooltipText = getTooltipText(WALLETS.WALLET_CONNECT.label)
         iconComponent = (
           <Icons.WalletConnect className="wallet-connect-logo wallet-connect-logo--black flex" />
         )
         break
       case WALLETS.EXPLORER_MODE.name:
-        tooltipText = "You are viewing the site in an Explorer Mode"
+        tooltipText = getTooltipText(WALLETS.EXPLORER_MODE.label)
         iconComponent = (
           <Icons.Wallet className="wallet-connect-logo wallet-connect-logo--black flex" />
         )
