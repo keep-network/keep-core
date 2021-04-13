@@ -36,28 +36,23 @@ const useSubscribeToConnectorEvents = () => {
       })
     }
 
-    const sendNextTransactionFromQueue = async (
-      transactions,
-      transactionIndex = 0
-    ) => {
-      web3.eth.sendTransaction(
-        transactions[transactionIndex].params[0],
-        async (error, response) => {
-          if (!error) {
-            const nextIndex = transactionIndex + 1
-            if (transactions[nextIndex])
-              await sendNextTransactionFromQueue(transactions, nextIndex)
-          }
-        }
+    const sendTransactionsFromQueue = (transactions) => {
+      const transactionObjects = transactions.map(
+        (transaction) => transaction.params[0]
       )
+
+      dispatch({
+        type: "web3/send_raw_transaction_in_sequence",
+        payload: transactionObjects,
+      })
     }
 
-    const executeTransactionsInQueue = async (transactions) => {
+    const executeTransactionsInQueue = (transactions) => {
       if (transactions.length > 0) {
         dispatch({
           type: "transactions/clear_queue",
         })
-        await sendNextTransactionFromQueue(transactions)
+        sendTransactionsFromQueue(transactions)
       }
     }
 

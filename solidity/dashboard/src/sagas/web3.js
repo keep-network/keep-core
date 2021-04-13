@@ -7,6 +7,7 @@ import {
   closeMessage,
 } from "../actions/messages"
 import { messageType } from "../components/Message"
+import { Web3Loaded } from "../contracts"
 
 function createTransactionEventChannel(
   contract,
@@ -14,20 +15,31 @@ function createTransactionEventChannel(
   args = [],
   options = {}
 ) {
+  const emitter = contract.methods[method](...args).send(options)
+
+  return createEventChannelFromEmitter(emitter)
+}
+
+async function createRawTransactionEventChannel(transactionObject) {
+  const web3 = await Web3Loaded
+  const emitter = web3.eth.sendTransaction(transactionObject)
+
+  return createEventChannelFromEmitter(emitter)
+}
+
+function createEventChannelFromEmitter(emitter) {
+  let txHashCache
+
+  let showPendingActionMessage
+  let showSuccessMessage
+  let showErrorMessage
+
   const showWalletMessage = showMessage({
     messageType: messageType.WALLET,
     messageProps: {
       sticky: true,
     },
   })
-
-  const emitter = contract.methods[method](...args).send(options)
-
-  let txHashCache
-
-  let showPendingActionMessage
-  let showSuccessMessage
-  let showErrorMessage
 
   return eventChannel((emit) => {
     emit(showWalletMessage)
@@ -141,6 +153,24 @@ export function* sendTransaction(action) {
   }
 }
 
+export function* sendRawTransaction(action) {
+  const transactionEventChannel = yield call(
+    createRawTransactionEventChannel,
+    action.payload
+  )
+
+  try {
+    while (true) {
+      const event = yield take(transactionEventChannel)
+      yield put(event)
+    }
+  } catch (error) {
+    throw error
+  } finally {
+    transactionEventChannel.close()
+  }
+}
+
 export function* watchSendTransactionRequest() {
   yield takeEvery("web3/send_transaction", function* (action) {
     const { contractName, methodName, args, options } = action.payload
@@ -157,5 +187,15 @@ export function* watchSendTransactionRequest() {
       payload: sendTransactionPayload,
       meta: action.meta,
     })
+  })
+}
+
+export function* watchSendRawTransactionsInSequenceRequest() {
+  yield takeEvery("web3/send_raw_transaction_in_sequence", function* (action) {
+    for (const transactionObject of action.payload) {
+      yield call(sendRawTransaction, {
+        payload: transactionObject,
+      })
+    }
   })
 }
