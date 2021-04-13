@@ -206,7 +206,9 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
   const ownerDelegations = await stakingContract.getPastEvents(
     "StakeDelegated",
     {
-      fromBlock: await getContractDeploymentBlockNumber.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { owner, ...filterParam },
     }
   )
