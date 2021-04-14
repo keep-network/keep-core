@@ -19,7 +19,7 @@ const RandomBeaconRewardsPage = () => {
   useEffect(() => {
     dispatch({
       type: "rewards/beacon_fetch_distributed_rewards_request",
-      payload: yourAddress,
+      payload: { address: yourAddress },
     })
   }, [dispatch, yourAddress])
 
