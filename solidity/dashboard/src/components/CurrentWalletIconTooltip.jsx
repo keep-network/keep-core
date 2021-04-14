@@ -43,7 +43,7 @@ const CurrentWalletIconTooltip = () => {
       case WALLETS.EXPLORER_MODE.name:
         tooltipText = getTooltipText(WALLETS.EXPLORER_MODE.label)
         iconComponent = (
-          <Icons.Wallet className="wallet-connect-logo wallet-connect-logo--black flex" />
+          <Icons.Explore className="wallet-connect-logo wallet-connect-logo--black flex" />
         )
         break
       default:

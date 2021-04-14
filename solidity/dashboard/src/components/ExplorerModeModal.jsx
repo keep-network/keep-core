@@ -28,7 +28,7 @@ const ExplorerModeModal = ({
   return selectedAddress ? (
     <SelectedWalletModal
       icon={
-        <Icons.Wallet
+        <Icons.Explore
           className="wallet-connect-logo wallet-connect-logo--black"
           width={30}
           height={28}

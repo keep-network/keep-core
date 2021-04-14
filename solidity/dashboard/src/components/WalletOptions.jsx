@@ -53,7 +53,7 @@ const WALLETS_OPTIONS = [
   },
   {
     label: "Explorer Mode",
-    icon: Icons.Wallet,
+    icon: Icons.Explore,
     isHardwareWallet: false,
     connector: new ExplorerModeConnector(),
   },
