@@ -64,11 +64,9 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
         tx.serialize().toString("hex")
       )
 
-      // The transport layer only returns the lower 2 bytes.
-      // The returned `v` will be wrong for chainId's < 255 and has to be recomputed.
       const ledgerSignedV = parseInt(result.v, 16)
       let signedV = this.chainId * 2 + 35
-      if (ledgerSignedV % 2 === 0) {
+      if (signedV !== ledgerSignedV && ledgerSignedV % 2 === 0) {
         signedV += 1
       }
 
@@ -76,12 +74,9 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
       tx.r = getBufferFromHex(result.r)
       tx.s = getBufferFromHex(result.s)
 
-      // Compare `v` value returned from Ledger.
-      // eg. for `chainId = 1101` => `v = 2238(08be)` => `ledgerSignedV = 190(be)`
-      // `2238 & 0xff = 190`
-      const isValidSignedV = (signedV & 0xff) === ledgerSignedV
       const chainIdFromV = getChainIdFromV(tx.v)
-      if (chainIdFromV !== this.chainId && !isValidSignedV) {
+
+      if (chainIdFromV !== this.chainId) {
         throw new Error("Invalid chainID")
       }
 
