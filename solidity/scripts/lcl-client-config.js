@@ -4,7 +4,7 @@ addresses.
 
 Example:
 KEEP_CORE_CONFIG_FILE_PATH=~go/src/github.com/keep-network/keep-core/config.toml \
-    truffle exec scripts/lcl-client-config.js --network local
+    truffle exec scripts/lcl-client-config.js --network sov
 */
 const fs = require('fs')
 const toml = require('toml')

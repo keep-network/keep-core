@@ -48,15 +48,15 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{},\"title\":\"GrantStakingPolicy\"},\"userdoc\":{\"methods\":{},\"notice\":\"A staking policy defines the function `getStakeableAmount` which calculates how many tokens may be staked from a token grant.\"}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":\"GrantStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]}},\"version\":1}",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{},\"title\":\"GrantStakingPolicy\"},\"userdoc\":{\"methods\":{},\"notice\":\"A staking policy defines the function `getStakeableAmount` which calculates how many tokens may be staked from a token grant.\"}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol\":\"GrantStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]}},\"version\":1}",
   "bytecode": "0x",
   "deployedBytecode": "0x",
   "sourceMap": "",
   "deployedSourceMap": "",
   "source": "pragma solidity 0.5.17;\n\n/// @title GrantStakingPolicy\n/// @notice A staking policy defines the function `getStakeableAmount`\n/// which calculates how many tokens may be staked from a token grant.\ncontract GrantStakingPolicy {\n    function getStakeableAmount(\n        uint256 _now,\n        uint256 grantedAmount,\n        uint256 duration,\n        uint256 start,\n        uint256 cliff,\n        uint256 withdrawn) public view returns (uint256);\n}\n",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
     "exportedSymbols": {
       "GrantStakingPolicy": [
         1238
@@ -308,7 +308,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
       "exportedSymbols": {
         "GrantStakingPolicy": [
           1238
@@ -580,7 +580,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:01.824Z",
+  "updatedAt": "2021-04-13T12:32:12.113Z",
   "devdoc": {
     "methods": {},
     "title": "GrantStakingPolicy"

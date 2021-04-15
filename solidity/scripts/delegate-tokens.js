@@ -26,7 +26,7 @@ module.exports = async function () {
 
     // Stake delegate tokens for first 5 accounts as operators,
     // including the first account where owner operating for themself.
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < accounts.length; i++) {
       let operator = accounts[i]
       let beneficiary = accounts[i] // The address where the rewards for participation are sent.
       let authorizer = accounts[i] // Authorizer authorizes operator contracts the staker operates on.

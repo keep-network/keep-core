@@ -2,6 +2,7 @@ require('babel-register')
 require('babel-polyfill')
 const HDWalletProvider = require('@truffle/hdwallet-provider')
 
+
 module.exports = {
   networks: {
     local: {
@@ -12,15 +13,22 @@ module.exports = {
     sov: {
       provider: function () {
         return new HDWalletProvider(
-          '2d61b31f93df83e90e78b61943019f3d03fd9f31901359a0e065a4c896eee23d',
-          'wss://testnet.sovryn.app/ws'
+          ['2d61b31f93df83e90e78b61943019f3d03fd9f31901359a0e065a4c896eee23d',
+          '5957857a88b0ab23b4f2ddd2108e99a114bca0bfe94f0fb5e503a22905e6088f',
+          '3c53f81b6e3da8a4818a33554bfef1eec57d45c252550c8ac1593de6f0148c46',
+          '0ab212d7bae1f220699eaa40ec84e97a032382a6c0e42c73b1931eb9474a0e1e',
+          '79861b19d809f940b4d91cc8ce42c804c4591b324352f037d831aa3a1fb223c9'],          
+          'wss://testnet.sovryn.app/ws',
+          0, 
+          sovKeys.length
         )
       },
+      websocket: true,
       gas: 6700000,
-      gasPrice: 60000000,
+      gasPrice: 70000000,
       skipDryRun: false,
       network_id: '*',
-      timeoutBlocks: 100,
+      timeoutBlocks: 200,
       deploymentPollingInterval: 4000,
       disableConfirmationListener: true,
     },

@@ -94,6 +94,7 @@ func connectWithClient(
 	}
 
 	blockCounter, err := blockcounter.CreateBlockCounter(pv.client)
+
 	if err != nil {
 		return nil, fmt.Errorf(
 			"failed to create Ethereum blockcounter: [%v]",

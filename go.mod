@@ -3,6 +3,7 @@ module github.com/keep-network/keep-core
 go 1.12
 
 replace github.com/urfave/cli => github.com/keep-network/cli v1.20.0
+replace github.com/ethereum/go-ethereum => github.com/rumblefishdev/go-ethereum v1.9.10
 
 require (
 	github.com/BurntSushi/toml v0.3.1

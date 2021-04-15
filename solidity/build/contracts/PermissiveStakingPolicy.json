@@ -48,15 +48,15 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{},\"title\":\"PermissiveStakingPolicy\"},\"userdoc\":{\"methods\":{},\"notice\":\"A staking policy which allows the grantee to stake the entire grant, regardless of its unlocking status.\"}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/PermissiveStakingPolicy.sol\":\"PermissiveStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/home/bless/keep-core/solidity/contracts/PermissiveStakingPolicy.sol\":{\"keccak256\":\"0xb67694ece8587fff0e08405f1d00937d5b091b9c58a988f6f892e9dda3423895\",\"urls\":[\"bzz-raw://ec72e1404b29b4875278d627c0e0670b5e5bff4f6d8b20e4965276a38f58fd24\",\"dweb:/ipfs/Qmeb7e4r7Stk2zmfPoDAr9LX7K45Xse9QoUxiF5etM4yDH\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
-  "bytecode": "0x608060405234801561001057600080fd5b50610204806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100b982876100c590919063ffffffff16565b90509695505050505050565b600061010783836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f77000081525061010f565b905092915050565b60008383111582906101bc576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825283818151815260200191508051906020019080838360005b83811015610181578082015181840152602081019050610166565b50505050905090810190601f1680156101ae5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b506000838503905080915050939250505056fea265627a7a7231582097cd3ddc2048fa05f2715234f7537819e12ef9153631a091fbc03d1f6045256064736f6c63430005110032",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100b982876100c590919063ffffffff16565b90509695505050505050565b600061010783836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f77000081525061010f565b905092915050565b60008383111582906101bc576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825283818151815260200191508051906020019080838360005b83811015610181578082015181840152602081019050610166565b50505050905090810190601f1680156101ae5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b506000838503905080915050939250505056fea265627a7a7231582097cd3ddc2048fa05f2715234f7537819e12ef9153631a091fbc03d1f6045256064736f6c63430005110032",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{},\"title\":\"PermissiveStakingPolicy\"},\"userdoc\":{\"methods\":{},\"notice\":\"A staking policy which allows the grantee to stake the entire grant, regardless of its unlocking status.\"}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/PermissiveStakingPolicy.sol\":\"PermissiveStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/PermissiveStakingPolicy.sol\":{\"keccak256\":\"0xb67694ece8587fff0e08405f1d00937d5b091b9c58a988f6f892e9dda3423895\",\"urls\":[\"bzz-raw://ec72e1404b29b4875278d627c0e0670b5e5bff4f6d8b20e4965276a38f58fd24\",\"dweb:/ipfs/Qmeb7e4r7Stk2zmfPoDAr9LX7K45Xse9QoUxiF5etM4yDH\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610204806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100b982876100c590919063ffffffff16565b90509695505050505050565b600061010783836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f77000081525061010f565b905092915050565b60008383111582906101bc576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825283818151815260200191508051906020019080838360005b83811015610181578082015181840152602081019050610166565b50505050905090810190601f1680156101ae5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b506000838503905080915050939250505056fea265627a7a723158203700d937e3e63060dac1a5cd806bf6e6d36e12c5f0e99950f4c210694937abb264736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100b982876100c590919063ffffffff16565b90509695505050505050565b600061010783836040518060400160405280601e81526020017f536166654d6174683a207375627472616374696f6e206f766572666c6f77000081525061010f565b905092915050565b60008383111582906101bc576040517f08c379a00000000000000000000000000000000000000000000000000000000081526004018080602001828103825283818151815260200191508051906020019080838360005b83811015610181578082015181840152602081019050610166565b50505050905090810190601f1680156101ae5780820380516001836020036101000a031916815260200191505b509250505060405180910390fd5b506000838503905080915050939250505056fea265627a7a723158203700d937e3e63060dac1a5cd806bf6e6d36e12c5f0e99950f4c210694937abb264736f6c63430005110032",
   "sourceMap": "277:422:17:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;277:422:17;;;;;;;",
   "deployedSourceMap": "277:422:17:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;277:422:17;;;;;;;;;;;;;;;;;;;371:326;;;;;;13:3:-1;8;5:12;2:2;;;30:1;27;20:12;2:2;371:326:17;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;579:7;662:28;680:9;662:13;:17;;:28;;;;:::i;:::-;655:35;;371:326;;;;;;;;:::o;1274:134:88:-;1332:7;1358:43;1362:1;1365;1358:43;;;;;;;;;;;;;;;;;:3;:43::i;:::-;1351:50;;1274:134;;;;:::o;1732:187::-;1818:7;1850:1;1845;:6;;1853:12;1837:29;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;23:1:-1;8:100;33:3;30:1;27:10;8:100;;;99:1;94:3;90:11;84:18;80:1;75:3;71:11;64:39;52:2;49:1;45:10;40:15;;8:100;;;12:14;1837:29:88;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;1876:9;1892:1;1888;:5;1876:17;;1911:1;1904:8;;;1732:187;;;;;:::o",
   "source": "pragma solidity 0.5.17;\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\nimport \"./GrantStakingPolicy.sol\";\n\n/// @title PermissiveStakingPolicy\n/// @notice A staking policy which allows the grantee to stake the entire grant,\n/// regardless of its unlocking status.\ncontract PermissiveStakingPolicy is GrantStakingPolicy {\n    using SafeMath for uint256;\n\n    function getStakeableAmount (\n        uint256 _now,\n        uint256 grantedAmount,\n        uint256 duration,\n        uint256 start,\n        uint256 cliff,\n        uint256 withdrawn\n    ) public view returns (uint256) {\n        // Can always stake the entire remaining amount.\n        return grantedAmount.sub(withdrawn);\n    }\n}\n",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/PermissiveStakingPolicy.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/PermissiveStakingPolicy.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/PermissiveStakingPolicy.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/PermissiveStakingPolicy.sol",
     "exportedSymbols": {
       "PermissiveStakingPolicy": [
         5481
@@ -87,7 +87,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+        "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
         "file": "./GrantStakingPolicy.sol",
         "id": 5452,
         "nodeType": "ImportDirective",
@@ -456,7 +456,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/PermissiveStakingPolicy.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/PermissiveStakingPolicy.sol",
       "exportedSymbols": {
         "PermissiveStakingPolicy": [
           5481
@@ -494,7 +494,7 @@
       {
         "attributes": {
           "SourceUnit": 1239,
-          "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+          "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
           "file": "./GrantStakingPolicy.sol",
           "scope": 5482,
           "symbolAliases": [
@@ -889,15 +889,15 @@
     "version": "0.5.17+commit.d19bba13.Emscripten.clang"
   },
   "networks": {
-    "5777": {
+    "31": {
       "events": {},
       "links": {},
-      "address": "0xc8d93CcE9e882DBd019d6D7f25Eeb63A53Eb6238",
-      "transactionHash": "0xcabcab78e3aa3da2ecc41a8bbd22e3d9bfeeaedf9bfbeb993b806e600fa52cf9"
+      "address": "0x2F9e89f1CDFa6cdD7b23D7c4Dc266E0Ac81fA021",
+      "transactionHash": "0x18b3ba3e28905ef31cef07eab79cd9a38cdcc51e2a4b1a05225ebddb98e04d6c"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:25.190Z",
+  "updatedAt": "2021-04-13T13:16:24.926Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {},

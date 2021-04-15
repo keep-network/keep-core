@@ -29,9 +29,9 @@ npm install
 
 printf "${LOG_START}Migrating contracts for Keep-Core...${LOG_END}"
 rm -rf build/
-truffle migrate --reset --network local
+truffle migrate --reset --network sov
 printf "${LOG_START}Delegating tokens...${LOG_END}"
-truffle exec ./scripts/delegate-tokens.js --network local
+truffle exec ./scripts/delegate-tokens.js --network sov
 
 cd $TBTC_SOL_PATH
 
@@ -46,7 +46,7 @@ npm link
 
 cd $KEEP_ECDSA_SOL_PATH
 
-output=$(truffle exec ./scripts/get-network-id.js --network local)
+output=$(truffle exec ./scripts/get-network-id.js --network sov)
 NETWORKID=$(echo "$output" | tail -1)
 printf "Current network ID: ${NETWORKID}\n"
 
@@ -62,7 +62,7 @@ NETWORKID=$NETWORKID \
 
 printf "${LOG_START}Migrating contracts for Keep-Ecdsa...${LOG_END}"
 npm run clean
-truffle migrate --reset --network local
+truffle migrate --reset --network sov
 
 printf "${LOG_START}Creating symlinks for Keep-Ecdsa...${LOG_END}"
 rm -f artifacts
@@ -70,7 +70,7 @@ ln -s build/contracts artifacts
 npm link
 
 printf "${LOG_START}Initializing Keep-Ecdsa...${LOG_END}"
-truffle exec scripts/lcl-initialize.js --network local
+truffle exec scripts/lcl-initialize.js --network sov
 
 cd $DASHBOARD_DIR_PATH
 
@@ -98,7 +98,7 @@ npm link @keep-network/tbtc
 # Make sure files below exists in keep-ecdsa repository. Otherwise comment out.
 printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"
 cd $KEEP_ECDSA_SOL_PATH
-truffle exec ./scripts/generate-staker-rewards-input.js --network local
+truffle exec ./scripts/generate-staker-rewards-input.js --network sov
 
 printf "${LOG_START}Generating mock merkle objects${LOG_END}"
 cd $KEEP_ECDSA_DISTRIBUTOR_PATH
@@ -110,4 +110,4 @@ cp $MERKLE_DISTRIBUTOR_OUTPUT_PATH "$DASHBOARD_DIR_PATH/src/rewards-allocation/r
 
 printf "${LOG_START}Initializing ECDSARewardsDistributor contract${LOG_END}"
 cd $KEEP_ECDSA_SOL_PATH
-truffle exec ./scripts/initialize-ecdsa-rewards-distributor.js --network local
+truffle exec ./scripts/initialize-ecdsa-rewards-distributor.js --network sov

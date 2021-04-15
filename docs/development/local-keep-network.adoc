@@ -297,7 +297,7 @@ outputted contract addresses in the Keep peer configuration later.
 
 ```
 $ cd keep-core/solidity
-$ truffle migrate --reset --network local
+$ truffle migrate --reset --network sov
 
 Using network 'local'.
 
@@ -348,7 +348,7 @@ account. The `delegate-tokens.js` script transfers KEEP tokens and stake them fo
 addresses available.
 
 ```
-$ truffle exec ./scripts/delegte-tokens.js --network local
+$ truffle exec ./scripts/delegte-tokens.js --network sov
 
 Using network 'local'.
 
@@ -567,7 +567,7 @@ $ LOG_LEVEL="info" KEEP_ETHEREUM_PASSWORD="password" ./keep-core --config config
 In order to trigger creation of the first group genesis entry must be submitted. The script includes
 the required DKG fee.
 ```
-$ truffle exec ./scripts/genesis.js --network local
+$ truffle exec ./scripts/genesis.js --network sov
 
 Using network 'development'.
 
@@ -579,7 +579,7 @@ Genesis entry successfully submitted.
 
 Once the first group is created we can request relay entry with the following script:
 ```
-$ truffle exec ./scripts/request-relay-entry.js --network local
+$ truffle exec ./scripts/request-relay-entry.js --network sov
 
 Using network 'development'.
 
@@ -606,7 +606,7 @@ truffle exec ./scripts/request-relay-entry-with-callback.js yourContractAddress 
 Example usage:
 
 ```
-$ truffle exec ./scripts/request-relay-entry-with-callback.js 0x230cD94D6a4d3923da88d38b362337A5CC7136Dd "callback(uint256)" 100 --network local
+$ truffle exec ./scripts/request-relay-entry-with-callback.js 0x230cD94D6a4d3923da88d38b362337A5CC7136Dd "callback(uint256)" 100 --network sov
 
 Using network 'development'.
 

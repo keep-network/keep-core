@@ -1,15 +1,15 @@
 {
   "contractName": "PercentUtils",
   "abi": [],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol\":\"PercentUtils\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol\":{\"keccak256\":\"0x696b15997a739e6c47c5bc29e1f9023998bb188405221a6b337377bca4ab3f68\",\"urls\":[\"bzz-raw://e93e2287fe6b6e1c5cc45ebc92b9d682e19a5b1302e00cb037391da753282bbf\",\"dweb:/ipfs/QmRXmEopRWNaL7mvY5nTyNNob3EPHF67R6Nxhm3F4VsDoo\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
-  "bytecode": "0x60556023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a723158209d8d574eb035b90ecea22c896e8667542e32bd3ddf6d2ec2bbd82def86a5a2a064736f6c63430005110032",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a723158209d8d574eb035b90ecea22c896e8667542e32bd3ddf6d2ec2bbd82def86a5a2a064736f6c63430005110032",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/PercentUtils.sol\":\"PercentUtils\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/PercentUtils.sol\":{\"keccak256\":\"0x696b15997a739e6c47c5bc29e1f9023998bb188405221a6b337377bca4ab3f68\",\"urls\":[\"bzz-raw://e93e2287fe6b6e1c5cc45ebc92b9d682e19a5b1302e00cb037391da753282bbf\",\"dweb:/ipfs/QmRXmEopRWNaL7mvY5nTyNNob3EPHF67R6Nxhm3F4VsDoo\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
+  "bytecode": "0x60556023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a723158203d8420045bf87f461a38010a8ccd5bb567e4800798aaa48d0f6ed272e1baf34264736f6c63430005110032",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a723158203d8420045bf87f461a38010a8ccd5bb567e4800798aaa48d0f6ed272e1baf34264736f6c63430005110032",
   "sourceMap": "86:460:82:-;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
   "deployedSourceMap": "86:460:82:-;;;;;;;;",
   "source": "pragma solidity 0.5.17;\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\n\nlibrary PercentUtils {\n    using SafeMath for uint256;\n\n    // Return `b`% of `a`\n    // 200.percent(40) == 80\n    // Commutative, works both ways\n    function percent(uint256 a, uint256 b) internal pure returns (uint256) {\n        return a.mul(b).div(100);\n    }\n\n    // Return `a` as percentage of `b`:\n    // 80.asPercentOf(200) == 40\n    function asPercentOf(uint256 a, uint256 b) internal pure returns (uint256) {\n        return a.mul(100).div(b);\n    }\n}\n",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/PercentUtils.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/PercentUtils.sol",
     "exportedSymbols": {
       "PercentUtils": [
         24503
@@ -570,7 +570,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/PercentUtils.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/PercentUtils.sol",
       "exportedSymbols": {
         "PercentUtils": [
           24503
@@ -1184,7 +1184,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:02.247Z",
+  "updatedAt": "2021-04-13T12:32:13.386Z",
   "devdoc": {
     "methods": {}
   },

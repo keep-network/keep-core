@@ -28,22 +28,22 @@ npm install
 
 printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
 KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-    npx truffle exec scripts/unlock-eth-accounts.js --network local
+    npx truffle exec scripts/unlock-eth-accounts.js --network sov
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
 rm -rf build/
-npx truffle migrate --reset --network local
+npx truffle migrate --reset --network sov
 
 KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
-npx truffle exec scripts/delegate-tokens.js --network local
+npx truffle exec scripts/delegate-tokens.js --network sov
 
 printf "${LOG_START}Updating keep-core client configs...${LOG_END}"
 for CONFIG_FILE in $KEEP_CORE_CONFIG_DIR_PATH/*.toml
 do
     KEEP_CORE_CONFIG_FILE_PATH=$CONFIG_FILE \
-        npx truffle exec scripts/lcl-client-config.js --network local
+        npx truffle exec scripts/lcl-client-config.js --network sov
 done
 
 printf "${LOG_START}Building keep-core client...${LOG_END}"

@@ -1,15 +1,15 @@
 {
   "contractName": "ModUtils",
   "abi": [],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/utils/ModUtils.sol\":\"ModUtils\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/utils/ModUtils.sol\":{\"keccak256\":\"0xdba4d96c8bff55fbd9a1b932986ff02ba3658151a896dedb2801a82122b195b5\",\"urls\":[\"bzz-raw://e227a1d0dc6c82c88fc38d58080f4f07e6066aa7b5f5ef8bbbdd3b088a3020cf\",\"dweb:/ipfs/QmXKEsRkEe8S2tVoAX6b6kUQfq5KuJMXrBcPt629EC5f9W\"]}},\"version\":1}",
-  "bytecode": "0x60556023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a72315820f30c4c28744f284e517c9e9685b9f61933e39e94e1c8b434d0cf8fc6136e973864736f6c63430005110032",
-  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a72315820f30c4c28744f284e517c9e9685b9f61933e39e94e1c8b434d0cf8fc6136e973864736f6c63430005110032",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/ModUtils.sol\":\"ModUtils\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/ModUtils.sol\":{\"keccak256\":\"0xdba4d96c8bff55fbd9a1b932986ff02ba3658151a896dedb2801a82122b195b5\",\"urls\":[\"bzz-raw://e227a1d0dc6c82c88fc38d58080f4f07e6066aa7b5f5ef8bbbdd3b088a3020cf\",\"dweb:/ipfs/QmXKEsRkEe8S2tVoAX6b6kUQfq5KuJMXrBcPt629EC5f9W\"]}},\"version\":1}",
+  "bytecode": "0x60556023600b82828239805160001a607314601657fe5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a72315820d2cb87b7aaf2c329508fd7daf8eeaf14d62735b885dae7b083c83544ac8e11f764736f6c63430005110032",
+  "deployedBytecode": "0x73000000000000000000000000000000000000000030146080604052600080fdfea265627a7a72315820d2cb87b7aaf2c329508fd7daf8eeaf14d62735b885dae7b083c83544ac8e11f764736f6c63430005110032",
   "sourceMap": "26:3127:80:-;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
   "deployedSourceMap": "26:3127:80:-;;;;;;;;",
   "source": "pragma solidity 0.5.17;\n\n\nlibrary ModUtils {\n\n    /**\n     * @dev Wrap the modular exponent pre-compile introduced in Byzantium.\n     * Returns base^exponent mod p.\n     */\n    function modExp(uint256 base, uint256 exponent, uint256 p)\n        internal\n        view returns(uint256 o)\n    {\n        /* solium-disable-next-line */\n        assembly {\n            // Args for the precompile: [<length_of_BASE> <length_of_EXPONENT>\n            // <length_of_MODULUS> <BASE> <EXPONENT> <MODULUS>]\n            let output := mload(0x40)\n            let args := add(output, 0x20)\n            mstore(args, 0x20)\n            mstore(add(args, 0x20), 0x20)\n            mstore(add(args, 0x40), 0x20)\n            mstore(add(args, 0x60), base)\n            mstore(add(args, 0x80), exponent)\n            mstore(add(args, 0xa0), p)\n\n            // 0x05 is the modular exponent contract address\n            if iszero(staticcall(not(0), 0x05, args, 0xc0, output, 0x20)) {\n                revert(0, 0)\n            }\n            o := mload(output)\n        }\n    }\n\n    /**\n     * @dev Calculates and returns the square root of a mod p if such a square\n     * root exists. The modulus p must be an odd prime. If a square root does\n     * not exist, function returns 0.\n     */\n    function modSqrt(uint256 a, uint256 p)\n        internal\n        view returns(uint256)\n    {\n\n        if (legendre(a, p) != 1) {\n            return 0;\n        }\n\n        if (a == 0) {\n            return 0;\n        }\n\n        if (p % 4 == 3) {\n            return modExp(a, (p + 1) / 4, p);\n        }\n\n        uint256 s = p - 1;\n        uint256 e = 0;\n\n        while (s % 2 == 0) {\n            s = s / 2;\n            e = e + 1;\n        }\n\n        // Note the smaller int- finding n with Legendre symbol or -1\n        // should be quick\n        uint256 n = 2;\n        while (legendre(n, p) != -1) {\n            n = n + 1;\n        }\n\n        uint256 x = modExp(a, (s + 1) / 2, p);\n        uint256 b = modExp(a, s, p);\n        uint256 g = modExp(n, s, p);\n        uint256 r = e;\n        uint256 gs = 0;\n        uint256 m = 0;\n        uint256 t = b;\n\n        while (true) {\n            t = b;\n            m = 0;\n\n            for (m = 0; m < r; m++) {\n                if (t == 1) {\n                    break;\n                }\n                t = modExp(t, 2, p);\n            }\n\n            if (m == 0) {\n                return x;\n            }\n\n            gs = modExp(g, uint256(2) ** (r - m - 1), p);\n            g = (gs * gs) % p;\n            x = (x * gs) % p;\n            b = (b * g) % p;\n            r = m;\n        }\n    }\n\n    /**\n     * @dev Calculates the Legendre symbol of the given a mod p.\n     * @return Returns 1 if a is a quadratic residue mod p, -1 if it is\n     * a non-quadratic residue, and 0 if a is 0.\n     */\n    function legendre(uint256 a, uint256 p)\n        internal\n        view returns(int256)\n    {\n        uint256 raised = modExp(a, (p - 1) / uint256(2), p);\n\n        if (raised == 0 || raised == 1) {\n            return int256(raised);\n        } else if (raised == p - 1) {\n            return -1;\n        }\n\n        require(false, \"Failed to calculate legendre.\");\n    }\n}\n",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/utils/ModUtils.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/ModUtils.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/ModUtils.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/ModUtils.sol",
     "exportedSymbols": {
       "ModUtils": [
         24235
@@ -4192,7 +4192,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/utils/ModUtils.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/utils/ModUtils.sol",
       "exportedSymbols": {
         "ModUtils": [
           24235
@@ -8623,15 +8623,15 @@
     "version": "0.5.17+commit.d19bba13.Emscripten.clang"
   },
   "networks": {
-    "5777": {
+    "31": {
       "events": {},
       "links": {},
-      "address": "0x2bbCb21677b1E66996994aCa6083a3B4Dbeb3079",
-      "transactionHash": "0x28414fd43a4f571bd6e11da276976c71020fc0d167efc661dc96cdcfe257d3c9"
+      "address": "0xe83eD8a2C53B5FC14b3673817947e775b32Df7Cd",
+      "transactionHash": "0x04240e14c3c9c36b38e3ea0bd74236959cf5f90f37f94467e1d47460f706d67a"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:25.037Z",
+  "updatedAt": "2021-04-13T13:16:24.683Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

@@ -32,15 +32,15 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"__beaconCallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lastEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Example callback contract for Random Beacon.\",\"methods\":{},\"title\":\"CallbackContract\"},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol\":\"CallbackContract\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol\":{\"keccak256\":\"0x7582dc270725d9d15dbc2e13b263fa2f2c3164d9c2ac4a452b2a891a8285262a\",\"urls\":[\"bzz-raw://25cfc654326961065b23bd76da82b9c86354b30bf0b37d16c4734bdc3033b84d\",\"dweb:/ipfs/QmYvebB1arUVwod3speEHWZx6qZNaPuB94XhSFR6hPw8a6\"]},\"/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol\":{\"keccak256\":\"0xdee3f4590f2cc6262ca481bc892c1dd04604907b235bf370270aa9044d54acc7\",\"urls\":[\"bzz-raw://147b7259d58316c07db48b43cffc05578f2cb2bc0c188dd1a815f28788cb0702\",\"dweb:/ipfs/QmckN6CMfmD8J1r5zEnTVpMuCXnLznbip6sZpeZq3L8NuJ\"]}},\"version\":1}",
-  "bytecode": "0x608060405234801561001057600080fd5b5060c68061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063356e0728146037578063ffa2f8c3146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b60686088565b6040518082815260200191505060405180910390f35b8060008190555050565b6000805490509056fea265627a7a72315820776c1d72cd125d48df63971a5fe9ca59d999d65ec1234c2b404b82f54ee5b13464736f6c63430005110032",
-  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060325760003560e01c8063356e0728146037578063ffa2f8c3146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b60686088565b6040518082815260200191505060405180910390f35b8060008190555050565b6000805490509056fea265627a7a72315820776c1d72cd125d48df63971a5fe9ca59d999d65ec1234c2b404b82f54ee5b13464736f6c63430005110032",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"entry\",\"type\":\"uint256\"}],\"name\":\"__beaconCallback\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"lastEntry\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"Example callback contract for Random Beacon.\",\"methods\":{},\"title\":\"CallbackContract\"},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/examples/CallbackContract.sol\":\"CallbackContract\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/IRandomBeacon.sol\":{\"keccak256\":\"0x7582dc270725d9d15dbc2e13b263fa2f2c3164d9c2ac4a452b2a891a8285262a\",\"urls\":[\"bzz-raw://25cfc654326961065b23bd76da82b9c86354b30bf0b37d16c4734bdc3033b84d\",\"dweb:/ipfs/QmYvebB1arUVwod3speEHWZx6qZNaPuB94XhSFR6hPw8a6\"]},\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/examples/CallbackContract.sol\":{\"keccak256\":\"0xdee3f4590f2cc6262ca481bc892c1dd04604907b235bf370270aa9044d54acc7\",\"urls\":[\"bzz-raw://147b7259d58316c07db48b43cffc05578f2cb2bc0c188dd1a815f28788cb0702\",\"dweb:/ipfs/QmckN6CMfmD8J1r5zEnTVpMuCXnLznbip6sZpeZq3L8NuJ\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5060c68061001f6000396000f3fe6080604052348015600f57600080fd5b506004361060325760003560e01c8063356e0728146037578063ffa2f8c3146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b60686088565b6040518082815260200191505060405180910390f35b8060008190555050565b6000805490509056fea265627a7a7231582073742bfe744b76731d5d3a1d344ad7ff81578cde55e18575766c261e2895e2f764736f6c63430005110032",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060325760003560e01c8063356e0728146037578063ffa2f8c3146062575b600080fd5b606060048036036020811015604b57600080fd5b8101908080359060200190929190505050607e565b005b60686088565b6040518082815260200191505060405180910390f35b8060008190555050565b6000805490509056fea265627a7a7231582073742bfe744b76731d5d3a1d344ad7ff81578cde55e18575766c261e2895e2f764736f6c63430005110032",
   "sourceMap": "145:284:29:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;145:284:29;;;;;;;",
   "deployedSourceMap": "145:284:29:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;145:284:29;;;;;;;;;;;;;;;;;;;;;;;;237:95;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;237:95:29;;;;;;;;;;;;;;;;;:::i;:::-;;338:89;;;:::i;:::-;;;;;;;;;;;;;;;;;;;237:95;320:5;307:10;:18;;;;237:95;:::o;338:89::-;380:7;410:10;;403:17;;338:89;:::o",
   "source": "pragma solidity 0.5.17;\n\nimport \"../IRandomBeacon.sol\";\n\n/**\n * @title CallbackContract\n * @dev Example callback contract for Random Beacon.\n */\ncontract CallbackContract is IRandomBeaconConsumer {\n\n    uint256 internal _lastEntry;\n\n    function __beaconCallback(uint256 entry)\n        public\n    {\n        _lastEntry = entry;\n    }\n\n    function lastEntry() public view returns (uint256)\n    {\n        return _lastEntry;\n    }\n}\n",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/examples/CallbackContract.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/examples/CallbackContract.sol",
     "exportedSymbols": {
       "CallbackContract": [
         13314
@@ -60,7 +60,7 @@
         "src": "0:23:29"
       },
       {
-        "absolutePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+        "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/IRandomBeacon.sol",
         "file": "../IRandomBeacon.sol",
         "id": 13291,
         "nodeType": "ImportDirective",
@@ -325,7 +325,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/examples/CallbackContract.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/examples/CallbackContract.sol",
       "exportedSymbols": {
         "CallbackContract": [
           13314
@@ -348,7 +348,7 @@
       {
         "attributes": {
           "SourceUnit": 1364,
-          "absolutePath": "/home/bless/keep-core/solidity/contracts/IRandomBeacon.sol",
+          "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/IRandomBeacon.sol",
           "file": "../IRandomBeacon.sol",
           "scope": 13315,
           "symbolAliases": [
@@ -658,7 +658,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:02.062Z",
+  "updatedAt": "2021-04-13T12:32:12.807Z",
   "devdoc": {
     "details": "Example callback contract for Random Beacon.",
     "methods": {},

@@ -47,15 +47,15 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"base\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"schedule\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"steps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{},\"notice\":\"MinimumStakeSchedule defines the minimum stake parametrization and schedule. It starts with a minimum stake of 100k KEEP. Over the following 2 years, the minimum stake is lowered periodically using a uniform stepwise function, eventually ending at 10k.\"}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":\"MinimumStakeSchedule\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":{\"keccak256\":\"0x31a399a918eba21f0002019a70b1b68c9610a5a4977fcd874b86d4965eb974c3\",\"urls\":[\"bzz-raw://acbe55a89d5e6f7b6d4add0764e7b47acbdc31afc0d5b1f211b45546d3a5cd6c\",\"dweb:/ipfs/QmcXSUaLV7d117ZvyMnRB3MVXVEGy62ccB5u6d8h1Sm792\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
-  "bytecode": "0x60f0610025600b82828239805160001a60731461001857fe5b30600052607381538281f3fe730000000000000000000000000000000000000000301460806040526004361060475760003560e01c80635001f3b514604c57806360192799146068578063b0604a26146084575b600080fd5b605260a0565b6040518082815260200191505060405180910390f35b606e60ae565b6040518082815260200191505060405180910390f35b608a60b3565b6040518082815260200191505060405180910390f35b69021e19e0c9bab240000081565b600a81565b6303c267008156fea265627a7a72315820337d1ff7db4638c304049ef8829ae2de3f997477c78b632e67579134fb91062064736f6c63430005110032",
-  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040526004361060475760003560e01c80635001f3b514604c57806360192799146068578063b0604a26146084575b600080fd5b605260a0565b6040518082815260200191505060405180910390f35b606e60ae565b6040518082815260200191505060405180910390f35b608a60b3565b6040518082815260200191505060405180910390f35b69021e19e0c9bab240000081565b600a81565b6303c267008156fea265627a7a72315820337d1ff7db4638c304049ef8829ae2de3f997477c78b632e67579134fb91062064736f6c63430005110032",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"base\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"schedule\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"steps\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{},\"notice\":\"MinimumStakeSchedule defines the minimum stake parametrization and schedule. It starts with a minimum stake of 100k KEEP. Over the following 2 years, the minimum stake is lowered periodically using a uniform stepwise function, eventually ending at 10k.\"}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":\"MinimumStakeSchedule\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol\":{\"keccak256\":\"0x31a399a918eba21f0002019a70b1b68c9610a5a4977fcd874b86d4965eb974c3\",\"urls\":[\"bzz-raw://acbe55a89d5e6f7b6d4add0764e7b47acbdc31afc0d5b1f211b45546d3a5cd6c\",\"dweb:/ipfs/QmcXSUaLV7d117ZvyMnRB3MVXVEGy62ccB5u6d8h1Sm792\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
+  "bytecode": "0x60f0610025600b82828239805160001a60731461001857fe5b30600052607381538281f3fe730000000000000000000000000000000000000000301460806040526004361060475760003560e01c80635001f3b514604c57806360192799146068578063b0604a26146084575b600080fd5b605260a0565b6040518082815260200191505060405180910390f35b606e60ae565b6040518082815260200191505060405180910390f35b608a60b3565b6040518082815260200191505060405180910390f35b69021e19e0c9bab240000081565b600a81565b6303c267008156fea265627a7a72315820774ee6d7311eb390232ffededa617c6a2bafc1f653b0b796f76547a355f263db64736f6c63430005110032",
+  "deployedBytecode": "0x730000000000000000000000000000000000000000301460806040526004361060475760003560e01c80635001f3b514604c57806360192799146068578063b0604a26146084575b600080fd5b605260a0565b6040518082815260200191505060405180910390f35b606e60ae565b6040518082815260200191505060405180910390f35b608a60b3565b6040518082815260200191505060405180910390f35b69021e19e0c9bab240000081565b600a81565b6303c267008156fea265627a7a72315820774ee6d7311eb390232ffededa617c6a2bafc1f653b0b796f76547a355f263db64736f6c63430005110032",
   "sourceMap": "363:798:41:-;;132:2:-1;166:7;155:9;146:7;137:37;255:7;249:14;246:1;241:23;235:4;232:33;222:2;;269:9;222:2;293:9;290:1;283:20;323:4;314:7;306:22;347:7;338;331:24",
   "deployedSourceMap": "363:798:41:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;596:43;;;:::i;:::-;;;;;;;;;;;;;;;;;;;556:34;;;:::i;:::-;;;;;;;;;;;;;;;;;;;500:50;;;:::i;:::-;;;;;;;;;;;;;;;;;;;596:43;627:12;596:43;:::o;556:34::-;588:2;556:34;:::o;500:50::-;535:15;500:50;:::o",
   "source": "pragma solidity 0.5.17;\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\n\n/// @notice MinimumStakeSchedule defines the minimum stake parametrization and\n/// schedule. It starts with a minimum stake of 100k KEEP. Over the following\n/// 2 years, the minimum stake is lowered periodically using a uniform stepwise\n/// function, eventually ending at 10k.\nlibrary MinimumStakeSchedule {\n    using SafeMath for uint256;\n\n    // 2 years in seconds (seconds per day * days in a year * years)\n    uint256 public constant schedule = 86400 * 365 * 2;\n    uint256 public constant steps = 10;\n    uint256 public constant base = 10000 * 1e18;\n\n    /// @notice Returns the current value of the minimum stake. The minimum\n    /// stake is lowered periodically over the course of 2 years since the time\n    /// of the shedule start and eventually ends at 10k KEEP.\n    function current(uint256 scheduleStart) internal view returns (uint256) {\n        if (now < scheduleStart.add(schedule)) {\n            uint256 currentStep = steps.mul(now.sub(scheduleStart)).div(schedule);\n            return base.mul(steps.sub(currentStep));\n        }\n        return base;\n    }\n}",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol",
     "exportedSymbols": {
       "MinimumStakeSchedule": [
         17007
@@ -918,7 +918,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/libraries/staking/MinimumStakeSchedule.sol",
       "exportedSymbols": {
         "MinimumStakeSchedule": [
           17007
@@ -1845,15 +1845,15 @@
     "version": "0.5.17+commit.d19bba13.Emscripten.clang"
   },
   "networks": {
-    "5777": {
+    "31": {
       "events": {},
       "links": {},
-      "address": "0x16b17540422599A38CE357CFE744a28b9D126C5C",
-      "transactionHash": "0x5c84824a1510b8eb372dca2b4ff3fee8c66ede55ff6346c92f92a0dfb7d56785"
+      "address": "0x48D10eDf0a40b32c1D1C0D066e3528BA8bd5aC12",
+      "transactionHash": "0x0bd45cef36811f880c8a8a37988b010ead27e71c43d7ec55a477be89ebd8d3ac"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:25.087Z",
+  "updatedAt": "2021-04-13T13:16:24.759Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

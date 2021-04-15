@@ -48,15 +48,15 @@
       "type": "function"
     }
   ],
-  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"A staking policy which allows the grantee to stake a million times more than the grant amount.\",\"methods\":{},\"title\":\"EvilStakingPolicy\"},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/home/bless/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol\":\"EvilStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/home/bless/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol\":{\"keccak256\":\"0x3566a1aec95acdab1a1f004ab61f96e5bc140f9fb6bc227211646d72a8f809d2\",\"urls\":[\"bzz-raw://463f32cd5811eaaffd4c75a615b6ad803e22b09bd1e5b1c45f92ecba111c6fe8\",\"dweb:/ipfs/QmdQSdt2dWKzrHQWddXGpoDE8j78r5ZqNqrKtthB5qkpus\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
-  "bytecode": "0x608060405234801561001057600080fd5b506101a4806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100bc620f4240876100c890919063ffffffff16565b90509695505050505050565b6000808314156100db5760009050610148565b60008284029050828482816100ec57fe5b0414610143576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602181526020018061014f6021913960400191505060405180910390fd5b809150505b9291505056fe536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a265627a7a723158201045dd90f5c7282c2d69da709b3dd2667e711d955577430bf426099f997e28af64736f6c63430005110032",
-  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100bc620f4240876100c890919063ffffffff16565b90509695505050505050565b6000808314156100db5760009050610148565b60008284029050828482816100ec57fe5b0414610143576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602181526020018061014f6021913960400191505060405180910390fd5b809150505b9291505056fe536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a265627a7a723158201045dd90f5c7282c2d69da709b3dd2667e711d955577430bf426099f997e28af64736f6c63430005110032",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.17+commit.d19bba13\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_now\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"grantedAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"duration\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"start\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"cliff\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"withdrawn\",\"type\":\"uint256\"}],\"name\":\"getStakeableAmount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"details\":\"A staking policy which allows the grantee to stake a million times more than the grant amount.\",\"methods\":{},\"title\":\"EvilStakingPolicy\"},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol\":\"EvilStakingPolicy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol\":{\"keccak256\":\"0x9d7604d5ccd4bf23b5aca39074183aabad98ce47bc74edd2023e7e0b1be6d1b5\",\"urls\":[\"bzz-raw://92fb21051ecfa9b9885b775c2cff1778cfbab3afe3b436e234a4f08181277983\",\"dweb:/ipfs/QmPxQUWpL6iFcydJxyFsZjmWRnxziPVA2rqrgwhn6F7Tfe\"]},\"/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol\":{\"keccak256\":\"0x3566a1aec95acdab1a1f004ab61f96e5bc140f9fb6bc227211646d72a8f809d2\",\"urls\":[\"bzz-raw://463f32cd5811eaaffd4c75a615b6ad803e22b09bd1e5b1c45f92ecba111c6fe8\",\"dweb:/ipfs/QmdQSdt2dWKzrHQWddXGpoDE8j78r5ZqNqrKtthB5qkpus\"]},\"openzeppelin-solidity/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506101a4806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100bc620f4240876100c890919063ffffffff16565b90509695505050505050565b6000808314156100db5760009050610148565b60008284029050828482816100ec57fe5b0414610143576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602181526020018061014f6021913960400191505060405180910390fd5b809150505b9291505056fe536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a265627a7a723158202b07d6db55c81a2c65bc2d9a7c0a66978b8aece69b4c9cf5623675f1b149126c64736f6c63430005110032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063dab4093514610030575b600080fd5b61008e600480360360c081101561004657600080fd5b810190808035906020019092919080359060200190929190803590602001909291908035906020019092919080359060200190929190803590602001909291905050506100a4565b6040518082815260200191505060405180910390f35b60006100bc620f4240876100c890919063ffffffff16565b90509695505050505050565b6000808314156100db5760009050610148565b60008284029050828482816100ec57fe5b0414610143576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040180806020018281038252602181526020018061014f6021913960400191505060405180910390fd5b809150505b9291505056fe536166654d6174683a206d756c7469706c69636174696f6e206f766572666c6f77a265627a7a723158202b07d6db55c81a2c65bc2d9a7c0a66978b8aece69b4c9cf5623675f1b149126c64736f6c63430005110032",
   "sourceMap": "259:357:45:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;259:357:45;;;;;;;",
   "deployedSourceMap": "259:357:45:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;259:357:45;;;;;;;;;;;;;;;;;;;347:267;;;;;;13:3:-1;8;5:12;2:2;;;30:1;27;20:12;2:2;347:267:45;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;555:7;581:26;599:7;581:13;:17;;:26;;;;:::i;:::-;574:33;;347:267;;;;;;;;:::o;2159:459:88:-;2217:7;2463:1;2458;:6;2454:45;;;2487:1;2480:8;;;;2454:45;2509:9;2525:1;2521;:5;2509:17;;2553:1;2548;2544;:5;;;;;;:10;2536:56;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2610:1;2603:8;;;2159:459;;;;;:::o",
   "source": "pragma solidity 0.5.17;\n\nimport \"openzeppelin-solidity/contracts/math/SafeMath.sol\";\nimport \"../GrantStakingPolicy.sol\";\n\n/// @title EvilStakingPolicy\n/// @dev A staking policy which allows the grantee to stake\n/// a million times more than the grant amount.\ncontract EvilStakingPolicy is GrantStakingPolicy {\n    using SafeMath for uint256;\n\n    function getStakeableAmount (\n        uint256 _now,\n        uint256 grantedAmount,\n        uint256 duration,\n        uint256 start,\n        uint256 cliff,\n        uint256 withdrawn\n    ) public view returns (uint256) {\n        return grantedAmount.mul(1000000);\n    }\n}\n",
-  "sourcePath": "/home/bless/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol",
+  "sourcePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol",
   "ast": {
-    "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol",
+    "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol",
     "exportedSymbols": {
       "EvilStakingPolicy": [
         17577
@@ -87,7 +87,7 @@
         "unitAlias": ""
       },
       {
-        "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+        "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
         "file": "../GrantStakingPolicy.sol",
         "id": 17548,
         "nodeType": "ImportDirective",
@@ -461,7 +461,7 @@
   },
   "legacyAST": {
     "attributes": {
-      "absolutePath": "/home/bless/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol",
+      "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/stubs/EvilStakingPolicy.sol",
       "exportedSymbols": {
         "EvilStakingPolicy": [
           17577
@@ -499,7 +499,7 @@
       {
         "attributes": {
           "SourceUnit": 1239,
-          "absolutePath": "/home/bless/keep-core/solidity/contracts/GrantStakingPolicy.sol",
+          "absolutePath": "/Users/konrad/Desktop/rumble/fin/local-setup/keep-core/solidity/contracts/GrantStakingPolicy.sol",
           "file": "../GrantStakingPolicy.sol",
           "scope": 17578,
           "symbolAliases": [
@@ -898,7 +898,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-01-29T15:47:02.120Z",
+  "updatedAt": "2021-04-13T12:32:12.905Z",
   "devdoc": {
     "details": "A staking policy which allows the grantee to stake a million times more than the grant amount.",
     "methods": {},
