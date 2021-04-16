@@ -8,6 +8,18 @@ on:
       - "solidity/dashboard/**"
   pull_request:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for workflow execution'
+        required: false
+        default: 'dev'
+      upstream_builds:
+        description: 'Upstream builds'
+        required: false
+      ref:
+        description: 'Git reference to checkout (e.g. branch name)'
+        required: false
+        default: 'master'
 
 jobs:
   dashboard-detect-changes:
@@ -15,15 +27,30 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-    - uses: actions/checkout@v2
-      if: github.event_name == 'pull_request' 
-    - uses: dorny/paths-filter@v2
-      if: github.event_name == 'pull_request' 
-      id: filter
-      with:
-        filters: |
-          path-filter:
-            - './solidity/dashboard/**'
+      - name: Show workflow metadata
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+            echo "Workflow dispatched on branch: ${{ github.ref }}"
+            echo "environment = ${{ github.event.inputs.environment }}"
+            echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
+            echo "ref = ${{ github.event.inputs.ref }}"
+
+      - name: Show workflow metadata
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+            echo "ref = ${{ github.ref }}"
+            echo "sha = ${{ github.sha }}"
+
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/dashboard/**'
 
   dashboard-build-and-publish:
     needs: dashboard-detect-changes
@@ -77,8 +104,9 @@ jobs:
 
       - name: Login to Google Container Registry
         if: |
-          github.ref == 'refs/heads/master'
-            && github.event_name != 'pull_request'
+          (github.ref == 'refs/heads/master'
+            && github.event_name == 'push')
+            || github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v1
         with:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
@@ -88,7 +116,7 @@ jobs:
       - name: Build and publish Keep Token Dashboard image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-dapp-token-dashboard'
+          IMAGE_NAME: 'keep-dapp-token-dashboard-wip' # TODO: remove '-wip' 
           GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./solidity/dashboard/
@@ -98,7 +126,21 @@ jobs:
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           push: |
-            ${{ github.ref == 'refs/heads/master'
-              && github.event_name != 'pull_request' }} 
+            ${{ (github.ref == 'refs/heads/master'
+              && github.event_name == 'push')
+              || github.event_name == 'workflow_dispatch' }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
+      
+      - name: Notify CI about completion of the workflow
+        if: github.event_name == 'workflow_dispatch'
+        uses: keep-network/notify-workflow-completed@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-ecdsa"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          ref: ${{ github.event.inputs.ref }}
+          version: ${{ github.sha }} # TODO: replace with version once versioning ready
