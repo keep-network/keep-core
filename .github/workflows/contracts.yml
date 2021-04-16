@@ -28,7 +28,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name == 'workflow_dispatch'
         run: |
             echo "Workflow dispatched on branch: ${{ github.ref }}"
@@ -36,7 +36,7 @@ jobs:
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
 
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
         run: |
             echo "ref = ${{ github.ref }}"
@@ -125,7 +125,7 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-            
+
       - name: Install dependencies
         run: npm ci
 
@@ -134,10 +134,6 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test, contracts-lint]
-    # if: |
-    #   github.ref == 'refs/heads/master'
-    #     && github.event_name != 'pull_request'
-    # TODO: Decide on execution conditions
     if: |
       (github.ref == 'refs/heads/master'
         && github.event_name == 'push')
@@ -200,9 +196,9 @@ jobs:
       - name: Upload contract data
         env: 
           CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
+        run: | # TODO remove '-wip'
           cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core
+          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core-wip
 
       - name: Copy artifacts
         run: |
@@ -294,7 +290,6 @@ jobs:
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test, contracts-lint]
-    # shoud be executed for workflow-dispatch? on which branches?
     if: |
       github.ref == 'refs/heads/master'
         && github.event_name != 'pull_request'

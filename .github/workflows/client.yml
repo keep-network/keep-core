@@ -31,7 +31,7 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name == 'workflow_dispatch'
         run: |
             echo "Workflow dispatched on branch: ${{ github.ref }}"
@@ -39,7 +39,7 @@ jobs:
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
 
-      - name: Show workflow metadata # TODO: consider whether to keep it or remove
+      - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
         run: |
             echo "ref = ${{ github.ref }}"
@@ -96,10 +96,6 @@ jobs:
             gotestsum
 
       - name: Login to Google Container Registry
-        # if:  |
-        #   github.ref == 'refs/heads/master'
-        #     && github.event_name != 'pull_request'
-         # TODO: Decide on execution conditions
         if: |
           (github.ref == 'refs/heads/master'
             && github.event_name == 'push')
@@ -121,10 +117,6 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
-          # push: | # what about publishing for workflow_dipatch on different refs than master?
-          #   ${{ github.ref == 'refs/heads/master' 
-          #     && github.event_name != 'pull_request' }}
-          # TODO: Decide on execution conditions
           push: |
             ${{ (github.ref == 'refs/heads/master'
               && github.event_name == 'push')
@@ -145,12 +137,6 @@ jobs:
 
   client-scan:
     needs: client-detect-changes
-    # if: |
-    #   github.event_name != 'pull_request'
-    #     || needs.client-detect-changes.outputs.path-filter == 'true'
-    # Do we want to support manual dispath of workflow without triggering 
-    # downstream builds? If so, we would likely want to run the `client-scan`,
-    # conditions would need to change.
     if: |
       github.event_name == 'push'
         || needs.client-detect-changes.outputs.path-filter == 'true'
