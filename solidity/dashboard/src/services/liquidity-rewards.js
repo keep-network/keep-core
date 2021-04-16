@@ -385,7 +385,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
    */
   calculateRewardMultiplier = async (address) => {
     const stakedBalanceOfUser = await this.stakedBalance(address)
-    const rewardBalance = await this.rewardBalance(stakedBalanceOfUser)
+    const rewardBalance = await this.rewardBalance(address, stakedBalanceOfUser)
 
     const stakedBalanceOfUserBN = new BigNumber(stakedBalanceOfUser)
     const rewardBalanceBN = new BigNumber(rewardBalance)
