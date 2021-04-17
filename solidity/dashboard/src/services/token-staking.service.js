@@ -406,7 +406,9 @@ const getAllGranteeOperators = async (
     ? []
     : (
         await stakingPortBackerContract.getPastEvents("StakePaidBack", {
-          fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+          fromBlock: await getContractDeploymentBlockNumber(
+            STAKING_PORT_BACKER_CONTRACT_NAME
+          ),
           filter: { owner: grantee, operator: activeOperators },
         })
       ).map((_) => _.returnValues.operator)
