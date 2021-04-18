@@ -13,7 +13,7 @@ import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
-import CustomNavLink from "./CustomNavLink";
+import NavLink from "./NavLink"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -24,13 +24,13 @@ export const SideMenu = (props) => {
     <nav className="side-menu--active">
       <ul className="side-menu__list">
         <li className="side-menu__route-wrapper">
-          <CustomNavLink
+          <NavLink
             to={OverviewPage.route.path}
             className="side-menu__route"
             activeClassName="side-menu__route--active"
           >
             {OverviewPage.route.title}
-          </CustomNavLink>
+          </NavLink>
           <Divider style={styles.overviewDivider} />
         </li>
         <NavLinkSection
@@ -98,14 +98,14 @@ const NavLinkSectionRoute = ({ title, path, exact, withNewLabel }) => {
 
   return (
     <li className="side-menu__route-wrapper">
-      <CustomNavLink
+      <NavLink
         to={path}
         className={`side-menu__route${match ? "--active" : ""}`}
         activeClassName={`side-menu__route--active`}
       >
         {title}
         {withNewLabel && <Chip text="NEW" size="tiny" className="ml-1" />}
-      </CustomNavLink>
+      </NavLink>
     </li>
   )
 }

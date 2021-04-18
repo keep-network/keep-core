@@ -2,7 +2,7 @@ import React from "react"
 import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
 import Chip from "./Chip"
-import CustomNavLink from "./CustomNavLink";
+import NavLink from "./NavLink"
 
 const Header = ({ title, subLinks, className = "", newPage = false }) => {
   return (
@@ -26,14 +26,14 @@ const Header = ({ title, subLinks, className = "", newPage = false }) => {
 const SubNavItem = ({ title, path }) => {
   return (
     <li className="sub-nav__item-wrapper">
-      <CustomNavLink
+      <NavLink
         to={path}
         className="sub-nav__item"
         activeClassName="sub-nav__item--active"
         exact={true}
       >
         {title}
-      </CustomNavLink>
+      </NavLink>
     </li>
   )
 }

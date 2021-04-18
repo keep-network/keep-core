@@ -3,7 +3,7 @@ import { Switch } from "react-router-dom"
 import Header from "./Header"
 import { renderExplorerModePage, renderPage } from "./Routing"
 import { isEmptyArray } from "../utils/array.utils"
-import CustomRedirect from "./CustomRedirect"
+import Redirect from "./Redirect"
 
 const PageWrapper = ({
   title,
@@ -28,7 +28,7 @@ const PageWrapper = ({
           <Switch>
             {routes.map(renderPage)}
             {routes.map(renderExplorerModePage)}
-            <CustomRedirect to={routes[0].route.path} />
+            <Redirect to={routes[0].route.path} />
           </Switch>
         )}
       </main>

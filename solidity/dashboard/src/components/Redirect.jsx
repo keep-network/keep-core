@@ -1,11 +1,11 @@
 import React from "react"
-import { Redirect } from "react-router-dom"
+import { Redirect as RedirectReadtRouterDOM } from "react-router-dom"
 import useWalletAddressFromUrl from "../hooks/useWalletAddressFromUrl"
 
-const CustomRedirect = ({ to, ...props }) => {
+const Redirect = ({ to, ...props }) => {
   const walletAddressFromUrl = useWalletAddressFromUrl()
   const finalPath = walletAddressFromUrl ? "/" + walletAddressFromUrl + to : to
-  return <Redirect to={finalPath} />
+  return <RedirectReadtRouterDOM to={finalPath} />
 }
 
-export default CustomRedirect
+export default Redirect
