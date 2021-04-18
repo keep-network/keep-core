@@ -172,16 +172,13 @@ class Web3ContextProvider extends React.Component {
   ) => {
     if (
       explorerModeConnector?.name === WALLETS.EXPLORER_MODE.name &&
-      walletConnector?.name !== WALLETS.EXPLORER_MODE.name
+      walletConnector?.name !== WALLETS.EXPLORER_MODE.name &&
+      explorerModeAddress &&
+      !isSameEthAddress(explorerModeAddress, walletAddress)
     ) {
-      if (
-        explorerModeAddress &&
-        !isSameEthAddress(explorerModeAddress, walletAddress)
-      ) {
-        throw new Error(
-          "Connected address is different from the one used in Explorer Mode."
-        )
-      }
+      throw new Error(
+        "Connected address is different from the one used in Explorer Mode."
+      )
     }
   }
 

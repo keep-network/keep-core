@@ -63,7 +63,6 @@ const WalletOptions = ({ displayExplorerMode = true }) => {
   return (
     <ul className="wallet__options">
       {WALLETS_OPTIONS.filter(
-        // do not display explorer mode option inside WalletSelectionModal
         (wallet) =>
           !(
             !displayExplorerMode && wallet.label === WALLETS.EXPLORER_MODE.label

@@ -12,12 +12,7 @@ export const WalletSelectionModal = () => {
         </h3>
       </div>
       <span className="text-center mt-1">
-        {
-          <ConnectWalletBtn
-            text={"Connect wallet"}
-            displayExplorerMode={false}
-          />
-        }
+        <ConnectWalletBtn text={"Connect wallet"} displayExplorerMode={false} />
       </span>
     </div>
   )

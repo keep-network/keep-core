@@ -17,6 +17,7 @@ export class ExplorerModeConnector extends AbstractConnector {
 
   setSelectedAccount = (address) => {
     this.selectedAccount = address
+    this.emit("accountsChanged", address)
   }
 
   enable = async () => {

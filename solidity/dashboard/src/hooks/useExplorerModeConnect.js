@@ -6,6 +6,7 @@ import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
+import useWalletAddressFromUrl from "./useWalletAddressFromUrl";
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -21,13 +22,13 @@ import { WALLETS } from "../constants/constants"
 const useExplorerModeConnect = () => {
   const location = useLocation()
   const history = useHistory()
+  const address = useWalletAddressFromUrl()
   const { openModal, closeModal } = useModal()
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
 
   useEffect(() => {
     const pathnameSplitted = location.pathname.split("/")
     if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
-      const address = pathnameSplitted[1]
       // change url to the one without an address when disconnecting
       if (web3Utils.isAddress(address) && !connector) {
         const newPathname = location.pathname.replace("/" + address, "")
@@ -50,7 +51,6 @@ const useExplorerModeConnect = () => {
   useEffect(() => {
     const pathnameSplitted = location.pathname.split("/")
     if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
-      const address = pathnameSplitted[1]
       // log in to explorer mode when pasting url with address
       if (web3Utils.isAddress(address) && !connector) {
         const explorerModeConnector = new ExplorerModeConnector()

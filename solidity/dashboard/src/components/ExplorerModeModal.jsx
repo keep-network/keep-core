@@ -1,8 +1,7 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import SelectedWalletModal from "./SelectedWalletModal"
 import * as Icons from "./Icons"
 import { WALLETS } from "../constants/constants"
-import { useState } from "react"
 import ExplorerModeAddressForm from "./ExplorerModeAddressForm"
 
 const ExplorerModeModal = ({
