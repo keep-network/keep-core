@@ -15,7 +15,9 @@ const ExplorerModeAddressForm = ({ submitAction, onCancel }) => {
         name="address"
         type="text"
         label="Enter an address"
-        tooltipText={<>tooltip text</>}
+        tooltipText={
+          "Enter an address with which you would like to view the dashboard"
+        }
       />
       <div
         className="flex row center mt-2"
