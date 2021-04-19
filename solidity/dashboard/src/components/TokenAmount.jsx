@@ -1,66 +1,50 @@
 import React from "react"
-import * as Icons from "./Icons"
-import { displayAmount, getNumberWithMetricSuffix } from "../utils/token.utils"
 import Tooltip from "./Tooltip"
+import { KEEP } from "../utils/token.utils"
 
 const TokenAmount = ({
-  wrapperClassName,
-  currencyIcon,
-  currencyIconProps,
   amount,
-  amountClassName,
-  suffixClassName,
-  displayWithMetricSuffix,
-  currencySymbol,
-  displayAmountFunction,
-  withTooltip,
-  tooltipText,
+  token = KEEP,
+  wrapperClassName = "",
+  amountClassName = "",
+  icon = null,
+  iconProps = {},
+  withIcon = false,
+  withMetricSuffix = false,
+  smallestPrecisionUnit = null,
+  smallestPrecisionDecimals = null,
 }) => {
-  const { value, suffix } = displayWithMetricSuffix
-    ? getNumberWithMetricSuffix(displayAmountFunction(amount, false))
-    : { value: "0", suffix: "" }
-  const CurrencyIcon = currencyIcon
+  const CurrencyIcon = withIcon ? icon || token.icon : () => <></>
 
-  const TokenAmount = () => (
-    <div className={`token-amount flex row center ${wrapperClassName || ""}`}>
-      <CurrencyIcon {...currencyIconProps} />
-      <span className={amountClassName} style={{ marginLeft: "10px" }}>
-        {displayWithMetricSuffix ? value : displayAmountFunction(amount)}
-        {displayWithMetricSuffix && (
-          <span
-            className={suffixClassName}
-            style={{ marginLeft: "3px", alignSelf: "flex-end" }}
-          >
-            {suffix}
-          </span>
+  const _smallestPrecisionUnit =
+    smallestPrecisionUnit || token.smallestPrecisionUnit
+
+  const _smallestPrecisionDecimals =
+    smallestPrecisionDecimals || token.smallestPrecisionDecimals
+
+  const formattedAmount = withMetricSuffix
+    ? token.displayAmountWithMetricSuffix(amount)
+    : token.displayAmount(amount)
+
+  return (
+    <div className={`flex row center ${wrapperClassName}`}>
+      <CurrencyIcon width={32} height={32} {...iconProps} />
+      <Tooltip
+        simple
+        triggerComponent={() => (
+          <span className={`h2 ${amountClassName}`}>{formattedAmount}</span>
         )}
-        {currencySymbol && <span>&nbsp;{currencySymbol}</span>}
-      </span>
+        delay={0}
+        className="token-amount-tooltip"
+      >
+        {`${token.toFormat(
+          token.toTokenUnit(amount, _smallestPrecisionDecimals),
+          _smallestPrecisionDecimals
+        )} ${_smallestPrecisionUnit}`}
+      </Tooltip>
+      <span className="h3">&nbsp;{token.symbol}</span>
     </div>
   )
-
-  return withTooltip ? (
-    <Tooltip
-      simple
-      triggerComponent={TokenAmount}
-      className="token-amount-tooltip"
-    >
-      {tooltipText}
-    </Tooltip>
-  ) : (
-    <TokenAmount />
-  )
-}
-
-TokenAmount.defaultProps = {
-  currencyIcon: Icons.KeepOutline,
-  currencyIconProps: {},
-  amountClassName: "h1 text-primary",
-  suffixClassName: "h3",
-  displayWithMetricSuffix: true,
-  wrapperClassName: "",
-  currencySymbol: null,
-  displayAmountFunction: displayAmount,
 }
 
 export default TokenAmount
