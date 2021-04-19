@@ -6,7 +6,9 @@ import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import { WALLETS } from "../constants/constants"
-import useWalletAddressFromUrl from "./useWalletAddressFromUrl";
+import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
+import { injected } from "../connectors"
+import { isEmptyArray } from "../utils/array.utils"
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -19,10 +21,10 @@ import useWalletAddressFromUrl from "./useWalletAddressFromUrl";
  *  http://localhost:3000/0x857173e7c7d76e051e80d30FCc3EA6A9C2b53756/liquidity
  *
  */
-const useExplorerModeConnect = () => {
+const useAutoConnect = () => {
   const location = useLocation()
   const history = useHistory()
-  const address = useWalletAddressFromUrl()
+  const walletAddressFromUrl = useWalletAddressFromUrl()
   const { openModal, closeModal } = useModal()
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
 
@@ -30,14 +32,17 @@ const useExplorerModeConnect = () => {
     const pathnameSplitted = location.pathname.split("/")
     if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
       // change url to the one without an address when disconnecting
-      if (web3Utils.isAddress(address) && !connector) {
-        const newPathname = location.pathname.replace("/" + address, "")
+      if (web3Utils.isAddress(walletAddressFromUrl) && !connector) {
+        const newPathname = location.pathname.replace(
+          "/" + walletAddressFromUrl,
+          ""
+        )
         history.push({ pathname: newPathname })
       }
 
       // change url to the one with address when we connect to the explorer mode
       if (
-        !web3Utils.isAddress(address) &&
+        !web3Utils.isAddress(walletAddressFromUrl) &&
         connector &&
         yourAddress &&
         connector.name === WALLETS.EXPLORER_MODE.name
@@ -49,17 +54,18 @@ const useExplorerModeConnect = () => {
   }, [connector, yourAddress])
 
   useEffect(() => {
+    // history.push({ pathname: "elo/melo" })
     const pathnameSplitted = location.pathname.split("/")
     if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
       // log in to explorer mode when pasting url with address
-      if (web3Utils.isAddress(address) && !connector) {
+      if (web3Utils.isAddress(walletAddressFromUrl) && !connector) {
         const explorerModeConnector = new ExplorerModeConnector()
         openModal(
           <ExplorerModeModal
             connectAppWithWallet={connectAppWithWallet}
             connector={explorerModeConnector}
             closeModal={closeModal}
-            address={address}
+            address={walletAddressFromUrl}
             connectWithWalletOnMount={true}
           />,
           {
@@ -69,6 +75,20 @@ const useExplorerModeConnect = () => {
       }
     }
   }, [location.pathname])
+
+  useEffect(() => {
+    injected.getAccounts().then((accounts) => {
+      if (!isEmptyArray(accounts) && !walletAddressFromUrl) {
+        connectAppWithWallet(injected, false).catch((error) => {
+          // Just log an error, we don't want to do anything else.
+          console.log(
+            "Eager injected connector cannot connect with the dapp:",
+            error.message
+          )
+        })
+      }
+    })
+  }, [connectAppWithWallet])
 }
 
-export default useExplorerModeConnect
+export default useAutoConnect
