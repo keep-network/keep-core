@@ -201,6 +201,10 @@ export class Token {
   }
 
   displayAmountWithMetricSuffix = (amount) => {
+    if (!amount || isZero(amount)) {
+      return "0"
+    }
+
     const MIN_AMOUNT = new BigNumber(10)
       .pow(this.smallestPrecisionDecimals)
       .toString()
