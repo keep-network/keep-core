@@ -54,7 +54,7 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
       <section className="wallet-page__overview-layout">
         <section className="tile wallet-page__overview__balance">
           <h4 className="mb-1">Wallet Balance</h4>
-          <TokenAmount amount={keepToken.value} currencySymbol="KEEP" />
+          <TokenAmount amount={keepToken.value} withIcon withMetricSuffix />
         </section>
         <section className="tile wallet-page__overview__staked-tokens">
           <h4 className="mb-2">Tokens Staked</h4>

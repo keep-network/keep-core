@@ -87,7 +87,7 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
         {isBalanceFetching ? (
           <TokenAmountSkeleton />
         ) : (
-          <TokenAmount amount={balance} currencySymbol="KEEP" />
+          <TokenAmount amount={balance} withIcon withMetricSuffix />
         )}
       </div>
       <div className="rewards__overview__period">

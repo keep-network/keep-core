@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useEffect } from "react"
 import Web3 from "web3"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import ProviderEngine from "web3-provider-engine"
@@ -7,12 +7,11 @@ import { useParams } from "react-router-dom"
 import { Link } from "react-router-dom"
 import PageWrapper from "../../components/PageWrapper"
 import { TokenGrantDetails } from "../../components/TokenGrantOverview"
-import TokenAmount from "../../components/TokenAmount"
 import { LoadingOverlay } from "../../components/Loadable"
 import { TokenGrantSkeletonOverview } from "../../components/skeletons/TokenOverviewSkeleton"
 import { CircularProgressBars } from "../../components/CircularProgressBar"
 import { SubmitButton } from "../../components/Button"
-import { add, gt } from "../../utils/arithmetics.utils"
+import { gt } from "../../utils/arithmetics.utils"
 import {
   displayAmount,
   displayAmountWithMetricSuffix,
@@ -30,15 +29,14 @@ import { getWsUrl } from "../../connectors/utils"
 import { Web3Context } from "../../components/WithWeb3Context"
 import { GrantedTokensPage } from "../delegation/GrantedTokensPage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
-import { useCallback } from "react"
-import { useDispatchWhenAccountChanged } from "../../hooks/useDispatchWhenAccountChanged"
 
 const TokenGrantsPage = (props) => {
   const dispatch = useDispatch()
   const address = useWeb3Address()
 
   const { grants, isFetching } = useSelector((state) => state.tokenGrants)
-  const fetchGrants = useCallback(
+
+  useEffect(
     () =>
       dispatch({
         type: "token-grant/fetch_grants_request",
@@ -47,22 +45,8 @@ const TokenGrantsPage = (props) => {
     [address, dispatch]
   )
 
-  useDispatchWhenAccountChanged(fetchGrants)
-
-  const totalGrantAmount = useMemo(() => {
-    return grants.map(({ amount }) => amount).reduce(add, "0")
-  }, [grants])
-
   return (
     <PageWrapper {...props}>
-      <TokenAmount
-        wrapperClassName="mb-2"
-        amount={totalGrantAmount}
-        amountClassName="h2 text-grey-40"
-        currencyIconProps={{ className: "keep-outline grey-40" }}
-        displayWithMetricSuffix={false}
-      />
-
       <LoadingOverlay
         isFetching={isFetching}
         skeletonComponent={<TokenGrantSkeletonOverview />}

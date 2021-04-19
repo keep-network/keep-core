@@ -6,9 +6,10 @@ const TokenAmount = ({
   amount,
   token = KEEP,
   wrapperClassName = "",
-  amountClassName = "",
+  amountClassName = "h2 text-mint-100",
+  symbolClassName = "h3 text-mint-100",
   icon = null,
-  iconProps = {},
+  iconProps = { className: "keep-outline keep-outline--mint-80" },
   withIcon = false,
   withMetricSuffix = false,
   smallestPrecisionUnit = null,
@@ -29,10 +30,11 @@ const TokenAmount = ({
   return (
     <div className={`flex row center ${wrapperClassName}`}>
       <CurrencyIcon width={32} height={32} {...iconProps} />
+      &nbsp;
       <Tooltip
         simple
         triggerComponent={() => (
-          <span className={`h2 ${amountClassName}`}>{formattedAmount}</span>
+          <span className={amountClassName}>{formattedAmount}</span>
         )}
         delay={0}
         className="token-amount-tooltip"
@@ -42,7 +44,7 @@ const TokenAmount = ({
           _smallestPrecisionDecimals
         )} ${_smallestPrecisionUnit}`}
       </Tooltip>
-      <span className="h3">&nbsp;{token.symbol}</span>
+      <span className={symbolClassName}>&nbsp;{token.symbol}</span>
     </div>
   )
 }

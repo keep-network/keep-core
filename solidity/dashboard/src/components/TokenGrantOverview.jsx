@@ -5,10 +5,7 @@ import { SubmitButton } from "./Button"
 import { colors } from "../constants/colors"
 import ProgressBar from "./ProgressBar"
 import TokenAmount from "./TokenAmount"
-import {
-  displayAmount,
-  displayAmountWithMetricSuffix,
-} from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { sub, gt } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
 import Tooltip from "./Tooltip"
@@ -34,13 +31,15 @@ const TokenGrantOverview = ({ selectedGrant, selectedGrantStakedAmount }) => {
 }
 
 export const TokenGrantDetails = ({ selectedGrant, availableAmount }) => {
-  const totalAmount = useMemo(() => displayAmount(selectedGrant.amount), [
-    selectedGrant.amount,
-  ])
+  const totalAmount = useMemo(
+    () =>
+      selectedGrant.amount ? KEEP.displayAmount(selectedGrant.amount) : null,
+    [selectedGrant.amount]
+  )
 
   return (
     <>
-      <TokenAmount amount={availableAmount} currencySymbol="KEEP" />
+      <TokenAmount amount={availableAmount} withIcon withMetricSuffix />
       <h4 className="text-grey-70 mt-3 mb-1">Grant Details</h4>
       <section className="grant-details">
         <div className="flex row center mb-1">
@@ -109,7 +108,7 @@ const TokenGrantUnlockingdDetailsComponent = ({ selectedGrant }) => {
       <ProgressBar.Legend
         leftValueLabel="Locked"
         valueLabel="Unlocked"
-        displayLegendValuFn={displayAmountWithMetricSuffix}
+        displayLegendValuFn={KEEP.displayAmountWithMetricSuffix}
       />
     </ProgressBar>
   )
@@ -132,7 +131,7 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
       <ProgressBar.Legend
         leftValueLabel="Unstaked"
         valueLabel="Staked"
-        displayLegendValuFn={displayAmountWithMetricSuffix}
+        displayLegendValuFn={KEEP.displayAmountWithMetricSuffix}
       />
     </ProgressBar>
   )
@@ -159,7 +158,7 @@ export const TokenGrantWithdrawnTokensDetails = ({
         <ProgressBar.Legend
           valueLabel="Withdrawn from Grant"
           leftValueLabel="Available to Withdraw"
-          displayLegendValuFn={displayAmountWithMetricSuffix}
+          displayLegendValuFn={KEEP.displayAmountWithMetricSuffix}
         />
       </ProgressBar>
       <SubmitButton
