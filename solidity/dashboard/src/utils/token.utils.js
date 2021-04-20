@@ -1,5 +1,4 @@
 import BigNumber from "bignumber.js"
-import { AMOUNT_UNIT } from "../constants/constants"
 import * as Icons from "../components/Icons"
 import { isZero, lt } from "./arithmetics.utils"
 
@@ -9,95 +8,14 @@ const metrics = [
   { divisor: 1e6, symbol: "M" },
 ]
 
-export function displayAmount(
-  amount,
-  withCommaSeparator = true,
-  unit = AMOUNT_UNIT.WEI
-) {
-  if (amount) {
-    const readableFormat =
-      unit === AMOUNT_UNIT.WEI ? toTokenUnit(amount) : new BigNumber(amount)
-    return withCommaSeparator
-      ? readableFormat.toFormat(0, BigNumber.ROUND_DOWN)
-      : readableFormat.toString()
-  }
-  return 0
-}
-
-/**
- * Convert wei amount to token units
- * @param {*} amount amount in wei
- *
- * @return {BigNumber} amount in token units
- */
-export const toTokenUnit = (amount) => {
-  if (!amount) {
-    return new BigNumber(0)
-  }
-  return new BigNumber(amount).div(new BigNumber(10).pow(new BigNumber(18)))
-}
-
-/**
- * Convert token unit amount to wei.
- * @param {*} amount amount in token units
- * @param {*} decimals decimals
- *
- * @return {BigNumber} amount in wei
- */
-export function fromTokenUnit(amount, decimals = 18) {
-  amount = new BigNumber(amount)
-  return amount.times(new BigNumber(10).pow(new BigNumber(decimals)))
-}
-
-/**
- * Returns a number with a metric suffix eg.:
- * * 10000000 => { value: 10, suffix: 'M', formattedValue: '10M' }
- * * 1000.4 => { value: 1.4, suffix: 'K', formattedValue: '1.4K'}
- * * 10000.4 => { value: 10, suffix: 'K', formattedValue: '10K' }
- * * 1 => { value: 1, suffix: '', formattedValue: '1' }
- *
- * @param {*} number
- *
- * @typedef {Object} NumebrWithSuffix
- * @property {string} value - number in string
- * @property {string} suffix - metric suffix
- * @property {string} formattedValue - number with suffix
- *
- * @return {NumebrWithSuffix}
- */
-export const getNumberWithMetricSuffix = (number) => {
-  const bigNumber = new BigNumber(number)
-  let metric
-  for (let i = metrics.length - 1; i >= 0; i--) {
-    metric = metrics[i]
-    if (bigNumber.gte(metric.divisor)) {
-      break
-    }
-  }
-
-  let value = bigNumber.div(metric.divisor)
-  const beforeDecimal = value.toFraction(1)[0]
-  const precision = beforeDecimal.toString().length === 1 ? 1 : 0
-  value = bigNumber
-    .div(metric.divisor)
-    .toFormat(precision, BigNumber.ROUND_DOWN)
-
-  return {
-    value,
-    suffix: metric.symbol,
-    formattedValue: `${value}${metric.symbol}`,
-  }
-}
-
-export const displayAmountWithMetricSuffix = (amount) => {
-  return getNumberWithMetricSuffix(toTokenUnit(amount)).formattedValue
-}
-
-export const displayNumberWithMetricSuffix = (number) => {
-  return getNumberWithMetricSuffix(number).formattedValue
-}
-
 export class Token {
+  /**
+   * Convert wei amount to token units
+   * @param {*} amount amount in wei
+   * @param {*} decimals decimals
+   *
+   * @return {BigNumber} amount in token units
+   */
   static toTokenUnit = (amount, decimals) => {
     if (!amount) {
       return new BigNumber(0)
@@ -105,6 +23,13 @@ export class Token {
     return new BigNumber(amount).div(new BigNumber(10).pow(decimals))
   }
 
+  /**
+   * Convert token unit amount to wei.
+   * @param {*} amount amount in token units
+   * @param {*} decimals decimals
+   *
+   * @return {BigNumber} amount in wei
+   */
   static fromTokenUnit(amount, decimals = 18) {
     amount = new BigNumber(amount)
     return amount.times(new BigNumber(10).pow(decimals))
@@ -136,6 +61,13 @@ export class Token {
     return this.constructor.fromTokenUnit(amount, decimals)
   }
 
+  /**
+   * Displays the provided amount in the readble format.
+   *
+   * @param {*} amount An amount in the samllest unit of the token.
+   *
+   * @return {string} Formatted amount in readble format.
+   */
   displayAmount = (amount) => {
     if (!amount || isZero(amount)) {
       return "0"
@@ -152,12 +84,29 @@ export class Token {
     return this.toFormat(this.toTokenUnit(amount))
   }
 
+  /**
+   * Formats the amount with comma separators and removes trailing zeros if
+   * needed. Eg:
+   * 10000.2300 -> 100,000.23
+   * 1000 -> 1,000
+   * @param {BigNumber} amountInBn An amount to format.
+   * @param {number} decimalPlaces Number of decimals to display.
+   *
+   * @return {string} Formatted amount.
+   */
   toFormat = (amountInBn, decimalPlaces = this.decimalsToDisplay) => {
     return amountInBn.decimalPlaces() < decimalPlaces
       ? amountInBn.toFormat(undefined, BigNumber.ROUND_DOWN)
       : amountInBn.toFormat(decimalPlaces, BigNumber.ROUND_DOWN)
   }
 
+  /**
+   * Displays an amount with a token symbol.
+   *
+   * @param {*} amount An amount to display.
+   *
+   * @return {string} Formatted amount with a token symbol.
+   */
   displayAmountWithSymbol = (amount) => {
     return `${this.displayAmount(amount)} ${this.symbol}`
   }
@@ -200,6 +149,13 @@ export class Token {
     }
   }
 
+  /**
+   * Displays an amount with a metric suffix.
+   *
+   * @param {*} amount An amount to display.
+   *
+   * @return {string} Formatted amount with a metric suffix.
+   */
   displayAmountWithMetricSuffix = (amount) => {
     if (!amount || isZero(amount)) {
       return "0"
