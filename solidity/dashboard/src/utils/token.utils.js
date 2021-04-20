@@ -51,6 +51,13 @@ export class Token {
     this.smallestPrecisionDecimals = _smallestPrecisionDecimals
     this.icon = _icon
     this.decimalsToDisplay = _decimalsToDisplay
+    this.MIN_AMOUNT_TO_DISPLAY = new BigNumber(10)
+      .pow(this.smallestPrecisionDecimals)
+      .toString()
+
+    this.MIN_AMOUNT_IN_TOKEN_UNIT = this.toTokenUnit(
+      this.MIN_AMOUNT_TO_DISPLAY
+    ).toString()
   }
 
   toTokenUnit = (amount, decimals = this.decimals) => {
@@ -69,19 +76,7 @@ export class Token {
    * @return {string} Formatted amount in readble format.
    */
   displayAmount = (amount) => {
-    if (!amount || isZero(amount)) {
-      return "0"
-    }
-
-    const MIN_AMOUNT = new BigNumber(10)
-      .pow(this.smallestPrecisionDecimals)
-      .toString()
-
-    if (lt(amount, MIN_AMOUNT)) {
-      return `<${this.toTokenUnit(MIN_AMOUNT).toString()}`
-    }
-
-    return this.toFormat(this.toTokenUnit(amount))
+    return this._displayAmount(amount, this.toFormat)
   }
 
   /**
@@ -157,20 +152,20 @@ export class Token {
    * @return {string} Formatted amount with a metric suffix.
    */
   displayAmountWithMetricSuffix = (amount) => {
+    const result = this._displayAmount(amount, this.getNumberWithMetricSuffix)
+    return result?.formattedValue ? result.formattedValue : result
+  }
+
+  _displayAmount = (amount, formattingFn = (amount) => amount) => {
     if (!amount || isZero(amount)) {
       return "0"
     }
 
-    const MIN_AMOUNT = new BigNumber(10)
-      .pow(this.smallestPrecisionDecimals)
-      .toString()
-
-    if (lt(amount, MIN_AMOUNT)) {
-      return `<${this.toTokenUnit(MIN_AMOUNT).toString()}`
+    if (lt(amount, this.MIN_AMOUNT_TO_DISPLAY)) {
+      return `<${this.MIN_AMOUNT_IN_TOKEN_UNIT}`
     }
 
-    return this.getNumberWithMetricSuffix(this.toTokenUnit(amount))
-      .formattedValue
+    return formattingFn(this.toTokenUnit(amount))
   }
 }
 
@@ -189,6 +184,7 @@ export const TBTC = new Token("tBTC", 18, "TBTC", "tSats", 8, Icons.TBTC)
 export const LPToken = new Token(
   "Liqudity Provider Token",
   18,
+  "LP",
   "LP",
   18,
   null,
