@@ -17,7 +17,6 @@ import { lte } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
 import MaxAmountAddon from "./MaxAmountAddon"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
-import { AMOUNT_UNIT } from "../constants/constants"
 import { getNextMinStake } from "../utils/minimum-stake-schedule"
 
 const DelegateStakeForm = ({
@@ -145,9 +144,7 @@ const TokensAmountField = ({
             <>
               The minimum stake will decrease to&nbsp;
               {KEEP.displayAmountWithSymbol(
-                KEEP.fromTokenUnit(nextMinStakeInfo.value),
-                true,
-                AMOUNT_UNIT.TOKEN
+                KEEP.fromTokenUnit(nextMinStakeInfo.value)
               )}
               &nbsp; on {nextMinStakeInfo.date}. You can see the full schedule
               in our staking docs {stakingDocsLink}
