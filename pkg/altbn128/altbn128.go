@@ -9,10 +9,12 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
+// G1Point represents G1 point
 type G1Point struct {
 	*bn256.G1
 }
 
+// G2Point represents G2 point
 type G2Point struct {
 	*bn256.G2
 }

@@ -11,6 +11,7 @@ type SignatureShareMessage struct {
 	shareBytes []byte
 }
 
+// NewSignatureShareMessage creates new SignatureShareMessage
 func NewSignatureShareMessage(
 	senderID group.MemberIndex,
 	shareBytes []byte,
