@@ -1,4 +1,4 @@
-// This is auto generated code
+// Package async code is auto generated
 package async
 
 import (
@@ -8,9 +8,10 @@ import (
 	"github.com/keep-network/keep-core/pkg/beacon/relay/event"
 )
 
-// Promise represents an eventual completion of an ansynchronous operation
-// and its resulting value. Promise can be either fulfilled or failed and
-// it can happen only one time. All Promise operations are thread-safe.
+// EventEntryGeneratedPromise represents an eventual completion of an
+// ansynchronous operation and its resulting value. Promise can be either
+// fulfilled or failed and it can happen only one time. All Promise operations
+// are thread-safe.
 //
 // To create a promise use: `&EventEntryGeneratedPromise{}`
 type EventEntryGeneratedPromise struct {
