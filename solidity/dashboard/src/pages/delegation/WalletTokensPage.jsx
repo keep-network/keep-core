@@ -7,7 +7,6 @@ import DelegateStakeForm from "../../components/DelegateStakeForm"
 import ProgressBar from "../../components/ProgressBar"
 import { DelegationPageWrapper } from "./index"
 import { add } from "../../utils/arithmetics.utils"
-import { displayAmountWithMetricSuffix } from "../../utils/token.utils"
 import DelegationOverview from "../../components/DelegationOverview"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
@@ -71,7 +70,14 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
             <ProgressBar.Legend
               leftValueLabel="Unstaked"
               valueLabel="Staked"
-              displayLegendValuFn={displayAmountWithMetricSuffix}
+              renderValuePattern={
+                <TokenAmount
+                  withMetricSuffix
+                  withSymbol={false}
+                  amountClassName=""
+                  symbolClassName=""
+                />
+              }
             />
           </ProgressBar>
         </section>

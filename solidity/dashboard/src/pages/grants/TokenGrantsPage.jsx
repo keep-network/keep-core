@@ -12,10 +12,7 @@ import { TokenGrantSkeletonOverview } from "../../components/skeletons/TokenOver
 import { CircularProgressBars } from "../../components/CircularProgressBar"
 import { SubmitButton } from "../../components/Button"
 import { gt } from "../../utils/arithmetics.utils"
-import {
-  displayAmount,
-  displayAmountWithMetricSuffix,
-} from "../../utils/token.utils"
+import { KEEP } from "../../utils/token.utils"
 import { colors } from "../../constants/colors"
 import useReleaseTokens from "../../hooks/useReleaseTokens"
 import { useFetchData } from "../../hooks/useFetchData"
@@ -29,6 +26,7 @@ import { getWsUrl } from "../../connectors/utils"
 import { Web3Context } from "../../components/WithWeb3Context"
 import { GrantedTokensPage } from "../delegation/GrantedTokensPage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
+import TokenAmount from "../../components/TokenAmount"
 
 const TokenGrantsPage = (props) => {
   const dispatch = useDispatch()
@@ -36,14 +34,12 @@ const TokenGrantsPage = (props) => {
 
   const { grants, isFetching } = useSelector((state) => state.tokenGrants)
 
-  useEffect(
-    () =>
-      dispatch({
-        type: "token-grant/fetch_grants_request",
-        payload: { address },
-      }),
-    [address, dispatch]
-  )
+  useEffect(() => {
+    dispatch({
+      type: "token-grant/fetch_grants_request",
+      payload: { address },
+    })
+  }, [address, dispatch])
 
   return (
     <PageWrapper {...props}>
@@ -113,14 +109,30 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
               label: "Staked",
             },
           ]}
+          renderLegendValuePattern={
+            <TokenAmount
+              withMetricSuffix
+              withSymbol={false}
+              amountClassName=""
+              symbolClassName=""
+            />
+          }
           withLegend
         />
       </div>
       <div className="ml-2 mt-1 self-start flex-1">
         <h5 className="text-grey-70">staked</h5>
-        <h4 className="text-grey-70">{displayAmount(stakedAmount)}</h4>
-        <div className="text-smaller text-grey-40">
-          of {displayAmountWithMetricSuffix(selectedGrant.amount)} Total
+        <h4 className="text-grey-70">{KEEP.displayAmount(stakedAmount)}</h4>
+        <div className="flex wrap text-smaller text-grey-40">
+          of&nbsp;
+          <TokenAmount
+            amount={selectedGrant.amount}
+            withMetricSuffix
+            withSymbol={false}
+            amountClassName=""
+            symbolClassName=""
+          />
+          &nbsp;Total
         </div>
       </div>
     </>
@@ -158,6 +170,14 @@ const TokenGrantUnlockingdDetails = ({
             },
           ]}
           withLegend
+          renderLegendValuePattern={
+            <TokenAmount
+              withMetricSuffix
+              withSymbol={false}
+              amountClassName=""
+              symbolClassName=""
+            />
+          }
         />
       </div>
       <div
@@ -167,19 +187,30 @@ const TokenGrantUnlockingdDetails = ({
       >
         <h5 className="text-grey-70">unlocked</h5>
         <h4 className="text-grey-70">
-          {displayAmount(selectedGrant.unlocked)}
+          {KEEP.displayAmount(selectedGrant.unlocked)}
         </h4>
-        <div className="text-smaller text-grey-40">
-          of {displayAmountWithMetricSuffix(selectedGrant.amount)} Total
+        <div className="flex wrap text-smaller text-grey-40">
+          of&nbsp;
+          <TokenAmount
+            amount={selectedGrant.amount}
+            withMetricSuffix
+            withSymbol={false}
+            amountClassName=""
+            symbolClassName=""
+          />
+          &nbsp;Total
         </div>
         {gt(selectedGrant.readyToRelease || 0, 0) && (
           <div className="mt-2">
             <div className="text-secondary text-small flex wrap">
-              <span className="mr-1">
-                {`${displayAmountWithMetricSuffix(
-                  selectedGrant.readyToRelease
-                )} Available`}
-              </span>
+              <TokenAmount
+                amount={selectedGrant.readyToRelease}
+                withMetricSuffix
+                withSymbol={false}
+                amountClassName="text-secondary text-small"
+                symbolClassName="text-secondary text-small"
+              />
+              &nbsp;Available
             </div>
             {!hideReleaseTokensBtn && (
               <SubmitButton

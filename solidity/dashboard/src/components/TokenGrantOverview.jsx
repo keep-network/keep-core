@@ -108,7 +108,14 @@ const TokenGrantUnlockingdDetailsComponent = ({ selectedGrant }) => {
       <ProgressBar.Legend
         leftValueLabel="Locked"
         valueLabel="Unlocked"
-        displayLegendValuFn={KEEP.displayAmountWithMetricSuffix}
+        renderValuePattern={
+          <TokenAmount
+            withMetricSuffix
+            withSymbol={false}
+            amountClassName=""
+            symbolClassName=""
+          />
+        }
       />
     </ProgressBar>
   )
@@ -131,7 +138,14 @@ export const TokenGrantStakedDetails = ({ selectedGrant, stakedAmount }) => {
       <ProgressBar.Legend
         leftValueLabel="Unstaked"
         valueLabel="Staked"
-        displayLegendValuFn={KEEP.displayAmountWithMetricSuffix}
+        renderValuePattern={
+          <TokenAmount
+            withMetricSuffix
+            withSymbol={false}
+            amountClassName=""
+            symbolClassName=""
+          />
+        }
       />
     </ProgressBar>
   )
@@ -158,7 +172,14 @@ export const TokenGrantWithdrawnTokensDetails = ({
         <ProgressBar.Legend
           valueLabel="Withdrawn from Grant"
           leftValueLabel="Available to Withdraw"
-          displayLegendValuFn={KEEP.displayAmountWithMetricSuffix}
+          renderValuePattern={
+            <TokenAmount
+              withMetricSuffix
+              withSymbol={false}
+              amountClassName=""
+              symbolClassName=""
+            />
+          }
         />
       </ProgressBar>
       <SubmitButton
