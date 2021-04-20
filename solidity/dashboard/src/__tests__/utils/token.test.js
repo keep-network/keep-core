@@ -64,18 +64,43 @@ describe("Test `Token` class", () => {
     expect(result).toBe(`100,000 ${TestToken.symbol}`)
   })
 
-  it("should return amount with metric suffix", () => {
-    const amount = "123456123400000000000000" // 123456,1234
-    const milions = "1639000000000000000000000" // 1 639 000
-    const milions2 = "2230639000000000000000000000" // 2 230 639 000
+  describe("displayAmountWithMetricSuffix test", () => {
+    it("should return amount with metric suffix", () => {
+      const amount = "123456123400000000000000" // 123456,1234
+      const milions = "1639000000000000000000000" // 1 639 000
+      const milions2 = "2230639000000000000000000000" // 2 230 639 000
 
-    const result = TestToken.displayAmountWithMetricSuffix(amount)
-    const resultMilions = TestToken.displayAmountWithMetricSuffix(milions)
-    const resultMilions2 = TestToken.displayAmountWithMetricSuffix(milions2)
+      const result = TestToken.displayAmountWithMetricSuffix(amount)
+      const resultMilions = TestToken.displayAmountWithMetricSuffix(milions)
+      const resultMilions2 = TestToken.displayAmountWithMetricSuffix(milions2)
 
-    expect(result).toBe("123.45K")
-    expect(resultMilions).toBe("1.63M")
-    expect(resultMilions2).toBe("2,230.63M")
+      expect(result).toBe("123.45K")
+      expect(resultMilions).toBe("1.63M")
+      expect(resultMilions2).toBe("2,230.63M")
+    })
+
+    it("should return 0 if the amount is 0", () => {
+      expect(TestToken.displayAmountWithMetricSuffix(0)).toBe("0")
+    })
+
+    it("should return 0 if the amount is null", () => {
+      expect(TestToken.displayAmountWithMetricSuffix(null)).toBe("0")
+    })
+
+    it("should return 0 if the amount is undefined", () => {
+      expect(TestToken.displayAmountWithMetricSuffix()).toBe("0")
+      expect(TestToken.displayAmountWithMetricSuffix(undefined)).toBe("0")
+    })
+
+    it("should return a `<...` if the amount is samllest than smallestDecimalsPrercision", () => {
+      const smallAmount = new BigNumber(8).times(
+        new BigNumber(10).pow(TestToken.smallestPrecisionDecimals - 1) // 0.00008
+      )
+
+      expect(TestToken.displayAmountWithMetricSuffix(smallAmount)).toBe(
+        "<0.0001"
+      )
+    })
   })
 
   it("should convert token amount to readable format", () => {
