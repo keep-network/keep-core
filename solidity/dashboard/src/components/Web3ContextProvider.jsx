@@ -53,10 +53,10 @@ class Web3ContextProvider extends React.Component {
       )
       yourAddress = accounts[0]
 
-      this.explorerModeToWalletConnectionCheck(
+      this.checkIfConnectionToWalletIsPossible(
         this.state.connector,
-        connector,
         this.state.yourAddress,
+        connector,
         yourAddress
       )
 
@@ -164,17 +164,19 @@ class Web3ContextProvider extends React.Component {
     }
   }
 
-  explorerModeToWalletConnectionCheck = (
-    explorerModeConnector,
-    walletConnector,
-    explorerModeAddress,
-    walletAddress
+  checkIfConnectionToWalletIsPossible = (
+    prevConnector,
+    prevAddress,
+    nextConnector,
+    nextAddress
   ) => {
+    // Checks if an address on the wallet that the user is trying to connect to
+    // is the same that was used in Explorer Mode
     if (
-      explorerModeConnector?.name === WALLETS.EXPLORER_MODE.name &&
-      walletConnector?.name !== WALLETS.EXPLORER_MODE.name &&
-      explorerModeAddress &&
-      !isSameEthAddress(explorerModeAddress, walletAddress)
+      prevConnector?.name === WALLETS.EXPLORER_MODE.name &&
+      nextConnector?.name !== WALLETS.EXPLORER_MODE.name &&
+      prevAddress &&
+      !isSameEthAddress(prevAddress, nextAddress)
     ) {
       throw new Error(
         "Connected address is different from the one used in Explorer Mode."
