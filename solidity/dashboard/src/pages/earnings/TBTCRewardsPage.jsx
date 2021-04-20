@@ -25,7 +25,7 @@ const TBTCRewardsPage = () => {
 
   useEffect(() => {
     if (address) {
-      setServiceArgs(address)
+      setServiceArgs([address])
     }
   }, [setServiceArgs, address])
 
