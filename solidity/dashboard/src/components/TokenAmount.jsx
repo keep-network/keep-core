@@ -16,6 +16,7 @@ const TokenAmount = ({
   withMetricSuffix = false,
   smallestPrecisionUnit = null,
   smallestPrecisionDecimals = null,
+  withSymbol = true,
 }) => {
   const CurrencyIcon = withIcon ? icon || token.icon : () => <></>
 
@@ -48,9 +49,11 @@ const TokenAmount = ({
           _smallestPrecisionDecimals
         )} ${_smallestPrecisionUnit}`}
       </Tooltip>
-      <span className={symbolClassName} style={symbolStyles}>
-        &nbsp;{token.symbol}
-      </span>
+      {withSymbol && (
+        <span className={symbolClassName} style={symbolStyles}>
+          &nbsp;{token.symbol}
+        </span>
+      )}
     </div>
   )
 }
