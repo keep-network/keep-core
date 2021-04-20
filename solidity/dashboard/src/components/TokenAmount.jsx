@@ -7,7 +7,9 @@ const TokenAmount = ({
   token = KEEP,
   wrapperClassName = "",
   amountClassName = "h2 text-mint-100",
+  amountStyles = {},
   symbolClassName = "h3 text-mint-100",
+  symbolStyles = {},
   icon = null,
   iconProps = { className: "keep-outline keep-outline--mint-80" },
   withIcon = false,
@@ -34,7 +36,9 @@ const TokenAmount = ({
       <Tooltip
         simple
         triggerComponent={() => (
-          <span className={amountClassName}>{formattedAmount}</span>
+          <span className={amountClassName} style={amountStyles}>
+            {formattedAmount}
+          </span>
         )}
         delay={0}
         className="token-amount-tooltip"
@@ -44,7 +48,9 @@ const TokenAmount = ({
           _smallestPrecisionDecimals
         )} ${_smallestPrecisionUnit}`}
       </Tooltip>
-      <span className={symbolClassName}>&nbsp;{token.symbol}</span>
+      <span className={symbolClassName} style={symbolStyles}>
+        &nbsp;{token.symbol}
+      </span>
     </div>
   )
 }
