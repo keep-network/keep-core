@@ -24,7 +24,7 @@ jobs:
       with:
         filters: |
           path-filter:
-            - './solidity/!(dashboard/**)/**'
+            - './solidity/!(dashboard)/**'
 
   contracts-build-and-test:
     needs: contracts-detect-changes
