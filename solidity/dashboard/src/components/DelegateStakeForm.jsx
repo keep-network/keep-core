@@ -8,7 +8,7 @@ import {
   getErrorsObj,
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { displayAmount, fromTokenUnit } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
@@ -27,7 +27,7 @@ const DelegateStakeForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const stakeTokensValue = fromTokenUnit(formikProps.values.stakeTokens)
+  const stakeTokensValue = KEEP.fromTokenUnit(formikProps.values.stakeTokens)
 
   return (
     <form className="delegate-stake-form flex column">
@@ -134,22 +134,28 @@ const TokensAmountField = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
           placeholder="0"
-          additionalInfoText={`MIN STAKE ${displayAmount(minStake)} KEEP`}
+          additionalInfoText={`MIN STAKE ${KEEP.displayAmountWithSymbol(
+            minStake
+          )}`}
           leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
           tooltipText={
             <>
-              The minimum stake will decrease to{" "}
-              {displayAmount(nextMinStakeInfo.value, true, AMOUNT_UNIT.TOKEN)}{" "}
-              KEEP on {nextMinStakeInfo.date}. You can see the full schedule in
-              our staking docs {stakingDocsLink}
+              The minimum stake will decrease to&nbsp;
+              {KEEP.displayAmountWithSymbol(
+                KEEP.fromTokenUnit(nextMinStakeInfo.value),
+                true,
+                AMOUNT_UNIT.TOKEN
+              )}
+              &nbsp; on {nextMinStakeInfo.date}. You can see the full schedule
+              in our staking docs {stakingDocsLink}
             </>
           }
         />
         <div className="text-caption--green-theme text-right ml-a">
-          {displayAmount(availableToStake)} available to stake
+          {KEEP.displayAmount(availableToStake)} available to stake
         </div>
       </div>
     </div>

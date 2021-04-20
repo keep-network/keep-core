@@ -3,7 +3,7 @@ import { DataTable, Column } from "./DataTable"
 import Chip from "./Chip"
 import AddressShortcut from "./AddressShortcut"
 import * as Icons from "./Icons"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { REWARD_STATUS } from "../constants/constants"
 
 const TBTCRewardsDataTable = ({ data = [] }) => {
@@ -30,7 +30,7 @@ const AmountCell = ({ amount }) => {
         height={32}
       />
       <div>
-        <div>{displayAmount(amount)}&nbsp;KEEP</div>
+        <div>{KEEP.displayAmountWithSymbol(amount)}</div>
         <div className="flex row center">
           <Icons.Rewards width={8} height={8} />
           <span className="text-small text-grey-40">&nbsp;Reward</span>

@@ -6,12 +6,7 @@ import { SubmitButton } from "./Button"
 import * as Icons from "./Icons"
 import { APY } from "./liquidity"
 import { gt, add, lte } from "../utils/arithmetics.utils"
-import {
-  toTokenUnit,
-  displayAmount,
-  fromTokenUnit,
-  displayAmountWithMetricSuffix,
-} from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
@@ -45,7 +40,7 @@ const KeepOnlyPool = ({
   }, [lpBalance, rewardBalance])
 
   const formattingFn = useCallback((value) => {
-    return displayAmount(fromTokenUnit(value))
+    return KEEP.displayAmount(KEEP.fromTokenUnit(value))
   }, [])
 
   const addKEEP = useCallback(
@@ -59,7 +54,7 @@ const KeepOnlyPool = ({
       )
 
       addLpTokens(
-        fromTokenUnit(amount).toString(),
+        KEEP.fromTokenUnit(amount).toString(),
         liquidityContractName,
         pool,
         awaitingPromise
@@ -87,7 +82,7 @@ const KeepOnlyPool = ({
 
       withdrawLiquidityRewards(
         liquidityContractName,
-        fromTokenUnit(amount).toString(),
+        KEEP.fromTokenUnit(amount).toString(),
         pool,
         awaitingPromise
       )
@@ -109,7 +104,7 @@ const KeepOnlyPool = ({
           <h2 className="h2--alt text-grey-70">Your KEEP Total Locked</h2>
           <h1 className="text-mint-100 mt-2">
             <CountUp
-              end={toTokenUnit(lockedKEEP).toNumber()}
+              end={KEEP.toTokenUnit(lockedKEEP).toNumber()}
               preserveValue
               decimals={2}
               duration={1}
@@ -121,7 +116,7 @@ const KeepOnlyPool = ({
             <h4>Deposited KEEP tokens</h4>
             <h4 className="self-end">
               <CountUp
-                end={toTokenUnit(lpBalance).toNumber()}
+                end={KEEP.toTokenUnit(lpBalance).toNumber()}
                 preserveValue
                 decimals={2}
                 duration={1}
@@ -135,7 +130,7 @@ const KeepOnlyPool = ({
             <h4>Rewarded KEEP tokens</h4>
             <h4 className="self-end">
               <CountUp
-                end={toTokenUnit(rewardBalance).toNumber()}
+                end={KEEP.toTokenUnit(rewardBalance).toNumber()}
                 preserveValue
                 decimals={2}
                 duration={1}
@@ -206,10 +201,9 @@ const AddKEEPForm = (props) => {
       <h3 className="mb-1">Amount available to deposit.</h3>
       <TokenAmount
         amount={availableAmount}
-        currencySymbol="KEEP"
-        wrapperClassName="mb-1"
-        currencyIconProps={{ className: "keep-outline--mint-80" }}
+        withIcon
         amountClassName="h1 text-mint-100"
+        symbolClassName="h1 text-mint-100"
       />
       <AvailableTokenForm
         onSubmit={formikProps.handleSubmit}
@@ -238,21 +232,11 @@ const WithdrawKEEPForm = (props) => {
     <>
       <h3 className="mb-1">Amount available to withdraw.</h3>
       <div className="flex row mb-2">
-        <AmountTile
-          title="deposited"
-          amount={availableAmount}
-          icon={<Icons.KeepOutline className="keep-outline--mint-80" />}
-        />
+        <AmountTile title="deposited" amount={availableAmount} />
         <AmountTile
           title="rewarded"
           amount={rewardedAmount}
-          icon={
-            <Icons.Rewards
-              width={32}
-              height={32}
-              className="reward-icon--mint-80"
-            />
-          }
+          icon={Icons.Rewards}
         />
       </div>
       <AvailableTokenForm
@@ -289,14 +273,13 @@ const AmountTile = ({ amount, title, icon }) => {
       style={styles.amountTileWrapper}
     >
       <h5 className="text-grey-40 text-left mb-1">{title}</h5>
-      <div className="flex row mb-1">
-        {icon}
-        &nbsp;
-        <h2 className="text-mint-100">
-          {displayAmountWithMetricSuffix(amount)}
-          <span className="h3">&nbsp;KEEP</span>
-        </h2>
-      </div>
+      <TokenAmount
+        wrapperClassName="mb-1"
+        amount={amount}
+        icon={icon}
+        withIcon
+        withMetricSuffix
+      />
     </MetricsTile>
   )
 }

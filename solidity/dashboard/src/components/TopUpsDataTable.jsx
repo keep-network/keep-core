@@ -3,7 +3,7 @@ import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
 import { commitTopUp } from "../actions/web3"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { connect } from "react-redux"
 
 export const TopUpsDataTable = ({ topUps, commitTopUp }) => {
@@ -25,7 +25,7 @@ export const TopUpsDataTable = ({ topUps, commitTopUp }) => {
         header="top-up amount"
         field="availableTopUpAmount"
         renderContent={({ availableTopUpAmount }) =>
-          `${displayAmount(availableTopUpAmount)} KEEP`
+          `${KEEP.displayAmountWithSymbol(availableTopUpAmount)}`
         }
       />
       <Column

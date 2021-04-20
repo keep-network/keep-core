@@ -1,6 +1,6 @@
 import React from "react"
 import { formatDate } from "../utils/general.utils"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { DataTable, Column } from "./DataTable"
 import moment from "moment"
@@ -19,7 +19,7 @@ const PendingUndelegation = ({ data }) => {
           header="amount"
           field="stakedBalance"
           renderContent={({ stakedBalance }) =>
-            stakedBalance && `${displayAmount(stakedBalance)}`
+            stakedBalance && `${KEEP.displayAmount(stakedBalance)}`
           }
         />
         <Column
