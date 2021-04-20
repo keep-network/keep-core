@@ -17,8 +17,9 @@ const TBTCRewardsDataTable = ({ rewards, fetchOperatorByDepositId }) => {
             token={TBTC}
             amount={amount}
             withIcon
-            iconProps={{ width: 15, height: 15 }}
+            iconProps={{ width: 24, height: 24 }}
             amountClassName="text-big text-grey-70"
+            symbolClassName="text-big text-grey-70"
           />
         )}
       />
