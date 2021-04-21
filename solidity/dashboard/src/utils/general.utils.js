@@ -94,6 +94,22 @@ export const displayPercentageValue = (
   return `${prefix}${value}%`
 }
 
+/**
+ * Returns a number that is in the same spot on <yMin, yMax> number line that
+ * inputX is on <xMin, xMax> number line
+ *
+ * e.g 2 on the number line of <1, 3> is exactly in the middle so for the
+ * number line of <1, 10> it will return 5.
+ *
+ * @param {BigNumber|String|Number} inputX Number on number line
+ * @param {BigNumber|String|Number} xMin - Minimal value of the current number
+ * line
+ * @param {BigNumber|String|Number} xMax - Maximal value of the current number
+ * line
+ * @param {BigNumber|String|Number} yMin - Minimal value of the new number line
+ * @param {BigNumber|String|Number} yMax - Maximal value of the new number line
+ * @return {BigNumber} Number from the new number line
+ */
 export const scaleInputForNumberRange = (inputX, xMin, xMax, yMin, yMax) => {
   inputX = BigNumber.isBigNumber(inputX) ? inputX : new BigNumber(inputX)
   xMin = BigNumber.isBigNumber(xMin) ? xMin : new BigNumber(xMin)
