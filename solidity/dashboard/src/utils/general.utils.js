@@ -67,12 +67,16 @@ const toValidHex = (hex) => {
   return hex.length % 2 !== 0 ? `0${hex}` : hex
 }
 
-export const formatPercentage = (value, decimalPlaces = 2) => {
+export const formatValue = (
+  value,
+  decimalPlaces = 2,
+  roundingType = BigNumber.ROUND_DOWN
+) => {
   if (!value) return 0
 
   value = BigNumber.isBigNumber(value) ? value : new BigNumber(value)
 
-  return value.decimalPlaces(decimalPlaces, BigNumber.ROUND_DOWN).toNumber()
+  return value.decimalPlaces(decimalPlaces, roundingType).toNumber()
 }
 
 export const displayPercentageValue = (
@@ -82,7 +86,7 @@ export const displayPercentageValue = (
   max = 999
 ) => {
   if (!isFormattedValue) {
-    value = formatPercentage(value)
+    value = formatValue(value)
   }
 
   let prefix = ""

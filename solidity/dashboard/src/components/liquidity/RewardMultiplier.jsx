@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
 import { Skeleton } from "../skeletons"
 import CountUp from "react-countup"
-import BigNumber from "bignumber.js"
+import { formatValue } from "../../utils/general.utils";
 
 export const RewardMultiplier = ({
   rewardMultiplier,
@@ -10,9 +10,7 @@ export const RewardMultiplier = ({
   className = "",
 }) => {
   const formattedRewardMultiplier = useMemo(() => {
-    return new BigNumber(rewardMultiplier)
-      .decimalPlaces(1, BigNumber.ROUND_DOWN)
-      .toString()
+    return formatValue(rewardMultiplier, 1)
   }, [rewardMultiplier])
 
   return isFetching ? (
