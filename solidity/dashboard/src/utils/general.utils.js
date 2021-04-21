@@ -93,3 +93,14 @@ export const displayPercentageValue = (
   }
   return `${prefix}${value}%`
 }
+
+export const scaleInputForNumberRange = (inputX, xMin, xMax, yMin, yMax) => {
+  inputX = BigNumber.isBigNumber(inputX) ? inputX : new BigNumber(inputX)
+  xMin = BigNumber.isBigNumber(xMin) ? xMin : new BigNumber(xMin)
+  xMax = BigNumber.isBigNumber(xMax) ? xMax : new BigNumber(xMax)
+  yMin = BigNumber.isBigNumber(yMin) ? yMin : new BigNumber(yMin)
+  yMax = BigNumber.isBigNumber(yMax) ? yMax : new BigNumber(yMax)
+
+  const percent = inputX.minus(xMin).dividedBy(xMax.minus(xMin))
+  return percent.multipliedBy(yMax.minus(yMin)).plus(yMin)
+}

@@ -15,6 +15,7 @@ import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import { KEEP_TOKEN_GEYSER_CONTRACT_NAME } from "../constants/constants"
+import { scaleInputForNumberRange } from "../utils/general.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -306,6 +307,16 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return await this.LPRewardsContract.methods.totalStaked().call()
   }
 
+  updateAccounting = async (address) => {
+    try {
+      return await this.LPRewardsContract.methods
+        .updateAccounting()
+        .call({ from: address })
+    } catch (err) {
+      return null
+    }
+  }
+
   rewardBalance = async (address, amount) => {
     try {
       // The `TokenGeyser.unstakeQuery` throws an error in case when eg. the
@@ -386,16 +397,28 @@ class TokenGeyserLPRewards extends LiquidityRewards {
   calculateRewardMultiplier = async (address) => {
     const stakedBalanceOfUser = await this.stakedBalance(address)
     const rewardBalance = await this.rewardBalance(address, stakedBalanceOfUser)
+    const updateAccountingData = await this.updateAccounting(address)
 
-    const stakedBalanceOfUserBN = new BigNumber(stakedBalanceOfUser)
+    if (!updateAccountingData) return "1"
+
     const rewardBalanceBN = new BigNumber(rewardBalance)
+    const rewardBalanceWithMaxMultiplier = new BigNumber(
+      updateAccountingData[4]
+    )
 
-    const rewardMultiplier = stakedBalanceOfUserBN
-      .plus(rewardBalanceBN)
-      .dividedBy(stakedBalanceOfUserBN)
-      .toString()
+    const rewardMultiplier = rewardBalanceBN.dividedBy(
+      rewardBalanceWithMaxMultiplier
+    )
 
-    return rewardMultiplier
+    const scaledRewardMultiplier = scaleInputForNumberRange(
+      rewardMultiplier,
+      0.3,
+      1,
+      1,
+      3
+    )
+
+    return scaledRewardMultiplier.toString()
   }
 }
 
