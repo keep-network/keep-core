@@ -102,8 +102,9 @@ export const displayPercentageValue = (
  * Returns a number that is in the same spot on <yMin, yMax> number line that
  * inputX is on <xMin, xMax> number line
  *
- * e.g 2 on the number line of <1, 3> is exactly in the middle so for the
- * number line of <1, 10> it will return 5.
+ * e.g 2 on the number line of <1, 3> is exactly in the middle of the number
+ * line of <1, 10> so it will return 5.5 (because 5.5 is exactly in the middle
+ * of the number line of <1, 10>.
  *
  * @param {BigNumber|String|Number} inputX Number on number line
  * @param {BigNumber|String|Number} xMin - Minimal value of the current number
