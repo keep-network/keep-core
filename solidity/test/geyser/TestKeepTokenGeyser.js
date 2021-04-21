@@ -5,8 +5,7 @@ const {
   time,
 } = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot.js")
-
-const { toBN } = require("web3-utils")
+const { expectCloseTo } = require("../helpers/numbers.js")
 
 const KeepToken = contract.fromArtifact("KeepToken")
 const TestToken = contract.fromArtifact("TestToken")
@@ -15,8 +14,7 @@ const BatchedPhasedEscrow = contract.fromArtifact("BatchedPhasedEscrow")
 const KeepTokenGeyserRewardsEscrowBeneficiary = contract.fromArtifact(
   "KeepTokenGeyserRewardsEscrowBeneficiary"
 )
-
-const BN = web3.utils.BN
+const { BN, toBN } = web3.utils
 const chai = require("chai")
 chai.use(require("bn-chai")(BN))
 const expect = chai.expect
@@ -371,24 +369,29 @@ describe("KeepTokenGeyser", async () => {
       })
 
       // Validate stakers' stake token balances.
-      expect(
+      expectCloseTo(
         await stakeToken.balanceOf.call(staker1),
+        stakerInitialBalance1,
         "invalid staker's 1 token balance"
-      ).to.eq.BN(stakerInitialBalance1)
-      expect(
+      )
+      expectCloseTo(
         await stakeToken.balanceOf.call(staker2),
+        stakerInitialBalance2,
         "invalid staker's 2 token balance"
-      ).to.eq.BN(stakerInitialBalance2)
+      )
 
       // Validate stakers' distribution token balances.
-      expect(
+      expectCloseTo(
         await keepToken.balanceOf.call(staker1),
+        expectedRewards1,
         "invalid staker's 1 rewards token balance"
-      ).to.eq.BN(expectedRewards1)
-      expect(
+      )
+
+      expectCloseTo(
         await keepToken.balanceOf.call(staker2),
+        expectedRewards2,
         "invalid staker's 2 rewards token balance"
-      ).to.eq.BN(expectedRewards2)
+      )
     })
 
     async function checkRewards(staker, stakeAmount, expectedRewards, message) {
@@ -420,21 +423,5 @@ describe("KeepTokenGeyser", async () => {
     await stakeToken.approve(tokenGeyser.address, amount, { from: staker })
 
     return await tokenGeyser.stake(amount, [], { from: staker })
-  }
-
-  function expectCloseTo(actual, expected, message) {
-    actualBN = toBN(actual)
-    expectedBN = toBN(expected)
-
-    const delta = actualBN.muln(1).divn(100) // approx. 1%
-
-    if (
-      actualBN.lt(expectedBN.sub(delta)) ||
-      actualBN.gt(expectedBN.add(delta))
-    ) {
-      expect.fail(
-        `${message}\nexpected : ${expectedBN.toString()}\nactual   : ${actualBN.toString()}`
-      )
-    }
   }
 })

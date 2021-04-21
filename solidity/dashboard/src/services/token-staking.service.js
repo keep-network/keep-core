@@ -206,7 +206,9 @@ export const getOperatorsOfOwner = async (owner, operatorsFilterParam) => {
   const ownerDelegations = await stakingContract.getPastEvents(
     "StakeDelegated",
     {
-      fromBlock: await getContractDeploymentBlockNumber.stakingContract,
+      fromBlock: await getContractDeploymentBlockNumber(
+        TOKEN_STAKING_CONTRACT_NAME
+      ),
       filter: { owner, ...filterParam },
     }
   )
@@ -289,7 +291,11 @@ export const getOperatorsOfGrantee = async (address) => {
   const {
     allOperators,
     operatorToGrantDetailsMap,
-  } = await getAllGranteeOperators(Array.from(granteeOperators), granteeGrants)
+  } = await getAllGranteeOperators(
+    Array.from(granteeOperators),
+    granteeGrants,
+    address
+  )
 
   return { allOperators, granteeGrants, operatorToGrantDetailsMap }
 }
@@ -315,7 +321,12 @@ export const getOperatorsOfManagedGrantee = async (address) => {
   const {
     allOperators,
     operatorToGrantDetailsMap,
-  } = await getAllGranteeOperators(Array.from(operators), grantIds, true)
+  } = await getAllGranteeOperators(
+    Array.from(operators),
+    grantIds,
+    address,
+    true
+  )
 
   return { allOperators, granteeGrants: grantIds, operatorToGrantDetailsMap }
 }
@@ -331,6 +342,7 @@ export const getOperatorsOfManagedGrantee = async (address) => {
  * @param {string[]} granteeOperators The result of the
  * `TokenGrant::getGranteeOperators`.
  * @param {string[]} grantIds Array of all grantee grants ids.
+ * @param {string} grantee Grantee address.
  * @param {boolean} isManagedGrant The flag informs that grants in `grantIds`
  * param are managed grants.
  * @return {Promise<string[]>} Array of all grantee operators.
@@ -338,6 +350,7 @@ export const getOperatorsOfManagedGrantee = async (address) => {
 const getAllGranteeOperators = async (
   granteeOperators,
   grantIds,
+  grantee,
   isManagedGrant = false
 ) => {
   const {
@@ -386,9 +399,28 @@ const getAllGranteeOperators = async (
         activeOperators
       )
 
+  // Fetching paid back delegations. Paid-back delegations are as the
+  // delegations from liquid tokens in the new `TokenStaking` contract. So we
+  // want to display them as delegations from liquid tokens ,not from a grant.
+  const paidBackDelegations = isEmptyArray(activeOperators)
+    ? []
+    : (
+        await stakingPortBackerContract.getPastEvents("StakePaidBack", {
+          fromBlock: await getContractDeploymentBlockNumber(
+            STAKING_PORT_BACKER_CONTRACT_NAME
+          ),
+          filter: { owner: grantee, operator: activeOperators },
+        })
+      ).map((_) => _.returnValues.operator)
+
+  const operatorsToFilterOut = [
+    ...operatorsOfPortBacker,
+    ...paidBackDelegations,
+  ]
+
   // We want to skip copied delegations.
   activeOperators = activeOperators.filter(
-    (operator) => !operatorsOfPortBacker.includes(operator)
+    (operator) => !operatorsToFilterOut.includes(operator)
   )
 
   let operatorToGrantDetailsMap = {}

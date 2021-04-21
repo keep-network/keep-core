@@ -38,7 +38,7 @@
     "@celo/contractkit": "^1.0.1",
     "@openzeppelin/test-environment": "^0.1.3",
     "@openzeppelin/test-helpers": "^0.5.5",
-    "@truffle/hdwallet-provider": "^1.2.2",
+    "@truffle/hdwallet-provider": "^1.2.6",
     "babel-polyfill": "^6.26.0",
     "babel-preset-es2015": "^6.18.0",
     "babel-preset-stage-2": "^6.18.0",
@@ -56,10 +56,10 @@
     "prettier-plugin-solidity": "^1.0.0-beta.2 ",
     "solc": "0.5.17",
     "solium": "^1.2.5",
-    "solium-config-keep": "github:keep-network/solium-config-keep#0.1.1",
+    "solium-config-keep": "github:keep-network/solium-config-keep#0.1.2",
     "toml": "^3.0.0",
     "tomlify-j0.4": "^3.0.0",
-    "truffle": "^5.2.1",
+    "truffle": "^5.3.1",
     "websocket": "^1.0.28"
   }
 }
