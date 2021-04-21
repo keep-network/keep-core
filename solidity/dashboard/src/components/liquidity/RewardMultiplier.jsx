@@ -1,6 +1,7 @@
-import React from "react"
+import React, { useMemo } from "react"
 import { Skeleton } from "../skeletons"
 import CountUp from "react-countup"
+import BigNumber from "bignumber.js"
 
 export const RewardMultiplier = ({
   rewardMultiplier,
@@ -8,12 +9,18 @@ export const RewardMultiplier = ({
   skeletonProps = { tag: "h2", shining: true, color: "grey-10" },
   className = "",
 }) => {
+  const formattedRewardMultiplier = useMemo(() => {
+    return new BigNumber(rewardMultiplier)
+      .decimalPlaces(1, BigNumber.ROUND_DOWN)
+      .toString()
+  }, [rewardMultiplier])
+
   return isFetching ? (
     <Skeleton {...skeletonProps} />
   ) : (
     <h2 className={` ${className} liquidity__info-tile__title text-mint-100`}>
       <CountUp
-        end={rewardMultiplier}
+        end={formattedRewardMultiplier}
         preserveValue
         decimals={1}
         duration={1}
