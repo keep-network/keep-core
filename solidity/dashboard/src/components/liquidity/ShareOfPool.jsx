@@ -2,10 +2,7 @@ import React, { useMemo } from "react"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import { Skeleton } from "../skeletons"
-import {
-  displayPercentageValue,
-  formatPercentage,
-} from "../../utils/general.utils"
+import { displayPercentageValue, formatValue } from "../../utils/general.utils"
 
 const ShareOfPool = ({
   percentageOfTotalPool,
@@ -15,9 +12,7 @@ const ShareOfPool = ({
 }) => {
   const formattedPercentageOfTotalPool = useMemo(() => {
     const bn = new BigNumber(percentageOfTotalPool)
-    return bn.isLessThan(0.01) && bn.isGreaterThan(0)
-      ? 0.01
-      : formatPercentage(bn)
+    return bn.isLessThan(0.01) && bn.isGreaterThan(0) ? 0.01 : formatValue(bn)
   }, [percentageOfTotalPool])
 
   return isFetching ? (

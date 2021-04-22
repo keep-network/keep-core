@@ -7,7 +7,7 @@ import * as delegateStakeSaga from "../../sagas/staking"
 import * as tokenGrantSaga from "../../sagas/token-grant"
 import {
   watchSendRawTransactionsInSequenceRequest,
-  watchSendTransactionRequest
+  watchSendTransactionRequest,
 } from "../../sagas/web3"
 import * as copyStakeSaga from "../../sagas/copy-stake"
 import * as subscriptions from "../../sagas/subscriptions"
@@ -16,6 +16,27 @@ import * as rewards from "../../sagas/rewards"
 import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
+
+const {
+  watchFetchLiquidityRewardsAPY,
+  ...restliquidityRewards
+} = liquidityRewards
+
+const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
+
+const loginRequiredSagas = [
+  ...Object.values(delegateStakeSaga),
+  watchSendTransactionRequest,
+  watchSendRawTransactionsInSequenceRequest,
+  ...Object.values(tokenGrantSaga),
+  ...Object.values(copyStakeSaga),
+  ...Object.values(subscriptions),
+  ...Object.values(keepTokenBalance),
+  ...Object.values(rewards),
+  ...Object.values(restliquidityRewards),
+  ...Object.values(operator),
+  ...Object.values(authorization),
+]
 
 describe("Test root saga", () => {
   it("should start correctly and handle login flow", () => {
@@ -49,6 +70,11 @@ describe("Test root saga step by step", () => {
 
   beforeAll(() => {
     generator = rootSaga()
+  })
+
+  it("should run sagas", () => {
+    const expectedYieldAll = all(sagas.map(fork))
+    expect(generator.next().value).toStrictEqual(expectedYieldAll)
   })
 
   it("should wait for start action", () => {
@@ -99,22 +125,7 @@ describe("Test account switching saga step by step", () => {
   })
 
   it("should fork all sagas", () => {
-    const expectedAllYield = all(
-      [
-        ...Object.values(messagesSaga),
-        ...Object.values(delegateStakeSaga),
-        watchSendTransactionRequest,
-        watchSendRawTransactionsInSequenceRequest,
-        ...Object.values(tokenGrantSaga),
-        ...Object.values(copyStakeSaga),
-        ...Object.values(subscriptions),
-        ...Object.values(keepTokenBalance),
-        ...Object.values(rewards),
-        ...Object.values(liquidityRewards),
-        ...Object.values(operator),
-        ...Object.values(authorization),
-      ].map(fork)
-    )
+    const expectedAllYield = all(loginRequiredSagas.map(fork))
     expect(generator.next().value).toStrictEqual(expectedAllYield)
   })
 
