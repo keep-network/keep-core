@@ -54,7 +54,6 @@ const useAutoConnect = () => {
   }, [connector, yourAddress])
 
   useEffect(() => {
-    // history.push({ pathname: "elo/melo" })
     const pathnameSplitted = location.pathname.split("/")
     if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
       // log in to explorer mode when pasting url with address
