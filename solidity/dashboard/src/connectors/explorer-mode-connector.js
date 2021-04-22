@@ -5,6 +5,7 @@ import Web3ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import ExplorerModeSubprovider from "./explorerModeSubprovider"
 import { EventEmitter } from "events"
+import { Subprovider } from "@0x/subproviders"
 
 export class ExplorerModeConnector extends AbstractConnector {
   /** @type {string} To store selected account by user. */
@@ -12,7 +13,11 @@ export class ExplorerModeConnector extends AbstractConnector {
 
   constructor() {
     super(WALLETS.EXPLORER_MODE.name)
-    this.eventEmitter = new EventEmitter()
+    this.explorerModeSubprovider = Object.assign(
+      ExplorerModeSubprovider.prototype,
+      Subprovider.prototype,
+      EventEmitter.prototype
+    )
   }
 
   setSelectedAccount = (address) => {
@@ -26,8 +31,15 @@ export class ExplorerModeConnector extends AbstractConnector {
     }
 
     this.provider = new Web3ProviderEngine()
-    this.provider.addProvider(new ExplorerModeSubprovider(this.eventEmitter))
+    this.provider.addProvider(this.explorerModeSubprovider)
     this.provider.addProvider(new WebsocketSubprovider({ rpcUrl: getWsUrl() }))
+
+    this.explorerModeSubprovider.on(
+      "chooseWalletAndSendTransaction",
+      (payload) => {
+        this.emit("chooseWalletAndSendTransaction", payload)
+      }
+    )
 
     this.provider.start()
 
@@ -35,6 +47,10 @@ export class ExplorerModeConnector extends AbstractConnector {
   }
 
   disconnect = async () => {
+    this.explorerModeSubprovider.removeListener(
+      "chooseWalletAndSendTransaction",
+      () => {}
+    )
     this.provider.stop()
     this.emit("disconnect")
   }

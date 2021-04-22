@@ -60,13 +60,9 @@ const useSubscribeToConnectorEvents = () => {
       dispatch({ type: "app/login", payload: { address: yourAddress } })
       connector.on("accountsChanged", accountChangedHandler)
       connector.once("disconnect", disconnectHandler)
+      connector.on("chooseWalletAndSendTransaction", showChooseWalletModal)
 
-      if (connector.name === WALLETS.EXPLORER_MODE.name) {
-        connector.eventEmitter.on(
-          "chooseWalletAndSendTransaction",
-          showChooseWalletModal
-        )
-      } else {
+      if (connector.name !== WALLETS.EXPLORER_MODE.name) {
         executeTransactionsInQueue(transactionQueue)
         if (walletAddressFromUrl) {
           const newPath = location.pathname.replace(
@@ -82,12 +78,10 @@ const useSubscribeToConnectorEvents = () => {
       if (connector) {
         connector.removeListener("accountsChanged", accountChangedHandler)
         connector.removeListener("disconnect", disconnectHandler)
-        if (connector.name === WALLETS.EXPLORER_MODE.name) {
-          connector.eventEmitter.removeListener(
-            "chooseWalletAndSendTransaction",
-            showChooseWalletModal
-          )
-        }
+        connector.removeListener(
+          "chooseWalletAndSendTransaction",
+          showChooseWalletModal
+        )
       }
     }
   }, [isConnected, connector, dispatch, yourAddress, web3])
