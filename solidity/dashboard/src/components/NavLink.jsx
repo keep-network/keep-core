@@ -1,7 +1,7 @@
 import React from "react"
 import { NavLink as NavLinkReactRouterDOM } from "react-router-dom"
 import useWalletAddressFromUrl from "../hooks/useWalletAddressFromUrl"
-import useFinalPath from "../hooks/useFinalPath";
+import useFinalPath from "../hooks/useFinalPath"
 
 const NavLink = ({ to, ...props }) => {
   const walletAddressFromUrl = useWalletAddressFromUrl()

@@ -11,9 +11,10 @@ import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 import RewardsPage from "../pages/rewards"
 import LiquidityPage from "../pages/liquidity"
+import web3Utils from "web3-utils"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
-const pages = [
+export const pages = [
   TokenOverviewPage,
   DelegationPage,
   TokenGrantsPage,
@@ -94,8 +95,7 @@ export const renderExplorerModePage = (PageComponent, index) => {
       key={`${finalPath}-${index}`}
       render={(routeProps) => {
         const address = routeProps.match.params.address
-        // TODO: Use/Create function to check if it's valid eth address
-        if (address.slice(0, 2) === "0x") {
+        if (web3Utils.isAddress(address)) {
           return (
             <PageComponent
               routes={PageComponent.route.pages}

@@ -1,15 +1,17 @@
-import { useLocation } from "react-router-dom"
 import web3Utils from "web3-utils"
+import { useRouteMatch } from "react-router-dom"
+import { pages } from "../components/Routing"
 
 const useWalletAddressFromUrl = () => {
-  const location = useLocation()
+  const match = useRouteMatch(`/:address/:actualPath`)
 
-  const pathnameSplitted = location.pathname.split("/")
+  if (match) {
+    const isActualPathCorrect = pages.some((page) => {
+      return page.route.path === `/${match.params.actualPath}`
+    })
 
-  if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
-    const address = pathnameSplitted[1]
-    if (web3Utils.isAddress(address)) {
-      return address
+    if (isActualPathCorrect && web3Utils.isAddress(match.params.address)) {
+      return match.params.address
     }
   }
 
