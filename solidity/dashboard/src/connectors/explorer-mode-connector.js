@@ -19,6 +19,10 @@ export class ExplorerModeConnector extends AbstractConnector {
     this.emit("accountsChanged", address)
   }
 
+  chooseWalletAndSendTransactionHandler = (payload) => {
+    this.emit("chooseWalletAndSendTransaction", payload)
+  }
+
   enable = async () => {
     if (!this.selectedAccount) {
       throw new Error("Account is not selected")
@@ -30,9 +34,7 @@ export class ExplorerModeConnector extends AbstractConnector {
 
     this.explorerModeSubprovider.on(
       "chooseWalletAndSendTransaction",
-      (payload) => {
-        this.emit("chooseWalletAndSendTransaction", payload)
-      }
+      this.chooseWalletAndSendTransactionHandler
     )
 
     this.provider.start()
@@ -43,7 +45,7 @@ export class ExplorerModeConnector extends AbstractConnector {
   disconnect = async () => {
     this.explorerModeSubprovider.removeListener(
       "chooseWalletAndSendTransaction",
-      () => {}
+      this.chooseWalletAndSendTransactionHandler
     )
     this.provider.stop()
     this.emit("disconnect")
