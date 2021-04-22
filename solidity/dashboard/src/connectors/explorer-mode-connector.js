@@ -4,8 +4,6 @@ import { getWsUrl } from "./utils"
 import Web3ProviderEngine from "web3-provider-engine"
 import WebsocketSubprovider from "web3-provider-engine/subproviders/websocket"
 import ExplorerModeSubprovider from "./explorerModeSubprovider"
-import { EventEmitter } from "events"
-import { Subprovider } from "@0x/subproviders"
 
 export class ExplorerModeConnector extends AbstractConnector {
   /** @type {string} To store selected account by user. */
@@ -13,11 +11,7 @@ export class ExplorerModeConnector extends AbstractConnector {
 
   constructor() {
     super(WALLETS.EXPLORER_MODE.name)
-    this.explorerModeSubprovider = Object.assign(
-      ExplorerModeSubprovider.prototype,
-      Subprovider.prototype,
-      EventEmitter.prototype
-    )
+    this.explorerModeSubprovider = new ExplorerModeSubprovider()
   }
 
   setSelectedAccount = (address) => {
