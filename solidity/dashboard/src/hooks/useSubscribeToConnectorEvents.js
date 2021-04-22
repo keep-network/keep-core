@@ -23,6 +23,14 @@ const useSubscribeToConnectorEvents = () => {
 
     const disconnectHandler = () => {
       dispatch({ type: "app/logout" })
+
+      if (walletAddressFromUrl) {
+        const newPathname = location.pathname.replace(
+          "/" + walletAddressFromUrl,
+          ""
+        )
+        history.push({ pathname: newPathname })
+      }
     }
 
     const showChooseWalletModal = (payload) => {

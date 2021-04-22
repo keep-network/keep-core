@@ -29,49 +29,34 @@ const useAutoConnect = () => {
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
 
   useEffect(() => {
-    const pathnameSplitted = location.pathname.split("/")
-    if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
-      // change url to the one without an address when disconnecting
-      if (web3Utils.isAddress(walletAddressFromUrl) && !connector) {
-        const newPathname = location.pathname.replace(
-          "/" + walletAddressFromUrl,
-          ""
-        )
-        history.push({ pathname: newPathname })
-      }
-
-      // change url to the one with address when we connect to the explorer mode
-      if (
-        !web3Utils.isAddress(walletAddressFromUrl) &&
-        connector &&
-        yourAddress &&
-        connector.name === WALLETS.EXPLORER_MODE.name
-      ) {
-        const newPathname = "/" + yourAddress + location.pathname
-        history.push({ pathname: newPathname })
-      }
+    // change url to the one with address when we connect to the explorer mode
+    if (
+      !walletAddressFromUrl &&
+      connector &&
+      yourAddress &&
+      connector.name === WALLETS.EXPLORER_MODE.name
+    ) {
+      const newPathname = "/" + yourAddress + location.pathname
+      history.push({ pathname: newPathname })
     }
   }, [connector, yourAddress])
 
   useEffect(() => {
-    const pathnameSplitted = location.pathname.split("/")
-    if (pathnameSplitted.length > 1 && pathnameSplitted[1]) {
-      // log in to explorer mode when pasting url with address
-      if (web3Utils.isAddress(walletAddressFromUrl) && !connector) {
-        const explorerModeConnector = new ExplorerModeConnector()
-        openModal(
-          <ExplorerModeModal
-            connectAppWithWallet={connectAppWithWallet}
-            connector={explorerModeConnector}
-            closeModal={closeModal}
-            address={walletAddressFromUrl}
-            connectWithWalletOnMount={true}
-          />,
-          {
-            title: "Connect Ethereum Address",
-          }
-        )
-      }
+    // log in to explorer mode when pasting an url with an address
+    if (walletAddressFromUrl && !connector) {
+      const explorerModeConnector = new ExplorerModeConnector()
+      openModal(
+        <ExplorerModeModal
+          connectAppWithWallet={connectAppWithWallet}
+          connector={explorerModeConnector}
+          closeModal={closeModal}
+          address={walletAddressFromUrl}
+          connectWithWalletOnMount={true}
+        />,
+        {
+          title: "Connect Ethereum Address",
+        }
+      )
     }
   }, [location.pathname])
 
