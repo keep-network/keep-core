@@ -1,5 +1,5 @@
 import React from "react"
-import ConnectWalletBtn from "./ConnectWalletBtn";
+import ConnectWalletBtn from "./ConnectWalletBtn"
 
 export const WalletSelectionModal = () => {
   return (

@@ -20,7 +20,7 @@ const ConnectWalletBtn = ({
         </span>
       )}
     >
-      <WalletOptions displayExplorerMode={displayExplorerMode}/>
+      <WalletOptions displayExplorerMode={displayExplorerMode} />
     </Tooltip>
   )
 }

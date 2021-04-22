@@ -6,7 +6,6 @@ import { useModal } from "./useModal"
 import { WalletSelectionModal } from "../components/WalletSelectionModal"
 import { useLocation, useHistory } from "react-router-dom"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
-import { Deferred } from "../contracts"
 
 const useSubscribeToConnectorEvents = () => {
   const dispatch = useDispatch()
