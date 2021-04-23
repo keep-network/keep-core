@@ -6,7 +6,7 @@ on:
       - master
     paths:
       - "docs/**"
-      - "solidity/scripts/generate-api-docs.js"
+      - "solidity/**"
   pull_request:
   workflow_dispatch:
 
@@ -24,7 +24,7 @@ jobs:
       with:
         filters: | # TODO: Remove '|(.github/workflows/docs.yml)' once workflow gets tested
           path-filter:
-            - './((docs/**)|(solidity/scripts/generate-api-docs.js)|(.github/workflows/docs.yml))'
+            - './(((docs|solidity)/**)|(.github/workflows/docs.yml))'
 
   docs-generate:
     needs: docs-detect-changes
