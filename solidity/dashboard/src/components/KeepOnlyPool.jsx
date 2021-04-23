@@ -290,11 +290,11 @@ const commonFormikOptions = {
   }),
   validate: ({ amount }, { availableAmount }) => {
     const errors = {}
-
+    const minAmount = KEEP.fromTokenUnit(1)
     if (lte(availableAmount || 0, 0)) {
       errors.amount = "Insufficient funds"
     } else {
-      errors.amount = validateAmountInRange(amount, availableAmount, 1)
+      errors.amount = validateAmountInRange(amount, availableAmount, minAmount)
     }
 
     return getErrorsObj(errors)
