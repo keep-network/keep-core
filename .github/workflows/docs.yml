@@ -16,43 +16,72 @@ jobs:
     outputs:
       path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-    - uses: actions/checkout@v2
-      if: github.event_name == 'pull_request' 
-    - uses: dorny/paths-filter@v2
-      if: github.event_name == 'pull_request' 
-      id: filter
-      with:
-        filters: | # TODO: Remove '|(.github/workflows/docs.yml)' once workflow gets tested
-          path-filter:
-            - './(((docs|solidity)/**)|(.github/workflows/docs.yml))'
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request' 
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request' 
+        id: filter
+        with:
+          filters: | # TODO: Remove '|(.github/workflows/docs.yml)' once workflow gets tested
+            path-filter:
+              - './(((docs|solidity)/**)|(.github/workflows/docs.yml))'
 
-  docs-generate:
+  docs-tex:
+    runs-on: ubuntu-latest
+    container: keepnetwork/texlive:3
     needs: docs-detect-changes
     if: |
       github.event_name != 'pull_request'
         || needs.docs-detect-changes.outputs.path-filter == 'true'
-    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
     env:
       DOCS_DIR: ${{ github.workspace }}/tmp/docs
     steps:
       - uses: actions/checkout@v2
 
-      - name: Create temporary docs directory
-        run: mkdir -p $DOCS_DIR
-
+      # Step generates files based on Makefile config. Current config produces
+      # a number of .png files, which are then used to generate 
+      # relay-states.pdf. We want to publish only the resulting .pdf file.
       - name: Generate TeX document files
-        uses: addnab/docker-run-action@v3 # Runs shell commands within specified container
+        run: |
+          make clean
+          make docs
+          mkdir -p $DOCS_DIR
+          mv relay-states.pdf $DOCS_DIR
+
+      # A push event is a master merge; deploy to primary bucket.
+      - if: github.event_name == 'push'
+        name: Upload generated files
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
-          registry: ghcr.io
-          image: keepnetwork/texlive:3
-          options: -v ${{ github.workspace }}:/volume-dir
-          run: |
-            mkdir /volume-dir/tmp/docs/img
-            cd /volume-dir/docs
-            make clean
-            make docs
-            cp relay-states.pdf /volume-dir/tmp/docs
-            cp -r img/generated /volume-dir/tmp/docs/img/generated
+          service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+          project: keep-test
+          bucket-name: docs.keep.network
+          bucket-path: core-wip2 # TODO: remove `-wip2` after tests
+          build-folder: tmp/docs
+
+      # A pull_request event is a PR; deploy to preview bucket.
+      - if: github.event_name == 'pull_request'
+        name: Upload preview of generated files
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        with:
+          service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+          project: keep-test
+          bucket-name: docs.keep.network
+          bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
+          build-folder: tmp/docs
+    
+  docs-solidity:
+    runs-on: ubuntu-latest
+    needs: docs-detect-changes
+    continue-on-error: true
+    if: |
+      github.event_name != 'pull_request'
+        || needs.docs-detect-changes.outputs.path-filter == 'true'
+    steps:
+      - uses: actions/checkout@v2
 
       - name: Generate solidity docs
         run: |
@@ -61,33 +90,33 @@ jobs:
           mkdir -p ${{ github.workspace }}/docs/solidity
           node scripts/generate-api-docs.js > ${{ github.workspace }}/docs/solidity/index.adoc
 
-      - name: Generate asciidoctor HTML files
-        id: asciidoctor-html
-        uses: thesis/asciidoctor-action@v1.0.1 # Saves results to asciidoc-out
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: Solidity Docs
+          path: ${{ github.workspace }}/docs/solidity/index.adoc
+
+  docs-html:
+    runs-on: ubuntu-latest
+    needs: [docs-detect-changes, docs-solidity]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2
+        continue-on-error: true
+        with:
+          name: Solidity Docs
+          path: ${{ github.workspace }}/docs/solidity
+
+      - name: Build HTML docs
+        id: html
+        uses: thesis/asciidoctor-action@v1.0.1
         with:
           files: 'docs/*.adoc docs/**/*.adoc'
-          asciidoctor-args: '--failure-level=ERROR'
-
-      - name: Copy HTML files to temporary directory
-        run: |
-          cp -r asciidoc-out/docs/* $DOCS_DIR
-          sudo rm -rf asciidoc-out
-      
-      - name: Generate asciidoctor PDF files
-        id: asciidoctor-pdf
-        uses: thesis/asciidoctor-action@v1.0.1 # Saves results to asciidoc-out
-        with:
-          files: 'docs/*.adoc docs/**/*.adoc'
-          format: pdf
-          asciidoctor-args: '--failure-level=ERROR'
-
-      - name: Copy PDF files to temporary directory
-        run: |
-          cp -r asciidoc-out/docs/* $DOCS_DIR
-          sudo rm -rf asciidoc-out
+          args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
 
       # A push event is a master merge; deploy to primary bucket.
-      # TODO: Discuss bucket name, path and project and adjust acordingly
       - if: github.event_name == 'push'
         name: Upload asciidocs
         uses: thesis/gcp-storage-bucket-action@v3.1.0
@@ -95,11 +124,10 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: keep-test
           bucket-name: docs.keep.network
-          bucket-path: core
-          build-folder: tmp/docs
+          bucket-path: core-wip2 # TODO: remove `-wip2` after tests
+          build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
-      # TODO: Discuss bucket name, path and project and adjust acordingly
       - if: github.event_name == 'pull_request'
         name: Upload asciidocs preview
         uses: thesis/gcp-storage-bucket-action@v3.1.0
@@ -107,5 +135,60 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: keep-test
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}
-          build-folder: tmp/docs
+          bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
+          build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+
+      - name: Upload a Build Artifact # TODO: Remove this after tests finished
+        uses: actions/upload-artifact@v2
+        with:
+          name: HTML Docs
+          path: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
+
+  docs-pdf:
+    runs-on: ubuntu-latest
+    needs: [docs-detect-changes, docs-solidity]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v2
+        continue-on-error: true
+        with:
+          name: Solidity Docs
+          path: ${{ github.workspace }}/docs/solidity
+
+      - name: Build PDF docs
+        id: pdf
+        uses: thesis/asciidoctor-action@v1.0.1
+        with:
+          files: 'docs/*.adoc docs/**/*.adoc'
+          format: pdf
+          args: '-a revdate=`date +%Y-%m-%d` --failure-level=ERROR'
+
+      # A push event is a master merge; deploy to primary bucket.
+      - if: github.event_name == 'push'
+        name: Upload asciidocs
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        with:
+          service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+          project: keep-test
+          bucket-name: docs.keep.network
+          bucket-path: core-wip2 # TODO: remove `-wip2` after tests
+          build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
+
+      # A pull_request event is a PR; deploy to preview bucket.
+      - if: github.event_name == 'pull_request'
+        name: Upload asciidocs preview
+        uses: thesis/gcp-storage-bucket-action@v3.1.0
+        with:
+          service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
+          project: keep-test
+          bucket-name: docs.keep.network
+          bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
+          build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
+
+      - name: Upload a Build Artifact # TODO: Remove this after tests finished
+        uses: actions/upload-artifact@v2
+        with:
+          name: PDF Docs
+          path: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
