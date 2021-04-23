@@ -16,7 +16,7 @@ export class Token {
    *
    * @return {BigNumber} amount in token units
    */
-  static toTokenUnit = (amount, decimals) => {
+  static toTokenUnit = (amount, decimals = 18) => {
     if (!amount) {
       return new BigNumber(0)
     }
