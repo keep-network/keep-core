@@ -45,8 +45,7 @@ const TokenAmount = ({
         className="token-amount-tooltip"
       >
         {`${token.toFormat(
-          token.toTokenUnit(amount, _smallestPrecisionDecimals),
-          _smallestPrecisionDecimals
+          token.toTokenUnit(amount, _smallestPrecisionDecimals)
         )} ${_smallestPrecisionUnit}`}
       </Tooltip>
       {withSymbol && (
