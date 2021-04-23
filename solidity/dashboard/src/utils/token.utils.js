@@ -187,6 +187,5 @@ export const LPToken = new Token(
   "LP",
   "LP",
   18,
-  null,
-  4
+  null
 )
