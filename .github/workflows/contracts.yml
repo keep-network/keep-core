@@ -8,13 +8,29 @@ on:
       - "solidity/**"
       - "!solidity/dashboard/**"
   pull_request:
-    paths:
-      - "solidity/**"
-      - "!solidity/dashboard/**"
   workflow_dispatch:
 
 jobs:
-  build-and-test:
+  contracts-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/!(dashboard)/**'
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -51,7 +67,11 @@ jobs:
       - name: Run tests
         run: npm run test
 
-  lint:
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -85,12 +105,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  migrate-and-publish-ethereum:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-ethereum:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -175,9 +194,9 @@ jobs:
           name: Contracts (Node.js ${{ matrix.node-version }})
           path: ./solidity/build/contracts/*
 
-  build-and-publish-initcontainer:
-    needs: [migrate-and-publish-ethereum]
-    if: needs.migrate-and-publish-ethereum.result == 'success'
+  contracts-build-and-publish-initcontainer:
+    needs: [contracts-migrate-and-publish-ethereum]
+    if: needs.contracts-migrate-and-publish-ethereum.result == 'success'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -226,12 +245,11 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
 
-  migrate-and-publish-celo:
-    needs: [build-and-test, lint]
+  contracts-migrate-and-publish-celo:
+    needs: [contracts-build-and-test, contracts-lint]
     if: |
       github.ref == 'refs/heads/master'
-        && (github.event_name == 'push'
-        || github.event_name == 'workflow_dispatch')
+        && github.event_name != 'pull_request'
     environment: keep-test
     runs-on: ubuntu-latest
     strategy:
