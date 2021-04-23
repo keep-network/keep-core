@@ -37,7 +37,7 @@ describe("Test `Token` class", () => {
     })
 
     it("should return small amount correctly", () => {
-      const amount = "90000000000000" // 0,00009
+      const amount = "90000000000000" // 0.00009
 
       const result = TestToken.displayAmount(amount)
 
@@ -45,8 +45,8 @@ describe("Test `Token` class", () => {
     })
 
     it("should return the amount with separators and w/o trailing zeros", () => {
-      const amountWithTrailingZeros = "100000200000000000000000" // 100 000.2
-      const amountWithLongDecimals = "100000244332211550000000" // 100 000.24433221155
+      const amountWithTrailingZeros = "100000200000000000000000" // 100,000.2
+      const amountWithLongDecimals = "100000244332211550000000" // 100,000.24433221155
 
       const result1 = TestToken.displayAmount(amountWithTrailingZeros)
       const result2 = TestToken.displayAmount(amountWithLongDecimals)
@@ -57,7 +57,7 @@ describe("Test `Token` class", () => {
   })
 
   it("should return amount with symbol", () => {
-    const amount = "100000000000000000000000" // 100 000
+    const amount = "100000000000000000000000" // 100,000
 
     const result = TestToken.displayAmountWithSymbol(amount)
 
@@ -66,9 +66,9 @@ describe("Test `Token` class", () => {
 
   describe("displayAmountWithMetricSuffix test", () => {
     it("should return amount with metric suffix", () => {
-      const amount = "123456123400000000000000" // 123456,1234
-      const milions = "1639000000000000000000000" // 1 639 000
-      const milions2 = "2230639000000000000000000000" // 2 230 639 000
+      const amount = "123456123400000000000000" // 123,456,1234
+      const milions = "1639000000000000000000000" // 1,639,000
+      const milions2 = "2230639000000000000000000000" // 2,230,639,000
 
       const result = TestToken.displayAmountWithMetricSuffix(amount)
       const resultMilions = TestToken.displayAmountWithMetricSuffix(milions)
@@ -104,7 +104,7 @@ describe("Test `Token` class", () => {
   })
 
   it("should convert token amount to readable format", () => {
-    const tokenAmount = "100000000000000000000000" // 100 000
+    const tokenAmount = "100000000000000000000000" // 100,000
 
     const result = TestToken.toTokenUnit(tokenAmount).toString()
     const expectedValue = new BigNumber(tokenAmount).div(
