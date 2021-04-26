@@ -94,7 +94,7 @@ jobs:
           mkdir -p $SOLIDITY_DOCS_DIR
           node scripts/generate-api-docs.js > $SOLIDITY_DOCS_DIR/index.adoc
 
-      - name: Upload a Build Artifact
+      - name: Upload Solidity Docs Artifact
         uses: actions/upload-artifact@v2
         with:
           name: Solidity Docs
@@ -106,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Download a Build Artifact
+      - name: Download Solidity Docs Artifact
         uses: actions/download-artifact@v2
         continue-on-error: true
         with:
