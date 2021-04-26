@@ -85,7 +85,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Get upstream packages' versions
-        uses: keep-network/upstream-builds-query
+        uses: keep-network/upstream-builds-query@main
         id: upstream-builds-query
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
