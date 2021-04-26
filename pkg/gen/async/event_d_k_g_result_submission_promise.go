@@ -1,4 +1,4 @@
-// Package async code is auto generated
+// Package async code is auto generated.
 package async
 
 import (

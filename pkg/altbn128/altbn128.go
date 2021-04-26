@@ -9,17 +9,17 @@ import (
 	"github.com/keep-network/keep-core/pkg/internal/byteutils"
 )
 
-// G1Point represents G1 point
+// G1Point represents G1 point.
 type G1Point struct {
 	*bn256.G1
 }
 
-// G2Point represents G2 point
+// G2Point represents G2 point.
 type G2Point struct {
 	*bn256.G2
 }
 
-// Quadratic extension field element as seen in bn256/gfp2.go
+// Quadratic extension field element as seen in bn256/gfp2.go.
 type gfP2 struct {
 	x, y *big.Int
 }
