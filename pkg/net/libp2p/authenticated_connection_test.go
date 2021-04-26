@@ -68,12 +68,12 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 	initiatorConnectionReader := protoio.NewDelimitedReader(ac.Conn, maxFrameSize)
 	initiatorConnectionWriter := protoio.NewDelimitedWriter(ac.Conn)
 
-	InitiatorAct1, err := handshake.InitiateHandshake(ProtocolBeacon)
+	initiatorAct1, err := handshake.InitiateHandshake(ProtocolBeacon)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	act1WireMessage, err := InitiatorAct1.Message().Marshal()
+	act1WireMessage, err := initiatorAct1.Message().Marshal()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,19 +82,19 @@ func maliciousInitiatorHijacksHonestRun(t *testing.T, ac *authenticatedConnectio
 		t.Fatal(err)
 	}
 
-	InitiatorAct2 := InitiatorAct1.Next()
+	initiatorAct2 := initiatorAct1.Next()
 
 	act2Message, err := ac.initiatorReceiveAct2(initiatorConnectionReader)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	InitiatorAct3, err := InitiatorAct2.Next(act2Message)
+	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	act3WireMessage, err := InitiatorAct3.Message().Marshal()
+	act3WireMessage, err := initiatorAct3.Message().Marshal()
 	if err != nil {
 		t.Fatal(err)
 	}

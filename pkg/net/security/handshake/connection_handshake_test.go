@@ -82,8 +82,8 @@ func TestRepeatChallengeToFinalize(t *testing.T) {
 	act2Msg := &Act2Message{nonce2, expectedChallenge, protocol}
 
 	// initiator station
-	InitiatorAct2 := &InitiatorAct2{nonce1, protocol}
-	InitiatorAct3, err := InitiatorAct2.Next(act2Msg)
+	initiatorAct2 := &InitiatorAct2{nonce1, protocol}
+	initiatorAct3, err := initiatorAct2.Next(act2Msg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func TestRepeatChallengeToFinalize(t *testing.T) {
 	//
 
 	// initiator station
-	act3Msg := InitiatorAct3.Message()
+	act3Msg := initiatorAct3.Message()
 
 	// assert if challenge sent by initiator in Act3 is the
 	// same challenge as the one received from responder in Act2
@@ -144,8 +144,8 @@ func TestFailAct2ForUnexpectedProtocol(t *testing.T) {
 	act2Msg := &Act2Message{nonce2, expectedChallenge, protocol2}
 
 	// initiator station
-	InitiatorAct2 := &InitiatorAct2{nonce1, protocol}
-	_, err := InitiatorAct2.Next(act2Msg)
+	initiatorAct2 := &InitiatorAct2{nonce1, protocol}
+	_, err := initiatorAct2.Next(act2Msg)
 
 	expectedErr := "unsupported protocol: [keep-ecdsa]"
 	if err.Error() != expectedErr {
@@ -170,8 +170,8 @@ func TestFailAct2ForInvalidChallenge(t *testing.T) {
 	act2Msg := &Act2Message{nonce2, invalidChallenge, protocol}
 
 	// initiator station
-	InitiatorAct2 := &InitiatorAct2{nonce1, protocol}
-	_, err := InitiatorAct2.Next(act2Msg)
+	initiatorAct2 := &InitiatorAct2{nonce1, protocol}
+	_, err := initiatorAct2.Next(act2Msg)
 
 	// assert if initiator detects invalid challenge sent by responder
 	expectedError := errors.New("unexpected responder's challenge")
@@ -186,16 +186,16 @@ func TestFailAct2ForInvalidChallenge(t *testing.T) {
 
 func TestFailAct3ForInvalidChallenge(t *testing.T) {
 	expectedChallenge := hashToChallenge(rand.Uint64(), rand.Uint64())
-	ResponderAct3 := &ResponderAct3{expectedChallenge}
+	responderAct3 := &ResponderAct3{expectedChallenge}
 
 	invalidChallenge := hashToChallenge(rand.Uint64(), rand.Uint64())
-	InitiatorAct3 := &InitiatorAct3{invalidChallenge}
+	initiatorAct3 := &InitiatorAct3{invalidChallenge}
 
 	//
 	// Act 3
 	//
-	act3Msg := InitiatorAct3.Message()
-	err := ResponderAct3.FinalizeHandshake(act3Msg)
+	act3Msg := initiatorAct3.Message()
+	err := responderAct3.FinalizeHandshake(act3Msg)
 
 	// assert if responder detects invalid challenge sent by initiator
 	expectedError := errors.New("unexpected initiator's challenge")
@@ -214,15 +214,15 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// initiator station
-	InitiatorAct1, err := InitiateHandshake(protocol)
+	initiatorAct1, err := InitiateHandshake(protocol)
 	if err != nil {
 		t.Fatal(err)
 	}
-	act1Message := InitiatorAct1.Message()
-	InitiatorAct2 := InitiatorAct1.Next()
+	act1Message := initiatorAct1.Message()
+	initiatorAct2 := initiatorAct1.Next()
 
 	// responder station
-	ResponderAct2, err := AnswerHandshake(act1Message, protocol)
+	responderAct2, err := AnswerHandshake(act1Message, protocol)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -232,11 +232,11 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// responder station
-	act2Message := ResponderAct2.Message()
-	ResponderAct3 := ResponderAct2.Next()
+	act2Message := responderAct2.Message()
+	responderAct3 := responderAct2.Next()
 
 	// initiator station
-	InitiatorAct3, err := InitiatorAct2.Next(act2Message)
+	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,10 +246,10 @@ func TestFullHandshake(t *testing.T) {
 	//
 
 	// initiator station
-	act3Message := InitiatorAct3.Message()
+	act3Message := initiatorAct3.Message()
 
 	// responder station
-	err = ResponderAct3.FinalizeHandshake(act3Message)
+	err = responderAct3.FinalizeHandshake(act3Message)
 	if err != nil {
 		t.Fatal(err)
 	}
