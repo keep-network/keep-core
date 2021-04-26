@@ -31,8 +31,13 @@ const TokenAmount = ({
     : token.displayAmount(amount)
 
   return (
-    <div className={`flex row center ${wrapperClassName}`}>
-      <CurrencyIcon width={32} height={32} {...iconProps} />
+    <div className={`token-amount ${wrapperClassName}`}>
+      <CurrencyIcon
+        width={32}
+        height={32}
+        {...iconProps}
+        className={`token-amount__icon ${iconProps.className}`}
+      />
       &nbsp;
       <Tooltip
         simple
@@ -42,7 +47,7 @@ const TokenAmount = ({
           </span>
         )}
         delay={0}
-        className="token-amount-tooltip"
+        className="token-amount__tooltip"
       >
         {`${token.toFormat(
           token.toTokenUnit(amount, _smallestPrecisionDecimals)
