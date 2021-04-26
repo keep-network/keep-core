@@ -199,13 +199,7 @@ const AddKEEPForm = (props) => {
   return (
     <>
       <h3 className="mb-1">Amount available to deposit.</h3>
-      <TokenAmount
-        amount={availableAmount}
-        withIcon
-        withMetricSuffix
-        amountClassName="h1 text-mint-100"
-        symbolClassName="h1 text-mint-100"
-      />
+      <TokenAmount amount={availableAmount} withIcon withMetricSuffix />
       <AvailableTokenForm
         onSubmit={formikProps.handleSubmit}
         onCancel={onCancel}
