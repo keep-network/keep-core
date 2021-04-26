@@ -29,13 +29,8 @@ const useAutoConnect = () => {
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
 
   useEffect(() => {
-    // change url to the one with address when we connect to the explorer mode
-    if (
-      !walletAddressFromUrl &&
-      connector &&
-      yourAddress &&
-      connector.name === WALLETS.EXPLORER_MODE.name
-    ) {
+    // change url to the one with address when we connect to the wallet
+    if (!walletAddressFromUrl && connector && yourAddress) {
       const newPathname = "/" + yourAddress + location.pathname
       history.push({ pathname: newPathname })
     }

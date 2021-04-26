@@ -71,13 +71,6 @@ const useSubscribeToConnectorEvents = () => {
 
       if (connector.name !== WALLETS.EXPLORER_MODE.name) {
         executeTransactionsInQueue(transactionQueue)
-        if (walletAddressFromUrl) {
-          const newPath = location.pathname.replace(
-            "/" + walletAddressFromUrl,
-            ""
-          )
-          history.push({ pathname: newPath })
-        }
       }
     }
 
@@ -91,7 +84,14 @@ const useSubscribeToConnectorEvents = () => {
         )
       }
     }
-  }, [isConnected, connector, dispatch, yourAddress, web3])
+  }, [
+    isConnected,
+    connector,
+    dispatch,
+    yourAddress,
+    web3,
+    walletAddressFromUrl,
+  ])
 }
 
 export default useSubscribeToConnectorEvents
