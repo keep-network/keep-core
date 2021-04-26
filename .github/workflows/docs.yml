@@ -7,6 +7,7 @@ on:
     paths:
       - "docs/**"
       - "solidity/**"
+      - "!solidity/dashboard/**"
   pull_request:
   workflow_dispatch:
 
@@ -24,7 +25,7 @@ jobs:
         with:
           filters: | # TODO: Remove '|(.github/workflows/docs.yml)' once workflow gets tested
             path-filter:
-              - './(((docs|solidity)/**)|(.github/workflows/docs.yml))'
+              - './(((docs|(solidity/!dashboard))/**)|(.github/workflows/docs.yml))'
 
   docs-tex:
     runs-on: ubuntu-latest
