@@ -82,23 +82,23 @@ jobs:
       github.event_name != 'pull_request'
         || needs.docs-detect-changes.outputs.path-filter == 'true'
     env:
-      DOCS_DIR: ${{ github.workspace }}/docs/solidity
+      SOLIDITY_DOCS_DIR: ${{ github.workspace }}/docs/solidity
     steps:
       - uses: actions/checkout@v2
 
       - name: Generate solidity docs
         working-directory: ./solidity
         run: |
-          npm install
-          node_modules/.bin/truffle compile
-          mkdir -p $DOCS_DIR
-          node scripts/generate-api-docs.js > $DOCS_DIR/index.adoc
+          npm ci
+          npx truffle compile
+          mkdir -p $SOLIDITY_DOCS_DIR
+          node scripts/generate-api-docs.js > $SOLIDITY_DOCS_DIR/index.adoc
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2
         with:
           name: Solidity Docs
-          path: ${{ env.DOCS_DIR }}/index.adoc
+          path: ${{ env.SOLIDITY_DOCS_DIR }}/index.adoc
 
   docs-html:
     runs-on: ubuntu-latest
