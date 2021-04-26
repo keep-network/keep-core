@@ -77,7 +77,6 @@ jobs:
   docs-solidity:
     runs-on: ubuntu-latest
     needs: docs-detect-changes
-    continue-on-error: true
     if: |
       github.event_name != 'pull_request'
         || needs.docs-detect-changes.outputs.path-filter == 'true'
@@ -101,6 +100,7 @@ jobs:
           path: ${{ env.SOLIDITY_DOCS_DIR }}/index.adoc
 
   docs-html:
+    if: always()
     runs-on: ubuntu-latest
     needs: [docs-detect-changes, docs-solidity]
     steps:
@@ -149,6 +149,7 @@ jobs:
           path: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
   docs-pdf:
+    if: always()
     runs-on: ubuntu-latest
     needs: [docs-detect-changes, docs-solidity]
     steps:
