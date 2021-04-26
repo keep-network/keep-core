@@ -202,6 +202,7 @@ const AddKEEPForm = (props) => {
       <TokenAmount
         amount={availableAmount}
         withIcon
+        withMetricSuffix
         amountClassName="h1 text-mint-100"
         symbolClassName="h1 text-mint-100"
       />
