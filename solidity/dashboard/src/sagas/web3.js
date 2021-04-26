@@ -1,6 +1,10 @@
 import { eventChannel, END, buffers } from "redux-saga"
 import { take, takeEvery, put, call } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper } from "./utils"
+import {
+  getContractsContext,
+  getWeb3Context,
+  submitButtonHelper,
+} from "./utils"
 import {
   showCreatedMessage,
   showMessage,
@@ -8,16 +12,18 @@ import {
 } from "../actions/messages"
 import { messageType } from "../components/Message"
 import { Web3Loaded } from "../contracts"
+import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider";
 
 function createTransactionEventChannel(
   contract,
   method,
   args = [],
-  options = {}
+  options = {},
+  displayWalletMessage = true
 ) {
   const emitter = contract.methods[method](...args).send(options)
 
-  return createEventChannelFromEmitter(emitter)
+  return createEventChannelFromEmitter(emitter, displayWalletMessage)
 }
 
 async function createRawTransactionEventChannel(transactionObject) {
@@ -27,7 +33,7 @@ async function createRawTransactionEventChannel(transactionObject) {
   return createEventChannelFromEmitter(emitter)
 }
 
-function createEventChannelFromEmitter(emitter) {
+function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
   let txHashCache
 
   let showPendingActionMessage
@@ -42,7 +48,7 @@ function createEventChannelFromEmitter(emitter) {
   })
 
   return eventChannel((emit) => {
-    emit(showWalletMessage)
+    if (displayWalletMessage) emit(showWalletMessage)
     emitter
       .once("transactionHash", (txHash) => {
         emit(closeMessage(showWalletMessage.payload.id))
@@ -133,12 +139,17 @@ export function createSubcribeToContractEventChannel(contract, eventName) {
 
 export function* sendTransaction(action) {
   const { contract, methodName, args, options } = action.payload
+  const web3 = yield getWeb3Context()
+  const displayWalletMessage = !web3.currentProvider._providers.some(
+    (provider) => provider instanceof ExplorerModeSubprovider
+  )
 
   const transactionEventChannel = createTransactionEventChannel(
     contract,
     methodName,
     args,
-    options
+    options,
+    displayWalletMessage
   )
 
   try {
