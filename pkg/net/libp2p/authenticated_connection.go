@@ -146,12 +146,12 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 1
 	//
 
-	InitiatorAct1, err := handshake.InitiateHandshake(ac.protocol)
+	initiatorAct1, err := handshake.InitiateHandshake(ac.protocol)
 	if err != nil {
 		return err
 	}
 
-	act1WireMessage, err := InitiatorAct1.Message().Marshal()
+	act1WireMessage, err := initiatorAct1.Message().Marshal()
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 		return err
 	}
 
-	InitiatorAct2 := InitiatorAct1.Next()
+	initiatorAct2 := initiatorAct1.Next()
 
 	//
 	// Act 2
@@ -171,7 +171,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 		return err
 	}
 
-	InitiatorAct3, err := InitiatorAct2.Next(act2Message)
+	initiatorAct3, err := initiatorAct2.Next(act2Message)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (ac *authenticatedConnection) runHandshakeAsInitiator() error {
 	// Act 3
 	//
 
-	act3WireMessage, err := InitiatorAct3.Message().Marshal()
+	act3WireMessage, err := initiatorAct3.Message().Marshal()
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 		return err
 	}
 
-	ResponderAct2, err := handshake.AnswerHandshake(act1Message, ac.protocol)
+	responderAct2, err := handshake.AnswerHandshake(act1Message, ac.protocol)
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 	// Act 2
 	//
 
-	act2WireMessage, err := ResponderAct2.Message().Marshal()
+	act2WireMessage, err := responderAct2.Message().Marshal()
 	if err != nil {
 		return err
 	}
@@ -304,7 +304,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 		return err
 	}
 
-	ResponderAct3 := ResponderAct2.Next()
+	responderAct3 := responderAct2.Next()
 
 	//
 	// Act 3
@@ -315,7 +315,7 @@ func (ac *authenticatedConnection) runHandshakeAsResponder() error {
 		return err
 	}
 
-	if err := ResponderAct3.FinalizeHandshake(act3Message); err != nil {
+	if err := responderAct3.FinalizeHandshake(act3Message); err != nil {
 		return err
 	}
 
