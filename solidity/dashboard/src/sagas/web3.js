@@ -11,7 +11,6 @@ import {
   closeMessage,
 } from "../actions/messages"
 import { messageType } from "../components/Message"
-import { Web3Loaded } from "../contracts"
 import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider";
 
 function createTransactionEventChannel(
@@ -26,8 +25,7 @@ function createTransactionEventChannel(
   return createEventChannelFromEmitter(emitter, displayWalletMessage)
 }
 
-async function createRawTransactionEventChannel(transactionObject) {
-  const web3 = await Web3Loaded
+function createRawTransactionEventChannel(transactionObject, web3) {
   const emitter = web3.eth.sendTransaction(transactionObject)
 
   return createEventChannelFromEmitter(emitter)
@@ -84,7 +82,7 @@ function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
         emit(showSuccessMessage)
         emit(END)
       })
-      .once("error", (error, receipt) => {
+      .on("error", (error, receipt) => {
         emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(txHashCache))
         if (error.name === "ExplorerModeSubproviderError") emit(END)
@@ -165,10 +163,9 @@ export function* sendTransaction(action) {
 }
 
 export function* sendRawTransaction(action) {
-  const transactionEventChannel = yield call(
-    createRawTransactionEventChannel,
-    action.payload
-  )
+  const web3 = yield getWeb3Context()
+
+  const transactionEventChannel = createRawTransactionEventChannel(action.payload, web3)
 
   try {
     while (true) {
@@ -203,10 +200,13 @@ export function* watchSendTransactionRequest() {
 
 export function* watchSendRawTransactionsInSequenceRequest() {
   yield takeEvery("web3/send_raw_transaction_in_sequence", function* (action) {
-    for (const transactionObject of action.payload) {
-      yield call(sendRawTransaction, {
-        payload: transactionObject,
-      })
+    try {
+      for (const transactionObject of action.payload) {
+        yield call(sendRawTransaction, {
+          payload: transactionObject,
+        })
+      }
+    } catch (err) {
     }
   })
 }
