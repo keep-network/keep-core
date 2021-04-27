@@ -91,7 +91,14 @@ const useSubscribeToConnectorEvents = () => {
         )
       }
     }
-  }, [isConnected, connector, dispatch, yourAddress, web3])
+  }, [
+    isConnected,
+    connector,
+    dispatch,
+    yourAddress,
+    web3,
+    walletAddressFromUrl,
+  ])
 }
 
 export default useSubscribeToConnectorEvents
