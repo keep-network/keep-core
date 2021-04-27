@@ -8,6 +8,7 @@ import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
 import useIsExactRoutePath from "./useIsExactRoutePath"
+import {isSameEthAddress} from "../utils/general.utils";
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -37,30 +38,13 @@ const useAutoConnect = () => {
   }, [connector, yourAddress])
 
   useEffect(() => {
-    // log in to explorer mode when pasting an url with an address
-    if (walletAddressFromUrl && !connector) {
-      const explorerModeConnector = new ExplorerModeConnector()
-      openModal(
-        <ExplorerModeModal
-          connectAppWithWallet={connectAppWithWallet}
-          connector={explorerModeConnector}
-          closeModal={closeModal}
-          address={walletAddressFromUrl}
-          connectWithWalletOnMount={true}
-        />,
-        {
-          title: "Connect Ethereum Address",
-        }
-      )
-    }
-  }, [location.pathname])
-
-  useEffect(() => {
     injected.getAccounts().then((accounts) => {
       if (
-        !isEmptyArray(accounts) &&
-        !walletAddressFromUrl &&
-        isExactRoutePath
+        (!isEmptyArray(accounts) && isExactRoutePath) ||
+        (walletAddressFromUrl &&
+          accounts.some((account) =>
+            isSameEthAddress(account, walletAddressFromUrl)
+          ))
       ) {
         connectAppWithWallet(injected, false).catch((error) => {
           // Just log an error, we don't want to do anything else.
@@ -69,6 +53,20 @@ const useAutoConnect = () => {
             error.message
           )
         })
+      } else if (walletAddressFromUrl && !connector) {
+        const explorerModeConnector = new ExplorerModeConnector()
+        openModal(
+          <ExplorerModeModal
+            connectAppWithWallet={connectAppWithWallet}
+            connector={explorerModeConnector}
+            closeModal={closeModal}
+            address={walletAddressFromUrl}
+            connectWithWalletOnMount={true}
+          />,
+          {
+            title: "Connect Ethereum Address",
+          }
+        )
       }
     })
   }, [connectAppWithWallet])
