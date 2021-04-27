@@ -87,7 +87,7 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
       abortWalletConnection()
     }
     closeModal()
-  }, [abortWalletConnection, closeModal])
+  }, [abortWalletConnection, closeModal, currentConnector])
 
   const renderModalContent = () => {
     const defaultProps = { connector, closeModal, connectAppWithWallet }

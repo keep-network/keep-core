@@ -98,6 +98,10 @@ const useSubscribeToConnectorEvents = () => {
     yourAddress,
     web3,
     walletAddressFromUrl,
+    history,
+    location.pathname,
+    openModal,
+    transactionQueue,
   ])
 }
 

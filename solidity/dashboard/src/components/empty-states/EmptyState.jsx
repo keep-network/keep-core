@@ -1,6 +1,4 @@
 import React from "react"
-import WalletOptions from "../WalletOptions"
-import Tooltip from "../Tooltip"
 import ResourceTooltip from "../ResourceTooltip"
 import ConnectWalletBtn from "../ConnectWalletBtn";
 

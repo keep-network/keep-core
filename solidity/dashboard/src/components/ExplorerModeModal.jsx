@@ -14,7 +14,7 @@ const ExplorerModeModal = ({
 
   useEffect(() => {
     connector.setSelectedAccount(selectedAddress)
-  }, [selectedAddress])
+  }, [selectedAddress, connector])
 
   useEffect(() => {
     if (address) setSelectedAddress(address)

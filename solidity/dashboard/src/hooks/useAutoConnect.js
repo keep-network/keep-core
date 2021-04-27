@@ -1,5 +1,4 @@
-import React, { useEffect } from "react"
-import web3Utils from "web3-utils"
+import React, { useEffect, useState } from "react"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import ExplorerModeModal from "../components/ExplorerModeModal"
 import { useLocation, useHistory } from "react-router-dom"
@@ -9,6 +8,12 @@ import { WALLETS } from "../constants/constants"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
+import { usePrevious } from "./usePrevious"
+
+const useHasChanged = (val) => {
+  const prevVal = usePrevious(val)
+  return prevVal !== val
+}
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -28,7 +33,11 @@ const useAutoConnect = () => {
   const { openModal, closeModal } = useModal()
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
 
+  const locationHasChanged = useHasChanged(location.pathname)
+  const [injectedTried, setInjectedTried] = useState(false)
+
   useEffect(() => {
+    if (locationHasChanged) return
     // change url to the one with address when we connect to the explorer mode
     if (
       !walletAddressFromUrl &&
@@ -39,7 +48,14 @@ const useAutoConnect = () => {
       const newPathname = "/" + yourAddress + location.pathname
       history.push({ pathname: newPathname })
     }
-  }, [connector, yourAddress])
+  }, [
+    connector,
+    yourAddress,
+    history,
+    location.pathname,
+    locationHasChanged,
+    walletAddressFromUrl,
+  ])
 
   useEffect(() => {
     // log in to explorer mode when pasting an url with an address
@@ -58,10 +74,19 @@ const useAutoConnect = () => {
         }
       )
     }
-  }, [location.pathname])
+  }, [
+    location.pathname,
+    closeModal,
+    openModal,
+    connector,
+    connectAppWithWallet,
+    walletAddressFromUrl,
+  ])
 
   useEffect(() => {
+    if (injectedTried) return
     injected.getAccounts().then((accounts) => {
+      setInjectedTried(true)
       if (!isEmptyArray(accounts) && !walletAddressFromUrl) {
         connectAppWithWallet(injected, false).catch((error) => {
           // Just log an error, we don't want to do anything else.
@@ -72,7 +97,7 @@ const useAutoConnect = () => {
         })
       }
     })
-  }, [connectAppWithWallet])
+  }, [connectAppWithWallet, walletAddressFromUrl, injectedTried])
 }
 
 export default useAutoConnect
