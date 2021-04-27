@@ -8,6 +8,8 @@ const Tooltip = ({
   simple = false,
   delay = 300,
   className = "",
+  shouldShowTooltip = true,
+  contentWrapperStyles = {},
 }) => {
   const timeout = useRef(null)
   const [active, setActive] = useState(false)
@@ -45,7 +47,7 @@ const Tooltip = ({
         <TriggerComponent />
       </div>
       <CSSTransition
-        in={active}
+        in={shouldShowTooltip ? active : false}
         timeout={delay}
         classNames="tooltip__content-wrapper"
         unmountOnExit
@@ -54,6 +56,7 @@ const Tooltip = ({
       >
         <div
           className="tooltip__content-wrapper"
+          style={contentWrapperStyles}
           onMouseEnter={showTooltip}
           onMouseLeave={hideTooltip}
         >
