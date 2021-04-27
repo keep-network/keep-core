@@ -1,14 +1,13 @@
 import React, { useEffect } from "react"
-import web3Utils from "web3-utils"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import ExplorerModeModal from "../components/ExplorerModeModal"
 import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
-import { WALLETS } from "../constants/constants"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
+import useIsExactRoutePath from "./useIsExactRoutePath"
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -24,6 +23,7 @@ import { isEmptyArray } from "../utils/array.utils"
 const useAutoConnect = () => {
   const location = useLocation()
   const history = useHistory()
+  const isExactRoutePath = useIsExactRoutePath(location.pathname)
   const walletAddressFromUrl = useWalletAddressFromUrl()
   const { openModal, closeModal } = useModal()
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
@@ -57,7 +57,11 @@ const useAutoConnect = () => {
 
   useEffect(() => {
     injected.getAccounts().then((accounts) => {
-      if (!isEmptyArray(accounts) && !walletAddressFromUrl) {
+      if (
+        !isEmptyArray(accounts) &&
+        !walletAddressFromUrl &&
+        isExactRoutePath
+      ) {
         connectAppWithWallet(injected, false).catch((error) => {
           // Just log an error, we don't want to do anything else.
           console.log(
