@@ -782,7 +782,7 @@ describe("TokenStakingEscrow", () => {
       expect(await escrow.withdrawable(operator)).to.eq.BN(0)
       expectCloseTo(
         await anotherEscrow.depositedAmount(operator),
-        web3.utils.toWei("150000"), // 300k - 150k KEEP\
+        web3.utils.toWei("150000"), // 300k - 150k KEEP
         "invalid deposited amount for operator"
       )
     })
