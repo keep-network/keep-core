@@ -30,6 +30,10 @@ export const WALLETS = {
   TREZOR: { label: "Trezor", name: "TREZOR" },
   LEDGER: { label: "Ledger", name: "LEDGER" },
   WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
+  EXPLORER_MODE: {
+    label: "Explorer Mode",
+    name: "EXPLORER_MODE",
+  },
 }
 
 export const REWARD_STATUS = {

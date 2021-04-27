@@ -16,6 +16,8 @@ const {
   delegateStakeFromManagedGrant,
 } = require("../helpers/delegateStake")
 
+const { expectCloseTo } = require("../helpers/numbers.js")
+
 const KeepToken = contract.fromArtifact("KeepToken")
 const KeepRegistry = contract.fromArtifact("KeepRegistry")
 const TokenGrant = contract.fromArtifact("TokenGrant")
@@ -572,14 +574,15 @@ describe("TokenStaking/StakingGrant", () => {
       await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
 
       // It may happen that OZ will add a split of a second which results in
-      // availabale amount slightly less than 50%
-      const redelegationAmountUpperBound = web3.utils.toWei("1000000")
-      const redelegationAmountLowerBound = web3.utils.toWei("999999")
+      // available amount slightly less than 50%
       const redelegationAmount = await tokenStakingEscrow.availableAmount(
         operatorOne
       )
-      expect(redelegationAmount).to.gt.BN(redelegationAmountLowerBound)
-      expect(redelegationAmount).to.lte.BN(redelegationAmountUpperBound)
+      expectCloseTo(
+        redelegationAmount,
+        web3.utils.toWei("1000000"),
+        "invalid redelegation amount"
+      )
 
       // And now, let's redelegate the remaining 1 000 000 KEEP...
       await tokenStakingEscrow.redelegate(
@@ -633,21 +636,27 @@ describe("TokenStaking/StakingGrant", () => {
         { from: grantee }
       )
 
-      let availableAmount = await tokenStakingEscrow.availableAmount(
-        operatorOne
+      expectCloseTo(
+        await tokenStakingEscrow.availableAmount(operatorOne),
+        web3.utils.toWei("1"),
+        "invalid available amount",
+        4
       )
-      expect(availableAmount).to.eq.BN(web3.utils.toWei("1"))
 
       // Finally, we need to wait until the remaining 1 KEEP becomes
       // withdrawable and withdraw it.
       await time.increaseTo(grantStart.add(time.duration.years(2)))
-      const withdrawable = await tokenStakingEscrow.withdrawable(operatorOne)
-      expect(withdrawable).to.eq.BN(web3.utils.toWei("1"))
+      expectCloseTo(
+        await tokenStakingEscrow.withdrawable(operatorOne),
+        web3.utils.toWei("1"),
+        "invalid withdrawable amount",
+        4
+      )
+
       await tokenStakingEscrow.withdraw(operatorOne, { from: grantee })
       // ok, no revert
 
-      availableAmount = await tokenStakingEscrow.availableAmount(operatorOne)
-      expect(availableAmount).to.eq.BN(0)
+      expect(await tokenStakingEscrow.availableAmount(operatorOne)).to.eq.BN(0)
     })
 
     it("can be cancelled by grantee", async () => {

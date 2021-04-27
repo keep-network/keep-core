@@ -5,6 +5,7 @@ const {
   time,
 } = require("@openzeppelin/test-helpers")
 const { createSnapshot, restoreSnapshot } = require("../helpers/snapshot")
+const { expectCloseTo } = require("../helpers/numbers.js")
 
 const {
   grantTokens,
@@ -557,7 +558,11 @@ describe("TokenStakingEscrow", () => {
       const balanceAfter = await token.balanceOf(grantManager)
 
       const diff = balanceAfter.sub(balanceBefore)
-      expect(diff).to.eq.BN(web3.utils.toWei("150000")) // 300k - 150k = 150k KEEP
+      expectCloseTo(
+        diff,
+        web3.utils.toWei("150000"), // 300k - 150k = 150k KEEP
+        "invalid balance"
+      )
     })
 
     it("withdraws entire deposited amount if nothing has been withdrawn before", async () => {

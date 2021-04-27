@@ -1,6 +1,5 @@
 name: Token Dashboard / Testnet
 
-#TODO: extend the conditions once workflow gets tested together with other workflows
 on:
   push:
     branches:
@@ -8,26 +7,39 @@ on:
     paths:
       - "solidity/dashboard/**"
   pull_request:
-    paths:
-      - "solidity/dashboard/**"
   workflow_dispatch:
 
 jobs:
-  build-and-publish:
+  dashboard-detect-changes:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request' 
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request' 
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/dashboard/**'
+
+  dashboard-build-and-publish:
+    needs: dashboard-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.dashboard-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./solidity/dashboard
     steps:
       - uses: actions/checkout@v2
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "12.x"
 
       - name: Cache Global NPM Cache
         uses: actions/cache@v2
@@ -60,7 +72,9 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to Google Container Registry
-        if: github.event_name == 'push'
+        if: |
+          github.ref == 'refs/heads/master'
+            && github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           registry: ${{ secrets.GCR_REGISTRY_URL }}
@@ -81,7 +95,6 @@ jobs:
           labels: revision=${{ github.sha }}
           push: |
             ${{ github.ref == 'refs/heads/master'
-              && (github.event_name == 'push'
-              || github.event_name == 'workflow_dispatch') }} 
+              && github.event_name != 'pull_request' }} 
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
