@@ -140,7 +140,7 @@ export function createSubcribeToContractEventChannel(contract, eventName) {
 export function* sendTransaction(action) {
   const { contract, methodName, args, options } = action.payload
   const web3 = yield getWeb3Context()
-  const displayWalletMessage = !web3.currentProvider._providers.some(
+  const displayWalletMessage = !web3.currentProvider?._providers?.some(
     (provider) => provider instanceof ExplorerModeSubprovider
   )
 
