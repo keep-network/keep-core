@@ -142,12 +142,6 @@ jobs:
           bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
-      - name: Upload a Build Artifact # TODO: Remove this after tests finished
-        uses: actions/upload-artifact@v2
-        with:
-          name: HTML Docs
-          path: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
-
   docs-pdf:
     if: always()
     runs-on: ubuntu-latest
@@ -191,9 +185,3 @@ jobs:
           bucket-name: docs.keep.network
           bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
           build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
-
-      - name: Upload a Build Artifact # TODO: Remove this after tests finished
-        uses: actions/upload-artifact@v2
-        with:
-          name: PDF Docs
-          path: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
