@@ -3,6 +3,7 @@ import { take, takeEvery, put, call } from "redux-saga/effects"
 import {
   getContractsContext,
   getWeb3Context,
+  logError,
   submitButtonHelper,
 } from "./utils"
 import {
@@ -82,7 +83,7 @@ function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
         emit(showSuccessMessage)
         emit(END)
       })
-      .on("error", (error, receipt) => {
+      .once("error", (error, receipt) => {
         emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(txHashCache))
         if (error.name === "ExplorerModeSubproviderError") emit(END)
@@ -206,7 +207,8 @@ export function* watchSendRawTransactionsInSequenceRequest() {
           payload: transactionObject,
         })
       }
-    } catch (err) {
+    } catch (error) {
+      yield* logError("web3/send_raw_transaction_in_sequence_failure", error)
     }
   })
 }
