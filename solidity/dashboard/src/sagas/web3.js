@@ -1,19 +1,44 @@
 import { eventChannel, END, buffers } from "redux-saga"
 import { take, takeEvery, put, call } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper } from "./utils"
+import {
+  getContractsContext,
+  getWeb3Context,
+  logError,
+  submitButtonHelper,
+} from "./utils"
 import {
   showCreatedMessage,
   showMessage,
   closeMessage,
 } from "../actions/messages"
 import { messageType } from "../components/Message"
+import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider";
 
 function createTransactionEventChannel(
   contract,
   method,
   args = [],
-  options = {}
+  options = {},
+  displayWalletMessage = true
 ) {
+  const emitter = contract.methods[method](...args).send(options)
+
+  return createEventChannelFromEmitter(emitter, displayWalletMessage)
+}
+
+function createRawTransactionEventChannel(transactionObject, web3) {
+  const emitter = web3.eth.sendTransaction(transactionObject)
+
+  return createEventChannelFromEmitter(emitter)
+}
+
+function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
+  let txHashCache
+
+  let showPendingActionMessage
+  let showSuccessMessage
+  let showErrorMessage
+
   const showWalletMessage = showMessage({
     messageType: messageType.WALLET,
     messageProps: {
@@ -21,16 +46,8 @@ function createTransactionEventChannel(
     },
   })
 
-  const emitter = contract.methods[method](...args).send(options)
-
-  let txHashCache
-
-  let showPendingActionMessage
-  let showSuccessMessage
-  let showErrorMessage
-
   return eventChannel((emit) => {
-    emit(showWalletMessage)
+    if (displayWalletMessage) emit(showWalletMessage)
     emitter
       .once("transactionHash", (txHash) => {
         emit(closeMessage(showWalletMessage.payload.id))
@@ -69,6 +86,7 @@ function createTransactionEventChannel(
       .once("error", (error, receipt) => {
         emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(txHashCache))
+        if (error.name === "ExplorerModeSubproviderError") emit(END)
         showErrorMessage = showMessage({
           messageType: messageType.ERROR,
           messageProps: {
@@ -120,13 +138,35 @@ export function createSubcribeToContractEventChannel(contract, eventName) {
 
 export function* sendTransaction(action) {
   const { contract, methodName, args, options } = action.payload
+  const web3 = yield getWeb3Context()
+  const displayWalletMessage = !web3.currentProvider?._providers?.some(
+    (provider) => provider instanceof ExplorerModeSubprovider
+  )
 
   const transactionEventChannel = createTransactionEventChannel(
     contract,
     methodName,
     args,
-    options
+    options,
+    displayWalletMessage
   )
+
+  try {
+    while (true) {
+      const event = yield take(transactionEventChannel)
+      yield put(event)
+    }
+  } catch (error) {
+    throw error
+  } finally {
+    transactionEventChannel.close()
+  }
+}
+
+export function* sendRawTransaction(action) {
+  const web3 = yield getWeb3Context()
+
+  const transactionEventChannel = createRawTransactionEventChannel(action.payload, web3)
 
   try {
     while (true) {
@@ -156,5 +196,19 @@ export function* watchSendTransactionRequest() {
       payload: sendTransactionPayload,
       meta: action.meta,
     })
+  })
+}
+
+export function* watchSendRawTransactionsInSequenceRequest() {
+  yield takeEvery("web3/send_raw_transaction_in_sequence", function* (action) {
+    try {
+      for (const transactionObject of action.payload) {
+        yield call(sendRawTransaction, {
+          payload: transactionObject,
+        })
+      }
+    } catch (error) {
+      yield* logError("web3/send_raw_transaction_in_sequence_failure", error)
+    }
   })
 }

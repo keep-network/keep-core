@@ -8,6 +8,7 @@ const Tooltip = ({
   simple = false,
   delay = 300,
   className = "",
+  tooltipContentWrapperClassName = "",
 }) => {
   const timeout = useRef(null)
   const [active, setActive] = useState(false)
@@ -47,13 +48,17 @@ const Tooltip = ({
       <CSSTransition
         in={active}
         timeout={delay}
-        classNames="tooltip__content-wrapper"
+        classNames={`tooltip__content-wrapper ${
+          tooltipContentWrapperClassName ? tooltipContentWrapperClassName : ""
+        }`}
         unmountOnExit
         onEnter={showTooltip}
         onExited={hideTooltip}
       >
         <div
-          className="tooltip__content-wrapper"
+          className={`tooltip__content-wrapper ${
+            tooltipContentWrapperClassName ? tooltipContentWrapperClassName : ""
+          }`}
           onMouseEnter={showTooltip}
           onMouseLeave={hideTooltip}
         >
