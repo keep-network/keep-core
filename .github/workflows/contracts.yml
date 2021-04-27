@@ -32,19 +32,15 @@ jobs:
       github.event_name != 'pull_request'
         || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "12.x"
 
       - name: Cache node modules
         uses: actions/cache@v2
@@ -73,19 +69,15 @@ jobs:
       github.event_name != 'pull_request'
         || needs.contracts-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "12.x"
 
       - name: Cache node modules
         uses: actions/cache@v2
