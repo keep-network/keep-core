@@ -7,6 +7,7 @@ import { displayAmount } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { shortenAddress } from "../utils/general.utils"
 import resourceTooltipProps from "../constants/tooltips"
+import Tooltip from "./Tooltip"
 
 const AuthorizeContracts = ({
   data,
@@ -65,13 +66,18 @@ const AuthorizeContracts = ({
           header="operator contract details"
           field=""
           renderContent={({ contracts, operatorAddress }) => (
-            <Contracts
-              contracts={contracts}
-              operatorAddress={operatorAddress}
-              onAuthorizeBtn={onAuthorizeBtn}
-              onDeauthorizeBtn={onDeauthorizeBtn}
-              onSuccessCallback={onSuccessCallback}
-            />
+            <ul className="line-separator">
+              {contracts.map((contract) => (
+                <AuthorizeContractItem
+                  key={contract.contractName}
+                  {...contract}
+                  operatorAddress={operatorAddress}
+                  onAuthorizeBtn={onAuthorizeBtn}
+                  onDeauthorizeBtn={onDeauthorizeBtn}
+                  onSuccessCallback={onSuccessCallback}
+                />
+              ))}
+            </ul>
           )}
         />
       </DataTable>
@@ -79,27 +85,8 @@ const AuthorizeContracts = ({
   )
 }
 
-const Contracts = ({
-  contracts,
-  operatorAddress,
-  onAuthorizeBtn,
-  onDeauthorizeBtn,
-  onSuccessCallback,
-}) => {
-  return (
-    <ul className="line-separator">
-      {contracts.map((contract) => (
-        <AuthorizeContractItem
-          key={contract.contractName}
-          {...contract}
-          operatorAddress={operatorAddress}
-          onAuthorizeBtn={onAuthorizeBtn}
-          onDeauthorizeBtn={onDeauthorizeBtn}
-          onSuccessCallback={onSuccessCallback}
-        />
-      ))}
-    </ul>
-  )
+const styles = {
+  tooltipContentWrapper: { textAlign: "left", minWidth: "15rem" },
 }
 
 const AuthorizeContractItem = ({
@@ -153,14 +140,39 @@ const AuthorizeContractItem = ({
             )}
           </div>
         ) : (
-          <SubmitButton
-            onSubmitAction={onAuthorize}
-            className="btn btn-secondary btn-sm"
-            style={{ marginLeft: "auto" }}
-            successCallback={onSuccess}
+          <Tooltip
+            shouldShowTooltip={
+              contractName === "Keep Random Beacon Operator Contract"
+            }
+            simple
+            delay={10}
+            direction="top"
+            contentWrapperStyles={styles.tooltipContentWrapper}
+            triggerComponent={() => (
+              <SubmitButton
+                onSubmitAction={onAuthorize}
+                className="btn btn-secondary btn-sm"
+                style={{ marginLeft: "auto" }}
+                successCallback={onSuccess}
+                disabled={
+                  contractName === "Keep Random Beacon Operator Contract"
+                }
+              >
+                authorize
+              </SubmitButton>
+            )}
           >
-            authorize
-          </SubmitButton>
+            Keep Random Beacon Operator contract has been disabled due to&nbsp;
+            <a
+              href="https://docs.keep.network/status-reports/2020-11-11-retro-geth-hardfork.html"
+              rel="noopener noreferrer"
+              target="_blank"
+              className="text-white text-link"
+            >
+              the impact of the geth hardfork that occurred on 11 November 2020
+            </a>
+            .
+          </Tooltip>
         )}
       </div>
     </li>
