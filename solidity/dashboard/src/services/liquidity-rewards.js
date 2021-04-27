@@ -5,7 +5,7 @@ import {
   getContractDeploymentBlockNumber,
 } from "../contracts"
 import BigNumber from "bignumber.js"
-import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
+import { KEEP, Token } from "../utils/token.utils"
 import {
   getPairData,
   getKeepTokenPriceInUSD,
@@ -100,7 +100,7 @@ class LiquidityRewards {
 
   rewardPoolPerWeek = async () => {
     const rewardRate = await this.rewardRate()
-    return toTokenUnit(rewardRate).multipliedBy(
+    return KEEP.toTokenUnit(rewardRate).multipliedBy(
       moment.duration(7, "days").asSeconds()
     )
   }
@@ -141,7 +141,7 @@ class LiquidityRewards {
 
 class UniswapLPRewards extends LiquidityRewards {
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
     const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
@@ -215,9 +215,9 @@ class SaddleLPRewards extends LiquidityRewards {
   swapContract = null
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
-    const wrappedTokenTotalSupply = toTokenUnit(
+    const wrappedTokenTotalSupply = Token.toTokenUnit(
       await this.wrappedTokenTotalSupply()
     )
 
@@ -225,7 +225,7 @@ class SaddleLPRewards extends LiquidityRewards {
     const BTCPriceInUSD = await getBTCPriceInUSD()
 
     const wrappedTokenPoolInUSD = BTCPriceInUSD.multipliedBy(
-      toTokenUnit(BTCInPool)
+      Token.toTokenUnit(BTCInPool)
     )
 
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
@@ -337,7 +337,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
   }
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
@@ -367,7 +367,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     )
 
     // The KEEP-only pool will earn 100k KEEP per month.
-    let rewardPoolPerMonth = fromTokenUnit(10e4)
+    let rewardPoolPerMonth = KEEP.fromTokenUnit(10e4)
     const weeksInMonth = new BigNumber(
       moment.duration(1, "months").asSeconds()
     ).div(moment.duration(7, "days").asSeconds())
@@ -378,7 +378,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
       )
     }
 
-    return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
+    return Token.toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
 
   calculateLPTokenBalance = (lpBalance) => {

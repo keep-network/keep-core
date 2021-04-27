@@ -6,7 +6,7 @@ import * as Icons from "./Icons"
 import { shortenAddress } from "../utils/general.utils"
 import WalletOptions from "./WalletOptions"
 import CopyToClipboard from "./CopyToClipboard"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { WALLETS } from "../constants/constants"
 import CurrentWalletIconTooltip from "./CurrentWalletIconTooltip"
 
@@ -70,7 +70,7 @@ const WalletMenu = () => {
       <div className="wallet__menu__balance">
         {keepTokenBalance.isFetching
           ? "loading KEEP balance..."
-          : `${displayAmount(keepTokenBalance.value)} KEEP`}
+          : `${KEEP.displayAmountWithSymbol(keepTokenBalance.value)}`}
       </div>
       <div className="wallet__menu__disconnect" onClick={disconnect}>
         Disconnect
