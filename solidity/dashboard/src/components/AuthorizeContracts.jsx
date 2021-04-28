@@ -8,6 +8,7 @@ import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { shortenAddress } from "../utils/general.utils"
 import resourceTooltipProps from "../constants/tooltips"
 import Tooltip from "./Tooltip"
+import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
 
 const AuthorizeContracts = ({
   data,
@@ -129,7 +130,7 @@ const AuthorizeContractItem = ({
         {isAuthorized ? (
           <div>
             <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
-            {contractName === "TBTCSystem" && (
+            {contractName === AUTH_CONTRACTS_LABEL.TBTC_SYSTEM && (
               <SubmitButton
                 onSubmitAction={onDeauthorize}
                 className="btn btn-secondary btn-sm ml-1"
@@ -142,7 +143,7 @@ const AuthorizeContractItem = ({
         ) : (
           <Tooltip
             shouldShowTooltip={
-              contractName === "Keep Random Beacon Operator Contract"
+              contractName === AUTH_CONTRACTS_LABEL.RANDOM_BEACON
             }
             simple
             delay={10}
@@ -154,9 +155,7 @@ const AuthorizeContractItem = ({
                 className="btn btn-secondary btn-sm"
                 style={{ marginLeft: "auto" }}
                 successCallback={onSuccess}
-                disabled={
-                  contractName === "Keep Random Beacon Operator Contract"
-                }
+                disabled={contractName === AUTH_CONTRACTS_LABEL.RANDOM_BEACON}
               >
                 authorize
               </SubmitButton>
