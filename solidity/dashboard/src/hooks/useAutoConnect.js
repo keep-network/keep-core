@@ -39,11 +39,7 @@ const useAutoConnect = () => {
   useEffect(() => {
     if (locationHasChanged) return
     // change url to the one with address when we connect to the explorer mode
-    if (
-      !walletAddressFromUrl &&
-      connector &&
-      yourAddress
-    ) {
+    if (!walletAddressFromUrl && connector && yourAddress) {
       const newPathname = "/" + yourAddress + location.pathname
       history.push({ pathname: newPathname })
     }
@@ -53,32 +49,6 @@ const useAutoConnect = () => {
     history,
     location.pathname,
     locationHasChanged,
-    walletAddressFromUrl,
-  ])
-
-  useEffect(() => {
-    // log in to explorer mode when pasting an url with an address
-    if (walletAddressFromUrl && !connector) {
-      const explorerModeConnector = new ExplorerModeConnector()
-      openModal(
-        <ExplorerModeModal
-          connectAppWithWallet={connectAppWithWallet}
-          connector={explorerModeConnector}
-          closeModal={closeModal}
-          address={walletAddressFromUrl}
-          connectWithWalletOnMount={true}
-        />,
-        {
-          title: "Connect Ethereum Address",
-        }
-      )
-    }
-  }, [
-    location.pathname,
-    closeModal,
-    openModal,
-    connector,
-    connectAppWithWallet,
     walletAddressFromUrl,
   ])
 
@@ -94,9 +64,30 @@ const useAutoConnect = () => {
             error.message
           )
         })
+      } else if (walletAddressFromUrl && !connector) {
+        const explorerModeConnector = new ExplorerModeConnector()
+        openModal(
+          <ExplorerModeModal
+            connectAppWithWallet={connectAppWithWallet}
+            connector={explorerModeConnector}
+            closeModal={closeModal}
+            address={walletAddressFromUrl}
+            connectWithWalletOnMount={true}
+          />,
+          {
+            title: "Connect Ethereum Address",
+          }
+        )
       }
     })
-  }, [connectAppWithWallet, walletAddressFromUrl, injectedTried])
+  }, [
+    connectAppWithWallet,
+    walletAddressFromUrl,
+    injectedTried,
+    closeModal,
+    openModal,
+    connector,
+  ])
 }
 
 export default useAutoConnect
