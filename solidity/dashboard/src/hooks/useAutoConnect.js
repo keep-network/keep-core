@@ -4,11 +4,12 @@ import ExplorerModeModal from "../components/ExplorerModeModal"
 import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
-import { WALLETS } from "../constants/constants"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
 import { usePrevious } from "./usePrevious"
+import useIsExactRoutePath from "./useIsExactRoutePath"
+import { isSameEthAddress } from "../utils/general.utils"
 
 const useHasChanged = (val) => {
   const prevVal = usePrevious(val)
@@ -32,9 +33,19 @@ const useAutoConnect = () => {
   const walletAddressFromUrl = useWalletAddressFromUrl()
   const { openModal, closeModal } = useModal()
   const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
+  const isExactRoutePath = useIsExactRoutePath()
 
   const locationHasChanged = useHasChanged(location.pathname)
   const [injectedTried, setInjectedTried] = useState(false)
+
+  const isWalletFromUrlSameAsInMetamask = (metamaskAccounts) => {
+    return (
+      walletAddressFromUrl &&
+      metamaskAccounts.some((account) =>
+        isSameEthAddress(account, walletAddressFromUrl)
+      )
+    )
+  }
 
   useEffect(() => {
     if (locationHasChanged) return
@@ -56,7 +67,10 @@ const useAutoConnect = () => {
     if (injectedTried) return
     injected.getAccounts().then((accounts) => {
       setInjectedTried(true)
-      if (!isEmptyArray(accounts) && !walletAddressFromUrl) {
+      if (
+        (!isEmptyArray(accounts) && isExactRoutePath) ||
+        isWalletFromUrlSameAsInMetamask(accounts)
+      ) {
         connectAppWithWallet(injected, false).catch((error) => {
           // Just log an error, we don't want to do anything else.
           console.log(
@@ -87,6 +101,8 @@ const useAutoConnect = () => {
     closeModal,
     openModal,
     connector,
+    isExactRoutePath,
+    isWalletFromUrlSameAsInMetamask,
   ])
 }
 
