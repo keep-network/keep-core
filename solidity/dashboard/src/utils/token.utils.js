@@ -84,15 +84,18 @@ export class Token {
    * needed. Eg:
    * 10000.2300 -> 100,000.23
    * 1000 -> 1,000
-   * @param {BigNumber} amountInBn An amount to format.
+   * @param {BigNumber | number | string} amount An amount to format.
    * @param {number} decimalPlaces Number of decimals to display.
    *
    * @return {string} Formatted amount.
    */
-  toFormat = (amountInBn, decimalPlaces = this.decimalsToDisplay) => {
-    return amountInBn.decimalPlaces() < decimalPlaces
-      ? amountInBn.toFormat(undefined, BigNumber.ROUND_DOWN)
-      : amountInBn.toFormat(decimalPlaces, BigNumber.ROUND_DOWN)
+  toFormat = (amount, decimalPlaces = this.decimalsToDisplay) => {
+    const _amount = BigNumber.isBigNumber(amount)
+      ? amount
+      : new BigNumber(amount)
+    return _amount.decimalPlaces() < decimalPlaces
+      ? _amount.toFormat(undefined, BigNumber.ROUND_DOWN)
+      : _amount.toFormat(decimalPlaces, BigNumber.ROUND_DOWN)
   }
 
   /**
