@@ -67,8 +67,9 @@ const AuthorizeContracts = ({
           header="operator contract details"
           field=""
           renderContent={({ contracts, operatorAddress }) => (
-            <ul className="line-separator">
-              {contracts.map((contract) => (
+            <ContractsToAuthorizeCell
+              contracts={contracts}
+              renderAuthContract={(contract) => (
                 <AuthorizeContractItem
                   key={contract.contractName}
                   {...contract}
@@ -77,8 +78,8 @@ const AuthorizeContracts = ({
                   onDeauthorizeBtn={onDeauthorizeBtn}
                   onSuccessCallback={onSuccessCallback}
                 />
-              ))}
-            </ul>
+              )}
+            />
           )}
         />
       </DataTable>
@@ -88,6 +89,10 @@ const AuthorizeContracts = ({
 
 const styles = {
   tooltipContentWrapper: { textAlign: "left", minWidth: "15rem" },
+}
+
+const ContractsToAuthorizeCell = ({ renderAuthContract, contracts }) => {
+  return <ul className="line-separator">{contracts.map(renderAuthContract)}</ul>
 }
 
 const AuthorizeContractItem = ({
