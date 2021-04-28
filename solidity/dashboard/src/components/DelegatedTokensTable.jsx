@@ -68,7 +68,7 @@ const DelegatedTokensTable = ({
       openModal(
         <TopUpInitiatedConfirmationModal
           {...delegationData}
-          addedAmount={amount}
+          addedAmount={KEEP.fromTokenUnit(amount).toString()}
           currentAmount={delegationData.amount}
         />,
         {

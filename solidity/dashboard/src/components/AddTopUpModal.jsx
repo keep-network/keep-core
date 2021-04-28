@@ -32,6 +32,8 @@ const AddTopUpModal = ({
     }
   }
 
+  const amountInTokenUnit = KEEP.fromTokenUnit(amount)
+
   return (
     <>
       {step === 1 && (
@@ -60,8 +62,8 @@ const AddTopUpModal = ({
           authorizerAddress={authorizerAddress}
           beneficiary={beneficiary}
           operatorAddress={operatorAddress}
-          newAmount={add(KEEP.fromTokenUnit(amount), currentAmount)}
-          amountToAdd={amount}
+          newAmount={add(amountInTokenUnit, currentAmount)}
+          amountToAdd={amountInTokenUnit}
           onSubmit={onSubmit}
         />
       )}
@@ -116,7 +118,7 @@ const Step2Content = ({
   return (
     <>
       <TokenAmount
-        amount={KEEP.fromTokenUnit(amountToAdd).toString()}
+        amount={amountToAdd}
         withIcon
         icon={Icons.Plus}
         iconProps={{ width: 24, height: 24, className: "plus-icon" }}
@@ -157,16 +159,14 @@ const DelegationDetails = ({
 )
 
 const TopUpInitiatedConfirmationModal = ({
-  // In token unit.
   addedAmount,
-  // In the smallest token unit.
   currentAmount,
   authorizerAddress,
   beneficiary,
   operatorAddress,
 }) => {
   const { closeModal } = useModal()
-  const newAmount = add(currentAmount, KEEP.fromTokenUnit(addedAmount))
+  const newAmount = add(currentAmount, addedAmount)
 
   return (
     <>
@@ -178,7 +178,7 @@ const TopUpInitiatedConfirmationModal = ({
         </div>
       </section>
       <TokenAmount
-        amount={KEEP.fromTokenUnit(addedAmount).toString()}
+        amount={addedAmount}
         withIcon
         icon={Icons.Plus}
         iconProps={{ width: 24, height: 24, className: "plus-icon" }}
