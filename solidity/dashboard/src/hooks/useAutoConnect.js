@@ -42,8 +42,7 @@ const useAutoConnect = () => {
     if (
       !walletAddressFromUrl &&
       connector &&
-      yourAddress &&
-      connector.name === WALLETS.EXPLORER_MODE.name
+      yourAddress
     ) {
       const newPathname = "/" + yourAddress + location.pathname
       history.push({ pathname: newPathname })
