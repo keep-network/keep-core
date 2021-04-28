@@ -116,3 +116,9 @@ export const LIQUIDITY_REWARD_PAIRS = {
     pool: "TOKEN_GEYSER",
   },
 }
+
+export const AUTH_CONTRACTS_LABEL = {
+  TBTC_SYSTEM: "TBTCSystem",
+  BONDED_ECDSA_KEEP_FACTORY: "BondedECDSAKeepFactory",
+  RANDOM_BEACON: "Keep Random Beacon Operator Contract",
+}

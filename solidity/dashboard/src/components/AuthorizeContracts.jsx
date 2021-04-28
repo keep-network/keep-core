@@ -7,6 +7,8 @@ import { KEEP } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { shortenAddress } from "../utils/general.utils"
 import resourceTooltipProps from "../constants/tooltips"
+import Tooltip from "./Tooltip"
+import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
 
 const AuthorizeContracts = ({
   data,
@@ -65,12 +67,18 @@ const AuthorizeContracts = ({
           header="operator contract details"
           field=""
           renderContent={({ contracts, operatorAddress }) => (
-            <Contracts
+            <ContractsToAuthorizeCell
               contracts={contracts}
-              operatorAddress={operatorAddress}
-              onAuthorizeBtn={onAuthorizeBtn}
-              onDeauthorizeBtn={onDeauthorizeBtn}
-              onSuccessCallback={onSuccessCallback}
+              renderAuthContract={(contract) => (
+                <AuthorizeContractItem
+                  key={contract.contractName}
+                  {...contract}
+                  operatorAddress={operatorAddress}
+                  onAuthorizeBtn={onAuthorizeBtn}
+                  onDeauthorizeBtn={onDeauthorizeBtn}
+                  onSuccessCallback={onSuccessCallback}
+                />
+              )}
             />
           )}
         />
@@ -79,27 +87,12 @@ const AuthorizeContracts = ({
   )
 }
 
-const Contracts = ({
-  contracts,
-  operatorAddress,
-  onAuthorizeBtn,
-  onDeauthorizeBtn,
-  onSuccessCallback,
-}) => {
-  return (
-    <ul className="line-separator">
-      {contracts.map((contract) => (
-        <AuthorizeContractItem
-          key={contract.contractName}
-          {...contract}
-          operatorAddress={operatorAddress}
-          onAuthorizeBtn={onAuthorizeBtn}
-          onDeauthorizeBtn={onDeauthorizeBtn}
-          onSuccessCallback={onSuccessCallback}
-        />
-      ))}
-    </ul>
-  )
+const styles = {
+  tooltipContentWrapper: { textAlign: "left", minWidth: "15rem" },
+}
+
+const ContractsToAuthorizeCell = ({ renderAuthContract, contracts }) => {
+  return <ul className="line-separator">{contracts.map(renderAuthContract)}</ul>
 }
 
 const AuthorizeContractItem = ({
@@ -142,7 +135,7 @@ const AuthorizeContractItem = ({
         {isAuthorized ? (
           <div>
             <StatusBadge status={BADGE_STATUS.COMPLETE} text="authorized" />
-            {contractName === "TBTCSystem" && (
+            {contractName === AUTH_CONTRACTS_LABEL.TBTC_SYSTEM && (
               <SubmitButton
                 onSubmitAction={onDeauthorize}
                 className="btn btn-secondary btn-sm ml-1"
@@ -153,14 +146,37 @@ const AuthorizeContractItem = ({
             )}
           </div>
         ) : (
-          <SubmitButton
-            onSubmitAction={onAuthorize}
-            className="btn btn-secondary btn-sm"
-            style={{ marginLeft: "auto" }}
-            successCallback={onSuccess}
+          <Tooltip
+            shouldShowTooltip={
+              contractName === AUTH_CONTRACTS_LABEL.RANDOM_BEACON
+            }
+            simple
+            delay={10}
+            direction="top"
+            contentWrapperStyles={styles.tooltipContentWrapper}
+            triggerComponent={() => (
+              <SubmitButton
+                onSubmitAction={onAuthorize}
+                className="btn btn-secondary btn-sm"
+                style={{ marginLeft: "auto" }}
+                successCallback={onSuccess}
+                disabled={contractName === AUTH_CONTRACTS_LABEL.RANDOM_BEACON}
+              >
+                authorize
+              </SubmitButton>
+            )}
           >
-            authorize
-          </SubmitButton>
+            Keep Random Beacon Operator contract has been disabled due to&nbsp;
+            <a
+              href="https://docs.keep.network/status-reports/2020-11-11-retro-geth-hardfork.html"
+              rel="noopener noreferrer"
+              target="_blank"
+              className="text-white text-link"
+            >
+              the impact of the geth hardfork that occurred on 11 November 2020
+            </a>
+            .
+          </Tooltip>
         )}
       </div>
     </li>

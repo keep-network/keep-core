@@ -8,6 +8,8 @@ const Tooltip = ({
   simple = false,
   delay = 300,
   className = "",
+  shouldShowTooltip = true,
+  contentWrapperStyles = {},
   tooltipContentWrapperClassName = "",
 }) => {
   const timeout = useRef(null)
@@ -32,6 +34,10 @@ const Tooltip = ({
     }, delay)
   }
 
+  const _wrapperClassName = `tooltip__content-wrapper ${
+    tooltipContentWrapperClassName ? tooltipContentWrapperClassName : ""
+  }`
+
   return (
     <div
       className={`tooltip${
@@ -46,19 +52,16 @@ const Tooltip = ({
         <TriggerComponent />
       </div>
       <CSSTransition
-        in={active}
+        in={shouldShowTooltip ? active : false}
         timeout={delay}
-        classNames={`tooltip__content-wrapper ${
-          tooltipContentWrapperClassName ? tooltipContentWrapperClassName : ""
-        }`}
+        classNames={_wrapperClassName}
         unmountOnExit
         onEnter={showTooltip}
         onExited={hideTooltip}
       >
         <div
-          className={`tooltip__content-wrapper ${
-            tooltipContentWrapperClassName ? tooltipContentWrapperClassName : ""
-          }`}
+          className={_wrapperClassName}
+          style={contentWrapperStyles}
           onMouseEnter={showTooltip}
           onMouseLeave={hideTooltip}
         >
