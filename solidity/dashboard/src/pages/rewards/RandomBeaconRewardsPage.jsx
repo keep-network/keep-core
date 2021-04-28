@@ -59,7 +59,7 @@ const Balance = ({
       {isBalanceFetching ? (
         <TokenAmountSkeleton />
       ) : (
-        <TokenAmount amount={rewardsBalance} currencySymbol="KEEP" />
+        <TokenAmount amount={rewardsBalance} withIcon withMetricSuffix />
       )}
       {onWithdrawAll && (
         <SubmitButton

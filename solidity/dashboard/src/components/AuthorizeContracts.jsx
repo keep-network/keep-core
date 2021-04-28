@@ -3,7 +3,7 @@ import AddressShortcut from "./AddressShortcut"
 import { SubmitButton } from "./Button"
 import { DataTable, Column } from "./DataTable"
 import { ViewAddressInBlockExplorer } from "./ViewInBlockExplorer"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import { shortenAddress } from "../utils/general.utils"
 import resourceTooltipProps from "../constants/tooltips"
@@ -58,7 +58,7 @@ const AuthorizeContracts = ({
           header="stake"
           field="stakeAmount"
           renderContent={({ stakeAmount }) =>
-            `${displayAmount(stakeAmount)} KEEP`
+            `${KEEP.displayAmountWithSymbol(stakeAmount)}`
           }
         />
         <Column

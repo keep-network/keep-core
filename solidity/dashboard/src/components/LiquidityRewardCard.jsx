@@ -7,7 +7,7 @@ import Card from "./Card"
 import { Skeleton } from "./skeletons"
 import Tooltip from "./Tooltip"
 import Banner from "./Banner"
-import { toTokenUnit } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { gt } from "../utils/arithmetics.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { APY, LPTokenBalance, ShareOfPool } from "./liquidity"
@@ -200,7 +200,7 @@ const LiquidityRewardCard = ({
           ) : (
             <h3>
               <CountUp
-                end={toTokenUnit(rewardBalance).toNumber()}
+                end={KEEP.toTokenUnit(rewardBalance).toNumber()}
                 separator={","}
                 preserveValue
               />

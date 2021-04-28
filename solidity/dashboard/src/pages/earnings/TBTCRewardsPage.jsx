@@ -6,11 +6,10 @@ import {
   TokenAmountSkeleton,
 } from "../../components/skeletons"
 import TokenAmount from "../../components/TokenAmount"
-import * as Icons from "../../components/Icons"
 import { tbtcRewardsService } from "../../services/tbtc-rewards.service"
 import { useFetchData } from "../../hooks/useFetchData"
 import { add } from "../../utils/arithmetics.utils"
-import { toTokenUnit } from "../../utils/token.utils"
+import { TBTC } from "../../utils/token.utils"
 import { findIndexAndObject } from "../../utils/array.utils"
 import EmptyStatePage from "./EmptyStatePage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
@@ -26,7 +25,7 @@ const TBTCRewardsPage = () => {
 
   useEffect(() => {
     if (address) {
-      setServiceArgs(address)
+      setServiceArgs([address])
     }
   }, [setServiceArgs, address])
 
@@ -63,21 +62,17 @@ const TBTCRewardsPage = () => {
 
   return (
     <section className="tile">
-      <h2 className="text-grey-70">Total Amount</h2>
+      <h2 className="text-grey-70 mb-1">Total Amount</h2>
       {isFetching ? (
         <TokenAmountSkeleton textStyles={{ width: "35%" }} />
       ) : (
         <TokenAmount
-          currencyIcon={Icons.TBTC}
-          currencyIconProps={{
-            className: "tbtc-icon--mint-80",
-            width: 32,
-            height: 32,
-          }}
+          token={TBTC}
           amount={totalAmount}
-          currencySymbol="TBTC"
-          displayWithMetricSuffix={false}
-          displayAmountFunction={(amount) => toTokenUnit(amount).toString()}
+          withIcon
+          iconProps={{
+            className: "tbtc-icon--mint-80",
+          }}
         />
       )}
 

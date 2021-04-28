@@ -2,7 +2,10 @@ import { all, fork, take, cancel, put } from "redux-saga/effects"
 import * as messagesSaga from "./messages"
 import * as delegateStakeSaga from "./staking"
 import * as tokenGrantSaga from "./token-grant"
-import { watchSendTransactionRequest } from "./web3"
+import {
+  watchSendRawTransactionsInSequenceRequest,
+  watchSendTransactionRequest,
+} from "./web3"
 import * as copyStakeSaga from "./copy-stake"
 import * as subscriptions from "./subscriptions"
 import * as keepTokenBalance from "./keep-balance"
@@ -19,6 +22,7 @@ const {
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
   watchSendTransactionRequest,
+  watchSendRawTransactionsInSequenceRequest,
   ...Object.values(tokenGrantSaga),
   ...Object.values(copyStakeSaga),
   ...Object.values(subscriptions),

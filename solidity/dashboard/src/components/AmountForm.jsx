@@ -2,18 +2,15 @@ import React from "react"
 import { withFormik } from "formik"
 import FormInput from "./FormInput"
 import Button from "./Button"
+import Tag from "./Tag"
+import * as Icons from "./Icons"
 import { validateAmountInRange, getErrorsObj } from "../forms/common-validators"
-import { lte } from "../utils/arithmetics.utils"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
 } from "../forms/form.utils.js"
-import * as Icons from "./Icons"
-import Tag from "./Tag"
-import ProgressBar from "./ProgressBar"
-import { colors } from "../constants/colors"
-import { displayAmount, fromTokenUnit } from "../utils/token.utils"
-import { add } from "../utils/arithmetics.utils"
+import { KEEP } from "../utils/token.utils"
+import { add, lte } from "../utils/arithmetics.utils"
 
 const AmountForm = ({
   onCancel,
@@ -24,7 +21,8 @@ const AmountForm = ({
 }) => {
   const { amount: formAmount } = formikProps.values || 0
   const newAmount =
-    formAmount && displayAmount(add(fromTokenUnit(formAmount), currentAmount))
+    formAmount &&
+    KEEP.displayAmount(add(KEEP.fromTokenUnit(formAmount), currentAmount))
 
   return (
     <>
@@ -33,7 +31,7 @@ const AmountForm = ({
           <Tag text="Current" IconComponent={Icons.KeepToken} />
         </div>
         <h3 className="flex-2 text-primary">
-          {displayAmount(currentAmount)} KEEP
+          {KEEP.displayAmountWithSymbol(currentAmount)}
         </h3>
       </div>
       <div className="flex row center mt-1">
@@ -59,18 +57,8 @@ const AmountForm = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
         />
-        <ProgressBar
-          styles={styles.progressBar}
-          total={availableAmount}
-          items={[
-            {
-              value: fromTokenUnit(formAmount),
-              color: colors.primary,
-            },
-          ]}
-        />
         <div className="text-caption text-grey-50">
-          {displayAmount(availableAmount)} KEEP available.
+          {KEEP.displayAmountWithSymbol(availableAmount)} available.
         </div>
         <div className="flex row center"></div>
         <Button
@@ -110,9 +98,5 @@ const AmountFormWithFormik = withFormik({
   handleSubmit: (values, { props }) => props.onBtnClick(values),
   displayName: "KEEPTokenAmountForm",
 })(AmountForm)
-
-const styles = {
-  progressBar: { margin: 0, marginTop: "-0.5rem" },
-}
 
 export default AmountFormWithFormik

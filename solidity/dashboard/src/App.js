@@ -10,7 +10,7 @@ import { ModalContextProvider } from "./components/Modal"
 import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
 import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents"
-import useInjectedAutoConnect from "./hooks/useInjectedAutoConnect"
+import useAutoConnect from "./hooks/useAutoConnect"
 
 const App = () => (
   <Provider store={store}>
@@ -27,9 +27,8 @@ const App = () => (
 )
 
 const AppLayout = () => {
-  useInjectedAutoConnect()
+  useAutoConnect()
   useSubscribeToConnectorEvents()
-
   return (
     <>
       <AppHeader />

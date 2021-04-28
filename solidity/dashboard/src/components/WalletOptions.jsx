@@ -14,6 +14,8 @@ import {
 import MetaMaskModal from "./MetaMaskModal"
 import WallectConnectModal from "./WalletConnectModal"
 import { WALLETS } from "../constants/constants"
+import ExplorerModeModal from "./ExplorerModeModal"
+import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 
 const WALLETS_OPTIONS = [
   {
@@ -49,11 +51,24 @@ const WALLETS_OPTIONS = [
     isHardwareWallet: false,
     connector: new WalletConnectConnector(),
   },
+  {
+    label: "Explorer Mode",
+    icon: Icons.Explore,
+    isHardwareWallet: false,
+    connector: new ExplorerModeConnector(),
+  },
 ]
 
-const WalletOptions = () => {
+const WalletOptions = ({ displayExplorerMode = true }) => {
   return (
-    <ul className="wallet__options">{WALLETS_OPTIONS.map(renderWallet)}</ul>
+    <ul className="wallet__options">
+      {WALLETS_OPTIONS.filter(
+        (wallet) =>
+          !(
+            !displayExplorerMode && wallet.label === WALLETS.EXPLORER_MODE.label
+          )
+      ).map(renderWallet)}
+    </ul>
   )
 }
 
@@ -61,12 +76,18 @@ const renderWallet = (wallet) => <Wallet key={wallet.label} {...wallet} />
 
 const Wallet = ({ label, icon: IconComponent, connector }) => {
   const { openModal, closeModal } = useModal()
-  const { connectAppWithWallet, abortWalletConnection } = useWeb3Context()
+  const {
+    connectAppWithWallet,
+    abortWalletConnection,
+    connector: currentConnector,
+  } = useWeb3Context()
 
   const customCloseModal = useCallback(() => {
-    abortWalletConnection()
+    if (currentConnector?.name !== WALLETS.EXPLORER_MODE.name) {
+      abortWalletConnection()
+    }
     closeModal()
-  }, [abortWalletConnection, closeModal])
+  }, [abortWalletConnection, closeModal, currentConnector])
 
   const renderModalContent = () => {
     const defaultProps = { connector, closeModal, connectAppWithWallet }
@@ -79,17 +100,24 @@ const Wallet = ({ label, icon: IconComponent, connector }) => {
         return <MetaMaskModal {...defaultProps} />
       case WALLETS.WALLET_CONNECT.name:
         return <WallectConnectModal {...defaultProps} />
+      case WALLETS.EXPLORER_MODE.name:
+        return <ExplorerModeModal {...defaultProps} />
       default:
         return null
     }
   }
+
+  const modalTitle =
+    label === WALLETS.EXPLORER_MODE.label
+      ? "Connect Ethereum Address"
+      : "Connect Wallet"
 
   return (
     <li
       className="wallet__item"
       onClick={async () => {
         openModal(renderModalContent(), {
-          title: "Connect Wallet",
+          title: modalTitle,
           closeModal: customCloseModal,
         })
       }}

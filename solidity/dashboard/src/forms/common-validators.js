@@ -1,5 +1,5 @@
 import web3Utils from "web3-utils"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 
 const REGEXP_NOT_BLANK_STRING = /^\s*$/
 const REGEXP_ONLY_NUMBERS = /^\d+$/
@@ -22,7 +22,12 @@ export const validateEthAddress = (address, required = true) => {
   }
 }
 
-export const validateAmountInRange = (value, maxValue, minValue = 0) => {
+export const validateAmountInRange = (
+  value,
+  maxValue,
+  minValue = 0,
+  token = KEEP
+) => {
   const formatedValue = value
     ? web3Utils
         .toBN(value)
@@ -38,13 +43,13 @@ export const validateAmountInRange = (value, maxValue, minValue = 0) => {
   } else if (!REGEXP_ONLY_NUMBERS.test(value)) {
     return "Invalid value"
   } else if (validateValueInBN.gt(maxValueInBN)) {
-    return `The value should be less than or equal ${displayAmount(
-      maxValueInBN
-    ).toString()}`
+    return `The value should be less than or equal ${token.displayAmount(
+      maxValueInBN.toString()
+    )}`
   } else if (validateValueInBN.lt(minValueInBN)) {
-    return `The value should be greater than or equal ${displayAmount(
-      minValueInBN
-    ).toString()}`
+    return `The value should be greater than or equal ${token.displayAmount(
+      minValueInBN.toString()
+    )}`
   }
 }
 

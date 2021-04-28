@@ -135,6 +135,7 @@ const fetchBondingData = async (address) => {
         isWithdrawableForOperator,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
+        bondedETHInWei: bondedEth.toString(),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
         availableETHInWei: availableEth,
       }

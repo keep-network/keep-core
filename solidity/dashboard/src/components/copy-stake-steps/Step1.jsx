@@ -102,9 +102,9 @@ const DelegationItem = ({ delegation, onSelect, selectedOperatorAddress }) => {
         <div className="flex row">
           <TokenAmount
             amount={amount}
-            currencySymbol="KEEP"
             wrapperClassName="self-start"
-            amountClassName="text-primary h3"
+            withIcon
+            withMetricSuffix
           />
           <div style={{ marginLeft: "auto" }}>
             <Address address={authorizerAddress} label="authorizer" />

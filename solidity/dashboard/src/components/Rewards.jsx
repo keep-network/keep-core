@@ -12,10 +12,9 @@ import { useWeb3Context, useWeb3Address } from "./WithWeb3Context"
 import { findIndexAndObject } from "../utils/array.utils"
 import { PENDING_STATUS } from "../constants/constants"
 import { isSameEthAddress } from "../utils/general.utils"
-import { sub, lt, gt } from "../utils/arithmetics.utils"
+import { sub } from "../utils/arithmetics.utils"
 import Tile from "./Tile"
 import TokenAmount from "./TokenAmount"
-import * as Icons from "./Icons"
 import RewardsStatus from "./RewardsStatus"
 import { useSubscribeToContractEvent } from "../hooks/useSubscribeToContractEvent"
 import {
@@ -26,11 +25,8 @@ import {
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
 import Skeleton from "./skeletons/Skeleton"
 import { withdrawGroupMemberRewards } from "../actions/web3"
-import {
-  displayEthAmount,
-  MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI,
-} from "../utils/ethereum.utils"
 import ResourceTooltip from "./ResourceTooltip"
+import { ETH } from "../utils/token.utils"
 
 const previewDataCount = 10
 const initialRewardsData = [[], "0"]
@@ -185,10 +181,6 @@ export const Rewards = () => {
       : rewardsToReturn.slice(0, previewDataCount)
   }, [rewards, withdrawals, showAll, rewardFilter.status])
 
-  const amountTooltipText = (amount) => {
-    return `${displayEthAmount(amount, "gwei", null)} gwei`
-  }
-
   return (
     <>
       <Tile title="Total Balance" titleClassName="text-grey-70 h2">
@@ -197,24 +189,7 @@ export const Rewards = () => {
             <Skeleton className="h1 mb-1" styles={{ width: "25%" }} />
           ) : (
             <div className="flex row mb-1 mt-1">
-              <TokenAmount
-                currencyIcon={Icons.ETH}
-                currencyIconProps={{
-                  width: 64,
-                  height: 64,
-                  className: "eth-icon primary",
-                }}
-                currencySymbol="ETH"
-                displayWithMetricSuffix={false}
-                amount={totalRewardsBalance}
-                amountClassName="h1 text-primary"
-                displayAmountFunction={displayEthAmount}
-                withTooltip={
-                  lt(totalRewardsBalance, MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI) &&
-                  gt(totalRewardsBalance, 0)
-                }
-                tooltipText={amountTooltipText(totalRewardsBalance)}
-              />
+              <TokenAmount token={ETH} amount={totalRewardsBalance} withIcon />
               <div className="ml-1 self-center">
                 <ResourceTooltip
                   title="Beacon earnings"
@@ -266,21 +241,14 @@ export const Rewards = () => {
               field="reward"
               renderContent={({ reward, status }) => (
                 <TokenAmount
-                  currencyIcon={Icons.ETH}
-                  currencyIconProps={{
-                    width: 32,
-                    height: 32,
-                    className: "eth-icon grey-60",
-                  }}
-                  displayWithMetricSuffix={false}
+                  token={ETH}
                   amount={reward}
-                  amountClassName={`text-big text-grey-${
-                    status === REWARD_STATUS.WITHDRAWN ? "40" : "70"
-                  }`}
-                  currencySymbol="ETH"
-                  displayAmountFunction={displayEthAmount}
-                  withTooltip={lt(reward, MIN_ETH_AMOUNT_TO_DISPLAY_IN_WEI)}
-                  tooltipText={amountTooltipText(reward)}
+                  withIcon
+                  iconProps={{
+                    className: "eth-icon eth-icon--grey-60",
+                  }}
+                  amountClassName="text-big text-black"
+                  symbolClassName="text-big text-black"
                 />
               )}
             />

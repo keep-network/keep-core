@@ -1,5 +1,5 @@
 import React from "react"
-import { Link, NavLink, useRouteMatch } from "react-router-dom"
+import { useRouteMatch } from "react-router-dom"
 import OverviewPage from "../pages/OverviewPage"
 import DelegationPage from "../pages/delegation"
 import TokenGrantsPage from "../pages/grants"
@@ -13,6 +13,7 @@ import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
+import NavLink from "./NavLink"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -97,10 +98,14 @@ const NavLinkSectionRoute = ({ title, path, exact, withNewLabel }) => {
 
   return (
     <li className="side-menu__route-wrapper">
-      <Link to={path} className={`side-menu__route${match ? "--active" : ""}`}>
+      <NavLink
+        to={path}
+        className={`side-menu__route${match ? "--active" : ""}`}
+        activeClassName={`side-menu__route--active`}
+      >
         {title}
         {withNewLabel && <Chip text="NEW" size="tiny" className="ml-1" />}
-      </Link>
+      </NavLink>
     </li>
   )
 }
