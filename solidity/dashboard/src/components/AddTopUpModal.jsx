@@ -4,10 +4,11 @@ import AddressShortcut from "./AddressShortcut"
 import Tag from "./Tag"
 import * as Icons from "./Icons"
 import { withConfirmationModal } from "./ConfirmationModal"
-import { displayAmount, fromTokenUnit } from "../utils/token.utils"
-import { add } from "../utils/arithmetics.utils"
 import Button from "./Button"
 import Divider from "./Divider"
+import TokenAmount from "./TokenAmount"
+import { KEEP } from "../utils/token.utils"
+import { add } from "../utils/arithmetics.utils"
 import { useModal } from "../hooks/useModal"
 
 const AddTopUpModal = ({
@@ -46,7 +47,9 @@ const AddTopUpModal = ({
       )}
       {step === 2 && (
         <Step2
-          title={`You are adding ${amount} to this delegation. Note that this top up cannot be canceled once initiated.`}
+          title={`You are adding ${KEEP.toFormat(
+            amount
+          )} KEEP to this delegation. Note that this top up cannot be canceled once initiated.`}
           confirmationText="CONFIRM"
           getLabelText={(confirmationText) =>
             `Type ${confirmationText} to add KEEP.`
@@ -57,7 +60,7 @@ const AddTopUpModal = ({
           authorizerAddress={authorizerAddress}
           beneficiary={beneficiary}
           operatorAddress={operatorAddress}
-          newAmount={add(fromTokenUnit(amount), currentAmount)}
+          newAmount={add(KEEP.fromTokenUnit(amount), currentAmount)}
           amountToAdd={amount}
           onSubmit={onSubmit}
         />
@@ -90,9 +93,7 @@ const Step1 = ({
         <div className="flex-1">
           <Tag text="Current" IconComponent={Icons.KeepToken} />
         </div>
-        <h3 className="flex-2 text-primary">
-          {displayAmount(currentAmount)} KEEP
-        </h3>
+        <TokenAmount amount={currentAmount} />
       </div>
       <AmountForm
         onCancel={onCancel}
@@ -114,10 +115,14 @@ const Step2Content = ({
 }) => {
   return (
     <>
-      {/* TODO use updated TokenAmount component here with a plus icon */}
-      <h3 className="flex-2 text-primary">{amountToAdd} KEEP</h3>
+      <TokenAmount
+        amount={KEEP.fromTokenUnit(amountToAdd).toString()}
+        withIcon
+        icon={Icons.Plus}
+        iconProps={{ width: 24, height: 24, className: "plus-icon" }}
+      />
       <h4 className="text-grey-70 mb-1">
-        New delegation balance: {displayAmount(newAmount)} KEEP
+        New delegation balance: {KEEP.displayAmountWithSymbol(newAmount)}
       </h4>
       <DelegationDetails
         authorizerAddress={authorizerAddress}
@@ -152,13 +157,16 @@ const DelegationDetails = ({
 )
 
 const TopUpInitiatedConfirmationModal = ({
+  // In token unit.
   addedAmount,
-  newAmount,
+  // In the smallest token unit.
+  currentAmount,
   authorizerAddress,
   beneficiary,
   operatorAddress,
 }) => {
   const { closeModal } = useModal()
+  const newAmount = add(currentAmount, KEEP.fromTokenUnit(addedAmount))
 
   return (
     <>
@@ -169,11 +177,14 @@ const TopUpInitiatedConfirmationModal = ({
           top-up!
         </div>
       </section>
-
-      {/* TODO use updated TokenAmount component here with a plus icon */}
-      <h3 className="flex-2 text-primary mt-2">{addedAmount} KEEP</h3>
+      <TokenAmount
+        amount={KEEP.fromTokenUnit(addedAmount).toString()}
+        withIcon
+        icon={Icons.Plus}
+        iconProps={{ width: 24, height: 24, className: "plus-icon" }}
+      />
       <h4 className="text-grey-70 mb-1">
-        New delegation balance: {displayAmount(newAmount)} KEEP
+        New delegation balance: {KEEP.displayAmountWithSymbol(newAmount)}
       </h4>
       <DelegationDetails
         authorizerAddress={authorizerAddress}

@@ -12,7 +12,6 @@ import { useModal } from "../hooks/useModal"
 import AddTopUpModal, { TopUpInitiatedConfirmationModal } from "./AddTopUpModal"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
-import { add } from "../utils/arithmetics.utils"
 
 const DelegatedTokensTable = ({
   delegatedTokens,
@@ -70,7 +69,7 @@ const DelegatedTokensTable = ({
         <TopUpInitiatedConfirmationModal
           {...delegationData}
           addedAmount={amount}
-          newAmount={add(delegationData.amount, amount).toString()}
+          currentAmount={delegationData.amount}
         />,
         {
           title: "Add KEEP",

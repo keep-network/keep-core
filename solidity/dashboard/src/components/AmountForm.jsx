@@ -8,11 +8,12 @@ import {
   formatAmount as formatFormAmount,
 } from "../forms/form.utils.js"
 import Divider from "./Divider"
-import { KEEP } from "../utils/token.utils"
 import { lte } from "../utils/arithmetics.utils"
+import TokenAmount from "./TokenAmount"
 
 const styles = {
   divider: { margin: "2rem -2rem 0", padding: "2rem 2rem 0" },
+  availableAmountWrapper: { marginTop: "-1rem" },
 }
 
 const AmountForm = ({
@@ -33,17 +34,18 @@ const AmountForm = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
         />
-        <div
-          className="text-caption--green-theme flex"
-          style={{ marginTop: "-1rem" }}
-        >
-          <span className="ml-a">
-            {KEEP.displayAmountWithMetricSuffix(availableAmount)}
-            &nbsp;available.
-          </span>
+        <div className="flex row center" style={styles.availableAmountWrapper}>
+          <TokenAmount
+            wrapperClassName="ml-a"
+            amountClassName="text-caption--green-theme"
+            symbolClassName="text-caption--green-theme"
+            amount={availableAmount}
+            withMetricSuffix
+          />
+          <span className="text-caption--green-theme">&nbsp;available.</span>
         </div>
         <Divider style={styles.divider} />
-        <div className="flex row center mt-2">
+        <div className="flex row center">
           <Button
             className="btn btn-lg btn-primary"
             type="submit"
