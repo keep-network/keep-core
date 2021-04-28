@@ -35,12 +35,22 @@ jobs:
             echo "environment = ${{ github.event.inputs.environment }}"
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
+            echo "sha = ${{ github.sha }}"
 
       - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
         run: |
             echo "ref = ${{ github.ref }}"
             echo "sha = ${{ github.sha }}"
+
+      # - name: DEBUG - Bump up package version # TODO: remove
+      #   continue-on-error: true
+      #   uses: keep-network/npm-version-bump@v2
+      #   with:
+      #     work-dir: ./solidity
+      #     environment: ${{ github.event.inputs.environment }}
+      #     branch: ${{ github.ref }}
+      #     commit: ${{ github.sha }}
 
       - uses: actions/checkout@v2
         if: github.event_name == 'pull_request'
@@ -67,6 +77,18 @@ jobs:
         working-directory: ./solidity
     steps:
       - uses: actions/checkout@v2
+
+      - name: DEBUG - Show workflow metadata # TODO: remove
+        run: echo "sha = ${{ github.sha }}"
+
+      # - name: DEBUG - Bump up package version # TODO: remove
+      #   continue-on-error: true
+      #   uses: keep-network/npm-version-bump@v2
+      #   with:
+      #     work-dir: ./solidity
+      #     environment: ${{ github.event.inputs.environment }}
+      #     branch: ${{ github.ref }}
+      #     commit: ${{ github.sha }}
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
@@ -150,6 +172,18 @@ jobs:
       version: ${{ steps.npm-version-bump.outputs.version }}
     steps:
       - uses: actions/checkout@v2
+
+      - name: DEBUG - Show workflow metadata # TODO: remove
+        run: echo "sha = ${{ github.sha }}"
+
+      # - name: DEBUG - Bump up package version # TODO: remove
+      #   continue-on-error: true
+      #   uses: keep-network/npm-version-bump@v2
+      #   with:
+      #     work-dir: ./solidity
+      #     environment: ${{ github.event.inputs.environment }}
+      #     branch: ${{ github.ref }}
+      #     commit: ${{ github.sha }}
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
