@@ -8,10 +8,7 @@ import Divider from "./Divider"
 import ProgressBar from "./ProgressBar"
 import Chip from "./Chip"
 import ResourceTooltip from "./ResourceTooltip"
-import {
-  displayAmount,
-  displayAmountWithMetricSuffix,
-} from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { Skeleton } from "./skeletons"
 import { useWeb3Context } from "./WithWeb3Context"
 import resourceTooltipProps from "../constants/tooltips"
@@ -63,9 +60,9 @@ const TotalKeepBalance = ({
 
   return (
     <section className="balance__overview">
-      <h3>Total KEEP Balance</h3>
-      <TokenAmount wrapperClassName="mb-3" amount={totalKeep} />
-      <div className="balance__overview__granted">
+      <h3 className="mb-1">Total KEEP Balance</h3>
+      <TokenAmount amount={totalKeep} withIcon withMetricSuffix />
+      <div className="balance__overview__granted mt-3">
         <h4>Granted Tokens</h4>
         {isFetching ? (
           <Skeleton
@@ -78,7 +75,7 @@ const TotalKeepBalance = ({
         ) : (
           <h4 className="ml-a">
             {isConnected
-              ? `${displayAmount(grantedKeepBalance)} KEEP`
+              ? `${KEEP.displayAmountWithSymbol(grantedKeepBalance)}`
               : "No data to display"}
           </h4>
         )}
@@ -97,7 +94,7 @@ const TotalKeepBalance = ({
         ) : (
           <h4 className="ml-a">
             {isConnected
-              ? `${displayAmount(walletKeepBalance)} KEEP`
+              ? `${KEEP.displayAmountWithSymbol(walletKeepBalance)}`
               : "No data to display"}
           </h4>
         )}
@@ -129,9 +126,12 @@ const TokenBalance = ({
       return (
         <h4 className="text-grey-40">
           {totalBalance ? (
-            <span className="text-mint-100">
-              {displayAmountWithMetricSuffix(totalBalance)} KEEP
-            </span>
+            <TokenAmount
+              amount={totalBalance}
+              withMetricSuffix
+              amountClassName="text-mint-100"
+              symbolClassName="text-mint-100"
+            />
           ) : (
             "No data"
           )}

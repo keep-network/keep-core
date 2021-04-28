@@ -3,13 +3,17 @@ import { withFormik } from "formik"
 import FormInput from "./FormInput"
 import Button from "./Button"
 import { validateAmountInRange, getErrorsObj } from "../forms/common-validators"
-import { lte } from "../utils/arithmetics.utils"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
 } from "../forms/form.utils.js"
-import { displayAmount } from "../utils/token.utils"
 import Divider from "./Divider"
+import { KEEP } from "../utils/token.utils"
+import { lte } from "../utils/arithmetics.utils"
+
+const styles = {
+  divider: { margin: "2rem -2rem 0", padding: "2rem 2rem 0" },
+}
 
 const AmountForm = ({
   onCancel,
@@ -34,15 +38,11 @@ const AmountForm = ({
           style={{ marginTop: "-1rem" }}
         >
           <span className="ml-a">
-            {displayAmount(availableAmount)} KEEP available.
+            {KEEP.displayAmountWithMetricSuffix(availableAmount)}
+            &nbsp;available.
           </span>
         </div>
-        <Divider
-          style={{
-            margin: "2rem -2rem 0",
-            padding: "2rem 2rem 0",
-          }}
-        />
+        <Divider style={styles.divider} />
         <div className="flex row center mt-2">
           <Button
             className="btn btn-lg btn-primary"

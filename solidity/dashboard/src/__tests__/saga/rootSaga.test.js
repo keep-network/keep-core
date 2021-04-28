@@ -5,7 +5,10 @@ import rootSaga, { runTasks } from "../../sagas"
 import * as messagesSaga from "../../sagas/messages"
 import * as delegateStakeSaga from "../../sagas/staking"
 import * as tokenGrantSaga from "../../sagas/token-grant"
-import { watchSendTransactionRequest } from "../../sagas/web3"
+import {
+  watchSendRawTransactionsInSequenceRequest,
+  watchSendTransactionRequest,
+} from "../../sagas/web3"
 import * as copyStakeSaga from "../../sagas/copy-stake"
 import * as subscriptions from "../../sagas/subscriptions"
 import * as keepTokenBalance from "../../sagas/keep-balance"
@@ -24,6 +27,7 @@ const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
   watchSendTransactionRequest,
+  watchSendRawTransactionsInSequenceRequest,
   ...Object.values(tokenGrantSaga),
   ...Object.values(copyStakeSaga),
   ...Object.values(subscriptions),

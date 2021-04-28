@@ -7,7 +7,6 @@ import DelegateStakeForm from "../../components/DelegateStakeForm"
 import ProgressBar from "../../components/ProgressBar"
 import { DelegationPageWrapper } from "./index"
 import { add } from "../../utils/arithmetics.utils"
-import { displayAmountWithMetricSuffix } from "../../utils/token.utils"
 import DelegationOverview from "../../components/DelegationOverview"
 import ResourceTooltip from "../../components/ResourceTooltip"
 import resourceTooltipProps from "../../constants/tooltips"
@@ -54,7 +53,7 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
       <section className="wallet-page__overview-layout">
         <section className="tile wallet-page__overview__balance">
           <h4 className="mb-1">Wallet Balance</h4>
-          <TokenAmount amount={keepToken.value} currencySymbol="KEEP" />
+          <TokenAmount amount={keepToken.value} withIcon withMetricSuffix />
         </section>
         <section className="tile wallet-page__overview__staked-tokens">
           <h4 className="mb-2">Tokens Staked</h4>
@@ -71,7 +70,14 @@ const WalletTokensPageComponent = ({ onSubmitDelegateStakeForm }) => {
             <ProgressBar.Legend
               leftValueLabel="Unstaked"
               valueLabel="Staked"
-              displayLegendValuFn={displayAmountWithMetricSuffix}
+              renderValuePattern={
+                <TokenAmount
+                  withMetricSuffix
+                  withSymbol={false}
+                  amountClassName=""
+                  symbolClassName=""
+                />
+              }
             />
           </ProgressBar>
         </section>

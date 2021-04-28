@@ -1,6 +1,6 @@
 import React, { useCallback } from "react"
 import { formatDate } from "../utils/general.utils"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import AddressShortcut from "./AddressShortcut"
 import UndelegateStakeButton from "./UndelegateStakeButton"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
@@ -92,7 +92,9 @@ const DelegatedTokensTable = ({
         <Column
           header="amount"
           field="amount"
-          renderContent={({ amount }) => `${displayAmount(amount)} KEEP`}
+          renderContent={({ amount }) =>
+            `${KEEP.displayAmountWithSymbol(amount)}`
+          }
         />
         <Column
           header="status"

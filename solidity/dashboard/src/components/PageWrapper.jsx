@@ -1,8 +1,9 @@
 import React from "react"
-import { Switch, Redirect } from "react-router-dom"
+import { Switch } from "react-router-dom"
 import Header from "./Header"
-import { renderPage } from "./Routing"
+import { renderExplorerModePage, renderPage } from "./Routing"
 import { isEmptyArray } from "../utils/array.utils"
+import Redirect from "./Redirect"
 
 const PageWrapper = ({
   title,
@@ -26,6 +27,7 @@ const PageWrapper = ({
         {hasRoutes && (
           <Switch>
             {routes.map(renderPage)}
+            {routes.map(renderExplorerModePage)}
             <Redirect to={routes[0].route.path} />
           </Switch>
         )}

@@ -1,8 +1,8 @@
 import React from "react"
-import { NavLink } from "react-router-dom"
 import { isEmptyArray } from "../utils/array.utils"
 import { Web3Status } from "./Web3Status"
 import Chip from "./Chip"
+import NavLink from "./NavLink"
 
 const Header = ({ title, subLinks, className = "", newPage = false }) => {
   return (

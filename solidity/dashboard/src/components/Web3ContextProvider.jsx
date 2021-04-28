@@ -9,6 +9,8 @@ import {
   ContractsLoaded,
 } from "../contracts"
 import { getNetworkName } from "../utils/ethereum.utils"
+import { isSameEthAddress } from "../utils/general.utils"
+import { WALLETS } from "../constants/constants"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -51,10 +53,17 @@ class Web3ContextProvider extends React.Component {
       )
       yourAddress = accounts[0]
 
+      this.checkIfConnectionToWalletIsPossible(
+        this.state.connector,
+        this.state.yourAddress,
+        connector,
+        yourAddress
+      )
+
       web3 = new Web3(connector.getProvider())
       web3.eth.defaultAccount = yourAddress
 
-      resolveWeb3Deferred(web3)
+      await resolveWeb3Deferred(web3)
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       throw error
@@ -152,6 +161,26 @@ class Web3ContextProvider extends React.Component {
         isConnected: false,
         connector: null,
       })
+    }
+  }
+
+  checkIfConnectionToWalletIsPossible = (
+    prevConnector,
+    prevAddress,
+    nextConnector,
+    nextAddress
+  ) => {
+    // Checks if an address on the wallet that the user is trying to connect to
+    // is the same that was used in Explorer Mode
+    if (
+      prevConnector?.name === WALLETS.EXPLORER_MODE.name &&
+      nextConnector?.name !== WALLETS.EXPLORER_MODE.name &&
+      prevAddress &&
+      !isSameEthAddress(prevAddress, nextAddress)
+    ) {
+      throw new Error(
+        "Connected address is different from the one used in Explorer Mode."
+      )
     }
   }
 

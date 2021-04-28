@@ -6,7 +6,6 @@ import {
   renderProgressBarLegendItem,
   ProgressBarLegendContext,
 } from "./ProgressBar"
-import { displayAmountWithMetricSuffix } from "../utils/token.utils"
 
 const countCircumference = (radius) => {
   return new BigNumber(2 * Math.PI * radius)
@@ -90,7 +89,7 @@ CircularProgressBar.defaultProps = {
 }
 
 export const CircularProgressBars = React.memo(
-  ({ withLegend, total, items, size = 120 }) => {
+  ({ withLegend, total, items, renderLegendValuePattern, size = 120 }) => {
     const bars = useMemo(() => {
       return items.map((item, index) => (
         <CircularProgressBar
@@ -115,13 +114,15 @@ export const CircularProgressBars = React.memo(
             <Icons.KeepCircle />
           </g>
         </svg>
-        <div className="mb-1">
-          <ProgressBarLegendContext.Provider
-            value={{ displayLegendValuFn: displayAmountWithMetricSuffix }}
-          >
-            {withLegend && items.map(renderProgressBarLegendItem)}
-          </ProgressBarLegendContext.Provider>
-        </div>
+        {withLegend && (
+          <div className="mb-1">
+            <ProgressBarLegendContext.Provider
+              value={{ renderValuePattern: renderLegendValuePattern }}
+            >
+              {withLegend && items.map(renderProgressBarLegendItem)}
+            </ProgressBarLegendContext.Provider>
+          </div>
+        )}
       </>
     )
   }
