@@ -32,7 +32,7 @@ const AddTopUpModal = ({
     }
   }
 
-  const amountInTokenUnit = KEEP.fromTokenUnit(amount)
+  const amountInSmallestUnit = KEEP.fromTokenUnit(amount)
 
   return (
     <>
@@ -62,8 +62,8 @@ const AddTopUpModal = ({
           authorizerAddress={authorizerAddress}
           beneficiary={beneficiary}
           operatorAddress={operatorAddress}
-          newAmount={add(amountInTokenUnit, currentAmount)}
-          amountToAdd={amountInTokenUnit}
+          newAmount={add(amountInSmallestUnit, currentAmount)}
+          amountToAdd={amountInSmallestUnit}
           onSubmit={onSubmit}
         />
       )}
