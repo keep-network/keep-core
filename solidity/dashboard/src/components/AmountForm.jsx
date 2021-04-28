@@ -13,7 +13,7 @@ import TokenAmount from "./TokenAmount"
 
 const styles = {
   divider: { margin: "2rem -2rem 0", padding: "2rem 2rem 0" },
-  availableAmountWrapper: { marginTop: "-1rem" },
+  availableAmountWrapper: { marginTop: "-1rem", alignItems: "baseline" },
 }
 
 const AmountForm = ({
@@ -34,7 +34,7 @@ const AmountForm = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
         />
-        <div className="flex row center" style={styles.availableAmountWrapper}>
+        <div className="flex row" style={styles.availableAmountWrapper}>
           <TokenAmount
             wrapperClassName="ml-a"
             amountClassName="text-caption--green-theme"
