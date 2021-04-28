@@ -2,15 +2,19 @@ import React from "react"
 import { withFormik } from "formik"
 import FormInput from "./FormInput"
 import Button from "./Button"
-import Tag from "./Tag"
-import * as Icons from "./Icons"
 import { validateAmountInRange, getErrorsObj } from "../forms/common-validators"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
 } from "../forms/form.utils.js"
-import { KEEP } from "../utils/token.utils"
-import { add, lte } from "../utils/arithmetics.utils"
+import Divider from "./Divider"
+import { lte } from "../utils/arithmetics.utils"
+import TokenAmount from "./TokenAmount"
+
+const styles = {
+  divider: { margin: "2rem -2rem 0", padding: "2rem 2rem 0" },
+  availableAmountWrapper: { marginTop: "-1rem", alignItems: "baseline" },
+}
 
 const AmountForm = ({
   onCancel,
@@ -19,35 +23,8 @@ const AmountForm = ({
   currentAmount,
   ...formikProps
 }) => {
-  const { amount: formAmount } = formikProps.values || 0
-  const newAmount =
-    formAmount &&
-    KEEP.displayAmount(add(KEEP.fromTokenUnit(formAmount), currentAmount))
-
   return (
     <>
-      <div className="flex row center mt-1">
-        <div className="flex-1">
-          <Tag text="Current" IconComponent={Icons.KeepToken} />
-        </div>
-        <h3 className="flex-2 text-primary">
-          {KEEP.displayAmountWithSymbol(currentAmount)}
-        </h3>
-      </div>
-      <div className="flex row center mt-1">
-        <div className="flex-1">
-          <Tag text="New" IconComponent={Icons.KeepToken} />
-        </div>
-        {formAmount ? (
-          <h3 className="flex-2 text-primary">
-            {formAmount && `${newAmount} KEEP`}
-          </h3>
-        ) : (
-          <span className="flex-2 text-big text-grey-40">
-            Add an amount below
-          </span>
-        )}
-      </div>
       <form onSubmit={formikProps.handleSubmit} className="mt-1">
         <FormInput
           name="amount"
@@ -57,20 +34,29 @@ const AmountForm = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
         />
-        <div className="text-caption text-grey-50">
-          {KEEP.displayAmountWithSymbol(availableAmount)} available.
+        <div className="flex row" style={styles.availableAmountWrapper}>
+          <TokenAmount
+            wrapperClassName="ml-a"
+            amountClassName="text-caption--green-theme"
+            symbolClassName="text-caption--green-theme"
+            amount={availableAmount}
+            withMetricSuffix
+          />
+          <span className="text-caption--green-theme">&nbsp;available.</span>
         </div>
-        <div className="flex row center"></div>
-        <Button
-          className="btn btn-primary mt-1"
-          type="submit"
-          disabled={!(formikProps.isValid && formikProps.dirty)}
-        >
-          {submitBtnText}
-        </Button>
-        <span onClick={onCancel} className="mt-1 ml-1 text-link">
-          Cancel
-        </span>
+        <Divider style={styles.divider} />
+        <div className="flex row center">
+          <Button
+            className="btn btn-lg btn-primary"
+            type="submit"
+            disabled={!(formikProps.isValid && formikProps.dirty)}
+          >
+            {submitBtnText}
+          </Button>
+          <span onClick={onCancel} className="ml-2 text-link text-grey-70">
+            Cancel
+          </span>
+        </div>
       </form>
     </>
   )
@@ -84,7 +70,7 @@ const AmountFormWithFormik = withFormik({
     const errors = {}
 
     if (lte(amount || 0, 0)) {
-      errors.amount = "Insufficient funds"
+      errors.amount = "The value should be greater than zero"
     } else {
       errors.amount = validateAmountInRange(
         amount,

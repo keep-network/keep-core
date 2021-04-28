@@ -9,7 +9,7 @@ import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
-import AddTopUpModal from "./AddTopUpModal"
+import AddTopUpModal, { TopUpInitiatedConfirmationModal } from "./AddTopUpModal"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
 
@@ -21,7 +21,7 @@ const DelegatedTokensTable = ({
   addKeep,
   undelegationPeriod,
 }) => {
-  const { openConfirmationModal } = useModal()
+  const { openConfirmationModal, openModal } = useModal()
 
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
@@ -63,6 +63,21 @@ const DelegatedTokensTable = ({
       },
       awaitingPromise
     )
+    try {
+      await awaitingPromise.promise
+      openModal(
+        <TopUpInitiatedConfirmationModal
+          {...delegationData}
+          addedAmount={KEEP.fromTokenUnit(amount).toString()}
+          currentAmount={delegationData.amount}
+        />,
+        {
+          title: "Add KEEP",
+        }
+      )
+    } catch (error) {
+      console.error("Unexpected error", error)
+    }
   }
 
   return (
