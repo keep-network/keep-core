@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import ExplorerModeModal from "../components/ExplorerModeModal"
 import { useModal } from "./useModal"
@@ -27,14 +27,17 @@ const useAutoConnect = () => {
   const isExactRoutePath = useIsExactRoutePath()
   const [injectedTried, setInjectedTried] = useState(false)
 
-  const isWalletFromUrlSameAsInMetamask = (metamaskAccounts) => {
-    return (
-      walletAddressFromUrl &&
-      metamaskAccounts.some((account) =>
-        isSameEthAddress(account, walletAddressFromUrl)
+  const isWalletFromUrlSameAsInMetamask = useCallback(
+    (metamaskAccounts) => {
+      return (
+        walletAddressFromUrl &&
+        metamaskAccounts.some((account) =>
+          isSameEthAddress(account, walletAddressFromUrl)
+        )
       )
-    )
-  }
+    },
+    [walletAddressFromUrl]
+  )
 
   useEffect(() => {
     if (injectedTried) return

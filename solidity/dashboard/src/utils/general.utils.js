@@ -157,6 +157,5 @@ export const removeSubstringBetweenCharacter = (
   const splittedInput = input.split(character)
   splittedInput.splice(occurrenceIndex, 1)
   const final = splittedInput.join(character)
-  console.log('final', final)
   return final
 }

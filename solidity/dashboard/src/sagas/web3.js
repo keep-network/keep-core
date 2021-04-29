@@ -12,7 +12,7 @@ import {
   closeMessage,
 } from "../actions/messages"
 import { messageType } from "../components/Message"
-import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider";
+import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider"
 
 function createTransactionEventChannel(
   contract,
@@ -166,7 +166,10 @@ export function* sendTransaction(action) {
 export function* sendRawTransaction(action) {
   const web3 = yield getWeb3Context()
 
-  const transactionEventChannel = createRawTransactionEventChannel(action.payload, web3)
+  const transactionEventChannel = createRawTransactionEventChannel(
+    action.payload,
+    web3
+  )
 
   try {
     while (true) {
