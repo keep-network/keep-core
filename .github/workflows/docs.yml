@@ -23,9 +23,9 @@ jobs:
         if: github.event_name == 'pull_request' 
         id: filter
         with:
-          filters: | # TODO: Remove '|(.github/workflows/docs.yml)' once workflow gets tested
+          filters: |
             path-filter:
-              - './(((docs|(solidity/!dashboard))/**)|(.github/workflows/docs.yml))'
+              - './((docs|(solidity/!dashboard))/**)'
 
   docs-tex:
     runs-on: ubuntu-latest
@@ -58,9 +58,9 @@ jobs:
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-          project: keep-test
+          project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core-wip2 # TODO: remove `-wip2` after tests
+          bucket-path: core
           build-folder: tmp/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
@@ -69,9 +69,9 @@ jobs:
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-          project: keep-test
+          project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
+          bucket-path: core/${{ github.head_ref }}
           build-folder: tmp/docs
     
   docs-solidity:
@@ -126,9 +126,9 @@ jobs:
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-          project: keep-test
+          project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core-wip2 # TODO: remove `-wip2` after tests
+          bucket-path: core
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
@@ -137,9 +137,9 @@ jobs:
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-          project: keep-test
+          project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
+          bucket-path: core/${{ github.head_ref }}
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
   docs-pdf:
@@ -170,9 +170,9 @@ jobs:
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-          project: keep-test
+          project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core-wip2 # TODO: remove `-wip2` after tests
+          bucket-path: core
           build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
@@ -181,7 +181,7 @@ jobs:
         uses: thesis/gcp-storage-bucket-action@v3.1.0
         with:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
-          project: keep-test
+          project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}-wip2 # TODO: remove `-wip2` after tests
+          bucket-path: core/${{ github.head_ref }}
           build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
