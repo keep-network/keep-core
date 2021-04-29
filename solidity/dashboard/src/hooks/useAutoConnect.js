@@ -1,20 +1,13 @@
 import React, { useEffect, useState } from "react"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import ExplorerModeModal from "../components/ExplorerModeModal"
-import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
-import { usePrevious } from "./usePrevious"
 import useIsExactRoutePath from "./useIsExactRoutePath"
 import { isSameEthAddress } from "../utils/general.utils"
-
-const useHasChanged = (val) => {
-  const prevVal = usePrevious(val)
-  return prevVal !== val
-}
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -28,14 +21,10 @@ const useHasChanged = (val) => {
  *
  */
 const useAutoConnect = () => {
-  const location = useLocation()
-  const history = useHistory()
   const walletAddressFromUrl = useWalletAddressFromUrl()
   const { openModal, closeModal } = useModal()
-  const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
+  const { connector, connectAppWithWallet } = useWeb3Context()
   const isExactRoutePath = useIsExactRoutePath()
-
-  const locationHasChanged = useHasChanged(location.pathname)
   const [injectedTried, setInjectedTried] = useState(false)
 
   const isWalletFromUrlSameAsInMetamask = (metamaskAccounts) => {
@@ -46,22 +35,6 @@ const useAutoConnect = () => {
       )
     )
   }
-
-  useEffect(() => {
-    if (locationHasChanged) return
-    // change url to the one with address when we connect to the explorer mode
-    if (!walletAddressFromUrl && connector && yourAddress) {
-      const newPathname = "/" + yourAddress + location.pathname
-      history.push({ pathname: newPathname })
-    }
-  }, [
-    connector,
-    yourAddress,
-    history,
-    location.pathname,
-    locationHasChanged,
-    walletAddressFromUrl,
-  ])
 
   useEffect(() => {
     if (injectedTried) return
