@@ -60,7 +60,7 @@ const ProgressBarInline = ({ height = 10, className = "" }) => {
 
 const defaultDisplayLegendValuFn = (value) => value.toString()
 export const ProgressBarLegendContext = React.createContext({
-  displayLegendValuFn: defaultDisplayLegendValuFn,
+  renderValuePattern: defaultDisplayLegendValuFn,
 })
 
 const useProgressBarLegendContext = () => {
@@ -78,7 +78,7 @@ const useProgressBarLegendContext = () => {
 const ProgressBarLegend = ({
   valueLabel,
   leftValueLabel,
-  displayLegendValuFn = defaultDisplayLegendValuFn,
+  renderValuePattern = defaultDisplayLegendValuFn,
 }) => {
   const { value, total, color, bgColor } = useProgressBarContext()
   const leftValue = useMemo(() => {
@@ -87,7 +87,7 @@ const ProgressBarLegend = ({
   }, [value, total])
 
   return (
-    <ProgressBarLegendContext.Provider value={{ displayLegendValuFn }}>
+    <ProgressBarLegendContext.Provider value={{ renderValuePattern }}>
       <div className="progress-bar__legend">
         <ProgressBarLegendItem
           value={leftValue}
@@ -101,13 +101,17 @@ const ProgressBarLegend = ({
 }
 
 export const ProgressBarLegendItem = React.memo(({ value, label, color }) => {
-  const { displayLegendValuFn } = useProgressBarLegendContext()
+  const { renderValuePattern } = useProgressBarLegendContext()
+  const renderedValue = React.isValidElement(renderValuePattern)
+    ? React.cloneElement(renderValuePattern, { amount: value })
+    : renderValuePattern(value)
 
   return (
     <div className="progress-bar-legend__item">
       <div className="legend__item__dot" style={{ backgroundColor: color }} />
       <span className="legend__item__value">
-        {displayLegendValuFn(value)}&nbsp;
+        {renderedValue}
+        &nbsp;
       </span>
       <span className="legend__item__label">{label}</span>
     </div>
@@ -149,8 +153,22 @@ const PercentageLabel = ({ text, className = "" }) => {
   )
 }
 
+// const ProgressBarLegend2 = () => {
+//   return (
+//     <div className="progress-bar__legend">
+//       <ProgressBarLegendItem
+//         value={leftValue}
+//         label={leftValueLabel}
+//         color={bgColor}
+//       />
+//       <ProgressBarLegendItem value={value} label={valueLabel} color={color} />
+//     </div>
+//   )
+// }
+
 ProgressBar.Inline = ProgressBarInline
 ProgressBar.Legend = ProgressBarLegend
+ProgressBar.LegendItem = ProgressBarLegendItem
 ProgressBar.Circular = ProgressBarCircular
 ProgressBar.PercentageLabel = PercentageLabel
 

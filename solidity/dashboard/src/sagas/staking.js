@@ -10,7 +10,7 @@ import moment from "moment"
 import { sendTransaction } from "./web3"
 import { getContractDeploymentBlockNumber } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
-import { fromTokenUnit } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
 import {
   fetchAvailableTopUps,
@@ -40,7 +40,7 @@ function* resolveStake(action) {
     authorizerAddress,
   } = action.payload
 
-  const tokenAmount = fromTokenUnit(amount).toString()
+  const tokenAmount = KEEP.fromTokenUnit(amount).toString()
   const stakingContractAddress = stakingContract.options.address
   const delegationData =
     "0x" +

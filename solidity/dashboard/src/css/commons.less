@@ -59,6 +59,16 @@
     }
 }
 
+.token-amount {
+  display: flex;
+  align-items: first baseline;
+
+  &__icon {
+    align-self: center;
+    margin-right: 0.25rem;
+  }
+}
+
 //background colors
 each(@bg-colors, {
   .bg-@{key} {
@@ -247,16 +257,10 @@ svg.arrow-right {
   }
 }
 
-svg.eth-icon {
-  &.grey-60 {
-    .color {
+svg.eth-icon.eth-icon {
+  &--grey-60 {
+    path {
       fill: @color-grey-60;
-      opacity: 1;
-    }
-  }
-  &.primary {
-    .color {
-      fill: @primary-color;
     }
   }
 }

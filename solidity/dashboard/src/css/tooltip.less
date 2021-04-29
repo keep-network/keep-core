@@ -16,6 +16,10 @@
             left: 50%;
             transform: translateX(-50%);
 
+            &--lower-position {
+                top: 2rem;
+            }
+
             &:after {
                 content: '';
                 height: 0;
@@ -115,20 +119,9 @@
         position: relative;
         
         .tooltip {
-            &__trigger {
-                &:hover {
-                    cursor: pointer;
-                }
-            }
             &__content-wrapper {
                 z-index: 1000;
             }
         }
-    }
-}
-
-.tooltip--simple--bottom.token-amount-tooltip {
-    .tooltip__content-wrapper {
-        left: calc(64px + 2rem);
     }
 }

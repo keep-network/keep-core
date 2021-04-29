@@ -79,7 +79,7 @@ const DelegatedTokens = ({ data, cancelSuccessCallback }) => {
     <section className="flex row wrap">
       <section className="tile delegation-overview">
         <h2 className="text-grey-70">Total Balance</h2>
-        <TokenAmount amount={stakedBalance} />
+        <TokenAmount amount={stakedBalance} withIcon withMetricSuffix />
         <DelegationAddress address={ownerAddress} label={"owner"} />
         <DelegationAddress address={beneficiaryAddress} label={"beneficiary"} />
         <DelegationAddress address={authorizerAddress} label={"authorizer"} />

@@ -1,7 +1,7 @@
 import React from "react"
-import Tooltip from "./Tooltip"
+import TokenAmount from "./TokenAmount"
+import { ETH } from "../utils/token.utils"
 import { colors } from "../constants/colors"
-import { displayEthAmount } from "../utils/ethereum.utils"
 
 const styles = {
   ethAmount: {
@@ -14,24 +14,15 @@ const styles = {
   },
 }
 
-const AvailableEthAmount = React.memo(({ availableETHInWei, availableETH }) => {
+const AvailableEthAmount = React.memo(({ availableETHInWei }) => {
   return (
-    <>
-      <Tooltip
-        simple
-        delay={0}
-        triggerComponent={() => {
-          return (
-            <span className="text-big text-grey-70" style={styles.ethAmount}>
-              {displayEthAmount(availableETHInWei)}
-            </span>
-          )
-        }}
-      >
-        {availableETH}&nbsp;ETH
-      </Tooltip>
-      <span className="text-grey-60">&nbsp;ETH</span>
-    </>
+    <TokenAmount
+      amount={availableETHInWei}
+      token={ETH}
+      amountClassName=""
+      amountStyles={styles.ethAmount}
+      symbolClassName="text-grey-60"
+    />
   )
 })
 

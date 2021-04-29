@@ -3,6 +3,7 @@ import {
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
   STAKING_PORT_BACKER_CONTRACT_NAME,
+  AUTH_CONTRACTS_LABEL,
 } from "../constants/constants"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
@@ -51,12 +52,12 @@ const fetchTBTCAuthorizationData = async (address) => {
       stakeAmount: delegatedTokens.amount,
       contracts: [
         {
-          contractName: "BondedECDSAKeepFactory",
+          contractName: AUTH_CONTRACTS_LABEL.BONDED_ECDSA_KEEP_FACTORY,
           operatorContractAddress: bondedECDSAKeepFactoryAddress,
           isAuthorized: isBondedECDSAKeepFactoryAuthorized,
         },
         {
-          contractName: "TBTCSystem",
+          contractName: AUTH_CONTRACTS_LABEL.TBTC_SYSTEM,
           operatorContractAddress: tBTCSystemAddress,
           isAuthorized: isTBTCSystemAuthorized,
         },
@@ -135,6 +136,7 @@ const fetchBondingData = async (address) => {
         isWithdrawableForOperator,
         stakeAmount: delegatedTokens.amount,
         bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
+        bondedETHInWei: bondedEth.toString(),
         availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
         availableETHInWei: availableEth,
       }
