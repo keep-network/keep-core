@@ -5,8 +5,7 @@ import useIsExactRoutePath from "./useIsExactRoutePath"
 const useWalletAddressFromUrl = () => {
   const match = useRouteMatch(`/:address/:actualPath`)
   const isActualPathCorrect = useIsExactRoutePath(
-    `/${match?.params?.actualPath}`,
-    true
+    `/${match?.params?.actualPath}`
   )
   if (!match?.params?.address || !match?.params?.actualPath) return false
 

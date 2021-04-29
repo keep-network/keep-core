@@ -7,7 +7,7 @@ const useIsExactRoutePath = (path = null, cutOutWalletAddress = false) => {
   const realPath = path
     ? path
     : cutOutWalletAddress
-    ? removeSubstringBetweenCharacter(location.pathname, "/", 1)
+    ? removeSubstringBetweenCharacter(location.pathname, "/", 0)
     : location.pathname
 
   if (!realPath) return false
