@@ -97,8 +97,8 @@ jobs:
       - name: Resolve latest contracts
         run: |
             npm install --save-exact \
-              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }}
-              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }}
+              @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }} \
+              @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }} \
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-solidity-version }}
 
       - name: Set up Docker Buildx
