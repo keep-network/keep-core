@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useCallback, useState } from "react"
 import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 import ConfirmationModal from "./ConfirmationModal"
+import useCurrentWidthLowerThanThreshold from "../hooks/useCurrentWidthLowerThanThreshold"
+import MobileUsersModal from "./MobileUsersModal"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
@@ -70,6 +72,11 @@ export const ModalContextProvider = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [modalOptions, setModalOptions] = useState(null)
   const awaitingPromiseRef = useRef()
+  const showModalWindowForMobileUsers = useCurrentWidthLowerThanThreshold(1000)
+  const [
+    modalWindowForMobileUsersDisplayed,
+    setModalWindowForMobileUsersDisplayed,
+  ] = useState(false)
 
   const openModal = useCallback((modalComponent, modalOptions = {}) => {
     setModalComponent(modalComponent)
@@ -113,6 +120,21 @@ export const ModalContextProvider = ({ children }) => {
     },
     [openModal, onSubmitConfirmationModal, closeModal]
   )
+
+  const customModalWindowForMobileUsersClose = () => {
+    setModalWindowForMobileUsersDisplayed(true)
+    closeModal()
+  }
+
+  if (
+    showModalWindowForMobileUsers &&
+    !isOpen &&
+    !modalWindowForMobileUsersDisplayed
+  ) {
+    openModal(MobileUsersModal, {
+      closeModal: customModalWindowForMobileUsersClose,
+    })
+  }
 
   return (
     <ModalContext.Provider
