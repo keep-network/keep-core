@@ -66,12 +66,10 @@ const useSubscribeToConnectorEvents = () => {
       }
     }
 
-    if (
-      isConnected &&
-      connector &&
-      (connectorHasChanged || isConnectedHasChanged)
-    ) {
-      dispatch({ type: "app/login", payload: { address: yourAddress } })
+    if (isConnected && connector) {
+      if (connectorHasChanged || isConnectedHasChanged) {
+        dispatch({ type: "app/login", payload: { address: yourAddress } })
+      }
       connector.on("accountsChanged", accountChangedHandler)
       connector.once("disconnect", disconnectHandler)
       connector.on("chooseWalletAndSendTransaction", showChooseWalletModal)
