@@ -131,9 +131,12 @@ export const ModalContextProvider = ({ children }) => {
     !isOpen &&
     !modalWindowForMobileUsersDisplayed
   ) {
-    openModal(MobileUsersModal, {
-      closeModal: customModalWindowForMobileUsersClose,
-    })
+    openModal(
+      <MobileUsersModal closeModal={customModalWindowForMobileUsersClose} />,
+      {
+        closeModal: customModalWindowForMobileUsersClose,
+      }
+    )
   }
 
   return (
