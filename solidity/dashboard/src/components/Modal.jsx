@@ -9,55 +9,58 @@ const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
 const crossIconWidth = 15
 
-const Modal = React.memo(({ isOpen, closeModal, isFullScreen, ...props }) => {
-  const modalOverlay = useRef(null)
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-    }
-
-    return () => {
-      document.body.style.overflow = "scroll"
-    }
-  }, [isOpen])
-
-  const onOverlayClick = useCallback(
-    (event) => {
-      if (modalOverlay.current === event.target) {
-        closeModal()
+const Modal = React.memo(
+  ({ isOpen, closeModal, isFullScreen, hideTitleBar, ...props }) => {
+    const modalOverlay = useRef(null)
+    useEffect(() => {
+      if (isOpen) {
+        document.body.style.overflow = "hidden"
       }
-    },
-    [closeModal]
-  )
 
-  return isOpen
-    ? ReactDOM.createPortal(
-        <div
-          ref={modalOverlay}
-          className="modal-overlay"
-          onClick={onOverlayClick}
-        >
+      return () => {
+        document.body.style.overflow = "scroll"
+      }
+    }, [isOpen])
+
+    const onOverlayClick = useCallback(
+      (event) => {
+        if (modalOverlay.current === event.target) {
+          closeModal()
+        }
+      },
+      [closeModal]
+    )
+
+    return isOpen
+      ? ReactDOM.createPortal(
           <div
-            className={`modal-wrapper${isFullScreen ? "--full-screen" : ""}`}
+            ref={modalOverlay}
+            className="modal-overlay"
+            onClick={onOverlayClick}
           >
-            {!isFullScreen && (
-              <div className="modal-title">
-                <h4 className="text-darker-grey">{props.title}</h4>
-                <div className="modal-close" onClick={closeModal}>
-                  <Icons.Cross
-                    width={crossIconWidth}
-                    height={crossIconHeight}
-                  />
-                </div>
-              </div>
-            )}
-            <div className="modal-content">{props.children}</div>
-          </div>
-        </div>,
-        modalRoot
-      )
-    : null
-})
+            <div
+              className={`modal-wrapper${isFullScreen ? "--full-screen" : ""}`}
+            >
+              {!isFullScreen ||
+                (!hideTitleBar && (
+                  <div className="modal-title">
+                    <h4 className="text-darker-grey">{props.title}</h4>
+                    <div className="modal-close" onClick={closeModal}>
+                      <Icons.Cross
+                        width={crossIconWidth}
+                        height={crossIconHeight}
+                      />
+                    </div>
+                  </div>
+                ))}
+              <div className="modal-content">{props.children}</div>
+            </div>
+          </div>,
+          modalRoot
+        )
+      : null
+  }
+)
 
 export default Modal
 
@@ -135,6 +138,7 @@ export const ModalContextProvider = ({ children }) => {
       <MobileUsersModal closeModal={customModalWindowForMobileUsersClose} />,
       {
         closeModal: customModalWindowForMobileUsersClose,
+        hideTitleBar: true,
       }
     )
   }
