@@ -150,3 +150,15 @@ jobs:
           args: |
             -exclude-dir=pkg/chain/gen
             ./...
+
+  client-lint:
+    needs: client-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.client-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Lint Go
+        uses: keep-network/golint-action@v1.0.2
