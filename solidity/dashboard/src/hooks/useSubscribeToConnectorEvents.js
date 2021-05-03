@@ -6,6 +6,7 @@ import { useModal } from "./useModal"
 import { WalletSelectionModal } from "../components/WalletSelectionModal"
 import { useLocation, useHistory } from "react-router-dom"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
+import useHasChanged from "./useHasChanged"
 
 const useSubscribeToConnectorEvents = () => {
   const dispatch = useDispatch()
@@ -15,6 +16,8 @@ const useSubscribeToConnectorEvents = () => {
   const history = useHistory()
   const location = useLocation()
   const walletAddressFromUrl = useWalletAddressFromUrl()
+  const isConnectedHasChanged = useHasChanged(isConnected)
+  const connectorHasChanged = useHasChanged(connector)
 
   useEffect(() => {
     const accountChangedHandler = (address) => {
@@ -63,7 +66,11 @@ const useSubscribeToConnectorEvents = () => {
       }
     }
 
-    if (isConnected && connector) {
+    if (
+      isConnected &&
+      connector &&
+      (connectorHasChanged || isConnectedHasChanged)
+    ) {
       dispatch({ type: "app/login", payload: { address: yourAddress } })
       connector.on("accountsChanged", accountChangedHandler)
       connector.once("disconnect", disconnectHandler)
@@ -95,6 +102,8 @@ const useSubscribeToConnectorEvents = () => {
     location.pathname,
     openModal,
     transactionQueue,
+    connectorHasChanged,
+    isConnectedHasChanged,
   ])
 }
 
