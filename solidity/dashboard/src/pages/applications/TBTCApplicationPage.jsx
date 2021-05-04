@@ -10,7 +10,10 @@ import {
 } from "../../utils/array.utils"
 import { add, sub } from "../../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
-import { KEEP_BONDING_CONTRACT_NAME } from "../../constants/constants"
+import {
+  KEEP_BONDING_CONTRACT_NAME,
+  AUTH_CONTRACTS_LABEL,
+} from "../../constants/constants"
 import { LoadingOverlay } from "../../components/Loadable"
 import { isSameEthAddress } from "../../utils/general.utils"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
@@ -146,7 +149,7 @@ const TBTCApplicationPage = ({
   const authorizeContract = useCallback(
     async (data, awaitingPromise) => {
       const { operatorAddress, contractName } = data
-      if (contractName === "TBTCSystem") {
+      if (contractName === AUTH_CONTRACTS_LABEL.TBTC_SYSTEM) {
         const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
 
         authorizeSortitionPoolContract(

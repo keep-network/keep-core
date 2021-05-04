@@ -5,7 +5,7 @@ import {
   getContractDeploymentBlockNumber,
 } from "../contracts"
 import BigNumber from "bignumber.js"
-import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
+import { KEEP, Token } from "../utils/token.utils"
 import {
   getPairData,
   getKeepTokenPriceInUSD,
@@ -15,6 +15,7 @@ import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
 import { KEEP_TOKEN_GEYSER_CONTRACT_NAME } from "../constants/constants"
+import { scaleInputForNumberRange } from "../utils/general.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -99,7 +100,7 @@ class LiquidityRewards {
 
   rewardPoolPerWeek = async () => {
     const rewardRate = await this.rewardRate()
-    return toTokenUnit(rewardRate).multipliedBy(
+    return KEEP.toTokenUnit(rewardRate).multipliedBy(
       moment.duration(7, "days").asSeconds()
     )
   }
@@ -140,7 +141,7 @@ class LiquidityRewards {
 
 class UniswapLPRewards extends LiquidityRewards {
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
     const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
@@ -214,9 +215,9 @@ class SaddleLPRewards extends LiquidityRewards {
   swapContract = null
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
-    const wrappedTokenTotalSupply = toTokenUnit(
+    const wrappedTokenTotalSupply = Token.toTokenUnit(
       await this.wrappedTokenTotalSupply()
     )
 
@@ -224,7 +225,7 @@ class SaddleLPRewards extends LiquidityRewards {
     const BTCPriceInUSD = await getBTCPriceInUSD()
 
     const wrappedTokenPoolInUSD = BTCPriceInUSD.multipliedBy(
-      toTokenUnit(BTCInPool)
+      Token.toTokenUnit(BTCInPool)
     )
 
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
@@ -306,6 +307,16 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return await this.LPRewardsContract.methods.totalStaked().call()
   }
 
+  updateAccounting = async (address) => {
+    try {
+      return await this.LPRewardsContract.methods
+        .updateAccounting()
+        .call({ from: address })
+    } catch (err) {
+      return null
+    }
+  }
+
   rewardBalance = async (address, amount) => {
     try {
       // The `TokenGeyser.unstakeQuery` throws an error in case when eg. the
@@ -326,7 +337,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
   }
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
@@ -356,7 +367,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     )
 
     // The KEEP-only pool will earn 100k KEEP per month.
-    let rewardPoolPerMonth = fromTokenUnit(10e4)
+    let rewardPoolPerMonth = KEEP.fromTokenUnit(10e4)
     const weeksInMonth = new BigNumber(
       moment.duration(1, "months").asSeconds()
     ).div(moment.duration(7, "days").asSeconds())
@@ -367,7 +378,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
       )
     }
 
-    return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
+    return Token.toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
   }
 
   calculateLPTokenBalance = (lpBalance) => {
@@ -385,17 +396,29 @@ class TokenGeyserLPRewards extends LiquidityRewards {
    */
   calculateRewardMultiplier = async (address) => {
     const stakedBalanceOfUser = await this.stakedBalance(address)
-    const rewardBalance = await this.rewardBalance(stakedBalanceOfUser)
+    const rewardBalance = await this.rewardBalance(address, stakedBalanceOfUser)
+    const updateAccountingData = await this.updateAccounting(address)
 
-    const stakedBalanceOfUserBN = new BigNumber(stakedBalanceOfUser)
+    if (!updateAccountingData) return "1"
+
     const rewardBalanceBN = new BigNumber(rewardBalance)
+    const rewardBalanceWithMaxMultiplier = new BigNumber(
+      updateAccountingData[4]
+    )
 
-    const rewardMultiplier = stakedBalanceOfUserBN
-      .plus(rewardBalanceBN)
-      .dividedBy(stakedBalanceOfUserBN)
-      .toString()
+    const rewardMultiplier = rewardBalanceBN.dividedBy(
+      rewardBalanceWithMaxMultiplier
+    )
 
-    return rewardMultiplier
+    const scaledRewardMultiplier = scaleInputForNumberRange(
+      rewardMultiplier,
+      0.3,
+      1,
+      1,
+      3
+    )
+
+    return scaledRewardMultiplier.toString()
   }
 }
 

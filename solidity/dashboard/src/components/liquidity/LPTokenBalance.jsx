@@ -2,21 +2,21 @@ import React, { useMemo } from "react"
 import * as Icons from "../Icons"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
-import { formatPercentage } from "../../utils/general.utils"
+import { formatValue } from "../../utils/general.utils"
 import Tooltip from "../Tooltip"
-import { toTokenUnit } from "../../utils/token.utils"
+import { LPToken } from "../../utils/token.utils"
 
 const LPTokenBalance = ({ lpTokens, lpTokenBalance }) => {
   const formattedLPTokenBalance = useMemo(() => {
     const token0BN = new BigNumber(lpTokenBalance.token0)
     const token1BN = new BigNumber(lpTokenBalance.token1)
 
-    const token0 = formatPercentage(token0BN, 0)
-    const token1 = formatPercentage(token1BN, 0)
+    const token0 = formatValue(token0BN, 0)
+    const token1 = formatValue(token1BN, 0)
 
     return {
-      token0: toTokenUnit(token0),
-      token1: toTokenUnit(token1),
+      token0: LPToken.toTokenUnit(token0),
+      token1: LPToken.toTokenUnit(token1),
     }
   }, [lpTokenBalance.token0, lpTokenBalance.token1])
 

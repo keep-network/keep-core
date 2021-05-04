@@ -13,7 +13,7 @@ import {
 } from "../contracts"
 import { isSameEthAddress } from "../utils/general.utils"
 import { isEmptyArray } from "../utils/array.utils"
-import { getEventsFromTransaction } from "../utils/ethereum.utils"
+import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { tokenGrantsService } from "./token-grants.service"
 
 const delegationInfoFromStakedEvents = async (address) => {
@@ -485,4 +485,12 @@ const reduceByOperator = (result, event) => {
   ;(result[operator] = result[operator] || []).push(event)
 
   return result
+}
+
+export const isDelegationExists = async (operator) => {
+  const { stakingContract } = await ContractsLoaded
+
+  const owner = await stakingContract.methods.ownerOf(operator).call()
+
+  return owner !== ZERO_ADDRESS
 }

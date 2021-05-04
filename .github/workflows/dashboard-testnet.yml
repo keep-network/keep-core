@@ -58,19 +58,25 @@ jobs:
       github.event_name != 'pull_request'
         || needs.dashboard-detect-changes.outputs.path-filter == 'true'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity/dashboard
     steps:
       - uses: actions/checkout@v2
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          node-version: ${{ matrix.node-version }}
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12.x"
 
       - name: Cache Global NPM Cache
         uses: actions/cache@v2
@@ -119,7 +125,7 @@ jobs:
             || github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v1
         with:
-          registry: ${{ secrets.GCR_REGISTRY_URL }}
+          registry: ${{ env.GCR_REGISTRY_URL }}
           username: _json_key
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
@@ -127,13 +133,12 @@ jobs:
         uses: docker/build-push-action@v2
         env:
           IMAGE_NAME: 'keep-dapp-token-dashboard'
-          GOOGLE_PROJECT_ID: ${{ secrets.KEEP_TEST_GOOGLE_PROJECT_ID }}
         with:
           context: ./solidity/dashboard/
           # GCR image should be named according to following convention:
           # HOSTNAME/PROJECT-ID/IMAGE:TAG
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
-          tags: ${{ secrets.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
           push: |
             ${{ (github.ref == 'refs/heads/master'

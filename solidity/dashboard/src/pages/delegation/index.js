@@ -12,6 +12,7 @@ import * as Icons from "../../components/Icons"
 import { WalletTokensPage } from "./WalletTokensPage"
 import { GrantedTokensPage } from "./GrantedTokensPage"
 import { useWeb3Address } from "../../components/WithWeb3Context"
+import { isDelegationExists } from "../../services/token-staking.service"
 
 const DelegationPage = ({ title, routes }) => {
   return <PageWrapper title={title} routes={routes} />
@@ -49,24 +50,41 @@ const DelegationPageWrapperComponent = ({
   const { openModal, openConfirmationModal } = useModal()
 
   const onSubmitDelegateStakeForm = useCallback(
-    async (values, meta) => {
-      await openConfirmationModal(
-        confirmationModalOptions(initializationPeriod)
-      )
-      const grantData = values.grantData
-        ? { ...values.grantData, grantId: values.grantData.id }
-        : {}
+    async (values, awaitingPromise) => {
+      const { operatorAddress } = values
+      try {
+        if (await isDelegationExists(operatorAddress)) {
+          openModal(
+            <>
+              Delegate tokens for a different operator address or top-up the
+              existing delegation for <strong>{operatorAddress}</strong>
+              &nbsp;operartor via <strong>ADD KEEP</strong> button under&nbsp;
+              <strong>Delegations</strong> table.
+            </>,
+            { title: "Delegation already exists" }
+          )
+          throw new Error("Delegation already exists")
+        }
+        await openConfirmationModal(
+          confirmationModalOptions(initializationPeriod)
+        )
+        const grantData = values.grantData
+          ? { ...values.grantData, grantId: values.grantData.id }
+          : {}
 
-      delegateStake(
-        {
-          ...values,
-          ...grantData,
-          amount: values.stakeTokens,
-        },
-        meta
-      )
+        delegateStake(
+          {
+            ...values,
+            ...grantData,
+            amount: values.stakeTokens,
+          },
+          awaitingPromise
+        )
+      } catch (error) {
+        awaitingPromise.reject(error)
+      }
     },
-    [delegateStake, initializationPeriod, openConfirmationModal]
+    [delegateStake, initializationPeriod, openConfirmationModal, openModal]
   )
 
   return (

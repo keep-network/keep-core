@@ -1,7 +1,7 @@
 import React from "react"
 import * as Icons from "./Icons"
 import BeaconRewardsHelper, { ECDSARewardsHelper } from "../utils/rewardsHelper"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { formatDate } from "../utils/general.utils"
 
 const MinKeepInInterval = ({ label, minKeep }) => {
@@ -96,7 +96,7 @@ const ECDSARewardsDetails = ({ pastRewards }) => {
           />
           <span className="text-small ml-1">Past Rewards</span>
           <span className="text-small text-grey-60 ml-a">
-            {`${displayAmount(pastRewards)} KEEP`}
+            {`${KEEP.displayAmountWithSymbol(pastRewards)}`}
           </span>
         </li>
         <NextInterval

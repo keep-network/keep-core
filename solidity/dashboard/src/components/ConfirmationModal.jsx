@@ -12,16 +12,18 @@ const ConfirmationModal = ({
   btnText,
   onBtnClick,
   onCancel,
+  getLabelText,
 }) => {
   return (
     <>
-      <h4 className="mb-1">{title}</h4>
+      <h3 className="mb-1">{title}</h3>
       <div className="text-big text-grey-60 mb-3">{subtitle}</div>
       <ConfirmationFormFormik
         confirmationText={confirmationText}
         btnText={btnText}
         onBtnClick={onBtnClick}
         onCancel={onCancel}
+        getLabelText={getLabelText}
       />
     </>
   )
@@ -36,6 +38,7 @@ export const withConfirmationModal = (WrappedComponent) => ({
   btnText,
   onBtnClick,
   onCancel,
+  getLabelText,
   ...restProps
 }) => {
   return (
@@ -45,6 +48,7 @@ export const withConfirmationModal = (WrappedComponent) => ({
       confirmationText={confirmationText}
       onCancel={onCancel}
       onBtnClick={onBtnClick}
+      getLabelText={getLabelText}
       subtitle={<WrappedComponent {...restProps} />}
     />
   )
@@ -54,6 +58,7 @@ const ConfirmationForm = ({
   confirmationText,
   btnText,
   onCancel,
+  getLabelText = (confirmationText) => `Type ${confirmationText} to confirm.`,
   ...formikProps
 }) => {
   return (
@@ -61,7 +66,7 @@ const ConfirmationForm = ({
       <FormInput
         name="confirmationText"
         type="text"
-        label={`Type ${confirmationText} to confirm.`}
+        label={getLabelText(confirmationText)}
         placeholder=""
       />
       <div
@@ -73,7 +78,7 @@ const ConfirmationForm = ({
         }}
       >
         <Button
-          className="btn btn-primary"
+          className="btn btn-lg btn-primary"
           type="submit"
           disabled={!(formikProps.isValid && formikProps.dirty)}
           onClick={formikProps.handleSubmit}

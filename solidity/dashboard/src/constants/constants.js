@@ -25,16 +25,15 @@ export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
 
-export const AMOUNT_UNIT = {
-  TOKEN: "TOKEN",
-  WEI: "WEI",
-}
-
 export const WALLETS = {
   METAMASK: { label: "MetaMask", name: "METAMASK" },
   TREZOR: { label: "Trezor", name: "TREZOR" },
   LEDGER: { label: "Ledger", name: "LEDGER" },
   WALLET_CONNECT: { label: "WalletConnect", name: "WALLET_CONNECT" },
+  EXPLORER_MODE: {
+    label: "Explorer Mode",
+    name: "EXPLORER_MODE",
+  },
 }
 
 export const REWARD_STATUS = {
@@ -116,4 +115,10 @@ export const LIQUIDITY_REWARD_PAIRS = {
     label: "KEEP",
     pool: "TOKEN_GEYSER",
   },
+}
+
+export const AUTH_CONTRACTS_LABEL = {
+  TBTC_SYSTEM: "TBTCSystem",
+  BONDED_ECDSA_KEEP_FACTORY: "BondedECDSAKeepFactory",
+  RANDOM_BEACON: "Keep Random Beacon Operator Contract",
 }

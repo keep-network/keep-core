@@ -2,10 +2,7 @@ import React, { useMemo } from "react"
 import CountUp from "react-countup"
 import BigNumber from "bignumber.js"
 import { Skeleton } from "../skeletons"
-import {
-  displayPercentageValue,
-  formatPercentage,
-} from "../../utils/general.utils"
+import { displayPercentageValue, formatValue } from "../../utils/general.utils"
 
 export const APY = ({
   apy,
@@ -23,7 +20,7 @@ export const APY = ({
       return 999
     }
 
-    return formatPercentage(bn)
+    return formatValue(bn)
   }, [apy])
 
   return isFetching ? (

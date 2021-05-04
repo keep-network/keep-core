@@ -3,6 +3,7 @@ import {
   ContractsLoaded,
 } from "../contracts"
 import { getOperatorsOfAuthorizer } from "./token-staking.service"
+import { AUTH_CONTRACTS_LABEL } from "../constants/constants"
 
 const keepRandomBeaconOperatorAddress = getKeepRandomBeaconOperatorAddress()
 
@@ -27,7 +28,7 @@ const fetchRandomBeaconAuthorizationData = async (address) => {
       stakeAmount: delegatedTokens.amount,
       contracts: [
         {
-          contractName: "Keep Random Beacon Operator Contract",
+          contractName: AUTH_CONTRACTS_LABEL.RANDOM_BEACON,
           operatorContractAddress: keepRandomBeaconOperatorAddress,
           isAuthorized: isKeepRandomBeaconOperatorAuthorized,
         },
