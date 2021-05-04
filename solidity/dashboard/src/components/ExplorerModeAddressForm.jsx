@@ -14,9 +14,10 @@ const ExplorerModeAddressForm = ({ submitAction, onCancel }) => {
       <FormInput
         name="address"
         type="text"
-        label="Enter an address"
+        label="Enter an Ethereum address"
+        tooltipProps={{ direction: "top" }}
         tooltipText={
-          "Enter an address with which you would like to view the dashboard"
+          "Enter an Ethereum address to preview its read-only version of the dashboard."
         }
       />
       <div
@@ -28,7 +29,7 @@ const ExplorerModeAddressForm = ({ submitAction, onCancel }) => {
         }}
       >
         <SubmitButton
-          className="btn btn-primary"
+          className="btn btn-lg btn-primary"
           type="submit"
           onSubmitAction={onSubmit}
           withMessageActionIsPending={false}
