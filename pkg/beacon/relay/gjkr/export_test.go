@@ -8,7 +8,7 @@ import (
 	"github.com/keep-network/keep-core/pkg/net/ephemeral"
 )
 
-func (epkm *EphemeralPublicKeyMessage) SetSenderId(
+func (epkm *EphemeralPublicKeyMessage) SetSenderID(
 	senderID group.MemberIndex,
 ) {
 	epkm.senderID = senderID

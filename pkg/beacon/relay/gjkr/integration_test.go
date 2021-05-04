@@ -1189,7 +1189,7 @@ func TestExecute_InvalidMemberIndex(t *testing.T) {
 		publicKeyMessage, ok := msg.(*gjkr.EphemeralPublicKeyMessage)
 		if ok && publicKeyMessage.SenderID() == group.MemberIndex(1) {
 			// Set an non-existing sender id.
-			publicKeyMessage.SetSenderId(group.MemberIndex(groupSize + 1))
+			publicKeyMessage.SetSenderID(group.MemberIndex(groupSize + 1))
 			return publicKeyMessage
 		}
 
