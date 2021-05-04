@@ -238,18 +238,6 @@ jobs:
           github-project-name: keep-core
           version-tag: ${{ steps.npm-version-bump.outputs.version }}
 
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Upload contract data
-        env: 
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core
-
       - name: Publish to npm
         run: |
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
@@ -368,16 +356,4 @@ jobs:
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ secrets.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Upload contract data
-        env:
-          CONTRACT_DATA_BUCKET: ${{ secrets.KEEP_TEST_CONTRACT_DATA_BUCKET }}
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://"$CONTRACT_DATA_BUCKET"/keep-core-celo
-
-      # TODO: add NPM publish step once it's clear how artifacts should be tagged
+      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear how artifacts should be tagged
