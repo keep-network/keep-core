@@ -80,10 +80,9 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to Google Container Registry
-        if: | # TODO: remove 'rfc-18' condition one tested
-          (github.ref == 'refs/heads/master'
-            && github.event_name != 'pull_request')
-            || github.ref == 'refs/heads/rfc-18/load-env-var'
+        if: |
+          github.ref == 'refs/heads/master'
+            && github.event_name != 'pull_request'
         uses: docker/login-action@v1
         with:
           registry: ${{ env.GCR_REGISTRY_URL }}
@@ -93,7 +92,7 @@ jobs:
       - name: Build and publish Keep Token Dashboard image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-dapp-token-dashboard-wip' # TODO: remove '-wip' before merging to master
+          IMAGE_NAME: 'keep-dapp-token-dashboard'
         with:
           context: ./solidity/dashboard/
           # GCR image should be named according to following convention:
@@ -101,9 +100,8 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
-          push: | # TODO: remove 'rfc-18' condition one tested
-            ${{ (github.ref == 'refs/heads/master'
-              && github.event_name != 'pull_request')
-              || github.ref == 'refs/heads/rfc-18/load-env-var' }} 
+          push: |
+            ${{ github.ref == 'refs/heads/master'
+              && github.event_name != 'pull_request' }} 
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
