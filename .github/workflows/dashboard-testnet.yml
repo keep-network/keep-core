@@ -132,7 +132,7 @@ jobs:
       - name: Build and publish Keep Token Dashboard image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-dapp-token-dashboard'
+          IMAGE_NAME: 'keep-dapp-token-dashboard-wip' # TODO: remove `-wip` before merging to master
         with:
           context: ./solidity/dashboard/
           # GCR image should be named according to following convention:
