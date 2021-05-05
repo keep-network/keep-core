@@ -80,7 +80,9 @@ rm -rf build/
 CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY \
     npx truffle migrate --reset --network $NETWORK
 
-KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"
+printf "${LOG_START}Creating links...${LOG_END}"
+ln -sf build/contracts artifacts
+npm link
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
 
