@@ -107,12 +107,12 @@ export const displayPercentageValue = (
  * of the number line of <1, 10>.
  *
  * @param {BigNumber|String|Number} inputX Number on number line
- * @param {BigNumber|String|Number} xMin - Minimal value of the current number
+ * @param {BigNumber|String|Number} xMin Minimal value of the current number
  * line
- * @param {BigNumber|String|Number} xMax - Maximal value of the current number
+ * @param {BigNumber|String|Number} xMax Maximal value of the current number
  * line
- * @param {BigNumber|String|Number} yMin - Minimal value of the new number line
- * @param {BigNumber|String|Number} yMax - Maximal value of the new number line
+ * @param {BigNumber|String|Number} yMin Minimal value of the new number line
+ * @param {BigNumber|String|Number} yMax Maximal value of the new number line
  * @return {BigNumber} Number from the new number line
  */
 export const scaleInputForNumberRange = (inputX, xMin, xMax, yMin, yMax) => {
@@ -124,4 +124,38 @@ export const scaleInputForNumberRange = (inputX, xMin, xMax, yMin, yMax) => {
 
   const percent = inputX.minus(xMin).dividedBy(xMax.minus(xMin))
   return percent.multipliedBy(yMax.minus(yMin)).plus(yMin)
+}
+
+/**
+ * Removes a substring from the input that occurs between the two same
+ * characters on given index
+ *
+ * e.g to remove test3 from the input "test1/test2/test3/test4" we should call
+ * this function like this:
+ * removeSubstringBetweenCharacter("test1/test2/test3/test4", "/", 2)
+ *
+ * NOTE: if we keep the occurrenceIndex as 0 it will remove the word between
+ * start of the input and first character occurrence. By analogy when we add max
+ * possible index it will remove the word between last character occurrence and
+ * the end of the input
+ *
+ * @param {string} input Input that we want to operate on
+ * @param {string} character Character between which we want to cut out text
+ * @param {Number} occurrenceIndex If there are more than two same character
+ * in the input then we should specify the index to cut it out from (starts
+ * from 0)
+ * @return {String} Input with the word cut out
+ */
+export const removeSubstringBetweenCharacter = (
+  input,
+  character,
+  occurrenceIndex = 0
+) => {
+  if (occurrenceIndex < 0) return input
+  occurrenceIndex =
+    input.charAt(0) === character ? occurrenceIndex + 1 : occurrenceIndex
+  const splittedInput = input.split(character)
+  splittedInput.splice(occurrenceIndex, 1)
+  const final = splittedInput.join(character)
+  return final
 }

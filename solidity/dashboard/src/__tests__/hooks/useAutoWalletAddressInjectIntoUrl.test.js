@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react-hooks"
 import useWalletAddressFromUrl from "../../hooks/useWalletAddressFromUrl"
 
+const mockCurrentUrl = "/0x857173e7c7d76e051e80d30FCc3EA6A9C2b53756/dashboard"
 const mockAddress = "0x857173e7c7d76e051e80d30FCc3EA6A9C2b53756"
 
 jest.mock("react-router-dom", () => ({
@@ -27,6 +28,9 @@ jest.mock("react-router-dom", () => ({
         actualPath: "rewards",
       },
     })),
+  useLocation: jest.fn(() => ({
+    pathname: mockCurrentUrl,
+  })),
 }))
 
 jest.mock("../../components/Routing", () => ({
