@@ -17,6 +17,7 @@ const FormInput = ({
   additionalInfoText,
   leftIcon,
   inputAddon,
+  tooltipProps = {},
   ...props
 }) => {
   const [field, meta, helpers] = useField(props.name, props.type)
@@ -61,6 +62,7 @@ const FormInput = ({
               delay={0}
               triggerComponent={Icons.MoreInfo}
               className="input__label__info-container__tooltip"
+              {...tooltipProps}
             >
               {tooltipText}
             </Tooltip>

@@ -12,7 +12,7 @@ import (
 var logger = log.Logger("keep-diagnostics")
 
 // Initialize sets up the diagnostics registry and enables diagnostics server.
-func Initialize(port int) (*diagnostics.DiagnosticsRegistry, bool) {
+func Initialize(port int) (*diagnostics.Registry, bool) {
 	if port == 0 {
 		return nil, false
 	}
@@ -27,7 +27,7 @@ func Initialize(port int) (*diagnostics.DiagnosticsRegistry, bool) {
 // RegisterConnectedPeersSource registers the diagnostics source providing
 // information about connected peers.
 func RegisterConnectedPeersSource(
-	registry *diagnostics.DiagnosticsRegistry,
+	registry *diagnostics.Registry,
 	netProvider net.Provider,
 ) {
 	registry.RegisterSource("connected_peers", func() string {
@@ -62,7 +62,7 @@ func RegisterConnectedPeersSource(
 // RegisterClientInfoSource registers the diagnostics source providing
 // information about the client itself.
 func RegisterClientInfoSource(
-	registry *diagnostics.DiagnosticsRegistry,
+	registry *diagnostics.Registry,
 	netProvider net.Provider,
 ) {
 	registry.RegisterSource("client_info", func() string {
