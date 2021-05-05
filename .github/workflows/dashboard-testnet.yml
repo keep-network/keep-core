@@ -34,6 +34,7 @@ jobs:
             echo "environment = ${{ github.event.inputs.environment }}"
             echo "upstream_builds = ${{ github.event.inputs.upstream_builds }}"
             echo "ref = ${{ github.event.inputs.ref }}"
+            echo "sha = ${{ github.sha }}"
 
       - name: Show workflow metadata
         if: github.event_name != 'workflow_dispatch'
@@ -119,10 +120,7 @@ jobs:
             ${{ runner.os }}-buildx-
 
       - name: Login to Google Container Registry
-        if: |
-          (github.ref == 'refs/heads/master'
-            && github.event_name == 'push')
-            || github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch'
         uses: docker/login-action@v1
         with:
           registry: ${{ env.GCR_REGISTRY_URL }}
@@ -132,7 +130,7 @@ jobs:
       - name: Build and publish Keep Token Dashboard image
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'keep-dapp-token-dashboard-wip' # TODO: remove `-wip` before merging to master
+          IMAGE_NAME: 'keep-dapp-token-dashboard'
         with:
           context: ./solidity/dashboard/
           # GCR image should be named according to following convention:
@@ -140,10 +138,7 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
-          push: |
-            ${{ (github.ref == 'refs/heads/master'
-              && github.event_name == 'push')
-              || github.event_name == 'workflow_dispatch' }}
+          push: ${{ github.event_name == 'workflow_dispatch' }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
       

@@ -127,10 +127,7 @@ jobs:
 
   contracts-migrate-and-publish-ethereum:
     needs: [contracts-build-and-test]
-    if: |
-      (github.ref == 'refs/heads/master'
-        && github.event_name == 'push')
-        || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test # keep-test requires a manual aproval
     runs-on: ubuntu-latest
     strategy:
@@ -177,7 +174,8 @@ jobs:
       - name: Migrate contracts
         env: 
           ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
       
       - name: Copy artifacts
@@ -211,7 +209,7 @@ jobs:
           echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
           npm publish --access=public
 
-      - name: Upload a Build Artifact
+      - name: Upload keep-core contracts for initcontainer build
         uses: actions/upload-artifact@v2
         with:
           name: Contracts (Node.js ${{ matrix.node-version }})
@@ -237,7 +235,7 @@ jobs:
           # in config files.
           environment: 'ropsten'
 
-      - name: Download a Build Artifact
+      - name: Download migrated contracts artifacts
         uses: actions/download-artifact@v2
         with:
           name: Contracts (Node.js ${{ matrix.node-version }})
@@ -278,7 +276,6 @@ jobs:
           cache-to: type=local,dest=/tmp/.buildx-cache
       
       - name: Notify CI about completion of the workflow
-        if: github.event_name == 'workflow_dispatch'
         uses: keep-network/notify-workflow-completed@main
         env:
           GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
@@ -292,14 +289,9 @@ jobs:
 
   contracts-migrate-and-publish-celo:
     needs: [contracts-build-and-test]
-    if: |
-      github.ref == 'refs/heads/master'
-        && github.event_name != 'pull_request'
+    if: github.event_name == 'workflow_dispatch'
     environment: keep-test
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity
@@ -316,10 +308,9 @@ jobs:
           # in config files.
           environment: 'alfajores'
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "12.x"
 
       - name: Cache node modules
         uses: actions/cache@v2
