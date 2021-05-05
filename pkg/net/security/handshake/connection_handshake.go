@@ -32,10 +32,10 @@
 // initiator and responder in acts one, two, and three of the handshake,
 // respectively.
 //
-// initiatorAct1, initiatorAct2, and initiatorAct3 represent the state of the
+// InitiatorAct1, InitiatorAct2, and InitiatorAct3 represent the state of the
 // initiator in rounds one, two, and three of the handshake, respectively.
 //
-// responderAct2 and responderAct3 represent the state of the responder in
+// ResponderAct2 and ResponderAct3 represent the state of the responder in
 // rounds two and three of the handshake, respectively. Since the first act of
 // the handshake is initiated by the initiator and the responder has no internal
 // state before receiving the first message, there is no representation for
@@ -83,9 +83,9 @@ type Act3Message struct {
 	challenge [sha256.Size]byte
 }
 
-// initiatorAct1 represents the state of the initiator in the first act of the
+// InitiatorAct1 represents the state of the initiator in the first act of the
 // handshake protocol.
-type initiatorAct1 struct {
+type InitiatorAct1 struct {
 	nonce1    uint64
 	protocol1 string
 }
@@ -93,25 +93,25 @@ type initiatorAct1 struct {
 // InitiateHandshake function allows to initiate a handshake by creating
 // and initializing a state machine representing initiator in the first round
 // of the handshake, ready to execute the protocol.
-func InitiateHandshake(protocol string) (*initiatorAct1, error) {
+func InitiateHandshake(protocol string) (*InitiatorAct1, error) {
 	nonce1, err := randomNonce()
 	if err != nil {
 		return nil, fmt.Errorf("could not initiate the handshake: [%v]", err)
 	}
 
-	return &initiatorAct1{nonce1, protocol}, nil
+	return &InitiatorAct1{nonce1, protocol}, nil
 }
 
 // Message returns the message sent by initiator to the responder in the first
 // act of the handshake protocol.
-func (ia1 *initiatorAct1) Message() *Act1Message {
+func (ia1 *InitiatorAct1) Message() *Act1Message {
 	return &Act1Message{nonce1: ia1.nonce1, protocol1: ia1.protocol1}
 }
 
 // Next performs a state transition and returns initiator in a state ready to
 // execute the second act of the handshake protocol.
-func (ia1 *initiatorAct1) Next() *initiatorAct2 {
-	return &initiatorAct2{nonce1: ia1.nonce1, protocol1: ia1.protocol1}
+func (ia1 *InitiatorAct1) Next() *InitiatorAct2 {
+	return &InitiatorAct2{nonce1: ia1.nonce1, protocol1: ia1.protocol1}
 }
 
 // AnswerHandshake is used to initiate a responder as a result of receiving
@@ -119,7 +119,7 @@ func (ia1 *initiatorAct1) Next() *initiatorAct2 {
 // The returned responder is in a state ready to execute the second act of the
 // handshake protocol.
 // The function also validates if both parties run the same protocol.
-func AnswerHandshake(message *Act1Message, protocol string) (*responderAct2, error) {
+func AnswerHandshake(message *Act1Message, protocol string) (*ResponderAct2, error) {
 	if message.protocol1 != protocol {
 		return nil, fmt.Errorf("unsupported protocol: [%v]", message.protocol1)
 	}
@@ -131,19 +131,19 @@ func AnswerHandshake(message *Act1Message, protocol string) (*responderAct2, err
 	}
 	challenge := hashToChallenge(nonce1, nonce2)
 
-	return &responderAct2{nonce2, challenge, protocol}, nil
+	return &ResponderAct2{nonce2, challenge, protocol}, nil
 }
 
-// initiatorAct2 represents the state of the initiator in the second act of the
+// InitiatorAct2 represents the state of the initiator in the second act of the
 // handshake protocol.
-type initiatorAct2 struct {
+type InitiatorAct2 struct {
 	nonce1    uint64
 	protocol1 string
 }
 
-// responderAct2 represents the state of the responder in the second act of the
+// ResponderAct2 represents the state of the responder in the second act of the
 // handshake protocol.
-type responderAct2 struct {
+type ResponderAct2 struct {
 	nonce2    uint64
 	challenge [sha256.Size]byte
 	protocol2 string
@@ -151,7 +151,7 @@ type responderAct2 struct {
 
 // Message returns the message sent by responder to the initiator in the second
 // act of the handshake protocol.
-func (ra2 *responderAct2) Message() *Act2Message {
+func (ra2 *ResponderAct2) Message() *Act2Message {
 	return &Act2Message{
 		nonce2:    ra2.nonce2,
 		challenge: ra2.challenge,
@@ -161,8 +161,8 @@ func (ra2 *responderAct2) Message() *Act2Message {
 
 // Next performs a state transition and returns responder in a state ready to
 // execute the third act of the handshake protocol.
-func (ra2 *responderAct2) Next() *responderAct3 {
-	return &responderAct3{challenge: ra2.challenge}
+func (ra2 *ResponderAct2) Next() *ResponderAct3 {
+	return &ResponderAct3{challenge: ra2.challenge}
 }
 
 // Next performs a state transition and returns initiator in a state ready to
@@ -174,7 +174,7 @@ func (ra2 *responderAct2) Next() *responderAct3 {
 // protocol should be immediately aborted.
 //
 // The function also validates if both parties run the same protocol.
-func (ia2 *initiatorAct2) Next(message *Act2Message) (*initiatorAct3, error) {
+func (ia2 *InitiatorAct2) Next(message *Act2Message) (*InitiatorAct3, error) {
 	if message.protocol2 != ia2.protocol1 {
 		return nil, fmt.Errorf("unsupported protocol: [%v]", message.protocol2)
 	}
@@ -184,24 +184,24 @@ func (ia2 *initiatorAct2) Next(message *Act2Message) (*initiatorAct3, error) {
 		return nil, fmt.Errorf("unexpected responder's challenge")
 	}
 
-	return &initiatorAct3{challenge: message.challenge}, nil
+	return &InitiatorAct3{challenge: message.challenge}, nil
 }
 
-// initiatorAct3 represents the state of the initiator in the third act of the
+// InitiatorAct3 represents the state of the initiator in the third act of the
 // handshake protocol.
-type initiatorAct3 struct {
+type InitiatorAct3 struct {
 	challenge [sha256.Size]byte
 }
 
-// responderAct3 represents the state of the responder in the third act of the
+// ResponderAct3 represents the state of the responder in the third act of the
 // handshake protocol.
-type responderAct3 struct {
+type ResponderAct3 struct {
 	challenge [sha256.Size]byte
 }
 
 // Message returns the message sent by initiator to the responder in the third
 // act of the handshake protocol.
-func (ia3 *initiatorAct3) Message() *Act3Message {
+func (ia3 *InitiatorAct3) Message() *Act3Message {
 	return &Act3Message{challenge: ia3.challenge}
 }
 
@@ -211,7 +211,7 @@ func (ia3 *initiatorAct3) Message() *Act3Message {
 // If both challenges are equal, handshake has completed successfully and
 // function returns nil. Otherwise, if challenge is not as expected, function
 // returns an error and it means the handshake protocol failed.
-func (ra3 *responderAct3) FinalizeHandshake(message *Act3Message) error {
+func (ra3 *ResponderAct3) FinalizeHandshake(message *Act3Message) error {
 	if ra3.challenge != message.challenge {
 		return errors.New("unexpected initiator's challenge")
 	}
