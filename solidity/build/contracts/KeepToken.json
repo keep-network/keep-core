@@ -2902,12 +2902,12 @@
         }
       },
       "links": {},
-      "address": "0x3f073E8319E351b10F20B783D73AA9434Ea8Dd92",
-      "transactionHash": "0xce7e2d58b7e86244d18d4cb7349a352187c64f2089ccb4060a5f90845546a9c0"
+      "address": "0xAaE10Ce710E39044B365397414e205924B89adf1",
+      "transactionHash": "0x7abb77b91768d58d0c5a00046e89d286cfec647665f00c987c94b66a3c426a2d"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T13:16:24.676Z",
+  "updatedAt": "2021-04-30T08:46:00.648Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "Standard ERC20Burnable token",

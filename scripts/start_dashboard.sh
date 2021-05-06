@@ -37,7 +37,7 @@ cd $TBTC_SOL_PATH
 
 printf "${LOG_START}Migrating contracts for tBTC...${LOG_END}"
 npm run clean
-truffle migrate --reset --network development
+truffle migrate --reset --network sov
 
 printf "${LOG_START}Creating symlinks for tBTC...${LOG_END}"
 rm -f artifacts

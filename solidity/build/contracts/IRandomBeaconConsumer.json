@@ -940,7 +940,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:12.117Z",
+  "updatedAt": "2021-04-30T08:21:44.646Z",
   "devdoc": {
     "details": "Use this interface to indicate the contract receives relay entries from the beacon and to ensure the correctness of callback function signature.",
     "methods": {

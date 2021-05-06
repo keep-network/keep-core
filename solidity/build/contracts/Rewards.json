@@ -34402,7 +34402,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:12.575Z",
+  "updatedAt": "2021-04-30T08:21:44.810Z",
   "devdoc": {
     "details": "A concrete implementation of the abstract rewards contract must specify functions for accessing information about keeps and paying out rewards. For the purpose of rewards, Random Beacon signing groups count as \"keeps\" and the beacon operator contract acts as the \"factory\".",
     "methods": {

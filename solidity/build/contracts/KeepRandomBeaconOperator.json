@@ -42059,19 +42059,19 @@
         }
       },
       "links": {
-        "GroupSelection": "0x289f6c33c5fE35cd1D5673E961754ee91166d12a",
-        "Groups": "0xb1770B58F72CF54D5f458A584fedB62Bed48c869",
-        "DKGResultVerification": "0xEc818eFCD3b96a329DE484150C9C8Ea921Bf7097",
-        "DelayFactor": "0xe7c8E644D97DE9e6bF9d3109795ea35CEb45377C",
-        "Reimbursements": "0x1615D1FD5F125D0437bfc0fA669538E0D6c1000f",
-        "BLS": "0xA7665478dE7eBbC15d70901CAA1438C39365c441"
+        "GroupSelection": "0x8F9d8c7E2C8f039BcB1193D3cE01D160501Ef365",
+        "Groups": "0xD02a664A2D2DC49A5c9caaae7444E2D8D9E0BC2A",
+        "DKGResultVerification": "0x26f8A6CdE631F2D670830716D6a6074fc0bDa307",
+        "DelayFactor": "0x65435A16Ad81a7C6d205f2f308A602241ee9F54C",
+        "Reimbursements": "0x1c0D66cF5b2Aed324DcE91755C17577d7D3477b3",
+        "BLS": "0x71DEd21734Bbc126338425C91468d46E8743920A"
       },
-      "address": "0xE46872ceAF486bE9F1a77B922b6dd80A90d6984e",
-      "transactionHash": "0x191450c4fe755da1ec614216104f7178420b244d393197119c66981696dafdf6"
+      "address": "0x50D856DB7a4210d0e9D7788572478A39acb668EB",
+      "transactionHash": "0x6bca846f1e953eef4394e0639db43fc85bc23e716882630053831f9608a03ea9"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T13:21:25.986Z",
+  "updatedAt": "2021-04-30T08:50:06.753Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {

@@ -20,10 +20,10 @@ module.exports = {
           '79861b19d809f940b4d91cc8ce42c804c4591b324352f037d831aa3a1fb223c9'],          
           'wss://testnet.sovryn.app/ws',
           0, 
-          sovKeys.length
+          5
         )
       },
-      websocket: true,
+      websockets: true,
       gas: 6700000,
       gasPrice: 70000000,
       skipDryRun: false,

@@ -3165,7 +3165,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:12.968Z",
+  "updatedAt": "2021-04-30T08:21:45.025Z",
   "devdoc": {
     "methods": {
       "addServiceContract(address)": {

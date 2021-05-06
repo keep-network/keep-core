@@ -4347,7 +4347,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:12.108Z",
+  "updatedAt": "2021-04-30T08:21:44.640Z",
   "devdoc": {
     "details": "Interface expected to be implemented by contracts added as a gas price oracle consumers. Consumers are notified by GasPriceOracle every time gas price change is finalized by calling their refreshGasPrice function. Each consumer may decide to pull the new value from the oracle immediatelly or at the moment right for the consumer. Consumers must be trusted contracts whose refreshGasPrice must always succeed and never consume excessive gas.",
     "methods": {}

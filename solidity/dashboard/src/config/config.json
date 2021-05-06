@@ -8,6 +8,9 @@
         },
         "1": {
             "wsURL": "wss://mainnet.infura.io/ws/v3/b5ebe659c75d4096aa2a8ba40b22f438"
+        },
+        "31": {
+            "wsURL": "wss://electrumx-server.test.tbtc.network:8443"
         }
     }
 }

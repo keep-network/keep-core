@@ -48,8 +48,8 @@
   },
   "devDependencies": {
     "eslint": "^6.8.0",
-    "prettier": "^2.0.4",
-    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git"
+    "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
+    "prettier": "^2.0.4"
   },
   "browserslist": [
     ">0.2%",

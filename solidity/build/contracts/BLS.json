@@ -3356,12 +3356,12 @@
     "31": {
       "events": {},
       "links": {},
-      "address": "0xA7665478dE7eBbC15d70901CAA1438C39365c441",
-      "transactionHash": "0x223ee1dc4d215b63924d5e76cc5fe4f89cb1efe0e5fa5d94158eea0bac6a4f3a"
+      "address": "0x71DEd21734Bbc126338425C91468d46E8743920A",
+      "transactionHash": "0x79671fa6a0b5808a134a7750310a2ac03c3aa479bb24e49d4a39f440b714588b"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T13:16:24.754Z",
+  "updatedAt": "2021-04-30T08:46:00.697Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "Library for verification of 2-pairing-check BLS signatures, including basic, aggregated, or reconstructed threshold BLS signatures, generated using the AltBn128 curve.",

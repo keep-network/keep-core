@@ -28182,12 +28182,12 @@
         }
       },
       "links": {},
-      "address": "0x58129130475249c327bc4da835276757d1626c19",
-      "transactionHash": "0xa86820f0f82831e5074c26813a12fc7990a652ded4d0d5c71ea6536d34fd0fb6"
+      "address": "0xfe02730ED391fdF91f0210494192A9CA6A4AAC94",
+      "transactionHash": "0xbd286c7dad2ee2fa3eb552d84f38ab46443c3fd46b3f6ea3b355fb953b2b9e42"
     }
   },
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T13:21:26.139Z",
+  "updatedAt": "2021-04-30T08:50:06.881Z",
   "networkType": "ethereum",
   "devdoc": {
     "details": "The owner of TokenStakingEscrow is TokenStaking contract and only owner can deposit. This contract works with an assumption that operator is unique in the scope of `TokenStaking`, that is, no more than one delegation in the `TokenStaking` can be done do the given operator ever. Even if the previous delegation ended, operator address cannot be reused.",

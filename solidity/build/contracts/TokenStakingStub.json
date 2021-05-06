@@ -1962,7 +1962,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:13.266Z",
+  "updatedAt": "2021-04-30T08:21:45.147Z",
   "devdoc": {
     "details": "TokenStakingStub keeps the same minimum stake value of 100k KEEP for all the time. This stub is used by tests for which we want to maintain the same minimum stake value. MinimumStakeSchedule uses the time of deploying KEEP token as the starting point of the minimum stake schedule. Use this stub to keep it at the same, predictable level. Going back in time in tests is not possible.",
     "methods": {

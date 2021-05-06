@@ -3589,7 +3589,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:13.017Z",
+  "updatedAt": "2021-04-30T08:21:45.044Z",
   "devdoc": {
     "details": "A simplified Random Beacon operator contract to help local development.",
     "methods": {

@@ -27,11 +27,12 @@ printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
 npm install
 
 printf "${LOG_START}Unlocking ethereum accounts...${LOG_END}"
-KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
-    npx truffle exec scripts/unlock-eth-accounts.js --network sov
+# KEEP_ETHEREUM_PASSWORD=$KEEP_ETHEREUM_PASSWORD \
+#     npx truffle exec scripts/unlock-eth-accounts.js --network sov
 
 printf "${LOG_START}Migrating contracts...${LOG_END}"
 rm -rf build/
+npx truffle compile
 npx truffle migrate --reset --network sov
 
 KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"

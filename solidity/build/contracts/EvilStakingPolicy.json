@@ -898,7 +898,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.3",
-  "updatedAt": "2021-04-13T12:32:12.905Z",
+  "updatedAt": "2021-04-30T08:21:45.001Z",
   "devdoc": {
     "details": "A staking policy which allows the grantee to stake a million times more than the grant amount.",
     "methods": {},
