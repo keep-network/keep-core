@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 
-const useCurrentWidthLowerThanThreshold = (widthThreshold) => {
+const useCurrentWidth = () => {
   const [width, setWidth] = useState(window.innerWidth)
 
   useEffect(() => {
@@ -14,7 +14,7 @@ const useCurrentWidthLowerThanThreshold = (widthThreshold) => {
     }
   }, [])
 
-  return width < widthThreshold
+  return width
 }
 
-export default useCurrentWidthLowerThanThreshold
+export default useCurrentWidth
