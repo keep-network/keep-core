@@ -11,6 +11,8 @@ import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
 import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents"
 import useAutoConnect from "./hooks/useAutoConnect"
+import useAutoWalletAddressInjectIntoUrl
+  from "./hooks/useAutoWalletAddressInjectIntoUrl";
 import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers";
 
 const App = () => (
@@ -29,6 +31,7 @@ const App = () => (
 
 const AppLayout = () => {
   useAutoConnect()
+  useAutoWalletAddressInjectIntoUrl()
   useSubscribeToConnectorEvents()
   useModalWindowForMobileUsers()
   return (

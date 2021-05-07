@@ -1,4 +1,4 @@
-import useWalletAddressFromUrl from "./useWalletAddressFromUrl";
+import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 
 const useFinalPath = (to) => {
   const walletAddress = useWalletAddressFromUrl()
