@@ -10,14 +10,7 @@ const crossIconHeight = 15
 const crossIconWidth = 15
 
 const Modal = React.memo(
-  ({
-    isOpen,
-    closeModal,
-    isFullScreen,
-    hideTitleBar,
-    isRounded = false,
-    ...props
-  }) => {
+  ({ isOpen, closeModal, isFullScreen, hideTitleBar, ...props }) => {
     const modalOverlay = useRef(null)
     useEffect(() => {
       if (isOpen) {
@@ -38,14 +31,6 @@ const Modal = React.memo(
       [closeModal]
     )
 
-    const modalWrapperBorderStyle = isRounded
-      ? {
-          borderRadius: "8px",
-        }
-      : {
-          borderRadius: "0px",
-        }
-
     return isOpen
       ? ReactDOM.createPortal(
           <div
@@ -55,7 +40,6 @@ const Modal = React.memo(
           >
             <div
               className={`modal-wrapper${isFullScreen ? "--full-screen" : ""}`}
-              style={modalWrapperBorderStyle}
             >
               {!isFullScreen ||
                 (!hideTitleBar && (
@@ -155,7 +139,6 @@ export const ModalContextProvider = ({ children }) => {
       {
         closeModal: customModalWindowForMobileUsersClose,
         hideTitleBar: true,
-        isRounded: true,
       }
     )
   }
