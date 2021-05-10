@@ -38,7 +38,7 @@ help()
 for arg in "$@"; do
   shift
   case "$arg" in
-    "--config-dir")      set -- "$@" "-c" ;;
+    "--config-dir")     set -- "$@" "-c" ;;
     "--network")        set -- "$@" "-n" ;;
     "--contracts-only") set -- "$@" "-m" ;;
     "--help")           set -- "$@" "-h" ;;
