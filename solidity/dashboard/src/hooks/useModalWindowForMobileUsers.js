@@ -46,7 +46,7 @@ const useModalWindowForMobileUsers = () => {
     ) {
       customModalWindowForMobileUsersClose()
     }
-  }, [currentWidth, openModal, closeModal])
+  }, [currentWidth, openModal, closeModal, modalWindowStatus])
 }
 
 export default useModalWindowForMobileUsers
