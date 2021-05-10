@@ -6,12 +6,16 @@ const MobileUsersModal = ({ closeModal }) => {
   return (
     <div className={"mobile-users-modal"}>
       <Icons.Dashboard className={"mobile-users-modal__icon"} />
-      <h2 className={"mobile-users-modal__main-text"}>
-        {"The dashboard shines on desktop."}
-      </h2>
-      <span className={"mobile-users-modal__secondary-text"}>
-        {"Switch to a desktop for the best viewing experience of the dashboard"}
-      </span>
+      <div className={"mobile-users-modal__text-container"}>
+        <h2 className={"mobile-users-modal__main-text"}>
+          {"The dashboard shines on desktop."}
+        </h2>
+        <span className={"mobile-users-modal__secondary-text"}>
+          {
+            "Switch to a desktop for the best viewing experience of the dashboard"
+          }
+        </span>
+      </div>
       <a
         href="https://keep.network/"
         className="btn btn-lg btn-primary mobile-users-modal__button h2"

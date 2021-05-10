@@ -8,7 +8,7 @@ const crossIconHeight = 15
 const crossIconWidth = 15
 
 const Modal = React.memo(
-  ({ isOpen, closeModal, isFullScreen, hideTitleBar, ...props }) => {
+  ({ isOpen, closeModal, isFullScreen, hideTitleBar, classes, ...props }) => {
     const modalOverlay = useRef(null)
     useEffect(() => {
       if (isOpen) {
@@ -37,7 +37,11 @@ const Modal = React.memo(
             onClick={onOverlayClick}
           >
             <div
-              className={`modal-wrapper${isFullScreen ? "--full-screen" : ""}`}
+              className={`modal-wrapper${isFullScreen ? "--full-screen" : ""} ${
+                classes?.modalWrapperClassName
+                  ? classes.modalWrapperClassName
+                  : ""
+              }`}
             >
               {!isFullScreen ||
                 (!hideTitleBar && (

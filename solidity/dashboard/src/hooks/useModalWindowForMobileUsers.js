@@ -32,6 +32,9 @@ const useModalWindowForMobileUsers = () => {
         {
           closeModal: customModalWindowForMobileUsersClose,
           hideTitleBar: true,
+          classes: {
+            modalWrapperClassName: "modal-wrapper--max-width-for-mobile-users",
+          },
         }
       )
       setModalWindowStatus(MODAL_WINDOW_STATUS.IS_DISPLAYING)
