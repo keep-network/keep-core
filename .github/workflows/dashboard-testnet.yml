@@ -91,7 +91,16 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
 
+      - name: Resolve latest contracts
+        if: github.event_name != 'workflow_dispatch'
+        run: |
+            npm update \
+              @keep-network/keep-core \
+              @keep-network/keep-ecdsa \
+              @keep-network/tbtc
+
       - name: Get upstream packages' versions
+        if: github.event_name == 'workflow_dispatch'
         uses: keep-network/upstream-builds-query@main
         id: upstream-builds-query
         with:
@@ -102,6 +111,7 @@ jobs:
             tbtc-solidity-version = github.com/keep-network/tbtc/solidity#version
 
       - name: Resolve latest contracts
+        if: github.event_name == 'workflow_dispatch'
         run: |
             npm install --save-exact \
               @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }} \
