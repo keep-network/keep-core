@@ -37,7 +37,7 @@ const MobileUsersModal = ({ closeModal }) => {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href={"https://discord.gg/wYezN7v"}
+            href={LINK.discord}
             className={`text-link`}
           >
             Join our Discord
