@@ -1,11 +1,12 @@
 import React from "react"
+import { LINK } from "../constants/constants";
 
 const links = [
-  { label: "Join Discord", url: "https://discordapp.com/invite/wYezN7v" },
-  { label: "About Keep", url: "https://keep.network/" },
+  { label: "Join Discord", url: LINK.discord },
+  { label: "About Keep", url: LINK.keepWebsite },
   {
     label: "User Guide",
-    url: "https://keep-network.gitbook.io/staking-documentation/",
+    url: LINK.stakingDocumentation,
   },
 ]
 
