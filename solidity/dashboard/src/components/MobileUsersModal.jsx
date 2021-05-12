@@ -1,21 +1,9 @@
 import React from "react"
 import Button from "./Button"
 import * as Icons from "./Icons"
+import { LINK } from "../constants/constants"
 
 const MobileUsersModal = ({ closeModal }) => {
-  const renderDiscordLink = () => {
-    return (
-      <a
-        target="_blank"
-        rel="noopener noreferrer"
-        href={"https://discord.gg/wYezN7v"}
-        className={`text-link`}
-      >
-        Join our Discord
-      </a>
-    )
-  }
-
   return (
     <div className={"mobile-users-modal"}>
       <Icons.Dashboard className={"mobile-users-modal__icon"} />
@@ -30,7 +18,7 @@ const MobileUsersModal = ({ closeModal }) => {
         </span>
       </div>
       <a
-        href="https://keep.network/"
+        href={LINK.keepWebsite}
         className="btn btn-lg btn-primary mobile-users-modal__button h2"
         rel="noopener noreferrer"
         target="_blank"
@@ -45,7 +33,16 @@ const MobileUsersModal = ({ closeModal }) => {
       </Button>
       <span className={"mobile-users-modal__discord-info text-grey-60"}>
         {"Curious for more? "}
-        {renderDiscordLink()}
+        {
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href={"https://discord.gg/wYezN7v"}
+            className={`text-link`}
+          >
+            Join our Discord
+          </a>
+        }
       </span>
     </div>
   )
