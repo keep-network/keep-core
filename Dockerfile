@@ -5,12 +5,10 @@ ARG REVISION
 
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
-	APP_NAME=keep-client \
-	APP_DIR=/go/src/github.com/keep-network/keep-core \
-	TEST_RESULTS_DIR=/mnt/test-results \
+	APP_NAME=keep-app \
+	APP_DIR=/go/src/keep-core \
 	BIN_PATH=/usr/local/bin \
 	LD_LIBRARY_PATH=/usr/local/lib/ \
-	# GO111MODULE required to support go modules
 	GO111MODULE=on
 
 RUN apk add --update --no-cache \
@@ -19,62 +17,44 @@ RUN apk add --update --no-cache \
 	protobuf \
 	git \
 	make \
-	nodejs \
-	npm \
 	python && \
 	rm -rf /var/cache/apk/ && mkdir /var/cache/apk/ && \
 	rm -rf /usr/share/man
 
 COPY --from=ethereum/solc:0.5.17 /usr/bin/solc /usr/bin/solc
 
-RUN go get gotest.tools/gotestsum
-
-RUN mkdir -p $APP_DIR $TEST_RESULTS_DIR
+RUN mkdir -p $APP_DIR
 
 WORKDIR $APP_DIR
-
-# Configure GitHub token to be able to get private repositories.
-ARG GITHUB_TOKEN
-RUN git config --global url."https://$GITHUB_TOKEN:@github.com/".insteadOf "https://github.com/"
-
-# Get dependencies.
-COPY go.mod $APP_DIR/
-COPY go.sum $APP_DIR/
-
-RUN go mod download
-
-# Install code generators.
-RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
-RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
-
-COPY ./solidity $APP_DIR/solidity
-RUN cd $APP_DIR/solidity && npm install
-
-COPY ./pkg/net/gen $APP_DIR/pkg/net/gen
-COPY ./pkg/chain/gen $APP_DIR/pkg/chain/gen
-COPY ./pkg/beacon/relay/entry/gen $APP_DIR/pkg/beacon/relay/entry/gen
-COPY ./pkg/beacon/relay/gjkr/gen $APP_DIR/pkg/beacon/relay/gjkr/gen
-COPY ./pkg/beacon/relay/dkg/result/gen $APP_DIR/pkg/beacon/relay/dkg/result/gen
-COPY ./pkg/beacon/relay/registry/gen $APP_DIR/pkg/beacon/relay/registry/gen
-# Need this to resolve imports in generated Ethereum commands.
-COPY ./config $APP_DIR/config
-RUN go generate ./.../gen
-
-COPY ./ $APP_DIR/
-RUN go generate ./pkg/gen
+COPY . $APP_DIR/
 
 RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH
 
-FROM alpine:3.10
+FROM node:15-alpine AS app
 
-ENV APP_NAME=keep-client \
+ENV APP_NAME=keep-app \
 	BIN_PATH=/usr/local/bin
+
+RUN apk add --update --no-cache git
+	# git \
+	# nodejs \
+	# npm
+
+RUN npm i -g pm2
 
 COPY --from=gobuild $BIN_PATH/$APP_NAME $BIN_PATH
 
-# ENTRYPOINT cant handle ENV variables.
-ENTRYPOINT ["keep-client", "-config", "/keepclient/config.toml"]
+COPY ./configs/config.local.1.toml ./config.toml
+COPY entrypoint.sh .
+
+RUN git clone https://github.com/rumblefishdev/tbtc-rsk-proxy.git proxy
+RUN cd proxy/node-http-proxy && npm install
+RUN cd proxy && npm install
+
+RUN mkdir /data
+
+ENTRYPOINT ["./entrypoint.sh"]
 
 # docker caches more when using CMD [] resulting in a faster build.
 CMD []
