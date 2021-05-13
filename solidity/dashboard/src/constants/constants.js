@@ -25,6 +25,13 @@ export const ECDSA_REWARDS_DISTRRIBUTOR_CONTRACT_NAME =
 export const PENDING_STATUS = "PENDING"
 export const COMPLETE_STATUS = "COMPLETE"
 
+export const LINK = {
+  discord: "https://discordapp.com/invite/wYezN7v",
+  keepWebsite: "https://keep.network/",
+  stakingDocumentation:
+    "https://keep-network.gitbook.io/staking-documentation/",
+}
+
 export const WALLETS = {
   METAMASK: { label: "MetaMask", name: "METAMASK" },
   TREZOR: { label: "Trezor", name: "TREZOR" },

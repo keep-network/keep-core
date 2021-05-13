@@ -1,19 +1,13 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useCallback } from "react"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import ExplorerModeModal from "../components/ExplorerModeModal"
-import { useLocation, useHistory } from "react-router-dom"
 import { useModal } from "./useModal"
 import { useWeb3Context } from "../components/WithWeb3Context"
-import { WALLETS } from "../constants/constants"
 import useWalletAddressFromUrl from "./useWalletAddressFromUrl"
 import { injected } from "../connectors"
 import { isEmptyArray } from "../utils/array.utils"
-import { usePrevious } from "./usePrevious"
-
-const useHasChanged = (val) => {
-  const prevVal = usePrevious(val)
-  return prevVal !== val
-}
+import useIsExactRoutePath from "./useIsExactRoutePath"
+import { isSameEthAddress } from "../utils/general.utils"
 
 /**
  * Checks if there is a wallet addres in the url and then tries to connect to
@@ -27,67 +21,32 @@ const useHasChanged = (val) => {
  *
  */
 const useAutoConnect = () => {
-  const location = useLocation()
-  const history = useHistory()
   const walletAddressFromUrl = useWalletAddressFromUrl()
   const { openModal, closeModal } = useModal()
-  const { connector, connectAppWithWallet, yourAddress } = useWeb3Context()
-
-  const locationHasChanged = useHasChanged(location.pathname)
+  const { connector, connectAppWithWallet } = useWeb3Context()
+  const isExactRoutePath = useIsExactRoutePath()
   const [injectedTried, setInjectedTried] = useState(false)
 
-  useEffect(() => {
-    if (locationHasChanged) return
-    // change url to the one with address when we connect to the explorer mode
-    if (
-      !walletAddressFromUrl &&
-      connector &&
-      yourAddress &&
-      connector.name === WALLETS.EXPLORER_MODE.name
-    ) {
-      const newPathname = "/" + yourAddress + location.pathname
-      history.push({ pathname: newPathname })
-    }
-  }, [
-    connector,
-    yourAddress,
-    history,
-    location.pathname,
-    locationHasChanged,
-    walletAddressFromUrl,
-  ])
-
-  useEffect(() => {
-    // log in to explorer mode when pasting an url with an address
-    if (walletAddressFromUrl && !connector) {
-      const explorerModeConnector = new ExplorerModeConnector()
-      openModal(
-        <ExplorerModeModal
-          connectAppWithWallet={connectAppWithWallet}
-          connector={explorerModeConnector}
-          closeModal={closeModal}
-          address={walletAddressFromUrl}
-          connectWithWalletOnMount={true}
-        />,
-        {
-          title: "Connect Ethereum Address",
-        }
+  const isWalletFromUrlSameAsInMetamask = useCallback(
+    (metamaskAccounts) => {
+      return (
+        walletAddressFromUrl &&
+        metamaskAccounts.some((account) =>
+          isSameEthAddress(account, walletAddressFromUrl)
+        )
       )
-    }
-  }, [
-    location.pathname,
-    closeModal,
-    openModal,
-    connector,
-    connectAppWithWallet,
-    walletAddressFromUrl,
-  ])
+    },
+    [walletAddressFromUrl]
+  )
 
   useEffect(() => {
     if (injectedTried) return
     injected.getAccounts().then((accounts) => {
       setInjectedTried(true)
-      if (!isEmptyArray(accounts) && !walletAddressFromUrl) {
+      if (
+        (!isEmptyArray(accounts) && isExactRoutePath) ||
+        isWalletFromUrlSameAsInMetamask(accounts)
+      ) {
         connectAppWithWallet(injected, false).catch((error) => {
           // Just log an error, we don't want to do anything else.
           console.log(
@@ -95,9 +54,32 @@ const useAutoConnect = () => {
             error.message
           )
         })
+      } else if (walletAddressFromUrl && !connector) {
+        const explorerModeConnector = new ExplorerModeConnector()
+        openModal(
+          <ExplorerModeModal
+            connectAppWithWallet={connectAppWithWallet}
+            connector={explorerModeConnector}
+            closeModal={closeModal}
+            address={walletAddressFromUrl}
+            connectWithWalletOnMount={true}
+          />,
+          {
+            title: "Connect Ethereum Address",
+          }
+        )
       }
     })
-  }, [connectAppWithWallet, walletAddressFromUrl, injectedTried])
+  }, [
+    connectAppWithWallet,
+    walletAddressFromUrl,
+    injectedTried,
+    closeModal,
+    openModal,
+    connector,
+    isExactRoutePath,
+    isWalletFromUrlSameAsInMetamask,
+  ])
 }
 
 export default useAutoConnect
