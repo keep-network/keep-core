@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react-hooks"
-import useExplorerModeConnect from "../../hooks/useAutoConnect"
+import useAutoWalletAddressInjectIntoUrl from "../../hooks/useAutoWalletAddressInjectIntoUrl"
 
 const mockCurrentUrl = "/dashboard"
 const mockHistoryPush = jest.fn()
@@ -34,7 +34,7 @@ jest.mock("../../components/WithWeb3Context", () => ({
 
 describe("Current url without wallet address", () => {
   it("change url when connecting to explorer mode", () => {
-    renderHook(() => useExplorerModeConnect())
+    renderHook(() => useAutoWalletAddressInjectIntoUrl())
 
     expect(mockHistoryPush).toHaveBeenCalledWith({
       pathname: `/${mockAddress}/dashboard`,
