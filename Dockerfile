@@ -37,9 +37,6 @@ ENV APP_NAME=keep-app \
 	BIN_PATH=/usr/local/bin
 
 RUN apk add --update --no-cache git
-	# git \
-	# nodejs \
-	# npm
 
 RUN npm i -g pm2
 

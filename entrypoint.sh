@@ -46,7 +46,13 @@ set_config_object "Port" $P2P_PORT $CORE_CONFIG_FILE
 set_config_object "Peers" $P2P_PEERS_ARRAY $CORE_CONFIG_FILE
 
 cd proxy
-PROXY_PORT=5050 pm2 start eth.js --name eth-rsk-proxy
+TARGET_URL=$RSK_NODE_URL \
+TARGET_PORT=$RSK_NODE_PORT \
+PROXY_PORT=5050 \
+HTTP_MODE=0 \
+MATCH_REQUESTS=0 \
+MUTE_LOGGING=0 \
+pm2 start eth.js --name eth-rsk-proxy
 cd ..
 
 KEEP_ETHEREUM_PASSWORD=$OPERATOR_WALLET_PASSWORD LOG_LEVEL="debug" keep-app --config $CORE_CONFIG_FILE start
