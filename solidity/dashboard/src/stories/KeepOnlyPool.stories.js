@@ -1,10 +1,6 @@
 import React from "react"
 import KeepOnlyPool from "../components/KeepOnlyPool"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
-import { storiesOf } from "@storybook/react"
-import centered from "@storybook/addon-centered/react"
-
-storiesOf("KeepOnlyPool", module).addDecorator(centered)
 
 export default {
   title: "KeepOnlyPool",

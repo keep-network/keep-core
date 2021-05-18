@@ -2,6 +2,10 @@ import React from "react"
 import MetricsTile from "../components/MetricsTile"
 import RewardMultiplier from "../components/liquidity/RewardMultiplier"
 import { APY, ShareOfPool } from "../components/liquidity"
+import { storiesOf } from "@storybook/react"
+import centered from "@storybook/addon-centered/react"
+
+storiesOf("MetricsTile", module).addDecorator(centered)
 
 export default {
   title: "MetricsTile",
@@ -28,7 +32,7 @@ ForRewardMultiplier.args = {
         <RewardMultiplier.TooltipContent />
       </MetricsTile.Tooltip>
       <RewardMultiplier
-        rewardMultiplier={100}
+        rewardMultiplier={2.6}
         className="liquidity__info-tile__title text-mint-100"
       />
       <h6>reward multiplier</h6>
