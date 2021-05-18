@@ -1,5 +1,7 @@
 import "./../src/css/app.css"
+import "./storybookStyleFix.css"
 import React from "react";
+import { BrowserRouter } from "react-router-dom";
 export const parameters = {
   layout: 'centered',
   actions: { argTypesRegex: "^on[A-Z].*" },
@@ -11,10 +13,13 @@ export const parameters = {
   },
 }
 
-// export const decorators = [
-//   (Story) => (
-//     <div style={{ display: "flex" }}>
-//       <Story />
-//     </div>
-//   ),
-// ];
+export const decorators = [
+  (Story) => (
+    <>
+      <div></div>
+      <BrowserRouter>
+        <Story />
+      </BrowserRouter>
+    </>
+  ),
+];
