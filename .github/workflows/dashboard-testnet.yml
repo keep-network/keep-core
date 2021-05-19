@@ -86,7 +86,7 @@ jobs:
 
       - name: Get upstream packages' versions
         if: github.event_name == 'workflow_dispatch'
-        uses: keep-network/upstream-builds-query@main
+        uses: keep-network/upstream-builds-query@v1
         id: upstream-builds-query
         with:
           upstream-builds: ${{ github.event.inputs.upstream_builds }}
