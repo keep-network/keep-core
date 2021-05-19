@@ -318,4 +318,16 @@ jobs:
             ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
 
-      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear how artifacts should be tagged
+      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear
+      # how artifacts should be tagged. Once that's done, no longer publish
+      # contracts to GC Bucket.
+
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Upload contract data
+        run: |
+          cd build/contracts
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core-celo
