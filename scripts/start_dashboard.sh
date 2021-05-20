@@ -1,76 +1,52 @@
 #!/bin/bash
 set -e
 
-# Dafault inputs.
+LOG_START='\n\e[1;36m' # new line + bold + color
+LOG_END='\n\e[0m' # new line + reset color
+
+KEEP_CORE_PATH=$PWD
+DASHBOARD_DIR_PATH="$KEEP_CORE_PATH/solidity/dashboard"
+
+KEEP_ECDSA_PATH="$PWD/../keep-ecdsa"
 KEEP_ECDSA_SOL_PATH="$PWD/../keep-ecdsa/solidity"
+
 KEEP_ECDSA_DISTRIBUTOR_PATH="$PWD/../keep-ecdsa/staker-rewards/distributor"
 MERKLE_DISTRIBUTOR_INPUT_PATH="$KEEP_ECDSA_DISTRIBUTOR_PATH/staker-reward-allocation.json"
 MERKLE_DISTRIBUTOR_OUTPUT_PATH="$KEEP_ECDSA_DISTRIBUTOR_PATH/output-merkle-objects.json"
 
-TBTC_SOL_PATH="$PWD/../tbtc/solidity"
-TBTC_SOL_ARTIFACTS_PATH="$TBTC_SOL_PATH/build/contracts"
+TBTC_PATH="$PWD/../tbtc"
+TBTC_SOL_ARTIFACTS_PATH="$TBTC_PATH/solidity/artifacts"
 
-KEEP_CORE_PATH=$PWD
-KEEP_CORE_SOL_PATH="$KEEP_CORE_PATH/solidity"
-DASHBOARD_DIR_PATH="$KEEP_CORE_SOL_PATH/dashboard"
-KEEP_CORE_SOL_ARTIFACTS_PATH="$KEEP_CORE_SOL_PATH/build/contracts"
+printf "${LOG_START}Migrating contracts for keep-core...${LOG_END}"
+cd "$KEEP_CORE_PATH"
+./scripts/install.sh --network local --contracts-only
 
-# Run script.
-LOG_START='\n\e[1;36m' # new line + bold + color
-LOG_END='\n\e[0m' # new line + reset color
-
-cd $KEEP_CORE_SOL_PATH
-
-## uncomment when version of a dependency in package.json has changed.
-# printf "${LOG_START}Installing NPM dependencies...${LOG_END}"
-# rm -f package-lock.json
-# rm -rf node_modules/
-npm install
-
-printf "${LOG_START}Migrating contracts for Keep-Core...${LOG_END}"
-rm -rf build/
-truffle migrate --reset --network local
-printf "${LOG_START}Delegating tokens...${LOG_END}"
-truffle exec ./scripts/delegate-tokens.js --network local
-
-cd $TBTC_SOL_PATH
+printf "${LOG_START}Migrating contracts for keep-ecdsa...${LOG_END}"
+cd "$KEEP_ECDSA_PATH"
+./scripts/install.sh --network local --contracts-only
 
 printf "${LOG_START}Migrating contracts for tBTC...${LOG_END}"
-npm run clean
-truffle migrate --reset --network development
+cd "$TBTC_PATH"
+./scripts/install.sh
 
-printf "${LOG_START}Creating symlinks for tBTC...${LOG_END}"
-rm -f artifacts
-ln -s build/contracts artifacts
-npm link
-
+printf "${LOG_START}Initialize contracts for keep-ecdsa...${LOG_END}"
 cd $KEEP_ECDSA_SOL_PATH
 
-output=$(truffle exec ./scripts/get-network-id.js --network local)
-NETWORKID=$(echo "$output" | tail -1)
-printf "Current network ID: ${NETWORKID}\n"
+# Get network ID.
+NETWORK_ID_OUTPUT=$(npx truffle exec ./scripts/get-network-id.js)
+NETWORK_ID=$(echo "$NETWORK_ID_OUTPUT" | tail -1)
 
-printf "${LOG_START}Provisioning Keep-Ecdsa...${LOG_END}"
-KEEP_CORE_SOL_ARTIFACTS_PATH=$KEEP_CORE_SOL_ARTIFACTS_PATH \
-NETWORKID=$NETWORKID \
-    ./scripts/lcl-provision-external-contracts.sh
+# Extract TBTCSystem contract address.
+JSON_QUERY=".networks.\"${NETWORK_ID}\".address"
+TBTC_SYSTEM_CONTRACT="${TBTC_SOL_ARTIFACTS_PATH}/TBTCSystem.json"
+TBTC_SYSTEM_CONTRACT_ADDRESS=$(cat ${TBTC_SYSTEM_CONTRACT} | jq "${JSON_QUERY}" | tr -d '"')
 
-printf "${LOG_START}Provisioning TBTC...${LOG_END}"
-TBTC_SOL_ARTIFACTS_PATH=$TBTC_SOL_ARTIFACTS_PATH \
-NETWORKID=$NETWORKID \
-    ./scripts/lcl-provision-tbtc.sh
+printf "${LOG_START}TBTCSystem contract address is: ${TBTC_SYSTEM_CONTRACT_ADDRESS}${LOG_END}"
 
-printf "${LOG_START}Migrating contracts for Keep-Ecdsa...${LOG_END}"
-npm run clean
-truffle migrate --reset --network local
+# Run keep-ecdsa initialization script.
+./scripts/initialize.sh --network local --application-address $TBTC_SYSTEM_CONTRACT_ADDRESS
 
-printf "${LOG_START}Creating symlinks for Keep-Ecdsa...${LOG_END}"
-rm -f artifacts
-ln -s build/contracts artifacts
-npm link
-
-printf "${LOG_START}Initializing Keep-Ecdsa...${LOG_END}"
-truffle exec scripts/lcl-initialize.js --network local
+printf "${LOG_START}Installing Keep Token Dashboard...${LOG_END}"
 
 cd $DASHBOARD_DIR_PATH
 
@@ -80,18 +56,8 @@ cd $DASHBOARD_DIR_PATH
 # rm package-lock.json
 npm install
 
-cd $KEEP_CORE_SOL_PATH
-
-printf "${LOG_START}Creating symlinks for Keep-Core...${LOG_END}"
-rm -f artifacts
-ln -s build/contracts artifacts
-npm link
-
 cd $DASHBOARD_DIR_PATH
 npm link @keep-network/keep-core @keep-network/keep-ecdsa @keep-network/tbtc
-
-# printf "${LOG_START}Starting dashboard...${LOG_END}"
-# npm start
 
 # Make sure files below exists in keep-ecdsa repository. Otherwise comment out.
 printf "${LOG_START}Generating mock input data for ecdsa merkle distributor${LOG_END}"
@@ -109,3 +75,7 @@ cp $MERKLE_DISTRIBUTOR_OUTPUT_PATH "$DASHBOARD_DIR_PATH/src/rewards-allocation/r
 printf "${LOG_START}Initializing ECDSARewardsDistributor contract${LOG_END}"
 cd $KEEP_ECDSA_SOL_PATH
 truffle exec ./scripts/initialize-ecdsa-rewards-distributor.js --network local
+
+printf "${LOG_START}Starting dashboard...${LOG_END}"
+cd $DASHBOARD_DIR_PATH
+npm start
