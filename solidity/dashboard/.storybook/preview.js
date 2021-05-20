@@ -3,7 +3,6 @@ import "./storybookStyleFix.css"
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 export const parameters = {
-  layout: 'centered',
   actions: { argTypesRegex: "^on[A-Z].*" },
   controls: {
     matchers: {
@@ -18,7 +17,9 @@ export const decorators = [
     <>
       <div></div>
       <BrowserRouter>
-        <Story />
+        <div style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+          <Story />
+        </div>
       </BrowserRouter>
     </>
   ),
