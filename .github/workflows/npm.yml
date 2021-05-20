@@ -4,21 +4,27 @@ on:
   push:
     branches:
       - master
+      - "rfc-18/**" # TODO: Remove after testing
     paths:
       - 'solidity/contracts/**'
       - 'solidity/package.json'
       - 'solidity/package-lock.json'
+      - '.github/workflows/npm.yml' # TODO: Remove after testing
 
 jobs:
-  publish-contracts:
+  npm-migrate-publish-contracts:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
         with:
           node-version: '12.x'
           registry-url: 'https://registry.npmjs.org'
-          scope: '@keep-network'
+
       - name: Cache node modules
         uses: actions/cache@v1
         env:
@@ -30,46 +36,28 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - name: Bump up version
-        working-directory: ./solidity
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile contracts
+        run: npx truffle compile
+
+      - name: Copy artifacts
         run: |
-          set -x
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
 
-          name=$(jq --raw-output .name package.json)
-          version=$(jq --raw-output .version package.json)
-          preid=$(echo $version | sed -e s/^.*-\\\([^.]*\\\).*$/\\1/)
-
-          # Check resolved `preid`. Currently only `pre` value is supported,
-          # other types of releases are not handled by this job.
-          if [ "$preid" != pre ]; then
-            echo "Unsupported preid. Resolved info:"
-            echo "$name@$version ; preid $preid"
-            exit 1
-          fi
-
-          # Find the latest published package version matching this preid.
-          # Note that in jq, we wrap the result in an array and then flatten;
-          # this is because npm show json contains a single string if there
-          # is only one matching version, or an array if there are multiple,
-          # and we want to look at an array always.
-          latest_version=$(npm show -json "$name@^$version" version | jq --raw-output "[.] | flatten | .[-1]")
-          latest_version=${latest_version:-$version}
-          if [ -z $latest_version ]; then
-            echo "Latest version calculation failed. Resolved info:"
-            echo "$name@$version ; preid $preid"
-            exit 1
-          fi
-
-          # Update package.json with the latest published package version matching this
-          # preid to prepare for bumping.
-          echo $(jq -M ".version=\"${latest_version}\"" package.json) > package.json
-
-          # Bump without doing any git work. Versioning is a build-time action for us.
-          # Consider including commit id? Would be +<commit id>.
-          npm version prerelease --preid=$preid --no-git-tag-version
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: dev
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
 
       - name: Publish package
-        run: npm publish --access public
-        working-directory: ./solidity
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --dry-run # TODO: Remove --dry-run after testing
