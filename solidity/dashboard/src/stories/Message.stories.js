@@ -2,8 +2,6 @@ import React from "react"
 import { Message } from "../components/Message"
 import * as Icons from "../components/Icons"
 
-// TODO: Center this
-
 export default {
   title: "Message",
   component: Message,
@@ -14,7 +12,7 @@ export default {
   },
   decorators: [
     (Story) => (
-      <div>
+      <div style={{ width: "25rem" }}>
         <Story />
       </div>
     ),
