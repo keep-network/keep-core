@@ -10,7 +10,7 @@ on:
       - 'solidity/package-lock.json'
 
 jobs:
-  npm-migrate-publish-contracts:
+  npm-compile-publish-contracts:
     runs-on: ubuntu-latest
     defaults:
       run:
