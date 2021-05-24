@@ -1,15 +1,13 @@
 import React from "react"
 import ProgressBar from "../components/ProgressBar"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import TokenAmount from "../components/TokenAmount"
 import { colors } from "../constants/colors"
 
-storiesOf("ProgressBar", module).addDecorator(centered)
-
 export default {
   title: "ProgressBar",
   component: ProgressBar,
+  decorators: [centered],
 }
 
 const Template = (args) => <ProgressBar {...args} />

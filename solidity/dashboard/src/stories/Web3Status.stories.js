@@ -1,15 +1,11 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { Web3Status } from "../components/Web3Status"
-import { injected } from "../connectors"
-import Web3ContextProvider from "../components/Web3ContextProvider"
-
-storiesOf("Web3Status", module).addDecorator(centered)
 
 export default {
   title: "Web3Status",
   component: Web3Status,
+  decorators: [centered]
 }
 
 const Template = (args) => <Web3Status {...args} />

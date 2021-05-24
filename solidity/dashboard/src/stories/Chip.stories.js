@@ -1,14 +1,12 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import Chip from "../components/Chip"
 import * as Icons from "../components/Icons"
 
-storiesOf("Chip", module).addDecorator(centered)
-
 export default {
   title: "Chip",
   component: Chip,
+  decorators: [centered],
 }
 
 const Template = (args) => <Chip {...args} />

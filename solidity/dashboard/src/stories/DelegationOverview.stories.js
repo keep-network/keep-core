@@ -1,5 +1,4 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import DelegateStakeForm from "../components/DelegateStakeForm"
 import DelegationOverview from "../components/DelegationOverview"
@@ -79,8 +78,6 @@ const mockedAvailableTopUps = [
   },
 ]
 
-storiesOf("DelegationOverview", module).addDecorator(centered)
-
 export default {
   title: "DelegationOverview",
   component: DelegationOverview,
@@ -90,6 +87,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

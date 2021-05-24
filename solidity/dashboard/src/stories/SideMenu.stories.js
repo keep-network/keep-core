@@ -1,5 +1,6 @@
 import React from "react"
 import { SideMenu } from "../components/SideMenu"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "SideMenu",
@@ -10,6 +11,7 @@ export default {
         <Story />
       </div>
     ),
+    centered,
   ],
 }
 

@@ -1,9 +1,11 @@
 import React from "react"
 import { ViewInBlockExplorer } from "../components/ViewInBlockExplorer"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "ViewInBlockExplorer",
   component: ViewInBlockExplorer,
+  decorators: [centered],
 }
 
 const Template = (args) => <ViewInBlockExplorer {...args} />

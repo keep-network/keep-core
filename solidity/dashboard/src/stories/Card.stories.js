@@ -1,13 +1,11 @@
 import React from "react"
 import Card from "../components/Card"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("Card", module).addDecorator(centered)
 
 export default {
   title: "Card",
   component: Card,
+  decorators: [centered],
 }
 
 const Template = (args) => <Card {...args} />

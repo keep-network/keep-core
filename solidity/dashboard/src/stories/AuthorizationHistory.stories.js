@@ -1,9 +1,6 @@
 import React from "react"
 import AuthorizationHistory from "../components/AuthorizationHistory"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("AuthorizationHistory", module).addDecorator(centered)
 
 const mockContracts = [
   {
@@ -25,6 +22,7 @@ const mockContracts = [
 export default {
   title: "AuthorizationHistory",
   component: AuthorizationHistory,
+  decorators: [centered],
 }
 
 const Template = (args) => <AuthorizationHistory {...args} />

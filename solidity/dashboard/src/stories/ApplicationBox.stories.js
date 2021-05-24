@@ -1,11 +1,8 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import ApplicationBox from "../components/ApplicationBox"
 import { BrowserRouter } from "react-router-dom"
 import Web3ContextProvider from "../components/Web3ContextProvider"
-
-storiesOf("ApplicationBox", module).addDecorator(centered)
 
 export default {
   title: "ApplicationBox",
@@ -16,6 +13,7 @@ export default {
     },
   },
   decorators: [
+    centered,
     (Story) => (
       <BrowserRouter>
         <Web3ContextProvider>

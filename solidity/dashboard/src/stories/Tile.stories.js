@@ -1,5 +1,6 @@
 import React from "react"
 import Tile from "../components/Tile"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "Tile",
@@ -10,6 +11,7 @@ export default {
         <Story />
       </div>
     ),
+    centered,
   ],
 }
 

@@ -2,6 +2,7 @@ import React from "react"
 import UndelegateStakeButton from "../components/UndelegateStakeButton"
 import { Provider } from "react-redux"
 import store from "../store"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "UndelegateStakeButton",
@@ -12,6 +13,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

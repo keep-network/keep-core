@@ -1,13 +1,11 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { SeeAllButton } from "../components/SeeAllButton"
-
-storiesOf("SeeAllButton", module).addDecorator(centered)
 
 export default {
   title: "SeeAllButton",
   component: SeeAllButton,
+  decorators: [centered],
 }
 
 const Template = (args) => <SeeAllButton {...args} />

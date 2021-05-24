@@ -1,10 +1,12 @@
 import React from "react"
 import CardContainer from "../components/CardContainer"
 import { Default as DefaultCardStory } from "../stories/Card.stories"
+import centered from "@storybook/addon-centered/react";
 
 export default {
   title: "CardContainer",
   component: CardContainer,
+  decorators: [centered],
 }
 
 const TemplateEvenNumber = (args) => (

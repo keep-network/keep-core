@@ -1,13 +1,11 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import Badge from "../components/Badge"
-
-storiesOf("Badge", module).addDecorator(centered)
 
 export default {
   title: "Badge",
   component: Badge,
+  decorators: [centered],
 }
 
 const Template = (args) => <Badge {...args} />

@@ -2,10 +2,7 @@ import React from "react"
 import LiquidityRewardCard from "../components/LiquidityRewardCard"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import * as Icons from "../components/Icons"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("LiquidityRewardCard", module).addDecorator(centered)
 
 export default {
   title: "LiquidityRewardCard",
@@ -18,6 +15,7 @@ export default {
       action: "withdrawLiquidityRewards clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <LiquidityRewardCard {...args} />

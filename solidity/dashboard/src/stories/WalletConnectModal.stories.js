@@ -1,10 +1,7 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { WalletConnectConnector } from "../connectors"
 import WalletConnectModal from "../components/WalletConnectModal"
-
-storiesOf("WalletConnectModal", module).addDecorator(centered)
 
 export default {
   title: "WalletConnectModal",
@@ -17,6 +14,7 @@ export default {
       action: "closeModal clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <WalletConnectModal {...args} />

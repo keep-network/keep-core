@@ -1,10 +1,12 @@
 import React from "react"
 import KeepOnlyPool from "../components/KeepOnlyPool"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
+import { centeredWithFullWidth } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "KeepOnlyPool",
   component: KeepOnlyPool,
+  decorators: [centeredWithFullWidth],
 }
 
 const Template = (args) => <KeepOnlyPool {...args} />

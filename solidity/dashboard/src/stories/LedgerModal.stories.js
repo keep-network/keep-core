@@ -1,11 +1,8 @@
 import React from "react"
 import LedgerModal from "../components/LedgerModal"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { LEDGER_DERIVATION_PATHS, LedgerConnector } from "../connectors"
 import { WALLETS } from "../constants/constants"
-
-storiesOf("LedgerModal", module).addDecorator(centered)
 
 export default {
   title: "LedgerModal",
@@ -18,6 +15,7 @@ export default {
       action: "closeModal clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <LedgerModal {...args} />

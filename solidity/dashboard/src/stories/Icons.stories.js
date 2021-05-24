@@ -1,13 +1,11 @@
 import React from "react"
 import * as Icons from "../components/Icons"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("Icons", module).addDecorator(centered)
 
 export default {
   title: "Icons",
   component: Icons,
+  decorators: [centered],
 }
 
 export const Badge = (args) => <Icons.Badge width={50} height={50} />

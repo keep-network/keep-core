@@ -2,10 +2,7 @@ import React from "react"
 import RecoverStakeButton from "../components/RecoverStakeButton"
 import store from "../store"
 import { Provider } from "react-redux"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("PendingUndelegation", module).addDecorator(centered)
 
 export default {
   title: "RecoverStakeButton",
@@ -16,6 +13,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

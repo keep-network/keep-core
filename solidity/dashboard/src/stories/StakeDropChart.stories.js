@@ -12,7 +12,15 @@ storiesOf("StakeDropChart", module).addDecorator(centered)
 export default {
   title: "StakeDropChart",
   component: StakeDropChart,
-  decorators: [(Story) => <section className="rewards-overview--random-beacon"><section><Story /></section></section>]
+  decorators: [
+    (Story) => (
+      <section className="rewards-overview--random-beacon">
+        <section>
+          <Story />
+        </section>
+      </section>
+    ),
+  ],
 }
 
 // const Template = (args) => <StakeDropChart {...args} />

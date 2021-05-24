@@ -2,6 +2,7 @@ import React from "react"
 import Web3ContextProvider from "../components/Web3ContextProvider"
 import { BrowserRouter } from "react-router-dom"
 import TokenOverview from "../components/TokenOverview"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "TokenOverview",
@@ -14,6 +15,7 @@ export default {
         </Web3ContextProvider>
       </BrowserRouter>
     ),
+    centered,
   ],
 }
 

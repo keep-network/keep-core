@@ -1,8 +1,5 @@
 import React from "react"
-import Tag from "../components/Tag"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-import * as Icons from "../components/Icons"
 import TBTCRewardsDataTable from "../components/TBTCRewardsDataTable"
 
 const mockedData = [
@@ -91,11 +88,10 @@ const mockedData = [
   },
 ]
 
-storiesOf("TBTCRewardsDataTable", module).addDecorator(centered)
-
 export default {
   title: "TBTCRewardsDataTable",
   component: TBTCRewardsDataTable,
+  decorators: [centered],
 }
 
 const Template = (args) => <TBTCRewardsDataTable {...args} />

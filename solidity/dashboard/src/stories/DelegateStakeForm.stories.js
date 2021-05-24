@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import DelegateStakeForm from "../components/DelegateStakeForm"
-
-storiesOf("DelegateStakeForm", module).addDecorator(centered)
 
 export default {
   title: "DelegateStakeForm",
@@ -14,6 +11,7 @@ export default {
         <Story />
       </section>
     ),
+    centered,
   ],
   argTypes: {
     onSubmit: {

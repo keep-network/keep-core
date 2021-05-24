@@ -1,15 +1,13 @@
 // TODO: Story with hook and Formik
 
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import FormInput from "../components/FormInput"
-
-storiesOf("FormInput", module).addDecorator(centered)
 
 export default {
   title: "FormInput",
   component: FormInput,
+  decorators: [centered],
 }
 
 const Template = (args) => <FormInput {...args} />

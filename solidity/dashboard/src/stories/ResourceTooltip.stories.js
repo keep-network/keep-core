@@ -2,10 +2,7 @@ import React from "react"
 import store from "../store"
 import { Provider } from "react-redux"
 import ResourceTooltip from "../components/ResourceTooltip"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-// storiesOf("ResourceTooltip", module).addDecorator(centered)
 
 export default {
   title: "ResourceTooltip",
@@ -16,6 +13,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

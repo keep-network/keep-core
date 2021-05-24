@@ -1,9 +1,6 @@
 import React from "react"
 import Button from "../components/Button"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("Button", module).addDecorator(centered)
 
 export default {
   title: "Button",
@@ -14,6 +11,7 @@ export default {
         <Story />
       </div>
     ),
+    centered,
   ],
 }
 

@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import AmountForm from "../components/AmountForm"
-
-storiesOf("AmountForm", module).addDecorator(centered)
 
 export default {
   title: "AmountForm",
@@ -16,6 +13,7 @@ export default {
       action: "onBtnClick clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <AmountForm {...args} />

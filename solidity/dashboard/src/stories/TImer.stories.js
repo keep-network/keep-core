@@ -1,5 +1,6 @@
 import React from "react"
 import Timer from "../components/Timer"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "Timer",
@@ -16,6 +17,7 @@ export default {
         </h2>
       </section>
     ),
+    centered,
   ],
 }
 

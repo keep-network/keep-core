@@ -1,5 +1,6 @@
 import React from "react"
 import Header from "../components/Header"
+import {centeredWithFullWidth} from "../../.storybook/cuatomDecorators";
 
 const mockedSublinks = [
   {
@@ -17,6 +18,7 @@ const mockedSublinks = [
 export default {
   title: "Header",
   component: Header,
+  decorators: [centeredWithFullWidth],
 }
 
 const Template = (args) => <Header {...args} />

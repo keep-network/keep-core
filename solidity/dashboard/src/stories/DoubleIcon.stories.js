@@ -1,16 +1,14 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import * as Icons from "../components/Icons"
 import DoubleIcon from "../components/DoubleIcon"
 import Card from "../components/Card"
 import CardContainer from "../components/CardContainer"
 
-storiesOf("DoubleIcon", module).addDecorator(centered)
-
 export default {
   title: "DoubleIcon",
   component: DoubleIcon,
+  decorators: [centered],
 }
 
 const Template = (args) => <DoubleIcon {...args} />

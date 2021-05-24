@@ -1,6 +1,7 @@
 import React from "react"
 import { Message } from "../components/Message"
 import * as Icons from "../components/Icons"
+import centered from "@storybook/addon-centered/react";
 
 export default {
   title: "Message",
@@ -16,6 +17,7 @@ export default {
         <Story />
       </div>
     ),
+    centered,
   ],
 }
 

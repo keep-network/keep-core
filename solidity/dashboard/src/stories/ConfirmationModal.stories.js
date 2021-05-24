@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import ConfirmationModal from "../components/ConfirmationModal"
-
-storiesOf("ConfirmationModal", module).addDecorator(centered)
 
 export default {
   title: "ConfirmationModal",
@@ -16,6 +13,7 @@ export default {
       action: "onCancel clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <ConfirmationModal {...args} />

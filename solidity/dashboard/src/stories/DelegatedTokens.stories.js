@@ -1,5 +1,4 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import DelegatedTokens from "../components/DelegatedTokens"
 import { Provider } from "react-redux"
@@ -19,8 +18,6 @@ const mockData = {
   undelegationCompletedAt: null,
 }
 
-storiesOf("DelegatedTokens", module).addDecorator(centered)
-
 export default {
   title: "DelegatedTokens",
   component: DelegatedTokens,
@@ -30,6 +27,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
   argTypes: {
     onSubmit: {

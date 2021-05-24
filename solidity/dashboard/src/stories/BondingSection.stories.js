@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { BondingSection } from "../components/BondingSection"
-
-storiesOf("BondingSection", module).addDecorator(centered)
 
 const mockData = [
   {
@@ -56,6 +53,7 @@ const mockData = [
 export default {
   title: "BondingSection",
   component: BondingSection,
+  decorators: [centered],
 }
 
 const Template = (args) => <BondingSection {...args} />

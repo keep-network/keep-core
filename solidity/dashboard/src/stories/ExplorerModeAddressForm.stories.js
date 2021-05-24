@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import ExplorerModeAddressForm from "../components/ExplorerModeAddressForm"
-
-storiesOf("ExplorerModeAddressForm", module).addDecorator(centered)
 
 export default {
   title: "ExplorerModeAddressForm",
@@ -16,6 +13,7 @@ export default {
       action: "onCancel clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <ExplorerModeAddressForm {...args} />

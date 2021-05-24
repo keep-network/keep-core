@@ -2,11 +2,7 @@ import React from "react"
 import AddETHModal from "../components/AddETHModal"
 import { Provider } from "react-redux"
 import store from "../store"
-import { ModalContextProvider } from "../components/Modal"
-import {storiesOf} from "@storybook/react";
-import centered from "@storybook/addon-centered/react";
-
-storiesOf("AddETHModal", module).addDecorator(centered)
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "AddEthModal",
@@ -17,6 +13,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

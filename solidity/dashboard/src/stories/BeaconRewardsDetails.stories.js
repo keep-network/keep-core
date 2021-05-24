@@ -2,6 +2,7 @@ import React from "react"
 import store from "../store"
 import { Provider } from "react-redux"
 import { BeaconRewardsDetails } from "../components/RewardsDetails"
+import centered from "@storybook/addon-centered/react";
 
 export default {
   title: "BeaconRewardsDetails",
@@ -14,6 +15,7 @@ export default {
         </section>
       </Provider>
     ),
+    centered,
   ],
 }
 

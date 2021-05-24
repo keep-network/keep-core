@@ -1,14 +1,12 @@
 import React from "react"
 import Tag from "../components/Tag"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import * as Icons from "../components/Icons"
-
-storiesOf("Tag", module).addDecorator(centered)
 
 export default {
   title: "Tag",
   component: Tag,
+  decorators: [centered],
 }
 
 const Template = (args) => <Tag {...args} />

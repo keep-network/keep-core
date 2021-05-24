@@ -1,11 +1,8 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import AvailableTokenForm from "../components/AvailableTokenForm"
 
 // TODO: COMPONENT WITH HOOK
-
-storiesOf("AvailableTokenForm", module).addDecorator(centered)
 
 export default {
   title: "AvailableTokenForm",
@@ -15,6 +12,7 @@ export default {
       action: "operator selected",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <AvailableTokenForm {...args} />

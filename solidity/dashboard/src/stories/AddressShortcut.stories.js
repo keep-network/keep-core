@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import AddressShortcut from "../components/AddressShortcut"
-
-storiesOf("AddressShortcut", module).addDecorator(centered)
 
 export default {
   title: "AddressShortcut",
@@ -13,6 +10,7 @@ export default {
       action: "onClick clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <AddressShortcut {...args} />

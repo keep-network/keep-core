@@ -1,10 +1,7 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import CreateTokenGrantForm from "../components/CreateTokenGrantForm"
 import Tile from "../components/Tile"
-
-storiesOf("CreateTokenGrantForm", module).addDecorator(centered)
 
 export default {
   title: "CreateTokenGrantForm",
@@ -20,6 +17,7 @@ export default {
         <Story />
       </Tile>
     ),
+    centered,
   ],
 }
 

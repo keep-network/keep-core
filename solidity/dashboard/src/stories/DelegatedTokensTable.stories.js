@@ -1,5 +1,4 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { Provider } from "react-redux"
 import store from "../store"
@@ -63,8 +62,6 @@ const mockDelegatedTokens = [
   },
 ]
 
-storiesOf("DelegatedTokensTable", module).addDecorator(centered)
-
 export default {
   title: "DelegatedTokensTable",
   component: DelegatedTokensTable,
@@ -74,6 +71,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

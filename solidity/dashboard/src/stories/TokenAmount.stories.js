@@ -1,9 +1,11 @@
 import React from "react"
 import TokenAmount from "../components/TokenAmount"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "TokenAmount",
   component: TokenAmount,
+  decorators: [centered],
 }
 
 const Template = (args) => <TokenAmount {...args} />

@@ -1,14 +1,8 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-import { Web3Status } from "../components/Web3Status"
-import { injected } from "../connectors"
-import Web3ContextProvider from "../components/Web3ContextProvider"
 import WithdrawETHModal from "../components/WithdrawETHModal"
 import { Provider } from "react-redux"
 import store from "../store"
-
-storiesOf("WithdrawETHModal", module).addDecorator(centered)
 
 export default {
   title: "WithdrawETHModal",
@@ -19,6 +13,7 @@ export default {
         <Story />
       </Provider>
     ),
+    centered,
   ],
 }
 

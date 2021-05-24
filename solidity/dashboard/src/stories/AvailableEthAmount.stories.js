@@ -1,13 +1,11 @@
 import React from "react"
 import AvailableEthAmount from "../components/AvailableEthAmount"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("AvailableEthAmount", module).addDecorator(centered)
 
 export default {
   title: "AvailableEthAmount",
   component: AvailableEthAmount,
+  decorators: [centered],
 }
 
 const Template = (args) => <AvailableEthAmount {...args} />

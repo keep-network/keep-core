@@ -1,10 +1,7 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { injected } from "../connectors"
 import MetaMaskModal from "../components/MetaMaskModal"
-
-storiesOf("MetaMaskModal", module).addDecorator(centered)
 
 export default {
   title: "MetaMaskModal",
@@ -17,6 +14,7 @@ export default {
       action: "closeModal clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <MetaMaskModal {...args} />

@@ -1,9 +1,6 @@
 import React from "react"
 import AuthorizeContracts from "../components/AuthorizeContracts"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("AuthorizeContracts", module).addDecorator(centered)
 
 const mockFilterDropdownOptions = [
   {
@@ -27,6 +24,7 @@ export default {
       action: "operator selected",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <AuthorizeContracts {...args} />

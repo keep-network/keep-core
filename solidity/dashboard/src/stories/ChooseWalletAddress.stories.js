@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import ChooseWalletAddress from "../components/ChooseWalletAddress"
-
-storiesOf("ChooseWalletAddress", module).addDecorator(centered)
 
 export default {
   title: "ChooseWalletAddress",
@@ -19,6 +16,7 @@ export default {
       action: "prev clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <ChooseWalletAddress {...args} />

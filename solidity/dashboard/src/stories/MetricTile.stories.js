@@ -2,10 +2,7 @@ import React from "react"
 import MetricsTile from "../components/MetricsTile"
 import RewardMultiplier from "../components/liquidity/RewardMultiplier"
 import { APY, ShareOfPool } from "../components/liquidity"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-
-storiesOf("MetricsTile", module).addDecorator(centered)
 
 export default {
   title: "MetricsTile",
@@ -19,6 +16,7 @@ export default {
         <Story />
       </section>
     ),
+    centered,
   ],
 }
 

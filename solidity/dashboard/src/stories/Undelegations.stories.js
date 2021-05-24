@@ -1,6 +1,7 @@
 import React from "react"
 import Undelegations from "../components/Undelegations"
 import moment from "moment";
+import centered from "@storybook/addon-centered/react"
 
 const mockedUndelegations = [
   {
@@ -30,6 +31,7 @@ const mockedUndelegations = [
 export default {
   title: "Undelegations",
   component: Undelegations,
+  decorators: [centered]
 }
 
 const Template = (args) => <Undelegations {...args} />

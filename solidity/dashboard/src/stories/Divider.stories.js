@@ -1,13 +1,11 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
-import Divider from "../components/Divider";
-
-storiesOf("Divider", module).addDecorator(centered)
+import Divider from "../components/Divider"
 
 export default {
   title: "Divider",
   component: Divider,
+  decorators: [centered],
 }
 
 const Template = (args) => <Divider {...args} />

@@ -1,13 +1,11 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { NetworkStatus } from "../components/NetworkStatus"
-
-storiesOf("NetworkStatus", module).addDecorator(centered)
 
 export default {
   title: "NetworkStatus",
   component: NetworkStatus,
+  decorators: [centered],
 }
 
 const Template = (args) => <NetworkStatus {...args} />

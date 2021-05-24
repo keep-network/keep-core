@@ -3,6 +3,7 @@ import { TopUpsDataTable } from "../components/TopUpsDataTable"
 import Tile from "../components/Tile"
 import DataTableSkeleton from "../components/skeletons/DataTableSkeleton"
 import { LoadingOverlay } from "../components/Loadable"
+import centered from "@storybook/addon-centered/react"
 
 const mockedTopUps = [
   {
@@ -35,6 +36,7 @@ export default {
         </LoadingOverlay>
       </section>
     ),
+    centered,
   ],
 }
 

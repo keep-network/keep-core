@@ -1,14 +1,13 @@
 import React from "react"
-import Web3ContextProvider from "../components/Web3ContextProvider"
-import { BrowserRouter } from "react-router-dom"
-import TokenOverview from "../components/TokenOverview"
 import Tooltip from "../components/Tooltip"
 import * as Icons from "../components/Icons"
 import { colors } from "../constants/colors"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "Tooltip",
   component: Tooltip,
+  decorators: [centered],
 }
 
 const Template = (args) => <Tooltip {...args} />

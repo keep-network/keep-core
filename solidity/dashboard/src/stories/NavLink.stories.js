@@ -1,9 +1,6 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import NavLink from "../components/NavLink"
-
-storiesOf("NavLink", module).addDecorator(centered)
 
 export default {
   title: "NavLink",
@@ -13,6 +10,7 @@ export default {
       action: "onMessageClose function called",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <NavLink {...args} />

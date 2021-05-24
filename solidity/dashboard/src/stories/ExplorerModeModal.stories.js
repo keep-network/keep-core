@@ -1,10 +1,7 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import ExplorerModeModal from "../components/ExplorerModeModal"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
-
-storiesOf("ExplorerModeModal", module).addDecorator(centered)
 
 export default {
   title: "ExplorerModeModal",
@@ -17,6 +14,7 @@ export default {
       action: "closeModal clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <ExplorerModeModal {...args} />

@@ -1,10 +1,7 @@
 import React from "react"
-import { storiesOf } from "@storybook/react"
 import centered from "@storybook/addon-centered/react"
 import { TrezorConnector } from "../connectors"
-import TrezorModal from "../components/TrezorModal";
-
-storiesOf("TrezorModal", module).addDecorator(centered)
+import TrezorModal from "../components/TrezorModal"
 
 export default {
   title: "TrezorModal",
@@ -17,6 +14,7 @@ export default {
       action: "closeModal clicked",
     },
   },
+  decorators: [centered],
 }
 
 const Template = (args) => <TrezorModal {...args} />

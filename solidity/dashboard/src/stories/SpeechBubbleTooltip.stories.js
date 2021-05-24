@@ -1,10 +1,12 @@
 import React from "react"
 import { SpeechBubbleTooltip } from "../components/SpeechBubbleTooltip"
 import { colors } from "../constants/colors"
+import centered from "@storybook/addon-centered/react"
 
 export default {
   title: "SpeechBubbleTooltip",
   component: SpeechBubbleTooltip,
+  decorators: [centered],
 }
 
 const Template = (args) => <SpeechBubbleTooltip {...args} />
