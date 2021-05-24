@@ -4,12 +4,10 @@ on:
   push:
     branches:
       - master
-      - "rfc-18/**" # TODO: Remove after testing
     paths:
       - 'solidity/contracts/**'
       - 'solidity/package.json'
       - 'solidity/package-lock.json'
-      - '.github/workflows/npm.yml' # TODO: Remove after testing
 
 jobs:
   npm-migrate-publish-contracts:
@@ -60,4 +58,4 @@ jobs:
       - name: Publish package
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --access public --dry-run # TODO: Remove --dry-run after testing
+        run: npm publish --access public
