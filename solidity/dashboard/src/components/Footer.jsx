@@ -1,5 +1,6 @@
 import React from "react"
-import { LINK } from "../constants/constants";
+import moment from "moment"
+import { LINK } from "../constants/constants"
 
 const links = [
   { label: "Join Discord", url: LINK.discord },
@@ -16,7 +17,7 @@ const Footer = ({ className }) => {
       <ul className="footer__links">{links.map(renderFooterLinkItem)}</ul>
       <div className="footer__signature">
         <p>A Thesis* Build</p>
-        <p>&#169; 2020 Keep, SEZC</p>
+        <p>&#169; {moment().format("YYYY")} Keep, SEZC</p>
         <p>All Rights Reserved.</p>
       </div>
       <a
