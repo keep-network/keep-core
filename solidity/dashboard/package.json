@@ -67,6 +67,7 @@
     "less-loader": "^8.1.1",
     "prettier": "^2.0.4",
     "redux-saga-test-plan": "^4.0.1",
+    "storybook-formik": "^2.1.5",
     "storybook-less-loader": "^0.1.0"
   },
   "browserslist": [
