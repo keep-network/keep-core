@@ -1,14 +1,24 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
-import { Web3Status } from "../components/Web3Status"
+import { Web3StatusView } from "../components/Web3Status"
+import { injected } from "../connectors"
+import { Provider } from "react-redux"
+import store from "../store"
 
 export default {
-  title: "Web3Status",
-  component: Web3Status,
-  decorators: [centered]
+  title: "Web3StatusView",
+  component: Web3StatusView,
+  decorators: [
+    (Story) => (
+      <Provider store={store}>
+        <Story />
+      </Provider>
+    ),
+    centered,
+  ],
 }
 
-const Template = (args) => <Web3Status {...args} />
+const Template = (args) => <Web3StatusView {...args} />
 
 export const NotConnected = Template.bind({})
 NotConnected.args = {
@@ -17,10 +27,9 @@ NotConnected.args = {
   connector: null,
 }
 
-// TODO: Connected - component with hook (useWeb3Context)
-// export const Connected = Template.bind({})
-// Connected.args = {
-//   yourAddress: "0xeF42ac774dD0d3519E7CBFD59F36e52038D4e255",
-//   isConnected: true,
-//   connector: injected,
-// }
+export const Connected = Template.bind({})
+Connected.args = {
+  yourAddress: "0xeF42ac774dD0d3519E7CBFD59F36e52038D4e255",
+  isConnected: true,
+  connector: injected,
+}

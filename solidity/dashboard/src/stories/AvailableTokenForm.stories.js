@@ -2,7 +2,7 @@ import React from "react"
 import centered from "@storybook/addon-centered/react"
 import AvailableTokenForm from "../components/AvailableTokenForm"
 
-// TODO: COMPONENT WITH HOOK
+// TODO: COMPONENT WITH FORMIK AND HOOK
 
 export default {
   title: "AvailableTokenForm",

@@ -29,11 +29,3 @@ Default.args = {
   // withdrawUnbondedEth,
   // withdrawUnbondedEthAsManagedGrantee,
 }
-
-// TODO: Connected - component with hook (useWeb3Context)
-// export const Connected = Template.bind({})
-// Connected.args = {
-//   yourAddress: "0xeF42ac774dD0d3519E7CBFD59F36e52038D4e255",
-//   isConnected: true,
-//   connector: injected,
-// }

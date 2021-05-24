@@ -10,9 +10,7 @@ import { KEEP } from "../utils/token.utils"
 import { WALLETS } from "../constants/constants"
 import CurrentWalletIconTooltip from "./CurrentWalletIconTooltip"
 
-export const Web3Status = () => {
-  const { yourAddress, isConnected, connector } = useWeb3Context()
-
+export const Web3StatusView = ({ yourAddress, isConnected, connector }) => {
   return (
     <div className="web3-status">
       <div className="web3-status__content-wrapper">
@@ -41,6 +39,18 @@ export const Web3Status = () => {
         </div>
       </div>
     </div>
+  )
+}
+
+export const Web3Status = () => {
+  const { yourAddress, isConnected, connector } = useWeb3Context()
+
+  return (
+    <Web3StatusView
+      yourAddress={yourAddress}
+      isConnected={isConnected}
+      connector={connector}
+    />
   )
 }
 
