@@ -1,6 +1,5 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
-import DelegateStakeForm from "../components/DelegateStakeForm"
 import DelegationOverview from "../components/DelegationOverview"
 import { Provider } from "react-redux"
 import store from "../store"
@@ -107,20 +106,20 @@ EmptyData.args = {
   context: "wallet",
 }
 
-// TODO: WithMockedData
-// export const WithMockedData = Template.bind({})
-// WithMockedData.args = {
-//   delegations: mockedDelegations,
-//   undelegations: mockedUndelegations,
-//   isFetching: false,
-//   topUps: mockedAvailableTopUps,
-//   areTopUpsFetching: false,
-//   undelegationPeriod: "1209600",
-//   initializationPeriod: "1",
-//   grants: [],
-//   selectedGrant: {},
-//   context: "wallet",
-// }
+export const WithMockedData = Template.bind({})
+WithMockedData.args = {
+  delegations: mockedDelegations,
+  undelegations: mockedUndelegations,
+  isFetching: false,
+  topUps: mockedAvailableTopUps,
+  areTopUpsFetching: false,
+  undelegationPeriod: "1209600",
+  initializationPeriod: "1",
+  keepTokenBalance: "388850139352913431577157930",
+  grants: [],
+  selectedGrant: {},
+  context: "wallet",
+}
 
 export const FetchingData = Template.bind({})
 FetchingData.args = {

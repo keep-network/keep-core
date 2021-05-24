@@ -22,4 +22,4 @@ const Template = (args) => <Rewards {...args} />
 export const IsFetching = Template.bind({})
 IsFetching.args = { }
 
-// TODO: mock fetched data
+// TODO: with mocked fetched data

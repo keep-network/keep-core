@@ -1,4 +1,4 @@
-import React from "react"
+// import React from "react"
 import { Message } from "../components/Message"
 import * as Icons from "../components/Icons"
 import Modal, {ModalContextProvider} from "../components/Modal"
@@ -7,7 +7,7 @@ import centered from "@storybook/addon-centered/react";
 import {Provider} from "react-redux";
 import store from "../store"
 
-//TODO: Not sure how to write story for this yet
+// TODO: story for Modal
 
 // storiesOf("Modal", module).addDecorator(centered)
 //
