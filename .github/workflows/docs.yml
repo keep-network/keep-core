@@ -60,7 +60,7 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core
+          bucket-path: .
           build-folder: tmp/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
@@ -71,7 +71,7 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}
+          bucket-path: ./${{ github.head_ref }}
           build-folder: tmp/docs
     
   docs-solidity:
@@ -128,7 +128,7 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core
+          bucket-path: .
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
@@ -139,7 +139,7 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}
+          bucket-path: ./${{ github.head_ref }}
           build-folder: ${{ steps.html.outputs.asciidoctor-artifacts }}/docs
 
   docs-pdf:
@@ -172,7 +172,7 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core
+          bucket-path: .
           build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
 
       # A pull_request event is a PR; deploy to preview bucket.
@@ -183,5 +183,5 @@ jobs:
           service-key: ${{ secrets.DOCS_KEEP_NETWORK_UPLOADER_SERVICE_KEY_JSON }}
           project: cfc-production
           bucket-name: docs.keep.network
-          bucket-path: core/${{ github.head_ref }}
+          bucket-path: ./${{ github.head_ref }}
           build-folder: ${{ steps.pdf.outputs.asciidoctor-artifacts }}/docs
