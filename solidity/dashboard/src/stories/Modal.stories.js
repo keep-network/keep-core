@@ -1,11 +1,11 @@
 // import React from "react"
-import { Message } from "../components/Message"
-import * as Icons from "../components/Icons"
-import Modal, {ModalContextProvider} from "../components/Modal"
-import {storiesOf} from "@storybook/react";
-import centered from "@storybook/addon-centered/react";
-import {Provider} from "react-redux";
-import store from "../store"
+// import { Message } from "../components/Message"
+// import * as Icons from "../components/Icons"
+// import Modal, {ModalContextProvider} from "../components/Modal"
+// import {storiesOf} from "@storybook/react";
+// import centered from "@storybook/addon-centered/react";
+// import {Provider} from "react-redux";
+// import store from "../store"
 
 // TODO: story for Modal
 
@@ -24,7 +24,7 @@ import store from "../store"
 //       <Provider store={store}>
 //         <ModalContextProvider>
 //           <Story />
-//         </ModalContextProvider>
+//         </ModalContextProvider>RandomBeaconRewardsTable
 //       </Provider>
 //     ),
 //   ],

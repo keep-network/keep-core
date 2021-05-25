@@ -1,18 +1,14 @@
-import React from "react"
-import { storiesOf } from "@storybook/react"
+// import React from "react"
+import RandomBeaconRewardsTable from "../components/RandomBeaconRewardsTable"
 import centered from "@storybook/addon-centered/react"
-import PageWrapper from "../components/PageWrapper"
-import PendingUndelegation from "../components/PendingUndelegation";
-import RandomBeaconRewardsTable from "../components/RandomBeaconRewardsTable";
-
-// storiesOf("PendingUndelegation", module).addDecorator(centered)
 
 export default {
   title: "RandomBeaconRewardsTable",
   component: RandomBeaconRewardsTable,
+  decorators: [centered],
 }
 
-const Template = (args) => <RandomBeaconRewardsTable {...args} />
+// const Template = (args) => <RandomBeaconRewardsTable {...args} />
 
 // TODO WithMockedData
 // export const WithMockedData = Template.bind({})
