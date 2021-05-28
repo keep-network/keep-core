@@ -205,22 +205,22 @@ function* observeEvents() {
 
 function* removeOldDelegationWatcher(contract, eventName) {
   // Create subscription channel.
-  const contractEventCahnnel = yield call(
-    createSubcribeToContractEventChannel,
-    contract,
-    eventName
-  )
+  // const contractEventCahnnel = yield call(
+  //   createSubcribeToContractEventChannel,
+  //   contract,
+  //   eventName
+  // )
 
-  // Observe and dispatch an action that updates copy-stake reducer.
-  while (true) {
-    try {
-      const {
-        returnValues: { operator },
-      } = yield take(contractEventCahnnel)
-      yield put({ type: "copy-stake/remove_old_delegation", payload: operator })
-    } catch (error) {
-      console.error(`Failed subscribing to ${eventName} event`, error)
-      contractEventCahnnel.close()
-    }
-  }
+  // // Observe and dispatch an action that updates copy-stake reducer.
+  // while (true) {
+  //   try {
+  //     const {
+  //       returnValues: { operator },
+  //     } = yield take(contractEventCahnnel)
+  //     yield put({ type: "copy-stake/remove_old_delegation", payload: operator })
+  //   } catch (error) {
+  //     console.error(`Failed subscribing to ${eventName} event`, error)
+  //     contractEventCahnnel.close()
+  //   }
+  // }
 }

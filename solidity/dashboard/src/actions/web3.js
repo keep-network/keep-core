@@ -45,20 +45,20 @@ export const keepTokenApproveAndCall = (data, meta) => {
   }
 }
 
-export const depositEthForOperator = (operatorAddress, amountInWei, meta) => {
-  return {
-    type: WEB3_SEND_TRANSACTION,
-    payload: {
-      contractName: KEEP_BONDING_CONTRACT_NAME,
-      methodName: "deposit",
-      args: [operatorAddress],
-      options: { value: amountInWei },
-    },
-    meta,
-  }
-}
+// export const depositEthForOperator = (operatorAddress, amountInWei, meta) => {
+//   return {
+//     type: WEB3_SEND_TRANSACTION,
+//     payload: {
+//       contractName: KEEP_BONDING_CONTRACT_NAME,
+//       methodName: "deposit",
+//       args: [operatorAddress, amountInWei],
+//       options: { value: amountInWei }
+//     },
+//     meta,
+//   }
+// }
 
-export const withdrawUnbondedEth = (weiToWithdraw, operatorAddress, meta) => {
+export const withdrawUnbondedBondingToken = (weiToWithdraw, operatorAddress, meta) => {
   return {
     type: WEB3_SEND_TRANSACTION,
     payload: {
@@ -70,7 +70,7 @@ export const withdrawUnbondedEth = (weiToWithdraw, operatorAddress, meta) => {
   }
 }
 
-export const withdrawUnbondedEthAsManagedGrantee = (
+export const withdrawUnbondedBondingTokenAsManagedGrantee = (
   weiToWithdraw,
   operatorAddress,
   managedGrantAddress,

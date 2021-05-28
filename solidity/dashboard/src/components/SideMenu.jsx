@@ -13,6 +13,7 @@ import Divider from "./Divider"
 import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
+import DebugMintingPage from "../pages/debugMinting"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -49,6 +50,7 @@ export const SideMenu = (props) => {
             EarningsPage.route,
             RewardsPage.route,
             { ...LiquidityPage.route, withNewLabel: true },
+            DebugMintingPage.route
           ]}
         />
         <NavLinkSection

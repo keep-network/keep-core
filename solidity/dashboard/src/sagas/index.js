@@ -7,6 +7,8 @@ import * as copyStakeSaga from "./copy-stake"
 import * as subscriptions from "./subscriptions"
 import * as keepTokenBalance from "./keep-balance"
 import * as rewards from "./rewards"
+import * as bonding from "./bonding"
+import * as debugMinting from "./debugMinting"
 import * as liquidityRewards from "./liquidity-rewards"
 
 export default function* rootSaga() {
@@ -20,6 +22,8 @@ export default function* rootSaga() {
       ...Object.values(subscriptions),
       ...Object.values(keepTokenBalance),
       ...Object.values(rewards),
+      ...Object.values(bonding),
+      ...Object.values(debugMinting),
       ...Object.values(liquidityRewards),
     ].map(fork)
   )

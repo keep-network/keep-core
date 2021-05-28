@@ -1,4 +1,5 @@
 import KeepToken from "@keep-network/keep-core/artifacts/KeepToken.json"
+import BondERC20 from "@keep-network/keep-ecdsa/artifacts/BondERC20.json"
 import TokenStaking from "@keep-network/keep-core/artifacts/TokenStaking.json"
 import TokenGrant from "@keep-network/keep-core/artifacts/TokenGrant.json"
 import KeepRandomBeaconOperator from "@keep-network/keep-core/artifacts/KeepRandomBeaconOperator.json"
@@ -32,6 +33,7 @@ import {
   MANAGED_GRANT_FACTORY_CONTRACT_NAME,
   KEEP_BONDING_CONTRACT_NAME,
   TBTC_TOKEN_CONTRACT_NAME,
+  BOND_ERC20_CONTRACT_NAME,
   TBTC_SYSTEM_CONTRACT_NAME,
   TOKEN_STAKING_ESCROW_CONTRACT_NAME,
   BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME,
@@ -101,10 +103,10 @@ const contracts = [
     { contractName: BONDED_ECDSA_KEEP_FACTORY_CONTRACT_NAME },
     BondedECDSAKeepFactory,
   ],
-  [
-    { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
-    StakingPortBacker,
-  ],
+  // [
+  //   { contractName: STAKING_PORT_BACKER_CONTRACT_NAME, withDeployBlock: true },
+  //   StakingPortBacker,
+  // ],
   [{ contractName: "beaconRewardsContract" }, BeaconRewards],
   [
     { contractName: "ECDSARewardsDistributorContract", withDeployBlock: true },
@@ -214,12 +216,12 @@ export async function getContracts(web3) {
     )
   }
 
-  const oldTokenStakingArtifact = await getOldTokenStakingArtifact()
-  web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME] = await getContract(
-    web3,
-    oldTokenStakingArtifact,
-    { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
-  )
+  // const oldTokenStakingArtifact = await getOldTokenStakingArtifact()
+  // web3Contracts[OLD_TOKEN_STAKING_CONTRACT_NAME] = await getContract(
+  //   web3,
+  //   oldTokenStakingArtifact,
+  //   { contractName: OLD_TOKEN_STAKING_CONTRACT_NAME }
+  // )
 
   resovleContractsDeferred(web3Contracts)
   return web3Contracts
@@ -312,4 +314,8 @@ const getOldTokenStakingArtifact = async () => {
 
 export const createERC20Contract = (web3, address) => {
   return createWeb3ContractInstance(web3, IERC20.abi, address)
+}
+
+export const createBondERC20Contract = (web3, address) => {
+  return createWeb3ContractInstance(web3, BondERC20.abi, address)
 }

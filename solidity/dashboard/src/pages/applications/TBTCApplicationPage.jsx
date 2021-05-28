@@ -57,16 +57,16 @@ const TBTCApplicationPage = ({
         return
       }
 
-      const availableETHInWei = arithmeticOpration(
-        obsoleteData.availableETHInWei,
+      const availableTokensInWei = arithmeticOpration(
+        obsoleteData.availableTokensInWei,
         amount
       ).toString()
-      const availableETH = web3Utils.fromWei(availableETHInWei, "ether")
+      const availableTokens = web3Utils.fromWei(availableTokensInWei, "ether")
       const updatedBondinData = [...bondingState.data]
       updatedBondinData[indexInArray] = {
         ...obsoleteData,
-        availableETH,
-        availableETHInWei,
+        availableTokens,
+        availableTokensInWei,
       }
       updateBondinData(updatedBondinData)
     },

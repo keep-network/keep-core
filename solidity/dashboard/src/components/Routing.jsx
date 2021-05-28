@@ -11,6 +11,7 @@ import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 import RewardsPage from "../pages/rewards"
 import LiquidityPage from "../pages/liquidity"
+import DebugMintingPage from "../pages/debugMinting"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 const pages = [
@@ -22,6 +23,7 @@ const pages = [
   ApplicationsPage,
   EarningsPage,
   RewardsPage,
+  DebugMintingPage,
   LiquidityPage,
   ResourcesPage,
 ]

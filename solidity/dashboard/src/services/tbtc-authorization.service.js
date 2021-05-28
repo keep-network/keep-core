@@ -112,7 +112,7 @@ const fetchBondingData = async (web3Context) => {
       const operatorAddress = web3Utils.toChecksumAddress(
         createdBonds[i].operator
       )
-      const bondedEth = await fetchLockedBondAmount(
+      const bondedTokens = await fetchLockedBondAmount(
         web3Context,
         operatorAddress,
         createdBonds[i].holder,
@@ -121,9 +121,9 @@ const fetchBondingData = async (web3Context) => {
 
       const currentBond = operatorBondingDataMap.get(operatorAddress)
       if (currentBond) {
-        operatorBondingDataMap.set(operatorAddress, add(currentBond, bondedEth))
+        operatorBondingDataMap.set(operatorAddress, add(currentBond, bondedTokens))
       } else {
-        operatorBondingDataMap.set(operatorAddress, bondedEth)
+        operatorBondingDataMap.set(operatorAddress, bondedTokens)
       }
     }
 
@@ -133,12 +133,12 @@ const fetchBondingData = async (web3Context) => {
         web3Context,
         operatorAddress
       )
-      const availableEth = await fetchAvailableAmount(
+      const availableTokens = await fetchAvailableAmount(
         web3Context,
         operatorAddress
       )
 
-      const bondedEth = operatorBondingDataMap.get(operatorAddress)
+      const bondedTokens = operatorBondingDataMap.get(operatorAddress)
         ? operatorBondingDataMap.get(operatorAddress)
         : 0
 
@@ -147,9 +147,9 @@ const fetchBondingData = async (web3Context) => {
         managedGrantAddress: managedGrantInfo.address,
         isWithdrawableForOperator,
         stakeAmount: delegatedTokens.amount,
-        bondedETH: web3Utils.fromWei(bondedEth.toString(), "ether"),
-        availableETH: web3Utils.fromWei(availableEth.toString(), "ether"),
-        availableETHInWei: availableEth,
+        bondedTokens: web3Utils.fromWei(bondedTokens.toString(), "ether"),
+        availableTokens: web3Utils.fromWei(availableTokens.toString(), "ether"),
+        availableTokensInWei: availableTokens,
       }
 
       bondingData.push(bonding)
@@ -272,22 +272,22 @@ const fetchOperatorsOf = async (web3Context, yourAddress) => {
     })
   }
 
-  const copiedOperatorsFromLiquidTokens = await getCopiedOperatorsFromLiquidTokens(
-    defaultAccount,
-    Array.from(operators.keys())
-  )
-  for (let i = 0; i < copiedOperatorsFromLiquidTokens.length; i++) {
-    operators.set(
-      web3Utils.toChecksumAddress(copiedOperatorsFromLiquidTokens[i]),
-      {
-        managedGrantInfo: {},
-        // From the `TokenStaking` contract's perspective,
-        // the `StakingPortBacker` contract is an owner of the copied delegation,
-        // so the "real" owner cannot withdraw bond.
-        isWithdrawableForOperator: false,
-      }
-    )
-  }
+  // const copiedOperatorsFromLiquidTokens = await getCopiedOperatorsFromLiquidTokens(
+  //   defaultAccount,
+  //   Array.from(operators.keys())
+  // )
+  // for (let i = 0; i < copiedOperatorsFromLiquidTokens.length; i++) {
+  //   operators.set(
+  //     web3Utils.toChecksumAddress(copiedOperatorsFromLiquidTokens[i]),
+  //     {
+  //       managedGrantInfo: {},
+  //       // From the `TokenStaking` contract's perspective,
+  //       // the `StakingPortBacker` contract is an owner of the copied delegation,
+  //       // so the "real" owner cannot withdraw bond.
+  //       isWithdrawableForOperator: false,
+  //     }
+  //   )
+  // }
 
   const ownerAddress = await contractService.makeCall(
     web3Context,

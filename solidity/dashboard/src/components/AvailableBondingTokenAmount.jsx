@@ -14,7 +14,7 @@ const styles = {
   },
 }
 
-const AvailableEthAmount = React.memo(({ availableETHInWei, availableETH }) => {
+const AvailableBondingTokenAmount = React.memo(({ availableTokensInWei, availableTokens }) => {
   return (
     <>
       <Tooltip
@@ -23,16 +23,16 @@ const AvailableEthAmount = React.memo(({ availableETHInWei, availableETH }) => {
         triggerComponent={() => {
           return (
             <span className="text-big text-grey-70" style={styles.ethAmount}>
-              {displayEthAmount(availableETHInWei)}
+              {displayEthAmount(availableTokensInWei)}
             </span>
           )
         }}
       >
-        {availableETH}&nbsp;ETH
+        {availableTokens}&nbsp;ERC20
       </Tooltip>
-      <span className="text-grey-60">&nbsp;ETH</span>
+      <span className="text-grey-60">&nbsp;ERC20</span>
     </>
   )
 })
 
-export default AvailableEthAmount
+export default AvailableBondingTokenAmount

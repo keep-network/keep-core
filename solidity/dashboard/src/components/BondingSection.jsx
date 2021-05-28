@@ -5,9 +5,9 @@ import AddressShortcut from "./AddressShortcut"
 import Button from "./Button"
 import { displayAmount } from "../utils/token.utils"
 import { useModal } from "../hooks/useModal"
-import AddEthModal from "./AddETHModal"
-import WithdrawEthModal from "./WithdrawETHModal"
-import AvailableEthAmount from "./AvailableEthAmount"
+import AddBondingTokenModal from "./AddBondingTokenModal"
+import WithdrawBondingTokenModal from "./WithdrawBondingTokenModal"
+import AvailableBondingTokenAmount from "./AvailableBondingTokenAmount"
 import { gt } from "../utils/arithmetics.utils"
 
 export const BondingSection = ({ data }) => {
@@ -16,13 +16,13 @@ export const BondingSection = ({ data }) => {
       <DataTable
         data={data}
         itemFieldId="operatorAddress"
-        title="Add ETH for Bonding"
+        title="Add ERC20 for Bonding"
         subtitle={
           <div>
-            Add an amount of ETH to the available balance to be eligible for
+            Add an amount of ERC20 to the available balance to be eligible for
             signing group selection.&nbsp;
             <span className="text-bold text-validation">
-              NOTE: Withdrawn ETH will go to the beneficiary address.
+              NOTE: Withdrawn ERC20 will go to the beneficiary address.
             </span>
           </div>
         }
@@ -42,16 +42,16 @@ export const BondingSection = ({ data }) => {
             `${displayAmount(stakeAmount)} KEEP`
           }
         />
-        <Column header="bonded eth" field="bondedETH" />
+        <Column header="bonded ERC20" field="bondedTokens" />
         <Column
-          header="available eth"
-          field="availableETH"
-          renderContent={renderAvailableEthContent}
+          header="available ERC20"
+          field="availableTokens"
+          renderContent={renderAvailableBondingTokensContent}
         />
         <Column
           header=""
           headerStyle={{ textAlign: "right", colSpan: "2" }}
-          field="availableETH"
+          field="availableTokens"
           renderContent={(item) => {
             return <ActionCell {...item} />
           }}
@@ -61,14 +61,14 @@ export const BondingSection = ({ data }) => {
   )
 }
 
-const renderAvailableEthContent = (data) => <AvailableEthAmount {...data} />
+const renderAvailableBondingTokensContent = (data) => <AvailableBondingTokenAmount {...data} />
 
 export default React.memo(BondingSection)
 
 const ActionCell = React.memo(
   ({
-    availableETH,
-    availableETHInWei,
+    availableTokens,
+    availableTokensInWei,
     operatorAddress,
     managedGrantAddress,
     isWithdrawableForOperator,
@@ -77,19 +77,19 @@ const ActionCell = React.memo(
 
     const onBtnClick = (event) => {
       const action = event.currentTarget.id
-      const title = action === "add" ? "Add ETH" : "Withdraw ETH"
+      const title = action === "add" ? "Add ERC20" : "Withdraw ERC20"
 
       const component =
         action === "add" ? (
-          <AddEthModal
+          <AddBondingTokenModal
             operatorAddress={operatorAddress}
             closeModal={closeModal}
           />
         ) : (
-          <WithdrawEthModal
+          <WithdrawBondingTokenModal
             operatorAddress={operatorAddress}
-            availableETH={availableETH}
-            availableETHInWei={availableETHInWei}
+            availableTokens={availableTokens}
+            availableTokensInWei={availableTokensInWei}
             closeModal={closeModal}
             managedGrantAddress={managedGrantAddress}
           />
@@ -105,13 +105,13 @@ const ActionCell = React.memo(
             onClick={onBtnClick}
             className="btn btn-secondary btn-sm"
           >
-            add eth
+            add ERC20
           </Button>
           <Button
             id="withdraw"
             onClick={onBtnClick}
             className="btn btn-secondary btn-sm"
-            disabled={!(isWithdrawableForOperator && gt(availableETHInWei, 0))}
+            disabled={!(isWithdrawableForOperator && gt(availableTokensInWei, 0))}
           >
             withdraw
           </Button>

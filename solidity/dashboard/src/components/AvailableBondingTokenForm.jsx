@@ -4,7 +4,7 @@ import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import FormInput from "./FormInput"
 import { colors } from "../constants/colors"
 
-const AvailableETHForm = ({
+const AvailableBondingTokenForm = ({
   onSubmit,
   onCancel,
   submitBtnText,
@@ -15,9 +15,9 @@ const AvailableETHForm = ({
   return (
     <form>
       <FormInput
-        name="ethAmount"
+        name="tokenAmount"
         type="text"
-        label="ETH Amount"
+        label="ERC20 Amount"
         placeholder="0"
       />
       <div
@@ -46,4 +46,4 @@ const AvailableETHForm = ({
   )
 }
 
-export default React.memo(AvailableETHForm)
+export default React.memo(AvailableBondingTokenForm)
