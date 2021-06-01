@@ -43,18 +43,17 @@ const Modal = React.memo(
                   : ""
               }`}
             >
-              {!isFullScreen ||
-                (!hideTitleBar && (
-                  <div className="modal-title">
-                    <h4 className="text-darker-grey">{props.title}</h4>
-                    <div className="modal-close" onClick={closeModal}>
-                      <Icons.Cross
-                        width={crossIconWidth}
-                        height={crossIconHeight}
-                      />
-                    </div>
+              {!isFullScreen && !hideTitleBar && (
+                <div className="modal-title">
+                  <h4 className="text-darker-grey">{props.title}</h4>
+                  <div className="modal-close" onClick={closeModal}>
+                    <Icons.Cross
+                      width={crossIconWidth}
+                      height={crossIconHeight}
+                    />
                   </div>
-                ))}
+                </div>
+              )}
               <div className="modal-content">{props.children}</div>
             </div>
           </div>,
