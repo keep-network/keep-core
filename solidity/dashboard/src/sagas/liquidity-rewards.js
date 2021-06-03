@@ -1,5 +1,22 @@
-import { takeLatest, takeEvery, fork, call, put } from "redux-saga/effects"
-import { submitButtonHelper, logError, getLPRewardsWrapper } from "./utils"
+import {
+  takeLatest,
+  takeEvery,
+  fork,
+  call,
+  put,
+  select,
+  delay,
+} from "redux-saga/effects"
+import BigNumber from "bignumber.js"
+import moment from "moment"
+import { takeOnlyOnce } from "./effects"
+import {
+  submitButtonHelper,
+  logError,
+  getLPRewardsWrapper,
+  getWeb3Context,
+  identifyTaskByAddress,
+} from "./utils"
 import { sendTransaction } from "./web3"
 import { LiquidityRewardsFactory } from "../services/liquidity-rewards"
 import { gt, percentageOf, eq } from "../utils/arithmetics.utils"
@@ -7,6 +24,8 @@ import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 import { getWsUrl } from "../connectors/utils"
 import { initializeWeb3, createLPRewardsContract } from "../contracts"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
+import { showMessage } from "../actions/messages"
+import { messageType } from "../components/Message"
 
 function* fetchAllLiquidtyRewardsData(action) {
   const { address } = action.payload
@@ -52,6 +71,10 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 
     let reward = 0
     let shareOfPoolInPercent = 0
+    let lpTokenBalance = {
+      token0: 0,
+      token1: 0,
+    }
     if (gt(lpBalance, 0)) {
       // Fetching available reward balance from `LPRewards` contract.
       reward = yield call(
@@ -61,7 +84,17 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
       )
       // % of total pool in the `LPRewards` contract.
       shareOfPoolInPercent = percentageOf(lpBalance, totalSupply).toString()
+
+      lpTokenBalance = yield call(
+        [LiquidityRewards, LiquidityRewards.calculateLPTokenBalance],
+        lpBalance
+      )
     }
+
+    const rewardMultiplier = yield call(
+      [LiquidityRewards, LiquidityRewards.calculateRewardMultiplier],
+      address
+    )
 
     yield put({
       type: `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`,
@@ -72,6 +105,8 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
         wrappedTokenBalance,
         reward,
         shareOfPoolInPercent,
+        lpTokenBalance,
+        rewardMultiplier,
       },
     })
   } catch (error) {
@@ -84,10 +119,106 @@ function* fetchLiquidityRewardsData(liquidityRewardPair, address) {
 }
 
 export function* watchFetchLiquidityRewardsData() {
-  yield takeLatest(
+  yield takeOnlyOnce(
     "liquidity_rewards/fetch_data_request",
+    identifyTaskByAddress,
     fetchAllLiquidtyRewardsData
   )
+}
+
+export function* watchLiquidityRewardNotifications() {
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
+  // for the first iteration update the lastNotificationRewardAmount variable in redux without showing message
+  let displayMessage = false
+  while (true) {
+    for (const pairName of Object.keys(LIQUIDITY_REWARD_PAIRS)) {
+      yield fork(
+        processLiquidityRewardEarnedNotification,
+        pairName,
+        defaultAccount,
+        displayMessage
+      )
+    }
+    displayMessage = true
+    yield delay(moment.duration(15, "minutes").asMilliseconds())
+  }
+}
+
+function* processLiquidityRewardEarnedNotification(
+  liquidityRewardPairName,
+  address,
+  displayMessage
+) {
+  const liquidityRewardPair = LIQUIDITY_REWARD_PAIRS[liquidityRewardPairName]
+
+  /** @type LiquidityRewards */
+  const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
+  const { liquidityRewards } = yield select()
+  const lastNotificationRewardAmount = new BigNumber(
+    liquidityRewards[liquidityRewardPairName].lastNotificationRewardAmount
+  )
+  const currentReward = yield call(
+    [LiquidityRewards, LiquidityRewards.rewardBalance],
+    address
+  )
+  const displayedMessages = yield select((state) => state.messages)
+  const liquidityRewardNotificationAlreadyDisplayed = displayedMessages.some(
+    (message) => {
+      return message.messageType === messageType.LIQUIDITY_REWARDS_EARNED
+    }
+  )
+  // show the notification if the rewardBalance from LPRewardsContract is greater
+  // than the reward amount that was last time the notification was displayed
+  if (gt(currentReward, lastNotificationRewardAmount) && displayMessage) {
+    const {
+      liquidityRewardNotification: { pairsDisplayed },
+    } = yield select((state) => state.notificationsData)
+
+    // display notification if not already displayed
+    if (!liquidityRewardNotificationAlreadyDisplayed) {
+      yield put(
+        showMessage({
+          messageType: messageType.LIQUIDITY_REWARDS_EARNED,
+          messageProps: {
+            sticky: true,
+          },
+        })
+      )
+    }
+
+    // check if liquidity pair is already in displayed notification
+    if (
+      !pairsDisplayed.some(
+        (pairDisplayed) => pairDisplayed === liquidityRewardPairName
+      )
+    ) {
+      yield put({
+        type:
+          "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
+        payload: [...pairsDisplayed, liquidityRewardPairName],
+      })
+    }
+
+    yield put({
+      type: `liquidity_rewards/${liquidityRewardPairName}_reward_updated`,
+      payload: {
+        liquidityRewardPairName,
+        reward: currentReward,
+      },
+    })
+  }
+
+  // save last notification reward amount for future comparisons
+  yield put({
+    type: `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`,
+    payload: {
+      liquidityRewardPairName,
+      lastNotificationRewardAmount: currentReward,
+    },
+  })
 }
 
 function* stakeTokens(action) {

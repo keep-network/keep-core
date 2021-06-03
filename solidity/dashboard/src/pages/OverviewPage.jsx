@@ -13,17 +13,25 @@ import { useSelector, useDispatch } from "react-redux"
 import { useWeb3Context } from "../components/WithWeb3Context"
 import DelegationPage from "./delegation"
 import * as Icons from "../components/Icons"
+import { useWeb3Address } from "../components/WithWeb3Context"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
+  const address = useWeb3Address()
   const dispatch = useDispatch()
 
   useEffect(() => {
     if (isConnected) {
-      dispatch({ type: "staking/fetch_delegations_request" })
-      dispatch({ type: "token-grant/fetch_grants_request" })
+      dispatch({
+        type: "staking/fetch_delegations_request",
+        payload: { address },
+      })
+      dispatch({
+        type: "token-grant/fetch_grants_request",
+        payload: { address },
+      })
     }
-  }, [dispatch, isConnected])
+  }, [dispatch, isConnected, address])
 
   const keepToken = useSelector((state) => state.keepTokenBalance)
   const {
@@ -133,7 +141,9 @@ const OverviewFirstSection = () => {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href={"https://balancer.exchange/#/swap"}
+            href={
+              "https://balancer.exchange/#/swap/ether/0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"
+            }
             className="text-black mr-2"
           >
             Balancer
@@ -144,7 +154,9 @@ const OverviewFirstSection = () => {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href={"https://app.uniswap.org/#/swap"}
+            href={
+              "https://app.uniswap.org/#/swap?inputCurrency=ETH&outputCurrency=0x85eee30c52b0b379b046fb0f85f4f3dc3009afec"
+            }
             className="text-black"
           >
             Uniswap

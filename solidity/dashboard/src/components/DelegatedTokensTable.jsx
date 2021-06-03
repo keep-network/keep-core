@@ -1,6 +1,6 @@
 import React, { useCallback } from "react"
 import { formatDate } from "../utils/general.utils"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import AddressShortcut from "./AddressShortcut"
 import UndelegateStakeButton from "./UndelegateStakeButton"
 import StatusBadge, { BADGE_STATUS } from "./StatusBadge"
@@ -9,7 +9,7 @@ import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import { SubmitButton } from "./Button"
 import { useModal } from "../hooks/useModal"
-import AddTopUpModal from "./AddTopUpModal"
+import AddTopUpModal, { TopUpInitiatedConfirmationModal } from "./AddTopUpModal"
 import { connect } from "react-redux"
 import web3Utils from "web3-utils"
 
@@ -21,7 +21,7 @@ const DelegatedTokensTable = ({
   addKeep,
   undelegationPeriod,
 }) => {
-  const { openConfirmationModal } = useModal()
+  const { openConfirmationModal, openModal } = useModal()
 
   const getAvailableToStakeFromGrant = useCallback(
     (grantId) => {
@@ -63,6 +63,21 @@ const DelegatedTokensTable = ({
       },
       awaitingPromise
     )
+    try {
+      await awaitingPromise.promise
+      openModal(
+        <TopUpInitiatedConfirmationModal
+          {...delegationData}
+          addedAmount={KEEP.fromTokenUnit(amount).toString()}
+          currentAmount={delegationData.amount}
+        />,
+        {
+          title: "Add KEEP",
+        }
+      )
+    } catch (error) {
+      console.error("Unexpected error", error)
+    }
   }
 
   return (
@@ -76,7 +91,9 @@ const DelegatedTokensTable = ({
         <Column
           header="amount"
           field="amount"
-          renderContent={({ amount }) => `${displayAmount(amount)} KEEP`}
+          renderContent={({ amount }) =>
+            `${KEEP.displayAmountWithSymbol(amount)}`
+          }
         />
         <Column
           header="status"

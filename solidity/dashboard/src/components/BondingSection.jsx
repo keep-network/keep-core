@@ -3,12 +3,13 @@ import Tile from "./Tile"
 import { DataTable, Column } from "./DataTable"
 import AddressShortcut from "./AddressShortcut"
 import Button from "./Button"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP, ETH } from "../utils/token.utils"
 import { useModal } from "../hooks/useModal"
 import AddEthModal from "./AddETHModal"
 import WithdrawEthModal from "./WithdrawETHModal"
 import AvailableEthAmount from "./AvailableEthAmount"
 import { gt } from "../utils/arithmetics.utils"
+import TokenAmount from "./TokenAmount"
 
 export const BondingSection = ({ data }) => {
   return (
@@ -39,10 +40,14 @@ export const BondingSection = ({ data }) => {
           header="stake"
           field="stakeAmount"
           renderContent={({ stakeAmount }) =>
-            `${displayAmount(stakeAmount)} KEEP`
+            `${KEEP.displayAmountWithSymbol(stakeAmount)}`
           }
         />
-        <Column header="bonded eth" field="bondedETH" />
+        <Column
+          header="bonded eth"
+          field="bondedETH"
+          renderContent={renderBondedETHContent}
+        />
         <Column
           header="available eth"
           field="availableETH"
@@ -60,7 +65,14 @@ export const BondingSection = ({ data }) => {
     </Tile>
   )
 }
-
+const renderBondedETHContent = ({ bondedETHInWei }) => (
+  <TokenAmount
+    token={ETH}
+    amount={bondedETHInWei}
+    amountClassName=""
+    symbolClassName=""
+  />
+)
 const renderAvailableEthContent = (data) => <AvailableEthAmount {...data} />
 
 export default React.memo(BondingSection)

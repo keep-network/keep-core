@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from "react"
+import React, { useEffect, useCallback, useState, useMemo } from "react"
 import AuthorizeContracts from "../../components/AuthorizeContracts"
 import { tbtcAuthorizationService } from "../../services/tbtc-authorization.service"
 import { useFetchData } from "../../hooks/useFetchData"
@@ -10,7 +10,10 @@ import {
 } from "../../utils/array.utils"
 import { add, sub } from "../../utils/arithmetics.utils"
 import web3Utils from "web3-utils"
-import { KEEP_BONDING_CONTRACT_NAME } from "../../constants/constants"
+import {
+  KEEP_BONDING_CONTRACT_NAME,
+  AUTH_CONTRACTS_LABEL,
+} from "../../constants/constants"
 import { LoadingOverlay } from "../../components/Loadable"
 import { isSameEthAddress } from "../../utils/general.utils"
 import DataTableSkeleton from "../../components/skeletons/DataTableSkeleton"
@@ -22,6 +25,7 @@ import {
 import { connect } from "react-redux"
 import { getBondedECDSAKeepFactoryAddress } from "../../contracts"
 import EmptyStatePage from "./EmptyStatePage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const initialData = []
 const TBTCApplicationPage = ({
@@ -30,17 +34,28 @@ const TBTCApplicationPage = ({
   deauthorizeSortitionPoolContract,
 }) => {
   const [selectedOperator, setOperator] = useState({})
+  const address = useWeb3Address()
 
   // fetch data from service
-  const [tbtcAuthState, updateTbtcAuthData] = useFetchData(
+  const [tbtcAuthState, updateTbtcAuthData, , setAuthDataArgs] = useFetchData(
     tbtcAuthorizationService.fetchTBTCAuthorizationData,
-    initialData
+    initialData,
+    address
   )
   // fetch bonding data
-  const [bondingState, updateBondinData] = useFetchData(
+  const [bondingState, updateBondinData, , setBondingArgs] = useFetchData(
     tbtcAuthorizationService.fetchBondingData,
-    initialData
+    initialData,
+    address
   )
+
+  useEffect(() => {
+    setBondingArgs([address])
+  }, [setBondingArgs, address])
+
+  useEffect(() => {
+    setAuthDataArgs([address])
+  }, [setAuthDataArgs, address])
 
   const unbondedValueUpdated = useCallback(
     (event, arithmeticOpration = add) => {
@@ -134,7 +149,7 @@ const TBTCApplicationPage = ({
   const authorizeContract = useCallback(
     async (data, awaitingPromise) => {
       const { operatorAddress, contractName } = data
-      if (contractName === "TBTCSystem") {
+      if (contractName === AUTH_CONTRACTS_LABEL.TBTC_SYSTEM) {
         const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
 
         authorizeSortitionPoolContract(

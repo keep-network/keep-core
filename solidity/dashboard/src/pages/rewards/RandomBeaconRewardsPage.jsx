@@ -4,14 +4,14 @@ import TokenAmount from "../../components/TokenAmount"
 import { SubmitButton } from "../../components/Button"
 import { BeaconRewardsDetails } from "../../components/RewardsDetails"
 // import StakeDropChart from "../../components/StakeDropChart"
-import { useWeb3Context } from "../../components/WithWeb3Context"
 import { TokenAmountSkeleton } from "../../components/skeletons"
 import EmptyStatePage from "./EmptyStatePage"
 import { gt } from "../../utils/arithmetics.utils"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const RandomBeaconRewardsPage = () => {
   const dispatch = useDispatch()
-  const { yourAddress } = useWeb3Context()
+  const yourAddress = useWeb3Address()
   const { beaconRewardsFetching, becaonRewardsBalance } = useSelector(
     (state) => state.rewards
   )
@@ -19,7 +19,7 @@ const RandomBeaconRewardsPage = () => {
   useEffect(() => {
     dispatch({
       type: "rewards/beacon_fetch_distributed_rewards_request",
-      payload: yourAddress,
+      payload: { address: yourAddress },
     })
   }, [dispatch, yourAddress])
 
@@ -59,7 +59,7 @@ const Balance = ({
       {isBalanceFetching ? (
         <TokenAmountSkeleton />
       ) : (
-        <TokenAmount amount={rewardsBalance} currencySymbol="KEEP" />
+        <TokenAmount amount={rewardsBalance} withIcon withMetricSuffix />
       )}
       {onWithdrawAll && (
         <SubmitButton

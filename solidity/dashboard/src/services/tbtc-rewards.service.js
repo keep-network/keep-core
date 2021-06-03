@@ -1,27 +1,31 @@
-import { contractService } from "./contracts.service"
+import web3Utils from "web3-utils"
 import {
   TBTC_TOKEN_CONTRACT_NAME,
-  TOKEN_STAKING_CONTRACT_NAME,
   TBTC_SYSTEM_CONTRACT_NAME,
 } from "../constants/constants"
 import {
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
   createDepositContractInstance,
   createBondedECDSAKeepContractInstance,
+  ContractsLoaded,
+  Web3Loaded,
 } from "../contracts"
-import web3Utils from "web3-utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { isEmptyArray } from "../utils/array.utils"
 
-const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
+const fetchTBTCRewards = async (beneficiaryAddress) => {
+  const { tbtcTokenContract, tbtcSystemContract } = await ContractsLoaded
+
+  if (!beneficiaryAddress) {
+    return []
+  }
+
   const transferEventSearchFilter = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_TOKEN_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(TBTC_TOKEN_CONTRACT_NAME),
     filter: { to: web3Utils.toChecksumAddress(beneficiaryAddress) },
   }
 
-  const transferEventToBeneficiary = await contractService.getPastEvents(
-    web3Context,
-    TBTC_TOKEN_CONTRACT_NAME,
+  const transferEventToBeneficiary = await tbtcTokenContract.getPastEvents(
     "Transfer",
     transferEventSearchFilter
   )
@@ -34,13 +38,13 @@ const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
         ),
       }
   const depositCreatedSearchFilter = {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER[TBTC_SYSTEM_CONTRACT_NAME],
+    fromBlock: await getContractDeploymentBlockNumber(
+      TBTC_SYSTEM_CONTRACT_NAME
+    ),
     filter: depositCreatedFilterParam,
   }
 
-  const depositCreatedEvents = await contractService.getPastEvents(
-    web3Context,
-    TBTC_SYSTEM_CONTRACT_NAME,
+  const depositCreatedEvents = await tbtcSystemContract.getPastEvents(
     "Created",
     depositCreatedSearchFilter
   )
@@ -62,11 +66,11 @@ const fetchTBTCRewards = async (web3Context, beneficiaryAddress) => {
 }
 
 const fetchBeneficiaryOperatorsFromDeposit = async (
-  web3Context,
   beneficairyAddress,
   depositId
 ) => {
-  const { web3 } = web3Context
+  const web3 = await Web3Loaded
+  const { stakingContract } = await ContractsLoaded
   const depositConract = createDepositContractInstance(web3, depositId)
 
   const keepAddress = await depositConract.methods.keepAddress().call()
@@ -81,12 +85,9 @@ const fetchBeneficiaryOperatorsFromDeposit = async (
 
   const beneficiaryOperators = []
   for (const operator of bondedMembers) {
-    const beneficiaryOfOperator = await contractService.makeCall(
-      web3Context,
-      TOKEN_STAKING_CONTRACT_NAME,
-      "beneficiaryOf",
-      operator
-    )
+    const beneficiaryOfOperator = await stakingContract.methods
+      .beneficiaryOf(operator)
+      .call()
     if (isSameEthAddress(beneficiaryOfOperator, beneficairyAddress))
       beneficiaryOperators.push(operator)
   }

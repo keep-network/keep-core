@@ -11,9 +11,10 @@ import TokenOverviewPage from "../pages/OverviewPage"
 import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 import RewardsPage from "../pages/rewards"
 import LiquidityPage from "../pages/liquidity"
+import web3Utils from "web3-utils"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
-const pages = [
+export const pages = [
   TokenOverviewPage,
   DelegationPage,
   TokenGrantsPage,
@@ -40,6 +41,7 @@ class Routing extends React.Component {
           component={CreateTokenGrantPage}
         /> */}
         {pages.map(renderPage)}
+        {pages.map(renderExplorerModePage)}
         <Route exact path="/">
           <Redirect to="/overview" />
         </Route>
@@ -71,17 +73,39 @@ const CustomRoute = ({
   withConnectWalletGuard = false,
   ...componentProps
 }) => {
-  const { yourAddress, provider } = useWeb3Context()
+  const { isConnected } = useWeb3Context()
 
   return (
     <Route path={path} exact={exact}>
-      {!withConnectWalletGuard ||
-      (withConnectWalletGuard && yourAddress && provider) ? (
+      {!withConnectWalletGuard || (withConnectWalletGuard && isConnected) ? (
         <Component routes={Component.route.pages} {...componentProps} />
       ) : (
         <EmptyStateComponent {...Component.route} />
       )}
     </Route>
+  )
+}
+
+export const renderExplorerModePage = (PageComponent, index) => {
+  const finalPath = "/:address" + PageComponent.route.path
+  return (
+    <Route
+      path={finalPath}
+      exact={PageComponent.route.exact}
+      key={`${finalPath}-${index}`}
+      render={(routeProps) => {
+        const address = routeProps.match.params.address
+        if (web3Utils.isAddress(address)) {
+          return (
+            <PageComponent
+              routes={PageComponent.route.pages}
+              {...PageComponent.route}
+            />
+          )
+        }
+        return <NotFound404 />
+      }}
+    />
   )
 }
 

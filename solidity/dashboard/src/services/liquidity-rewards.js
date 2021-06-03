@@ -2,10 +2,10 @@ import web3Utils from "web3-utils"
 import {
   createERC20Contract,
   createSaddleSwapContract,
-  CONTRACT_DEPLOY_BLOCK_NUMBER,
+  getContractDeploymentBlockNumber,
 } from "../contracts"
 import BigNumber from "bignumber.js"
-import { toTokenUnit, fromTokenUnit } from "../utils/token.utils"
+import { KEEP, Token } from "../utils/token.utils"
 import {
   getPairData,
   getKeepTokenPriceInUSD,
@@ -14,6 +14,8 @@ import {
 import moment from "moment"
 import { add } from "../utils/arithmetics.utils"
 import { isEmptyArray } from "../utils/array.utils"
+import { KEEP_TOKEN_GEYSER_CONTRACT_NAME } from "../constants/constants"
+import { scaleInputForNumberRange } from "../utils/general.utils"
 /** @typedef {import("web3").default} Web3 */
 /** @typedef {LiquidityRewards} LiquidityRewards */
 
@@ -98,7 +100,7 @@ class LiquidityRewards {
 
   rewardPoolPerWeek = async () => {
     const rewardRate = await this.rewardRate()
-    return toTokenUnit(rewardRate).multipliedBy(
+    return KEEP.toTokenUnit(rewardRate).multipliedBy(
       moment.duration(7, "days").asSeconds()
     )
   }
@@ -127,11 +129,19 @@ class LiquidityRewards {
   calculateAPY = async (totalSupplyOfLPRewards) => {
     throw new Error("First, implement the `calculateAPY` function")
   }
+
+  calculateLPTokenBalance = async (lpBalance) => {
+    throw new Error("First, implement the `calculateLPTokenBalance` function")
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    throw new Error("First, implement the `calculateRewardMultiplier` function")
+  }
 }
 
 class UniswapLPRewards extends LiquidityRewards {
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
     const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
@@ -159,6 +169,34 @@ class UniswapLPRewards extends LiquidityRewards {
 
     return this._calculateAPY(r, WEEKS_IN_YEAR)
   }
+
+  /**
+   * Calculates lp token balance for the given pair
+   * The calculations were done based on
+   * https://uniswap.org/docs/v2/advanced-topics/understanding-returns/#why-is-my-liquidity-worth-less-than-i-put-in
+   *
+   * @param {string} lpBalance Balance of liquidity token for a given uniswap pair deposited in
+   * the LPRewards` contract.
+   * @return {Promise<{token0: string, token1: string}>}
+   */
+  calculateLPTokenBalance = async (lpBalance) => {
+    const pairData = await getPairData(this.wrappedTokenAddress.toLowerCase())
+
+    return {
+      token0: new BigNumber(lpBalance)
+        .multipliedBy(pairData.reserve0)
+        .dividedBy(pairData.totalSupply)
+        .toString(),
+      token1: new BigNumber(lpBalance)
+        .multipliedBy(pairData.reserve1)
+        .dividedBy(pairData.totalSupply)
+        .toString(),
+    }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 1
+  }
 }
 
 class SaddleLPRewards extends LiquidityRewards {
@@ -177,9 +215,9 @@ class SaddleLPRewards extends LiquidityRewards {
   swapContract = null
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
-    const wrappedTokenTotalSupply = toTokenUnit(
+    const wrappedTokenTotalSupply = Token.toTokenUnit(
       await this.wrappedTokenTotalSupply()
     )
 
@@ -187,7 +225,7 @@ class SaddleLPRewards extends LiquidityRewards {
     const BTCPriceInUSD = await getBTCPriceInUSD()
 
     const wrappedTokenPoolInUSD = BTCPriceInUSD.multipliedBy(
-      toTokenUnit(BTCInPool)
+      Token.toTokenUnit(BTCInPool)
     )
 
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
@@ -222,6 +260,17 @@ class SaddleLPRewards extends LiquidityRewards {
 
   _getTokenBalance = async (index) => {
     return await this.swapContract.methods.getTokenBalance(index).call()
+  }
+
+  calculateLPTokenBalance = (lpBalance) => {
+    return {
+      token0: "0",
+      token1: "0",
+    }
+  }
+
+  calculateRewardMultiplier = async (address) => {
+    return 1
   }
 }
 
@@ -258,6 +307,16 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     return await this.LPRewardsContract.methods.totalStaked().call()
   }
 
+  updateAccounting = async (address) => {
+    try {
+      return await this.LPRewardsContract.methods
+        .updateAccounting()
+        .call({ from: address })
+    } catch (err) {
+      return null
+    }
+  }
+
   rewardBalance = async (address, amount) => {
     try {
       // The `TokenGeyser.unstakeQuery` throws an error in case when eg. the
@@ -278,7 +337,7 @@ class TokenGeyserLPRewards extends LiquidityRewards {
   }
 
   calculateAPY = async (totalSupplyOfLPRewards) => {
-    totalSupplyOfLPRewards = toTokenUnit(totalSupplyOfLPRewards)
+    totalSupplyOfLPRewards = Token.toTokenUnit(totalSupplyOfLPRewards)
 
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
@@ -300,12 +359,15 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     const tokensLockedEvents = await this.LPRewardsContract.getPastEvents(
       "TokensLocked",
       {
-        fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.keepTokenGeyserContract,
+        fromBlock: await getContractDeploymentBlockNumber(
+          KEEP_TOKEN_GEYSER_CONTRACT_NAME,
+          this.web3
+        ),
       }
     )
 
     // The KEEP-only pool will earn 100k KEEP per month.
-    let rewardPoolPerMonth = fromTokenUnit(10e4)
+    let rewardPoolPerMonth = KEEP.fromTokenUnit(10e4)
     const weeksInMonth = new BigNumber(
       moment.duration(1, "months").asSeconds()
     ).div(moment.duration(7, "days").asSeconds())
@@ -316,7 +378,47 @@ class TokenGeyserLPRewards extends LiquidityRewards {
       )
     }
 
-    return toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
+    return Token.toTokenUnit(rewardPoolPerMonth.div(weeksInMonth))
+  }
+
+  calculateLPTokenBalance = (lpBalance) => {
+    return {
+      token0: "0",
+      token1: "0",
+    }
+  }
+
+  /**
+   * Calculates reward multiplier for KEEP-ONLY pool for a given user
+   *
+   * @param {string} address - address of the user's wallet
+   * @return {Promise<string>}
+   */
+  calculateRewardMultiplier = async (address) => {
+    const stakedBalanceOfUser = await this.stakedBalance(address)
+    const rewardBalance = await this.rewardBalance(address, stakedBalanceOfUser)
+    const updateAccountingData = await this.updateAccounting(address)
+
+    if (!updateAccountingData) return "1"
+
+    const rewardBalanceBN = new BigNumber(rewardBalance)
+    const rewardBalanceWithMaxMultiplier = new BigNumber(
+      updateAccountingData[4]
+    )
+
+    const rewardMultiplier = rewardBalanceBN.dividedBy(
+      rewardBalanceWithMaxMultiplier
+    )
+
+    const scaledRewardMultiplier = scaleInputForNumberRange(
+      rewardMultiplier,
+      0.3,
+      1,
+      1,
+      3
+    )
+
+    return scaledRewardMultiplier.toString()
   }
 }
 

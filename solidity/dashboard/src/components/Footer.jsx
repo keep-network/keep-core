@@ -1,11 +1,13 @@
 import React from "react"
+import moment from "moment"
+import { LINK } from "../constants/constants"
 
 const links = [
-  { label: "Join Discord", url: "https://discordapp.com/invite/wYezN7v" },
-  { label: "About Keep", url: "https://keep.network/" },
+  { label: "Join Discord", url: LINK.discord },
+  { label: "About Keep", url: LINK.keepWebsite },
   {
     label: "User Guide",
-    url: "https://keep-network.gitbook.io/staking-documentation/",
+    url: LINK.stakingDocumentation,
   },
 ]
 
@@ -15,10 +17,17 @@ const Footer = ({ className }) => {
       <ul className="footer__links">{links.map(renderFooterLinkItem)}</ul>
       <div className="footer__signature">
         <p>A Thesis* Build</p>
-        <p>&#169; 2020 Keep, SEZC</p>
+        <p>&#169; {moment().format("YYYY")} Keep, SEZC</p>
         <p>All Rights Reserved.</p>
       </div>
-      <div className="footer__app-version">{`Version ${process.env.REACT_APP_VERSION}`}</div>
+      <a
+        href="https://github.com/keep-network/keep-core/releases"
+        className="footer__app-version"
+        rel="noopener noreferrer"
+        target="_blank"
+      >
+        {`Version ${process.env.REACT_APP_VERSION}`}
+      </a>
     </footer>
   )
 }

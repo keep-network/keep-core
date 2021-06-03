@@ -1,8 +1,5 @@
 FROM golang:1.13.6-alpine3.10 AS gobuild
 
-ARG VERSION
-ARG REVISION
-
 ENV GOPATH=/go \
 	GOBIN=/go/bin \
 	APP_NAME=keep-client \
@@ -44,8 +41,7 @@ COPY go.sum $APP_DIR/
 RUN go mod download
 
 # Install code generators.
-RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.1/protoc-gen-gogoslick && go install .
-RUN cd /go/pkg/mod/github.com/ethereum/go-ethereum@v1.9.10/cmd/abigen && go install .
+RUN cd /go/pkg/mod/github.com/gogo/protobuf@v1.3.2/protoc-gen-gogoslick && go install .
 
 COPY ./solidity $APP_DIR/solidity
 RUN cd $APP_DIR/solidity && npm install
@@ -62,6 +58,10 @@ RUN go generate ./.../gen
 
 COPY ./ $APP_DIR/
 RUN go generate ./pkg/gen
+
+# Client Versioning.
+ARG VERSION
+ARG REVISION
 
 RUN GOOS=linux go build -ldflags "-X main.version=$VERSION -X main.revision=$REVISION" -a -o $APP_NAME ./ && \
 	mv $APP_NAME $BIN_PATH

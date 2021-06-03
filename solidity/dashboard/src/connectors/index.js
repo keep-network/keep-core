@@ -1,22 +1,16 @@
-import { TrezorProvider } from "./trezor"
-import { LedgerProvider, LEDGER_DERIVATION_PATHS } from "./ledger"
+import { TrezorConnector } from "./trezor"
+import { LedgerConnector, LEDGER_DERIVATION_PATHS } from "./ledger"
+import { InjectedConnector } from "./injected"
+import { WalletConnectConnector } from "./wallet-connect"
+import { UserRejectedConnectionRequestError } from "./utils"
 
-const InjectedProvider = window.ethereum
-if (InjectedProvider) {
-  // https://docs.metamask.io/guide/ethereum-provider.html#ethereum-autorefreshonnetworkchange
-  InjectedProvider.autoRefreshOnNetworkChange = false
-
-  // Override `enable` function in the injected provider.
-  // MetaMask: 'ethereum.enable()' is deprecated and may be removed in the
-  // future. https://docs.metamask.io/guide/provider-migration.html#replacing-window-web3
-  InjectedProvider.enable = async () => {
-    return await InjectedProvider.request({ method: "eth_requestAccounts" })
-  }
-}
+const injected = new InjectedConnector()
 
 export {
-  TrezorProvider,
-  LedgerProvider,
+  TrezorConnector,
+  LedgerConnector,
   LEDGER_DERIVATION_PATHS,
-  InjectedProvider,
+  injected,
+  WalletConnectConnector,
+  UserRejectedConnectionRequestError,
 }

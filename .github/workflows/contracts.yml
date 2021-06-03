@@ -5,29 +5,58 @@ on:
     branches:
       - master
     paths:
-      - "solidity/contracts/**"
-      - "solidity/package.json"
-      - "solidity/package-lock.json"
-      - ".github/workflows/contracts.yml"
+      - "solidity/**"
+      - "!solidity/dashboard/**"
   pull_request:
-    branches:
-      - master
-    paths:
-      - "solidity/contracts/**"
-      - "solidity/package.json"
-      - "solidity/package-lock.json"
-      - ".github/workflows/contracts.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment for workflow execution'
+        required: false
+        default: 'dev'
+      upstream_builds:
+        description: 'Upstream builds'
+        required: false
+      upstream_ref:
+        description: 'Git reference to checkout (e.g. branch name)'
+        required: false
+        default: 'master'
 
 jobs:
-  test:
+  contracts-detect-changes:
     runs-on: ubuntu-latest
+    outputs:
+      path-filter: ${{ steps.filter.outputs.path-filter }}
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v2
+        if: github.event_name == 'pull_request'
+
+      - uses: dorny/paths-filter@v2
+        if: github.event_name == 'pull_request'
+        id: filter
+        with:
+          filters: |
+            path-filter:
+              - './solidity/!(dashboard)/**'
+
+  contracts-build-and-test:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
         with:
           node-version: "12.x"
+
       - name: Cache node modules
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         env:
           cache-name: cache-solidity-node-modules
         with:
@@ -37,36 +66,268 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
+            
       - name: Install dependencies
-        working-directory: ./solidity
-        run: |
-          npm ci
-      - name: Run tests
-        working-directory: ./solidity
-        run: |
-          npm run test
-          exit 0
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: "12.x"
-      - name: Cache node modules
-        uses: actions/cache@v1
-        env:
-          cache-name: cache-solidity-node-modules
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: Install dependencies
-        working-directory: ./solidity
         run: npm ci
-      - name: Lint
+
+      - name: Build solidity contracts
+        run: npm run compile
+
+      - name: Run tests
+        run: npm run test
+
+  contracts-lint:
+    needs: contracts-detect-changes
+    if: |
+      github.event_name == 'push'
+        || needs.contracts-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
         working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12.x"
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
         run: npm run lint
+
+  contracts-migrate-and-publish-ethereum:
+    needs: [contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    defaults:
+      run:
+        working-directory: ./solidity
+    outputs:
+      version: ${{ steps.npm-version-bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Migrate contracts
+        env: 
+          ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
+          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+      
+      - name: Copy artifacts
+        run: |
+          mkdir -p artifacts
+          cp -r build/contracts/* artifacts/
+
+      - name: Bump up package version
+        id: npm-version-bump
+        uses: keep-network/npm-version-bump@v2
+        with:
+          work-dir: ./solidity
+          environment: ${{ github.event.inputs.environment }}
+          branch: ${{ github.ref }}
+          commit: ${{ github.sha }}
+
+      - name: Push contracts to Tenderly
+        # TODO: once below action gets tagged replace `@main` with `@v1` 
+        uses: keep-network/tenderly-push-action@main
+        continue-on-error: true
+        with:
+          working-directory: ./solidity
+          tenderly-token: ${{ secrets.TENDERLY_TOKEN }}
+          tenderly-project: thesis/keep-test
+          eth-network-id: ${{ env.NETWORK_ID }}
+          github-project-name: keep-core
+          version-tag: ${{ steps.npm-version-bump.outputs.version }}
+
+      - name: Publish to npm
+        run: |
+          echo //registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN }} > .npmrc
+          npm publish --access=public
+
+      - name: Upload keep-core contracts for initcontainer build
+        uses: actions/upload-artifact@v2
+        with:
+          name: Contracts (Node.js ${{ matrix.node-version }})
+          path: ./solidity/build/contracts/*
+
+  contracts-build-and-publish-initcontainer:
+    needs: [contracts-migrate-and-publish-ethereum]
+    if: needs.contracts-migrate-and-publish-ethereum.result == 'success'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'ropsten'
+
+      - name: Download migrated contracts artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: Contracts (Node.js ${{ matrix.node-version }})
+          path: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Login to Google Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.GCR_REGISTRY_URL }}
+          username: _json_key
+          password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Build and publish initcontainer
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'initcontainer-provision-keep-client'
+        with:
+          context: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
+          # GCR image should be named according to following convention:
+          # HOSTNAME/PROJECT-ID/IMAGE:TAG
+          # We don't use TAG yet, will be added at later stages of work on RFC-18.
+          tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
+          labels: |
+            revision=${{ github.sha }}
+          push: true
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache
+      
+      - name: Notify CI about completion of the workflow
+        uses: keep-network/notify-workflow-completed@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          module: "github.com/keep-network/keep-core/solidity"
+          url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          environment: ${{ github.event.inputs.environment }}
+          upstream_builds: ${{ github.event.inputs.upstream_builds }}
+          upstream_ref: ${{ github.event.inputs.upstream_ref }}
+          version: ${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
+
+  contracts-migrate-and-publish-celo:
+    needs: [contracts-build-and-test]
+    if: github.event_name == 'workflow_dispatch'
+    environment: keep-test # line can be deleted once we'll no longer use environment protection
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./solidity
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Load environment variables
+        uses: keep-network/load-env-variables@v1
+        env: 
+          CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
+        with:
+          # TODO: Consider passing of `environment` input instead of using 
+          # hardcoded value. Would require some rework in action's code or
+          # in config files.
+          environment: 'alfajores'
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "12.x"
+
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-solidity-node-modules
+        with:
+          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Migrate contracts
+        env:
+          CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear
+      # how artifacts should be tagged. Once that's done, no longer publish
+      # contracts to GC Bucket.
+
+      - uses: google-github-actions/setup-gcloud@v0.2.0
+        with:
+          project_id: ${{ env.GOOGLE_PROJECT_ID }}
+          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
+
+      - name: Upload contract data
+        run: |
+          cd build/contracts
+          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core-celo

@@ -1,7 +1,6 @@
 package ethereum
 
 import (
-	"context"
 	"fmt"
 	"math/big"
 	"time"
@@ -27,7 +26,7 @@ func (ec *ethereumChain) ThresholdRelay() relayChain.Interface {
 }
 
 func (ec *ethereumChain) GetKeys() (*operator.PrivateKey, *operator.PublicKey) {
-	return operator.EthereumKeyToOperatorKey(ec.accountKey)
+	return operator.ChainKeyToOperatorKey(ec.accountKey)
 }
 
 func (ec *ethereumChain) Signing() chain.Signing {
@@ -492,11 +491,4 @@ func (ec *ethereumChain) CalculateDKGResultHash(
 
 func (ec *ethereumChain) Address() common.Address {
 	return ec.accountKey.Address
-}
-
-func (ec *ethereumChain) WeiBalanceOf(address common.Address) (*big.Int, error) {
-	ctx, cancelCtx := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancelCtx()
-
-	return ec.client.BalanceAt(ctx, address, nil)
 }

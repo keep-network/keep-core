@@ -1,5 +1,12 @@
-import { take, takeLatest, call, put, fork } from "redux-saga/effects"
-import { logError, submitButtonHelper, getContractsContext } from "./utils"
+import { takeLatest, call, put } from "redux-saga/effects"
+import { takeOnlyOnce } from "./effects"
+import web3Utils from "web3-utils"
+import {
+  logError,
+  submitButtonHelper,
+  getContractsContext,
+  identifyTaskByAddress,
+} from "./utils"
 import {
   fetchtTotalDistributedRewards,
   fetchECDSAAvailableRewards,
@@ -8,10 +15,19 @@ import {
 import { sendTransaction } from "./web3"
 import { isSameEthAddress } from "../utils/general.utils"
 import { add } from "../utils/arithmetics.utils"
-import { getOperatorsOfBeneficiary } from "../services/token-staking.service"
+import {
+  getOperatorsOfBeneficiary,
+  getOperatorsOfOwner,
+  getOperatorsOfGrantee,
+  getOperatorsOfManagedGrantee,
+  getOperatorsOfCopiedDelegations,
+} from "../services/token-staking.service"
 import { REWARD_STATUS } from "../constants/constants"
 
-function* fetchBeaconDistributedRewards(address) {
+function* fetchBeaconDistributedRewards(action) {
+  const {
+    payload: { address },
+  } = action
   try {
     yield put({ type: "rewards/beacon_fetch_distributed_rewards_start" })
     const balance = yield call(
@@ -29,10 +45,11 @@ function* fetchBeaconDistributedRewards(address) {
 }
 
 export function* watchFetchBeaconDistributedRewards() {
-  const { payload } = yield take(
-    "rewards/beacon_fetch_distributed_rewards_request"
+  yield takeOnlyOnce(
+    "rewards/beacon_fetch_distributed_rewards_request",
+    identifyTaskByAddress,
+    fetchBeaconDistributedRewards
   )
-  yield fork(fetchBeaconDistributedRewards, payload)
 }
 
 function* withdrawECDSARewards(action) {
@@ -68,11 +85,42 @@ export function* watchWithdrawECDSARewards() {
 }
 
 function* fetchECDSARewardsData(action) {
-  const beneficiary = action.payload
+  const { address } = action.payload
   try {
     yield put({ type: "rewards/ecdsa_fetch_rewards_data_start" })
 
-    const operators = yield call(getOperatorsOfBeneficiary, beneficiary)
+    // Beneficiary operators.
+    const beneficiaryOperators = yield call(getOperatorsOfBeneficiary, address)
+    // Owner operators.
+    const ownerOperators = yield call(getOperatorsOfOwner, address)
+    // Grantee operators.
+    const { allOperators: grenteeOperators } = yield call(
+      getOperatorsOfGrantee,
+      address
+    )
+    // Managed grantee operators.
+    const { allOperators: mangedGranteeOperators } = yield call(
+      getOperatorsOfManagedGrantee,
+      address
+    )
+    // Get operators of copied delegations where an owner of the old delegations
+    // is `address`.
+    const copiedOperators = yield call(getOperatorsOfCopiedDelegations, address)
+
+    const operators = Array.from(
+      // The same address can be used as beneficiary and owner. So addresses in
+      // array may be repeated. Let's convert to a Set to make sure the given
+      // address is in array only once.
+      new Set(
+        beneficiaryOperators
+          .concat(ownerOperators)
+          .concat(grenteeOperators)
+          .concat(mangedGranteeOperators)
+          .concat(copiedOperators)
+          .map((address) => web3Utils.toChecksumAddress(address))
+      ).add(web3Utils.toChecksumAddress(address)) // Operator can also view own rewards.
+    )
+
     let availableRewards = yield call(fetchECDSAAvailableRewards, operators)
     const claimedRewards = yield call(fetchECDSAClaimedRewards, operators)
 
@@ -121,8 +169,9 @@ function* fetchECDSARewardsData(action) {
 }
 
 export function* watchFetchECDSARewards() {
-  yield takeLatest(
+  yield takeOnlyOnce(
     "rewards/ecdsa_fetch_rewards_data_request",
+    identifyTaskByAddress,
     fetchECDSARewardsData
   )
 }

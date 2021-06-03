@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindManagedGrantFactory(address common.Address, caller bind.ContractCaller,
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ManagedGrantFactory *ManagedGrantFactoryRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ManagedGrantFactory *ManagedGrantFactoryRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ManagedGrantFactory.Contract.ManagedGrantFactoryCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_ManagedGrantFactory *ManagedGrantFactoryRaw) Transact(opts *bind.Transact
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_ManagedGrantFactory *ManagedGrantFactoryCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_ManagedGrantFactory *ManagedGrantFactoryCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _ManagedGrantFactory.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,52 +173,62 @@ func (_ManagedGrantFactory *ManagedGrantFactoryTransactorRaw) Transact(opts *bin
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_ManagedGrantFactory *ManagedGrantFactoryCaller) Token(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrantFactory.contract.Call(opts, out, "token")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrantFactory.contract.Call(opts, &out, "token")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_ManagedGrantFactory *ManagedGrantFactorySession) Token() (common.Address, error) {
 	return _ManagedGrantFactory.Contract.Token(&_ManagedGrantFactory.CallOpts)
 }
 
 // Token is a free data retrieval call binding the contract method 0xfc0c546a.
 //
-// Solidity: function token() constant returns(address)
+// Solidity: function token() view returns(address)
 func (_ManagedGrantFactory *ManagedGrantFactoryCallerSession) Token() (common.Address, error) {
 	return _ManagedGrantFactory.Contract.Token(&_ManagedGrantFactory.CallOpts)
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_ManagedGrantFactory *ManagedGrantFactoryCaller) TokenGrant(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _ManagedGrantFactory.contract.Call(opts, out, "tokenGrant")
-	return *ret0, err
+	var out []interface{}
+	err := _ManagedGrantFactory.contract.Call(opts, &out, "tokenGrant")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_ManagedGrantFactory *ManagedGrantFactorySession) TokenGrant() (common.Address, error) {
 	return _ManagedGrantFactory.Contract.TokenGrant(&_ManagedGrantFactory.CallOpts)
 }
 
 // TokenGrant is a free data retrieval call binding the contract method 0xd92db09f.
 //
-// Solidity: function tokenGrant() constant returns(address)
+// Solidity: function tokenGrant() view returns(address)
 func (_ManagedGrantFactory *ManagedGrantFactoryCallerSession) TokenGrant() (common.Address, error) {
 	return _ManagedGrantFactory.Contract.TokenGrant(&_ManagedGrantFactory.CallOpts)
 }
@@ -407,5 +416,6 @@ func (_ManagedGrantFactory *ManagedGrantFactoryFilterer) ParseManagedGrantCreate
 	if err := _ManagedGrantFactory.contract.UnpackLog(event, "ManagedGrantCreated", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

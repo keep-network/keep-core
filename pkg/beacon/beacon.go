@@ -259,7 +259,6 @@ func confirmCurrentRelayRequest(
 					"there is no entry in progress; "+
 						"current request start block is 0 "+
 						"giving up after [%v] retries",
-					currentRequestStartBlock,
 					maxRetries,
 				)
 			} else {

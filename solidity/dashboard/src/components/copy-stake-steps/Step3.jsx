@@ -92,11 +92,7 @@ const CopyStakeStep3 = ({
           Stake balance to
           {strategy === "COPY_STAKE_FLOW" ? " Copy" : " Undelegate"}
         </h3>
-        <TokenAmount
-          amount={delegation.amount}
-          currencySymbol="KEEP"
-          wrapperClassName="mb-1"
-        />
+        <TokenAmount amount={delegation.amount} withIcon withMetricSuffix />
         <Address address={delegation.authorizerAddress} label="authorizer" />
         <Address address={delegation.operatorAddress} label="operator" />
         <Address address={delegation.beneficiaryAddress} label="beneficiary" />

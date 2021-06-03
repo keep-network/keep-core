@@ -9,11 +9,7 @@ import {
   ReferenceArea,
 } from "recharts"
 import { colors } from "../constants/colors"
-import {
-  displayAmount,
-  getNumberWithMetricSuffix,
-  fromTokenUnit,
-} from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { formatDate } from "../utils/general.utils"
 import BeaconRewardsHelper from "../utils/rewardsHelper"
 
@@ -70,7 +66,7 @@ const StakeDropChart = () => {
       BeaconRewardsHelper.intervalStartOf(interval)
     )
 
-    const formattedRewardAmount = displayAmount(fromTokenUnit(amount))
+    const formattedRewardAmount = KEEP.displayAmount(KEEP.fromTokenUnit(amount))
     tooltipContentEl.childNodes[2].innerHTML = tooltipContentEl.childNodes[2].innerHTML = `${formattedRewardAmount} KEEP`
   }
 
@@ -106,9 +102,7 @@ const StakeDropChart = () => {
           <YAxis
             stroke={colors.grey60}
             strokeWidth={2}
-            tickFormatter={(tick) =>
-              getNumberWithMetricSuffix(tick).formattedValue
-            }
+            tickFormatter={(tick) => KEEP.displayAmountWithMetricSuffix(tick)}
             tickLine={false}
           />
           <Tooltip cursor={false} wrapperStyle={{ display: "none" }} />

@@ -6,12 +6,12 @@ import * as Icons from "./Icons"
 import { shortenAddress } from "../utils/general.utils"
 import WalletOptions from "./WalletOptions"
 import CopyToClipboard from "./CopyToClipboard"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
+import { WALLETS } from "../constants/constants"
+import CurrentWalletIconTooltip from "./CurrentWalletIconTooltip"
 
 export const Web3Status = () => {
-  const { yourAddress, provider } = useWeb3Context()
-
-  const isActive = yourAddress && provider
+  const { yourAddress, isConnected, connector } = useWeb3Context()
 
   return (
     <div className="web3-status">
@@ -19,16 +19,23 @@ export const Web3Status = () => {
         <div className="web3-status__network-status">
           <NetworkStatus />
         </div>
-        <div className="web3-status__wallet">
+        {isConnected && <CurrentWalletIconTooltip />}
+        <div
+          className={`web3-status__wallet ${
+            connector?.name === WALLETS.EXPLORER_MODE.name
+              ? "web3-status__wallet--explorer-mode"
+              : ""
+          }`}
+        >
           <Icons.Wallet
-            className={`wallet__icon${isActive ? "--active" : ""}`}
+            className={`wallet__icon${isConnected ? "--active" : ""}`}
           />
-          <div className={`wallet__address${isActive ? "--active" : ""}`}>
-            {isActive ? shortenAddress(yourAddress) : "connect wallet"}
+          <div className={`wallet__address${isConnected ? "--active" : ""}`}>
+            {isConnected ? shortenAddress(yourAddress) : "connect wallet"}
           </div>
           <div className="wallet__menu-container">
             <div className="wallet__menu">
-              {isActive ? <WalletMenu /> : <WalletOptions />}
+              {isConnected ? <WalletMenu /> : <WalletOptions />}
             </div>
           </div>
         </div>
@@ -38,7 +45,7 @@ export const Web3Status = () => {
 }
 
 const WalletMenu = () => {
-  const { yourAddress } = useWeb3Context()
+  const { yourAddress, disconnect } = useWeb3Context()
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
   return (
     <>
@@ -63,12 +70,11 @@ const WalletMenu = () => {
       <div className="wallet__menu__balance">
         {keepTokenBalance.isFetching
           ? "loading KEEP balance..."
-          : `${displayAmount(keepTokenBalance.value)} KEEP`}
+          : `${KEEP.displayAmountWithSymbol(keepTokenBalance.value)}`}
       </div>
-      {/* TODO add support for dissconnect wallet */}
-      {/* <div className="wallet__menu__disconnect" onClick={disconnect}>
+      <div className="wallet__menu__disconnect" onClick={disconnect}>
         Disconnect
-      </div> */}
+      </div>
     </>
   )
 }

@@ -14,7 +14,7 @@ import moment from "moment"
 
 import ProgressBar from "./ProgressBar"
 import { colors } from "../constants/colors"
-import { fromTokenUnit, displayAmount } from "../utils/token.utils.js"
+import { KEEP } from "../utils/token.utils.js"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
@@ -25,7 +25,7 @@ const CreateTokenGrantForm = ({
   submitAction,
   ...formikProps
 }) => {
-  const amount = fromTokenUnit(formikProps.values.amount)
+  const amount = KEEP.fromTokenUnit(formikProps.values.amount)
 
   const onSubmit = useCustomOnSubmitFormik(submitAction)
 
@@ -40,7 +40,7 @@ const CreateTokenGrantForm = ({
         format={formatFormAmount}
       />
       <div className="text-smaller text-grey-50">
-        {displayAmount(keepBalance)} KEEP available
+        {KEEP.displayAmountWithSymbol(keepBalance)} available
       </div>
       <ProgressBar
         total={keepBalance}
@@ -91,9 +91,10 @@ const connectedWithFormik = withFormik({
   validate: (values, props) => {
     const { keepBalance } = props
     const { grantee, amount, duration, start, cliff } = values
+    const minAmount = KEEP.fromTokenUnit(1)
     const errors = {}
     errors.grantee = validateEthAddress(grantee)
-    errors.amount = validateAmountInRange(amount, keepBalance, 1)
+    errors.amount = validateAmountInRange(amount, keepBalance, minAmount)
     errors.duration = validateRequiredValue(duration)
     errors.start = validateRequiredValue(start)
     errors.cliff = validateRequiredValue(cliff)

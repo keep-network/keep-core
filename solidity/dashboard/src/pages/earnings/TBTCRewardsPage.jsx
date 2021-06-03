@@ -1,28 +1,33 @@
-import React, { useMemo, useCallback } from "react"
+import React, { useEffect, useMemo, useCallback } from "react"
 import TBTCEarningsDataTable from "../../components/TBTCEarningsDataTable"
 import { LoadingOverlay } from "../../components/Loadable"
-import { useWeb3Context } from "../../components/WithWeb3Context"
 import {
   DataTableSkeleton,
   TokenAmountSkeleton,
 } from "../../components/skeletons"
 import TokenAmount from "../../components/TokenAmount"
-import * as Icons from "../../components/Icons"
 import { tbtcRewardsService } from "../../services/tbtc-rewards.service"
 import { useFetchData } from "../../hooks/useFetchData"
 import { add } from "../../utils/arithmetics.utils"
-import { toTokenUnit } from "../../utils/token.utils"
+import { TBTC } from "../../utils/token.utils"
 import { findIndexAndObject } from "../../utils/array.utils"
 import EmptyStatePage from "./EmptyStatePage"
+import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const TBTCRewardsPage = () => {
-  const web3Context = useWeb3Context()
-  const { yourAddress } = web3Context
-  const [{ data, isFetching }, updateRewardsData] = useFetchData(
-    tbtcRewardsService.fetchTBTCRewards,
-    [],
-    yourAddress
-  )
+  const address = useWeb3Address()
+  const [
+    { data, isFetching },
+    updateRewardsData,
+    ,
+    setServiceArgs,
+  ] = useFetchData(tbtcRewardsService.fetchTBTCRewards, [], address)
+
+  useEffect(() => {
+    if (address) {
+      setServiceArgs([address])
+    }
+  }, [setServiceArgs, address])
 
   const totalAmount = useMemo(() => {
     return data
@@ -34,8 +39,7 @@ const TBTCRewardsPage = () => {
   const fetchOperatorByDepositId = useCallback(
     async (depositId) => {
       const operators = await tbtcRewardsService.fetchBeneficiaryOperatorsFromDeposit(
-        web3Context,
-        yourAddress,
+        address,
         depositId
       )
       const updatedData = [...data]
@@ -53,26 +57,22 @@ const TBTCRewardsPage = () => {
 
       updateRewardsData(updatedData)
     },
-    [data, updateRewardsData, yourAddress, web3Context]
+    [data, updateRewardsData, address]
   )
 
   return (
     <section className="tile">
-      <h2 className="text-grey-70">Total Amount</h2>
+      <h2 className="text-grey-70 mb-1">Total Amount</h2>
       {isFetching ? (
         <TokenAmountSkeleton textStyles={{ width: "35%" }} />
       ) : (
         <TokenAmount
-          currencyIcon={Icons.TBTC}
-          currencyIconProps={{
-            className: "tbtc-icon--mint-80",
-            width: 32,
-            height: 32,
-          }}
+          token={TBTC}
           amount={totalAmount}
-          currencySymbol="tBTC"
-          displayWithMetricSuffix={false}
-          displayAmountFunction={(amount) => toTokenUnit(amount).toString()}
+          withIcon
+          iconProps={{
+            className: "tbtc-icon--mint-80",
+          }}
         />
       )}
 

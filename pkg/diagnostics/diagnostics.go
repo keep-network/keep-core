@@ -12,7 +12,7 @@ import (
 var logger = log.Logger("keep-diagnostics")
 
 // Initialize sets up the diagnostics registry and enables diagnostics server.
-func Initialize(port int) (*diagnostics.DiagnosticsRegistry, bool) {
+func Initialize(port int) (*diagnostics.Registry, bool) {
 	if port == 0 {
 		return nil, false
 	}
@@ -27,7 +27,7 @@ func Initialize(port int) (*diagnostics.DiagnosticsRegistry, bool) {
 // RegisterConnectedPeersSource registers the diagnostics source providing
 // information about connected peers.
 func RegisterConnectedPeersSource(
-	registry *diagnostics.DiagnosticsRegistry,
+	registry *diagnostics.Registry,
 	netProvider net.Provider,
 ) {
 	registry.RegisterSource("connected_peers", func() string {
@@ -45,7 +45,7 @@ func RegisterConnectedPeersSource(
 
 			peersList[i] = map[string]interface{}{
 				"network_id":       peer,
-				"ethereum_address": key.NetworkPubKeyToEthAddress(peerPublicKey),
+				"ethereum_address": key.NetworkPubKeyToChainAddress(peerPublicKey),
 			}
 		}
 
@@ -62,7 +62,7 @@ func RegisterConnectedPeersSource(
 // RegisterClientInfoSource registers the diagnostics source providing
 // information about the client itself.
 func RegisterClientInfoSource(
-	registry *diagnostics.DiagnosticsRegistry,
+	registry *diagnostics.Registry,
 	netProvider net.Provider,
 ) {
 	registry.RegisterSource("client_info", func() string {
@@ -77,7 +77,7 @@ func RegisterClientInfoSource(
 
 		clientInfo := map[string]interface{}{
 			"network_id":       clientID,
-			"ethereum_address": key.NetworkPubKeyToEthAddress(clientPublicKey),
+			"ethereum_address": key.NetworkPubKeyToChainAddress(clientPublicKey),
 		}
 
 		bytes, err := json.Marshal(clientInfo)

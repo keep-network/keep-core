@@ -12,6 +12,12 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { getEventsFromTransaction, ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { LIQUIDITY_REWARD_PAIRS } from "../constants/constants"
 /** @typedef { import("../services/liquidity-rewards").LiquidityRewards} LiquidityRewards */
+import { showMessage } from "../actions/messages"
+import { messageType } from "../components/Message"
+import {
+  OPERATOR_DELEGATION_UNDELEGATED,
+  FETCH_OPERATOR_DELEGATIONS_SUCCESS,
+} from "../actions"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -38,7 +44,7 @@ function* observeKeepTokenTransfer() {
         returnValues: { from, to, value },
       } = yield take(contractEventCahnnel)
 
-      let arithmeticOpration
+      let arithmeticOpration = null
       if (isSameEthAddress(defaultAccount, from)) {
         arithmeticOpration = sub
       } else if (isSameEthAddress(defaultAccount, to)) {
@@ -687,17 +693,29 @@ function* lpTokensStakedOrWithdrawn(
 
   let updatedlpBalance = lpBalance
   let emittedAmountValue = 0
-  // Update only if this transacion relates to the current logged account.
+  // Update only if this transaction relates to the current logged account.
   if (isSameEthAddress(defaultAccount, user)) {
     emittedAmountValue = amount
     const arithmeticOpration = actionType.includes("withdrawn") ? sub : add
     updatedlpBalance = arithmeticOpration(lpBalance, amount).toString()
   }
 
+  yield* updateLPTokenBalance(
+    LiquidityRewards,
+    liquidityRewardPairName,
+    defaultAccount,
+    updatedlpBalance
+  )
+
   const reward = yield call(
     [LiquidityRewards, LiquidityRewards.rewardBalance],
     defaultAccount,
     updatedlpBalance
+  )
+
+  const rewardMultiplier = yield call(
+    [LiquidityRewards, LiquidityRewards.calculateRewardMultiplier],
+    defaultAccount
   )
 
   // If the `Withdrawn` or `Staked` event was emitted the total pool of the LPRewards,
@@ -711,6 +729,7 @@ function* lpTokensStakedOrWithdrawn(
       reward,
       apy,
       liquidityRewardPairName,
+      rewardMultiplier,
     },
   })
 }
@@ -758,6 +777,10 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
   /** @type LiquidityRewards */
   const LiquidityRewards = yield getLPRewardsWrapper(liquidityRewardPair)
 
+  const {
+    eth: { defaultAccount },
+  } = yield getWeb3Context()
+
   const contractEventCahnnel = yield call(
     createSubcribeToContractEventChannel,
     LiquidityRewards.wrappedToken,
@@ -767,15 +790,64 @@ function* observeWrappedTokenMintAndBurnTx(liquidityRewardPair) {
   while (true) {
     try {
       const {
+        transactionHash,
         returnValues: { from, to },
       } = yield take(contractEventCahnnel)
 
       // If the `from` is a zero address it means it was a `mint` transaction.
       // If the `to` is a zero address it means it was a `burn` transaction. For
-      // these casese we need to update APY value because the tootal pool value
-      // of the wrapped token has been increased / decresed.
+      // these cases we need to update APY value because the total pool value
+      // of the wrapped token has been increased / decreased.
       if (from === ZERO_ADDRESS || to === ZERO_ADDRESS) {
         yield* updateAPY(LiquidityRewards, liquidityRewardPair.name)
+        yield* updateLPTokenBalance(
+          LiquidityRewards,
+          liquidityRewardPair.name,
+          defaultAccount
+        )
+      }
+
+      // If the 'to' address is equal to the address of the connected wallet
+      // then it means that LP tokens are transferred to this address so we are
+      // displaying the proper notification
+      if (
+        isSameEthAddress(to, defaultAccount) &&
+        liquidityRewardPair.label !== LIQUIDITY_REWARD_PAIRS.KEEP_ONLY.label
+      ) {
+        yield put(
+          showMessage({
+            messageType: messageType.NEW_LP_TOKENS_IN_WALLET,
+            messageProps: {
+              liquidityRewardPairName: liquidityRewardPair.label,
+              sticky: true,
+            },
+          })
+        )
+
+        const eventsToCheck = [
+          [
+            LiquidityRewards.LPRewardsContract,
+            LiquidityRewards.depositWithdrawnEventName,
+          ],
+        ]
+
+        const emittedEvents = yield call(
+          getEventsFromTransaction,
+          eventsToCheck,
+          transactionHash
+        )
+
+        // Fetch wrappedTokenBalance value only when depositWithdrawnEventName event was not previously emitted (so
+        // in other words when user did not withdraw all on the dApp, but still got some lp tokens transferred
+        // to his wallet). If the user clicks withdraw all the wrappedTokenBalance will be updated on the redux
+        // side (`liquidity_rewards/${liquidityRewardPairName}_withdrawn` case) so we don't need to update it here.
+        if (!emittedEvents[LiquidityRewards.depositWithdrawnEventName]) {
+          yield* updateWrappedTokenBalance(
+            LiquidityRewards,
+            liquidityRewardPair.name,
+            defaultAccount
+          )
+        }
       }
     } catch (error) {
       console.error(`Failed subscribing to Transfer event`, error)
@@ -807,17 +879,63 @@ function* updateAPY(
   })
 }
 
+function* updateWrappedTokenBalance(
+  LiquidityRewards,
+  liquidityRewardPairName,
+  address
+) {
+  // Fetching balance of liquidity token for a given uniswap pair.
+  const wrappedTokenBalance = yield call(
+    [LiquidityRewards, LiquidityRewards.wrappedTokenBalance],
+    address
+  )
+
+  yield put({
+    type: `liquidity_rewards/${liquidityRewardPairName}_wrapped_token_balance_updated`,
+    payload: {
+      wrappedTokenBalance,
+      liquidityRewardPairName,
+    },
+  })
+}
+
+function* updateLPTokenBalance(
+  LiquidityRewards,
+  liquidityRewardPairName,
+  address,
+  lpBalance = null
+) {
+  if (!lpBalance) {
+    // Fetching balance of liquidity token for a given uniswap pair deposited in
+    // the `LPRewards` contract.
+    lpBalance = yield call(
+      [LiquidityRewards, LiquidityRewards.stakedBalance],
+      address
+    )
+  }
+
+  const lpTokenBalance = yield call(
+    [LiquidityRewards, LiquidityRewards.calculateLPTokenBalance],
+    lpBalance
+  )
+
+  yield put({
+    type: `liquidity_rewards/${liquidityRewardPairName}_lp_balance_updated`,
+    payload: { lpTokenBalance, liquidityRewardPairName },
+  })
+}
+
 export function* subscribeToLiquidityRewardsEvents() {
   for (const [pairName, value] of Object.entries(LIQUIDITY_REWARD_PAIRS)) {
     yield fork(
       function* (liquidityRewardPair) {
+        yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
         yield take(
           `liquidity_rewards/${liquidityRewardPair.name}_fetch_data_success`
         )
         yield fork(observeLiquidityTokenStakedEvent, liquidityRewardPair)
         yield fork(observeLiquidityTokenWithdrawnEvent, liquidityRewardPair)
         yield fork(observeLiquidityRewardPaidEvent, liquidityRewardPair)
-        yield fork(observeWrappedTokenMintAndBurnTx, liquidityRewardPair)
       },
       {
         name: pairName,
@@ -825,4 +943,50 @@ export function* subscribeToLiquidityRewardsEvents() {
       }
     )
   }
+}
+
+function* updateOperatorData() {
+  const { stakingContract } = yield getContractsContext()
+
+  // Create subscription channel.
+  const contractEventCahnnel = yield call(
+    createSubcribeToContractEventChannel,
+    stakingContract,
+    "Undelegated"
+  )
+
+  // Observe and dispatch an action that updates keep token balance.
+  while (true) {
+    try {
+      const {
+        returnValues: { operator, undelegatedAt },
+      } = yield take(contractEventCahnnel)
+      const {
+        eth: { defaultAccount },
+      } = yield getWeb3Context()
+
+      if (!isSameEthAddress(defaultAccount, operator)) {
+        return
+      }
+
+      const { undelegationPeriod } = yield select((state) => state.operator)
+
+      const undelegationCompletedAt = moment
+        .unix(undelegatedAt)
+        .add(undelegationPeriod, "seconds")
+
+      yield put({
+        type: OPERATOR_DELEGATION_UNDELEGATED,
+        payload: { undelegationCompletedAt, delegationStatus: "UNDELEGATED" },
+      })
+    } catch (error) {
+      console.error(`Failed subscribing to Undelegated event`, error)
+      contractEventCahnnel.close()
+    }
+  }
+}
+
+export function* subscribeToOperatorUndelegateEvent() {
+  yield take(FETCH_OPERATOR_DELEGATIONS_SUCCESS)
+  yield fork(updateOperatorData)
 }

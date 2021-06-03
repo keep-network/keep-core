@@ -1,11 +1,26 @@
-import { take, takeEvery, call, fork, put, select } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper, logError } from "./utils"
+import { take, takeEvery, call, put, select, delay } from "redux-saga/effects"
+import { takeOnlyOnce } from "./effects"
+import {
+  getContractsContext,
+  submitButtonHelper,
+  logErrorAndThrow,
+  identifyTaskByAddress,
+} from "./utils"
+import moment from "moment"
 import { sendTransaction } from "./web3"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { getContractDeploymentBlockNumber } from "../contracts"
 import { gt, sub } from "../utils/arithmetics.utils"
-import { fromTokenUnit } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import { tokensPageService } from "../services/tokens-page.service"
-import { fetchAvailableTopUps } from "../services/top-ups.service"
+import {
+  fetchAvailableTopUps,
+  isTopUpReadyToBeCommitted,
+} from "../services/top-ups.service"
+import { isEmptyArray } from "../utils/array.utils"
+import { showMessage } from "../actions/messages"
+import { isSameEthAddress } from "../utils/general.utils"
+import { messageType } from "../components/Message"
+import { TOKEN_STAKING_ESCROW_CONTRACT_NAME } from "../constants/constants"
 
 function* delegateStake(action) {
   yield call(submitButtonHelper, resolveStake, action)
@@ -25,7 +40,7 @@ function* resolveStake(action) {
     authorizerAddress,
   } = action.payload
 
-  const tokenAmount = fromTokenUnit(amount).toString()
+  const tokenAmount = KEEP.fromTokenUnit(amount).toString()
   const stakingContractAddress = stakingContract.options.address
   const delegationData =
     "0x" +
@@ -92,7 +107,10 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
     [tokenStakingEscrow, tokenStakingEscrow.getPastEvents],
     "Deposited",
     {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+      fromBlock: yield call(
+        getContractDeploymentBlockNumber,
+        TOKEN_STAKING_ESCROW_CONTRACT_NAME
+      ),
       filter: { grantId },
     }
   )
@@ -133,9 +151,11 @@ function* stakeFirstFromEscrow(grantId, amount, extraData) {
 }
 
 export function* watchFetchDelegationRequest() {
-  // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_delegations_request")
-  yield fork(fetchDelegations)
+  yield takeOnlyOnce(
+    "staking/fetch_delegations_request",
+    (action) => action.payload.address,
+    fetchDelegations
+  )
 }
 
 function* fetchDelegations() {
@@ -144,14 +164,17 @@ function* fetchDelegations() {
     const data = yield call(tokensPageService.fetchTokensPageData)
     yield put({ type: "staking/fetch_delegations_success", payload: data })
   } catch (error) {
-    yield* logError("staking/fetch_delegations_failure", error)
+    yield* logErrorAndThrow("staking/fetch_delegations_failure", error)
   }
 }
 
 export function* watchFetchTopUpsRequest() {
   // Fetch data only once and update data based on evnets.
-  yield take("staking/fetch_top_ups_request")
-  yield fork(fetchTopUps)
+  yield takeOnlyOnce(
+    "staking/fetch_top_ups_request",
+    identifyTaskByAddress,
+    fetchTopUps
+  )
 }
 
 function* fetchTopUps() {
@@ -166,15 +189,110 @@ function* fetchTopUps() {
     }
 
     yield put({ type: "staking/fetch_top_ups_start" })
-    const { delegations, undelegations } = yield select(
+    const { delegations, undelegations, initializationPeriod } = yield select(
       (state) => state.staking
     )
     const operators = [...undelegations, ...delegations].map(
       ({ operatorAddress }) => operatorAddress
     )
     const topUps = yield call(fetchAvailableTopUps, operators)
-    yield put({ type: "staking/fetch_top_ups_success", payload: topUps })
+    yield put({
+      type: "staking/fetch_top_ups_success",
+      payload: topUps.map((_) => ({
+        ..._,
+        readyToBeCommitted: isTopUpReadyToBeCommitted(_, initializationPeriod),
+      })),
+    })
   } catch (error) {
-    yield* logError("staking/fetch_top_ups_failure", error)
+    yield* logErrorAndThrow("staking/fetch_top_ups_failure", error)
+  }
+}
+
+export function* watchTopUpReadyToBeCommitted() {
+  // Waiting for top-ups data.
+  yield take("staking/fetch_top_ups_success")
+  yield call(notifyTopUpReadyToBeCommitted)
+
+  while (true) {
+    yield delay(moment.duration(5, "minutes").asMilliseconds())
+    yield call(notifyTopUpReadyToBeCommitted)
+  }
+}
+
+function* notifyTopUpReadyToBeCommitted() {
+  const topUps = yield select((state) => state.staking.topUps)
+  const initializationPeriod = yield select(
+    (state) => state.staking.initializationPeriod
+  )
+
+  const topUpsReadyToCommit = topUps.filter((topUp) =>
+    isTopUpReadyToBeCommitted(topUp, initializationPeriod)
+  )
+
+  if (isEmptyArray(topUpsReadyToCommit)) {
+    return
+  }
+
+  yield put({
+    type: "staking/top_ups_ready_to_be_committed",
+    payload: topUpsReadyToCommit,
+  })
+
+  const { delegations } = yield select((state) => state.staking)
+  const displayedMessages = yield select((state) => state.messages)
+  const liquidTopUpNotificationAlreadyDisplayed = displayedMessages.some(
+    (message) =>
+      message.messageType === messageType.TOP_UP_READY_TO_BE_COMMITTED &&
+      !message.messageProps.grantId
+  )
+
+  // We only want to display a single notification if in a grant are multiple
+  // top-ups, so we store grant ids that have already been notified. The top-ups
+  // are grouped by grant in a data table.
+  const notifiedGrants = new Set()
+  let isFromLiquidTokens = false
+  for (const { operatorAddress } of topUpsReadyToCommit) {
+    if (!isFromLiquidTokens) {
+      isFromLiquidTokens = delegations.some(
+        (_) =>
+          isSameEthAddress(_.operatorAddress, operatorAddress) && !_.isFromGrant
+      )
+    }
+    const stake = delegations.find(
+      (_) =>
+        isSameEthAddress(_.operatorAddress, operatorAddress) && _.isFromGrant
+    )
+
+    if (
+      stake &&
+      !notifiedGrants.has(stake.grantId) &&
+      !displayedMessages.some(
+        (message) =>
+          message.messageType === messageType.TOP_UP_READY_TO_BE_COMMITTED &&
+          message.messageProps.grantId === stake.grantId
+      )
+    ) {
+      notifiedGrants.add(stake.grantId)
+      yield put(
+        showMessage({
+          messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
+          messageProps: {
+            sticky: true,
+            grantId: stake.grantId,
+          },
+        })
+      )
+    }
+  }
+
+  if (isFromLiquidTokens && !liquidTopUpNotificationAlreadyDisplayed) {
+    yield put(
+      showMessage({
+        messageType: messageType.TOP_UP_READY_TO_BE_COMMITTED,
+        messageProps: {
+          sticky: true,
+        },
+      })
+    )
   }
 }

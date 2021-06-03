@@ -8,9 +8,7 @@ import {
   getErrorsObj,
 } from "../forms/common-validators"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
-import { displayAmount, fromTokenUnit } from "../utils/token.utils"
-import ProgressBar from "./ProgressBar"
-import { colors } from "../constants/colors"
+import { KEEP } from "../utils/token.utils"
 import {
   normalizeAmount,
   formatAmount as formatFormAmount,
@@ -19,6 +17,7 @@ import { lte } from "../utils/arithmetics.utils"
 import * as Icons from "./Icons"
 import MaxAmountAddon from "./MaxAmountAddon"
 import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken"
+import { getNextMinStake } from "../utils/minimum-stake-schedule"
 
 const DelegateStakeForm = ({
   onSubmit,
@@ -27,7 +26,7 @@ const DelegateStakeForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-  const stakeTokensValue = fromTokenUnit(formikProps.values.stakeTokens)
+  const stakeTokensValue = KEEP.fromTokenUnit(formikProps.values.stakeTokens)
 
   return (
     <form className="delegate-stake-form flex column">
@@ -112,7 +111,18 @@ const TokensAmountField = ({
   stakeTokensValue,
 }) => {
   const onAddonClick = useSetMaxAmountToken("stakeTokens", availableToStake)
+  const stakingDocsLink = (
+    <a
+      target="_blank"
+      rel="noopener noreferrer"
+      href={"https://staking.keep.network/about-staking/staking-minimums"}
+      className="text-white text-link"
+    >
+      here
+    </a>
+  )
 
+  const nextMinStakeInfo = getNextMinStake()
   return (
     <div className="token-amount-wrapper">
       <div className="token-amount-field">
@@ -123,27 +133,26 @@ const TokensAmountField = ({
           normalize={normalizeAmount}
           format={formatFormAmount}
           placeholder="0"
-          instructionText={`The minimum stake is ${displayAmount(
+          additionalInfoText={`MIN STAKE ${KEEP.displayAmountWithSymbol(
             minStake
-          )} KEEP`}
+          )}`}
           leftIcon={<Icons.KeepOutline className="keep-outline--mint-100" />}
           inputAddon={
             <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
+          tooltipText={
+            <>
+              The minimum stake will decrease to&nbsp;
+              {KEEP.displayAmountWithSymbol(
+                KEEP.fromTokenUnit(nextMinStakeInfo.value)
+              )}
+              &nbsp; on {nextMinStakeInfo.date}. You can see the full schedule
+              in our staking docs {stakingDocsLink}
+            </>
+          }
         />
-        <ProgressBar
-          total={availableToStake}
-          value={stakeTokensValue}
-          color={colors.mint80}
-          bgColor={colors.mint20}
-        >
-          <ProgressBar.Inline
-            height={10}
-            className="token-amount__progress-bar"
-          />
-        </ProgressBar>
-        <div className="text-caption text-grey-60 text-right ml-a">
-          {displayAmount(availableToStake)} KEEP available
+        <div className="text-caption--green-theme text-right ml-a">
+          {KEEP.displayAmount(availableToStake)} available to stake
         </div>
       </div>
     </div>

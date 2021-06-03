@@ -1,46 +1,67 @@
 import { eventChannel, END, buffers } from "redux-saga"
 import { take, takeEvery, put, call } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper } from "./utils"
 import {
-  Message,
+  getContractsContext,
+  getWeb3Context,
+  logError,
+  submitButtonHelper,
+} from "./utils"
+import {
   showCreatedMessage,
   showMessage,
   closeMessage,
 } from "../actions/messages"
 import { messageType } from "../components/Message"
+import ExplorerModeSubprovider from "../connectors/explorerModeSubprovider"
 
 function createTransactionEventChannel(
   contract,
   method,
   args = [],
-  options = {}
+  options = {},
+  displayWalletMessage = true
 ) {
-  const infoMessage = Message.create({
-    title: "Waiting for the transaction confirmation...",
-    type: messageType.WALLET,
-    sticky: true,
-  })
-
   const emitter = contract.methods[method](...args).send(options)
 
+  return createEventChannelFromEmitter(emitter, displayWalletMessage)
+}
+
+function createRawTransactionEventChannel(transactionObject, web3) {
+  const emitter = web3.eth.sendTransaction(transactionObject)
+
+  return createEventChannelFromEmitter(emitter)
+}
+
+function createEventChannelFromEmitter(emitter, displayWalletMessage = true) {
   let txHashCache
 
+  let showPendingActionMessage
+  let showSuccessMessage
+  let showErrorMessage
+
+  const showWalletMessage = showMessage({
+    messageType: messageType.WALLET,
+    messageProps: {
+      sticky: true,
+    },
+  })
+
   return eventChannel((emit) => {
-    emit(showCreatedMessage(infoMessage))
+    if (displayWalletMessage) emit(showWalletMessage)
     emitter
       .once("transactionHash", (txHash) => {
-        emit(closeMessage(infoMessage.id))
+        emit(closeMessage(showWalletMessage.payload.id))
         txHashCache = txHash
-        emit(
-          showCreatedMessage({
-            id: txHash,
-            title: "Pending transaction",
-            sticky: true,
-            type: messageType.PENDING_ACTION,
+        showPendingActionMessage = showCreatedMessage({
+          id: txHash,
+          messageType: messageType.PENDING_ACTION,
+          messageProps: {
+            txHash: txHash,
             withTransactionHash: true,
-            txHash,
-          })
-        )
+            sticky: true,
+          },
+        })
+        emit(showPendingActionMessage)
       })
       .once("receipt", (receipt) => {
         let id
@@ -49,30 +70,31 @@ function createTransactionEventChannel(
         } else {
           id = txHashCache
         }
-        emit(closeMessage(infoMessage.id))
+        emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(id))
-        emit(
-          showMessage({
-            title: "Success!",
-            sticky: true,
-            type: messageType.SUCCESS,
-            withTransactionHash: true,
+        showSuccessMessage = showMessage({
+          messageType: messageType.SUCCESS,
+          messageProps: {
             txHash: id,
-          })
-        )
+            withTransactionHash: true,
+            sticky: true,
+          },
+        })
+        emit(showSuccessMessage)
         emit(END)
       })
       .once("error", (error, receipt) => {
-        emit(closeMessage(infoMessage.id))
+        emit(closeMessage(showWalletMessage.payload.id))
         emit(closeMessage(txHashCache))
-        emit(
-          showMessage({
-            title: "Error",
+        if (error.name === "ExplorerModeSubproviderError") emit(END)
+        showErrorMessage = showMessage({
+          messageType: messageType.ERROR,
+          messageProps: {
             content: error.message,
-            type: messageType.ERROR,
             sticky: true,
-          })
-        )
+          },
+        })
+        emit(showErrorMessage)
         emit(new Error())
       })
 
@@ -116,12 +138,37 @@ export function createSubcribeToContractEventChannel(contract, eventName) {
 
 export function* sendTransaction(action) {
   const { contract, methodName, args, options } = action.payload
+  const web3 = yield getWeb3Context()
+  const displayWalletMessage = !web3.currentProvider?._providers?.some(
+    (provider) => provider instanceof ExplorerModeSubprovider
+  )
 
   const transactionEventChannel = createTransactionEventChannel(
     contract,
     methodName,
     args,
-    options
+    options,
+    displayWalletMessage
+  )
+
+  try {
+    while (true) {
+      const event = yield take(transactionEventChannel)
+      yield put(event)
+    }
+  } catch (error) {
+    throw error
+  } finally {
+    transactionEventChannel.close()
+  }
+}
+
+export function* sendRawTransaction(action) {
+  const web3 = yield getWeb3Context()
+
+  const transactionEventChannel = createRawTransactionEventChannel(
+    action.payload,
+    web3
   )
 
   try {
@@ -152,5 +199,19 @@ export function* watchSendTransactionRequest() {
       payload: sendTransactionPayload,
       meta: action.meta,
     })
+  })
+}
+
+export function* watchSendRawTransactionsInSequenceRequest() {
+  yield takeEvery("web3/send_raw_transaction_in_sequence", function* (action) {
+    try {
+      for (const transactionObject of action.payload) {
+        yield call(sendRawTransaction, {
+          payload: transactionObject,
+        })
+      }
+    } catch (error) {
+      yield* logError("web3/send_raw_transaction_in_sequence_failure", error)
+    }
   })
 }

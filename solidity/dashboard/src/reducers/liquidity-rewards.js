@@ -7,6 +7,12 @@ const liquidityPairInitialData = {
   reward: 0,
   wrappedTokenBalance: 0,
   lpBalance: 0,
+  lastNotificationRewardAmount: "0",
+  lpTokenBalance: {
+    token0: 0,
+    token1: 0,
+  },
+  rewardMultiplier: 1,
   isFetching: false,
   error: null,
 }
@@ -71,6 +77,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
+          rewardMultiplier: restPayload.rewardMultiplier,
         },
       }
     }
@@ -90,6 +97,7 @@ const liquidityRewardsReducer = (state = initialState, action) => {
           ).toString(),
           reward: restPayload.reward,
           apy: restPayload.apy,
+          rewardMultiplier: restPayload.rewardMultiplier,
         },
       }
     }
@@ -107,6 +115,14 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           apy: restPayload.apy,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_wrapped_token_balance_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          wrappedTokenBalance: restPayload.wrappedTokenBalance.toString(),
         },
       }
     case `liquidity_rewards/${liquidityRewardPairName}_fetch_apy_start`:
@@ -132,6 +148,31 @@ const liquidityRewardsReducer = (state = initialState, action) => {
         [liquidityRewardPairName]: {
           ...state[liquidityRewardPairName],
           isAPYFetching: false,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_reward_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          reward: restPayload.reward,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_lp_balance_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          lpTokenBalance: restPayload.lpTokenBalance,
+        },
+      }
+    case `liquidity_rewards/${liquidityRewardPairName}_last_notification_reward_amount_updated`:
+      return {
+        ...state,
+        [liquidityRewardPairName]: {
+          ...state[liquidityRewardPairName],
+          lastNotificationRewardAmount:
+            restPayload.lastNotificationRewardAmount,
         },
       }
     default:

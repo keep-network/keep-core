@@ -5,6 +5,11 @@
         align-items: center;
     }
 
+    &__wallet-connected-icon-wrapper {
+        display: flex;
+        margin-left: 1rem;
+    }
+
     .header__content & {
         margin-left: auto;
     }
@@ -18,6 +23,10 @@
         background-color: @color-black;
         margin-left: 1rem;
         cursor: pointer;
+
+        &--explorer-mode {
+            background-color: @color-grey-60
+        }
 
         &:hover, &--open {
             .wallet__menu-container {

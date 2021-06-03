@@ -20,7 +20,6 @@ var (
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
@@ -138,7 +137,7 @@ func bindStakeDelegatable(address common.Address, caller bind.ContractCaller, tr
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_StakeDelegatable *StakeDelegatableRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_StakeDelegatable *StakeDelegatableRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _StakeDelegatable.Contract.StakeDelegatableCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +156,7 @@ func (_StakeDelegatable *StakeDelegatableRaw) Transact(opts *bind.TransactOpts, 
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_StakeDelegatable *StakeDelegatableCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_StakeDelegatable *StakeDelegatableCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _StakeDelegatable.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,104 +173,124 @@ func (_StakeDelegatable *StakeDelegatableTransactorRaw) Transact(opts *bind.Tran
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableCaller) AuthorizerOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakeDelegatable.contract.Call(opts, out, "authorizerOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _StakeDelegatable.contract.Call(opts, &out, "authorizerOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableSession) AuthorizerOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.AuthorizerOf(&_StakeDelegatable.CallOpts, _operator)
 }
 
 // AuthorizerOf is a free data retrieval call binding the contract method 0xfb1677b1.
 //
-// Solidity: function authorizerOf(address _operator) constant returns(address)
+// Solidity: function authorizerOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableCallerSession) AuthorizerOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.AuthorizerOf(&_StakeDelegatable.CallOpts, _operator)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _address) view returns(uint256 balance)
 func (_StakeDelegatable *StakeDelegatableCaller) BalanceOf(opts *bind.CallOpts, _address common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _StakeDelegatable.contract.Call(opts, out, "balanceOf", _address)
-	return *ret0, err
+	var out []interface{}
+	err := _StakeDelegatable.contract.Call(opts, &out, "balanceOf", _address)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _address) view returns(uint256 balance)
 func (_StakeDelegatable *StakeDelegatableSession) BalanceOf(_address common.Address) (*big.Int, error) {
 	return _StakeDelegatable.Contract.BalanceOf(&_StakeDelegatable.CallOpts, _address)
 }
 
 // BalanceOf is a free data retrieval call binding the contract method 0x70a08231.
 //
-// Solidity: function balanceOf(address _address) constant returns(uint256 balance)
+// Solidity: function balanceOf(address _address) view returns(uint256 balance)
 func (_StakeDelegatable *StakeDelegatableCallerSession) BalanceOf(_address common.Address) (*big.Int, error) {
 	return _StakeDelegatable.Contract.BalanceOf(&_StakeDelegatable.CallOpts, _address)
 }
 
 // BeneficiaryOf is a free data retrieval call binding the contract method 0xba7bffd3.
 //
-// Solidity: function beneficiaryOf(address _operator) constant returns(address)
+// Solidity: function beneficiaryOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableCaller) BeneficiaryOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakeDelegatable.contract.Call(opts, out, "beneficiaryOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _StakeDelegatable.contract.Call(opts, &out, "beneficiaryOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // BeneficiaryOf is a free data retrieval call binding the contract method 0xba7bffd3.
 //
-// Solidity: function beneficiaryOf(address _operator) constant returns(address)
+// Solidity: function beneficiaryOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableSession) BeneficiaryOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.BeneficiaryOf(&_StakeDelegatable.CallOpts, _operator)
 }
 
 // BeneficiaryOf is a free data retrieval call binding the contract method 0xba7bffd3.
 //
-// Solidity: function beneficiaryOf(address _operator) constant returns(address)
+// Solidity: function beneficiaryOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableCallerSession) BeneficiaryOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.BeneficiaryOf(&_StakeDelegatable.CallOpts, _operator)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
 //
-// Solidity: function ownerOf(address _operator) constant returns(address)
+// Solidity: function ownerOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableCaller) OwnerOf(opts *bind.CallOpts, _operator common.Address) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _StakeDelegatable.contract.Call(opts, out, "ownerOf", _operator)
-	return *ret0, err
+	var out []interface{}
+	err := _StakeDelegatable.contract.Call(opts, &out, "ownerOf", _operator)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
 //
-// Solidity: function ownerOf(address _operator) constant returns(address)
+// Solidity: function ownerOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableSession) OwnerOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.OwnerOf(&_StakeDelegatable.CallOpts, _operator)
 }
 
 // OwnerOf is a free data retrieval call binding the contract method 0x14afd79e.
 //
-// Solidity: function ownerOf(address _operator) constant returns(address)
+// Solidity: function ownerOf(address _operator) view returns(address)
 func (_StakeDelegatable *StakeDelegatableCallerSession) OwnerOf(_operator common.Address) (common.Address, error) {
 	return _StakeDelegatable.Contract.OwnerOf(&_StakeDelegatable.CallOpts, _operator)
 }

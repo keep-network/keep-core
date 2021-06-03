@@ -1,6 +1,6 @@
 import React from "react"
 import { formatDate } from "../utils/general.utils"
-import { displayAmount } from "../utils/token.utils"
+import { KEEP } from "../utils/token.utils"
 import AddressShortcut from "./AddressShortcut"
 import { DataTable, Column } from "./DataTable"
 import resourceTooltipProps from "../constants/tooltips"
@@ -22,9 +22,9 @@ const SlashedTokensList = ({ slashedTokens }) => {
         renderContent={({ amount }) => (
           <>
             <span className="text-error">
-              {amount && `-${displayAmount(amount)} `}
+              {amount && `-${KEEP.displayAmount(amount)}`}
             </span>
-            <span className="text-grey-40">KEEP</span>
+            <span className="text-grey-40">{KEEP.symbol}</span>
           </>
         )}
       />

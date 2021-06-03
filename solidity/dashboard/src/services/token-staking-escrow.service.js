@@ -1,10 +1,13 @@
-import { ContractsLoaded, CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { ContractsLoaded, getContractDeploymentBlockNumber } from "../contracts"
+import { TOKEN_STAKING_ESCROW_CONTRACT_NAME } from "../constants/constants"
 
 export const fetchEscrowDepositsByGrantId = async (grantId) => {
   const { tokenStakingEscrow } = await ContractsLoaded
 
   return await tokenStakingEscrow.getPastEvents("Deposited", {
-    fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.tokenStakingEscrow,
+    fromBlock: await getContractDeploymentBlockNumber(
+      TOKEN_STAKING_ESCROW_CONTRACT_NAME
+    ),
     filter: { grantId },
   })
 }

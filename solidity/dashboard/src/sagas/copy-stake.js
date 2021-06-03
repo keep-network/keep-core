@@ -8,10 +8,11 @@ import {
 import { fetchOldDelegations } from "../services/staking-port-backer.service"
 import { getContractsContext } from "./utils"
 import { sendTransaction, createSubcribeToContractEventChannel } from "./web3"
-import { CONTRACT_DEPLOY_BLOCK_NUMBER } from "../contracts"
+import { getContractDeploymentBlockNumber } from "../contracts"
 import { showMessage, showCreatedMessage } from "../actions/messages"
 import { isEmptyArray } from "../utils/array.utils"
 import { messageType } from "../components/Message"
+import { STAKING_PORT_BACKER_CONTRACT_NAME } from "../constants/constants"
 
 function* fetchOldStakingDelegations() {
   try {
@@ -55,10 +56,11 @@ function* copyStake(action) {
   } catch (error) {
     yield put(
       showMessage({
-        type: messageType.ERROR,
-        title: "Error",
-        subtitle: error.message,
-        sticky: true,
+        messageType: messageType.ERROR,
+        messageProps: {
+          content: error.message,
+          sticky: true,
+        },
       })
     )
     yield put({ type: "copy-stake/copy-stake_failure", payload: error })
@@ -72,7 +74,10 @@ function* safeCopyStake(operator) {
     [stakingPortBackerContract, stakingPortBackerContract.getPastEvents],
     "StakeCopied",
     {
-      fromBlock: CONTRACT_DEPLOY_BLOCK_NUMBER.stakingPortBackerContract,
+      fromBlock: yield call(
+        getContractDeploymentBlockNumber,
+        STAKING_PORT_BACKER_CONTRACT_NAME
+      ),
       filter: { operator },
     }
   )
@@ -90,11 +95,12 @@ function* safeCopyStake(operator) {
     yield put(
       showCreatedMessage({
         id: txHash,
-        title: "Your delegation has been already copied.",
-        content: txHash,
-        type: messageType.SUCCESS,
-        sticky: true,
-        withTransactionHash: true,
+        messageType: messageType.DELEGATION_ALREADY_COPIED,
+        messageProps: {
+          content: txHash,
+          withTransactionHash: true,
+          sticky: true,
+        },
       })
     )
   }

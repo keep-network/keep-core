@@ -36,7 +36,7 @@ const TBTCRewardsPage = () => {
   useEffect(() => {
     dispatch({
       type: "rewards/ecdsa_fetch_rewards_data_request",
-      payload: yourAddress,
+      payload: { address: yourAddress },
     })
   }, [dispatch, yourAddress])
 
@@ -87,7 +87,7 @@ const RewardsOverview = ({ balance, isBalanceFetching, withdrawRewards }) => {
         {isBalanceFetching ? (
           <TokenAmountSkeleton />
         ) : (
-          <TokenAmount amount={balance} currencySymbol="KEEP" />
+          <TokenAmount amount={balance} withIcon withMetricSuffix />
         )}
       </div>
       <div className="rewards__overview__period">

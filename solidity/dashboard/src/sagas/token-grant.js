@@ -1,5 +1,10 @@
-import { take, takeEvery, fork, call, put } from "redux-saga/effects"
-import { getContractsContext, submitButtonHelper, logError } from "./utils"
+import { takeEvery, call, put } from "redux-saga/effects"
+import { takeOnlyOnce } from "./effects"
+import {
+  getContractsContext,
+  submitButtonHelper,
+  logErrorAndThrow,
+} from "./utils"
 import { sendTransaction } from "./web3"
 import { gt } from "../utils/arithmetics.utils"
 import { tokenGrantsService } from "../services/token-grants.service"
@@ -56,8 +61,11 @@ export function* watchReleaseTokens() {
 }
 
 export function* watchFetchGrants() {
-  yield take("token-grant/fetch_grants_request")
-  yield fork(fetchGrants)
+  yield takeOnlyOnce(
+    "token-grant/fetch_grants_request",
+    (action) => action.payload.address,
+    fetchGrants
+  )
 }
 
 function* fetchGrants() {
@@ -74,6 +82,6 @@ function* fetchGrants() {
       payload: tokenGrants,
     })
   } catch (err) {
-    yield* logError("token-grant/fetch_grants_failure", err)
+    yield* logErrorAndThrow("token-grant/fetch_grants_failure", err)
   }
 }
