@@ -2,6 +2,7 @@ import React from "react"
 import centered from "@storybook/addon-centered/react"
 import { TrezorConnector } from "../connectors"
 import TrezorModal from "../components/TrezorModal"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "TrezorModal",
@@ -14,7 +15,7 @@ export default {
       action: "closeModal clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <TrezorModal {...args} />

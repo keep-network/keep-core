@@ -1,6 +1,7 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import ExplorerModeAddressForm from "../components/ExplorerModeAddressForm"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "ExplorerModeAddressForm",
@@ -13,7 +14,7 @@ export default {
       action: "onCancel clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <ExplorerModeAddressForm {...args} />

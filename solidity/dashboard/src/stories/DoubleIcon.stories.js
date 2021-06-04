@@ -19,7 +19,10 @@ KEEP_TBTC.decorators = [
   (Story) => (
     <CardContainer>
       <Card className={`liquidity__card tile keep-tbtc`}>
-        <div className={"liquidity__card-title"}>
+        <div
+          className={"liquidity__card-title"}
+          style={{ justifyContent: "center" }}
+        >
           <Story />
         </div>
       </Card>
@@ -37,7 +40,10 @@ FirstIconWithTransparentBackground.decorators = [
   (Story) => (
     <CardContainer>
       <Card className={`liquidity__card tile tbtc-eth`}>
-        <div className={"liquidity__card-title"} style={{justifyContent: "center"}}>
+        <div
+          className={"liquidity__card-title"}
+          style={{ justifyContent: "center" }}
+        >
           <Story />
         </div>
       </Card>

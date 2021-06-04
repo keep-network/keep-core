@@ -11,4 +11,10 @@ export default {
 const Template = (args) => <Divider {...args} />
 
 export const GreyDivider = Template.bind({})
-GreyDivider.args = { style: { borderTop: "1px solid grey", height: "30px" } }
+GreyDivider.args = {
+  style: {
+    borderTop: "5px solid grey",
+    margin: "2rem -2rem 0",
+    padding: "2rem 2rem 0",
+  },
+}

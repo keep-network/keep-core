@@ -1,11 +1,12 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import WalletOptions from "../components/WalletOptions"
+import { blackBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "WalletOptions",
   component: WalletOptions,
-  decorators: [centered],
+  decorators: [blackBackground, centered],
 }
 
 const Template = (args) => <WalletOptions {...args} />

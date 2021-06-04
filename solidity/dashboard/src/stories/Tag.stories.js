@@ -2,11 +2,12 @@ import React from "react"
 import Tag from "../components/Tag"
 import centered from "@storybook/addon-centered/react"
 import * as Icons from "../components/Icons"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "Tag",
   component: Tag,
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <Tag {...args} />

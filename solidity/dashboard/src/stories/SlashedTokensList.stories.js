@@ -1,6 +1,7 @@
 import React from "react"
 import SlashedTokensList from "../components/SlashedTokensList"
 import centered from "@storybook/addon-centered/react"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 const mockedSlashedTokens = [
   {
@@ -26,6 +27,7 @@ export default {
         <Story />
       </div>
     ),
+    whiteBackground,
     centered,
   ],
 }

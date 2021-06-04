@@ -4,6 +4,7 @@ import { Web3StatusView } from "../components/Web3Status"
 import { injected } from "../connectors"
 import { Provider } from "react-redux"
 import store from "../store"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "Web3StatusView",
@@ -14,6 +15,7 @@ export default {
         <Story />
       </Provider>
     ),
+    whiteBackground,
     centered,
   ],
 }

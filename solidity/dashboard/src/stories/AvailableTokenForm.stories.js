@@ -7,6 +7,7 @@ import {
   normalizeAmount,
 } from "../forms/form.utils"
 import MaxAmountAddon from "../components/MaxAmountAddon"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 // TODO: Get rid of error <form> cannot appear as descendant of <form>
 
@@ -18,7 +19,7 @@ export default {
       action: "operator selected",
     },
   },
-  decorators: [centered, withFormik],
+  decorators: [whiteBackground, centered, withFormik],
 }
 
 const Template = (args) => <AvailableTokenForm {...args} />

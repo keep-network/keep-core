@@ -1,6 +1,7 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import ChooseWalletAddress from "../components/ChooseWalletAddress"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "ChooseWalletAddress",
@@ -16,7 +17,7 @@ export default {
       action: "prev clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <ChooseWalletAddress {...args} />

@@ -1,6 +1,7 @@
 import React from "react"
 import { SideMenu } from "../components/SideMenu"
 import centered from "@storybook/addon-centered/react"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "SideMenu",
@@ -11,6 +12,7 @@ export default {
         <Story />
       </div>
     ),
+    whiteBackground,
     centered,
   ],
 }

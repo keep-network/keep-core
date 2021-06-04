@@ -1,6 +1,7 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import TBTCRewardsDataTable from "../components/TBTCRewardsDataTable"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 const mockedData = [
   {
@@ -91,7 +92,7 @@ const mockedData = [
 export default {
   title: "TBTCRewardsDataTable",
   component: TBTCRewardsDataTable,
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <TBTCRewardsDataTable {...args} />

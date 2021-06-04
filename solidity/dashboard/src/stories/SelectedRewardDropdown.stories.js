@@ -1,6 +1,7 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import SelectedRewardDropdown from "../components/SelectedRewardDropdown"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 const mockedGroupReward = {
   reward: 20,
@@ -16,6 +17,7 @@ export default {
         <Story />
       </div>
     ),
+    whiteBackground,
     centered,
   ],
 }

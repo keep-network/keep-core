@@ -3,6 +3,7 @@ import AddETHModal from "../components/AddETHModal"
 import { Provider } from "react-redux"
 import store from "../store"
 import centered from "@storybook/addon-centered/react"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "AddEthModal",
@@ -13,6 +14,7 @@ export default {
         <Story />
       </Provider>
     ),
+    whiteBackground,
     centered,
   ],
 }

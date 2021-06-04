@@ -3,6 +3,7 @@ import LedgerModal from "../components/LedgerModal"
 import centered from "@storybook/addon-centered/react"
 import { LEDGER_DERIVATION_PATHS, LedgerConnector } from "../connectors"
 import { WALLETS } from "../constants/constants"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "LedgerModal",
@@ -15,7 +16,7 @@ export default {
       action: "closeModal clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <LedgerModal {...args} />

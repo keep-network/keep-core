@@ -1,6 +1,7 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import AddressShortcut from "../components/AddressShortcut"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "AddressShortcut",
@@ -10,7 +11,7 @@ export default {
       action: "onClick clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <AddressShortcut {...args} />

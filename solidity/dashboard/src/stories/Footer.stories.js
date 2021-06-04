@@ -1,11 +1,12 @@
 import React from "react"
 import Footer from "../components/Footer"
 import centered from "@storybook/addon-centered/react"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "Footer",
   component: Footer,
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <Footer {...args} />

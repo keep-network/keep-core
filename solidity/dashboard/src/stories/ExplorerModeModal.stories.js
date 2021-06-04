@@ -2,6 +2,7 @@ import React from "react"
 import centered from "@storybook/addon-centered/react"
 import ExplorerModeModal from "../components/ExplorerModeModal"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "ExplorerModeModal",
@@ -14,7 +15,7 @@ export default {
       action: "closeModal clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <ExplorerModeModal {...args} />

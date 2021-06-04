@@ -1,11 +1,9 @@
 import React from "react"
-import centered from "@storybook/addon-centered/react"
 import PageWrapper from "../components/PageWrapper"
 
 export default {
   title: "PageWrapper",
   component: PageWrapper,
-  decorators: [centered],
 }
 
 const Template = (args) => <PageWrapper {...args} />

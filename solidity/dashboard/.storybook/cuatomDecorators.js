@@ -7,3 +7,15 @@ export const centeredWithFullWidth = (Story) => (
     </div>
   </div>
 )
+
+export const whiteBackground = (Story) => (
+  <div style={{backgroundColor: "white", padding: "30px", borderRadius: "5px"}}>
+    <Story />
+  </div>
+)
+
+export const blackBackground = (Story) => (
+  <div style={{backgroundColor: "black", padding: "30px", borderRadius: "5px"}}>
+    <Story />
+  </div>
+)

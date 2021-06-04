@@ -3,6 +3,7 @@ import centered from "@storybook/addon-centered/react"
 import WithdrawETHModal from "../components/WithdrawETHModal"
 import { Provider } from "react-redux"
 import store from "../store"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "WithdrawETHModal",
@@ -13,6 +14,7 @@ export default {
         <Story />
       </Provider>
     ),
+    whiteBackground,
     centered,
   ],
 }

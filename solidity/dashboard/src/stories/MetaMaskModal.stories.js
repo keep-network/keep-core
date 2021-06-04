@@ -2,6 +2,7 @@ import React from "react"
 import centered from "@storybook/addon-centered/react"
 import { injected } from "../connectors"
 import MetaMaskModal from "../components/MetaMaskModal"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "MetaMaskModal",
@@ -14,7 +15,7 @@ export default {
       action: "closeModal clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <MetaMaskModal {...args} />

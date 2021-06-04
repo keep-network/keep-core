@@ -1,6 +1,7 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import AmountForm from "../components/AmountForm"
+import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
 export default {
   title: "AmountForm",
@@ -13,7 +14,7 @@ export default {
       action: "onBtnClick clicked",
     },
   },
-  decorators: [centered],
+  decorators: [whiteBackground, centered],
 }
 
 const Template = (args) => <AmountForm {...args} />

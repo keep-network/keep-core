@@ -7,7 +7,6 @@ import { colors } from "../constants/colors"
 export default {
   title: "ProgressBar",
   component: ProgressBar,
-  decorators: [centered],
 }
 
 const Template = (args) => <ProgressBar {...args} />
@@ -18,7 +17,7 @@ Inline.args = {
   total: 100,
   color: colors.mint80,
   bgColor: colors.mint20,
-  children: <ProgressBar.Inline height={8} />,
+  children: <ProgressBar.Inline height={20} />,
 }
 
 export const Circular = Template.bind({})
@@ -34,6 +33,7 @@ Circular.args = {
     </div>
   ),
 }
+Circular.decorators = [centered]
 
 export const CircularWithLegend = Template.bind({})
 CircularWithLegend.args = {
@@ -60,7 +60,6 @@ CircularWithLegend.args = {
         }
       />
     </div>
-
-
-  )
+  ),
 }
+CircularWithLegend.decorators = [centered]
