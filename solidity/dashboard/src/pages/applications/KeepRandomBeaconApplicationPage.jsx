@@ -13,6 +13,7 @@ import {
   FETCH_KEEP_RANDOM_BEACON_AUTH_DATA_REQUEST,
   KEEP_RANDOM_BEACON_AUTHORIZED,
 } from "../../actions"
+import { LINK } from "../../constants/constants"
 
 const KeepRandomBeaconApplicationPage = () => {
   const dispatch = useDispatch()
@@ -82,7 +83,7 @@ const KeepRandomBeaconApplicationPage = () => {
     <>
       <nav className="mb-2">
         <a
-          href="https://keep.network/"
+          href={LINK.keepWebsite}
           className="h4"
           rel="noopener noreferrer"
           target="_blank"
