@@ -1,11 +1,13 @@
 import React from "react"
+import moment from "moment"
+import { LINK } from "../constants/constants"
 
 const links = [
-  { label: "Join Discord", url: "https://discordapp.com/invite/wYezN7v" },
-  { label: "About Keep", url: "https://keep.network/" },
+  { label: "Join Discord", url: LINK.discord },
+  { label: "About Keep", url: LINK.keepWebsite },
   {
     label: "User Guide",
-    url: "https://keep-network.gitbook.io/staking-documentation/",
+    url: LINK.stakingDocumentation,
   },
 ]
 
@@ -15,7 +17,7 @@ const Footer = ({ className }) => {
       <ul className="footer__links">{links.map(renderFooterLinkItem)}</ul>
       <div className="footer__signature">
         <p>A Thesis* Build</p>
-        <p>&#169; 2020 Keep, SEZC</p>
+        <p>&#169; {moment().format("YYYY")} Keep, SEZC</p>
         <p>All Rights Reserved.</p>
       </div>
       <a
