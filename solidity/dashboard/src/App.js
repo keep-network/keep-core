@@ -13,6 +13,7 @@ import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents
 import useAutoConnect from "./hooks/useAutoConnect"
 import useAutoWalletAddressInjectIntoUrl
   from "./hooks/useAutoWalletAddressInjectIntoUrl";
+import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers";
 
 const App = () => (
   <Provider store={store}>
@@ -32,6 +33,7 @@ const AppLayout = () => {
   useAutoConnect()
   useAutoWalletAddressInjectIntoUrl()
   useSubscribeToConnectorEvents()
+  useModalWindowForMobileUsers()
   return (
     <>
       <AppHeader />
