@@ -49,7 +49,7 @@ export const SideMenu = (props) => {
           icon={<Icons.FeesVector />}
           subroutes={[
             CoveragePoolPage.route,
-            { ...LiquidityPage.route, withNewLabel: true },
+            LiquidityPage.route,
             EarningsPage.route,
             RewardsPage.route,
           ]}
