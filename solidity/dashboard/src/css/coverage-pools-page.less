@@ -1,0 +1,59 @@
+.coverage-pool__checklist {
+    max-width: unset;
+    background-color: @color-mint-20;
+    padding-bottom: 2rem;
+    
+    .banner__title {
+        &:extend(.h3);
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .checklist-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+
+        @media screen and (min-width: 1000px) {
+            margin-top: unset;
+            justify-content: space-evenly;
+        }
+
+        .checklist__section {
+            margin-top: 1rem;
+            flex-basis: 250px;
+
+            > ul.list__content{
+                > li.list__item {
+                    margin-bottom: 0.25rem;
+                    > * {
+                        display: inline-block;
+                        vertical-align: middle;
+                    }
+
+                    svg {
+                        width: 1rem;
+                        height: 1rem;
+    
+                        path {
+                            fill: @color-mint-100;
+                        }
+                    }
+                }
+            }
+
+            &--notes {
+                > ul.list__content {
+                    > li.list__item {
+                        svg {
+                            path {
+                                fill: @color-brass;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+}
