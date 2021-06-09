@@ -481,6 +481,7 @@ Exposed metrics contain the value and timestamp at which they were collected.
 
 Example metrics endpoint call result:
 ```
+$ curl localhost:9601/metrics
 # TYPE connected_peers_count gauge
 connected_peers_count 108 1623235129569
 
@@ -503,6 +504,7 @@ diagnostics endpoint is exposed.
 
 Example diagnostics endpoint call result:
 ```
+$ curl localhost:9501/diagnostics
 {
   "client_info" { 
    "ethereum_address":"0xDcd4199e22d09248cA2583cBDD2759b2acD22381",
