@@ -14,6 +14,7 @@ import { isEmptyArray } from "../utils/array.utils"
 import LiquidityPage from "../pages/liquidity"
 import Chip from "./Chip"
 import NavLink from "./NavLink"
+import CoveragePoolPage from "../pages/coverage-pools"
 
 const styles = {
   overviewDivider: { margin: "1rem 1.5rem" },
@@ -47,9 +48,10 @@ export const SideMenu = (props) => {
           label="earn"
           icon={<Icons.FeesVector />}
           subroutes={[
+            CoveragePoolPage.route,
+            { ...LiquidityPage.route, withNewLabel: true },
             EarningsPage.route,
             RewardsPage.route,
-            { ...LiquidityPage.route, withNewLabel: true },
           ]}
         />
         <NavLinkSection
