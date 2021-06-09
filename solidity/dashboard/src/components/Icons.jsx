@@ -56,6 +56,7 @@ export { ReactComponent as UniswapLogo } from "../static/svg/uniswap-logo.svg"
 export { ReactComponent as WalletConnect } from "../static/svg/wallet-connect.svg"
 export { ReactComponent as Explore } from "../static/svg/explore.svg"
 export { ReactComponent as Dashboard } from "../static/svg/dashboard.svg"
+export { ReactComponent as BrowserWindow } from "../static/svg/browser-window.svg"
 
 const Badge = ({ height, width }) => (
   <svg
