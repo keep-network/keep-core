@@ -1,11 +1,15 @@
 import React from "react"
 import PageWrapper from "../../components/PageWrapper"
-import { CheckListBanner } from "../../components/coverage-pools"
+import {
+  CheckListBanner,
+  HowDoesItWorkBanner,
+} from "../../components/coverage-pools"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
       <CheckListBanner />
+      <HowDoesItWorkBanner />
     </PageWrapper>
   )
 }

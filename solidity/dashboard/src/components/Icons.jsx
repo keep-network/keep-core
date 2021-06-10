@@ -57,6 +57,7 @@ export { ReactComponent as WalletConnect } from "../static/svg/wallet-connect.sv
 export { ReactComponent as Explore } from "../static/svg/explore.svg"
 export { ReactComponent as Dashboard } from "../static/svg/dashboard.svg"
 export { ReactComponent as BrowserWindow } from "../static/svg/browser-window.svg"
+export { ReactComponent as Decentralize } from "../static/svg/decentralize.svg"
 
 const Badge = ({ height, width }) => (
   <svg
