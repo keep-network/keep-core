@@ -53,13 +53,11 @@ jobs:
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
+        if: github.event_name == 'workflow_dispatch'
         env: 
           CI_GITHUB_TOKEN: ${{ secrets.CI_GITHUB_TOKEN }}
         with:
-          # TODO: Consider passing of `environment` input instead of using 
-          # hardcoded value. Would require some rework in action's code or
-          # in config files.
-          environment: 'ropsten' 
+          environment: ${{ github.event.inputs.environment }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -99,7 +97,17 @@ jobs:
           username: _json_key
           password: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
 
+      - name: Build Docker Runtime Image
+        if: github.event_name != 'workflow_dispatch'
+        uses: docker/build-push-action@v2
+        env:
+          IMAGE_NAME: 'keep-client'
+        with:
+          labels: revision=${{ github.sha }}
+          push: false
+
       - name: Build and publish Docker Runtime Image
+        if: github.event_name == 'workflow_dispatch'
         uses: docker/build-push-action@v2
         env:
           IMAGE_NAME: 'keep-client'
@@ -109,7 +117,7 @@ jobs:
           # We don't use TAG yet, will be added at later stages of work on RFC-18.
           tags: ${{ env.GCR_REGISTRY_URL }}/${{ env.GOOGLE_PROJECT_ID }}/${{ env.IMAGE_NAME }}
           labels: revision=${{ github.sha }}
-          push: ${{ github.event_name == 'workflow_dispatch' }}
+          push: true
       
       - name: Notify CI about completion of the workflow
         if: github.event_name == 'workflow_dispatch'
