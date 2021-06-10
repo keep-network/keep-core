@@ -3,6 +3,8 @@ import Banner from "../Banner"
 import * as Icons from "../Icons"
 import Tag from "../Tag"
 import List from "../List"
+import OnlyIf from "../OnlyIf"
+import { useHideComponent } from "../../hooks/useHideComponent"
 
 const needed = [
   { icon: Icons.BrowserWindow, label: "Web3-compatible browser" },
@@ -16,54 +18,58 @@ const notes = [
 ]
 
 const CheckListBanner = () => {
+  const [isBannerVisible, hide] = useHideComponent(false)
+
   return (
-    <Banner className="coverage-pool__checklist">
-      <Banner.CloseIcon />
-      <Banner.Title>Checklist</Banner.Title>
-      <div className="checklist-wrapper">
-        <List
-          className="checklist__section checklist__section--needed"
-          items={needed}
-        >
-          <List.Title className="text-grey-60 mb-1">
-            What You&apos;ll Need
-          </List.Title>
-          <List.Content />
-        </List>
+    <OnlyIf condition={isBannerVisible}>
+      <Banner className="coverage-pool__checklist">
+        <Banner.CloseIcon onClick={hide} />
+        <Banner.Title>Checklist</Banner.Title>
+        <div className="checklist-wrapper">
+          <List
+            className="checklist__section checklist__section--needed"
+            items={needed}
+          >
+            <List.Title className="text-grey-60 mb-1">
+              What You&apos;ll Need
+            </List.Title>
+            <List.Content />
+          </List>
 
-        <List className="checklist__section checklist__section--docs">
-          <List.Title className="text-grey-60 mb-1">Documentation</List.Title>
-          <List.Content>
-            <List.Item>
-              Read the documentation to learn more about participating in the
-              coverage pool.
-            </List.Item>
-            <List.Item>
-              <Tag
-                text={
-                  <a
-                    href="https://example.com"
-                    rel="noopener noreferrer"
-                    target="_blank"
-                    className="text-black"
-                  >
-                    Read Documentation
-                  </a>
-                }
-              />
-            </List.Item>
-          </List.Content>
-        </List>
+          <List className="checklist__section checklist__section--docs">
+            <List.Title className="text-grey-60 mb-1">Documentation</List.Title>
+            <List.Content>
+              <List.Item>
+                Read the documentation to learn more about participating in the
+                coverage pool.
+              </List.Item>
+              <List.Item>
+                <Tag
+                  text={
+                    <a
+                      href="https://example.com"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      className="text-black"
+                    >
+                      Read Documentation
+                    </a>
+                  }
+                />
+              </List.Item>
+            </List.Content>
+          </List>
 
-        <List
-          className="checklist__section checklist__section--notes"
-          items={notes}
-        >
-          <List.Title className="text-grey-60 mb-1">Take note</List.Title>
-          <List.Content />
-        </List>
-      </div>
-    </Banner>
+          <List
+            className="checklist__section checklist__section--notes"
+            items={notes}
+          >
+            <List.Title className="text-grey-60 mb-1">Take note</List.Title>
+            <List.Content />
+          </List>
+        </div>
+      </Banner>
+    </OnlyIf>
   )
 }
 
