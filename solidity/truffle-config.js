@@ -13,7 +13,7 @@ module.exports = {
     keep_dev: {
       provider: function () {
         return new HDWalletProvider({
-          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
+          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
           providerOrUrl: "http://localhost:8545",
         })
       },
@@ -24,7 +24,7 @@ module.exports = {
     keep_dev_vpn: {
       provider: function () {
         return new HDWalletProvider({
-          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
+          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
           providerOrUrl: "http://eth-tx-node.default.svc.cluster.local:8545",
         })
       },
@@ -35,8 +35,8 @@ module.exports = {
     ropsten: {
       provider: function () {
         return new HDWalletProvider({
-          privateKeys: [process.env.CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY],
-          providerOrUrl: process.env.ETH_HOSTNAME,
+          privateKeys: [process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY],
+          providerOrUrl: process.env.CHAIN_API_URL,
         })
       },
       gas: 6000000,
@@ -48,8 +48,8 @@ module.exports = {
 
     alfajores: {
       provider: function () {
-        const kit = Kit.newKit(process.env.CELO_HOSTNAME)
-        kit.addAccount(process.env.CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY)
+        const kit = Kit.newKit(process.env.CHAIN_API_URL)
+        kit.addAccount(process.env.CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY)
         return kit.web3.currentProvider
       },
       network_id: 44787,
