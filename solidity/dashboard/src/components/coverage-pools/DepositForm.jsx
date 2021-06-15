@@ -43,7 +43,7 @@ const DepositForm = ({
         <List.Title className="mb-2">Estimated Rewards</List.Title>
         <List.Content>{estimatedRewards.map(renderListItem)}</List.Content>
       </List>
-      <Divider className="divider divider--tile-full-width" />
+      <Divider className="divider divider--tile-fluid" />
 
       <p>
         Risk warning:&nbsp;
