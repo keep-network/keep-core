@@ -22,23 +22,25 @@ const DepositForm = ({
 }) => {
   return (
     <form className="deposit-form">
-      <FormInput
-        name="tokenAmount"
-        type="text"
-        label="Amount"
-        placeholder="0"
-        normalize={normalizeAmount}
-        format={formatAmount}
-        inputAddon={
-          <MaxAmountAddon
-            onClick={() => console.log("on clikc addon")}
-            text="Max Stake"
-          />
-        }
-        additionalInfoText={`KEEP Balance ${KEEP.displayAmountWithSymbol(
-          tokenAmount
-        )}`}
-      />
+      <div className="deposit-form__token-amount-wrapper">
+        <FormInput
+          name="tokenAmount"
+          type="text"
+          label="Amount"
+          placeholder="0"
+          normalize={normalizeAmount}
+          format={formatAmount}
+          inputAddon={
+            <MaxAmountAddon
+              onClick={() => console.log("on clikc addon")}
+              text="Max Stake"
+            />
+          }
+          additionalInfoText={`KEEP Balance ${KEEP.displayAmountWithSymbol(
+            tokenAmount
+          )}`}
+        />
+      </div>
       <List>
         <List.Title className="mb-2">Estimated Rewards</List.Title>
         <List.Content>{estimatedRewards.map(renderListItem)}</List.Content>
