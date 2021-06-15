@@ -30,14 +30,12 @@ const CheckListBanner = () => {
             className="checklist__section checklist__section--needed"
             items={needed}
           >
-            <List.Title className="text-grey-60 mb-1">
-              What You&apos;ll Need
-            </List.Title>
+            <List.Title className="mb-1 h5">What You&apos;ll Need</List.Title>
             <List.Content />
           </List>
 
           <List className="checklist__section checklist__section--docs">
-            <List.Title className="text-grey-60 mb-1">Documentation</List.Title>
+            <List.Title className="h5 mb-1">Documentation</List.Title>
             <List.Content>
               <List.Item>
                 Read the documentation to learn more about participating in the
@@ -64,7 +62,7 @@ const CheckListBanner = () => {
             className="checklist__section checklist__section--notes"
             items={notes}
           >
-            <List.Title className="text-grey-60 mb-1">Take note</List.Title>
+            <List.Title className="h5 mb-1">Take note</List.Title>
             <List.Content />
           </List>
         </div>
