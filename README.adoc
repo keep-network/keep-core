@@ -1,6 +1,7 @@
 = keep-core
 
-https://circleci.com/gh/keep-network/keep-core[image:https://circleci.com/gh/keep-network/keep-core.svg?style=svg&circle-token=ec728f5ca814b6cb2db5ffeb7258151b752a207e[CircleCI Build Status]]
+https://github.com/keep-network/keep-core/actions/workflows/contracts.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-core/Solidity/master?event=push&label=Solidity build[Solidity contracts build status]]
+https://github.com/keep-network/keep-core/actions/workflows/client.yml[image:https://img.shields.io/github/workflow/status/keep-network/keep-core/Solidity/master?event=push&label=Go build[Go client build status]]
 https://discord.gg/wYezN7v[image:https://img.shields.io/badge/chat-Discord-blueViolet.svg[Chat with us on Discord]]
 
 The core contracts and reference client implementation behind the Keep network,
