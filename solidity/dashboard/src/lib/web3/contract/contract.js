@@ -145,7 +145,7 @@ class Web3jsContractWrapper extends BaseContract {
 }
 
 class ContractFactory {
-  static async createWeb3jsContract(instance, deploymentTxnHash, web3Wrapper) {
+  static createWeb3jsContract(instance, deploymentTxnHash, web3Wrapper) {
     return new Web3jsContractWrapper(instance, deploymentTxnHash, web3Wrapper)
   }
 }
