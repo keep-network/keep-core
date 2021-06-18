@@ -10,6 +10,7 @@ import List from "../List"
 import * as Icons from "../Icons"
 import Chip from "../Chip"
 import TokenAmount from "../TokenAmount"
+import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
 
 const DepositForm = ({
   tokenAmount,
@@ -20,6 +21,8 @@ const DepositForm = ({
     { apy: 30, label: "Yearly", reward: "1000000000000000000000" },
   ],
 }) => {
+  const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
+
   return (
     <form className="deposit-form">
       <div className="deposit-form__token-amount-wrapper">
@@ -60,7 +63,7 @@ const DepositForm = ({
       </p>
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
-        onSubmitAction={onSubmit}
+        onSubmitAction={onSubmitBtn}
       >
         deposit
       </SubmitButton>

@@ -1,15 +1,40 @@
 import React from "react"
+import { useDispatch } from "react-redux"
 import PageWrapper from "../../components/PageWrapper"
 import {
   CheckListBanner,
   HowDoesItWorkBanner,
   DepositForm,
+  InitiateDepositModal,
 } from "../../components/coverage-pools"
 import TokenAmount from "../../components/TokenAmount"
 import MetricsTile from "../../components/MetricsTile"
 import { APY } from "../../components/liquidity"
+import { KEEP } from "../../utils/token.utils"
+import { useModal } from "../../hooks/useModal"
+import { depositAssetPool } from "../../actions/web3"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
+  const shareOfPool = "0"
+  const rewards = "0"
+
+  const { openConfirmationModal } = useModal()
+  const dispatch = useDispatch()
+
+  const onSubmitDepositForm = async (values, awaitingPromise) => {
+    const { tokenAmount } = values
+    const amount = KEEP.fromTokenUnit(tokenAmount)
+    await openConfirmationModal(
+      {
+        modalOptions: { title: "Initiate Deposit" },
+        submitBtnText: "deposit",
+        amount,
+      },
+      InitiateDepositModal
+    )
+    dispatch(depositAssetPool(amount, awaitingPromise))
+  }
+
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
       <CheckListBanner />
@@ -46,8 +71,9 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
           <h3>Deposit</h3>
-          <DepositForm />
+          <DepositForm onSubmit={onSubmitDepositForm} />
         </section>
+
         <section className="tile coverage-pool__share-of-pool">
           <h4 className="text-grey-70">Your Share of Pool</h4>
         </section>
@@ -55,6 +81,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         <section className="tile coverage-pool__rewards">
           <h4 className="text-grey-70">Your Rewards</h4>
         </section>
+
         <HowDoesItWorkBanner />
       </section>
     </PageWrapper>
