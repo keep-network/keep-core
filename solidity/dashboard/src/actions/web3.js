@@ -3,6 +3,7 @@ import {
   KEEP_BONDING_CONTRACT_NAME,
   KEEP_TOKEN_CONTRACT_NAME,
   OPERATOR_CONTRACT_NAME,
+  ASSET_POOL_CONTRACT_NAME,
 } from "../constants/constants"
 
 const WEB3_SEND_TRANSACTION = "web3/send_transaction"
@@ -208,6 +209,18 @@ export const addMoreLpTokens = (
       amount,
       address,
       pool,
+    },
+    meta,
+  }
+}
+
+export const depositAssetPool = (amount, meta) => {
+  return {
+    type: "coverage_pool/deposit",
+    payload: {
+      contractName: ASSET_POOL_CONTRACT_NAME,
+      methodName: "deposit",
+      args: [amount],
     },
     meta,
   }

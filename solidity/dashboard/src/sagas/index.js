@@ -13,6 +13,7 @@ import * as rewards from "./rewards"
 import * as liquidityRewards from "./liquidity-rewards"
 import * as operator from "./operartor"
 import * as authorization from "./authorization"
+import * as coveragePool from "./coverage-pool"
 
 const {
   watchFetchLiquidityRewardsAPY,
@@ -31,6 +32,7 @@ const loginRequiredSagas = [
   ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
+  ...Object.values(coveragePool),
 ]
 
 const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
