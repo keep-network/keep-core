@@ -61,6 +61,7 @@ describe("Test Web3.js lib wrapper", () => {
       Contract: jest.fn(),
       defaultAccount: null,
     },
+    setProvider: jest.fn(),
   }
 
   let web3Wrapper
@@ -115,5 +116,13 @@ describe("Test Web3.js lib wrapper", () => {
 
     expect(web3Wrapper.defaultAccount).toEqual(acc)
     expect(mockedWeb3Lib.eth.defaultAccount).toEqual(acc)
+  })
+
+  it("should set the new provider correctly", () => {
+    const provider = {}
+
+    web3Wrapper.setProvider(provider)
+
+    expect(mockedWeb3Lib.setProvider).toHaveBeenCalledWith(provider)
   })
 })

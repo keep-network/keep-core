@@ -135,6 +135,16 @@ class Keep {
       this.keepTokenContract
     )
   }
+
+  setProvider = (provider) => {
+    this.web3.setProvider(provider)
+
+    for (const [contractName] of Object.entries(contracts)) {
+      this[contractName].setProvider(provider)
+    }
+
+    this.saddleSwapContract.setProvider(provider)
+  }
 }
 
 export default Keep

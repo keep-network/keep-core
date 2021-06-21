@@ -137,6 +137,7 @@ describe("Test Web3jsContract wrapper", () => {
       defaultAccount: null,
       address: "0x0",
     },
+    setProvider: jest.fn(),
   }
   const deploymentTxnHash = "0x0"
   const web3Wrapper = new Web3jsWrapper({})
@@ -195,5 +196,15 @@ describe("Test Web3jsContract wrapper", () => {
     contract.defaultAccount = mockedDefaultAccount
 
     expect(contract.defaultAccount).toEqual(mockedDefaultAccount)
+  })
+
+  it("should set the new provider correctly", () => {
+    const provider = {}
+
+    contract.setProvider(provider)
+
+    expect(mockedWebjsContractInstance.setProvider).toHaveBeenCalledWith(
+      provider
+    )
   })
 })

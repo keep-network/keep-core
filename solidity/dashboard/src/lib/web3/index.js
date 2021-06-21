@@ -34,6 +34,10 @@ class Web3LibWrapper {
   set defaultAccount(defaultAccount) {
     this._defaultAccount = defaultAccount
   }
+
+  setProvider = (provider) => {
+    this._setProvider(provider)
+  }
 }
 
 class Web3jsWrapper extends Web3LibWrapper {
@@ -65,6 +69,10 @@ class Web3jsWrapper extends Web3LibWrapper {
 
   get _defaultAccount() {
     return this.lib.eth.defaultAccount
+  }
+
+  _setProvider = (provider) => {
+    this.lib.setProvider(provider)
   }
 }
 

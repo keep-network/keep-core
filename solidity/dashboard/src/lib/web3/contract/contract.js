@@ -94,6 +94,15 @@ class BaseContract {
 
     return this.deployedAtBlock
   }
+
+  /**
+   * Sets a provider for a contract.
+   *
+   * @param {any} provider
+   */
+  setProvider = (provider) => {
+    this._setProvider(provider)
+  }
 }
 
 /**
@@ -141,6 +150,15 @@ class Web3jsContractWrapper extends BaseContract {
 
   get _defaultAccount() {
     return this.instance.options.defaultAccount
+  }
+
+  /**
+   * Sets a provider for a contract.
+   *
+   * @param {any} provider
+   */
+  _setProvider = (provider) => {
+    this.instance.setProvider(provider)
   }
 }
 
