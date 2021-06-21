@@ -27,10 +27,6 @@ class Web3LibWrapper {
 }
 
 class Web3jsWrapper extends Web3LibWrapper {
-  constructor(_lib) {
-    super(_lib)
-  }
-
   _getTransaction = async (hash) => {
     return await this.lib.eth.getTransaction(hash)
   }
