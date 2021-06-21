@@ -67,6 +67,7 @@ class Web3ContextProvider extends React.Component {
 
       await resolveWeb3Deferred(web3)
       Keep.setProvider(connector.getProvider())
+      Keep.defaultAccount = yourAddress
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       throw error
