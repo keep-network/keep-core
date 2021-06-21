@@ -142,8 +142,18 @@ class Keep {
     for (const [contractName] of Object.entries(contracts)) {
       this[contractName].setProvider(provider)
     }
-
     this.saddleSwapContract.setProvider(provider)
+  }
+
+  /**
+   * @param {string} acc Account address
+   */
+  set defaultAccount(acc) {
+    this.web3.defaultAccount = acc
+
+    for (const [contractName] of Object.entries(contracts)) {
+      this[contractName].defaultAccount = acc
+    }
   }
 }
 
