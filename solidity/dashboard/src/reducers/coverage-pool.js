@@ -30,6 +30,7 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
       return {
         ...state,
         totalValueLocked: action.payload,
+        isTotalValueLockedFetching: false,
         tvlError: null,
       }
     case COVERAGE_POOL_FETCH_TVL_ERROR:

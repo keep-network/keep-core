@@ -21,7 +21,7 @@ class CoveragePoolV1 {
     this.corateralTokenContract = _corateralTokenContract
   }
 
-  shareOfPool = async (covTotalSupply, covBalanceOf) => {
+  shareOfPool = (covTotalSupply, covBalanceOf) => {
     return new BigNumber(covBalanceOf).div(covTotalSupply).toString()
   }
 

@@ -35,7 +35,11 @@ const loginRequiredSagas = [
   ...Object.values(coveragePool),
 ]
 
-const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
+const sagas = [
+  ...Object.values(messagesSaga),
+  watchFetchLiquidityRewardsAPY,
+  ...Object.values(coveragePool),
+]
 
 export default function* rootSaga() {
   yield all(sagas.map(fork))

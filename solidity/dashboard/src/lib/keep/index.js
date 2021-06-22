@@ -22,6 +22,7 @@ import {
   LP_REWARDS_KEEP_TBTC_CONTRACT_NAME,
   LP_REWARDS_TBTC_SADDLE_CONTRACT_NAME,
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
+  COV_TOKEN_CONTRACT_NAME,
 } from "./contracts"
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
@@ -98,7 +99,10 @@ class Keep {
   [KEEP_TOKEN_GEYSER_CONTRACT_NAME];
 
   /** @type {BaseContract} */
-  [SADDLE_SWAP_CONTRACT_NAME]
+  [SADDLE_SWAP_CONTRACT_NAME];
+
+  /** @type {BaseContract} */
+  [COV_TOKEN_CONTRACT_NAME]
 
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
