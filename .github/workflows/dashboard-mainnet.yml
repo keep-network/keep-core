@@ -2,7 +2,7 @@ name: Token Dashboard / Mainnet
 
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
     paths:
     - solidity/dashboard/**
 
@@ -37,10 +37,10 @@ jobs:
       run: npm run build
       env:
         PUBLIC_URL: /${{ github.head_ref }}
-    # A push event is a master merge; deploy to primary bucket.
+    # A push event is a main merge; deploy to primary bucket.
     # TODO uncomment when mainnet builds happen this way
     #- if: github.event_name == 'push'
-    #  name: Deploy Master to GCP
+    #  name: Deploy Main to GCP
     #  uses: thesis/gcp-storage-bucket-action@v3.1.0
     #  with:
     #    service-key: ${{ secrets.KEEP_DASHBOARD_UPLOADER_SERVICE_KEY_JSON }}

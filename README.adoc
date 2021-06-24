@@ -50,7 +50,7 @@ They can be used to request
 link:solidity/contracts/IRandomBeacon.sol[miner-resistant random numbers], as
 well as creating and managing keeps. To generate new ECDSA key material and
 request signatures, the contracts can be found in
-link:https://github.com/keep-network/keep-ecdsa/blob/master/solidity/contracts/api/IBondedECDSAKeep.sol[`keep-ecdsa`].
+link:https://github.com/keep-network/keep-ecdsa/blob/main/solidity/contracts/api/IBondedECDSAKeep.sol[`keep-ecdsa`].
 
 === Client Developers
 
