@@ -13,6 +13,7 @@ import { APY } from "../../components/liquidity"
 import { KEEP } from "../../utils/token.utils"
 import { useModal } from "../../hooks/useModal"
 import { depositAssetPool } from "../../actions/web3"
+import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const shareOfPool = "0"
@@ -34,6 +35,12 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     )
     dispatch(depositAssetPool(amount, awaitingPromise))
   }
+
+  const onMaxAmountClick = () => {}
+
+  const onCancel = () => {}
+
+  const onSubmit = () => {}
 
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
@@ -82,8 +89,24 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <h4 className="text-grey-70">Your Rewards</h4>
         </section>
 
-        <HowDoesItWorkBanner />
+        <section className="tile coverage-pool__withdraw-wrapper">
+          <h3>Available to withdraw</h3>
+          <TokenAmount
+            wrapperClassName={"coverage-pool__token-amount"}
+            amount={"100000000000000000000000"}
+            withIcon
+          />
+          <WithdrawAmountForm
+            onCancel={onCancel}
+            submitBtnText="add keep"
+            availableAmount={"10000000000000000"}
+            currentAmount={"10000000000000000"}
+            onBtnClick={onSubmit}
+          />
+        </section>
       </section>
+
+      <section className={"coverage-pool__pending-withdrawal"}></section>
     </PageWrapper>
   )
 }
