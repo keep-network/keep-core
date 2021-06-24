@@ -1,4 +1,5 @@
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
+/** @typedef { import("events").EventEmitter } EventEmitter */
 
 class BaseContract {
   /**
@@ -103,6 +104,16 @@ class BaseContract {
   setProvider = (provider) => {
     this._setProvider(provider)
   }
+
+  /**
+   * Subscribes to the contract event
+   *
+   * @param {string} eventName
+   * @return {EventEmitter} The event emitter.
+   */
+  on = (eventName, ...args) => {
+    return this._on(eventName, ...args)
+  }
 }
 
 /**
@@ -159,6 +170,16 @@ class Web3jsContractWrapper extends BaseContract {
    */
   _setProvider = (provider) => {
     this.instance.setProvider(provider)
+  }
+
+  /**
+   * Subscribes to the contract event {@link https://web3js.readthedocs.io/en/v1.3.4/web3-eth-contract.html#contract-events}
+   *
+   * @param {string} eventName
+   * @return {EventEmitter} The event emitter.
+   */
+  _on = (eventName, ...args) => {
+    return this.instance.events[eventName](...args)
   }
 }
 

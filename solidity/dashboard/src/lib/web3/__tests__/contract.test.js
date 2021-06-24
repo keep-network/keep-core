@@ -124,6 +124,8 @@ describe("Test Web3jsContract wrapper", () => {
   const mockedMethodName = "mockedMethod"
   const mockedMethodCall = jest.fn()
   const mockedMethodSend = jest.fn()
+  const mockedEventFn = jestn.fn()
+  const mockedEventName = "EventName"
 
   const mockedWebjsContractInstance = {
     methods: {
@@ -138,6 +140,9 @@ describe("Test Web3jsContract wrapper", () => {
       address: "0x0",
     },
     setProvider: jest.fn(),
+    events: {
+      [mockedEventName]: mockedEventFn,
+    },
   }
   const deploymentTxnHash = "0x0"
   const web3Wrapper = new Web3jsWrapper({})
@@ -179,9 +184,10 @@ describe("Test Web3jsContract wrapper", () => {
 
     await contract.getPastEvents(eventName, filter, fromBlock)
 
-    expect(
-      mockedWebjsContractInstance.getPastEvents
-    ).toHaveBeenCalledWith(eventName, { fromBlock, filter })
+    expect(mockedWebjsContractInstance.getPastEvents).toHaveBeenCalledWith(
+      eventName,
+      { fromBlock, filter }
+    )
   })
 
   it("should return the contract instance address", () => {
@@ -206,5 +212,19 @@ describe("Test Web3jsContract wrapper", () => {
     expect(mockedWebjsContractInstance.setProvider).toHaveBeenCalledWith(
       provider
     )
+  })
+
+  it("should subscribe to the event", () => {
+    const mockedResult = { on: jest.fn() }
+    const mockedArg1 = "1"
+    const mockedArg2 = 2
+    contract.events[mockedEventName].mockReturnValue(mockedResult)
+
+    const result = contract.on(eventName, mockedArg1, mockedArg2)
+
+    expect(
+      mockedWebjsContractInstance.events[mockedEventName]
+    ).toHaveBeenCalledWith(mockedArg1, mockedArg2)
+    expect(result).toEqual(mockedResult)
   })
 })
