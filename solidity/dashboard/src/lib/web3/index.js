@@ -52,7 +52,7 @@ class Web3jsWrapper extends Web3LibWrapper {
     deploymentBlock = null
   ) => {
     const contract = new this.lib.eth.Contract(abi, address)
-    contract.options.defaultAccount = this.defaultAccount
+    contract.options.from = this.defaultAccount
     contract.options.handleRevert = true
 
     return ContractFactory.createWeb3jsContract(

@@ -124,7 +124,7 @@ describe("Test Web3jsContract wrapper", () => {
   const mockedMethodName = "mockedMethod"
   const mockedMethodCall = jest.fn()
   const mockedMethodSend = jest.fn()
-  const mockedEventFn = jestn.fn()
+  const mockedEventFn = jest.fn()
   const mockedEventName = "EventName"
 
   const mockedWebjsContractInstance = {
@@ -198,10 +198,14 @@ describe("Test Web3jsContract wrapper", () => {
 
   it("should set the default account for contract", () => {
     const mockedDefaultAccount = "0x123456789"
+    const spyOnDefaultAccount = jest.spyOn(contract, "defaultAccount", "set")
 
     contract.defaultAccount = mockedDefaultAccount
 
-    expect(contract.defaultAccount).toEqual(mockedDefaultAccount)
+    expect(spyOnDefaultAccount).toHaveBeenCalledWith(mockedDefaultAccount)
+    expect(mockedWebjsContractInstance.options.from).toEqual(
+      mockedDefaultAccount
+    )
   })
 
   it("should set the new provider correctly", () => {
@@ -220,7 +224,7 @@ describe("Test Web3jsContract wrapper", () => {
     const mockedArg2 = 2
     contract.events[mockedEventName].mockReturnValue(mockedResult)
 
-    const result = contract.on(eventName, mockedArg1, mockedArg2)
+    const result = contract.on(mockedEventName, mockedArg1, mockedArg2)
 
     expect(
       mockedWebjsContractInstance.events[mockedEventName]

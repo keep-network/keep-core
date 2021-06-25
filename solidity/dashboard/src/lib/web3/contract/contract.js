@@ -156,11 +156,11 @@ class Web3jsContractWrapper extends BaseContract {
   }
 
   set _defaultAccount(defaultAccount) {
-    this.instance.options.defaultAccount = defaultAccount
+    this.instance.options.from = defaultAccount
   }
 
   get _defaultAccount() {
-    return this.instance.options.defaultAccount
+    return this.instance.options.from
   }
 
   /**
