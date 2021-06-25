@@ -15,10 +15,8 @@ import * as operator from "./operartor"
 import * as authorization from "./authorization"
 import * as coveragePool from "./coverage-pool"
 
-const {
-  watchFetchLiquidityRewardsAPY,
-  ...restliquidityRewards
-} = liquidityRewards
+const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
+  liquidityRewards
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
