@@ -23,7 +23,7 @@ import {
   covTokenTransferEventEmitted,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
 } from "../actions/coverage-pool"
-import Keep from "../lib/keep"
+import { Keep } from "../contracts"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
