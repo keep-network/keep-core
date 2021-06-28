@@ -5,6 +5,7 @@ import {
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_START,
+  COVERAGE_POOL_COV_TOKEN_UPDATED,
 } from "../actions/coverage-pool"
 
 export const coveragePoolInitialData = {
@@ -19,6 +20,7 @@ export const coveragePoolInitialData = {
   covTotalSupply: 0,
   error: null,
   estimatedRewards: 0,
+  estimatedKeepBalance: 0,
 }
 
 const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
@@ -48,12 +50,10 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
         isDataFetching: true,
       }
     case COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS:
+    case COVERAGE_POOL_COV_TOKEN_UPDATED:
       return {
         ...state,
-        shareOfPool: action.payload.shareOfPool,
-        covBalance: action.payload.covBalance,
-        covTotalSupply: action.payload.covTotalSupply,
-        estimatedRewards: action.payload.estimatedRewards,
+        ...action.payload,
         isDataFetching: false,
         error: null,
       }

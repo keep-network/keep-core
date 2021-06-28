@@ -5,6 +5,7 @@ import {
   select,
   take,
   actionChannel,
+  takeEvery,
 } from "redux-saga/effects"
 import { takeOnlyOnce } from "./effects"
 import {
@@ -17,23 +18,25 @@ import {
   fetchCovPoolDataStart,
   fetchCovPoolDataSuccess,
   covTokenUpdated,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
+  COVERAGE_POOL_DEPOSIT_ASSET_POOL,
 } from "../actions/coverage-pool"
-import { identifyTaskByAddress, logErrorAndThrow, logError } from "./utils"
+import {
+  identifyTaskByAddress,
+  logErrorAndThrow,
+  logError,
+  submitButtonHelper,
+} from "./utils"
 import { Keep } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { ZERO_ADDRESS } from "../utils/ethereum.utils"
+import { sendTransaction } from "./web3"
 
 function* fetchTvl() {
   try {
-    const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
-
     yield put(fetchTvlStart())
-    const tvl = yield call(
-      Keep.coveragePoolV1.corateralTokenContract.makeCall,
-      "balanceOf",
-      assetPoolAddress
-    )
+    const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
     yield put(fetchTvlSuccess(tvl))
   } catch (error) {
     yield* logError(COVERAGE_POOL_FETCH_TVL_ERROR, error)
@@ -51,10 +54,20 @@ function* fetchCovPoolData(action) {
 
     const balanceOf = yield call(Keep.coveragePoolV1.covBalanceOf, address)
     const totalSupply = yield call(Keep.coveragePoolV1.covTotalSupply)
-    const shareOfPool = Keep.coveragePoolV1.shareOfPool(totalSupply, balanceOf)
+    const shareOfPool = yield call(
+      Keep.coveragePoolV1.shareOfPool,
+      totalSupply,
+      balanceOf
+    )
+    const estimatedKeepBalance = yield call(
+      Keep.coveragePoolV1.estimatedCorateralTokenBalance,
+      shareOfPool
+    )
+
     const estimatedRewards = yield call(
       Keep.coveragePoolV1.estimatedRewards,
-      shareOfPool
+      shareOfPool,
+      estimatedKeepBalance
     )
 
     yield put(
@@ -63,10 +76,11 @@ function* fetchCovPoolData(action) {
         covBalance: balanceOf,
         covTotalSupply: totalSupply,
         estimatedRewards,
+        estimatedKeepBalance,
       })
     )
   } catch (error) {
-    yield* logErrorAndThrow(COVERAGE_POOL_FETCH_TVL_ERROR, error)
+    yield* logErrorAndThrow(COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR, error)
   }
 }
 
@@ -118,15 +132,51 @@ export function* subscribeToCovTokenTransferEvent() {
       updatedCovBalance
     )
 
-    // TODO update estimated rewards.
-    const estimatedRewards = 0
+    const estimatedKeepBalance = yield call(
+      Keep.coveragePoolV1.estimatedCorateralTokenBalance,
+      shareOfPool
+    )
+
+    const estimatedRewards = yield call(
+      Keep.coveragePoolV1.estimatedRewards,
+      shareOfPool,
+      estimatedKeepBalance
+    )
+
+    const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
 
     yield put(
       covTokenUpdated({
         covBalance: updatedCovBalance,
         covTotalSupply: updatedCovTotalSupply,
         shareOfPool,
+        estimatedKeepBalance,
+        estimatedRewards,
+        totalValueLocked: tvl,
       })
     )
   }
+}
+
+function* depositAssetPool(action) {
+  const { payload } = action
+  const { amount } = payload
+
+  const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.corateralTokenContract.instance,
+      methodName: "approveAndCall",
+      args: [assetPoolAddress, amount, []],
+    },
+  })
+}
+
+function* depositAssetPoolWorker(action) {
+  yield call(submitButtonHelper, depositAssetPool, action)
+}
+
+export function* watchDepositAssetPool() {
+  yield takeEvery(COVERAGE_POOL_DEPOSIT_ASSET_POOL, depositAssetPoolWorker)
 }

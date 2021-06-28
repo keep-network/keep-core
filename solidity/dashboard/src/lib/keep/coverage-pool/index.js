@@ -5,23 +5,20 @@ class CoveragePoolV1 {
   /**
    *
    * @param {BaseContract} _assetPoolContract
-   * @param {BaseContract} _rewardPoolContract
    * @param {BaseContract} _covTokenContract
    * @param {BaseContract} _corateralTokenContract
    */
-  constructor(
-    _assetPoolContract,
-    _rewardPoolContract,
-    _covTokenContract,
-    _corateralTokenContract
-  ) {
+  constructor(_assetPoolContract, _covTokenContract, _corateralTokenContract) {
     this.assetPoolContract = _assetPoolContract
-    this.rewardPoolContract = _rewardPoolContract
     this.covTokenContract = _covTokenContract
     this.corateralTokenContract = _corateralTokenContract
+    this._rewardPoolContractAddress = null
   }
 
   shareOfPool = (covTotalSupply, covBalanceOf) => {
+    if (new BigNumber(covTotalSupply).isZero()) {
+      return 0
+    }
     return new BigNumber(covBalanceOf).div(covTotalSupply).toString()
   }
 
@@ -33,17 +30,37 @@ class CoveragePoolV1 {
     return await this.covTokenContract.makeCall("balanceOf", address)
   }
 
-  estimatedRewards = async (shareOfPool) => {
-    const tokensInPool = await this.corateralTokenContract.makeCall(
+  estimatedRewards = async (shareOfPool, estimatedKeepBalance) => {
+    const tvl = await this.totalValueLocked()
+
+    return new BigNumber(tvl)
+      .multipliedBy(shareOfPool)
+      .minus(estimatedKeepBalance)
+      .toFixed(0)
+      .toString()
+  }
+
+  totalValueLocked = async () => {
+    return await this.assetPoolContract.makeCall("totalValue")
+  }
+
+  corateralTokenAllowance = async (owner, spender) => {
+    return await this.corateralTokenContract.makeCall(
+      "allowance",
+      owner,
+      spender
+    )
+  }
+
+  estimatedCorateralTokenBalance = async (shareOfPool) => {
+    const balanceOfAssetPool = await this.corateralTokenContract.makeCall(
       "balanceOf",
       this.assetPoolContract.address
     )
 
-    const earned = await this.rewardPoolContract.makeCall("earned")
-
-    return new BigNumber(tokensInPool)
-      .plus(new BigNumber(earned))
+    return new BigNumber(balanceOfAssetPool)
       .multipliedBy(shareOfPool)
+      .toFixed(0)
       .toString()
   }
 

@@ -138,7 +138,6 @@ class Keep {
   initializeServices = () => {
     this.coveragePoolV1 = new CoveragePoolV1(
       this.assetPoolContract,
-      this.rewardPoolContract,
       this.covTokenContract,
       this.keepTokenContract
     )

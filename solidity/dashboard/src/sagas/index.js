@@ -30,7 +30,6 @@ const loginRequiredSagas = [
   ...Object.values(restliquidityRewards),
   ...Object.values(operator),
   ...Object.values(authorization),
-  ...Object.values(coveragePool),
 ]
 
 const sagas = [
