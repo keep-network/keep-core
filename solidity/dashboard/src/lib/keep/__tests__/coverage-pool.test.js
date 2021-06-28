@@ -11,13 +11,13 @@ describe("Test CoveragePoolV1 lib", () => {
     const assetPoolContract = createMockedContract("0x9")
     const rewardPoolContract = createMockedContract("0x8")
     const covTokenContract = createMockedContract("0x7")
-    const corateralTokenContract = createMockedContract("0x6")
+    const collateralToken = createMockedContract("0x6")
 
     coveragePoolV1 = new CoveragePoolV1(
       assetPoolContract,
       rewardPoolContract,
       covTokenContract,
-      corateralTokenContract
+      collateralToken
     )
   })
 
@@ -49,13 +49,13 @@ describe("Test CoveragePoolV1 lib", () => {
 
   it("should return estimated rewards", async () => {
     const shareOfPool = 0.35
-    coveragePoolV1.corateralTokenContract.makeCall.mockResolvedValue(75)
+    coveragePoolV1.collateralToken.makeCall.mockResolvedValue(75)
     coveragePoolV1.rewardPoolContract.makeCall.mockResolvedValue(25)
     const epxectedResult = 35
 
     const result = await coveragePoolV1.estimatedRewards(shareOfPool)
 
-    expect(coveragePoolV1.corateralTokenContract.makeCall).toHaveBeenCalledWith(
+    expect(coveragePoolV1.collateralToken.makeCall).toHaveBeenCalledWith(
       "balanceOf",
       coveragePoolV1.assetPoolContract.address
     )

@@ -6,12 +6,12 @@ class CoveragePoolV1 {
    *
    * @param {BaseContract} _assetPoolContract
    * @param {BaseContract} _covTokenContract
-   * @param {BaseContract} _corateralTokenContract
+   * @param {BaseContract} _collateralToken
    */
-  constructor(_assetPoolContract, _covTokenContract, _corateralTokenContract) {
+  constructor(_assetPoolContract, _covTokenContract, _collateralToken) {
     this.assetPoolContract = _assetPoolContract
     this.covTokenContract = _covTokenContract
-    this.corateralTokenContract = _corateralTokenContract
+    this.collateralToken = _collateralToken
     this._rewardPoolContractAddress = null
   }
 
@@ -45,15 +45,11 @@ class CoveragePoolV1 {
   }
 
   corateralTokenAllowance = async (owner, spender) => {
-    return await this.corateralTokenContract.makeCall(
-      "allowance",
-      owner,
-      spender
-    )
+    return await this.collateralToken.makeCall("allowance", owner, spender)
   }
 
   estimatedCorateralTokenBalance = async (shareOfPool) => {
-    const balanceOfAssetPool = await this.corateralTokenContract.makeCall(
+    const balanceOfAssetPool = await this.collateralToken.makeCall(
       "balanceOf",
       this.assetPoolContract.address
     )

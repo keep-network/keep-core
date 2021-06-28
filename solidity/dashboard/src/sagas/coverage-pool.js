@@ -166,7 +166,7 @@ function* depositAssetPool(action) {
 
   yield call(sendTransaction, {
     payload: {
-      contract: Keep.coveragePoolV1.corateralTokenContract.instance,
+      contract: Keep.coveragePoolV1.collateralToken.instance,
       methodName: "approveAndCall",
       args: [assetPoolAddress, amount, []],
     },
