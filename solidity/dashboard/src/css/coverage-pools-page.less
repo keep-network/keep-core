@@ -94,7 +94,7 @@
 
     .coverage-pool__deposit-form {
         grid-area: deposit-form;
-        margin-bottom: 0;
+        //margin-bottom: 0;
 
         .deposit-form {
             .deposit-form__token-amount-wrapper {
@@ -134,6 +134,35 @@
             margin-bottom: 2rem;
         }
     }
+}
+
+.pending-withdrawal {
+    .pending-withdrawal__date {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .pending-withdrawal__progress-bar {
+        margin: 5px 0;
+        width: 200px;
+    }
+
+    .pending-withdrawal__cooldown-status {
+        .pending-withdrawal__cooldown-time-container {
+            display: flex;
+            align-items: center;
+
+            .time-icon {
+                margin-right: 0.5rem;
+            }
+        }
+    }
+
+    .pending-withdrawal__button-container {
+        display: flex;
+        justify-content: flex-end;
+    }
+
 }
 
 .withdraw-amount-form__button-text {

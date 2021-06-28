@@ -14,8 +14,24 @@ import { KEEP } from "../../utils/token.utils"
 import { useModal } from "../../hooks/useModal"
 import { depositAssetPool } from "../../actions/web3"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
+import resourceTooltipProps from "../../constants/tooltips"
+import { Column, DataTable } from "../../components/DataTable"
+import moment from "moment"
+import { SubmitButton } from "../../components/Button"
+import { colors } from "../../constants/colors"
+import ProgressBar from "../../components/ProgressBar"
+import * as Icons from "../../components/Icons"
+import Chip from "../../components/Chip"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
+  const mockedData = [
+    {
+      covAmount: "1000000000000000000000",
+      timestamp: "1624425850",
+    },
+  ]
+  const cooldownDurationInDays = 14
+  const withdrawAvailableDurationInDays = 3
   const shareOfPool = "0"
   const rewards = "0"
 
@@ -35,6 +51,83 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     )
     dispatch(depositAssetPool(amount, awaitingPromise))
   }
+
+  const isWithdrawalCooldownOver = (pendingWithdrawal) => {
+    const currentDate = moment()
+    const endOfCooldownDate = moment
+      .unix(pendingWithdrawal.timestamp)
+      .add(cooldownDurationInDays, "days")
+
+    return currentDate.isAfter(endOfCooldownDate)
+  }
+
+  const renderProgressBar = (
+    withdrawalDate,
+    endOfCooldownDate,
+    currentDate
+  ) => {
+    const progressBarValueInMinutes = currentDate.diff(
+      withdrawalDate,
+      "minutes"
+    )
+    const progressBarTotalInMinutes = endOfCooldownDate.diff(
+      withdrawalDate,
+      "minutes"
+    )
+    return (
+      <ProgressBar
+        value={progressBarValueInMinutes}
+        total={progressBarTotalInMinutes}
+        color={colors.secondary}
+        bgColor={colors.bgSecondary}
+      >
+        <ProgressBar.Inline
+          height={20}
+          className={"pending-withdrawal__progress-bar"}
+        />
+      </ProgressBar>
+    )
+  }
+
+  const renderCooldownStatus = (timestamp) => {
+    const withdrawalDate = moment.unix(timestamp)
+    const currentDate = moment()
+    const endOfCooldownDate = moment
+      .unix(timestamp)
+      .add(cooldownDurationInDays, "days")
+    const days = endOfCooldownDate.diff(currentDate, "days")
+    const hours = endOfCooldownDate.diff(currentDate, "hours") % 24
+    const minutes = endOfCooldownDate.diff(currentDate, "minutes") % 60
+
+    let cooldownStatus = <></>
+    if (days >= 0 && hours >= 0 && minutes >= 0) {
+      cooldownStatus = (
+        <>
+          {renderProgressBar(withdrawalDate, endOfCooldownDate, currentDate)}
+          <div className={"pending-withdrawal__cooldown-time-container"}>
+            <Icons.Time
+              width="16"
+              height="16"
+              className="time-icon time-icon--grey-30"
+            />
+            <span>
+              {days}d {hours}h {minutes}m until available
+            </span>
+          </div>
+        </>
+      )
+    } else {
+      cooldownStatus = <Chip text={"cooldown completed"} size="small" />
+    }
+
+    return (
+      <div className={"pending-withdrawal__cooldown-status"}>
+        {cooldownStatus}
+      </div>
+    )
+  }
+
+  const onSubmitBtn = () => {}
 
   const onMaxAmountClick = () => {}
 
@@ -89,6 +182,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <h4 className="text-grey-70">Your Rewards</h4>
         </section>
 
+        {/*<HowDoesItWorkBanner />*/}
+
         <section className="tile coverage-pool__withdraw-wrapper">
           <h3>Available to withdraw</h3>
           <TokenAmount
@@ -106,7 +201,59 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         </section>
       </section>
 
-      <section className={"coverage-pool__pending-withdrawal"}></section>
+      <section className={"tile pending-withdrawal"}>
+        <DataTable
+          data={mockedData}
+          itemFieldId="pendingWithdrawalId"
+          title="Pending withdrawal"
+          withTooltip
+          tooltipProps={resourceTooltipProps.pendingWithdrawal}
+          noDataMessage="No pending withdrawals."
+        >
+          <Column
+            header="amount"
+            field="covAmount"
+            renderContent={({ covAmount }) => {
+              return <TokenAmount amount={covAmount} />
+            }}
+          />
+          <Column
+            header="withdrawal initiated"
+            field="timestamp"
+            renderContent={({ timestamp }) => {
+              const withdrawalDate = moment.unix(timestamp)
+              return (
+                <div className={"pending-withdrawal__date"}>
+                  <span>{withdrawalDate.format("DD-MM-YYYY")}</span>
+                  <span>{withdrawalDate.format("HH:mm:ss")}</span>
+                </div>
+              )
+            }}
+          />
+          <Column
+            header="cooldown status"
+            field="timestamp"
+            tdClassName={"cooldown-status-column"}
+            renderContent={({ timestamp }) => {
+              return renderCooldownStatus(timestamp)
+            }}
+          />
+          <Column
+            header=""
+            renderContent={() => (
+              <div className={"pending-withdrawal__button-container"}>
+                <SubmitButton
+                  className="btn btn-lg btn-primary"
+                  onSubmitAction={onSubmitBtn}
+                  disabled={!isWithdrawalCooldownOver(mockedData[0])}
+                >
+                  claim tokens
+                </SubmitButton>
+              </div>
+            )}
+          />
+        </DataTable>
+      </section>
     </PageWrapper>
   )
 }
