@@ -11,6 +11,11 @@ import * as Icons from "../Icons"
 import Chip from "../Chip"
 import TokenAmount from "../TokenAmount"
 import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
+import {
+  validateAmountInRange,
+  getErrorsObj,
+} from "../../forms/common-validators"
+import { lte } from "../../utils/arithmetics.utils"
 
 const DepositForm = ({
   tokenAmount,
@@ -20,6 +25,7 @@ const DepositForm = ({
     { apy: 20, label: "Monthly", reward: "1000000000000000000000" },
     { apy: 30, label: "Yearly", reward: "1000000000000000000000" },
   ],
+  ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
 
@@ -64,6 +70,7 @@ const DepositForm = ({
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
+        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         deposit
       </SubmitButton>
@@ -100,13 +107,26 @@ const EstimatedAPYListItem = ({ apy, reward, label }) => {
 }
 
 export default withFormik({
-  validateOnChange: false,
-  validateOnBlur: false,
+  validateOnChange: true,
+  validateOnBlur: true,
   mapPropsToValues: () => ({
     tokenAmount: "0",
   }),
   validate: (values, props) => {
-    return {}
+    const { tokenAmount } = values
+    const errors = {}
+
+    if (lte(props.tokenAmount || 0, 0)) {
+      errors.tokenAmount = "Insufficient funds"
+    } else {
+      errors.tokenAmount = validateAmountInRange(
+        tokenAmount,
+        props.tokenAmount,
+        KEEP.fromTokenUnit(1)
+      )
+    }
+
+    return getErrorsObj(errors)
   },
   displayName: "CovPoolsDepositForm",
 })(DepositForm)
