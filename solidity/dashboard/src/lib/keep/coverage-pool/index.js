@@ -30,12 +30,12 @@ class CoveragePoolV1 {
     return await this.covTokenContract.makeCall("balanceOf", address)
   }
 
-  estimatedRewards = async (shareOfPool, estimatedKeepBalance) => {
+  estimatedRewards = async (shareOfPool, estimatedCollateralTokenBalance) => {
     const tvl = await this.totalValueLocked()
 
     return new BigNumber(tvl)
       .multipliedBy(shareOfPool)
-      .minus(estimatedKeepBalance)
+      .minus(estimatedCollateralTokenBalance)
       .toFixed(0)
       .toString()
   }
@@ -44,11 +44,7 @@ class CoveragePoolV1 {
     return await this.assetPoolContract.makeCall("totalValue")
   }
 
-  corateralTokenAllowance = async (owner, spender) => {
-    return await this.collateralToken.makeCall("allowance", owner, spender)
-  }
-
-  estimatedCorateralTokenBalance = async (shareOfPool) => {
+  estimatedCollateralTokenBalance = async (shareOfPool) => {
     const balanceOfAssetPool = await this.collateralToken.makeCall(
       "balanceOf",
       this.assetPoolContract.address

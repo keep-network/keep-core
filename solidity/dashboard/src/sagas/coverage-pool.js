@@ -60,7 +60,7 @@ function* fetchCovPoolData(action) {
       balanceOf
     )
     const estimatedKeepBalance = yield call(
-      Keep.coveragePoolV1.estimatedCorateralTokenBalance,
+      Keep.coveragePoolV1.estimatedCollateralTokenBalance,
       shareOfPool
     )
 
@@ -133,7 +133,7 @@ export function* subscribeToCovTokenTransferEvent() {
     )
 
     const estimatedKeepBalance = yield call(
-      Keep.coveragePoolV1.estimatedCorateralTokenBalance,
+      Keep.coveragePoolV1.estimatedCollateralTokenBalance,
       shareOfPool
     )
 
