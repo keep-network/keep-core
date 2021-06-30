@@ -111,19 +111,32 @@ class Keep {
   initializeContracts = () => {
     const getDeploymentInfo = (artifact) => {
       const { networks } = artifact
-      const networkId = Object.keys(networks)[0]
-
-      const address = networks[networkId].address
-      const deploymentTxnHash = networks[networkId].transactionHash
-      return { address, deploymentTxnHash }
+      let deploymentTxnHash = null
+      let address = null
+      let deployedAtBlock = null
+      if (networks) {
+        // If the JSON artifact has the `networks` field, it means that an
+        // artifact was built by Truffle.
+        const networkId = Object.keys(networks)[0]
+        address = networks[networkId].address
+        deploymentTxnHash = networks[networkId].transactionHash
+      } else {
+        // Otherwise, it means an artifact was built by Hardhat.
+        address = artifact.address
+        deploymentTxnHash = artifact.transactionHash
+        deployedAtBlock = artifact.receipt.blockNumber
+      }
+      return { address, deploymentTxnHash, deployedAtBlock }
     }
 
     for (const [contractName, { artifact }] of Object.entries(contracts)) {
-      const { address, deploymentTxnHash } = getDeploymentInfo(artifact)
+      const { address, deploymentTxnHash, deployedAtBlock } =
+        getDeploymentInfo(artifact)
       this[contractName] = this.web3.createContractInstance(
         artifact.abi,
         address,
-        deploymentTxnHash
+        deploymentTxnHash,
+        deployedAtBlock
       )
     }
 
