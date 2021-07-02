@@ -19,6 +19,11 @@ export const COVERAGE_POOL_DEPOSIT_ASSET_POOL = "coverage_pool/deposit"
 
 export const COVERAGE_POOL_COV_TOKEN_UPDATED = "coverage_pool/cov_token_updated"
 
+export const COVERAGE_POOL_FETCH_APY_REQUEST = "coverage_pool/fetch_apy_request"
+export const COVERAGE_POOL_FETCH_APY_START = "coverage_pool/fetch_apy_start"
+export const COVERAGE_POOL_FETCH_APY_SUCCESS = "coverage_pool/fetch_apy_success"
+export const COVERAGE_POOL_FETCH_APY_ERROR = "coverage_pool/fetch_apy_error"
+
 export const fetchTvlStart = () => {
   return {
     type: COVERAGE_POOL_FETCH_TVL_START,
@@ -96,5 +101,24 @@ export const depositAssetPool = (amount, meta) => {
       amount,
     },
     meta,
+  }
+}
+
+export const fetchAPYRequest = () => {
+  return {
+    type: COVERAGE_POOL_FETCH_APY_REQUEST,
+  }
+}
+
+export const fetchAPYStart = () => {
+  return {
+    type: COVERAGE_POOL_FETCH_APY_START,
+  }
+}
+
+export const fetchAPYSuccess = (apy) => {
+  return {
+    type: COVERAGE_POOL_FETCH_APY_SUCCESS,
+    payload: apy,
   }
 }

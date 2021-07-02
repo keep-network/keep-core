@@ -20,6 +20,9 @@ import {
   covTokenUpdated,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
   COVERAGE_POOL_DEPOSIT_ASSET_POOL,
+  fetchAPYStart,
+  COVERAGE_POOL_FETCH_APY_ERROR,
+  fetchAPYSuccess,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -32,12 +35,15 @@ import { add, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { sendTransaction } from "./web3"
+import { KEEP } from "../utils/token.utils"
 
 function* fetchTvl() {
   try {
     yield put(fetchTvlStart())
     const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
-    yield put(fetchTvlSuccess(tvl))
+    const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
+    const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
+    yield put(fetchTvlSuccess({ tvl, tvlInUSD }))
   } catch (error) {
     yield* logError(COVERAGE_POOL_FETCH_TVL_ERROR, error)
   }
@@ -45,6 +51,20 @@ function* fetchTvl() {
 
 export function* watchFetchTvl() {
   yield takeLatest(COVERAGE_POOL_FETCH_TVL_REQUEST, fetchTvl)
+}
+
+function* fetchAPY() {
+  try {
+    yield put(fetchAPYStart())
+    const apy = yield call(Keep.coveragePoolV1.apy)
+    yield put(fetchAPYSuccess(apy))
+  } catch (error) {
+    yield* logError(COVERAGE_POOL_FETCH_APY_ERROR, error)
+  }
+}
+
+export function* watchFetchAPY() {
+  yield takeLatest(COVERAGE_POOL_FETCH_TVL_REQUEST, fetchAPY)
 }
 
 function* fetchCovPoolData(action) {
@@ -66,8 +86,8 @@ function* fetchCovPoolData(action) {
 
     const estimatedRewards = yield call(
       Keep.coveragePoolV1.estimatedRewards,
-      shareOfPool,
-      estimatedKeepBalance
+      address,
+      shareOfPool
     )
 
     yield put(
@@ -139,11 +159,14 @@ export function* subscribeToCovTokenTransferEvent() {
 
     const estimatedRewards = yield call(
       Keep.coveragePoolV1.estimatedRewards,
-      shareOfPool,
-      estimatedKeepBalance
+      address,
+      shareOfPool
     )
 
     const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
+    const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
+    const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
+    const apy = yield call(Keep.coveragePoolV1.apy)
 
     yield put(
       covTokenUpdated({
@@ -153,6 +176,8 @@ export function* subscribeToCovTokenTransferEvent() {
         estimatedKeepBalance,
         estimatedRewards,
         totalValueLocked: tvl,
+        totalValueLockedInUSD: tvlInUSD,
+        apy,
       })
     )
   }

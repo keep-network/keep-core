@@ -6,13 +6,22 @@ import {
   COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_START,
   COVERAGE_POOL_COV_TOKEN_UPDATED,
+  COVERAGE_POOL_FETCH_APY_START,
+  COVERAGE_POOL_FETCH_APY_SUCCESS,
+  COVERAGE_POOL_FETCH_APY_ERROR,
 } from "../actions/coverage-pool"
 
 export const coveragePoolInitialData = {
   // TVL data
   totalValueLocked: 0,
+  totalValueLockedInUSD: 0,
   isTotalValueLockedFetching: false,
   tvlError: null,
+
+  // APY
+  apy: 0,
+  isApyFetching: false,
+  apyError: null,
 
   isDataFetching: false,
   shareOfPool: 0,
@@ -33,7 +42,8 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
     case COVERAGE_POOL_FETCH_TVL_SUCCESS:
       return {
         ...state,
-        totalValueLocked: action.payload,
+        totalValueLocked: action.payload.tvl,
+        totalValueLockedInUSD: action.payload.tvlInUSD,
         isTotalValueLockedFetching: false,
         tvlError: null,
       }
@@ -62,6 +72,25 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
         ...state,
         isDataFetching: false,
         error: action.payload.error,
+      }
+    case COVERAGE_POOL_FETCH_APY_START:
+      return {
+        ...state,
+        isApyFetching: true,
+      }
+    case COVERAGE_POOL_FETCH_APY_SUCCESS:
+      return {
+        ...state,
+        isApyFetching: false,
+        apy: action.payload,
+        apyError: null,
+      }
+    case COVERAGE_POOL_FETCH_APY_ERROR:
+      return {
+        ...state,
+        isApyFetching: false,
+
+        apyError: action.payload.error,
       }
     default:
       return state
