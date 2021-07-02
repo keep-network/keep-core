@@ -26,6 +26,7 @@ import KeepOnlyPool from "@keep-network/keep-core/artifacts/KeepVault.json"
 import SaddleSwap from "../../../contracts-artifacts/SaddleSwap.json"
 import AssetPool from "@keep-network/coverage-pool/artifacts/AssetPool.json"
 import UnderwriterToken from "@keep-network/coverage-pool/artifacts/UnderwriterToken.json"
+import RewardsPool from "@keep-network/coverage-pool/artifacts/RewardsPool.json"
 
 export const KEEP_TOKEN_CONTRACT_NAME = "keepTokenContract"
 export const TOKEN_STAKING_CONTRACT_NAME = "stakingContract"
@@ -57,6 +58,8 @@ export const SaddleSwapArtifact = SaddleSwap
 
 export const ASSET_POOL_CONTRACT_NAME = "assetPoolContract"
 export const COV_TOKEN_CONTRACT_NAME = "covTokenContract"
+
+export const RewardsPoolArtifact = RewardsPool
 
 const contracts = {
   [KEEP_TOKEN_CONTRACT_NAME]: { artifact: KeepToken },
