@@ -261,7 +261,7 @@ reference].
 
 == Build from Source
 
-See the https://github.com/keep-network/keep-core/tree/master/docs/development#building[building] section in our developer docs.
+See the link:development#building[building] section in our developer docs.
 
 == Docker
 
@@ -307,7 +307,7 @@ At Keep we run on GCP + Kube. To accommodate the aforementioned system considera
 - A LoadBalancer Service for each client.
 - A StatefulSet for each client.
 
-You can see our Ropsten Kube configurations https://github.com/keep-network/keep-core/tree/master/infrastructure/kube/keep-test[here]
+You can see our Ropsten Kube configurations link:../infrastructure/kube/keep-test[here]
 
 == Logging
 

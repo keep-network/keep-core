@@ -3,7 +3,7 @@ name: Solidity
 on:
   push:
     branches:
-      - master
+      - main
     paths:
       - "solidity/**"
       - "!solidity/dashboard/**"
@@ -20,7 +20,7 @@ on:
       upstream_ref:
         description: 'Git reference to checkout (e.g. branch name)'
         required: false
-        default: 'master'
+        default: 'main'
 
 jobs:
   contracts-detect-changes:
@@ -110,14 +110,10 @@ jobs:
       - name: Lint
         run: npm run lint
 
-  contracts-migrate-and-publish-ethereum:
+  contracts-migrate-and-publish:
     needs: [contracts-build-and-test]
     if: github.event_name == 'workflow_dispatch'
-    environment: keep-test # line can be deleted once we'll no longer use environment protection
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     defaults:
       run:
         working-directory: ./solidity
@@ -129,15 +125,11 @@ jobs:
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
         with:
-          # TODO: Consider passing of `environment` input instead of using 
-          # hardcoded value. Would require some rework in action's code or
-          # in config files.
-          environment: 'ropsten'
+          environment: ${{ github.event.inputs.environment }}
 
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+      - uses: actions/setup-node@v2
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: "12.x"
 
       - name: Cache node modules
         uses: actions/cache@v2
@@ -154,11 +146,20 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Migrate contracts
-        env: 
-          ETH_HOSTNAME: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
-          CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY: |
+      - name: Migrate contracts on Ethereum
+        if: github.event.inputs.environment != 'alfajores'
+        env:
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_ETH_HOSTNAME }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
             ${{ secrets.KEEP_TEST_ETH_CONTRACT_OWNER_PRIVATE_KEY }}
+        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
+
+      - name: Migrate contracts on Celo
+        if: github.event.inputs.environment == 'alfajores'
+        env:
+          CHAIN_API_URL: ${{ secrets.KEEP_TEST_CELO_HOSTNAME }}
+          CONTRACT_OWNER_ACCOUNT_PRIVATE_KEY: |
+            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
         run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
       
       - name: Copy artifacts
@@ -176,7 +177,8 @@ jobs:
           commit: ${{ github.sha }}
 
       - name: Push contracts to Tenderly
-        # TODO: once below action gets tagged replace `@main` with `@v1` 
+        if: github.event.inputs.environment == 'ropsten'
+        # TODO: once below action gets tagged replace `@main` with `@v1`
         uses: keep-network/tenderly-push-action@main
         continue-on-error: true
         with:
@@ -195,31 +197,25 @@ jobs:
       - name: Upload keep-core contracts for initcontainer build
         uses: actions/upload-artifact@v2
         with:
-          name: Contracts (Node.js ${{ matrix.node-version }})
+          name: Contracts
           path: ./solidity/build/contracts/*
 
   contracts-build-and-publish-initcontainer:
-    needs: [contracts-migrate-and-publish-ethereum]
-    if: needs.contracts-migrate-and-publish-ethereum.result == 'success'
+    needs: [contracts-migrate-and-publish]
+    if: needs.contracts-migrate-and-publish.result == 'success'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [12.x]
     steps:
       - uses: actions/checkout@v2
 
       - name: Load environment variables
         uses: keep-network/load-env-variables@v1
         with:
-          # TODO: Consider passing of `environment` input instead of using 
-          # hardcoded value. Would require some rework in action's code or
-          # in config files.
-          environment: 'ropsten'
+          environment: ${{ github.event.inputs.environment }}
 
       - name: Download migrated contracts artifacts
         uses: actions/download-artifact@v2
         with:
-          name: Contracts (Node.js ${{ matrix.node-version }})
+          name: Contracts
           path: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
 
       - name: Set up Docker Buildx
@@ -243,7 +239,7 @@ jobs:
       - name: Build and publish initcontainer
         uses: docker/build-push-action@v2
         env:
-          IMAGE_NAME: 'initcontainer-provision-keep-client'
+          IMAGE_NAME: initcontainer-provision-keep-client-${{ env.CHAIN }}
         with:
           context: ./infrastructure/kube/templates/keep-client/initcontainer/provision-keep-client/
           # GCR image should be named according to following convention:
@@ -266,7 +262,7 @@ jobs:
           environment: ${{ github.event.inputs.environment }}
           upstream_builds: ${{ github.event.inputs.upstream_builds }}
           upstream_ref: ${{ github.event.inputs.upstream_ref }}
-          version: ${{ needs.contracts-migrate-and-publish-ethereum.outputs.version }}
+          version: ${{ needs.contracts-migrate-and-publish.outputs.version }}
 
       - # Temp fix - move cache instead of copying (added below step and
         # modified value of `cache-to`).
@@ -277,61 +273,3 @@ jobs:
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-  contracts-migrate-and-publish-celo:
-    needs: [contracts-build-and-test]
-    if: github.event_name == 'workflow_dispatch'
-    environment: keep-test # line can be deleted once we'll no longer use environment protection
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./solidity
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Load environment variables
-        uses: keep-network/load-env-variables@v1
-        with:
-          # TODO: Consider passing of `environment` input instead of using 
-          # hardcoded value. Would require some rework in action's code or
-          # in config files.
-          environment: 'alfajores'
-
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "12.x"
-
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-solidity-node-modules
-        with:
-          path: ~/.npm # npm cache files are stored in `~/.npm` on Linux/macOS
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Migrate contracts
-        env:
-          CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY: |
-            ${{ secrets.KEEP_TEST_CELO_CONTRACT_OWNER_PRIVATE_KEY }}
-        run: npx truffle migrate --reset --network $TRUFFLE_NETWORK
-
-      # TODO: Add copy to `artifacts` dir and NPM publish steps once it's clear
-      # how artifacts should be tagged. Once that's done, no longer publish
-      # contracts to GC Bucket.
-
-      - uses: google-github-actions/setup-gcloud@v0.2.0
-        with:
-          project_id: ${{ env.GOOGLE_PROJECT_ID }}
-          service_account_key: ${{ secrets.KEEP_TEST_GCR_JSON_KEY }}
-
-      - name: Upload contract data
-        run: |
-          cd build/contracts
-          gsutil -m cp * gs://${{ env.CONTRACT_DATA_BUCKET }}/keep-core-celo

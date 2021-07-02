@@ -7,7 +7,7 @@ const docs = [
   {
     title: "Run Random Beacon",
     link:
-      "https://github.com/keep-network/keep-core/blob/master/docs/run-random-beacon.adoc",
+      "https://github.com/keep-network/keep-core/blob/main/docs/run-random-beacon.adoc",
   },
   {
     title: "GitBook Staking Documentation",
@@ -17,7 +17,7 @@ const docs = [
   {
     title: "Staking Overview",
     link:
-      "https://github.com/keep-network/keep-core/blob/master/docs/random-beacon/staking/index.adoc ",
+      "https://github.com/keep-network/keep-core/blob/main/docs/random-beacon/staking/index.adoc ",
   },
 ]
 

@@ -1,3 +1,5 @@
+![Token Dashboard / Testnet](https://github.com/keep-network/keep-core/actions/workflows/dashboard-testnet.yml/badge.svg?branch=master&event=push)
+
 # KEEP Token Dashboard
 
 A react web app to interact with Keep network staking and token grant contracts.
@@ -73,7 +75,7 @@ When you don’t want to use the local version of `@keep-network/keep-core` anym
 
 ### Internal testnet
 
-A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `master` merge. dApp can be accessed at [https://dashboard.dev.keep.network/](https://dashboard.dev.keep.network/) and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
+A new version of staking dApp is automatically deployed to `keep-dev` internal testnet after each `main` merge. dApp can be accessed at [https://dashboard.dev.keep.network/](https://dashboard.dev.keep.network/) and requires an initial setup in MetaMask before the first use. All the setup described below has to be done only one time. 
 
 ### MetaMask extension setup
 
@@ -95,7 +97,7 @@ Before MetaMask can be used with `keep-dev` testnet for the first time, it needs
 ### MetaMask KEEP token owner account import
 On `keep-dev`, account `0x0f0977c4161a371b5e5ee6a8f43eb798cd1ae1db` is the owner of contracts including KEEP ERC20 token contract. This account can be used to create token grants and delegate stake to operators. Grantees of tokens can also stake-delegate their grants.
 
-To use this account in the dApp, it needs to be imported from [the JSON file](https://github.com/keep-network/keep-core/blob/master/private-testnet/keyfiles/UTC--2019-03-27T19-05-16.429364100Z--0f0977c4161a371b5e5ee6a8f43eb798cd1ae1db) secured by a [password](https://github.com/keep-network/keep-core/blob/master/private-testnet/eth-account-password.txt).
+To use this account in the dApp, it needs to be imported from [the JSON file](https://github.com/keep-network/keep-core/blob/main/private-testnet/keyfiles/UTC--2019-03-27T19-05-16.429364100Z--0f0977c4161a371b5e5ee6a8f43eb798cd1ae1db) secured by a [password](https://github.com/keep-network/keep-core/blob/main/private-testnet/eth-account-password.txt).
 
 1. Download the account JSON file
 2. Expand the list of accounts and click on `Import Account`
