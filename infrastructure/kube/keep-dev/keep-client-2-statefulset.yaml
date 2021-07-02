@@ -78,7 +78,7 @@ spec:
         command: ["keep-client", "-config", "/mnt/keep-client/config/keep-client-config.toml", "start"]
       initContainers:
       - name: initcontainer-provision-keep-client
-        image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-client
+        image: gcr.io/keep-dev-fe24/initcontainer-provision-keep-client-ethereum
         imagePullPolicy: Always
         env:
           - name: ETH_RPC_URL
