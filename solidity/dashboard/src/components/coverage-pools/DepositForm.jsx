@@ -17,19 +17,17 @@ import {
 } from "../../forms/common-validators"
 import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
+import { displayPercentageValue } from "../../utils/general.utils"
 
-const DepositForm = ({
-  tokenAmount,
-  onSubmit,
-  estimatedRewards = [
-    { apy: 10, label: "Weekly", reward: "1000000000000000000000" },
-    { apy: 20, label: "Monthly", reward: "1000000000000000000000" },
-    { apy: 30, label: "Yearly", reward: "1000000000000000000000" },
-  ],
-  ...formikProps
-}) => {
+const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+
+  const estimatedReward = KEEP.fromTokenUnit(formikProps.values.tokenAmount)
+    .multipliedBy(apy.toString())
+    .toFixed()
+    .toString()
+
   return (
     <form className="deposit-form">
       <div className="deposit-form__token-amount-wrapper">
@@ -50,7 +48,13 @@ const DepositForm = ({
       </div>
       <List>
         <List.Title className="mb-2">Estimated Rewards</List.Title>
-        <List.Content>{estimatedRewards.map(renderListItem)}</List.Content>
+        <List.Content>
+          <EstimatedAPYListItem
+            apy={apy}
+            reward={estimatedReward}
+            label="Yearly"
+          />
+        </List.Content>
       </List>
       <Divider className="divider divider--tile-fluid" />
 
@@ -76,10 +80,6 @@ const DepositForm = ({
   )
 }
 
-const renderListItem = (item) => (
-  <EstimatedAPYListItem key={item.label} {...item} />
-)
-
 const EstimatedAPYListItem = ({ apy, reward, label }) => {
   return (
     <List.Item className="mb-1">
@@ -92,7 +92,10 @@ const EstimatedAPYListItem = ({ apy, reward, label }) => {
         &nbsp;
         <span className="text-grey-50">{label}</span>
         &nbsp;
-        <Chip text={`${apy}% APY`} size="small" />
+        <Chip
+          text={`${displayPercentageValue(apy * 100, false)} APY`}
+          size="small"
+        />
         <TokenAmount
           wrapperClassName="ml-a"
           amount={reward}
