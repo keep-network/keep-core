@@ -16,6 +16,7 @@ import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
   depositAssetPool,
+  fetchAPYRequest,
 } from "../../actions/coverage-pool"
 import { useWeb3Address } from "../../components/WithWeb3Context"
 import { lte } from "../../utils/arithmetics.utils"
@@ -27,6 +28,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const dispatch = useDispatch()
   const {
     totalValueLocked,
+    totalValueLockedInUSD,
     // isTotalValueLockedFetching,
     // isDataFetching,
     shareOfPool,
@@ -35,6 +37,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     // error,
     estimatedRewards,
     estimatedKeepBalance,
+    apy,
+    isApyFetching,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
@@ -42,6 +46,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   useEffect(() => {
     dispatch(fetchTvlRequest())
+    dispatch(fetchAPYRequest())
   }, [dispatch])
 
   useEffect(() => {
@@ -77,24 +82,23 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             symbolClassName="h2 text-mint-100"
             withIcon
           />
+          <h3 className="tvl tvl--usd">
+            {`$${totalValueLockedInUSD.toString()} USD`}
+          </h3>
         </section>
         <section className="coverage-pool__overview__apy">
-          <h3 className="text-grey-70 mb-1">Pool APY</h3>
-          <section className="apy__values">
-            <MetricsTile className="bg-mint-10">
-              <APY apy="0.15" className="text-mint-100" />
-              <h5 className="text-grey-60">weekly</h5>
-            </MetricsTile>
-            <MetricsTile className="bg-mint-10">
-              <APY apy="0.50" className="text-mint-100 " />
-              <h5 className="text-grey-60">monthly</h5>
-            </MetricsTile>
-            <MetricsTile className="bg-mint-10">
-              <APY apy="1.40" className="text-mint-100" />
-              <h5 className="text-grey-60">annual</h5>
-            </MetricsTile>
-          </section>
+          <h4 className="text-grey-70 mb-1">Rewards Rate</h4>
+
+          <MetricsTile className="bg-mint-10">
+            <APY
+              apy={apy}
+              isFetching={isApyFetching}
+              className="text-mint-100"
+            />
+            <h5 className="text-grey-60">annual</h5>
+          </MetricsTile>
         </section>
+        {/* TODO add more metrics according to the Figma vies */}
       </section>
 
       <section className="coverage-pool__deposit-wrapper">
@@ -103,6 +107,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <DepositForm
             onSubmit={onSubmitDepositForm}
             tokenAmount={keepTokenBalance.value}
+            apy={apy}
           />
         </section>
 
@@ -130,7 +135,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         <section className="tile coverage-pool__rewards">
           <h4 className="text-grey-70 mb-3">Your Rewards</h4>
-          <OnlyIf condition={lte(estimatedRewards, 0) && shareOfPool < 0}>
+          <OnlyIf condition={lte(estimatedRewards, 0) && shareOfPool <= 0}>
             <div className="text-grey-30 text-center">
               You have no rewards yet.&nbsp;
               <br />
