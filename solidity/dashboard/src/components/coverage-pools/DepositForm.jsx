@@ -16,6 +16,7 @@ import {
   getErrorsObj,
 } from "../../forms/common-validators"
 import { lte } from "../../utils/arithmetics.utils"
+import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 
 const DepositForm = ({
   tokenAmount,
@@ -28,7 +29,7 @@ const DepositForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
-
+  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
   return (
     <form className="deposit-form">
       <div className="deposit-form__token-amount-wrapper">
@@ -40,10 +41,7 @@ const DepositForm = ({
           normalize={normalizeAmount}
           format={formatAmount}
           inputAddon={
-            <MaxAmountAddon
-              onClick={() => console.log("on clikc addon")}
-              text="Max Stake"
-            />
+            <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
           additionalInfoText={`KEEP Balance ${KEEP.displayAmountWithSymbol(
             tokenAmount
