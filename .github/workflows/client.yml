@@ -3,7 +3,7 @@ name: Go
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - "docs/**"
       - "infrastructure/**"
@@ -23,7 +23,7 @@ on:
       upstream_ref:
         description: 'Git reference to checkout (e.g. branch name)'
         required: false
-        default: 'master'
+        default: 'main'
 
 jobs:
   client-detect-changes:
