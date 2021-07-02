@@ -3,6 +3,7 @@ import contracts, {
   SaddleSwapArtifact,
 } from "./contracts"
 import CoveragePoolV1 from "./coverage-pool"
+import { UniswapV2Exchange } from "./exchange-api"
 import {
   KEEP_TOKEN_CONTRACT_NAME,
   TOKEN_STAKING_CONTRACT_NAME,
@@ -28,6 +29,7 @@ import {
 
 /** @typedef { import("../web3").Web3LibWrapper} Web3LibWrapper */
 /** @typedef { import("../web3").BaseContract} BaseContract */
+/** @typedef { import("./exchange-api").BaseExchange} BaseExchange */
 
 class Keep {
   static initialize(web3) {
@@ -40,9 +42,12 @@ class Keep {
 
   /**
    * @param {Web3LibWrapper} _web3 The web3 lib wrapper.
+   * @param {BaseExchange} exchangeService The exchange service that provides
+   * data from the external exchanges.
    */
-  constructor(_web3) {
+  constructor(_web3, exchangeService = null) {
     this.web3 = _web3
+    this.exchangeService = exchangeService || new UniswapV2Exchange()
   }
 
   /** @type {BaseContract} */
