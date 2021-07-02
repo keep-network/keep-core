@@ -1,3 +1,5 @@
+![Token Dashboard / Testnet](https://github.com/keep-network/keep-core/actions/workflows/dashboard-testnet.yml/badge.svg?branch=master&event=push)
+
 # KEEP Token Dashboard
 
 A react web app to interact with Keep network staking and token grant contracts.
