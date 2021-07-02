@@ -1,18 +1,28 @@
 import BigNumber from "bignumber.js"
 /** @typedef { import("../../web3").BaseContract} BaseContract */
+/** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
+/** @typedef { import("../exchange-api").BaseExchange} BaseExchange */
 
 class CoveragePoolV1 {
   /**
-   *
    * @param {BaseContract} _assetPoolContract
    * @param {BaseContract} _covTokenContract
    * @param {BaseContract} _collateralToken
+   * @param {BaseExchange} _exchangeService
+   * @param {Web3LibWrapper} _web3
    */
-  constructor(_assetPoolContract, _covTokenContract, _collateralToken) {
+  constructor(
+    _assetPoolContract,
+    _covTokenContract,
+    _collateralToken,
+    _exchangeService,
+    _web3
+  ) {
     this.assetPoolContract = _assetPoolContract
     this.covTokenContract = _covTokenContract
     this.collateralToken = _collateralToken
-    this._rewardPoolContractAddress = null
+    this.exchangeService = _exchangeService
+    this.web3 = _web3
   }
 
   shareOfPool = (covTotalSupply, covBalanceOf) => {

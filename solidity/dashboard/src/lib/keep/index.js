@@ -157,7 +157,9 @@ class Keep {
     this.coveragePoolV1 = new CoveragePoolV1(
       this.assetPoolContract,
       this.covTokenContract,
-      this.keepTokenContract
+      this.keepTokenContract,
+      this.exchangeService,
+      this.web3
     )
   }
 
