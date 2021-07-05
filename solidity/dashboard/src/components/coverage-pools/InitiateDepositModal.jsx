@@ -5,7 +5,7 @@ import Banner from "../Banner"
 import * as Icons from "../Icons"
 
 const warningBannerTitle =
-  "Standard cooldown period is 14 days. During this cooldown period, your funds will continue to earn rewards and funds will be at risk of liquidation."
+  "Standard cooldown period is 21 days. During this cooldown period, your funds will continue to earn rewards and funds will be at risk of liquidation."
 
 const InitiateDepositModal = ({
   amount,
@@ -36,7 +36,7 @@ const InitiateDepositModal = ({
         icon={Icons.Time}
         title={warningBannerTitle}
         className="banner--warning mt-2 mb-2"
-      ></Banner>
+      />
     </AcceptTermConfirmationModal>
   )
 }
