@@ -23,12 +23,13 @@ const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
 
-  const estimatedReward = formikProps.values.tokenAmount
-    ? KEEP.fromTokenUnit(formikProps.values.tokenAmount)
-        .multipliedBy(apy.toString())
-        .toFixed()
-        .toString()
-    : 0
+  const estimatedReward =
+    formikProps.values.tokenAmount && apy > 0 && isFinite(apy)
+      ? KEEP.fromTokenUnit(formikProps.values.tokenAmount)
+          .multipliedBy(apy.toString())
+          .toFixed()
+          .toString()
+      : 0
 
   return (
     <form className="deposit-form">
