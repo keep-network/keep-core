@@ -148,10 +148,16 @@ class CoveragePoolV1 {
       totalSupplyInUSD
     )
 
-    return APYCalculator.calculateAPY(rewardRate)
-      .multipliedBy(100)
-      .decimalPlaces(2, BigNumber.ROUND_DOWN)
-      .toString()
+    return APYCalculator.calculateAPY(rewardRate).toString()
+  }
+
+  totalAllocatedRewards = async () => {
+    const rewardPoolContract = await this.getRewardPoolContract()
+
+    return (await rewardPoolContract.getPastEvents("RewardToppedUp")).reduce(
+      (reducer, _) => add(reducer, _.returnValues.amount),
+      "0"
+    )
   }
 }
 

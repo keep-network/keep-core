@@ -43,7 +43,10 @@ function* fetchTvl() {
     const tvl = yield call(Keep.coveragePoolV1.totalValueLocked)
     const keepInUSD = yield call(Keep.exchangeService.getKeepTokenPriceInUSD)
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
-    yield put(fetchTvlSuccess({ tvl, tvlInUSD }))
+    const totalAllocatedRewards = yield call(
+      Keep.coveragePoolV1.totalAllocatedRewards
+    )
+    yield put(fetchTvlSuccess({ tvl, tvlInUSD, totalAllocatedRewards }))
   } catch (error) {
     yield* logError(COVERAGE_POOL_FETCH_TVL_ERROR, error)
   }
