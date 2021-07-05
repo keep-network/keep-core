@@ -22,6 +22,7 @@ import { useWeb3Address } from "../../components/WithWeb3Context"
 import { lte } from "../../utils/arithmetics.utils"
 import OnlyIf from "../../components/OnlyIf"
 import { displayPercentageValue } from "../../utils/general.utils"
+import { Skeleton } from "../../components/skeletons"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -29,7 +30,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const {
     totalValueLocked,
     totalValueLockedInUSD,
-    // isTotalValueLockedFetching,
+    isTotalValueLockedFetching,
     // isDataFetching,
     shareOfPool,
     // covBalance,
@@ -39,6 +40,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     estimatedKeepBalance,
     apy,
     isApyFetching,
+    totalAllocatedRewards,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
@@ -86,18 +88,38 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             {`$${totalValueLockedInUSD.toString()} USD`}
           </h3>
         </section>
-        <section className="coverage-pool__overview__apy">
-          <h4 className="text-grey-70 mb-1">Rewards Rate</h4>
+        <div className="coverage-pool__overview__metrics">
+          <section className="metrics__apy">
+            <h4 className="text-grey-70 mb-1">Rewards Rate</h4>
 
-          <MetricsTile className="bg-mint-10">
-            <APY
-              apy={apy}
-              isFetching={isApyFetching}
-              className="text-mint-100"
-            />
-            <h5 className="text-grey-60">annual</h5>
-          </MetricsTile>
-        </section>
+            <MetricsTile className="bg-mint-10 mr-2">
+              <APY
+                apy={apy}
+                isFetching={isApyFetching}
+                className="text-mint-100"
+              />
+              <h5 className="text-grey-60">annual</h5>
+            </MetricsTile>
+          </section>
+          <section className="metrics__total-rewards">
+            <h4 className="text-grey-70 mb-1">Total Rewards</h4>
+
+            <MetricsTile className="bg-mint-10">
+              {isTotalValueLockedFetching ? (
+                <Skeleton tag="h2" shining color="grey-10" />
+              ) : (
+                <TokenAmount
+                  amount={totalAllocatedRewards}
+                  withIcon
+                  withSymbol={false}
+                  withMetricSuffix
+                />
+              )}
+              <h5 className="text-grey-60">pool lifetime</h5>
+            </MetricsTile>
+          </section>
+        </div>
+
         {/* TODO add more metrics according to the Figma vies */}
       </section>
 
