@@ -48,6 +48,10 @@ class CoveragePoolV1 {
   }
 
   estimatedRewards = async (address, shareOfPool) => {
+    if (shareOfPool <= 0) {
+      return "0"
+    }
+
     const tvl = await this.totalValueLocked()
     const toAssetPool = (
       await this.collateralToken.getPastEvents("Transfer", {
@@ -64,7 +68,7 @@ class CoveragePoolV1 {
 
     const curretlyDeposited = sub(toAssetPool, fromAssetPool)
 
-    let deposited = 0
+    let deposited = "0"
     if (gt(curretlyDeposited, "0")) {
       deposited = curretlyDeposited
     }
