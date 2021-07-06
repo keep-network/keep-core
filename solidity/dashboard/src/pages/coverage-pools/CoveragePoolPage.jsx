@@ -10,7 +10,7 @@ import {
 import TokenAmount from "../../components/TokenAmount"
 import MetricsTile from "../../components/MetricsTile"
 import { APY } from "../../components/liquidity"
-import { KEEP } from "../../utils/token.utils"
+import {covKEEP, KEEP} from "../../utils/token.utils"
 import { useModal } from "../../hooks/useModal"
 import {
   fetchTvlRequest,
@@ -51,7 +51,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     isTotalValueLockedFetching,
     // isDataFetching,
     shareOfPool,
-    // covBalance,
+    covBalance,
     // covTotalSupply,
     // error,
     estimatedRewards,
@@ -279,7 +279,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <h3>Available to withdraw</h3>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={"100000000000000000000000"}
+            amount={covBalance}
+            token={covKEEP}
             withIcon
           />
           <WithdrawAmountForm
