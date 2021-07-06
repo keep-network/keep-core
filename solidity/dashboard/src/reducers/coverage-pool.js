@@ -2,26 +2,35 @@ import {
   COVERAGE_POOL_FETCH_TVL_START,
   COVERAGE_POOL_FETCH_TVL_SUCCESS,
   COVERAGE_POOL_FETCH_TVL_ERROR,
-  COVERAGE_POOL_FETCH_PENDING_WITHDRAWALS_START,
-  COVERAGE_POOL_FETCH_PENDING_WITHDRAWALS_SUCCESS,
-  COVERAGE_POOL_FETCH_PENDING_WITHDRAWALS_ERROR,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_START,
+  COVERAGE_POOL_COV_TOKEN_UPDATED,
+  COVERAGE_POOL_FETCH_APY_START,
+  COVERAGE_POOL_FETCH_APY_SUCCESS,
+  COVERAGE_POOL_FETCH_APY_ERROR,
 } from "../actions/coverage-pool"
 
 export const coveragePoolInitialData = {
   // TVL data
   totalValueLocked: 0,
+  totalValueLockedInUSD: 0,
   isTotalValueLockedFetching: false,
   tvlError: null,
+  totalAllocatedRewards: 0,
 
-  // shareOfPool
+  // APY
+  apy: 0,
+  isApyFetching: false,
+  apyError: null,
+
+  isDataFetching: false,
   shareOfPool: 0,
-  isShareOfPoolFetching: false,
-  shareOfPoolError: null,
-
-  weeklyRoi: 0,
-  rewards: 0,
-  pendingWithdrawals: [],
-  pendingWithdrawalsError: null,
+  covBalance: 0,
+  covTotalSupply: 0,
+  error: null,
+  estimatedRewards: 0,
+  estimatedKeepBalance: 0,
 }
 
 const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
@@ -34,7 +43,10 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
     case COVERAGE_POOL_FETCH_TVL_SUCCESS:
       return {
         ...state,
-        totalValueLocked: action.payload,
+        totalValueLocked: action.payload.tvl,
+        totalValueLockedInUSD: action.payload.tvlInUSD,
+        totalAllocatedRewards: action.payload.totalAllocatedRewards,
+        isTotalValueLockedFetching: false,
         tvlError: null,
       }
     case COVERAGE_POOL_FETCH_TVL_ERROR:
@@ -43,23 +55,44 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
         isTotalValueLockedFetching: false,
         tvlError: action.payload.error,
       }
-    case COVERAGE_POOL_FETCH_PENDING_WITHDRAWALS_START:
+
+    case COVERAGE_POOL_FETCH_COV_POOL_DATA_START:
       return {
         ...state,
-        isPendingWithdrawalsFetching: true,
+        isDataFetching: true,
       }
-    case COVERAGE_POOL_FETCH_PENDING_WITHDRAWALS_SUCCESS:
+    case COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS:
+    case COVERAGE_POOL_COV_TOKEN_UPDATED:
       return {
         ...state,
-        withdrawals: action.payload,
-        isPendingWithdrawalsFetching: false,
-        withdrawalsError: null,
+        ...action.payload,
+        isDataFetching: false,
+        error: null,
       }
-    case COVERAGE_POOL_FETCH_PENDING_WITHDRAWALS_ERROR:
+    case COVERAGE_POOL_FETCH_COV_POOL_DATA_ERROR:
       return {
         ...state,
-        isPendingWithdrawalsFetching: false,
-        withdrawalsError: action.payload.error,
+        isDataFetching: false,
+        error: action.payload.error,
+      }
+    case COVERAGE_POOL_FETCH_APY_START:
+      return {
+        ...state,
+        isApyFetching: true,
+      }
+    case COVERAGE_POOL_FETCH_APY_SUCCESS:
+      return {
+        ...state,
+        isApyFetching: false,
+        apy: action.payload,
+        apyError: null,
+      }
+    case COVERAGE_POOL_FETCH_APY_ERROR:
+      return {
+        ...state,
+        isApyFetching: false,
+
+        apyError: action.payload.error,
       }
     default:
       return state

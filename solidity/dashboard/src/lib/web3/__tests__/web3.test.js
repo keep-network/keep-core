@@ -30,13 +30,25 @@ describe("Test Web3 lib wrapper", () => {
     const mockedResult = {
       methods: { mockedMethod: { call: () => {}, send: () => {} } },
     }
-    const mockedArtifact = { abi: [] }
+    const abi = []
+    const address = "0x123"
+    const deploymentTxHash = "0x123456789"
+    const deployetAtBlock = 100
+
     web3Wrapper._createContractInstance.mockResolvedValue(mockedResult)
 
-    const result = await web3Wrapper.createContractInstance(mockedArtifact)
+    const result = await web3Wrapper.createContractInstance(
+      abi,
+      address,
+      deploymentTxHash,
+      deployetAtBlock
+    )
 
     expect(web3Wrapper._createContractInstance).toHaveBeenCalledWith(
-      mockedArtifact
+      abi,
+      address,
+      deploymentTxHash,
+      deployetAtBlock
     )
     expect(result).toEqual(mockedResult)
   })
@@ -49,6 +61,7 @@ describe("Test Web3.js lib wrapper", () => {
       Contract: jest.fn(),
       defaultAccount: null,
     },
+    setProvider: jest.fn(),
   }
 
   let web3Wrapper
@@ -69,12 +82,10 @@ describe("Test Web3.js lib wrapper", () => {
   })
 
   it("should create web3 contract instance", () => {
-    const contractData = { address: "0x0", transactionHash: "0x1" }
-    const abi = {}
-    const mockedArtifact = {
-      abi,
-      networks: { 1: contractData },
-    }
+    const abi = []
+    const address = "0x0"
+    const deploymentTxHash = "0x0123"
+
     const mockedWeb3jsContractInstance = {
       methods: {},
       options: { defaultAccount: null },
@@ -87,16 +98,14 @@ describe("Test Web3.js lib wrapper", () => {
       .spyOn(ContractFactory, "createWeb3jsContract")
       .mockReturnValue({})
 
-    web3Wrapper.createContractInstance(mockedArtifact)
+    web3Wrapper.createContractInstance(abi, address, deploymentTxHash)
 
-    expect(mockedWeb3Lib.eth.Contract).toHaveBeenCalledWith(
-      abi,
-      contractData.address
-    )
+    expect(mockedWeb3Lib.eth.Contract).toHaveBeenCalledWith(abi, address)
     expect(spyOnContractFactory).toHaveBeenCalledWith(
       mockedWeb3jsContractInstance,
-      contractData.transactionHash,
-      web3Wrapper
+      deploymentTxHash,
+      web3Wrapper,
+      null
     )
   })
 
@@ -107,5 +116,13 @@ describe("Test Web3.js lib wrapper", () => {
 
     expect(web3Wrapper.defaultAccount).toEqual(acc)
     expect(mockedWeb3Lib.eth.defaultAccount).toEqual(acc)
+  })
+
+  it("should set the new provider correctly", () => {
+    const provider = {}
+
+    web3Wrapper.setProvider(provider)
+
+    expect(mockedWeb3Lib.setProvider).toHaveBeenCalledWith(provider)
   })
 })

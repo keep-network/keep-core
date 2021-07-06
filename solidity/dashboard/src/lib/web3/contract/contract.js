@@ -1,4 +1,5 @@
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
+/** @typedef { import("events").EventEmitter } EventEmitter */
 
 class BaseContract {
   /**
@@ -94,6 +95,25 @@ class BaseContract {
 
     return this.deployedAtBlock
   }
+
+  /**
+   * Sets a provider for a contract.
+   *
+   * @param {any} provider
+   */
+  setProvider = (provider) => {
+    this._setProvider(provider)
+  }
+
+  /**
+   * Subscribes to the contract event
+   *
+   * @param {string} eventName
+   * @return {EventEmitter} The event emitter.
+   */
+  on = (eventName, ...args) => {
+    return this._on(eventName, ...args)
+  }
 }
 
 /**
@@ -136,17 +156,46 @@ class Web3jsContractWrapper extends BaseContract {
   }
 
   set _defaultAccount(defaultAccount) {
-    this.instance.options.defaultAccount = defaultAccount
+    this.instance.options.from = defaultAccount
   }
 
   get _defaultAccount() {
-    return this.instance.options.defaultAccount
+    return this.instance.options.from
+  }
+
+  /**
+   * Sets a provider for a contract.
+   *
+   * @param {any} provider
+   */
+  _setProvider = (provider) => {
+    this.instance.setProvider(provider)
+  }
+
+  /**
+   * Subscribes to the contract event {@link https://web3js.readthedocs.io/en/v1.3.4/web3-eth-contract.html#contract-events}
+   *
+   * @param {string} eventName
+   * @return {EventEmitter} The event emitter.
+   */
+  _on = (eventName, ...args) => {
+    return this.instance.events[eventName](...args)
   }
 }
 
 class ContractFactory {
-  static createWeb3jsContract(instance, deploymentTxnHash, web3Wrapper) {
-    return new Web3jsContractWrapper(instance, deploymentTxnHash, web3Wrapper)
+  static createWeb3jsContract(
+    instance,
+    deploymentTxnHash,
+    web3Wrapper,
+    deployedAtBlock
+  ) {
+    return new Web3jsContractWrapper(
+      instance,
+      deploymentTxnHash,
+      web3Wrapper,
+      deployedAtBlock
+    )
   }
 }
 

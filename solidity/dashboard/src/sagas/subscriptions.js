@@ -5,6 +5,7 @@ import {
   getContractsContext,
   getWeb3Context,
   getLPRewardsWrapper,
+  subscribeToEventAndEmitData,
 } from "./utils"
 import { createManagedGrantContractInstance } from "../contracts"
 import { add, sub } from "../utils/arithmetics.utils"
@@ -18,6 +19,11 @@ import {
   OPERATOR_DELEGATION_UNDELEGATED,
   FETCH_OPERATOR_DELEGATIONS_SUCCESS,
 } from "../actions"
+import {
+  covTokenTransferEventEmitted,
+  COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
+} from "../actions/coverage-pool"
+import { Keep } from "../contracts"
 
 export function* subscribeToKeepTokenTransferEvent() {
   yield take("keep-token/balance_request_success")
@@ -40,9 +46,15 @@ function* observeKeepTokenTransfer() {
   // Observe and dispatch an action that updates keep token balance.
   while (true) {
     try {
+      const event = yield take(contractEventCahnnel)
       const {
         returnValues: { from, to, value },
-      } = yield take(contractEventCahnnel)
+      } = event
+
+      yield put({
+        type: "keep-token/transfered_event",
+        payload: { event },
+      })
 
       let arithmeticOpration = null
       if (isSameEthAddress(defaultAccount, from)) {
@@ -162,14 +174,13 @@ function* observeStakedEvents() {
         if (!isAddressedToCurrentAccount) {
           // check if current address is a grantee in the managed grant
           try {
-            const managedGrantContractInstance = createManagedGrantContractInstance(
-              web3,
-              grantee
-            )
+            const managedGrantContractInstance =
+              createManagedGrantContractInstance(web3, grantee)
             const granteeAddressInManagedGrant = yield call(
               managedGrantContractInstance.methods.grantee().call
             )
-            delegation.managedGrantContractInstance = managedGrantContractInstance
+            delegation.managedGrantContractInstance =
+              managedGrantContractInstance
             delegation.isManagedGrant = true
 
             // compere a current address with a grantee address from the ManagedGrant contract
@@ -461,11 +472,8 @@ export function* subscribeToTopUpInitiatedEvent() {
 }
 
 function* observeTopUpInitiatedEvent() {
-  const {
-    stakingContract,
-    tokenStakingEscrow,
-    grantContract,
-  } = yield getContractsContext()
+  const { stakingContract, tokenStakingEscrow, grantContract } =
+    yield getContractsContext()
 
   // Other events may also be emitted with the `TopUpInitiated` event.
   const eventsToCheck = [
@@ -529,11 +537,8 @@ export function* subsribeToTopUpCompletedEvent() {
 }
 
 function* observeTopUpCompletedEvent() {
-  const {
-    stakingContract,
-    tokenStakingEscrow,
-    grantContract,
-  } = yield getContractsContext()
+  const { stakingContract, tokenStakingEscrow, grantContract } =
+    yield getContractsContext()
   const eventsToCheck = [
     [grantContract, "TokenGrantStaked"],
     [tokenStakingEscrow, "DepositRedelegated"],
@@ -989,4 +994,18 @@ function* updateOperatorData() {
 export function* subscribeToOperatorUndelegateEvent() {
   yield take(FETCH_OPERATOR_DELEGATIONS_SUCCESS)
   yield fork(updateOperatorData)
+}
+
+export function* observeCovTokenTransferEvent() {
+  yield take(COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS)
+
+  const covTokenContract = Keep.coveragePoolV1.covTokenContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    covTokenContract,
+    "Transfer",
+    covTokenTransferEventEmitted,
+    "CovToken.Transfer"
+  )
 }

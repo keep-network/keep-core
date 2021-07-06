@@ -11,17 +11,25 @@ import * as Icons from "../Icons"
 import Chip from "../Chip"
 import TokenAmount from "../TokenAmount"
 import { useCustomOnSubmitFormik } from "../../hooks/useCustomOnSubmitFormik"
+import {
+  validateAmountInRange,
+  getErrorsObj,
+} from "../../forms/common-validators"
+import { lte } from "../../utils/arithmetics.utils"
+import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
+import { displayPercentageValue } from "../../utils/general.utils"
 
-const DepositForm = ({
-  tokenAmount,
-  onSubmit,
-  estimatedRewards = [
-    { apy: 10, label: "Weekly", reward: "1000000000000000000000" },
-    { apy: 20, label: "Monthly", reward: "1000000000000000000000" },
-    { apy: 30, label: "Yearly", reward: "1000000000000000000000" },
-  ],
-}) => {
+const DepositForm = ({ tokenAmount, onSubmit, apy, ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
+  const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
+
+  const estimatedReward =
+    formikProps.values.tokenAmount && apy > 0 && isFinite(apy)
+      ? KEEP.fromTokenUnit(formikProps.values.tokenAmount)
+          .multipliedBy(apy.toString())
+          .toFixed()
+          .toString()
+      : 0
 
   return (
     <form className="deposit-form">
@@ -34,10 +42,7 @@ const DepositForm = ({
           normalize={normalizeAmount}
           format={formatAmount}
           inputAddon={
-            <MaxAmountAddon
-              onClick={() => console.log("on clikc addon")}
-              text="Max Stake"
-            />
+            <MaxAmountAddon onClick={onAddonClick} text="Max Stake" />
           }
           additionalInfoText={`KEEP Balance ${KEEP.displayAmountWithSymbol(
             tokenAmount
@@ -46,7 +51,13 @@ const DepositForm = ({
       </div>
       <List>
         <List.Title className="mb-2">Estimated Rewards</List.Title>
-        <List.Content>{estimatedRewards.map(renderListItem)}</List.Content>
+        <List.Content>
+          <EstimatedAPYListItem
+            apy={apy}
+            reward={estimatedReward}
+            label="Yearly"
+          />
+        </List.Content>
       </List>
       <Divider className="divider divider--tile-fluid" />
 
@@ -64,16 +75,13 @@ const DepositForm = ({
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
+        disabled={!(formikProps.isValid && formikProps.dirty)}
       >
         deposit
       </SubmitButton>
     </form>
   )
 }
-
-const renderListItem = (item) => (
-  <EstimatedAPYListItem key={item.label} {...item} />
-)
 
 const EstimatedAPYListItem = ({ apy, reward, label }) => {
   return (
@@ -87,7 +95,10 @@ const EstimatedAPYListItem = ({ apy, reward, label }) => {
         &nbsp;
         <span className="text-grey-50">{label}</span>
         &nbsp;
-        <Chip text={`${apy}% APY`} size="small" />
+        <Chip
+          text={`${displayPercentageValue(apy * 100, false)} APY`}
+          size="small"
+        />
         <TokenAmount
           wrapperClassName="ml-a"
           amount={reward}
@@ -100,13 +111,26 @@ const EstimatedAPYListItem = ({ apy, reward, label }) => {
 }
 
 export default withFormik({
-  validateOnChange: false,
-  validateOnBlur: false,
+  validateOnChange: true,
+  validateOnBlur: true,
   mapPropsToValues: () => ({
     tokenAmount: "0",
   }),
   validate: (values, props) => {
-    return {}
+    const { tokenAmount } = values
+    const errors = {}
+
+    if (lte(props.tokenAmount || 0, 0)) {
+      errors.tokenAmount = "Insufficient funds"
+    } else {
+      errors.tokenAmount = validateAmountInRange(
+        tokenAmount,
+        props.tokenAmount,
+        KEEP.fromTokenUnit(1)
+      )
+    }
+
+    return getErrorsObj(errors)
   },
   displayName: "CovPoolsDepositForm",
 })(DepositForm)

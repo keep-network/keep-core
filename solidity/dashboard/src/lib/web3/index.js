@@ -13,8 +13,18 @@ class Web3LibWrapper {
     return await this._getTransaction(hash)
   }
 
-  createContractInstance = (artifact) => {
-    return this._createContractInstance(artifact)
+  createContractInstance = (
+    abi,
+    address,
+    deploymentTxnHash,
+    deploymentBlock
+  ) => {
+    return this._createContractInstance(
+      abi,
+      address,
+      deploymentTxnHash,
+      deploymentBlock
+    )
   }
 
   get defaultAccount() {
@@ -24,32 +34,32 @@ class Web3LibWrapper {
   set defaultAccount(defaultAccount) {
     this._defaultAccount = defaultAccount
   }
+
+  setProvider = (provider) => {
+    this._setProvider(provider)
+  }
 }
 
 class Web3jsWrapper extends Web3LibWrapper {
-  constructor(_lib) {
-    super(_lib)
-  }
-
   _getTransaction = async (hash) => {
     return await this.lib.eth.getTransaction(hash)
   }
 
-  _createContractInstance = (artifact) => {
-    const { networks, abi } = artifact
-    const networkId = Object.keys(networks)[0]
-
-    const address = networks[networkId].address
-    const deploymentTxnHash = networks[networkId].transactionHash
-
+  _createContractInstance = (
+    abi,
+    address,
+    deploymentTxnHash = null,
+    deploymentBlock = null
+  ) => {
     const contract = new this.lib.eth.Contract(abi, address)
-    contract.options.defaultAccount = this.defaultAccount
+    contract.options.from = this.defaultAccount
     contract.options.handleRevert = true
 
     return ContractFactory.createWeb3jsContract(
       contract,
       deploymentTxnHash,
-      this
+      this,
+      deploymentBlock
     )
   }
 
@@ -59,6 +69,10 @@ class Web3jsWrapper extends Web3LibWrapper {
 
   get _defaultAccount() {
     return this.lib.eth.defaultAccount
+  }
+
+  _setProvider = (provider) => {
+    this.lib.setProvider(provider)
   }
 }
 

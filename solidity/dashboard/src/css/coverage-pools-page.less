@@ -40,7 +40,7 @@
                     svg {
                         width: 1rem;
                         height: 1rem;
-    
+
                         path {
                             fill: @color-mint-100;
                         }
@@ -64,29 +64,31 @@
 
 }
 
+
 .coverage-pool__overview {
     display: flex;
 
-    &__tvl {
+    &__metrics {
+        display: flex;
         flex: 1;
+        justify-content: center;
     }
 
-    &__apy {
-        flex: 1;
-
-        > .apy__values {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
+    &__tvl {
+        .tvl.tvl--usd {
+            color: @color-grey-40;
+            margin-top: 0.75rem;
+            margin-left: 2.25rem;
         }
     }
+
 }
 
 .coverage-pool__deposit-wrapper {
     display: grid;
     grid-template-areas:
-        "deposit-form   share-of-pool   rewards"
-        "deposit-form   banner          banner";
+    "deposit-form   share-of-pool   rewards"
+    "deposit-form   banner          banner";
 
     grid-template-columns: 2fr 1fr 1fr;
     grid-template-rows: auto;

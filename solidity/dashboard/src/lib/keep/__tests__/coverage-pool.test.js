@@ -11,13 +11,13 @@ describe("Test CoveragePoolV1 lib", () => {
     const assetPoolContract = createMockedContract("0x9")
     const rewardPoolContract = createMockedContract("0x8")
     const covTokenContract = createMockedContract("0x7")
-    const corateralTokenContract = createMockedContract("0x6")
+    const collateralToken = createMockedContract("0x6")
 
     coveragePoolV1 = new CoveragePoolV1(
       assetPoolContract,
       rewardPoolContract,
       covTokenContract,
-      corateralTokenContract
+      collateralToken
     )
   })
 
@@ -48,20 +48,20 @@ describe("Test CoveragePoolV1 lib", () => {
   })
 
   it("should return estimated rewards", async () => {
-    const shareOfPool = 0.35
-    coveragePoolV1.corateralTokenContract.makeCall.mockResolvedValue(75)
-    coveragePoolV1.rewardPoolContract.makeCall.mockResolvedValue(25)
-    const epxectedResult = 35
+    const shareOfPool = 0.4
+    const spyOnTvl = jest
+      .spyOn(coveragePoolV1, "totalValueLocked")
+      .mockResolvedValue(150)
+    const estimatedKeepBalance = 50
+    // tvl * shareOfPool - estimatedBalance
+    const epxectedResult = 10
 
-    const result = await coveragePoolV1.estimatedRewards(shareOfPool)
+    const result = await coveragePoolV1.estimatedRewards(
+      shareOfPool,
+      estimatedKeepBalance
+    )
 
-    expect(coveragePoolV1.corateralTokenContract.makeCall).toHaveBeenCalledWith(
-      "balanceOf",
-      coveragePoolV1.assetPoolContract.address
-    )
-    expect(coveragePoolV1.rewardPoolContract.makeCall).toHaveBeenCalledWith(
-      "earned"
-    )
+    expect(spyOnTvl).toHaveBeenCalled()
     expect(result).toEqual(epxectedResult.toString())
   })
 
@@ -76,5 +76,35 @@ describe("Test CoveragePoolV1 lib", () => {
     )
 
     expect(result).toEqual(expectedResult.toString())
+  })
+
+  it("should return the total value locked", async () => {
+    const mockedResult = "100"
+    coveragePoolV1.assetPoolContract.makeCall.mockResolvedValue(mockedResult)
+
+    const result = await coveragePoolV1.totalValueLocked()
+
+    expect(coveragePoolV1.assetPoolContract.makeCall).toHaveBeenCalledWith(
+      "totalValue"
+    )
+    expect(result).toEqual(mockedResult)
+  })
+
+  it("should return the estimated collateral token balance", async () => {
+    const mockedCollateralBalance = 100
+    coveragePoolV1.collateralToken.makeCall.mockResolvedValue(
+      mockedCollateralBalance
+    )
+    const shareOfPool = 0.35
+
+    const result = await coveragePoolV1.estimatedCollateralTokenBalance(
+      shareOfPool
+    )
+
+    expect(coveragePoolV1.collateralToken.makeCall).toHaveBeenCalledWith(
+      "balanceOf",
+      coveragePoolV1.assetPoolContract.address
+    )
+    expect(result).toEqual((mockedCollateralBalance * shareOfPool).toString())
   })
 })

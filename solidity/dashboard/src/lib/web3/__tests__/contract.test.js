@@ -124,6 +124,8 @@ describe("Test Web3jsContract wrapper", () => {
   const mockedMethodName = "mockedMethod"
   const mockedMethodCall = jest.fn()
   const mockedMethodSend = jest.fn()
+  const mockedEventFn = jest.fn()
+  const mockedEventName = "EventName"
 
   const mockedWebjsContractInstance = {
     methods: {
@@ -136,6 +138,10 @@ describe("Test Web3jsContract wrapper", () => {
     options: {
       defaultAccount: null,
       address: "0x0",
+    },
+    setProvider: jest.fn(),
+    events: {
+      [mockedEventName]: mockedEventFn,
     },
   }
   const deploymentTxnHash = "0x0"
@@ -178,9 +184,10 @@ describe("Test Web3jsContract wrapper", () => {
 
     await contract.getPastEvents(eventName, filter, fromBlock)
 
-    expect(
-      mockedWebjsContractInstance.getPastEvents
-    ).toHaveBeenCalledWith(eventName, { fromBlock, filter })
+    expect(mockedWebjsContractInstance.getPastEvents).toHaveBeenCalledWith(
+      eventName,
+      { fromBlock, filter }
+    )
   })
 
   it("should return the contract instance address", () => {
@@ -191,9 +198,37 @@ describe("Test Web3jsContract wrapper", () => {
 
   it("should set the default account for contract", () => {
     const mockedDefaultAccount = "0x123456789"
+    const spyOnDefaultAccount = jest.spyOn(contract, "defaultAccount", "set")
 
     contract.defaultAccount = mockedDefaultAccount
 
-    expect(contract.defaultAccount).toEqual(mockedDefaultAccount)
+    expect(spyOnDefaultAccount).toHaveBeenCalledWith(mockedDefaultAccount)
+    expect(mockedWebjsContractInstance.options.from).toEqual(
+      mockedDefaultAccount
+    )
+  })
+
+  it("should set the new provider correctly", () => {
+    const provider = {}
+
+    contract.setProvider(provider)
+
+    expect(mockedWebjsContractInstance.setProvider).toHaveBeenCalledWith(
+      provider
+    )
+  })
+
+  it("should subscribe to the event", () => {
+    const mockedResult = { on: jest.fn() }
+    const mockedArg1 = "1"
+    const mockedArg2 = 2
+    contract.events[mockedEventName].mockReturnValue(mockedResult)
+
+    const result = contract.on(mockedEventName, mockedArg1, mockedArg2)
+
+    expect(
+      mockedWebjsContractInstance.events[mockedEventName]
+    ).toHaveBeenCalledWith(mockedArg1, mockedArg2)
+    expect(result).toEqual(mockedResult)
   })
 })
