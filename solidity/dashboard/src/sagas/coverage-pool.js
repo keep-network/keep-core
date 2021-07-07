@@ -23,6 +23,7 @@ import {
   fetchAPYStart,
   COVERAGE_POOL_FETCH_APY_ERROR,
   fetchAPYSuccess,
+  COVERAGE_POOL_FETCH_APY_REQUEST,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -36,6 +37,7 @@ import { isSameEthAddress } from "../utils/general.utils"
 import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { sendTransaction } from "./web3"
 import { KEEP } from "../utils/token.utils"
+import selectors from "./selectors"
 
 function* fetchTvl() {
   try {
@@ -67,7 +69,7 @@ function* fetchAPY() {
 }
 
 export function* watchFetchAPY() {
-  yield takeLatest(COVERAGE_POOL_FETCH_TVL_REQUEST, fetchAPY)
+  yield takeLatest(COVERAGE_POOL_FETCH_APY_REQUEST, fetchAPY)
 }
 
 function* fetchCovPoolData(action) {
@@ -128,15 +130,15 @@ export function* subscribeToCovTokenTransferEvent() {
       returnValues: { from, to, value },
     } = event
     const { covTotalSupply, covBalance } = yield select(
-      (state) => state.coveragePool
+      selectors.getCoveragePool
     )
 
-    const address = yield select((state) => state.app.address)
-    let updatedCovTotalSupply = 0
+    const address = yield select(selectors.getUserAddress)
+    let updatedCovTotalSupply = covTotalSupply
     if (isSameEthAddress(from, ZERO_ADDRESS)) {
-      updatedCovTotalSupply = add(covTotalSupply, value)
+      updatedCovTotalSupply = add(covTotalSupply, value).toString()
     } else if (isSameEthAddress(to, ZERO_ADDRESS)) {
-      updatedCovTotalSupply = add(covTotalSupply, value)
+      updatedCovTotalSupply = sub(covTotalSupply, value).toString()
     }
 
     let arithmeticOpration = null
@@ -147,10 +149,11 @@ export function* subscribeToCovTokenTransferEvent() {
     }
 
     const updatedCovBalance = arithmeticOpration
-      ? arithmeticOpration(covBalance, value)
+      ? arithmeticOpration(covBalance, value).toString()
       : covBalance
 
-    const shareOfPool = Keep.coveragePoolV1.shareOfPool(
+    const shareOfPool = yield call(
+      Keep.coveragePoolV1.shareOfPool,
       updatedCovTotalSupply,
       updatedCovBalance
     )
