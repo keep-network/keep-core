@@ -32,22 +32,52 @@ class CoveragePoolV1 {
     this._rewardPoolContract = undefined
   }
 
+  /**
+   * Calculates the share of the coverage pool.
+   * @param {string} covTotalSupply Total supply of the cov token in the
+   * smallest unit. It can be fetched via {@link CoveragePoolV1.covTotalSupply}.
+   * @param {string} covBalanceOf Amount of tokens owned by user in the samllest
+   * unit. It can be fetched via {@link CoveragePoolV1.covBalanceOf}.
+   * @return {string} The share of pool. The value is between [0, 1].
+   */
   shareOfPool = (covTotalSupply, covBalanceOf) => {
     if (new BigNumber(covTotalSupply).isZero()) {
-      return 0
+      return "0"
     }
     return new BigNumber(covBalanceOf).div(covTotalSupply).toString()
   }
 
+  /**
+   * Returns the total supply of the cov token in the smallest unit- 18
+   * ddecimals precision.
+   * @return {Promise<string>} Total supply of the cov token.
+   */
   covTotalSupply = async () => {
     return await this.covTokenContract.makeCall("totalSupply")
   }
 
+  /**
+   * Returns the amount of cov tokens owned by `address`.
+   * @param {string} address User address.
+   * @return {Promise<string>} Aamount of cov tokens owned by `address`.
+   */
   covBalanceOf = async (address) => {
     return await this.covTokenContract.makeCall("balanceOf", address)
   }
 
+  /**
+   * Estimates the current reward balance earned for participating in the pool.
+   * The collateral token is a reward token.
+   * @param {string} address User address.
+   * @param {string} shareOfPool The user's current share of the pool.
+   * @return {Promise<string>} The current reward balance (in collateral token)
+   * in the smallest unit- 18 decimals precision.
+   */
   estimatedRewards = async (address, shareOfPool) => {
+    if (shareOfPool <= 0) {
+      return "0"
+    }
+
     const tvl = await this.totalValueLocked()
     const toAssetPool = (
       await this.collateralToken.getPastEvents("Transfer", {
@@ -64,7 +94,7 @@ class CoveragePoolV1 {
 
     const curretlyDeposited = sub(toAssetPool, fromAssetPool)
 
-    let deposited = 0
+    let deposited = "0"
     if (gt(curretlyDeposited, "0")) {
       deposited = curretlyDeposited
     }
@@ -76,10 +106,24 @@ class CoveragePoolV1 {
       .toString()
   }
 
+  /**
+   * Returns the current collateral token balance of the asset pool plus the
+   * reward amount (in collateral token) earned by the asset pool and not yet
+   * withdrawn to the asset pool.
+   *
+   * @return {Promise<string>}  The total value of asset pool in collateral
+   * token in the smallest unit.
+   */
   totalValueLocked = async () => {
     return await this.assetPoolContract.makeCall("totalValue")
   }
 
+  /**
+   * Estimates the collateral token balance based on the share of the pool.
+   * @param {string | number} shareOfPool The user's current share of the
+   * coverage pool. It can be calculated via {@link CoveragePoolV1#shareOfPool}
+   * @return {Promise<string>} Estimated collateral token balance.
+   */
   estimatedCollateralTokenBalance = async (shareOfPool) => {
     const balanceOfAssetPool = await this.assetPoolCollateralTokenBalance()
 
@@ -89,6 +133,11 @@ class CoveragePoolV1 {
       .toString()
   }
 
+  /**
+   * Returns the `AssetPool` contract's balance of the collateral token.
+   * @return {Promise<string>} The `AssetPool` contract's balance of the
+   * collateral token.
+   */
   assetPoolCollateralTokenBalance = async () => {
     return await this.collateralToken.makeCall(
       "balanceOf",
@@ -96,19 +145,33 @@ class CoveragePoolV1 {
     )
   }
 
+  /**
+   * Calculates the reward pool per week. The `RewardsPool` will earn a given
+   * amount of collateral token per week. Reward tokens from the previous
+   * interval that has not been yet unlocked, are added to the new interval
+   * being created.
+   * @return  {Promise<string>} The reward pool per week (in collateral token)
+   * in the smallest unit.
+   */
   rewardPoolPerWeek = async () => {
     const rewardRate = await this.rewardPoolRewardRate()
 
     return KEEP.toTokenUnit(rewardRate).multipliedBy(REWARD_DURATION)
   }
 
+  /**
+   * Returns the `RewardsPool` contract's rate per second with which reward
+   * tokens are unlocked.
+   * @return {Promise<string>} The rate per second with which reward tokens are
+   * unlocked.
+   */
   rewardPoolRewardRate = async () => {
     const rewardPoolContract = await this.getRewardPoolContract()
     return await rewardPoolContract.makeCall("rewardRate")
   }
 
   /**
-   * @return {Promise<BaseContract>} The reward pool contract.
+   * @return {Promise<BaseContract>} The `RewardsPool` contract.
    */
   getRewardPoolContract = async () => {
     if (!this._rewardPoolContract) {
@@ -129,6 +192,10 @@ class CoveragePoolV1 {
     return this._rewardPoolContract
   }
 
+  /**
+   * Calculates the APY of the coverage pool assuming that there are no calims.
+   * @return {Promise<string>} APY.
+   */
   apy = async () => {
     const totalSupply = await this.assetPoolCollateralTokenBalance()
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
@@ -151,6 +218,12 @@ class CoveragePoolV1 {
     return APYCalculator.calculateAPY(rewardRate).toString()
   }
 
+  /**
+   * Calculates the total amount of the tokens that were allocated as a reward
+   * to the `RewardsPool` contract.
+   * @return {Promise<string>} The total amount of tokens allocated to
+   * the `RewardsPool` contract.
+   */
   totalAllocatedRewards = async () => {
     const rewardPoolContract = await this.getRewardPoolContract()
 

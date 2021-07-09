@@ -10,17 +10,18 @@ import {
 import TokenAmount from "../../components/TokenAmount"
 import MetricsTile from "../../components/MetricsTile"
 import { APY } from "../../components/liquidity"
-import {covKEEP, KEEP} from "../../utils/token.utils"
-import { useModal } from "../../hooks/useModal"
+import { Skeleton } from "../../components/skeletons"
+import { useWeb3Address } from "../../components/WithWeb3Context"
+import OnlyIf from "../../components/OnlyIf"
 import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
   depositAssetPool,
   fetchAPYRequest,
 } from "../../actions/coverage-pool"
-import { useWeb3Address } from "../../components/WithWeb3Context"
+import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
-import OnlyIf from "../../components/OnlyIf"
+import {covKEEP, KEEP} from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
 import { Skeleton } from "../../components/skeletons"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"

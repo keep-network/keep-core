@@ -81,9 +81,12 @@ export const covTokenTransferEventEmitted = (event) => {
 
 /**
  * @param {Object} data Cov token info.
- * @param {string} data.shareOfPool The share of the pool.
- * @param {string} data.covBalance The user's token balance.
- * @param {string} data.covTotalSupply The total supply of the cov token.
+ * @param {string} data.shareOfPool The share of the pool. Tha value should be
+ * between [0, 1].
+ * @param {string} data.covBalance The amount of tokens owned by user in the
+ * smallest unit (18 decimals precision).
+ * @param {string} data.covTotalSupply The total supply of the cov token in the
+ * samallest unit (18 decimals precision).
  *
  * @return { { type: string, payload: object }}
  */

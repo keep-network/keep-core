@@ -158,3 +158,6 @@ export const removeSubstringBetweenCharacter = (
   const final = splittedInput.join(character)
   return final
 }
+
+export const isString = (value) =>
+  typeof value === "string" || value instanceof String

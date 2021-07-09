@@ -91,7 +91,6 @@ const coveragePoolReducer = (state = coveragePoolInitialData, action) => {
       return {
         ...state,
         isApyFetching: false,
-
         apyError: action.payload.error,
       }
     default:
