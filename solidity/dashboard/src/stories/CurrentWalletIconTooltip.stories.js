@@ -2,7 +2,7 @@ import React from "react"
 import centered from "@storybook/addon-centered/react"
 import { CurrentWalletIconTooltipView } from "../components/CurrentWalletIconTooltip"
 import {
-  injected,
+  // injected,
   LEDGER_DERIVATION_PATHS,
   LedgerConnector,
   TrezorConnector,
@@ -10,6 +10,7 @@ import {
 } from "../connectors"
 import { ExplorerModeConnector } from "../connectors/explorer-mode-connector"
 import { WALLETS } from "../constants/constants"
+import { InjectedConnector } from "../connectors/injected"
 
 // TODO: MOVE WALLETS_OPTIONS TO A SEPARATE FILE AND EXPORT IT FOR EACH WALLET
 
@@ -21,8 +22,8 @@ export default {
 
 const Template = (args) => <CurrentWalletIconTooltipView {...args} />
 
-export const MetaMask = Template.bind({})
-MetaMask.args = { connector: injected }
+// export const MetaMask = Template.bind({})
+// MetaMask.args = { connector: new InjectedConnector() }
 
 export const Ledger = Template.bind({})
 Ledger.args = {

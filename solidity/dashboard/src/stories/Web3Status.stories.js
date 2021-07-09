@@ -1,7 +1,6 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
 import { Web3StatusView } from "../components/Web3Status"
-import { injected } from "../connectors"
 import { Provider } from "react-redux"
 import store from "../store"
 import { whiteBackground } from "../../.storybook/cuatomDecorators"
@@ -33,5 +32,4 @@ export const Connected = Template.bind({})
 Connected.args = {
   yourAddress: "0xeF42ac774dD0d3519E7CBFD59F36e52038D4e255",
   isConnected: true,
-  connector: injected,
 }

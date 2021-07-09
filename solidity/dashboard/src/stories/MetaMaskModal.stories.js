@@ -1,6 +1,6 @@
 import React from "react"
 import centered from "@storybook/addon-centered/react"
-import { injected } from "../connectors"
+// import { injected } from "../connectors"
 import MetaMaskModal from "../components/MetaMaskModal"
 import { whiteBackground } from "../../.storybook/cuatomDecorators"
 
@@ -22,5 +22,5 @@ const Template = (args) => <MetaMaskModal {...args} />
 
 export const Default = Template.bind({})
 Default.args = {
-  connector: injected,
+  // connector: new InjectedConnector(),
 }
