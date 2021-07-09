@@ -17,11 +17,11 @@ import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
   depositAssetPool,
-  fetchAPYRequest,
+  fetchAPYRequest, withdrawAssetPool,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
-import {covKEEP, KEEP} from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import resourceTooltipProps from "../../constants/tooltips"
@@ -87,6 +87,20 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
       InitiateDepositModal
     )
     dispatch(depositAssetPool(amount, awaitingPromise))
+  }
+
+  const onSubmitWithdrawForm = async (values, awaitingPromise) => {
+    const { withdrawAmount } = values
+    const amount = KEEP.fromTokenUnit(withdrawAmount)
+    await openConfirmationModal(
+      {
+        modalOptions: { title: "Initiate Deposit" },
+        submitBtnText: "withdraw",
+        amount,
+      },
+      InitiateDepositModal
+    )
+    dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
 
   const isWithdrawalCooldownOver = (pendingWithdrawal) => {
@@ -166,11 +180,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   const onSubmitBtn = () => {}
 
-  const onMaxAmountClick = () => {}
-
   const onCancel = () => {}
-
-  const onSubmit = () => {}
 
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
@@ -286,9 +296,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <WithdrawAmountForm
             onCancel={onCancel}
             submitBtnText="add keep"
-            availableAmount={"10000000000000000"}
-            currentAmount={"10000000000000000"}
-            onBtnClick={onSubmit}
+            withdrawAmountBalance={covBalance}
+            onSubmit={onSubmitWithdrawForm}
           />
         </section>
       </section>

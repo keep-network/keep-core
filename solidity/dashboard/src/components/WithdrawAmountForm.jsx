@@ -10,13 +10,13 @@ import FormInput from "./FormInput"
 import MaxAmountAddon from "./MaxAmountAddon"
 import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
+import { KEEP } from "../utils/token.utils"
 
 const WithdrawAmountForm = ({
   onCancel,
   onSubmit,
   submitBtnText,
-  availableAmount,
-  currentAmount,
+  withdrawAmount,
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
@@ -59,24 +59,24 @@ const WithdrawAmountForm = ({
 
 const WithdrawAmountFormWithFormik = withFormik({
   mapPropsToValues: () => ({
-    amount: "",
+    withdrawAmount: "",
   }),
-  validate: ({ amount }, { availableAmount, minimumAmount }) => {
+  validate: (values, props) => {
+    const { withdrawAmount } = values
     const errors = {}
 
-    if (lte(amount || 0, 0)) {
-      errors.amount = "The value should be greater than zero"
+    if (lte(props.withdrawAmountBalance || 0, 0)) {
+      errors.withdrawAmount = "The value should be greater than zero"
     } else {
-      errors.amount = validateAmountInRange(
-        amount,
-        availableAmount,
-        minimumAmount
+      errors.withdrawAmount = validateAmountInRange(
+        withdrawAmount,
+        props.withdrawAmountBalance,
+        KEEP.fromTokenUnit(1)
       )
     }
 
     return getErrorsObj(errors)
   },
-  handleSubmit: (values, { props }) => props.onBtnClick(values),
   displayName: "CoveragePoolsWithdrawAmountForm",
 })(WithdrawAmountForm)
 

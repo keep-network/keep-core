@@ -24,6 +24,7 @@ import {
   COVERAGE_POOL_FETCH_APY_ERROR,
   fetchAPYSuccess,
   COVERAGE_POOL_FETCH_APY_REQUEST,
+  COVERAGE_POOL_WITHDRAW_ASSET_POOL,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -210,4 +211,35 @@ function* depositAssetPoolWorker(action) {
 
 export function* watchDepositAssetPool() {
   yield takeEvery(COVERAGE_POOL_DEPOSIT_ASSET_POOL, depositAssetPoolWorker)
+}
+
+function* withdrawAssetPool(action) {
+  const { payload } = action
+  const { amount } = payload
+
+  const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.covTokenContract.instance,
+      methodName: "approve",
+      args: [assetPoolAddress, amount],
+    },
+  })
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.assetPoolContract.instance,
+      methodName: "initiateWithdrawal",
+      args: [amount],
+    },
+  })
+}
+
+function* withdrawAssetPoolWorker(action) {
+  yield call(submitButtonHelper, withdrawAssetPool, action)
+}
+
+export function* watchWithdrawAssetPool() {
+  yield takeEvery(COVERAGE_POOL_WITHDRAW_ASSET_POOL, withdrawAssetPoolWorker)
 }
