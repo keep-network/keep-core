@@ -16,13 +16,16 @@ import * as rewards from "../../sagas/rewards"
 import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
+import * as coveragePool from "../../sagas/coverage-pool"
 
-const {
+const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
+  liquidityRewards
+
+const sagas = [
+  ...Object.values(messagesSaga),
   watchFetchLiquidityRewardsAPY,
-  ...restliquidityRewards
-} = liquidityRewards
-
-const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
+  ...Object.values(coveragePool),
+]
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
