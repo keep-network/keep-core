@@ -9,7 +9,7 @@ import { DataTable, Column } from "./DataTable"
 import Tile from "./Tile"
 import resourceTooltipProps from "../constants/tooltips"
 
-const Undelegations = ({ undelegations, title }) => {
+const Undelegations = ({ undelegations }) => {
   return (
     <Tile>
       <DataTable
