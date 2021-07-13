@@ -34,15 +34,6 @@ import * as Icons from "../../components/Icons"
 import Chip from "../../components/Chip"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
-  const mockedData = [
-    {
-      covAmount: "1000000000000000000000",
-      timestamp: "1624425850",
-    },
-  ]
-  const cooldownDurationInDays = 14
-  const withdrawAvailableDurationInDays = 3
-
   const { openConfirmationModal } = useModal()
   const dispatch = useDispatch()
   const {
@@ -59,6 +50,9 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     apy,
     isApyFetching,
     totalAllocatedRewards,
+    withdrawalDelay,
+    withdrawalTimeout,
+    pendingWithdrawals,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
@@ -103,11 +97,11 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
 
-  const isWithdrawalCooldownOver = (pendingWithdrawal) => {
+  const isWithdrawalCooldownOver = (pendingWithdrawalTimestamp) => {
     const currentDate = moment()
     const endOfCooldownDate = moment
-      .unix(pendingWithdrawal.timestamp)
-      .add(cooldownDurationInDays, "days")
+      .unix(pendingWithdrawalTimestamp)
+      .add(withdrawalDelay, "seconds")
 
     return currentDate.isAfter(endOfCooldownDate)
   }
@@ -145,7 +139,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     const currentDate = moment()
     const endOfCooldownDate = moment
       .unix(timestamp)
-      .add(cooldownDurationInDays, "days")
+      .add(withdrawalDelay, "seconds")
     const days = endOfCooldownDate.diff(currentDate, "days")
     const hours = endOfCooldownDate.diff(currentDate, "hours") % 24
     const minutes = endOfCooldownDate.diff(currentDate, "minutes") % 60
@@ -304,7 +298,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
       <section className={"tile pending-withdrawal"}>
         <DataTable
-          data={mockedData}
+          data={pendingWithdrawals}
           itemFieldId="pendingWithdrawalId"
           title="Pending withdrawal"
           withTooltip
@@ -341,12 +335,13 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
           <Column
             header=""
-            renderContent={() => (
+            field="timestamp"
+            renderContent={({ timestamp }) => (
               <div className={"pending-withdrawal__button-container"}>
                 <SubmitButton
                   className="btn btn-lg btn-primary"
                   onSubmitAction={onSubmitBtn}
-                  disabled={!isWithdrawalCooldownOver(mockedData[0])}
+                  disabled={!isWithdrawalCooldownOver(timestamp)}
                 >
                   claim tokens
                 </SubmitButton>

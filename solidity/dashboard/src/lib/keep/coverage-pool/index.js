@@ -3,6 +3,7 @@ import { KEEP } from "../../../utils/token.utils"
 import { APYCalculator } from "../helper"
 import { RewardsPoolArtifact } from "../contracts"
 import { add, sub, gt } from "../../../utils/arithmetics.utils"
+import { isSameEthAddress } from "../../../utils/general.utils"
 
 /** @typedef { import("../../web3").BaseContract} BaseContract */
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
@@ -202,8 +203,7 @@ class CoveragePoolV1 {
 
     // We know that the collateral token is KEEP. TODO: consider a more abstract
     // solution to fetch the collateral token price in USD.
-    const collateralTokenPriceInUSD =
-      await this.exchangeService.getKeepTokenPriceInUSD()
+    const collateralTokenPriceInUSD = await this.exchangeService.getKeepTokenPriceInUSD()
 
     const totalSupplyInUSD = KEEP.toTokenUnit(totalSupply).multipliedBy(
       collateralTokenPriceInUSD
@@ -231,6 +231,42 @@ class CoveragePoolV1 {
       (reducer, _) => add(reducer, _.returnValues.amount),
       "0"
     )
+  }
+
+  pendingWithdrawals = async (address) => {
+    const withdrawalInitiatedEvents = await this.assetPoolContract.getPastEvents(
+      "WithdrawalInitiated"
+    )
+
+    const newestWithdrawalForGivenAddress = withdrawalInitiatedEvents
+      .filter((withdrawal) => {
+        return isSameEthAddress(withdrawal.returnValues.underwriter, address)
+      })
+      .reduce((prev, current) => {
+        return current.returnValues.timestamp > prev.returnValues.timestamp
+          ? current
+          : prev
+      })
+    return [
+      {
+        covAmount: newestWithdrawalForGivenAddress.returnValues.covAmount,
+        timestamp: newestWithdrawalForGivenAddress.returnValues.timestamp,
+        underwriter: newestWithdrawalForGivenAddress.returnValues.underwriter,
+      },
+    ]
+  }
+
+  withdrawalDelays = async () => {
+    const withdrawalDelay = await this.assetPoolContract.makeCall(
+      "withdrawalDelay"
+    )
+    const withdrawalTimeout = await this.assetPoolContract.makeCall(
+      "withdrawalTimeout"
+    )
+    return {
+      withdrawalDelay,
+      withdrawalTimeout,
+    }
   }
 }
 

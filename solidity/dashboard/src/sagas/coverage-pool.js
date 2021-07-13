@@ -96,6 +96,13 @@ function* fetchCovPoolData(action) {
       shareOfPool
     )
 
+    const withdrawalDelays = yield call(Keep.coveragePoolV1.withdrawalDelays)
+
+    const pendingWithdrawals = yield call(
+      Keep.coveragePoolV1.pendingWithdrawals,
+      address
+    )
+
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
@@ -103,6 +110,9 @@ function* fetchCovPoolData(action) {
         covTotalSupply: totalSupply,
         estimatedRewards,
         estimatedKeepBalance,
+        withdrawalDelay: withdrawalDelays.withdrawalDelay,
+        withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
+        pendingWithdrawals,
       })
     )
   } catch (error) {
