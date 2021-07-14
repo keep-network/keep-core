@@ -185,6 +185,11 @@ export function* subscribeToCovTokenTransferEvent() {
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
     const apy = yield call(Keep.coveragePoolV1.apy)
 
+    const pendingWithdrawals = yield call(
+      Keep.coveragePoolV1.pendingWithdrawals,
+      address
+    )
+
     yield put(
       covTokenUpdated({
         covBalance: updatedCovBalance,
@@ -195,6 +200,7 @@ export function* subscribeToCovTokenTransferEvent() {
         totalValueLocked: tvl,
         totalValueLockedInUSD: tvlInUSD,
         apy,
+        pendingWithdrawals,
       })
     )
   }
