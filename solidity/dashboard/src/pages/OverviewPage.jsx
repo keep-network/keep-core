@@ -14,6 +14,7 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import DelegationPage from "./delegation"
 import * as Icons from "../components/Icons"
 import { useWeb3Address } from "../components/WithWeb3Context"
+import * as CoveragePoolsComponents from "../components/coverage-pools"
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -80,6 +81,7 @@ const OverviewPage = (props) => {
 
   return (
     <PageWrapper {...props} headerClassName="header--overview">
+      <CoveragePoolsComponents.LearnMoreBanner />
       <OverviewFirstSection />
       <TokenOverview
         totalKeepTokenBalance={totalKeepTokenBalance}
