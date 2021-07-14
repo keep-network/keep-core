@@ -89,3 +89,32 @@
     border-radius: 8px;
     background-color: @color-yellow-30;
 }
+
+.banner--coverage-pools {
+    width: 100%;
+    max-width: none;
+    background-color: @color-brand-violet-80;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 1.5rem 4.5rem;
+
+    .banner__title {
+        &:extend(.h3);
+    }
+
+    .banner__icon {
+        width: auto;
+    height: auto;
+    }
+
+    .banner__close-icon {
+        width: 16px;
+        height: 16px;
+        top: 16px;
+        right: 16px;
+
+        path {
+            stroke: @white;
+        }
+    }
+}
