@@ -1,0 +1,95 @@
+:toc: macro
+
+= Keep Staking Guide
+
+:icons: font
+:numbered:
+toc::[]
+
+In this document, we describe how KEEP staking works. 
+
+== Terminology
+
+address:: Hexadecimal string consisting of 40 characters prefixed with "0x" uniquely identifying Ethereum account; 
+derived from ECDSA public key of the party. Example address: `0xb2560a01e4b8b5cb0ac549fa39c7ae255d80e943`.
+
+owner:: The address owning KEEP tokens or KEEP token grant. The owner’s participation is not required in the day-to-day 
+operations on the stake, so cold storage can be accommodated to the maximum extent.
+
+operator:: The address of a party authorized to operate in the network on behalf of a given owner. The operator handles 
+the everyday operations on the delegated stake without actually owning the staked tokens. An operator can not simply 
+transfer away delegated tokens, however, it should be noted that operator's misbehaviour may result in slashing tokens 
+and thus the entire staked amount is indeed at stake.
+
+beneficiary:: the address where the rewards for participation and all reimbursements are sent, earned by an operator, 
+on behalf of an owner
+
+delegated stake:: an owner's staked tokens, delegated to the operator by the owner. Delegation enables KEEP owners to 
+have their wallets offline and their stake operated by operators on their behalf.
+
+operator contract:: Ethereum smart contract handling operations that may have an impact on staked tokens.
+
+authorizer:: the address appointed by owner to authorize operator contract on behalf of the owner. Operator contract 
+must be pre-approved by authorizer before the operator is eligible to use it and join the specific part of the network.
+
+
+== Delegating tokens
+
+KEEP tokens are delegated by the owner. During the delegation, the owner needs to appoint an operator, beneficiary, 
+and authorizer. Owner may delegate owned tokens or tokens from a grant. Owner may decide to delegate just a portion 
+of owned tokens or just a part of tokens from a grant. Owner may delegate multiple times to different operators. 
+Tokens can be delegated using Tokens page in KEEP token dashboard and a certain minimum stake defined by the system 
+is required to be provided in the delegation. The more stake is delegated, the higher chance to be selected for work 
+getting and later getting rewarded for that work.
+
+Delegation takes immediate effect but can be cancelled within one week without additional delay. After one week 
+operator appointed during the delegation becomes eligible for work selection.
+
+Delegating stake makes the operator eligible for work selection for the random beacon. Participation in ECDSA keeps 
+requires providing additional bonding.
+
+== Bonding
+
+Additional bond is required to participate in ECDSA keeps. Because signers are able to collude to censor withdrawals 
+or abscond with funds, a bond is required from each signer backing ECDSA keeps. A bond can be seized when operator 
+misbehaves. Funds that can be converted to bonds need to be provided in advance before the operator is considered 
+as eligible for work selection in ECDSA keeps.
+
+Funds for bonds are provided using `deposit(address operator) external payable` function in `KeepBonding` contract.
+
+== Authorizations
+Before operator is considered as eligible for work selection, authorizer appointed during the delegation needs to review 
+and authorize operator smart contract. Smart contracts can be authorized using KEEP token dashboard. Authorized operator 
+contracts may slash or seize tokens if needed.
+
+== Rewards
+
+Random beacon rewards group members in ETH for each produced relay entry. Random beacon rewards have to be withdrawn 
+from the operator contract after signing group expires. Rewards available for withdrawal are listed in KEEP token 
+dashboard dApp on the Rewards page. Rewards are alway paid to the beneficiary appointed during delegation.
+
+ECDSA keep signing group members are not rewarded by Keep Network. Each application using ECDSA keeps rewards signers 
+in either ETH or ERC20. For example, tBTC rewards signers in tBTC token and rewards are automatically transferred to 
+beneficiary account without needing manual withdrawal. 
+
+== Undelegation
+
+Owner may decide to undelegate tokens or grant from an operator at any moment. Before funds are returned to owner, they 
+are held for an additional 6 months of stake undelegation period. During that time, operator is not eligible for any new 
+work selection but is still required to perform any outstanding work, like producing relay entries or participating in 
+signing for existing keeps. 
+
+Undelegation can be triggered using KEEP token dashboard by either owner or operator.
+
+Once the stake undelegation time passes, either owner or operator may recover the stake. Recovering stake transfers 
+funds back to the owner. Stake recovery can be performed in KEEP token dashboard.
+
+== Withdrawing from bonding contract
+
+Funds not assigned to bonds can be withdrawn at any moment using function 
+`withdraw(uint256 amount, address operator)` public function in the bonding contract. Funds assigned to bonds will 
+be eventually released - depending on the rules of application owning the given ECDSA keeps - and then also available 
+for withdrawal.
+
+== Related Links
+- https://github.com/keep-network/keep-tecdsa/blob/master/solidity/contracts/KeepBonding.sol
