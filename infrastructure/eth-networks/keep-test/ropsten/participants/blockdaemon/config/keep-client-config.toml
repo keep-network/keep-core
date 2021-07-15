@@ -3,7 +3,6 @@
   URLRPC = "https://ropsten.infura.io/v3/59fb36a36fa4474b890c13dd30038be5"
 
   [ethereum.account]
-    Address = "0xb4f78caa0ad8c8c700eaac42b68e5db4f9efeddf"
     KeyFile = "/mnt/keep-client/config/eth-account-keyfile"
 
   # Contracts are already deployed to Ropsten.  They are subject to change on deployment.
