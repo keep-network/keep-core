@@ -74,26 +74,19 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			onSubmittedResultChan <- event.BlockNumber
 		},
 	)
-
-	returnWithError := func(err error) error {
-		subscription.Unsubscribe()
-		close(onSubmittedResultChan)
-		return err
-	}
+	defer subscription.Unsubscribe()
 
 	alreadySubmitted, err := chainRelay.IsGroupRegistered(result.GroupPublicKey)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf(
-				"could not check if the result is already submitted: [%v]",
-				err,
-			),
+		return fmt.Errorf(
+			"could not check if the result is already submitted: [%v]",
+			err,
 		)
 	}
 
 	// Someone who was ahead of us in the queue submitted the result. Giving up.
 	if alreadySubmitted {
-		return returnWithError(nil)
+		return nil
 	}
 
 	// Wait until the current member is eligible to submit the result.
@@ -103,9 +96,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 		config.ResultPublicationBlockStep,
 	)
 	if err != nil {
-		return returnWithError(
-			fmt.Errorf("wait for eligibility failure: [%v]", err),
-		)
+		return fmt.Errorf("wait for eligibility failure: [%v]", err)
 	}
 
 	for {
@@ -114,9 +105,6 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			// Member becomes eligible to submit the result.
 			errorChannel := make(chan error)
 			defer close(errorChannel)
-
-			subscription.Unsubscribe()
-			close(onSubmittedResultChan)
 
 			logger.Infof(
 				"[member:%v] submitting DKG result with public key [0x%x] and "+
@@ -146,7 +134,7 @@ func (sm *SubmittingMember) SubmitDKGResult(
 			)
 			// A result has been submitted by other member. Leave without
 			// publishing the result.
-			return returnWithError(nil)
+			return nil
 		}
 	}
 }
