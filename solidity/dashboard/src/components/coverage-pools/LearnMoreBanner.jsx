@@ -7,7 +7,7 @@ const LearnMoreBanner = ({ onClose }) => {
   return (
     <Banner className="banner banner--coverage-pools">
       <Banner.CloseIcon onClick={onClose} />
-      <div className="flex row space-between full-center">
+      <div className="banner__content-wrapper">
         <Banner.Icon icon={Icons.CoveragePool} />
         <Banner.Title className="h3 text-white">
           Deposit KEEP in the coverage pool to
