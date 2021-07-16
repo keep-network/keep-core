@@ -238,22 +238,33 @@ class CoveragePoolV1 {
       "WithdrawalInitiated"
     )
 
-    const newestWithdrawalForGivenAddress = withdrawalInitiatedEvents
-      .filter((withdrawal) => {
+    const withdrawalsForGivenAddress = withdrawalInitiatedEvents.filter(
+      (withdrawal) => {
         return isSameEthAddress(withdrawal.returnValues.underwriter, address)
-      })
-      .reduce((prev, current) => {
-        return current.returnValues.timestamp > prev.returnValues.timestamp
-          ? current
-          : prev
-      })
-    return [
-      {
-        covAmount: newestWithdrawalForGivenAddress.returnValues.covAmount,
-        timestamp: newestWithdrawalForGivenAddress.returnValues.timestamp,
-        underwriter: newestWithdrawalForGivenAddress.returnValues.underwriter,
-      },
-    ]
+      }
+    )
+
+    let newestWithdrawalForGivenAddress
+    if (withdrawalsForGivenAddress.length > 0) {
+      newestWithdrawalForGivenAddress = withdrawalsForGivenAddress.reduce(
+        (prev, current) => {
+          return current.returnValues.timestamp > prev.returnValues.timestamp
+            ? current
+            : prev
+        }
+      )
+    }
+
+    return newestWithdrawalForGivenAddress
+      ? [
+          {
+            covAmount: newestWithdrawalForGivenAddress.returnValues.covAmount,
+            timestamp: newestWithdrawalForGivenAddress.returnValues.timestamp,
+            underwriter:
+              newestWithdrawalForGivenAddress.returnValues.underwriter,
+          },
+        ]
+      : []
   }
 
   withdrawalDelays = async () => {

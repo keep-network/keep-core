@@ -17,7 +17,8 @@ import {
   fetchTvlRequest,
   fetchCovPoolDataRequest,
   depositAssetPool,
-  fetchAPYRequest, withdrawAssetPool,
+  fetchAPYRequest,
+  withdrawAssetPool,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
@@ -111,18 +112,18 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     endOfCooldownDate,
     currentDate
   ) => {
-    const progressBarValueInMinutes = currentDate.diff(
+    const progressBarValueInSeconds = currentDate.diff(
       withdrawalDate,
-      "minutes"
+      "seconds"
     )
-    const progressBarTotalInMinutes = endOfCooldownDate.diff(
+    const progressBarTotalInSeconds = endOfCooldownDate.diff(
       withdrawalDate,
-      "minutes"
+      "seconds"
     )
     return (
       <ProgressBar
-        value={progressBarValueInMinutes}
-        total={progressBarTotalInMinutes}
+        value={progressBarValueInSeconds}
+        total={progressBarTotalInSeconds}
         color={colors.secondary}
         bgColor={colors.bgSecondary}
       >
@@ -141,8 +142,10 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
       .unix(timestamp)
       .add(withdrawalDelay, "seconds")
     const days = endOfCooldownDate.diff(currentDate, "days")
-    const hours = endOfCooldownDate.diff(currentDate, "hours") % 24
-    const minutes = endOfCooldownDate.diff(currentDate, "minutes") % 60
+    const hours = moment.duration(endOfCooldownDate.diff(currentDate)).hours()
+    const minutes = moment
+      .duration(endOfCooldownDate.diff(currentDate))
+      .minutes()
 
     let cooldownStatus = <></>
     if (days >= 0 && hours >= 0 && minutes >= 0) {
@@ -277,7 +280,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           </OnlyIf>
         </section>
 
-        {/*<HowDoesItWorkBanner />*/}
+        {/* <HowDoesItWorkBanner />*/}
 
         <section className="tile coverage-pool__withdraw-wrapper">
           <h3>Available to withdraw</h3>
@@ -292,6 +295,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             submitBtnText="add keep"
             withdrawAmountBalance={covBalance}
             onSubmit={onSubmitWithdrawForm}
+            withdrawalDelay={withdrawalDelay}
           />
         </section>
       </section>
