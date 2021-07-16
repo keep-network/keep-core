@@ -15,7 +15,7 @@ const LearnMoreBanner = ({ onClose }) => {
           secure the network and earn rewards.
         </Banner.Title>
         <NavLink
-          to="coverage-pools/how-it-works"
+          to="/coverage-pools/how-it-works"
           className="btn btn-tertiary btn-lg"
         >
           learn more
