@@ -34,6 +34,10 @@ const resourceTooltipProps = {
     content:
       "A grant that contains KEEP tokens that unlocks at a set schedule over a period of time.",
   },
+  pendingWithdrawal: {
+    title: "Pending Withdrawal",
+    content: "Tooltip content",
+  },
 }
 
 export default resourceTooltipProps

@@ -3,6 +3,7 @@ import { KEEP } from "../../../utils/token.utils"
 import { APYCalculator } from "../helper"
 import { RewardsPoolArtifact } from "../contracts"
 import { add, sub, gt } from "../../../utils/arithmetics.utils"
+import { isSameEthAddress } from "../../../utils/general.utils"
 
 /** @typedef { import("../../web3").BaseContract} BaseContract */
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
@@ -202,8 +203,7 @@ class CoveragePoolV1 {
 
     // We know that the collateral token is KEEP. TODO: consider a more abstract
     // solution to fetch the collateral token price in USD.
-    const collateralTokenPriceInUSD =
-      await this.exchangeService.getKeepTokenPriceInUSD()
+    const collateralTokenPriceInUSD = await this.exchangeService.getKeepTokenPriceInUSD()
 
     const totalSupplyInUSD = KEEP.toTokenUnit(totalSupply).multipliedBy(
       collateralTokenPriceInUSD
@@ -231,6 +231,110 @@ class CoveragePoolV1 {
       (reducer, _) => add(reducer, _.returnValues.amount),
       "0"
     )
+  }
+
+  /**
+   * Gets last withdrawal (either initiated or completed)
+   * @param {string} address - address of the user we want to get withdrawals
+   * from
+   * @param {Object} withdrawalEvents - InitiatedWithdrawal/CompletedWithdrawal
+   * events
+   *
+   * @typedef {Object} Withdrawal
+   * @property {string} covAmount|amount - covAmount is the amount of covKeeps
+   * for the initiated withdrawal; amount is the amount of KEEPs claimed when
+   * completion of the withdrawal is executed
+   * @property {string} timestamp - timestamp when the initiation/completion of
+   * the withdrawal was executed
+   * @property {string} underwriter - address of the user who
+   * initiated/completed the withdrawal
+   *
+   * @return {Withdrawal|null}
+   * @private
+   */
+  _getLastWithdrawalOfUser = (address, withdrawalEvents) => {
+    const withdrawalEventsForGivenAddress = withdrawalEvents.filter(
+      (withdrawal) => {
+        return isSameEthAddress(withdrawal.returnValues.underwriter, address)
+      }
+    )
+
+    let newestWithdrawalEventForGivenAddress
+    if (withdrawalEventsForGivenAddress.length > 0) {
+      newestWithdrawalEventForGivenAddress = withdrawalEventsForGivenAddress.reduce(
+        (prev, current) => {
+          return current.returnValues.timestamp > prev.returnValues.timestamp
+            ? current
+            : prev
+        }
+      )
+    }
+
+    let newestWithdrawalForGivenAddress = null
+    if (newestWithdrawalEventForGivenAddress.returnValues.covAmount) {
+      newestWithdrawalForGivenAddress = {
+        covAmount: newestWithdrawalEventForGivenAddress.returnValues.covAmount,
+        timestamp: newestWithdrawalEventForGivenAddress.returnValues.timestamp,
+        underwriter:
+          newestWithdrawalEventForGivenAddress.returnValues.underwriter,
+      }
+    } else if (newestWithdrawalEventForGivenAddress.returnValues.amount) {
+      newestWithdrawalForGivenAddress = {
+        covAmount: newestWithdrawalEventForGivenAddress.returnValues.covAmount,
+        timestamp: newestWithdrawalEventForGivenAddress.returnValues.timestamp,
+        underwriter:
+          newestWithdrawalEventForGivenAddress.returnValues.underwriter,
+      }
+    }
+
+    return newestWithdrawalForGivenAddress
+  }
+
+  pendingWithdrawals = async (address) => {
+    const withdrawalInitiatedEvents = await this.assetPoolContract.getPastEvents(
+      "WithdrawalInitiated"
+    )
+
+    const withdrawalCompletedEvents = await this.assetPoolContract.getPastEvents(
+      "WithdrawalCompleted"
+    )
+
+    const newestInitiatedWithdrawalForGivenAddress = this._getLastWithdrawalOfUser(
+      address,
+      withdrawalInitiatedEvents
+    )
+
+    const newestCompletedWithdrawalForGivenAddress = this._getLastWithdrawalOfUser(
+      address,
+      withdrawalCompletedEvents
+    )
+
+    if (!newestInitiatedWithdrawalForGivenAddress) {
+      return []
+    }
+
+    if (
+      newestCompletedWithdrawalForGivenAddress &&
+      newestCompletedWithdrawalForGivenAddress.timestamp >
+        newestInitiatedWithdrawalForGivenAddress.timestamp
+    ) {
+      return []
+    }
+
+    return [newestInitiatedWithdrawalForGivenAddress]
+  }
+
+  withdrawalDelays = async () => {
+    const withdrawalDelay = await this.assetPoolContract.makeCall(
+      "withdrawalDelay"
+    )
+    const withdrawalTimeout = await this.assetPoolContract.makeCall(
+      "withdrawalTimeout"
+    )
+    return {
+      withdrawalDelay,
+      withdrawalTimeout,
+    }
   }
 }
 

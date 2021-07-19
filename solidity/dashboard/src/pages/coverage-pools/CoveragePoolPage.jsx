@@ -18,11 +18,14 @@ import {
   fetchCovPoolDataRequest,
   depositAssetPool,
   fetchAPYRequest,
+  withdrawAssetPool,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
-import { KEEP } from "../../utils/token.utils"
+import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
+import WithdrawAmountForm from "../../components/WithdrawAmountForm"
+import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -31,12 +34,17 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     totalValueLocked,
     totalValueLockedInUSD,
     isTotalValueLockedFetching,
+    // isDataFetching,
     shareOfPool,
+    covBalance,
+    // covTotalSupply,
+    // error,
     estimatedRewards,
     estimatedKeepBalance,
     apy,
     isApyFetching,
     totalAllocatedRewards,
+    withdrawalDelay,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
@@ -66,6 +74,22 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     )
     dispatch(depositAssetPool(amount, awaitingPromise))
   }
+
+  const onSubmitWithdrawForm = async (values, awaitingPromise) => {
+    const { withdrawAmount } = values
+    const amount = KEEP.fromTokenUnit(withdrawAmount)
+    await openConfirmationModal(
+      {
+        modalOptions: { title: "Initiate Deposit" },
+        submitBtnText: "withdraw",
+        amount,
+      },
+      InitiateDepositModal
+    )
+    dispatch(withdrawAssetPool(amount, awaitingPromise))
+  }
+
+  const onCancel = () => {}
 
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
@@ -119,6 +143,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         {/* TODO add more metrics according to the Figma vies */}
       </section>
 
+      <PendingWithdrawals />
+
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
           <h3>Deposit</h3>
@@ -168,7 +194,24 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           </OnlyIf>
         </section>
 
-        <HowDoesItWorkBanner />
+        {/* <HowDoesItWorkBanner />*/}
+
+        <section className="tile coverage-pool__withdraw-wrapper">
+          <h3>Available to withdraw</h3>
+          <TokenAmount
+            wrapperClassName={"coverage-pool__token-amount"}
+            amount={covBalance}
+            token={covKEEP}
+            withIcon
+          />
+          <WithdrawAmountForm
+            onCancel={onCancel}
+            submitBtnText="add keep"
+            withdrawAmountBalance={covBalance}
+            onSubmit={onSubmitWithdrawForm}
+            withdrawalDelay={withdrawalDelay}
+          />
+        </section>
       </section>
     </PageWrapper>
   )

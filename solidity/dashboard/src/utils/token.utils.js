@@ -184,6 +184,16 @@ export const KEEP = new Token(
   0
 )
 
+export const covKEEP = new Token(
+  "covKeep Token",
+  18,
+  "covKEEP",
+  "covKEEP",
+  18,
+  Icons.KeepOutline,
+  0
+)
+
 export const ETH = new Token("Ether", 18, "ETH", "gwei", 14, Icons.ETH)
 export const TBTC = new Token("tBTC", 18, "TBTC", "tSats", 8, Icons.TBTC)
 export const LPToken = new Token(

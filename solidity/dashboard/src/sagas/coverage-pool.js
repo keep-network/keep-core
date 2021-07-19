@@ -24,6 +24,7 @@ import {
   COVERAGE_POOL_FETCH_APY_ERROR,
   fetchAPYSuccess,
   COVERAGE_POOL_FETCH_APY_REQUEST,
+  COVERAGE_POOL_WITHDRAW_ASSET_POOL, COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -95,6 +96,13 @@ function* fetchCovPoolData(action) {
       shareOfPool
     )
 
+    const withdrawalDelays = yield call(Keep.coveragePoolV1.withdrawalDelays)
+
+    const pendingWithdrawals = yield call(
+      Keep.coveragePoolV1.pendingWithdrawals,
+      address
+    )
+
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
@@ -102,6 +110,9 @@ function* fetchCovPoolData(action) {
         covTotalSupply: totalSupply,
         estimatedRewards,
         estimatedKeepBalance,
+        withdrawalDelay: withdrawalDelays.withdrawalDelay,
+        withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
+        pendingWithdrawals,
       })
     )
   } catch (error) {
@@ -174,6 +185,11 @@ export function* subscribeToCovTokenTransferEvent() {
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
     const apy = yield call(Keep.coveragePoolV1.apy)
 
+    const pendingWithdrawals = yield call(
+      Keep.coveragePoolV1.pendingWithdrawals,
+      address
+    )
+
     yield put(
       covTokenUpdated({
         covBalance: updatedCovBalance,
@@ -184,6 +200,7 @@ export function* subscribeToCovTokenTransferEvent() {
         totalValueLocked: tvl,
         totalValueLockedInUSD: tvlInUSD,
         apy,
+        pendingWithdrawals,
       })
     )
   }
@@ -210,4 +227,58 @@ function* depositAssetPoolWorker(action) {
 
 export function* watchDepositAssetPool() {
   yield takeEvery(COVERAGE_POOL_DEPOSIT_ASSET_POOL, depositAssetPoolWorker)
+}
+
+function* withdrawAssetPool(action) {
+  const { payload } = action
+  const { amount } = payload
+
+  const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.covTokenContract.instance,
+      methodName: "approve",
+      args: [assetPoolAddress, amount],
+    },
+  })
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.assetPoolContract.instance,
+      methodName: "initiateWithdrawal",
+      args: [amount],
+    },
+  })
+}
+
+function* withdrawAssetPoolWorker(action) {
+  yield call(submitButtonHelper, withdrawAssetPool, action)
+}
+
+export function* watchWithdrawAssetPool() {
+  yield takeEvery(COVERAGE_POOL_WITHDRAW_ASSET_POOL, withdrawAssetPoolWorker)
+}
+
+function* claimTokensFromWithdrawal() {
+  const address = yield select(selectors.getUserAddress)
+
+  yield call(sendTransaction, {
+    payload: {
+      contract: Keep.coveragePoolV1.assetPoolContract.instance,
+      methodName: "completeWithdrawal",
+      args: [address],
+    },
+  })
+}
+
+function* claimTokensFromWithdrawalWorker(action) {
+  yield call(submitButtonHelper, claimTokensFromWithdrawal, action)
+}
+
+export function* watchClaimTokensFromWithdrawal() {
+  yield takeEvery(
+    COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
+    claimTokensFromWithdrawalWorker
+  )
 }

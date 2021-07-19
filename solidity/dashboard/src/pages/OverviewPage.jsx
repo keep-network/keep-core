@@ -14,6 +14,8 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import DelegationPage from "./delegation"
 import * as Icons from "../components/Icons"
 import { useWeb3Address } from "../components/WithWeb3Context"
+import PendingWithdrawals
+  from "../components/coverage-pools/PendingWithdrawals";
 
 const OverviewPage = (props) => {
   const { isConnected } = useWeb3Context()
@@ -81,6 +83,7 @@ const OverviewPage = (props) => {
   return (
     <PageWrapper {...props} headerClassName="header--overview">
       <OverviewFirstSection />
+      <PendingWithdrawals />
       <TokenOverview
         totalKeepTokenBalance={totalKeepTokenBalance}
         totalOwnedStakedBalance={totalOwnedStakedBalance}
