@@ -19,6 +19,7 @@ import {
   depositAssetPool,
   fetchAPYRequest,
   withdrawAssetPool,
+  claimTokensFromWithdrawal,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
@@ -107,6 +108,12 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     return currentDate.isAfter(endOfCooldownDate)
   }
 
+  const onClaimTokensSubmitButtonClick = async (awaitingPromise) => {
+    dispatch(claimTokensFromWithdrawal(awaitingPromise))
+  }
+
+  const onCancel = () => {}
+
   const renderProgressBar = (
     withdrawalDate,
     endOfCooldownDate,
@@ -174,10 +181,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
       </div>
     )
   }
-
-  const onSubmitBtn = () => {}
-
-  const onCancel = () => {}
 
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
@@ -344,7 +347,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               <div className={"pending-withdrawal__button-container"}>
                 <SubmitButton
                   className="btn btn-lg btn-primary"
-                  onSubmitAction={onSubmitBtn}
+                  onSubmitAction={onClaimTokensSubmitButtonClick}
                   disabled={!isWithdrawalCooldownOver(timestamp)}
                 >
                   claim tokens

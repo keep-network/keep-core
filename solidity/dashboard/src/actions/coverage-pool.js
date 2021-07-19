@@ -17,6 +17,8 @@ export const COVERAGE_POOL_COV_TOKEN_TRANSFER_EVENT_EMITTED =
 
 export const COVERAGE_POOL_DEPOSIT_ASSET_POOL = "coverage_pool/deposit"
 export const COVERAGE_POOL_WITHDRAW_ASSET_POOL = "coverage_pool/withdraw"
+export const COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL =
+  "coverage_pool/claim_tokens"
 
 export const COVERAGE_POOL_COV_TOKEN_UPDATED = "coverage_pool/cov_token_updated"
 
@@ -114,6 +116,13 @@ export const withdrawAssetPool = (amount, meta) => {
     payload: {
       amount,
     },
+    meta,
+  }
+}
+
+export const claimTokensFromWithdrawal = (meta) => {
+  return {
+    type: COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
     meta,
   }
 }

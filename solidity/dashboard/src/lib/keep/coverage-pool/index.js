@@ -233,20 +233,35 @@ class CoveragePoolV1 {
     )
   }
 
-  pendingWithdrawals = async (address) => {
-    const withdrawalInitiatedEvents = await this.assetPoolContract.getPastEvents(
-      "WithdrawalInitiated"
-    )
-
-    const withdrawalsForGivenAddress = withdrawalInitiatedEvents.filter(
+  /**
+   * Gets last withdrawal (either initiated or completed)
+   * @param {string} address - address of the user we want to get withdrawals
+   * from
+   * @param {Object} withdrawalEvents - InitiatedWithdrawal/CompletedWithdrawal
+   * events
+   *
+   * @typedef {Object} Withdrawal
+   * @property {string} covAmount|amount - covAmount is the amount of covKeeps
+   * for the initiated withdrawal; amount is the amount of KEEPs claimed when
+   * completion of the withdrawal is executed
+   * @property {string} timestamp - timestamp when the initiation/completion of
+   * the withdrawal was executed
+   * @property {string} underwriter - address of the user who
+   * initiated/completed the withdrawal
+   *
+   * @return {Withdrawal|null}
+   * @private
+   */
+  _getLastWithdrawalOfUser = (address, withdrawalEvents) => {
+    const withdrawalEventsForGivenAddress = withdrawalEvents.filter(
       (withdrawal) => {
         return isSameEthAddress(withdrawal.returnValues.underwriter, address)
       }
     )
 
-    let newestWithdrawalForGivenAddress
-    if (withdrawalsForGivenAddress.length > 0) {
-      newestWithdrawalForGivenAddress = withdrawalsForGivenAddress.reduce(
+    let newestWithdrawalEventForGivenAddress
+    if (withdrawalEventsForGivenAddress.length > 0) {
+      newestWithdrawalEventForGivenAddress = withdrawalEventsForGivenAddress.reduce(
         (prev, current) => {
           return current.returnValues.timestamp > prev.returnValues.timestamp
             ? current
@@ -255,16 +270,58 @@ class CoveragePoolV1 {
       )
     }
 
+    let newestWithdrawalForGivenAddress = null
+    if (newestWithdrawalEventForGivenAddress.returnValues.covAmount) {
+      newestWithdrawalForGivenAddress = {
+        covAmount: newestWithdrawalEventForGivenAddress.returnValues.covAmount,
+        timestamp: newestWithdrawalEventForGivenAddress.returnValues.timestamp,
+        underwriter:
+          newestWithdrawalEventForGivenAddress.returnValues.underwriter,
+      }
+    } else if (newestWithdrawalEventForGivenAddress.returnValues.amount) {
+      newestWithdrawalForGivenAddress = {
+        covAmount: newestWithdrawalEventForGivenAddress.returnValues.covAmount,
+        timestamp: newestWithdrawalEventForGivenAddress.returnValues.timestamp,
+        underwriter:
+          newestWithdrawalEventForGivenAddress.returnValues.underwriter,
+      }
+    }
+
     return newestWithdrawalForGivenAddress
-      ? [
-          {
-            covAmount: newestWithdrawalForGivenAddress.returnValues.covAmount,
-            timestamp: newestWithdrawalForGivenAddress.returnValues.timestamp,
-            underwriter:
-              newestWithdrawalForGivenAddress.returnValues.underwriter,
-          },
-        ]
-      : []
+  }
+
+  pendingWithdrawals = async (address) => {
+    const withdrawalInitiatedEvents = await this.assetPoolContract.getPastEvents(
+      "WithdrawalInitiated"
+    )
+
+    const withdrawalCompletedEvents = await this.assetPoolContract.getPastEvents(
+      "WithdrawalCompleted"
+    )
+
+    const newestInitiatedWithdrawalForGivenAddress = this._getLastWithdrawalOfUser(
+      address,
+      withdrawalInitiatedEvents
+    )
+
+    const newestCompletedWithdrawalForGivenAddress = this._getLastWithdrawalOfUser(
+      address,
+      withdrawalCompletedEvents
+    )
+
+    if (!newestInitiatedWithdrawalForGivenAddress) {
+      return []
+    }
+
+    if (
+      newestCompletedWithdrawalForGivenAddress &&
+      newestCompletedWithdrawalForGivenAddress.timestamp >
+        newestInitiatedWithdrawalForGivenAddress.timestamp
+    ) {
+      return []
+    }
+
+    return [newestInitiatedWithdrawalForGivenAddress]
   }
 
   withdrawalDelays = async () => {
