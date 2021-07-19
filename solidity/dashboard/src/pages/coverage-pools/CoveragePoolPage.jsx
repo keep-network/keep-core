@@ -19,7 +19,6 @@ import {
   depositAssetPool,
   fetchAPYRequest,
   withdrawAssetPool,
-  claimTokensFromWithdrawal,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
@@ -90,14 +89,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
 
-  const onClaimTokensSubmitButtonClick = async (awaitingPromise) => {
-    dispatch(claimTokensFromWithdrawal(awaitingPromise))
-  }
-
-  const onReinitiateWithdrawal = async (awaitingPromise) => {
-    console.log('reinitiate withdrawal')
-  }
-
   const onCancel = () => {}
 
   return (
@@ -151,6 +142,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         {/* TODO add more metrics according to the Figma vies */}
       </section>
+
+      <PendingWithdrawals />
 
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
@@ -220,11 +213,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
         </section>
       </section>
-
-      <PendingWithdrawals
-        onClaimTokensSubmitButtonClick={onClaimTokensSubmitButtonClick}
-        onReinitiateWithdrawal={onReinitiateWithdrawal}
-      />
     </PageWrapper>
   )
 }
