@@ -1,5 +1,8 @@
 import React from "react"
-import { claimTokensFromWithdrawal } from "../../actions/coverage-pool"
+import {
+  claimTokensFromWithdrawal,
+  withdrawAssetPool,
+} from "../../actions/coverage-pool"
 import PendingWithdrawalsView from "./PendingWithdrawalsView"
 import { useDispatch } from "react-redux"
 
@@ -10,7 +13,7 @@ const PendingWithdrawals = () => {
   }
 
   const onReinitiateWithdrawal = async (awaitingPromise) => {
-    console.log("reinitiate withdrawal")
+    dispatch(withdrawAssetPool("0", awaitingPromise))
   }
 
   return (

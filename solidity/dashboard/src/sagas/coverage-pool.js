@@ -33,7 +33,7 @@ import {
   submitButtonHelper,
 } from "./utils"
 import { Keep } from "../contracts"
-import { add, sub } from "../utils/arithmetics.utils"
+import { add, gt, sub } from "../utils/arithmetics.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { sendTransaction } from "./web3"
@@ -233,15 +233,24 @@ function* withdrawAssetPool(action) {
   const { payload } = action
   const { amount } = payload
 
+  const address = yield select(selectors.getUserAddress)
   const assetPoolAddress = Keep.coveragePoolV1.assetPoolContract.address
 
-  yield call(sendTransaction, {
-    payload: {
-      contract: Keep.coveragePoolV1.covTokenContract.instance,
-      methodName: "approve",
-      args: [assetPoolAddress, amount],
-    },
-  })
+  const covTokensAllowed = yield call(
+    Keep.coveragePoolV1.covTokensAllowed,
+    address,
+    assetPoolAddress
+  )
+
+  if (gt(amount, covTokensAllowed)) {
+    yield call(sendTransaction, {
+      payload: {
+        contract: Keep.coveragePoolV1.covTokenContract.instance,
+        methodName: "approve",
+        args: [assetPoolAddress, amount],
+      },
+    })
+  }
 
   yield call(sendTransaction, {
     payload: {

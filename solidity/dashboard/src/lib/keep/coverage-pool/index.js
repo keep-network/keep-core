@@ -233,6 +233,10 @@ class CoveragePoolV1 {
     )
   }
 
+  covTokensAllowed = async (owner, spender) => {
+    return await this.covTokenContract.makeCall("allowance", owner, spender)
+  }
+
   /**
    * Gets last withdrawal (either initiated or completed)
    * @param {string} address - address of the user we want to get withdrawals
