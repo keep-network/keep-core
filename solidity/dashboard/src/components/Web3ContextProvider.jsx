@@ -7,10 +7,12 @@ import {
   resolveWeb3Deferred,
   Web3Loaded,
   ContractsLoaded,
+  Keep,
 } from "../contracts"
 import { getNetworkName } from "../utils/ethereum.utils"
 import { isSameEthAddress } from "../utils/general.utils"
 import { WALLETS } from "../constants/constants"
+import { getWsUrl } from "../connectors/utils"
 
 class Web3ContextProvider extends React.Component {
   static contextType = MessagesContext
@@ -64,6 +66,8 @@ class Web3ContextProvider extends React.Component {
       web3.eth.defaultAccount = yourAddress
 
       await resolveWeb3Deferred(web3)
+      Keep.setProvider(connector.getProvider())
+      Keep.defaultAccount = yourAddress
     } catch (error) {
       this.setState({ providerError: error.message, isFetching: false })
       throw error
@@ -128,6 +132,7 @@ class Web3ContextProvider extends React.Component {
     const web3 = await Web3Loaded
     web3.eth.defaultAccount = yourAddress
     const contracts = await ContractsLoaded
+    Keep.defaultAccount = yourAddress
     for (const contractInstance of Object.values(contracts)) {
       contractInstance.options.from = web3.eth.defaultAccount
     }
@@ -144,6 +149,8 @@ class Web3ContextProvider extends React.Component {
 
   disconnect = async (shouldSetState = true) => {
     const { connector } = this.state
+    // Set provider to the default one to fetch data w/o connected wallet.
+    Keep.setProvider(new Web3.providers.WebsocketProvider(getWsUrl()))
     if (!connector) {
       return
     }

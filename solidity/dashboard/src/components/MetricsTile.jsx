@@ -4,7 +4,7 @@ import * as Icons from "./Icons"
 
 const MetricsTile = ({ className, children, style = {} }) => {
   return (
-    <div className={`tile--metrics ${className}`} style={style}>
+    <div className={`tile tile--metrics ${className}`} style={style}>
       {children}
     </div>
   )

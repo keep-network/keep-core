@@ -1,19 +1,20 @@
 import React from "react"
 import { useField } from "formik"
+import OnlyIf from "./OnlyIf"
 
-const FormCheckbox = ({ label, ...props }) => {
+const FormCheckbox = ({ label, withError = false, ...props }) => {
   const [field, meta] = useField(props.name, props.type)
 
   return (
-    <div className="form-input">
-      <div className="flex row center">
-        <label className="mr-1">{label}:</label>
+    <>
+      <label>
         <input checked={field.value} {...field} {...props} />
-      </div>
-      {meta.touched && meta.error ? (
+        &nbsp;{label}
+      </label>
+      <OnlyIf condition={withError && meta.touched && meta.error}>
         <div className="form-error">{meta.error}</div>
-      ) : null}
-    </div>
+      </OnlyIf>
+    </>
   )
 }
 

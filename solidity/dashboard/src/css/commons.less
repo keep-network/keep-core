@@ -39,6 +39,7 @@
       flex-direction: column;
       justify-content: center;
       position: relative;
+      box-shadow: unset;
 
       &__tooltip {
         &.tooltip--simple {
@@ -335,7 +336,8 @@ svg.tbtc-icon,
 svg.reward-icon,
 svg.trezor-logo,
 svg.ledger-logo,
-svg.wallet-connect-logo {
+svg.wallet-connect-logo,
+svg.plus-icon {
   &--black {
     path {
       fill: @color-black;
@@ -354,6 +356,12 @@ svg.wallet-connect-logo {
     }
   }
 
+  &--grey-50 {
+    path {
+      fill: @color-grey-50;
+    }
+  }
+
   &--mint-100 {
     path {
       fill: @color-mint-100;
@@ -365,4 +373,10 @@ svg.wallet-connect-logo {
       fill: @color-mint-80;
     }
   }
+}
+
+
+.divider.divider--tile-fluid {
+  margin: 0 -2rem;
+  padding: 2rem 2rem 0;
 }

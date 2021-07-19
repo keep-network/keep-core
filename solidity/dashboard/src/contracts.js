@@ -47,6 +47,10 @@ import {
   KEEP_TOKEN_GEYSER_CONTRACT_NAME,
 } from "./constants/constants"
 
+import KeepLib from "./lib/keep"
+import { Web3jsWrapper } from "./lib/web3"
+import { getWsUrl } from "./connectors/utils.js"
+
 const CONTRACT_DEPLOYMENT_BLOCK_CACHE = {}
 
 export const getContractDeploymentBlockNumber = async (
@@ -192,6 +196,9 @@ export function Deferred() {
 
 const ContractsDeferred = new Deferred()
 const Web3Deferred = new Deferred()
+
+/** @type {KeepLib} */
+export const Keep = KeepLib.initialize(new Web3jsWrapper(new Web3(getWsUrl())))
 
 export const Web3Loaded = Web3Deferred.promise
 export const ContractsLoaded = ContractsDeferred.promise

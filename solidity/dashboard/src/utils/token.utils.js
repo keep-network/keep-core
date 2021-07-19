@@ -1,6 +1,5 @@
 import BigNumber from "bignumber.js"
 import * as Icons from "../components/Icons"
-import { isZero, lt } from "./arithmetics.utils"
 
 const metrics = [
   { divisor: 1, symbol: "" },
@@ -160,11 +159,14 @@ export class Token {
   }
 
   _displayAmount = (amount, formattingFn = (amount) => amount) => {
-    if (!amount || isZero(amount)) {
+    const amountInBn = BigNumber.isBigNumber(amount)
+      ? amount
+      : new BigNumber(amount)
+    if (!amount || amountInBn.isZero()) {
       return "0"
     }
 
-    if (lt(amount, this.MIN_AMOUNT_TO_DISPLAY)) {
+    if (amountInBn.lt(this.MIN_AMOUNT_TO_DISPLAY)) {
       return `<${this.MIN_AMOUNT_IN_TOKEN_UNIT}`
     }
 

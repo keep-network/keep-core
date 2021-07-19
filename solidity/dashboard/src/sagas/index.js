@@ -13,11 +13,10 @@ import * as rewards from "./rewards"
 import * as liquidityRewards from "./liquidity-rewards"
 import * as operator from "./operartor"
 import * as authorization from "./authorization"
+import * as coveragePool from "./coverage-pool"
 
-const {
-  watchFetchLiquidityRewardsAPY,
-  ...restliquidityRewards
-} = liquidityRewards
+const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
+  liquidityRewards
 
 const loginRequiredSagas = [
   ...Object.values(delegateStakeSaga),
@@ -33,7 +32,11 @@ const loginRequiredSagas = [
   ...Object.values(authorization),
 ]
 
-const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
+const sagas = [
+  ...Object.values(messagesSaga),
+  watchFetchLiquidityRewardsAPY,
+  ...Object.values(coveragePool),
+]
 
 export default function* rootSaga() {
   yield all(sagas.map(fork))
