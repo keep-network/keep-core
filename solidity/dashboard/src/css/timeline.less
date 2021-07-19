@@ -1,3 +1,101 @@
+@margin-bottom-between-elements: 1rem;
+@left-border-width: 8px;
+
 .timeline {
+  position: relative;
+
+  &__element {
+    position: relative;
+    min-width: 200px;
+    padding: 1.5rem 2rem;
+    border: 1px solid #AE96E1; // @color-brand-violet-40
+    border-left: @left-border-width solid #633EB1; // @color-brand-violet-80
+    border-radius: 0.5rem;
+    &:extend(.box-shadow);
+    background-color: @white;
+    margin-bottom: @margin-bottom-between-elements;
     
+
+    &--left {
+      margin-left: 3rem;
+    }
+
+    &--right {
+      // TODO add support for displaying timeline events on the right side and
+      // alternate.
+      margin-left: 3rem;
+    }
+
+    // Drawing the dashed line for the first element. NOTE: only valid when timeline
+    // breeakpoints are centered relative to the event content.
+    &:nth-of-type(1) {
+        &::before {
+          height: unset;
+          top: 50%;
+          bottom: 0;
+          .draw-dashed-vertical-line(@color-grey-30);
+        }
+    }
+
+    // Drawing the dashed line for the last element. NOTE: only valid when timeline
+    // breeakpoints are centered relative to the event content.
+    &:nth-last-of-type(1) {
+      &::before {
+        top: 0;
+        bottom: 50%;
+        height: unset;
+        .draw-dashed-vertical-line(@color-grey-30);
+      }
+    }
+
+    // Drawing the dashed line for the rest elements between the first and last
+    // element. NOTE: only valid when timeline breeakpoints are centered relative to
+    // the event content.
+    &::before {
+      .draw-dashed-vertical-line(@color-grey-30);
+      content: '';
+      position: absolute;
+      width: 2px;
+      left: calc(-3rem - 8px);
+      height: calc(100% + 2rem);
+      top: -1rem;
+      bottom: -1rem;
+      overflow: visible;
+    }
+  }
+
+  .element {
+
+    &__breakpoint {
+      @breakpoint-size: 24px;
+
+      position: absolute;
+      width: @breakpoint-size;
+      height: @breakpoint-size;
+      left: calc(-3rem - (@breakpoint-size / 2) - 7px);
+      border-radius: 50%;
+
+      background-color: #633EB1; // @color-brand-violet-80;
+      border: 1px solid #D7CBF0; //@color-brand-violet-20;
+      color: @white;
+
+      align-items: center;
+      display: flex;
+      justify-content: center;
+
+      z-index: 1;
+
+      &--start {
+        top: 0;
+      }
+
+      &--center {
+        top: calc(50% - 12px);
+      }
+
+      &--end {
+        top: 100%;
+      }
+    }
+  }
 }
