@@ -1,4 +1,12 @@
 .pending-withdrawal {
+  table {
+    thead {
+      tr {
+        background-color: @color-brand-violet-10
+      }
+    }
+  }
+
   .pending-withdrawal__date {
     display: flex;
     flex-direction: column;
@@ -10,6 +18,10 @@
   }
 
   .pending-withdrawal__cooldown-status {
+    .pending_withdrawal__cooldown-status-chip {
+      color: white;
+      padding: 0.2rem 0.5rem;
+    }
     .pending-withdrawal__cooldown-time-container {
       display: flex;
       align-items: center;
@@ -22,6 +34,26 @@
 
   .pending-withdrawal__button-container {
     display: flex;
+    flex-direction: column;
     justify-content: flex-end;
+    button {
+      margin: 0 3rem;
+    }
+    button:not([disabled]) {
+      .pending-withdrawal__button-container__button-text {
+        background: -webkit-linear-gradient(left, #48DBB4, #9198e5);
+        background: -o-linear-gradient(right, #48DBB4, #9198e5);
+        background: -moz-linear-gradient(right, #48DBB4, #9198e5);
+        background: linear-gradient(to right, #48DBB4 , #9198e5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+    }
+    .pending-withdrawal__button-container__time-left-text {
+      align-self: center;
+      margin-top: 0.2rem;
+      font-size: 14px;
+    }
   }
 }

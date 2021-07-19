@@ -94,6 +94,10 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     dispatch(claimTokensFromWithdrawal(awaitingPromise))
   }
 
+  const onReinitiateWithdrawal = async (awaitingPromise) => {
+    console.log('reinitiate withdrawal')
+  }
+
   const onCancel = () => {}
 
   return (
@@ -219,6 +223,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
       <PendingWithdrawals
         onClaimTokensSubmitButtonClick={onClaimTokensSubmitButtonClick}
+        onReinitiateWithdrawal={onReinitiateWithdrawal}
       />
     </PageWrapper>
   )

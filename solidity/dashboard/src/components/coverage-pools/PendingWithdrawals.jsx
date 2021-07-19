@@ -10,7 +10,10 @@ import Chip from "../Chip"
 import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 
-const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
+const PendingWithdrawals = ({
+  onClaimTokensSubmitButtonClick,
+  onReinitiateWithdrawal,
+}) => {
   const {
     withdrawalDelay,
     withdrawalTimeout,
@@ -19,14 +22,14 @@ const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
 
   const renderProgressBar = (
     withdrawalDate,
-    endOfCooldownDate,
+    endOfWithdrawalDelayDate,
     currentDate
   ) => {
     const progressBarValueInSeconds = currentDate.diff(
       withdrawalDate,
       "seconds"
     )
-    const progressBarTotalInSeconds = endOfCooldownDate.diff(
+    const progressBarTotalInSeconds = endOfWithdrawalDelayDate.diff(
       withdrawalDate,
       "seconds"
     )
@@ -48,20 +51,26 @@ const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
   const renderCooldownStatus = (timestamp) => {
     const withdrawalDate = moment.unix(timestamp)
     const currentDate = moment()
-    const endOfCooldownDate = moment
+    const endOfWithdrawalDelayDate = moment
       .unix(timestamp)
       .add(withdrawalDelay, "seconds")
-    const days = endOfCooldownDate.diff(currentDate, "days")
-    const hours = moment.duration(endOfCooldownDate.diff(currentDate)).hours()
+    const days = endOfWithdrawalDelayDate.diff(currentDate, "days")
+    const hours = moment
+      .duration(endOfWithdrawalDelayDate.diff(currentDate))
+      .hours()
     const minutes = moment
-      .duration(endOfCooldownDate.diff(currentDate))
+      .duration(endOfWithdrawalDelayDate.diff(currentDate))
       .minutes()
 
     let cooldownStatus = <></>
-    if (days >= 0 && hours >= 0 && minutes >= 0) {
+    if (currentDate.isBefore(endOfWithdrawalDelayDate, "seconds")) {
       cooldownStatus = (
         <>
-          {renderProgressBar(withdrawalDate, endOfCooldownDate, currentDate)}
+          {renderProgressBar(
+            withdrawalDate,
+            endOfWithdrawalDelayDate,
+            currentDate
+          )}
           <div className={"pending-withdrawal__cooldown-time-container"}>
             <Icons.Time
               width="16"
@@ -75,7 +84,14 @@ const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
         </>
       )
     } else {
-      cooldownStatus = <Chip text={"cooldown completed"} size="small" />
+      cooldownStatus = (
+        <Chip
+          className={"pending_withdrawal__cooldown-status-chip"}
+          color="violet"
+          text={"cooldown completed"}
+          size="small"
+        />
+      )
     }
 
     return (
@@ -85,13 +101,60 @@ const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
     )
   }
 
-  const isWithdrawalCooldownOver = (pendingWithdrawalTimestamp) => {
+  const isWithdrawalDelayOver = (pendingWithdrawalTimestamp) => {
     const currentDate = moment()
-    const endOfCooldownDate = moment
+    const endOfWithdrawalDelayDate = moment
       .unix(pendingWithdrawalTimestamp)
       .add(withdrawalDelay, "seconds")
 
-    return currentDate.isAfter(endOfCooldownDate)
+    return currentDate.isAfter(endOfWithdrawalDelayDate)
+  }
+
+  const isWithdrawalTimeoutOver = (pendingWithdrawalTimestamp) => {
+    const currentDate = moment()
+    const endOfWithdrawalTimeoutDate = moment
+      .unix(pendingWithdrawalTimestamp)
+      .add(withdrawalDelay, "seconds")
+      .add(withdrawalTimeout, "seconds")
+
+    return currentDate.isAfter(endOfWithdrawalTimeoutDate, "second")
+  }
+
+  const renderTimeLeftToClaimText = (pendingWithdrawalTimestamp) => {
+    const currentDate = moment()
+    const endOfWithdrawalDelayDate = moment
+      .unix(pendingWithdrawalTimestamp)
+      .add(withdrawalDelay, "seconds")
+
+    if (currentDate.isBefore(endOfWithdrawalDelayDate, "second")) {
+      return <></>
+    }
+
+    const endOfWithdrawalTimeoutDate = moment
+      .unix(pendingWithdrawalTimestamp)
+      .add(withdrawalDelay, "seconds")
+      .add(withdrawalTimeout, "seconds")
+
+    const days = endOfWithdrawalTimeoutDate.diff(currentDate, "days")
+    const hours = moment
+      .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
+      .hours()
+    const minutes = moment
+      .duration(endOfWithdrawalTimeoutDate.diff(currentDate))
+      .minutes()
+
+    let timeToClaim = <></>
+    if (!isWithdrawalTimeoutOver(pendingWithdrawalTimestamp)) {
+      timeToClaim = (
+        <span>
+          Time left to claim: {days}d {hours}h {minutes}m
+        </span>
+      )
+    } else {
+      timeToClaim = <span>Tokens went back to pool</span>
+    }
+
+    return timeToClaim
   }
 
   return (
@@ -108,7 +171,14 @@ const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
           header="amount"
           field="covAmount"
           renderContent={({ covAmount }) => {
-            return <TokenAmount amount={covAmount} />
+            return (
+              <TokenAmount
+                amount={covAmount}
+                wrapperClassName={"pending-withdrawal__token-amount"}
+                amountClassName={"h2 text-brand-violet-100"}
+                symbolClassName={"h3 text-brand-violet-100"}
+              />
+            )
           }}
         />
         <Column
@@ -139,11 +209,32 @@ const PendingWithdrawals = (onClaimTokensSubmitButtonClick) => {
             <div className={"pending-withdrawal__button-container"}>
               <SubmitButton
                 className="btn btn-lg btn-primary"
-                onSubmitAction={onClaimTokensSubmitButtonClick}
-                disabled={!isWithdrawalCooldownOver(timestamp)}
+                onSubmitAction={(awaitingPromise) => {
+                  if (isWithdrawalTimeoutOver) {
+                    onReinitiateWithdrawal(awaitingPromise)
+                  } else {
+                    onClaimTokensSubmitButtonClick(awaitingPromise)
+                  }
+                }}
+                disabled={!isWithdrawalDelayOver(timestamp)}
               >
-                claim tokens
+                <span
+                  className={
+                    "pending-withdrawal__button-container__button-text"
+                  }
+                >
+                  {isWithdrawalTimeoutOver(timestamp)
+                    ? "reinitiate"
+                    : "claim tokens"}
+                </span>
               </SubmitButton>
+              <span
+                className={
+                  "pending-withdrawal__button-container__time-left-text"
+                }
+              >
+                {renderTimeLeftToClaimText(timestamp)}
+              </span>
             </div>
           )}
         />
