@@ -23,6 +23,7 @@ import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
 import { KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
+import Timeline from "../../components/Timeline"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -70,6 +71,43 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   return (
     <PageWrapper title={title} newPage={withNewLabel}>
       <CheckListBanner />
+
+      <section className="tile">
+        <Timeline>
+          <Timeline.Element>
+            <Timeline.ElementBreakpoint active>1</Timeline.ElementBreakpoint>
+            <h4 className="text-violet-80">Deposit your tokens</h4>
+            <span className="text-grey-60">
+              There is no minimum KEEP amount for your deposit and no minimum
+              time lock.
+            </span>
+          </Timeline.Element>
+
+          <Timeline.Element>
+            <Timeline.ElementBreakpoint active>2</Timeline.ElementBreakpoint>
+            <h4 className="text-violet-80">Withdraw deposit </h4>
+            <span className="text-grey-60">
+              <strong>Withdrawing is a two step action.</strong>&nbsp;From the
+              initiation of your withdrawal to claiming your tokens there is a
+              21 day cooldown period in which your tokens are still accumulating
+              rewards but are also subject to risk to cover for a hit.
+            </span>
+          </Timeline.Element>
+
+          <Timeline.Element>
+            <Timeline.ElementBreakpoint active>3</Timeline.ElementBreakpoint>
+            <h4 className="text-violet-80">Claim tokens</h4>
+            <span className="text-grey-60">
+              <strong>
+                You have a 2 day grace period to claim your tokens and rewards.
+              </strong>
+              Your deposit and rewards will be sent in one transaction. If you
+              do not claim your tokens within 2 days, your tokens will return to
+              the pool and you will have to re-withdraw them.
+            </span>
+          </Timeline.Element>
+        </Timeline>
+      </section>
 
       <section className="tile coverage-pool__overview">
         <section className="coverage-pool__overview__tvl">
