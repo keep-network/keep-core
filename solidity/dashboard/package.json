@@ -45,8 +45,8 @@
     "build": "npm run build-css && react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
+    "lint": "eslint --ext .jsx --ext .js .",
+    "lint:fix": "eslint --fix --ext .jsx --ext .js .",
     "format": "npm run lint && prettier --check .",
     "format:fix": "npm run lint:fix && prettier --write ."
   },
