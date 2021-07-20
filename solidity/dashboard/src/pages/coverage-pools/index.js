@@ -1,11 +1,17 @@
+import React from "react"
 import CoveragePoolPage from "./CoveragePoolPage"
+import PageWrapper from "../../components/PageWrapper"
+import HowItWorksPage from "./HowItWorksPage"
 
-CoveragePoolPage.route = {
+const CoveragePoolsPageContainer = ({ title, routes, withNewLabel }) => {
+  return <PageWrapper title={title} routes={routes} newPage={withNewLabel} />
+}
+
+CoveragePoolsPageContainer.route = {
   title: "Coverage Pool",
   path: "/coverage-pools",
-  exact: true,
-  pages: [],
+  pages: [HowItWorksPage, CoveragePoolPage],
   withNewLabel: true,
 }
 
-export default CoveragePoolPage
+export default CoveragePoolsPageContainer
