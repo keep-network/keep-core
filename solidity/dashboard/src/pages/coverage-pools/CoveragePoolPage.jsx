@@ -1,6 +1,5 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import PageWrapper from "../../components/PageWrapper"
 import {
   CheckListBanner,
   HowDoesItWorkBanner,
@@ -68,7 +67,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   }
 
   return (
-    <PageWrapper title={title} newPage={withNewLabel}>
+    <>
       <CheckListBanner />
 
       <section className="tile coverage-pool__overview">
@@ -118,7 +117,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         {/* TODO add more metrics according to the Figma vies */}
       </section>
-
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
           <h3>Deposit</h3>
@@ -170,8 +168,14 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         <HowDoesItWorkBanner />
       </section>
-    </PageWrapper>
+    </>
   )
+}
+
+CoveragePoolPage.route = {
+  title: "Deposit",
+  path: "/coverage-pools/deposit",
+  exact: true,
 }
 
 export default CoveragePoolPage

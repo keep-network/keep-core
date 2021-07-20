@@ -70,7 +70,7 @@ const CopyStakeStep4 = ({
       <h2 className="mb-2 mt-2 self-start" style={styles.title}>
         {getContent().title}
       </h2>
-      <ul className="list__colored-bullets--grey-60">
+      <ul className="bullets bullets--grey-60">
         {getContent().subtitles.map((subtitle, index) => (
           <li key={index} className="h3 text-grey-70" style={styles.listItem}>
             {subtitle.replace(
