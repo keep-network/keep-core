@@ -1,4 +1,5 @@
-button, .btn {
+button,
+.btn {
   display: inline-block;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -14,18 +15,19 @@ button, .btn {
   background-image: none;
   font-variant: small-caps;
   cursor: pointer;
-  transition: all ease-in-out .25s;
+  transition: all ease-in-out 0.25s;
 
   font-size: 1.25rem;
   line-height: 1.5rem;
   font-variant: small-caps;
-  font-feature-settings: 'tnum' on, 'lnum' on, 'zero' on;
+  font-feature-settings: "tnum" on, "lnum" on, "zero" on;
   letter-spacing: 0.05rem;
 
-  &:hover:disabled, &hover[disabled] {
+  &:hover:disabled,
+  &hover[disabled] {
     cursor: not-allowed;
     &::after {
-      opacity: 0
+      opacity: 0;
     }
   }
 }
@@ -34,7 +36,7 @@ button, .btn {
   &-lg {
     padding: 1rem 2.25rem !important;
     font-size: 1.25rem !important;
-    line-height: 1.5rem !important
+    line-height: 1.5rem !important;
   }
 
   &-md {
@@ -57,24 +59,30 @@ button, .btn {
     color: @primary-color;
     padding: 1rem 2.25rem;
 
-    &:hover, &:hover:enabled, &:focus {
+    &:hover,
+    &:hover:enabled,
+    &:focus {
       color: @white;
     }
 
-    &:active, &:active:enabled {
+    &:active,
+    &:active:enabled {
       background-color: @primary-color;
       border-color: @primary-color;
       color: @color-black;
     }
 
-    &:disabled, &[disabled] {
+    &:disabled,
+    &[disabled] {
       background-color: @color-grey-20;
       border-color: @color-grey-20;
       color: @color-grey-30;
     }
   }
 
-  &-secondary, &-transparent, &-tertiary {
+  &-secondary,
+  &-transparent,
+  &-tertiary {
     font-style: normal;
     font-weight: 600;
     font-size: 0.75rem;
@@ -97,20 +105,24 @@ button, .btn {
       transition: all 0.25s ease-in-out;
     }
 
-    &:hover, &:hover:enabled, &:focus {
+    &:hover,
+    &:hover:enabled,
+    &:focus {
       &:after {
         opacity: 1;
       }
     }
 
-    &:active, &:active:enabled {
+    &:active,
+    &:active:enabled {
       &:after {
         background-color: @primary-color;
         opacity: 1;
       }
     }
 
-    &:disabled, &[disabled] {
+    &:disabled,
+    &[disabled] {
       border-color: @color-grey-20;
       color: @color-grey-20;
     }
@@ -124,18 +136,19 @@ button, .btn {
     font-weight: 500;
     font-size: 0.75rem;
     line-height: 1.5rem;
-    padding: 0.325rem 0.75rem;    
+    padding: 0.325rem 0.75rem;
     padding: 0.5rem 0.75rem;
   }
 }
 
 .button-content {
-  &-enter, &-exit {
+  &-enter,
+  &-exit {
     opacity: 0;
 
     &-active {
       opacity: 1;
-      transition: opacity .5s ease-in;
+      transition: opacity 0.5s ease-in;
     }
   }
 }
@@ -150,7 +163,8 @@ fieldset[disabled] .btn {
     border-color: @color-black;
   }
 
-  &.pending, .btn-success& {
+  &.pending,
+  .btn-success& {
     opacity: 1;
   }
 }
@@ -161,7 +175,7 @@ fieldset[disabled] .btn {
   font-weight: bold;
   color: @color-black;
   background-color: @primary-color;
-  border-color:  @primary-color;
+  border-color: @primary-color;
 
   &:hover,
   &:focus,
@@ -170,13 +184,13 @@ fieldset[disabled] .btn {
   &.active,
   &.focus {
     background-color: @primary-color;
-    border-color:  @primary-color;
+    border-color: @primary-color;
   }
 }
 
 a.btn {
   text-decoration: none !important;
   &:after {
-    content: ""
+    content: "";
   }
 }

@@ -1,7 +1,7 @@
 import React, { useMemo } from "react"
 import { Skeleton } from "../skeletons"
 import CountUp from "react-countup"
-import { formatValue } from "../../utils/general.utils";
+import { formatValue } from "../../utils/general.utils"
 
 export const RewardMultiplier = ({
   rewardMultiplier,

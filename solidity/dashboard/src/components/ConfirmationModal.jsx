@@ -31,28 +31,30 @@ const ConfirmationModal = ({
 
 export default React.memo(ConfirmationModal)
 
-export const withConfirmationModal = (WrappedComponent) => ({
-  title,
-  subtitle,
-  confirmationText,
-  btnText,
-  onBtnClick,
-  onCancel,
-  getLabelText,
-  ...restProps
-}) => {
-  return (
-    <ConfirmationModal
-      title={title}
-      btnText={btnText}
-      confirmationText={confirmationText}
-      onCancel={onCancel}
-      onBtnClick={onBtnClick}
-      getLabelText={getLabelText}
-      subtitle={<WrappedComponent {...restProps} />}
-    />
-  )
-}
+export const withConfirmationModal =
+  (WrappedComponent) =>
+  ({
+    title,
+    subtitle,
+    confirmationText,
+    btnText,
+    onBtnClick,
+    onCancel,
+    getLabelText,
+    ...restProps
+  }) => {
+    return (
+      <ConfirmationModal
+        title={title}
+        btnText={btnText}
+        confirmationText={confirmationText}
+        onCancel={onCancel}
+        onBtnClick={onBtnClick}
+        getLabelText={getLabelText}
+        subtitle={<WrappedComponent {...restProps} />}
+      />
+    )
+  }
 
 const ConfirmationForm = ({
   confirmationText,

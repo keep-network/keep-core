@@ -1,15 +1,15 @@
 @keyframes aniVertical {
-    0% {
-      opacity: 0;
-    }
-  
-    50% {
-      opacity: 1;
-    }
-  
-    100% {
-      opacity: 0;
-    }
+  0% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 .table__skeleton {
@@ -29,25 +29,24 @@
     animation-fill-mode: forwards;
     opacity: 1;
     border: none !important;
-  
+
     &:nth-child(2) {
-      animation-delay: .5s;
+      animation-delay: 0.5s;
     }
-  
+
     &:nth-child(3) {
       animation-delay: 1s;
     }
-  
+
     &::before {
-        mix-blend-mode: overlay;
+      mix-blend-mode: overlay;
     }
   }
-
 }
-  
+
 @keyframes shine {
   0% {
-    background-position: right;    
+    background-position: right;
   }
 }
 

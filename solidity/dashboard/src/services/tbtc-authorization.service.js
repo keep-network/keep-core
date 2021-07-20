@@ -71,10 +71,8 @@ const fetchTBTCAuthorizationData = async (address) => {
 }
 
 const isTbtcSystemAuthorized = async (operatorAddress) => {
-  const {
-    bondedEcdsaKeepFactoryContract,
-    keepBondingContract,
-  } = await ContractsLoaded
+  const { bondedEcdsaKeepFactoryContract, keepBondingContract } =
+    await ContractsLoaded
   try {
     const sortitionPoolAddress = await bondedEcdsaKeepFactoryContract.methods
       .getSortitionPool(tBTCSystemAddress)
@@ -245,10 +243,11 @@ const fetchOperatorsOf = async (address) => {
     })
   }
 
-  const copiedOperatorsFromLiquidTokens = await getCopiedOperatorsFromLiquidTokens(
-    address,
-    Array.from(operators.keys())
-  )
+  const copiedOperatorsFromLiquidTokens =
+    await getCopiedOperatorsFromLiquidTokens(
+      address,
+      Array.from(operators.keys())
+    )
   for (let i = 0; i < copiedOperatorsFromLiquidTokens.length; i++) {
     operators.set(
       web3Utils.toChecksumAddress(copiedOperatorsFromLiquidTokens[i]),

@@ -196,8 +196,7 @@ function* processLiquidityRewardEarnedNotification(
       )
     ) {
       yield put({
-        type:
-          "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
+        type: "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
         payload: [...pairsDisplayed, liquidityRewardPairName],
       })
     }

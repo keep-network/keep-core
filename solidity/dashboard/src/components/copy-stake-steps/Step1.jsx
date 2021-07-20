@@ -77,12 +77,8 @@ const CopyStakeStep1 = ({
 }
 
 const DelegationItem = ({ delegation, onSelect, selectedOperatorAddress }) => {
-  const {
-    amount,
-    authorizerAddress,
-    operatorAddress,
-    beneficiaryAddress,
-  } = delegation
+  const { amount, authorizerAddress, operatorAddress, beneficiaryAddress } =
+    delegation
   const isSelected = operatorAddress === selectedOperatorAddress
 
   return (

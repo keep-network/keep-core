@@ -110,26 +110,22 @@ const TBTCApplicationPage = ({
 
   const onSuccessCallback = useCallback(
     (contractName, operatorAddress, isAuthorized = true) => {
-      const {
-        indexInArray: operatorIndexInArray,
-        obj: obsoleteOperator,
-      } = findIndexAndObject(
-        "operatorAddress",
-        operatorAddress,
-        tbtcAuthState.data,
-        compareEthAddresses
-      )
+      const { indexInArray: operatorIndexInArray, obj: obsoleteOperator } =
+        findIndexAndObject(
+          "operatorAddress",
+          operatorAddress,
+          tbtcAuthState.data,
+          compareEthAddresses
+        )
       if (operatorIndexInArray === null) {
         return
       }
-      const {
-        indexInArray: contractIndexInArray,
-        obj: obsoleteContract,
-      } = findIndexAndObject(
-        "contractName",
-        contractName,
-        obsoleteOperator.contracts
-      )
+      const { indexInArray: contractIndexInArray, obj: obsoleteContract } =
+        findIndexAndObject(
+          "contractName",
+          contractName,
+          obsoleteOperator.contracts
+        )
       const updatedContracts = [...obsoleteOperator.contracts]
       updatedContracts[contractIndexInArray] = {
         ...obsoleteContract,
@@ -150,7 +146,8 @@ const TBTCApplicationPage = ({
     async (data, awaitingPromise) => {
       const { operatorAddress, contractName } = data
       if (contractName === AUTH_CONTRACTS_LABEL.TBTC_SYSTEM) {
-        const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
+        const sortitionPoolAddress =
+          await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
 
         authorizeSortitionPoolContract(
           {
@@ -173,7 +170,8 @@ const TBTCApplicationPage = ({
   const deauthorizeTBTCSystem = useCallback(
     async (data, awaitingPromise) => {
       const { operatorAddress } = data
-      const sortitionPoolAddress = await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
+      const sortitionPoolAddress =
+        await tbtcAuthorizationService.fetchSortitionPoolForTbtc()
       deauthorizeSortitionPoolContract(
         { operatorAddress, sortitionPoolAddress },
         awaitingPromise

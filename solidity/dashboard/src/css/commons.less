@@ -17,46 +17,47 @@
 }
 
 .box-shadow {
-    .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
+  .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
 }
 
 .tile {
-    background: @white;
-    padding: 2rem;
-    margin-bottom: 1.2rem;
-    .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
+  background: @white;
+  padding: 2rem;
+  margin-bottom: 1.2rem;
+  .box-shadow(0px, 4px, 4px,rgba(196, 196, 196, 0.3));
 
-    &--metrics {
-      background-color: @color-grey-20;
-      transition: background-color 0.5s ease;
-      text-align: center;
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 0 0.2rem;
-      height: 9rem;
-      width: 10rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
+  &--metrics {
+    background-color: @color-grey-20;
+    transition: background-color 0.5s ease;
+    text-align: center;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0 0.2rem;
+    height: 9rem;
+    width: 10rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
 
-      &__tooltip {
-        &.tooltip--simple {
-          &--top, &--bottom {
-            width: 12px;
-            height: 12px;
-            position: absolute;
-            top: 0;
-            right: 8px;
+    &__tooltip {
+      &.tooltip--simple {
+        &--top,
+        &--bottom {
+          width: 12px;
+          height: 12px;
+          position: absolute;
+          top: 0;
+          right: 8px;
 
-            .tooltip__content-wrapper {
-              text-align: left;
-              min-width: 16rem;
-            }
+          .tooltip__content-wrapper {
+            text-align: left;
+            min-width: 16rem;
           }
         }
       }
     }
+  }
 }
 
 .token-amount {
@@ -108,7 +109,7 @@ each(@directions-shortcuts, .(@v, @k) {
   }
 });
 
-.w{
+.w {
   &-100 {
     width: 100%;
   }
@@ -118,7 +119,7 @@ hr {
   margin-top: 1.25rem;
   margin-bottom: 1.25rem;
   border: 0;
-  border-top: 1px solid @color-grey-20 ;  
+  border-top: 1px solid @color-grey-20;
 }
 
 .flex {
@@ -131,7 +132,7 @@ hr {
     flex: 2;
   }
 
-  &-3{
+  &-3 {
     flex: 3;
   }
 
@@ -148,7 +149,8 @@ hr {
     flex-direction: row;
   }
 
-  &.row, &.column {
+  &.row,
+  &.column {
     &.space-between {
       justify-content: space-between;
     }
@@ -161,7 +163,7 @@ hr {
       align-items: center;
     }
   }
-  
+
   &.wrap {
     flex-wrap: wrap;
   }
@@ -180,17 +182,17 @@ hr {
 }
 
 .self {
-    &-start {
-      align-self: flex-start;
-    }
+  &-start {
+    align-self: flex-start;
+  }
 
-    &-end {
-      align-self: flex-end;
-    }
+  &-end {
+    align-self: flex-end;
+  }
 
-    &-center {
-      align-self: center;
-    }
+  &-center {
+    align-self: center;
+  }
 }
 
 .balance {
@@ -205,7 +207,7 @@ hr {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  margin-right: .5rem;
+  margin-right: 0.5rem;
 
   &.grey {
     background: @color-grey-30;
@@ -220,15 +222,15 @@ hr {
   }
 }
 
-svg.keep-outline { 
+svg.keep-outline {
   &.grey-40 {
     * {
-      fill: @color-grey-40
+      fill: @color-grey-40;
     }
   }
 }
 
-ul.line-separator { 
+ul.line-separator {
   li {
     border-bottom: 1px solid @color-grey-20;
     padding-bottom: 1rem;
@@ -237,7 +239,7 @@ ul.line-separator {
     &:first-of-type {
       margin-top: 0;
     }
-    
+
     &:last-of-type {
       border-bottom: none;
     }
@@ -266,7 +268,11 @@ svg.eth-icon.eth-icon {
 }
 
 .text-fade-out {
-  background-image: linear-gradient(90deg, @color-black, rgba(255, 255, 255, 0) 100%);
+  background-image: linear-gradient(
+    90deg,
+    @color-black,
+    rgba(255, 255, 255, 0) 100%
+  );
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -306,7 +312,7 @@ hr {
 
 svg.success-icon {
   &.green {
-    path { 
+    path {
       fill: @success-color;
     }
   }

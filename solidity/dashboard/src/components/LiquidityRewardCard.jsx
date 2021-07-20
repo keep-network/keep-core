@@ -38,9 +38,10 @@ const LiquidityRewardCard = ({
   pool,
   incentivesRemoved,
 }) => {
-  const hasWrappedTokens = useMemo(() => gt(wrappedTokenBalance, 0), [
-    wrappedTokenBalance,
-  ])
+  const hasWrappedTokens = useMemo(
+    () => gt(wrappedTokenBalance, 0),
+    [wrappedTokenBalance]
+  )
 
   const hasDepositedWrappedTokens = useMemo(() => gt(lpBalance, 0), [lpBalance])
 

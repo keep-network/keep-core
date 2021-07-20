@@ -19,7 +19,7 @@
 
 .liquidity__card {
   align-self: flex-start;
-  
+
   .liquidity__card-title {
     display: flex;
     align-items: center;
@@ -27,7 +27,8 @@
     .liquidity__double-icon-container {
       margin-right: 0.5rem;
 
-      .tbtc-eth&, .tbtc-saddle& {
+      .tbtc-eth&,
+      .tbtc-saddle& {
         .main-icon {
           circle {
             fill: @white;
@@ -48,7 +49,8 @@
     }
   }
 
-  .liquidity__info, .liquidity__info--locked {
+  .liquidity__info,
+  .liquidity__info--locked {
     display: flex;
     justify-content: center;
   }
@@ -124,7 +126,8 @@
         flex-direction: row;
       }
 
-      .lp-balance__plus-separator::before, .lp-balance__plus-separator::after {
+      .lp-balance__plus-separator::before,
+      .lp-balance__plus-separator::after {
         content: "";
         flex: 1;
         border-bottom: 1px solid @color-grey-70;
@@ -132,11 +135,11 @@
       }
 
       .lp-balance__plus-separator::before {
-        margin-right: .75rem;
+        margin-right: 0.75rem;
       }
 
       .lp-balance__plus-separator::after {
-        margin-left: .75rem;
+        margin-left: 0.75rem;
       }
     }
   }
@@ -173,10 +176,10 @@
     }
   }
 
-  .liquidity__add-more-tokens, .liquidity__withdraw {
+  .liquidity__add-more-tokens,
+  .liquidity__withdraw {
     margin: 0.5rem 0;
   }
-
 }
 
 .liquidity__info--locked {
@@ -187,8 +190,6 @@
     }
   }
 }
-
-
 
 .keep-only-pool {
   display: flex;
@@ -218,7 +219,7 @@
     background-color: @color-grey-10;
     background-size: cover;
     background-position: center center;
-    background-repeat:no-repeat;
+    background-repeat: no-repeat;
     height: 400px;
   }
 
@@ -251,14 +252,16 @@
   // Display only one box on the smaller screen to avoid placing `connect wallet btn`
   // below the view port.
   .skeleton__box {
-    &:nth-child(2),  &:nth-child(3) {
+    &:nth-child(2),
+    &:nth-child(3) {
       display: none;
     }
   }
 
   @media screen and (min-width: 900px) {
     .skeleton__box {
-      &:nth-child(2),  &:nth-child(3) {
+      &:nth-child(2),
+      &:nth-child(3) {
         display: block;
       }
     }

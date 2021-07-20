@@ -48,9 +48,8 @@ class CustomLedgerSubprovider extends LedgerSubprovider {
     }
     txData.chainId = this.chainId
 
-    const fullDerivationPath = this.addressToPathMap[
-      web3Utils.toChecksumAddress(txData.from)
-    ]
+    const fullDerivationPath =
+      this.addressToPathMap[web3Utils.toChecksumAddress(txData.from)]
 
     try {
       this._ledgerClientIfExists = await this._createLedgerClientAsync()

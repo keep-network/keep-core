@@ -16,12 +16,8 @@ import { useWeb3Address } from "../../components/WithWeb3Context"
 
 const TBTCRewardsPage = () => {
   const address = useWeb3Address()
-  const [
-    { data, isFetching },
-    updateRewardsData,
-    ,
-    setServiceArgs,
-  ] = useFetchData(tbtcRewardsService.fetchTBTCRewards, [], address)
+  const [{ data, isFetching }, updateRewardsData, , setServiceArgs] =
+    useFetchData(tbtcRewardsService.fetchTBTCRewards, [], address)
 
   useEffect(() => {
     if (address) {
@@ -38,10 +34,11 @@ const TBTCRewardsPage = () => {
 
   const fetchOperatorByDepositId = useCallback(
     async (depositId) => {
-      const operators = await tbtcRewardsService.fetchBeneficiaryOperatorsFromDeposit(
-        address,
-        depositId
-      )
+      const operators =
+        await tbtcRewardsService.fetchBeneficiaryOperatorsFromDeposit(
+          address,
+          depositId
+        )
       const updatedData = [...data]
       operators.forEach((operator) => {
         const { indexInArray, obj } = findIndexAndObject(

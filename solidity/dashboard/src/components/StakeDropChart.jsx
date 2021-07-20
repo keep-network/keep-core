@@ -67,7 +67,8 @@ const StakeDropChart = () => {
     )
 
     const formattedRewardAmount = KEEP.displayAmount(KEEP.fromTokenUnit(amount))
-    tooltipContentEl.childNodes[2].innerHTML = tooltipContentEl.childNodes[2].innerHTML = `${formattedRewardAmount} KEEP`
+    tooltipContentEl.childNodes[2].innerHTML =
+      tooltipContentEl.childNodes[2].innerHTML = `${formattedRewardAmount} KEEP`
   }
 
   const onMouseLeaveDot = () => {
