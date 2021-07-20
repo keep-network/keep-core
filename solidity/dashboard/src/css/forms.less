@@ -2,11 +2,10 @@ input {
   font-size: 1rem;
   font-weight: normal;
   line-height: 1.5rem;
-  padding: 1rem .75rem;
+  padding: 1rem 0.75rem;
 
   &::placeholder {
-   color: @color-grey-30;
-
+    color: @color-grey-30;
   }
 
   &[type="text"] {
@@ -17,7 +16,7 @@ input {
     @radio-size: 24px;
     visibility: hidden;
 
-    &+label {
+    & + label {
       position: relative;
       cursor: pointer;
       padding-left: calc(@radio-size + 1rem);
@@ -31,7 +30,7 @@ input {
         width: @radio-size;
         height: @radio-size;
         background-color: @white;
-        border: 2px solid @color-black; 
+        border: 2px solid @color-black;
         border-radius: 100%;
       }
     }
@@ -40,29 +39,30 @@ input {
       border-color: @secondary-color;
     }
 
-    &:checked + label::after, &:not(:checked) + label::after {
-        content: "";
-        position: absolute;
-        left: 4px;
-        top: 4px;
-        width: 20px;
-        height: 20px;
-        border-radius: 100%;
-        transition: all .2s ease;
-      }
-
-      &:checked + label::after {
-        background-color: @secondary-color;
-        transform: scale(1);
-        opacity: 1;
-      }
-
-      &:checked:not(:checked) + label::after {
-        background: @white;
-        transform: scale(0);
-        opacity: 0;
-      }
+    &:checked + label::after,
+    &:not(:checked) + label::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 100%;
+      transition: all 0.2s ease;
     }
+
+    &:checked + label::after {
+      background-color: @secondary-color;
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    &:checked:not(:checked) + label::after {
+      background: @white;
+      transform: scale(0);
+      opacity: 0;
+    }
+  }
 }
 
 .form {
@@ -78,7 +78,7 @@ input {
 
       &__text {
         font-weight: 500;
-        color: @color-grey-60
+        color: @color-grey-60;
       }
 
       &__info-container {
@@ -108,7 +108,7 @@ input {
       }
     }
 
-    >.form-input__wrapper {
+    > .form-input__wrapper {
       position: relative;
       display: flex;
       align-items: center;
@@ -116,7 +116,7 @@ input {
       > svg {
         margin-right: 1.5rem;
       }
-      
+
       input {
         width: 100%;
       }
@@ -130,7 +130,7 @@ input {
 
     &__error {
       color: @validation-color;
-      font-size: .9rem;
+      font-size: 0.9rem;
       font-weight: 500;
     }
   }

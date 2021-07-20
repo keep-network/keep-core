@@ -1,3 +1,3 @@
 module.exports = {
-    ...require("@keep-network/prettier-config-keep"),
+  ...require("@keep-network/prettier-config-keep"),
 }

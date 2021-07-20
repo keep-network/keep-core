@@ -55,11 +55,8 @@ const fetchDelegatedTokensData = async (address) => {
   const { eth } = web3
   let ownerAddress
 
-  const {
-    stakingTransactionHash,
-    beneficiaryAddress,
-    authorizerAddress,
-  } = await delegationInfoFromStakedEvents(address)
+  const { stakingTransactionHash, beneficiaryAddress, authorizerAddress } =
+    await delegationInfoFromStakedEvents(address)
 
   const [stakedBalance, initializationPeriod] = await Promise.all([
     stakingContract.methods.balanceOf(address).call(),
@@ -288,14 +285,12 @@ export const getOperatorsOfGrantee = async (address) => {
     await grantContract.methods.getGranteeOperators(address).call()
   )
 
-  const {
-    allOperators,
-    operatorToGrantDetailsMap,
-  } = await getAllGranteeOperators(
-    Array.from(granteeOperators),
-    granteeGrants,
-    address
-  )
+  const { allOperators, operatorToGrantDetailsMap } =
+    await getAllGranteeOperators(
+      Array.from(granteeOperators),
+      granteeGrants,
+      address
+    )
 
   return { allOperators, granteeGrants, operatorToGrantDetailsMap }
 }
@@ -318,15 +313,8 @@ export const getOperatorsOfManagedGrantee = async (address) => {
     grenteeOperators.forEach(operators.add, operators)
   }
 
-  const {
-    allOperators,
-    operatorToGrantDetailsMap,
-  } = await getAllGranteeOperators(
-    Array.from(operators),
-    grantIds,
-    address,
-    true
-  )
+  const { allOperators, operatorToGrantDetailsMap } =
+    await getAllGranteeOperators(Array.from(operators), grantIds, address, true)
 
   return { allOperators, granteeGrants: grantIds, operatorToGrantDetailsMap }
 }
@@ -353,11 +341,8 @@ const getAllGranteeOperators = async (
   grantee,
   isManagedGrant = false
 ) => {
-  const {
-    tokenStakingEscrow,
-    stakingPortBackerContract,
-    stakingContract,
-  } = await ContractsLoaded
+  const { tokenStakingEscrow, stakingPortBackerContract, stakingContract } =
+    await ContractsLoaded
 
   let escrowRedelegation = []
   if (!isEmptyArray(grantIds)) {
