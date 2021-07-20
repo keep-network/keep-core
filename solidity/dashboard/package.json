@@ -45,16 +45,19 @@
     "build": "npm run build-css && react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "js:lint": "eslint src/**/*.js src/**/*.jsx",
-    "js:lint:fix": "eslint --fix src/**/*.js src/**/*.jsx"
+    "lint": "eslint src/",
+    "lint:fix": "eslint --fix src/",
+    "format": "npm run lint && prettier --check .",
+    "format:fix": "npm run lint:fix && prettier --write ."
   },
   "devDependencies": {
+    "@keep-network/prettier-config-keep": "github:keep-network/prettier-config-keep",
     "@redux-saga/testing-utils": "^1.1.3",
     "@testing-library/react-hooks": "^5.1.2",
     "@types/jest": "^26.0.21",
     "eslint": "^6.8.0",
     "eslint-config-keep": "git+https://github.com/keep-network/eslint-config-keep.git",
-    "prettier": "^2.0.4",
+    "prettier": "^2.3.2",
     "redux-saga-test-plan": "^4.0.1"
   },
   "browserslist": [
