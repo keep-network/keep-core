@@ -285,18 +285,32 @@ svg.eth-icon.eth-icon {
 }
 
 ul {
-  &.list__colored-bullets--grey-60 {
-    list-style: none;
+  &.bullets {
+    list-style: inside;
 
     li {
-      padding-left: 1em;
-      text-indent: -1em;
+      padding-left: 1.5rem;
+      text-indent: -1.5rem;
     }
 
     li::before {
       content: "\2022";
-      color: @color-grey-60;
+      color: @color-black;
       padding-right: 1rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    &--violet-80 {
+      li::before {
+        color: @color-brand-violet-80;
+      }
+    }
+
+    &--grey-60 {
+      li::before {
+        color: @color-grey-60;
+      }
     }
   }
 }
