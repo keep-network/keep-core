@@ -11,7 +11,7 @@ defaults:
         working-directory: ./solidity/dashboard
 
 jobs:
-  dashbord-code-format:
+  dashboard-code-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
