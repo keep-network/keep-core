@@ -1,0 +1,27 @@
+name: KEEP Token Dashboard Code Format Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+defaults:
+    run:
+        working-directory: ./solidity/dashboard
+
+jobs:
+  dashbord-code-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format
