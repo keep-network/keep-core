@@ -11,7 +11,21 @@ defaults:
         working-directory: ./solidity/dashboard
 
 jobs:
+  dashboard-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+    steps:
+    - uses: dorny/paths-filter@v2
+      id: filter
+      with:
+        filters: |
+          dashboard:
+            - './**'
+
   dashboard-code-format:
+    needs: dashboard-detect-changes
+    if: ${{ needs.changes.outputs.dashboard == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
