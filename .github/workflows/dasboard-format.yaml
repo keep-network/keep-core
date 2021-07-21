@@ -7,8 +7,8 @@ on:
   pull_request:
 
 defaults:
-    run:
-        working-directory: ./solidity/dashboard
+  run:
+    working-directory: ./solidity/dashboard
 
 jobs:
   dashboard-detect-changes:
