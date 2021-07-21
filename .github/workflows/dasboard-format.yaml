@@ -27,7 +27,7 @@ jobs:
 
   dashboard-code-format:
     needs: dashboard-detect-changes
-    if: ${{ needs.changes.outputs.dashboard == 'true' }}
+    if: ${{ needs.dashboard-detect-changes.outputs.dashboard == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
