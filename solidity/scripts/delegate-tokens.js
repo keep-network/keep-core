@@ -11,7 +11,7 @@ function formatAmount(amount, decimals) {
 }
 
 function getAccounts() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     web3.eth.getAccounts((error, accounts) => {
       resolve(accounts)
     })
