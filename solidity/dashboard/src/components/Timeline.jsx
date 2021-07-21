@@ -21,11 +21,11 @@ const Timeline = ({ children, position = "left" }) => {
     </TimelineContext.Provider>
   )
 }
-const TimelineElement = ({ position, children }) => {
+const TimelineElement = ({ position, children, className = "" }) => {
   const { position: timelinePosition } = useTimelineContext()
   const _position = position || timelinePosition
   return (
-    <div className={`timeline__element timeline__element--${_position}`}>
+    <div className={`timeline__element timeline__element--${_position} ${className}`}>
       {children}
     </div>
   )
