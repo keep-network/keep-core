@@ -101,7 +101,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
               <strong>
                 You have a 2 day grace period to claim your tokens and rewards.
               </strong>
-              Your deposit and rewards will be sent in one transaction. If you
+              &nbsp;Your deposit and rewards will be sent in one transaction. If you
               do not claim your tokens within 2 days, your tokens will return to
               the pool and you will have to re-withdraw them.
             </span>
