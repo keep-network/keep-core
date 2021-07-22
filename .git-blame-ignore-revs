@@ -2,5 +2,5 @@
 # `git blame` function. These are expected to be commits containing code generated
 # by automatic tools.
 
-# Auto-formatted code via `npm run format:fix` command.
+# Auto-formatted dashboard code via `npm run format:fix` command.
 60776920bc3642216882e305820cc098b1c2e643
