@@ -1,0 +1,4 @@
+/* gets rid of the sidebar */
+#root {
+    grid-template-columns: 0 1fr!important;
+}

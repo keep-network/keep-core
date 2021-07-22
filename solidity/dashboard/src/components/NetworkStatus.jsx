@@ -2,9 +2,7 @@ import React from "react"
 import { useWeb3Context } from "./WithWeb3Context"
 import * as Icons from "./Icons"
 
-export const NetworkStatus = () => {
-  const { networkType, error, isConnected } = useWeb3Context()
-
+export const NetworkStatusView = ({ networkType, error, isConnected }) => {
   let status = "disconnected"
   if (error) {
     status = "error"
@@ -23,5 +21,17 @@ export const NetworkStatus = () => {
         {status === "connected" && networkType}
       </span>
     </div>
+  )
+}
+
+export const NetworkStatus = () => {
+  const { networkType, error, isConnected } = useWeb3Context()
+
+  return (
+    <NetworkStatusView
+      networkType={networkType}
+      error={error}
+      isConnected={isConnected}
+    />
   )
 }
