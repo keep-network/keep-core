@@ -80,7 +80,8 @@ jobs:
             npm update \
               @keep-network/keep-core \
               @keep-network/keep-ecdsa \
-              @keep-network/tbtc
+              @keep-network/tbtc \
+              @keep-network/coverage-pools
 
       - name: Get upstream packages' versions
         if: github.event_name == 'workflow_dispatch'
@@ -92,6 +93,7 @@ jobs:
             keep-core-solidity-version = github.com/keep-network/keep-core/solidity#version
             keep-ecdsa-solidity-version = github.com/keep-network/keep-ecdsa/solidity#version
             tbtc-solidity-version = github.com/keep-network/tbtc/solidity#version
+            coverage-pools-version = github.com/keep-network/coverage-pools#version
 
       - name: Resolve latest contracts
         if: github.event_name == 'workflow_dispatch'
@@ -99,7 +101,8 @@ jobs:
             npm install --save-exact \
               @keep-network/keep-core@${{ steps.upstream-builds-query.outputs.keep-core-solidity-version }} \
               @keep-network/keep-ecdsa@${{ steps.upstream-builds-query.outputs.keep-ecdsa-solidity-version }} \
-              @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-solidity-version }}
+              @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-solidity-version }} \
+              @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
