@@ -15,14 +15,15 @@ defaults:
 
 jobs:
   dashboard-detect-changes:
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     outputs:
       dashboard: ${{ steps.filter.outputs.path-filter }}
     steps:
     - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request'
 
     - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request'
       id: filter
       with:
         filters: |
