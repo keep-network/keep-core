@@ -275,14 +275,14 @@ class CoveragePoolV1 {
     }
 
     let newestWithdrawalForGivenAddress = null
-    if (newestWithdrawalEventForGivenAddress.returnValues.covAmount) {
+    if (newestWithdrawalEventForGivenAddress?.returnValues?.covAmount) {
       newestWithdrawalForGivenAddress = {
         covAmount: newestWithdrawalEventForGivenAddress.returnValues.covAmount,
         timestamp: newestWithdrawalEventForGivenAddress.returnValues.timestamp,
         underwriter:
           newestWithdrawalEventForGivenAddress.returnValues.underwriter,
       }
-    } else if (newestWithdrawalEventForGivenAddress.returnValues.amount) {
+    } else if (newestWithdrawalEventForGivenAddress?.returnValues?.amount) {
       newestWithdrawalForGivenAddress = {
         covAmount: newestWithdrawalEventForGivenAddress.returnValues.covAmount,
         timestamp: newestWithdrawalEventForGivenAddress.returnValues.timestamp,
@@ -302,6 +302,9 @@ class CoveragePoolV1 {
     const withdrawalCompletedEvents = await this.assetPoolContract.getPastEvents(
       "WithdrawalCompleted"
     )
+
+    console.log("withdrawalInitiatedEvents", withdrawalInitiatedEvents)
+    console.log("withdrawalCompletedEvents", withdrawalCompletedEvents)
 
     const newestInitiatedWithdrawalForGivenAddress = this._getLastWithdrawalOfUser(
       address,
