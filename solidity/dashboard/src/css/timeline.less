@@ -1,101 +1,90 @@
-@margin-bottom-between-elements: 1rem;
+@margin-bottom-between-elements: 2rem;
 @left-border-width: 8px;
 
 .timeline {
-  position: relative;
+  display: flex;
+  flex-direction: column;
 
   &__element {
     position: relative;
-    min-width: 200px;
-    padding: 1.5rem 2rem;
-    border: 1px solid #AE96E1; // @color-brand-violet-40
-    border-left: @left-border-width solid #633EB1; // @color-brand-violet-80
-    border-radius: 0.5rem;
-    &:extend(.box-shadow);
-    background-color: @white;
-    margin-bottom: @margin-bottom-between-elements;
-    
+    display: flex;
+    // min-height: 80px;
 
-    &--left {
-      margin-left: 3rem;
-    }
-
-    &--right {
-      // TODO add support for displaying timeline events on the right side and
-      // alternate.
-      margin-left: 3rem;
-    }
-
-    // Drawing the dashed line for the first element. NOTE: only valid when timeline
-    // breeakpoints are centered relative to the event content.
-    &:nth-of-type(1) {
-        &::before {
-          height: unset;
-          top: 50%;
-          bottom: 0;
-          .draw-dashed-vertical-line(@color-grey-30);
-        }
-    }
-
-    // Drawing the dashed line for the last element. NOTE: only valid when timeline
-    // breeakpoints are centered relative to the event content.
     &:nth-last-of-type(1) {
-      &::before {
-        top: 0;
-        bottom: 50%;
-        height: unset;
-        .draw-dashed-vertical-line(@color-grey-30);
+      .element__breakpoint {
+        .breakpoint__line {
+          height: 0;
+        }
       }
     }
 
-    // Drawing the dashed line for the rest elements between the first and last
-    // element. NOTE: only valid when timeline breeakpoints are centered relative to
-    // the event content.
-    &::before {
-      .draw-dashed-vertical-line(@color-grey-30);
-      content: '';
-      position: absolute;
-      width: 2px;
-      left: calc(-3rem - 8px);
-      height: calc(100% + 2rem);
-      top: -1rem;
-      bottom: -1rem;
-      overflow: visible;
+    .element {
+      &__breakpoint {
+        position: relative;
+        flex: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+
+        .breakpoint {
+          &__dot {
+            margin-top: 1.5rem;
+            position: relative;
+            display: flex;
+            width: 24px;
+            height: 24px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 2px solid#D7CBF0;
+            background-color: #633EB1;
+            color: @white;
+            z-index: 1;
+
+            &--breaker {
+              margin-top: 1rem;
+              width: 24px;
+              height: 12px;
+              background-color: white;
+              border: 2px solid @color-grey-30;
+              border-left-width: 0;
+              border-right-width: 0;
+              border-radius: unset;
+              transform: rotate(20deg) skew(15deg);
+
+              &-violet-80 {
+                border-color: #633EB1;
+              }
+            }
+          }
+
+          &__line {
+            position: absolute;
+            height: calc(100% + 1.5rem);
+            height: 100%;
+            border-left: 2px dotted @color-grey-30;
+            top: 1.5rem;
+
+            &--active {
+              border-left: 2px solid #633EB1;
+            }
+          }
+        }
+      }
+
+      &__content {
+        padding: 0.5rem 1rem;
+        flex: 1;
+      }
     }
   }
+}
 
-  .element {
-
-    &__breakpoint {
-      @breakpoint-size: 24px;
-
-      position: absolute;
-      width: @breakpoint-size;
-      height: @breakpoint-size;
-      left: calc(-3rem - (@breakpoint-size / 2) - 7px);
-      border-radius: 50%;
-
-      background-color: #633EB1; // @color-brand-violet-80;
-      border: 1px solid #D7CBF0; //@color-brand-violet-20;
-      color: @white;
-
-      align-items: center;
-      display: flex;
-      justify-content: center;
-
-      z-index: 1;
-
-      &--start {
-        top: 0;
-      }
-
-      &--center {
-        top: calc(50% - 12px);
-      }
-
-      &--end {
-        top: 100%;
-      }
-    }
-  }
+.timeline-default-card {
+  border: 1px solid #AE96E1; // @color-brand-violet-40
+  border-left: @left-border-width solid #633EB1; // @color-brand-violet-80
+  border-radius: 0.5rem;
+  &:extend(.box-shadow);
+  padding: 1.5rem 2rem;
+  background-color: @white;
 }

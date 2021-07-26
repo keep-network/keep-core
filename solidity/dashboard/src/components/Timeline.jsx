@@ -1,4 +1,5 @@
 import React, { useContext } from "react"
+import OnlyIf from "./OnlyIf"
 
 const TimelineContext = React.createContext({
   // May be useful in the future, eg. if we would like to be able to display the
@@ -14,37 +15,75 @@ const useTimelineContext = () => {
   return context
 }
 
-const Timeline = ({ children, position = "left" }) => {
+const Timeline = ({ children, position = "left", className = "" }) => {
   return (
     <TimelineContext.Provider value={{ position: position }}>
-      <div className="timeline">{children}</div>
+      <ul className={`timeline ${className}`}>{children}</ul>
     </TimelineContext.Provider>
   )
 }
+
 const TimelineElement = ({ position, children, className = "" }) => {
   const { position: timelinePosition } = useTimelineContext()
   const _position = position || timelinePosition
   return (
-    <div className={`timeline__element timeline__element--${_position} ${className}`}>
+    <li
+      className={`timeline__element timeline__element--${_position} ${className}`}
+    >
+      {children}
+    </li>
+  )
+}
+
+Timeline.Element = TimelineElement
+
+Timeline.Content = ({ children, className = "", ...props }) => {
+  return (
+    <div className={`element__content ${className}`} {...props}>
       {children}
     </div>
   )
 }
-Timeline.Element = TimelineElement
 
-Timeline.ElementBreakpoint = ({
-  children,
-  className = "",
-  // start, center
-  // TODO add support for a start position.
-  position = "center",
-}) => {
+Timeline.ElementDefaultCard = ({ children, className = "", ...props }) => {
   return (
-    <div
-      className={`element__breakpoint element__breakpoint--${position} ${className}`}
-    >
+    <div className={`timeline-default-card ${className}`} {...props}>
       {children}
     </div>
+  )
+}
+
+Timeline.Breakpoint = ({ children, className = "" }) => {
+  return <div className={`element__breakpoint ${className}`}>{children}</div>
+}
+
+Timeline.BreakpointDot = ({
+  children,
+  lineBreaker = false,
+  lineBreakerColor = "grey-30",
+  className = "",
+}) => {
+  return (
+    <span
+      className={`breakpoint__dot ${
+        lineBreaker ? "breakpoint__dot--breaker" : ""
+      } ${
+        lineBreakerColor ? `breakpoint__dot--breaker-${lineBreakerColor}` : ""
+      }
+      ${className}`}
+    >
+      <OnlyIf condition={!lineBreaker}>{children}</OnlyIf>
+    </span>
+  )
+}
+
+Timeline.BreakpointLine = ({ active = false, className = "" }) => {
+  return (
+    <span
+      className={`breakpoint__line ${
+        active ? "breakpoint__line--active" : ""
+      } ${className}`}
+    />
   )
 }
 
