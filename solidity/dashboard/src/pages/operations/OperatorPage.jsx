@@ -30,12 +30,8 @@ const OperatorPage = ({ title }) => {
     })
   }, [dispatch, address])
 
-  const {
-    isFetching,
-    areSlashedTokensFetching,
-    slashedTokens,
-    ...data
-  } = useSelector((state) => state.operator)
+  const { isFetching, areSlashedTokensFetching, slashedTokens, ...data } =
+    useSelector((state) => state.operator)
 
   return (
     <PageWrapper title={title}>

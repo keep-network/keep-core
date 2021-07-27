@@ -42,27 +42,19 @@ const authorizationReducer = (state = initialState, action) => {
 }
 
 const updateAuthData = (authData, { contractName, operatorAddress }) => {
-  const {
-    indexInArray: operatorIndexInArray,
-    obj: obsoleteOperator,
-  } = findIndexAndObject(
-    "operatorAddress",
-    operatorAddress,
-    authData,
-    compareEthAddresses
-  )
+  const { indexInArray: operatorIndexInArray, obj: obsoleteOperator } =
+    findIndexAndObject(
+      "operatorAddress",
+      operatorAddress,
+      authData,
+      compareEthAddresses
+    )
   if (operatorIndexInArray === null) {
     return authData
   }
 
-  const {
-    indexInArray: contractIndexInArray,
-    obj: obsoleteContract,
-  } = findIndexAndObject(
-    "contractName",
-    contractName,
-    obsoleteOperator.contracts
-  )
+  const { indexInArray: contractIndexInArray, obj: obsoleteContract } =
+    findIndexAndObject("contractName", contractName, obsoleteOperator.contracts)
   const updatedContracts = [...obsoleteOperator.contracts]
   updatedContracts[contractIndexInArray] = {
     ...obsoleteContract,

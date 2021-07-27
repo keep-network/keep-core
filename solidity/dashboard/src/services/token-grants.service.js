@@ -184,14 +184,12 @@ const fetchManagedGrants = async () => {
   const yourAddress = web3.eth.defaultAccount
   const { managedGrantFactoryContract } = await ContractsLoaded
 
-  const managedGrantCreatedEvents = await managedGrantFactoryContract.getPastEvents(
-    "ManagedGrantCreated",
-    {
+  const managedGrantCreatedEvents =
+    await managedGrantFactoryContract.getPastEvents("ManagedGrantCreated", {
       fromBlock: await getContractDeploymentBlockNumber(
         MANAGED_GRANT_FACTORY_CONTRACT_NAME
       ),
-    }
-  )
+    })
   const grants = []
 
   for (const event of managedGrantCreatedEvents) {
