@@ -9,6 +9,7 @@ import * as Icons from "../Icons"
 import Chip from "../Chip"
 import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
+import Tooltip from "../Tooltip"
 
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
@@ -60,12 +61,14 @@ const PendingWithdrawalsView = ({
   }
 
   const renderWithdrawalCooldownEndTime = (timestamp) => {
-    const withdrawalDate = moment.unix(timestamp)
+    const endOfWithdrawalDelayDate = moment
+      .unix(timestamp)
+      .add(withdrawalDelay, "seconds")
     return (
       <div className={"pending-withdrawal__date text-grey-70"}>
         <span>
-          {withdrawalDate.format("MM/DD/YYYY")} at{" "}
-          {withdrawalDate.format("HH:mm:ss")}{" "}
+          {endOfWithdrawalDelayDate.format("MM/DD/YYYY")} at{" "}
+          {endOfWithdrawalDelayDate.format("HH:mm:ss")}{" "}
           <a
             href={"http://google.com"}
             className="arrow-link"
@@ -111,12 +114,10 @@ const PendingWithdrawalsView = ({
       )
     } else {
       cooldownStatus = (
-        <Chip
-          className={"pending_withdrawal__cooldown-status-chip"}
-          color="violet"
-          text={"cooldown completed"}
-          size="small"
-        />
+        <div className={"pending-withdrawal__cooldown-completed"}>
+          <Icons.Success className={"success-icon"} />{" "}
+          <span>Cooldown completed</span>
+        </div>
       )
     }
 
@@ -172,15 +173,59 @@ const PendingWithdrawalsView = ({
     let timeToClaim = <></>
     if (!isWithdrawalTimeoutOver(pendingWithdrawalTimestamp)) {
       timeToClaim = (
-        <span>
-          Time left to claim: {days}d {hours}h {minutes}m
-        </span>
+        <div
+          className={"coverage-pool__withdrawal-claim-tokens-info-container"}
+        >
+          <div className={"coverage-pool__withdrawal-available-for"}>
+            <h4>
+              Available for: {days}d {hours}h {minutes}m
+            </h4>
+            <Tooltip
+              simple
+              delay={0}
+              triggerComponent={Icons.MoreInfo}
+              className={"withdrawal-available-for__tooltip"}
+            >
+              Available for tooltip
+            </Tooltip>
+          </div>
+          <span className={"coverage-pool__withdrawal-expired-at"}>
+            Expires:&nbsp;
+            {endOfWithdrawalTimeoutDate.format("MM/DD/YYYY")} at{" "}
+            {endOfWithdrawalTimeoutDate.format("HH:mm:ss")}{" "}
+          </span>
+        </div>
       )
     } else {
-      timeToClaim = <span>Tokens went back to pool</span>
+      timeToClaim = (
+        <div className={"coverage-pool__withdrawal-expired-error"}>
+          <h4 className={"text-error"}>Claim window expired</h4>
+          <Tooltip
+            simple
+            delay={0}
+            triggerComponent={Icons.MoreInfo}
+            className={"withdrawal-expired__tooltip"}
+          >
+            Withdrawal expired tooltip
+          </Tooltip>
+        </div>
+      )
     }
 
     return timeToClaim
+  }
+
+  const renderPendingWithdrawalButtonText = (pendingWithdrawalTimestamp) => {
+    let pendingWithdrawalButtonText = <span>claim tokens</span>
+    if (isWithdrawalTimeoutOver(pendingWithdrawalTimestamp)) {
+      pendingWithdrawalButtonText = (
+        <span className={"pending-withdrawal__button-container__button-text"}>
+          <Icons.Refresh className={"mr-1"} />
+          <span>re-initiate</span>
+        </span>
+      )
+    }
+    return pendingWithdrawalButtonText
   }
 
   return (
@@ -196,30 +241,19 @@ const PendingWithdrawalsView = ({
         <Column
           header="amount"
           field="covAmount"
-          renderContent={({ covAmount }) => {
+          renderContent={({ covAmount, timestamp }) => {
+            const withdrawalTimestamp = moment.unix(timestamp)
             return (
-              <TokenAmount
-                amount={covAmount}
-                wrapperClassName={"pending-withdrawal__token-amount"}
-                amountClassName={"h2 text-brand-violet-100"}
-                symbolClassName={"h3 text-brand-violet-100"}
-              />
+              <div>
+                <TokenAmount
+                  amount={covAmount}
+                  wrapperClassName={"pending-withdrawal__token-amount"}
+                />
+                <div>&nbsp;{withdrawalTimestamp.format("MM/DD/YYYY")}</div>
+              </div>
             )
           }}
         />
-        {/*<Column*/}
-        {/*  header="withdrawal initiated"*/}
-        {/*  field="timestamp"*/}
-        {/*  renderContent={({ timestamp }) => {*/}
-        {/*    const withdrawalDate = moment.unix(timestamp)*/}
-        {/*    return (*/}
-        {/*      <div className={"pending-withdrawal__date"}>*/}
-        {/*        <span>{withdrawalDate.format("DD-MM-YYYY")}</span>*/}
-        {/*        <span>{withdrawalDate.format("HH:mm:ss")}</span>*/}
-        {/*      </div>*/}
-        {/*    )*/}
-        {/*  }}*/}
-        {/*/>*/}
         <Column
           header="cooldown status"
           field="timestamp"
@@ -244,15 +278,7 @@ const PendingWithdrawalsView = ({
                 }}
                 disabled={!isWithdrawalDelayOver(timestamp)}
               >
-                <span
-                  className={
-                    "pending-withdrawal__button-container__button-text"
-                  }
-                >
-                  {isWithdrawalTimeoutOver(timestamp)
-                    ? "reinitiate"
-                    : "claim tokens"}
-                </span>
+                {renderPendingWithdrawalButtonText(timestamp)}
               </SubmitButton>
               <span
                 className={
