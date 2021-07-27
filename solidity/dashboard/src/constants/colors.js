@@ -23,4 +23,6 @@ export const colors = {
   mint20: "#C8F4E9",
   mint80: "#12C0A1",
   green30: "#D7F6EE",
+  yellowPrimary: "#FFF9F1",
+  yellowSecondary: "#FF9900",
 }

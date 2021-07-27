@@ -2,7 +2,8 @@
   table {
     thead {
       tr {
-        background-color: @color-brand-violet-10
+        background-color: @color-yellow-10;
+        border-bottom: 1px solid @color-yellow-60;
       }
     }
   }
@@ -10,11 +11,12 @@
   .pending-withdrawal__date {
     display: flex;
     flex-direction: column;
+    font-size: 14px;
   }
 
   .pending-withdrawal__progress-bar {
     margin: 5px 0;
-    width: 200px;
+    //width: 200px;
   }
 
   .pending-withdrawal__cooldown-status {
@@ -37,7 +39,7 @@
     flex-direction: column;
     justify-content: flex-end;
     button {
-      margin: 0 3rem;
+      margin: 0 6rem;
     }
     button:not([disabled]) {
       .pending-withdrawal__button-container__button-text {

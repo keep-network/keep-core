@@ -37,8 +37,8 @@ const PendingWithdrawalsView = ({
       <ProgressBar
         value={progressBarValueInSeconds}
         total={progressBarTotalInSeconds}
-        color={colors.secondary}
-        bgColor={colors.bgSecondary}
+        color={colors.yellowSecondary}
+        bgColor={colors.yellowPrimary}
       >
         <ProgressBar.Inline
           height={20}
@@ -49,6 +49,37 @@ const PendingWithdrawalsView = ({
   }
 
   const renderCooldownStatus = (timestamp) => {
+    const loadingBar = renderLoadingBarCooldownStatus(timestamp)
+    const endTime = renderWithdrawalCooldownEndTime(timestamp)
+    return (
+      <>
+        {loadingBar}
+        {endTime}
+      </>
+    )
+  }
+
+  const renderWithdrawalCooldownEndTime = (timestamp) => {
+    const withdrawalDate = moment.unix(timestamp)
+    return (
+      <div className={"pending-withdrawal__date text-grey-70"}>
+        <span>
+          {withdrawalDate.format("MM/DD/YYYY")} at{" "}
+          {withdrawalDate.format("HH:mm:ss")}{" "}
+          <a
+            href={"http://google.com"}
+            className="arrow-link"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Add to calendar
+          </a>
+        </span>
+      </div>
+    )
+  }
+
+  const renderLoadingBarCooldownStatus = (timestamp) => {
     const withdrawalDate = moment.unix(timestamp)
     const currentDate = moment()
     const endOfWithdrawalDelayDate = moment
@@ -72,11 +103,6 @@ const PendingWithdrawalsView = ({
             currentDate
           )}
           <div className={"pending-withdrawal__cooldown-time-container"}>
-            <Icons.Time
-              width="16"
-              height="16"
-              className="time-icon time-icon--grey-30"
-            />
             <span>
               {days}d {hours}h {minutes}m until available
             </span>
@@ -181,19 +207,19 @@ const PendingWithdrawalsView = ({
             )
           }}
         />
-        <Column
-          header="withdrawal initiated"
-          field="timestamp"
-          renderContent={({ timestamp }) => {
-            const withdrawalDate = moment.unix(timestamp)
-            return (
-              <div className={"pending-withdrawal__date"}>
-                <span>{withdrawalDate.format("DD-MM-YYYY")}</span>
-                <span>{withdrawalDate.format("HH:mm:ss")}</span>
-              </div>
-            )
-          }}
-        />
+        {/*<Column*/}
+        {/*  header="withdrawal initiated"*/}
+        {/*  field="timestamp"*/}
+        {/*  renderContent={({ timestamp }) => {*/}
+        {/*    const withdrawalDate = moment.unix(timestamp)*/}
+        {/*    return (*/}
+        {/*      <div className={"pending-withdrawal__date"}>*/}
+        {/*        <span>{withdrawalDate.format("DD-MM-YYYY")}</span>*/}
+        {/*        <span>{withdrawalDate.format("HH:mm:ss")}</span>*/}
+        {/*      </div>*/}
+        {/*    )*/}
+        {/*  }}*/}
+        {/*/>*/}
         <Column
           header="cooldown status"
           field="timestamp"

@@ -87,8 +87,8 @@
 .coverage-pool__deposit-wrapper {
     display: grid;
     grid-template-areas:
-    "deposit-form   share-of-pool   rewards"
-    "deposit-form   banner          banner";
+    "deposit-form   balance   balance"
+    "deposit-form   available-to-withdraw          available-to-withdraw";
 
     grid-template-columns: 2fr 1fr 1fr;
     grid-template-rows: auto;
@@ -107,24 +107,55 @@
         }
     }
 
-    .coverage-pool__share-of-pool {
-        grid-area: share-of-pool;
-        margin-bottom: 0;
-    }
+    //.coverage-pool__share-of-pool {
+    //    grid-area: share-of-pool;
+    //    margin-bottom: 0;
+    //}
+    //
+    //.coverage-pool__rewards {
+    //    grid-area: rewards;
+    //    margin-bottom: 0;
+    //}
 
-    .coverage-pool__rewards {
-        grid-area: rewards;
-        margin-bottom: 0;
+    .coverage-pool__balance {
+        grid-area: balance;
+        justify-self: stretch;
+        align-self: start;
+
+        .coverage-pool__balance-title {
+            display: flex;
+            align-items: center;
+
+            .coverage-pool_pending-withdrawal-chip {
+                margin: 0 1rem;
+            }
+
+            .coverage-pool__share-of-pool {
+                margin-left: auto
+            }
+        }
     }
 
     > .coverage-pool__checklist {
-        grid-area: banner;
+        grid-area: available-to-withdraw;
         justify-self: stretch;
         align-self: start;
     }
 
+    .coverage-pool__deposits-and-earned {
+        margin: 2rem 0;
+        .coverage-pool__deposit, .coverage-pool__earned {
+            display: flex;
+            align-items: center;
+
+            .coverage-pool__deposit-amount, .coverage-pool__earned-amount {
+                margin-left: auto;
+            }
+        }
+    }
+
     .coverage-pool__withdraw-wrapper {
-        grid-area: banner;
+        grid-area: available-to-withdraw;
         justify-self: stretch;
         align-self: start;
 

@@ -26,6 +26,10 @@ import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
 import PendingWithdrawals from "../../components/coverage-pools/PendingWithdrawals"
+import Chip from "../../components/Chip"
+import Tooltip from "../../components/Tooltip"
+import * as Icons from "../../components/Icons"
+import Divider from "../../components/Divider"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -47,6 +51,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     withdrawalDelay,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
+  console.log("estimatedRewards", estimatedRewards)
 
   const address = useWeb3Address()
 
@@ -155,46 +160,98 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
         </section>
 
-        <section className="tile coverage-pool__share-of-pool">
-          <h4 className="text-grey-70 mb-3">Your Share of Pool</h4>
+        {/* <section className="tile coverage-pool__share-of-pool">*/}
+        {/*  <h4 className="text-grey-70 mb-3">Your Share of Pool</h4>*/}
 
-          <OnlyIf condition={shareOfPool <= 0}>
-            <div className="text-grey-30 text-center">
-              You have no balance yet.&nbsp;
-              <br />
-              <u>Deposit KEEP</u>&nbsp;to see balance.
-            </div>
-          </OnlyIf>
-          <OnlyIf condition={shareOfPool > 0}>
-            <div className="flex column center">
-              <TokenAmount amount={estimatedKeepBalance} withSymbol={false} />
-              <h4 className="text-mint-100">{KEEP.symbol}</h4>
-              <div className="text-grey-40 mt-2">
-                <b>{displayPercentageValue(shareOfPool * 100, false)}</b>
-                &nbsp;of Pool
-              </div>
-            </div>
-          </OnlyIf>
-        </section>
+        {/*  <OnlyIf condition={shareOfPool <= 0}>*/}
+        {/*    <div className="text-grey-30 text-center">*/}
+        {/*      You have no balance yet.&nbsp;*/}
+        {/*      <br />*/}
+        {/*      <u>Deposit KEEP</u>&nbsp;to see balance.*/}
+        {/*    </div>*/}
+        {/*  </OnlyIf>*/}
+        {/*  <OnlyIf condition={shareOfPool > 0}>*/}
+        {/*    <div className="flex column center">*/}
+        {/*      <TokenAmount amount={estimatedKeepBalance} withSymbol={false} />*/}
+        {/*      <h4 className="text-mint-100">{KEEP.symbol}</h4>*/}
+        {/*      <div className="text-grey-40 mt-2">*/}
+        {/*        <b>{displayPercentageValue(shareOfPool * 100, false)}</b>*/}
+        {/*        &nbsp;of Pool*/}
+        {/*      </div>*/}
+        {/*    </div>*/}
+        {/*  </OnlyIf>*/}
+        {/* </section>*/}
 
-        <section className="tile coverage-pool__rewards">
-          <h4 className="text-grey-70 mb-3">Your Rewards</h4>
-          <OnlyIf condition={lte(estimatedRewards, 0) && shareOfPool <= 0}>
-            <div className="text-grey-30 text-center">
-              You have no rewards yet.&nbsp;
-              <br />
-              <u>Deposit KEEP</u>&nbsp;to see rewards.
-            </div>
-          </OnlyIf>
-          <OnlyIf condition={shareOfPool > 0}>
-            <div className="flex column center">
-              <TokenAmount amount={estimatedRewards} withSymbol={false} />
-              <h4 className="text-mint-100">{KEEP.symbol}</h4>
-            </div>
-          </OnlyIf>
-        </section>
+        {/* <section className="tile coverage-pool__rewards">*/}
+        {/*  <h4 className="text-grey-70 mb-3">Your Rewards</h4>*/}
+        {/*  <OnlyIf condition={lte(estimatedRewards, 0) && shareOfPool <= 0}>*/}
+        {/*    <div className="text-grey-30 text-center">*/}
+        {/*      You have no rewards yet.&nbsp;*/}
+        {/*      <br />*/}
+        {/*      <u>Deposit KEEP</u>&nbsp;to see rewards.*/}
+        {/*    </div>*/}
+        {/*  </OnlyIf>*/}
+        {/*  <OnlyIf condition={shareOfPool > 0}>*/}
+        {/*    <div className="flex column center">*/}
+        {/*      <TokenAmount amount={estimatedRewards} withSymbol={false} />*/}
+        {/*      <h4 className="text-mint-100">{KEEP.symbol}</h4>*/}
+        {/*    </div>*/}
+        {/*  </OnlyIf>*/}
+        {/* </section>*/}
 
         {/* <HowDoesItWorkBanner />*/}
+
+        <section className="tile coverage-pool__balance">
+          <div className={"coverage-pool__balance-title"}>
+            <h3>Balance</h3>
+            <Chip
+              text={`Pending withdrawal`}
+              size="small"
+              className={"coverage-pool_pending-withdrawal-chip"}
+              color="yellow"
+            />
+            <span className={"coverage-pool__share-of-pool text-grey-40"}>
+              {displayPercentageValue(shareOfPool * 100, false)} of pool
+            </span>
+          </div>
+          <TokenAmount
+            wrapperClassName={"coverage-pool__token-amount"}
+            amount={covBalance}
+            token={covKEEP}
+            withIcon
+          />
+          <div className={"coverage-pool__deposits-and-earned"}>
+            <div className={"coverage-pool__deposit"}>
+              <h4>Your deposits &nbsp;</h4>
+              <Tooltip
+                simple
+                delay={0}
+                triggerComponent={Icons.MoreInfo}
+                className={"lp-balance__tooltip"}
+              >
+                Your deposits tooltip
+              </Tooltip>
+              <h4 className={"coverage-pool__deposit-amount text-grey-40"}>
+                1,000 KEEP
+              </h4>
+            </div>
+            <Divider style={{ margin: "0.5rem 0" }} />
+            <div className={"coverage-pool__earned"}>
+              <h4>Earned &nbsp;</h4>
+              <Tooltip
+                simple
+                delay={0}
+                triggerComponent={Icons.MoreInfo}
+                className={"lp-balance__tooltip"}
+              >
+                Rewards earned tooltip
+              </Tooltip>
+              <h4 className={"coverage-pool__earned-amount text-grey-40"}>
+                0 KEEP
+              </h4>
+            </div>
+          </div>
+        </section>
 
         <section className="tile coverage-pool__withdraw-wrapper">
           <h3>Available to withdraw</h3>
