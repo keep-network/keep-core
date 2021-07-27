@@ -120,8 +120,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             <Timeline.Content>
               <Chip
                 text="21 day cooldown"
-                color="violet-80"
-                className="text-white"
+                color="strong"
+                size="big"
               />
             </Timeline.Content>
           </Timeline.Element>
