@@ -62,6 +62,7 @@ Timeline.BreakpointDot = ({
   lineBreaker = false,
   lineBreakerColor = "grey-30",
   className = "",
+  ...props
 }) => {
   return (
     <span
@@ -71,6 +72,7 @@ Timeline.BreakpointDot = ({
         lineBreakerColor ? `breakpoint__dot--breaker-${lineBreakerColor}` : ""
       }
       ${className}`}
+      {...props}
     >
       <OnlyIf condition={!lineBreaker}>{children}</OnlyIf>
     </span>
