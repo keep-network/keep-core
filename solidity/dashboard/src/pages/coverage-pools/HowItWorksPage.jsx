@@ -4,6 +4,7 @@ import NavLink from "../../components/NavLink"
 import List from "../../components/List"
 import Timeline from "../../components/Timeline"
 import Chip from "../../components/Chip"
+import { colors } from "../../constants/colors"
 
 const triggers = [
   {
@@ -112,7 +113,7 @@ const HowItWorksPage = () => {
                 <Timeline.BreakpointDot
                   lineBreaker
                   lineBreakerColor="violet-80"
-                  className="bg-violet-10"
+                  style={{ backgroundColor: colors.brandViolet10 }}
                 />
                 <Timeline.BreakpointLine active />
               </Timeline.Breakpoint>
