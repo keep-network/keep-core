@@ -9,7 +9,7 @@ const Chip = ({
 }) => {
   return (
     <span
-      className={`chip--${color} chip--${icon ? "icon" : size} ${className}`}
+      className={`chip chip--${color} chip--${icon ? "icon" : size} ${className}`}
     >
       {icon ? icon : text}
     </span>
