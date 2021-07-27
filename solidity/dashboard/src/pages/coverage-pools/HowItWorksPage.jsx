@@ -2,7 +2,8 @@ import React from "react"
 import * as Icons from "../../components/Icons"
 import NavLink from "../../components/NavLink"
 import List from "../../components/List"
-// import Timeline from "../../components/Timeline"
+import Timeline from "../../components/Timeline"
+import Chip from "../../components/Chip"
 
 const triggers = [
   {
@@ -65,6 +66,83 @@ const HowItWorksPage = () => {
             read the docs
           </a>
         </div>
+      </section>
+
+      <section className="tile">
+        <Timeline>
+          <Timeline.Element>
+            <Timeline.Breakpoint>
+              <Timeline.BreakpointDot>1</Timeline.BreakpointDot>
+              <Timeline.BreakpointLine active />
+            </Timeline.Breakpoint>
+            <Timeline.Content>
+              <Timeline.ElementDefaultCard>
+                <h4 className="text-violet-80">Deposit your tokens</h4>
+                <span className="text-grey-60">
+                  There is no minimum KEEP amount for your deposit and no
+                  minimum time lock.
+                </span>
+              </Timeline.ElementDefaultCard>
+            </Timeline.Content>
+          </Timeline.Element>
+
+          <Timeline.Element>
+            <Timeline.Breakpoint>
+              <Timeline.BreakpointDot>2</Timeline.BreakpointDot>
+              <Timeline.BreakpointLine active />
+            </Timeline.Breakpoint>
+            <Timeline.Content>
+              <Timeline.ElementDefaultCard>
+                <h4 className="text-violet-80">Withdraw deposit</h4>
+                <span className="text-grey-60">
+                  <strong>Withdrawing is a two step action.</strong>&nbsp;First,
+                  you initiate your withdrawal. After that there is a 21 day
+                  cooldown period. During cooldown, your tokens are still
+                  accumulating rewards but are also subject to risk to cover for
+                  a hit. After 21 days, you can claim your tokens.
+                </span>
+              </Timeline.ElementDefaultCard>
+            </Timeline.Content>
+          </Timeline.Element>
+          <Timeline.Element>
+            <Timeline.Breakpoint>
+              <Timeline.BreakpointDot
+                lineBreaker
+                lineBreakerColor="violet-80"
+              />
+              <Timeline.BreakpointLine active />
+            </Timeline.Breakpoint>
+            <Timeline.Content>
+              <Chip
+                text="21 day cooldown"
+                color="strong"
+                size="big"
+              />
+            </Timeline.Content>
+          </Timeline.Element>
+
+          <Timeline.Element>
+            <Timeline.Breakpoint>
+              <Timeline.BreakpointDot>3</Timeline.BreakpointDot>
+              <Timeline.BreakpointLine active />
+            </Timeline.Breakpoint>
+            <Timeline.Content>
+              <Timeline.ElementDefaultCard>
+                <h4 className="text-violet-80">Claim tokens</h4>
+                <span className="text-grey-60">
+                  <strong>
+                    You have a 2 day claim window to claim your tokens and
+                    rewards.
+                  </strong>
+                  &nbsp;Your deposit and rewards will be sent in one
+                  transaction. If you do not claim your tokens within 2 days,
+                  your tokens will return to the pool and you will have to
+                  re-withdraw them.
+                </span>
+              </Timeline.ElementDefaultCard>
+            </Timeline.Content>
+          </Timeline.Element>
+        </Timeline>
       </section>
       <section className="tile">
         <h3 className="mb-1">Rewards pool</h3>
