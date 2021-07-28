@@ -1,6 +1,5 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import PageWrapper from "../../components/PageWrapper"
 import {
   CheckListBanner,
   HowDoesItWorkBanner,
@@ -23,8 +22,6 @@ import { useModal } from "../../hooks/useModal"
 import { lte } from "../../utils/arithmetics.utils"
 import { KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
-import Timeline from "../../components/Timeline"
-import Chip from "../../components/Chip"
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -70,86 +67,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   }
 
   return (
-    <PageWrapper title={title} newPage={withNewLabel}>
+    <>
       <CheckListBanner />
-
-      <section className="tile">
-        <Timeline>
-          <Timeline.Element>
-            <Timeline.Breakpoint>
-              <Timeline.BreakpointDot>1</Timeline.BreakpointDot>
-              <Timeline.BreakpointLine active />
-            </Timeline.Breakpoint>
-            <Timeline.Content>
-              <Timeline.ElementDefaultCard>
-                <h4 className="text-violet-80">Deposit your tokens</h4>
-                <span className="text-grey-60">
-                  There is no minimum KEEP amount for your deposit and no
-                  minimum time lock.
-                </span>
-              </Timeline.ElementDefaultCard>
-            </Timeline.Content>
-          </Timeline.Element>
-
-          <Timeline.Element>
-            <Timeline.Breakpoint>
-              <Timeline.BreakpointDot>2</Timeline.BreakpointDot>
-              <Timeline.BreakpointLine active />
-            </Timeline.Breakpoint>
-            <Timeline.Content>
-              <Timeline.ElementDefaultCard>
-                <h4 className="text-violet-80">Withdraw deposit</h4>
-                <span className="text-grey-60">
-                  <strong>Withdrawing is a two step action.</strong>&nbsp;First,
-                  you initiate your withdrawal. After that there is a 21 day
-                  cooldown period. During cooldown, your tokens are still
-                  accumulating rewards but are also subject to risk to cover for
-                  a hit. After 21 days, you can claim your tokens.
-                </span>
-              </Timeline.ElementDefaultCard>
-            </Timeline.Content>
-          </Timeline.Element>
-          <Timeline.Element>
-            <Timeline.Breakpoint>
-              <Timeline.BreakpointDot
-                lineBreaker
-                lineBreakerColor="violet-80"
-              />
-              <Timeline.BreakpointLine active />
-            </Timeline.Breakpoint>
-            <Timeline.Content>
-              <Chip
-                text="21 day cooldown"
-                color="strong"
-                size="big"
-              />
-            </Timeline.Content>
-          </Timeline.Element>
-
-          <Timeline.Element>
-            <Timeline.Breakpoint>
-              <Timeline.BreakpointDot>3</Timeline.BreakpointDot>
-              <Timeline.BreakpointLine active />
-            </Timeline.Breakpoint>
-            <Timeline.Content>
-              <Timeline.ElementDefaultCard>
-                <h4 className="text-violet-80">Claim tokens</h4>
-                <span className="text-grey-60">
-                  <strong>
-                    You have a 2 day claim window to claim your tokens and
-                    rewards.
-                  </strong>
-                  &nbsp;Your deposit and rewards will be sent in one
-                  transaction. If you do not claim your tokens within 2 days,
-                  your tokens will return to the pool and you will have to
-                  re-withdraw them.
-                </span>
-              </Timeline.ElementDefaultCard>
-            </Timeline.Content>
-          </Timeline.Element>
-        </Timeline>
-      </section>
-
       <section className="tile coverage-pool__overview">
         <section className="coverage-pool__overview__tvl">
           <h2 className="h2--alt text-grey-70 mb-1">Total Value Locked</h2>
@@ -197,7 +116,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         {/* TODO add more metrics according to the Figma vies */}
       </section>
-
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
           <h3>Deposit</h3>
@@ -249,8 +167,14 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         <HowDoesItWorkBanner />
       </section>
-    </PageWrapper>
+    </>
   )
+}
+
+CoveragePoolPage.route = {
+  title: "Deposit",
+  path: "/coverage-pools/deposit",
+  exact: true,
 }
 
 export default CoveragePoolPage

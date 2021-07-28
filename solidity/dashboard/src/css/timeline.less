@@ -35,8 +35,8 @@
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            border: 2px solid#D7CBF0;
-            background-color: #633EB1;
+            border: 2px solid @color-brand-violet-20;
+            background-color: @color-brand-violet-80;
             color: @white;
             z-index: 1;
 
@@ -44,7 +44,7 @@
               margin-top: 1rem;
               width: 24px;
               height: 12px;
-              background-color: white;
+              background-color: @white;
               border: 2px solid @color-grey-30;
               border-left-width: 0;
               border-right-width: 0;
@@ -65,7 +65,7 @@
             top: 1.5rem;
 
             &--active {
-              border-left: 2px solid #633EB1;
+              border-left: 2px solid @color-brand-violet-80;
             }
           }
         }
@@ -80,8 +80,8 @@
 }
 
 .timeline-default-card {
-  border: 1px solid #AE96E1; // @color-brand-violet-40
-  border-left: @left-border-width solid #633EB1; // @color-brand-violet-80
+  border: 1px solid @color-brand-violet-40;
+  border-left: @left-border-width solid @color-brand-violet-80;
   border-radius: 0.5rem;
   &:extend(.box-shadow);
   padding: 1.5rem 2rem;

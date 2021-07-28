@@ -123,3 +123,68 @@
         align-self: start;
     }
 }
+
+.cov-how-it-works__info-section {
+    .tile();
+    display: flex;
+    flex-direction: column;
+
+    .info-section {
+        &__icon {
+            flex-shrink: 0;
+            align-self: center;
+        }
+
+        &__header {
+            margin: 1rem 0;
+        }
+    }
+
+    @media screen and (min-width: 1000px) {
+        flex-direction: row;
+        align-items: center;
+
+        .info-section {
+            &__header {
+                margin-left: 2rem;
+                margin-right: 3rem;
+            }
+
+            &__cta {
+                margin-left: auto;
+            }
+        }
+    }
+}
+
+.coverage-pool-resources-grid {
+    @media screen and (min-width: 1000px) {
+        display: grid;
+        grid-template-areas:
+            "overview   rewards-pool"
+            "overview   covering-hit"
+            "cov-KEEP   covering-hit";
+        gap: 1rem;
+
+        section {
+            align-self: start;
+            margin-bottom: 0;
+
+            &:nth-child(1) {
+                grid-area: overview;
+            }
+    
+            &:nth-child(2) {
+                grid-area: rewards-pool;
+            }
+    
+            &:nth-child(3) {
+                grid-area: covering-hit;
+            }
+    
+            &:nth-child(4) {
+                grid-area: cov-KEEP;
+            }
+        }
+    }
+}

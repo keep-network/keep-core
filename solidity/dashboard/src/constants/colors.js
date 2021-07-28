@@ -23,4 +23,9 @@ export const colors = {
   mint20: "#C8F4E9",
   mint80: "#12C0A1",
   green30: "#D7F6EE",
+  brandViolet100: "#52388A",
+  brandViolet80: "#6946B4",
+  brandViolet40: "#AE96E1",
+  brandViolet20: "#D7CBF0",
+  brandViolet10: "#F2EEFA",
 }
