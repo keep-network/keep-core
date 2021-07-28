@@ -1,68 +1,3 @@
-.coverage-pool__checklist {
-  max-width: unset;
-  background-color: @color-mint-20;
-  padding: 2rem;
-  margin-bottom: 1rem;
-  border-radius: 10px;
-
-  .banner__title {
-    &:extend(.h3);
-  }
-
-  .banner__close-icon {
-    width: 16px;
-    height: 16px;
-    top: 16px;
-    right: 16px;
-  }
-
-  .checklist-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-
-    @media screen and (min-width: 1000px) {
-      margin-top: unset;
-      justify-content: space-between;
-    }
-
-    .checklist__section {
-      margin-top: 1rem;
-      flex-basis: 250px;
-
-      > ul.list__content {
-        > li.list__item {
-          margin-bottom: 0.25rem;
-          > * {
-            display: inline-block;
-            vertical-align: middle;
-          }
-
-          svg {
-            width: 1rem;
-            height: 1rem;
-
-            path {
-              fill: @color-mint-100;
-            }
-          }
-        }
-      }
-
-      &--notes {
-        > ul.list__content {
-          > li.list__item {
-            svg {
-              path {
-                fill: @color-brass;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 .coverage-pool__overview {
   display: flex;
 
@@ -112,12 +47,6 @@
   .coverage-pool__rewards {
     grid-area: rewards;
     margin-bottom: 0;
-  }
-
-  > .coverage-pool__checklist {
-    grid-area: banner;
-    justify-self: stretch;
-    align-self: start;
   }
 }
 

@@ -1,8 +1,6 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import {
-  CheckListBanner,
-  HowDoesItWorkBanner,
   DepositForm,
   InitiateDepositModal,
 } from "../../components/coverage-pools"
@@ -68,7 +66,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   return (
     <>
-      <CheckListBanner />
       <section className="tile coverage-pool__overview">
         <section className="coverage-pool__overview__tvl">
           <h2 className="h2--alt text-grey-70 mb-1">Total Value Locked</h2>
@@ -164,8 +161,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             </div>
           </OnlyIf>
         </section>
-
-        <HowDoesItWorkBanner />
       </section>
     </>
   )
