@@ -39,7 +39,7 @@ spec:
           restartPolicy: OnFailure
           initContainers:
           - name: initcontainer-provision-keep-client
-            image: gcr.io/keep-dev-fe24/keep-client-initcontainer
+            image: gcr.io/keep-dev-fe24/keep-client-initcontainer-ethereum
             env:
               - name: KEEP_CLIENT_TYPE
                 value: relay-requester

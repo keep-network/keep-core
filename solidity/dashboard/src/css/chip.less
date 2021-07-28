@@ -1,62 +1,68 @@
 @chip-colors: {
-    emphasis: @color-mint-40, @color-black;
-    success: @color-green-60, @white;
-    pending: @pending-color,  @color-black;
-    error: @error-color,  @color-black;
-    disabled: @color-grey-20,  @color-grey-40;
-    strong: #633EB1, @white; // @color-brand-violet-80
-    subtle: #D7CBF0, #52388A // @color-brand-violet-20, @color-brand-violet-100
-}
+  emphasis: @color-mint-40, @color-black;
+  success: @color-green-60, @white;
+  pending: @pending-color, @color-black;
+  error: @error-color, @color-black;
+  disabled: @color-grey-20, @color-grey-40;
+  strong: @color-brand-violet-80, @white;
+  subtle: @color-brand-violet-20, @color-brand-violet-100;
+};
 
 .chip {
-    border-radius: 100px;
+  border-radius: 100px;
 
-    each(@chip-colors, .(@colors, @color-name) {
+  each(@chip-colors, .(@colors, @color-name) {
         &--@{color-name} {
             background-color: extract(@colors, 1);
             color: extract(@colors, 2);
         }
     })
-
     &--tiny {
-        font-size: 0.625rem;
-        line-height: 0.875rem;
-        letter-spacing: 0.05rem;
-        padding: 0.125rem 0.375rem;
-        font-feature-settings: unset
-    }
-    
-    &--small, &--big {
-        font-weight: 500;
-        letter-spacing: 0.05rem;
-        text-transform: uppercase;
-        font-feature-settings: 'tnum' on, 'lnum' on, 'zero' on;
-    }
+    font-size: 0.625rem;
+    line-height: 0.875rem;
+    letter-spacing: 0.05rem;
+    padding: 0.125rem 0.375rem;
+    font-feature-settings: unset;
+  }
 
-    &--small {
-        font-size: 0.75rem;
-        padding: 0.125rem 0.5rem;
-        line-height: 1.25rem;
-    }
+  &--small,
+  &--big {
+    font-weight: 500;
+    letter-spacing: 0.05rem;
+    text-transform: uppercase;
+    font-feature-settings: "tnum" on, "lnum" on, "zero" on;
+  }
 
-    &--big {
-        font-size: 0.875rem;
-        line-height: 1.125rem;
-        padding: 0.375rem 0.75rem;
-    }
+  &--small {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
+    line-height: 1.25rem;
+  }
 
-    &--icon {
-        width: 24px;
-        height: 24px;
-        // padding: 6px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+  &--big {
+    font-size: 0.875rem;
+    line-height: 1.125rem;
+    padding: 0.375rem 0.75rem;
+  }
 
-        svg {
-            width: 12px;
-            height: 12px;
-        }
+  &--tiny,
+  &--small,
+  &--big {
+    border-radius: 100px;
+  }
+
+  &--icon {
+    width: 24px;
+    height: 24px;
+    // padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 12px;
+      height: 12px;
     }
+  }
 }

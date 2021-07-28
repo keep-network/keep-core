@@ -1,50 +1,50 @@
-@import 'vars';
-@import 'typography';
-@import 'buttons';
-@import 'forms';
-@import 'messages';
-@import 'indicator';
-@import 'menu-button';
-@import 'rewards';
-@import 'address-shortcut';
-@import 'no-data.less';
-@import 'commons.less';
-@import 'withdrawal-rewards-history.less';
-@import 'operator-page.less';
-@import 'dropdown.less';
-@import 'network-status.less';
-@import 'step-nav.less';
-@import 'modal.less';
-@import 'progress-bar.less';
-@import 'banner.less';
-@import 'tooltip.less';
-@import 'datatable.less';
-@import 'wallet-options.less';
-@import 'delegate-stake-form.less';
-@import 'token-grants-page.less';
-@import 'choose-wallet-address.less';
-@import 'skeletons.less';
-@import 'resources-page.less';
-@import 'tags.less';
-@import 'copy-stake-page.less';
-@import 'badge.less';
-@import 'footer.less';
-@import 'side-menu.less';
-@import 'header.less';
-@import 'web3-status.less';
-@import 'chip.less';
-@import 'overview-page.less';
-@import 'empty-states.less';
-@import 'wallet-tokens-page.less';
-@import 'granted-tokens-page.less';
-@import 'rewards-page.less';
-@import 'card-container.less';
-@import 'card.less';
-@import 'double-icon.less';
-@import 'liquidity-page.less';
-@import 'mobile-users-modal.less';
-@import 'coverage-pools-page.less';
-@import 'timeline.less';
+@import "vars";
+@import "typography";
+@import "buttons";
+@import "forms";
+@import "messages";
+@import "indicator";
+@import "menu-button";
+@import "rewards";
+@import "address-shortcut";
+@import "no-data.less";
+@import "commons.less";
+@import "withdrawal-rewards-history.less";
+@import "operator-page.less";
+@import "dropdown.less";
+@import "network-status.less";
+@import "step-nav.less";
+@import "modal.less";
+@import "progress-bar.less";
+@import "banner.less";
+@import "tooltip.less";
+@import "datatable.less";
+@import "wallet-options.less";
+@import "delegate-stake-form.less";
+@import "token-grants-page.less";
+@import "choose-wallet-address.less";
+@import "skeletons.less";
+@import "resources-page.less";
+@import "tags.less";
+@import "copy-stake-page.less";
+@import "badge.less";
+@import "footer.less";
+@import "side-menu.less";
+@import "header.less";
+@import "web3-status.less";
+@import "chip.less";
+@import "overview-page.less";
+@import "empty-states.less";
+@import "wallet-tokens-page.less";
+@import "granted-tokens-page.less";
+@import "rewards-page.less";
+@import "card-container.less";
+@import "card.less";
+@import "double-icon.less";
+@import "liquidity-page.less";
+@import "mobile-users-modal.less";
+@import "coverage-pools-page.less";
+@import "timeline.less";
 
 * {
   margin: 0;
@@ -58,7 +58,9 @@ html {
   background: @background-color;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100vh;
   width: 100vw;
 }
@@ -99,13 +101,13 @@ ul {
 
     background-color: @color-grey-20;
 
-      main {
-        margin-left: auto;
-        margin-right: auto;
-        margin-bottom: 5rem;
-        padding: 1rem;
-        padding-top: 2.5rem;
-      }
+    main {
+      margin-left: auto;
+      margin-right: auto;
+      margin-bottom: 5rem;
+      padding: 1rem;
+      padding-top: 2.5rem;
+    }
   }
 
   .app__footer {
@@ -138,7 +140,7 @@ ul {
 }
 
 @media screen and (min-width: 700px) {
- .header {
+  .header {
     > .web3 {
       display: flex;
     }
@@ -154,8 +156,8 @@ ul {
 @media screen and (min-width: 750px) {
   .header {
     > .account-address {
-        display: block;
-      }
+      display: block;
+    }
   }
 
   // .side-menu {
@@ -167,12 +169,10 @@ ul {
 
 @media screen and (min-width: 1000px) {
   .header {
-     > .web3 {
-       visibility: visible;
-     }
-   }
-
-
+    > .web3 {
+      visibility: visible;
+    }
+  }
 
   #root {
     .app__content {
@@ -215,7 +215,8 @@ ul {
     z-index: 10;
     overflow-x: visible;
 
-    ul > .account-address, .web3 {
+    ul > .account-address,
+    .web3 {
       visibility: hidden;
     }
   }
