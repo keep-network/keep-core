@@ -10,6 +10,7 @@ import Chip from "../Chip"
 import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import Tooltip from "../Tooltip"
+import { KEEP } from "../../utils/token.utils"
 
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
@@ -65,7 +66,7 @@ const PendingWithdrawalsView = ({
       .unix(timestamp)
       .add(withdrawalDelay, "seconds")
     return (
-      <div className={"pending-withdrawal__date text-grey-70"}>
+      <div className={"pending-withdrawal__cooldown-end-date text-grey-70"}>
         <span>
           {endOfWithdrawalDelayDate.format("MM/DD/YYYY")} at{" "}
           {endOfWithdrawalDelayDate.format("HH:mm:ss")}{" "}
@@ -248,8 +249,12 @@ const PendingWithdrawalsView = ({
                 <TokenAmount
                   amount={covAmount}
                   wrapperClassName={"pending-withdrawal__token-amount"}
+                  token={KEEP}
+                  withIcon
                 />
-                <div>&nbsp;{withdrawalTimestamp.format("MM/DD/YYYY")}</div>
+                <div className={"pending-withdrawal__initialization-date"}>
+                  &nbsp;{withdrawalTimestamp.format("MM/DD/YYYY")}
+                </div>
               </div>
             )
           }}

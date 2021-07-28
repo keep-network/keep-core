@@ -217,12 +217,25 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
             amount={covBalance}
+            amountClassName={"h1 text-mint-100"}
+            symbolClassName={"h2 text-mint-100"}
+            token={KEEP}
+            withIcon
+          />
+          <TokenAmount
+            wrapperClassName={"coverage-pool__cov-token-amount"}
+            amount={covBalance}
+            amountClassName={"h3 text-grey-40"}
+            symbolClassName={"h3 text-grey-40"}
             token={covKEEP}
             withIcon
+            icon={() => {
+              return <div style={{ width: "35px", height: "35px" }}></div>
+            }}
           />
           <div className={"coverage-pool__deposits-and-earned"}>
             <div className={"coverage-pool__deposit"}>
-              <h4>Your deposits &nbsp;</h4>
+              <h4 className={"text-grey-70"}>Your deposits &nbsp;</h4>
               <Tooltip
                 simple
                 delay={0}
@@ -237,7 +250,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             </div>
             <Divider style={{ margin: "0.5rem 0" }} />
             <div className={"coverage-pool__earned"}>
-              <h4>Earned &nbsp;</h4>
+              <h4 className={"text-grey-70"}>Earned &nbsp;</h4>
               <Tooltip
                 simple
                 delay={0}
@@ -258,8 +271,21 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
             amount={covBalance}
+            amountClassName={"h2 text-mint-100"}
+            symbolClassName={"h3 text-mint-100"}
+            token={KEEP}
+            withIcon
+          />
+          <TokenAmount
+            wrapperClassName={"coverage-pool__cov-token-amount"}
+            amount={covBalance}
+            amountClassName={"h3 text-grey-40"}
+            symbolClassName={"h3 text-grey-40"}
             token={covKEEP}
             withIcon
+            icon={() => {
+              return <div style={{ width: "35px", height: "35px" }}></div>
+            }}
           />
           <WithdrawAmountForm
             onCancel={onCancel}
