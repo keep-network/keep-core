@@ -13,10 +13,8 @@ import moment from "moment"
 
 const fetchSlashedTokens = async (address) => {
   const { eth } = await Web3Loaded
-  const {
-    stakingContract,
-    keepRandomBeaconOperatorContract,
-  } = await ContractsLoaded
+  const { stakingContract, keepRandomBeaconOperatorContract } =
+    await ContractsLoaded
   const operatorEventsSearchFilters = {
     fromBlock: await getContractDeploymentBlockNumber(OPERATOR_CONTRACT_NAME),
   }
@@ -42,26 +40,26 @@ const fetchSlashedTokens = async (address) => {
     return data
   }
 
-  const unauthorizedSigningEvents = await keepRandomBeaconOperatorContract.getPastEvents(
-    "UnauthorizedSigningReported",
-    operatorEventsSearchFilters
-  )
+  const unauthorizedSigningEvents =
+    await keepRandomBeaconOperatorContract.getPastEvents(
+      "UnauthorizedSigningReported",
+      operatorEventsSearchFilters
+    )
 
-  const relayEntryTimeoutEvents = await keepRandomBeaconOperatorContract.getPastEvents(
-    "RelayEntryTimeoutReported",
-    operatorEventsSearchFilters
-  )
+  const relayEntryTimeoutEvents =
+    await keepRandomBeaconOperatorContract.getPastEvents(
+      "RelayEntryTimeoutReported",
+      operatorEventsSearchFilters
+    )
 
   const punishmentEvents = [
     ...unauthorizedSigningEvents,
     ...relayEntryTimeoutEvents,
   ]
-  const slashedTokensGroupedByTxtHash = groupByTransactionHash(
-    slashedTokensEvents
-  )
-  const seizedTokensGroupedByTxtHash = groupByTransactionHash(
-    seizedTokensEvents
-  )
+  const slashedTokensGroupedByTxtHash =
+    groupByTransactionHash(slashedTokensEvents)
+  const seizedTokensGroupedByTxtHash =
+    groupByTransactionHash(seizedTokensEvents)
 
   for (let i = 0; i < punishmentEvents.length; i++) {
     const {
@@ -86,9 +84,10 @@ const fetchSlashedTokens = async (address) => {
     punishmentData.date = moment.unix(
       (await eth.getBlock(blockNumber)).timestamp
     )
-    punishmentData.groupPublicKey = await keepRandomBeaconOperatorContract.methods
-      .getGroupPublicKey(groupIndex)
-      .call()
+    punishmentData.groupPublicKey =
+      await keepRandomBeaconOperatorContract.methods
+        .getGroupPublicKey(groupIndex)
+        .call()
 
     data.push(punishmentData)
   }

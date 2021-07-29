@@ -93,7 +93,7 @@ repo's `docs` available at https://docs.keep.network/relay-states.pdf. The
 images in the diagram, whose sources are at `img-src/*.tikz`, are also
 available at `+https://docs.keep.network/img/generated/*.png+` (the filenames
 are identical to their TikZ sources, with a `.png` suffix instead of
-`.tikz`). These URLs are for the `master` version of the repo; non-`master`
+`.tikz`). These URLs are for the `main` version of the repo; non-`main`
 branches are instead published to `+https://docs.keep.network/<branch name>/+`.
 
 == Common problems

@@ -131,7 +131,7 @@ understanding of what “Done” means. For a milestone item to be considered as
 “Done”, the following requirements must be met: 
 
 * The implemented code has been reviewed and approved by at least one other development team member
-* Code merged to `master` branch
+* Code merged to `main` branch
 * The feature described by the item works as expected
 * The code is implemented according to the guidelines
 * No technical debt other than agreed in the item’s description 
