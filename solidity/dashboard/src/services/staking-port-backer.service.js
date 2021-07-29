@@ -17,11 +17,8 @@ const filterOutByOperator = (toFilterOut) => (operator) =>
 export const fetchOldDelegations = async () => {
   const web3 = await Web3Loaded
   const yourAddress = web3.eth.defaultAccount
-  const {
-    oldTokenStakingContract,
-    grantContract,
-    stakingPortBackerContract,
-  } = await ContractsLoaded
+  const { oldTokenStakingContract, grantContract, stakingPortBackerContract } =
+    await ContractsLoaded
 
   // We want to skip the already copied stakes. To get copied stakes we should scan
   // the `StakedCopied` event from the `StakingPortBacker` contract.
@@ -127,13 +124,10 @@ const getDelegations = async (
   const delegations = []
 
   for (const operatorAddress of operators) {
-    const {
-      createdAt,
-      undelegatedAt,
-      amount,
-    } = await oldTokenStakingContract.methods
-      .getDelegationInfo(operatorAddress)
-      .call()
+    const { createdAt, undelegatedAt, amount } =
+      await oldTokenStakingContract.methods
+        .getDelegationInfo(operatorAddress)
+        .call()
 
     const beneficiaryAddress = await oldTokenStakingContract.methods
       .beneficiaryOf(operatorAddress)
@@ -186,9 +180,8 @@ const getDelegations = async (
         operatorData.undelegationCompleteAt = moment
           .unix(undelegatedAt)
           .add(undelegationPeriod, "seconds")
-        operatorData.canRecoverStake = operatorData.undelegationCompleteAt.isBefore(
-          moment()
-        )
+        operatorData.canRecoverStake =
+          operatorData.undelegationCompleteAt.isBefore(moment())
         operatorData.isUndelegating = true
       }
 

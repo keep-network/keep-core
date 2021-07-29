@@ -6,18 +6,15 @@ import * as Icons from "../Icons"
 const docs = [
   {
     title: "Run Random Beacon",
-    link:
-      "https://github.com/keep-network/keep-core/blob/master/docs/run-random-beacon.adoc",
+    link: "https://github.com/keep-network/keep-core/blob/main/docs/run-random-beacon.adoc",
   },
   {
     title: "GitBook Staking Documentation",
-    link:
-      "https://keep-network.gitbook.io/staking-documentation/staking-basics/staking-101",
+    link: "https://keep-network.gitbook.io/staking-documentation/staking-basics/staking-101",
   },
   {
     title: "Staking Overview",
-    link:
-      "https://github.com/keep-network/keep-core/blob/master/docs/random-beacon/staking/index.adoc ",
+    link: "https://github.com/keep-network/keep-core/blob/main/docs/random-beacon/staking/index.adoc ",
   },
 ]
 

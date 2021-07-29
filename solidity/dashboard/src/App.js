@@ -11,9 +11,8 @@ import * as Icons from "./components/Icons"
 import Footer from "./components/Footer"
 import useSubscribeToConnectorEvents from "./hooks/useSubscribeToConnectorEvents"
 import useAutoConnect from "./hooks/useAutoConnect"
-import useAutoWalletAddressInjectIntoUrl
-  from "./hooks/useAutoWalletAddressInjectIntoUrl";
-import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers";
+import useAutoWalletAddressInjectIntoUrl from "./hooks/useAutoWalletAddressInjectIntoUrl"
+import useModalWindowForMobileUsers from "./hooks/useModalWindowForMobileUsers"
 
 const App = () => (
   <Provider store={store}>

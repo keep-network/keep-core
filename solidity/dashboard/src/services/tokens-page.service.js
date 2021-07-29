@@ -43,15 +43,12 @@ export const fetchTokensPageData = async () => {
     pendingUndelegationBalance,
   ] = await getOwnedDelegations(initializationPeriod, undelegationPeriod)
 
-  const [
-    granteeDelegations,
-    granteeUndelegations,
-    granteeGrantsIds,
-  ] = await getGranteeDelegations(
-    yourAddress,
-    initializationPeriod,
-    undelegationPeriod
-  )
+  const [granteeDelegations, granteeUndelegations, granteeGrantsIds] =
+    await getGranteeDelegations(
+      yourAddress,
+      initializationPeriod,
+      undelegationPeriod
+    )
 
   const [
     managedGrantsDelegations,
@@ -120,11 +117,9 @@ const getDelegations = async (
       isCopiedStake,
     } = details
 
-    const {
-      createdAt,
-      undelegatedAt,
-      amount,
-    } = await stakingContract.methods.getDelegationInfo(operatorAddress).call()
+    const { createdAt, undelegatedAt, amount } = await stakingContract.methods
+      .getDelegationInfo(operatorAddress)
+      .call()
 
     let managedGrantContractInstance = null
     if (isFromGrant && !grantId) {
@@ -165,9 +160,8 @@ const getDelegations = async (
       const initializationOverAt = moment
         .unix(createdAt)
         .add(initializationPeriod, "seconds")
-      operatorData.isInInitializationPeriod = moment().isSameOrBefore(
-        initializationOverAt
-      )
+      operatorData.isInInitializationPeriod =
+        moment().isSameOrBefore(initializationOverAt)
       operatorData.initializationOverAt = initializationOverAt
       delegations.push(operatorData)
       if (!isFromGrant) {
@@ -178,9 +172,8 @@ const getDelegations = async (
       operatorData.undelegationCompleteAt = moment
         .unix(undelegatedAt)
         .add(undelegationPeriod, "seconds")
-      operatorData.canRecoverStake = operatorData.undelegationCompleteAt.isBefore(
-        moment()
-      )
+      operatorData.canRecoverStake =
+        operatorData.undelegationCompleteAt.isBefore(moment())
       if (!isFromGrant) {
         pendingUndelegationBalance = pendingUndelegationBalance.add(balance)
       }
@@ -234,10 +227,8 @@ const getManagedGranteeDelegations = async (
   initializationPeriod,
   undelegationPeriod
 ) => {
-  const {
-    operatorToGrantDetailsMap,
-    granteeGrants,
-  } = await getOperatorsOfManagedGrantee(address)
+  const { operatorToGrantDetailsMap, granteeGrants } =
+    await getOperatorsOfManagedGrantee(address)
 
   const [delegations, undelegations] = await getDelegations(
     operatorToGrantDetailsMap,
@@ -253,10 +244,8 @@ const getGranteeDelegations = async (
   initializationPeriod,
   undelegationPeriod
 ) => {
-  const {
-    granteeGrants,
-    operatorToGrantDetailsMap,
-  } = await getOperatorsOfGrantee(address)
+  const { granteeGrants, operatorToGrantDetailsMap } =
+    await getOperatorsOfGrantee(address)
 
   const [delegations, undelegations] = await getDelegations(
     operatorToGrantDetailsMap,
@@ -284,14 +273,15 @@ export const getCopiedDelegations = async (
 
   // Scan `OperatorStaked` event by operator(indexed param) to get authorizer
   // and beneficiary.
-  const operatorToDetails = (isEmptyArray(operators)
-    ? []
-    : await stakingContract.getPastEvents("OperatorStaked", {
-        fromBlock: await getContractDeploymentBlockNumber(
-          TOKEN_STAKING_CONTRACT_NAME
-        ),
-        filter: { operator: operators },
-      })
+  const operatorToDetails = (
+    isEmptyArray(operators)
+      ? []
+      : await stakingContract.getPastEvents("OperatorStaked", {
+          fromBlock: await getContractDeploymentBlockNumber(
+            TOKEN_STAKING_CONTRACT_NAME
+          ),
+          filter: { operator: operators },
+        })
   ).reduce((reducer, _) => {
     reducer[_.returnValues.operator] = _.returnValues
     reducer[_.returnValues.operator].isCopiedStake = true
