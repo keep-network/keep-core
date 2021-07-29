@@ -1,6 +1,6 @@
 import React from "react"
 import ResourceTooltip from "../ResourceTooltip"
-import ConnectWalletBtn from "../ConnectWalletBtn";
+import ConnectWalletBtn from "../ConnectWalletBtn"
 
 const EmptyState = ({ children }) => {
   return <section className="empty-state__wrapper">{children}</section>
