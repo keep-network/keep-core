@@ -32,10 +32,10 @@ const CircularProgressBar = ({
   barWidth = 10,
   parentSize,
 }) => {
-  const normalizedRadius = useMemo(() => radius - barWidth / 2, [
-    radius,
-    barWidth,
-  ])
+  const normalizedRadius = useMemo(
+    () => radius - barWidth / 2,
+    [radius, barWidth]
+  )
 
   const circumference = useMemo(() => {
     return countCircumference(normalizedRadius)
