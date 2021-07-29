@@ -1,17 +1,68 @@
-.coverage-pool__overview {
-  display: flex;
+.coverage-pool__metrics {
+  display: grid;
+  grid-template-areas:
+    "tvl  tvl tvl"
+    "reward-rate  total-rewards lifetime-covered";
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1rem;
 
-  &__metrics {
-    display: flex;
-    flex: 1;
-    justify-content: center;
+  .metrics {
+    &__tvl {
+      grid-area: tvl;
+
+      .tvl.tvl--fiat-currency {
+        color: @color-grey-40;
+        font-weight: 600;
+        margin-top: 0.75rem;
+        margin-left: 2.25rem;
+      }
+    }
+
+    &__reward-rate {
+      grid-area: reward-rate;
+    }
+
+    &__total-rewards {
+      grid-area: total-rewards;
+    }
+
+    &__lifetime-covered {
+      grid-area: lifetime-covered;
+    }
+
+    &__reward-rate,
+    &__total-rewards,
+    &__lifetime-covered {
+      justify-self: center;
+
+      .token-amount {
+        align-self: center;
+      }
+    }
   }
 
-  &__tvl {
-    .tvl.tvl--usd {
-      color: @color-grey-40;
-      margin-top: 0.75rem;
-      margin-left: 2.25rem;
+  @media screen and (min-width: 1000px) {
+    grid-template-areas: "tvl reward-rate total-rewards lifetime-covered";
+    grid-template-columns: 3fr repeat(3, auto);
+
+    .metrics {
+      &__reward-rate,
+      &__total-rewards,
+      &__lifetime-covered {
+        justify-self: unset;
+
+        .tile.tile--metrics {
+          height: 100%;
+          .tooltip__trigger {
+            svg.more-info-icon {
+              path {
+                fill: @color-mint-100;
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
