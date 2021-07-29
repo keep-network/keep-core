@@ -15,9 +15,10 @@ const StepNav = ({ steps, activeStep = 0 }) => {
       return
     }
 
-    const stepElement = stepNavElement.current.getElementsByClassName(
-      "step-nav__step"
-    )[activeStep - 1]
+    const stepElement =
+      stepNavElement.current.getElementsByClassName("step-nav__step")[
+        activeStep - 1
+      ]
 
     const stepOffsetHeight =
       activeStep === numberOfSteps.current

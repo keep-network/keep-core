@@ -17,10 +17,8 @@ import * as liquidityRewards from "../../sagas/liquidity-rewards"
 import * as operator from "../../sagas/operartor"
 import * as authorization from "../../sagas/authorization"
 
-const {
-  watchFetchLiquidityRewardsAPY,
-  ...restliquidityRewards
-} = liquidityRewards
+const { watchFetchLiquidityRewardsAPY, ...restliquidityRewards } =
+  liquidityRewards
 
 const sagas = [...Object.values(messagesSaga), watchFetchLiquidityRewardsAPY]
 
