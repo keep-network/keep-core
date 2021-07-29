@@ -290,7 +290,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <WithdrawAmountForm
             onCancel={onCancel}
             submitBtnText="add keep"
-            withdrawAmountBalance={covBalance}
+            withdrawAmount={covBalance}
             onSubmit={onSubmitWithdrawForm}
             withdrawalDelay={withdrawalDelay}
           />

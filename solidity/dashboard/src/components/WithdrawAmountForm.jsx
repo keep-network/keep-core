@@ -12,6 +12,7 @@ import { SubmitButton } from "./Button"
 import { useCustomOnSubmitFormik } from "../hooks/useCustomOnSubmitFormik"
 import { KEEP } from "../utils/token.utils"
 import moment from "moment"
+import useSetMaxAmountToken from "../hooks/useSetMaxAmountToken";
 
 const WithdrawAmountForm = ({
   onCancel,
@@ -22,6 +23,7 @@ const WithdrawAmountForm = ({
   ...formikProps
 }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
+  const onAddonClick = useSetMaxAmountToken("withdrawAmount", withdrawAmount)
 
   return (
     <form
@@ -35,12 +37,7 @@ const WithdrawAmountForm = ({
         placeholder="0"
         normalize={normalizeAmount}
         format={formatFormAmount}
-        inputAddon={
-          <MaxAmountAddon
-            onClick={() => console.log("on click addon")}
-            text="Max Amount"
-          />
-        }
+        inputAddon={<MaxAmountAddon onClick={onAddonClick} text="Max Amount" />}
       />
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
