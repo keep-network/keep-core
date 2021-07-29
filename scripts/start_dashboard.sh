@@ -41,7 +41,7 @@ truffle migrate --reset --network development
 
 printf "${LOG_START}Creating symlinks for tBTC...${LOG_END}"
 rm -f artifacts
-ln -s build/contracts artifacts
+cp -r build/contracts artifacts
 npm link
 
 cd $KEEP_ECDSA_SOL_PATH
@@ -66,7 +66,7 @@ truffle migrate --reset --network local
 
 printf "${LOG_START}Creating symlinks for Keep-Ecdsa...${LOG_END}"
 rm -f artifacts
-ln -s build/contracts artifacts
+cp -r build/contracts artifacts
 npm link
 
 printf "${LOG_START}Initializing Keep-Ecdsa...${LOG_END}"
@@ -84,7 +84,7 @@ cd $KEEP_CORE_SOL_PATH
 
 printf "${LOG_START}Creating symlinks for Keep-Core...${LOG_END}"
 rm -f artifacts
-ln -s build/contracts artifacts
+cp -r build/contracts artifacts
 npm link
 
 cd $DASHBOARD_DIR_PATH
