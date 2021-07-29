@@ -342,9 +342,8 @@ class TokenGeyserLPRewards extends LiquidityRewards {
     const rewardPoolPerWeek = await this.rewardPoolPerWeek()
     const keepTokenInUSD = await getKeepTokenPriceInUSD()
 
-    const lpRewardsPoolInUSD = totalSupplyOfLPRewards.multipliedBy(
-      keepTokenInUSD
-    )
+    const lpRewardsPoolInUSD =
+      totalSupplyOfLPRewards.multipliedBy(keepTokenInUSD)
 
     const r = this._calculateR(
       keepTokenInUSD,
@@ -449,9 +448,8 @@ export class LiquidityRewardsFactory {
       const wrappedTokenAddress = await PoolStrategy._getWrappedTokenAddress(
         LPRewardsContract
       )
-      LPRewardsToWrappedTokenCache[
-        lpRewardsContractAddress
-      ] = wrappedTokenAddress
+      LPRewardsToWrappedTokenCache[lpRewardsContractAddress] =
+        wrappedTokenAddress
     }
 
     const wrappedTokenContract = createERC20Contract(

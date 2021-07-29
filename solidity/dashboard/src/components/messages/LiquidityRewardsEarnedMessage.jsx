@@ -49,8 +49,7 @@ const LiquidityRewardsEarnedMessage = ({
    */
   const clearNotificationData = () => {
     dispatch({
-      type:
-        "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
+      type: "notifications_data/liquidityRewardNotification/pairs_displayed_updated",
       payload: [],
     })
   }
