@@ -67,12 +67,12 @@ const WithdrawAmountFormWithFormik = withFormik({
     const { withdrawAmount } = values
     const errors = {}
 
-    if (lte(props.withdrawAmountBalance || 0, 0)) {
+    if (lte(props.withdrawAmount || 0, 0)) {
       errors.withdrawAmount = "The value should be greater than zero"
     } else {
       errors.withdrawAmount = validateAmountInRange(
         withdrawAmount,
-        props.withdrawAmountBalance,
+        props.withdrawAmount,
         KEEP.fromTokenUnit(1)
       )
     }
