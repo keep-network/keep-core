@@ -5,7 +5,7 @@ import {
 import { KEEP_TOKEN_CONTRACT_NAME } from "../../constants/constants"
 
 jest.mock("@keep-network/keep-core/artifacts/KeepToken.json", () => ({
-  networks: { "1": { addrress: "0x0", transactionHash: "0x00" } },
+  networks: { 1: { addrress: "0x0", transactionHash: "0x00" } },
 }))
 
 describe("Test `getContractDeploymentBlockNumber` function", () => {
