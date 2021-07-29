@@ -6,7 +6,7 @@ const TerminologyDataTable = () => (
     <header className="flex row wrap mb-1">
       <h3 className="text-grey-70">Quick Terminology</h3>
       <a
-        href="https://github.com/keep-network/keep-core/blob/master/docs/glossary.adoc"
+        href="https://github.com/keep-network/keep-core/blob/main/docs/glossary.adoc"
         className="arrow-link"
         style={{ marginLeft: "auto", marginRight: "2rem" }}
       >
