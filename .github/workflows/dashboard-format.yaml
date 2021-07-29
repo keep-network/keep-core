@@ -1,0 +1,51 @@
+name: KEEP Token Dashboard Code Format Checks
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "solidity/dashboard/**"
+  pull_request:
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: ./solidity/dashboard
+
+jobs:
+  dashboard-detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      dashboard: ${{ steps.filter.outputs.path-filter }}
+    steps:
+    - uses: actions/checkout@v2
+      if: github.event_name == 'pull_request'
+
+    - uses: dorny/paths-filter@v2
+      if: github.event_name == 'pull_request'
+      id: filter
+      with:
+        filters: |
+          path-filter:
+            - './solidity/dashboard/**'
+
+  dashboard-code-format:
+    needs: dashboard-detect-changes
+    if: |
+      github.event_name != 'pull_request'
+        || needs.dashboard-detect-changes.outputs.path-filter == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npm run format

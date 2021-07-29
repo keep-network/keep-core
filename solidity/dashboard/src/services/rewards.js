@@ -48,7 +48,7 @@ export const fetchtTotalDistributedRewards = async (
 
 /**
  * Gets the available rewards based on the output from the merkle object
- * generator (github.com/keep-network/keep-ecdsa/tree/master/staker-rewards) which
+ * generator (github.com/keep-network/keep-ecdsa/tree/main/staker-rewards) which
  * is stored in `src/rewards-allocation/rewards.json` file
  * for the given operators between the interval 0 and the
  * current interval. Note that rewards may already be withdrawn so need to take

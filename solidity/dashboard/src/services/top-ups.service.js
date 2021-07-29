@@ -96,20 +96,20 @@ const reduceAmount = (result, { returnValues: { topUp } }) => {
   return add(result, topUp)
 }
 
-const filterByAfterLatestCompletedTopUp = (latestTopUpCompletedEvent) => (
-  initiatedEvent
-) => {
-  const isAfterLatestCompletedTopUpBlock =
-    initiatedEvent.blockNumber > latestTopUpCompletedEvent.blockNumber
-  const isAfterLatestCompletedTopUpTransactionInBlock =
-    latestTopUpCompletedEvent.blockNumber === initiatedEvent.blockNumber &&
-    initiatedEvent.transactionIndex > latestTopUpCompletedEvent.transactionIndex
+const filterByAfterLatestCompletedTopUp =
+  (latestTopUpCompletedEvent) => (initiatedEvent) => {
+    const isAfterLatestCompletedTopUpBlock =
+      initiatedEvent.blockNumber > latestTopUpCompletedEvent.blockNumber
+    const isAfterLatestCompletedTopUpTransactionInBlock =
+      latestTopUpCompletedEvent.blockNumber === initiatedEvent.blockNumber &&
+      initiatedEvent.transactionIndex >
+        latestTopUpCompletedEvent.transactionIndex
 
-  return (
-    isAfterLatestCompletedTopUpBlock ||
-    isAfterLatestCompletedTopUpTransactionInBlock
-  )
-}
+    return (
+      isAfterLatestCompletedTopUpBlock ||
+      isAfterLatestCompletedTopUpTransactionInBlock
+    )
+  }
 
 export const isTopUpReadyToBeCommitted = (
   topUp,
