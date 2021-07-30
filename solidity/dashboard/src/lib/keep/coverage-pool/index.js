@@ -4,6 +4,7 @@ import { APYCalculator } from "../helper"
 import { RewardsPoolArtifact } from "../contracts"
 import { add, sub, gt } from "../../../utils/arithmetics.utils"
 import { isSameEthAddress } from "../../../utils/general.utils"
+import {EVENTS} from "../../../constants/events";
 
 /** @typedef { import("../../web3").BaseContract} BaseContract */
 /** @typedef { import("../../web3").Web3LibWrapper} Web3LibWrapper */
@@ -296,11 +297,11 @@ class CoveragePoolV1 {
 
   pendingWithdrawals = async (address) => {
     const withdrawalInitiatedEvents = await this.assetPoolContract.getPastEvents(
-      "WithdrawalInitiated"
+      EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED
     )
 
     const withdrawalCompletedEvents = await this.assetPoolContract.getPastEvents(
-      "WithdrawalCompleted"
+      EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED
     )
 
     console.log("withdrawalInitiatedEvents", withdrawalInitiatedEvents)

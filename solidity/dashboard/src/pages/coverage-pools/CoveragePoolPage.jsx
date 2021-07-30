@@ -51,7 +51,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     withdrawalDelay,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
-  console.log("estimatedRewards", estimatedRewards)
 
   const address = useWeb3Address()
 
@@ -159,47 +158,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             apy={apy}
           />
         </section>
-
-        {/* <section className="tile coverage-pool__share-of-pool">*/}
-        {/*  <h4 className="text-grey-70 mb-3">Your Share of Pool</h4>*/}
-
-        {/*  <OnlyIf condition={shareOfPool <= 0}>*/}
-        {/*    <div className="text-grey-30 text-center">*/}
-        {/*      You have no balance yet.&nbsp;*/}
-        {/*      <br />*/}
-        {/*      <u>Deposit KEEP</u>&nbsp;to see balance.*/}
-        {/*    </div>*/}
-        {/*  </OnlyIf>*/}
-        {/*  <OnlyIf condition={shareOfPool > 0}>*/}
-        {/*    <div className="flex column center">*/}
-        {/*      <TokenAmount amount={estimatedKeepBalance} withSymbol={false} />*/}
-        {/*      <h4 className="text-mint-100">{KEEP.symbol}</h4>*/}
-        {/*      <div className="text-grey-40 mt-2">*/}
-        {/*        <b>{displayPercentageValue(shareOfPool * 100, false)}</b>*/}
-        {/*        &nbsp;of Pool*/}
-        {/*      </div>*/}
-        {/*    </div>*/}
-        {/*  </OnlyIf>*/}
-        {/* </section>*/}
-
-        {/* <section className="tile coverage-pool__rewards">*/}
-        {/*  <h4 className="text-grey-70 mb-3">Your Rewards</h4>*/}
-        {/*  <OnlyIf condition={lte(estimatedRewards, 0) && shareOfPool <= 0}>*/}
-        {/*    <div className="text-grey-30 text-center">*/}
-        {/*      You have no rewards yet.&nbsp;*/}
-        {/*      <br />*/}
-        {/*      <u>Deposit KEEP</u>&nbsp;to see rewards.*/}
-        {/*    </div>*/}
-        {/*  </OnlyIf>*/}
-        {/*  <OnlyIf condition={shareOfPool > 0}>*/}
-        {/*    <div className="flex column center">*/}
-        {/*      <TokenAmount amount={estimatedRewards} withSymbol={false} />*/}
-        {/*      <h4 className="text-mint-100">{KEEP.symbol}</h4>*/}
-        {/*    </div>*/}
-        {/*  </OnlyIf>*/}
-        {/* </section>*/}
-
-        {/* <HowDoesItWorkBanner />*/}
 
         <section className="tile coverage-pool__balance">
           <div className={"coverage-pool__balance-title"}>

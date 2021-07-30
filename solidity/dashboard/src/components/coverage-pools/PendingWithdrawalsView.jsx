@@ -15,13 +15,10 @@ import { KEEP } from "../../utils/token.utils"
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
   onReinitiateWithdrawal,
+  withdrawalDelay,
+  withdrawalTimeout,
+  pendingWithdrawals,
 }) => {
-  const {
-    withdrawalDelay,
-    withdrawalTimeout,
-    pendingWithdrawals,
-  } = useSelector((state) => state.coveragePool)
-
   const renderProgressBar = (
     withdrawalDate,
     endOfWithdrawalDelayDate,
@@ -270,15 +267,15 @@ const PendingWithdrawalsView = ({
         <Column
           header=""
           field="timestamp"
-          renderContent={({ timestamp }) => (
+          renderContent={({ covAmount, timestamp }) => (
             <div className={"pending-withdrawal__button-container"}>
               <SubmitButton
                 className="btn btn-lg btn-primary"
                 onSubmitAction={(awaitingPromise) => {
-                  if (isWithdrawalTimeoutOver) {
+                  if (isWithdrawalTimeoutOver(timestamp)) {
                     onReinitiateWithdrawal(awaitingPromise)
                   } else {
-                    onClaimTokensSubmitButtonClick(awaitingPromise)
+                    onClaimTokensSubmitButtonClick(covAmount, awaitingPromise)
                   }
                 }}
                 disabled={!isWithdrawalDelayOver(timestamp)}

@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useCallback, useState } from "react"
 import ReactDOM from "react-dom"
 import * as Icons from "./Icons"
 import ConfirmationModal from "./ConfirmationModal"
+import { useDispatch, useSelector } from "react-redux"
+import { EVENTS } from "../constants/events"
+import ClaimTokensModal from "./coverage-pools/ClaimTokensModal"
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
@@ -72,10 +75,28 @@ export const ModalContext = React.createContext({
 })
 
 export const ModalContextProvider = ({ children }) => {
+  const dispatch = useDispatch()
   const [modalComponent, setModalComponent] = useState()
   const [isOpen, setIsOpen] = useState(false)
   const [modalOptions, setModalOptions] = useState(null)
   const awaitingPromiseRef = useRef()
+  const modal = useSelector((state) => state.modal)
+
+  useEffect(() => {
+    console.log("USE EFFECT OPEN MODAL BRO")
+    if (modal.isOpen) {
+      console.log("OPEN MODAL BRO")
+      if ((modal.emittedEvent = EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED)) {
+        openModal(<ClaimTokensModal transactionFinished={true} />, {
+          closeModal: closeModal,
+          title: "Claim tokens",
+          classes: {
+            modalWrapperClassName: "modal-wrapper__claim-tokens",
+          },
+        })
+      }
+    }
+  }, [modal.isOpen])
 
   const openModal = useCallback((modalComponent, modalOptions = {}) => {
     setModalComponent(modalComponent)
@@ -89,6 +110,7 @@ export const ModalContextProvider = ({ children }) => {
     }
     setModalOptions(null)
     setIsOpen(false)
+    dispatch({ type: "modal/close_modal" })
   }, [])
 
   const onSubmitConfirmationModal = useCallback(

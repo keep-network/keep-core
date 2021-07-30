@@ -24,7 +24,9 @@ import {
   COVERAGE_POOL_FETCH_APY_ERROR,
   fetchAPYSuccess,
   COVERAGE_POOL_FETCH_APY_REQUEST,
-  COVERAGE_POOL_WITHDRAW_ASSET_POOL, COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
+  COVERAGE_POOL_WITHDRAW_ASSET_POOL,
+  COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
+  COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -39,6 +41,7 @@ import { ZERO_ADDRESS } from "../utils/ethereum.utils"
 import { sendTransaction } from "./web3"
 import { KEEP } from "../utils/token.utils"
 import selectors from "./selectors"
+import { EVENTS } from "../constants/events"
 
 function* fetchTvl() {
   try {
@@ -203,6 +206,27 @@ export function* subscribeToCovTokenTransferEvent() {
         pendingWithdrawals,
       })
     )
+  }
+}
+
+export function* subscribeToWithdrawalCompletedEvent() {
+  console.log("SUBSCRIBE TO WITHDRAWAL COMPLETED ZIOM")
+  const requestChan = yield actionChannel(
+    COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED
+  )
+
+  while (true) {
+    const {
+      payload: { event },
+    } = yield take(requestChan)
+
+    yield put({
+      type: "modal/is_opened",
+      payload: {
+        emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
+        transactionHash: event.transactionHash,
+      },
+    })
   }
 }
 
