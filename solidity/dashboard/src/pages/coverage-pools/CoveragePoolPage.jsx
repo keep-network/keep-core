@@ -1,6 +1,5 @@
 import React, { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import PageWrapper from "../../components/PageWrapper"
 import {
   CheckListBanner,
   HowDoesItWorkBanner,
@@ -96,9 +95,8 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const onCancel = () => {}
 
   return (
-    <PageWrapper title={title} newPage={withNewLabel}>
+    <>
       <CheckListBanner />
-
       <section className="tile coverage-pool__overview">
         <section className="coverage-pool__overview__tvl">
           <h2 className="h2--alt text-grey-70 mb-1">Total Value Locked</h2>
@@ -254,8 +252,14 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
         </section>
       </section>
-    </PageWrapper>
+    </>
   )
+}
+
+CoveragePoolPage.route = {
+  title: "Deposit",
+  path: "/coverage-pools/deposit",
+  exact: true,
 }
 
 export default CoveragePoolPage

@@ -14,6 +14,9 @@ import { useWeb3Context } from "../components/WithWeb3Context"
 import DelegationPage from "./delegation"
 import * as Icons from "../components/Icons"
 import { useWeb3Address } from "../components/WithWeb3Context"
+import * as CoveragePoolsComponents from "../components/coverage-pools"
+import OnlyIf from "../components/OnlyIf"
+import { useHideComponent } from "../hooks/useHideComponent"
 import PendingWithdrawals
   from "../components/coverage-pools/PendingWithdrawals";
 
@@ -80,8 +83,13 @@ const OverviewPage = (props) => {
     return grantedBalance
   }, [grants])
 
+  const [isBannerVisible, hideBanner] = useHideComponent(false)
+
   return (
     <PageWrapper {...props} headerClassName="header--overview">
+      <OnlyIf condition={isBannerVisible}>
+        <CoveragePoolsComponents.LearnMoreBanner onClose={hideBanner} />
+      </OnlyIf>
       <OverviewFirstSection />
       <PendingWithdrawals />
       <TokenOverview

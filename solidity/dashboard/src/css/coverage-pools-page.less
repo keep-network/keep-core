@@ -1,121 +1,124 @@
 .coverage-pool__checklist {
-    max-width: unset;
-    background-color: @color-mint-20;
-    padding: 2rem;
-    margin-bottom: 1rem;
-    border-radius: 10px;
-    
-    .banner__title {
-        &:extend(.h3);
+  max-width: unset;
+  background-color: @color-mint-20;
+  padding: 2rem;
+  margin-bottom: 1rem;
+  border-radius: 10px;
+
+  .banner__title {
+    &:extend(.h3);
+  }
+
+  .banner__close-icon {
+    width: 16px;
+    height: 16px;
+    top: 16px;
+    right: 16px;
+  }
+
+  .checklist-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+
+    @media screen and (min-width: 1000px) {
+      margin-top: unset;
+      justify-content: space-between;
     }
 
-    .banner__close-icon {
-        width: 16px;
-        height: 16px;
-        top: 16px;
-        right: 16px;
-    }
+    .checklist__section {
+      margin-top: 1rem;
+      flex-basis: 250px;
 
-    .checklist-wrapper {
-        display: flex;
-        flex-wrap: wrap;
+      > ul.list__content {
+        > li.list__item {
+          margin-bottom: 0.25rem;
+          > * {
+            display: inline-block;
+            vertical-align: middle;
+          }
 
-        @media screen and (min-width: 1000px) {
-            margin-top: unset;
-            justify-content: space-between;
-        }
+          svg {
+            width: 1rem;
+            height: 1rem;
 
-        .checklist__section {
-            margin-top: 1rem;
-            flex-basis: 250px;
-
-            > ul.list__content{
-                > li.list__item {
-                    margin-bottom: 0.25rem;
-                    > * {
-                        display: inline-block;
-                        vertical-align: middle;
-                    }
-
-                    svg {
-                        width: 1rem;
-                        height: 1rem;
-
-                        path {
-                            fill: @color-mint-100;
-                        }
-                    }
-                }
+            path {
+              fill: @color-mint-100;
             }
-
-            &--notes {
-                > ul.list__content {
-                    > li.list__item {
-                        svg {
-                            path {
-                                fill: @color-brass;
-                            }
-                        }
-                    }
-                }
-            }
+          }
         }
-    }
+      }
 
+      &--notes {
+        > ul.list__content {
+          > li.list__item {
+            svg {
+              path {
+                fill: @color-brass;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-
 .coverage-pool__overview {
+  display: flex;
+
+  &__metrics {
     display: flex;
+    flex: 1;
+    justify-content: center;
+  }
 
-    &__metrics {
-        display: flex;
-        flex: 1;
-        justify-content: center;
+  &__tvl {
+    .tvl.tvl--usd {
+      color: @color-grey-40;
+      margin-top: 0.75rem;
+      margin-left: 2.25rem;
     }
-
-    &__tvl {
-        .tvl.tvl--usd {
-            color: @color-grey-40;
-            margin-top: 0.75rem;
-            margin-left: 2.25rem;
-        }
-    }
-
+  }
 }
 
 .coverage-pool__deposit-wrapper {
-    display: grid;
-    grid-template-areas:
+  display: grid;
+  grid-template-areas:
     "deposit-form   balance   balance"
     "deposit-form   available-to-withdraw          available-to-withdraw";
 
-    grid-template-columns: 2fr 1fr 1fr;
-    grid-template-rows: auto;
-    gap: 1rem;
+  grid-template-columns: 2fr 1fr 1fr;
+  grid-template-rows: auto;
+  gap: 1rem;
 
-    .coverage-pool__deposit-form {
-        grid-area: deposit-form;
-        //margin-bottom: 0;
+  .coverage-pool__deposit-form {
+    grid-area: deposit-form;
+    //margin-bottom: 0;
 
-        .deposit-form {
-            .deposit-form__token-amount-wrapper {
-                background-color: @color-green-bg-light;
-                margin: 2rem -2rem;
-                padding: 2rem 2rem;
-            }
-        }
+    .deposit-form {
+      .deposit-form__token-amount-wrapper {
+        background-color: @color-green-bg-light;
+        margin: 2rem -2rem;
+        padding: 2rem 2rem;
+      }
     }
+  }
 
-    //.coverage-pool__share-of-pool {
-    //    grid-area: share-of-pool;
-    //    margin-bottom: 0;
-    //}
-    //
-    //.coverage-pool__rewards {
-    //    grid-area: rewards;
-    //    margin-bottom: 0;
-    //}
+  //.coverage-pool__share-of-pool {
+  //  grid-area: share-of-pool;
+  //  margin-bottom: 0;
+  //}
+  //
+  //.coverage-pool__rewards {
+  //  grid-area: rewards;
+  //  margin-bottom: 0;
+  //}
+
+  > .coverage-pool__checklist {
+    grid-area: banner;
+    justify-self: stretch;
+    align-self: start;
+  }
 
     .coverage-pool__balance {
         grid-area: balance;
@@ -172,4 +175,69 @@
 .withdraw-amount-form__button-text {
     margin: 1rem;
     font-size: 16px;
+}
+
+.cov-how-it-works__info-section {
+  .tile();
+  display: flex;
+  flex-direction: column;
+
+  .info-section {
+    &__icon {
+      flex-shrink: 0;
+      align-self: center;
+    }
+
+    &__header {
+      margin: 1rem 0;
+    }
+  }
+
+  @media screen and (min-width: 1000px) {
+    flex-direction: row;
+    align-items: center;
+
+    .info-section {
+      &__header {
+        margin-left: 2rem;
+        margin-right: 3rem;
+      }
+
+      &__cta {
+        margin-left: auto;
+      }
+    }
+  }
+}
+
+.coverage-pool-resources-grid {
+  @media screen and (min-width: 1000px) {
+    display: grid;
+    grid-template-areas:
+      "overview   rewards-pool"
+      "overview   covering-hit"
+      "cov-KEEP   covering-hit";
+    gap: 1rem;
+
+    section {
+      align-self: start;
+      margin-bottom: 0;
+
+      &:nth-child(1) {
+        grid-area: overview;
+      }
+
+      &:nth-child(2) {
+        grid-area: rewards-pool;
+      }
+
+      &:nth-child(3) {
+        grid-area: covering-hit;
+      }
+
+      &:nth-child(4) {
+        grid-area: cov-KEEP;
+      }
+    }
+  }
 }
