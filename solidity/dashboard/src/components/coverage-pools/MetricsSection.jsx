@@ -1,10 +1,11 @@
 import React from "react"
 
-import MetricsTile from "../../components/MetricsTile"
-import { APY } from "../../components/liquidity"
-import { Skeleton } from "../../components/skeletons"
-import TokenAmount from "../../components/TokenAmount"
+import MetricsTile from "..//MetricsTile"
+import { APY } from "../liquidity"
+import { Skeleton } from "../skeletons"
+import TokenAmount from "../TokenAmount"
 import ResourceTooltip from "../ResourceTooltip"
+import OnlyIf from "../OnlyIf"
 
 const MetricsSection = ({
   tvl,
@@ -61,16 +62,17 @@ const MetricsSection = ({
             Rewards distributed from the rewards pool contract since the start
             of the pool.
           </MetricsTile.Tooltip>
-          {isTotalAllocatedRewardsFetching ? (
+          <OnlyIf condition={isTotalAllocatedRewardsFetching}>
             <Skeleton tag="h2" shining color="grey-10" />
-          ) : (
+          </OnlyIf>
+          <OnlyIf condition={!isTotalAllocatedRewardsFetching}>
             <TokenAmount
               amount={totalAllocatedRewards}
               withIcon
               withSymbol={false}
               withMetricSuffix
-            />
-          )}
+            />{" "}
+          </OnlyIf>
           <h5 className="text-grey-60">lifetime rewards</h5>
         </MetricsTile>
       </section>
@@ -83,16 +85,17 @@ const MetricsSection = ({
             Amount of KEEP used from the coverage pool to cover a loss since the
             start of the pool.
           </MetricsTile.Tooltip>
-          {isLifetimeCoveredFetching ? (
+          <OnlyIf condition={isLifetimeCoveredFetching}>
             <Skeleton tag="h2" shining color="grey-10" />
-          ) : (
+          </OnlyIf>
+          <OnlyIf condition={!isLifetimeCoveredFetching}>
             <TokenAmount
               amount={lifetimeCovered}
               withIcon
               withSymbol={false}
               withMetricSuffix
             />
-          )}
+          </OnlyIf>
           <h5 className="text-grey-60">lifetime covered</h5>
         </MetricsTile>
       </section>
