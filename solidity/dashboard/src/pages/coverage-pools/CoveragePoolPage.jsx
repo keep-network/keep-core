@@ -29,6 +29,7 @@ import Chip from "../../components/Chip"
 import Tooltip from "../../components/Tooltip"
 import * as Icons from "../../components/Icons"
 import Divider from "../../components/Divider"
+import WithdrawModal from "../../components/coverage-pools/WIthdrawModal";
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -83,11 +84,17 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     const amount = KEEP.fromTokenUnit(withdrawAmount)
     await openConfirmationModal(
       {
-        modalOptions: { title: "Initiate Deposit" },
+        modalOptions: {
+          title: "Withdraw",
+          classes: {
+            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+          },
+        },
         submitBtnText: "withdraw",
+
         amount,
       },
-      InitiateDepositModal
+      WithdrawModal,
     )
     dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
