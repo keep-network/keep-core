@@ -271,11 +271,11 @@ const PendingWithdrawalsView = ({
             <div className={"pending-withdrawal__button-container"}>
               <SubmitButton
                 className="btn btn-lg btn-primary"
-                onSubmitAction={(awaitingPromise) => {
+                onSubmitAction={async (awaitingPromise) => {
                   if (isWithdrawalTimeoutOver(timestamp)) {
-                    onReinitiateWithdrawal(awaitingPromise)
+                    await onReinitiateWithdrawal(awaitingPromise)
                   } else {
-                    onClaimTokensSubmitButtonClick(covAmount, awaitingPromise)
+                    await onClaimTokensSubmitButtonClick(covAmount, awaitingPromise)
                   }
                 }}
                 disabled={!isWithdrawalDelayOver(timestamp)}
