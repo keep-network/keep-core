@@ -14,7 +14,7 @@ const infoBannerTitle =
 const infoBannerDescription =
   "A withdrawn deposit will be available to claim after 21 days. During cooldown, your funds will accumulate rewards but are also subject to risk to cover for a hit."
 
-const WithdrawModal = ({
+const InitiateCovPoolsWithdrawModal = ({
   amount,
   submitBtnText,
   onBtnClick,
@@ -88,4 +88,4 @@ const WithdrawModal = ({
   )
 }
 
-export default WithdrawModal
+export default InitiateCovPoolsWithdrawModal

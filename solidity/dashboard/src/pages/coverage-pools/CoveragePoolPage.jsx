@@ -29,7 +29,8 @@ import Chip from "../../components/Chip"
 import Tooltip from "../../components/Tooltip"
 import * as Icons from "../../components/Icons"
 import Divider from "../../components/Divider"
-import WithdrawModal from "../../components/coverage-pools/WIthdrawModal";
+import InitiateCovPoolsWithdrawModal
+  from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal";
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -94,7 +95,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
         amount,
       },
-      WithdrawModal,
+      InitiateCovPoolsWithdrawModal,
     )
     dispatch(withdrawAssetPool(amount, awaitingPromise))
   }

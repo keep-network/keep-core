@@ -5,6 +5,8 @@ import ConfirmationModal from "./ConfirmationModal"
 import { useDispatch, useSelector } from "react-redux"
 import { EVENTS } from "../constants/events"
 import ClaimTokensModal from "./coverage-pools/ClaimTokensModal"
+import InitiateCovPoolsWithdrawModal
+  from "./coverage-pools/InitiateCovPoolsWithdrawModal";
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
@@ -83,17 +85,24 @@ export const ModalContextProvider = ({ children }) => {
   const modal = useSelector((state) => state.modal)
 
   useEffect(() => {
-    console.log("USE EFFECT OPEN MODAL BRO")
     if (modal.isOpen) {
-      console.log("OPEN MODAL BRO")
-      if ((modal.emittedEvent = EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED)) {
-        openModal(<ClaimTokensModal transactionFinished={true} />, {
-          closeModal: closeModal,
-          title: "Claim tokens",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__claim-tokens",
-          },
-        })
+      switch (modal.emittedEvent) {
+        case EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED:
+          openModal(<ClaimTokensModal transactionFinished={true} />, {
+            closeModal: closeModal,
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          })
+        case EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED:
+          openModal(<InitiateCovPoolsWithdrawModal transactionFinished={true} />, {
+            closeModal: closeModal,
+            title: "Claim tokens",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__claim-tokens",
+            },
+          })
       }
     }
   }, [modal.isOpen])
