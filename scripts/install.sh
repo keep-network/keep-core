@@ -88,8 +88,8 @@ rm -rf build/
 CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_ETH_ACCOUNT_PRIVATE_KEY \
     npx truffle migrate --reset --network $NETWORK
 
-printf "${LOG_START}Creating links...${LOG_END}"
-ln -sf build/contracts artifacts
+printf "${LOG_START}Copying contract artifacts...${LOG_END}"
+cp -r build/contracts artifacts
 npm link
 
 printf "${LOG_START}Initializing contracts...${LOG_END}"
