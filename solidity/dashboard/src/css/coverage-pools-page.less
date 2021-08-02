@@ -1,82 +1,68 @@
-.coverage-pool__checklist {
-  max-width: unset;
-  background-color: @color-mint-20;
-  padding: 2rem;
-  margin-bottom: 1rem;
-  border-radius: 10px;
+.coverage-pool__metrics {
+  display: grid;
+  grid-template-areas:
+    "tvl  tvl tvl"
+    "reward-rate  total-rewards lifetime-covered";
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1rem;
 
-  .banner__title {
-    &:extend(.h3);
-  }
+  .metrics {
+    &__tvl {
+      grid-area: tvl;
 
-  .banner__close-icon {
-    width: 16px;
-    height: 16px;
-    top: 16px;
-    right: 16px;
-  }
-
-  .checklist-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-
-    @media screen and (min-width: 1000px) {
-      margin-top: unset;
-      justify-content: space-between;
+      .tvl.tvl--fiat-currency {
+        color: @color-grey-40;
+        font-weight: 600;
+        margin-top: 0.75rem;
+        margin-left: 2.675rem;
+      }
     }
 
-    .checklist__section {
-      margin-top: 1rem;
-      flex-basis: 250px;
+    &__reward-rate {
+      grid-area: reward-rate;
+    }
 
-      > ul.list__content {
-        > li.list__item {
-          margin-bottom: 0.25rem;
-          > * {
-            display: inline-block;
-            vertical-align: middle;
-          }
+    &__total-rewards {
+      grid-area: total-rewards;
+    }
 
-          svg {
-            width: 1rem;
-            height: 1rem;
+    &__lifetime-covered {
+      grid-area: lifetime-covered;
+    }
 
-            path {
-              fill: @color-mint-100;
-            }
-          }
-        }
+    &__reward-rate,
+    &__total-rewards,
+    &__lifetime-covered {
+      justify-self: center;
+
+      .token-amount {
+        align-self: center;
       }
+    }
+  }
 
-      &--notes {
-        > ul.list__content {
-          > li.list__item {
-            svg {
+  @media screen and (min-width: 1000px) {
+    grid-template-areas: "tvl reward-rate total-rewards lifetime-covered";
+    grid-template-columns: 3fr repeat(3, auto);
+
+    .metrics {
+      &__reward-rate,
+      &__total-rewards,
+      &__lifetime-covered {
+        justify-self: unset;
+
+        .tile.tile--metrics {
+          height: 100%;
+          .tooltip__trigger {
+            svg.more-info-icon {
               path {
-                fill: @color-brass;
+                fill: @color-mint-100;
               }
             }
           }
         }
       }
-    }
-  }
-}
-
-.coverage-pool__overview {
-  display: flex;
-
-  &__metrics {
-    display: flex;
-    flex: 1;
-    justify-content: center;
-  }
-
-  &__tvl {
-    .tvl.tvl--usd {
-      color: @color-grey-40;
-      margin-top: 0.75rem;
-      margin-left: 2.25rem;
     }
   }
 }
@@ -112,12 +98,6 @@
   .coverage-pool__rewards {
     grid-area: rewards;
     margin-bottom: 0;
-  }
-
-  > .coverage-pool__checklist {
-    grid-area: banner;
-    justify-self: stretch;
-    align-self: start;
   }
 }
 
