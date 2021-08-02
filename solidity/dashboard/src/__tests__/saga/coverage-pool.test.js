@@ -41,6 +41,7 @@ describe("Coverage pool saga test", () => {
     const keepInUSD = new BigNumber(0.5)
     const totalAllocatedRewards = KEEP.fromTokenUnit(200000)
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
+    const totalCoverageClaimed = KEEP.fromTokenUnit(50000)
 
     it("should fetch tvl data correctly", () => {
       return expectSaga(watchFetchTvl)
@@ -52,6 +53,10 @@ describe("Coverage pool saga test", () => {
             call(Keep.coveragePoolV1.totalAllocatedRewards),
             totalAllocatedRewards,
           ],
+          [
+            call(Keep.coveragePoolV1.totalCoverageClaimed),
+            totalCoverageClaimed,
+          ],
         ])
         .dispatch(fetchTvlRequest())
         .put(fetchTvlStart())
@@ -60,12 +65,14 @@ describe("Coverage pool saga test", () => {
             tvl,
             tvlInUSD,
             totalAllocatedRewards,
+            totalCoverageClaimed,
           })
         )
         .hasFinalState({
           ...coveragePoolInitialData,
           totalValueLocked: tvl,
           totalValueLockedInUSD: tvlInUSD,
+          totalCoverageClaimed: totalCoverageClaimed,
           isTotalValueLockedFetching: false,
           tvlError: null,
           totalAllocatedRewards,
