@@ -1,5 +1,5 @@
 .modal-wrapper__initiate-withdrawal {
-  width: 880px!important;
+  width: 1000px!important;
 
   .modal-content {
     padding: 0!important;
@@ -9,23 +9,29 @@
 .withdraw-modal__main-container {
   display: flex;
 
-  .modal-with-timeline-modal__info {
-    .withdraw-modal__data {
-      margin-bottom: 5rem;
-      .withdraw-modal__token-amount{
-        margin-bottom: 0.1rem;
-      }
-      .withdraw-modal__cov-token-amount {
-        margin-bottom: 1rem;
-      }
-      .withdraw-modal__data-row {
-        display: flex;
-        align-items: center;
-        padding: 0.2rem 0;
+  .withdraw-modal__success-text {
+    display: flex;
+    align-items: center;
+    svg {
+      margin: 1rem 1rem 1rem 0;
+    }
+  }
 
-        .withdraw-modal__data__value {
-          margin-left: auto;
-        }
+  .withdraw-modal__data {
+    margin-bottom: 5rem;
+    .withdraw-modal__token-amount{
+      margin-bottom: 0.1rem;
+    }
+    .withdraw-modal__cov-token-amount {
+      margin-bottom: 1rem;
+    }
+    .withdraw-modal__data-row {
+      display: flex;
+      align-items: center;
+      padding: 0.2rem 0;
+
+      .withdraw-modal__data__value {
+        margin-left: auto;
       }
     }
   }
@@ -33,6 +39,7 @@
   .withdraw-modal__banner {
     display: flex;
     align-items: center;
+    margin: 2rem auto;
     .withdraw-modal__banner-icon {
       flex: 0 0 auto;
     }

@@ -27,6 +27,7 @@ import {
   COVERAGE_POOL_WITHDRAW_ASSET_POOL,
   COVERAGE_POOL_CLAIM_TOKENS_FROM_WITHDRAWAL,
   COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED,
+  COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED,
 } from "../actions/coverage-pool"
 import {
   identifyTaskByAddress,
@@ -209,8 +210,27 @@ export function* subscribeToCovTokenTransferEvent() {
   }
 }
 
+export function* subscribeToWithdrawalInitiatedEvent() {
+  const requestChan = yield actionChannel(
+    COVERAGE_POOL_WITHDRAWAL_INITIATED_EVENT_EMITTED
+  )
+
+  while (true) {
+    const {
+      payload: { event },
+    } = yield take(requestChan)
+
+    yield put({
+      type: "modal/is_opened",
+      payload: {
+        emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+        transactionHash: event.transactionHash,
+      },
+    })
+  }
+}
+
 export function* subscribeToWithdrawalCompletedEvent() {
-  console.log("SUBSCRIBE TO WITHDRAWAL COMPLETED ZIOM")
   const requestChan = yield actionChannel(
     COVERAGE_POOL_WITHDRAWAL_COMPLETED_EVENT_EMITTED
   )

@@ -95,14 +95,18 @@ export const ModalContextProvider = ({ children }) => {
               modalWrapperClassName: "modal-wrapper__claim-tokens",
             },
           })
+          break;
         case EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED:
           openModal(<InitiateCovPoolsWithdrawModal transactionFinished={true} />, {
             closeModal: closeModal,
-            title: "Claim tokens",
+            title: "Withdraw",
             classes: {
-              modalWrapperClassName: "modal-wrapper__claim-tokens",
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
             },
           })
+          break;
+        default:
+          break;
       }
     }
   }, [modal.isOpen])
@@ -119,7 +123,7 @@ export const ModalContextProvider = ({ children }) => {
     }
     setModalOptions(null)
     setIsOpen(false)
-    dispatch({ type: "modal/close_modal" })
+    dispatch({ type: "modal/is_closed" })
   }, [])
 
   const onSubmitConfirmationModal = useCallback(

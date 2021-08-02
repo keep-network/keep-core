@@ -23,6 +23,7 @@ import {
   covTokenTransferEventEmitted,
   COVERAGE_POOL_FETCH_COV_POOL_DATA_SUCCESS,
   coveragePoolWithdrawalCompletedEventEmitted,
+  coveragePoolWithdrawalInitiatedEventEmitted,
 } from "../actions/coverage-pool"
 import { Keep } from "../contracts"
 import { EVENTS } from "../constants/events"
@@ -1019,7 +1020,19 @@ export function* observeCovTokenTransferEvent() {
   )
 }
 
-export function* observeWithdrawalCompletedTransferEvent() {
+export function* observeWithdrawalInitiatedEvent() {
+  const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
+
+  yield fork(
+    subscribeToEventAndEmitData,
+    assetPoolContract,
+    EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+    coveragePoolWithdrawalInitiatedEventEmitted,
+    null
+  )
+}
+
+export function* observeWithdrawalCompletedEvent() {
   const assetPoolContract = Keep.coveragePoolV1.assetPoolContract.instance
 
   yield fork(

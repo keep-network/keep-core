@@ -92,7 +92,6 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           },
         },
         submitBtnText: "withdraw",
-
         amount,
       },
       InitiateCovPoolsWithdrawModal,
