@@ -2,8 +2,16 @@ import React from "react";
 import Timeline from "../Timeline";
 import {colors} from "../../constants/colors";
 import Chip from "../Chip";
+import OnlyIf from "../OnlyIf";
 
-const ModalWithTimeline = ({children, className = ""}) => {
+export const MODAL_WITH_TIMELINE_STEPS = {
+  DEPOSITED_TOKENS: 1,
+  WITHDRAW_DEPOSIT: 2,
+  COOLDOWN: 3,
+  CLAIM_TOKENS: 4,
+}
+
+const ModalWithTimeline = ({children, className = "", step = MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS, withDescription = false}) => {
   return (
     <div className={`modal-with-timeline__content-container ${className}`}>
       <div className={"modal-with-timeline-modal__info"}>
@@ -15,11 +23,18 @@ const ModalWithTimeline = ({children, className = ""}) => {
           <Timeline.Element>
             <Timeline.Breakpoint>
               <Timeline.BreakpointDot>1</Timeline.BreakpointDot>
-              <Timeline.BreakpointLine active />
+              <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS} />
             </Timeline.Breakpoint>
             <Timeline.Content>
               <Timeline.ElementDefaultCard>
                 <h4 className="text-violet-80">Deposit your tokens</h4>
+                <OnlyIf condition={
+                  step === MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS && withDescription
+                }>
+                  <span className="text-grey-60">
+                    There is no minimum KEEP amount for your deposit and no minimum time lock.
+                  </span>
+                </OnlyIf>
               </Timeline.ElementDefaultCard>
             </Timeline.Content>
           </Timeline.Element>
@@ -27,11 +42,19 @@ const ModalWithTimeline = ({children, className = ""}) => {
           <Timeline.Element>
             <Timeline.Breakpoint>
               <Timeline.BreakpointDot>2</Timeline.BreakpointDot>
-              <Timeline.BreakpointLine active />
+              <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT} />
             </Timeline.Breakpoint>
             <Timeline.Content>
               <Timeline.ElementDefaultCard>
                 <h4 className="text-violet-80">Withdraw deposit</h4>
+                <OnlyIf condition={
+                  step === MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT && withDescription
+                }>
+                  <span className="text-grey-60">
+                    Withdrawing requires two steps. First, there is a 21 day cooldown. Second, after 21 days your tokens will be available to claim in the dashboard.
+                  </span>
+                </OnlyIf>
+
               </Timeline.ElementDefaultCard>
             </Timeline.Content>
           </Timeline.Element>
@@ -42,7 +65,7 @@ const ModalWithTimeline = ({children, className = ""}) => {
                 lineBreakerColor="violet-80"
                 style={{ backgroundColor: colors.brandViolet10 }}
               />
-              <Timeline.BreakpointLine active />
+              <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.COOLDOWN} />
             </Timeline.Breakpoint>
             <Timeline.Content>
               <Chip text="21 day cooldown" color="strong" size="big" />
@@ -52,14 +75,18 @@ const ModalWithTimeline = ({children, className = ""}) => {
           <Timeline.Element>
             <Timeline.Breakpoint>
               <Timeline.BreakpointDot>3</Timeline.BreakpointDot>
-              <Timeline.BreakpointLine active />
+              <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.CLAIM_TOKENS} />
             </Timeline.Breakpoint>
             <Timeline.Content>
               <Timeline.ElementDefaultCard>
                 <h4 className="text-violet-80">Claim tokens</h4>
-                <span className="text-grey-60">
-                  There’s a 2 day claim window to claim your tokens and rewards.
-                </span>
+                <OnlyIf condition={
+                  step === MODAL_WITH_TIMELINE_STEPS.CLAIM_TOKENS && withDescription
+                }>
+                  <span className="text-grey-60">
+                    There’s a 2 day claim window to claim your tokens and rewards.
+                  </span>
+                </OnlyIf>
               </Timeline.ElementDefaultCard>
             </Timeline.Content>
           </Timeline.Element>

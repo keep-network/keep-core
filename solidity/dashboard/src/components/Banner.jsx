@@ -50,8 +50,8 @@ Banner.CloseIcon = ({
   )
 }
 
-Banner.Icon = ({ icon: IconComponent, className = "" }) => {
-  return <IconComponent className={`banner__icon ${className}`} />
+Banner.Icon = ({ icon: IconComponent, className = "", ...iconProps }) => {
+  return <IconComponent className={`banner__icon ${className}`} {...iconProps} />
 }
 
 export default Banner
