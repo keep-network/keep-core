@@ -89,6 +89,7 @@ CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY=$CONTRACT_OWNER_CELO_ACCOUNT_PRIVATE_KEY
     npx truffle migrate --reset --network $NETWORK
 
 printf "${LOG_START}Copying contract artifacts...${LOG_END}"
+rm -rf artifacts
 cp -r build/contracts artifacts
 npm link
 
