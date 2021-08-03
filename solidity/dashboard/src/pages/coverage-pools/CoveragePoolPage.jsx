@@ -50,6 +50,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     isApyFetching,
     totalAllocatedRewards,
     withdrawalDelay,
+    withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
@@ -172,12 +173,14 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         <section className="tile coverage-pool__balance">
           <div className={"coverage-pool__balance-title"}>
             <h3>Balance</h3>
-            <Chip
-              text={`Pending withdrawal`}
-              size="small"
-              className={"coverage-pool_pending-withdrawal-chip"}
-              color="yellow"
-            />
+            <OnlyIf condition={withdrawalInitiatedTimestamp > 0}>
+              <Chip
+                text={`Pending withdrawal`}
+                size="small"
+                className={"coverage-pool_pending-withdrawal-chip"}
+                color="yellow"
+              />
+            </OnlyIf>
             <span className={"coverage-pool__share-of-pool text-grey-40"}>
               {displayPercentageValue(shareOfPool * 100, false)} of pool
             </span>
