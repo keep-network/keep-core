@@ -102,8 +102,13 @@ function* fetchCovPoolData(action) {
 
     const withdrawalDelays = yield call(Keep.coveragePoolV1.withdrawalDelays)
 
-    const pendingWithdrawals = yield call(
-      Keep.coveragePoolV1.pendingWithdrawals,
+    const pendingWithdrawal = yield call(
+      Keep.coveragePoolV1.pendingWithdrawal,
+      address
+    )
+
+    const withdrawalInitiatedTimestamp = yield call(
+      Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
       address
     )
 
@@ -116,7 +121,8 @@ function* fetchCovPoolData(action) {
         estimatedKeepBalance,
         withdrawalDelay: withdrawalDelays.withdrawalDelay,
         withdrawalTimeout: withdrawalDelays.withdrawalTimeout,
-        pendingWithdrawals,
+        pendingWithdrawal,
+        withdrawalInitiatedTimestamp,
       })
     )
   } catch (error) {
@@ -204,8 +210,13 @@ export function* subscribeToCovTokenTransferEvent() {
     const tvlInUSD = keepInUSD.multipliedBy(KEEP.toTokenUnit(tvl)).toFormat(2)
     const apy = yield call(Keep.coveragePoolV1.apy)
 
-    const pendingWithdrawals = yield call(
-      Keep.coveragePoolV1.pendingWithdrawals,
+    const pendingWithdrawal = yield call(
+      Keep.coveragePoolV1.pendingWithdrawal,
+      address
+    )
+
+    const withdrawalInitiated = yield call(
+      Keep.coveragePoolV1.withdrawalInitiated,
       address
     )
 
@@ -219,7 +230,8 @@ export function* subscribeToCovTokenTransferEvent() {
         totalValueLocked: tvl,
         totalValueLockedInUSD: tvlInUSD,
         apy,
-        pendingWithdrawals,
+        pendingWithdrawal,
+        withdrawalInitiated,
       })
     )
   }

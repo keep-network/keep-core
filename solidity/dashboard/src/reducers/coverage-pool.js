@@ -31,6 +31,10 @@ export const coveragePoolInitialData = {
   error: null,
   estimatedRewards: 0,
   estimatedKeepBalance: 0,
+  withdrawalDelay: 0,
+  withdrawalTimeout: 0,
+  pendingWithdrawal: 0,
+  withdrawalInitiatedTimestamp: 0,
 }
 
 const coveragePoolReducer = (state = coveragePoolInitialData, action) => {

@@ -14,7 +14,8 @@ const PendingWithdrawals = () => {
   const {
     withdrawalDelay,
     withdrawalTimeout,
-    pendingWithdrawals,
+    pendingWithdrawal,
+    withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
 
   const onClaimTokensSubmitButtonClick = async (covAmount, awaitingPromise) => {
@@ -45,7 +46,8 @@ const PendingWithdrawals = () => {
       onReinitiateWithdrawal={onReinitiateWithdrawal}
       withdrawalDelay={withdrawalDelay}
       withdrawalTimeout={withdrawalTimeout}
-      pendingWithdrawals={pendingWithdrawals}
+      pendingWithdrawal={pendingWithdrawal}
+      withdrawalInitiatedTimestamp={withdrawalInitiatedTimestamp}
     />
   )
 }

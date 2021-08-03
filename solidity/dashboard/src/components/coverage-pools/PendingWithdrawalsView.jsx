@@ -1,4 +1,4 @@
-import React from "react"
+import React, {useMemo} from "react"
 import { Column, DataTable } from "../DataTable"
 import resourceTooltipProps from "../../constants/tooltips"
 import TokenAmount from "../TokenAmount"
@@ -11,14 +11,21 @@ import ProgressBar from "../ProgressBar"
 import { colors } from "../../constants/colors"
 import Tooltip from "../Tooltip"
 import { KEEP } from "../../utils/token.utils"
+import {formatValue} from "../../utils/general.utils";
 
 const PendingWithdrawalsView = ({
   onClaimTokensSubmitButtonClick,
   onReinitiateWithdrawal,
   withdrawalDelay,
   withdrawalTimeout,
-  pendingWithdrawals,
+  pendingWithdrawal,
+  withdrawalInitiatedTimestamp,
 }) => {
+  const formattedDataForDataTable = [{
+    covAmount: pendingWithdrawal,
+    timestamp: withdrawalInitiatedTimestamp,
+  }]
+
   const renderProgressBar = (
     withdrawalDate,
     endOfWithdrawalDelayDate,
@@ -229,7 +236,7 @@ const PendingWithdrawalsView = ({
   return (
     <section className={"tile pending-withdrawal"}>
       <DataTable
-        data={pendingWithdrawals}
+        data={formattedDataForDataTable}
         itemFieldId="pendingWithdrawalId"
         title="Pending withdrawal"
         withTooltip
