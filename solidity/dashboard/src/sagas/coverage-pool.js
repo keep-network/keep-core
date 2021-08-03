@@ -178,6 +178,21 @@ export function* subscribeToCovTokenTransferEvent() {
       shareOfPool
     )
 
+    if (isSameEthAddress(to, address)) {
+      yield put({
+        type: "modal/is_opened",
+        payload: {
+          emittedEvent: EVENTS.COVERAGE_POOLS.COV_TOKEN_TRANSFERED_TO_USER,
+          transactionHash: event.transactionHash,
+          additionalData: {
+            amount: value,
+            updatedCovBalance: updatedCovBalance,
+            estimatedKeepBalance: estimatedKeepBalance,
+          }
+        },
+      })
+    }
+
     const estimatedRewards = yield call(
       Keep.coveragePoolV1.estimatedRewards,
       address,

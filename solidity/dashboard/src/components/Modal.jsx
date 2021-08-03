@@ -7,6 +7,7 @@ import { EVENTS } from "../constants/events"
 import ClaimTokensModal from "./coverage-pools/ClaimTokensModal"
 import InitiateCovPoolsWithdrawModal
   from "./coverage-pools/InitiateCovPoolsWithdrawModal";
+import {InitiateDepositModal} from "./coverage-pools";
 
 const modalRoot = document.getElementById("modal-root")
 const crossIconHeight = 15
@@ -100,6 +101,21 @@ export const ModalContextProvider = ({ children }) => {
           openModal(<InitiateCovPoolsWithdrawModal transactionFinished={true} amount={modal.additionalData?.covAmount} onCancel={closeModal}/>, {
             closeModal: closeModal,
             title: "Withdraw",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+            },
+          })
+          break;
+        case EVENTS.COVERAGE_POOLS.COV_TOKEN_TRANSFERED_TO_USER:
+          openModal(<InitiateDepositModal
+            transactionFinished={true}
+            amount={modal.additionalData?.amount}
+            balanceAmount={modal.additionalData?.updatedCovBalance}
+            estimatedBalanceAmountInKeep={modal.additionalData?.estimatedKeepBalance}
+            onCancel={closeModal}
+          />, {
+            closeModal: closeModal,
+            title: "Deposit",
             classes: {
               modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
             },
