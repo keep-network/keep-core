@@ -25,7 +25,7 @@ const ClaimTokensModal = ({
       </OnlyIf>
       <div className={"claim-tokens-modal__data"}>
         <TokenAmount
-          amount={"20000"}
+          amount={amount}
           wrapperClassName={"claim-tokens-modal__token-amount"}
           token={KEEP}
           withIcon

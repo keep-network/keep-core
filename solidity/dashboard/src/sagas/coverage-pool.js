@@ -219,14 +219,25 @@ export function* subscribeToWithdrawalInitiatedEvent() {
     const {
       payload: { event },
     } = yield take(requestChan)
+    const {
+      returnValues: { underwriter, covAmount },
+    } = event
 
-    yield put({
-      type: "modal/is_opened",
-      payload: {
-        emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
-        transactionHash: event.transactionHash,
-      },
-    })
+
+    const address = yield select(selectors.getUserAddress)
+
+    if (isSameEthAddress(address, underwriter)) {
+      yield put({
+        type: "modal/is_opened",
+        payload: {
+          emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+          transactionHash: event.transactionHash,
+          additionalData: {
+            covAmount
+          }
+        },
+      })
+    }
   }
 }
 
@@ -239,14 +250,25 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const {
       payload: { event },
     } = yield take(requestChan)
+    const {
+      returnValues: { underwriter, amount },
+    } = event
+    const address = yield select(selectors.getUserAddress)
 
-    yield put({
-      type: "modal/is_opened",
-      payload: {
-        emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
-        transactionHash: event.transactionHash,
-      },
-    })
+    if (isSameEthAddress(address, underwriter)) {
+      yield put({
+        type: "modal/is_opened",
+        payload: {
+          emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED,
+          transactionHash: event.transactionHash,
+          additionalData: {
+            amount
+          }
+        },
+      })
+    }
+
+
   }
 }
 

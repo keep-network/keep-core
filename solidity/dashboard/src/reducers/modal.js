@@ -2,6 +2,7 @@ const initialState = {
   isOpen: false,
   emittedEvent: null,
   transactionHash: null,
+  additionalData: null,
 }
 
 const modalReducer = (state = initialState, action) => {
@@ -11,12 +12,14 @@ const modalReducer = (state = initialState, action) => {
         isOpen: true,
         emittedEvent: action.payload.emittedEvent,
         transactionHash: action.payload.transactionHash,
+        additionalData: action.payload.additionalData,
       }
     case "modal/is_closed":
       return {
         isOpen: false,
         emittedEvent: null,
         transactionHash: null,
+        additionalData: null,
       }
     default:
       return state

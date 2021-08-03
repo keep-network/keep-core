@@ -88,7 +88,7 @@ export const ModalContextProvider = ({ children }) => {
     if (modal.isOpen) {
       switch (modal.emittedEvent) {
         case EVENTS.COVERAGE_POOLS.WITHDRAWAL_COMPLETED:
-          openModal(<ClaimTokensModal transactionFinished={true} />, {
+          openModal(<ClaimTokensModal transactionFinished={true} amount={modal.additionalData?.amount} onCancel={closeModal}/>, {
             closeModal: closeModal,
             title: "Claim tokens",
             classes: {
@@ -97,7 +97,7 @@ export const ModalContextProvider = ({ children }) => {
           })
           break;
         case EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED:
-          openModal(<InitiateCovPoolsWithdrawModal transactionFinished={true} />, {
+          openModal(<InitiateCovPoolsWithdrawModal transactionFinished={true} amount={modal.additionalData?.covAmount} onCancel={closeModal}/>, {
             closeModal: closeModal,
             title: "Withdraw",
             classes: {
