@@ -215,8 +215,8 @@ export function* subscribeToCovTokenTransferEvent() {
       address
     )
 
-    const withdrawalInitiated = yield call(
-      Keep.coveragePoolV1.withdrawalInitiated,
+    const withdrawalInitiatedTimestamp = yield call(
+      Keep.coveragePoolV1.withdrawalInitiatedTimestamp,
       address
     )
 
@@ -231,7 +231,7 @@ export function* subscribeToCovTokenTransferEvent() {
         totalValueLockedInUSD: tvlInUSD,
         apy,
         pendingWithdrawal,
-        withdrawalInitiated,
+        withdrawalInitiatedTimestamp,
       })
     )
   }
