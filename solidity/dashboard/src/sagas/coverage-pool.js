@@ -112,10 +112,13 @@ function* fetchCovPoolData(action) {
       address
     )
 
+    const covBalance = add(balanceOf, pendingWithdrawal)
+
     yield put(
       fetchCovPoolDataSuccess({
         shareOfPool,
-        covBalance: balanceOf,
+        covBalance,
+        covTokensAvailableToWithdraw: balanceOf,
         covTotalSupply: totalSupply,
         estimatedRewards,
         estimatedKeepBalance,
@@ -220,9 +223,12 @@ export function* subscribeToCovTokenTransferEvent() {
       address
     )
 
+    const covTokensAvailableToWithdraw = sub(updatedCovBalance, pendingWithdrawal)
+
     yield put(
       covTokenUpdated({
         covBalance: updatedCovBalance,
+        covTokensAvailableToWithdraw,
         covTotalSupply: updatedCovTotalSupply,
         shareOfPool,
         estimatedKeepBalance,

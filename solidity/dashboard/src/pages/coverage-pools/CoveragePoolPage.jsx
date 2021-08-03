@@ -42,6 +42,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     // isDataFetching,
     shareOfPool,
     covBalance,
+    covTokensAvailableToWithdraw,
     // covTotalSupply,
     // error,
     estimatedRewards,
@@ -52,6 +53,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     withdrawalDelay,
     withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
+
   const keepTokenBalance = useSelector((state) => state.keepTokenBalance)
 
   const address = useWeb3Address()
@@ -241,7 +243,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           <h3>Available to withdraw</h3>
           <TokenAmount
             wrapperClassName={"coverage-pool__token-amount"}
-            amount={covBalance}
+            amount={covTokensAvailableToWithdraw}
             amountClassName={"h2 text-mint-100"}
             symbolClassName={"h3 text-mint-100"}
             token={KEEP}
@@ -249,7 +251,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
           <TokenAmount
             wrapperClassName={"coverage-pool__cov-token-amount"}
-            amount={covBalance}
+            amount={covTokensAvailableToWithdraw}
             amountClassName={"h3 text-grey-40"}
             symbolClassName={"h3 text-grey-40"}
             token={covKEEP}
