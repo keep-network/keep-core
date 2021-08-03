@@ -27,7 +27,7 @@ const ModalWithTimeline = ({children, className = "", step = MODAL_WITH_TIMELINE
             </Timeline.Breakpoint>
             <Timeline.Content>
               <Timeline.ElementDefaultCard>
-                <h4 className="text-violet-80">Deposit your tokens</h4>
+                <h4>Deposit your tokens</h4>
                 <OnlyIf condition={
                   step === MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS && withDescription
                 }>
@@ -41,12 +41,12 @@ const ModalWithTimeline = ({children, className = "", step = MODAL_WITH_TIMELINE
 
           <Timeline.Element>
             <Timeline.Breakpoint>
-              <Timeline.BreakpointDot>2</Timeline.BreakpointDot>
+              <Timeline.BreakpointDot active={step > MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS}>2</Timeline.BreakpointDot>
               <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT} />
             </Timeline.Breakpoint>
             <Timeline.Content>
-              <Timeline.ElementDefaultCard>
-                <h4 className="text-violet-80">Withdraw deposit</h4>
+              <Timeline.ElementDefaultCard active={step > MODAL_WITH_TIMELINE_STEPS.DEPOSITED_TOKENS}>
+                <h4>Withdraw deposit</h4>
                 <OnlyIf condition={
                   step === MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT && withDescription
                 }>
@@ -62,24 +62,24 @@ const ModalWithTimeline = ({children, className = "", step = MODAL_WITH_TIMELINE
             <Timeline.Breakpoint>
               <Timeline.BreakpointDot
                 lineBreaker
-                lineBreakerColor="violet-80"
+                lineBreakerColor={step > MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT ? `violet-80` : `grey-40`}
                 style={{ backgroundColor: colors.brandViolet10 }}
               />
               <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.COOLDOWN} />
             </Timeline.Breakpoint>
             <Timeline.Content>
-              <Chip text="21 day cooldown" color="strong" size="big" />
+              <Chip text="21 day cooldown" color={step > MODAL_WITH_TIMELINE_STEPS.WITHDRAW_DEPOSIT ? "strong" : "subtle"} size="big" />
             </Timeline.Content>
           </Timeline.Element>
 
           <Timeline.Element>
             <Timeline.Breakpoint>
-              <Timeline.BreakpointDot>3</Timeline.BreakpointDot>
+              <Timeline.BreakpointDot active={step > MODAL_WITH_TIMELINE_STEPS.COOLDOWN}>3</Timeline.BreakpointDot>
               <Timeline.BreakpointLine active={step > MODAL_WITH_TIMELINE_STEPS.CLAIM_TOKENS} />
             </Timeline.Breakpoint>
             <Timeline.Content>
-              <Timeline.ElementDefaultCard>
-                <h4 className="text-violet-80">Claim tokens</h4>
+              <Timeline.ElementDefaultCard active={step > MODAL_WITH_TIMELINE_STEPS.COOLDOWN}>
+                <h4>Claim tokens</h4>
                 <OnlyIf condition={
                   step === MODAL_WITH_TIMELINE_STEPS.CLAIM_TOKENS && withDescription
                 }>

@@ -71,7 +71,12 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     const amount = KEEP.fromTokenUnit(tokenAmount)
     await openConfirmationModal(
       {
-        modalOptions: { title: "Initiate Deposit" },
+        modalOptions: {
+          title: "Deposit",
+          classes: {
+            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+          },
+        },
         submitBtnText: "deposit",
         amount,
       },

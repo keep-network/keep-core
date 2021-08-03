@@ -45,9 +45,10 @@ Timeline.Content = ({ children, className = "", ...props }) => {
   )
 }
 
-Timeline.ElementDefaultCard = ({ children, className = "", ...props }) => {
+Timeline.ElementDefaultCard = ({ children, className = "", active = true, ...props }) => {
+  const activeClass = active ? "timeline-default-card--active" : ""
   return (
-    <div className={`timeline-default-card ${className}`} {...props}>
+    <div className={`timeline-default-card ${activeClass} ${className}`} {...props}>
       {children}
     </div>
   )
@@ -61,6 +62,7 @@ Timeline.BreakpointDot = ({
   children,
   lineBreaker = false,
   lineBreakerColor = "grey-30",
+  active = true,
   className = "",
   ...props
 }) => {
@@ -69,6 +71,9 @@ Timeline.BreakpointDot = ({
       className={`breakpoint__dot ${
         lineBreaker ? "breakpoint__dot--breaker" : ""
       } ${
+        active ? "breakpoint__dot--active" : ""
+      } 
+      ${
         lineBreakerColor ? `breakpoint__dot--breaker-${lineBreakerColor}` : ""
       }
       ${className}`}
