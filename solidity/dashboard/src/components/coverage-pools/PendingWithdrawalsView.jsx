@@ -21,10 +21,10 @@ const PendingWithdrawalsView = ({
   pendingWithdrawal,
   withdrawalInitiatedTimestamp,
 }) => {
-  const formattedDataForDataTable = [{
+  const formattedDataForDataTable = withdrawalInitiatedTimestamp > 0 ? [{
     covAmount: pendingWithdrawal,
     timestamp: withdrawalInitiatedTimestamp,
-  }]
+  }] : []
 
   const renderProgressBar = (
     withdrawalDate,
