@@ -1,5 +1,6 @@
 node_modules/
 ./solidity/truffle.js
+artifacts/
 build/
 vendor/
 _local/
