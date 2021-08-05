@@ -98,7 +98,11 @@ export const ModalContextProvider = ({ children }) => {
           })
           break;
         case EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED:
-          openModal(<InitiateCovPoolsWithdrawModal transactionFinished={true} amount={modal.additionalData?.covAmount} onCancel={closeModal}/>, {
+          openModal(<InitiateCovPoolsWithdrawModal
+            transactionFinished={true}
+            amount={modal.additionalData?.covAmount}
+            onCancel={closeModal}
+          />, {
             closeModal: closeModal,
             title: "Withdraw",
             classes: {

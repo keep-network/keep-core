@@ -20,6 +20,7 @@ const PendingWithdrawalsView = ({
   withdrawalTimeout,
   pendingWithdrawal,
   withdrawalInitiatedTimestamp,
+  covTokensAvailableToWithdraw,
 }) => {
   const formattedDataForDataTable = withdrawalInitiatedTimestamp > 0 ? [{
     covAmount: pendingWithdrawal,
@@ -280,7 +281,7 @@ const PendingWithdrawalsView = ({
                 className="btn btn-lg btn-primary"
                 onSubmitAction={async (awaitingPromise) => {
                   if (isWithdrawalTimeoutOver(timestamp)) {
-                    await onReinitiateWithdrawal(awaitingPromise)
+                    await onReinitiateWithdrawal(covAmount, covTokensAvailableToWithdraw, awaitingPromise)
                   } else {
                     await onClaimTokensSubmitButtonClick(covAmount, awaitingPromise)
                   }

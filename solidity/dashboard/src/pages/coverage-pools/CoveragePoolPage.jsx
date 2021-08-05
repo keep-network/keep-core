@@ -101,6 +101,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         },
         submitBtnText: "withdraw",
         amount,
+        containerTitle: "You are about to withdraw:"
       },
       InitiateCovPoolsWithdrawModal,
     )
@@ -160,7 +161,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         {/* TODO add more metrics according to the Figma vies */}
       </section>
 
-      <PendingWithdrawals />
+      <PendingWithdrawals covTokensAvailableToWithdraw={covTokensAvailableToWithdraw}/>
 
       <section className="coverage-pool__deposit-wrapper">
         <section className="tile coverage-pool__deposit-form">
@@ -203,7 +204,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             token={covKEEP}
             withIcon
             icon={() => {
-              return <div style={{ width: "35px", height: "35px" }}></div>
+              return <div style={{ width: "32px", height: "32px" }}></div>
             }}
           />
           <div className={"coverage-pool__deposits-and-earned"}>
@@ -257,7 +258,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
             token={covKEEP}
             withIcon
             icon={() => {
-              return <div style={{ width: "35px", height: "35px" }}></div>
+              return <div style={{ width: "32px", height: "32px" }}></div>
             }}
           />
           <WithdrawAmountForm

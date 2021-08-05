@@ -27,6 +27,7 @@ export const coveragePoolInitialData = {
   isDataFetching: false,
   shareOfPool: 0,
   covBalance: 0,
+  covTokensAvailableToWithdraw: 0,
   covTotalSupply: 0,
   error: null,
   estimatedRewards: 0,

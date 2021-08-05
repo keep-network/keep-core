@@ -18,6 +18,7 @@ const infoBannerDescription =
 
 const InitiateCovPoolsWithdrawModal = ({
   amount,
+  containerTitle,
   submitBtnText,
   onBtnClick,
   onCancel,
@@ -26,7 +27,7 @@ const InitiateCovPoolsWithdrawModal = ({
 }) => {
   return (
     <ModalWithTimeline
-      className={`withdraw-modal__main-container`}
+      className={`withdraw-modal__main-container ${className}`}
       step={
         transactionFinished ?
           MODAL_WITH_TIMELINE_STEPS.COOLDOWN :
@@ -35,6 +36,7 @@ const InitiateCovPoolsWithdrawModal = ({
       withDescription={true}>
       <InitiateCovPoolsWithdrawModal.Container
         transactionFinished={transactionFinished}
+        containerTitle={containerTitle}
         submitBtnText={submitBtnText}
         onBtnClick={onBtnClick}
         onCancel={onCancel}>
@@ -107,9 +109,16 @@ const InitiateCovPoolsWithdrawModal = ({
 }
 
 
-InitiateCovPoolsWithdrawModal.Container = ({transactionFinished = false, submitBtnText, onBtnClick, onCancel, children}) => {
+InitiateCovPoolsWithdrawModal.Container = ({
+   transactionFinished = false,
+   containerTitle = "You are about to withdraw:",
+   submitBtnText,
+   onBtnClick,
+   onCancel,
+   children
+}) => {
   const container = transactionFinished ? <>{children}</> : <AcceptTermConfirmationModal
-    title="You are about to withdraw:"
+    title={containerTitle}
     termText="I confirm I have read the documentation and am aware of the risk."
     btnText={submitBtnText}
     onBtnClick={onBtnClick}
