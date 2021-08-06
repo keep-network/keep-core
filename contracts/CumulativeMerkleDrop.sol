@@ -34,6 +34,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         bytes32 targetMerkleRoot,
         bytes32[] calldata merkleProof
     ) external override {
+        require(amountToClaim > 0, "CMD: Amount should not be 0");
         require(merkleRoot == targetMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
@@ -55,11 +56,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
         emit Claimed(index, account, amountToClaim);
     }
 
-    function applyProof(
-        uint256 index,
-        bytes32 leaf,
-        bytes32[] calldata proof
-    ) public pure returns (bytes32 computedHash) {
+    function applyProof(uint256 index, bytes32 leaf, bytes32[] calldata proof) public pure returns (bytes32 computedHash) {
         computedHash = leaf;
 
         for (uint256 i = 0; i < proof.length; i++) {
