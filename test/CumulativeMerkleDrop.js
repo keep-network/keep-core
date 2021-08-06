@@ -25,6 +25,19 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         this.drop = await CumulativeMerkleDrop.new(this.token.address);
     });
 
+    it('Benchmark 30000 wallets (merkle tree height 15)', async function () {
+        const wallets = Array(30000).fill().map((_, i) => w1);
+        const amounts = Array(30000).fill().map((_, i) => i + 1);
+
+        const { leafs, root, proofs } = await makeDrop(this.token, this.drop, wallets, amounts, 1000000);
+        this.leafs = leafs;
+        this.root = root;
+        this.proofs = proofs;
+
+        await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
+        await this.drop.contract.methods.applyProof2(0, this.leafs[0], this.proofs[0]).send({ from: _ });
+    });
+
     describe('Single drop for 4 wallets: [1, 2, 3, 4]', async function () {
         beforeEach(async function () {
             const { leafs, root, proofs } = await makeDrop(this.token, this.drop, [w1, w2, w3, w4], [1, 2, 3, 4], 10);
@@ -36,6 +49,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         describe('First wallet', async function () {
             it('should fail to claim 2 tokens', async function () {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
+                await this.drop.contract.methods.applyProof2(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(0, w1, 2, 1, this.root, this.proofs[0]),
                     'CMD: Claiming amount is too high'

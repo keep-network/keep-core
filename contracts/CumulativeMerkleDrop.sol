@@ -67,4 +67,32 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
             }
         }
     }
+
+    // Experimental assembly optimization
+    function applyProof2(uint256 index, bytes32 leaf, bytes32[] calldata proof) public pure returns (bytes32) {
+        assembly {
+            let mem1 := mload(0x40)
+            let mem2 := add(mem1, 0x20)
+            let len := proof.length
+            let ptr := add(proof.offset, 0x20)
+            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
+                switch and(shr(i, index), 1)
+                case 0 {
+                    mstore(mem1, leaf)
+                    mstore(mem2, calldataload(ptr))
+                }
+                default {
+                    mstore(mem1, calldataload(ptr))
+                    mstore(mem2, leaf)
+                }
+
+                ptr := add(ptr, 0x20)
+                leaf := keccak256(mem1, 64)
+            }
+
+            mstore(mem1, leaf)
+            return(mem1, 32)
+        }
+    }
+
 }
