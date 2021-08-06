@@ -2,6 +2,8 @@ const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
+const { profileEVM, gasspectEVM } = require('./helpers/profileEVM');
+
 const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop = artifacts.require('CumulativeMerkleDrop');
 
@@ -30,7 +32,6 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         {
             // 2 tokens failed
             await this.drop.contract.methods.applyProof(0, leafs[0], proofs[0]).send({ from: _ });
-            await this.drop.contract.methods.applyProof2(0, leafs[0], proofs[0]).send({ from: _ });
             await expectRevert(
                 this.drop.claim(0, w1, 2, 1, merkleRoot, proofs[0]),
                 'CMD: Claiming amount is too high'
@@ -38,10 +39,11 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
 
             // 1 token success
             await this.drop.contract.methods.applyProof(0, leafs[0], proofs[0]).send({ from: _ });
-            await expectEvent(
+            const receipt = await expectEvent(
                 await this.drop.claim(0, w1, 1, 1, merkleRoot, proofs[0]),
                 'Claimed', '0', w1, '1'
             );
+            gasspectEVM(receipt.transactionHash);
 
             // 1 tokens failed
             await this.drop.contract.methods.applyProof(0, leafs[0], proofs[0]).send({ from: _ });
