@@ -75,7 +75,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x20)
             let len := proof.length
-            let ptr := add(proof.offset, 0x20)
+            let ptr := add(calldataload(proof.offset), 0x20)
             for { let i := 0 } lt(i, len) { i := add(i, 1) } {
                 switch and(shr(i, index), 1)
                 case 0 {
