@@ -98,6 +98,6 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     }
 
     function _keccak128(bytes memory input) internal pure returns(bytes16) {
-        return bytes16(bytes32(uint256(keccak256(input)) << 128));
+        return bytes16(keccak256(input) << 128);
     }
 }
