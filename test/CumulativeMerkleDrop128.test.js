@@ -1,9 +1,9 @@
-const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
+const { BN, expectEvent } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
 const {
-    shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234
+    shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234,
 } = require('./MerkleDrop.behavior');
 
 const TokenMock = artifacts.require('TokenMock');

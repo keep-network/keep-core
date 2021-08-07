@@ -11,7 +11,7 @@ function shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234 (errorPrefix, [w1
             });
 
             it('should succeed to claim 1 token', async function () {
-                const receipt = await expectEvent(
+                await expectEvent(
                     await this.drop.claim(0, w1, 1, 1, this.root, this.proofs[0]),
                     'Claimed', '0', w1, '1',
                 );
