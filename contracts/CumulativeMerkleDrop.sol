@@ -70,6 +70,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
 
     // Experimental assembly optimization
     function applyProof2(uint256 index, bytes32 leaf, bytes32[] calldata proof) public pure returns (bytes32) {
+        // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x20)

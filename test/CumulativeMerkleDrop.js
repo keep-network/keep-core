@@ -2,12 +2,12 @@ const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
-const { profileEVM, gasspectEVM } = require('./helpers/profileEVM');
+const { gasspectEVM } = require('./helpers/profileEVM');
 
 const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop = artifacts.require('CumulativeMerkleDrop');
 
-async function makeDrop(token, drop, wallets, amounts, deposit) {
+async function makeDrop (token, drop, wallets, amounts, deposit) {
     const elements = wallets.map((w, i) => w + web3.utils.padLeft(web3.utils.toHex(amounts[i]), 64).substr(2));
     const leafs = elements.map(keccak256);
     const tree = new MerkleTree(leafs, keccak256);
@@ -21,7 +21,7 @@ async function makeDrop(token, drop, wallets, amounts, deposit) {
 }
 contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
     beforeEach(async function () {
-        this.token = await TokenMock.new("1INCH Token", "1INCH");
+        this.token = await TokenMock.new('1INCH Token', '1INCH');
         this.drop = await CumulativeMerkleDrop.new(this.token.address);
     });
 
@@ -52,7 +52,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof2(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(0, w1, 2, 1, this.root, this.proofs[0]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -60,9 +60,9 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 const receipt = await expectEvent(
                     await this.drop.claim(0, w1, 1, 1, this.root, this.proofs[0]),
-                    'Claimed', '0', w1, '1'
+                    'Claimed', '0', w1, '1',
                 );
-                // gasspectEVM(receipt.transactionHash);
+                gasspectEVM(receipt.transactionHash);
             });
 
             it('should fail to claim 1 token after 1 token', async function () {
@@ -71,7 +71,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(0, w1, 1, 1, this.root, this.proofs[0]),
-                    'CMD: Drop already claimed'
+                    'CMD: Drop already claimed',
                 );
             });
 
@@ -79,7 +79,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(0, w1, 2, 1, this.root, this.proofs[0]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
         });
@@ -89,7 +89,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(1, this.leafs[1], this.proofs[1]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(1, w2, 3, 2, this.root, this.proofs[1]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -97,13 +97,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(1, this.leafs[1], this.proofs[1]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(1, w2, 1, 2, this.root, this.proofs[1]),
-                    'Claimed', '1', w2, '1'
+                    'Claimed', '1', w2, '1',
                 );
 
                 await this.drop.contract.methods.applyProof(1, this.leafs[1], this.proofs[1]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(1, w2, 1, 2, this.root, this.proofs[1]),
-                    'Claimed', '1', w2, '1'
+                    'Claimed', '1', w2, '1',
                 );
             });
 
@@ -113,7 +113,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(1, this.leafs[1], this.proofs[1]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(1, w2, 2, 2, this.root, this.proofs[1]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -121,17 +121,17 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(1, this.leafs[1], this.proofs[1]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(1, w2, 2, 2, this.root, this.proofs[1]),
-                    'Claimed', '1', w2, '2'
+                    'Claimed', '1', w2, '2',
                 );
             });
 
             it('should fail to claim 1 token after 2 tokens', async function () {
-                await this.drop.claim(1, w2, 2, 2, this.root, this.proofs[1]),
+                await this.drop.claim(1, w2, 2, 2, this.root, this.proofs[1]);
 
                 await this.drop.contract.methods.applyProof(1, this.leafs[1], this.proofs[1]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(1, w2, 1, 2, this.root, this.proofs[1]),
-                    'CMD: Drop already claimed'
+                    'CMD: Drop already claimed',
                 );
             });
         });
@@ -141,7 +141,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(2, w3, 4, 3, this.root, this.proofs[2]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -149,7 +149,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(2, w3, 3, 3, this.root, this.proofs[2]),
-                    'Claimed', '2', w3, '3'
+                    'Claimed', '2', w3, '3',
                 );
             });
 
@@ -157,13 +157,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(2, w3, 1, 3, this.root, this.proofs[2]),
-                    'Claimed', '2', w3, '1'
+                    'Claimed', '2', w3, '1',
                 );
 
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(2, w3, 2, 3, this.root, this.proofs[2]),
-                    'Claimed', '2', w3, '2'
+                    'Claimed', '2', w3, '2',
                 );
             });
 
@@ -171,13 +171,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(2, w3, 2, 3, this.root, this.proofs[2]),
-                    'Claimed', '2', w3, '2'
+                    'Claimed', '2', w3, '2',
                 );
 
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(2, w3, 1, 3, this.root, this.proofs[2]),
-                    'Claimed', '2', w3, '1'
+                    'Claimed', '2', w3, '1',
                 );
             });
 
@@ -187,7 +187,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(2, w3, 3, 3, this.root, this.proofs[2]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -197,7 +197,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(2, w3, 2, 3, this.root, this.proofs[2]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -207,7 +207,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(2, this.leafs[2], this.proofs[2]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(2, w3, 1, 3, this.root, this.proofs[2]),
-                    'CMD: Drop already claimed'
+                    'CMD: Drop already claimed',
                 );
             });
         });
@@ -217,7 +217,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(3, w4, 5, 4, this.root, this.proofs[3]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -225,7 +225,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 4, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '3'
+                    'Claimed', '3', w4, '3',
                 );
             });
 
@@ -233,13 +233,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 1, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '1'
+                    'Claimed', '3', w4, '1',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 3, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '3'
+                    'Claimed', '3', w4, '3',
                 );
             });
 
@@ -247,13 +247,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 2, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '2'
+                    'Claimed', '3', w4, '2',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 2, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '2'
+                    'Claimed', '3', w4, '2',
                 );
             });
 
@@ -261,13 +261,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 3, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '3'
+                    'Claimed', '3', w4, '3',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 1, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '1'
+                    'Claimed', '3', w4, '1',
                 );
             });
 
@@ -275,19 +275,19 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 1, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '1'
+                    'Claimed', '3', w4, '1',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 2, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '2'
+                    'Claimed', '3', w4, '2',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 1, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '1'
+                    'Claimed', '3', w4, '1',
                 );
             });
 
@@ -295,13 +295,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 4, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '4'
+                    'Claimed', '3', w4, '4',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(3, w4, 1, 4, this.root, this.proofs[3]),
-                    'CMD: Drop already claimed'
+                    'CMD: Drop already claimed',
                 );
             });
 
@@ -309,13 +309,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 3, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '3'
+                    'Claimed', '3', w4, '3',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(3, w4, 2, 4, this.root, this.proofs[3]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -323,13 +323,13 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 2, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '2'
+                    'Claimed', '3', w4, '2',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(3, w4, 3, 4, this.root, this.proofs[3]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
 
@@ -337,24 +337,24 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(3, w4, 1, 4, this.root, this.proofs[3]),
-                    'Claimed', '3', w4, '1'
+                    'Claimed', '3', w4, '1',
                 );
 
                 await this.drop.contract.methods.applyProof(3, this.leafs[3], this.proofs[3]).send({ from: _ });
                 await expectRevert(
                     this.drop.claim(3, w4, 4, 4, this.root, this.proofs[3]),
-                    'CMD: Claiming amount is too high'
+                    'CMD: Claiming amount is too high',
                 );
             });
         });
     });
 
     describe('Double drop for 4 wallets: [1, 2, 3, 4] + [2, 3, 4, 5] = [3, 5, 7, 9]', async function () {
-        async function firstDrop(token, drop) {
+        async function firstDrop (token, drop) {
             return makeDrop(token, drop, [w1, w2, w3, w4], [1, 2, 3, 4], 1 + 2 + 3 + 4);
         }
 
-        async function secondDrop(token, drop) {
+        async function secondDrop (token, drop) {
             return await makeDrop(token, drop, [w1, w2, w3, w4], [3, 5, 7, 9], 2 + 3 + 4 + 5);
         }
 
@@ -370,7 +370,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(0, w1, 1, 1, this.root, this.proofs[0]),
-                    'Claimed', '0', w1, '1'
+                    'Claimed', '0', w1, '1',
                 );
 
                 const { leafs, root, proofs } = await secondDrop(this.token, this.drop);
@@ -381,7 +381,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(0, w1, 2, 3, this.root, this.proofs[0]),
-                    'Claimed', '0', w1, '2'
+                    'Claimed', '0', w1, '2',
                 );
             });
 
@@ -394,7 +394,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
                 await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
                 await expectEvent(
                     await this.drop.claim(0, w1, 3, 3, this.root, this.proofs[0]),
-                    'Claimed', '0', w1, '3'
+                    'Claimed', '0', w1, '3',
                 );
             });
         });
