@@ -30,7 +30,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         this.drop = await CumulativeMerkleDrop.new(this.token.address);
     });
 
-    it.only('Benchmark 30000 wallets (merkle tree height 15)', async function () {
+    it('Benchmark 30000 wallets (merkle tree height 15)', async function () {
         const wallets = Array(30000).fill().map((_, i) => '0x' + (new BN(w1)).addn(i).toString('hex'));
         const amounts = Array(30000).fill().map((_, i) => i + 1);
 
