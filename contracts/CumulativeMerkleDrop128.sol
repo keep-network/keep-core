@@ -73,28 +73,27 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     function applyProof2(uint256 index, bytes16 leaf, bytes calldata proof) public pure returns (bytes16) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
-            leaf := shr(128, leaf)
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x10)
             let len := div(proof.length, 0x10)
-            let ptr := add(proof.offset, 0x20)
+            let ptr := proof.offset
             for { let i := 0 } lt(i, len) { i := add(i, 1) } {
                 switch and(shr(i, index), 1)
                 case 0 {
-                    mstore(mem2, calldataload(ptr))
                     mstore(mem1, leaf)
+                    mstore(mem2, calldataload(ptr))
                 }
                 default {
-                    mstore(mem2, leaf)
                     mstore(mem1, calldataload(ptr))
+                    mstore(mem2, leaf)
                 }
 
                 ptr := add(ptr, 0x10)
-                leaf := keccak256(mem2, 32)
+                leaf := shl(128, keccak256(mem1, 32))
             }
 
             mstore(mem1, leaf)
-            return(mem2, 32)
+            return(mem1, 32)
         }
     }
 

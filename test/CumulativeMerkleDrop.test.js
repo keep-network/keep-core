@@ -30,14 +30,11 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         this.drop = await CumulativeMerkleDrop.new(this.token.address);
     });
 
-    it('Benchmark 30000 wallets (merkle tree height 15)', async function () {
-        // const wallets = Array(4).fill().map((_, i) => '0x' + (new BN(w1)).addn(i).toString('hex'));
-        // const amounts = Array(4).fill().map((_, i) => i + 1);
-        const wallets = [w1, w2, w3, w4];
-        const amounts = [1, 2, 3, 4];
+    it.only('Benchmark 30000 wallets (merkle tree height 15)', async function () {
+        const wallets = Array(4).fill().map((_, i) => '0x' + (new BN(w1)).addn(i).toString('hex'));
+        const amounts = Array(4).fill().map((_, i) => i + 1);
 
-        //const { leafs, root, proofs } = await makeDrop(this.token, this.drop, wallets, amounts, 1000000);
-        const { leafs, root, proofs } = await makeDrop(this.token, this.drop, [w1, w2, w3, w4], [1, 2, 3, 4], 10);
+        const { leafs, root, proofs } = await makeDrop(this.token, this.drop, wallets, amounts, 1000000);
         this.leafs = leafs;
         this.root = root;
         this.proofs = proofs;
