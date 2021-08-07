@@ -1,4 +1,4 @@
-const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
+const { BN, expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
@@ -6,6 +6,11 @@ const { gasspectEVM } = require('./helpers/profileEVM');
 
 const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop = artifacts.require('CumulativeMerkleDrop');
+const CumulativeMerkleDrop128 = artifacts.require('CumulativeMerkleDrop128');
+
+function keccak128 (input) {
+    return keccak256(input).slice(16, 32);
+}
 
 async function makeDrop (token, drop, wallets, amounts, deposit) {
     const elements = wallets.map((w, i) => w + web3.utils.padLeft(web3.utils.toHex(amounts[i]), 64).substr(2));
@@ -19,23 +24,61 @@ async function makeDrop (token, drop, wallets, amounts, deposit) {
 
     return { leafs, root, proofs };
 }
+
+async function makeDrop128 (token, drop, wallets, amounts, deposit) {
+    const elements = wallets.map((w, i) => w + web3.utils.padLeft(web3.utils.toHex(amounts[i]), 64).substr(2));
+    const leafs = elements.map(keccak128);
+    const tree = new MerkleTree(leafs, keccak128);
+    const root = tree.getHexRoot();
+    const proofs = leafs
+        .map(tree.getHexProof, tree)
+        .map(proof => '0x' + proof.map(p => p.substr(2)).join(''));
+
+    await drop.setMerkleRoot(root);
+    await token.mint(drop.address, deposit);
+
+    return { leafs, root, proofs };
+}
+
 contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
     beforeEach(async function () {
         this.token = await TokenMock.new('1INCH Token', '1INCH');
         this.drop = await CumulativeMerkleDrop.new(this.token.address);
+        this.drop128 = await CumulativeMerkleDrop128.new(this.token.address);
     });
 
     it('Benchmark 30000 wallets (merkle tree height 15)', async function () {
-        const wallets = Array(30000).fill().map((_, i) => w1);
+        const wallets = Array(30000).fill().map((_, i) => '0x' + (new BN(w1)).addn(i).toString('hex'));
         const amounts = Array(30000).fill().map((_, i) => i + 1);
+        console.log(wallets[0]);
+        console.log(wallets[1]);
 
         const { leafs, root, proofs } = await makeDrop(this.token, this.drop, wallets, amounts, 1000000);
         this.leafs = leafs;
         this.root = root;
         this.proofs = proofs;
 
+        console.log(this.leafs[0], this.proofs[0]);
         await this.drop.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
         await this.drop.contract.methods.applyProof2(0, this.leafs[0], this.proofs[0]).send({ from: _ });
+        expect(await this.drop.applyProof(0, this.leafs[0], this.proofs[0])).to.be.equal(this.root);
+        expect(await this.drop.applyProof2(0, this.leafs[0], this.proofs[0])).to.be.equal(this.root);
+    });
+
+    it('128bits: Benchmark 30000 wallets (merkle tree height 15)', async function () {
+        const wallets = Array(30000).fill().map((_, i) => '0x' + (new BN(w1)).addn(i).toString('hex'));
+        const amounts = Array(30000).fill().map((_, i) => i + 1);
+
+        const { leafs, root, proofs } = await makeDrop128(this.token, this.drop128, wallets, amounts, 1000000);
+        this.leafs = leafs;
+        this.root = root;
+        this.proofs = proofs;
+
+        console.log(this.leafs[0], this.proofs[0]);
+        await this.drop128.contract.methods.applyProof(0, this.leafs[0], this.proofs[0]).send({ from: _ });
+        await this.drop128.contract.methods.applyProof2(0, this.leafs[0], this.proofs[0]).send({ from: _ });
+        expect(await this.drop128.applyProof(0, this.leafs[0], this.proofs[0])).to.be.equal(this.root);
+        expect(await this.drop128.applyProof2(0, this.leafs[0], this.proofs[0])).to.be.equal(this.root);
     });
 
     describe('Single drop for 4 wallets: [1, 2, 3, 4]', async function () {
