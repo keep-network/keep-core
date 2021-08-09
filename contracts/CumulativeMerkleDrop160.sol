@@ -29,14 +29,14 @@ contract CumulativeMerkleDrop160 is Ownable, ICumulativeMerkleDrop160 {
     function claim(
         address account,
         uint256 cumulativeAmount,
-        bytes20 targetMerkleRoot,
+        bytes20 expectedMerkleRoot,
         bytes calldata merkleProof
     ) external override {
-        require(merkleRoot == targetMerkleRoot, "CMD: Merkle root was updated");
+        require(merkleRoot == expectedMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
         bytes20 leaf = _keccak160(abi.encodePacked(account, cumulativeAmount));
-        require(verify2(merkleProof, targetMerkleRoot, leaf), "CMD: Invalid proof");
+        require(verifyAsm(merkleProof, expectedMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
         uint256 preclaimed = cumulativeClaimed[account];
@@ -49,21 +49,27 @@ contract CumulativeMerkleDrop160 is Ownable, ICumulativeMerkleDrop160 {
         emit Claimed(account, amount);
     }
 
-    function verify(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool) {
-        for (uint256 i = 0; i < proof.length / 20; i++) {
-            bytes20 node = _getBytes20(proof[i*20:(i+1)*20]);
-            if (leaf < node) {
-                leaf = _keccak160(abi.encodePacked(leaf, node));
-            } else {
-                leaf = _keccak160(abi.encodePacked(node, leaf));
-            }
-        }
-
-        return leaf == root;
-    }
+    // function verify(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool) {
+    //     for (uint256 i = 0; i < proof.length / 20; i++) {
+    //         bytes20 node = _getBytes20(proof[i*20:(i+1)*20]);
+    //         if (leaf < node) {
+    //             leaf = _keccak160(abi.encodePacked(leaf, node));
+    //         } else {
+    //             leaf = _keccak160(abi.encodePacked(node, leaf));
+    //         }
+    //     }
+    //     return leaf == root;
+    // }
+    //
+    // function _getBytes20(bytes calldata input) internal pure returns(bytes20 res) {
+    //     // solhint-disable-next-line no-inline-assembly
+    //     assembly {
+    //         res := calldataload(input.offset)
+    //     }
+    // }
 
     // Experimental assembly optimization
-    function verify2(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool valid) {
+    function verifyAsm(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool valid) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
@@ -87,13 +93,6 @@ contract CumulativeMerkleDrop160 is Ownable, ICumulativeMerkleDrop160 {
             }
 
             valid := iszero(shr(96, xor(root, leaf)))
-        }
-    }
-
-    function _getBytes20(bytes calldata input) internal pure returns(bytes20 res) {
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            res := calldataload(input.offset)
         }
     }
 

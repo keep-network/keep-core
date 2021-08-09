@@ -19,7 +19,7 @@ interface ICumulativeMerkleDrop160 {
     function claim(
         address account,
         uint256 cumulativeAmount,
-        bytes20 targetMerkleRoot,
+        bytes20 expectedMerkleRoot,
         bytes calldata merkleProof
     ) external;
 }
