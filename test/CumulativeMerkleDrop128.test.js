@@ -1,4 +1,4 @@
-const { BN, expectEvent } = require('@openzeppelin/test-helpers');
+const { BN } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
@@ -15,10 +15,6 @@ const CumulativeMerkleDrop128 = artifacts.require('CumulativeMerkleDrop128');
 
 function keccak128 (input) {
     return keccak256(input).slice(0, 16);
-}
-
-function claimedEvent(account, amount) {
-    return { account, amount };
 }
 
 async function makeDrop (token, drop, wallets, amounts, deposit) {

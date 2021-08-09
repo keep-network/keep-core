@@ -1,6 +1,6 @@
 const { expectEvent, expectRevert } = require('@openzeppelin/test-helpers');
 
-function claimedEvent(account, amount) {
+function claimedEvent (account, amount) {
     return { account, amount };
 }
 
@@ -10,7 +10,7 @@ function shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234 (errorPrefix, wal
             it('should succeed to claim 1 token', async function () {
                 await expectEvent(
                     await this.drop.claim(wallets[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]),
-                    'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '1')
+                    'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '1'),
                 );
             });
 

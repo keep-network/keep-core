@@ -1,4 +1,4 @@
-const { BN, expectEvent } = require('@openzeppelin/test-helpers');
+const { BN } = require('@openzeppelin/test-helpers');
 const { MerkleTree } = require('merkletreejs');
 const keccak256 = require('keccak256');
 
@@ -14,10 +14,6 @@ const {
 
 const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop = artifacts.require('CumulativeMerkleDrop');
-
-function claimedEvent(account, amount) {
-    return { account, amount };
-}
 
 async function makeDrop (token, drop, wallets, amounts, deposit) {
     const elements = wallets.map((w, i) => w + web3.utils.padLeft(web3.utils.toHex(amounts[i]), 64).substr(2));
