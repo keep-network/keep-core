@@ -4,11 +4,11 @@ const keccak256 = require('keccak256');
 
 const {
     shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234,
-} = require('./MerkleDrop.behavior');
+} = require('./behaviors/MerkleDrop.behavior');
 
 const {
     shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234,
-} = require('./CumulativeMerkleDrop.behavior');
+} = require('./behaviors/CumulativeMerkleDrop.behavior');
 
 const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop160 = artifacts.require('CumulativeMerkleDrop160');
