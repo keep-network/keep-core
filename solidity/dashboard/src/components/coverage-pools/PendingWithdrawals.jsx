@@ -49,7 +49,7 @@ const PendingWithdrawals = ({covTokensAvailableToWithdraw}) => {
         submitBtnText: "continue",
         pendingWithdrawalBalance: pendingWithdrawal,
         covTokensAvailableToWithdraw,
-        containerTitle: "You are about to re-initiate this withdrawal:"
+        containerTitle: "You are about to re-initiate this withdrawal:",
       },
       ReinitiateWithdrawalModal,
     )

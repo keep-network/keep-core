@@ -20,7 +20,7 @@ import {
   withdrawAssetPool,
 } from "../../actions/coverage-pool"
 import { useModal } from "../../hooks/useModal"
-import { lte } from "../../utils/arithmetics.utils"
+import { eq, gt } from "../../utils/arithmetics.utils"
 import { covKEEP, KEEP } from "../../utils/token.utils"
 import { displayPercentageValue } from "../../utils/general.utils"
 import WithdrawAmountForm from "../../components/WithdrawAmountForm"
@@ -31,6 +31,7 @@ import * as Icons from "../../components/Icons"
 import Divider from "../../components/Divider"
 import InitiateCovPoolsWithdrawModal
   from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal";
+import { EVENTS } from "../../constants/events";
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -91,6 +92,17 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
   const onSubmitWithdrawForm = async (values, awaitingPromise) => {
     const { withdrawAmount } = values
     const amount = KEEP.fromTokenUnit(withdrawAmount)
+    if (eq(withdrawalInitiatedTimestamp, 0)) {
+      dispatch({
+        type: "modal/set_emitted_event",
+        payload: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
+      })
+    } else {
+      dispatch({
+        type: "modal/set_emitted_event",
+        payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL,
+      })
+    }
     await openConfirmationModal(
       {
         modalOptions: {
@@ -101,7 +113,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         },
         submitBtnText: "withdraw",
         amount,
-        containerTitle: "You are about to withdraw:"
+        containerTitle: "You are about to withdraw:",
       },
       InitiateCovPoolsWithdrawModal,
     )
@@ -176,7 +188,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
         <section className="tile coverage-pool__balance">
           <div className={"coverage-pool__balance-title"}>
             <h3>Balance</h3>
-            <OnlyIf condition={withdrawalInitiatedTimestamp > 0}>
+            <OnlyIf condition={gt(withdrawalInitiatedTimestamp, 0)}>
               <Chip
                 text={`Pending withdrawal`}
                 size="small"

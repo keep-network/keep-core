@@ -110,6 +110,19 @@ export const ModalContextProvider = ({ children }) => {
             },
           })
           break;
+        case EVENTS.COVERAGE_POOLS.RE_WITHDRAWAL_INITIATED:
+          openModal(<InitiateCovPoolsWithdrawModal
+            transactionFinished={true}
+            amount={modal.additionalData?.covAmount}
+            onCancel={closeModal}
+          />, {
+            closeModal: closeModal,
+            title: "Re-initiate withdrawal",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+            },
+          })
+          break;
         case EVENTS.COVERAGE_POOLS.COV_TOKEN_TRANSFERED_TO_USER:
           openModal(<InitiateDepositModal
             transactionFinished={true}
@@ -143,7 +156,7 @@ export const ModalContextProvider = ({ children }) => {
     }
     setModalOptions(null)
     setIsOpen(false)
-    dispatch({ type: "modal/is_closed" })
+    // dispatch({ type: "modal/is_closed" })
   }, [])
 
   const onSubmitConfirmationModal = useCallback(

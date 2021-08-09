@@ -112,6 +112,12 @@ function* fetchCovPoolData(action) {
       address
     )
 
+    if (gt(withdrawalInitiatedTimestamp, 0)) {
+      yield put({
+        type: "modal/pending_withdrawal_not_finished"
+      })
+    }
+
     const covBalance = add(balanceOf, pendingWithdrawal)
 
     yield put(
@@ -189,6 +195,10 @@ export function* subscribeToCovTokenTransferEvent() {
 
     if (isSameEthAddress(to, address)) {
       yield put({
+        type: "modal/pending_withdrawal_finished"
+      })
+
+      yield put({
         type: "modal/is_opened",
         payload: {
           emittedEvent: EVENTS.COVERAGE_POOLS.COV_TOKEN_TRANSFERED_TO_USER,
@@ -261,9 +271,12 @@ export function* subscribeToWithdrawalInitiatedEvent() {
 
     if (isSameEthAddress(address, underwriter)) {
       yield put({
+        type: "modal/pending_withdrawal_not_finished"
+      })
+
+      yield put({
         type: "modal/is_opened",
         payload: {
-          emittedEvent: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
           transactionHash: event.transactionHash,
           additionalData: {
             covAmount
@@ -289,6 +302,10 @@ export function* subscribeToWithdrawalCompletedEvent() {
     const address = yield select(selectors.getUserAddress)
 
     if (isSameEthAddress(address, underwriter)) {
+      yield put({
+        type: "modal/pending_withdrawal_finished"
+      })
+
       yield put({
         type: "modal/is_opened",
         payload: {

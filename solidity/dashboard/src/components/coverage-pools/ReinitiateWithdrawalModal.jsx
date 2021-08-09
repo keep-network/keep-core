@@ -1,10 +1,12 @@
-import React, {useState} from "react"
+import React, { useEffect, useState } from "react"
 import OnlyIf from "../OnlyIf";
 import InitiateCovPoolsWithdrawModal from "./InitiateCovPoolsWithdrawModal";
 import TokenAmount from "../TokenAmount";
 import {covKEEP, KEEP} from "../../utils/token.utils";
 import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm";
-import {add} from "../../utils/arithmetics.utils";
+import { gt, eq } from "../../utils/arithmetics.utils";
+import { useDispatch } from "react-redux";
+import { EVENTS } from "../../constants/events";
 
 const step1Title = "You are about to re-initiate this withdrawal:"
 const step2Title = "You are about to re-withdraw:"
@@ -20,6 +22,7 @@ const ReinitiateWithdrawalModal = ({
 }) => {
   const [step, setStep] = useState(1)
   const [amount, setAmount] = useState("0")
+  const dispatch = useDispatch()
 
   const onSubmit = (values) => {
     if (step === 1) {
@@ -28,6 +31,22 @@ const ReinitiateWithdrawalModal = ({
     } else if (step === 2) {
     }
   }
+
+  useEffect(() => {
+    if (step === 2) {
+      if (eq(amount, 0)) {
+        dispatch({
+          type: "modal/set_emitted_event",
+          payload: EVENTS.COVERAGE_POOLS.RE_WITHDRAWAL_INITIATED
+        })
+      } else if (gt(amount, 0)) {
+        dispatch({
+          type: "modal/set_emitted_event",
+          payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL
+        })
+      }
+    }
+  }, [step, amount, amount])
 
   return (
     <>
@@ -43,15 +62,17 @@ const ReinitiateWithdrawalModal = ({
         />
       </OnlyIf>
       <OnlyIf condition={step === 2}>
-        <InitiateCovPoolsWithdrawModal
-          amount={add(pendingWithdrawalBalance, amount)}
-          containerTitle={step2Title}
-          submitBtnText={"withdraw"}
-          onBtnClick={onBtnClick}
-          onCancel={onCancel}
-          className={"reinitiate-withdrawal-modal__main-container"}
-          transactionFinished={false}
-        />
+        <OnlyIf condition={eq(amount, 0)}>
+          <InitiateCovPoolsWithdrawModal
+            amount={pendingWithdrawalBalance}
+            containerTitle={step2Title}
+            submitBtnText={"withdraw"}
+            onBtnClick={onBtnClick}
+            onCancel={onCancel}
+            className={"reinitiate-withdrawal-modal__main-container"}
+            transactionFinished={false}
+          />
+        </OnlyIf>
       </OnlyIf>
     </>
   )
