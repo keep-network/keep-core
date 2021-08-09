@@ -37,7 +37,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
 
         // Verify the merkle proof
         bytes32 leaf = keccak256(abi.encodePacked(account, cumulativeAmount));
-        require(merkleProof.verify(targetMerkleRoot, leaf), "CMD: Invalid proof");
+        require(verify2(merkleProof, targetMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
         uint256 preclaimed = cumulativeClaimed[account];
@@ -55,14 +55,16 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     }
 
     // Experimental assembly optimization
-    function verify2(bytes32[] calldata proof, bytes32 root, bytes32 leaf) public pure returns (bool) {
+    function verify2(bytes32[] calldata proof, bytes32 root, bytes32 leaf) public pure returns (bool valid) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x20)
             let ptr := proof.offset
+
             for { let end := add(ptr, mul(0x20, proof.length)) } lt(ptr, end) { ptr := add(ptr, 0x20) } {
                 let node := calldataload(ptr)
+
                 switch lt(leaf, node)
                 case 1 {
                     mstore(mem1, leaf)
@@ -76,9 +78,7 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
                 leaf := keccak256(mem1, 64)
             }
 
-            // valid := eq(root, leaf)
-            mstore(mem1, eq(root, leaf))
-            return(mem1, 32)
+            valid := eq(root, leaf)
         }
     }
 }

@@ -10,7 +10,7 @@ const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop160 = artifacts.require('CumulativeMerkleDrop160');
 
 function keccak160 (input) {
-    return keccak256(input).slice(12, 32);
+    return keccak256(input).slice(0, 20);
 }
 
 function claimedEvent(account, amount) {

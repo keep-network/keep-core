@@ -36,7 +36,7 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
 
         // Verify the merkle proof
         bytes16 leaf = _keccak128(abi.encodePacked(account, cumulativeAmount));
-        require(verify(merkleProof, targetMerkleRoot, leaf), "CMD: Invalid proof");
+        require(verify2(merkleProof, targetMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
         uint256 preclaimed = cumulativeClaimed[account];
@@ -63,15 +63,16 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     }
 
     // Experimental assembly optimization
-    function verify2(bytes calldata proof, bytes16 root, bytes16 leaf) public pure returns (bool) {
+    function verify2(bytes calldata proof, bytes16 root, bytes16 leaf) public pure returns (bool valid) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x10)
-            let len := div(proof.length, 0x10)
             let ptr := proof.offset
-            for { let end := add(ptr, mul(0x10, len)) } lt(ptr, end) { ptr := add(ptr, 0x10) } {
+
+            for { let end := add(ptr, proof.length) } lt(ptr, end) { ptr := add(ptr, 0x10) } {
                 let node := calldataload(ptr)
+
                 switch lt(leaf, node)
                 case 1 {
                     mstore(mem1, leaf)
@@ -82,11 +83,10 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
                     mstore(mem2, leaf)
                 }
 
-                leaf := shl(128, keccak256(mem1, 32))
+                leaf := keccak256(mem1, 32)
             }
 
-            mstore(mem1, eq(root, leaf))
-            return(mem1, 32)
+            valid := iszero(shr(128, xor(root, leaf)))
         }
     }
 
@@ -98,6 +98,6 @@ contract CumulativeMerkleDrop128 is Ownable, ICumulativeMerkleDrop128 {
     }
 
     function _keccak128(bytes memory input) internal pure returns(bytes16) {
-        return bytes16(keccak256(input) << 128);
+        return bytes16(keccak256(input));
     }
 }
