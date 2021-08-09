@@ -116,7 +116,7 @@ jobs:
         with:
           service-key: ${{ secrets.KEEP_TEST_CI_UPLOAD_DAPP_JSON_KEY_BASE64 }}
           project: ${{ env.GOOGLE_PROJECT_ID }}
-          bucket-name: keep-test-dashboard-dapp
+          bucket-name: dashboard.test.keep.network
           set-website: true
           home-page-path: index.html
           error-page-path: index.html
