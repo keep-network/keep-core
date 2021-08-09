@@ -39,10 +39,11 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
     beforeEach(async function () {
         this.token = await TokenMock.new('1INCH Token', '1INCH');
         this.drop = await CumulativeMerkleDrop.new(this.token.address);
+        await Promise.all(wallets.map(w => this.token.mint(w, 1)));
     });
 
     it('Benchmark 30000 wallets (merkle tree height 15)', async function () {
-        const accounts = Array(30000).fill().map((_, i) => '0x' + (new BN(w1)).addn(i).toString('hex'));
+        const accounts = Array(30000).fill().map((_, i) => '0x' + (new BN(w1.substr(2), 16)).addn(i).toString('hex'));
         const amounts = Array(30000).fill().map((_, i) => i + 1);
 
         const { hashedElements, leaves, root, proofs } = await makeDrop(this.token, this.drop, accounts, amounts, 1000000);
@@ -55,6 +56,7 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
         await this.drop.contract.methods.verify2(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
         expect(await this.drop.verify(this.proofs[0], this.root, this.leaves[0])).to.be.true;
         expect(await this.drop.verify2(this.proofs[0], this.root, this.leaves[0])).to.be.true;
+        await this.drop.claim(accounts[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]);
     });
 
     describe('Single drop for 4 wallets: [1, 2, 3, 4]', async function () {
