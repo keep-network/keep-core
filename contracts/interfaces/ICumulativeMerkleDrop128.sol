@@ -7,7 +7,7 @@ interface ICumulativeMerkleDrop128 {
     // This event is triggered whenever a call to #claim succeeds.
     event MerkelRootUpdated(bytes16 oldMerkleRoot, bytes16 newMerkleRoot);
     // This event is triggered whenever a call to #claim succeeds.
-    event Claimed(uint256 index, address account, uint256 amount);
+    event Claimed(address account, uint256 amount);
 
     // Returns the address of the token distributed by this contract.
     function token() external view returns (address);
@@ -17,10 +17,8 @@ interface ICumulativeMerkleDrop128 {
     function setMerkleRoot(bytes16 merkleRoot_) external;
     // Claim the given amount of the token to the given address. Reverts if the inputs are invalid.
     function claim(
-        uint256 index,
         address account,
         uint256 cumulativeAmount,
-        uint256 amountToClaim,
         bytes16 targetMerkleRoot,
         bytes calldata merkleProof
     ) external;

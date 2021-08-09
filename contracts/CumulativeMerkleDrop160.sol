@@ -27,73 +27,75 @@ contract CumulativeMerkleDrop160 is Ownable, ICumulativeMerkleDrop160 {
     }
 
     function claim(
-        uint256 index,
         address account,
-        uint256 amountToClaim,
         uint256 cumulativeAmount,
         bytes20 targetMerkleRoot,
         bytes calldata merkleProof
     ) external override {
-        require(amountToClaim > 0, "CMD: Amount should not be 0");
         require(merkleRoot == targetMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
-        bytes20 node = _keccak160(abi.encodePacked(account, cumulativeAmount));
-        require(targetMerkleRoot == applyProof(index, node, merkleProof), "CMD: Invalid proof");
+        bytes20 leaf = _keccak160(abi.encodePacked(account, cumulativeAmount));
+        require(verify(merkleProof, targetMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
-        uint256 claimed = cumulativeClaimed[account] + amountToClaim;
-        cumulativeClaimed[account] = claimed;
-        if (claimed - amountToClaim == cumulativeAmount) {
-            revert("CMD: Drop already claimed");
-        }
-        else if (claimed > cumulativeAmount) {
-            revert("CMD: Claiming amount is too high");
-        }
+        uint256 preclaimed = cumulativeClaimed[account];
+        require(preclaimed < cumulativeAmount, "CMD: Nothing to claim");
+        cumulativeClaimed[account] = cumulativeAmount;
 
         // Send the token
-        IERC20(token).safeTransfer(account, amountToClaim);
-        emit Claimed(index, account, amountToClaim);
+        uint256 amount = cumulativeAmount - preclaimed;
+        IERC20(token).safeTransfer(account, amount);
+        emit Claimed(account, amount);
     }
 
-    function applyProof(uint256 index, bytes20 leaf, bytes calldata proof) public view returns (bytes20 computedHash) {
-        this; // hide pure warning
-        computedHash = leaf;
-
+    function verify(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool) {
         for (uint256 i = 0; i < proof.length / 20; i++) {
-            if ((index >> i) & 1 == 0) {
-                computedHash = _keccak160(abi.encodePacked(computedHash, proof[i*20:(i+1)*20]));
+            bytes20 node = _getBytes20(proof[i*20:(i+1)*20]);
+            if (leaf < node) {
+                leaf = _keccak160(abi.encodePacked(leaf, node));
             } else {
-                computedHash = _keccak160(abi.encodePacked(proof[i*20:(i+1)*20], computedHash));
+                leaf = _keccak160(abi.encodePacked(node, leaf));
             }
         }
+
+        return leaf == root;
     }
 
     // Experimental assembly optimization
-    function applyProof2(uint256 index, bytes20 leaf, bytes calldata proof) public pure returns (bytes20) {
+    function verify2(bytes calldata proof, bytes20 root, bytes20 leaf) public pure returns (bool) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
-            let mem2 := add(mem1, 0x14)
+            let mem2 := add(mem1, 12)
+            let mem3 := add(mem1, 32)
             let len := div(proof.length, 0x14)
             let ptr := proof.offset
-            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
-                switch and(shr(i, index), 1)
-                case 0 {
+            leaf := shr(96, leaf)
+            for { let end := add(ptr, mul(0x14, len)) } lt(ptr, end) { ptr := add(ptr, 0x14) } {
+                let node := calldataload(ptr)
+                switch lt(leaf, node)
+                case 1 {
                     mstore(mem1, leaf)
-                    mstore(mem2, calldataload(ptr))
+                    mstore(mem3, node)
                 }
                 default {
-                    mstore(mem1, calldataload(ptr))
-                    mstore(mem2, leaf)
+                    mstore(mem1, node)
+                    mstore(mem3, leaf)
                 }
 
-                ptr := add(ptr, 0x14)
-                leaf := shl(96, keccak256(mem1, 40))
+                leaf := keccak256(mem2, 40)
             }
 
-            mstore(mem1, leaf)
-            return(mem1, 32)
+            mstore(mem1, eq(root, leaf))
+            return(mem2, 32)
+        }
+    }
+
+    function _getBytes20(bytes calldata input) internal pure returns(bytes20 res) {
+        // solhint-disable-next-line no-inline-assembly
+        assembly {
+            res := calldataload(input.offset)
         }
     }
 

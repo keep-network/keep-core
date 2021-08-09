@@ -11,6 +11,7 @@ import "./interfaces/ICumulativeMerkleDrop.sol";
 
 contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     using SafeERC20 for IERC20;
+    using MerkleProof for bytes32[];
 
     address public immutable override token;
 
@@ -27,71 +28,56 @@ contract CumulativeMerkleDrop is Ownable, ICumulativeMerkleDrop {
     }
 
     function claim(
-        uint256 index,
         address account,
-        uint256 amountToClaim,
         uint256 cumulativeAmount,
         bytes32 targetMerkleRoot,
         bytes32[] calldata merkleProof
     ) external override {
-        require(amountToClaim > 0, "CMD: Amount should not be 0");
         require(merkleRoot == targetMerkleRoot, "CMD: Merkle root was updated");
 
         // Verify the merkle proof
-        bytes32 node = keccak256(abi.encodePacked(account, cumulativeAmount));
-        require(targetMerkleRoot == applyProof(index, node, merkleProof), "CMD: Invalid proof");
+        bytes32 leaf = keccak256(abi.encodePacked(account, cumulativeAmount));
+        require(merkleProof.verify(targetMerkleRoot, leaf), "CMD: Invalid proof");
 
         // Mark it claimed
-        uint256 claimed = cumulativeClaimed[account] + amountToClaim;
-        cumulativeClaimed[account] = claimed;
-        if (claimed - amountToClaim == cumulativeAmount) {
-            revert("CMD: Drop already claimed");
-        }
-        else if (claimed > cumulativeAmount) {
-            revert("CMD: Claiming amount is too high");
-        }
+        uint256 preclaimed = cumulativeClaimed[account];
+        require(preclaimed < cumulativeAmount, "CMD: Nothing to claim");
+        cumulativeClaimed[account] = cumulativeAmount;
 
         // Send the token
-        IERC20(token).safeTransfer(account, amountToClaim);
-        emit Claimed(index, account, amountToClaim);
+        uint256 amount = cumulativeAmount - preclaimed;
+        IERC20(token).safeTransfer(account, amount);
+        emit Claimed(account, amount);
     }
 
-    function applyProof(uint256 index, bytes32 leaf, bytes32[] calldata proof) public pure returns (bytes32 computedHash) {
-        computedHash = leaf;
-
-        for (uint256 i = 0; i < proof.length; i++) {
-            if ((index >> i) & 1 == 0) {
-                computedHash = keccak256(abi.encodePacked(computedHash, proof[i]));
-            } else {
-                computedHash = keccak256(abi.encodePacked(proof[i], computedHash));
-            }
-        }
+    function verify(bytes32[] calldata merkleProof, bytes32 root, bytes32 leaf) public pure returns (bool) {
+        return merkleProof.verify(root, leaf);
     }
 
     // Experimental assembly optimization
-    function applyProof2(uint256 index, bytes32 leaf, bytes32[] calldata proof) public pure returns (bytes32) {
+    function verify2(bytes32[] calldata proof, bytes32 root, bytes32 leaf) public pure returns (bool) {
         // solhint-disable-next-line no-inline-assembly
         assembly {
             let mem1 := mload(0x40)
             let mem2 := add(mem1, 0x20)
-            let len := proof.length
             let ptr := proof.offset
-            for { let i := 0 } lt(i, len) { i := add(i, 1) } {
-                switch and(shr(i, index), 1)
-                case 0 {
+            for { let end := add(ptr, mul(0x20, proof.length)) } lt(ptr, end) { ptr := add(ptr, 0x20) } {
+                let node := calldataload(ptr)
+                switch lt(leaf, node)
+                case 1 {
                     mstore(mem1, leaf)
-                    mstore(mem2, calldataload(ptr))
+                    mstore(mem2, node)
                 }
                 default {
-                    mstore(mem1, calldataload(ptr))
+                    mstore(mem1, node)
                     mstore(mem2, leaf)
                 }
 
-                ptr := add(ptr, 0x20)
                 leaf := keccak256(mem1, 64)
             }
 
-            mstore(mem1, leaf)
+            // valid := eq(root, leaf)
+            mstore(mem1, eq(root, leaf))
             return(mem1, 32)
         }
     }
