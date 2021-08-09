@@ -8,6 +8,10 @@ const {
     shouldBehaveLikeMerkleDropFor4WalletsWithBalances1234,
 } = require('./MerkleDrop.behavior');
 
+const {
+    shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234,
+} = require('./CumulativeMerkleDrop.behavior');
+
 const TokenMock = artifacts.require('TokenMock');
 const CumulativeMerkleDrop = artifacts.require('CumulativeMerkleDrop');
 
@@ -72,56 +76,22 @@ contract('CumulativeMerkleDrop', async function ([_, w1, w2, w3, w4]) {
     });
 
     describe('Double drop for 4 wallets: [1, 2, 3, 4] + [2, 3, 4, 5] = [3, 5, 7, 9]', async function () {
-        async function firstDrop (token, drop) {
-            return makeDrop(token, drop, [w1, w2, w3, w4], [1, 2, 3, 4], 1 + 2 + 3 + 4);
+        async function makeFirstDrop (self) {
+            const { hashedElements, leaves, root, proofs } = await makeDrop(self.token, self.drop, [w1, w2, w3, w4], [1, 2, 3, 4], 1 + 2 + 3 + 4);
+            self.hashedElements = hashedElements;
+            self.leaves = leaves;
+            self.root = root;
+            self.proofs = proofs;
         }
 
-        async function secondDrop (token, drop) {
-            return makeDrop(token, drop, [w1, w2, w3, w4], [3, 5, 7, 9], 2 + 3 + 4 + 5);
+        async function makeSecondDrop (self) {
+            const { hashedElements, leaves, root, proofs } = await makeDrop(self.token, self.drop, [w1, w2, w3, w4], [3, 5, 7, 9], 2 + 3 + 4 + 5);
+            self.hashedElements = hashedElements;
+            self.leaves = leaves;
+            self.root = root;
+            self.proofs = proofs;
         }
 
-        beforeEach(async function () {
-            const { hashedElements, leaves, root, proofs } = await firstDrop(this.token, this.drop);
-            this.hashedElements = hashedElements;
-            this.leaves = leaves;
-            this.root = root;
-            this.proofs = proofs;
-        });
-
-        describe('First wallet', async function () {
-            it('should success to claim 1 token, second drop and claim 2 tokens', async function () {
-                await this.drop.contract.methods.verify(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
-                await expectEvent(
-                    await this.drop.claim(wallets[findSortedIndex(this, 0)], 1, this.root, this.proofs[0]),
-                    'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '1')
-                );
-
-                const { hashedElements, leaves, root, proofs } = await secondDrop(this.token, this.drop);
-                this.hashedElements = hashedElements;
-                this.leaves = leaves;
-                this.root = root;
-                this.proofs = proofs;
-
-                await this.drop.contract.methods.verify(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
-                await expectEvent(
-                    await this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
-                    'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '2')
-                );
-            });
-
-            it('should success to claim all 3 tokens after second drop', async function () {
-                const { hashedElements, leaves, root, proofs } = await secondDrop(this.token, this.drop);
-                this.hashedElements = hashedElements;
-                this.leaves = leaves;
-                this.root = root;
-                this.proofs = proofs;
-
-                await this.drop.contract.methods.verify(this.proofs[0], this.root, this.leaves[0]).send({ from: _ });
-                await expectEvent(
-                    await this.drop.claim(wallets[findSortedIndex(this, 0)], 3, this.root, this.proofs[0]),
-                    'Claimed', claimedEvent(wallets[findSortedIndex(this, 0)], '3')
-                );
-            });
-        });
+        shouldBehaveLikeCumulativeMerkleDropFor4WalletsWithBalances1234('CMD', _, [w1, w2, w3, w4], findSortedIndex, makeFirstDrop, makeSecondDrop);
     });
 });
