@@ -199,6 +199,8 @@ async function createKeepClientConfig() {
 
     parsedConfigFile.Storage.DataDir = process.env.KEEP_CLIENT_DATA_DIR;
 
+    parsedConfigFile.Metrics.Port = Number(process.env.METRICS_PORT)
+
     /*
     tomlify.toToml() writes our Seed/Port values as a float.  The added precision renders our config
     file unreadable by the keep-client as it interprets 3919.0 as a string when it expects an int.
