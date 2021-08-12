@@ -95,7 +95,7 @@ const InitiateDepositModal = ({
 
 InitiateDepositModal.Container = ({transactionFinished = false, submitBtnText, onBtnClick, onCancel, children}) => {
   const container = transactionFinished ? <>{children}</> : <AcceptTermConfirmationModal
-    title="You are about to withdraw:"
+    title="You are about to deposit:"
     termText="I confirm I have read the documentation and am aware of the risk."
     btnText={submitBtnText}
     onBtnClick={onBtnClick}

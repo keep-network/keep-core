@@ -5,6 +5,8 @@ import Divider from "../Divider"
 import Button from "../Button"
 import OnlyIf from "../OnlyIf"
 import ModalWithTimeline from "./ModalWithTImeline";
+import {useWeb3Address} from "../WithWeb3Context";
+import {shortenAddress} from "../../utils/general.utils";
 
 const ClaimTokensModal = ({
   amount,
@@ -14,6 +16,7 @@ const ClaimTokensModal = ({
   transactionFinished = false,
   transactionHash = "",
 }) => {
+  const yourAddress = useWeb3Address()
   return (
     <ModalWithTimeline className={"claim-tokens-modal__main-container"}>
       <OnlyIf condition={!transactionFinished}>
@@ -33,7 +36,7 @@ const ClaimTokensModal = ({
         <div className={"claim-tokens-modal__data-row"}>
           <h4 className={"text-grey-50"}>Initial Withdrawal &nbsp;</h4>
           <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
-            1,000 KEEP
+            {KEEP.displayAmount(amount)} KEEP
           </h4>
         </div>
         <div className={"claim-tokens-modal__data-row"}>
@@ -45,7 +48,7 @@ const ClaimTokensModal = ({
         <div className={"claim-tokens-modal__data-row"}>
           <h4 className={"text-grey-50"}>Wallet &nbsp;</h4>
           <h4 className={"claim-tokens-modal__data__value text-grey-70"}>
-            1,000 KEEP
+            {shortenAddress(yourAddress)}
           </h4>
         </div>
       </div>

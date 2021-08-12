@@ -8,14 +8,11 @@ import {useSelector} from "react-redux";
 import List from "../List";
 import Divider from "../Divider";
 import Button, {SubmitButton} from "../Button";
-import {AcceptTermConfirmationModal} from "../ConfirmationModal";
-import InitiateCovPoolsWithdrawModal from "./InitiateCovPoolsWithdrawModal";
-import TokenAmount from "../TokenAmount";
-import {covKEEP, KEEP} from "../../utils/token.utils";
+import {KEEP} from "../../utils/token.utils";
 import {shortenAddress} from "../../utils/general.utils";
-import Banner from "../Banner";
 import WithdrawalInfo from "./WithdrawalInfo";
 import {add} from "../../utils/arithmetics.utils";
+import {useWeb3Address} from "../WithWeb3Context";
 
 const infoBannerTitle = "The cooldown period is 21 days"
 
@@ -37,17 +34,23 @@ const IncreaseWithdrawalModal = ({
   className = "",
   transactionFinished = false,
 }) => {
+  const yourAddress = useWeb3Address()
   const [step, setStep] = useState(transactionFinished ? 2 : 1)
 
   const onSubmit = (values) => {
     if (step === 1) {
       setStep((prevStep) => prevStep + 1)
     } else if (step === 2) {
+      onBtnClick()
     }
   }
 
   return (
-    <ModalWithOverview className={`${className} withdraw-modal__main-container` }>
+    <ModalWithOverview
+      className={`${className} withdraw-modal__main-container`}
+      pendingWithdrawalBalance={pendingWithdrawalBalance}
+      addedAmount={addedAmount}
+    >
       <OnlyIf condition={step === 1}>
         <IncreaseWithdrawalModalStep1 onSubmit={onSubmit}/>
       </OnlyIf>
@@ -56,7 +59,7 @@ const IncreaseWithdrawalModal = ({
           transactionFinished={transactionFinished}
           containerTitle={"Your new withdrawal amount"}
           submitBtnText={"withdraw"}
-          onBtnClick={onBtnClick}
+          onBtnClick={onSubmit}
           onCancel={onCancel}
           amount={add(pendingWithdrawalBalance, addedAmount)}
           infoBannerTitle={infoBannerTitle}
@@ -64,19 +67,19 @@ const IncreaseWithdrawalModal = ({
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Expired withdrawal &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              1,000 KEEP
+              {KEEP.displayAmount(pendingWithdrawalBalance)} KEEP
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Increase amount &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              1,000 KEEP
+              {KEEP.displayAmount(addedAmount)} KEEP
             </h4>
           </div>
           <div className={"withdraw-modal__data-row"}>
             <h4 className={"text-grey-50"}>Wallet &nbsp;</h4>
             <h4 className={"withdraw-modal__data__value text-grey-70"}>
-              {shortenAddress("0x254673e7c7d76e051e80d30FCc3EA6A9C2a22222")}
+              {shortenAddress(yourAddress)}
             </h4>
           </div>
         </WithdrawalInfo>
@@ -112,8 +115,10 @@ const IncreaseWithdrawalModalStep1 = ({onSubmit}) => {
 }
 
 const ModalWithOverview = ({
-   children,
-   className = "",
+  children,
+  className = "",
+  pendingWithdrawalBalance,
+  addedAmount,
  }) => {
   return (
     <div className={`modal-with-overview__content-container ${className}`}>
@@ -122,13 +127,13 @@ const ModalWithOverview = ({
       </div>
       <div className={"modal-with-overview__overview-container"}>
         <h4 className={"mb-1"}>Overview</h4>
-        <IncreaseWithdrawalModal.Tile title={"expired withdrawal"} amount={"99000"} expired/>
+        <IncreaseWithdrawalModal.Tile title={"expired withdrawal"} amount={pendingWithdrawalBalance} expired/>
         <h4 className={"modal-with-overview__added-amount color-grey-70"}>
           <Icons.ArrowDown />
           <Icons.Add />
-          1,000 KEEP
+          {KEEP.displayAmount(addedAmount)} KEEP
         </h4>
-        <IncreaseWithdrawalModal.Tile title={"new withdrawal"} amount={"100000"}/>
+        <IncreaseWithdrawalModal.Tile title={"new withdrawal"} amount={add(pendingWithdrawalBalance, addedAmount)}/>
       </div>
     </div>
   )
@@ -143,7 +148,7 @@ const IncreaseWithdrawalModalTile = ({title, amount, expired = false}) => {
     <div className={"modal-with-overview__tile"}>
       <h5 className={"modal-with-overview__tile-title"}>{title}</h5>
       <div className={"modal-with-overview__withdrawal-info"}>
-        <h4 className={"modal-with-overview__amount text-grey-70"}>{amount} KEEEP</h4>
+        <h4 className={"modal-with-overview__amount text-grey-70"}>{KEEP.displayAmount(amount)} KEEP</h4>
         <OnlyIf condition={!expired}>
           <div className={"modal-with-overview__delay text-grey-50"}>21 days: {endOfWithdrawalDate.format("MM/DD")}</div>
         </OnlyIf>
