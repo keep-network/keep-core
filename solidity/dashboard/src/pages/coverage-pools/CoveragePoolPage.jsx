@@ -32,6 +32,8 @@ import Divider from "../../components/Divider"
 import InitiateCovPoolsWithdrawModal
   from "../../components/coverage-pools/InitiateCovPoolsWithdrawModal";
 import { EVENTS } from "../../constants/events";
+import ReinitiateWithdrawalModal
+  from "../../components/coverage-pools/ReinitiateWithdrawalModal";
 
 const CoveragePoolPage = ({ title, withNewLabel }) => {
   const { openConfirmationModal } = useModal()
@@ -52,6 +54,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
     isApyFetching,
     totalAllocatedRewards,
     withdrawalDelay,
+    pendingWithdrawal,
     withdrawalInitiatedTimestamp,
   } = useSelector((state) => state.coveragePool)
 
@@ -91,32 +94,51 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
 
   const onSubmitWithdrawForm = async (values, awaitingPromise) => {
     const { withdrawAmount } = values
-    const amount = KEEP.fromTokenUnit(withdrawAmount)
+    const amount = KEEP.fromTokenUnit(withdrawAmount).toString();
     if (eq(withdrawalInitiatedTimestamp, 0)) {
       dispatch({
         type: "modal/set_emitted_event",
         payload: EVENTS.COVERAGE_POOLS.WITHDRAWAL_INITIATED,
       })
+
+      await openConfirmationModal(
+        {
+          modalOptions: {
+            title: "Withdraw",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+            },
+          },
+          submitBtnText: "withdraw",
+          amount,
+          containerTitle: "You are about to withdraw:",
+        },
+        InitiateCovPoolsWithdrawModal,
+      )
     } else {
       dispatch({
         type: "modal/set_emitted_event",
         payload: EVENTS.COVERAGE_POOLS.ADD_BALANCE_TO_WITHDRAWAL,
       })
-    }
-    await openConfirmationModal(
-      {
-        modalOptions: {
-          title: "Withdraw",
-          classes: {
-            modalWrapperClassName: "modal-wrapper__initiate-withdrawal",
+
+      await openConfirmationModal(
+        {
+          modalOptions: {
+            title: "Re-initiate withdrawal",
+            classes: {
+              modalWrapperClassName: "modal-wrapper__reinitiate-withdrawal",
+            },
           },
+          submitBtnText: "continue",
+          pendingWithdrawalBalance: pendingWithdrawal,
+          initialAmountValue: amount,
+          covTokensAvailableToWithdraw,
+          containerTitle: "You are about to re-initiate this withdrawal:",
         },
-        submitBtnText: "withdraw",
-        amount,
-        containerTitle: "You are about to withdraw:",
-      },
-      InitiateCovPoolsWithdrawModal,
-    )
+        ReinitiateWithdrawalModal,
+      )
+    }
+
     dispatch(withdrawAssetPool(amount, awaitingPromise))
   }
 
@@ -275,7 +297,7 @@ const CoveragePoolPage = ({ title, withNewLabel }) => {
           />
           <WithdrawAmountForm
             onCancel={onCancel}
-            submitBtnText="add keep"
+            submitBtnText={gt(withdrawalInitiatedTimestamp, "0") ? "increase withdrawal" : "withdraw"}
             withdrawAmount={covBalance}
             onSubmit={onSubmitWithdrawForm}
             withdrawalDelay={withdrawalDelay}

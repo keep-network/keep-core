@@ -15,7 +15,7 @@ import {
 import { lte } from "../../utils/arithmetics.utils"
 import useSetMaxAmountToken from "../../hooks/useSetMaxAmountToken"
 
-const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, ...formikProps }) => {
+const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, initialValue = "0", ...formikProps }) => {
   const onSubmitBtn = useCustomOnSubmitFormik(onSubmit)
   const onAddonClick = useSetMaxAmountToken("tokenAmount", tokenAmount)
 
@@ -51,7 +51,7 @@ const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, ...formikProps }) =>
       <SubmitButton
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
-        disabled={!(formikProps.isValid && formikProps.dirty)}
+        disabled={!(formikProps.isValid)}
       >
         continue
       </SubmitButton>
@@ -62,8 +62,8 @@ const AddAmountToWithdrawalForm = ({ tokenAmount, onSubmit, ...formikProps }) =>
 export default withFormik({
   validateOnChange: true,
   validateOnBlur: true,
-  mapPropsToValues: () => ({
-    tokenAmount: '',
+  mapPropsToValues: ({initialValue}) => ({
+    tokenAmount: KEEP.toTokenUnit(initialValue).toString(),
   }),
   validate: (values, props) => {
     const { tokenAmount } = values

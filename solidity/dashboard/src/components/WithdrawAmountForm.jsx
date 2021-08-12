@@ -43,7 +43,7 @@ const WithdrawAmountForm = ({
         className="btn btn-lg btn-primary w-100"
         onSubmitAction={onSubmitBtn}
       >
-        withdraw
+        { submitBtnText }
       </SubmitButton>
       <p
         className={

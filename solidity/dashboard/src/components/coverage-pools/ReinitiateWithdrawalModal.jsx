@@ -4,9 +4,10 @@ import InitiateCovPoolsWithdrawModal from "./InitiateCovPoolsWithdrawModal";
 import TokenAmount from "../TokenAmount";
 import {covKEEP, KEEP} from "../../utils/token.utils";
 import AddAmountToWithdrawalForm from "./AddAmountToWithdrawalForm";
-import { gt, eq } from "../../utils/arithmetics.utils";
+import {gt, eq, lt} from "../../utils/arithmetics.utils";
 import { useDispatch } from "react-redux";
 import { EVENTS } from "../../constants/events";
+import IncreaseWithdrawalModal from "./IncreaseWithdrawalModal";
 
 const step1Title = "You are about to re-initiate this withdrawal:"
 const step2Title = "You are about to re-withdraw:"
@@ -18,15 +19,16 @@ const ReinitiateWithdrawalModal = ({
  onBtnClick,
  onCancel,
  className = "",
+ initialAmountValue = "0", // in smallest unit
  transactionFinished = false,
 }) => {
   const [step, setStep] = useState(1)
-  const [amount, setAmount] = useState("0")
+  const [amount, setAmount] = useState(initialAmountValue.toString())
   const dispatch = useDispatch()
 
   const onSubmit = (values) => {
     if (step === 1) {
-      setStep((preveStep) => preveStep + 1)
+      setStep((prevStep) => prevStep + 1)
       setAmount(KEEP.fromTokenUnit(values.tokenAmount).toString())
     } else if (step === 2) {
     }
@@ -59,6 +61,7 @@ const ReinitiateWithdrawalModal = ({
           onBtnClick={onSubmit}
           onCancel={onCancel}
           transactionFinished={transactionFinished}
+          initialAmountValue={initialAmountValue}
         />
       </OnlyIf>
       <OnlyIf condition={step === 2}>
@@ -73,6 +76,28 @@ const ReinitiateWithdrawalModal = ({
             transactionFinished={false}
           />
         </OnlyIf>
+        <OnlyIf condition={lt(amount, 0)}>
+          <InitiateCovPoolsWithdrawModal
+            amount={pendingWithdrawalBalance}
+            containerTitle={step2Title}
+            submitBtnText={"withdraw"}
+            onBtnClick={onBtnClick}
+            onCancel={onCancel}
+            className={"reinitiate-withdrawal-modal__main-container"}
+            transactionFinished={false}
+          />
+        </OnlyIf>
+        <OnlyIf condition={gt(amount, 0)}>
+          <IncreaseWithdrawalModal
+            pendingWithdrawalBalance={pendingWithdrawalBalance}
+            addedAmount={amount}
+            submitBtnText={"withdraw"}
+            onBtnClick={onBtnClick}
+            onCancel={onCancel}
+            className={"increase-withdrawal-modal__main-container"}
+            transactionFinished={false}
+          />
+        </OnlyIf>
       </OnlyIf>
     </>
   )
@@ -82,6 +107,7 @@ const ReinitiateWithdrawalModalStep1 = ({
   containerTitle,
   pendingWithdrawalBalance,
   covTokensAvailableToWithdraw,
+  initialAmountValue,
   submitBtnText,
   onBtnClick,
   onCancel,
@@ -105,7 +131,10 @@ const ReinitiateWithdrawalModalStep1 = ({
           token={covKEEP}
         />
       </div>
-      <AddAmountToWithdrawalForm onSubmit={onBtnClick} tokenAmount={covTokensAvailableToWithdraw} />
+      <AddAmountToWithdrawalForm
+        initialValue={initialAmountValue}
+        onSubmit={onBtnClick}
+        tokenAmount={covTokensAvailableToWithdraw} />
     </div>
   )
 }
