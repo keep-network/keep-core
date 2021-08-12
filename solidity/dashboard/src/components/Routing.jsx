@@ -13,6 +13,7 @@ import TokenGrantsPage, { TokenGrantPreviewPage } from "../pages/grants"
 import RewardsPage from "../pages/rewards"
 import LiquidityPage from "../pages/liquidity"
 import CoveragePoolPage from "../pages/coverage-pools"
+import TBTCMigrationPage from "../pages/tbtc-migration"
 // import CreateTokenGrantPage from "../pages/CreateTokenGrantPage"
 
 export const pages = [
@@ -27,6 +28,7 @@ export const pages = [
   LiquidityPage,
   ResourcesPage,
   CoveragePoolPage,
+  TBTCMigrationPage,
 ]
 
 class Routing extends React.Component {
