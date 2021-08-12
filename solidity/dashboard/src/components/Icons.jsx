@@ -59,6 +59,7 @@ export { ReactComponent as Dashboard } from "../static/svg/dashboard.svg"
 export { ReactComponent as BrowserWindow } from "../static/svg/browser-window.svg"
 export { ReactComponent as Decentralize } from "../static/svg/decentralize.svg"
 export { ReactComponent as CoveragePool } from "../static/svg/coverage-pool.svg"
+export { ReactComponent as SaddleWhite } from "../static/svg/saddle-logo.svg"
 
 const Badge = ({ height, width }) => (
   <svg
