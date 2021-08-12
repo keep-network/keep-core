@@ -104,9 +104,6 @@ jobs:
               @keep-network/tbtc@${{ steps.upstream-builds-query.outputs.tbtc-contracts-version }} \
               @keep-network/coverage-pools@${{ steps.upstream-builds-query.outputs.coverage-pools-version }}
 
-      - name: NPM install
-        run: npm ci
-
       - name: NPM build
         run: npm run build
 
