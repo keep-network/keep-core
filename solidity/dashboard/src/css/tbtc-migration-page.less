@@ -85,3 +85,69 @@
     }
   }
 }
+
+.tbtc-migration-portal {
+  // display: flex;
+
+  &__tbtc-balances {
+    .tile();
+    // flex: 1;
+    // max-width: 350px;
+    // margin-right: 1rem;
+
+    align-self: flex-start;
+    padding-bottom: 0;
+    .tbtc-balances {
+      margin-top: 1.5rem;
+      .tbtc-balance {
+        margin: 0 -2rem;
+        padding: 2rem 2rem;
+
+        &--v1 {
+          background-color: @color-black;
+
+          > .token-amount {
+            svg {
+              path {
+                fill: @white;
+              }
+            }
+          }
+        }
+
+        &--v2 {
+          > .token-amount {
+            svg {
+              path {
+                fill: @color-black;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  &__form-wrapper {
+    .tile();
+    // flex-grow: 3;
+    // max-width: 550px;
+    // height: 600px;
+  }
+
+  @media screen and (min-width: 1000px) {
+    display: flex;
+
+    &__tbtc-balances {
+      flex: 1;
+      max-width: 350px;
+      margin-right: 1rem;
+    }
+
+    &__form-wrapper {
+      flex-grow: 3;
+      max-width: 550px;
+      height: 600px;
+    }
+  }
+}
